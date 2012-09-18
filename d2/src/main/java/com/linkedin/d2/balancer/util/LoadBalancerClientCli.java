@@ -46,6 +46,7 @@ import org.slf4j.LoggerFactory;
 import com.linkedin.d2.balancer.clients.DynamicClient;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterPropertiesJsonSerializer;
+import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.ServicePropertiesJsonSerializer;
 import com.linkedin.d2.balancer.properties.UriProperties;
@@ -136,6 +137,10 @@ public class LoadBalancerClientCli
     OptionSpec<String> sendRequestOption =
         parser.acceptsAll(asList("sendrequest", "R"), "Send request to service method.")
               .withOptionalArg();
+    
+    OptionSpec<String> printEndpointsOption =
+            parser.acceptsAll(asList("endpoints", "e"), "Print service endpoints.")
+                  .withOptionalArg();
 
     OptionSet options = parser.parse(args);
 
@@ -168,6 +173,11 @@ public class LoadBalancerClientCli
         {
           getSchema(clobj.getZKClient(), options.valueOf(zkserverOption), options.valueOf(pathOption), clobj.getCluster(), clobj.getService());
         }
+        else if (options.has(printEndpointsOption))
+        {
+          clobj.getEndpoints(options.valueOf(zkserverOption), options.valueOf(pathOption), clobj.getCluster(), clobj.getService());
+          clobj.shutdown();
+        }
         else if (options.has(requestOption) && options.has(sendRequestOption))
         {
           if (options.has(serviceMethodOption))
@@ -197,7 +207,30 @@ public class LoadBalancerClientCli
 
   }
 
-  public LoadBalancerClientCli( String zkserverHostPort, String d2path) throws Exception
+  public void getEndpoints(String zkServer,
+		String d2path, String cluster, String service) throws Exception {
+	
+	  Map<String, UriProperties> scMap = getServiceClustersURIsInfo(zkServer, d2path, service);
+	  if (scMap != null && scMap.get(cluster) != null)
+	  {
+		  for (Map.Entry<URI, Map<Integer, PartitionData>> uriEntry: scMap.get(cluster).getPartitionDesc().entrySet())
+		  {
+			  System.out.println("uri: " + uriEntry.getKey());
+			  
+			  for (Map.Entry<Integer, PartitionData> pData : uriEntry.getValue().entrySet())
+			  {
+				  System.out.println("  " + pData.getKey() + ": " + pData.getValue());
+			  }
+		  }
+	  }
+	  else
+	  {
+		  System.out.println("No cluster information found for service: " + service + ", in cluster: " + cluster);
+	  }
+	  
+  }
+
+public LoadBalancerClientCli( String zkserverHostPort, String d2path) throws Exception
   {
     _zkserver = zkserverHostPort;
     _zkclient = createZkClient(zkserverHostPort);
@@ -227,6 +260,7 @@ public class LoadBalancerClientCli
     System.out.println("Example Print single store: lb-client.sh --zkserver=zk://esv4-be32.stg.linkedin.com:12913 --path=/d2 --cluster='history-write-1' --service=HistoryService --printstore");
     System.out.println("Example Get Service Schema: lb-client.sh -z=zk://esv4-be32.stg.linkedin.com:12913 -p=/d2 -c='history-write-1' -s=HistoryService -H  ");
     System.out.println("Example Get Service Schema: lb-client.sh --zkserver=zk://esv4-be32.stg.linkedin.com:12913 --path=/d2 --cluster='history-write-1' --service=HistoryService --getschema");
+    System.out.println("Example Get Endpoints: lb-client.sh --zkserver=zk://esv4-be32.stg.linkedin.com:12913 --path=/d2 --cluster identity --endpoints --service identityPrivacySettings");
     System.out.println("Example Send request to service: lb-client.sh -z=zk://esv4-be32.stg.linkedin.com:12913 -p=/d2 -c='history-write-1' -s=HistoryService -m=getCube -r=$stgrequest -R");
     System.out.println("Example Send request to service: lb-client.sh --zkserver=zk://esv4-be32.stg.linkedin.com:12913 --path=/d2 --cluster='history-write-1' --service=HistoryService --method=getCube --request=$stgrequest --sendrequest");
     System.out.println(" where stgrequest=\"{\"query\":{\"query\":[{\"limit\":12,\"transform\":\"SUM\",\"order\":[{\"column\":\"profile_views.tracking_time\",\"ascending\":false}],\"select\":[\"impression\",\"profile_views.tracking_time\"],\"group\":[\"profile_views.tracking_time\"]}],\"ids\":[\"1213\"],\"type\":\"wvmp-cube-profile-views\",\"stringCols\":[]}}\"");
@@ -913,14 +947,22 @@ public class LoadBalancerClientCli
       {
         for (String serviceGroup : servicesGroupMap.keySet())
         {
-          if (zkServiceRegistryMap.get(serviceGroup).get(service).getClusterName().equals(cluster))
+          ZooKeeperPermanentStore<ServiceProperties> zkStorePropsForSerivceGroup = zkServiceRegistryMap.get(serviceGroup);
+          if (zkStorePropsForSerivceGroup != null)
           {
-            System.out.println("-------------------");
-            System.out.println("SERVICE '" + service + "':");
+            ServiceProperties serviceProps = zkStorePropsForSerivceGroup.get(service);
+        	if (serviceProps != null)
+        	{
+        	  if (cluster.equals(serviceProps.getClusterName()))
+        	  {
+        	    System.out.println("-------------------");
+        	    System.out.println("SERVICE '" + service + "':");
 
-            printStore(zkClusterRegistry, zkUriRegistry, zkServiceRegistryMap.get(serviceGroup), cluster, service);
-            count++;
-            break;
+        	    printStore(zkClusterRegistry, zkUriRegistry, zkServiceRegistryMap.get(serviceGroup), cluster, service);
+        	    count++;
+        	    break;
+        	  }
+        	}
           }
         }
       }
