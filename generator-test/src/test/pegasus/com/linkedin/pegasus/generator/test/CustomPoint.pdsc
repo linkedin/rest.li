@@ -1,0 +1,9 @@
+{
+  "type" : "typeref",
+  "name" : "CustomPoint",
+  "namespace" : "com.linkedin.pegasus.generator.test",
+  "ref"  : "string",
+  "java" : {
+    "class" : "com.linkedin.data.template.TestCustom.CustomPoint"
+  }
+}

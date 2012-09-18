@@ -1,0 +1,56 @@
+{
+  "name" : "greetingsAuth",
+  "namespace" : "com.linkedin.restli.examples.greetings.client",
+  "path" : "/greetingsAuth",
+  "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+  "collection" : {
+    "identifier" : {
+      "name" : "greetingsAuthId",
+      "type" : "long"
+    },
+    "supports" : [ "create", "delete", "get", "partial_update", "update" ],
+    "methods" : [ {
+      "method" : "create",
+      "parameters" : [ {
+        "name" : "auth",
+        "type" : "string",
+        "optional" : true
+      } ]
+    }, {
+      "method" : "get",
+      "parameters" : [ {
+        "name" : "auth",
+        "type" : "string",
+        "optional" : true
+      }, {
+        "name" : "testComplex",
+        "type" : "com.linkedin.restli.examples.groups.api.GroupMembershipParam",
+        "optional" : true
+      } ]
+    }, {
+      "method" : "update",
+      "parameters" : [ {
+        "name" : "auth",
+        "type" : "string",
+        "optional" : true
+      } ]
+    }, {
+      "method" : "partial_update",
+      "parameters" : [ {
+        "name" : "auth",
+        "type" : "string",
+        "optional" : true
+      } ]
+    }, {
+      "method" : "delete",
+      "parameters" : [ {
+        "name" : "auth",
+        "type" : "string",
+        "optional" : true
+      } ]
+    } ],
+    "entity" : {
+      "path" : "/greetingsAuth/{greetingsAuthId}"
+    }
+  }
+}

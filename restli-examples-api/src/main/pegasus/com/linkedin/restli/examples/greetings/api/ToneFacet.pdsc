@@ -1,0 +1,9 @@
+{
+  "type": "record",
+  "name": "ToneFacet",
+  "namespace": "com.linkedin.restli.examples.greetings.api",
+  "doc": "metadata for greetings search results",
+  "fields": [ {"name": "tone", "type": "Tone"},
+              {"name": "count", "type": "int"}
+            ]
+}

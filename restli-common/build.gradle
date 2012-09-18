@@ -1,0 +1,11 @@
+dependencies {
+  compile project(':data')
+  compile project(':data-transform')
+  compile project(':li-jersey-uri')
+  compile externalDependency.jacksonCoreAsl
+  testCompile project(path: ':data', configuration: 'testArtifacts')
+  testCompile project(':li-jersey-uri')
+  testCompile externalDependency.testng
+}
+
+apply from: "${build_script_dir}/dataTemplate.gradle"

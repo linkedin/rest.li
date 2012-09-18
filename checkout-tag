@@ -1,0 +1,6 @@
+#!/bin/sh
+
+: ${RELEASE_VERSION:?"Environment variable \"RELEASE_VERSION\" is required."}
+
+git checkout "v$RELEASE_VERSION"
+echo "Tag v${RELEASE_VERSION} is checked out successfully."

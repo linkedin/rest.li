@@ -1,0 +1,169 @@
+/*
+   Copyright (c) 2012 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
+package com.linkedin.restli.server;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.linkedin.common.callback.Callback;
+import com.linkedin.parseq.Engine;
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.restli.internal.server.RestLiMethodInvoker;
+import com.linkedin.restli.internal.server.RestLiResponseHandler;
+import com.linkedin.restli.internal.server.RestLiRouter;
+import com.linkedin.restli.internal.server.RoutingResult;
+import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
+import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor.InterfaceType;
+import com.linkedin.restli.internal.server.model.ResourceModel;
+import com.linkedin.restli.internal.server.model.RestLiApiBuilder;
+import com.linkedin.restli.server.resources.PrototypeResourceFactory;
+import com.linkedin.restli.server.resources.ResourceFactory;
+
+/**
+ * @author dellamag
+ */
+public class RestLiServer extends BaseRestServer
+{
+  private static final Logger log = LoggerFactory.getLogger(RestLiServer.class);
+
+  private final RestLiConfig _config;
+  private final RestLiRouter _router;
+  private final ResourceFactory _resourceFactory;
+  private final RestLiMethodInvoker _methodInvoker;
+  private final RestLiResponseHandler _responseHandler;
+  private final RestLiDocumentationRequestHandler _docRequestHandler;
+  private boolean _isDocInitialized = false;
+
+  public RestLiServer(final RestLiConfig config)
+  {
+    this(config, new PrototypeResourceFactory());
+  }
+
+  public RestLiServer(final RestLiConfig config, final ResourceFactory resourceFactory)
+  {
+    this(config, resourceFactory, null);
+  }
+
+  public RestLiServer(final RestLiConfig config,
+                      final ResourceFactory resourceFactory,
+                      final Engine engine)
+  {
+    super(config);
+
+    _config = config;
+    _resourceFactory = resourceFactory;
+    _rootResources = new RestLiApiBuilder(config).build();
+    _resourceFactory.setRootResources(_rootResources);
+    _router = new RestLiRouter(_rootResources);
+    _methodInvoker = new RestLiMethodInvoker(_resourceFactory, engine);
+    _responseHandler = new RestLiResponseHandler();
+    _docRequestHandler = config.getDocumentationRequestHandler();
+
+    // verify that if there are resources using the engine, then the engine is not null
+    if (engine == null)
+    {
+      for (ResourceModel model : _rootResources.values())
+      {
+        for (ResourceMethodDescriptor desc : model.getResourceMethodDescriptors())
+        {
+          final InterfaceType type = desc.getInterfaceType();
+          if (type == InterfaceType.PROMISE || type == InterfaceType.TASK)
+          {
+            final String fmt =
+                "ParSeq based method %s.%s, but no engine given. "
+                    + "Check your RestLiServer construction, spring wiring, "
+                    + "and container-pegasus-restli-server-cmpt version.";
+            log.warn(String.format(fmt, model.getResourceClass().getName(), desc.getMethod()
+                                                                                .getName()));
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * @see BaseRestServer#doHandleRequest(com.linkedin.r2.message.rest.RestRequest, com.linkedin.common.callback.Callback)
+   */
+  @Override
+  protected void doHandleRequest(final RestRequest request,
+                                 final Callback<RestResponse> callback)
+  {
+    if (_docRequestHandler == null || !_docRequestHandler.isDocumentationRequest(request))
+    {
+      handleResourceRequest(request, callback);
+    }
+    else
+    {
+      handleDocumentationRequest(request, callback);
+    }
+  }
+
+  private void handleResourceRequest(final RestRequest request,
+                                     final Callback<RestResponse> callback)
+  {
+    final RoutingResult method;
+    try
+    {
+      method = _router.process(request);
+    }
+    catch (Exception e)
+    {
+      final RestLiCallback<Object> restLiCallback =
+          new RestLiCallback<Object>(request, null, _responseHandler, callback);
+      restLiCallback.onErrorPre(e);
+      return;
+    }
+
+    final RestLiCallback<Object> restLiCallback =
+        new RestLiCallback<Object>(request, method, _responseHandler, callback);
+
+    try
+    {
+      _methodInvoker.invoke(method, request, restLiCallback);
+    }
+    catch (Exception e)
+    {
+      restLiCallback.onErrorPre(e);
+    }
+  }
+
+  private void handleDocumentationRequest(final RestRequest request,
+                                          final Callback<RestResponse> callback)
+  {
+    try
+    {
+      synchronized (this)
+      {
+        if (!_isDocInitialized)
+        {
+          _docRequestHandler.initialize(_config, _rootResources);
+          _isDocInitialized = true;
+        }
+      }
+
+      final RestResponse response = _docRequestHandler.processDocumentationRequest(request);
+      callback.onSuccess(response);
+    }
+    catch (Exception e)
+    {
+      final RestLiCallback<Object> restLiCallback =
+          new RestLiCallback<Object>(request, null, _responseHandler, callback);
+      restLiCallback.onErrorPre(e);
+    }
+  }
+}

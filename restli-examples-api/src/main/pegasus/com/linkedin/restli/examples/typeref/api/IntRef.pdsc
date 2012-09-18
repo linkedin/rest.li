@@ -1,0 +1,6 @@
+{
+  "type" : "typeref",
+  "name" : "IntRef",
+  "namespace" : "com.linkedin.restli.examples.typeref.api",
+  "ref" : "int"
+}

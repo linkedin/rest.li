@@ -1,0 +1,12 @@
+{
+  "membershipLevel": "REQUESTING_TO_JOIN",
+	"contactEmail": "bruce@test.linkedin.com",
+	"isPublicized": true,
+  "allowMessagesFromMembers": true,
+	"emailDigestFrequency": "DAILY",
+	"emailAnnouncementsFromManagers": true,
+	"emailForEveryNewPost": true,
+	"writeLevel": "FULL",
+	"firstName": "Bruce",
+	"lastName": "Willis"
+}

@@ -1,0 +1,9 @@
+{
+  "type" : "record",
+  "name" : "IncludeA",
+  "namespace" : "com.linkedin.pegasus.generator.test",
+  "fields" : [
+    { "name" : "a1", "type" : "int" },
+    { "name" : "a2", "type" : "string" }
+  ]
+}

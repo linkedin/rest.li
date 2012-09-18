@@ -1,0 +1,16 @@
+{
+  "type": "record",
+  "name": "GroupContact",
+  "namespace": "com.linkedin.restli.examples.groups.api",
+  "doc": "A contact associated with this group. Managers upload contact to manage pre-approval/blacklists + invite members",
+  "fields":  [  {"name": "contactID", "type": "int", "doc": "Surrogate ID for this contact. This field is read-only."},
+                {"name": "groupID", "type": "int", "doc": "The group that owns this contact"},
+                {"name": "memberID", "type": "int", "optional": true, "doc": "The member associated with this contact record (null if this is a contact is not a LinkedIn member)"},
+                {"name": "firstName", "type": "string", "doc": "Contact's first name"},
+                {"name": "lastName", "type": "string", "doc": "Contact's last name"},
+                {"name": "isPreapproved", "type": "boolean", "doc": "True if this contact is pre-approved to join the group"},
+                {"name": "isInvited", "type": "boolean", "doc": "True if this contact has been invited"},
+                {"name": "createdAt", "type": "long", "doc":""},
+                {"name": "updatedAt", "type": "long", "doc":""}
+  ]
+}

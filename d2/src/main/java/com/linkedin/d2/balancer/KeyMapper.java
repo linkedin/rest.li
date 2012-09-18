@@ -1,0 +1,154 @@
+/*
+   Copyright (c) 2012 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
+/**
+ * $Id: $
+ */
+
+package com.linkedin.d2.balancer;
+
+import com.linkedin.d2.balancer.util.AllPartitionsResult;
+import com.linkedin.d2.balancer.util.MapKeyResult;
+import com.linkedin.r2.message.RequestContext;
+
+import java.net.URI;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+
+/**
+ * KeyMapper is used with D2's consistent hashing mechanism to maintain key to host affinity across
+ * a set of functionally similar hosts.  A typical use case for this affinity is to allow the service
+ * provider to maintain cache affinity, for better resource utilization.  Note that there are no
+ * strict partitioning guarantees, since failure or overload conditions can cause the same key to
+ * be mapped to another host on subsequent requests.  Similarly, different clients may have
+ * temporally inconsistent views of the key mappings.
+ *
+ * KeyMapper allows clients to determine which host would be chosen to serve a request for a
+ * specific key without requiring a request for the key to be fully constructed.  This allows clients
+ * to map a set of keys across the hosts in the D2 cluster.  The client can use this information to
+ * construct a single batch request to each host, containing the group of keys which map to
+ * the respective host.
+ *
+ * Clients should not depend on a KeyMapper if strict partitioning is required.
+ * @author Josh Walker
+ * @version $Revision: $
+ */
+
+public interface KeyMapper
+{
+  /**
+   * Maps keys to hosts according to the underlying strategy, e.g., consistent hashing.
+   * Output is a map of host URI to group of keys.  Each key in the input set will
+   * appear in exactly one of output groups, i.e., the groups are mutually exclusive
+   * and collectively exhaustive (MECE).
+   *
+   * Duplicate keys are allowed.
+   *
+   * @param keys The set of keys to be mapped
+   * @param serviceUri The URI for the service to which requests will be issued
+   * @param <K> The key type
+   * @return map of host URI -> mapped keys
+   * @deprecated use @link #mapKeysV2(URI, Collection) instead
+   */
+  @Deprecated
+  public <K> Map<URI, Collection<K>> mapKeys(URI serviceUri, Iterable<K> keys)
+          throws ServiceUnavailableException;
+
+  /**
+   * Maps keys to hosts according to the underlying strategy, e.g., consistent hashing.
+   * Output is a map of host URI to group of keys.  Each key in the input set will
+   * appear in exactly one of output groups, i.e., the groups are mutually exclusive
+   * and collectively exhaustive (MECE).
+   *
+   * Duplicate keys are not allowed.
+   *
+   * @param keys The set of keys to be mapped
+   * @param serviceUri The URI for the service to which requests will be issued
+   * @param <K> The key type
+   * @return map of host URI -> mapped keys
+   * @deprecated use @link #mapKeysV2(URI, Collection) instead
+   */
+  @Deprecated
+  public <K> Map<URI, Set<K>> mapKeys(URI serviceUri, Set<K> keys)
+          throws ServiceUnavailableException;
+
+  /**
+   * Maps keys to hosts according to the underlying strategy, e.g., consistent hashing.
+   * Output is a map of host URI to group of keys.  Each key in the input set will
+   * appear in exactly one of output groups, i.e., the groups are mutually exclusive
+   * and collectively exhaustive (MECE). If a key is not mapped, either because we can
+   * not find a partition for the key (illegal key, wrong config, etc), or we can not
+   * find a server for the partition of the key (no servers registered for the partition,
+   * or all servers are bad, or the call dropping happened), we put the key in the
+   * unmapped keys in the return value, and also provide a error type for the unmappped
+   * key.
+   *
+   * The ServiceUnavailableException will be thrown if 1) no such service configured
+   * 2) no load balancer strategy for the service
+   *
+   * No ServiceUnavailableException will be thrown for the errors caused by the
+   * unmapped keys. Instead, users should check the errors of unmapped keys
+   * and handle them properly @see MapKeyResult
+   *
+   * Duplicate keys are not allowed.
+   * V2 is here to differentiate it from the older API
+   *
+   * @param keys The set of keys to be mapped
+   * @param serviceUri The URI for the service to which requests will be issued
+   * @param <K> The key type
+   * @return @link MapKeyResult contains mapped keys and also unmapped keys
+   */
+  public <K> MapKeyResult<URI, K> mapKeysV2(URI serviceUri, Iterable<K> keys)
+      throws ServiceUnavailableException;
+
+  /**
+   * Get host uris that cover all the partitions. The number of uris does not neccessarily equal
+   * to the number of partitions, because a server may join multiple partitions. Additional information
+   * about partition availability is supplied in {@link AllPartitionsResult}
+   * @param serviceUri the service uri
+   * @return {@link AllPartitionsResult}
+   */
+  public AllPartitionsResult<URI> getAllPartitions(URI serviceUri) throws ServiceUnavailableException;
+
+  public static class TargetHostHints
+  {
+    private static final String TARGET_HOST_KEY_NAME = "D2-KeyMapper-TargetHost";
+
+    /**
+     * Inserts a hint in RequestContext instructing D2 to bypass normal hashing behavior
+     * and instead route to the specified target host.  Clients should obtain the URI
+     * for target host from D2, e.g., by calling {@link KeyMapper}.mapKeys().
+     * @param context RequestContext for the request which will be made
+     * @param targetHost target host's URI to be used as a hint in the RequestContext
+     */
+    public static void setRequestContextTargetHost(RequestContext context, URI targetHost)
+    {
+      context.putLocalAttr(TARGET_HOST_KEY_NAME, targetHost);
+    }
+
+    /**
+     * Looks for a target host hint in the RequestContext, returning it if found, or null if no
+     * hint is present.
+     * @param context RequestContext for the request
+     * @return URI for target host hint, or null if no hint is present in the RequestContext
+     */
+    public static URI getRequestContextTargetHost(RequestContext context)
+    {
+      return (URI)context.getLocalAttr(TARGET_HOST_KEY_NAME);
+    }
+  }
+}

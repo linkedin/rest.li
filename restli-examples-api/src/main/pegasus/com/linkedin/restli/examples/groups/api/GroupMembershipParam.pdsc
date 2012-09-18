@@ -1,0 +1,18 @@
+{
+  "type": "record",
+  "name": "GroupMembershipParam",
+  "namespace": "com.linkedin.restli.examples.groups.api",
+  "doc": "A GroupMembership entity parameters",
+  "fields":  [
+    {
+      "name": "intParameter",
+      "type": "int",
+      "doc": ""
+    },
+    {
+      "name": "stringParameter",
+      "type": "string",
+      "doc": ""
+    }
+  ]
+}

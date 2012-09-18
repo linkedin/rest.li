@@ -1,0 +1,6 @@
+{
+  "type": "typeref",
+  "name": "TestRecordArrayRef",
+  "namespace": "com.linkedin.restli.server",
+  "ref" : { "type" : "array", "items" : "TestRecord" }
+}

@@ -1,0 +1,57 @@
+dependencies {
+  compile project(':degrader')
+  compile project(':r2')
+  compile project(':data')
+  compile project(':pegasus-common')
+  compile project(':li-jersey-uri')
+  compile fileTree(dir: 'lib', include: '*.jar')
+  compile externalDependency.commonsCodec
+  compile externalDependency.commonsHttpClient
+  compile externalDependency.json
+  compile externalDependency.zookeeper
+  compile externalDependency.jacksonCoreAsl
+  compile externalDependency.jacksonMapperAsl
+  compile externalDependency.jdkTools
+  testCompile externalDependency.testng
+  testCompile externalDependency.commonsIo
+  testCompile externalDependency.easymock
+  testCompile externalDependency.easymockClassExtension
+  testCompile project(':r2-jetty')
+}
+
+task packup(dependsOn: configurations.default.allArtifacts, type: Copy) {
+    into "$buildDir/package"
+    from configurations.default
+    from { configurations.default.allArtifacts.files }
+    from 'src/main/sh'
+    from 'src/main/resources'
+    description = "Packages all main jars, scripts, etc into a \"packages\" folder under the build directory."
+    doLast {
+        exec {
+            executable = 'chmod'
+            args = [ '+x', fileTree(dir: "$buildDir/package", include: '*.sh') as Object[] ].flatten()
+        }
+    }
+}
+
+task packupTest(dependsOn: [testJar, packup], type: Copy) {
+    into "$buildDir/package"
+    from configurations.testArtifacts
+    from { configurations.testArtifacts.allArtifacts.files }
+    from "src/test/sh"
+
+    description = "Packages all test jars, scripts, etc into a \"packages\" folder under the build directory."
+
+    doLast {
+        exec {
+            executable = 'chmod'
+            args = [ '+x', fileTree(dir: "$buildDir/package", include: '*.sh') as Object[] ].flatten()
+        }
+    }
+}
+
+task scripts(dependsOn: packup, type: Zip) {
+    from "$buildDir/package"
+    baseName = 'lb-tool'
+    description = "Zip a package up with all scripts, log4js, and jars."
+}

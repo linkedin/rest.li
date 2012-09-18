@@ -1,0 +1,35 @@
+dependencies {
+  compile project (':data')
+  compile project (':r2')
+  compile project (':r2-jetty')
+  compile project (':r2-sample') 
+  compile project (':pegasus-common')
+  compile project (':test-util')
+}
+
+task runR2PerfTest  (type: JavaExec) {
+  // Command line example:
+  /* gradle runPerfTest -Dperf.host=localhost -Dperf.port=8083 -Dperf.uri=/echo -Dperf.datafile="/home/usr/r2-perf-test/src/main/resources/data/group.json" -Dperf.reportfile="R2PerfTest.log" -Dperf.threads=10 -Dperf.runs=10 -Dperf.rampup=10 -S
+  */
+  // This task is used for debugging JMeter JavaSample classes
+  def logdir = rootDir.toString() + '/build/r2-perf-test/logs'
+  mkdir (logdir)
+  def properties = System.properties.findAll { k,_ -> k.startsWith('perf.') }
+  main = 'test.r2.perf.R2Perf'
+  description = "Runs simple rest client performance tests"
+  classpath = sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
+  systemProperties += properties
+}
+
+task runHttpPerfServer (type: JavaExec) {
+  def props = System.properties.findAll { k,_ -> k.startsWith('perf.') }
+  classpath = sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
+ 
+  def gclogdir = rootDir.toString() + '/build/r2-perf-test/logs/gc'
+  mkdir (gclogdir)
+  jvmArgs '-verbose:gc', '-Xloggc:'+gclogdir+'/gc.log', '-XX:+PrintGCDetails', '-XX:+PrintGCDateStamps'
+  main = 'test.r2.perf.RunHttpServer'
+  description = "Runs the http server"
+  classpath = sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
+  systemProperties += props
+}

@@ -1,0 +1,31 @@
+<html>
+<head>
+  <title>Resources</title>
+  <style type="text/css">
+    #include("vmTemplates/_doc.css")
+  </style>
+</head>
+<body>
+  <div id="container">
+
+  #parse("vmTemplates/_nav.vm")
+
+  <div id="body">
+    <h2>Resources</h2>
+
+    <ul>
+      #foreach($resourceEntry in $resourceSchemas.entrySet())
+        <li>
+          <a href="$docBaseUri/rest/$resourceEntry.key">
+          #if ($resourceEntry.value.namespace) ${resourceEntry.value.namespace}.#end$resourceEntry.key
+          </a>
+        </li>
+      #end
+    </ul>
+  </div>
+
+  #include("vmTemplates/_footer.html")
+
+  </div>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "type": "record",
+  "name": "Greeting",
+  "namespace": "com.linkedin.greetings.api",
+  "doc": "A greeting",
+  "fields": [ {"name": "id", "type": "long"},
+              {"name": "message", "type": "string"},
+              {"name": "tone", "type": "Tone", "doc":"tone"}
+            ]
+}

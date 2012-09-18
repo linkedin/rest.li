@@ -1,0 +1,3 @@
+POST http://localhost:1234 HTTP/1.1
+
+This is a simple entity!

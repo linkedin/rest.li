@@ -1,0 +1,4 @@
+GET http://localhost:1234 HTTP/1.1
+FIELD-NAME1:field-val1
+FIELD-NAME2: field-val2
+

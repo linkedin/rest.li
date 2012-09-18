@@ -1,0 +1,457 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+  {% from 'docutil.html' import code, avro_field, avro_link %}
+
+  {%- macro parameters(params) -%}
+  {% if params %}?<br>{% for param in params %}{% if not loop.first %}<br>&amp;{% endif %}{{ param.name }}=...{% endfor %}{% else %}/{% endif %}
+  {%- endmacro -%}
+
+  {%- macro parameter_table(params) -%}
+  <table>
+    <thead>
+    <tr>
+      <th class="fixedcol">Parameter</th>
+      <th class="fixedcol">Type</th>
+      <th class="fixedcol">Default</th>
+      <th>Description</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for param in params %}
+    <tr>
+      <td>{{ param.name }}</td>
+      <td>{{ avro_field(param.type) }}</td>
+      <td>{{ code(param.default) }}</td>
+      <td>{% if not param.has_key('default') %}<b>REQUIRED </b>{% endif %}{{ param.doc|join|safe }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {%- endmacro -%}
+
+  <link href="{{ url_for('static', filename='docgen.css') }}" rel="stylesheet" type="text/css" >
+  <title>{{ rootSpec.name }} API Documentation</title>
+</head>
+<body>
+<a href="{{ url_for('index') }}">Home</a>
+<h1>
+  The {{ rootSpec.name }} API
+</h1>
+<p><a href="{{ url_for('read_json', spec_id=spec_id) }}">View json source</a></p>
+
+<p><span class="todo">TODO: Should support custom docs for standard operations</span></p>
+
+{% macro document(spec, basePath) %}
+{% set path = basePath + '/' + spec.name %}
+{% set entity = spec.entity if spec.entity else spec.collection %}
+<h2>{{ code(spec.name) }}</h2>
+
+<p>{{ spec.doc|join|safe }}</p>
+{% if spec.identifier %}
+<table class="identifier-table">
+  <tr>
+    <th>Identifier Name</th>
+    <td>{{ code(spec.identifier.name) }}</td>
+  </tr>
+  <tr>
+    <th>Type</th>
+    <td>{{ avro_field(spec.identifier.type) }}</td>
+  </tr>
+  <tr>
+    <th>Notes</th>
+    <td>{{ spec.identifier.doc|join|safe }}</td>
+  </tr>
+</table>
+<br>
+{% endif %}
+
+{% if spec.supports %}
+<table id="standard-methods">
+  <thead>
+  <tr>
+    <th class="fixedcol">HTTP method</th>
+    <th class="bigcol">Path</th>
+    <th class="bigcol">Body</th>
+    <th class="bigcol">Response</th>
+    <th>Notes</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr>
+  {% for method_name in spec.supports %}
+  {% if spec.supports[method_name] and spec.supports[method_name] != spec.supports|attr(method_name) %}
+    {% set method = spec.supports[method_name] %}
+  {% else %}
+    {% set method = {} %}
+  {% endif %}
+  {% if not spec.entity %}
+    {% if method_name == 'get_all' %}
+    <td>GET</td>
+    <td class="code">{{ path }}/</td>
+    <td>&nbsp;</td>
+    <td>
+      {% if 'response_doc' in method %}
+        {{ method.response_doc|join|safe }}
+      {% else %}
+        A collection of {{ avro_link(entity) }}
+      {% endif %}
+    </td>
+    <td>
+      {% if 'doc' in method %}
+        {{ method.doc|join|safe }}
+      {% else %}
+        Gets all the {{ avro_link(entity) }}s in the {{ code(spec.name) }} collection.
+      {% endif %}
+    </td>
+    {% elif method_name == 'count' %}
+    <td>GET</td>
+    <td class="code">{{ path }}/count/</td>
+    <td>&nbsp;</td>
+    <td>
+      {% if 'response_doc' in method %}
+        {{ method.response_doc|join|safe }}
+      {% else %}
+        {{ code('int') }}
+      {% endif %}
+    </td>
+    <td>
+      {% if 'doc' in method %}
+        {{ method.doc|join|safe }}
+      {% else %}
+        The count of {{ code(spec.name) }}.
+      {% endif %}
+    </td>
+    {% elif method_name == 'get' %}
+    <td>GET</td>
+    <td class="code">{{ path }}/[{{ spec.identifier.name }}]/</td>
+    <td>&nbsp;</td>
+    <td>
+      {% if 'response_doc' in method %}
+        {{ method.response_doc|join|safe }}
+      {% else %}
+        {{ avro_link(entity) }} identified by {{ code(spec.identifier.name) }}
+      {% endif %}
+    </td>
+    <td>
+      {{ method.doc|join|safe }}
+    </td>
+    {% elif method_name == 'create' %}
+    <td>POST</td>
+    <td class="code">{{ path }}/</td>
+    <td>
+      {% if 'body_doc' in method %}
+        {{ method.body_doc|join|safe }}
+      {% elif entity %}
+        {{ avro_link(entity) }} to create
+      {% endif %}
+    </td>
+    <td>
+      {% if 'response_doc' in method %}
+        {{ method.response_doc|join|safe }}
+      {% elif entity %}
+        URI to pointing to new {{ avro_link(entity) }}
+      {% endif %}
+    </td>
+    <td>
+      {% if 'doc' in method %}
+        {{ method.doc|join|safe }}
+      {% else %}
+        Creates a new {{ avro_link(entity) }}.
+      {% endif %}
+    </td>
+    {% elif method_name == 'update' %}
+    <td>PUT</td>
+    <td class="code">{{ path }}/[{{ spec.identifier.name }}]/</td>
+    <td>
+      {% if 'body_doc' in method %}
+        {{ method.body_doc|join|safe }}
+      {% elif entity %}
+        A sparse {{ avro_link(entity) }} (only set fields will be updated)
+      {% endif %}
+    </td>
+    <td>
+      {{ method.response_doc|join|safe }}
+    </td>
+    <td>
+      {% if 'doc' in method %}
+        {{ method.doc|join|safe }}
+      {% else %}
+        Applies a partial update to the {{ avro_link(entity) }}.
+        <span class="todo">TODO: This kind of breaks the semantics of standard PUT, which should replace the object</span>
+      {% endif %}
+    </td>
+    {% elif method_name == 'delete' %}
+    <td>DELETE</td>
+    <td class="code">{{ path }}/[{{ spec.identifier.name }}]/</td>
+    <td>&nbsp;</td>
+    <td>
+      {{ method.response_doc|join|safe }}
+    </td>
+    <td>
+      {% if 'doc' in method %}
+        {{ method.doc|join|safe }}
+      {% else %}
+        Deletes the {{ avro_link(entity) }} identified by {{ code(spec.identifier.name) }}.
+      {% endif %}
+    </td>
+    {% elif method_name == 'batch_get' %}
+    <td>GET</td>
+    <td class="code">{{ path }}?{{ spec.identifier.name }}=[{{ spec.identifier.name }}1]&amp;{{ spec.identifier.name }}=[{{ spec.identifier.name }}2]&amp;...</td>
+    <td>&nbsp;</td>
+    <td>
+      {% if 'response_doc' in method %}
+        {{ method.response_doc|join|safe }}
+      {% else %}
+        An array of {{ avro_link(entity) }} matching the given {{ code(spec.identifier.name + 's') }}
+      {% endif %}
+    </td>
+    <td>
+      {{ method.doc|join|safe }}
+    </td>
+    {% elif method_name == 'batch_create' %}
+    <td>POST</td>
+    <td class="code">{{ path }}?multi=</td>
+    <td>
+      {% if 'body_doc' in method %}
+        {{ method.body_doc|join|safe }}
+      {% elif entity %}
+        An array of {{ avro_link(entity) }} to create
+      {% endif %}
+    </td>
+    <td>
+      {% if 'response_doc' in method %}
+        {{ method.response_doc|join|safe }}
+      {% elif entity %}
+        An array of URIs pointing to the new {{ avro_link(entity) }}
+      {% endif %}
+    </td>
+    <td>
+      {% if 'doc' in method %}
+        {{ method.doc|join|safe }}
+      {% else %}
+        Batch creation of {{ avro_link(entity) }}.
+      {% endif %}
+    </td>
+    {% elif method_name == 'batch_update' %}
+    <td>PUT</td>
+    <td class="code">{{ path }}?multi=</td>
+    <td>
+      {% if 'body_doc' in method %}
+        {{ method.body_doc|join|safe }}
+      {% elif entity %}
+        An array of sparse {{ avro_link(entity) }} (only set fields will be updated). The
+        {{ code(spec.identifier.name + 's') }} MUST be set on each {{ avro_link(entity) }} passed in.
+      {% endif %}
+    </td>
+    <td>
+      {% if 'response_doc' in method %}
+        {{ method.response_doc|join|safe }}
+      {% endif %}
+    </td>
+    <td>
+      {% if 'doc' in method %}
+        {{ method.doc|join|safe }}
+      {% else %}
+        Batch partial updates to {{ avro_link(entity) }} identified by {{ code(spec.identifier.name + 's') }} in
+        the request body.
+        <span class="todo">TODO: This kind of breaks the semantics of standard PUT, which should replace the collection</span>
+      {% endif %}
+    </td>
+    {% elif method_name == 'batch_delete' %}
+    <td>DELETE</td>
+    <td class="code">{{ path }}?{{ spec.identifier.name }}=[{{ spec.identifier.name }}1]&amp;{{ spec.identifier.name }}=[{{ spec.identifier.name }}2]&amp;...</td>
+    <td>&nbsp;</td>
+    <td>
+      {% if 'response_doc' in method %}
+        {{ method.response_doc|join|safe }}
+      {% endif %}
+    </td>
+    <td>
+      {% if 'doc' in method %}
+        {{ method.doc|join|safe }}
+      {% else %}
+        Batch delete of the {{ avro_link(entity) }} identified by the given {{ code(spec.identifier.name + 's') }}
+      {% endif %}
+    </td>
+    {% endif %}
+  </tr>
+  {% else %}
+  <tr>
+    {% if method_name == 'get' %}
+    <td>GET</td>
+    <td class="code">{{ path }}/</td>
+    <td>&nbsp;</td>
+    <td>
+      {% if 'response_doc' in method %}
+        {{ method.response|join|safe }}
+      {% else %}
+        {{ avro_link(entity) }}
+      {% endif %}
+    </td>
+    <td>
+      {% if 'doc' in method %}
+        {{ method.doc|join|safe }}
+      {% else %}
+        Gets the {{ code(spec.name) }} {{ avro_link(entity) }}
+      {% endif %}
+    </td>
+    {% elif method_name == 'create' %}
+    <td>POST</td>
+    <td class="code">{{ path }}/</td>
+    <td>
+      {% if 'body_doc' in method %}
+        {{ method.body_doc|join|safe }}
+      {% else %}
+        {{ avro_link(entity) }} to create
+      {% endif %}
+    </td>
+    <td>
+      {% if 'response_doc' in method %}
+        {{ method.response|join|safe }}
+      {% else %}
+        URI to pointing to the new {{ avro_link(entity) }}
+      {% endif %}
+    <td>
+    {% if 'doc' in method %}
+      {{ method.doc|join|safe }}
+    {% else %}
+      Creates a new {{ code(spec.name) }} {{ avro_link(entity) }}.
+      <span class="todo">
+        TODO: Is it an error if you try to create one when one already exists? Does
+        this even get added to the parent collection?
+      </span>
+    {% endif %}
+    </td>
+    {% elif method_name == 'update' %}
+    <td>PUT</td>
+    <td class="code">{{ path }}/</td>
+    <td>
+      {% if 'body_doc' in method %}
+        {{ method.body_doc|join|safe }}
+      {% else %}
+        A sparse {{ avro_link(entity) }} (only set fields will be updated)
+      {% endif %}
+    </td>
+    <td>
+      {{ method.response|join|safe }}
+    <td>
+      {% if 'doc' in method %}
+        {{ method.doc|join|safe }}
+      {% else %}
+        Applies a partial update to the {{ code(spec.name) }} {{ avro_link(entity) }}.
+        <span class="todo">TODO: This kind of breaks the semantics of standard PUT, which should replace the object</span>
+      {% endif %}
+    </td>
+    {% elif method_name == 'delete' %}
+    <td>DELETE</td>
+    <td class="code">{{ path }}/</td>
+    <td>&nbsp;</td>
+    <td>
+      {{ method.response|join|safe }}
+    <td>
+      {% if 'doc' in method %}
+        {{ method.doc|join|safe }}
+      {% else %}
+        Deletes the {{ code(spec.name) }} {{ avro_link(entity) }}.
+      {% endif %}
+    </td>
+    {% endif %}
+  {% endif %}
+  {% endfor %}
+  </tr>
+  </tbody>
+</table>
+{% endif %} {# spec.supports #}
+
+{% if spec.find %}
+{% for method in spec.find %}
+{% if method.doc %}
+<h2>{{ method.doc|join|safe }}</h2>
+{% endif %}
+<table id="{{entity}}_find-methods">
+  <thead>
+  <tr>
+    <th class="fixedcol">HTTP method</th>
+    <th class="bigcol">Path</th>
+    <th class="fixedcol">Response</th>
+    <th class="fixedcol">Parameter</th>
+    <th class="fixedcol">Type</th>
+    <th class="fixedcol">Default</th>
+    <th>Description</th>
+  </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="{{ method.parameters|length }}">GET</td>
+      <td rowspan="{{ method.parameters|length }}" class="code">{{ path }}{{ parameters(method.parameters) }}{% if method.name %}<br>&s={{ method.name }}{% endif %}</td>
+      <td rowspan="{{ method.parameters|length }}">A collection of {{ avro_link(entity) }}</td>
+      {% for param in method.parameters %}
+        {% if not loop.first %}<tr>{% endif %}
+        <td>{{ param.name }}</td>
+        <td>{{ avro_field(param.type) }}</td>
+        <td>{{ code(param.default) }}</td>
+        <td>{% if not param.has_key('default') %}<b>REQUIRED </b>{% endif %}{{ param.doc|join|safe }}</td>
+      </tr>
+      {% else %}
+        {% if not loop.first %}<tr>{% endif %}
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+      {% endfor %}
+  </tbody>
+</table>
+{% endfor %}
+{% endif %}
+
+{% if spec.namespaced %}
+{% for resource in spec.namespaced %}
+  {{ document(resource, path) }}
+{% endfor %}
+{% endif %}
+
+{% if spec.scoped %}
+{% for resource in spec.scoped %}
+  {{ document(resource, path + '/[' + spec.identifier.name + ']') }}
+{% endfor %}
+{% endif %}
+
+{% if spec.custom %}
+<h2>Custom methods</h2>
+
+<h3>These are non-standard methods that make state changes on the server.</h3>
+
+<table id="custom-methods">
+  <thead>
+  <tr>
+    <th class="fixedcol">HTTP method</th>
+    <th class="bigcol">Path</th>
+    <th class="bigcol">Body</th>
+    <th class="fixedcol">Response</th>
+    <th>Description</th>
+  </tr>
+  </thead>
+  <tbody>
+  {% for method in spec.custom %}
+  <tr>
+    <td>POST</td>
+    <td class="code">{{ path }}/{{ method.name }}/</td>
+    <td>
+      {% if method.body %}
+        {{ parameter_table(method.body) }}
+      {% endif %}
+    </td>
+    <td>An object of type: {{ code(method.response) }}</td>
+    <td>{{ method.doc|join|safe }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endmacro %}
+
+{{ document(rootSpec, '') }}
+</body>
+</html>

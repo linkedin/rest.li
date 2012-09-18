@@ -1,0 +1,5 @@
+dependencies {
+  compile project (':data')
+  testCompile externalDependency.testng
+  testCompile project(path: ':data', configuration: 'testArtifacts')
+}

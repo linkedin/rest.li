@@ -1,0 +1,7 @@
+{
+  "name": "ActionsSetSchema",
+  "namespace": "com.linkedin.restli.restspec",
+  "type": "record",
+  "fields": [ {"name": "actions", "type": {"type": "array", "items": "ActionSchema"}, "doc": "list of actions supported by this action set"}
+            ]
+}

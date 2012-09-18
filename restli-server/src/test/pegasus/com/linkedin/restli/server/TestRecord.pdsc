@@ -1,0 +1,10 @@
+{
+  "type": "record",
+  "name": "TestRecord",
+  "namespace": "com.linkedin.restli.server",
+  "fields": [ {"name": "intField", "type": "int"},
+              {"name": "longField", "type": "long"},
+              {"name": "floatField", "type": "float"},
+              {"name": "doubleField", "type": "double"}
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "doc"  : "Test generation of Java bindings for enums",
+  "type" : "record",
+  "name" : "EnumTest",
+  "namespace" : "com.linkedin.pegasus.generator.test",
+  "fields" : [
+
+    { "name" : "enumEmpty", "type" :
+      { "type" : "enum", "name" : "EnumEmpty", "symbols" : [ ] }
+    }
+
+    /* not allowed, enum's cannot have Java reserved symbols
+    ,
+    { "name" : "enumWithNull", "type" :
+      { "type" : "enum", "name" : "EnumWithNull", "symbols" : [ "null", "A", "B", "C" ] }
+    },
+
+    { "name" : "enumWithoutNull", "type" :
+      { "type" : "enum", "name" : "EnumWithoutNull", "symbols" : [ "A", "B", "C" ] }
+    }
+    */
+
+  ]
+}

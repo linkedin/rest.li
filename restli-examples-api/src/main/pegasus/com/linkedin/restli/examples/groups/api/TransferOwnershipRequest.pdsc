@@ -1,0 +1,9 @@
+{
+  "type": "record",
+  "name": "TransferOwnershipRequest",
+  "namespace": "com.linkedin.restli.examples.groups.api",
+  "doc": "Request for transferOwnership RPC method",
+  "fields":  [ {"name": "newOwnerMemberID", "type": "int", "doc": "The new owner"},
+               {"name": "newOwnerContactEmail", "type": "string", "doc": "The new owner's email"}
+  ]
+}

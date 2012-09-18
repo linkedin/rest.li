@@ -1,0 +1,22 @@
+{
+  "name" : "greetings",
+  "path" : "/greetings",
+  "schema" : "com.linkedin.greetings.api.Greeting",
+  "doc" : "A richer \"Hello world\" example, demonstrating a full array of methods, finders and actions",
+  "actionsSet" : {
+    "actions" : [ {
+      "name" : "handshake",
+      "parameters" : [ {
+        "name" : "me",
+        "type" : "string"
+      }, {
+        "name" : "others",
+        "type" : "{ \"type\" : \"array\", \"items\" : \"string\"}"
+      }, {
+        "name" : "param",
+        "type" : "string",
+        "optional" : true
+      } ]
+    } ]
+  }
+}

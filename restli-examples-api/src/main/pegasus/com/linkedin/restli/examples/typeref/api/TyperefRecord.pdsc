@@ -1,0 +1,77 @@
+{
+  "type" : "record",
+  "name" : "TyperefRecord",
+  "namespace" : "com.linkedin.restli.examples.typeref.api",
+  "fields" : [
+    {
+      "name" : "int",
+      "type" : "IntRef",
+      "optional" : true
+    },
+    {
+      "name" : "long",
+      "type" : "LongRef",
+      "optional" : true
+    },
+    {
+      "name" : "float",
+      "type" : "FloatRef",
+      "optional" : true
+    },
+    {
+      "name" : "double",
+      "type" : "DoubleRef",
+      "optional" : true
+    },
+    {
+      "name" : "boolean",
+      "type" : "BooleanRef",
+      "optional" : true
+    },
+    {
+      "name" : "string",
+      "type" : "StringRef",
+      "optional" : true
+    },
+    {
+      "name" : "bytes",
+      "type" : "BytesRef",
+      "optional" : true
+    },
+    {
+      "name" : "intArray",
+      "type" : "IntArrayRef",
+      "optional" : true
+    },
+    {
+      "name" : "intMap",
+      "type" : "IntMapRef",
+      "optional" : true
+    },
+    {
+      "name" : "fixed16",
+      "type" : "Fixed16Ref",
+      "optional" : true
+    },
+    {
+      "name" : "fruits",
+      "type" : "FruitsRef",
+      "optional" : true
+    },
+    {
+      "name" : "union",
+      "type" : "Union",
+      "optional" : true
+    },
+    {
+      "name" : "union2",
+      "type" : "UnionRef",
+      "optional" : true
+    },
+    {
+      "name" : "point",
+      "type" : "PointRef",
+      "optional" : true
+    }
+  ]
+}

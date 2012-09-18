@@ -1,0 +1,6 @@
+{
+  "name": "Contactability",
+  "namespace": "com.linkedin.restli.examples.groups.api",
+  "type": "enum",
+  "symbols": [ "CONTACTABLE", "NON_CONTACTABLE" ]
+}

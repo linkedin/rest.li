@@ -1,0 +1,37 @@
+#!/bin/sh
+
+VERSION=`sed -n 's|version = ||p' gradle.properties`
+
+echo Attempting to publish: $VERSION
+echo
+
+DIRTY="`git status --porcelain || echo FAIL`"
+if test -n "$DIRTY"
+then
+    echo "Dirty index or working tree. Use git status to check." 2>&1
+    echo "After resolution, run this command again." 2>&1
+    exit 1
+fi
+
+INCONSISTENT="`git diff origin/master || echo FAIL`"
+if test -n "$INCONSISTENT"
+then
+    echo "origin/master and current branch are inconsistent." 2>&1
+    echo "Use git diff origin/master to see changes." 2>&1
+    echo "Rebase or push, as appropriate, and run this command again." 2>&1
+    exit 1
+fi
+
+CHANGELOG=`grep $VERSION CHANGELOG`
+if test $? -ne 0
+then
+    echo "No entry in the CHANGELOG for version $VERSION." 2>&1
+    echo "To get a list of changes, use git log previous_tag.." 2>&1
+    echo "Add an entry to the CHANGELOG and run this command again." 2>&1
+    exit 1
+fi
+
+gradle clean build && \
+git tag v$VERSION && \
+git push origin v$VERSION && \
+echo "Publish completed successfully."

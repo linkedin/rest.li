@@ -1,0 +1,6 @@
+dependencies {
+  compile project(':r2')
+  compile project(':pegasus-common')
+  compile project(':data')
+  compile project(':r2-jetty')
+}

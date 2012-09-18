@@ -1,0 +1,28 @@
+{
+    "name": "RestMethodSchema",
+    "namespace": "com.linkedin.restli.restspec",
+    "type": "record",
+    "fields": [
+        {
+            "name": "method",
+            "type": "string",
+            "doc": "method type for this rest method"
+        },
+        {
+            "name": "doc",
+            "type": "string",
+            "optional" : true,
+            "doc": "Documentation for this finder"
+        },
+        {
+            "name": "parameters",
+            "type":
+            {
+                "type": "array",
+                "items": "ParameterSchema"
+            },
+            "optional" : true,
+            "doc": "list of query parameters for this method"
+        }
+    ]
+}

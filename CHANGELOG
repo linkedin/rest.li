@@ -1,0 +1,1731 @@
+1.5.6
+-----
+(RB=95037)
+Generated rest client builders now contain Javadoc extracted from .restspec.json files.
+Such document originally comes from the Javadoc of corresponding resource classes.
+
+1.5.5
+-----
+(RB=94738)
+Add consistency check between SSLContext and SSLParameters arguments
+of HttpNettyClient constructor.
+
+(RB=95371)
+Deprecate RestLiConfig.setClassLoader().  RestLi now loads resource
+classes using the current thread's contextClassLoader.
+
+1.5.4
+-----
+(RB=93597)
+Enhance JSR330Adapter to support injection via constructor arguments,
+allowing a safer coding practice of declaring final member variables
+in rest.li resources.
+
+(RB=92918)
+RestLiResourceModelExporter now returns a GeneratorResult of files modified/created so it is more consistent with the
+other generator classes.
+
+1.5.3
+-----
+(RB=93836)
+Detect class name conflicts that occur when a generated class name
+is the same as the class name for a NamedDataSchema.
+Also clean up DataTemplateGenerator code.
+Array items and map values of generated classes is always the
+the first schema with custom Java binding or the fully
+dereferenced schema if there is no custom Java binding.
+
+1.5.2
+-----
+(RB=92697)
+Add SSL support to R2 http client.
+
+1.5.1
+-----
+(RB=93099)
+Remove cow.
+
+1.5.0
+-----
+(RB=93107)
+Fix bug of JMX bean
+
+(RB=93024)
+Follow on change to remove old Rpc code in data.
+
+(RB=93011)
+Fix javadoc, imports, syntactical changes in data.
+
+(RB=92227)
+Remove support for RpcEndpointGenerator and ExceptionTemplates - this functionality has been
+deprecated and is currently unused.
+
+(RB=92505)
+Fix bug that restli-docgen fail to initialize when a resource has 2 or more subresources.
+This is because the hierarchy stack is not popped after visiting a resource.
+
+Display the full name (namespace + resource name) of resources and subresource in HTML.
+If the resource does not have namespace, only display resource name.
+
+1.4.1
+-----
+(RB=92103)
+Allow directory command line arg for rest client builder generator.
+The reason for this change is that network build is invoking the generator
+for each file because there is no clean and safe way to pass a list of
+file names in the java ant task.
+
+After this change, network build can pass the directory as a single argument and
+the generator will scan for restspec.json files in the directory.
+
+1.4.0
+-----
+(RB=79135)
+Add parttioning support to d2.
+Support range-based and hash-based partitioning.
+Update scatter/gather API and add "send to all partitions" API in restli/extras.
+
+(RB=91895)
+Allow directory command line arg for data template and avro schema translator.
+The reason for this change is that network build is invoking the generator
+for each file because there is no clean and safe way to pass a list of
+file names in the java ant task.
+
+After this change, network build can pass the directory as a single argument and
+the generator will scan for pdsc files in the directory.
+
+(RB=91765)
+Fix intermittent TestAbstractGenerator failures.
+
+1.3.5
+-----
+(RB=90955)
+Fix issue with erroneously decoding query parameters, causing issues when a query parameter value contains "*".  This issue was introduced in 1.3.2
+
+1.3.4
+-----
+(RB=88872)
+Revise the documentation generator for idl files in RestLiResourceModelExporter to handle overloaded methods
+in resources.
+
+(RB=90000)
+restli-docgen depends on Apache Velocity 1.5-LIN0 instead of previously 1.7. This change is necessary to
+fix the trunk blocker ANE-6970.
+
+(RB=90280)
+Add main function to RestLiResourceModelCompatibilityChecker so that it can be invoked in command line.
+The usage pattern is:
+RestLiResourceModelCompatibilityChecker [prevRestspecPath:currRestspecPath pairs]
+
+1.3.3
+-----
+(RB=88405)
+Refactor tests and add AvroUtil class to data-avro to allow common models test
+to not depend on test artifacts from pegasus.
+
+(RB=88304)
+Add access to client factories from D2 Facilities interface.
+
+1.3.2
+-----
+(RB=87108)
+Enhance validator API to enable AnyRecord validator to be implemented.
+See AnyRecordValidator example and test cases in data.
+
+(RB=83380) 
+Add support for structured query parameters on CRUD methods.
+
+(RB=86674) 
+Remove c3po support 
+
+(RB=86313) 
+Modify IDL generation to only emit shallow references to named schema types.
+
+1.3.1
+-----
+(RB=86000)
+Allow "registration" of custom validators be more automatic (without having to explicitly
+add to map and passing the map to DataSchemaAnnotationValidator.
+
+ * The value of this property must be a {@link DataMap}. Each entry in this {@link DataMap}
+ * declares a {@link Validator} that has to be created. The key of the entry determines
+ * {@link Validator} subclass to instantiate.
+ *  <p>
+ *
+ * The key to {@link Validator} class lookup algorithm first looks up the key-to-class
+ * map provided to the constructor to obtain the {@link Validator} subclass. If the key
+ * does not exist in the map, then look for a class whose name is equal to the
+ * provided key and is a subclass of {@link Validator}. If there is no match,
+ * then look for a class whose fully qualified name is derived from the provided by key
+ * by using "com.linkedin.data.schema.validator" as the Java package name and capitalizing
+ * the first character of the key and appending "Validator" to the key as the name
+ * of the class, and the class is a subclass of {@link Validator}.
+
+(RB=79648)
+New on-line documentation generator for Rest.li server.
+When passing an implementation of com.linkedin.restli.server.RestLiDocumentationRequestHandler to
+RestLiServer through RestLiConfig, the server will respond to special URLs with documentation content
+such as HTML page or JSON object.
+The default implementation is from the new docgen project, which renders both HTML and JSON documentation.
+It also provides an OPTIONS http method alias to the JSON documentation content.
+
+1.3.0
+-----
+(RB=85284)
+Moved jetty dependents in r2, restli-server to new sub-projects r2-jetty, restli-server-standalone
+
+1.2.5
+-----
+(RB=84826)
+To make sure custom Java class bound via typeref are initialized that their static initializers are
+executed to register coercers, the code generator will generate a call Custom.initializeCustomClass
+for each custom class referenced by a type.
+
+For generality, this Custom.initializeCustomClass is called regardless of whether the coercer class
+is also explicitly specified.
+
+The way in which explicit coercer class initialization is performed has also changed to use
+Class.forName(String className, boolean initializer, ClassLoader classLoader) with the initialize
+flag set to true. This will cause the class to initialized without accessing the REGISTER_COERCER
+static variable or trying to construct an instance of the coercer class. This allows the use of
+static initializer block to initialize explicitly specified coercer class.
+
+This change is not backwards compatible if the Coercer depends on constructing a new instance
+to register the coercer.
+
+(RB=84726)
+Add more test code for AvroOverrideFactory. Fixed a few bugs, i.e when schema/name and translator/class is not
+specified, name is specified without namespace.
+
+(RB=84335)
+Add support for custom data translator for translating from Avro to Pegasus data representation when there
+is a custom Avro schema binding.
+
+ * A custom Avro schema is provided via as follows:
+ * <pre>
+ *   {
+ *     "type" : "record",
+ *     "name" : "AnyRecord",
+ *     "fields" : [ ... ],
+ *     ...
+ *     "avro" : {
+ *       "schema" : {
+ *         "type" : "record",
+ *         "name" : "AnyRecord",
+ *         "fields" : [
+ *           {
+ *             "name" : "type",
+ *             "type" : "string"
+ *           },
+ *           {
+ *             "name" : "value",
+ *             "type" : "string"
+ *           }
+ *         ]
+ *       },
+ *       "translator" : {
+ *         "class" : "com.foo.bar.AnyRecordTranslator"
+ *       }
+ *     }
+ *   }
+ * </pre>
+ *
+ * If the "avro" property is present, it provides overrides that
+ * override the default schema and data translation. The "schema"
+ * property provides the override Avro schema. The "translator"
+ * property provides the class for that will be used to translate
+ * from the to and from Pegasus and Avro data representations.
+ * Both of these properties are required if either is present.
+ *
+ * If an override Avro schema is specified, the schema translation
+ * inlines the value of the "schema" property into the translated
+ * Avro schema.
+ *
+ * If a translator class is specified, the data translator will
+ * construct an instance of this class and invoke this instance
+ * to translate the data between Pegasus and Avro representations.
+
+(RB=80898)
+Allow query parameters to be custom types (SI-318)
+
+Example customType annotation:
+   * @QueryParam(value="o", typeref=CustomObjectRef.class) CustomObject o
+where CustomObjectRef is an class generated off of a pdsc that specifies the underlying type of
+CustomObject.
+
+Users must also write and register a coercer that converts from the custom object to the
+underlying type and back.
+
+
+1.2.4
+-----
+(RB=82484)
+Add support for custom Avro schema binding to Pegasus to Avro Schema translator.
+
+   * A custom Avro schema is provided via as follows:
+   * <pre>
+   *   {
+   *     "type" : "record",
+   *     "name" : "AnyRecord",
+   *     "fields" : [ ... ],
+   *     ...
+   *     "avro" : {
+   *       "schema" : {
+   *       "type" : "record",
+   *       "name" : "AnyRecord",
+   *       "fields" : [
+   *         {
+   *           "name" : "type",
+   *           "type" : "string"
+   *         },
+   *         {
+   *           "name" : "value",
+   *           "type" : "string"
+   *         }
+   *       ]
+   *     }
+   *   }
+   * </pre>
+   *
+   * If the "avro" property has a "schema" property, the value of this
+   * property provides the translated Avro schema for this type. No further
+   * translation or processing is performed. It simply inlines the value
+   * of this property into the translated Avro schema.
+
+(RB=82990)
+Support a custom ClassLoader in the RestliConfig to use when scanning/loading RestLi classes.
+
+(RB=83273)
+Bump ParSeq to 0.4.4
+
+1.2.3
+-----
+(RB=82646)
+Revert incompatible change to bytecode signatures of builder methods introduced in 1.1.7
+
+(RB=81647)
+Fix bug of idl compatibility checker which did not check for new optional parameters and
+  custom CRUD methods.
+The report messages are revised and parameterized to be more readable.
+
+1.2.2
+-----
+(RB=81960)
+Prototype custom class for records (not for production use yet.)
+
+Enable auto-registration of coercer when it is not possible to use 
+a static initializer on the custom class to register. Here is the
+comments from com.linkedin.data.template.Custom.
+
+  /**
+   * Initialize coercer class.
+   *
+   * The preferred pattern is that custom class will register a coercer
+   * through its static initializer. However, it is not always possible to
+   * extend the custom class to add a static initializer.
+   *
+   * In this situation, an optional coercer class can also be specified
+   * with the custom class binding declaration in the schema.
+   *
+   * <pre>
+   * {
+   *   "java" : {
+   *     "class" : "java.net.URI",
+   *     "coercerClass" : "com.linkedin.common.URICoercer"
+   *   }
+   * }
+   * </pre>
+   *
+   * When another type refers to this type, the generated class for referrer
+   * class will invoke this method on the coercer class within the referrer
+   * class's static initializer.
+   *
+   * This method will reflect on the coercer class. It will attempt to read
+   * the {@code REGISTER_COERCER} static field of the class if this field is declared
+   * in the class. This static field may be private.
+   * If such a field is not found or cannot be read, this method will attempt
+   * to construct a new instance of the coercer class with the default constructor
+   * of the coercer class. Either of these actions should cause the static initializer
+   * of the coercer class to be invoked. The static initializer
+   * is expected to register the coercer using {@link #registerCoercer}.
+   * If both of these actions fail, then this method throws an {@link IllegalArgumentException}.
+   *
+   * Note: Simply referencing to the coercer class using a static variable or
+   * getting the class of the coercer class does not cause the static
+   * initializer of the coercer class to be invoked. Hence, there is a need
+   * actually access a field or invoke a method to cause the static initializer
+   * to be invoked.
+   *
+   * The preferred implementation pattern for coercer class is as follows:
+   *
+   * <pre>
+   * public class UriCoercer implements DirectCoercer<URI>
+   * {
+   *   static
+   *   {
+   *     Custom.registerCoercer(URI.class, new UriCoercer());
+   *   }
+   *
+   *   private static final Object REGISTER_COERCER = null;
+   *   ...
+   * }
+   * </pre>
+   */
+
+(RB=80633)
+Add more diagnostic details to idl compatibility report.
+
+1.2.1
+-----
+(RB=81299)
+2nd installment of imported util cleanup
+Get rid of timespan dependency.
+Fix indentation errors.
+Remove used classes.
+
+(RB=81019)
+1st installment.  Remove unneeded code from imported util cases. 
+Fix problem with pegasus-common test directory is under src/main instead of src.
+Remove LongStats. Make ImmutableLongStats the replacement.
+Remove callsInLastSecond tracking (this is legacy that is not used and not needed in network.)
+Remove unused methods in TrackerUtil.
+
+(RB=80037)
+Eliminate pegasus dependency on util-core, in preparation for open sourcing.  This change
+copies a number of classes from util-core related to Clock, CallTracker, and Stats.  These
+classes have been placed in different packages, and are considered forked.  The only functional
+change is that CallTracker no-longer ignores BusinessException when counting errors.
+
+1.2.0
+-----
+(RB=76684)
+Experimental ParSeq client/server support
+
+1.1.8
+-----
+(RB=80013)
+Fix bug where EnumDataSchema.index() always returned 0 when a symbol is found
+
+(RB=73477)
+Add support for inspecting and modifying Data objects returned from DataIterators.
+Data objects can be counted, accumulated, transformed and removed declaratively
+based on value, schema properties or path in the Data object.  The intent is to
+provide a core set of primitives that may be used to build decoration, filtering,
+mapping, etc. for Data objects.
+
+See: com.linkedin.data.it.{Builder, Remover, Counter, ValueAccumulator, Transformer}
+
+1.1.7
+-----
+(RB=77548)
+Build "next" pagination link in collection result when start+count < total (iff total is provided by application code).
+
+(RB=78265, 78300)
+Moved spring integration from restli-contrib-spring to the pegasus-restli-spring-bridge sub-project in container.
+General dependency injection functionality (JSR-330) has been moved to restli-server sub-project. Empty restli-contrib-spring
+project is not removed from Pegasus, to preserve backwards compatibility with integration tests. All dependencies on
+restli-contrib-spring should be removed.
+
+1.1.6
+-----
+(RB=74812)
+Add RetryZooKeeper that handles ZooKeeper connection loss exception.
+
+1.1.5
+-----
+(RB=76630)
+Added multiple tests for complex resource keys, fixed a number of bugs in client builders.
+
+(RB=78028)
+Add getFacilities() to DynamicClient, in order to provide single point of entry for D2.
+
+1.1.4
+-----
+(RB=74709)
+Usability fixes to RestLiResponseException - use GetMode.NULL for accessors, add hasXyz() methods.
+
+(RB=73936)
+Clean up Exception handling in RestClient.  Previously, one could receive different exception
+types for the same error in the Callback interface versus the two flavors of Future interface.
+
+For example, if the server returned a valid error response, the caller of
+ResponseFuture.getResponse() would receive a RestLiResponseException, but Callback.onError()
+or the caller of Future.get() would receive a RestException.
+
+Now, a RestLiResponseException is always generated when a valid error response is received from
+the server.  Users of the Callback interface will receive a RestLiResponseException in
+Callback.onError().  The ResponseFuture interface will throw a RestLiResponseException,
+while the standard Future interface will throw a RestLiResponseException wrapped in an
+ExecutionException.
+
+(RB=73689)
+Remove dependency on ASM and Jersey package scanning logic.  Our ASM version is fairly 
+old, and presents a compatibility challenge, especially for open source usage.
+
+This patch removes the relevant Jersey code and implements very simple package scanning 
+by loading the classes in the specified packages.  In theory this could waste more 
+resources by loading classes unnecessarily.  In practice, we expect the rest.li resource 
+packages to be fairly narrowly specified, so it should not be a significant issue.
+
+(RB=73067)
+Improve exception message when there are Avro to Pegasus data translation errors.
+This changes what DataTranslationException includes in getMessage().
+
+(RB=72875)
+Add Data to Avro Schema translation mode called OptionalDefaultMode. This mode allows
+the user to control how optional fields with default value is translated. The previous
+behavior is to translate the default value. This new option allows all optional fields
+to be translated to have default value of null (instead of the translated default value.)
+
+This is appropriate for Avro because the default value is only used if it is present
+in the reader schema and absent in the writer schema. By translating default value to
+null, the absent field will have null as its value (which is a better indication of
+absence and would translate more cleanly to Pegasus as an absent field). I think this
+is more correct, then filling in with the translated default value for an absent field.
+
+In addition, this also improves the Pegasus user experience. If the user did not specify
+a default value for field, this is translated to a union with null and default value set to
+null. Because of Avro limitation, it means that other uses of this record cannot initialize
+this field to another default value. This should be allowed because specific use case
+may indeed have valid default values for that specific use of the record.
+
+Although the new mode has been added, the default is to be backwards compatible and
+translate the default value (instead of forcing the translation to null.) We may change
+this to be the default in the future. However, this may break backwards compatibility of
+generated schema in the case that the Avro default value is significant (i.e. fields
+absent in writer schema but present in reader schema.)
+
+1.1.2
+-----
+(RB=70773)
+fix bug in degraderStrategyV2 where zookeeper updates would cause getTrackerClient to
+return null for some calls because the existing state didn't have trackerclient information
+and the threads weren't waiting for a good state.
+
+1.1.1
+-----
+(RB=72064)
+Fix bug in which "include" and "fields" are not processed in the same order in
+which they are defined.
+
+As part of this fix, the parser needs to have knowledge of the location of
+a data object within the input stream. JacksonCodec has been extended to
+provide this location. Because this location is now available, various parsers 
+have been improved emit error messages that include the likely location 
+of the error.
+
+Remove noisy TestCloudPerformance output.
+
+1.1.0
+-----
+(RB=69279)
+An ability to define arbitrarily complex resource keys has been added. The resource
+implementation has to extend ComplexKeyResource parameterized, in addition to the
+value type, with key and params types, both extending RecordTemplate.  This feature is 
+currently considered experimental - future versions may be backwards incompatible.
+
+1.0.5
+-----
+(RB=71138)
+Add -Dgenerator.generate.imported switch to PegasusDataTemplateGenerator to allow
+the suppression of code generation for imported schemas.
+
+(RB=71319)
+A ResourceConfigException will be thrown when an association resource has a single key.
+The exception will be thrown during initialization.
+
+1.0.4
+-----
+
+(RB=70743)
+ValidationOption and schema validation and fixup behavior has been refined.
+
+The fixup boolean in ValidationOption has been replaced with CoercionMode.
+This flag used to indicate whether primitive type coercion should occur and whether
+the input Data objects can be modified.
+
+There is minor incompatible change to RequiredMode.FIXUP_ABSENT_WITH_DEFAULT.
+The old behavior is that the fixup flag must be set to allow
+RequiredMode.FIXUP_ABSENT_WITH_DEFAULT to modify the input.
+The new behavior is that RequiredMode.FIXUP_ABSENT_WITH_DEFAULT
+alone allows validation to modify the input Data object.
+
+RequiredMode and CoercionMode are independent of each other.
+RequiredMode specifies how required fields should be handled.
+CoercionMode specifies how coercion of primitive types should performed.
+
+For backwards compatibility, setFixup(true) sets coercion mode to CoercionMode.NORMAL,
+and isFixup returns true if coercion mode is not CoercionMode.OFF or required mode
+is RequiredMode.FIXUP_ABSENT_WITH_DEFAULT.
+
+(RB=71088)
+Change in Data.Traverse callbacks for startMap and startList to pass the DataMap
+and DataList about to be traversed. This is a change to Data API. Code search
+indicates there are no other users of Data.Traverse outside of the data module.
+
+Add experimental PSON binary serialization format for more compact serialized
+representation by remembering which map keys have already be seen and assigning
+a numeric index to each new key seen. Subsequent occurrence of the same key
+requires only serializing the numeric index of the key instead of the string
+representation of the key.
+
+The PsonCodec is currently in test directory because it is still experimental
+for understanding data compression possible and processor overhead for looking
+up keys before serialization and potential savings from binary representation.
+
+1.0.3
+-----
+(RB=68998)
+Add support for filtering DataSchema to remove unwanted fields or custom properties.
+
+(RB=69111)
+SI-297 Allow server application code to specify default count/start for PagingContext
+
+(RB=64782)
+SI-274 Restli sends error responses via callback.onError rather than callback.onSuccess
+
+(RB=69527)
+SI-346 Fix so that RoutingExceptions thrown prior to method invocation cause service code error 400.
+
+(RB=68531)
+Backwards incompatible function name change in RestLiResourceModelCompatibilityChecker,
+which requires rum version 0.13.51. Incompatibility information are changed to three categories:
+UnableToChecks, Incompatibles and Compatibles. Use corresponding getters to access.
+
+1.0.2
+-----
+(RB=68386)
+Fix JMX registering of tracker client.
+
+1.0.1
+-----
+(RB=68540)
+Do not normalize underscores in user-defined names.
+
+1.0.0
+-----
+(RB=67642)
+Final API cleanup:
+  Move R2 callbacks into com.linkedin.common / pegasus-common
+  Widen Callback.onError() signature to accept Throwable instead of Exception
+
+0.22.3
+------
+(RB=67362)
+Remove obsolete assembler code
+
+(RB=66584)
+Initial work on complex resource keys
+
+(RB=67100)
+Server-side support for query parameters on CRUD operations
+
+(RB=68048,67900,67100)
+Add support for custom query parameters on CRUD methods.
+
+0.22.2
+------
+(RB=66419)
+fix autometric/jmx support for DegraderLoadBalancer,State, and StrategyV2.
+
+(RB=65165)
+Allow standard CRUD methods to be implemented without needing to override CollectionResource / AssociationResource (by annotating with @RestMethod.Get, @RestMethod.Create, etc.).  This is a step toward allowing custom query parameters on CRUD methods.
+
+0.22.1
+------
+(RB=66358)
+Report warning when idl file not found for compatibility check.
+
+0.22.0
+------
+(RB=56807)
+Add rest.li support for BatchUpdate, BatchPartialUpdate, BatchCreate, and BatchDelete
+    Refactor builders to dispatch based on ResourceMethod, rather than response object type
+    Improve type handling in response builders
+    Initial version of routing, request handling, and response building for all batch methods
+    Refactor projection to each response builder
+    Unify handling of action responses and resource responses
+    Refactored response builders & MethodInvoker switch cases to MethodAdapters
+    Support for batch CUD operations in dynamic builder layer
+    Code-generation for batch builders
+    Adopt KV as default for new batch methods
+These changes are intended to be backwards compatible, and should not require changes in application code
+
+0.21.2
+------
+(RB=65432) Separate jersey uri components from package scanning, and repackage jersey source under com.linkedin.jersey
+
+(RB=65497) Fix D2 RewriteClient to respect percent-encoded query params.
+
+0.21.1
+------
+No changes (accidental publish)
+
+0.21.0
+------
+(RB=64609)
+Add Java custom class binding support for primitive type.
+You add a custom class binding by using a typeref with a "java" property.
+
+The "java" property of the typeref declaration must be a map.
+If this map has an "class" property, then the value of the "class"
+property must be a string and this string provides the name of
+the Java custom class for the typeref.
+
+The generated code will now return and accept the Java custom class
+as the return and argument type instead of the standard Java class
+for the referenced type.
+
+The custom class should meet the following requirements.
+
+1. An instance of the custom class must be immutable.
+2. A Coercer must be defined that can coerce the standard Java class
+   of the type to the custom Java class of the type, in both the
+   input and output directions. The coercer implements the
+   DirectCoercer interface.
+3. An instance of the coercer must be registered with the
+   data template framework.
+
+The following is an example illustrating Java custom class binding:
+
+CustomPoint.pdsc:
+
+{
+  "type" : "typeref",
+  "name" : "CustomPoint",
+  "ref"  : "string",
+  "java" : {
+    "class" : "com.linkedin.data.template.TestCustom.CustomPoint"
+  }
+}
+
+CustomPoint.java:
+
+//
+// The custom class
+// It has to be immutable.
+//
+public class CustomPoint
+{
+  private int _x;
+  private int _y;
+
+  public CustomPoint(String s)
+  {
+    String parts[] = s.split(",");
+    _x = Integer.parseInt(parts[0]);
+    _y = Integer.parseInt(parts[1]);
+  }
+
+  public CustomPoint(int x, int y)
+  {
+    _x = x;
+    _y = y;
+  }
+
+  public int getX()
+  {
+    return _x;
+  }
+
+  public int getY()
+  {
+    return _y;
+  }
+
+  public String toString()
+  {
+    return _x + "," + _y;
+  }
+
+  public boolean equals(Object o)
+  {
+    if (o == null)
+      return false;
+    if (this == o)
+      return true;
+    if (o.getClass() != getClass())
+      return false;
+    CustomPoint p = (CustomPoint) o;
+    return (p._x == _x) && (p._y == _y);
+  }
+
+  //
+  // The custom class's DirectCoercer.
+  //
+  public static class CustomPointCoercer implements DirectCoercer<CustomPoint>
+  {
+    @Override
+    public Object coerceInput(CustomPoint object)
+      throws ClassCastException
+    {
+      return object.toString();
+    }
+
+    @Override
+    public CustomPoint coerceOutput(Object object)
+      throws TemplateOutputCastException
+    {
+      if (object instanceof String == false)
+      {
+        throw new TemplateOutputCastException("Output " + object + " is not a string, and cannot be coerced to " + CustomPoint.class.getName());
+      }
+      return new CustomPoint((String) object);
+    }
+  }
+
+  //
+  // Automatically register Java custom class and its coercer.
+  //
+  static
+  {
+    Custom.registerCoercer(CustomPoint.class, new CustomPointCoercer());
+  }
+}
+
+0.20.6
+------
+(RB=64647)
+If a required field is missing, add Message for both the record and the missing field.
+Modify test cases to test for paths reported as having failed.
+
+(RB=64183)
+Throw NPE more consistently when attempting to add null elements to array templates or
+adding null values to map templates. Previously, NPE will be thrown but not as
+consistently and may not indicate that the input argument cannot be null.
+
+Previously, attempting to add null to DataMap and DataList results in IllegalArgumentException.
+Now, this will throw NPE.
+
+0.20.5
+------
+(RB=62385)
+Fix Avro schema converter such that default values for Avro unions can translated correctly.
+Prior to this fix, the default value for an Avro union is encoded like similar using the JSON
+serialization of the default value. The Avro specification specifies that the default value
+for an union does not include the type discriminator, and the type is provided by the 1st
+member of the union.
+
+When a Data Schema is translated to an Avro Schema, if the union has a default value,
+the default value's type must be the 1st member type of the union. Otherwise, an
+IllegalArgumentException will be thrown. When a value of an union type is translated,
+its translated value will not include the type discriminator.
+
+When an Avro Schema is translated to a Data Schema, if the Avro union has a value,
+the parser and validation function obtains the type of the value from the 1st member type
+of union. The translated default value will include a type discriminator if translated type
+remains a union after translation. (The translated type will not be a union if
+the Avro union is the type for a field of a record and this union type has two members
+and one of them is null as the field will become an optional field whose type is
+the non-null member type of the union.)
+
+Avro schema parser does not validate default values are valid, i.e. it does not validate the
+default value for each field with the schema for the field. Pegasus schema parser will
+perform this validation.
+
+(RB=62715)
+Add support for BatchResponseKV in BatchGet, which provides correctly typed Map keys for getResults() and getError().
+Convert clients to generate multi-valued params for batch requests, e.g., GET /resource?ids=1&ids=2.  Server-side support for this format has been in pegasus since 0.18.5, and has been deployed for all production use cases
+
+0.20.4
+------
+(RB=61006)
+Add include functionality to record, record can include fields from another record.
+Include does not include or attempt to merge any other attributes from the included record,
+including validate field (this is a TBD feature).
+
+(RB=61411)
+Fix bug handling default query parameter values for enum types.
+
+(RB=58634)
+Internal cleanup of JSON handling in RestLiResourceModelExporter/RestRequestBuilderGenerator
+
+0.20.3
+------
+(RB=60050)
+Re-enable action parameter validation, using fix-up mode to ensure that wire types are correctly coerced to schema types.
+
+(RB=60193)
+Make fixup the default enabled for ValidationOptions.
+
+0.20.2
+------
+(RB=59945)
+Disable Action parameter validation since it fails when the schema declares a type of long but the value on the wire is less than MAX_INT.
+
+0.20.1
+------
+(RB=59681)
+Reduce unintentional memory retention by R2 timeout mechanism.
+
+0.20.0
+------
+Same as 0.19.7. Bumped minor version due to backward incompatibility
+
+0.19.7
+------
+(RB=48204)
+Implemented correct initialization of InjectResourceFactory. This is an incompatible change for users of InjectResourceFactory and container/pegasus-restli-server-cmpt. To fix, you need to define an InjectResourceFactory bean in the your application's spring context and wire it in to rest.li server e.g.
+
+<bean id="resourceFactory" class="com.linkedin.restli.server.spring.InjectResourceFactory" />
+
+0.19.6
+------
+(RB=59196)
+Fix server-side detection of rest.li compound key syntax to use best-match heuristic
+
+0.19.5
+------
+(RB=57847)
+Add support for boxified and unboxified setter for primitive types
+
+(RB=59188)
+Add support for returning source files, target files, and modified files from data template
+and rest client generators.
+
+0.19.4
+------
+(RB=57839)
+Cleanup build warnings
+
+(RB=56392)
+Add pdsc definition for IDL (restspec.json) files in restli-common.
+Add IDL compatibility checker and its test suites.
+
+(RB=56305)
+SI-260 properly handle RestLiServiceException returned from action invocation
+validate action parameters against schema to detect type mismatches
+
+(RB=58323)
+fix quick deploy bug when no uris are registered in zk
+
+(RB=58625)
+Inject dependencies into superclass fields when using @Inject/@Named
+
+0.19.3
+------
+(RB=57723)
+Make Continuation support configurable and off by default.
+
+(RB=57724)
+Fix NullPointerException errors when referenced types in typeref, map, record fields are incomplete
+or not resolvable.
+
+(RB=57529)
+Fix bug causing Server Timeout when application code returns null object - should be 404
+
+0.19.2
+------
+(RB=54399)
+Remove deprecated "Application" object dependency injection through BaseResource.
+(RB=55085)
+Remove rpc-demo-*
+(RB=56165)
+Pass undecoded path segments to parsers to enable proper context-aware percent-decoding.
+
+0.19.1
+------
+Fix bugs in code generation for @RestLiActions (actions set) resources
+
+-----
+(RB=54529)
+
+Add fix bugs in Data Schema to Avro Schema translation
+1. Fix exception thrown when translating default values of map types.
+2. Fix exception thrown when translating typeref'ed optional union.
+3. Translating data schema to avro schema should not mutate input data schema.
+
+0.19.0
+------
+Enhanced exception support:
+  Server-side application code may throw RestLiServiceException, which prompts the framework to send an ErrorResponse document to the client
+  Client-side application code may catch RestLiResponseException, which provides access to the ErrorResponse contents.
+
+Backwards-incompatible API changes:
+  BusinessException has been replaced by RestLiServiceException
+  ResponseFuture.getResponse() now throws RemoteInvocationException instead of RestException
+
+0.18.7
+------
+Allow PagingContext to appear at any position in a Finder signature, or to be omitted entirely
+
+DataTemplate: generate .fields() accessor methods for primitive branches of unions
+
+0.18.6
+------
+(RB=52064)
+Add SetMode to Record setters.
+
+  /**
+   * If the provided value is null, then do nothing.
+   * <p>
+   *
+   * If the provided value is null, then do nothing,
+   * i.e. the value of the field is not changed.
+   * The field may or may be present.
+   */
+  IGNORE_NULL,
+  /**
+   * If the provided value is null, then remove the field.
+   * <p>
+   *
+   * If the provided value is null, then remove the field.
+   * This occurs regardless of whether the field is optional.
+   */
+  REMOVE_IF_NULL,
+  /**
+   * If the provided value is null and the field is
+   * an optional field, then remove the field.
+   * <p>
+   *
+   * If the provided value is null and the field is
+   * an optional field, then remove the field.
+   * If the provided value is null and the field is
+   * a mandatory field, then throw
+   * {@link IllegalArgumentException}.
+   */
+  REMOVE_OPTIONAL_IF_NULL,
+  /**
+   * The provided value cannot be null.
+   * <p>
+   *
+   * If the provided value is null, then throw {@link NullPointerException}.
+   */
+  DISALLOW_NULL
+
+0.18.5
+------
+(RB=51189)
+(1) added support for array parameters in finders.
+    url notation is ...?foo=foo1&foo=foo2&foo=foo3&...
+(2) ids parameter notation changed from ids=1,2,3 to ids=1&ids=2&ids3 for better compatibility
+    with standard on query part of urls, client libraries, and (1).
+(3) string representation of compound keys changed back to foo=foo1&bar=bar1
+    (from foo:foo1;bar:bar1) for better compatibility with (1) and (2).
+(4) batch request builder will use legacy comma encoding
+
+The new server will support both new and old URL formats.
+Existing batch request client builders will emit old URL format.
+The URLs emitted by batch request client builders generated from this release will use the old format.
+
+The upgrade sequence will be
+    - first update all servers to this version,
+    - then release new batch client and update all clients.
+
+------
+(RB=51536)
+Fix bug due to not recursively translating default values when translating
+schemas between Avro and Pegasus.
+Fix bug due to different handling of member keys in union between Avro
+and Pegasus when translating schemas.
+
+0.18.4
+------
+(RB=49976)
+Add rest.li server-side support for application-defined response headers
+
+0.18.3
+------
+(RB=49668)
+Bump RUM version to 0.13.18 to fix eclipse compatibility problem
+
+0.18.2
+-----
+(RB=50209)
+Change default namespace for restli-server-examples to be backwards compatible.
+Change check for TimeoutException in netty client shutdown test
+Use 0.13.12 of rum plugin
+
+0.18.1
+------
+(RB=49106)
+Add support in D2 for direct local routing, as well as fix handling of
+the root path in ZooKeeperStore.
+
+0.18.0
+------
+(RB=47488)
+Add support of bulk requests for association resources
+
+------
+(RB=49668)
+
+Change build to use pegasus v2 rum plugin
+Require use of rum 0.13.11
+
+/**
+ * Pegasus code generation plugin.
+ * <p>
+ * Performs the following functions:
+ * <p>
+ * <b>Generate data model and data template jars for each source set.</b>
+ * <p>
+ * Generates data template source (.java) files from data schema (.pdsc) files,
+ * compiles the data template source (.java) files into class (.class) files,
+ * creates a data model jar file and a data template jar file.
+ * The data model jar file contains the source data schema (.pdsc) files.
+ * The data template jar file contains both the source data schema (.pdsc) files
+ * and the generated data template class (.class) files.
+ * <p>
+ * In the data template generation phase, the plugin creates a new target source set
+ * for the generated files. The new target source set's name is the input source set name's
+ * suffixed with "GeneratedDataTemplate", e.g. "mainGeneratedDataTemplate".
+ * The plugin invokes PegasusDataTemplateGenerator to generate data template source (.java) files
+ * for all data schema (.pdsc) files present in the input source set's pegasus
+ * directory, e.g. "src/main/pegasus". The generated data template source (.java) files
+ * will be in the new target source set's java source directory, e.g.
+ * "src/mainGeneratedDataTemplate/java". The dataTemplateGenerator configuration
+ * specifies the classpath for loading PegasusDataTemplateGenerator. In addition to
+ * the data schema (.pdsc) files in the pegasus directory, the dataModel configuration
+ * specifies resolver path for the PegasusDataTemplateGenerator. The resolver path
+ * provides the data schemas and previously generated data template classes that
+ * may be referenced by the input source set's data schemas. In most cases, the dataModel
+ * configuration should contain data template jars.
+ * <p>
+ * The next phase is the data template compilation phase, the plugin compiles the generated
+ * data template source (.java) files into class files. The dataTemplateCompile configuration
+ * specifies the pegasus jars needed to compile these classes. The compileClasspath of the
+ * target source set is a composite of the dataModel configuration which includes the data template
+ * classes that were previously generated and included in the dependent data template jars,
+ * and the dataTemplateCompile configuration.
+ * This configuration should specify a dependency on the Pegasus data jar.
+ * <p>
+ * The following phase is creating the the data model jar and the data template jar.
+ * This plugin creates the data model jar that includes the contents of the
+ * input source set's pegasus directory, and sets the jar file's classification to
+ * "data-model". Hence, the resulting jar file's name should end with "-data-model.jar".
+ * It adds the data model jar as an artifact to the dataModel configuration.
+ * This jar file should only contain data schema (.pdsc) files.
+ * <p>
+ * This plugin also create the data template jar that includes the contents of the input
+ * source set's pegasus directory and the java class output directory of the
+ * target source set. It sets the jar file's classification to "data-template".
+ * Hence, the resulting jar file's name should end with "-data-template.jar".
+ * It adds the data template jar file as an artifact to the dataTemplate configuration.
+ * This jar file contains both data schema (.pdsc) files and generated data template
+ * class (.class) files.
+ * <p>
+ * This plugin will ensure that data template source files are generated before
+ * compiling the input source set and before the idea and eclipse tasks. It
+ * also adds the generated classes to the compileClasspath of the input source set.
+ * <p>
+ * The configurations that apply to generating the data model and data template jars
+ * are as follow:
+ * <ul>
+ * <li>
+ *   The dataTemplateGenerator configuration specifies the classpath for
+ *   PegasusDataTemplateGenerator. In most cases, it should be the Pegasus generator jar.
+ * </li>
+ * <li>
+ *   The dataTemplateCompile configuration specifies the classpath for compiling
+ *   the generated data template source (.java) files. In most cases,
+ *   it should be the Pegasus data jar.
+ *   (The default compile configuration is not used for compiling data templates because
+ *   it is not desirable to include non data template dependencies in the data template jar.)
+ *   The configuration should not directly include data template jars. Data template jars
+ *   should be included in the dataModel configuration.
+ * </li>
+ * <li>
+ *   The dataModel configuration provides the value of the "generator.resolver.path"
+ *   system property that is passed to PegasusDataTemplateGenerator. In most cases,
+ *   this configuration should contain only data template jars. The data template jars
+ *   contain both data schema (.pdsc) files and generated data template (.class) files.
+ *   PegasusDataTemplateGenerator will not generate data template (.java) files for
+ *   classes that can be found in the resolver path. This avoids redundant generation
+ *   of the same classes, and inclusion of these classes in multiple jars.
+ *   The dataModel configuration is also used to publish the data model jar which
+ *   contains only data schema (.pdsc) files.
+ * </li>
+ * <li>
+ *   The testDataModel configuration is similar to the dataModel configuration
+ *   except it is used when generating data templates from test source sets.
+ *   It extends from the dataModel configuration. It is also used to publish
+ *   the data model jar from test source sets.
+ * </li>
+ * <li>
+ *   The dataTemplate configuration is used to publish the data template
+ *   jar which contains both data schema (.pdsc) files and the data template class
+ *   (.class) files generated from these data schema (.pdsc) files.
+ * </li>
+ * <li>
+ *   The testDataTemplate configuration is similar to the dataTemplate configuration
+ *   except it is used when oublishing the data template jar files generated from
+ *   test source sets.
+ * </li>
+ * </ul>
+ * <p>
+ * <b>Generate rest model and rest client jars for each source set.</b>
+ * <p>
+ * Generates the idl (.restspec.json) files from the input source set's
+ * output class files, generates rest client source (.java) files from
+ * the idl, compiles the rest client source (.java) files to
+ * rest client class (.class) files, and creates a rest model jar file
+ * and a rest-client jar file.
+ * The rest model jar file contains the generated idl (.restspec.json) files.
+ * The rest client jar file contains both the generated idl (.restspec.json)
+ * files and the generated rest client class (.class) files.
+ * <p>
+ * In the idl generation phase, the plugin creates a new target source set
+ * for the generated files. The new target source set's name is the input source set name's
+ * suffixed with "GeneratedRest", e.g. "mainGeneratedRest".
+ * The plugin invokes RestLiResourceModelExporter to generate idl (.restspec.json) files
+ * for each IdlItem in the input source set's pegasus IdlOptions.
+ * The generated idl files will be in target source set's idl directory,
+ * e.g."src/mainGeneratedRest/idl".
+ * <p>
+ * For example, the following adds an IdlItem to the source set's pegasus IdlOptions.
+ * <pre>
+ *   pegasus.main.idlOptions.addIdlItem("groups", ['com.linkedin.restli.examples.groups.server'])
+ * </pre>
+ * <p>
+ * The next phase is to generate the rest client source (.java) files from the
+ * generated idl (.restspec.json) files using RestRequestBuilderGenerator.
+ * The generated rest client source (.java) files will be in the new target source set's
+ * java source directory, e.g. "src/mainGeneratedRest/java". The restClientGenerator
+ * configuration specifies the classpath for loading RestLiResourceModelExporter
+ * and for loading RestRequestBuilderGenerator.
+ * <p>
+ * RestRequestBuilderGenerator requires access to the data schemas referenced
+ * by the idl. The dataModel configuration specifies the resolver path needed
+ * by RestRequestBuilderGenerator to access the data schemas referenced by
+ * the idl that is not in the source set's pegasus directory.
+ * This plugin automatically includes the data schema (.pdsc) files in the
+ * source set's pegasus directory in the resolver path.
+ * In most cases, the dataModel configuration should contain data template jars.
+ * The data template jars contains both data schema (.pdsc) files and generated
+ * data template class (.class) files. By specifying data template jars instead
+ * of data model jars, redundant generation of data template classes is avoided
+ * as classes that can be found in the resolver path are not generated.
+ * <p>
+ * The next phase is the rest client compilation phase, the plugin compiles the generated
+ * rest client source (.java) files into class files. The restClientCompile configuration
+ * specifies the pegasus jars needed to compile these classes. The compile classpath
+ * is a composite of the dataModel configuration which includes the data template
+ * classes that were previously generated and included in the dependent data template jars,
+ * and the restClientCompile configuration.
+ * This configuration should specify a dependency on the Pegasus restli-client jar.
+ * <p>
+ * The following phase is creating the the rest model jar and the rest client jar.
+ * This plugin creates the rest model jar that includes the
+ * generated idl (.restspec.json) files, and sets the jar file's classification to
+ * "rest-model". Hence, the resulting jar file's name should end with "-rest-model.jar".
+ * It adds the rest model jar as an artifact to the restModel configuration.
+ * This jar file should only contain idl (.restspec.json) files.
+ * <p>
+ * This plugin also create the rest client jar that includes the
+ *  generated idl (.restspec.json) files and the java class output directory of the
+ * target source set. It sets the jar file's classification to "rest-client".
+ * Hence, the resulting jar file's name should end with "-rest-client.jar".
+ * It adds the rest client jar file as an artifact to the restClient configuration.
+ * This jar file contains both idl (.restspec.json) files and generated rest client
+ * class (.class) files.
+ * <p>
+ * This plugin will ensure that generating idl will occur after compiling the
+ * input source set. It will also ensure that idea and eclipse tasks runs after
+ * rest client source (.java) files are generated.
+ * <p>
+ * The configurations that apply to generating the rest model and rest client jars
+ * are as follow:
+ * <ul>
+ * <li>
+ *   The restClientGenerator configuration specifies the classpath for
+ *   RestLiResourceModelExporter and RestRequestBuilderGenerator.
+ *   In most cases, it should be the Pegasus restli-tools jar.
+ * </li>
+ * <li>
+ *   The restClientCompile configuration specifies the classpath for compiling
+ *   the generated rest client source (.java) files. In most cases,
+ *   it should be the Pegasus restli-client jar.
+ *   (The default compile configuration is not used for compiling rest client because
+ *   it is not desirable to include non rest client dependencies, such as
+ *   the rest server implementation classes, in the data template jar.)
+ *   The configuration should not directly include data template jars. Data template jars
+ *   should be included in the dataModel configuration.
+ * </li>
+ * <li>
+ *   The dataModel configuration provides the value of the "generator.resolver.path"
+ *   system property that is passed to RestRequestBuilderGenerator.
+ *   This configuration should contain only data template jars. The data template jars
+ *   contain both data schema (.pdsc) files and generated data template (.class) files.
+ *   The RestRequestBuilderGenerator will only generate rest client classes.
+ *   The dataModel configuration is also included in the compile classpath for the
+ *   generated rest client source files. The dataModel configuration does not
+ *   include generated data template classes, then the Java compiler may not able to
+ *   find the data template classes referenced by the generated rest client.
+ * </li>
+ * <li>
+ *   The testDataModel configuration is similar to the dataModel configuration
+ *   except it is used when generating rest client source files from
+ *   test source sets.
+ * </li>
+ * <li>
+ *   The restModel configuration is used to publish the rest model jar
+ *   which contains generated idl (.restspec.json) files.
+ * </li>
+ * <li>
+ *   The testRestModel configuration is similar to the restModel configuration
+ *   except it is used to publish rest model jar files generated from
+ *   test source sets.
+ * </li>
+ * <li>
+ *   The restClient configuration is used to publish the rest client jar
+ *   which contains both generated idl (.restspec.json) files and
+ *   the rest client class (.class) files generated from from these
+ *   idl (.restspec.json) files.
+ * </li>
+ * <li>
+ *   The testRestClient configuration is similar to the restClient configuration
+ *   except it is used to publish rest client jar files generated from
+ *   test source sets.
+ * </li>
+ * </ul>
+ *
+ * <p>
+ * This plugin considers test source sets whose names begin with 'test' to be
+ * test source sets.
+ *
+ */
+
+0.17.6
+------
+(RB=49060)
+Add option to disable record template generation from RestRequestBuilderGenerator, to support ant codegen integration in network
+
+0.17.5
+------
+
+(RB=49324)
+
+Refactor SimpleLoadBalancerState to use one TransportClient per
+cluster and eliminate LazyClient.
+
+(RB=49528)
+Add "namespace" parameter to @RestLi* resource annotations, allowing the resource author to
+specify the default namespace to be used for the IDL and client builders.
+
+0.17.4
+------
+(RB=49133)
+
+Fix key usage and delete handling in groups example in rest.li
+
+------
+(RB=48987)
+
+Fix inconsistent parsing of paginationa parameters in rest.li.
+
+------
+(RB=49268)
+
+Add another workaround for Jackson http://jira.codehaus.org/browse/JACKSON-491
+
+------
+(RB=49414)
+
+Fix bugs in translation from Pegasus DataMap to Avro GenericRecord translations.
+Add test cases for round-tripping through binary Avro serialization.
+Map keys from Avro may be String or Utf8
+Enum symbol is mapped to GenericData.EnumSymbol instead of String.
+ByteBuffer not rewound after copy to ByteString.
+
+0.17.3
+------
+(RB=48930)
+
+Fix bug in DataTemplate wrapping of typeref'ed types
+
+0.17.2
+------
+(RB=48666)
+
+Code generator changes to avoid generating the same class multiple
+times. If a class already exist in generator.resolver.path, then don't
+generate the class again.
+
+0.17.1
+------
+(RB=48198)
+
+Generate typesafe pathkey-binding methods for actions in subresources
+
+-----
+(RB=48258)
+
+Add AvroSchemaGenerator to output avsc files from pdsc files.
+Avro avsc requires the type to be record. If a pdsc file or schema
+is not a record, no avsc file will be emitted.
+
+Refactor generator to move common schema resolution based on path,
+testing for stale output files, ... can be reused by different
+generators.
+
+Simplify by consolidating DataSchemaContext and DataSchemaResolver,
+eliminate duplicate tracking of names to schemas.
+
+0.17.0
+------
+(RB=43660)
+
+Revamp rest.li client library
+   One Request/RequestBuilder pair per rest.li method.
+   Generate builders for finder and action methods
+   Generate xyzRequestBuilders "builder factory" classes for resources
+   Generate builders for all resource methods, to allow type-safe specification of parent resource keys
+
+0.16.5
+------
+(RB=47325)
+Fix issue with field projections on CollectionResult (SI-198)
+
+0.16.4
+------
+(RB=45316)
+
+Update util to 4.0.1.
+Merge DegraderImpl changes from container to Pegasus.
+
+0.16.3
+------
+(RB=46923)
+Add configurable maxResponseSize to NttpNettyClient/HttpClientFactory
+
+0.16.2
+------
+(RB=45441)
+
+Workaround fix for JACKSON-230 (http://jira.codehaus.org/browse/JACKSON-230)
+
+-----
+(RB=45505)
+
+Add auto-detection of whether JACKSON-230 bug is present.
+Upgrade Jackson library to 1.4.2.
+Auto-detection added to handle Jackson library version override in consumers.
+
+0.16.1
+------
+Merge 0.15.2 through 0.15.4
+
+0.16
+----
+
+Refactor the relationship between HttpNettyClient and
+HttpClientFactory.  HttpClientFactory now owns the thread pool
+resources, and all clients created by the factory will share the same
+underlying executors.  This is an incompatible change, because the
+HttpClientFactory must now be shut down.
+
+Add support for an overall request timeout to HttpNettyClient.  If the
+request does not complete for any reason within the timeout, the
+callback's onError will be invoked.
+
+Add support for graceful shutdown to HttpNettyClient and
+HttpClientFactory.  The factories and the clients can be shutdown in
+any relative order, and outstanding requests will be allowed to
+complete within the shutdown timeout.
+
+-----
+(RB=45018)
+
+Add SchemaTranslator class to translate from Avro Schema to Pegasus Data Schema
+and vice-versa.
+
+0.15.4
+------
+Add a dependency from data.jar to the new empty cow.jar
+
+0.15.3
+------
+Add empty cow.jar to facilitate renaming cow.jar to data.jar
+
+0.15.2
+------
+(RB=44099)
+
+Internal changes to replace Stack with ArrayList or ArrayDeque.
+
+0.15.1
+------
+(RB=43133)
+
+Main API change is removal/decoupling of validation from DataSchema.
+DataSchema no longer has validate method. The replacement is
+ValidateDataAgainstSchema.validate(...).
+
+Reduce memory allocation for DataElement for each object visited.
+Will reuse same DataElement for each member of a container.
+As part of this change, it is no longer possible to get a
+standard Iterator from a builder. The alternative is to use the
+traverse method that takes a callback for each object iterated.
+
+Add support for different pre-order and post-order traversal
+to ObjectIterator. This allows ObjectIterator to be used for
+data to schema validation. This unification allows single pass
+data to schema validation as well as calling Validator after
+fixup and schema validation.
+
+Enhance DataSchemaAnnotationValidator to not throw exception
+on construction. Allow validator to be used if only some
+validators are constructed. Use common Message classes for emitting
+initialization messages.
+
+Refactor code to allow both iterative and recursive validation.
+
+Add more test cases.
+
+-----
+(RB=43604)
+
+Add support to taking DataElement as starting point for
+iterating through Data objects and for validation. This
+has been requested by Identity superblock where the patch
+is applied to position (using position as starting point), but
+the root object is a profile. The validation should start
+where the patch is applied, but the validator plugin wants
+access to the entire entity, i.e. the profile entity.
+
+Add tests and bug fix unnecessary additional calls to validators
+from ValidateDataAgainstSchema when typerefs are in use. The
+bug was that the downstream validator will be called once per
+typeref in the typeref chain. The correct and fixed behavior
+is that the downstream validator will be called once per
+data object (not once per schema typeref'ed).
+
+0.15
+----
+
+Add pluggable validator to Data Schemas (RB=41693)
+
+1. Change behavior of ObjectIterator to include returning the
+   input value.
+
+2. See com.linkedin.data.validator package and TestValidator
+   class for how to use validators.
+
+3. This is still a prototype feature.
+
+Output Avro-compliant equivalent JSON from Pegasus schema (RB=41878)
+
+Add translation between Pegasus DataMap and Avro GenericRecord (RB=42130)
+
+1. Also include refactoring of DataSchema to JSON encoding to
+   move Avro specific code out of cow module into cow-avro module.
+
+Rest.li support for full and partial updates
+  Full update (overwrite) is transported as an HTTP PUT to the entity URI,
+with a payload containing the JSON serialized RecordTemplate of the entity
+schema.
+
+  Partial update (patch) is transported as an HTTP POST to the entity URI,
+with a payload containing a JSON serialized PatchRequest
+
+The internal structure of a PatchRequest is documented here:
+https://iwww.corp.linkedin.com/wiki/cf/display/ENGS/Partial+Update
+
+PatchRequests can be generated on the client side by "diff'ing" two
+RecordTemplate objects using PatchGenerator in com.linkedin.restli.client.utility.
+Patch Generation relies on the facilities from the data-transform pegasus
+component, in the com.linkedin.data.transform package.
+
+PatchRequests can be applied on the server side by providing a pre-image
+RecordTemplate object and a PatchRequest to PatchApplier in
+com.linkedin.restli.server.util.  Patch application uses the DataMapProcessor
+from the pegasus data-transform component.
+
+Full and Partial update are provided as overloaded update() methods in
+CollectionResource/AssociationResource on the server-side and as overloaded
+buildUpdate() methods in EntityRequestBuilder on the client-side.
+
+PARTIAL_UPDATE is defined as a new ResourceMethod, and listed as appropriate
+in the IDL "supports" clause of the resource.
+
+Support for deep (nested) projections has been implemented:
+  Server-side, the rest.li framework understands both the old "field1,field2,field3"
+syntax and the new PAL-style "field1,field2:(nestedfield)" syntax.  Projections
+are applied automatically by the framework, using pegasus data-transform.
+ResourceContext provides access to the projections as either a Set<String> or a MaskTree.
+
+  Client-side, the generated RecordTemplate classes have been modified to
+provide fields as a nested class accessed through the .fields() static method.
+Each field can be accessed as a Path object through a fieldName() method, which
+provides full static typing.  Fields are provided as methods rather than member
+variables to avoid initialization cycles when a RecordTemplate contains a field of
+the same type.
+
+Deep projection support is currently *disabled* on the client side, to avoid ordering
+issues with deployment.  Once all services have been deployed to production with the
+new pegasus version, we will enable deep projections on the client side.
+
+More background on projection support is available here:
+https://iwww.corp.linkedin.com/wiki/cf/display/ENGS/Projections
+
+Compatibility:
+WIRE: This change is wire INCOMPATIBLE for existing users of update.  There are
+no known uses of update in production.
+
+CLIENT: This change is library INCOMPATIBLE for users of update, projection fields,
+or code that relies on the types of framework ...Builder classes (a type parameter has
+been removed).  Client code will need to be upgraded.
+
+SERVER: This change is library INCOMPATIBLE for users of update.  Server code will
+need to be upgraded to use PatchRequests and PatchApplier.
+
+-----
+
+Validation code refactoring.
+
+1. Move validation code out of DataSchema classes, enable single pass validation of schema and calling
+   validator plugins.
+2. Move schema validation code into validation package.
+3. Move validator plugins into validator package.
+4. Provide field specific diagnostic data from schema validator.
+
+-----
+
+Rename cow and cow-avro module to data and data-avro module.
+
+Refactor Cow classes and provide implementation that have the checker
+functionality but without copy-on-write, known as CheckedMap and CheckedList
+classes.
+
+-----
+(RB=42905)
+
+Add support for "validate" annotation on fields.
+
+Prefix DataElement accessor methods with "get".
+
+-----
+(RB=43002)
+
+Add support for filtering calls to a Validator based on what has been
+set as specified by the patch operations map. This functionality is
+implemented by the PatchFilterValidator class.
+
+Refactored ValidationMessage* classes into Message* classes so that
+patch operations can re-use these classes for generating patch messages.
+
+0.14.7
+------
+
+Fix a bug in D2 where the PropertyStore information was not correctly
+persisted to disk, preventing the load balancer from operating
+correctly if connectivity to ZooKeeper was interrupted.
+
+0.14.6
+------
+
+(RB=41257)
+
+1. Add support for typeref to enable aliasing primitive types.
+   Typeref works for any type (not just primitive).
+   There is no support yet for binding different Java classes
+   to the typeref'ed types.
+   If a typeref is member of union, then the accessor method
+   names for accessing the member are derived from the typeref
+   name.
+
+2. Serialization protocol and format does not change. The serialized
+   representation of the member key is always the actual type, i.e.
+   the type reached by following chain of typerefs.
+
+3. Rest.li @Action and @ActionParam now has optional 'typeref'
+   attribute that specifies the typeref that should be emitted to
+   the IDL instead of the type inferred from the Java type.
+   The provided typeref must be compatible with the Java type.
+
+   KNOWN ISSUE - Unions cannot be used as return or parameter for
+   actions.
+
+0.14.5
+------
+
+(RB=41200)
+
+  1. Provide human readable locations when Jackson parse errors occurs.
+
+0.14.4
+------
+
+Data Schema Resolver (RB=41014)
+
+  1. RUM pegasus plugin will not have to unjar before passing data schema jars to
+     pegasus.  See seperate review for changes to plugin.
+
+  2. Remove location from in-memory representation of schemas. Location is only used
+     for generating Java bindings and checking for freshness of generated files.
+     It is not needed to in-memory representation. Storing them in in-memory bindings
+     may cause file "leaks" as they refer to jar files and files.
+
+  3. Simply by removing FIELDS_ONLY record type.
+
+0.14.3
+------
+
+(RB=40353)
+
+  1. Minor changes to comments in rpc-demo-client.
+
+  2. Fix pdpr and avsc references in tools/rest-doc-generator/docgen.py
+
+0.14.2
+------
+
+Not released.
+
+0.14.1
+------
+
+Data Schema Generator
+
+  1. Fixes a bug in which parse errors are not sent to output.
+     There is no other functional changes.
+
+0.14
+----
+
+Data Schema changes
+
+  1. Add "optional" support to record schema.
+     In previous version, "default" is used to provide
+     default value as well as indicate that the field is
+     optional in a record. In the new version, "optional"
+     is orthogonal to "default". A default value can be
+     specified for optional as well as mandatory fields.
+     An "optional" field may or may not have a default value.
+
+  2. Change extension of data schema files from avsc to pdsc.
+     This change requires 0.12.7 version of RUM for the new
+     version of PegasusGeneratorPlugin that understands the new
+     file name extension. This version of plugin also expects
+     data schema files to be in the pegasus directory instead
+     of the avro directory. The plugin also works with older
+     projects that use the previous version of Pegasus, i.e.
+     uses avro directories and avsc as the file name extension.
+
+RestLi (RB=38654)
+
+  1.  Merge EntityResource into CollectionResource / AssociationResource,
+      to simplify resource definition
+
+  2.  RestLiRouter internal cleanup.
+
+  3.  Remove anonymous finder functionality, to reserve "GET /collection/"
+      for future use.
+  4.  Remove JAX-RS / Jersey dependencies from library APIs.
+
+  5.  Minimize JAX-RS / Jersey usage internally.
+
+  6.  Extract Annotation classes to top-level, to assist in IDE
+      auto-import.
+
+  7.  Invert parent/child dependency in resource annotations (replace "root=false"
+      with "parent=Xyz.class").
+
+  8.  ResourceModel internal cleanup.
+
+  9.  Support compound keys for collections.
+
+  10. Cleanup PathKeys and CompoundKey interfaces.
+
+  11. Remove rest-jax-rs-prototype from active repository

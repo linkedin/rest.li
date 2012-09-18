@@ -1,0 +1,9 @@
+{
+    "type" : "typeref",
+    "name" : "NoCoercerCustomStringRef",
+    "namespace" : "com.linkedin.restli.server",
+    "ref"  : "string",
+    "java" : {
+        "class" : "com.linkedin.restli.server.custom.types.NoCoercerCustomString"
+    }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "MembershipSortOrder",
+  "namespace": "com.linkedin.restli.examples.groups.api",
+  "type": "enum",
+  "symbols": [ "LAST_NAME_ASC", "LAST_TRANSITION_ON_DESC" ]
+}

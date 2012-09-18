@@ -1,0 +1,23 @@
+{
+  "type" : "record",
+  "name" : "CustomPointRecord",
+  "namespace" : "com.linkedin.pegasus.generator.test",
+  "fields" : [
+    {
+      "name" : "customPoint",
+      "type" : "CustomPoint"
+    },
+    {
+      "name" : "customPointArray",
+      "type" : { "type" : "array", "items" : "CustomPoint" }
+    },
+    {
+      "name" : "customPointMap",
+      "type" : { "type" : "map", "values" : "CustomPoint" }
+    },
+    {
+      "name" : "customPointUnion",
+      "type" : [ "int", "CustomPoint" ]
+    }
+  ]
+}

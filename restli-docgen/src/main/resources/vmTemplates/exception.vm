@@ -1,0 +1,39 @@
+<html>
+<head>
+  <title>$exception.class.name</title>
+  <style type="text/css">
+    #include("vmTemplates/_doc.css")
+  </style>
+  <script type="application/javascript">
+    #include("vmTemplates/_prettify.js")
+  </script>
+</head>
+<body onload="prettyPrint()">
+  <div id="container">
+
+  #parse("vmTemplates/_nav.vm")
+
+  <div id="body">
+  <h1>$exception.class.name</h1>
+
+  <table>
+    <tbody>
+      #if ($exception.message)
+        <tr>
+          <th valign="top">Message</th>
+          <td>$exception.message</td>
+        </tr>
+      #end
+      <tr>
+        <th valign="top">StackTrace</th>
+        <td><pre class="prettyprint">$stacktrace</pre></td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  #include("vmTemplates/_footer.html")
+
+  </div>
+</body>
+</html>

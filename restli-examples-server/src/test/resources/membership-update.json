@@ -1,0 +1,5 @@
+{
+	"emailDigestFrequency": "WEEKLY",
+	"emailAnnouncementsFromManagers": false,
+	"emailForEveryNewPost": false
+}

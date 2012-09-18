@@ -1,0 +1,11 @@
+{
+  "name": "ActionSchema",
+  "namespace": "com.linkedin.restli.restspec",
+  "type": "record",
+  "fields": [ {"name": "name", "type": "string", "doc": "name of this action"},
+              {"name": "doc", "type": "string", "optional": true, "doc": "Documentation for this action"},
+              {"name": "parameters", "type": {"type": "array", "items": "ParameterSchema"}, "optional" : true, "doc": "parameters for this action"},
+              {"name": "returns", "type": "string", "optional" : true, "doc": "avro type of this action's return value"},
+              {"name": "throws", "type": {"type": "array", "items": "string"}, "optional" : true, "doc": "list of exception types thrown by this action"}
+            ]
+}

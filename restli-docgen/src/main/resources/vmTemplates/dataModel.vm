@@ -1,0 +1,70 @@
+<html>
+<head>
+  <title>Data::$dataModel.fullName</title>
+  <style type="text/css">
+    #include("vmTemplates/_doc.css")
+  </style>
+  <script type="application/javascript">
+    #include("vmTemplates/_prettify.js")
+  </script>
+</head>
+<body onload="prettyPrint();">
+  <div id="container">
+
+  #parse("vmTemplates/_nav.vm")
+
+  <div id="body">
+    <h1>$dataModel.name $dataModel.type</h1>
+    <p>$dataModel.doc</p>
+
+    <dl>
+      #if (!$relatedResources.isEmpty())
+        <dt>Related Resources</dt>
+        #foreach ($resourceModel in $relatedResources)
+          <dd><a href="$docBaseUri/rest/$resourceModel.name">$resourceModel.name</a></dd>
+        #end
+      #end
+      #if (!$relatedSchemas.isEmpty())
+        <dt>Related Data Schemas</dt>
+        #foreach ($recordDataSchema in $relatedSchemas)
+          <dd><a href="$recordDataSchema.fullName">$recordDataSchema.fullName</a></dd>
+        #end
+      #end
+      #if ($dataModel.fields)
+        <dt>Fields</dt>
+        <table>
+          <thead>
+            <tr>
+              <th class="nobg">Name</th>
+              <th scope="col">Type</th>
+              <th scope="col">Optional?</th>
+              <th scope="col">Default</th>
+              <th scope="col">Doc</th>
+            </tr>
+          </thead>
+          <tbody>
+            #foreach ($field in $dataModel.fields)
+              <tr>
+                <th scope="row">$field.name</th>
+                <td>$field.type.type.name().toLowerCase()</td>
+                <td>#if ($field.optional) yes #else no #end</td>
+                <td>$!field.default</td>
+                <td>$field.doc</td>
+              </tr>
+            #end
+          </tbody>
+        </table>
+      </dt>
+      #end
+    </dl>
+
+    <h2>Example</h2>
+
+    <pre class="prettyprint">$example</pre>
+  </div>
+
+  #include("vmTemplates/_footer.html")
+
+  </div>
+</body>
+</html>

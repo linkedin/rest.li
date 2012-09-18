@@ -1,0 +1,9 @@
+{
+  "name": "IdentifierSchema",
+  "namespace": "com.linkedin.restli.restspec",
+  "type": "record",
+  "fields": [ {"name": "name", "type": "string", "doc": "name of the identifier"},
+              {"name": "type", "type": "string", "doc": "avro type of the identifier"},
+              {"name": "params", "type": "string", "doc": "avro type of the identifier parameters", "optional": true}
+            ]
+}

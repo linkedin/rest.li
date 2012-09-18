@@ -1,0 +1,29 @@
+-- alfred creates a group
+curl -v -X POST -H "Content-Type: application/json" -H "Expect:" -d @group.json http://localhost:1338/groups
+curl -v -X POST -H "Content-Type: application/json" -H "Expect:" -d @group.json http://localhost:1338/groups
+
+-- get/search groups
+
+curl -v -X GET http://localhost:1338/groups/1
+curl -v -X GET "http://localhost:1338/groups?q=search&keywords=scientist"
+
+-- bruce requests to join
+curl -v -X PUT -H "Content-Type: application/json" -H "Expect:" -d @membership-bruce.json "http://localhost:1338/groupMemberships/groupID=1&memberID=2"
+
+-- get bruce's memberships
+
+curl -v -X GET "http://localhost:1338/groupMemberships/memberID=2?q=member"
+curl -v -X GET "http://localhost:1338/groupMemberships/memberID=2&groupID=1"
+
+-- carole requests to join
+curl -v -X PUT -H "Content-Type: application/json" -H "Expect:" -d @membership-carole.json "http://localhost:1338/groupMemberships/groupID=1&memberID=3"
+
+-- diana requests to join
+curl -v -X PUT -H "Content-Type: application/json" -H "Expect:" -d @membership-carole.json "http://localhost:1338/groupMemberships/groupID=1&memberID=4"
+
+-- alfred approves bruce
+curl -v -X PUT -H "Content-Type: application/json" -H "Expect:" -d @membership-update-state-change.json "http://localhost:1338/groupMemberships/groupID=1&memberID=2"
+
+-- bruce leaves
+curl -v -X PUT -H "Content-Type: application/json" -H "Expect:" -d @membership-leave.json "http://localhost:1338/groupMemberships/groupID=1&memberID=2"
+

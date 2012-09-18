@@ -1,0 +1,52 @@
+{
+  "name" : "accounts",
+  "path" : "/accounts",
+  "actionsSet" : {
+    "actions" : [ {
+      "name" : "closeAccounts",
+      "parameters" : [ {
+        "name" : "emailAddresses",
+        "type" : "{ \"type\" : \"array\", \"items\" : \"string\" }"
+      }, {
+        "name" : "someFlag",
+        "type" : "boolean"
+      }, {
+        "name" : "options",
+        "type" : "{ \"type\" : \"map\", \"values\" : \"string\" }",
+        "optional" : true
+      } ],
+      "returns" : "{ \"type\" : \"map\", \"values\" : \"string\" }"
+    }, {
+      "name" : "noArgMethod"
+    }, {
+      "name" : "primitiveResponse",
+      "returns" : "int"
+    }, {
+      "name" : "register",
+      "parameters" : [ {
+        "name" : "first",
+        "type" : "string"
+      }, {
+        "name" : "last",
+        "type" : "string"
+      }, {
+        "name" : "email",
+        "type" : "string"
+      }, {
+        "name" : "company",
+        "type" : "string",
+        "optional" : true
+      }, {
+        "name" : "openToMarketingEmails",
+        "type" : "boolean",
+        "default" : "true"
+      } ]
+    }, {
+      "name" : "spamTweets",
+      "parameters" : [ {
+        "name" : "statuses",
+        "type" : "{ \"type\" : \"array\", \"items\" : \"string\" }"
+      } ]
+    } ]
+  }
+}

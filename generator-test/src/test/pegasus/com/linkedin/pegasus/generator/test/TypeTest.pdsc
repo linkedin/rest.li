@@ -1,0 +1,44 @@
+{
+  "doc"  : "Ensuring that the more esoteric way of writing primitive types works correctly.",
+  "type" : "record",
+  "name" : "TypeTest",
+  "namespace" : "com.linkedin.pegasus.generator.test",
+  "fields" : [
+      { "name" : "simpleBooleanTest", "type" : { "type" : "boolean" } },
+      { "name" : "simpleIntTest", "type" : { "type" : "int" } },
+      { "name" : "simpleLongTest", "type" : { "type" : "long" } },
+      { "name" : "simpleFloatTest", "type" : { "type" : "float" } },
+      { "name" : "simpleDoubleTest", "type" : { "type" : "double" } },
+      { "name" : "simpleBytesTest", "type" : { "type" : "bytes" } },
+      { "name" : "simpleStringTest", "type" : { "type" : "string" } },
+
+      { "name" : "arrayBooleanTest", "type" : { "type" : "array", "items" : { "type": "boolean" } } },
+      { "name" : "arrayIntTest", "type" : { "type" : "array", "items" : { "type": "int" } } },
+      { "name" : "arrayLongTest", "type" : { "type" : "array", "items" : { "type": "long" } } },
+      { "name" : "arrayFloatTest", "type" : { "type" : "array", "items" : { "type": "float" } } },
+      { "name" : "arrayDoubleTest", "type" : { "type" : "array", "items" : { "type": "double" } } },
+      { "name" : "arrayBytesTest", "type" : { "type" : "array", "items" : { "type": "bytes" } } },
+      { "name" : "arrayStringTest", "type" : { "type" : "array", "items" : { "type": "string" } } },
+
+      { "name" : "mapBooleanTest", "type" : { "type": "map", "values": { "type" : "boolean" } } },
+      { "name" : "mapIntTest", "type" : { "type": "map", "values": { "type" : "int" } } },
+      { "name" : "mapLongTest", "type" : { "type": "map", "values": { "type" : "long" } } },
+      { "name" : "mapFloatTest", "type" : { "type": "map", "values": { "type" : "float" } } },
+      { "name" : "mapDoubleTest", "type" : { "type": "map", "values": { "type" : "double" } } },
+      { "name" : "mapBytesTest", "type" : { "type": "map", "values": { "type" : "bytes" } } },
+      { "name" : "mapStringTest", "type" : { "type": "map", "values": { "type" : "string" } } },
+
+      { "name" : "unionTest", "type" :
+        [
+          {"type": "boolean"},
+          {"type": "int"},
+          {"type": "long"},
+          {"type": "float"},
+          {"type": "double"},
+          {"type": "bytes"},
+          {"type": "string"}
+        ]
+      }
+
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "type" : "record",
+  "name" : "OptionalWithDefault",
+  "namespace" : "com.linkedin.pegasus.generator.examples",
+  "fields" :
+  [
+    {
+      "name"    : "foo",
+      "type"    : "string",
+      "value"   : "foo bar baz"
+    }
+  ]
+}
+

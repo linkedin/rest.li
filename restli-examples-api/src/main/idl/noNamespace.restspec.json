@@ -1,0 +1,47 @@
+{
+  "name" : "noNamespace",
+  "path" : "/noNamespace",
+  "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+  "doc" : "An REST endpoint without namespace",
+  "collection" : {
+    "identifier" : {
+      "name" : "noNamespaceId",
+      "type" : "long"
+    },
+    "supports" : [ ],
+    "entity" : {
+      "path" : "/noNamespace/{noNamespaceId}",
+      "subresources" : [ {
+        "name" : "noNamespaceSub",
+        "path" : "/noNamespace/{noNamespaceId}/noNamespaceSub",
+        "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+        "doc" : "A subresource of the REST endpoint without namespace",
+        "collection" : {
+          "identifier" : {
+            "name" : "noNamespaceSubId",
+            "type" : "long"
+          },
+          "supports" : [ ],
+          "entity" : {
+            "path" : "/noNamespace/{noNamespaceId}/noNamespaceSub/{noNamespaceSubId}"
+          }
+        }
+      }, {
+        "name" : "noNamespaceSub2",
+        "path" : "/noNamespace/{noNamespaceId}/noNamespaceSub2",
+        "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+        "doc" : "Another subresource of the REST endpoint without namespace",
+        "collection" : {
+          "identifier" : {
+            "name" : "noNamespaceSub2Id",
+            "type" : "long"
+          },
+          "supports" : [ ],
+          "entity" : {
+            "path" : "/noNamespace/{noNamespaceId}/noNamespaceSub2/{noNamespaceSub2Id}"
+          }
+        }
+      } ]
+    }
+  }
+}

@@ -1,0 +1,69 @@
+body {
+  font: normal 14px auto "Trebuchet MS", Verdana, Arial, Helvetica, sans-serif;
+  /* color: #4f6b72; */
+  background: #E6EAE9;
+}
+
+a {
+  color: #0000AA;
+}
+
+a:visited {
+  color: #AA00AA;
+}
+
+table {
+  width: 100%;
+  border-spacing: 0px;
+}
+
+th {
+  font: bold 11px "Trebuchet MS", Verdana, Arial, Helvetica, sans-serif;
+  border-right: 1px solid #C1DAD7;
+  border-bottom: 1px solid #C1DAD7;
+  border-top: 1px solid #C1DAD7;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-align: left;
+  padding: 6px 6px 6px 12px;
+  background: #CAE8EA
+}
+
+td {
+  border-right: 1px solid #C1DAD7;
+  border-bottom: 1px solid #C1DAD7;
+  background: #fff;
+  padding: 6px 6px 6px 12px;
+  /* color: #6D929B; */
+}
+
+.code {
+  font-family:"Courier New";
+  color: #333333;
+}
+
+.todo {
+  display: none;
+  font-style: italic;
+  color: #AA0000;
+}
+
+table.identifier-table {
+  width: auto;
+}
+
+table.identifier-table th {
+  width: 120px;
+}
+
+table.identifier-table td {
+  min-width: 200px;
+}
+
+th.fixedcol {
+  width: 50px;
+}
+
+th.bigcol {
+  width: 300px;
+}

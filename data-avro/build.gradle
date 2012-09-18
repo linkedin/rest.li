@@ -1,0 +1,12 @@
+/**
+ * Use a different module to avoid having the main data module depend on
+ * unnecessary external libraries, such as Avro.
+ */
+
+dependencies {
+  compile project(':data')
+  compile externalDependency.jacksonCoreAsl
+  compile externalDependency.avro
+  testCompile externalDependency.testng
+  testCompile project(path: ':data', configuration: 'testArtifacts')
+}

@@ -1,0 +1,12 @@
+{
+  "name": "CollectionSchema",
+  "namespace": "com.linkedin.restli.restspec",
+  "type": "record",
+  "fields": [ {"name": "identifier", "type": "IdentifierSchema", "doc": "details of the identifier (key) for this collection"},
+              {"name": "supports", "type": {"type": "array", "items": "string"}, "doc": "basic rest.li methods supported by this resource, e.g., create, get, update, delete, batch_get"},
+              {"name": "methods", "type": {"type": "array", "items": "RestMethodSchema"}, "optional" : true, "doc": "details on rest methods supported by this collection"},
+              {"name": "finders", "type": {"type": "array", "items": "FinderSchema"}, "optional" : true, "doc": "list of finders supported by this collection"},
+              {"name": "actions", "type": {"type": "array", "items": "ActionSchema"}, "optional" : true, "doc": "list of actions supported by this collection"},
+              {"name": "entity", "type": "EntitySchema", "doc": "details of the entity provided by this collection"}
+            ]
+}

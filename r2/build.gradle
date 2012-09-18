@@ -1,0 +1,8 @@
+dependencies {
+  compile project (':data')
+  compile project (':pegasus-common')
+  compile externalDependency.netty
+  compile externalDependency.servletApi
+  compile externalDependency.mina
+  testCompile externalDependency.testng
+}

@@ -1,0 +1,31 @@
+{
+  "name" : "greetings",
+  "namespace": "com.linkedin.restli.greetings",
+  "path" : "/greetings",
+  "schema" : "com.linkedin.greetings.api.Greeting",
+  "doc" : "A richer \"Hello world\" example, demonstrating a full array of methods, finders and actions",
+  "association" : {
+    "assocKeys" : [ {
+      "name" : "key1",
+      "type" : "string"
+    }, {
+      "name" : "key2",
+      "type" : "int"
+    } ],
+    "supports": [ "create" ],
+    "methods" : [ {
+      "method" : "create",
+      "parameters" : [ {
+        "name" : "auth",
+        "type" : "string",
+        "optional" : true
+      }, {
+        "name" : "data",
+        "type" : "string"
+      } ]
+    } ],
+    "entity" : {
+      "path" : "/greetings/association/{id}"
+    }
+  }
+}

@@ -1,0 +1,33 @@
+dependencies {
+  compile project(':data')
+  compile project(':r2')
+  compile project(':li-jersey-uri')
+  compile project(':generator')
+  compile project(':restli-common')
+  compile project(':restli-client')
+  compile project(':restli-server')
+  compile externalDependency.commonsIo
+  compile externalDependency.codemodel
+  compile externalDependency.slf4jApi
+  compile externalDependency.slf4jLog4j12
+  compile externalDependency.log4j
+  compile externalDependency.commonsCli
+  compile externalDependency.commonsLang
+  compile externalDependency.jacksonCoreAsl
+  compile externalDependency.jacksonMapperAsl
+  compile externalDependency.jdkTools
+  testCompile externalDependency.googleCollections
+  testCompile externalDependency.testng
+  testCompile externalDependency.easymock
+  testCompile externalDependency.easymockClassExtension
+  testCompile externalDependency.commonsHttpClient
+  testRuntime externalDependency.cglib
+}
+
+test {
+  systemProperties['test.projectDir'] = projectDir.toString()
+}
+
+allTests {
+  systemProperties['test.projectDir'] = projectDir.toString()
+}

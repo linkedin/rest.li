@@ -1,0 +1,8 @@
+dependencies {
+  compile project(':restli-examples-api')
+  compile externalDependency.log4j
+  testCompile externalDependency.testng
+  testCompile externalDependency.easymock
+  testCompile externalDependency.easymockClassExtension
+  testCompile externalDependency.commonsHttpClient
+}

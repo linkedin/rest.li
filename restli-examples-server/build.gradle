@@ -1,0 +1,115 @@
+dependencies {
+  compile project(':restli-examples-api')
+  compile project(':restli-server-standalone') // for task startServerStandaloneLauncher
+  compile project(':data')
+  compile project(':pegasus-common')
+  compile project(':r2')
+  compile project(':r2-jetty')
+  compile project(':data-transform')
+  compile project(':restli-docgen')
+  compile project(':restli-server')
+  compile project(':restli-common')
+  compile externalDependency.log4j
+  compile externalDependency.googleCollections
+  compile externalDependency.commonsLang
+  compile externalDependency.javaxInject
+  compile externalDependency.parseq
+  testCompile externalDependency.testng
+}
+
+// run the generator for each configuration
+def genClass = 'com.linkedin.restli.examples.greetings.server.GreetingsResourceCodeGenerator'
+def outputBase = 'src/mainGeneratedTest/java/com/linkedin/restli/examples/greetings/server/'
+task generateGreetings(dependsOn: ['compileJava']) << {
+  mkdir(outputBase)
+  ant.java(classname: genClass,
+           output: outputBase + 'GreetingsResource.java',
+           classpath: "${sourceSets.main.runtimeClasspath.asPath}") {
+    arg(value: 'com.linkedin.restli.server.resources.CollectionResourceTemplate')
+    arg(value: 'SYNC')
+    arg(value: '')
+    arg(value: 'false')
+  }
+  ant.java(classname: genClass,
+           output: outputBase + 'GreetingsResourceCallback.java',
+           classpath: "${sourceSets.main.runtimeClasspath.asPath}") {
+    arg(value: 'com.linkedin.restli.server.resources.CollectionResourceAsyncTemplate')
+    arg(value: 'CALLBACK')
+    arg(value: 'Callback')
+    arg(value: 'false')
+  }
+  ant.java(classname: genClass,
+           output: outputBase + 'GreetingsResourcePromise.java',
+           classpath: "${sourceSets.main.runtimeClasspath.asPath}") {
+    arg(value: 'com.linkedin.restli.server.resources.KeyValueResource')
+    arg(value: 'PROMISE')
+    arg(value: 'Promise')
+    arg(value: 'false')
+  }
+  ant.java(classname: genClass,
+           output: outputBase + 'GreetingsResourcePromiseCtx.java',
+           classpath: "${sourceSets.main.runtimeClasspath.asPath}") {
+    arg(value: 'com.linkedin.restli.server.resources.KeyValueResource')
+    arg(value: 'PROMISE')
+    arg(value: 'PromiseCtx')
+    arg(value: 'true')
+  }
+  ant.java(classname: genClass,
+           output: outputBase + 'GreetingsResourceTask.java',
+           classpath: "${sourceSets.main.runtimeClasspath.asPath}") {
+    arg(value: 'com.linkedin.restli.server.resources.KeyValueResource')
+    arg(value: 'TASK')
+    arg(value: 'Task')
+    arg(value: 'false')
+  }
+}
+// compile generated code separately from the main code, but put the classes
+// in the same output directory
+sourceSets {
+  generated {
+    java {
+      srcDirs = [ 'src/mainGeneratedTest/java' ]
+      output.classesDir = sourceSets.main.output.classesDir
+    }
+  }
+}
+// need to reference GreetingsResourceImpl, which is in runtime classpath
+sourceSets.generated.compileClasspath = sourceSets.main.compileClasspath + sourceSets.main.runtimeClasspath
+compileGeneratedJava.dependsOn(generateGreetings)
+test.dependsOn(compileGeneratedJava)
+jar.dependsOn(compileGeneratedJava)
+compileTestJava.dependsOn(compileGeneratedJava)
+javadoc.dependsOn(compileGeneratedJava)
+// cleanup
+task cleanGenerateGreetings(type: Delete) {
+  delete 'src/mainGeneratedTest'
+}
+clean.dependsOn(cleanGenerateGreetings)
+
+// Generate IDLs for ACL, Groups, and Greetings.
+ext.resourcePackages = [
+  'main': [
+    'com.linkedin.restli.examples.groups.server',
+    'com.linkedin.restli.examples.greetings.server',
+    'com.linkedin.restli.examples.typeref.server'
+  ]
+]
+apply from: "${build_script_dir}/restModel.gradle"
+apply from: "${build_script_dir}/publishIdl.gradle"
+
+// TODO When using spawn: true, the server process seems to exit after when gradle exits
+// the groups example requires some application setup/wiring, hence the custom RestLiExamplesServer class
+task startServer(dependsOn: ['build']) << {
+  logging.captureStandardOutput LogLevel.INFO
+  ant.java(classname: 'com.linkedin.restli.examples.RestLiExamplesServer', fork: true, output: '/tmp/restli-examples-server.log',
+           classpath: "${sourceSets.main.runtimeClasspath.asPath}")
+}
+
+// all other examples are simple (no app-specific setup/configuration) and can be booted directly via the StandaloneLauncher class
+task startServerStandaloneLauncher(dependsOn: ['build']) << {
+  logging.captureStandardOutput LogLevel.INFO
+  ant.java(classname: 'com.linkedin.restli.server.StandaloneLauncher', fork: true, output: '/tmp/restli-examples-server.log',
+  classpath: "${sourceSets.main.runtimeClasspath.asPath}") {
+     arg(line: '-packages com.linkedin.restli.examples.greetings.server,com.linkedin.restli.examples.typeref.server')
+  }
+}

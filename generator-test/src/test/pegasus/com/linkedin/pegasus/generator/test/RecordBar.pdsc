@@ -1,0 +1,8 @@
+{
+  "type" : "record",
+  "name" : "RecordBar",
+  "namespace" : "com.linkedin.pegasus.generator.test",
+  "fields" : [
+    { "name" : "location", "type" : "string" }
+  ]
+}

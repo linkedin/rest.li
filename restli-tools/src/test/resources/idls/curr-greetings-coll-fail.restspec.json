@@ -1,0 +1,99 @@
+{
+  "name" : "greetings",
+  "path" : "/greetings",
+  "schema" : "com.linkedin.greetings.api.Greeting",
+  "doc" : "A richer \"Hello world\" example, demonstrating a full array of methods, finders and actions",
+  "collection" : {
+    "identifier" : {
+      "name" : "id",
+      "type" : "long",
+      "params" : "long"
+    },
+    "supports" : [ "create", "delete", "get", "update" ],
+    "finders" : [ {
+      "name" : "search",
+      "default" : true,
+      "parameters" : [ {
+        "name" : "tone",
+        "type" : "array",
+        "items": "com.linkedin.greetings.api.Tone",
+        "optional" : false
+      } ],
+      "metadata" : {
+        "type" : "int"
+      },
+      "assocKeys" : [ "q", "changed_key" ]
+    } ],
+    "actions" : [ {
+      "name" : "anotherAction",
+      "doc" : "Deletes all greetings",
+      "parameters" : [ {
+        "name" : "bitfield",
+        "type" : {
+          "type" : "array",
+          "items" : "boolean"
+        }
+      }, {
+        "name" : "request",
+        "type" : "com.linkedin.groups.api.TransferOwnershipRequest"
+      }, {
+        "name" : "someString",
+        "type" : "StringRef"
+      }, {
+        "name" : "stringMap",
+        "type" : {
+          "type" : "map",
+          "values" : "int"
+        }
+      } ],
+      "return" : "void"
+    }, {
+      "name" : "exceptionTest",
+      "throws" : [ "com.linkedin.groups.api.GroupOwnerException", "java.lang.NullPointerException" ]
+    } ],
+    "entity" : {
+      "path" : "/greetings/{id}",
+      "actions" : [ {
+        "name" : "anotherAction",
+        "doc" : "Deletes all greetings",
+        "parameters" : [ {
+          "name" : "bitfield",
+          "type" : {
+            "type" : "array",
+            "items" : "boolean"
+          }
+        }, {
+          "name" : "request",
+          "type" : "com.linkedin.groups.api.TransferOwnershipRequest"
+        }, {
+          "name" : "someString",
+          "type" : "string"
+        } ]
+      }, {
+        "name" : "exceptionTest",
+        "throws" : [ "com.linkedin.groups.api.GroupOwnerException", "java.io.FileNotFoundException" ]
+      }, {
+        "name" : "someAction",
+        "parameters" : [ {
+          "name" : "a",
+          "type" : "int",
+          "default" : "1"
+        }, {
+          "name" : "b",
+          "type" : "int",
+          "default" : "0"
+        }, {
+          "name" : "c",
+          "type" : "com.linkedin.groups.api.TransferOwnershipRequest",
+          "optional" : true
+        }, {
+          "name" : "d",
+          "type" : "com.linkedin.groups.api.TransferOwnershipRequest"
+        }, {
+          "name" : "f",
+          "type" : "int"
+        } ]
+      } ]
+    }
+  }
+}

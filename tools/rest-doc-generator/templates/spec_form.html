@@ -1,0 +1,19 @@
+{% macro spec_form(spec=None) %}
+
+{% if not spec %}
+  {% set post_url = url_for('create') %}
+{% else %}
+  {% set post_url = url_for('edit', spec_id=spec._id) %}
+{% endif %}
+
+<form action="{{ post_url }}" method="POST">
+  <label for="specName">Name</label>
+  <input id="specName" type="text" name="name" value="{{ spec.name }}">
+  <BR>
+  <label for="jsonSpec">
+    Type in some JSON here:<br>
+  </label>
+  <textarea id="jsonSpec" name="spec" rows="40" cols="40">{{ spec.json }}</textarea><br>
+  <input type="submit" name="json" value="Submit">
+</form>
+{% endmacro %}

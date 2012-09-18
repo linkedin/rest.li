@@ -1,0 +1,29 @@
+{
+  "type" : "record",
+  "name" : "Foo",
+  "namespace" : "com.linkedin.pegasus.generator.examples",
+  "fields" : [
+    { "name" : "booleanField",   "type" : "boolean" },
+    { "name" : "intField",       "type" : "int" },
+    { "name" : "longField",      "type" : "long" },
+    { "name" : "floatField",     "type" : "float" },
+    { "name" : "doubleField",    "type" : "double" },
+    { "name" : "bytesField",     "type" : "bytes" },
+    { "name" : "stringField",    "type" : "string" },
+    { "name" : "fruitsField",    "type" : "Fruits" },
+    { "name" : "intArrayField",  "type" : { "type" : "array", "items" : "int" } },
+    { "name" : "stringMapField", "type" : { "type" : "map", "values" : "string" } },
+    {
+      "name" : "unionField",
+      "type" : [
+        "int",
+        "string",
+        "Fruits",
+        "Foo",
+        { "type" : "array", "items" : "string" },
+        { "type" : "map", "values" : "long" },
+        "null"
+      ]
+    }
+  ]
+}

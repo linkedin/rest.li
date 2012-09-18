@@ -1,0 +1,6 @@
+{
+  "name": "NonMemberPermissions",
+  "namespace": "com.linkedin.restli.examples.groups.api",
+  "type": "enum",
+  "symbols": [ "NONE", "READ_ONLY", "COMMENT_WITH_MODERATION", "COMMENT_AND_POST_WITH_MODERATION", "COMMENT_NO_MODERATION_POST_MODERATION" ]
+}

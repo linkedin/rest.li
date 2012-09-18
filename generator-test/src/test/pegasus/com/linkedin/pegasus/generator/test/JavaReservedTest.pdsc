@@ -1,0 +1,21 @@
+{
+  "doc"  : "Test generation of Java bindings for Java reserved words",
+  "type" : "record",
+  "name" : "JavaReservedTest",
+  "aliases" : [ "super", "this", "return" ],
+  "namespace" : "com.linkedin.pegasus.generator.test",
+  "fields" : [
+    { "name" : "if", "type" : "int" },
+
+    { "name" : "then", "type" : { "type" : "fixed", "name" : "else", "size" : 1 } },
+    { "name" : "for", "type" : "else" },
+
+    { "name" : "while", "type" : { "type" : "enum", "name" : "switch", "symbols" : [ ] } },
+    { "name" : "case", "type" : "switch" },
+
+    { "name" : "break", "type" : { "type" : "record", "name" : "goto", "fields" : [ ] } },
+    { "name" : "try", "type" : "goto" },
+
+    { "name" : "union", "type" : [ "switch", "else", "goto", "super" ] }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "name": "EntitySchema",
+  "namespace": "com.linkedin.restli.restspec",
+  "type": "record",
+  "fields": [ {"name": "path", "type": "string", "doc": "URI template for accessing this entity"},
+              {"name": "actions", "type": {"type": "array", "items": "ActionSchema"}, "optional" : true, "doc": "list of actions supported by this entity"},
+              {"name": "subresources", "type": {"type": "array", "items": "ResourceSchema"}, "optional" : true, "doc": "list of subresources accessible via this entity"}
+            ]
+}

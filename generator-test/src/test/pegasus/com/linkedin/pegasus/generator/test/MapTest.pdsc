@@ -1,0 +1,72 @@
+{
+  "doc"  : "Test generation of Java bindings for maps",
+  "type" : "record",
+  "name" : "MapTest",
+  "namespace" : "com.linkedin.pegasus.generator.test",
+  "fields" : [
+
+    { "name" : "intMap", "type" : { "type" : "map", "values" : "int" } },
+    { "name" : "longMap", "type" : { "type" : "map", "values" : "long" } },
+    { "name" : "floatMap", "type" : { "type" : "map", "values" : "float" } },
+    { "name" : "doubleMap", "type" : { "type" : "map", "values" : "double" } },
+    { "name" : "booleanMap", "type" : { "type" : "map", "values" : "boolean" } },
+    { "name" : "stringMap", "type" : { "type" : "map", "values" : "string" } },
+    { "name" : "bytesMap", "type" : { "type" : "map", "values" : "bytes" } },
+
+    { "name" : "intArrayMap", "type" : { "type" : "map", "values" : { "type" : "array", "items" : "int" } } },
+    { "name" : "longArrayMap", "type" : { "type" : "map", "values" : { "type" : "array", "items" : "long" } } },
+    { "name" : "floatArrayMap", "type" : { "type" : "map", "values" : { "type" : "array", "items" : "float" } } },
+    { "name" : "doubleArrayMap", "type" : { "type" : "map", "values" : { "type" : "array", "items" : "double" } } },
+    { "name" : "booleanArrayMap", "type" : { "type" : "map", "values" : { "type" : "array", "items" : "boolean" } } },
+    { "name" : "stringArrayMap", "type" : { "type" : "map", "values" : { "type" : "array", "items" : "string" } } },
+    { "name" : "bytesArrayMap", "type" : { "type" : "map", "values" : { "type" : "array", "items" : "bytes" } } },
+
+    { "name" : "enumFruitsMap", "type" : { "type" : "map", "values" : "EnumFruits" } },
+
+    { "name" : "enumInlineMap", "type" :
+      { "type" : "map",
+        "values" : {
+          "type" : "enum", "name" : "EnumInMap", "symbols" : [ "A", "B" ]
+        }
+      }
+    },
+
+    { "name" : "recordMap", "type" : { "type" : "map", "values" : "RecordBar" } },
+
+    { "name" : "recordInlineMap", "type" :
+      { "type" : "map",
+        "values" : {
+          "type" : "record", "name" : "RecordInMap", "fields" : [
+            { "name" : "f", "type" : "int" }
+          ]
+        }
+      }
+    },
+
+    { "name" : "fixedMap", "type" : { "type" : "map", "values" : "FixedMD5" } },
+
+    { "name" : "fixedInlineMap", "type" :
+      { "type" : "map",
+        "values" : {
+          "type" : "fixed", "name" : "FixedInMap", "size" : 1
+        }
+      }
+    },
+
+    { "name" : "unionMap", "type" :
+      { "type" : "map",
+        "values" :
+        [
+          "null",
+          "int",
+          "string",
+          { "type" : "array", "items" : "int" },
+          { "type" : "map", "values" : "string" },
+          "EnumFruits",
+          "RecordBar",
+          "FixedMD5"
+        ]
+      }
+    }
+  ]
+}

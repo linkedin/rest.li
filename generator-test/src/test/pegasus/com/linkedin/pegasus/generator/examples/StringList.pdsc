@@ -1,0 +1,9 @@
+{
+  "type" : "record",
+  "name" : "StringList",
+  "namespace" : "com.linkedin.pegasus.generator.examples",
+  "fields" : [
+    { "name" : "element", "type" : "string" },
+    { "name" : "next"   , "type" : [ "StringList", "null" ] }
+  ]
+}

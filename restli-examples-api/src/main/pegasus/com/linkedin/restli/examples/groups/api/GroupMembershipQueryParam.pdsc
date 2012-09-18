@@ -1,0 +1,18 @@
+{
+  "type": "record",
+  "name": "GroupMembershipQueryParam",
+  "namespace": "com.linkedin.restli.examples.groups.api",
+  "doc": "A GroupMembership resource query parameters",
+  "fields":  [
+    {
+      "name": "intParameter",
+      "type": "int",
+      "doc": ""
+    },
+    {
+      "name": "stringParameter",
+      "type": "string",
+      "doc": ""
+    }
+  ]
+}

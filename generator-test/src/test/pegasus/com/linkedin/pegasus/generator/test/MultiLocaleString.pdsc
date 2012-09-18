@@ -1,0 +1,12 @@
+{
+  "type" : "record",
+  "name" : "MultiLocaleString",
+  "namespace" : "com.linkedin.pegasus.generator.test",
+  "doc" : "Represents a textual field with values for multiple locales",
+  "fields" : [
+    { "name" : "localized", "type" : { "type" : "map", "values" : "string" }, "doc" : "Maps a locale to a localized version of the string" },
+
+    // todo: change type to "locale" when available
+    { "name" : "preferredLocale", "type" : "string", "derived" : true, "optional" : true, "doc" : "The preferred locale to use, based on standard rules" }
+  ]
+}

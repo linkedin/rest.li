@@ -1,0 +1,6 @@
+{
+  "type" : "typeref",
+  "name" : "DoubleRef",
+  "namespace" : "com.linkedin.restli.examples.typeref.api",
+  "ref" : "double"
+}

@@ -1,0 +1,63 @@
+{
+  "name" : "groupMemberships",
+  "namespace" : "com.linkedin.restli.examples.groups.client",
+  "path" : "/groupMemberships",
+  "schema" : "com.linkedin.restli.examples.groups.api.GroupMembership",
+  "doc" : "Association between members and groups",
+  "association" : {
+    "assocKeys" : [ {
+      "name" : "groupID",
+      "type" : "int"
+    }, {
+      "name" : "memberID",
+      "type" : "int"
+    } ],
+    "supports" : [ "batch_delete", "batch_get", "batch_update", "delete", "get", "partial_update", "update" ],
+    "methods" : [ {
+      "method" : "get"
+    }, {
+      "method" : "update"
+    }, {
+      "method" : "partial_update"
+    }, {
+      "method" : "delete"
+    }, {
+      "method" : "batch_get"
+    }, {
+      "method" : "batch_update"
+    }, {
+      "method" : "batch_delete"
+    } ],
+    "finders" : [ {
+      "name" : "group",
+      "parameters" : [ {
+        "name" : "level",
+        "type" : "string",
+        "optional" : true
+      }, {
+        "name" : "firstName",
+        "type" : "string",
+        "optional" : true
+      }, {
+        "name" : "lastName",
+        "type" : "string",
+        "optional" : true
+      }, {
+        "name" : "email",
+        "type" : "string",
+        "optional" : true
+      }, {
+        "name" : "sort",
+        "type" : "com.linkedin.restli.examples.groups.api.MembershipSortOrder",
+        "optional" : true
+      } ],
+      "assocKeys" : [ "groupID" ]
+    }, {
+      "name" : "member",
+      "assocKeys" : [ "memberID" ]
+    } ],
+    "entity" : {
+      "path" : "/groupMemberships/memberID={memberID}&groupID={groupID}"
+    }
+  }
+}

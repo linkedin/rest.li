@@ -1,0 +1,7 @@
+<div id="nav">
+  <ul>
+    <li><a href="$docBaseUri">Home</a></li>
+    <li><a href="$docBaseUri/rest">Resources</a></li>
+    <li><a href="$docBaseUri/data">Data Models</a></li>
+  </ul>
+</div>

@@ -1,0 +1,12 @@
+{
+  "name": "WriteLevel",
+  "namespace" : "com.linkedin.restli.examples.groups.api",
+  "type": "enum",
+  "symbols": [
+    "NONE",
+    "PREMODERATED",
+    "DEFAULT",
+    "FULL"
+  ]
+}
+              

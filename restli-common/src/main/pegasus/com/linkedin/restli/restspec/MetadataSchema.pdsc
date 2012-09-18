@@ -1,0 +1,8 @@
+{
+  "name": "MetadataSchema",
+  "namespace": "com.linkedin.restli.restspec",
+  "type": "record",
+  "fields": [
+              {"name": "type", "type": "string", "doc": "pegasus type of the metadata"}
+            ]
+}

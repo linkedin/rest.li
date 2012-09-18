@@ -1,0 +1,30 @@
+{
+  "type" : "record",
+  "name" : "UriClient",
+  "namespace" : "com.linkedin.pegasus.generator.test",
+  "fields" : [
+    {
+      "name" : "required",
+      "type" : "Uri"
+    },
+    {
+      "name": "optional",
+      "type" : "Uri",
+      "optional" : true
+    },
+    {
+      "name" : "array",
+      "type" : {
+        "type" : "array",
+        "items" : "Uri"
+      }
+    },
+    {
+      "name" : "map",
+      "type" : {
+        "type" : "map",
+        "values" : "Uri"
+      }
+    }
+  ]
+}

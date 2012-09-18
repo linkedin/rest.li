@@ -1,0 +1,15 @@
+dependencies {
+  compile project(':data')
+  compile project(':data-transform')
+  compile project(':r2')
+  compile project(':li-jersey-uri')
+  compile project(':restli-common')
+  compile project(':restli-server')
+  compile externalDependency.commonsLang
+  compile externalDependency.jacksonCoreAsl
+  compile externalDependency.log4j
+  compile externalDependency.velocity
+  testCompile project(':restli-examples-api')
+  testCompile project.files({ return project(':restli-examples-server').sourceSets.generated.output })
+  testCompile externalDependency.testng
+}

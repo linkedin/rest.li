@@ -1,0 +1,19 @@
+{
+  "name" : "exceptions",
+  "namespace" : "com.linkedin.restli.examples.greetings.client",
+  "path" : "/exceptions",
+  "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+  "collection" : {
+    "identifier" : {
+      "name" : "exceptionsId",
+      "type" : "long"
+    },
+    "supports" : [ "get" ],
+    "methods" : [ {
+      "method" : "get"
+    } ],
+    "entity" : {
+      "path" : "/exceptions/{exceptionsId}"
+    }
+  }
+}

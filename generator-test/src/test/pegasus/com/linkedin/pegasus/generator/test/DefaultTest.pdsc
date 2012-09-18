@@ -1,0 +1,52 @@
+{
+  "doc"  : "Test for default values",
+  "type" : "record",
+  "name" : "DefaultTest",
+  "namespace" : "com.linkedin.pegasus.generator.test",
+  "fields" : [
+    { "name" : "intField",       "type" : "int",     "default" : 1 },
+    { "name" : "longField",      "type" : "long",    "default" : 9876543210 },
+    { "name" : "floatField",     "type" : "float",   "default" : 2.5 },
+    { "name" : "doubleField",    "type" : "double",  "default" : 9.5 },
+    { "name" : "booleanField",   "type" : "boolean", "default" : true },
+    { "name" : "stringField",    "type" : "string",  "default" : "a string" },
+    { "name" : "bytesField",     "type" : "bytes",   "default" : "\u00ff\u0000" },
+
+    { "name" : "enumField",      "type" : "EnumFruits", "default" : "APPLE" },
+    { "name" : "recordField",    "type" : "RecordBar",  "default" : { "location" : "anywhere" } },
+    { "name" : "fixedField",     "type" : "FixedMD5",   "default" : "1234567890ABCDEF" },
+
+    { "name" : "enumInlineField", "type" :
+      { "type" : "enum", "name" : "EnumInDefaultTest", "symbols" : [ "A", "B", "C" ] },
+      "default" : "A" },
+    { "name" : "recordInlineField", "type" :
+      { "type" : "record", "name" : "RecordInDefaultTest",
+        "fields" : [
+          { "name" : "a", "type" : "int" }
+        ]
+      },
+      "default" : { "a" : 1 }
+    },
+    { "name" : "fixedInlineField", "type" :
+      { "type" : "fixed", "name" : "fixedInDefaultTest", "size" : 1 },
+      "default" : "\u0080"
+    },
+
+    { "name" : "arrayField",     "type" : { "type" : "array", "items" : "int" },   "default" : [ 1, 2, 3 ] },
+    { "name" : "mapField",       "type" : { "type" : "map", "values" : "string" }, "default" : { "a" : "B", "b" : "B" } },
+
+    {
+      "name" : "unionField",
+      "type" : [
+        { "type" : "array", "items" : "string" },
+        { "type" : "map", "values" : "long" },
+        "int",
+        "string",
+        "EnumFruits",
+        "RecordBar",
+        "null"
+      ],
+      "default" : { "array" : [ "e1", "e2", "e3" ] }
+    }
+  ]
+}

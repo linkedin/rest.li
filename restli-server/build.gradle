@@ -1,0 +1,28 @@
+dependencies {
+  compile project(':data')
+  compile project(':data-transform')
+  compile project(':r2')
+  compile project(':li-jersey-uri')
+  compile project(':restli-common')
+  compile project(':pegasus-common')
+  compile externalDependency.javaxInject
+  compile externalDependency.slf4jApi
+  compile externalDependency.slf4jLog4j12
+  compile externalDependency.log4j
+  compile externalDependency.commonsLang
+  compile externalDependency.jacksonCoreAsl
+  compile externalDependency.jacksonMapperAsl
+  compile externalDependency.parseq
+  testCompile externalDependency.googleCollections
+  testCompile externalDependency.testng
+  testCompile externalDependency.easymock
+  testCompile externalDependency.easymockClassExtension
+  testCompile externalDependency.commonsHttpClient
+  testRuntime externalDependency.cglib
+}
+
+apply from: "${build_script_dir}/dataTemplate.gradle"
+
+test {
+   systemProperties['test.projectDir'] = projectDir.toString()
+}

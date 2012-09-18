@@ -1,0 +1,11 @@
+{
+  "type" : "typeref",
+  "name" : "Uri",
+  "namespace" : "com.linkedin.pegasus.generator.test",
+  "ref" : "string",
+  "java" :
+  {
+    "class" : "java.net.URI",
+    "coercerClass" : "com.linkedin.pegasus.generator.test.UriCoercer"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "type" : "typeref",
+  "name" : "PointRef",
+  "namespace" : "com.linkedin.restli.examples.typeref.api",
+  "ref" : "Point"
+}

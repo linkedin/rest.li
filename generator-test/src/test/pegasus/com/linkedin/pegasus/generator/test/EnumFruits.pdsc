@@ -1,0 +1,6 @@
+{
+  "name" : "EnumFruits",
+  "namespace" : "com.linkedin.pegasus.generator.test",
+  "type" : "enum",
+  "symbols" : [ "APPLE", "BANANA", "GRAPES", "ORANGE", "PINEAPPLE" ]
+}

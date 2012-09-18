@@ -1,0 +1,6 @@
+{
+  "type" : "typeref",
+  "name" : "IntArrayRef",
+  "namespace" : "com.linkedin.restli.examples.typeref.api",
+  "ref" : { "type" : "array", "items" : "int" }
+}

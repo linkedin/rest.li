@@ -1,0 +1,18 @@
+{
+  "doc"  : "Test aliases",
+  "type" : "record",
+  "name" : "AliasTest",
+  "namespace" : "com.linkedin.pegasus.generator.test",
+  "aliases" : [ "AliasTest2", "com.linkedin.pegasus.generator.test.a.AliasTestA", "com.linkedin.pegasus.generator.test.a.b.AliasTestAB" ],
+  "fields" : [
+    { "name" : "a1", "type" : "AliasTest" },
+    { "name" : "a2", "type" : "com.linkedin.pegasus.generator.test.AliasTest" },
+    { "name" : "a3", "type" : "AliasTest2" },
+    { "name" : "a4", "type" : "com.linkedin.pegasus.generator.test.AliasTest2" },
+    { "name" : "a5", "type" : "com.linkedin.pegasus.generator.test.a.AliasTestA" },
+    { "name" : "a6", "type" : "com.linkedin.pegasus.generator.test.a.b.AliasTestAB" },
+    { "name" : "a7", "type" : { "type" : "record", "name" : "com.linkedin.pegasus.generator.test.a.RecordInAliasTest", "fields" : [
+      { "name" : "b1", "type" : "AliasTestA" }
+    ] } }
+  ]
+}

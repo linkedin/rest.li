@@ -1,0 +1,12 @@
+{
+  "name": "FinderSchema",
+  "namespace": "com.linkedin.restli.restspec",
+  "type": "record",
+  "fields": [ {"name": "name", "type": "string", "optional" : true, "doc": "name of this finder - not required if this is the default finder"},
+              {"name": "doc", "type": "string", "optional" : true, "doc": "Documentation for this finder"},
+              {"name": "parameters", "type": {"type": "array", "items": "ParameterSchema"}, "optional" : true, "doc": "list of query parameters for this finder"},
+              {"name": "metadata", "type": "MetadataSchema", "optional" : true, "doc": "describes the collection-level metadata returned by this finder"},
+              {"name": "assocKey", "type": "string", "optional" : true, "doc": "association key for this finder - only present if this finder takes a single association key"},
+              {"name": "assocKeys", "type": {"type": "array", "items": "string"}, "optional" : true, "doc": "list of association keys for this finder - only present if this finder takes multiple association keys"}
+            ]
+}

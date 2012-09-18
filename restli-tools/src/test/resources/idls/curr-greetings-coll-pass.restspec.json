@@ -1,0 +1,116 @@
+{
+  "name" : "greetings",
+  "namespace": "com.linkedin.restli.greetings",
+  "path" : "/greetings",
+  "schema" : "com.linkedin.greetings.api.Greeting",
+  "doc" : "A richer \"Hello world\" example, demonstrating a full array of methods, finders and actions",
+  "collection" : {
+    "identifier" : {
+      "name" : "id",
+      "type" : "long",
+      "params" : "string"
+    },
+    "supports" : [ "batch_get", "create", "delete", "get", "update" ],
+    "finders" : [ {
+      "name" : "search",
+      "parameters" : [ {
+        "name" : "tone",
+        "type" : "array",
+        "items": "com.linkedin.greetings.api.Tone",
+        "optional" : false
+      }, {
+        "name" : "newParam",
+        "type" : "int",
+        "optional" : true
+      } ],
+      "metadata" : {
+        "type" : {
+          "type" : "array",
+          "items" : "int"
+        }
+      },
+      "assocKeys" : [ "q", "s" ]
+    } ],
+    "actions" : [ {
+      "name" : "anotherAction",
+      "doc" : "Changed description for anotherAction",
+      "parameters" : [ {
+        "name" : "bitfield",
+        "type" : {
+          "type" : "array",
+          "items" : "boolean"
+        }
+      }, {
+        "name" : "request",
+        "type" : "com.linkedin.groups.api.TransferOwnershipRequest"
+      }, {
+        "name" : "someString",
+        "type" : "string",
+        "default" : "default"
+      }, {
+        "name" : "stringMap",
+        "type" : {
+          "type" : "map",
+          "values" : "string"
+        }
+      }, {
+        "name" : "newParam",
+        "type" : "int",
+        "optional" : true
+      } ]
+    }, {
+      "name" : "exceptionTest",
+      "throws" : [ "com.linkedin.groups.api.GroupOwnerException" ]
+    } ],
+    "entity" : {
+      "path" : "/greetings/{id}",
+      "actions" : [ {
+        "name" : "anotherAction",
+        "doc" : "Deletes all greetings",
+        "parameters" : [ {
+          "name" : "bitfield",
+          "type" : {
+            "type" : "array",
+            "items" : "boolean"
+          }
+        }, {
+          "name" : "request",
+          "type" : "com.linkedin.groups.api.TransferOwnershipRequest"
+        }, {
+          "name" : "someString",
+          "type" : "string"
+        }, {
+          "name" : "stringMap",
+          "type" : {
+            "type" : "map",
+            "values" : "string"
+          }
+        } ]
+      }, {
+        "name" : "exceptionTest",
+        "throws" : [ "com.linkedin.groups.api.GroupOwnerException" ]
+      }, {
+        "name" : "someAction",
+        "parameters" : [ {
+          "name" : "a",
+          "type" : "int",
+          "default" : "1"
+        }, {
+          "name" : "b",
+          "type" : "string",
+          "default" : "default"
+        }, {
+          "name" : "c",
+          "type" : "com.linkedin.groups.api.TransferOwnershipRequest"
+        }, {
+          "name" : "d",
+          "type" : "com.linkedin.groups.api.TransferOwnershipRequest"
+        }, {
+          "name" : "e",
+          "type" : "int"
+        } ],
+        "returns" : "com.linkedin.greetings.api.Greeting"
+      } ]
+    }
+  }
+}

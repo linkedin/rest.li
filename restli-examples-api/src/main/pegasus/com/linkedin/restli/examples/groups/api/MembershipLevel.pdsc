@@ -1,0 +1,15 @@
+{
+  "name": "MembershipLevel",
+  "namespace" : "com.linkedin.restli.examples.groups.api",
+  "type": "enum",
+  "symbols": [
+    "BLOCKED",
+    "NON_MEMBER",
+    "REQUESTING_TO_JOIN",
+    "MEMBER",
+    "MODERATOR",
+    "MANAGER",
+    "OWNER" 
+  ]
+}
+              

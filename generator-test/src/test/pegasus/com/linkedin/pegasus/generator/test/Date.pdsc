@@ -1,0 +1,10 @@
+{
+  "type" : "record",
+  "name" : "Date",
+  "namespace" : "com.linkedin.pegasus.generator.test",
+  "fields" : [
+    { "name" : "day",   "type" : "int", "optional" : true, "default" : 1 },
+    { "name" : "month", "type" : "int", "optional" : true, "default" : 1 },
+    { "name" : "year",  "type" : "int", "optional" : true, "default" : 0 }
+  ]
+}

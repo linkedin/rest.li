@@ -1,0 +1,18 @@
+dependencies {
+  compile project(':restli-examples-api')
+  compile project(':restli-examples-server')
+  compile project(':data')
+  compile project(':pegasus-common')
+  compile project(':r2')
+  compile project(':data-transform')
+  compile project(':restli-server')
+  compile project(':restli-common')
+  compile project(':restli-extras')
+  compile project(':d2')
+  compile externalDependency.log4j
+  compile externalDependency.googleCollections
+  compile externalDependency.commonsLang
+  compile externalDependency.javaxInject
+  compile externalDependency.parseq
+  testCompile externalDependency.testng
+}

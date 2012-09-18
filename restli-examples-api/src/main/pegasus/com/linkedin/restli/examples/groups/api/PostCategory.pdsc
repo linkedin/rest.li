@@ -1,0 +1,6 @@
+{
+  "name": "PostCategory",
+  "namespace": "com.linkedin.restli.examples.groups.api",
+  "type": "enum",
+  "symbols": [ "DISCUSSION", "JOB", "PROMOTION" ]
+}
