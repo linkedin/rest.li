@@ -765,17 +765,19 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
                                                               facadeClass.getPackage());
         generatePathKeyBindingMethods(pathKeys, derivedBuilder, pathKeyTypes);
 
-        final RestMethodSchema schema = schemaMap.get(method);
-        assert(schema != null);
-        if (schema.hasParameters())
-        {
-          generateQueryParamBindingMethods(facadeClass, schema.getParameters(), derivedBuilder);
-        }
         JMethod factoryMethod = facadeClass.method(JMod.PUBLIC, derivedBuilder, nameCamelCase(methodName));
         factoryMethod.body()._return(JExpr._new(derivedBuilder).arg(baseUriField).arg(resourceSpecField));
 
-        generateClassJavadoc(derivedBuilder, schema);
-        generateFactoryMethodJavadoc(factoryMethod, schema);
+        final RestMethodSchema schema = schemaMap.get(method);
+        if (schema != null)
+        {
+          if (schema.hasParameters())
+          {
+            generateQueryParamBindingMethods(facadeClass, schema.getParameters(), derivedBuilder);
+          }
+          generateClassJavadoc(derivedBuilder, schema);
+          generateFactoryMethodJavadoc(factoryMethod, schema);
+        }
       }
     }
   }
