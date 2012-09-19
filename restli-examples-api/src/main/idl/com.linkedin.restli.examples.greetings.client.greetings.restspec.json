@@ -64,9 +64,6 @@
       } ]
     } ],
     "actions" : [ {
-      "name" : "purge",
-      "returns" : "int"
-    }, {
       "name" : "anotherAction",
       "parameters" : [ {
         "name" : "bitfield",
@@ -83,6 +80,9 @@
       } ]
     }, {
       "name" : "exceptionTest"
+    }, {
+      "name" : "purge",
+      "returns" : "int"
     } ],
     "entity" : {
       "path" : "/greetings/{greetingsId}",
