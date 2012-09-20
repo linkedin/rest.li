@@ -88,17 +88,6 @@ public class RestLiConfig
     }
   }
 
-  /**
-   * This method is retained for API compatibility, but has no effect.
-   * Dynamic class loading is handled with the current thread's contextClassloader.
-   * @param classLoader ignored
-   */
-  @Deprecated
-  public void setClassLoader(final ClassLoader classLoader)
-  {
-
-  }
-
   public URI getServerNodeUri()
   {
     return _serverNodeUri;
