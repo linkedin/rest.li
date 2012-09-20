@@ -137,8 +137,6 @@ public class DegraderLoadBalancerStrategyConfig
 
     Double initialRecoveryLevel = MapUtil.getWithDefault(map,
                                                          "initialRecoveryLevel", DEFAULT_INITIAL_RECOVERY_LEVEL);
-    Double recoveryStepCoefficient = MapUtil.getWithDefault(map,
-                                                            "ringRampFactor", DEFAULT_RAMP_FACTOR);
 
     Double ringRampFactor = MapUtil.getWithDefault(map,
                                                    "ringRampFactor", DEFAULT_RAMP_FACTOR);

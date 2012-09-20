@@ -131,6 +131,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
   @Override
   public TogglingLoadBalancer createLoadBalancer(ZKConnection zkConnection, PropertyEventThread thread)
   {
+    _log.info("Using d2ServicePath: " + _d2ServicePath);
     ZooKeeperPermanentStore<ClusterProperties> zkClusterRegistry = createPermanentStore(
             zkConnection, ZKFSUtil.clusterPath(_baseZKPath), new ClusterPropertiesJsonSerializer());
     ZooKeeperPermanentStore<ServiceProperties> zkServiceRegistry = createPermanentStore(

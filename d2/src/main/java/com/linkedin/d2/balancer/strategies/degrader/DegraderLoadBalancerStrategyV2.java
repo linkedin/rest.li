@@ -228,10 +228,15 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
    * We have two mechanisms to influence the health and traffic patterns of the client. They are
    * by load balancing (switching traffic from one host to another) and by degrading service
    * (dropping calls). We load balance by allocating points in a consistent hash ring based on the
-   * computedDropRate of the individual TrackerClients, which takes into account the latency and
-   * error rate seen by that TrackerClient's requests. We can alternatively, if the cluster is
+   * computedDropRate of the individual TrackerClients, which takes into account the latency
+   * seen by that TrackerClient's requests. We can alternatively, if the cluster is
    * unhealthy (by using a high latency watermark) drop a portion of traffic across all tracker
    * clients corresponding to this cluster.
+   *
+   * The reason we do not currently consider error rate when adjusting the hash ring is that
+   * there are legitimate errors that servers can send back for clients to handle, such as
+   * 400 return codes. A potential improvement would be to catch transport level exceptions and 500
+   * level return codes, but the implication of that would need to be carefully understood and documented.
    *
    * We don't want both to reduce hash points and allow clients to manage their own drop rates
    * because the clients do not have a global view that the load balancing strategy does. Without
@@ -269,7 +274,7 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
    *
    * This code is thread reentrant. Multiple threads can potentially call this concurrently, and so
    * callers must pass in the DegraderLoadBalancerState that they based their shouldUpdate() call on.
-   * The multiple threads may have different views of the trackerClients latency/errors, but this is
+   * The multiple threads may have different views of the trackerClients latency, but this is
    * ok as the new state in the end will have only taken one action (either loadbalance or
    * call-dropping with at most one step). Currently we will not call this concurrently, as
    * checkUpdateState will control entry to a single thread.
@@ -412,9 +417,9 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
 
       // Don't take into account cluster health when calculating the number of points
       // for each client. This is because the individual clients already take into account
-      // latency and errors, and a successfulTransmissionWeight can and should be made
+      // latency, and a successfulTransmissionWeight can and should be made
       // independent of other nodes in the cluster. Otherwise, one unhealthy client in a small
-      // cluster can take down the entire cluster because the avg latency/error rate is too high.
+      // cluster can take down the entire cluster if the avg latency is too high.
       // The global drop rate will take into account the cluster latency. High cluster-wide error
       // rates are not something d2 can address.
       //
