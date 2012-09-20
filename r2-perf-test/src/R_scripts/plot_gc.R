@@ -91,7 +91,7 @@ if (is.null(rampupTime) == FALSE && rampupTime > 0)
   starttime <- min(as.POSIXct(times))
 }
 
-endtime <- max(as.POSIXct(times))
+endtime <- max(as.POSIXct(data$Time))
 howLongRunning <- difftime(endtime,starttime , tz="", units="secs")
 cat("howlongRunning:",howLongRunning)
 

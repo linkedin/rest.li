@@ -6,10 +6,11 @@ targetServerHost=
 targetServerUser=
 targerServerHudsonJobName=
 rampupTime=
+gcLog=
 
 usage(){
-  echo "USAGE: $0 -j <load generator hudson job url> -h <target server host> -u <target server user> -t <target server hudson job name> -w <current node workspace dir> -r <rampup time>"
-  echo "Example #1: ./process_r2_perf_results.sh -w /home/usr/R2_PERF_TEST -j http://jenkins.n.com/job/R2_PERF_TEST/lastSuccessfulBuild/artifact/pegasus/publish/reports -h qa36.n.com -u tester -t R2_PERF_RunHttpServer -r 10"
+  echo "USAGE: $0 -j <load generator hudson job url> -h <target server host> -u <target server user> -t <target server hudson job name> -w <current node workspace dir> -r <rampup time> -g <Http server gc log>"
+  echo "Example #1: ./process_r2_perf_results.sh -w /home/usr/R2_PERF_TEST -j http://jenkins.n.com/job/R2_PERF_TEST/lastSuccessfulBuild/artifact/pegasus/publish/reports -h qa36.n.com -u tester -t R2_PERF_RunHttpServer -r 10 -g /home/usr/R2_PERF_TEST/remote_HTTP_server_logs/gc/gc.log"
   echo "Example #2 (used in jenkins job config setup): $WORKSPACE/pegasus/r2-perf-test/src/sh/process_r2_perf_results.sh -w $WORKSPACE -j ${JOB_URL}lastSuccessfulBuild/artifact/pegasus/publish/reports -h ${TARGET_PERF_SERVER} -u tester -t ${TARGET_PERF_SERVER_JOB_NAME} -r 10"
 }
 
@@ -33,6 +34,9 @@ do
                         ;;
     -r | --workspace )  shift
                         rampupTime=$1
+                        ;;
+    -g | --gclog )      shift
+                        gcLog=$1
                         ;;
     esac
     shift
@@ -58,12 +62,12 @@ fi
 
 
 # Copy gc.log from remote machine
-command="scp  tester@$targetServerHost:/export/home/tester/hudson/data/workspace/$targerServerHudsonJobName/pegasus/build/r2-perf-test/logs/gc/gc.log $currentNodeWorkspaceDir/build/r2-perf-test/logs/$targetServerHost/gc/gc.log"
-echo "Executing $command"
-$command
+#command="scp  tester@$targetServerHost:/export/home/tester/hudson/data/workspace/$targerServerHudsonJobName/pegasus/build/r2-perf-test/logs/gc/gc.log $currentNodeWorkspaceDir/build/r2-perf-test/logs/$targetServerHost/gc/gc.log"
+#echo "Executing $command"
+#$command
 
 # Parse gc log
-command="$srcDir/sh/parse_gclog.sh $buildDir/logs/$targetServerHost/gc/gc.log $buildDir/logs/$targetServerHost/parsed_gc.csv"
+command="$srcDir/sh/parse_gclog.sh  $currentNodeWorkspaceDir/build/r2-perf-test/logs/$targetServerHost/gc/gc.log  $buildDir/logs/$targetServerHost/parsed_gc.csv"
 echo "Executing $command"
 $command
 

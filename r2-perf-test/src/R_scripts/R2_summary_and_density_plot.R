@@ -227,7 +227,7 @@ cat("\nStats:")
 summary(r2stats)
 
 ### Calculate mean and median response time values for all responses
-sums <- c(summary(successData))
+sums <- c(summary(successData$resptime))
 
 resp_mean <- sums[4]
 resp_median <- sums[3]
@@ -238,6 +238,8 @@ trdq <- sums[5] # 3rd Qu.
 percentile95 <- quantile(successData$resptime, 0.95)
 percentile98 <- quantile(successData$resptime, 0.98)
 standard_deviation <- sapply(successData,sd)
+
+print(standard_deviation)
 
 #Calculate throughput
 howLongRunning <- difftime(as.POSIXct(endtime), as.POSIXct(starttime), tz="", units="secs")
@@ -307,7 +309,7 @@ summaryData <- c(format(starttime,"%Y/%m/%d %H:%M:%S", tz=""),format(endtime,"%Y
 
 # Response Stats html table
 responsesStatsHeader <- c("Min Response Time(millisec)","1st. Qu(millisec)","Median(millisec)","Mean(millisec)","3rd Qu.(millisec)","95%(millisec)","98%(millisec)","Max Response(millisec)","Standard Deviation")
-responsesStatsData <- c(minresptime, frsq, resp_median, resp_mean, trdq, percentile95, percentile98, maxresptime,standard_deviation)
+responsesStatsData <- c(minresptime, frsq, resp_median, resp_mean, trdq, percentile95, percentile98, maxresptime, toString(standard_deviation))
 
 cat(htmldata,"<p><br>SERVER REQUESTS<br></p><p><br>SUMMARY<br></p>",generateSummaryHtmlTable(summaryHeader,summaryData ),"<p><br>RESPONSE STATS<br></p>",generateSummaryHtmlTable(responsesStatsHeader,responsesStatsData ),c("</table"), sep="", file=out)
 
@@ -319,7 +321,7 @@ jout <- file(outputSummaryJsonFile,"w") # open an output txt file
 
 jdata <- c("{\"Total_Responses\":",ttlresponses,",\"Successful_Responses\":",successcount,",\"Failed_Responses\":",failedcount,",\"Total_Threads\":",totalthreads,",\"Throughput(r/sec)\":",throughput,
 ",\"Min_Response_Time\":",minresptime,",\"1st_Qu_RespTime\":",frsq,",\"Median_RespTime\":",resp_median,",\"Mean_RespTime\":",resp_mean,",\"3rd_Qu_RespTime\":",trdq,
-",\"Max_Response\":",maxresptime,",\"standard_deviation\":",standard_deviation,",\"95_Percentile(millisec)\":",percentile95,",\"98_Percentile(millisec)\":",percentile98,"}")
+",\"Max_Response\":",maxresptime,",\"95_Percentile(millisec)\":",percentile95,",\"98_Percentile(millisec)\":",percentile98,"}")
 
 cat(jdata, sep="", file=jout)
 close(jout)
