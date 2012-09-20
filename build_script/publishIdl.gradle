@@ -26,8 +26,8 @@ project.sourceSets.all { SourceSet sourceSet ->
   }
   currIdlFiles.each {
     final String apiIdlFilePath = "${apiIdlDir.path}${File.separatorChar}${it.name}"
-    checkIdlTask.args it
     checkIdlTask.args apiIdlFilePath
+    checkIdlTask.args it
   }
 
   final Task publishIdlTask = project.task(sourceSet.name + 'PublishIdl',
