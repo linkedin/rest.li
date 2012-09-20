@@ -31,7 +31,6 @@ then
     exit 1
 fi
 
-gradle clean build && \
 git tag v$VERSION && \
 git push origin v$VERSION && \
 echo "Publish completed successfully."
