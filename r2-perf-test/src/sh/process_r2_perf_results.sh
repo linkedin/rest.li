@@ -60,12 +60,6 @@ then
   mkdir -p "$buildDir/logs/$targetServerHost/gc"
 fi
 
-
-# Copy gc.log from remote machine
-#command="scp  tester@$targetServerHost:/export/home/tester/hudson/data/workspace/$targerServerHudsonJobName/pegasus/build/r2-perf-test/logs/gc/gc.log $currentNodeWorkspaceDir/build/r2-perf-test/logs/$targetServerHost/gc/gc.log"
-#echo "Executing $command"
-#$command
-
 # Parse gc log
 command="$srcDir/sh/parse_gclog.sh  $currentNodeWorkspaceDir/build/r2-perf-test/logs/$targetServerHost/gc/gc.log  $buildDir/logs/$targetServerHost/parsed_gc.csv"
 echo "Executing $command"
