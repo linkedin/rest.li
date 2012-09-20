@@ -3,6 +3,7 @@
   "namespace" : "com.linkedin.restli.examples.greetings.client",
   "path" : "/greetings",
   "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+  "doc" : "generated from: com.linkedin.restli.examples.greetings.server.GreetingsResource",
   "collection" : {
     "identifier" : {
       "name" : "greetingsId",

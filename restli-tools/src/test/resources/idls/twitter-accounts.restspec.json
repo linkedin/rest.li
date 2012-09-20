@@ -1,6 +1,7 @@
 {
   "name" : "accounts",
   "path" : "/accounts",
+  "doc" : "generated from: com.linkedin.restli.server.twitter.TwitterAccountsResource",
   "actionsSet" : {
     "actions" : [ {
       "name" : "closeAccounts",

@@ -2,7 +2,7 @@
   "name" : "statusesParams",
   "path" : "/statusesParams",
   "schema" : "com.linkedin.restli.server.twitter.TwitterTestDataModels$Status",
-  "doc" : "CollectionResource containing all statuses",
+  "doc" : "CollectionResource containing all statuses\n\ngenerated from: com.linkedin.restli.server.twitter.StatusWithParamsCollectionResource",
   "collection" : {
     "identifier" : {
       "name" : "statusID",

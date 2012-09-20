@@ -273,11 +273,15 @@ public class ResourceModelEncoder
       resourceSchema.setSchema(resourceModel.getValueClass().getName());
     }
 
-    String doc = _docsProvider.getClassDoc(resourceModel.getResourceClass());
+    final Class<?> resourceClass = resourceModel.getResourceClass();
+    final String doc = _docsProvider.getClassDoc(resourceClass);
+    final StringBuilder docBuilder = new StringBuilder();
     if (doc != null)
     {
-      resourceSchema.setDoc(doc);
+      docBuilder.append(doc).append("\n\n");
     }
+    docBuilder.append("generated from: ").append(resourceClass.getCanonicalName());
+    resourceSchema.setDoc(docBuilder.toString());
   }
 
   private void appendCollection(final ResourceSchema resourceSchema,

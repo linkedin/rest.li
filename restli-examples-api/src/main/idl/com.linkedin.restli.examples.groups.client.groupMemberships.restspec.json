@@ -3,7 +3,7 @@
   "namespace" : "com.linkedin.restli.examples.groups.client",
   "path" : "/groupMemberships",
   "schema" : "com.linkedin.restli.examples.groups.api.GroupMembership",
-  "doc" : "Association between members and groups",
+  "doc" : "Association between members and groups\n\ngenerated from: com.linkedin.restli.examples.groups.server.rest.impl.GroupMembershipsResource2",
   "association" : {
     "assocKeys" : [ {
       "name" : "groupID",

@@ -3,6 +3,7 @@
   "namespace" : "com.linkedin.restli.examples.greetings.client",
   "path" : "/greetingsPromiseCtx",
   "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+  "doc" : "generated from: com.linkedin.restli.examples.greetings.server.GreetingsResourcePromiseCtx",
   "collection" : {
     "identifier" : {
       "name" : "greetingsPromiseCtxId",

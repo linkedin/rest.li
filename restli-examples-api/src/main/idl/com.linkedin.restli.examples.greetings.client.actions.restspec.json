@@ -2,7 +2,7 @@
   "name" : "actions",
   "namespace" : "com.linkedin.restli.examples.greetings.client",
   "path" : "/actions",
-  "doc" : "Various action tasks that demonstrate usual behavior, timeout, and exceptions.",
+  "doc" : "Various action tasks that demonstrate usual behavior, timeout, and exceptions.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.ActionsResource",
   "actionsSet" : {
     "actions" : [ {
       "name" : "failCallbackCall",

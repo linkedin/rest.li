@@ -2,7 +2,7 @@
   "name" : "statuses",
   "path" : "/statuses",
   "schema" : "com.linkedin.restli.server.twitter.TwitterTestDataModels$Status",
-  "doc" : "CollectionResource containing all statuses",
+  "doc" : "CollectionResource containing all statuses\n\ngenerated from: com.linkedin.restli.server.twitter.StatusCollectionResource",
   "collection" : {
     "identifier" : {
       "name" : "statusID",
@@ -63,7 +63,7 @@
         "name" : "replies",
         "path" : "/statuses/{statusID}/replies",
         "schema" : "com.linkedin.restli.server.twitter.TwitterTestDataModels$Status",
-        "doc" : "Nested CollectionResource of all replies to a given status",
+        "doc" : "Nested CollectionResource of all replies to a given status\n\ngenerated from: com.linkedin.restli.server.twitter.RepliesCollectionResource",
         "collection" : {
           "identifier" : {
             "name" : "statusID",

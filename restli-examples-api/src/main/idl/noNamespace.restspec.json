@@ -2,7 +2,7 @@
   "name" : "noNamespace",
   "path" : "/noNamespace",
   "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
-  "doc" : "An REST endpoint without namespace",
+  "doc" : "An REST endpoint without namespace\n\ngenerated from: com.linkedin.restli.examples.greetings.server.NoNamespaceResource",
   "collection" : {
     "identifier" : {
       "name" : "noNamespaceId",
@@ -15,7 +15,7 @@
         "name" : "noNamespaceSub",
         "path" : "/noNamespace/{noNamespaceId}/noNamespaceSub",
         "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
-        "doc" : "A subresource of the REST endpoint without namespace",
+        "doc" : "A subresource of the REST endpoint without namespace\n\ngenerated from: com.linkedin.restli.examples.greetings.server.NoNamespaceSubResource",
         "collection" : {
           "identifier" : {
             "name" : "noNamespaceSubId",
@@ -30,7 +30,7 @@
         "name" : "noNamespaceSub2",
         "path" : "/noNamespace/{noNamespaceId}/noNamespaceSub2",
         "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
-        "doc" : "Another subresource of the REST endpoint without namespace",
+        "doc" : "Another subresource of the REST endpoint without namespace\n\ngenerated from: com.linkedin.restli.examples.greetings.server.NoNamespaceSubResource2",
         "collection" : {
           "identifier" : {
             "name" : "noNamespaceSub2Id",
