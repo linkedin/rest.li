@@ -1,10 +1,12 @@
+1.5.8
+-----
+(RB=96060)
+Add doc and Javadoc of source resource class name to generated idl and client builder.
+
 1.5.7
 -----
 (RB=96131)
-Fix NPE in RestRequestBuilderGenerator when processing legacy IDL format
-
-(RB=96060)
-Add doc and Javadoc of source resource class name to generated idl and client builder.
+Fix NPE in RestRequestBuilderGenerator when processing legacy IDL format.
 
 1.5.6
 -----
