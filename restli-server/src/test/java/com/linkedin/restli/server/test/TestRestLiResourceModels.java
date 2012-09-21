@@ -16,15 +16,8 @@
 
 package com.linkedin.restli.server.test;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import com.google.common.collect.Sets;
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
@@ -45,21 +38,23 @@ import com.linkedin.restli.server.invalid.InvalidActions;
 import com.linkedin.restli.server.invalid.InvalidResources;
 import com.linkedin.restli.server.resources.AssociationResource;
 import com.linkedin.restli.server.twitter.AsyncStatusCollectionResource;
+import com.linkedin.restli.server.twitter.ExceptionsResource;
 import com.linkedin.restli.server.twitter.FollowsAssociativeResource;
 import com.linkedin.restli.server.twitter.StatusCollectionResource;
 import com.linkedin.restli.server.twitter.TwitterAccountsResource;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Followed;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Status;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 import static com.linkedin.restli.server.test.RestLiTestHelper.buildResourceModel;
 import static com.linkedin.restli.server.test.RestLiTestHelper.buildResourceModels;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+import static org.testng.Assert.*;
 
 
 /**
@@ -379,6 +374,23 @@ public class TestRestLiResourceModels
     expectConfigException(InvalidActions.ActionNameConflict.class, "Found duplicate");
     expectConfigException(InvalidActions.ActionInvalidReturnType2.class, "invalid return type");
     expectConfigException(InvalidActions.ActionInvalidBytesParam.class, "not a valid type");
+  }
+
+  @Test
+  public void testExceptionMethods() throws Exception
+  {
+    final ResourceModel resourceModel = buildResourceModel(ExceptionsResource.class);
+    assertEquals(resourceModel.getResourceType(), ResourceType.COLLECTION);
+
+    assertEquals(resourceModel.getResourceMethodDescriptors().size(), 2);
+
+    final ResourceMethodDescriptor getMethod = resourceModel.findMethod(ResourceMethod.GET);
+    assertNotNull(getMethod);
+
+    final ResourceMethodDescriptor actionMethod = resourceModel.findActionMethod("exception", ResourceLevel.COLLECTION);
+    assertNotNull(actionMethod);
+    final Class<?> returnClass = actionMethod.getActionReturnType();
+    assertSame(returnClass, Integer.class);
   }
 
   // ************************

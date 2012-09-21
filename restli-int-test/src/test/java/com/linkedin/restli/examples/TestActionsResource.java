@@ -16,13 +16,8 @@
 
 package com.linkedin.restli.examples;
 
-import java.util.Collections;
-
-import org.testng.Assert;
-import org.testng.annotations.Test;
 
 import com.linkedin.r2.RemoteInvocationException;
-import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
@@ -33,6 +28,9 @@ import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.examples.greetings.client.ActionsBuilders;
+import java.util.Collections;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 public class TestActionsResource extends RestLiIntegrationTest
 {
@@ -99,7 +97,7 @@ public class TestActionsResource extends RestLiIntegrationTest
     Assert.assertEquals(response.getEntity(), "101 YAY false");
   }
 
-  @Test(expectedExceptions = RestException.class)
+  @Test(expectedExceptions = RestLiResponseException.class)
   public void testFailPromiseCall() throws RemoteInvocationException
   {
     // this version gives a Task that RestLi runs
@@ -107,7 +105,7 @@ public class TestActionsResource extends RestLiIntegrationTest
     REST_CLIENT.sendRequest(req).getResponse();
   }
 
-  @Test(expectedExceptions = RestException.class)
+  @Test(expectedExceptions = RestLiResponseException.class)
   public void testFailPromiseThrow() throws RemoteInvocationException
   {
     // this version gives a Task that RestLi runs
@@ -115,7 +113,7 @@ public class TestActionsResource extends RestLiIntegrationTest
     REST_CLIENT.sendRequest(req).getResponse();
   }
 
-  @Test(expectedExceptions = RestException.class)
+  @Test(expectedExceptions = RestLiResponseException.class)
   public void testFailTaskCall() throws RemoteInvocationException
   {
     // this version gives a Task that RestLi runs
@@ -123,7 +121,7 @@ public class TestActionsResource extends RestLiIntegrationTest
     REST_CLIENT.sendRequest(req).getResponse();
   }
 
-  @Test(expectedExceptions = RestException.class)
+  @Test(expectedExceptions = RestLiResponseException.class)
   public void testFailTaskThrow() throws RemoteInvocationException
   {
     // this version gives a Task that RestLi runs
@@ -131,7 +129,7 @@ public class TestActionsResource extends RestLiIntegrationTest
     REST_CLIENT.sendRequest(req).getResponse();
   }
 
-  @Test(expectedExceptions = RestException.class)
+  @Test(expectedExceptions = RestLiResponseException.class)
   public void testFailThrowInTask() throws RemoteInvocationException
   {
     // this version gives a Task that RestLi runs
@@ -139,7 +137,7 @@ public class TestActionsResource extends RestLiIntegrationTest
     REST_CLIENT.sendRequest(req).getResponse();
   }
 
-  @Test(expectedExceptions = RestException.class)
+  @Test(expectedExceptions = RestLiResponseException.class)
   public void testNullPromise() throws RemoteInvocationException
   {
     // this version gives a Task that RestLi runs
@@ -147,12 +145,11 @@ public class TestActionsResource extends RestLiIntegrationTest
     REST_CLIENT.sendRequest(req).getResponse();
   }
 
-  @Test(expectedExceptions = RestException.class)
+  @Test(expectedExceptions = RestLiResponseException.class)
   public void testNullTask() throws RemoteInvocationException
   {
     // this version gives a Task that RestLi runs
     ActionRequest<String> req = ACTIONS_BUILDERS.actionNullTask().build();
     REST_CLIENT.sendRequest(req).getResponse();
   }
-
 }

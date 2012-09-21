@@ -3,7 +3,7 @@
   "namespace" : "com.linkedin.restli.examples.greetings.client",
   "path" : "/greetingsAuth",
   "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
-  "doc" : "generated from: com.linkedin.restli.examples.greetings.server.TestCustomCrudParamsResource",
+  "doc" : "generated from: com.linkedin.restli.examples.greetings.server.CustomCrudParamsResource",
   "collection" : {
     "identifier" : {
       "name" : "greetingsAuthId",

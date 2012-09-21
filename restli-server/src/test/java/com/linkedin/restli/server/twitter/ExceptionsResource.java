@@ -14,42 +14,35 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
-package com.linkedin.restli.examples.greetings.server;
+package com.linkedin.restli.server.twitter;
 
 
 import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.examples.greetings.api.Greeting;
-import com.linkedin.restli.server.RestLiServiceException;
+import com.linkedin.restli.server.ActionResult;
+import com.linkedin.restli.server.GetResult;
+import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.RestLiCollection;
+import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
+import com.linkedin.restli.server.twitter.TwitterTestDataModels.Status;
+
 
 /**
- * @author Josh Walker
- * @version $Revision: $
+ * @author Keren Jin
  */
-
 @RestLiCollection(name = "exceptions",
                   namespace = "com.linkedin.restli.examples.greetings.client")
-public class ExceptionsResource extends CollectionResourceTemplate<Long, Greeting>
+public class ExceptionsResource extends CollectionResourceTemplate<Long, Status>
 {
-  @Override
-  public Greeting get(Long key)
+  @RestMethod.Get
+  public GetResult<Status> getWithResult(Long key)
   {
-    try
-    {
-      String s = (new String[0])[42];
-    }
-    catch (ArrayIndexOutOfBoundsException e)
-    {
-      Greeting details = new Greeting().setMessage("Hello, Sorry for the mess");
+    return new GetResult<Status>(new Status(), HttpStatus.S_500_INTERNAL_SERVER_ERROR);
+  }
 
-      throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, "error processing request", e)
-              .setServiceErrorCode(42).setErrorDetails(details.data());
-    }
-    return null;
+  @Action(name = "exception")
+  public ActionResult<Integer> actionWithResult()
+  {
+    return new ActionResult<Integer>(100, HttpStatus.S_500_INTERNAL_SERVER_ERROR);
   }
 }

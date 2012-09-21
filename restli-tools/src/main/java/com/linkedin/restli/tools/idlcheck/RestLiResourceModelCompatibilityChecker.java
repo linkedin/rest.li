@@ -218,7 +218,7 @@ public class RestLiResourceModelCompatibilityChecker
 
     if (summaryMessage.length() != 0)
     {
-      summaryMessage.insert(0, new StringBuilder().append("\nidl compatibility report between current \"").append(_prevRestspecPath).append("\" and \"").append(_currRestspecPath).append("\":\n").toString());
+      summaryMessage.insert(0, new StringBuilder().append("\nidl compatibility report between published \"").append(_prevRestspecPath).append("\" and current \"").append(_currRestspecPath).append("\":\n").toString());
     }
 
     return summaryMessage.toString();

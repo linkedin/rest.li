@@ -3,6 +3,11 @@
 (RB=96060)
 Add doc and Javadoc of source resource class name to generated idl and client builder.
 
+(RB=96333)
+Allow http status code be specified in GET methods and Action methods. For GET, define custom GET method (by annotating
+with @RestMethod.Get) with return type GetResult<V>. For Action, define the action method with return type
+ActionResult<V>.
+
 1.5.7
 -----
 (RB=96131)

@@ -16,25 +16,6 @@
 
 package com.linkedin.restli.internal.server.model;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Pattern;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.TyperefDataSchema;
@@ -53,6 +34,7 @@ import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor.InterfaceType;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
 import com.linkedin.restli.internal.server.util.ReflectionUtils;
+import com.linkedin.restli.server.ActionResult;
 import com.linkedin.restli.server.BatchCreateRequest;
 import com.linkedin.restli.server.BatchDeleteRequest;
 import com.linkedin.restli.server.BatchPatchRequest;
@@ -78,6 +60,22 @@ import com.linkedin.restli.server.annotations.RestLiCollectionCompoundKey;
 import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.resources.ComplexKeyResource;
 import com.linkedin.restli.server.resources.KeyValueResource;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -609,8 +607,7 @@ public final class RestLiAnnotationReader
           + " is a primitive type, but does not specify a default value in the @Optional annotation");
     }
 
-    String checkTyperefMessage =
-        checkParameterTyperefSchema(param.getType(), param.getTyperefSchema());
+    final String checkTyperefMessage = checkTyperefSchema(param.getType(), param.getTyperefSchema());
     if (checkTyperefMessage != null)
     {
       throw new ResourceConfigException("Parameter '" + paramName + "' on "
@@ -742,8 +739,7 @@ public final class RestLiAnnotationReader
         + method.getDeclaringClass().getName() + '\'';
   }
 
-  private static String checkParameterTyperefSchema(final Class<?> type,
-                                                    final TyperefDataSchema typerefSchema)
+  private static String checkTyperefSchema(final Class<?> type, final TyperefDataSchema typerefSchema)
   {
     if (typerefSchema == null)
     {
@@ -1101,7 +1097,7 @@ public final class RestLiAnnotationReader
     String actionName = actionAnno.name();
     List<Parameter<?>> parameters = getParameters(model, method, ResourceMethod.ACTION);
     validateActionReturnType(method);
-    Class<?> returnType = getLogicalReturnClass(method);
+    final Type returnType = getLogicalReturnType(method);
     ResourceMethodDescriptor existingMethodDescriptor =
         model.findActionMethod(actionName, actionAnno.resourceLevel());
     if (existingMethodDescriptor != null)
@@ -1125,8 +1121,26 @@ public final class RestLiAnnotationReader
           + "' cannot be instantiated, " + e.getMessage());
     }
 
-    String checkTyperefMessage =
-        checkParameterTyperefSchema(returnType, returnTyperefSchema);
+    Class<?> returnClass = getLogicalReturnClass(method);
+    if (ActionResult.class.isAssignableFrom(returnClass))
+    {
+      assert(returnType instanceof ParameterizedType);
+      final ParameterizedType paramReturnType = (ParameterizedType) returnType;
+      final Type[] actualReturnTypes = paramReturnType.getActualTypeArguments();
+      assert(actualReturnTypes.length == 1);
+      if (!(actualReturnTypes[0] instanceof Class<?>))
+      {
+        throw new ResourceConfigException("Unsupported type parameter for ActionResult<?>.");
+      }
+      returnClass = (Class<?>) actualReturnTypes[0];
+
+      if (returnClass == Void.class)
+      {
+        returnClass = Void.TYPE;
+      }
+    }
+
+    final String checkTyperefMessage = checkTyperefSchema(returnClass, returnTyperefSchema);
     if (checkTyperefMessage != null)
     {
       throw new ResourceConfigException("Typeref @Action method named '" + actionName
@@ -1145,7 +1159,7 @@ public final class RestLiAnnotationReader
                                                                                parameters,
                                                                                actionName,
                                                                                actionAnno.resourceLevel(),
-                                                                               returnType,
+                                                                               returnClass,
                                                                                returnTyperefSchema,
                                                                                getInterfaceType(method)));
 
@@ -1263,7 +1277,7 @@ public final class RestLiAnnotationReader
     boolean promise = Promise.class.isAssignableFrom(method.getReturnType());
     boolean task = Task.class.isAssignableFrom(method.getReturnType());
     boolean callback = getParamIndex(method, Callback.class) != -1;
-    boolean isVoid = method.getReturnType().equals(void.class);
+    boolean isVoid = method.getReturnType().equals(Void.TYPE);
 
     if (callback && !isVoid)
     {
@@ -1338,12 +1352,12 @@ public final class RestLiAnnotationReader
 
   /**
    * Analogous to {@link #getLogicalReturnType}. For callback and promise,
-   * <code>java.lang.Void.class</code> is converted to <code>void.class</code>.
+   * <code>java.lang.Void.class</code> is converted to <code>Void.TYPE</code>.
    */
   private static Class<?> getLogicalReturnClass(final Method method)
   {
     Class<?> c = typeToClass(getLogicalReturnType(method));
-    return Void.class.equals(c) ? void.class : c;
+    return Void.class.equals(c) ? Void.TYPE : c;
   }
 
   /**

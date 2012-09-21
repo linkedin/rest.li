@@ -16,6 +16,8 @@
 
 package com.linkedin.restli.server.test;
 
+import com.linkedin.restli.server.ActionResult;
+import com.linkedin.restli.server.GetResult;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -549,6 +551,31 @@ public class TestRestLiResponseHandler
                                               buildStatusList(3));
 
     Assert.assertEquals(response.getHeader(testHeaderName), testHeaderValue);
+  }
+
+  @Test
+  public void testWrapperResults() throws Exception
+  {
+    RestResponse response;
+    final Status status = buildStatusRecord();
+
+    final GetResult<Status> getResult = new GetResult<Status>(status, HttpStatus.S_500_INTERNAL_SERVER_ERROR);
+    response = invokeResponseHandler("/test", getResult, ResourceMethod.GET);
+    checkResponse(response, HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode(), 2, Status.class.getName(), null, true);
+    assertEquals(response.getEntity().asAvroString(), EXPECTED_STATUS_JSON);
+
+    final ActionResult<Status> actionResult = new ActionResult<Status>(status, HttpStatus.S_500_INTERNAL_SERVER_ERROR);
+    response = _responseHandler.buildResponse(buildRequest(),
+                                              buildRoutingResult(true),
+                                              actionResult);
+    checkResponse(response,
+                  HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode(),
+                  3,
+                  ActionResponse.class.getName(),
+                  Status.class.getName(),
+                  true);
+    assertEquals(response.getEntity().asAvroString(), EXPECTED_STATUS_ACTION_RESPONSE_JSON);
+
   }
 
   // *****************

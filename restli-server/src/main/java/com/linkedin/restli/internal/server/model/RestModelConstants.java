@@ -16,8 +16,6 @@
 
 package com.linkedin.restli.internal.server.model;
 
-import java.util.HashMap;
-import java.util.Map;
 
 import com.linkedin.data.ByteString;
 import com.linkedin.data.schema.DataSchema;
@@ -26,12 +24,16 @@ import com.linkedin.data.template.AbstractMapTemplate;
 import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.FixedTemplate;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.server.ActionResult;
 import com.linkedin.restli.server.resources.AssociationResource;
 import com.linkedin.restli.server.resources.AssociationResourceAsync;
 import com.linkedin.restli.server.resources.CollectionResource;
 import com.linkedin.restli.server.resources.CollectionResourceAsync;
 import com.linkedin.restli.server.resources.ComplexKeyResource;
 import com.linkedin.restli.server.resources.ComplexKeyResourceAsync;
+import java.util.HashMap;
+import java.util.Map;
+
 
 /**
  * @author dellamag
@@ -117,7 +119,8 @@ public interface RestModelConstants
       RecordTemplate.class,
       FixedTemplate.class,
       AbstractArrayTemplate.class,
-      AbstractMapTemplate.class
+      AbstractMapTemplate.class,
+      ActionResult.class
   };
 
   @SuppressWarnings("serial")

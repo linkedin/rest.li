@@ -40,12 +40,12 @@ import com.linkedin.restli.server.resources.KeyValueResource;
 
 @RestLiCollection(name = "greetingsAuth",
                   namespace = "com.linkedin.restli.examples.greetings.client")
-public class TestCustomCrudParamsResource implements KeyValueResource<Long, Greeting>
+public class CustomCrudParamsResource implements KeyValueResource<Long, Greeting>
 {
   private static GreetingsResourceImpl _impl = new GreetingsResourceImpl("greetingsAuth");
 
   @RestMethod.Get
-  public Greeting getGreeting(Long idx, @Optional @QueryParam("auth") String auth, 
+  public Greeting getGreeting(Long idx, @Optional @QueryParam("auth") String auth,
                               @Optional @QueryParam("testComplex") GroupMembershipParam complexParam)
   {
     validateAuth(auth);

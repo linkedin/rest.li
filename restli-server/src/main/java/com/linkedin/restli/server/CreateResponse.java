@@ -41,7 +41,6 @@ public class CreateResponse
    */
   public CreateResponse(final Object id, final HttpStatus status)
   {
-    super();
     _id = id;
     _status = status;
   }
@@ -51,7 +50,6 @@ public class CreateResponse
    */
   public CreateResponse(final HttpStatus status)
   {
-    super();
     _id = null;
     _status = status;
   }

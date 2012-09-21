@@ -20,11 +20,6 @@
 
 package com.linkedin.restli.internal.server.methods;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.validation.CoercionMode;
 import com.linkedin.data.schema.validation.RequiredMode;
@@ -44,7 +39,12 @@ import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.Parameter.ParamType;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
+import com.linkedin.restli.server.ActionResult;
 import com.linkedin.restli.server.RoutingException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Josh Walker
@@ -64,13 +64,26 @@ public class ActionMethodAdapter implements RestLiMethodAdapter
                                            final Map<String, String> headers)
           throws IOException
   {
-    // note that we always return 200 OK for ActionResponse: all response meaning is
-    // encoded in the response entity. The HTTP response code is unused.
-    headers.put(RestConstants.HEADER_LINKEDIN_TYPE, ActionResponse.class.getName());
-    headers.put(RestConstants.HEADER_LINKEDIN_SUB_TYPE, result.getClass().getName());
+    final Object value;
+    final HttpStatus status;
 
-    ActionResponse<?> actionResponse = new ActionResponse<Object>(result);
-    return new PartialRestResponse(actionResponse);
+    if (result instanceof ActionResult)
+    {
+      final ActionResult<?> actionResult = (ActionResult<?>) result;
+      value = actionResult.getValue();
+      status = actionResult.getStatus();
+    }
+    else
+    {
+      value = result;
+      status = HttpStatus.S_200_OK;
+    }
+
+    headers.put(RestConstants.HEADER_LINKEDIN_TYPE, ActionResponse.class.getName());
+    headers.put(RestConstants.HEADER_LINKEDIN_SUB_TYPE, value.getClass().getName());
+
+    final ActionResponse<?> actionResponse = new ActionResponse<Object>(value);
+    return new PartialRestResponse(status, actionResponse);
   }
 
   @Override

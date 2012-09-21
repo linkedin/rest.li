@@ -27,7 +27,6 @@ public class UpdateResponse
 
   public UpdateResponse(final HttpStatus status)
   {
-    super();
     _status = status;
   }
 
