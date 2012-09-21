@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer.util;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -31,7 +32,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.linkedin.d2.balancer.zkfs.ZKFSComponentFactory;
 import com.linkedin.d2.balancer.zkfs.ZKFSUtil;
+import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import joptsimple.OptionParser;
@@ -56,6 +59,8 @@ import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancerState;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
+import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyFactoryV2;
+import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyFactoryV3;
 import com.linkedin.d2.balancer.strategies.random.RandomLoadBalancerStrategyFactory;
 import com.linkedin.d2.discovery.PropertySerializer;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
@@ -64,10 +69,12 @@ import com.linkedin.d2.discovery.event.PropertyEventThread;
 import com.linkedin.d2.discovery.stores.PropertyStore;
 import com.linkedin.d2.discovery.stores.PropertyStoreException;
 import com.linkedin.d2.discovery.stores.file.FileStore;
+import com.linkedin.d2.discovery.stores.toggling.TogglingPublisher;
 import com.linkedin.d2.discovery.stores.zk.ZKConnection;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperPermanentStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperPropertyMerger;
+import com.linkedin.d2.discovery.stores.zk.ZooKeeperTogglingStore;
 import com.linkedin.d2.jmx.JmxManager;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -91,7 +98,12 @@ public class LoadBalancerClientCli
   private String _request  = null;
   private String _requestType = "rest";
   private DynamicClient _client = null;
-
+  private static String _tmpdirName = "temp-d2TmpFileStore" +  Long.toString(System.nanoTime());
+  private File _tmpDir;
+  private ZooKeeperPermanentStore<ClusterProperties> _zkClusterRegistry = null;
+  private ZooKeeperPermanentStore<ServiceProperties> _zkServiceRegistry = null;
+  private ZooKeeperEphemeralStore<UriProperties> _zkUriRegistry = null;
+  
   private static final Logger _log = LoggerFactory.getLogger(LoadBalancerClientCli.class);
 
   public static void main(String[] args) throws Exception
@@ -316,8 +328,19 @@ public LoadBalancerClientCli( String zkserverHostPort, String d2path) throws Exc
   {
     _client = createClient(_zkclient, _zkserver, _d2path, _service) ;
   }
+  
+  public DynamicClient createTogglingLBClient(ZKConnection zkclient, String zkserver, String d2path, String servicePath)
+  throws URISyntaxException,
+  InterruptedException,
+  ExecutionException,
+  IOException,
+  PropertyStoreException,
+  TimeoutException
+  {
+    return new DynamicClient(getTogglingLoadBalancer(_zkclient, zkserver, d2path, servicePath), null);
+  }
 
-  public DynamicClient createClient(ZKConnection zkclient, String zkserver, String d2path,String service)
+  public DynamicClient createClient(ZKConnection zkclient, String zkserver, String d2path, String service)
                                   throws URISyntaxException,
                                   InterruptedException,
                                   ExecutionException,
@@ -433,8 +456,6 @@ public LoadBalancerClientCli( String zkserverHostPort, String d2path) throws Exc
 
   public ZKConnection createZkClient(String zkserverHostPort)
   {
-    //URI storeUri = URI.create(zkserverHostPort);
-    //_zkclient = new ZKConnection(storeUri.getHost()+":"+storeUri.getPort(), 10000);
     _zkclient = new ZKConnection(zkserverHostPort.replace("zk://",""), 10000);
 
     return _zkclient;
@@ -469,29 +490,6 @@ public LoadBalancerClientCli( String zkserverHostPort, String d2path) throws Exc
   public String getRequest()
   {
     return _request;
-  }
-
-  public void shutdown() throws Exception
-  {
-    try
-    {
-      if (_client != null)
-      {
-        _client.shutdown();
-      }
-    }
-    catch (Exception e)
-    {
-      _log.error("Failed to shutdown dynamic client.");
-    }
-    try
-    {
-      _zkclient.shutdown();
-    }
-    catch (Exception e)
-    {
-      _log.error("Failed to shutdown zk client.");
-    }
   }
 
   public static <T> PropertyStore<T> getStore(ZKConnection zkclient,
@@ -619,10 +617,8 @@ public LoadBalancerClientCli( String zkserverHostPort, String d2path) throws Exc
                                                                    uristoreString,
                                                                    new UriPropertiesJsonSerializer(),
                                                                    new UriPropertiesMerger());
-
     // chains
     PropertyEventThread thread = new PropertyEventThread("lb client event thread");
-
     // start up the world
     thread.start();
 
@@ -636,9 +632,10 @@ public LoadBalancerClientCli( String zkserverHostPort, String d2path) throws Exc
     Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
         new HashMap<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>>();
 
-    loadBalancerStrategyFactories.put(zkServiceRegistry.get(service)
-                                                       .getLoadBalancerStrategyName(),
-                                      new RandomLoadBalancerStrategyFactory());
+    loadBalancerStrategyFactories.put("random", new RandomLoadBalancerStrategyFactory());
+    loadBalancerStrategyFactories.put("degrader", new DegraderLoadBalancerStrategyFactoryV2());
+    loadBalancerStrategyFactories.put("degraderV2", new DegraderLoadBalancerStrategyFactoryV2());
+    loadBalancerStrategyFactories.put("degraderV3", new DegraderLoadBalancerStrategyFactoryV3());
 
     Map<String, TransportClientFactory> clientFactories =
         new HashMap<String, TransportClientFactory>();
@@ -653,9 +650,8 @@ public LoadBalancerClientCli( String zkserverHostPort, String d2path) throws Exc
                                     serviceBus,
                                     clientFactories,
                                     loadBalancerStrategyFactories);
-
+    
     SimpleLoadBalancer balancer = new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS);
-
     FutureCallback<None> callback = new FutureCallback<None>();
     balancer.start(callback);
     callback.get(5, TimeUnit.SECONDS);
@@ -672,6 +668,132 @@ public LoadBalancerClientCli( String zkserverHostPort, String d2path) throws Exc
     return balancer;
   }
 
+  public TogglingLoadBalancer getTogglingLoadBalancer(ZKConnection zkclient,
+                                                      String zkserver,
+                                                      String d2path,
+                                                      String d2ServicePath) throws IOException,
+                                                                          IllegalStateException,
+                                                                          URISyntaxException,
+                                                                          PropertyStoreException,
+                                                                          ExecutionException,
+                                                                          TimeoutException,
+                                                                          InterruptedException
+  {
+    _tmpDir = createTempDirectory(_tmpdirName);
+    if(d2ServicePath == null || d2ServicePath.isEmpty())
+    {
+      d2ServicePath = "services";
+    }
+    _log.error("\n\n\n\n\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Created TmpDir:"+_tmpDir);
+    // zk stores
+
+    String clstoreString = zkserver + ZKFSUtil.clusterPath(d2path);
+    String scstoreString = zkserver + ZKFSUtil.servicePath(d2path);
+    String uristoreString = zkserver + ZKFSUtil.uriPath(d2path);
+
+    ZooKeeperPermanentStore<ClusterProperties> zkClusterRegistry =
+        (ZooKeeperPermanentStore<ClusterProperties>) getStore(zkclient,
+                                                              clstoreString,
+                                                              new ClusterPropertiesJsonSerializer());
+    ZooKeeperPermanentStore<ServiceProperties> zkServiceRegistry =
+        (ZooKeeperPermanentStore<ServiceProperties>) getStore(zkclient,
+                                                              scstoreString,
+                                                              new ServicePropertiesJsonSerializer());
+    ZooKeeperEphemeralStore<UriProperties> zkUriRegistry =
+        (ZooKeeperEphemeralStore<UriProperties>) getEphemeralStore(zkclient,
+                                                                   uristoreString,
+                                                                   new UriPropertiesJsonSerializer(),
+                                                                   new UriPropertiesMerger());
+    FileStore<ClusterProperties> fsClusterStore = createFileStore("clusters", new ClusterPropertiesJsonSerializer());
+    FileStore<ServiceProperties> fsServiceStore = createFileStore(d2ServicePath, new ServicePropertiesJsonSerializer());
+    FileStore<UriProperties> fsUriStore = createFileStore("uris", new UriPropertiesJsonSerializer());
+
+    // chains
+    PropertyEventThread thread = new PropertyEventThread("lb client event thread");
+    // start up the world
+    thread.start();
+
+    PropertyEventBus<ServiceProperties> serviceBus =
+        new PropertyEventBusImpl<ServiceProperties>(thread, zkServiceRegistry);
+    PropertyEventBus<UriProperties> uriBus =
+        new PropertyEventBusImpl<UriProperties>(thread, zkUriRegistry);
+    PropertyEventBus<ClusterProperties> clusterBus =
+        new PropertyEventBusImpl<ClusterProperties>(thread, zkClusterRegistry);
+
+    clusterBus.register(fsClusterStore);
+    serviceBus.register(fsServiceStore);
+    uriBus.register(fsUriStore);
+    
+    new ZooKeeperTogglingStore<UriProperties>(zkUriRegistry, fsUriStore, uriBus, true);
+    new ZooKeeperTogglingStore<ClusterProperties>(zkClusterRegistry, fsClusterStore, clusterBus, true);
+    
+    Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
+        new HashMap<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>>();
+
+    loadBalancerStrategyFactories.put("random", new RandomLoadBalancerStrategyFactory());
+    loadBalancerStrategyFactories.put("degrader", new DegraderLoadBalancerStrategyFactoryV2());
+    loadBalancerStrategyFactories.put("degraderV2", new DegraderLoadBalancerStrategyFactoryV2());
+    loadBalancerStrategyFactories.put("degraderV3", new DegraderLoadBalancerStrategyFactoryV3());
+
+    Map<String, TransportClientFactory> clientFactories =
+        new HashMap<String, TransportClientFactory>();
+
+    clientFactories.put("http", new HttpClientFactory());
+
+    
+    
+    
+    
+    ZKFSComponentFactory componentFactory = new ZKFSComponentFactory();
+
+    TogglingPublisher<ClusterProperties> clusterToggle = componentFactory.createClusterToggle(zkClusterRegistry,
+                                                                                      fsClusterStore,
+                                                                                      clusterBus);
+    TogglingPublisher<ServiceProperties> serviceToggle = componentFactory.createServiceToggle(zkServiceRegistry,
+                                                                                      fsServiceStore,
+                                                                                      serviceBus);
+    TogglingPublisher<UriProperties> uriToggle = componentFactory.createUriToggle(zkUriRegistry, fsUriStore, uriBus);
+
+   // create the state
+   SimpleLoadBalancerState state =
+       new SimpleLoadBalancerState(thread,
+                                   uriBus,
+                                   clusterBus,
+                                   serviceBus,
+                                   clientFactories,
+                                   loadBalancerStrategyFactories);
+   
+   SimpleLoadBalancer slbalancer = new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS);
+
+   TogglingLoadBalancer balancer = componentFactory.createBalancer(slbalancer, state, clusterToggle, serviceToggle, uriToggle);
+   balancer.start(new Callback<None>() {
+
+     @Override
+     public void onError(Throwable e)
+     {
+       _log.warn("Failed to run start on the TogglingLoadBalancer, may not have registered " +
+                         "SimpleLoadBalancer and State with JMX.");
+     }
+
+     @Override
+     public void onSuccess(None result)
+     {
+       _log.info("Registered SimpleLoadBalancer and State with JMX.");
+     }
+   });
+
+   new JmxManager().registerLoadBalancer("balancer", slbalancer)
+   .registerLoadBalancerState("state", state)
+   .registerPropertyEventThread("thread", thread)
+   .registerZooKeeperPermanentStore("zkClusterRegistry",
+                                    zkClusterRegistry)
+   .registerZooKeeperPermanentStore("zkServiceRegistry",
+                                    zkServiceRegistry)
+   .registerZooKeeperEphemeralStore("zkUriRegistry", zkUriRegistry);
+             
+    return balancer;
+  }
+  
   public  Set< UriProperties> getServiceURIsProps(String zkserver, String d2path, String serviceName) throws IOException,
   IllegalStateException,
   URISyntaxException,
@@ -865,27 +987,33 @@ public LoadBalancerClientCli( String zkserverHostPort, String d2path) throws Exc
     return sb.toString();
   }
 
-  public static void printStore(ZooKeeperPermanentStore<ClusterProperties> zkClusterRegistry,
+  public static String printStore(ZooKeeperPermanentStore<ClusterProperties> zkClusterRegistry,
                                 ZooKeeperEphemeralStore<UriProperties> zkUriRegistry,
                                 ZooKeeperPermanentStore<ServiceProperties> zkServiceRegistry,
                                 String cluster,
                                 String service) throws URISyntaxException,
       PropertyStoreException
   {
-    printStore(zkClusterRegistry, zkUriRegistry, cluster);
+    StringBuilder sb = new StringBuilder();
+
+    sb.append(printStore(zkClusterRegistry, zkUriRegistry, cluster));
     if (zkServiceRegistry.get(service).getClusterName().equals(cluster))
     {
-      printService(zkServiceRegistry, service);
+      sb.append(printService(zkServiceRegistry, service));
     }
+
+    return sb.toString();
   }
 
-  public static void printStores(ZKConnection zkclient, String zkserver, String d2path) throws IOException,
+  public static String printStores(ZKConnection zkclient, String zkserver, String d2path) throws IOException,
       IllegalStateException,
       URISyntaxException,
       PropertyStoreException,
       Exception
   {
     int serviceCount = 0;
+    String zkstr = "\nZKServer:" + zkserver;
+    StringBuilder sb = new StringBuilder();
     Set<String> currentservices = new HashSet<String>();
     Map<String,ZooKeeperPermanentStore<ServiceProperties>> zkServiceRegistryMap = new HashMap<String,ZooKeeperPermanentStore<ServiceProperties>>();
     Map<String,List<String>> servicesGroupMap = new HashMap<String,List<String>>(); 
@@ -923,25 +1051,30 @@ public LoadBalancerClientCli( String zkserverHostPort, String d2path) throws Exc
       serviceCount += services.size();
     }
 
-    System.out.println("ZKServer:" + zkserver + " Total Clusters:"
-        + currentclusters.size());
-    System.out.println("ZKServer:" + zkserver + " Total Services:"
-        + serviceCount);
-    System.out.println("ZKServer:" + zkserver + " Total URIs:" + currenturis.size());
-
-    System.out.println("============================================================");
-    System.out.println("SERVICE GROUPS");
+    sb.append(zkstr);
+    sb.append(" Total Clusters:");
+    sb.append(currentclusters.size());
+    sb.append(zkstr);
+    sb.append(" Total Services:");
+    sb.append(serviceCount);
+    sb.append(zkstr);
+    sb.append(" Total URIs:");
+    sb.append(currenturis.size());
+    sb.append("\n============================================================");
+    sb.append("\nSERVICE GROUPS");
 
     for (String serviceGroup : servicesGroupMap.keySet())
     {
-      System.out.println("GROUP:"+serviceGroup+"           Services:"+servicesGroupMap.get(serviceGroup));
+      sb.append("\nGROUP:"+serviceGroup+"           Services:"+servicesGroupMap.get(serviceGroup));
     }
 
     for (String cluster : currentclusters)
     {
       int count = 0;
-      System.out.println("============================================================");
-      System.out.println("CLUSTER '" + cluster + "':");
+      sb.append("\n============================================================");
+      sb.append("\nCLUSTER '");
+      sb.append(cluster);
+      sb.append("':");
 
       for (String service : currentservices)
       {
@@ -955,10 +1088,10 @@ public LoadBalancerClientCli( String zkserverHostPort, String d2path) throws Exc
         	{
         	  if (cluster.equals(serviceProps.getClusterName()))
         	  {
-        	    System.out.println("-------------------");
-        	    System.out.println("SERVICE '" + service + "':");
+                sb.append("\n-------------------");
+                sb.append("\nSERVICE '" + service + "':");
 
-        	    printStore(zkClusterRegistry, zkUriRegistry, zkServiceRegistryMap.get(serviceGroup), cluster, service);
+                sb.append(printStore(zkClusterRegistry, zkUriRegistry, zkServiceRegistryMap.get(serviceGroup), cluster, service));
         	    count++;
         	    break;
         	  }
@@ -968,10 +1101,125 @@ public LoadBalancerClientCli( String zkserverHostPort, String d2path) throws Exc
       }
       if (count == 0)
       {
-        printStore(zkClusterRegistry, zkUriRegistry, cluster);
-        System.out.println("No services were found in this cluster.");
+        sb.append(printStore(zkClusterRegistry, zkUriRegistry, cluster));
+        sb.append("\nNo services were found in this cluster.");
+      }
+    }
+    
+    return sb.toString();
+  }
+
+  private <T> FileStore<T> createFileStore(String baseName, PropertySerializer<T> serializer) throws PropertyStoreException
+  {
+    FileStore<T> store = new FileStore<T>(_tmpDir.getAbsolutePath() + File.separator + baseName, ".ini", serializer);
+    return store;
+  }
+  
+  private void deleteTempDir() throws IOException
+  {
+    _log.error("\n\n\n\n\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ DELETING TmpDir:"+_tmpDir);
+    
+    if (_tmpDir.exists())
+    {
+      if (!(_tmpDir.delete()))
+      {
+        throw new IOException("Could not delete temp file: " + _tmpDir.getAbsolutePath());
       }
     }
   }
+  
+  private static File createTempDirectory(String name) throws IOException
+  {
+    final File temp;
 
+    temp = File.createTempFile(name,"");
+
+    if (!(temp.delete()))
+    {
+      throw new IOException("Could not delete temp file: " + temp.getAbsolutePath());
+    }
+
+    if (!(temp.mkdir()))
+    {
+      throw new IOException("Could not create temp directory: " + temp.getAbsolutePath());
+    }
+
+    return (temp);
+  }
+  
+  public void shutdown() throws Exception
+  {
+    if (_zkClusterRegistry != null)
+    {
+      try
+      {
+        FutureCallback<None> shutdownCallback = new FutureCallback<None>();
+        _zkClusterRegistry.shutdown(shutdownCallback);
+        shutdownCallback.get(5000, TimeUnit.MILLISECONDS);
+      }
+      catch (Exception e)
+      {
+        _log.error("Failed to shutdown ZooKeeperPermanentStore<ClusterProperties> zkClusterRegistry.");
+      }
+    }
+    
+    if (_zkServiceRegistry != null)
+    {
+      try
+      {
+        FutureCallback<None> shutdownCallback = new FutureCallback<None>();
+        _zkServiceRegistry.shutdown(shutdownCallback);
+        shutdownCallback.get(5000, TimeUnit.MILLISECONDS);
+      }
+      catch (Exception e)
+      {
+        _log.error("Failed to shutdown ZooKeeperPermanentStore<ServiceProperties> zkServiceRegistry.");
+      }
+    }
+    
+    if (_zkUriRegistry != null)
+    {
+      try
+      {
+        FutureCallback<None> shutdownCallback = new FutureCallback<None>();
+        _zkUriRegistry.shutdown(shutdownCallback);
+        shutdownCallback.get(5000, TimeUnit.MILLISECONDS);
+      }
+      catch (Exception e)
+      {
+        _log.error("Failed to shutdown ZooKeeperEphemeralStore<UriProperties> zkUriRegistry.");
+      }
+    }
+
+    try
+    {
+      if (_client != null)
+      {
+        _client.shutdown();
+      }
+    }
+    catch (Exception e)
+    {
+      _log.error("Failed to shutdown dynamic client.");
+    }
+    
+    try
+    {
+      deleteTempDir();
+    }
+    catch (Exception e)
+    {
+      _log.error("Failed to delete directory " + _tmpDir);
+    }
+    
+    try
+    {
+      _zkclient.shutdown();
+    }
+    catch (Exception e)
+    {
+      _log.error("Failed to shutdown zk client.");
+    }
+
+  }
 }

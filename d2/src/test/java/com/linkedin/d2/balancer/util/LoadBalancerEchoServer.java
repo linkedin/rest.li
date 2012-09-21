@@ -31,9 +31,11 @@ import com.linkedin.d2.discovery.stores.zk.ZKConnection;
 import com.linkedin.d2.discovery.stores.zk.ZKTestUtil;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.d2.jmx.JmxManager;
+import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
+import com.linkedin.r2.message.rest.RestStatus;
 import com.linkedin.r2.message.rpc.RpcRequest;
 import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.message.rpc.RpcResponseBuilder;
@@ -63,6 +65,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 // Server startup
@@ -71,6 +75,7 @@ import java.util.concurrent.TimeoutException;
 public class LoadBalancerEchoServer
 {
   private final String       _basePath;
+  private final String       _host;
   private final int          _port;
   private final String       _scheme;
   private final String       _cluster;
@@ -79,9 +84,10 @@ public class LoadBalancerEchoServer
   private Server             _server;
   private LoadBalancerServer _announcer;
   private boolean            _isStopped = false;
+  private int                _timeout = 5000;
   private final Map<Integer, Double> _partitionWeight;
 
-  private final String RESPONSE_POSTFIX = ".FromEchoServerPort:";
+  private final static String RESPONSE_POSTFIX = ".FromEchoServerPort:";
 
   private static final Logger _log = LoggerFactory.getLogger(LoadBalancerEchoServer.class);
 
@@ -119,9 +125,9 @@ public class LoadBalancerEchoServer
       InterruptedException,
       TimeoutException
   {
-    this(zookeeperHost, zookeeperPort, echoServerHost, echoServerPort, scheme, basePath, cluster, null, services);
+    this(zookeeperHost, zookeeperPort, echoServerHost, echoServerPort, 5000, scheme, basePath, cluster, null, services); 
   }
-
+  
   public LoadBalancerEchoServer(String zookeeperHost,
                                 int zookeeperPort,
                                 String echoServerHost,
@@ -135,8 +141,43 @@ public class LoadBalancerEchoServer
       InterruptedException,
       TimeoutException
   {
+    this(zookeeperHost, zookeeperPort, echoServerHost, echoServerPort, 5000, scheme, basePath, cluster, partitionWeight, services); 
+  }
+
+  public LoadBalancerEchoServer(String zookeeperHost,
+                                int zookeeperPort,
+                                String echoServerHost,
+                                int echoServerPort,
+                                int timeout,
+                                String scheme,
+                                String basePath,
+                                String cluster,
+                                String... services) throws IOException,
+      PropertyStoreException,
+      InterruptedException,
+      TimeoutException
+  {
+    this(zookeeperHost, zookeeperPort, echoServerHost, echoServerPort, timeout, scheme, basePath, cluster, null, services); 
+  }
+  
+  public LoadBalancerEchoServer(String zookeeperHost,
+                                int zookeeperPort,
+                                String echoServerHost,
+                                int echoServerPort,
+                                int timeout,
+                                String scheme,
+                                String basePath,
+                                String cluster,
+                                Map<Integer, Double> partitionWeight,
+                                String... services) throws IOException,
+      PropertyStoreException,
+      InterruptedException,
+      TimeoutException
+  {
+    _host = echoServerHost;
     _port = echoServerPort;
     _scheme = scheme;
+    _timeout = timeout;
     _cluster = cluster;
     _partitionWeight = partitionWeight;
     _basePath = basePath;
@@ -156,7 +197,7 @@ public class LoadBalancerEchoServer
     // set up the lb announcer. if we can't connect, give up. in production, there would
     // be a JMX hook to "retry" if we're not connected.
 
-    final ZKConnection zkClient = ZKTestUtil.getConnection(zookeeperHost+":"+zookeeperPort, 5000);
+    final ZKConnection zkClient = ZKTestUtil.getConnection(zookeeperHost+":"+zookeeperPort, _timeout);
 
     ZooKeeperEphemeralStore<UriProperties> zk =
         new ZooKeeperEphemeralStore<UriProperties>(zkClient,
@@ -190,6 +231,21 @@ public class LoadBalancerEchoServer
     // announce that the server has started
   }
 
+  public String getHost()
+  {
+    return _host;
+  }
+
+  public int getPort()
+  {
+    return _port;
+  }
+
+  public Map<Integer, Double> getWeight()
+  {
+    return _partitionWeight;
+  }
+  
   public void startServer() throws IOException,
       InterruptedException,
       URISyntaxException
@@ -234,9 +290,11 @@ public class LoadBalancerEchoServer
     catch (NoSuchFieldException e)
     {
       // do nothing
+      e.printStackTrace();
     }
     catch (IllegalAccessException e)
     {
+      e.printStackTrace();
     }
 
     return _isStopped;
@@ -245,13 +303,18 @@ public class LoadBalancerEchoServer
 
   public void markUp() throws PropertyStoreException
   {
+    markUp(_partitionWeight);
+  }
+  
+  public void markUp(Map<Integer, Double> partitionWeight) throws PropertyStoreException
+  {
     FutureCallback<None> callback = new FutureCallback<None>();
     Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>();
-    if (_partitionWeight != null)
+    if (partitionWeight != null)
     {
-      for (int partitionId : _partitionWeight.keySet())
+      for (int partitionId : partitionWeight.keySet())
       {
-        partitionDataMap.put(partitionId, new PartitionData(_partitionWeight.get(partitionId)));
+        partitionDataMap.put(partitionId, new PartitionData(partitionWeight.get(partitionId)));
       }
     }
     else
@@ -284,11 +347,92 @@ public class LoadBalancerEchoServer
     }
   }
 
+  public RestResponse getExceptionTypeFromRequest(String request)
+  {
+    if (request.contains("PORT:"+_port))
+    {
+      Pattern pattern = Pattern.compile("EXCEPTION=(\\w+)", Pattern.CASE_INSENSITIVE);
+      Matcher matcher = pattern.matcher(request);
+      int status = -9999;
+      while (matcher.find())
+      {
+        if (matcher.group(1).contains("NOT_FOUND"))
+        {
+          status = RestStatus.NOT_FOUND;
+        }
+        else if (matcher.group(1).contains("INTERNAL_SERVER_ERROR"))
+        {
+          status = RestStatus.INTERNAL_SERVER_ERROR;
+        }
+        else if (matcher.group(1).contains("BAD_REQUEST"))
+        {
+          status = RestStatus.BAD_REQUEST;
+        }
+
+        final RestResponse res = new RestResponseBuilder().setStatus(status).build();
+        final RestException restException = new RestException(res);
+
+        return restException.getResponse();
+      }
+    }
+    return null;
+  }
+  
   private Server getHttpServer(TransportDispatcher dispatcher)
   {
     return new HttpServerFactory().createServer(_port, dispatcher);
   }
 
+
+  public long getDelayValueFromRequest(String request)
+  {
+    if (request.contains("PORT:"+_port))
+    {
+      Pattern pattern = Pattern.compile("DELAY=(\\d+)", Pattern.CASE_INSENSITIVE);
+      Matcher matcher = pattern.matcher(request);
+      while (matcher.find())
+      {
+        return Long.parseLong(matcher.group(1));
+      }
+    }
+    return 0;
+  }
+
+  public static String getResponsePostfixString()
+  {
+    return RESPONSE_POSTFIX;
+  }
+  
+  public String getResponsePostfixStringWithPort()
+  {
+    return RESPONSE_POSTFIX+_port;
+  }
+  
+  private String printWeights()
+  {
+    StringBuilder sb = new StringBuilder();
+    Map<Integer, Double> partitionDataMap = new HashMap<Integer, Double>();
+    if (_partitionWeight != null)
+    {
+      partitionDataMap = _partitionWeight;
+    }
+    else
+    {
+      partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new Double(1d));
+    }
+      
+    for (int partitionId : partitionDataMap.keySet())
+    {
+      sb.append(((sb.length() > 0) ? "," : ""));
+      sb.append(partitionId);
+      sb.append("/");
+      sb.append(partitionDataMap.get(partitionId));
+    }
+
+    return sb.toString();
+  }
+  
+  
   public class RpcDispatcher implements RpcRequestHandler
   {
     @Override
@@ -307,21 +451,33 @@ public class LoadBalancerEchoServer
     public void handleRequest(RestRequest request, final Callback<RestResponse> callback)
     {
 
-      System.err.println("REST server request: " + request.getEntity().asString("UTF-8"));
+      System.out.println("REST server request: " + request.getEntity().asString("UTF-8"));
 
-      String response = request.getEntity()+RESPONSE_POSTFIX+_port;
+      String requestStr = request.getEntity().asString("UTF-8");
+      String response = request.getEntity() + ";WEIGHT=" + printWeights() + getResponsePostfixStringWithPort();
       isStopped();
 
        // Return response only if server is running
       if (! _isStopped)
       {
-        callback.onSuccess(new RestResponseBuilder().setEntity(response.getBytes()).build());
+        try
+        {
+          Thread.sleep(getDelayValueFromRequest(requestStr));
+        }
+        catch (InterruptedException e)
+        {
+        }
+
+        if (requestStr.contains("EXCEPTION="))
+        {
+          callback.onSuccess(getExceptionTypeFromRequest(requestStr));
+        }
+        else
+        {
+          callback.onSuccess(new RestResponseBuilder().setEntity(response.getBytes()).build());
+        }
       }
     }
   }
 
-  public String getResponsePostfix()
-  {
-    return RESPONSE_POSTFIX+_port;
-  }
 }

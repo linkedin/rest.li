@@ -42,7 +42,6 @@ public class D2ConfigTestUtil
   private static String _prioritizedSchemes = "http";
   private static String _loadBalancerStrategyName = "degrader";
   private static List<String> _loadBalancerStrategyList = Arrays.asList(new String[]{"degrader","degraderV3"});
-
   private Map<String,Object> _clusterProperties = new HashMap<String,Object>();
   private Map<String, Object> _clusterDefaults = new HashMap<String, Object>();
   private Map<String, Object> _serviceDefaults = new HashMap<String, Object>();
@@ -68,12 +67,27 @@ public class D2ConfigTestUtil
     generateClusters(clustersData);
   }
 
+  public D2ConfigTestUtil(Map<String,List<String>> clustersData, List<String> loadBalancerStrategyList)
+  {
+    _loadBalancerStrategyList = loadBalancerStrategyList;
+    setDefaults();
+    generateClusters(clustersData);
+  }
+  
   public D2ConfigTestUtil(Map<String, List<String>> clusterData, Map<String, Object> partitionData)
   {
+    _loadBalancerStrategyList = Arrays.asList(new String[]{"degraderV3"});
     setDefaults();
     generateClusters(clusterData, partitionData);
   }
 
+  public D2ConfigTestUtil(Map<String, List<String>> clusterData, Map<String, Object> partitionData, List<String> loadBalancerStrategyList)
+  {
+    _loadBalancerStrategyList = loadBalancerStrategyList;
+    setDefaults();
+    generateClusters(clusterData, partitionData);
+  }
+  
   public D2ConfigTestUtil(String mainClusterName, Map<String,String> servicesData, Map<String,String> serviceGroupsData)
   {
     setDefaults();

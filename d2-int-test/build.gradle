@@ -1,18 +1,23 @@
+
 dependencies {
   compile project(':d2')
   compile project(':degrader')
   compile project(':r2')
+  compile project(':r2-jetty')
   compile project(':data')
   compile project(':pegasus-common')
   compile project(':li-jersey-uri')
+  compile fileTree(dir: 'lib', include: '*.jar')
   compile externalDependency.commonsCodec
   compile externalDependency.commonsHttpClient
-  compile externalDependency.commonsLang
   compile externalDependency.json
   compile externalDependency.zookeeper
   compile externalDependency.jacksonCoreAsl
   compile externalDependency.jacksonMapperAsl
   compile externalDependency.jdkTools
+  compile externalDependency.netty
   testCompile externalDependency.testng
   testCompile externalDependency.commonsIo
+  testCompile project(path: ":d2", configuration: "testArtifacts")
 }
+
