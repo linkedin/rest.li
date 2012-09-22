@@ -606,7 +606,8 @@ public class ResourceModelEncoder
                     ResourceMethod.BATCH_GET,
                     ResourceMethod.BATCH_UPDATE,
                     ResourceMethod.BATCH_PARTIAL_UPDATE,
-                    ResourceMethod.BATCH_DELETE
+                    ResourceMethod.BATCH_DELETE,
+                    ResourceMethod.GET_ALL
             };
 
     for (ResourceMethod method : crudMethods)

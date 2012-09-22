@@ -25,6 +25,27 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.internal.server.methods.arguments.ActionArgumentBuilder;
+import com.linkedin.restli.internal.server.methods.arguments.BatchCreateArgumentBuilder;
+import com.linkedin.restli.internal.server.methods.arguments.BatchDeleteArgumentBuilder;
+import com.linkedin.restli.internal.server.methods.arguments.BatchGetArgumentBuilder;
+import com.linkedin.restli.internal.server.methods.arguments.BatchPatchArgumentBuilder;
+import com.linkedin.restli.internal.server.methods.arguments.BatchUpdateArgumentBuilder;
+import com.linkedin.restli.internal.server.methods.arguments.CreateArgumentBuilder;
+import com.linkedin.restli.internal.server.methods.arguments.FinderArgumentBuilder;
+import com.linkedin.restli.internal.server.methods.arguments.GetArgumentBuilder;
+import com.linkedin.restli.internal.server.methods.arguments.PatchArgumentBuilder;
+import com.linkedin.restli.internal.server.methods.arguments.RestLiArgumentBuilder;
+import com.linkedin.restli.internal.server.methods.arguments.UpdateArgumentBuilder;
+import com.linkedin.restli.internal.server.methods.response.ActionResponseBuilder;
+import com.linkedin.restli.internal.server.methods.response.BatchCreateResponseBuilder;
+import com.linkedin.restli.internal.server.methods.response.BatchGetResponseBuilder;
+import com.linkedin.restli.internal.server.methods.response.BatchUpdateResponseBuilder;
+import com.linkedin.restli.internal.server.methods.response.CreateResponseBuilder;
+import com.linkedin.restli.internal.server.methods.response.FinderResponseBuilder;
+import com.linkedin.restli.internal.server.methods.response.GetResponseBuilder;
+import com.linkedin.restli.internal.server.methods.response.RestLiResponseBuilder;
+import com.linkedin.restli.internal.server.methods.response.UpdateResponseBuilder;
 
 /**
  * @author Josh Walker
@@ -33,36 +54,66 @@ import com.linkedin.restli.common.ResourceMethod;
 
 public class MethodAdapterRegistry
 {
-  private static final Map<ResourceMethod, RestLiMethodAdapter> _adapters = buildAdapterRegistry();
+  private static final Map<ResourceMethod, RestLiArgumentBuilder> _adapters = buildAdapterRegistry();
 
-  private static Map<ResourceMethod, RestLiMethodAdapter> buildAdapterRegistry()
+  private static final Map<ResourceMethod, RestLiResponseBuilder> _responseBuilders = buildResponseBuilders();
+
+  private static Map<ResourceMethod, RestLiArgumentBuilder> buildAdapterRegistry()
   {
-    Map<ResourceMethod, RestLiMethodAdapter> result =
-        new HashMap<ResourceMethod, RestLiMethodAdapter>(ResourceMethod.values().length);
-    result.put(ResourceMethod.GET, new GetMethodAdapter());
-    result.put(ResourceMethod.BATCH_GET, new BatchGetMethodAdapter());
-    result.put(ResourceMethod.FINDER, new FinderMethodAdapter());
-    result.put(ResourceMethod.CREATE, new CreateMethodAdapter());
-    result.put(ResourceMethod.PARTIAL_UPDATE, new PatchMethodAdapter());
-    result.put(ResourceMethod.UPDATE, new UpdateMethodAdapter());
-    result.put(ResourceMethod.DELETE, new DeleteMethodAdapter());
-    result.put(ResourceMethod.ACTION, new ActionMethodAdapter());
-    result.put(ResourceMethod.BATCH_UPDATE, new BatchUpdateMethodAdapter());
-    result.put(ResourceMethod.BATCH_PARTIAL_UPDATE, new BatchPatchMethodAdapter());
-    result.put(ResourceMethod.BATCH_CREATE, new BatchCreateMethodAdapter());
-    result.put(ResourceMethod.BATCH_DELETE, new BatchDeleteMethodAdapter());
+    Map<ResourceMethod, RestLiArgumentBuilder> result =
+        new HashMap<ResourceMethod, RestLiArgumentBuilder>(ResourceMethod.values().length);
+    result.put(ResourceMethod.GET, new GetArgumentBuilder());
+    result.put(ResourceMethod.BATCH_GET, new BatchGetArgumentBuilder());
+    result.put(ResourceMethod.FINDER, new FinderArgumentBuilder());
+    result.put(ResourceMethod.CREATE, new CreateArgumentBuilder());
+    result.put(ResourceMethod.PARTIAL_UPDATE, new PatchArgumentBuilder());
+    result.put(ResourceMethod.UPDATE, new UpdateArgumentBuilder());
+    result.put(ResourceMethod.DELETE, new GetArgumentBuilder());
+    result.put(ResourceMethod.ACTION, new ActionArgumentBuilder());
+    result.put(ResourceMethod.BATCH_UPDATE, new BatchUpdateArgumentBuilder());
+    result.put(ResourceMethod.BATCH_PARTIAL_UPDATE, new BatchPatchArgumentBuilder());
+    result.put(ResourceMethod.BATCH_CREATE, new BatchCreateArgumentBuilder());
+    result.put(ResourceMethod.BATCH_DELETE, new BatchDeleteArgumentBuilder());
+    result.put(ResourceMethod.GET_ALL, new FinderArgumentBuilder());
+    return Collections.unmodifiableMap(result);
+  }
+
+  private static Map<ResourceMethod, RestLiResponseBuilder> buildResponseBuilders()
+  {
+    Map<ResourceMethod, RestLiResponseBuilder> result =
+        new HashMap<ResourceMethod, RestLiResponseBuilder>(ResourceMethod.values().length);
+
+    result.put(ResourceMethod.GET, new GetResponseBuilder());
+    result.put(ResourceMethod.BATCH_GET, new BatchGetResponseBuilder());
+    result.put(ResourceMethod.FINDER, new FinderResponseBuilder());
+    result.put(ResourceMethod.CREATE, new CreateResponseBuilder());
+    result.put(ResourceMethod.PARTIAL_UPDATE, new UpdateResponseBuilder());
+    result.put(ResourceMethod.UPDATE, new UpdateResponseBuilder());
+    result.put(ResourceMethod.DELETE, new UpdateResponseBuilder());
+    result.put(ResourceMethod.ACTION, new ActionResponseBuilder());
+    result.put(ResourceMethod.BATCH_UPDATE, new BatchUpdateResponseBuilder());
+    result.put(ResourceMethod.BATCH_PARTIAL_UPDATE, new BatchUpdateResponseBuilder());
+    result.put(ResourceMethod.BATCH_CREATE, new BatchCreateResponseBuilder());
+    result.put(ResourceMethod.BATCH_DELETE, new BatchUpdateResponseBuilder());
+    result.put(ResourceMethod.GET_ALL, new FinderResponseBuilder());
+
     return Collections.unmodifiableMap(result);
   }
 
   /**
-   * Lookup {@link RestLiMethodAdapter} by {@link ResourceMethod}.
+   * Lookup {@link RestLiArgumentBuilder} by {@link ResourceMethod}.
    *
    * @param resourceMethod {@link ResourceMethod}
-   * @return the correct {@link RestLiMethodAdapter} for the provided
+   * @return the correct {@link RestLiArgumentBuilder} for the provided
    *         {@link ResourceMethod}
    */
-  public static RestLiMethodAdapter getMethodAdapter(final ResourceMethod resourceMethod)
+  public static RestLiArgumentBuilder getMethodAdapter(final ResourceMethod resourceMethod)
   {
     return _adapters.get(resourceMethod);
+  }
+
+  public static RestLiResponseBuilder getResponsebuilder(final ResourceMethod resourceMethod)
+  {
+    return _responseBuilders.get(resourceMethod);
   }
 }

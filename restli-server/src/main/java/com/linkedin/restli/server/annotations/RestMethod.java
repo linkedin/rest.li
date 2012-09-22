@@ -35,9 +35,9 @@ import com.linkedin.restli.server.ResourceConfigException;
 /**
  * @author Josh Walker
  * @version $Revision: $
- * 
+ *
  * Rest method annotations for CRUD rest.li resources that don't extend resource templates with fixed sets of methods.
- * 
+ *
  * Includes a map of annotations to resource methods.
  */
 
@@ -87,7 +87,7 @@ public class RestMethod
       }
     }
   }
-  
+
   public static ResourceMethod getResourceMethod(Class<? extends Annotation> annotationClass)
   {
     return _restMethodAnnotationToResourceMethodMap.get(annotationClass);
@@ -142,4 +142,9 @@ public class RestMethod
   @Target(ElementType.METHOD)
   @ToResourceMethod(ResourceMethod.BATCH_DELETE)
   public @interface BatchDelete{ }
+
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.METHOD)
+  @ToResourceMethod(ResourceMethod.GET_ALL)
+  public @interface GetAll{ }
 }

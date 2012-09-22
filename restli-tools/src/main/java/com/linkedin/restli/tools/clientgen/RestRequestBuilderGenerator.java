@@ -16,6 +16,27 @@
 
 package com.linkedin.restli.tools.clientgen;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.codehaus.jackson.JsonFactory;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.JsonParser;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.validation.RequiredMode;
@@ -38,6 +59,7 @@ import com.linkedin.restli.client.base.BatchUpdateRequestBuilderBase;
 import com.linkedin.restli.client.base.CreateRequestBuilderBase;
 import com.linkedin.restli.client.base.DeleteRequestBuilderBase;
 import com.linkedin.restli.client.base.FindRequestBuilderBase;
+import com.linkedin.restli.client.base.GetAllRequestBuilderBase;
 import com.linkedin.restli.client.base.GetRequestBuilderBase;
 import com.linkedin.restli.client.base.PartialUpdateRequestBuilderBase;
 import com.linkedin.restli.client.base.UpdateRequestBuilderBase;
@@ -75,25 +97,6 @@ import com.sun.codemodel.JMod;
 import com.sun.codemodel.JPackage;
 import com.sun.codemodel.JVar;
 import com.sun.codemodel.writer.FileCodeWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.JsonParser;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Generates Java request builders from Rest.li idl.
@@ -304,7 +307,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     ResourceSchemaArray subresources = null;
     ActionSchemaArray resourceActions = null;
     ActionSchemaArray entityActions = null;
-    
+
     if (resource.getCollection() != null)
     {
       CollectionSchema collection = resource.getCollection();
@@ -340,7 +343,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
       subresources = association.getEntity().getSubresources();
       resourceActions = association.getActions();
       entityActions = association.getEntity().getActions();
-      
+
       generateAssociationKey(
               facadeClass,
               association,
@@ -353,7 +356,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     {
       ActionsSetSchema actionsSet = resource.getActionsSet();
       resourceActions = actionsSet.getActions();
-      
+
       keyClass = _voidClass;
       isActionsSet = true;
     }
@@ -445,12 +448,12 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
 
     return facadeClass;
   }
-  
+
   /**
    * Get the key class. In case of collection with a simple key, return the one specified by "type" in the
    * "identifier". Otherwise, get both "type" and "params", and return ComplexKeyResource parameterized by
    * those two.
-   * 
+   *
    * @param collection
    * @param facadeClass
    * @return JClass as described above
@@ -461,9 +464,9 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     {
       return keyClass;
     }
-    
+
     JClass paramsClass = getType(collection.getIdentifier().getParams(), facadeClass);
-    
+
     return getCodeModel().ref(ComplexResourceKey.class).narrow(keyClass, paramsClass);
   }
 
@@ -752,6 +755,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     crudBuilderClasses.put(ResourceMethod.BATCH_UPDATE, BatchUpdateRequestBuilderBase.class);
     crudBuilderClasses.put(ResourceMethod.BATCH_PARTIAL_UPDATE, BatchPartialUpdateRequestBuilderBase.class);
     crudBuilderClasses.put(ResourceMethod.BATCH_DELETE, BatchDeleteRequestBuilderBase.class);
+    crudBuilderClasses.put(ResourceMethod.GET_ALL, GetAllRequestBuilderBase.class);
 
     for (Map.Entry<ResourceMethod, Class<?>> entry : crudBuilderClasses.entrySet())
     {

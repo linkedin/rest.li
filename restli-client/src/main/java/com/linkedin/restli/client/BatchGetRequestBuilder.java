@@ -159,11 +159,6 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
    */
   public static <RT extends RecordTemplate> BatchGetRequest<RT> batch(GetRequest<RT> request)
   {
-    if (request.getMethod() != ResourceMethod.GET)
-    {
-      throw new IllegalArgumentException("Can only batch a get request");
-    }
-
     URI baseURI = request.getBaseURI();
     String id = request.getId();
 

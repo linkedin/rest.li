@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.server.resources;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -28,6 +29,7 @@ import com.linkedin.restli.server.BatchPatchRequest;
 import com.linkedin.restli.server.BatchUpdateRequest;
 import com.linkedin.restli.server.BatchUpdateResult;
 import com.linkedin.restli.server.CreateResponse;
+import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.UpdateResponse;
 
 /**
@@ -123,5 +125,13 @@ public interface CollectionResource<K, V extends RecordTemplate> extends
    * @return the status or null if for a default, 204 No Content response
    */
   UpdateResponse delete(K key);
+
+  /**
+   * Gets a subset of the entire collection defined by this resource.
+   *
+   * @param pagingContext {@link PagingContext} specifying a subset to get.
+   * @return List of elements of the collections matching pagingContext.
+   */
+  List<V> getAll(PagingContext pagingContext);
 
 }

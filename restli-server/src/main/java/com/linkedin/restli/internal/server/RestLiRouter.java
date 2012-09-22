@@ -138,8 +138,7 @@ public class RestLiRouter
     // iterate through all path segments, simultaneously descending the resource hierarchy
     // and parsing path keys
     // the goal of this loop is to locate the leaf resource, which will be set in
-    // currentResource, and to parse the
-    // necessary information into the context
+    // currentResource, and to parse the necessary information into the context
     ResourceLevel currentLevel = ResourceLevel.COLLECTION;
 
     while (remainingPath.peek() != null)
@@ -272,6 +271,8 @@ public class RestLiRouter
             new ResourceMethodMatchKey("POST",   "",            true,    false,  false,  true),  ResourceMethod.ACTION,
             new ResourceMethodMatchKey("POST",   "",            true,    false,  false,  false), ResourceMethod.ACTION,
             new ResourceMethodMatchKey("POST",   "",            false,   false,  false,  false), ResourceMethod.CREATE,
+
+            new ResourceMethodMatchKey("GET",    "",            false,   false,  false,  false), ResourceMethod.GET_ALL,
 
             new ResourceMethodMatchKey("GET",    "GET",         false,   false,  false,  true),  ResourceMethod.GET,
             new ResourceMethodMatchKey("GET",    "FINDER",        false,   true,   false,  false), ResourceMethod.FINDER,

@@ -116,11 +116,24 @@ public class HashGroupMembershipMgr implements GroupMembershipMgr
   public List<GroupMembership> search(GroupMembershipSearchQuery query)
   {
     List<GroupMembership> result = new ArrayList<GroupMembership>();
+
+    int counter = 0;
     for (Map.Entry<CompoundKey, GroupMembership> entry : _data.entrySet())
     {
+      if (query.getStart() > counter)
+      {
+        counter++;
+        continue;
+      }
+      if (query.getCount() > 0 && query.getStart() + query.getCount() < counter)
+      {
+        break;
+      }
+
       GroupMembership value = entry.getValue();
 
-      boolean match = query.getGroupID() == value.getGroupID();
+      boolean match =
+          (query.getGroupID() == GroupMembershipSearchQuery.EMPTY_INT_VALUE || query.getGroupID() == value.getGroupID());
       if (query.getFirstName() != null)
       {
         match = match && query.getFirstName().equals(value.getFirstName());
@@ -138,6 +151,7 @@ public class HashGroupMembershipMgr implements GroupMembershipMgr
       {
         result.add(value);
       }
+      counter++;
     }
     return result;
   }

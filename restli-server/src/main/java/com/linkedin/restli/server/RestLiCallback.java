@@ -31,8 +31,8 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.server.RestLiResponseHandler;
 import com.linkedin.restli.internal.server.RoutingResult;
-import com.linkedin.restli.internal.server.methods.ErrorResponseBuilder;
-import com.linkedin.restli.internal.server.methods.PartialRestResponse;
+import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
+import com.linkedin.restli.internal.server.methods.response.PartialRestResponse;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 
 public class RestLiCallback<T> implements Callback<T>

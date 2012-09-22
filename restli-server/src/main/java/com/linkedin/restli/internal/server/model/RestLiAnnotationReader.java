@@ -16,6 +16,24 @@
 
 package com.linkedin.restli.internal.server.model;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.TyperefDataSchema;
@@ -60,22 +78,6 @@ import com.linkedin.restli.server.annotations.RestLiCollectionCompoundKey;
 import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.resources.ComplexKeyResource;
 import com.linkedin.restli.server.resources.KeyValueResource;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Pattern;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -1013,7 +1015,7 @@ public final class RestLiAnnotationReader
   }
 
   /**
-   * Check whether the method is annotated with one of RestMethod annotations.
+   * Check whether the method is annotated with one of {@link RestMethod} annotations.
    */
   private static boolean isRestMethodAnnotated(final Method method)
   {

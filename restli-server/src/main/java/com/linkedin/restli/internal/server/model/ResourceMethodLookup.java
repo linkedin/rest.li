@@ -59,6 +59,8 @@ public final class ResourceMethodLookup
                                        ResourceMethod.DELETE);
     _methodNameToResourceMethodMap.put(includePartial("batchDelete", false),
                                        ResourceMethod.BATCH_DELETE);
+    _methodNameToResourceMethodMap.put(includePartial("getAll", false),
+                                       ResourceMethod.GET_ALL);
   }
 
   private static String includePartial(String methodName, final boolean partial)

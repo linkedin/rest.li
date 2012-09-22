@@ -30,7 +30,7 @@ import com.linkedin.parseq.promise.Promises;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.internal.server.methods.MethodAdapterRegistry;
-import com.linkedin.restli.internal.server.methods.RestLiMethodAdapter;
+import com.linkedin.restli.internal.server.methods.arguments.RestLiArgumentBuilder;
 import com.linkedin.restli.internal.server.model.Parameter.ParamType;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.server.RestLiCallback;
@@ -84,7 +84,7 @@ public class RestLiMethodInvoker
       ((BaseResource) resource).setContext(invocableMethod.getContext());
     }
 
-    RestLiMethodAdapter adapter =
+    RestLiArgumentBuilder adapter =
         MethodAdapterRegistry.getMethodAdapter(resourceMethodDescriptor.getType());
     if (adapter == null)
     {

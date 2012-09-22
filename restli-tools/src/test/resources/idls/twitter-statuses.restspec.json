@@ -69,16 +69,15 @@
             "name" : "statusID",
             "type" : "long"
           },
-          "supports" : [ "batch_get", "create" ],
+          "supports" : [ "batch_get", "create", "get_all" ],
           "methods" : [ {
             "method" : "create",
             "doc" : "Replies to the parent status"
           }, {
             "method" : "batch_get",
             "doc" : "Gets a batch of replies by statusID"
-          } ],
-          "finders" : [ {
-            "name" : "paging",
+          }, {
+            "method" : "get_all",
             "doc" : "Iterates through all replies to the parent status"
           } ],
           "actions" : [ {

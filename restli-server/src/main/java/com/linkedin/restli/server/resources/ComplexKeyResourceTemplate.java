@@ -19,6 +19,7 @@
  */
 package com.linkedin.restli.server.resources;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -32,6 +33,7 @@ import com.linkedin.restli.server.BatchPatchRequest;
 import com.linkedin.restli.server.BatchUpdateRequest;
 import com.linkedin.restli.server.BatchUpdateResult;
 import com.linkedin.restli.server.CreateResponse;
+import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.UpdateResponse;
 
@@ -42,6 +44,13 @@ import com.linkedin.restli.server.UpdateResponse;
 public abstract class ComplexKeyResourceTemplate<K extends RecordTemplate, P extends RecordTemplate, V extends RecordTemplate> extends
     ResourceContextHolder implements ComplexKeyResource<K, P, V>
 {
+
+  /** @see com.linkedin.restli.server.resources.CollectionResource#getAll(com.linkedin.restli.server.PagingContext) */
+  @Override
+  public List<V> getAll(PagingContext pagingContext)
+  {
+    throw new RoutingException("'getAll(PagingContext)' not implemented", 400);
+  }
 
   /**
    * @see com.linkedin.restli.server.resources.CollectionResource#create(com.linkedin.data.template.RecordTemplate)

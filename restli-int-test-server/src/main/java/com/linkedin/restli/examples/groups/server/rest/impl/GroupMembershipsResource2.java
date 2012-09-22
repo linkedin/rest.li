@@ -157,7 +157,7 @@ public class GroupMembershipsResource2 extends AssociationResourceTemplate<Group
     {
       CompoundKey id = entry.getKey();
       GroupMembership membership = entry.getValue();
-      
+
       membership.setId(id.toString());
       membership.setGroupID(((Integer)id.getPart(GROUP_ID)));
       membership.setMemberID(((Integer)id.getPart(MEMBER_ID)));
@@ -235,4 +235,12 @@ public class GroupMembershipsResource2 extends AssociationResourceTemplate<Group
     }
   }
 
+  @Override
+  public List<GroupMembership> getAll(@Context PagingContext pagingContext)
+  {
+    return _app.getMembershipMgr()
+               .search(new GroupMembershipSearchQuery(GroupMembershipSearchQuery.EMPTY_INT_VALUE,
+                                                      pagingContext.getStart(),
+                                                      pagingContext.getCount()));
+  }
 }

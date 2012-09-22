@@ -23,14 +23,16 @@ import com.linkedin.restli.examples.groups.api.MembershipSortOrder;
 
 public class GroupMembershipSearchQuery
 {
-  private final int _groupID;
-  private final int _start;
-  private final int _count;
+  public  static final int EMPTY_INT_VALUE = -1;
 
-  private MembershipLevel _membershipLevel;
-  private String _firstName;
-  private String _lastName;
-  private String _emailAddress;
+  private final int           _groupID;
+  private final int           _start;
+  private final int           _count;
+
+  private MembershipLevel     _membershipLevel;
+  private String              _firstName;
+  private String              _lastName;
+  private String              _emailAddress;
   private MembershipSortOrder _sortOrder;
 
   public GroupMembershipSearchQuery(int groupID, int start, int count)

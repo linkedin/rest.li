@@ -28,10 +28,10 @@ import com.linkedin.restli.common.ActionResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
-import com.linkedin.restli.internal.server.methods.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.methods.MethodAdapterRegistry;
-import com.linkedin.restli.internal.server.methods.PartialRestResponse;
-import com.linkedin.restli.internal.server.methods.RestLiResponseBuilder;
+import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
+import com.linkedin.restli.internal.server.methods.response.PartialRestResponse;
+import com.linkedin.restli.internal.server.methods.response.RestLiResponseBuilder;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.server.CollectionResult;
@@ -129,7 +129,7 @@ public class RestLiResponseHandler
       return ErrorResponseBuilder.getInstance();
     }
 
-    return MethodAdapterRegistry.getMethodAdapter(routingResult.getResourceMethod()
-                                                               .getType());
+    return MethodAdapterRegistry.getResponsebuilder(routingResult.getResourceMethod()
+                                                                 .getType());
   }
 }

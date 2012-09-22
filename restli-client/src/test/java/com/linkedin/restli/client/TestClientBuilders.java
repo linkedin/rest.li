@@ -236,8 +236,8 @@ public class TestClientBuilders
                       expectedRequest,
                       Collections.<String, String>emptyMap());
   }
-  
-  
+
+
   @Test
   public void testCreateRequestBuilder()
   {
@@ -279,6 +279,25 @@ public class TestClientBuilders
     checkBasicRequest(request,
                       "test/key=a%3Ab?fields=message,id&p=42&q=search",
                       ResourceMethod.FINDER,
+                      null,
+                      Collections.<String, String>emptyMap());
+  }
+
+  @Test
+  public void testGetAllRequestBuilder()
+  {
+    GetAllRequestBuilder<Long, TestRecord> builder =
+        new GetAllRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC);
+
+    GetAllRequest<TestRecord> request =
+        builder.paginate(1, 4)
+               .fields(TestRecord.fields().id(), TestRecord.fields().message())
+               .build();
+    Assert.assertEquals(request.isSafe(), true);
+    Assert.assertEquals(request.isIdempotent(), true);
+    checkBasicRequest(request,
+                      "test?count=4&fields=message,id&start=1",
+                      ResourceMethod.GET_ALL,
                       null,
                       Collections.<String, String>emptyMap());
   }
@@ -326,7 +345,7 @@ public class TestClientBuilders
 
     checkBasicRequest(request, "test/1", ResourceMethod.UPDATE, new TestRecord(), Collections.<String, String>emptyMap());
   }
-  
+
   @Test
   public void testComplexKeyGetRequestBuilder() throws Exception
   {
@@ -347,7 +366,7 @@ public class TestClientBuilders
                       null,
                       Collections.<String, String> emptyMap());
   }
-  
+
   @Test
   public void testComplexKeyDeleteRequestBuilder() throws Exception
   {
@@ -368,7 +387,7 @@ public class TestClientBuilders
                       null,
                       Collections.<String, String> emptyMap());
   }
-  
+
   @Test
   public void testComplexKeyBatchGetRequestBuilder() throws Exception
   {
@@ -381,7 +400,7 @@ public class TestClientBuilders
     ComplexResourceKey<TestRecord, TestRecord> id2 =
         buildComplexKey(2L, "KeyMessage2", 20L, "ParamMessage2");
     RecordTemplate param = buildComplexParam(123, "ParamMessage");
-    
+
     @SuppressWarnings("unchecked")
     BatchGetRequest<TestRecord> request = builder.ids(id1, id2).param("testParam", param).build();
     Assert.assertTrue(request.isIdempotent());
@@ -392,7 +411,7 @@ public class TestClientBuilders
                       null,
                       Collections.<String, String>emptyMap());
   }
-  
+
   @Test
   public void testComplexKeyBatchUpdateRequestBuilder() throws Exception
   {
@@ -408,11 +427,11 @@ public class TestClientBuilders
 
     BatchUpdateRequest<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> request =
         builder.input(id1, new TestRecord()).input(id2, new TestRecord()).param("testParam", param).build();
-    
+
     BatchRequest<TestRecord> expectedRequest = new BatchRequest<TestRecord>(new DataMap(), TestRecord.class);
     expectedRequest.getEntities().put(id1.toStringFull(), new TestRecord());
     expectedRequest.getEntities().put(id2.toStringFull(), new TestRecord());
-    
+
     Assert.assertTrue(request.isIdempotent());
     Assert.assertFalse(request.isSafe());
     checkBasicRequest(request,
@@ -421,7 +440,7 @@ public class TestClientBuilders
                       expectedRequest,
                       Collections.<String, String> emptyMap());
   }
-  
+
   /**
    * Helper method to build complex key instance
    */
@@ -436,7 +455,7 @@ public class TestClientBuilders
     id.getParams().setMessage(paramMessage);
     return id;
   }
-  
+
   /**
    * Helper method to build complex param instance
    */
@@ -447,7 +466,7 @@ public class TestClientBuilders
     result.setMessage(message);
     return result;
   }
-  
+
   @Test
   public void testBuilderPathKeys()
   {

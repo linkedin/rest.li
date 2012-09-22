@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.server.resources;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -28,6 +29,7 @@ import com.linkedin.restli.server.BatchPatchRequest;
 import com.linkedin.restli.server.BatchUpdateRequest;
 import com.linkedin.restli.server.BatchUpdateResult;
 import com.linkedin.restli.server.CreateResponse;
+import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.UpdateResponse;
 
@@ -117,6 +119,12 @@ public class CollectionResourceTemplate<K, V extends RecordTemplate> extends
   public UpdateResponse delete(final K key)
   {
     throw new RoutingException("'delete' not implemented", 400);
+  }
+
+  @Override
+  public List<V> getAll(PagingContext pagingContext)
+  {
+    throw new RoutingException("'getAll(PagingContext)' not implemented", 400);
   }
 
 }

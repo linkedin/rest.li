@@ -12,7 +12,7 @@
       "name" : "memberID",
       "type" : "int"
     } ],
-    "supports" : [ "batch_delete", "batch_get", "batch_update", "delete", "get", "partial_update", "update" ],
+    "supports" : [ "batch_delete", "batch_get", "batch_update", "delete", "get", "get_all", "partial_update", "update" ],
     "methods" : [ {
       "method" : "get"
     }, {
@@ -27,6 +27,8 @@
       "method" : "batch_update"
     }, {
       "method" : "batch_delete"
+    }, {
+      "method" : "get_all"
     } ],
     "finders" : [ {
       "name" : "group",

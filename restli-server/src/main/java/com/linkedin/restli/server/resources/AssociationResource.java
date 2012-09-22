@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.server.resources;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -28,16 +29,16 @@ import com.linkedin.restli.server.BatchDeleteRequest;
 import com.linkedin.restli.server.BatchPatchRequest;
 import com.linkedin.restli.server.BatchUpdateRequest;
 import com.linkedin.restli.server.BatchUpdateResult;
+import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.UpdateResponse;
-
-
 
 /**
  *
  * @author dellamag
  */
-public interface AssociationResource<V extends RecordTemplate>
-        extends BaseResource, KeyValueResource<CompoundKey, V>
+public interface AssociationResource<V extends RecordTemplate> extends
+    BaseResource,
+    KeyValueResource<CompoundKey, V>
 {
   /**
    * Gets a batch of resources from this collection.
@@ -112,5 +113,13 @@ public interface AssociationResource<V extends RecordTemplate>
    * @return - deletion results
    */
   BatchUpdateResult<CompoundKey, V> batchDelete(BatchDeleteRequest<CompoundKey, V> ids);
+
+  /**
+   * Gets a subset of the entire collection defined by this resource.
+   *
+   * @param pagingContext {@link PagingContext} specifying a subset to get.
+   * @return List of elements of the collections matching pagingContext.
+   */
+  List<V> getAll(PagingContext pagingContext);
 
 }

@@ -37,6 +37,7 @@ import com.linkedin.restli.client.BatchGetRequest;
 import com.linkedin.restli.client.BatchUpdateRequest;
 import com.linkedin.restli.client.CreateRequest;
 import com.linkedin.restli.client.DeleteRequest;
+import com.linkedin.restli.client.GetAllRequest;
 import com.linkedin.restli.client.GetRequest;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
@@ -168,7 +169,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
                                                .build()).getResponse();
     Assert.assertEquals(response.getStatus(), 201);
     Assert.assertNotNull(response.getId());
-    
+
     // Get newly created group and verify name
     Integer createdId = Integer.valueOf(response.getId());
     Assert.assertEquals(REST_CLIENT.sendRequest(GROUPS_BUILDERS.get()
@@ -189,7 +190,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
                                                .input(patch)
                                                .build());
     Assert.assertEquals(204, responseFuture.getResponse().getStatus());
-    
+
     // Get updated group and verify name
     Assert.assertEquals(REST_CLIENT.sendRequest(GROUPS_BUILDERS.get()
                                                                .id(createdId)
@@ -202,7 +203,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
     // Delete
     responseFuture = REST_CLIENT.sendRequest(GROUPS_BUILDERS.delete().id(createdId).build());
     Assert.assertEquals(204, responseFuture.getResponse().getStatus());
-    
+
     // Verify deleted
     try
     {
@@ -213,7 +214,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
     {
       Assert.assertEquals(e.getStatus(), 404);
     }
-    
+
     // Cleanup - delete the owner's membership that was created along with the group
     responseFuture =
         REST_CLIENT.sendRequest(GROUP_MEMBERSHIPS_BUILDERS.delete()
@@ -248,7 +249,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
 
     return groupMembership;
   }
-  
+
   private static ComplexKeyGroupMembership buildComplexKeyGroupMembership(GroupMembershipKey id,
                                                                           String contactEmail,
                                                                           String firstName,
@@ -293,9 +294,9 @@ public class TestGroupsClient extends RestLiIntegrationTest
   }
 
   @Test
-  public void testAssociationCreateGetUpdateDelete() throws RemoteInvocationException
+  public void testAssociationBatchCreateGetUpdateDelete() throws RemoteInvocationException
   {
- // Setup - batch create two group memberships
+    // Setup - batch create two group memberships
     CompoundKey key1 = buildCompoundKey(1, 1);
     CompoundKey key2 = buildCompoundKey(2, 1);
     GroupMembership groupMembership1 =
@@ -308,8 +309,8 @@ public class TestGroupsClient extends RestLiIntegrationTest
                                                       .build()).getResponse().getEntity().getResults();
     Assert.assertEquals(results.get(key1).getStatus().intValue(), 204);
     Assert.assertEquals(results.get(key2).getStatus().intValue(), 204);
-    
-    // Get memberships
+
+    // BatchGet memberships
     BatchGetRequest<GroupMembership> request =
         GROUP_MEMBERSHIPS_BUILDERS.batchGet()
                                   .ids(key1, key2)
@@ -321,7 +322,16 @@ public class TestGroupsClient extends RestLiIntegrationTest
     Assert.assertEquals(groupMemberships.get(key1.toString()).getContactEmail(), "alfred@test.linkedin.com");
     Assert.assertTrue(groupMemberships.containsKey(key2.toString()));
     Assert.assertEquals(groupMemberships.get(key2.toString()).getContactEmail(), "bruce@test.linkedin.com");
-    
+
+    // GetAll memberships
+    GetAllRequest<GroupMembership> getAllRequest =
+        GROUP_MEMBERSHIPS_BUILDERS.getAll().paginate(1, 2)
+                                  .fields(GroupMembership.fields().contactEmail())
+                                  .build();
+    List<GroupMembership> elements =
+        REST_CLIENT.sendRequest(getAllRequest).getResponse().getEntity().getElements();
+    Assert.assertEquals(elements.size(), 1);
+
     // Delete the newly created group memberships
     Map<CompoundKey, UpdateStatus> deleteResult =
         REST_CLIENT.sendRequest(GROUP_MEMBERSHIPS_BUILDERS.batchDelete()
@@ -332,7 +342,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
                    .getResults();
     Assert.assertEquals(deleteResult.get(key1).getStatus().intValue(), 204);
     Assert.assertEquals(deleteResult.get(key2).getStatus().intValue(), 204);
-    
+
     // Make sure they are gone
     BatchResponse<GroupMembership> getResponse = REST_CLIENT.sendRequest(request).getResponse().getEntity();
     Assert.assertTrue(getResponse.getResults().isEmpty());
@@ -343,18 +353,18 @@ public class TestGroupsClient extends RestLiIntegrationTest
   }
 
   @Test
-  public void testAssociationBatchCreateGetDelete() throws RemoteInvocationException
+  public void testAssociationCreateGetDelete() throws RemoteInvocationException
   {
     // Setup - create group memberships
     CompoundKey key1 = buildCompoundKey(1, 1);
     GroupMembership groupMembership1 =
         buildGroupMembership(null, "alfred@test.linkedin.com", "Alfred", "Hitchcock");
-    
+
     Response<EmptyRecord> response = REST_CLIENT.sendRequest(GROUP_MEMBERSHIPS_BUILDERS.update().id(key1)
                                                       .input(groupMembership1)
                                                       .build()).getResponse();
     Assert.assertEquals(response.getStatus(), 204);
-    
+
     // Get membership
     GetRequest<GroupMembership> getRequest =
         GROUP_MEMBERSHIPS_BUILDERS.get()
@@ -363,13 +373,13 @@ public class TestGroupsClient extends RestLiIntegrationTest
                                   .build();
     GroupMembership groupMembership = REST_CLIENT.sendRequest(getRequest).getResponse().getEntity();
     Assert.assertEquals(groupMembership.getContactEmail(), "alfred@test.linkedin.com");
-    
+
     // Delete the newly created group membership
     Response<EmptyRecord> deleteResponse =
         REST_CLIENT.sendRequest(GROUP_MEMBERSHIPS_BUILDERS.delete().id(key1).build())
                    .getResponse();
     Assert.assertEquals(deleteResponse.getStatus(), 204);
-    
+
     // Make sure it is gone
     try
     {
@@ -380,7 +390,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
       Assert.assertEquals(e.getStatus(), 404);
     }
   }
-  
+
   @Test
   public void testComplexKeyCreateGetUpdateDelete() throws RemoteInvocationException
   {
@@ -402,7 +412,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
     GroupMembershipParam param = new GroupMembershipParam();
     param.setIntParameter(1);
     param.setStringParameter("1");
-    
+
     GroupMembershipQueryParam groupMembershipQueryParam1 = new GroupMembershipQueryParam();
     groupMembershipQueryParam1.setIntParameter(1);
     groupMembershipQueryParam1.setStringParameter("1");
@@ -452,7 +462,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
       Assert.assertEquals(e.getStatus(), 404);
     }
   }
-  
+
   @Test
   public void testComplexKeyBatchCreateGetUpdateDelete() throws RemoteInvocationException
   {
@@ -506,7 +516,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
     Assert.assertEquals(groupMembership2_.getContactEmail(), "bruce@test.linkedin.com");
     Assert.assertNotNull(groupMembership3_);
     Assert.assertEquals(groupMembership3_.getContactEmail(), "carole@test.linkedin.com");
-    
+
     // Update and verify
     groupMembership1.setContactEmail("alfred+@test.linkedin.com");
     groupMembership2.setContactEmail("bruce+@test.linkedin.com");
@@ -541,7 +551,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
     allResponseKeys.addAll(groupMemberships.getErrors().keySet());
     Assert.assertEquals(allResponseKeys, allRequestedKeys);
   }
-  
+
   private static ComplexResourceKey<GroupMembershipKey, GroupMembershipParam> buildComplexKey(int memberID,
                                                                                               int groupID,
                                                                                               int intParam,
