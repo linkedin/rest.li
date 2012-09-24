@@ -58,6 +58,10 @@ allprojects {
   }
 }
 
+task wrapper(type: Wrapper) {
+  gradleVersion = '1.0'
+}
+
 subprojects {
   apply plugin: 'java'
   apply plugin: 'idea'
