@@ -25,10 +25,12 @@ import java.util.Map;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.methods.AnyRecord;
 import com.linkedin.restli.internal.server.util.RestUtils;
+import com.linkedin.restli.server.GetResult;
 
 public class GetResponseBuilder implements RestLiResponseBuilder
 {
@@ -36,14 +38,27 @@ public class GetResponseBuilder implements RestLiResponseBuilder
   @Override
   public PartialRestResponse buildResponse(final RestRequest request,
                                            final RoutingResult routingResult,
-                                           final Object record,
+                                           final Object result,
                                            final Map<String, String> headers)
   {
-    headers.put(RestConstants.HEADER_LINKEDIN_TYPE, record.getClass().getName());
-    DataMap data =
-        RestUtils.projectFields(((RecordTemplate) record).data(),
-                                routingResult.getContext());
+    final RecordTemplate record;
+    final HttpStatus status;
 
-    return new PartialRestResponse(new AnyRecord(data));
+    if (result instanceof GetResult)
+    {
+      final GetResult<?> getResult = (GetResult<?>) result;
+      record = getResult.getValue();
+      status = getResult.getStatus();
+    }
+    else
+    {
+      record = (RecordTemplate) result;
+      status = HttpStatus.S_200_OK;
+    }
+
+    headers.put(RestConstants.HEADER_LINKEDIN_TYPE, record.getClass().getName());
+    final DataMap data =
+        RestUtils.projectFields(record.data(), routingResult.getContext());
+    return new PartialRestResponse(status, new AnyRecord(data));
   }
 }

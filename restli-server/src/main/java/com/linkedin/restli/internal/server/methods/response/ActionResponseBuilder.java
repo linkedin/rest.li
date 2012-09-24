@@ -21,8 +21,10 @@ import java.util.Map;
 
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.ActionResponse;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.server.RoutingResult;
+import com.linkedin.restli.server.ActionResult;
 
 public class ActionResponseBuilder implements RestLiResponseBuilder
 {
@@ -33,12 +35,25 @@ public class ActionResponseBuilder implements RestLiResponseBuilder
                                            final Object result,
                                            final Map<String, String> headers) throws IOException
   {
-    // note that we always return 200 OK for ActionResponse: all response meaning is
-    // encoded in the response entity. The HTTP response code is unused.
-    headers.put(RestConstants.HEADER_LINKEDIN_TYPE, ActionResponse.class.getName());
-    headers.put(RestConstants.HEADER_LINKEDIN_SUB_TYPE, result.getClass().getName());
+    final Object value;
+    final HttpStatus status;
 
-    ActionResponse<?> actionResponse = new ActionResponse<Object>(result);
-    return new PartialRestResponse(actionResponse);
+    if (result instanceof ActionResult)
+    {
+      final ActionResult<?> actionResult = (ActionResult<?>) result;
+      value = actionResult.getValue();
+      status = actionResult.getStatus();
+    }
+    else
+    {
+      value = result;
+      status = HttpStatus.S_200_OK;
+    }
+
+    headers.put(RestConstants.HEADER_LINKEDIN_TYPE, ActionResponse.class.getName());
+    headers.put(RestConstants.HEADER_LINKEDIN_SUB_TYPE, value.getClass().getName());
+
+    final ActionResponse<?> actionResponse = new ActionResponse<Object>(value);
+    return new PartialRestResponse(status, actionResponse);
   }
 }

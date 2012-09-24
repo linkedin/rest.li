@@ -16,7 +16,7 @@ import com.linkedin.restli.internal.server.methods.AnyRecord;
 import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.CollectionResult;
 
-public class FinderResponseBuilder implements RestLiResponseBuilder
+public class CollectionResponseBuilder implements RestLiResponseBuilder
 {
 
   @Override

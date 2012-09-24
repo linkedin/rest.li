@@ -42,18 +42,6 @@ public class GetAllRequestBuilder<K, V extends RecordTemplate> extends
 
   }
 
-  public GetAllRequestBuilder<K, V> name(String name)
-  {
-    addParam(RestConstants.QUERY_TYPE_PARAM, name);
-    return this;
-  }
-
-  public GetAllRequestBuilder<K, V> assocKey(String key, Object value)
-  {
-    addAssocKey(key, value);
-    return this;
-  }
-
   public GetAllRequestBuilder<K, V> paginate(int start, int count)
   {
     addParam(RestConstants.START_PARAM, String.valueOf(start));

@@ -133,7 +133,7 @@ public class HashGroupMembershipMgr implements GroupMembershipMgr
       GroupMembership value = entry.getValue();
 
       boolean match =
-          (query.getGroupID() == GroupMembershipSearchQuery.EMPTY_INT_VALUE || query.getGroupID() == value.getGroupID());
+          (query.getGroupID() == GroupMembershipSearchQuery.WILDCARD || query.getGroupID() == value.getGroupID());
       if (query.getFirstName() != null)
       {
         match = match && query.getFirstName().equals(value.getFirstName());

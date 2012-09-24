@@ -85,7 +85,7 @@ public class RestLiMethodInvoker
     }
 
     RestLiArgumentBuilder adapter =
-        MethodAdapterRegistry.getMethodAdapter(resourceMethodDescriptor.getType());
+        MethodAdapterRegistry.getArgumentBuilder(resourceMethodDescriptor.getType());
     if (adapter == null)
     {
       throw new IllegalArgumentException("Unsupported method type: "

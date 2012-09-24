@@ -23,7 +23,7 @@ import com.linkedin.restli.examples.groups.api.MembershipSortOrder;
 
 public class GroupMembershipSearchQuery
 {
-  public  static final int EMPTY_INT_VALUE = -1;
+  public  static final int WILDCARD = -1;
 
   private final int           _groupID;
   private final int           _start;

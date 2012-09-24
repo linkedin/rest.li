@@ -42,7 +42,7 @@ import com.linkedin.restli.internal.server.methods.response.BatchCreateResponseB
 import com.linkedin.restli.internal.server.methods.response.BatchGetResponseBuilder;
 import com.linkedin.restli.internal.server.methods.response.BatchUpdateResponseBuilder;
 import com.linkedin.restli.internal.server.methods.response.CreateResponseBuilder;
-import com.linkedin.restli.internal.server.methods.response.FinderResponseBuilder;
+import com.linkedin.restli.internal.server.methods.response.CollectionResponseBuilder;
 import com.linkedin.restli.internal.server.methods.response.GetResponseBuilder;
 import com.linkedin.restli.internal.server.methods.response.RestLiResponseBuilder;
 import com.linkedin.restli.internal.server.methods.response.UpdateResponseBuilder;
@@ -85,7 +85,7 @@ public class MethodAdapterRegistry
 
     result.put(ResourceMethod.GET, new GetResponseBuilder());
     result.put(ResourceMethod.BATCH_GET, new BatchGetResponseBuilder());
-    result.put(ResourceMethod.FINDER, new FinderResponseBuilder());
+    result.put(ResourceMethod.FINDER, new CollectionResponseBuilder());
     result.put(ResourceMethod.CREATE, new CreateResponseBuilder());
     result.put(ResourceMethod.PARTIAL_UPDATE, new UpdateResponseBuilder());
     result.put(ResourceMethod.UPDATE, new UpdateResponseBuilder());
@@ -95,7 +95,7 @@ public class MethodAdapterRegistry
     result.put(ResourceMethod.BATCH_PARTIAL_UPDATE, new BatchUpdateResponseBuilder());
     result.put(ResourceMethod.BATCH_CREATE, new BatchCreateResponseBuilder());
     result.put(ResourceMethod.BATCH_DELETE, new BatchUpdateResponseBuilder());
-    result.put(ResourceMethod.GET_ALL, new FinderResponseBuilder());
+    result.put(ResourceMethod.GET_ALL, new CollectionResponseBuilder());
 
     return Collections.unmodifiableMap(result);
   }
@@ -107,7 +107,7 @@ public class MethodAdapterRegistry
    * @return the correct {@link RestLiArgumentBuilder} for the provided
    *         {@link ResourceMethod}
    */
-  public static RestLiArgumentBuilder getMethodAdapter(final ResourceMethod resourceMethod)
+  public static RestLiArgumentBuilder getArgumentBuilder(final ResourceMethod resourceMethod)
   {
     return _adapters.get(resourceMethod);
   }

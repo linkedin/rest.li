@@ -239,7 +239,7 @@ public class GroupMembershipsResource2 extends AssociationResourceTemplate<Group
   public List<GroupMembership> getAll(@Context PagingContext pagingContext)
   {
     return _app.getMembershipMgr()
-               .search(new GroupMembershipSearchQuery(GroupMembershipSearchQuery.EMPTY_INT_VALUE,
+               .search(new GroupMembershipSearchQuery(GroupMembershipSearchQuery.WILDCARD,
                                                       pagingContext.getStart(),
                                                       pagingContext.getCount()));
   }

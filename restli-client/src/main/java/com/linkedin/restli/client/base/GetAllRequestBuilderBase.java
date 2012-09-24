@@ -44,20 +44,6 @@ public abstract class GetAllRequestBuilderBase<
 
   @SuppressWarnings({"unchecked"})
   @Override
-  public RB name(String name)
-  {
-    return (RB) super.name(name);
-  }
-
-  @SuppressWarnings({"unchecked"})
-  @Override
-  public RB assocKey(String key, Object value)
-  {
-    return (RB) super.assocKey(key, value);
-  }
-
-  @SuppressWarnings({"unchecked"})
-  @Override
   public RB paginate(int start, int count)
   {
     return (RB) super.paginate(start, count);
