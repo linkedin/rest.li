@@ -12,7 +12,7 @@ project.sourceSets.all { SourceSet sourceSet ->
     return;
   }
 
-  final Project apiProject = project(':restli-examples-api')
+  final Project apiProject = project(':restli-int-test-api')
   final File apiIdlDir = apiProject.file(apiIdlDirRelativePath)
 
   final Task checkIdlTask = project.task(sourceSet.name + 'CheckIdl',

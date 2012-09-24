@@ -1,5 +1,5 @@
 dependencies {
-  compile project(':restli-examples-api')
+  compile project(':restli-int-test-api')
   compile externalDependency.log4j
   testCompile externalDependency.testng
   testCompile externalDependency.easymock

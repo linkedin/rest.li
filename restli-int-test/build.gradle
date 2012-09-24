@@ -1,6 +1,6 @@
 dependencies {
-  compile project(':restli-examples-api')
-  compile project(':restli-examples-server')
+  compile project(':restli-int-test-api')
+  compile project(':restli-int-test-server')
   compile project(':data')
   compile project(':pegasus-common')
   compile project(':r2')
