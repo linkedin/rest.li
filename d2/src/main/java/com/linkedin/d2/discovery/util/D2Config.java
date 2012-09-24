@@ -62,17 +62,20 @@ public class D2Config
   private final Map<String,Object> _serviceDefaults;
   private final Map<String,Object> _serviceVariants;
   private final long _timeout;
+  private final int _retryLimit;
 
   @SuppressWarnings("unchecked")
   public D2Config (String zkHosts, int sessionTimeout, String basePath,
-                         long timeout,
+                         long timeout, int retryLimit,
                          Map<String, Object> clusterDefaults,
                          Map<String, Object> serviceDefaults,
                          Map<String, Object> clusterServiceConfigurations,
                          Map<String, Object> extraClusterServiceConfigurations,
                          Map<String, Object> serviceVariants)
   {
-    _zkConnection = new ZKConnection(zkHosts, sessionTimeout);
+    _retryLimit = retryLimit;
+    // use retry zkConnection
+    _zkConnection = new ZKConnection(zkHosts, sessionTimeout, _retryLimit, false, null, 0);
     _basePath = basePath;
     _timeout = timeout;
     _clusterServiceConfigurations = Arrays.asList(clusterServiceConfigurations, extraClusterServiceConfigurations);
@@ -319,7 +322,7 @@ public class D2Config
       }
     }
 
-    _log.info("serviceVariants: "+ serviceVariants);
+    _log.debug("serviceVariants: "+ serviceVariants);
 
     _zkConnection.start();
 
@@ -337,7 +340,14 @@ public class D2Config
     {
       for (Map.Entry<String,Map<String,Map<String,Object>>> entry : serviceVariants.entrySet())
       {
-        _log.info("serviceVariant: "+ entry + "\n");
+        if (_log.isDebugEnabled())
+        {
+          _log.info("serviceVariant: "+ entry + "\n");
+        }
+        else
+        {
+          _log.info("serviceVariant: "+ entry.getKey() + "\n");
+        }
         writeConfig(ZKFSUtil.servicePath(_basePath,entry.getKey()), new ServicePropertiesJsonSerializer(),
                     new ServicePropertiesJsonSerializer(), entry.getValue(), _serviceDefaults);
       }

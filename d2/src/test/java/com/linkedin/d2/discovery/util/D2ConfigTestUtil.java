@@ -33,6 +33,7 @@ public class D2ConfigTestUtil
   private static int _sessionTimeout = 10000;
   private static String _basePath = "/d2";
   private static long _timeout = 5000;
+  private static int _retryLimit = 10;
   private static int _getTimeOut = 10000;
   private static int _requestTimeout = 10000;
   private static int _updateIntervalsMs = 5000;
@@ -383,7 +384,7 @@ public class D2ConfigTestUtil
   public int runDiscovery(String zkHosts) throws IOException, InterruptedException, URISyntaxException, Exception
   {
     D2Config discovery = new D2Config(zkHosts, _sessionTimeout, _basePath,
-                                      _timeout,
+                                      _timeout, _retryLimit,
                                       _clusterDefaults,
                                       _serviceDefaults,
                                       _clusterServiceConfigurations,

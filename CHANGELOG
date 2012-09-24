@@ -8,6 +8,9 @@ Allow http status code be specified in GET methods and Action methods. For GET, 
 with @RestMethod.Get) with return type GetResult<V>. For Action, define the action method with return type
 ActionResult<V>.
 
+(RB=97871)
+retry d2-config-cmdline on connectionLossException
+
 1.5.7
 -----
 (RB=96131)
