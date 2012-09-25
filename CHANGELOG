@@ -1,3 +1,8 @@
+1.5.9
+-----
+(RB=97871)
+retry d2-config-cmdline on connectionLossException
+
 1.5.8
 -----
 (RB=96060)
@@ -7,9 +12,6 @@ Add doc and Javadoc of source resource class name to generated idl and client bu
 Allow http status code be specified in GET methods and Action methods. For GET, define custom GET method (by annotating
 with @RestMethod.Get) with return type GetResult<V>. For Action, define the action method with return type
 ActionResult<V>.
-
-(RB=97871)
-retry d2-config-cmdline on connectionLossException
 
 1.5.7
 -----
