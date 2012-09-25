@@ -27,7 +27,7 @@ import com.linkedin.restli.internal.server.RoutingResult;
 * @author Josh Walker
 * @version $Revision: $
 */
-public class FinderArgumentBuilder implements RestLiArgumentBuilder
+public class CollectionArgumentBuilder implements RestLiArgumentBuilder
 {
   @Override
   public Object[] buildArguments(final RoutingResult routingResult,

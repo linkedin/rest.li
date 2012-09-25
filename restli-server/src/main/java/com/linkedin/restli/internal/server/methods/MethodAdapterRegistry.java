@@ -32,7 +32,7 @@ import com.linkedin.restli.internal.server.methods.arguments.BatchGetArgumentBui
 import com.linkedin.restli.internal.server.methods.arguments.BatchPatchArgumentBuilder;
 import com.linkedin.restli.internal.server.methods.arguments.BatchUpdateArgumentBuilder;
 import com.linkedin.restli.internal.server.methods.arguments.CreateArgumentBuilder;
-import com.linkedin.restli.internal.server.methods.arguments.FinderArgumentBuilder;
+import com.linkedin.restli.internal.server.methods.arguments.CollectionArgumentBuilder;
 import com.linkedin.restli.internal.server.methods.arguments.GetArgumentBuilder;
 import com.linkedin.restli.internal.server.methods.arguments.PatchArgumentBuilder;
 import com.linkedin.restli.internal.server.methods.arguments.RestLiArgumentBuilder;
@@ -64,7 +64,7 @@ public class MethodAdapterRegistry
         new HashMap<ResourceMethod, RestLiArgumentBuilder>(ResourceMethod.values().length);
     result.put(ResourceMethod.GET, new GetArgumentBuilder());
     result.put(ResourceMethod.BATCH_GET, new BatchGetArgumentBuilder());
-    result.put(ResourceMethod.FINDER, new FinderArgumentBuilder());
+    result.put(ResourceMethod.FINDER, new CollectionArgumentBuilder());
     result.put(ResourceMethod.CREATE, new CreateArgumentBuilder());
     result.put(ResourceMethod.PARTIAL_UPDATE, new PatchArgumentBuilder());
     result.put(ResourceMethod.UPDATE, new UpdateArgumentBuilder());
@@ -74,7 +74,7 @@ public class MethodAdapterRegistry
     result.put(ResourceMethod.BATCH_PARTIAL_UPDATE, new BatchPatchArgumentBuilder());
     result.put(ResourceMethod.BATCH_CREATE, new BatchCreateArgumentBuilder());
     result.put(ResourceMethod.BATCH_DELETE, new BatchDeleteArgumentBuilder());
-    result.put(ResourceMethod.GET_ALL, new FinderArgumentBuilder());
+    result.put(ResourceMethod.GET_ALL, new CollectionArgumentBuilder());
     return Collections.unmodifiableMap(result);
   }
 
