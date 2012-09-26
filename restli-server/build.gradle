@@ -16,9 +16,9 @@ dependencies {
   testCompile externalDependency.googleCollections
   testCompile externalDependency.testng
   testCompile externalDependency.easymock
-  testCompile externalDependency.easymockClassExtension
   testCompile externalDependency.commonsHttpClient
   testRuntime externalDependency.cglib
+  testRuntime externalDependency.objenesis
 }
 
 apply from: "${build_script_dir}/dataTemplate.gradle"

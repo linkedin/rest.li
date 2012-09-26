@@ -15,8 +15,8 @@ dependencies {
   testCompile externalDependency.testng
   testCompile externalDependency.commonsIo
   testCompile externalDependency.easymock
-  testCompile externalDependency.easymockClassExtension
   testCompile project(':r2-jetty')
+  testRuntime externalDependency.cglib
 }
 
 task packup(dependsOn: configurations.default.allArtifacts, type: Copy) {

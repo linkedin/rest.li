@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.linkedin.restli.server.resources.ResourceFactory;
-import org.easymock.classextension.EasyMock;
+import org.easymock.EasyMock;
 
 import com.linkedin.restli.internal.server.model.ResourceModel;
 

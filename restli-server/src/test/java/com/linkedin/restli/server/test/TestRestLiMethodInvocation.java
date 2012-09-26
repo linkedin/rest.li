@@ -82,7 +82,7 @@ import com.linkedin.restli.server.twitter.TwitterTestDataModels.StatusType;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.easymock.IAnswer;
-import org.easymock.classextension.EasyMock;
+import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
@@ -103,7 +103,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import static com.linkedin.restli.server.test.RestLiTestHelper.buildResourceModel;
 import static com.linkedin.restli.server.test.RestLiTestHelper.buildResourceModels;
 import static org.easymock.EasyMock.eq;
-import static org.easymock.classextension.EasyMock.reset;
+import static org.easymock.EasyMock.reset;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.fail;
 

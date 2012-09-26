@@ -4,7 +4,6 @@ dependencies {
   testCompile project(":generator")
   testCompile externalDependency.log4j
   testCompile externalDependency.testng
-  testCompile externalDependency.easymock
 }
 
 project.sourceSets.test.java.srcDir('src/test/javaPegasus')

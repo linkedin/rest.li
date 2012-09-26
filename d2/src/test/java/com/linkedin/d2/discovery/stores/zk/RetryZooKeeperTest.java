@@ -16,25 +16,26 @@
 
 package com.linkedin.d2.discovery.stores.zk;
 
-import junit.framework.Assert;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.AsyncCallback;
-import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.data.ACL;
-import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.WatchedEvent;
-import org.easymock.classextension.ConstructorArgs;
-import org.easymock.classextension.EasyMock;
-import org.easymock.IAnswer;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import org.apache.zookeeper.AsyncCallback;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.Stat;
+import org.easymock.EasyMock;
+import org.easymock.IAnswer;
+import org.easymock.IMockBuilder;
+import org.testng.Assert;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
 
 public class RetryZooKeeperTest {
   private static final int _connectionLossRC = KeeperException.Code.CONNECTIONLOSS.intValue();
@@ -47,7 +48,15 @@ public class RetryZooKeeperTest {
   private static final List<ACL> _dummyACL = new ArrayList<ACL>();
   private static final Object _dummyCtx = new Object();
   private static final Stat _dummyStat = new Stat();
-  private static ConstructorArgs _constructorArgs;
+
+  private static Constructor<RetryZooKeeper> _rzkCstr1;
+  private static Constructor<RetryZooKeeper> _rzkCstr2;
+  private static Watcher _noopWatcher =  new Watcher() {
+    public void process(WatchedEvent event)
+    {
+      return;
+    }
+  };
 
   private static final AsyncCallback.DataCallback _dummyDataCallback = new AsyncCallback.DataCallback() {
     @Override
@@ -167,40 +176,38 @@ public class RetryZooKeeperTest {
   @BeforeTest
   public void setUp() throws NoSuchMethodException
   {
-    Constructor cstr = RetryZooKeeper.class.getDeclaredConstructor(
-        String.class,
-        int.class,
-        Watcher.class,
-        int.class);
-    _constructorArgs = new ConstructorArgs(cstr, "127.0.0.1:11711", 5000000, new Watcher(){
-      public void process(WatchedEvent event)
-      {
-        return;
-      }
-    }, 10);
+    _rzkCstr1 = RetryZooKeeper.class.getDeclaredConstructor(String.class,
+                                                            int.class,
+                                                            Watcher.class,
+                                                            int.class);
+    _rzkCstr2 = RetryZooKeeper.class.getDeclaredConstructor(String.class,
+                                                            int.class,
+                                                            Watcher.class,
+                                                            int.class,
+                                                            boolean.class,
+                                                            ScheduledExecutorService.class,
+                                                            long.class);
   }
 
   @SuppressWarnings("unchecked")
   @Test
   public void testRetryGetChildren() throws NoSuchMethodException
   {
-    RetryZooKeeper rzkPartialMock = EasyMock.createMock(RetryZooKeeper.class,
-        _constructorArgs,
+    final RetryZooKeeper rzkPartialMock = createMockObject(
         RetryZooKeeper.class.getMethod("zkGetChildren",
-            String.class,
-            boolean.class,
-            AsyncCallback.ChildrenCallback.class,
-            Object.class));
+                                       String.class,
+                                       boolean.class,
+                                       AsyncCallback.ChildrenCallback.class,
+                                       Object.class));
 
     // Here we only test the getChildren without supplying watcher
     // the alternative getChildren with a watcher should behave the same
     // as the watcher does not affect this operation
     // mock up zkGetChildren, which wrapper's ZooKeeper's getChildren
-    rzkPartialMock.zkGetChildren(
-        (String) EasyMock.anyObject(),
-        EasyMock.anyBoolean(),
-        (AsyncCallback.ChildrenCallback) EasyMock.anyObject(),
-        EasyMock.anyObject());
+    rzkPartialMock.zkGetChildren((String) EasyMock.anyObject(),
+                                 EasyMock.anyBoolean(),
+                                 (AsyncCallback.ChildrenCallback) EasyMock.anyObject(),
+                                 EasyMock.anyObject());
 
     // first try, we got "connection loss"
     expectGetChildCallbackWithCode(_connectionLossRC, _dummyList);
@@ -216,21 +223,19 @@ public class RetryZooKeeperTest {
   @Test
   public void testRetryGetData() throws NoSuchMethodException
   {
-    RetryZooKeeper rzkPartialMock = EasyMock.createMock(RetryZooKeeper.class,
-        _constructorArgs,
+    final RetryZooKeeper rzkPartialMock = createMockObject(
         RetryZooKeeper.class.getMethod("zkGetData",
-            String.class,
-            boolean.class,
-            AsyncCallback.DataCallback.class,
-            Object.class));
+                                       String.class,
+                                       boolean.class,
+                                       AsyncCallback.DataCallback.class,
+                                       Object.class));
 
     // Similarly, only getData without watcher is tested.
     // mock up zkGetData, which wrapper's ZooKeeper's getData
-    rzkPartialMock.zkGetData(
-        (String) EasyMock.anyObject(),
-        EasyMock.anyBoolean(),
-        (AsyncCallback.DataCallback) EasyMock.anyObject(),
-        EasyMock.anyObject());
+    rzkPartialMock.zkGetData((String) EasyMock.anyObject(),
+                             EasyMock.anyBoolean(),
+                             (AsyncCallback.DataCallback) EasyMock.anyObject(),
+                             EasyMock.anyObject());
 
     // first try, "connection loss" happens
     expectGetDataCallbackWithCode(_connectionLossRC, _dummyData);
@@ -245,13 +250,12 @@ public class RetryZooKeeperTest {
   @Test
   public void testRetryExists() throws NoSuchMethodException
   {
-    RetryZooKeeper rzkPartialMock = EasyMock.createMock(RetryZooKeeper.class,
-        _constructorArgs,
+    final RetryZooKeeper rzkPartialMock = createMockObject(
         RetryZooKeeper.class.getMethod("zkExists",
-            String.class,
-            boolean.class,
-            AsyncCallback.StatCallback.class,
-            Object.class));
+                                       String.class,
+                                       boolean.class,
+                                       AsyncCallback.StatCallback.class,
+                                       Object.class));
 
     // as before, only exists without watcher is tested.
     // mock up zkExists, which wrapper's ZooKeeper's exists
@@ -275,22 +279,20 @@ public class RetryZooKeeperTest {
   @Test
   public void testRetrySetData() throws NoSuchMethodException
   {
-    RetryZooKeeper rzkPartialMock = EasyMock.createMock(RetryZooKeeper.class,
-        _constructorArgs,
+    final RetryZooKeeper rzkPartialMock = createMockObject(
         RetryZooKeeper.class.getMethod("zkSetData",
-            String.class,
-            byte[].class,
-            int.class,
-            AsyncCallback.StatCallback.class,
-            Object.class));
+                                       String.class,
+                                       byte[].class,
+                                       int.class,
+                                       AsyncCallback.StatCallback.class,
+                                       Object.class));
 
     // mock up zkSetData, which wrapper's ZooKeeper's setData
-    rzkPartialMock.zkSetData(
-        (String) EasyMock.anyObject(),
-        EasyMock.aryEq(_dummyData),
-        EasyMock.anyInt(),
-        (AsyncCallback.StatCallback) EasyMock.anyObject(),
-        EasyMock.anyObject());
+    rzkPartialMock.zkSetData((String) EasyMock.anyObject(),
+                             EasyMock.aryEq(_dummyData),
+                             EasyMock.anyInt(),
+                             (AsyncCallback.StatCallback) EasyMock.anyObject(),
+                             EasyMock.anyObject());
 
     // first try, "connection loss"
     expectSetDataCallbackWithCode(_connectionLossRC);
@@ -307,13 +309,12 @@ public class RetryZooKeeperTest {
   @Test
   public void testDelete() throws NoSuchMethodException
   {
-    RetryZooKeeper rzkPartialMock = EasyMock.createMock(RetryZooKeeper.class,
-        _constructorArgs,
+    final RetryZooKeeper rzkPartialMock = createMockObject(
         RetryZooKeeper.class.getMethod("zkDelete",
-            String.class,
-            int.class,
-            AsyncCallback.VoidCallback.class,
-            Object.class));
+                                       String.class,
+                                       int.class,
+                                       AsyncCallback.VoidCallback.class,
+                                       Object.class));
 
     // mock up zkDelete, which wrapper's ZooKeeper's delete
     rzkPartialMock.zkDelete(
@@ -335,15 +336,14 @@ public class RetryZooKeeperTest {
   @Test
   public void testCreate() throws NoSuchMethodException
   {
-    RetryZooKeeper rzkPartialMock = EasyMock.createMock(RetryZooKeeper.class,
-        _constructorArgs,
+    final RetryZooKeeper rzkPartialMock = createMockObject(
         RetryZooKeeper.class.getMethod("zkCreate",
-            String.class,
-            byte[].class,
-            List.class,
-            CreateMode.class,
-            AsyncCallback.StringCallback.class,
-            Object.class));
+                                       String.class,
+                                       byte[].class,
+                                       List.class,
+                                       CreateMode.class,
+                                       AsyncCallback.StringCallback.class,
+                                       Object.class));
 
     /**
      * Testing nonsequential create, PERSISTENT type, but the ephemeral one should be the same
@@ -372,26 +372,24 @@ public class RetryZooKeeperTest {
   @Test
   public void testCreateSequential() throws NoSuchMethodException
   {
-    RetryZooKeeper rzkPartialMock = EasyMock.createMock(RetryZooKeeper.class,
-        _constructorArgs,
+    final RetryZooKeeper rzkPartialMock = createMockObject(
         RetryZooKeeper.class.getMethod("zkCreate",
-            String.class,
-            byte[].class,
-            List.class,
-            CreateMode.class,
-            AsyncCallback.StringCallback.class,
-            Object.class),
+                                       String.class,
+                                       byte[].class,
+                                       List.class,
+                                       CreateMode.class,
+                                       AsyncCallback.StringCallback.class,
+                                       Object.class),
         RetryZooKeeper.class.getMethod("zkGetData",
-            String.class,
-            boolean.class,
-            AsyncCallback.DataCallback.class,
-            Object.class),
+                                       String.class,
+                                       boolean.class,
+                                       AsyncCallback.DataCallback.class,
+                                       Object.class),
         RetryZooKeeper.class.getMethod("zkGetChildren",
-            String.class,
-            boolean.class,
-            AsyncCallback.ChildrenCallback.class,
-            Object.class)
-        );
+                                       String.class,
+                                       boolean.class,
+                                       AsyncCallback.ChildrenCallback.class,
+                                       Object.class));
 
     // mock up zkCreate, which wrapper's ZooKeeper's create
     rzkPartialMock.zkCreate(
@@ -499,26 +497,19 @@ public class RetryZooKeeperTest {
   @Test
   public void testRetryLimit() throws NoSuchMethodException
   {
-    Constructor cstr = RetryZooKeeper.class.getDeclaredConstructor(
-        String.class,
-        int.class,
-        Watcher.class,
-        int.class);
-    ConstructorArgs cargs = new ConstructorArgs(cstr, "127.0.0.1:11711", 5000000, new Watcher(){
-      public void process(WatchedEvent event)
-      {
-        return;
-      }
-    }, 1);
-
     // retry limit is set to 2
-    RetryZooKeeper rzkPartialMock = EasyMock.createMock(RetryZooKeeper.class,
-        cargs,
-        RetryZooKeeper.class.getMethod("zkExists",
-            String.class,
-            boolean.class,
-            AsyncCallback.StatCallback.class,
-            Object.class));
+    final RetryZooKeeper rzkPartialMock = EasyMock.createMockBuilder(RetryZooKeeper.class)
+        .withConstructor(_rzkCstr1)
+        .withArgs("127.0.0.1:11711",
+                  5000000,
+                  _noopWatcher,
+                  1)
+        .addMockedMethod(RetryZooKeeper.class.getMethod("zkExists",
+                                                        String.class,
+                                                        boolean.class,
+                                                        AsyncCallback.StatCallback.class,
+                                                        Object.class))
+        .createMock();
 
     rzkPartialMock.zkExists(
         (String) EasyMock.anyObject(),
@@ -537,28 +528,21 @@ public class RetryZooKeeperTest {
   @Test
   public void testRetryBackoff() throws NoSuchMethodException, InterruptedException
   {
-    Constructor cstr = RetryZooKeeper.class.getDeclaredConstructor(
-        String.class,
-        int.class,
-        Watcher.class,
-        int.class,
-        boolean.class,
-        ScheduledExecutorService.class,
-        long.class);
-    ConstructorArgs cargs = new ConstructorArgs(cstr, "127.0.0.1:11711", 5000000, new Watcher(){
-      public void process(WatchedEvent event)
-      {
-        return;
-      }
-    }, 10, true, Executors.newScheduledThreadPool(1), 20L);
-
-    RetryZooKeeper rzkPartialMock = EasyMock.createMock(RetryZooKeeper.class,
-        cargs,
-        RetryZooKeeper.class.getMethod("zkExists",
-            String.class,
-            boolean.class,
-            AsyncCallback.StatCallback.class,
-            Object.class));
+    final RetryZooKeeper rzkPartialMock = EasyMock.createMockBuilder(RetryZooKeeper.class)
+        .withConstructor(_rzkCstr2)
+        .withArgs("127.0.0.1:11711",
+                  5000000,
+                  _noopWatcher,
+                  10,
+                  true,
+                  Executors.newScheduledThreadPool(1),
+                  20L)
+        .addMockedMethod(RetryZooKeeper.class.getMethod("zkExists",
+                                                        String.class,
+                                                        boolean.class,
+                                                        AsyncCallback.StatCallback.class,
+                                                        Object.class))
+        .createMock();
 
     rzkPartialMock.zkExists(
         (String) EasyMock.anyObject(),
@@ -584,5 +568,21 @@ public class RetryZooKeeperTest {
     Thread.sleep(200);
     Assert.assertEquals(rzkPartialMock.getInterval(), 20);
     EasyMock.verify(rzkPartialMock);
+  }
+
+  private static RetryZooKeeper createMockObject(Method... methods)
+  {
+    final IMockBuilder<RetryZooKeeper> mockBuilder = EasyMock.createMockBuilder(RetryZooKeeper.class)
+        .withConstructor(_rzkCstr1)
+        .withArgs("127.0.0.1:11711",
+                  5000000,
+                  _noopWatcher,
+                  10);
+    for (Method m: methods)
+    {
+      mockBuilder.addMockedMethod(m);
+    }
+
+    return mockBuilder.createMock();
   }
 }
