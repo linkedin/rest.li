@@ -18,7 +18,7 @@ package com.linkedin.data.collections;
 
 import java.util.Collection;
 import java.util.Map;
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 

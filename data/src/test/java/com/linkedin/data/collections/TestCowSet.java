@@ -19,7 +19,7 @@ package com.linkedin.data.collections;
 
 
 import java.util.Iterator;
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**
@@ -33,16 +33,16 @@ public class TestCowSet
   {
     final CowSet<String> set = new CowSet<String>();
 
-    Assert.assertEquals(0, set.size());
+    Assert.assertEquals(set.size(), 0);
     Assert.assertFalse(set.contains("test"));
 
     Assert.assertTrue(set.add("test"));
     Assert.assertTrue(set.contains("test"));
-    Assert.assertEquals(1, set.size());
+    Assert.assertEquals(set.size(), 1);
 
     Assert.assertFalse(set.add("test"));
     Assert.assertTrue(set.contains("test"));
-    Assert.assertEquals(1, set.size());
+    Assert.assertEquals(set.size(), 1);
   }
 
   @Test
@@ -53,11 +53,11 @@ public class TestCowSet
 
     Assert.assertTrue(set.remove("test"));
     Assert.assertFalse(set.contains("test"));
-    Assert.assertEquals(0, set.size());
+    Assert.assertEquals(set.size(), 0);
 
     Assert.assertFalse(set.remove("test"));
     Assert.assertFalse(set.contains("test"));
-    Assert.assertEquals(0, set.size());
+    Assert.assertEquals(set.size(), 0);
   }
 
   @Test
@@ -69,7 +69,7 @@ public class TestCowSet
     set.add("test");
 
     Assert.assertTrue(set.contains("test"));
-    Assert.assertEquals(1, set.size());
+    Assert.assertEquals(set.size(), 1);
 
     set.setReadOnly();
     Assert.assertTrue(set.isReadOnly());
@@ -95,7 +95,7 @@ public class TestCowSet
     }
 
     Assert.assertTrue(set.contains("test"));
-    Assert.assertEquals(1, set.size());
+    Assert.assertEquals(set.size(), 1);
   }
 
   @Test

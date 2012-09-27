@@ -16,7 +16,7 @@
 
 package com.linkedin.d2.balancer.properties;
 
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.net.URI;

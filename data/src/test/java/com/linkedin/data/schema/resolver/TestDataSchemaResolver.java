@@ -43,12 +43,12 @@ import org.testng.annotations.Test;
 
 import static com.linkedin.data.TestUtil.asMap;
 import static com.linkedin.data.TestUtil.out;
-import static junit.framework.Assert.assertSame;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertSame;
 
 
 public class TestDataSchemaResolver

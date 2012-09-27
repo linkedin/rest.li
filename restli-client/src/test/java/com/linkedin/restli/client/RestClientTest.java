@@ -36,9 +36,9 @@ import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.client.EntityResponseDecoder;
-import junit.framework.Assert;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -185,7 +185,7 @@ public class RestClientTest
     catch (ExecutionException e)
     {
       Throwable cause = e.getCause();
-      Assert.assertTrue("Expected RestLiResponseException not " + cause.getClass().getName(), cause instanceof RestLiResponseException);
+      Assert.assertTrue(cause instanceof RestException, "Expected RestLiResponseException not " + cause.getClass().getName());
       RestLiResponseException rlre = (RestLiResponseException)cause;
       Assert.assertEquals(HTTP_CODE, rlre.getStatus());
       Assert.assertEquals(ERR_VALUE, rlre.getErrorDetails().get(ERR_KEY));
@@ -218,7 +218,7 @@ public class RestClientTest
     catch (ExecutionException e)
     {
       Throwable cause = e.getCause();
-      Assert.assertTrue("Expected RestException not " + cause.getClass().getName(), cause instanceof RestException);
+      Assert.assertTrue(cause instanceof RestException, "Expected RestException not " + cause.getClass().getName());
       RestException re = (RestException)cause;
       RestResponse r = re.getResponse();
 

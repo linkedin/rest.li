@@ -21,8 +21,6 @@ package com.linkedin.util.degrader;
 import java.util.ArrayList;
 import java.util.List;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -1196,8 +1194,4 @@ public class TestCallTracker
     }
   }
 
-  public static Test suite()
-  {
-    return new TestSuite(TestCallTracker.class);
-}
 }
