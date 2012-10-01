@@ -1,6 +1,7 @@
 1.5.10
 -----
-
+(RB=99688)
+Fix bug with double-encoding spaces in query parameters
 
 1.5.9
 -----

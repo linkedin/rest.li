@@ -61,6 +61,7 @@
  *   Repackaged original source under com.linkedin.jersey package.
  *   Removed dependency on javax.ws.rs interfaces
  *   Added JavaDoc documentation to conform to Pegasus style guidelines
+ *   Remove special-case encoding of ' ' in query params
  */
 
 package com.linkedin.jersey.api.uri;
@@ -325,11 +326,7 @@ public class UriComponent {
                 }
 
                 if (c < 0x80) {
-                    if (c == ' ' && (t == Type.QUERY_PARAM)) {
-                        sb.append('+');
-                    } else {
-                        appendPercentEncodedOctet(sb, c);
-                    }
+                    appendPercentEncodedOctet(sb, c);
                 } else {
                     appendUTF8EncodedCharacter(sb, c);
                 }
