@@ -1,0 +1,8 @@
+dependencies {
+  compile project(':data')
+  compile project(':restli-common')
+  compile project(':restli-client')
+}
+
+apply from: "${build_script_dir}/dataTemplate.gradle"
+apply from: "${build_script_dir}/restClient.gradle"

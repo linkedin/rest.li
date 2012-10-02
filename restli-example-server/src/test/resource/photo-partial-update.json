@@ -1,0 +1,8 @@
+{
+  "patch" : {
+    "$set" : {
+    "title": "Partial-Updated-Photo",
+    "format": "PNG"
+    }
+  }
+}

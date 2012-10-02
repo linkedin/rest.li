@@ -1,0 +1,58 @@
+{
+  "name" : "albumEntry",
+  "namespace" : "com.linkedin.restli.example.photos",
+  "path" : "/albumEntry",
+  "schema" : "com.linkedin.restli.example.AlbumEntry",
+  "doc" : "Many-many association between photos and albums.\n\ngenerated from: com.linkedin.restli.example.impl.AlbumEntryResource",
+  "association" : {
+    "assocKeys" : [ {
+      "name" : "albumId",
+      "type" : "long"
+    }, {
+      "name" : "photoId",
+      "type" : "long"
+    } ],
+    "supports" : [ "batch_get", "delete", "get", "update" ],
+    "methods" : [ {
+      "method" : "get",
+      "doc" : "Retrieve the photo's album entry"
+    }, {
+      "method" : "update",
+      "doc" : "Add the specified photo to the specified album.\n If a matching pair of IDs already exists, this changes the add date."
+    }, {
+      "method" : "delete",
+      "doc" : "Remove the specified photo from the specified album"
+    }, {
+      "method" : "batch_get"
+    } ],
+    "finders" : [ {
+      "name" : "search",
+      "doc" : "Find all entries matching the given album and photo IDs. <code>null</code> is treated\n as a wildcard.",
+      "parameters" : [ {
+        "name" : "albumId",
+        "type" : "long",
+        "optional" : true
+      }, {
+        "name" : "photoId",
+        "type" : "long",
+        "optional" : true
+      } ]
+    } ],
+    "actions" : [ {
+      "name" : "purge",
+      "parameters" : [ {
+        "name" : "albumId",
+        "type" : "long",
+        "optional" : true
+      }, {
+        "name" : "photoId",
+        "type" : "long",
+        "optional" : true
+      } ],
+      "returns" : "int"
+    } ],
+    "entity" : {
+      "path" : "/albumEntry/photoId={photoId}&albumId={albumId}"
+    }
+  }
+}

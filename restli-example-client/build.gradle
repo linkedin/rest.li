@@ -1,0 +1,12 @@
+dependencies {
+  compile project(':restli-example-api')
+  compile project(':pegasus-common')
+  compile project(':r2')
+  compile project(':restli-client')
+  compile project(':data')
+  compile project(':restli-common')
+  compile externalDependency.log4j
+  testCompile externalDependency.testng
+  testCompile externalDependency.easymock
+  testCompile externalDependency.commonsHttpClient
+}

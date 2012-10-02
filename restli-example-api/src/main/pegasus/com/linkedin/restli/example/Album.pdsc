@@ -1,0 +1,11 @@
+{
+  "name": "Album",
+  "namespace": "com.linkedin.restli.example",
+  "type": "record",
+  "doc": "An album for rest.li",
+  "fields": [ {"name": "id", "type": "long"},
+              {"name": "urn", "type": "string"},
+              {"name": "title", "type": "string"},
+              {"name": "creationTime", "type": "long", "doc": "When this album was created"}
+            ]
+}

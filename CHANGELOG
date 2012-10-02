@@ -1,3 +1,8 @@
+1.6.2
+-----
+(RB=103500)
+Move non-LI-specific part of photo server example into pegasus.
+
 1.6.1
 -----
 (RB=105748)

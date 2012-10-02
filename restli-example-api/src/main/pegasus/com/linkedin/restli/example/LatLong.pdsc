@@ -1,0 +1,18 @@
+{
+  "type" : "record",
+  "name" : "LatLong",
+  "namespace" : "com.linkedin.restli.example",
+  "fields" : [
+    {
+      "name" : "latitude",
+      "type" : "float",
+      "optional" : true
+    },
+    {
+      "name" : "longitude",
+      "type" : "float",
+      "optional" : true
+    }
+  ]
+}
+

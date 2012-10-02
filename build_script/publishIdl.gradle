@@ -17,7 +17,6 @@ project.sourceSets.all { SourceSet sourceSet ->
     return;
   }
 
-  final Project apiProject = project(':restli-int-test-api')
   final File apiIdlDir = apiProject.file(apiIdlDirRelativePath)
   final String compatLevel = (project.hasProperty(IDL_COMPAT_REQUIREMENT_NAME) ? project.property(IDL_COMPAT_REQUIREMENT_NAME)
                                                                                : 'equivalent')

@@ -1,0 +1,35 @@
+dependencies {
+  compile project(':restli-example-api')
+  compile project(':data')
+  compile project(':r2')
+  compile project(':r2-jetty')
+  compile project(':data-transform')
+  compile project(':restli-docgen')
+  compile project(':restli-server')
+  compile project(':restli-common')
+  compile externalDependency.log4j
+  compile externalDependency.javaxInject
+  compile externalDependency.parseq
+  testCompile externalDependency.testng
+  testCompile externalDependency.easymock
+}
+
+// Generate IDLs
+ext.resourcePackages = [
+  'main': [
+    'com.linkedin.restli.example.impl'
+  ]
+]
+
+ext.apiProject = project(':restli-example-api')
+
+apply from: "${build_script_dir}/restModel.gradle"
+apply from: "${build_script_dir}/publishIdl.gradle"
+
+task startServer(dependsOn: ['build']) << {
+  logging.captureStandardOutput LogLevel.INFO
+  ant.java(classname:   'com.linkedin.restli.example.RestLiExamplesServer',
+           fork:        true,
+           output:      '/tmp/restli-example-server.log',
+           classpath:   "${sourceSets.main.runtimeClasspath.asPath}")
+}

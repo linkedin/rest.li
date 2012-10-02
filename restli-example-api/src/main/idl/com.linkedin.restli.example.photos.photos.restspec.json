@@ -1,0 +1,46 @@
+{
+  "name" : "photos",
+  "namespace" : "com.linkedin.restli.example.photos",
+  "path" : "/photos",
+  "schema" : "com.linkedin.restli.example.Photo",
+  "doc" : "generated from: com.linkedin.restli.example.impl.PhotoResource",
+  "collection" : {
+    "identifier" : {
+      "name" : "photosId",
+      "type" : "long"
+    },
+    "supports" : [ "batch_get", "create", "delete", "get", "partial_update", "update" ],
+    "methods" : [ {
+      "method" : "create"
+    }, {
+      "method" : "get"
+    }, {
+      "method" : "update"
+    }, {
+      "method" : "partial_update"
+    }, {
+      "method" : "delete"
+    }, {
+      "method" : "batch_get"
+    } ],
+    "finders" : [ {
+      "name" : "titleAndOrFormat",
+      "parameters" : [ {
+        "name" : "title",
+        "type" : "string",
+        "optional" : true
+      }, {
+        "name" : "format",
+        "type" : "com.linkedin.restli.example.PhotoFormats",
+        "optional" : true
+      } ]
+    } ],
+    "actions" : [ {
+      "name" : "purge",
+      "returns" : "int"
+    } ],
+    "entity" : {
+      "path" : "/photos/{photosId}"
+    }
+  }
+}

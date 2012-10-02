@@ -1,0 +1,7 @@
+{
+    "name": "PhotoFormats",
+    "doc": "enum type for photo formats",
+    "namespace": "com.linkedin.restli.example",
+    "type": "enum",
+    "symbols": ["BMP", "JPG", "PNG"]
+}
