@@ -53,6 +53,8 @@ if (!isDefaultEnvironment)
 }
 
 allprojects {
+  apply plugin: 'idea'
+
   tasks.withType(Compile).all { Compile compile ->
     compile.options.compilerArgs = ['-Xlint', '-Xlint:-path', '-Werror']
   }
@@ -64,7 +66,6 @@ task wrapper(type: Wrapper) {
 
 subprojects {
   apply plugin: 'java'
-  apply plugin: 'idea'
   apply plugin: 'eclipse'
 
   sourceCompatibility = JavaVersion.VERSION_1_6
