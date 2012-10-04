@@ -329,7 +329,7 @@ public class LoadBalancerClientCli
     Map<String, Object> serviceVariants = (Map<String,Object>) configMap.get("serviceVariants");
 
     D2Config d2conf = new D2Config (zkHosts, 10000, d2path,
-                                    5000L,
+                                    5000L, 10,
                                     clusterDefaults,
                                     serviceDefaults,
                                     clusterServiceConfigurations,

@@ -130,6 +130,7 @@ subprojects {
     useTestNG() {
       excludeGroups 'not_implemented'
       excludeGroups 'integration'
+      excludeGroups 'd2integration'
       excludeGroups 'integration_external_product_dependent'
 	  excludeGroups 'known_issue'
     }
@@ -138,6 +139,7 @@ subprojects {
   task integrationTests(type: Test) {
     useTestNG() {
       includeGroups 'integration'
+      excludeGroups 'd2integration'
       excludeGroups 'integration_external_product_dependent'
     }
   }
@@ -145,6 +147,8 @@ subprojects {
   task d2integrationTests(type: Test) {
     useTestNG() {
       includeGroups 'd2integration'
+      excludeGroups 'integration'
+      excludeGroups 'integration_external_product_dependent'
     }
   }
 

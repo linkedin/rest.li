@@ -32,7 +32,7 @@ public class TestPartitionsWithZKQuorum extends D2BaseTest
   DynamicClient                         _client;
   private String                        _zkUriString;
 
-  public void setup() throws IOException, Exception
+  private void setup() throws IOException, Exception
   {
     // Start _quorum
     _quorum = new ZKQuorum(QUORUM_SIZE);
