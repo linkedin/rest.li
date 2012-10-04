@@ -68,6 +68,8 @@ subprojects {
   apply plugin: 'java'
   apply plugin: 'eclipse'
 
+  apply from: "${build_script_dir}/cleanGenerated.gradle"
+
   sourceCompatibility = JavaVersion.VERSION_1_6
 
   configurations {

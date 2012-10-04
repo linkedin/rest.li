@@ -1,0 +1,14 @@
+File getGeneratedSourceDir(Project project, SourceSet sourceSet, String genType)
+{
+  return project.file("src${File.separatorChar}${sourceSet.name}Generated${genType}")
+}
+
+project.sourceSets.all { SourceSet sourceSet ->
+  final Task cleanGeneratedDirTask = project.task(sourceSet.getTaskName('clean', 'GeneratedDir')) << {
+    project.delete(getGeneratedSourceDir(project, sourceSet, 'DataTemplate'))
+    project.delete(getGeneratedSourceDir(project, sourceSet, 'Rest'))
+    project.delete(getGeneratedSourceDir(project, sourceSet, 'AvroSchema'))
+  }
+  // make clean depends on deleting the generated directories
+  project.tasks.clean.dependsOn(cleanGeneratedDirTask)
+}
