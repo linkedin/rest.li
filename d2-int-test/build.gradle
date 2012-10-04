@@ -9,6 +9,7 @@ dependencies {
   compile project(':li-jersey-uri')
   compile fileTree(dir: 'lib', include: '*.jar')
   compile externalDependency.commonsCodec
+  compile externalDependency.commonsIo
   compile externalDependency.commonsHttpClient
   compile externalDependency.json
   compile externalDependency.zookeeper

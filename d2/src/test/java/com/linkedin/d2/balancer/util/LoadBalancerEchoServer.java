@@ -62,7 +62,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
@@ -438,8 +437,8 @@ public class LoadBalancerEchoServer
     @Override
     public void handleRequest(RpcRequest request, final Callback<RpcResponse> callback)
     {
-       System.err.println("RPC server request: " +
-       request.getEntity().asString("UTF-8"));
+      System.out.println("RPC server request: " +
+      request.getEntity().asString("UTF-8"));
 
       callback.onSuccess(new RpcResponseBuilder().setEntity(request.getEntity()).build());
     }
@@ -450,7 +449,6 @@ public class LoadBalancerEchoServer
     @Override
     public void handleRequest(RestRequest request, final Callback<RestResponse> callback)
     {
-
       System.out.println("REST server request: " + request.getEntity().asString("UTF-8"));
 
       String requestStr = request.getEntity().asString("UTF-8");

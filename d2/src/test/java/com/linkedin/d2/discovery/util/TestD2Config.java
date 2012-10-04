@@ -703,7 +703,6 @@ public class TestD2Config
     assertEquals(clusterprops.getClusterName(), cluster);
     assertEquals(clusterprops.getPrioritizedSchemes(), Arrays.asList(new String[] {"http"}));
     assertEquals(clusterprops.getProperties().get("requestTimeout"), String.valueOf(10000));
-    assertEquals(clusterprops.getProperties().get("getTimeOut"), String.valueOf(10000));
     assertEquals(clusterprops.getBanned(), new TreeSet<URI>());
   }
 
@@ -756,7 +755,6 @@ public class TestD2Config
 
     assertEquals(serviceprops.getClusterName(), cluster);
     assertEquals(serviceprops.getServiceName(), service);
-    assertEquals(serviceprops.getLoadBalancerStrategyName(), "degrader");
 
     assertEquals(serviceprops.getPath(), path);
     assertEquals(serviceprops.getLoadBalancerStrategyList(), Arrays.asList(new String[] {"degrader","degraderV3"}));

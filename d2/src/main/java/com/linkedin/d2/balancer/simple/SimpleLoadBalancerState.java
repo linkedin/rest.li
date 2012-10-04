@@ -89,8 +89,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   private final List<SimpleLoadBalancerStateListener>                                    _listeners;
 
   /**
-   * Map from cluster name => uri => tracker client. For example, sna-1 =>
-   * http://ela4-b312.prod.linkedin.com:5432 => tracker client.
+   * Map from cluster name => uri => tracker client.
    */
   private final Map<String, Map<URI, TrackerClient>>                                     _trackerClients;
 

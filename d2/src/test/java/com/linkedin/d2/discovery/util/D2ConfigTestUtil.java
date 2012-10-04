@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.discovery.util;
 
+import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,14 +35,12 @@ public class D2ConfigTestUtil
   private static String _basePath = "/d2";
   private static long _timeout = 5000;
   private static int _retryLimit = 10;
-  private static int _getTimeOut = 10000;
   private static int _requestTimeout = 10000;
   private static int _updateIntervalsMs = 5000;
   private static int _maxClusterLatencyWithoutDegrading = 500;
   private static double _defaultSuccessfulTransmissionWeight = 1.0;
   private static int _pointsPerWeight = 100;
   private static String _prioritizedSchemes = "http";
-  private static String _loadBalancerStrategyName = "degrader";
   private static List<String> _loadBalancerStrategyList = Arrays.asList(new String[]{"degrader","degraderV3"});
   private Map<String,Object> _clusterProperties = new HashMap<String,Object>();
   private Map<String, Object> _clusterDefaults = new HashMap<String, Object>();
@@ -56,25 +55,12 @@ public class D2ConfigTestUtil
   {
   }
 
-  public D2ConfigTestUtil(String clusterNamePrefix, String serviceNamePrefix, int totalClusters, int servicesPerCluster)
-  {
-    setDefaults();
-    generateClusters(clusterNamePrefix, serviceNamePrefix, totalClusters, servicesPerCluster);
-  }
-
   public D2ConfigTestUtil(Map<String,List<String>> clustersData)
   {
     setDefaults();
     generateClusters(clustersData);
   }
 
-  public D2ConfigTestUtil(Map<String,List<String>> clustersData, List<String> loadBalancerStrategyList)
-  {
-    _loadBalancerStrategyList = loadBalancerStrategyList;
-    setDefaults();
-    generateClusters(clustersData);
-  }
-  
   public D2ConfigTestUtil(Map<String, List<String>> clusterData, Map<String, Object> partitionData)
   {
     _loadBalancerStrategyList = Arrays.asList(new String[]{"degraderV3"});
@@ -82,13 +68,6 @@ public class D2ConfigTestUtil
     generateClusters(clusterData, partitionData);
   }
 
-  public D2ConfigTestUtil(Map<String, List<String>> clusterData, Map<String, Object> partitionData, List<String> loadBalancerStrategyList)
-  {
-    _loadBalancerStrategyList = loadBalancerStrategyList;
-    setDefaults();
-    generateClusters(clusterData, partitionData);
-  }
-  
   public D2ConfigTestUtil(String mainClusterName, Map<String,String> servicesData, Map<String,String> serviceGroupsData)
   {
     setDefaults();
@@ -101,6 +80,21 @@ public class D2ConfigTestUtil
     setClusterDefaults();
     setLoadBalancerStrategyProperties();
     setServiceDefaults();
+  }
+
+  public Map<String, Object> getClusterDefaults()
+  {
+    return _clusterDefaults;
+  }
+
+  public Map<String, Object> getServiceDefaults()
+  {
+    return _serviceDefaults;
+  }
+
+  public Map<String, Object> getClusterProperties()
+  {
+    return _clusterProperties;
   }
 
   public Map<String, Object> getClusterServiceConfigurations()
@@ -116,11 +110,6 @@ public class D2ConfigTestUtil
   public String getBasePath ()
   {
    return  _basePath;
-  }
-
-  public String getLoadBalancerStrategyName()
-  {
-    return _loadBalancerStrategyName;
   }
 
   public List<String> getLoadBalancerStrategyList()
@@ -216,14 +205,12 @@ public class D2ConfigTestUtil
   public void setClusterProperties()
   {
     // Cluster Defaults
-    _clusterProperties.put("getTimeOut", String.valueOf(_getTimeOut));
     _clusterProperties.put("requestTimeout", String.valueOf(_requestTimeout));
   }
 
   public void setClusterProperties(int getTimeOut, int requestTimeout)
   {
     // Cluster Defaults
-    _clusterProperties.put("getTimeOut", String.valueOf(_getTimeOut));
     _clusterProperties.put("requestTimeout", String.valueOf(_requestTimeout));
   }
 
@@ -258,14 +245,12 @@ public class D2ConfigTestUtil
   public void setServiceDefaults()
   {
     _serviceDefaults.put("loadBalancerStrategyProperties", _loadBalancerStrategyProperties);
-    _serviceDefaults.put("loadBalancerStrategyName",_loadBalancerStrategyName);
     _serviceDefaults.put("loadBalancerStrategyList", _loadBalancerStrategyList);
   }
 
-  public void setServiceDefaults(String loadBalancerStrategyName, List<String> loadBalancerStrategyList)
+  public void setServiceDefaults(List<String> loadBalancerStrategyList)
   {
     _serviceDefaults.put("loadBalancerStrategyProperties", _loadBalancerStrategyProperties);
-    _serviceDefaults.put("loadBalancerStrategyName",loadBalancerStrategyName);
     _serviceDefaults.put("loadBalancerStrategyList", loadBalancerStrategyList);
   }
 
@@ -379,6 +364,60 @@ public class D2ConfigTestUtil
     }
 
     return services;
+  }
+
+  public static Map<String, Object>  getD2ConfigDataMap(String jsonConfigData) throws Exception
+  {
+    ObjectMapper mapper = new ObjectMapper();
+    @SuppressWarnings("unchecked")
+    Map<String, Object> configMap = (Map<String, Object>) mapper.readValue(jsonConfigData, HashMap.class);
+
+    return configMap;
+  }
+
+  @SuppressWarnings("unchecked")
+  public static Map<String, Object>  getClusterServiceConfiguration(String jsonConfigData) throws Exception
+  {
+    ObjectMapper mapper = new ObjectMapper();
+    Map<String, Object> configMap = (Map<String, Object>) mapper.readValue(jsonConfigData, HashMap.class);
+
+    return (Map<String, Object>) configMap.get("clusterServiceConfigurations");
+  }
+
+  @SuppressWarnings("unchecked")
+  public static Map<String, Object>  getClusterDefaults(String jsonConfigData) throws Exception
+  {
+    ObjectMapper mapper = new ObjectMapper();
+    Map<String, Object> configMap = (Map<String, Object>) mapper.readValue(jsonConfigData, HashMap.class);
+
+    return (Map<String, Object>) configMap.get("clusterDefaults");
+  }
+
+  @SuppressWarnings("unchecked")
+  public static Map<String, Object>  getServiceDefaults(String jsonConfigData) throws Exception
+  {
+    ObjectMapper mapper = new ObjectMapper();
+    Map<String, Object> configMap = (Map<String, Object>) mapper.readValue(jsonConfigData, HashMap.class);
+
+    return (Map<String, Object>) configMap.get("serviceDefaults");
+  }
+
+  @SuppressWarnings("unchecked")
+  public static Map<String, Object>  getExtraClusterServiceConfigurations(String jsonConfigData) throws Exception
+  {
+    ObjectMapper mapper = new ObjectMapper();
+    Map<String, Object> configMap = (Map<String, Object>) mapper.readValue(jsonConfigData, HashMap.class);
+
+    return (Map<String, Object>) configMap.get("extraClusterServiceConfigurations");
+  }
+
+  @SuppressWarnings("unchecked")
+  public static Map<String, Object>  getServiceVariants(String jsonConfigData) throws Exception
+  {
+    ObjectMapper mapper = new ObjectMapper();
+    Map<String, Object> configMap = (Map<String, Object>) mapper.readValue(jsonConfigData, HashMap.class);
+
+    return (Map<String, Object>) configMap.get("serviceVariants");
   }
 
   public int runDiscovery(String zkHosts) throws IOException, InterruptedException, URISyntaxException, Exception

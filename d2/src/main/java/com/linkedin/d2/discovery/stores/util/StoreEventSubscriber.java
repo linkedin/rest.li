@@ -50,6 +50,8 @@ public class StoreEventSubscriber<T> implements PropertyEventSubscriber<T>
     try
     {
       _store.put(propertyName, propertyValue);
+      LOG.debug("STORE EVENT SUBSCRIBER. OnInitialize. adding property to file store. propertyName:"+propertyName+" propertyValue:"+propertyValue);
+
     }
     catch (PropertyStoreException e)
     {

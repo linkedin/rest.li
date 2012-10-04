@@ -184,29 +184,28 @@ public class ZKTestUtil
 
   public static int getRandomPort()
   {
-      ServerSocket server = null;
-      try
+    ServerSocket server = null;
+    try
+    {
+      server = new ServerSocket(0);
+      return server.getLocalPort();
+    }
+    catch ( IOException e )
+    {
+      throw new Error(e);
+    }
+    finally
+    {
+      if ( server != null )
       {
-          server = new ServerSocket(0);
-          return server.getLocalPort();
+        try
+        {
+          server.close();
+        }
+        catch ( IOException ignore )
+        {
+        }
       }
-      catch ( IOException e )
-      {
-          throw new Error(e);
-      }
-      finally
-      {
-          if ( server != null )
-          {
-              try
-              {
-                  server.close();
-              }
-              catch ( IOException ignore )
-              {
-                  // ignore
-              }
-          }
-      }
+    }
   }
 }

@@ -10,7 +10,7 @@
 	</appender>
 
 	<appender name="file" class="org.apache.log4j.FileAppender">
-		<param name="File" value="/tmp/beast.log" />
+		<param name="File" value="/tmp/d2-int-test.log" />
 		<param name="Append" value="true" />
 		<layout class="org.apache.log4j.PatternLayout">
 			<param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss} %c{1} [%p] %m%n" />
@@ -18,18 +18,17 @@
 	</appender>
 
 
-  <logger name="com.linkedin.d2" additivity="false" >
-    <level value="debug"/>
+  <logger name="com.linkedin" additivity="false" >
+    <level value="info"/>
     <appender-ref ref="file"/>
   </logger>
-
 
 	<root>
 		<priority value="error" />
 		<appender-ref ref="console" />
 	</root>
     <root>
-		<priority value="debug" />
+		<priority value="info" />
 		<appender-ref ref="file" />
 	</root>
 

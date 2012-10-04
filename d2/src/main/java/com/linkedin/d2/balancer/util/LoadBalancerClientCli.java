@@ -27,22 +27,29 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import com.linkedin.d2.balancer.zkfs.ZKFSComponentFactory;
+import com.linkedin.d2.balancer.zkfs.ZKFSLoadBalancer;
+import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
 import com.linkedin.d2.balancer.zkfs.ZKFSUtil;
-import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
-import joptsimple.OptionParser;
-import joptsimple.OptionSet;
-import joptsimple.OptionSpec;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,15 +73,15 @@ import com.linkedin.d2.discovery.PropertySerializer;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
 import com.linkedin.d2.discovery.event.PropertyEventBusImpl;
 import com.linkedin.d2.discovery.event.PropertyEventThread;
+import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
 import com.linkedin.d2.discovery.stores.PropertyStore;
 import com.linkedin.d2.discovery.stores.PropertyStoreException;
 import com.linkedin.d2.discovery.stores.file.FileStore;
-import com.linkedin.d2.discovery.stores.toggling.TogglingPublisher;
 import com.linkedin.d2.discovery.stores.zk.ZKConnection;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperPermanentStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperPropertyMerger;
-import com.linkedin.d2.discovery.stores.zk.ZooKeeperTogglingStore;
+import com.linkedin.d2.discovery.util.D2Config;
 import com.linkedin.d2.jmx.JmxManager;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -88,22 +95,24 @@ import com.linkedin.r2.transport.http.client.HttpClientFactory;
 
 public class LoadBalancerClientCli
 {
+  private ZKFSLoadBalancer _zkfsLoadBalancer;
   private ZKConnection _zkclient;
-
-  private String _zkserver = null;
-  private String _d2path   = null;
-  private String _cluster  = null;
-  private String _service  = "";
-  private String _method   = "";
-  private String _request  = null;
-  private String _requestType = "rest";
-  private DynamicClient _client = null;
-  private static String _tmpdirName = "temp-d2TmpFileStore" +  Long.toString(System.nanoTime());
   private File _tmpDir;
+  private static final long         TIMEOUT = 5000;
+  private static final int  SESSION_TIMEOUT = 60000;
+  private String        _zkConnectionString = null;
+  private String                  _d2path   = null;
+  private String                  _cluster  = null;
+  private String                  _service  = "";
+  private String                  _method   = "";
+  private String                  _request  = null;
+  private DynamicClient             _client = null;
+  private static String         _tmpdirName = "temp-d2TmpFileStore" +  Long.toString(System.nanoTime());
   private ZooKeeperPermanentStore<ClusterProperties> _zkClusterRegistry = null;
   private ZooKeeperPermanentStore<ServiceProperties> _zkServiceRegistry = null;
-  private ZooKeeperEphemeralStore<UriProperties> _zkUriRegistry = null;
-  
+  private ZooKeeperEphemeralStore<UriProperties>         _zkUriRegistry = null;
+
+  private static final Options OPTIONS = new Options();
   private static final Logger _log = LoggerFactory.getLogger(LoadBalancerClientCli.class);
 
   public static void main(String[] args) throws Exception
@@ -118,133 +127,126 @@ public class LoadBalancerClientCli
 
   public LoadBalancerClientCli(String[] args) throws Exception
   {
-    OptionParser parser = new OptionParser();
+    OPTIONS.addOption("h", "help", false, "Show help.");
+    OPTIONS.addOption("z", "zkserver", true, "Zookeeper server string (example:zk://localhost:2121).");
+    OPTIONS.addOption("p", "path", true, "Discovery path (example: /d2).");
+    OPTIONS.addOption("f", "file", true, "D2 clusters/services configuration file.");
+    OPTIONS.addOption("c", "cluster", true, "Cluster name.");
+    OPTIONS.addOption("s", "service", true, "Service name.");
+    OPTIONS.addOption("m", "method", true, "Service method name.");
+    OPTIONS.addOption("r", "request", true, "Request string or file.");
+    OPTIONS.addOption("t", "requestype", true, "Request type: either rpc or rest (default - rest).");
+    OPTIONS.addOption("D", "rundiscovery", false, "Run discovery (register clusters/services with zk).");
+    OPTIONS.addOption("P", "printstore", false, "Print single store.");
+    OPTIONS.addOption("S", "printstores", false, "Print all stores.");
+    OPTIONS.addOption("H", "printschema", false, "Print service schema.");
+    OPTIONS.addOption("R", "sendrequest", false, "Send request to service.");
+    OPTIONS.addOption("e", "endpoints", false, "Print service endpoints.");
 
-    parser.acceptsAll(asList("help", "h"), "Show help.");
-
-    OptionSpec<String> zkserverOption =
-        parser.acceptsAll(asList("zkserver", "z"), "ZK server string.").withRequiredArg();
-    OptionSpec<String> pathOption =
-        parser.acceptsAll(asList("path", "p"), "Discover path.").withRequiredArg();
-    OptionSpec<String> clusterOption =
-        parser.acceptsAll(asList("cluster", "c"), "Clister name.").withOptionalArg();
-    OptionSpec<String> serviceOption =
-        parser.acceptsAll(asList("service", "s"), "Service name.").withOptionalArg();
-    OptionSpec<String> serviceMethodOption =
-        parser.acceptsAll(asList("method", "m"), "Service method name.")
-              .withOptionalArg();
-    OptionSpec<String> requestOption =
-        parser.acceptsAll(asList("request", "r"), "Request string.").withOptionalArg().ofType(String.class );
-    OptionSpec<String> requestTypeOption =
-      parser.acceptsAll(asList("requestype", "t"), "Request string.").withOptionalArg();
-
-    OptionSpec<String> printStoreOption =
-      parser.acceptsAll(asList("printstore", "P"), "Print store.").withOptionalArg();
-    OptionSpec<String> printStoresOption =
-        parser.acceptsAll(asList("printstores", "S"), "Print stores.").withOptionalArg();
-
-    OptionSpec<String> printSchemaOption =
-        parser.acceptsAll(asList("getschema", "H"), "Print service schema.")
-              .withOptionalArg();
-    OptionSpec<String> sendRequestOption =
-        parser.acceptsAll(asList("sendrequest", "R"), "Send request to service method.")
-              .withOptionalArg();
-    
-    OptionSpec<String> printEndpointsOption =
-            parser.acceptsAll(asList("endpoints", "e"), "Print service endpoints.")
-                  .withOptionalArg();
-
-    OptionSet options = parser.parse(args);
-
-    if (options.has(zkserverOption) && options.has(pathOption))
+    CommandLine cl = null;
+    try
     {
-      LoadBalancerClientCli clobj = new LoadBalancerClientCli(options.valueOf(zkserverOption), options.valueOf(pathOption));
+      final CommandLineParser parser = new GnuParser();
+      cl = parser.parse(OPTIONS, args);
+    }
+    catch (ParseException e)
+    {
+      System.err.println("Invalid arguments: " + e.getMessage());
+      usage();
+    }
 
-      if (options.has(requestTypeOption))
-      {
-        clobj.setRequestType(options.valueOf(requestTypeOption));
-      }
+    if (cl.hasOption("z") && cl.hasOption("p"))
+    {
+      LoadBalancerClientCli clobj = new LoadBalancerClientCli(cl.getOptionValue("z"), cl.getOptionValue("p"));
 
-      clobj.createZkClient(options.valueOf(zkserverOption));
+      clobj.createZkClient(cl.getOptionValue("z"));
       clobj.startZkClient();
 
-      if (options.has(printStoresOption))
+      if (cl.hasOption("D") && cl.hasOption("f"))
       {
-        printStores(clobj.getZKClient(), options.valueOf(zkserverOption), options.valueOf(pathOption));
+        runDiscovery(cl.getOptionValue("z"), cl.getOptionValue("p"), new File(cl.getOptionValue("f")));
+        clobj.shutdown();
       }
-      else if (options.has(clusterOption) && options.has(serviceOption))
+      else if (cl.hasOption("S"))
       {
-        clobj.setCluster(options.valueOf(clusterOption));
-        clobj.setService(options.valueOf(serviceOption));
+        System.err.println(printStores(clobj.getZKClient(), cl.getOptionValue("z"), cl.getOptionValue("p")));
+      }
+      else if (cl.hasOption("c") && cl.hasOption("s"))
+      {
+        String requestType = "rest";
+        if (cl.hasOption("t"))
+        {
+          requestType = cl.getOptionValue("t");
+        }
 
-        if (options.has(printStoreOption))
+        clobj.setCluster(cl.getOptionValue("c"));
+        clobj.setService(cl.getOptionValue("s"));
+
+        if (cl.hasOption("P"))
         {
-          printStore(clobj.getZKClient(), options.valueOf(zkserverOption), options.valueOf(pathOption), clobj.getCluster(), clobj.getService());
+          printStore(clobj.getZKClient(), cl.getOptionValue("z"), cl.getOptionValue("p"), clobj.getCluster(), clobj.getService());
         }
-        else if (options.has(printSchemaOption))
+        else if (cl.hasOption("H"))
         {
-          getSchema(clobj.getZKClient(), options.valueOf(zkserverOption), options.valueOf(pathOption), clobj.getCluster(), clobj.getService());
-        }
-        else if (options.has(printEndpointsOption))
-        {
-          clobj.getEndpoints(options.valueOf(zkserverOption), options.valueOf(pathOption), clobj.getCluster(), clobj.getService());
+          System.err.println(getSchema(clobj.getZKClient(), cl.getOptionValue("z"), cl.getOptionValue("p"), clobj.getCluster(), clobj.getService(), requestType));
           clobj.shutdown();
         }
-        else if (options.has(requestOption) && options.has(sendRequestOption))
+        else if (cl.hasOption("e"))
         {
-          if (options.has(serviceMethodOption))
+          clobj.getEndpoints(cl.getOptionValue("z"), cl.getOptionValue("p"), clobj.getCluster(), clobj.getService());
+          clobj.shutdown();
+        }
+        else if (cl.hasOption("R") && cl.hasOption("r"))
+        {
+          if  (cl.hasOption("m"))
           {
-            clobj.setMethod("/" + options.valueOf(serviceMethodOption));
+            clobj.setMethod("/" + cl.getOptionValue("m"));
           }
-          clobj.setRequest(options.valueOf(requestOption));
+          clobj.setRequest(cl.getOptionValue("r"));
           clobj.createClient();
 
-          sendRequest(clobj.getClient(),clobj.getZKClient(), options.valueOf(zkserverOption), options.valueOf(pathOption),
-                      clobj.getCluster(), clobj.getService(),"",clobj.getRequest(), true);
+          System.err.println("RESPONSE:" + sendRequest(clobj.getClient(),clobj.getZKClient(), cl.getOptionValue("z"), cl.getOptionValue("p"),
+                      clobj.getCluster(), clobj.getService(),"",clobj.getRequest(), requestType, true));
         }
         else
         {
-          usage(parser);
+          usage();
         }
       }
       else
       {
-        usage(parser);
+        usage();
       }
     }
     else
     {
-      usage(parser);
+      usage();
     }
-
   }
 
-  public void getEndpoints(String zkServer,
-		String d2path, String cluster, String service) throws Exception {
-	
-	  Map<String, UriProperties> scMap = getServiceClustersURIsInfo(zkServer, d2path, service);
-	  if (scMap != null && scMap.get(cluster) != null)
-	  {
-		  for (Map.Entry<URI, Map<Integer, PartitionData>> uriEntry: scMap.get(cluster).getPartitionDesc().entrySet())
-		  {
-			  System.out.println("uri: " + uriEntry.getKey());
-			  
-			  for (Map.Entry<Integer, PartitionData> pData : uriEntry.getValue().entrySet())
-			  {
-				  System.out.println("  " + pData.getKey() + ": " + pData.getValue());
-			  }
-		  }
-	  }
-	  else
-	  {
-		  System.out.println("No cluster information found for service: " + service + ", in cluster: " + cluster);
-	  }
-	  
-  }
-
-public LoadBalancerClientCli( String zkserverHostPort, String d2path) throws Exception
+  public void getEndpoints(String zkServer, String d2path, String cluster, String service) throws Exception
   {
-    _zkserver = zkserverHostPort;
+	Map<String, UriProperties> scMap = getServiceClustersURIsInfo(zkServer, d2path, service);
+	if (scMap != null && scMap.get(cluster) != null)
+	{
+	  for (Map.Entry<URI, Map<Integer, PartitionData>> uriEntry: scMap.get(cluster).getPartitionDesc().entrySet())
+	  {
+	    System.out.println("uri: " + uriEntry.getKey());
+		for (Map.Entry<Integer, PartitionData> pData : uriEntry.getValue().entrySet())
+		{
+		  System.out.println("  " + pData.getKey() + ": " + pData.getValue());
+	    }
+	  }
+	}
+	else
+	{
+	  System.out.println("No cluster information found for service: " + service + ", in cluster: " + cluster);
+	}
+  }
+
+  public LoadBalancerClientCli( String zkserverHostPort, String d2path) throws Exception
+  {
+    _zkConnectionString = zkserverHostPort;
     _zkclient = createZkClient(zkserverHostPort);
     _d2path = d2path;
 
@@ -253,7 +255,7 @@ public LoadBalancerClientCli( String zkserverHostPort, String d2path) throws Exc
 
   public LoadBalancerClientCli( String zkserverHostPort, String d2path, String serviceName) throws Exception
   {
-    _zkserver = zkserverHostPort;
+    _zkConnectionString = zkserverHostPort;
     _zkclient = createZkClient(zkserverHostPort);
     _d2path = d2path;
     _service = serviceName;
@@ -261,62 +263,126 @@ public LoadBalancerClientCli( String zkserverHostPort, String d2path) throws Exc
     startZkClient();
   }
 
-  private void usage(OptionParser parser) throws IOException
+  private void usage() throws IOException
   {
-    System.out.println("Examples");
-    System.out.println("========");
-    System.out.println();
-    System.out.println("Example Print zk stores: lb-client.sh -z=zk://esv4-be32.stg.linkedin.com:12913 -p=/d2 -S");
-    System.out.println("Example Print zk stores: lb-client.sh --zkserver=zk://esv4-be32.stg.linkedin.com:12913 --path=/d2 --printstores");
-    System.out.println("Example Print single store: lb-client.sh -z=zk://esv4-be32.stg.linkedin.com:12913 -p=/d2 -c='history-read-1' -s=HistoryService -P");
-    System.out.println("Example Print single store: lb-client.sh --zkserver=zk://esv4-be32.stg.linkedin.com:12913 --path=/d2 --cluster='history-write-1' --service=HistoryService --printstore");
-    System.out.println("Example Get Service Schema: lb-client.sh -z=zk://esv4-be32.stg.linkedin.com:12913 -p=/d2 -c='history-write-1' -s=HistoryService -H  ");
-    System.out.println("Example Get Service Schema: lb-client.sh --zkserver=zk://esv4-be32.stg.linkedin.com:12913 --path=/d2 --cluster='history-write-1' --service=HistoryService --getschema");
-    System.out.println("Example Get Endpoints: lb-client.sh --zkserver=zk://esv4-be32.stg.linkedin.com:12913 --path=/d2 --cluster identity --endpoints --service identityPrivacySettings");
-    System.out.println("Example Send request to service: lb-client.sh -z=zk://esv4-be32.stg.linkedin.com:12913 -p=/d2 -c='history-write-1' -s=HistoryService -m=getCube -r=$stgrequest -R");
-    System.out.println("Example Send request to service: lb-client.sh --zkserver=zk://esv4-be32.stg.linkedin.com:12913 --path=/d2 --cluster='history-write-1' --service=HistoryService --method=getCube --request=$stgrequest --sendrequest");
-    System.out.println(" where stgrequest=\"{\"query\":{\"query\":[{\"limit\":12,\"transform\":\"SUM\",\"order\":[{\"column\":\"profile_views.tracking_time\",\"ascending\":false}],\"select\":[\"impression\",\"profile_views.tracking_time\"],\"group\":[\"profile_views.tracking_time\"]}],\"ids\":[\"1213\"],\"type\":\"wvmp-cube-profile-views\",\"stringCols\":[]}}\"");
-    System.out.println();
-    parser.printHelpOn(System.out);
+    StringBuilder sb = new StringBuilder();
+    sb.append("\nExamples");
+    sb.append("\n========");
+    sb.append("\nExample RunDiscovery (register clusters/services with zk): lb-client.sh -z zk://localhost:2121 -p /d2 -f d2_config_example.json -D");
+    sb.append("\nExample RunDiscovery (register clusters/services with zk): lb-client.sh --zkserver zk://localhost:2121 --path /d2 --file d2_config_example.json --rundiscovery");
+    sb.append("\nExample Print zk stores: lb-client.sh -z zk://localhost:2121 -p /d2 -c cluster-1 -s service-1_1 -S");
+    sb.append("\nExample Print zk stores: lb-client.sh --zkserver zk://localhost:2121 --path /d2 --cluster cluster-1 --service service-1_1 --printstores");
+    sb.append("\nExample Print single store: lb-client.sh -z=zk://localhost:2181 -p=/d2 -c='cluster-1' -s=service-1_1 -P");
+    sb.append("\nExample Print single store: lb-client.sh --zkserver=zk://localhost:2181 --path=/d2 --cluster='cluster-1' --service=service-1_1 --printstore");
+    sb.append("\nExample Print Service Schema: lb-client.sh -z zk://localhost:2121 -p /d2 -c 'cluster-1' -s service-1_1 -H");
+    sb.append("\nExample Print Service Schema: lb-client.sh --zkserver zk://localhost:2181 --path /d2 --cluster 'cluster-1' --service service-1_1 --printschema");
+    sb.append("\nExample Get Endpoints: lb-client.sh --zkserver zk://localhost:2121 --path /d2 --cluster cluster-1 --endpoints --service service-1_1");
+    sb.append("\nExample Send request to service: lb-client.sh -z zk://localhost:2181 -p /d2 -c 'cluster-1' -s service-1_1 -r 'test' -R");
+    sb.append("\nExample Send request to service: lb-client.sh -z zk://localhost:2181 -p /d2 -c 'cluster-1' -s service-1_1 -r 'test' -t rpc -R");
+    sb.append("\nExample Send request to service: lb-client.sh --zkserver zk://localhost:2181 --path /d2 --cluster 'cluster-1' --service service-1_1 --request 'test' --sendrequest");
+    sb.append("\nExample Send request to service: lb-client.sh -z zk://localhost:2181 -p /d2 -c 'history-write-1' -s HistoryService -m getCube -r 'test' -R");
+    sb.append("\nExample Send request to service: lb-client.sh --zkserver zk://localhost:2181 --path /d2 --cluster 'history-write-1' --service HistoryService --method getCube --request 'test' --sendrequest");
+    sb.append("\n");
+
+    final HelpFormatter formatter = new HelpFormatter();
+    formatter.printHelp("lb-client.sh -z=zk://<zk host port> -p=<d2 path> ... parameters..." + sb.toString(), OPTIONS);
+    System.exit(0);
   }
 
-  public void getSchema(ZKConnection zkclient,
+  public int runDiscovery(String zkserverHostPort, String d2path, File jsonConfigFile) throws Exception
+  {
+    if (jsonConfigFile.exists())
+    {
+      _log.info("Reading d2 config data:" + jsonConfigFile.getAbsolutePath());
+      ObjectMapper mapper = new ObjectMapper();
+      @SuppressWarnings("unchecked")
+      Map<String, Object> configMap = mapper.readValue(jsonConfigFile, HashMap.class);
+      return runDiscovery(zkserverHostPort, d2path, configMap);
+    }
+    else
+    {
+      _log.error("File " + jsonConfigFile.getAbsolutePath() + " does not exist. Check your data.");
+    }
+
+    return -1;
+  }
+
+  public int runDiscovery(String zkserverHostPort, String d2path, String jsonConfigData) throws Exception
+  {
+    _log.info("Reading d2 config data:" + jsonConfigData);
+    ObjectMapper mapper = new ObjectMapper();
+    @SuppressWarnings("unchecked")
+    Map<String, Object> configMap = (Map<String, Object>) mapper.readValue(jsonConfigData, HashMap.class);
+    
+    return runDiscovery(zkserverHostPort, d2path, configMap);
+  }
+
+  @SuppressWarnings("unchecked")
+  private int runDiscovery(String zkserverHostPort, String d2path, Map<String, Object> configMap) throws Exception
+  {
+    String zkHosts = zkserverHostPort.replace("zk://", "");
+
+    Map<String, Object> clusterDefaults = (Map<String,Object>) configMap.get("clusterDefaults");
+    Map<String, Object> serviceDefaults = (Map<String,Object>) configMap.get("serviceDefaults");
+    Map<String, Object> clusterServiceConfigurations = (Map<String,Object>) configMap.get("clusterServiceConfigurations");
+    Map<String, Object> extraClusterServiceConfigurations = (Map<String,Object>) configMap.get("extraClusterServiceConfigurations");
+    Map<String, Object> serviceVariants = (Map<String,Object>) configMap.get("serviceVariants");
+
+    D2Config d2conf = new D2Config (zkHosts, 10000, d2path,
+                                    5000L,
+                                    clusterDefaults,
+                                    serviceDefaults,
+                                    clusterServiceConfigurations,
+                                    extraClusterServiceConfigurations,
+                                    serviceVariants);
+    return d2conf.configure();
+  }
+
+  public String getSchema(ZKConnection zkclient,
                         String zkserver,
                         String d2path,
                         String cluster,
-                        String service) throws URISyntaxException,
+                        String service,
+                        String requestType) throws URISyntaxException,
           InterruptedException,
           ExecutionException,
           IOException,
           PropertyStoreException, TimeoutException
   {
+    String responseString = null;
     if (hasService(zkclient, zkserver, d2path, cluster, service))
     {
-
       DynamicClient client = new DynamicClient(getLoadBalancer(zkclient, zkserver, d2path, service), null);
-
       URI uri = URI.create("d2://" + service + "/");
-
-      RpcRequest req = new RpcRequestBuilder(uri).setEntity("".getBytes("UTF-8")).build();
 
       try
       {
-        Future<RpcResponse> response = client.rpcRequest(req);
-        String responseString = response.get().getEntity().asString("UTF-8");
-
-        System.out.println(uri + " response: " + responseString);
+        if (! requestType.equalsIgnoreCase("rest"))
+        {
+          RpcRequest req =
+            new RpcRequestBuilder(uri).setEntity("".getBytes("UTF-8")).build();
+          Future<RpcResponse> response = client.rpcRequest(req);
+          responseString = response.get().getEntity().asString("UTF-8");
+        }
+        else
+        {
+          RestRequest restRequest = new RestRequestBuilder(uri).setEntity("".getBytes("UTF-8")).build();
+          Future<RestResponse> response = client.restRequest(restRequest, new RequestContext());
+          responseString = response.get().getEntity().asString("UTF-8");
+        }
       }
       finally
       {
         client.shutdown();
+        zkclient.shutdown();
       }
     }
     else
     {
-      System.err.println("Service '" + service + "' is not defined for cluster '"
+      System.out.println("Service '" + service + "' is not defined for cluster '"
           + cluster + "'.");
     }
-
+    return responseString;
   }
 
   public void createClient() throws URISyntaxException,
@@ -326,18 +392,7 @@ public LoadBalancerClientCli( String zkserverHostPort, String d2path) throws Exc
                                           PropertyStoreException,
                                           TimeoutException
   {
-    _client = createClient(_zkclient, _zkserver, _d2path, _service) ;
-  }
-  
-  public DynamicClient createTogglingLBClient(ZKConnection zkclient, String zkserver, String d2path, String servicePath)
-  throws URISyntaxException,
-  InterruptedException,
-  ExecutionException,
-  IOException,
-  PropertyStoreException,
-  TimeoutException
-  {
-    return new DynamicClient(getTogglingLoadBalancer(_zkclient, zkserver, d2path, servicePath), null);
+    _client = createClient(_zkclient, _zkConnectionString, _d2path, _service) ;
   }
 
   public DynamicClient createClient(ZKConnection zkclient, String zkserver, String d2path, String service)
@@ -351,19 +406,36 @@ public LoadBalancerClientCli( String zkserverHostPort, String d2path) throws Exc
     return new DynamicClient(getLoadBalancer(zkclient, zkserver, d2path, service), null);
   }
 
+  public DynamicClient createZKFSTogglingLBClient(String zkHostsPortsConnectionString, String d2path, String servicePath)
+  throws URISyntaxException,
+  InterruptedException,
+  ExecutionException,
+  IOException,
+  PropertyStoreException,
+  TimeoutException,
+  Exception
+  {
+    _zkfsLoadBalancer = getZKFSLoadBalancer(zkHostsPortsConnectionString, d2path, servicePath);
+    FutureCallback<None> startupCallback = new FutureCallback<None>();
+    _zkfsLoadBalancer.start(startupCallback);
+    startupCallback.get(5000, TimeUnit.MILLISECONDS);
+
+    return new DynamicClient(_zkfsLoadBalancer, null);
+  }
+
   public DynamicClient getClient()
   {
     return _client;
   }
 
-  public String sendRequest(DynamicClient client, String cluster, String service, String request) throws URISyntaxException,
-                                                                                                         InterruptedException,
-                                                                                                         ExecutionException,
-                                                                                                         IOException,
-                                                                                                         PropertyStoreException,
-                                                                                                         TimeoutException
+  public String sendRequest(DynamicClient client, String cluster, String service, String request) throws Exception
   {
-    return sendRequest(client, _zkclient,_zkserver, _d2path, cluster, service, "", request, false);
+    return sendRequest(client, _zkclient, _zkConnectionString, _d2path, cluster, service, "", request, "rest", false);
+  }
+
+  public String sendRequest(DynamicClient client, String cluster, String service, String request, String requestType) throws  Exception
+  {
+    return sendRequest(client, _zkclient, _zkConnectionString, _d2path, cluster, service, "", request, requestType, false);
   }
 
   public String sendRequest(DynamicClient client,
@@ -374,12 +446,8 @@ public LoadBalancerClientCli( String zkserverHostPort, String d2path) throws Exc
                             String service,
                             String method,
                             String request,
-                            boolean performShutdown) throws URISyntaxException,
-                                                            InterruptedException,
-                                                            ExecutionException,
-                                                            IOException,
-                                                            PropertyStoreException,
-                                                            TimeoutException
+                            String requestType,
+                            boolean performShutdown) throws Exception
     {
       String responseString = null;
 
@@ -387,7 +455,7 @@ public LoadBalancerClientCli( String zkserverHostPort, String d2path) throws Exc
 
       try
       {
-        if (! _requestType.equalsIgnoreCase("rest"))
+        if (! requestType.equalsIgnoreCase("rest"))
         {
           RpcRequest req =
             new RpcRequestBuilder(uri).setEntity(request.getBytes("UTF-8")).build();
@@ -400,12 +468,6 @@ public LoadBalancerClientCli( String zkserverHostPort, String d2path) throws Exc
           Future<RestResponse> response = client.restRequest(restRequest, new RequestContext());
           responseString = response.get().getEntity().asString("UTF-8");
         }
-
-        System.out.println("===============================");
-        System.out.println("REQUEST:" + request);
-        int indx = request.indexOf("ids");
-        System.out.println(uri + " RESPONSE: ");
-        System.out.println(responseString);
       }
       finally
       {
@@ -449,11 +511,6 @@ public LoadBalancerClientCli( String zkserverHostPort, String d2path) throws Exc
     return _service;
   }
 
-  public void setRequestType (String requestType)
-  {
-    _requestType = requestType;
-  }
-
   public ZKConnection createZkClient(String zkserverHostPort)
   {
     _zkclient = new ZKConnection(zkserverHostPort.replace("zk://",""), 10000);
@@ -469,7 +526,7 @@ public LoadBalancerClientCli( String zkserverHostPort, String d2path) throws Exc
   public void startZkClient() throws IOException, InterruptedException, TimeoutException
   {
     _zkclient.start();
-    _zkclient.waitForState(KeeperState.SyncConnected, 30, TimeUnit.SECONDS);
+    _zkclient.waitForState(KeeperState.SyncConnected, 40, TimeUnit.SECONDS);
   }
 
   public void setMethod(String method)
@@ -586,7 +643,6 @@ public LoadBalancerClientCli( String zkserverHostPort, String d2path) throws Exc
     }
   }
 
-  @SuppressWarnings("unchecked")
   public static SimpleLoadBalancer getLoadBalancer(ZKConnection zkclient,
                                                    String zkserver,
                                                    String d2path,
@@ -598,7 +654,6 @@ public LoadBalancerClientCli( String zkserverHostPort, String d2path) throws Exc
                                                                           TimeoutException,
                                                                           InterruptedException
   {
-
     // zk stores
     String clstoreString = zkserver + ZKFSUtil.clusterPath(d2path);
     String scstoreString = zkserver + ZKFSUtil.servicePath(d2path);
@@ -668,132 +723,37 @@ public LoadBalancerClientCli( String zkserverHostPort, String d2path) throws Exc
     return balancer;
   }
 
-  public TogglingLoadBalancer getTogglingLoadBalancer(ZKConnection zkclient,
-                                                      String zkserver,
-                                                      String d2path,
-                                                      String d2ServicePath) throws IOException,
-                                                                          IllegalStateException,
-                                                                          URISyntaxException,
-                                                                          PropertyStoreException,
-                                                                          ExecutionException,
-                                                                          TimeoutException,
-                                                                          InterruptedException
+  public ZKFSLoadBalancer getZKFSLoadBalancer(String zkConnectString, String d2path, String d2ServicePath) throws Exception
   {
     _tmpDir = createTempDirectory(_tmpdirName);
-    if(d2ServicePath == null || d2ServicePath.isEmpty())
+
+	ZKFSComponentFactory componentFactory = new ZKFSComponentFactory();
+	if(d2ServicePath == null || d2ServicePath.isEmpty())
     {
       d2ServicePath = "services";
     }
-    _log.error("\n\n\n\n\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Created TmpDir:"+_tmpDir);
-    // zk stores
 
-    String clstoreString = zkserver + ZKFSUtil.clusterPath(d2path);
-    String scstoreString = zkserver + ZKFSUtil.servicePath(d2path);
-    String uristoreString = zkserver + ZKFSUtil.uriPath(d2path);
+    Map<String, TransportClientFactory> clientFactories = new HashMap<String, TransportClientFactory>();
+    clientFactories.put("http", new HttpClientFactory());
 
-    ZooKeeperPermanentStore<ClusterProperties> zkClusterRegistry =
-        (ZooKeeperPermanentStore<ClusterProperties>) getStore(zkclient,
-                                                              clstoreString,
-                                                              new ClusterPropertiesJsonSerializer());
-    ZooKeeperPermanentStore<ServiceProperties> zkServiceRegistry =
-        (ZooKeeperPermanentStore<ServiceProperties>) getStore(zkclient,
-                                                              scstoreString,
-                                                              new ServicePropertiesJsonSerializer());
-    ZooKeeperEphemeralStore<UriProperties> zkUriRegistry =
-        (ZooKeeperEphemeralStore<UriProperties>) getEphemeralStore(zkclient,
-                                                                   uristoreString,
-                                                                   new UriPropertiesJsonSerializer(),
-                                                                   new UriPropertiesMerger());
-    FileStore<ClusterProperties> fsClusterStore = createFileStore("clusters", new ClusterPropertiesJsonSerializer());
-    FileStore<ServiceProperties> fsServiceStore = createFileStore(d2ServicePath, new ServicePropertiesJsonSerializer());
-    FileStore<UriProperties> fsUriStore = createFileStore("uris", new UriPropertiesJsonSerializer());
-
-    // chains
-    PropertyEventThread thread = new PropertyEventThread("lb client event thread");
-    // start up the world
-    thread.start();
-
-    PropertyEventBus<ServiceProperties> serviceBus =
-        new PropertyEventBusImpl<ServiceProperties>(thread, zkServiceRegistry);
-    PropertyEventBus<UriProperties> uriBus =
-        new PropertyEventBusImpl<UriProperties>(thread, zkUriRegistry);
-    PropertyEventBus<ClusterProperties> clusterBus =
-        new PropertyEventBusImpl<ClusterProperties>(thread, zkClusterRegistry);
-
-    clusterBus.register(fsClusterStore);
-    serviceBus.register(fsServiceStore);
-    uriBus.register(fsUriStore);
-    
-    new ZooKeeperTogglingStore<UriProperties>(zkUriRegistry, fsUriStore, uriBus, true);
-    new ZooKeeperTogglingStore<ClusterProperties>(zkClusterRegistry, fsClusterStore, clusterBus, true);
-    
     Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
-        new HashMap<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>>();
+    new HashMap<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>>();
 
     loadBalancerStrategyFactories.put("random", new RandomLoadBalancerStrategyFactory());
     loadBalancerStrategyFactories.put("degrader", new DegraderLoadBalancerStrategyFactoryV2());
     loadBalancerStrategyFactories.put("degraderV2", new DegraderLoadBalancerStrategyFactoryV2());
     loadBalancerStrategyFactories.put("degraderV3", new DegraderLoadBalancerStrategyFactoryV3());
 
-    Map<String, TransportClientFactory> clientFactories =
-        new HashMap<String, TransportClientFactory>();
+	ZKFSTogglingLoadBalancerFactoryImpl factory = new ZKFSTogglingLoadBalancerFactoryImpl(componentFactory,
+                                        TIMEOUT, TimeUnit.MILLISECONDS,
+                                        d2path, _tmpDir.getAbsolutePath(),
+                                        clientFactories,
+                                        loadBalancerStrategyFactories,
+                                        d2ServicePath);
 
-    clientFactories.put("http", new HttpClientFactory());
-
-    
-    
-    
-    
-    ZKFSComponentFactory componentFactory = new ZKFSComponentFactory();
-
-    TogglingPublisher<ClusterProperties> clusterToggle = componentFactory.createClusterToggle(zkClusterRegistry,
-                                                                                      fsClusterStore,
-                                                                                      clusterBus);
-    TogglingPublisher<ServiceProperties> serviceToggle = componentFactory.createServiceToggle(zkServiceRegistry,
-                                                                                      fsServiceStore,
-                                                                                      serviceBus);
-    TogglingPublisher<UriProperties> uriToggle = componentFactory.createUriToggle(zkUriRegistry, fsUriStore, uriBus);
-
-   // create the state
-   SimpleLoadBalancerState state =
-       new SimpleLoadBalancerState(thread,
-                                   uriBus,
-                                   clusterBus,
-                                   serviceBus,
-                                   clientFactories,
-                                   loadBalancerStrategyFactories);
-   
-   SimpleLoadBalancer slbalancer = new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS);
-
-   TogglingLoadBalancer balancer = componentFactory.createBalancer(slbalancer, state, clusterToggle, serviceToggle, uriToggle);
-   balancer.start(new Callback<None>() {
-
-     @Override
-     public void onError(Throwable e)
-     {
-       _log.warn("Failed to run start on the TogglingLoadBalancer, may not have registered " +
-                         "SimpleLoadBalancer and State with JMX.");
-     }
-
-     @Override
-     public void onSuccess(None result)
-     {
-       _log.info("Registered SimpleLoadBalancer and State with JMX.");
-     }
-   });
-
-   new JmxManager().registerLoadBalancer("balancer", slbalancer)
-   .registerLoadBalancerState("state", state)
-   .registerPropertyEventThread("thread", thread)
-   .registerZooKeeperPermanentStore("zkClusterRegistry",
-                                    zkClusterRegistry)
-   .registerZooKeeperPermanentStore("zkServiceRegistry",
-                                    zkServiceRegistry)
-   .registerZooKeeperEphemeralStore("zkUriRegistry", zkUriRegistry);
-             
-    return balancer;
+	return new ZKFSLoadBalancer(zkConnectString, SESSION_TIMEOUT, (int) TIMEOUT, factory, null, d2path);
   }
-  
+
   public  Set< UriProperties> getServiceURIsProps(String zkserver, String d2path, String serviceName) throws IOException,
   IllegalStateException,
   URISyntaxException,
@@ -801,14 +761,9 @@ public LoadBalancerClientCli( String zkserverHostPort, String d2path) throws Exc
   {
     Set<UriProperties> uriprops = new HashSet<UriProperties>();
     // zk stores
-    String clstoreString = zkserver + ZKFSUtil.clusterPath(d2path);
     String scstoreString = zkserver + ZKFSUtil.servicePath(d2path);
     String uristoreString = zkserver + ZKFSUtil.uriPath(d2path);
 
-    ZooKeeperPermanentStore<ClusterProperties> zkClusterRegistry =
-        (ZooKeeperPermanentStore<ClusterProperties>) getStore(_zkclient,
-                                                              clstoreString,
-                                                              new ClusterPropertiesJsonSerializer());
     ZooKeeperPermanentStore<ServiceProperties> zkServiceRegistry =
         (ZooKeeperPermanentStore<ServiceProperties>) getStore(_zkclient,
                                                               scstoreString,
@@ -819,15 +774,9 @@ public LoadBalancerClientCli( String zkserverHostPort, String d2path) throws Exc
                                                                    new UriPropertiesJsonSerializer(),
                                                                    new UriPropertiesMerger());
 
-    List<String> currentservices = zkServiceRegistry.ls();
-
-    for (String service : currentservices)
-    {
-      String clusterName = zkServiceRegistry.get(serviceName).getClusterName();
-      UriProperties uripros = zkUriRegistry.get(clusterName);
-      uriprops.add( uripros);
-    }
-
+    String clusterName = zkServiceRegistry.get(serviceName).getClusterName();
+    UriProperties uripros = zkUriRegistry.get(clusterName);
+    uriprops.add( uripros);
     return uriprops;
   }
 
@@ -838,14 +787,9 @@ public LoadBalancerClientCli( String zkserverHostPort, String d2path) throws Exc
   {
     Map<String,UriProperties> map = new HashMap<String,UriProperties>();
     // zk stores
-    String clstoreString = zkserver + ZKFSUtil.clusterPath(d2path);
     String scstoreString = zkserver + ZKFSUtil.servicePath(d2path);
     String uristoreString = zkserver + ZKFSUtil.uriPath(d2path);
 
-    ZooKeeperPermanentStore<ClusterProperties> zkClusterRegistry =
-        (ZooKeeperPermanentStore<ClusterProperties>) getStore(_zkclient,
-                                                              clstoreString,
-                                                              new ClusterPropertiesJsonSerializer());
     ZooKeeperPermanentStore<ServiceProperties> zkServiceRegistry =
         (ZooKeeperPermanentStore<ServiceProperties>) getStore(_zkclient,
                                                               scstoreString,
@@ -1034,7 +978,6 @@ public LoadBalancerClientCli( String zkserverHostPort, String d2path) throws Exc
 
     List<String> currentclusters = zkClusterRegistry.ls();
     List<String> currenturis = zkUriRegistry.ls();
-
     List<String> servicesGroups = getServicesGroups (zkclient, d2path);
 
     for (String serviceGroup : servicesGroups)
@@ -1105,40 +1048,42 @@ public LoadBalancerClientCli( String zkserverHostPort, String d2path) throws Exc
         sb.append("\nNo services were found in this cluster.");
       }
     }
-    
+
     return sb.toString();
   }
 
-  private <T> FileStore<T> createFileStore(String baseName, PropertySerializer<T> serializer) throws PropertyStoreException
-  {
-    FileStore<T> store = new FileStore<T>(_tmpDir.getAbsolutePath() + File.separator + baseName, ".ini", serializer);
-    return store;
-  }
-  
   private void deleteTempDir() throws IOException
   {
-    _log.error("\n\n\n\n\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ DELETING TmpDir:"+_tmpDir);
-    
     if (_tmpDir.exists())
     {
-      if (!(_tmpDir.delete()))
+      try
+      {
+        FileUtils.deleteDirectory(_tmpDir);
+      }
+      catch (IOException e)
       {
         throw new IOException("Could not delete temp file: " + _tmpDir.getAbsolutePath());
       }
     }
   }
-  
+
   private static File createTempDirectory(String name) throws IOException
   {
     final File temp;
 
-    temp = File.createTempFile(name,"");
+    temp = new File(System.getProperty("java.io.tmpdir") + File.separator + name);
 
-    if (!(temp.delete()))
+    if (temp.exists() && temp.isDirectory())
     {
-      throw new IOException("Could not delete temp file: " + temp.getAbsolutePath());
+      try
+      {
+        FileUtils.deleteDirectory(temp);
+      }
+      catch (IOException e)
+      {
+        throw new IOException("Could not delete temp file: " + temp.getAbsolutePath());
+      }
     }
-
     if (!(temp.mkdir()))
     {
       throw new IOException("Could not create temp directory: " + temp.getAbsolutePath());
@@ -1202,7 +1147,32 @@ public LoadBalancerClientCli( String zkserverHostPort, String d2path) throws Exc
     {
       _log.error("Failed to shutdown dynamic client.");
     }
-    
+
+    if (_zkfsLoadBalancer != null)
+    {
+      try
+      {
+        final CountDownLatch latch = new CountDownLatch(1);
+        _zkfsLoadBalancer.shutdown(new PropertyEventShutdownCallback()
+        {
+          @Override
+          public void done()
+          {
+            latch.countDown();
+          }
+        });
+
+        if (!latch.await(5, TimeUnit.SECONDS))
+        {
+          _log.error("unable to shut down store");
+        }
+      }
+      catch (Exception e)
+      {
+        _log.error("Failed to shutdown zkfsLoadBalancer.");
+      }
+    }
+
     try
     {
       deleteTempDir();
