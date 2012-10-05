@@ -50,7 +50,7 @@ public class TrackerClientTest
   @Test(groups = { "small", "back-end" })
   public void testClient() throws URISyntaxException
   {
-    URI uri = URI.create("http://be123-ela4.prod.linkedin.com:4567/foo");
+    URI uri = URI.create("http://test.qa.com:1234/foo");
     double weight = 3d;
     TestClient wrappedClient = new TestClient();
     Clock clock = new SettableClock();

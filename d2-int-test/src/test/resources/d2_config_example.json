@@ -79,7 +79,7 @@
       "partitionProperties": {
         "partitionSize": "10",
         "keyRangeStart": "0",
-        "partitionKeyRegex": "service-4_(\d+)",
+        "partitionKeyRegex": "service-4_(\\d+)",
         "partitionType": "RANGE",
         "partitionCount": "10"
       }

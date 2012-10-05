@@ -5,7 +5,6 @@ dependencies {
   compile project(':data')
   compile project(':pegasus-common')
   compile project(':li-jersey-uri')
-  compile fileTree(dir: 'lib', include: '*.jar')
   compile externalDependency.commonsCodec
   compile externalDependency.commonsIo
   compile externalDependency.commonsCli

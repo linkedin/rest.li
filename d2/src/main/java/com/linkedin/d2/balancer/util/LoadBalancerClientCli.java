@@ -33,6 +33,13 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import javax.management.MBeanServerConnection;
+import javax.management.ObjectInstance;
+import javax.management.ObjectName;
+import javax.management.remote.JMXConnector;
+import javax.management.remote.JMXConnectorFactory;
+import javax.management.remote.JMXServiceURL;
+
 import com.linkedin.d2.balancer.zkfs.ZKFSComponentFactory;
 import com.linkedin.d2.balancer.zkfs.ZKFSLoadBalancer;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
@@ -52,6 +59,9 @@ import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import sun.jvmstat.monitor.HostIdentifier;
+import sun.jvmstat.monitor.MonitoredHost;
 
 import com.linkedin.d2.balancer.clients.DynamicClient;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
@@ -81,6 +91,7 @@ import com.linkedin.d2.discovery.stores.zk.ZKConnection;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperPermanentStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperPropertyMerger;
+import com.linkedin.d2.discovery.stores.zk.ZooKeeperStore;
 import com.linkedin.d2.discovery.util.D2Config;
 import com.linkedin.d2.jmx.JmxManager;
 import com.linkedin.r2.message.RequestContext;
@@ -98,16 +109,17 @@ public class LoadBalancerClientCli
   private ZKFSLoadBalancer _zkfsLoadBalancer;
   private ZKConnection _zkclient;
   private File _tmpDir;
-  private static final long         TIMEOUT = 5000;
-  private static final int  SESSION_TIMEOUT = 60000;
-  private String        _zkConnectionString = null;
-  private String                  _d2path   = null;
-  private String                  _cluster  = null;
-  private String                  _service  = "";
-  private String                  _method   = "";
-  private String                  _request  = null;
-  private DynamicClient             _client = null;
-  private static String         _tmpdirName = "temp-d2TmpFileStore" +  Long.toString(System.nanoTime());
+  private static final String CONNECTOR_ADDRESS = "com.sun.management.jmxremote.localConnectorAddress";
+  private static final long             TIMEOUT = 5000;
+  private static final int      SESSION_TIMEOUT = 60000;
+  private String            _zkConnectionString = null;
+  private String                      _d2path   = null;
+  private String                      _cluster  = null;
+  private String                      _service  = "";
+  private String                      _method   = "";
+  private String                      _request  = null;
+  private DynamicClient                 _client = null;
+  private static String             _tmpdirName = "temp-d2TmpFileStore" +  Long.toString(System.nanoTime());
   private ZooKeeperPermanentStore<ClusterProperties> _zkClusterRegistry = null;
   private ZooKeeperPermanentStore<ServiceProperties> _zkServiceRegistry = null;
   private ZooKeeperEphemeralStore<UriProperties>         _zkUriRegistry = null;
@@ -130,18 +142,23 @@ public class LoadBalancerClientCli
     OPTIONS.addOption("h", "help", false, "Show help.");
     OPTIONS.addOption("z", "zkserver", true, "Zookeeper server string (example:zk://localhost:2121).");
     OPTIONS.addOption("p", "path", true, "Discovery path (example: /d2).");
+    OPTIONS.addOption("h", "host", true, "Host name.");
+    OPTIONS.addOption("b", "enabled", true, "Enabled toggling store (value either 'true' or 'false'.");
     OPTIONS.addOption("f", "file", true, "D2 clusters/services configuration file.");
     OPTIONS.addOption("c", "cluster", true, "Cluster name.");
     OPTIONS.addOption("s", "service", true, "Service name.");
     OPTIONS.addOption("m", "method", true, "Service method name.");
     OPTIONS.addOption("r", "request", true, "Request string or file.");
-    OPTIONS.addOption("t", "requestype", true, "Request type: either rpc or rest (default - rest).");
+    OPTIONS.addOption("t", "requestype", true, "Request type: value either rpc or rest (default - rest).");
+    OPTIONS.addOption("d", "delete", true, "Delete store (cluster or service name).");
+    OPTIONS.addOption("n", "storename", true, "Store name (value either 'clusters' or 'services' or 'uris').");
     OPTIONS.addOption("D", "rundiscovery", false, "Run discovery (register clusters/services with zk).");
     OPTIONS.addOption("P", "printstore", false, "Print single store.");
     OPTIONS.addOption("S", "printstores", false, "Print all stores.");
     OPTIONS.addOption("H", "printschema", false, "Print service schema.");
     OPTIONS.addOption("R", "sendrequest", false, "Send request to service.");
     OPTIONS.addOption("e", "endpoints", false, "Print service endpoints.");
+    OPTIONS.addOption("T", "toggle", false, "Reset toggling store.");
 
     CommandLine cl = null;
     try
@@ -167,9 +184,21 @@ public class LoadBalancerClientCli
         runDiscovery(cl.getOptionValue("z"), cl.getOptionValue("p"), new File(cl.getOptionValue("f")));
         clobj.shutdown();
       }
+      else if (cl.hasOption("d") && cl.hasOption("n"))
+      {
+        deleteStore(clobj.getZKClient(), cl.getOptionValue("z"), cl.getOptionValue("p"), cl.getOptionValue("n"), cl.getOptionValue("d"));
+        clobj.shutdown();
+      }
       else if (cl.hasOption("S"))
       {
         System.err.println(printStores(clobj.getZKClient(), cl.getOptionValue("z"), cl.getOptionValue("p")));
+      }
+      else if (cl.hasOption("T") && cl.hasOption("h") && cl.hasOption("b"))
+      {
+        String host = cl.getOptionValue("h");
+        boolean toggled = !"false".equals(cl.getOptionValue("b"));
+
+        resetTogglingStores((host == null) ? "localhost" : host, toggled);
       }
       else if (cl.hasOption("c") && cl.hasOption("s"))
       {
@@ -205,8 +234,15 @@ public class LoadBalancerClientCli
           clobj.setRequest(cl.getOptionValue("r"));
           clobj.createClient();
 
-          System.err.println("RESPONSE:" + sendRequest(clobj.getClient(),clobj.getZKClient(), cl.getOptionValue("z"), cl.getOptionValue("p"),
-                      clobj.getCluster(), clobj.getService(),"",clobj.getRequest(), requestType, true));
+          System.err.println("RESPONSE:" + sendRequest(clobj.getClient(),
+                                                       clobj.getZKClient(),
+                                                       cl.getOptionValue("z"),
+                                                       cl.getOptionValue("p"),
+                                                       clobj.getCluster(),
+                                                       clobj.getService(),
+                                                       "",
+                                                       clobj.getRequest(),
+                                                       requestType, true));
         }
         else
         {
@@ -222,26 +258,6 @@ public class LoadBalancerClientCli
     {
       usage();
     }
-  }
-
-  public void getEndpoints(String zkServer, String d2path, String cluster, String service) throws Exception
-  {
-	Map<String, UriProperties> scMap = getServiceClustersURIsInfo(zkServer, d2path, service);
-	if (scMap != null && scMap.get(cluster) != null)
-	{
-	  for (Map.Entry<URI, Map<Integer, PartitionData>> uriEntry: scMap.get(cluster).getPartitionDesc().entrySet())
-	  {
-	    System.out.println("uri: " + uriEntry.getKey());
-		for (Map.Entry<Integer, PartitionData> pData : uriEntry.getValue().entrySet())
-		{
-		  System.out.println("  " + pData.getKey() + ": " + pData.getValue());
-	    }
-	  }
-	}
-	else
-	{
-	  System.out.println("No cluster information found for service: " + service + ", in cluster: " + cluster);
-	}
   }
 
   public LoadBalancerClientCli( String zkserverHostPort, String d2path) throws Exception
@@ -274,6 +290,9 @@ public class LoadBalancerClientCli
     sb.append("\nExample Print zk stores: lb-client.sh --zkserver zk://localhost:2121 --path /d2 --cluster cluster-1 --service service-1_1 --printstores");
     sb.append("\nExample Print single store: lb-client.sh -z=zk://localhost:2181 -p=/d2 -c='cluster-1' -s=service-1_1 -P");
     sb.append("\nExample Print single store: lb-client.sh --zkserver=zk://localhost:2181 --path=/d2 --cluster='cluster-1' --service=service-1_1 --printstore");
+    sb.append("\nExample Delete store: lb-client.sh -z zk://localhost:2121 -p /d2 -d cluster-2 -n clusters");
+    sb.append("\nExample Delete store: lb-client.sh -z zk://localhost:2121 -p /d2 -d service-3_3 -n services");
+    sb.append("\nExample Delete store: lb-client.sh --zkserver zk://localhost:2121 --path /d2  --delete cluster-2 -storename clusters");
     sb.append("\nExample Print Service Schema: lb-client.sh -z zk://localhost:2121 -p /d2 -c 'cluster-1' -s service-1_1 -H");
     sb.append("\nExample Print Service Schema: lb-client.sh --zkserver zk://localhost:2181 --path /d2 --cluster 'cluster-1' --service service-1_1 --printschema");
     sb.append("\nExample Get Endpoints: lb-client.sh --zkserver zk://localhost:2121 --path /d2 --cluster cluster-1 --endpoints --service service-1_1");
@@ -282,11 +301,33 @@ public class LoadBalancerClientCli
     sb.append("\nExample Send request to service: lb-client.sh --zkserver zk://localhost:2181 --path /d2 --cluster 'cluster-1' --service service-1_1 --request 'test' --sendrequest");
     sb.append("\nExample Send request to service: lb-client.sh -z zk://localhost:2181 -p /d2 -c 'history-write-1' -s HistoryService -m getCube -r 'test' -R");
     sb.append("\nExample Send request to service: lb-client.sh --zkserver zk://localhost:2181 --path /d2 --cluster 'history-write-1' --service HistoryService --method getCube --request 'test' --sendrequest");
+    sb.append("\nExample Reset toggling stores: lb-client.sh -z zk://localhost:2121 -p /d2 -h localhost -b false -T");
+    sb.append("\nExample Reset toggling stores: lb-client.sh --zkserver zk://localhost:2121 --path /d2 --host localhost --enabled false --toggle");
     sb.append("\n");
 
     final HelpFormatter formatter = new HelpFormatter();
     formatter.printHelp("lb-client.sh -z=zk://<zk host port> -p=<d2 path> ... parameters..." + sb.toString(), OPTIONS);
     System.exit(0);
+  }
+
+  public void getEndpoints(String zkServer, String d2path, String cluster, String service) throws Exception
+  {
+    Map<String, UriProperties> scMap = getServiceClustersURIsInfo(zkServer, d2path, service);
+    if (scMap != null && scMap.get(cluster) != null)
+    {
+      for (Map.Entry<URI, Map<Integer, PartitionData>> uriEntry: scMap.get(cluster).getPartitionDesc().entrySet())
+      {
+        System.out.println("uri: " + uriEntry.getKey());
+        for (Map.Entry<Integer, PartitionData> pData : uriEntry.getValue().entrySet())
+        {
+          System.out.println("  " + pData.getKey() + ": " + pData.getValue());
+        }
+      }
+    }
+    else
+    {
+      System.out.println("No cluster information found for service: " + service + ", in cluster: " + cluster);
+    }
   }
 
   public int runDiscovery(String zkserverHostPort, String d2path, File jsonConfigFile) throws Exception
@@ -547,6 +588,19 @@ public class LoadBalancerClientCli
   public String getRequest()
   {
     return _request;
+  }
+
+  public void deleteStore(ZKConnection zkclient,
+                                 String zkserverHostPort,
+                                 String d2path,
+                                 String storeName,
+                                 String listenTo) throws Exception
+  {
+    String storeString = zkserverHostPort + d2path + "/" + storeName;
+    PropertyStore<?> store = getStore(zkclient, storeString, null);
+
+    store.remove(listenTo);
+    shutdownPropertyStore(store, 60, TimeUnit.SECONDS);
   }
 
   public static <T> PropertyStore<T> getStore(ZKConnection zkclient,
@@ -1052,6 +1106,74 @@ public class LoadBalancerClientCli
     return sb.toString();
   }
 
+  public static void resetTogglingStores(String host, boolean enabled) throws Exception
+  {
+
+    MonitoredHost _host = MonitoredHost.getMonitoredHost(new HostIdentifier(host));
+
+    for (Object pidObj : _host.activeVms())
+    {
+      int pid = (Integer) pidObj;
+
+      System.out.println("checking pid: " + pid);
+
+      JMXServiceURL jmxUrl = null;
+      com.sun.tools.attach.VirtualMachine vm =
+          com.sun.tools.attach.VirtualMachine.attach(pid + "");
+
+      try
+      {
+        // get the connector address
+        String connectorAddress = vm.getAgentProperties().getProperty(CONNECTOR_ADDRESS);
+        // establish connection to connector server
+        if (connectorAddress != null)
+        {
+          jmxUrl = new JMXServiceURL(connectorAddress);
+        }
+      }
+      finally
+      {
+        vm.detach();
+      }
+
+      if (jmxUrl != null)
+      {
+        System.out.println("got jmx url: " + jmxUrl);
+
+        // connect to jmx
+        JMXConnector connector = JMXConnectorFactory.connect(jmxUrl);
+
+        connector.connect();
+
+        MBeanServerConnection mbeanServer = connector.getMBeanServerConnection();
+
+        // look for all beans in the d2 name space
+        Set<ObjectInstance> objectInstances =
+            mbeanServer.queryMBeans(new ObjectName("com.linkedin.d2:*"), null);
+
+        for (ObjectInstance objectInstance : objectInstances)
+        {
+          System.err.println("checking object: " + objectInstance.getObjectName());
+
+          // if we've found a toggling store, then toggle it
+          if (objectInstance.getObjectName().toString().endsWith("TogglingStore"))
+          {
+            System.out.println("found toggling zk store, so toggling to: " + enabled);
+
+            mbeanServer.invoke(objectInstance.getObjectName(),
+                               "setEnabled",
+                               new Object[] { enabled },
+                               new String[] { "boolean" });
+          }
+        }
+      }
+      else
+      {
+        System.out.println("pid is not a jmx process: " + pid);
+      }
+    }
+  }
+
   private void deleteTempDir() throws IOException
   {
     if (_tmpDir.exists())
@@ -1098,9 +1220,7 @@ public class LoadBalancerClientCli
     {
       try
       {
-        FutureCallback<None> shutdownCallback = new FutureCallback<None>();
-        _zkClusterRegistry.shutdown(shutdownCallback);
-        shutdownCallback.get(5000, TimeUnit.MILLISECONDS);
+        shutdownZKRegistry(_zkClusterRegistry);
       }
       catch (Exception e)
       {
@@ -1112,9 +1232,7 @@ public class LoadBalancerClientCli
     {
       try
       {
-        FutureCallback<None> shutdownCallback = new FutureCallback<None>();
-        _zkServiceRegistry.shutdown(shutdownCallback);
-        shutdownCallback.get(5000, TimeUnit.MILLISECONDS);
+        shutdownZKRegistry(_zkServiceRegistry);
       }
       catch (Exception e)
       {
@@ -1126,9 +1244,7 @@ public class LoadBalancerClientCli
     {
       try
       {
-        FutureCallback<None> shutdownCallback = new FutureCallback<None>();
-        _zkUriRegistry.shutdown(shutdownCallback);
-        shutdownCallback.get(5000, TimeUnit.MILLISECONDS);
+        shutdownZKRegistry(_zkUriRegistry);
       }
       catch (Exception e)
       {
@@ -1190,6 +1306,38 @@ public class LoadBalancerClientCli
     {
       _log.error("Failed to shutdown zk client.");
     }
+  }
 
+  private void shutdownZKRegistry(ZooKeeperStore<?> zkregistry) throws Exception
+  {
+    if (zkregistry != null)
+    {
+      FutureCallback<None> shutdownCallback = new FutureCallback<None>();
+      zkregistry.shutdown(shutdownCallback);
+      shutdownCallback.get(5000, TimeUnit.MILLISECONDS);
+    }
+  }
+
+  private void shutdownPropertyStore(PropertyStore<?> store, long timeout, TimeUnit unit) throws Exception
+  {
+    final CountDownLatch registryLatch = new CountDownLatch(1);
+
+    store.shutdown(new PropertyEventShutdownCallback()
+    {
+      @Override
+      public void done()
+      {
+        registryLatch.countDown();
+      }
+    });
+
+    try
+    {
+      registryLatch.await(timeout, unit);
+    }
+    catch (InterruptedException e)
+    {
+      System.err.println("unable to shutdown store: " + store);
+    }
   }
 }

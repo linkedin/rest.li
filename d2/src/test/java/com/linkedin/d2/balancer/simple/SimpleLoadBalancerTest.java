@@ -155,9 +155,9 @@ public class SimpleLoadBalancerTest
       loadBalancer.start(balancerCallback);
       balancerCallback.get();
 
-      URI uri1 = URI.create("http://ela4-be234.prod.linkdin.com:6783");
-      URI uri2 = URI.create("http://ela4-be123.prod.linkdin.com:6783");
-      URI uri3 = URI.create("http://ela4-be345.prod.linkdin.com:6783");
+      URI uri1 = URI.create("http://test.qa1.com:1234");
+      URI uri2 = URI.create("http://test.qa2.com:2345");
+      URI uri3 = URI.create("http://test.qa3.com:6789");
 
       Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
       partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
@@ -168,16 +168,16 @@ public class SimpleLoadBalancerTest
 
       prioritizedSchemes.add("http");
 
-      clusterRegistry.put("sna-1", new ClusterProperties("sna-1", prioritizedSchemes));
-      serviceRegistry.put("browsemaps", new ServiceProperties("browsemaps",
-                                                              "sna-1",
-                                                              "/browsemaps",
+      clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", prioritizedSchemes));
+      serviceRegistry.put("foo", new ServiceProperties("foo",
+                                                              "cluster-1",
+                                                              "/foo",
                                                               "degrader"));
-      uriRegistry.put("sna-1", new UriProperties("sna-1", uriData));
+      uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData));
 
-      URI expectedUri1 = URI.create("http://ela4-be234.prod.linkdin.com:6783/browsemaps");
-      URI expectedUri2 = URI.create("http://ela4-be123.prod.linkdin.com:6783/browsemaps");
-      URI expectedUri3 = URI.create("http://ela4-be345.prod.linkdin.com:6783/browsemaps");
+      URI expectedUri1 = URI.create("http://test.qa1.com:1234/foo");
+      URI expectedUri2 = URI.create("http://test.qa2.com:2345/foo");
+      URI expectedUri3 = URI.create("http://test.qa3.com:6789/foo");
 
       Set<URI> expectedUris = new HashSet<URI>();
 
@@ -188,7 +188,7 @@ public class SimpleLoadBalancerTest
       for (int i = 0; i < 100; ++i)
       {
         RewriteClient client =
-            (RewriteClient) loadBalancer.getClient(new URIRequest("d2://browsemaps/52"),
+            (RewriteClient) loadBalancer.getClient(new URIRequest("d2://foo/52"),
                                                    new RequestContext());
 
         assertTrue(expectedUris.contains(client.getUri()));
@@ -260,9 +260,9 @@ public class SimpleLoadBalancerTest
       loadBalancer.start(balancerCallback);
       balancerCallback.get();
 
-      URI uri1 = URI.create("http://ela4-be234.prod.linkdin.com:6783");
-      URI uri2 = URI.create("http://ela4-be235.prod.linkdin.com:6784");
-      URI uri3 = URI.create("http://ela4-be236.prod.linkdin.com:6784");
+      URI uri1 = URI.create("http://test.qa1.com:1234");
+      URI uri2 = URI.create("http://test.qa2.com:2345");
+      URI uri3 = URI.create("http://test.qa3.com:6789");
 
       Map<URI, Double> uris = new HashMap<URI, Double>();
 
@@ -292,20 +292,20 @@ public class SimpleLoadBalancerTest
       switch (partitionMethod)
       {
         case 0:
-          clusterRegistry.put("sna-1", new ClusterProperties("sna-1", prioritizedSchemes, new HashMap<String, String>(),
+          clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", prioritizedSchemes, new HashMap<String, String>(),
             new HashSet<URI>(), new RangeBasedPartitionProperties("id=(\\d+)", 0, 50, 2)));
           break;
         case 1:
-          clusterRegistry.put("sna-1", new ClusterProperties("sna-1", prioritizedSchemes, new HashMap<String, String>(),
+          clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", prioritizedSchemes, new HashMap<String, String>(),
               new HashSet<URI>(), new HashBasedPartitionProperties("id=(\\d+)", 2, HashBasedPartitionProperties.HashAlgorithm.valueOf("MODULO"))));
           break;
         case 2:
-          clusterRegistry.put("sna-1", new ClusterProperties("sna-1", prioritizedSchemes, new HashMap<String, String>(),
+          clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", prioritizedSchemes, new HashMap<String, String>(),
               new HashSet<URI>(), new HashBasedPartitionProperties("id=(\\d+)", 2, HashBasedPartitionProperties.HashAlgorithm.valueOf("MD5"))));
           break;
         case 3:
           // test getRings with gap. here, no server serves partition 2
-          clusterRegistry.put("sna-1", new ClusterProperties("sna-1", prioritizedSchemes, new HashMap<String, String>(),
+          clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", prioritizedSchemes, new HashMap<String, String>(),
               new HashSet<URI>(), new RangeBasedPartitionProperties("id=(\\d+)", 0, 50, 4)));
           server3.put(3, new PartitionData(1d));
           partitionDesc.put(uri3, server3);
@@ -314,25 +314,25 @@ public class SimpleLoadBalancerTest
       }
 
 
-      serviceRegistry.put("browsemaps", new ServiceProperties("browsemaps",
-          "sna-1",
-          "/browsemaps",
+      serviceRegistry.put("foo", new ServiceProperties("foo",
+          "cluster-1",
+          "/foo",
           "degrader"));
 
-      uriRegistry.put("sna-1", new UriProperties("sna-1", partitionDesc));
+      uriRegistry.put("cluster-1", new UriProperties("cluster-1", partitionDesc));
 
       if (partitionMethod == 3)
       {
-        Map<Integer, Ring<URI>> ringMap = loadBalancer.getRings(URI.create("d2://browsemaps"));
+        Map<Integer, Ring<URI>> ringMap = loadBalancer.getRings(URI.create("d2://foo"));
         assertEquals(ringMap.size(), 4);
         // the ring for partition 2 should be empty
         assertEquals(ringMap.get(2).toString(), new ConsistentHashRing<URI>(new HashMap<URI, Integer>()).toString());
         continue;
       }
 
-      URI expectedUri1 = URI.create("http://ela4-be234.prod.linkdin.com:6783/browsemaps");
-      URI expectedUri2 = URI.create("http://ela4-be235.prod.linkdin.com:6784/browsemaps");
-      URI expectedUri3 = URI.create("http://ela4-be236.prod.linkdin.com:6784/browsemaps");
+      URI expectedUri1 = URI.create("http://test.qa1.com:1234/foo");
+      URI expectedUri2 = URI.create("http://test.qa2.com:2345/foo");
+      URI expectedUri3 = URI.create("http://test.qa3.com:6789/foo");
 
       Set<URI> expectedUris = new HashSet<URI>();
       expectedUris.add(expectedUri1);
@@ -343,7 +343,7 @@ public class SimpleLoadBalancerTest
       {
         int ii = i % 100;
         RewriteClient client =
-            (RewriteClient) loadBalancer.getClient(new URIRequest("d2://browsemaps/id=" + ii), new RequestContext());
+            (RewriteClient) loadBalancer.getClient(new URIRequest("d2://foo/id=" + ii), new RequestContext());
         String clientUri = client.getUri().toString();
         HashFunction<String[]> hashFunction = null;
         String[] str = new String[1];
@@ -394,7 +394,7 @@ public class SimpleLoadBalancerTest
       }
 
       // two rings for two partitions
-      Map<Integer, Ring<URI>> ringMap = loadBalancer.getRings(URI.create("d2://browsemaps"));
+      Map<Integer, Ring<URI>> ringMap = loadBalancer.getRings(URI.create("d2://foo"));
       assertEquals(ringMap.size(), 2);
 
       if (partitionMethod != 2)
@@ -415,7 +415,7 @@ public class SimpleLoadBalancerTest
         // if it is range based partition, all keys from 0 ~ 49 belong to partition 0 according to the range definition
         // if it is modulo based partition, all even keys belong to partition 0 because the partition count is 2
         // only from partition 0
-        MapKeyResult<Ring<URI>, String> mapKeyResult = loadBalancer.getRings(URI.create("d2://browsemaps"), keys);
+        MapKeyResult<Ring<URI>, String> mapKeyResult = loadBalancer.getRings(URI.create("d2://foo"), keys);
         Map<Ring<URI>, Collection<String>> keyToPartition = mapKeyResult.getMapResult();
         assertEquals(keyToPartition.size(), 1);
         for (Ring<URI> ring : keyToPartition.keySet())
@@ -425,14 +425,14 @@ public class SimpleLoadBalancerTest
 
         // now also from partition 1
         keys.add("51");
-        mapKeyResult = loadBalancer.getRings(URI.create("d2://browsemaps"), keys);
+        mapKeyResult = loadBalancer.getRings(URI.create("d2://foo"), keys);
         assertEquals(mapKeyResult.getMapResult().size(), 2);
         assertEquals(mapKeyResult.getUnmappedKeys().size(), 0);
 
         // now only from partition 1
         keys.clear();
         keys.add("99");
-        mapKeyResult = loadBalancer.getRings(URI.create("d2://browsemaps"), keys);
+        mapKeyResult = loadBalancer.getRings(URI.create("d2://foo"), keys);
         keyToPartition = mapKeyResult.getMapResult();
         assertEquals(keyToPartition.size(), 1);
         assertEquals(mapKeyResult.getUnmappedKeys().size(), 0);
@@ -443,7 +443,7 @@ public class SimpleLoadBalancerTest
 
         keys.add("100");
 
-        mapKeyResult = loadBalancer.getRings(URI.create("d2://browsemaps"), keys);
+        mapKeyResult = loadBalancer.getRings(URI.create("d2://foo"), keys);
         if (partitionMethod == 0)
         {
           // key out of range
@@ -453,7 +453,7 @@ public class SimpleLoadBalancerTest
 
         try
         {
-          loadBalancer.getClient(new URIRequest("d2://browsemaps/id=100"), new RequestContext());
+          loadBalancer.getClient(new URIRequest("d2://foo/id=100"), new RequestContext());
           if (partitionMethod == 0)
           {
             // key out of range

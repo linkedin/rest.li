@@ -73,7 +73,7 @@ public class LoadBalancerTestState implements LoadBalancerState
     prioritizedSchemes.add("http");
 
     return (getClusterProperties)
-        ? new LoadBalancerStateItem<ClusterProperties>(new ClusterProperties("sna-1",
+        ? new LoadBalancerStateItem<ClusterProperties>(new ClusterProperties("cluster-1",
                                                                              prioritizedSchemes),
                                                        0,
                                                        0) : null;
@@ -90,9 +90,9 @@ public class LoadBalancerTestState implements LoadBalancerState
   public LoadBalancerStateItem<ServiceProperties> getServiceProperties(String serviceName)
   {
     return (getServiceProperties)
-        ? new LoadBalancerStateItem<ServiceProperties>(new ServiceProperties("browsemaps",
-                                                                             "sna-1",
-                                                                             "/browsemaps",
+        ? new LoadBalancerStateItem<ServiceProperties>(new ServiceProperties("service-1",
+                                                                             "cluster-1",
+                                                                             "/foo",
                                                                              "rr"),
                                                        0,
                                                        0) : null;
@@ -103,9 +103,9 @@ public class LoadBalancerTestState implements LoadBalancerState
   {
     try
     {
-      URI uri1 = URI.create("http://ela4-be234.prod.linkdin.com:6783");
-      URI uri2 = URI.create("http://ela4-be123.prod.linkdin.com:6783");
-      URI uri3 = URI.create("http://ela4-be345.prod.linkdin.com:6783");
+      URI uri1 = URI.create("http://test.qa1.com:1234");
+      URI uri2 = URI.create("http://test.qa2.com:2345");
+      URI uri3 = URI.create("http://test.qa3.com:6789");
 
       Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
       partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
@@ -114,7 +114,7 @@ public class LoadBalancerTestState implements LoadBalancerState
       uriData.put(uri2, partitionData);
       uriData.put(uri3, partitionData);
       return (getUriProperties)
-          ? new LoadBalancerStateItem<UriProperties>(new UriProperties("sna-1", uriData),
+          ? new LoadBalancerStateItem<UriProperties>(new UriProperties("cluster-1", uriData),
                                                      0,
                                                      0) : null;
     }
