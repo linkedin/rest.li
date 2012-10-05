@@ -18,6 +18,53 @@ Fix NullPointerException in testcase's shutdown method
 (RB=99688)
 Fix bug with double-encoding spaces in query parameters
 
+(RB=)
+Add "validatorPriority" to enable validator execution order to be specified.
+See details in DataSchemaAnnotationValidator class.
+
+ * <b>Validator Execution Order</b>
+ * <p>
+ *
+ * Execution ordering of multiple validators specified within the same "validate"
+ * property is determined by the "validatorPriority" property of each validator.
+ *
+ * <code>
+ *   "validate" : {
+ *     "higherPriorityValidator" : {
+ *       "validatorPriority" : 1
+ *     },
+ *     "defaultPriorityValidator" : {
+ *     },
+ *     "lowerPriorityValidator" : {
+ *       "validatorPriority" : -1
+ *     }
+ *   }
+ * </code>
+ * <p>
+ *
+ * The higher the priority value, the higher the priority of the validator, i.e.
+ * a validator with higher prority value will be executed before the validators
+ * with lower priority values. The default priority value for a validator that
+ * does not specify a priority value is 0. Execution order of validators with
+ * the same priority value is not defined or specified.
+ * <p>
+ *
+ * Validators may be attached to a field as well as the type of the field.
+ * This class will always execute the validators associated to the type of the field
+ * before it will execute the validators associated with the field.
+ * <p>
+ *
+ * If schema of a data element is a typeref, then the validator associated with
+ * the typeref is executed before the validator of the referenced type.
+ * <p>
+ *
+ * Beyond the above execution ordering guarantees provided by this class,
+ * the execution order of validators among different data elements is determined
+ * by the traversal order of the caller (i.e. how data elements passed to the
+ * {@link #validate(ValidatorContext)} method of this class. Typically, the caller will be
+ * {@link com.linkedin.data.schema.validation.ValidateDataAgainstSchema}
+ * and this caller performs a post-order traversal of data elements.
+
 1.5.9
 -----
 (RB=97871)

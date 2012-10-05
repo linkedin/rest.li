@@ -31,6 +31,7 @@ import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -118,12 +119,80 @@ import java.util.NoSuchElementException;
  * A partially successful initialized {@link DataSchemaAnnotationValidator} may still
  * be useful. It is possible that new keys added to the "validate" property may not be known
  * to other clients of schema.
+ * <p>
+ *
+ * <b>Validator Execution Order</b>
+ * <p>
+ *
+ * Execution ordering of multiple validators specified within the same "validate"
+ * property is determined by the "validatorPriority" property of each validator.
+ *
+ * <code>
+ *   "validate" : {
+ *     "higherPriorityValidator" : {
+ *       "validatorPriority" : 1
+ *     },
+ *     "defaultPriorityValidator" : {
+ *     },
+ *     "lowerPriorityValidator" : {
+ *       "validatorPriority" : -1
+ *     }
+ *   }
+ * </code>
+ * <p>
+ *
+ * The higher the priority value, the higher the priority of the validator, i.e.
+ * a validator with higher prority value will be executed before the validators
+ * with lower priority values. The default priority value for a validator that
+ * does not specify a priority value is 0. Execution order of validators with
+ * the same priority value is not defined or specified.
+ * <p>
+ *
+ * Validators may be attached to a field as well as the type of the field.
+ * This class will always execute the validators associated to the type of the field
+ * before it will execute the validators associated with the field.
+ * <p>
+ *
+ * If schema of a data element is a typeref, then the validator associated with
+ * the typeref is executed before the validator of the referenced type.
+ * <p>
+ *
+ * Beyond the above execution ordering guarantees provided by this class,
+ * the execution order of validators among different data elements is determined
+ * by the traversal order of the caller (i.e. how data elements passed to the
+ * {@link #validate(ValidatorContext)} method of this class. Typically, the caller will be
+ * {@link com.linkedin.data.schema.validation.ValidateDataAgainstSchema}
+ * and this caller performs a post-order traversal of data elements.
  */
 public class DataSchemaAnnotationValidator implements Validator
 {
   public static final String VALIDATE = "validate";
+  public static final String VALIDATOR_PRIORITY = "validatorPriority";
+
+  public static final int DEFAULT_VALIDATOR_PRIORITY = 0;
 
   private static final String MY_PACKAGE_NAME = DataSchemaAnnotationValidator.class.getPackage().getName();
+
+  private static class ValidatorInfo
+  {
+    private final int _priority;
+    private final Validator _validator;
+
+    private ValidatorInfo(Integer priority, Validator validator)
+    {
+      _priority = priority == null ? DEFAULT_VALIDATOR_PRIORITY : priority;
+      _validator = validator;
+    }
+  }
+
+  private static final Comparator<ValidatorInfo> PRIORITY_COMPARATOR = new Comparator<ValidatorInfo>()
+  {
+    @Override
+    public int compare(ValidatorInfo v1, ValidatorInfo v2)
+    {
+      return v2._priority - v1._priority;
+    }
+  };
 
   private boolean _debugMode = false;
   private DataSchema _schema = DataSchemaConstants.NULL_DATA_SCHEMA;
@@ -326,7 +395,7 @@ public class DataSchemaAnnotationValidator implements Validator
     else
     {
       DataMap validateMap = (DataMap) validateObject;
-      validatorList = new ArrayList<Validator>(validateMap.size());
+      List<ValidatorInfo> validatorInfoList = new ArrayList<ValidatorInfo>(validateMap.size());
       for (Map.Entry<String, Object> entry : validateMap.entrySet())
       {
         Object config = entry.getValue();
@@ -345,8 +414,10 @@ public class DataSchemaAnnotationValidator implements Validator
         try
         {
           Constructor<? extends Validator> ctor = clazz.getConstructor(DataMap.class);
-          Validator validator = ctor.newInstance((DataMap) config);
-          validatorList.add(validator);
+          DataMap configDataMap = (DataMap) config;
+          Integer priority = configDataMap.getInteger(VALIDATOR_PRIORITY);
+          Validator validator = ctor.newInstance(configDataMap);
+          validatorInfoList.add(new ValidatorInfo(priority, validator));
         }
         catch (Exception e)
         {
@@ -357,6 +428,12 @@ public class DataSchemaAnnotationValidator implements Validator
                      key,
                      e);
         }
+      }
+      Collections.sort(validatorInfoList, PRIORITY_COMPARATOR);
+      validatorList = new ArrayList<Validator>(validatorInfoList.size());
+      for (ValidatorInfo validatorInfo : validatorInfoList)
+      {
+        validatorList.add(validatorInfo._validator);
       }
     }
     assert(validatorList != null);

@@ -253,21 +253,22 @@ public class ObjectIterator implements DataIterator
       }
       else
       {
-        switch (mapSchema.getType())
+        DataSchema dereferencedSchema = mapSchema.getDereferencedDataSchema();
+        DataSchema.Type deferencedType = dereferencedSchema.getType();
+        switch (deferencedType)
         {
           case RECORD:
-            RecordDataSchema.Field field = ((RecordDataSchema) mapSchema).getField(_currentEntry.getKey());
+            RecordDataSchema.Field field = ((RecordDataSchema) dereferencedSchema).getField(_currentEntry.getKey());
             schema = (field == null ? null : field.getType());
             break;
           case UNION:
-            schema = ((UnionDataSchema) mapSchema).getType(_currentEntry.getKey());
+            schema = ((UnionDataSchema) dereferencedSchema).getType(_currentEntry.getKey());
             break;
           case MAP:
-            schema = ((MapDataSchema) mapSchema).getValues();
+            schema = ((MapDataSchema) dereferencedSchema).getValues();
             break;
           default:
-            schema = null;
-            break;
+            throw new IllegalStateException("Unknown dereferenced type " + deferencedType + " for DataMap's schema " + mapSchema);
         }
       }
       return schema;

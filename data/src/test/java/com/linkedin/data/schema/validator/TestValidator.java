@@ -29,9 +29,11 @@ import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
 import com.linkedin.data.schema.validation.ValidationOptions;
 import com.linkedin.data.schema.validation.ValidationResult;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.testng.annotations.Test;
@@ -270,12 +272,10 @@ public class TestValidator
     }
   }
 
-  @SuppressWarnings("serial")
-  static Map<String, Class<? extends Validator>> _validatorClassMap = new HashMap<String, Class<? extends Validator>>()
+  static Map<String, Class<? extends Validator>> _validatorClassMap = new HashMap<String, Class<? extends Validator>>();
+  static
   {
-    {
-      put("fooValidator", FooValidator.class);
-    }
+    _validatorClassMap.put("fooValidator", FooValidator.class);
   };
 
   private static final int SCHEMA_VALIDATOR = 0x1;
@@ -722,5 +722,388 @@ public class TestValidator
     testValidator(schemaText, input, validatorClassMap, checkStrings, SCHEMA_VALIDATOR);
   }
 
+  private static class OrderEntry
+  {
+    private final String _path;
+    private final String _validatorName;
+
+    private OrderEntry(String path, String validatorName)
+    {
+      _path = path;
+      _validatorName = validatorName;
+    }
+
+    private OrderEntry(String s)
+    {
+      String[] tokens = s.split(":");
+      _path = tokens[0];
+      _validatorName = tokens[1];
+    }
+
+    @Override
+    public String toString()
+    {
+      return _path + ":" + _validatorName;
+    }
+
+    @Override
+    public boolean equals(Object other)
+    {
+      if (other == null || other.getClass() != OrderEntry.class)
+        return false;
+      OrderEntry o = (OrderEntry) other;
+      return _path.equals(o._path) && _validatorName.equals(o._validatorName);
+    }
+  }
+
+  private static class OrderRelation
+  {
+    private final OrderEntry _beforeEntry;
+    private final OrderEntry _afterEntry;
+
+    protected OrderRelation(OrderEntry before, OrderEntry after)
+    {
+      _beforeEntry = before;
+      _afterEntry = after;
+    }
+
+    private boolean isSatisfied(List<OrderEntry> list)
+    {
+      int beforeIndex = list.indexOf(_beforeEntry);
+      int afterIndex = list.indexOf(_afterEntry);
+
+      assert(beforeIndex >= 0);
+      assert(afterIndex >= 0);
+
+      // out.println("before " + _beforeEntry + " index " + beforeIndex + ", after " + _afterEntry + " index " + afterIndex);
+      return beforeIndex < afterIndex;
+    }
+  }
+
+  public static class OrderValidator extends AbstractValidator
+  {
+    private final String _name;
+    private static final List<OrderEntry> _orderList = new ArrayList<OrderEntry>();
+
+    public OrderValidator(DataMap dataMap)
+    {
+      super(dataMap);
+      _name = dataMap.getString("name");
+    }
+
+    @Override
+    public void validate(ValidatorContext ctx)
+    {
+      DataElement element = ctx.dataElement();
+      OrderEntry entry = new OrderEntry(element.pathAsString(), _name);
+      _orderList.add(entry);
+    }
+  }
+
+  @Test
+  public void testValidatorPriority() throws IOException
+  {
+    Map<String, Class<? extends Validator>> validatorClassMap = new HashMap<String, Class<? extends Validator>>();
+    validatorClassMap.put("v1", OrderValidator.class);
+    validatorClassMap.put("v2", OrderValidator.class);
+    validatorClassMap.put("v3", OrderValidator.class);
+    validatorClassMap.put("v4", OrderValidator.class);
+    validatorClassMap.put("v5", OrderValidator.class);
+    validatorClassMap.put("v6", OrderValidator.class);
+
+    Object[][] inputs = {
+      {
+        // positive priority values
+        "{\n" +
+        "  \"name\" : \"Foo\",\n" +
+        "  \"type\" : \"record\",\n" +
+        "  \"fields\" : [], \n" +
+        "  \"validate\" : {\n" +
+        "    \"v1\" : { \"validatorPriority\" : 1, \"name\" : \"p1\" },\n" +
+        "    \"v2\" : { \"validatorPriority\" : 2, \"name\" : \"p2\" },\n" +
+        "    \"v3\" : { \"validatorPriority\" : 3, \"name\" : \"p3\" },\n" +
+        "    \"v4\" : { \"validatorPriority\" : 4, \"name\" : \"p4\" },\n" +
+        "    \"v5\" : { \"validatorPriority\" : 5, \"name\" : \"p5\" },\n" +
+        "    \"v6\" : { \"validatorPriority\" : 6, \"name\" : \"p6\" }\n" +
+        "  }\n" +
+        "}\n",
+        "{}",
+        new String[] {
+          ":p6", ":p5",
+          ":p5", ":p4",
+          ":p4", ":p3",
+          ":p3", ":p2",
+          ":p2", ":p1"
+        }
+      },
+      {
+        // negative priority values
+        "{\n" +
+        "  \"name\" : \"Foo\",\n" +
+        "  \"type\" : \"record\",\n" +
+        "  \"fields\" : [], \n" +
+        "  \"validate\" : {\n" +
+        "    \"v1\" : { \"validatorPriority\" : -1, \"name\" : \"p-1\" },\n" +
+        "    \"v2\" : { \"validatorPriority\" : 0, \"name\" : \"p=0\" },\n" +
+        "    \"v3\" : { \"validatorPriority\" : 1, \"name\" : \"p+1\" }\n" +
+        "  }\n" +
+        "}\n",
+        "{}",
+        new String[] {
+          ":p+1", ":p=0",
+          ":p=0", ":p-1"
+        }
+      },
+      {
+        // default priority value
+        "{\n" +
+        "  \"name\" : \"Foo\",\n" +
+        "  \"type\" : \"record\",\n" +
+        "  \"fields\" : [], \n" +
+        "  \"validate\" : {\n" +
+        "    \"v1\" : { \"validatorPriority\" : -1, \"name\" : \"p-1\" },\n" +
+        "    \"v2\" : { \"name\" : \"pdefault\" },\n" +
+        "    \"v3\" : { \"validatorPriority\" : 1, \"name\" : \"p+1\" }\n" +
+        "  }\n" +
+        "}\n",
+        "{}",
+        new String[] {
+          ":p+1", ":pdefault",
+          ":pdefault", ":p-1"
+        }
+      },
+      {
+        // same priority values
+        "{\n" +
+        "  \"name\" : \"Foo\",\n" +
+        "  \"type\" : \"record\",\n" +
+        "  \"fields\" : [], \n" +
+        "  \"validate\" : {\n" +
+        "    \"v1\" : { \"validatorPriority\" : -1, \"name\" : \"p-1a\" },\n" +
+        "    \"v2\" : { \"validatorPriority\" : -1, \"name\" : \"p-1b\" },\n" +
+        "    \"v3\" : { \"validatorPriority\" : 0, \"name\" : \"p0a\" },\n" +
+        "    \"v4\" : { \"validatorPriority\" : 0, \"name\" : \"p0b\" },\n" +
+        "    \"v5\" : { \"validatorPriority\" : 1, \"name\" : \"p+1a\" },\n" +
+        "    \"v6\" : { \"validatorPriority\" : 1, \"name\" : \"p+1b\" }\n" +
+        "  }\n" +
+        "}\n",
+        "{}",
+        new String[] {
+          ":p+1a", ":p0a",
+          ":p+1a", ":p0b",
+          ":p+1b", ":p0a",
+          ":p+1b", ":p0b",
+          ":p0a", ":p-1a",
+          ":p0a", ":p-1b",
+          ":p0b", ":p-1a",
+          ":p0b", ":p-1b"
+        }
+      },
+      {
+        // typeref outer before inner
+        "{\n" +
+        "  \"name\" : \"Foo\",\n" +
+        "  \"type\" : \"record\",\n" +
+        "  \"fields\" : [\n" +
+        "    {\n" +
+        "      \"name\" : \"i\",\n" +
+        "      \"type\" : {\n" +
+        "        \"type\" : \"typeref\",\n" +
+        "        \"name\" : \"Ref1\",\n" +
+        "        \"ref\" : {\n" +
+        "          \"type\" : \"typeref\",\n" +
+        "          \"name\" : \"Ref2\",\n" +
+        "          \"ref\" : \"int\",\n" +
+        "          \"validate\" : {\n" +
+        "            \"v1\" : { \"validatorPriority\" : -1, \"name\" : \"r2-1\" },\n" +
+        "            \"v2\" : { \"name\" : \"r2=0\" },\n" +
+        "            \"v3\" : { \"validatorPriority\" : 1, \"name\" : \"r2+1\" }\n" +
+        "          }\n" +
+        "        },\n" +
+        "        \"validate\" : {\n" +
+        "          \"v1\" : { \"validatorPriority\" : -1, \"name\" : \"r1-1\" },\n" +
+        "          \"v2\" : { \"name\" : \"r1=0\" },\n" +
+        "          \"v3\" : { \"validatorPriority\" : 1, \"name\" : \"r1+1\" }\n" +
+        "        }\n" +
+        "      }\n" +
+        "    }\n" +
+        "  ]\n" +
+        "}\n",
+        "{\n" +
+        "  \"i\" : 4\n" +
+        "}",
+        new String[] {
+          "/i:r1+1", "/i:r1=0",
+          "/i:r1=0", "/i:r1-1",
+          "/i:r1-1", "/i:r2+1",
+          "/i:r2+1", "/i:r2=0",
+          "/i:r2=0", "/i:r2-1",
+        }
+      },
+      {
+        // array items before array
+        "{\n" +
+        "  \"name\" : \"Foo\",\n" +
+        "  \"type\" : \"record\",\n" +
+        "  \"fields\" : [\n" +
+        "    {\n" +
+        "      \"name\" : \"a\",\n" +
+        "      \"type\" : {\n" +
+        "        \"type\" : \"array\",\n" +
+        "        \"items\" : {\n" +
+        "          \"type\" : \"typeref\",\n" +
+        "          \"name\" : \"IntRef\",\n" +
+        "          \"ref\" : \"int\",\n" +
+        "          \"validate\" : {\n" +
+        "            \"v1\" : { \"validatorPriority\" : -1, \"name\" : \"i-1\" },\n" +
+        "            \"v2\" : { \"name\" : \"i=0\" },\n" +
+        "            \"v3\" : { \"validatorPriority\" : 1, \"name\" : \"i+1\" }\n" +
+        "          }\n" +
+        "        },\n" +
+        "        \"validate\" : {\n" +
+        "          \"v1\" : { \"validatorPriority\" : -1, \"name\" : \"a-1\" },\n" +
+        "          \"v2\" : { \"name\" : \"a=0\" },\n" +
+        "          \"v3\" : { \"validatorPriority\" : 1, \"name\" : \"a+1\" }\n" +
+        "        }\n" +
+        "      }\n" +
+        "    }\n" +
+        "  ]\n" +
+        "}\n",
+        "{\n" +
+        "  \"a\" : [ 1 ]\n" +
+        "}",
+        new String[] {
+          "/a/0:i+1", "/a/0:i=0",
+          "/a/0:i=0", "/a/0:i-1",
+          "/a/0:i-1", "/a:a+1",
+          "/a:a+1", "/a:a=0",
+          "/a:a=0", "/a:a-1",
+        }
+      },
+      {
+        // map values before map
+        "{\n" +
+        "  \"name\" : \"Foo\",\n" +
+        "  \"type\" : \"record\",\n" +
+        "  \"fields\" : [\n" +
+        "    {\n" +
+        "      \"name\" : \"m\",\n" +
+        "      \"type\" : {\n" +
+        "        \"type\" : \"map\",\n" +
+        "        \"values\" : {\n" +
+        "          \"type\" : \"typeref\",\n" +
+        "          \"name\" : \"IntRef\",\n" +
+        "          \"ref\" : \"int\",\n" +
+        "          \"validate\" : {\n" +
+        "            \"v1\" : { \"validatorPriority\" : -1, \"name\" : \"v-1\" },\n" +
+        "            \"v2\" : { \"name\" : \"v=0\" },\n" +
+        "            \"v3\" : { \"validatorPriority\" : 1, \"name\" : \"v+1\" }\n" +
+        "          }\n" +
+        "        },\n" +
+        "        \"validate\" : {\n" +
+        "          \"v1\" : { \"validatorPriority\" : -1, \"name\" : \"m-1\" },\n" +
+        "          \"v2\" : { \"name\" : \"m=0\" },\n" +
+        "          \"v3\" : { \"validatorPriority\" : 1, \"name\" : \"m+1\" }\n" +
+        "        }\n" +
+        "      }\n" +
+        "    }\n" +
+        "  ]\n" +
+        "}\n",
+        "{\n" +
+        "  \"m\" : { \"x\" : 1 } }\n" +
+        "}",
+        new String[] {
+          "/m/x:v+1", "/m/x:v=0",
+          "/m/x:v=0", "/m/x:v-1",
+          "/m/x:v-1", "/m:m+1",
+          "/m:m+1", "/m:m=0",
+          "/m:m=0", "/m:m-1",
+        }
+      },
+      {
+        // union member before typeref of union
+        "{\n" +
+        "  \"name\" : \"Foo\",\n" +
+        "  \"type\" : \"record\",\n" +
+        "  \"fields\" : [\n" +
+        "    {\n" +
+        "      \"name\" : \"u\",\n" +
+        "      \"type\" : {\n" +
+        "        \"type\" : \"typeref\",\n" +
+        "        \"name\" : \"Union\",\n" +
+        "        \"ref\" : [\n" +
+        "          {\n" +
+        "            \"type\" : \"typeref\",\n" +
+        "            \"name\" : \"Int\",\n" +
+        "            \"ref\" : \"int\",\n" +
+        "            \"validate\" : {\n" +
+        "              \"v1\" : { \"validatorPriority\" : -1, \"name\" : \"i-1\" },\n" +
+        "              \"v2\" : { \"name\" : \"i=0\" },\n" +
+        "              \"v3\" : { \"validatorPriority\" : 1, \"name\" : \"i+1\" }\n" +
+        "            }\n" +
+        "          },\n" +
+        "          \"string\"\n" +
+        "        ],\n" +
+        "        \"validate\" : {\n" +
+        "          \"v1\" : { \"validatorPriority\" : -1, \"name\" : \"u-1\" },\n" +
+        "          \"v2\" : { \"name\" : \"u=0\" },\n" +
+        "          \"v3\" : { \"validatorPriority\" : 1, \"name\" : \"u+1\" }\n" +
+        "        }\n" +
+        "      }\n" +
+        "    }\n" +
+        "  ]\n" +
+        "}\n",
+        "{\n" +
+        "  \"u\" : { \"int\" : 4 }\n" +
+        "}",
+        new String[] {
+          "/u/int:i+1", "/u/int:i=0",
+          "/u/int:i=0", "/u/int:i-1",
+          "/u/int:i-1", "/u:u+1",
+          "/u:u+1", "/u:u=0",
+          "/u:u=0", "/u:u-1",
+        }
+      },
+
+    };
+
+    boolean debug = false;
+
+    for (Object[] row : inputs)
+    {
+      int i = 0;
+      String schemaText = (String) row[i++];
+      String dataMapText = (String) row[i++];
+
+      DataSchema schema = dataSchemaFromString(schemaText);
+      DataMap dataMap = dataMapFromString(dataMapText);
+
+      DataSchemaAnnotationValidator dataSchemaAnnotationValidator = new DataSchemaAnnotationValidator();
+      dataSchemaAnnotationValidator.init(schema, validatorClassMap);
+      if (debug) out.println(dataSchemaAnnotationValidator.getInitMessages());
+      assertTrue(dataSchemaAnnotationValidator.isInitOk());
+      if (debug) out.println(dataSchemaAnnotationValidator);
+      dataSchemaAnnotationValidator.setDebugMode(debug);
+
+      OrderValidator._orderList.clear();
+
+      ValidationOptions validationOptions = new ValidationOptions();
+      ValidationResult validationResult =
+        ValidateDataAgainstSchema.validate(dataMap, schema, validationOptions, dataSchemaAnnotationValidator);
+      assertTrue(validationResult.isValid());
+
+      if (debug) out.println(validationResult.getMessages());
+      if (debug) out.println(OrderValidator._orderList);
+
+      String[] expectedRelations = (String[]) row[i++];
+      assertTrue(expectedRelations.length % 2 == 0);
+      for (int r = 0; r < expectedRelations.length; r += 2)
+      {
+        OrderRelation orderRelation = new OrderRelation(new OrderEntry(expectedRelations[r]),
+                                                        new OrderEntry(expectedRelations[r + 1]));
+        assertTrue(orderRelation.isSatisfied(OrderValidator._orderList));
+      }
+    }
+  }
 }
 
