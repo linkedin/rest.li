@@ -10,8 +10,7 @@ project.sourceSets.all { SourceSet sourceSet ->
     return;
   }
 
-  final File outputDir = project.mkdir(outputDirPath)
-  sourceSet.java.srcDir(outputDir)
+  sourceSet.java.srcDir(outputDirPath)
 
   final Task generateDataTemplateTask = project.task(sourceSet.name + 'GenerateDataTemplate', type: JavaExec) {
     main = 'com.linkedin.pegasus.generator.PegasusDataTemplateGenerator'
@@ -19,6 +18,9 @@ project.sourceSets.all { SourceSet sourceSet ->
     args outputDirPath
     args inputDataSchemaFiles
     systemProperties(['generator.resolver.path': inputDataSchemaDirPath])
+    doFirst {
+      project.mkdir(outputDirPath)
+    }
   }
 
   project.tasks[sourceSet.compileJavaTaskName].dependsOn(generateDataTemplateTask)

@@ -11,14 +11,15 @@ project.sourceSets.all { SourceSet sourceSet ->
     return;
   }
 
-  project.mkdir(outputDirPath)
-
   final Task generateAvroSchemaTask = project.task(sourceSet.name + 'GenerateAvroSchema', type: JavaExec) {
     main = 'com.linkedin.data.avro.generator.AvroSchemaGenerator'
     classpath = dataAvroConfig + dataAvroConfig.allArtifacts.files + dataConfig + dataConfig.allArtifacts.files
     args outputDirPath
     args inputDataSchemaFiles
     systemProperties(['generator.resolver.path': inputDataSchemaDirPath])
+    doFirst {
+      project.mkdir(outputDirPath)
+    }
   }
 
   project.tasks[sourceSet.getTaskName('', 'jar')].dependsOn(generateAvroSchemaTask)

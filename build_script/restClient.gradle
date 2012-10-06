@@ -10,8 +10,7 @@ project.sourceSets.all { SourceSet sourceSet ->
     return;
   }
 
-  final File outputDir = project.mkdir(outputDirPath)
-  sourceSet.java.srcDir(outputDir)
+  sourceSet.java.srcDir(outputDirPath)
 
   final Task generateRestClientTask = project.task(sourceSet.name + 'GenerateRestClient', type: JavaExec) {
     main = 'com.linkedin.restli.tools.clientgen.RestRequestBuilderGenerator'
@@ -20,6 +19,9 @@ project.sourceSets.all { SourceSet sourceSet ->
     args inputIdlFiles
     systemProperties(['generator.resolver.path': "src${File.separatorChar}${sourceSet.name}${File.separatorChar}pegasus",
                       'generator.rest.generate.datatemplates': 'false'])
+    doFirst {
+      project.mkdir(outputDirPath)
+    }
   }
 
   project.tasks[sourceSet.compileJavaTaskName].dependsOn(generateRestClientTask)
