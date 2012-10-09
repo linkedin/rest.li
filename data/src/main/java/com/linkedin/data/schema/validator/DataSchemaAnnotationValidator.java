@@ -154,7 +154,7 @@ import java.util.NoSuchElementException;
  * <p>
  *
  * If schema of a data element is a typeref, then the validator associated with
- * the typeref is executed before the validator of the referenced type.
+ * the typeref is executed after the validator of the referenced type.
  * <p>
  *
  * Beyond the above execution ordering guarantees provided by this class,
@@ -583,23 +583,36 @@ public class DataSchemaAnnotationValidator implements Validator
     }
   }
 
+  private final void validateSchema(ValidatorContext context, DataSchema schema)
+  {
+    if (schema.getType() == DataSchema.Type.TYPEREF)
+    {
+      DataSchema refSchema = ((TyperefDataSchema) schema).getRef();
+      validateSchema(context, refSchema);
+      getAndInvokeValidatorList(context, schema);
+    }
+    else
+    {
+      getAndInvokeValidatorList(context, schema);
+    }
+  }
+
   @Override
   public void validate(ValidatorContext context)
   {
     DataElement element = context.dataElement();
     DataSchema schema = element.getSchema();
-    while (schema != null)
+    if (schema != null)
     {
-      getAndInvokeValidatorList(context, schema);
-      // check if the value belongs to a field in a record
-      // if it belongs to a field, check if the field has
-      // validators.
-      schema = (schema.getType() == DataSchema.Type.TYPEREF) ? ((TyperefDataSchema) schema).getRef() : null;
+      validateSchema(context, schema);
     }
     DataElement parentElement = element.getParent();
     if (parentElement != null)
     {
       DataSchema parentSchema = parentElement.getSchema();
+      // check if the value belongs to a field in a record
+      // if it belongs to a field, check if the field has
+      // validators.
       if (parentSchema != null && parentSchema.getType() == DataSchema.Type.RECORD)
       {
         Object name = element.getName();

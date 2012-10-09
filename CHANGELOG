@@ -55,7 +55,7 @@ See details in DataSchemaAnnotationValidator class.
  * <p>
  *
  * If schema of a data element is a typeref, then the validator associated with
- * the typeref is executed before the validator of the referenced type.
+ * the typeref is executed after the validator of the referenced type.
  * <p>
  *
  * Beyond the above execution ordering guarantees provided by this class,
@@ -64,6 +64,9 @@ See details in DataSchemaAnnotationValidator class.
  * {@link #validate(ValidatorContext)} method of this class. Typically, the caller will be
  * {@link com.linkedin.data.schema.validation.ValidateDataAgainstSchema}
  * and this caller performs a post-order traversal of data elements.
+
+There is an incompatible semantic change. Previously the outer typeref validators
+are executed before the inner typeref validators.
 
 1.5.9
 -----

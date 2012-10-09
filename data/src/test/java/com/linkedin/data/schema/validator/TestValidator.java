@@ -772,8 +772,8 @@ public class TestValidator
       int beforeIndex = list.indexOf(_beforeEntry);
       int afterIndex = list.indexOf(_afterEntry);
 
-      assert(beforeIndex >= 0);
-      assert(afterIndex >= 0);
+      assertTrue(beforeIndex >= 0);
+      assertTrue(afterIndex >= 0);
 
       // out.println("before " + _beforeEntry + " index " + beforeIndex + ", after " + _afterEntry + " index " + afterIndex);
       return beforeIndex < afterIndex;
@@ -900,7 +900,7 @@ public class TestValidator
         }
       },
       {
-        // typeref outer before inner
+        // typeref inner before outer
         "{\n" +
         "  \"name\" : \"Foo\",\n" +
         "  \"type\" : \"record\",\n" +
@@ -933,11 +933,11 @@ public class TestValidator
         "  \"i\" : 4\n" +
         "}",
         new String[] {
-          "/i:r1+1", "/i:r1=0",
-          "/i:r1=0", "/i:r1-1",
-          "/i:r1-1", "/i:r2+1",
           "/i:r2+1", "/i:r2=0",
           "/i:r2=0", "/i:r2-1",
+          "/i:r2-1", "/i:r1+1",
+          "/i:r1+1", "/i:r1=0",
+          "/i:r1=0", "/i:r1-1",
         }
       },
       {
