@@ -25,8 +25,6 @@ import com.linkedin.parseq.EngineBuilder;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.spi.LoggerRepository;
-import org.testng.annotations.AfterSuite;
-import org.testng.annotations.BeforeSuite;
 
 import com.linkedin.r2.transport.http.server.HttpServer;
 
@@ -51,7 +49,6 @@ public class RestLiIntegrationTest
   private HttpServer _server;
   private Map<String, Level> _originalLevels = new HashMap<String, Level>();
 
-  @BeforeSuite
   public void init() throws Exception
   {
     _scheduler = Executors.newScheduledThreadPool(numCores + 1);
@@ -81,7 +78,6 @@ public class RestLiIntegrationTest
 
   }
 
-  @AfterSuite
   public void shutdown() throws Exception
   {
     _server.stop();

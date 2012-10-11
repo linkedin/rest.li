@@ -31,6 +31,9 @@ then
     exit 1
 fi
 
-git tag v$VERSION && \
-git push origin v$VERSION && \
-echo "Publish completed successfully."
+if [ ! $SKIP_TAGGING_VERSION ]
+then
+    git tag v$VERSION && \
+    git push origin v$VERSION && \
+    echo "Publish completed successfully."
+fi

@@ -37,7 +37,9 @@ import com.linkedin.restli.examples.groups.client.GroupMembershipsBuilders;
 import com.linkedin.restli.examples.groups.client.GroupsBuilders;
 
 import org.testng.Assert;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -51,6 +53,18 @@ public class TestRestLiD2Integration extends RestLiIntegrationTest
   private SimpleLoadBalancer _loadBalancer = MockLBFactory.createLoadBalancer();
   private Client _r2Client = new DynamicClient(_loadBalancer, null);
   private RestClient _restClient = new RestClient(_r2Client, "d2://");
+
+  @BeforeClass
+  public void initClass() throws Exception
+  {
+    super.init();
+  }
+
+  @AfterClass
+  public void shutDown() throws Exception
+  {
+    super.shutdown();
+  }
 
   @BeforeTest
   public void init()

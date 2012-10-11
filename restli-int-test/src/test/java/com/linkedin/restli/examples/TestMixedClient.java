@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.linkedin.r2.RemoteInvocationException;
@@ -51,6 +53,18 @@ public class TestMixedClient extends RestLiIntegrationTest
   private static final String        URI_PREFIX  = "http://localhost:1338/";
   private static final RestClient    REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
   private static final MixedBuilders BUILDERS    = new MixedBuilders();
+
+  @BeforeClass
+  public void initClass() throws Exception
+  {
+    super.init();
+  }
+
+  @AfterClass
+  public void shutDown() throws Exception
+  {
+    super.shutdown();
+  }
 
   @Test
   public void testGet() throws InterruptedException,

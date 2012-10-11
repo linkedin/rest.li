@@ -24,6 +24,8 @@ import java.util.Map;
 
 import org.apache.log4j.BasicConfigurator;
 import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.linkedin.common.callback.FutureCallback;
@@ -74,6 +76,18 @@ public abstract class TestGreetingsClient extends RestLiIntegrationTest
   public TestGreetingsClient(String resName)
   {
     GREETINGS_BUILDERS = new GreetingsBuilders(resName);
+  }
+
+  @BeforeClass
+  public void initClass() throws Exception
+  {
+    super.init();
+  }
+
+  @AfterClass
+  public void shutDown() throws Exception
+  {
+    super.shutdown();
   }
 
   @Test

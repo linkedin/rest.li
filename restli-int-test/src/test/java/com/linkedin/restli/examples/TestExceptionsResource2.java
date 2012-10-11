@@ -32,6 +32,8 @@ import com.linkedin.restli.examples.greetings.client.Exceptions2Builders;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import java.util.Collections;
 import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 
@@ -41,6 +43,18 @@ public class TestExceptionsResource2 extends RestLiIntegrationTest
   private static final String URI_PREFIX = "http://localhost:1338/";
   private static final RestClient REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
   private static final Exceptions2Builders EXCEPTIONS_2_BUILDERS = new Exceptions2Builders();
+
+  @BeforeClass
+  public void initClass() throws Exception
+  {
+    super.init();
+  }
+
+  @AfterClass
+  public void shutDown() throws Exception
+  {
+    super.shutdown();
+  }
 
   @Test
   public void testGet() throws RemoteInvocationException

@@ -30,6 +30,8 @@ import com.linkedin.restli.examples.custom.types.CustomLong;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.client.CustomTypesBuilders;
 import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
@@ -49,6 +51,18 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
   private static final String URI_PREFIX = "http://localhost:1338/";
   private static final RestClient REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
   private static final CustomTypesBuilders CUSTOM_TYPES_BUILDERS = new CustomTypesBuilders();
+
+  @BeforeClass
+  public void initClass() throws Exception
+  {
+    super.init();
+  }
+
+  @AfterClass
+  public void shutDown() throws Exception
+  {
+    super.shutdown();
+  }
 
   @Test
   public void testCustomLong() throws RemoteInvocationException

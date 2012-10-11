@@ -19,6 +19,8 @@ package com.linkedin.restli.examples;
 import java.util.Collections;
 
 import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.linkedin.r2.transport.common.Client;
@@ -39,6 +41,18 @@ public class TestCustomCrudParams extends RestLiIntegrationTest
   private static final String URI_PREFIX = "http://localhost:1338/";
   private static final RestClient REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
   private static final GreetingsAuthBuilders GREETINGS_AUTH_BUILDERS = new GreetingsAuthBuilders();
+
+  @BeforeClass
+  public void initClass() throws Exception
+  {
+    super.init();
+  }
+
+  @AfterClass
+  public void shutDown() throws Exception
+  {
+    super.shutdown();
+  }
 
   @Test
   public static void testCookbookCrudParams() throws Exception

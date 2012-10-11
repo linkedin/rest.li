@@ -1,3 +1,8 @@
+1.5.11
+-----
+(RB=103288)
+Fix NullPointerException in testcase's shutdown method
+
 1.5.10
 -----
 (RB=99688)

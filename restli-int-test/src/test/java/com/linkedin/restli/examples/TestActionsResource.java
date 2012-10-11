@@ -30,6 +30,8 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.examples.greetings.client.ActionsBuilders;
 import java.util.Collections;
 import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 public class TestActionsResource extends RestLiIntegrationTest
@@ -38,6 +40,18 @@ public class TestActionsResource extends RestLiIntegrationTest
   private static final String URI_PREFIX = "http://localhost:1338/";
   private static final RestClient REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
   private static final ActionsBuilders ACTIONS_BUILDERS = new ActionsBuilders();
+
+  @BeforeClass
+  public void initClass() throws Exception
+  {
+    super.init();
+  }
+
+  @AfterClass
+  public void shutDown() throws Exception
+  {
+    super.shutdown();
+  }
 
   @Test
   public void testActionsSet() throws RemoteInvocationException

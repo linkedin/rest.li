@@ -58,8 +58,9 @@ public class TestParSeqRestClient extends RestLiIntegrationTest
   private ScheduledExecutorService      _scheduler;
 
   @BeforeClass
-  public void setUp()
+  public void setUp() throws Exception
   {
+    super.init();
     final int numCores = Runtime.getRuntime().availableProcessors();
     _scheduler = Executors.newScheduledThreadPool(numCores + 1);
     _engine = new EngineBuilder()
@@ -69,10 +70,12 @@ public class TestParSeqRestClient extends RestLiIntegrationTest
   }
 
   @AfterClass
-  public void tearDown()
+  public void tearDown() throws Exception
   {
     _engine.shutdown();
     _scheduler.shutdown();
+
+    super.shutdown();
   }
 
   /**

@@ -41,6 +41,8 @@ import com.linkedin.restli.examples.greetings.client.GreetingsBatchGetBuilder;
 import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
 
 import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.net.URI;
@@ -68,6 +70,18 @@ public class TestScatterGather extends RestLiIntegrationTest
             Collections.<String, String>emptyMap()));
   private static final String URI_PREFIX = "http://localhost:1338/";
   private static final RestClient REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
+
+  @BeforeClass
+  public void initClass() throws Exception
+  {
+    super.init();
+  }
+
+  @AfterClass
+  public void shutDown() throws Exception
+  {
+    super.shutdown();
+  }
 
   //@Test
   public static void testBuildSGRequests() throws URISyntaxException, RestException, ServiceUnavailableException

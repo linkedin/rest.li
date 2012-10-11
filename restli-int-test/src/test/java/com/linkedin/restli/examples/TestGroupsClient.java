@@ -24,6 +24,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.linkedin.r2.RemoteInvocationException;
@@ -110,6 +112,18 @@ public class TestGroupsClient extends RestLiIntegrationTest
   private static final ContactsBuilders CONTACTS_BUILDERS = new ContactsBuilders();
   private static final GroupMembershipsBuilders GROUP_MEMBERSHIPS_BUILDERS = new GroupMembershipsBuilders();
   private static final GroupMembershipsComplexBuilders GROUP_MEMBERSHIPS_COMPLEX_BUILDERS = new GroupMembershipsComplexBuilders();
+
+  @BeforeClass
+  public void initClass() throws Exception
+  {
+    super.init();
+  }
+
+  @AfterClass
+  public void shutDown() throws Exception
+  {
+    super.shutdown();
+  }
 
   //@Test
   public void testEntityGet() throws RemoteInvocationException
