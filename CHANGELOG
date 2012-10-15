@@ -3,6 +3,9 @@
 (RB=103288)
 Fix NullPointerException in testcase's shutdown method
 
+(RB=104243)
+Fix StackOverflowError when generating mock data for schema that recursively references itself
+
 1.5.10
 -----
 (RB=99688)
