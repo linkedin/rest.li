@@ -1,0 +1,11 @@
+{
+  "type" : "record",
+  "name" : "InvalidSelfReference",
+  "namespace" : "com.linkedin.pegasus.generator.test",
+  "fields" : [
+    {
+      "name" : "manditoryRef",
+      "type" : "InvalidSelfReference" /* unsatisfiable mandatory self reference */
+    }
+  ]
+}

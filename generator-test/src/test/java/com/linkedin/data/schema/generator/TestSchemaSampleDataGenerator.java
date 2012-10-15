@@ -16,6 +16,17 @@
 
 package com.linkedin.data.schema.generator;
 
+import java.lang.reflect.ParameterizedType;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.Map;
+import java.util.Set;
+
+import org.testng.Assert;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
+
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
@@ -54,17 +65,10 @@ import com.linkedin.data.template.StringMap;
 import com.linkedin.pegasus.generator.test.Certification;
 import com.linkedin.pegasus.generator.test.EnumFruits;
 import com.linkedin.pegasus.generator.test.FixedMD5;
+import com.linkedin.pegasus.generator.test.InvalidSelfReference;
+import com.linkedin.pegasus.generator.test.SelfReference;
 import com.linkedin.pegasus.generator.test.TyperefTest;
 import com.linkedin.pegasus.generator.test.UnionTest;
-import java.lang.reflect.ParameterizedType;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.Map;
-import java.util.Set;
-import org.testng.Assert;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
 
 public class TestSchemaSampleDataGenerator
 {
@@ -212,6 +216,40 @@ public class TestSchemaSampleDataGenerator
       final Object fieldValue = value.get(field.getName());
       final Object rebuildValue = SchemaSampleDataGenerator.buildDataMappable(fieldTyperefSchema.getDereferencedDataSchema(), _spec);
       Assert.assertSame(fieldValue.getClass(), rebuildValue.getClass());
+    }
+  }
+
+  @Test
+  public void testInvalidRecursivelyReferencedSchema()
+  {
+    try
+    {
+      // this schema is invalid because it contains a non-optional reference to itself
+      final RecordDataSchema schema = (RecordDataSchema) DataTemplateUtil.getSchema(InvalidSelfReference.class);
+      SchemaSampleDataGenerator.buildRecordData(schema, _spec);
+      Assert.assertFalse(true, "IllegalArgumentException should be thrown because schema contains schema that references itself and is not optional, or in a list, map or union.");
+    }
+    catch (IllegalArgumentException e)
+    {
+    }
+  }
+
+  @Test
+  public void testRecursivelyReferencedSchema()
+  {
+    try
+    {
+      final RecordDataSchema schema = (RecordDataSchema) DataTemplateUtil.getSchema(SelfReference.class);
+      DataMap data = SchemaSampleDataGenerator.buildRecordData(schema, _spec);
+      Assert.assertTrue(data.getDataList("listRef").getDataMap(0).getDataList("listRef").isEmpty(), "Self referenced schema in list should not be embedded recursively");
+      String firstKey = data.getDataMap("mapRef").keySet().iterator().next();
+      Assert.assertTrue(data.getDataMap("mapRef").getDataMap(firstKey).getDataMap("mapRef").isEmpty(), "Self referenced schema in map should not be embedded recursively");
+      Assert.assertFalse(data.getDataMap("indirectRef").containsKey("ref"), "Self referenced schema (via indirect reference) should not be embedded recursively");
+      Assert.assertFalse(data.getDataMap("unionRef").containsKey("com.linkedin.pegasus.generator.test.SelfReference"), "Self referenced schema in union should not be embedded recursively");
+    }
+    catch (StackOverflowError e)
+    {
+      Assert.assertFalse(true, "Self reference in schema should not cause stack overflow during doc gen.");
     }
   }
 
