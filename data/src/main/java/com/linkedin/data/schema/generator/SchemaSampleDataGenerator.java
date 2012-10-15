@@ -51,6 +51,7 @@ public class SchemaSampleDataGenerator
     public boolean realisticData = true;
     public int arraySize = (int)(Math.random() * 3) + 1;
 
+    @Override
     public DataGenerationSpec clone()
     {
       DataGenerationSpec clone = new DataGenerationSpec();
@@ -297,12 +298,12 @@ public class SchemaSampleDataGenerator
   }
 
   private static DataGenerationSpec preventRecursionIntoAlreadyTraversedSchemas(Stack<DataSchema> stack, DataGenerationSpec spec, final DataSchema schema) {
-    if(countOccurances(stack, schema) > 2)
+    if(countOccurrences(stack, schema) > 2)
     {
       throw new IllegalArgumentException("Could not generate data for recursively referenced schemas.  Recursive referenced schemas must be optional or in a list, map or union with valid alternatives.");
     }
 
-    if(countOccurances(stack,schema) > 0) // if stack has a recursively referenced schema
+    if(countOccurrences(stack,schema) == 1) // if stack has a recursively referenced schema
     {
       spec = spec.constrain(); // stop traversing optionals, maps an lists, this will break out of the recursive nested data gen for valid schemas
     }
@@ -360,7 +361,7 @@ public class SchemaSampleDataGenerator
   }
   */
 
-  private static int countOccurances(Stack<DataSchema> stack, DataSchema element)
+  private static int countOccurrences(Stack<DataSchema> stack, DataSchema element)
   {
     int count = 0;
     for(DataSchema schemaInStack : stack)
