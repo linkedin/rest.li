@@ -65,6 +65,7 @@ import com.linkedin.data.template.StringMap;
 import com.linkedin.pegasus.generator.test.Certification;
 import com.linkedin.pegasus.generator.test.EnumFruits;
 import com.linkedin.pegasus.generator.test.FixedMD5;
+import com.linkedin.pegasus.generator.test.InvalidSelfReference;
 import com.linkedin.pegasus.generator.test.SelfReference;
 import com.linkedin.pegasus.generator.test.TyperefTest;
 import com.linkedin.pegasus.generator.test.UnionTest;
@@ -215,6 +216,20 @@ public class TestSchemaSampleDataGenerator
       final Object fieldValue = value.get(field.getName());
       final Object rebuildValue = SchemaSampleDataGenerator.buildDataMappable(fieldTyperefSchema.getDereferencedDataSchema(), _spec);
       Assert.assertSame(fieldValue.getClass(), rebuildValue.getClass());
+    }
+  }
+
+  @Test
+  public void testInvalidRecursivelyReferencedSchema() {
+    try
+    {
+      // this schema is invalid because it contains a non-optional reference to itself
+      final RecordDataSchema schema = (RecordDataSchema) DataTemplateUtil.getSchema(InvalidSelfReference.class);
+      SchemaSampleDataGenerator.buildRecordData(schema, _spec);
+      Assert.assertFalse(true, "IllegalArgumentException should be thrown because schema contains schema that references itself and is not optional, or in a list, map or union.");
+    }
+    catch (IllegalArgumentException e)
+    {
     }
   }
 

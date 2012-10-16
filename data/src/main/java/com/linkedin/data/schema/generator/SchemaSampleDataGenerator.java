@@ -17,8 +17,9 @@
 package com.linkedin.data.schema.generator;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.linkedin.data.ByteString;
@@ -72,27 +73,74 @@ public class SchemaSampleDataGenerator
     }
   }
 
+  public static class ParentSchemas
+  {
+    private Map<DataSchema, Integer> counts = new HashMap<DataSchema, Integer>();
+    public void incrementReferences(DataSchema schema)
+    {
+      Integer count = counts.get(schema);
+      if(count == null)
+      {
+        count = 0;
+      }
+      count++;
+      counts.put(schema, count);
+    }
+
+    public void decrementReferences(DataSchema schema)
+    {
+      Integer count = counts.get(schema);
+      if(count == null || count == 0)
+      {
+        throw new IllegalArgumentException("No references to remove for given schema");
+      }
+      count--;
+      if(count == 0) counts.remove(schema);
+      else counts.put(schema, count);
+    }
+
+    public int count(DataSchema schema)
+    {
+      Integer count = counts.get(schema);
+      if(count == null)
+      {
+        count = 0;
+      }
+      return count;
+    }
+
+    public boolean contains(DataSchema schema)
+    {
+      return count(schema) > 0;
+    }
+
+    public Set<DataSchema> getAllReferenced()
+    {
+      return counts.keySet();
+    }
+  }
+
   public static DataMap buildRecordData(NamedDataSchema schema,
       DataGenerationSpec spec)
   {
-    return buildRecordData(new HashSet<DataSchema>(), schema, spec);
+    return buildRecordData(new ParentSchemas(), schema, spec);
   }
 
   public static Object buildDataMappable(DataSchema schema, DataGenerationSpec spec)
   {
-    return buildDataMappable(new HashSet<DataSchema>(), schema, null, spec);
+    return buildDataMappable(new ParentSchemas(), schema, null, spec);
   }
 
   public static Object buildDataMappable(DataSchema schema, String fieldName, DataGenerationSpec spec)
   {
-    return buildDataMappable(new HashSet<DataSchema>(), schema, fieldName, spec);
+    return buildDataMappable(new ParentSchemas(), schema, fieldName, spec);
   }
 
-  private static DataMap buildRecordData(Set<DataSchema> parentSchemas,
+  private static DataMap buildRecordData(ParentSchemas parentSchemas,
       NamedDataSchema schema, DataGenerationSpec spec)
   {
     spec = preventRecursionIntoAlreadyTraversedSchemas(parentSchemas, spec, schema);
-    parentSchemas.add(schema);
+    parentSchemas.incrementReferences(schema);
     final DataMap data = new DataMap();
     if (schema instanceof RecordDataSchema)
     {
@@ -130,19 +178,19 @@ public class SchemaSampleDataGenerator
     {
       data.put("value", buildDataMappable(parentSchemas, schema, spec));
     }
-    parentSchemas.remove(schema);
+    parentSchemas.decrementReferences(schema);
     return data;
   }
 
-  private static Object buildDataMappable(Set<DataSchema> parentSchemas, DataSchema schema, DataGenerationSpec spec)
+  private static Object buildDataMappable(ParentSchemas parentSchemas, DataSchema schema, DataGenerationSpec spec)
   {
     return buildDataMappable(parentSchemas, schema, null, spec);
   }
 
-  private static Object buildDataMappable(Set<DataSchema> parentSchemas, DataSchema schema, String fieldName, DataGenerationSpec spec)
+  private static Object buildDataMappable(ParentSchemas parentSchemas, DataSchema schema, String fieldName, DataGenerationSpec spec)
   {
     spec = preventRecursionIntoAlreadyTraversedSchemas(parentSchemas, spec, schema);
-    parentSchemas.add(schema);
+    parentSchemas.incrementReferences(schema);
     Object data = null;
     final DataSchema derefSchema = schema.getDereferencedDataSchema();
     switch (derefSchema.getType())
@@ -227,12 +275,12 @@ public class SchemaSampleDataGenerator
         break;
     }
 
-    parentSchemas.remove(schema);
+    parentSchemas.decrementReferences(schema);
     return data;
   }
 
   // TODO Consider validation rules here as well, such as length (easy), regex (really hard), etc
-  private static Object buildStringData(Set<DataSchema> parentSchemas, String fieldName, DataGenerationSpec spec)
+  private static Object buildStringData(ParentSchemas parentSchemas, String fieldName, DataGenerationSpec spec)
   {
     String[] EXAMPLE_STRINGS = STRINGS;
 
@@ -282,11 +330,11 @@ public class SchemaSampleDataGenerator
     _schemaParser = new SchemaParser(resolver);
   }
 
-  private DataMap buildDataMap(Set<DataSchema> parentSchemas, String pegasusDataSchemaName, DataGenerationSpec spec)
+  private DataMap buildDataMap(ParentSchemas parentSchemas, String pegasusDataSchemaName, DataGenerationSpec spec)
   {
     final DataSchema schema = _schemaParser.lookupName(pegasusDataSchemaName);
     spec = preventRecursionIntoAlreadyTraversedSchemas(parentSchemas, spec, schema);
-    parentSchemas.add(schema);
+    parentSchemas.incrementReferences(schema);
     if (schema == null)
     {
       throw new IllegalArgumentException(String.format("Could not find pegasus data schema '%s'", pegasusDataSchemaName));
@@ -294,11 +342,15 @@ public class SchemaSampleDataGenerator
 
     assert(schema instanceof RecordDataSchema);
     DataMap data = buildRecordData(parentSchemas, (RecordDataSchema) schema, spec);
-    parentSchemas.remove(schema);
+    parentSchemas.decrementReferences(schema);
     return data;
   }
 
-  private static DataGenerationSpec preventRecursionIntoAlreadyTraversedSchemas(Set<DataSchema> parentSchemas, DataGenerationSpec spec, final DataSchema schema) {
+  private static DataGenerationSpec preventRecursionIntoAlreadyTraversedSchemas(ParentSchemas parentSchemas, DataGenerationSpec spec, final DataSchema schema) {
+    if(parentSchemas.count(schema) > 2)
+    {
+      throw new IllegalArgumentException("Could not generate data for recursively referenced schemas.  Recursive referenced schemas must be optional or in a list, map or union with valid alternatives.");
+    }
     if(parentSchemas.contains(schema)) // if there is a recursively referenced schema
     {
       spec = spec.constrain(); // stop traversing optionals, maps an lists, this will break out of the recursive nested data gen for valid schemas
@@ -306,10 +358,10 @@ public class SchemaSampleDataGenerator
     return spec;
   }
 
-  private static List<DataSchema> removeAlreadyTraversedSchemasFromUnionMemberList(Set<DataSchema> parentSchemas, List<DataSchema> unionMembers)
+  private static List<DataSchema> removeAlreadyTraversedSchemasFromUnionMemberList(ParentSchemas parentSchemas, List<DataSchema> unionMembers)
   {
     ArrayList<DataSchema> copy = new ArrayList<DataSchema>(unionMembers);
-    copy.removeAll(parentSchemas);
+    copy.removeAll(parentSchemas.getAllReferenced());
     if(copy.isEmpty()) return unionMembers;  // eek, cannot safely filter out already traversed schemas, this code path will likely result in IllegalArgumentException being thrown from preventRecursionIntoAlreadyTraversedSchemas (which is the correct way to handle this).
     else return copy;
   }
