@@ -46,6 +46,8 @@ import com.linkedin.data.schema.UnionDataSchema;
  */
 public class SchemaSampleDataGenerator
 {
+  private static final int MAX_ALLOWED_SCHEMA_RECURSION = 5;
+
   public static class DataGenerationSpec
   {
     public boolean requiredFieldsOnly = false;
@@ -347,7 +349,7 @@ public class SchemaSampleDataGenerator
   }
 
   private static DataGenerationSpec preventRecursionIntoAlreadyTraversedSchemas(ParentSchemas parentSchemas, DataGenerationSpec spec, final DataSchema schema) {
-    if(parentSchemas.count(schema) > 2)
+    if(parentSchemas.count(schema) > MAX_ALLOWED_SCHEMA_RECURSION)
     {
       throw new IllegalArgumentException("Could not generate data for recursively referenced schemas.  Recursive referenced schemas must be optional or in a list, map or union with valid alternatives.");
     }

@@ -226,7 +226,7 @@ public class TestSchemaSampleDataGenerator
       // this schema is invalid because it contains a non-optional reference to itself
       final RecordDataSchema schema = (RecordDataSchema) DataTemplateUtil.getSchema(InvalidSelfReference.class);
       SchemaSampleDataGenerator.buildRecordData(schema, _spec);
-      Assert.assertFalse(true, "IllegalArgumentException should be thrown because schema contains schema that references itself and is not optional, or in a list, map or union.");
+      Assert.fail("IllegalArgumentException should be thrown because schema contains schema that references itself and is not optional, or in a list, map or union.");
     }
     catch (IllegalArgumentException e)
     {
@@ -248,7 +248,7 @@ public class TestSchemaSampleDataGenerator
     }
     catch (StackOverflowError e)
     {
-      Assert.assertFalse(true, "Self reference in schema should not cause stack overflow during doc gen.");
+      Assert.fail("Self reference in schema should not cause stack overflow during doc gen.");
     }
   }
 
