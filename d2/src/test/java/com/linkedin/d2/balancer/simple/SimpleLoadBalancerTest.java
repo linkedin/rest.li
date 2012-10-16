@@ -16,6 +16,33 @@
 
 package com.linkedin.d2.balancer.simple;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+
+import org.apache.commons.io.FileUtils;
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.Test;
+
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
@@ -59,32 +86,6 @@ import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
-import org.apache.commons.io.FileUtils;
-import org.testng.annotations.AfterSuite;
-import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.Test;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
 
 public class SimpleLoadBalancerTest
 {
@@ -749,9 +750,9 @@ public class SimpleLoadBalancerTest
 
   public class FileStoreTestFactory<T> implements PropertyStoreFactory<T>
   {
-    private String                _subfolder;
-    private PropertySerializer<T> _serializer;
-    private File                  _testDirectory;
+    private final String                _subfolder;
+    private final PropertySerializer<T> _serializer;
+    private final File                  _testDirectory;
 
     public FileStoreTestFactory(String subfolder, PropertySerializer<T> serializer) throws IOException
     {
@@ -780,7 +781,7 @@ public class SimpleLoadBalancerTest
     private final AtomicLong _count = new AtomicLong();
 
     @Override
-    public TransportClient getClient(Map<String, String> properties)
+    public TransportClient getClient(Map<String, ? extends Object> properties)
     {
       _count.incrementAndGet();
       return new DoNothingClient();

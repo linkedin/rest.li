@@ -17,14 +17,14 @@
 /* $Id$ */
 package test.r2.perf.client;
 
+import java.net.URI;
+import java.util.Collections;
+
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
-
-import java.net.URI;
-import java.util.Collections;
 
 /**
  * @author Chris Pettitt

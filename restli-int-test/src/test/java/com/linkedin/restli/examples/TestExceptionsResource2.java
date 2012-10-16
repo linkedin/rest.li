@@ -17,6 +17,13 @@
 package com.linkedin.restli.examples;
 
 
+import java.util.Collections;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
 import com.linkedin.data.DataMap;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.transport.common.Client;
@@ -30,11 +37,6 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.client.Exceptions2Builders;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
-import java.util.Collections;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
 
 
 public class TestExceptionsResource2 extends RestLiIntegrationTest

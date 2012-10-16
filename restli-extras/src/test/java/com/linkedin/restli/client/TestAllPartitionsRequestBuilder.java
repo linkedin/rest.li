@@ -16,6 +16,23 @@
 
 package com.linkedin.restli.client;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
 import com.linkedin.common.callback.Callback;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
@@ -34,22 +51,6 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.ResourceSpecImpl;
 import com.linkedin.restli.examples.greetings.api.Greeting;
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
 
 /**
 * @author Zhenkai Zhu

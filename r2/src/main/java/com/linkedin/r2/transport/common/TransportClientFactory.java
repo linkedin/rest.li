@@ -36,7 +36,7 @@ public interface TransportClientFactory
    * @param properties map of properties for the {@link TransportClient}
    * @return an appropriate {@link TransportClient} instance, as specified by the properties.
    */
-  TransportClient getClient(Map<String, String> properties);
+  TransportClient getClient(Map<String, ? extends Object> properties);
 
   /**
    * Shutdown this factory.

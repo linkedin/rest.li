@@ -17,6 +17,9 @@
 /* $Id$ */
 package com.linkedin.r2.sample;
 
+import java.net.URI;
+import java.util.Collections;
+
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.sample.echo.EchoServiceImpl;
 import com.linkedin.r2.sample.echo.OnExceptionEchoService;
@@ -31,9 +34,6 @@ import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcherBuilder;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.transport.http.server.HttpServerFactory;
-
-import java.net.URI;
-import java.util.Collections;
 
 /**
  * @author Chris Pettitt

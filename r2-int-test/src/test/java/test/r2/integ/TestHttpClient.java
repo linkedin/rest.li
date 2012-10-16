@@ -20,6 +20,9 @@
 
 package test.r2.integ;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -36,7 +39,6 @@ import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
-import org.testng.log4testng.Logger;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
@@ -51,9 +53,6 @@ import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.transport.http.client.TestServer;
-
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 
 /**
  * @author Steven Ihde
@@ -113,7 +112,9 @@ public class TestHttpClient
   public void testRequestContextReuse() throws Exception
   {
     final Integer REQUEST_TIMEOUT = 1000;
-    final TransportClient transportClient = _clientFactory.getClient(Collections.singletonMap(HttpClientFactory.REQUEST_TIMEOUT_KEY, Integer.toString(REQUEST_TIMEOUT)));
+    final TransportClient transportClient =
+        _clientFactory.getClient(Collections.singletonMap(HttpClientFactory.REQUEST_TIMEOUT_KEY,
+                                                          Integer.toString(REQUEST_TIMEOUT)));
     final Client client = new TransportClientAdapter(transportClient);
 
     RestRequestBuilder rb = new RestRequestBuilder(_testServer.getRequestURI());
@@ -174,7 +175,9 @@ public class TestHttpClient
     final int REQUEST_TIMEOUT = 1000;
 
     // Specify the get timeout; we know the max rate will be half the get timeout
-    final TransportClient transportClient = new HttpClientFactory().getClient(Collections.singletonMap(HttpClientFactory.REQUEST_TIMEOUT_KEY, Integer.toString(REQUEST_TIMEOUT)));
+    final TransportClient transportClient =
+        new HttpClientFactory().getClient(Collections.singletonMap(HttpClientFactory.REQUEST_TIMEOUT_KEY,
+                                                                   Integer.toString(REQUEST_TIMEOUT)));
     final Client client = new TransportClientAdapter(transportClient);
 
     final ServerSocket ss = new ServerSocket();

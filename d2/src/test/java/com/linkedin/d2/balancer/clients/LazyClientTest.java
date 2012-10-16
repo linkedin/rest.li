@@ -22,10 +22,11 @@ import static org.testng.Assert.assertNull;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.linkedin.r2.message.RequestContext;
 import org.testng.annotations.Test;
 
 import com.linkedin.common.callback.Callback;
+import com.linkedin.common.util.None;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rpc.RpcRequest;
@@ -33,7 +34,6 @@ import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
-import com.linkedin.common.util.None;
 
 public class LazyClientTest
 {
@@ -73,10 +73,10 @@ public class LazyClientTest
     public int                 restRequestCount = 0;
     public int                 rpcRequestCount  = 0;
     public int                 shutdownCount    = 0;
-    public Map<String, String> properties;
+    public Map<String, ? extends Object> properties;
 
     @Override
-    public TransportClient getClient(Map<String, String> properties)
+    public TransportClient getClient(Map<String, ? extends Object> properties)
     {
       ++getClientCount;
       this.properties = properties;

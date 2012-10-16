@@ -16,6 +16,28 @@
 
 package com.linkedin.d2.balancer.simple;
 
+import static com.linkedin.d2.discovery.util.LogUtil.debug;
+import static com.linkedin.d2.discovery.util.LogUtil.info;
+import static com.linkedin.d2.discovery.util.LogUtil.trace;
+import static com.linkedin.d2.discovery.util.LogUtil.warn;
+
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.callback.SimpleCallback;
@@ -43,27 +65,6 @@ import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdown
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.util.ClosableQueue;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-
-import static com.linkedin.d2.discovery.util.LogUtil.debug;
-import static com.linkedin.d2.discovery.util.LogUtil.info;
-import static com.linkedin.d2.discovery.util.LogUtil.trace;
-import static com.linkedin.d2.discovery.util.LogUtil.warn;
 
 public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactoryProvider
 {
@@ -261,6 +262,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     callback.onSuccess(None.none());
   }
 
+  @Override
   public void shutdown(final PropertyEventShutdownCallback shutdown)
   {
     trace(_log, "shutdown");
@@ -299,6 +301,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     });
   }
 
+  @Override
   public void listenToService(final String serviceName,
                               final LoadBalancerStateListenerCallback callback)
   {
@@ -307,6 +310,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     _serviceSubscriber.ensureListening(serviceName, callback);
   }
 
+  @Override
   public void listenToCluster(final String clusterName,
                               final LoadBalancerStateListenerCallback callback)
   {
@@ -317,7 +321,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     final LoadBalancerStateListenerCallback wrappedCallback =
         new LoadBalancerStateListenerCallback()
         {
-          private AtomicInteger _count = new AtomicInteger(2);
+          private final AtomicInteger _count = new AtomicInteger(2);
 
           @Override
           public void done(int type, String name)
@@ -333,23 +337,27 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     _uriSubscriber.ensureListening(clusterName, wrappedCallback);
   }
 
+  @Override
   public LoadBalancerStateItem<UriProperties> getUriProperties(String clusterName)
   {
     return _uriProperties.get(clusterName);
   }
 
+  @Override
   public LoadBalancerStateItem<ClusterProperties> getClusterProperties(String clusterName)
   {
     ClusterInfoItem clusterInfoItem =  _clusterInfo.get(clusterName);
     return clusterInfoItem == null ? null : clusterInfoItem.getClusterPropertiesItem();
   }
 
+  @Override
   public LoadBalancerStateItem<PartitionAccessor> getPartitionAccessor(String clusterName)
   {
     ClusterInfoItem clusterInfoItem =  _clusterInfo.get(clusterName);
     return clusterInfoItem == null ? null : clusterInfoItem.getPartitionAccessorItem();
   }
 
+  @Override
   public LoadBalancerStateItem<ServiceProperties> getServiceProperties(String serviceName)
   {
     return _serviceProperties.get(serviceName);
@@ -428,16 +436,19 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     });
   }
 
+  @Override
   public boolean isListeningToCluster(String clusterName)
   {
     return _clusterSubscriber.isListeningToProperty(clusterName);
   }
 
+  @Override
   public boolean isListeningToService(String serviceName)
   {
     return _serviceSubscriber.isListeningToProperty(serviceName);
   }
 
+  @Override
   public TrackerClient getClient(String clusterName, URI uri)
   {
     Map<URI, TrackerClient> trackerClients = _trackerClients.get(clusterName);
@@ -477,6 +488,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     return transportClient;
   }
 
+  @Override
   public LoadBalancerStrategy getStrategy(String serviceName, String scheme)
   {
     Map<String, LoadBalancerStrategy> strategies = _serviceStrategies.get(serviceName);

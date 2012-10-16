@@ -17,6 +17,7 @@
 /* $Id$ */
 package com.linkedin.r2.transport.http.client;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -68,10 +69,6 @@ import com.linkedin.r2.util.NamedThreadFactory;
  * @author Steven Ihde
  * @version $Revision$
  */
-/**
- * @author adubman
- *
- */
 public class HttpClientFactory implements TransportClientFactory
 {
   private static final Logger LOG = LoggerFactory.getLogger(HttpClientFactory.class);
@@ -81,6 +78,8 @@ public class HttpClientFactory implements TransportClientFactory
   public static final String               IDLE_TIMEOUT_KEY     = "idleTimeout";
   public static final String               SHUTDOWN_TIMEOUT_KEY = "shutdownTimeout";
   public static final String               MAX_RESPONSE_SIZE    = "maxResponseSize";
+  public static final String               SSL_CONTEXT          = "sslContext";
+  public static final String               SSL_PARAMS           = "sslParams";
   /**
    * @deprecated use REQUEST_TIMEOUT_KEY instead
    */
@@ -151,9 +150,63 @@ public class HttpClientFactory implements TransportClientFactory
   }
 
   @Override
-  public TransportClient getClient(Map<String, String> properties)
+  public TransportClient getClient(Map<String, ? extends Object> properties)
   {
-    return getClient(properties, null, null);
+    // Translate the new Map<String, Object> into the old Map<String, String> + SSLContext
+    // and SSLParameters params.
+    Map<String, String> stringProperties = new HashMap<String, String>(properties.size());
+    SSLContext sslContext = null;
+    SSLParameters sslParameters = null;
+
+    if (properties != null)
+    {
+      if (properties.containsKey(SSL_CONTEXT))
+      {
+        Object sslContextObj = properties.get(SSL_CONTEXT);
+        if (sslContextObj instanceof SSLContext)
+        {
+          sslContext = (SSLContext) sslContextObj;
+          properties.remove(SSL_CONTEXT);
+        }
+        else
+        {
+          throw new IllegalArgumentException(SSL_CONTEXT + " property is of type "
+              + sslContextObj.getClass().getSimpleName()
+              + " while must be SSLContext");
+        }
+      }
+
+      if (properties.containsKey(SSL_PARAMS))
+      {
+        Object sslParametersObj = properties.get(SSL_PARAMS);
+        if (sslParametersObj instanceof SSLParameters)
+        {
+          sslParameters = (SSLParameters) sslParametersObj;
+          properties.remove(SSL_PARAMS);
+        }
+        else
+        {
+          throw new IllegalArgumentException(SSL_PARAMS + " property is of type "
+              + sslParametersObj.getClass().getSimpleName()
+              + " while must be SSLParameters");
+        }
+      }
+
+      for (Map.Entry<String, ? extends Object> entry : properties.entrySet())
+      {
+        if (entry.getValue() instanceof String)
+        {
+          stringProperties.put(entry.getKey(), (String) entry.getValue());
+        }
+        else
+        {
+          throw new IllegalArgumentException("Property " + entry.getKey() + "is of type "
+              + entry.getValue().getClass().getSimpleName() + " while must be String");
+        }
+      }
+    }
+
+    return getClient(stringProperties, sslContext, sslParameters);
   }
 
   HttpNettyClient getRawClient(Map<String, String> properties)
@@ -171,7 +224,7 @@ public class HttpClientFactory implements TransportClientFactory
    * @param sslParameters {@link SSLParameters} to configure secure connections.
    * @return an appropriate {@link TransportClient} instance, as specified by the properties.
    */
-  public TransportClient getClient(Map<String, String> properties,
+  private TransportClient getClient(Map<String, String> properties,
                                    SSLContext sslContext,
                                    SSLParameters sslParameters)
   {

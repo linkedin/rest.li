@@ -16,6 +16,15 @@
 
 package com.linkedin.restli.examples;
 
+import java.util.Collections;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
 import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.EngineBuilder;
 import com.linkedin.parseq.Task;
@@ -30,14 +39,6 @@ import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.examples.greetings.client.ActionsBuilders;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import java.util.Collections;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * Integration test with actual usage of {@link ParSeqRestClient}.

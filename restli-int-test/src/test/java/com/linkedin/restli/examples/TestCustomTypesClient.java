@@ -20,6 +20,16 @@
 
 package com.linkedin.restli.examples;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
@@ -29,15 +39,6 @@ import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.examples.custom.types.CustomLong;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.client.CustomTypesBuilders;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
 
 /**
  * @author Moira Tagle

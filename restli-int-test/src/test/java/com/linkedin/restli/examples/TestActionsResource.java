@@ -17,6 +17,13 @@
 package com.linkedin.restli.examples;
 
 
+import java.util.Collections;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
@@ -28,11 +35,6 @@ import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.examples.greetings.client.ActionsBuilders;
-import java.util.Collections;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
 
 public class TestActionsResource extends RestLiIntegrationTest
 {

@@ -20,21 +20,6 @@
 
 package com.linkedin.r2.transport.http.client;
 
-import com.linkedin.common.callback.Callbacks;
-import com.linkedin.common.callback.FutureCallback;
-import com.linkedin.r2.filter.FilterChains;
-import com.linkedin.r2.message.rest.RestRequest;
-import com.linkedin.r2.message.rest.RestRequestBuilder;
-import com.linkedin.r2.transport.common.Client;
-import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
-import com.linkedin.common.util.None;
-import org.jboss.netty.channel.socket.ClientSocketChannelFactory;
-import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -47,6 +32,22 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import org.jboss.netty.channel.socket.ClientSocketChannelFactory;
+import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import com.linkedin.common.callback.Callbacks;
+import com.linkedin.common.callback.FutureCallback;
+import com.linkedin.common.util.None;
+import com.linkedin.r2.filter.FilterChains;
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestRequestBuilder;
+import com.linkedin.r2.transport.common.Client;
+import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 
 /**
  * @author Steven Ihde

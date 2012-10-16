@@ -20,31 +20,6 @@
 
 package com.linkedin.restli.client;
 
-import com.linkedin.d2.balancer.KeyMapper;
-import com.linkedin.d2.balancer.ServiceUnavailableException;
-import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
-import com.linkedin.d2.balancer.util.hashing.ConsistentHashKeyMapper;
-import com.linkedin.d2.balancer.util.hashing.ConsistentHashRing;
-import com.linkedin.d2.balancer.util.hashing.StaticRingProvider;
-import com.linkedin.restli.examples.RestLiIntegrationTest;
-import com.linkedin.d2.balancer.util.hashing.Ring;
-import com.linkedin.restli.examples.greetings.api.Greeting;
-import com.linkedin.common.callback.Callback;
-import com.linkedin.r2.message.RequestContext;
-import com.linkedin.r2.message.rest.RestException;
-import com.linkedin.r2.transport.common.Client;
-import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
-import com.linkedin.r2.transport.http.client.HttpClientFactory;
-import com.linkedin.restli.common.BatchResponse;
-
-import com.linkedin.restli.examples.greetings.client.GreetingsBatchGetBuilder;
-import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -58,6 +33,30 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import com.linkedin.common.callback.Callback;
+import com.linkedin.d2.balancer.KeyMapper;
+import com.linkedin.d2.balancer.ServiceUnavailableException;
+import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
+import com.linkedin.d2.balancer.util.hashing.ConsistentHashKeyMapper;
+import com.linkedin.d2.balancer.util.hashing.ConsistentHashRing;
+import com.linkedin.d2.balancer.util.hashing.Ring;
+import com.linkedin.d2.balancer.util.hashing.StaticRingProvider;
+import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.rest.RestException;
+import com.linkedin.r2.transport.common.Client;
+import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
+import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import com.linkedin.restli.common.BatchResponse;
+import com.linkedin.restli.examples.RestLiIntegrationTest;
+import com.linkedin.restli.examples.greetings.api.Greeting;
+import com.linkedin.restli.examples.greetings.client.GreetingsBatchGetBuilder;
+import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
 
 /**
  * @author Josh Walker

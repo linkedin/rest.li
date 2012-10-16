@@ -20,11 +20,12 @@ import static com.linkedin.d2.discovery.util.LogUtil.debug;
 
 import java.util.Map;
 
-import com.linkedin.r2.message.RequestContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.linkedin.common.callback.Callback;
+import com.linkedin.common.util.None;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rpc.RpcRequest;
@@ -32,7 +33,6 @@ import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
-import com.linkedin.common.util.None;
 
 public class LazyClient implements TransportClient
 {
