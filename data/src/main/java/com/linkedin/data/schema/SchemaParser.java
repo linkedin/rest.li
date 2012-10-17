@@ -544,7 +544,12 @@ public class SchemaParser extends AbstractDataParser
       for (Object anInclude : includeList)
       {
         DataSchema includedSchema = parseObject(anInclude);
-        if (includedSchema.getDereferencedType() != DataSchema.Type.RECORD)
+        if (includedSchema == null)
+        {
+          // error message should already have been emitted providing
+          // information on why the included schema could not be obtained.
+        }
+        else if (includedSchema.getDereferencedType() != DataSchema.Type.RECORD)
         {
           startErrorMessage(anInclude).
             append("\"").append(recordSchema.getFullName()).append("\" cannot include ").

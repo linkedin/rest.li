@@ -99,55 +99,66 @@ public abstract class AbstractGenerator
    */
   protected List<File> parseSources(String sources[]) throws IOException
   {
-    List<File> sourceFiles = new ArrayList<File>();
-
-    for (String source : sources)
+    try
     {
-      File sourceFile = new File(source);
-      if (sourceFile.exists())
+      List<File> sourceFiles = new ArrayList<File>();
+
+      for (String source : sources)
       {
-        if (sourceFile.isDirectory())
+        File sourceFile = new File(source);
+        if (sourceFile.exists())
         {
-          List<File> sourceFilesInDirectory = sourceFilesInDirectory(sourceFile, new NameEndsWithFilter(FileDataSchemaResolver.DEFAULT_EXTENSION));
-          for (File f : sourceFilesInDirectory)
+          if (sourceFile.isDirectory())
           {
-            parseFile(f);
-            sourceFiles.add(f);
+            List<File> sourceFilesInDirectory = sourceFilesInDirectory(sourceFile, new NameEndsWithFilter(FileDataSchemaResolver.DEFAULT_EXTENSION));
+            for (File f : sourceFilesInDirectory)
+            {
+              parseFile(f);
+              sourceFiles.add(f);
+            }
+          }
+          else
+          {
+            parseFile(sourceFile);
+            sourceFiles.add(sourceFile);
           }
         }
         else
         {
-          parseFile(sourceFile);
-          sourceFiles.add(sourceFile);
+          StringBuilder errorMessage = new StringBuilder();
+          DataSchema schema = getSchemaResolver().findDataSchema(source, errorMessage);
+          if (schema == null)
+          {
+            getMessage().append("File cannot be opened or schema name cannot be resolved: " + source + "\n");
+          }
+          if (errorMessage.length() > 0)
+          {
+            getMessage().append(errorMessage.toString());
+          }
+          if (schema != null)
+          {
+            handleSchema(schema);
+          }
         }
       }
-      else
+
+      if (getMessage().length() > 0)
       {
-        StringBuilder errorMessage = new StringBuilder();
-        DataSchema schema = getSchemaResolver().findDataSchema(source, errorMessage);
-        if (schema == null)
-        {
-          getMessage().append("File cannot be opened or schema name cannot be resolved: " + source + "\n");
-        }
-        if (errorMessage.length() > 0)
-        {
-          getMessage().append(errorMessage.toString());
-        }
-        if (schema != null)
-        {
-          handleSchema(schema);
-        }
+        throw new IOException(getMessage().toString());
       }
-    }
 
-    if (getMessage().length() > 0)
+      appendSourceFilesFromSchemaResolver(sourceFiles);
+
+      return sourceFiles;
+    }
+    catch (RuntimeException e)
     {
-      throw new IOException(getMessage().toString());
+      if (getMessage().length() > 0)
+      {
+        e = new RuntimeException("Unexpected exception\n" + getMessage(), e);
+      }
+      throw e;
     }
-
-    appendSourceFilesFromSchemaResolver(sourceFiles);
-
-    return sourceFiles;
   }
 
   /**
@@ -245,20 +256,26 @@ public abstract class AbstractGenerator
   protected List<DataSchema> parseSchema(final File schemaSourceFile) throws IOException
   {
     SchemaParser parser = new SchemaParser(getSchemaResolver());
-    parser.setLocation(new FileDataSchemaLocation(schemaSourceFile));
-    parser.parse(new FileInputStream(schemaSourceFile) {
-      @Override
-      public String toString()
+    try
+    {
+      parser.setLocation(new FileDataSchemaLocation(schemaSourceFile));
+      parser.parse(new FileInputStream(schemaSourceFile) {
+        @Override
+        public String toString()
+        {
+          return schemaSourceFile.toString();
+        }
+      });
+      if (parser.hasError())
       {
-        return schemaSourceFile.toString();
+        return Collections.emptyList();
       }
-    });
-    if (parser.hasError())
+      return parser.topLevelDataSchemas();
+    }
+    finally
     {
       getMessage().append(parser.errorMessage());
-      return Collections.emptyList();
     }
-    return parser.topLevelDataSchemas();
   }
 
   /**
