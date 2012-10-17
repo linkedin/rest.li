@@ -1,3 +1,8 @@
+1.5.13
+-----
+(RB=104714)
+Move SSL configuration to from HttpClientFactory down to TransportClientFactory.
+
 1.5.12
 -----
 (RB=104243)
