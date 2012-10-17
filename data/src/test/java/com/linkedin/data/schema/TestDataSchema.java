@@ -1585,6 +1585,19 @@ public class TestDataSchema
           "}",
           "Field \"b1\" defined more than once, with \"int\" defined in \"bar\" and \"double\" defined in \"foo\""
         },
+      // include non-existent schema
+      {
+        "{ " +
+        "  \"type\" : \"record\", " +
+        "  \"name\" : \"foo\", " +
+        "  \"include\" : [ " +
+        "    \"crap\" " +
+        "  ], " +
+        "  \"fields\" : [ " +
+        "  ] " +
+        "}",
+        "\"crap\" cannot be resolved"
+      },
     };
 
     boolean debug = false;
