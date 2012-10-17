@@ -1,6 +1,5 @@
 1.6.0
 -----
-
 (RB=101499)
 Add "validatorPriority" to enable validator execution order to be specified.
 See details in DataSchemaAnnotationValidator class.
@@ -50,6 +49,12 @@ See details in DataSchemaAnnotationValidator class.
 
 There is an incompatible semantic change. Previously the outer typeref validators
 are executed before the inner typeref validators.
+
+(RB=104954)
+Fix bug to not throw NPE when include schema is not valid.
+When RuntimeException is thrown by code generator, make sure that accummulated
+parser messages are emitted through a RuntimeException to help diagnose the
+cause of the RuntimeException.
 
 1.5.12
 ------
