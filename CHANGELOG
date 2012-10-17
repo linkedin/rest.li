@@ -1,7 +1,5 @@
 1.6.0
 -----
-(RB=104714)
-Move SSL configuration to from HttpClientFactory down to TransportClientFactory.
 
 (RB=101499)
 Add "validatorPriority" to enable validator execution order to be specified.
@@ -57,6 +55,9 @@ are executed before the inner typeref validators.
 ------
 (RB=104243)
 Fix StackOverflowError when generating mock data for schema that recursively references itself
+
+(RB=104714)
+Move SSL configuration to from HttpClientFactory down to TransportClientFactory.
 
 1.5.11
 -----
