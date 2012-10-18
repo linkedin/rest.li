@@ -22,11 +22,16 @@ import com.linkedin.restli.server.resources.CollectionResourceTemplate;
 
 
 /**
- * Another subresource of the REST endpoint without namespace
+ * A Subresource whose unqualified name is identical to its parent
+ *
+ * N.B. The only reason a namespace is specified on this resource is to avoid clashing when the
+ * client builders are generated.
  *
  * @author Keren Jin
  */
-@RestLiCollection(parent = NoNamespaceResource.class, name="noNamespaceSub2")
-public class NoNamespaceSubResource2 extends CollectionResourceTemplate<Long, Greeting>
+@RestLiCollection(parent = NoNamespaceResource.class,
+                  name=NoNamespaceResource.RESOURCE_NAME,
+                  namespace = "com.linkedin.restli.examples")
+public class IdenticallyNamedSubResource extends CollectionResourceTemplate<Long, Greeting>
 {
 }

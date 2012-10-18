@@ -26,7 +26,8 @@ import com.linkedin.restli.server.resources.CollectionResourceTemplate;
  *
  * @author Keren Jin
  */
-@RestLiCollection(name="noNamespace")
+@RestLiCollection(name=NoNamespaceResource.RESOURCE_NAME)
 public class NoNamespaceResource extends CollectionResourceTemplate<Long, Greeting>
 {
+  public static final String RESOURCE_NAME = "noNamespace";
 }

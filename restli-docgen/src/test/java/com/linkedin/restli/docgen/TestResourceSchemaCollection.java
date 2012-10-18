@@ -52,7 +52,7 @@ public class TestResourceSchemaCollection
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.mixed", ResourceType.COLLECTION);
     expectedTypes.put("noNamespace", ResourceType.COLLECTION);
     expectedTypes.put("noNamespace.noNamespaceSub", ResourceType.COLLECTION);
-    expectedTypes.put("noNamespace.noNamespaceSub2", ResourceType.COLLECTION);
+    expectedTypes.put("com.linkedin.restli.examples.noNamespace.noNamespace", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.typeref.client.typeref", ResourceType.COLLECTION);
 
     for (Map.Entry<String, ResourceSchema> entry: _schemas.getResources().entrySet())
@@ -96,7 +96,7 @@ public class TestResourceSchemaCollection
 
     final Set<String> expectedNoNamespaceSubresources = new HashSet<String>();
     expectedNoNamespaceSubresources.add("noNamespaceSub");
-    expectedNoNamespaceSubresources.add("noNamespaceSub2");
+    expectedNoNamespaceSubresources.add("com.linkedin.restli.examples.noNamespace");
 
     for (ResourceSchema sub: actualNoNamespaceSubresources)
     {

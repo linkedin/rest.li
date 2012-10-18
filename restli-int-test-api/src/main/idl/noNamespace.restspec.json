@@ -27,18 +27,19 @@
           }
         }
       }, {
-        "name" : "noNamespaceSub2",
-        "path" : "/noNamespace/{noNamespaceId}/noNamespaceSub2",
+        "name" : "noNamespace",
+        "namespace" : "com.linkedin.restli.examples",
+        "path" : "/noNamespace/{noNamespaceId}/noNamespace",
         "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
-        "doc" : "Another subresource of the REST endpoint without namespace\n\ngenerated from: com.linkedin.restli.examples.greetings.server.NoNamespaceSubResource2",
+        "doc" : "A Subresource whose unqualified name is identical to its parent\n\n N.B. The only reason a namespace is specified on this resource is to avoid clashing when the\n client builders are generated.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.IdenticallyNamedSubResource",
         "collection" : {
           "identifier" : {
-            "name" : "noNamespaceSub2Id",
+            "name" : "noNamespaceId",
             "type" : "long"
           },
           "supports" : [ ],
           "entity" : {
-            "path" : "/noNamespace/{noNamespaceId}/noNamespaceSub2/{noNamespaceSub2Id}"
+            "path" : "/noNamespace/{noNamespaceId}/noNamespace/{noNamespaceId}"
           }
         }
       } ]

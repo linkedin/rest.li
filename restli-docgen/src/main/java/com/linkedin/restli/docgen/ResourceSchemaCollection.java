@@ -135,9 +135,10 @@ public class ResourceSchemaCollection
       public void visitResourceSchema(VisitContext context,
                                       ResourceSchema resourceSchema)
       {
-        if (!_allResources.containsKey(resourceSchema.getName()))
+        String qualifiedResourceName = context.getResourcePath();
+        if (!_allResources.containsKey(qualifiedResourceName))
         {
-          flattenSubResources.put(context.getResourcePath(), resourceSchema);
+          flattenSubResources.put(qualifiedResourceName, resourceSchema);
 
           final List<ResourceSchema> hierarchy = context.getResourceSchemaHierarchy();
           final ResourceSchema parent = hierarchy.get(hierarchy.size() - 2);
