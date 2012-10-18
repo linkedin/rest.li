@@ -155,7 +155,10 @@ public abstract class AbstractGenerator
     {
       if (getMessage().length() > 0)
       {
-        e = new RuntimeException("Unexpected exception\n" + getMessage(), e);
+        e = new RuntimeException("Unexpected " + e.getClass().getSimpleName() + " encountered.\n" +
+                                 "This may be caused by the following parsing or processing errors:\n" +
+                                 getMessage(),
+                                 e);
       }
       throw e;
     }

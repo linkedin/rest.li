@@ -548,6 +548,7 @@ public class SchemaParser extends AbstractDataParser
         {
           // error message should already have been emitted providing
           // information on why the included schema could not be obtained.
+          assert errorMessageBuilder().length() > 0;
         }
         else if (includedSchema.getDereferencedType() != DataSchema.Type.RECORD)
         {
