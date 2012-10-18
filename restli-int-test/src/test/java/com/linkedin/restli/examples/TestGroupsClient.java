@@ -447,6 +447,17 @@ public class TestGroupsClient extends RestLiIntegrationTest
     Assert.assertNotNull(groupMembership1);
     Assert.assertEquals(groupMembership1.getContactEmail(), "alfred@test.linkedin.com");
 
+    // Test the same with optional complex parameters
+    request =
+        GROUP_MEMBERSHIPS_COMPLEX_BUILDERS.get()
+                                          .id(complexKey)
+                                          .fields(GroupMembership.fields().contactEmail())
+                                          .build();
+    groupMembership1 =
+        REST_CLIENT.sendRequest(request).getResponse().getEntity();
+    Assert.assertNotNull(groupMembership1);
+    Assert.assertEquals(groupMembership1.getContactEmail(), "alfred@test.linkedin.com");
+
     // Update contact email and verify
     groupMembership.setContactEmail("alphred@test.linkedin.com");
     UpdateRequest<ComplexKeyGroupMembership> updateRequest =

@@ -172,13 +172,31 @@ public class ArgumentBuilder
                                                         final Parameter<?> param)
   {
     Object paramValue = context.getStructuredParameter(param.getName());
+
+    if (paramValue == null)
+    {
+      if (!param.isOptional())
+      {
+        throw new RoutingException("Parameter '" + param.getName() + "' is required",
+                                   HttpStatus.S_400_BAD_REQUEST.getCode());
+      }
+
+      if (param.hasDefaultValue())
+      {
+        paramValue = param.getDefaultValue();
+      }
+      else
+      {
+        return null;
+      }
+    }
+
     @SuppressWarnings("unchecked")
     Class<? extends RecordTemplate> paramType =
         (Class<? extends RecordTemplate>) param.getType();
     DataTemplate paramRecordTemplate = DataTemplateUtil.wrap(paramValue, paramType);
     // Validate against the class schema with FixupMode.STRING_TO_PRIMITIVE to parse the
-    // strings into the
-    // corresponding primitive types.
+    // strings into the corresponding primitive types.
     ValidateDataAgainstSchema.validate(paramRecordTemplate.data(),
                                        paramRecordTemplate.schema(),
                                        new ValidationOptions(RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT,
