@@ -1,18 +1,20 @@
 package com.linkedin.restli.docgen;
 
 
-import com.linkedin.restli.internal.server.model.ResourceModel;
-import com.linkedin.restli.internal.server.model.ResourceType;
-import com.linkedin.restli.internal.server.model.RestLiApiBuilder;
-import com.linkedin.restli.restspec.ResourceSchema;
-import com.linkedin.restli.server.RestLiConfig;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import com.linkedin.restli.internal.server.model.ResourceModel;
+import com.linkedin.restli.internal.server.model.ResourceType;
+import com.linkedin.restli.internal.server.model.RestLiApiBuilder;
+import com.linkedin.restli.restspec.ResourceSchema;
+import com.linkedin.restli.server.RestLiConfig;
 
 
 /**
@@ -45,11 +47,15 @@ public class TestResourceSchemaCollection
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.greetingsPromiseCtx", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.greetingsTask", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.greetingsold", ResourceType.COLLECTION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.mixed", ResourceType.COLLECTION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.stringKeys", ResourceType.COLLECTION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.stringKeys.stringKeysSub", ResourceType.COLLECTION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.complexKeys", ResourceType.COLLECTION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.associations", ResourceType.ASSOCIATION);
     expectedTypes.put("com.linkedin.restli.examples.groups.client.groupMemberships", ResourceType.ASSOCIATION);
     expectedTypes.put("com.linkedin.restli.examples.groups.client.groupMembershipsComplex", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.groups.client.groups", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.groups.client.groups.contacts", ResourceType.COLLECTION);
-    expectedTypes.put("com.linkedin.restli.examples.greetings.client.mixed", ResourceType.COLLECTION);
     expectedTypes.put("noNamespace", ResourceType.COLLECTION);
     expectedTypes.put("noNamespace.noNamespaceSub", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.noNamespace.noNamespace", ResourceType.COLLECTION);

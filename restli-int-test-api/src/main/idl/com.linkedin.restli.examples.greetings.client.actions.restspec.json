@@ -5,6 +5,20 @@
   "doc" : "Various action tasks that demonstrate usual behavior, timeout, and exceptions.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.ActionsResource",
   "actionsSet" : {
     "actions" : [ {
+      "name" : "echo",
+      "parameters" : [ {
+        "name" : "input",
+        "type" : "string"
+      } ],
+      "returns" : "string"
+    }, {
+      "name" : "echoMessage",
+      "parameters" : [ {
+        "name" : "message",
+        "type" : "com.linkedin.restli.examples.greetings.api.Message"
+      } ],
+      "returns" : "com.linkedin.restli.examples.greetings.api.Message"
+    }, {
       "name" : "failCallbackCall",
       "doc" : "Action that fails by calling the callback"
     }, {

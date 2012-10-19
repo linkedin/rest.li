@@ -1,0 +1,21 @@
+{
+  "name" : "complexKeys",
+  "namespace" : "com.linkedin.restli.examples.greetings.client",
+  "path" : "/complexKeys",
+  "schema" : "com.linkedin.restli.examples.greetings.api.Message",
+  "doc" : "Demonstrates a resource with a complex key.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.ComplexKeysResource",
+  "collection" : {
+    "identifier" : {
+      "name" : "keys",
+      "type" : "com.linkedin.restli.examples.greetings.api.TwoPartKey",
+      "params" : "com.linkedin.restli.examples.greetings.api.TwoPartKey"
+    },
+    "supports" : [ "get" ],
+    "methods" : [ {
+      "method" : "get"
+    } ],
+    "entity" : {
+      "path" : "/complexKeys/{keys}"
+    }
+  }
+}

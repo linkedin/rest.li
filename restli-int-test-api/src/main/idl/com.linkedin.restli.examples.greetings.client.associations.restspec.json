@@ -1,0 +1,23 @@
+{
+  "name" : "associations",
+  "namespace" : "com.linkedin.restli.examples.greetings.client",
+  "path" : "/associations",
+  "schema" : "com.linkedin.restli.examples.greetings.api.Message",
+  "doc" : "Demonstrates an assocation resource keyed by string.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.AssociationsResource",
+  "association" : {
+    "assocKeys" : [ {
+      "name" : "dest",
+      "type" : "string"
+    }, {
+      "name" : "src",
+      "type" : "string"
+    } ],
+    "supports" : [ "get" ],
+    "methods" : [ {
+      "method" : "get"
+    } ],
+    "entity" : {
+      "path" : "/associations/src={src}&dest={dest}"
+    }
+  }
+}

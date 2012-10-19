@@ -98,7 +98,8 @@ public class QueryParamsDataMap
     }
     else
     {
-      result.put(keyPrefix, object.toString());
+      String value = object.toString();
+      result.put(keyPrefix, value);
     }
   }
 

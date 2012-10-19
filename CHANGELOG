@@ -1,3 +1,8 @@
+1.6.7
+-----
+(RB=106343)
+Fix url escaping of string when used as keys in rest.li. (SI-495)
+
 1.6.5
 -----
 (RB=109987)

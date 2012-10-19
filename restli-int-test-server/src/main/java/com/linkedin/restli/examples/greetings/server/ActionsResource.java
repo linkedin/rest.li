@@ -20,6 +20,11 @@
 
 package com.linkedin.restli.examples.greetings.server;
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 import com.linkedin.common.callback.Callback;
 import com.linkedin.parseq.BaseTask;
 import com.linkedin.parseq.Context;
@@ -28,16 +33,12 @@ import com.linkedin.parseq.Tasks;
 import com.linkedin.parseq.promise.Promise;
 import com.linkedin.parseq.promise.Promises;
 import com.linkedin.parseq.promise.SettablePromise;
+import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.ActionParam;
 import com.linkedin.restli.server.annotations.CallbackParam;
 import com.linkedin.restli.server.annotations.ParSeqContext;
 import com.linkedin.restli.server.annotations.RestLiActions;
-
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Various action tasks that demonstrate usual behavior, timeout, and exceptions.
@@ -62,6 +63,18 @@ public class ActionsResource
   public String get()
   {
     return "Hello, World";
+  }
+
+  @Action(name="echo")
+  public String echo(@ActionParam("input") final String input)
+  {
+    return input;
+  }
+
+  @Action(name="echoMessage")
+  public Message echoMessage(@ActionParam("message") final Message message)
+  {
+    return message;
   }
 
   @Action(name = "timeout")

@@ -90,7 +90,7 @@ public class PartialUpdateRequestBuilder<K, V extends RecordTemplate> extends
       throw new IllegalArgumentException("id required to build partial update request");
     }
     UriBuilder b = UriBuilder.fromUri(bindPathKeys());
-    b.path(keyToString(_id));
+    appendKeyToPath(b, _id);
     appendQueryParams(b);
 
     return new PartialUpdateRequest<V>(b.build(), _input, _headers, _resourceSpec);

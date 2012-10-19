@@ -31,6 +31,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.linkedin.data.ByteString;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -50,6 +53,7 @@ import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
  */
 public abstract class AbstractR2Servlet extends HttpServlet
 {
+  private static final Logger _log = LoggerFactory.getLogger(AbstractR2Servlet.class);
   private static final long serialVersionUID = 0L;
 
   /**
@@ -134,23 +138,7 @@ public abstract class AbstractR2Servlet extends HttpServlet
       URISyntaxException
   {
     StringBuilder sb = new StringBuilder();
-    String pathInfo = req.getPathInfo();
-    if (pathInfo != null)
-    {
-      sb.append(req.getPathInfo());
-    }
-    else
-    {
-      // We prefer to keep servlet mapping trivial with R2 and have R2
-      // TransportDispatchers make most of the routing decisions based on the 'pathInfo'
-      // and query parameters in the URI.
-      // If pathInfo is null, it's highly likely that the servlet was mapped to an exact
-      // path or to a file extension, making such R2-based services too reliant on the
-      // servlet container for routing
-      throw new ServletException("R2 servlet should only be mapped via wildcard path mapping e.g. /r2/*. "
-          + "Exact path matching (/r2) and file extension mappings (*.r2) are currently not supported");
-    }
-
+    sb.append(extractPathInfo(req));
     String query = req.getQueryString();
     if (query != null)
     {
@@ -183,6 +171,65 @@ public abstract class AbstractR2Servlet extends HttpServlet
     }
     return rb.build();
 
+  }
+
+  /**
+   * Attempts to return a "non decoded" pathInfo by stripping off the contextPath and servletPath parts of the requestURI.
+   * As a defensive measure, this method will return the "decoded" pathInfo directly by calling req.getPathInfo() if it is
+   * unable to strip off the contextPath or servletPath.
+   * @throws ServletException if resulting pathInfo is empty
+   */
+  protected static String extractPathInfo(HttpServletRequest req) throws ServletException
+  {
+    // For "http:hostname:8080/contextPath/servletPath/pathInfo" the RequestURI is "/contextPath/servletPath/pathInfo"
+    // where the contextPath, servletPath and pathInfo parts all contain their leading slash.
+
+    // stripping contextPath and servletPath this way is not fully compatible with the HTTP spec.  If a
+    // request for, say "/%75scp-proxy/reso%75rces" is made (where %75 decodes to 'u')
+    // the stripping off of contextPath and servletPath will fail because the requestUri string will
+    // include the encoded char but the contextPath and servletPath strings will not.
+    String requestUri = req.getRequestURI();
+    String contextPath = req.getContextPath();
+    StringBuilder builder = new StringBuilder();
+    if(contextPath != null)
+    {
+      builder.append(contextPath);
+    }
+
+    String servletPath = req.getServletPath();
+    if(servletPath != null)
+    {
+      builder.append(servletPath);
+    }
+    String prefix = builder.toString();
+    String pathInfo;
+    if(prefix.length() == 0)
+    {
+      pathInfo = requestUri;
+    }
+    else if(requestUri.startsWith(prefix))
+    {
+      pathInfo = requestUri.substring(prefix.length());
+    }
+    else
+    {
+      _log.warn("Unable to extract 'non decoded' pathInfo, returning 'decoded' pathInfo instead.  This may cause issues processing request URIs containing special characters. requestUri=" + requestUri);
+      return req.getPathInfo();
+    }
+
+    if(pathInfo.length() == 0)
+    {
+      // We prefer to keep servlet mapping trivial with R2 and have R2
+      // TransportDispatchers make most of the routing decisions based on the 'pathInfo'
+      // and query parameters in the URI.
+      // If pathInfo is null, it's highly likely that the servlet was mapped to an exact
+      // path or to a file extension, making such R2-based services too reliant on the
+      // servlet container for routing
+      throw new ServletException("R2 servlet should only be mapped via wildcard path mapping e.g. /r2/*. "
+          + "Exact path matching (/r2) and file extension mappings (*.r2) are currently not supported");
+    }
+
+    return pathInfo;
   }
 
   private void writeToServletResponse(TransportResponse<RestResponse> response,

@@ -88,7 +88,7 @@ public class GetRequestBuilder<K, V extends RecordTemplate> extends
     }
     URI baseUri = bindPathKeys();
     UriBuilder b = UriBuilder.fromUri(baseUri);
-    b.path(keyToString(_id));
+    appendKeyToPath(b, _id);
     appendQueryParams(b);
 
     return new GetRequest<V>(b.build(),

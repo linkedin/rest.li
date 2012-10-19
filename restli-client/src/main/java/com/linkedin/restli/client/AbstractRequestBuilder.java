@@ -47,6 +47,8 @@ import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.client.URIUtil;
 import com.linkedin.restli.internal.common.QueryParamsDataMap;
+import com.linkedin.restli.internal.common.URLEscaper;
+import com.linkedin.restli.internal.common.URLEscaper.Escaping;
 import com.linkedin.util.ArgumentUtil;
 
 /**
@@ -73,7 +75,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
     _baseURITemplate = baseURITemplate;
     _resourceSpec = resourceSpec;
   }
-  
+
   public AbstractRequestBuilder<K, V, R> header(String key, String value)
   {
     addHeader(key, value);
@@ -90,10 +92,10 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
     ArgumentUtil.notNull(value, "value");
     addParam(key, value);
   }
-  
+
   public AbstractRequestBuilder<K, V, R> pathKey(String name, Object value)
   {
-    addKey(name, value);
+    addKey(name, keyToString(value, Escaping.NO_ESCAPING));
     return this;
   }
 
@@ -125,11 +127,11 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
       }
     }
   }
-  
+
   /**
    * To be called from the extending BatchXXXRequestBuilder classes that implement ids(K...) to branch
    * depending on whether the resource key is a complex one.
-   * 
+   *
    * @param ids
    */
   protected final void addKeyParams(Collection<K> ids)
@@ -153,7 +155,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
       addParam(RestConstants.QUERY_BATCH_IDS_PARAM, ids);
     }
   }
-  
+
   /**
    * If any complex parameters have been added, add them to query parameters using
    * different naming and semantics as defined in {@link QueryParamsDataMap}
@@ -173,7 +175,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
       addParam(entry.getKey(), entry.getValue());
     }
   }
-  
+
   /**
    * Add an individual key to the DataList of keys, which will be later resolved into a collection
    * of individual query parameters.
@@ -182,23 +184,45 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
   {
     _keysDataList.add(id.toDataMap());
   }
-  
+
   /**
    * Depending on whether or not this is a complex resource key, return either a full (key + params)
-   * string representation of the key (which for ComplexResource includes both key and params), or 
+   * string representation of the key (which for ComplexResource includes both key and params), or
    * simply key.toString() (which for ComplexResourceKey only uses key part).
    */
   protected String keyToString(K key)
   {
-    if (key instanceof ComplexResourceKey) {
-      return ((ComplexResourceKey<?,?>)key).toStringFull(); 
+    return keyToString(key, Escaping.NO_ESCAPING);
+  }
+
+  protected void appendKeyToPath(UriBuilder uriBuilder, Object key)
+  {
+    uriBuilder.path(keyToString(key, Escaping.URL_ESCAPING));
+  }
+
+  private String keyToString(Object key, Escaping escaping)
+  {
+    if(key == null)
+    {
+      return null;
+    }
+
+    String result;
+    if (key instanceof ComplexResourceKey)
+    {
+      result = ((ComplexResourceKey<?,?>)key).toStringFull(escaping);
+    }
+    else if (key instanceof CompoundKey)
+    {
+      result = key.toString(); // already escaped
     }
     else
     {
-      return key.toString();
+      result = URLEscaper.escape(key.toString(), escaping);
     }
+    return result;
   }
-  
+
   /**
    * Helper method to convert a collection of key Objects into a set of strings
    */
@@ -215,7 +239,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
     }
     return idStrings;
   }
-  
+
   /** given a iterable of objects returns a collection of (non-null) toStrings */
   private static Collection<String> stringify(Iterable<?> values)
   {
@@ -311,7 +335,13 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
         throw new IllegalStateException("Missing path key: '" + key + "'");
       }
     }
-    return URI.create(template.createURI(_keys));
+    Map<String, String> escapedKeys = new HashMap<String, String>();
+    for(Map.Entry<String, String> key : _keys.entrySet())
+    {
+      escapedKeys.put(key.getKey(), URLEscaper.escape(key.getValue(), Escaping.URL_ESCAPING));
+    }
+
+    return URI.create(template.createURI(escapedKeys));
   }
 
   protected void addFields(PathSpec... fieldPaths)
@@ -324,7 +354,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
     _fields = new HashSet<PathSpec>(Arrays.asList(fieldPaths));
     addParam(RestConstants.FIELDS_PARAM, URIUtil.encodeFields(fieldPaths));
   }
-  
+
   protected boolean isComplexKeyResource()
   {
     return _resourceSpec.getKeyClass() == ComplexResourceKey.class;

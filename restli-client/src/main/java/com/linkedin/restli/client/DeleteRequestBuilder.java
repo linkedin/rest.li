@@ -81,7 +81,7 @@ public class DeleteRequestBuilder<K, V extends RecordTemplate>
       throw new IllegalArgumentException("id required to build delete request");
     }
     UriBuilder b = UriBuilder.fromUri(bindPathKeys());
-    b.path(keyToString(_id));
+    appendKeyToPath(b, _id);
     appendQueryParams(b);
 
     return new DeleteRequest<V>(b.build(), _headers, _resourceSpec);
