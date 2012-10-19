@@ -1,3 +1,9 @@
+1.6.1
+-----
+(RB=105748)
+Integrate compatibility level into idl checker. The exit code of the main function now depends on both
+the check result and the level.
+
 1.6.0
 -----
 (RB=101499)

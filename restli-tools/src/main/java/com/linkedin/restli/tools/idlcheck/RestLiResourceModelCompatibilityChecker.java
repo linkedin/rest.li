@@ -45,6 +45,16 @@ import com.linkedin.restli.restspec.ParameterSchemaArray;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.restspec.RestMethodSchema;
 import com.linkedin.restli.restspec.RestSpecCodec;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.PosixParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -56,8 +66,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Check backwards compatibility between pairs of idl (.restspec.json) files. The check result messages are categorized.
@@ -66,32 +74,75 @@ import org.slf4j.LoggerFactory;
  */
 public class RestLiResourceModelCompatibilityChecker
 {
-  /**
-   * @param args Usage: RestLiResourceModelCompatibilityChecker [pairs of <prevRestspecPath currRestspecPath>]
-   */
   public static void main(String[] args)
   {
-    if (args.length < 1 || args.length % 2 != 0)
+    final Options options = new Options();
+    options.addOption("h", "help", false, "Print help");
+    options.addOption(OptionBuilder.withArgName("compatibility_level")
+                                   .withLongOpt("compat")
+                                   .hasArg()
+                                   .withDescription("Compatibility level " + listCompatLevelOptions())
+                                   .create('c'));
+    final String cmdLineSyntax = RestLiResourceModelCompatibilityChecker.class.getCanonicalName() + " [pairs of <prevRestspecPath currRestspecPath>]";
+
+    final CommandLineParser parser = new PosixParser();
+    final CommandLine cmd;
+
+    try
     {
-      log.error("Usage: RestLiResourceModelCompatibilityChecker [pairs of <prevRestspecPath currRestspecPath>]");
+      cmd = parser.parse(options, args);
+    }
+    catch (ParseException e)
+    {
+      new HelpFormatter().printHelp(cmdLineSyntax, options, true);
+      System.exit(1);
+      return; // to suppress IDE warning
+    }
+
+    final String[] targets = cmd.getArgs();
+    if (cmd.hasOption('h') || targets.length < 2 || targets.length % 2 != 0)
+    {
+      new HelpFormatter().printHelp(cmdLineSyntax, options, true);
       System.exit(1);
     }
 
+    final String compatValue;
+    if (cmd.hasOption('c'))
+    {
+      compatValue = cmd.getOptionValue('c');
+    }
+    else
+    {
+      compatValue = CompatibilityLevel.EQUIVALENT.name();
+    }
+
+    final CompatibilityLevel compat;
+    try
+    {
+      compat = CompatibilityLevel.valueOf(compatValue.toUpperCase());
+    }
+    catch (IllegalArgumentException e)
+    {
+      new HelpFormatter().printHelp(cmdLineSyntax, options, true);
+      System.exit(1);
+      return;
+    }
+
     final StringBuilder allSummaries = new StringBuilder();
-    for (int i = 1; i < args.length; i += 2)
+    boolean result = true;
+    for (int i = 1; i < targets.length; i += 2)
     {
       final RestLiResourceModelCompatibilityChecker checker = new RestLiResourceModelCompatibilityChecker();
-      checker.check(args[i - 1], args[i]);
+      result &= checker.check(targets[i - 1], targets[i], compat);
       allSummaries.append(checker.getSummary());
     }
 
-    if (allSummaries.length() == 0)
+    if (compat != CompatibilityLevel.OFF && !result)
     {
-      System.exit(0);
+      System.out.println(allSummaries);
     }
 
-    System.out.println(allSummaries);
-    System.exit(1);
+    System.exit(result ? 0 : 1);
   }
 
   /**
@@ -119,10 +170,11 @@ public class RestLiResourceModelCompatibilityChecker
    *
    * @param prevRestspecPath previously existing idl file
    * @param currRestspecPath current idl file
-   * @return true if no file unable to check and no backwards incompatibility, false otherwise.
-   *         when returning true, backwards compatible changes may exist
+   * @param compatLevel compatibility level which affects the return value
+   * @return true if the check result conforms the compatibility level requirement
+   *         e.g. false if backwards compatible changes are found but the level is equivalent
    */
-  public boolean check(String prevRestspecPath, String currRestspecPath)
+  public boolean check(String prevRestspecPath, String currRestspecPath, CompatibilityLevel compatLevel)
   {
     _prevRestspecPath = prevRestspecPath;
     _currRestspecPath = currRestspecPath;
@@ -150,6 +202,10 @@ public class RestLiResourceModelCompatibilityChecker
     {
       currRec = _codec.readResourceSchema(new FileInputStream(currRestspecPath));
     }
+    catch (FileNotFoundException e)
+    {
+      addInfo(CompatibilityInfo.Type.FILE_NOT_FOUND, currRestspecPath);
+    }
     catch (Exception e)
     {
       addInfo(CompatibilityInfo.Type.OTHER_ERROR, e.getMessage());
@@ -157,7 +213,7 @@ public class RestLiResourceModelCompatibilityChecker
 
     if (prevRec == null || currRec == null)
     {
-      return false;
+      return isCompatible(compatLevel);
     }
 
     // validate RecordTemplate against schema before checking compatibility
@@ -167,14 +223,26 @@ public class RestLiResourceModelCompatibilityChecker
     valResult &= validateData(currRec.data(), currRec.schema(), valOptions);
     if (!valResult)
     {
-      return false;
+      return isCompatible(compatLevel);
     }
 
     checkRecordTemplate(prevRec, currRec);
 
     _path.remove(_path.size() - 1);
 
-    return getUnableToChecks().isEmpty() && getIncompatibles().isEmpty();
+    return isCompatible(compatLevel);
+  }
+
+  /**
+   * Check backwards compatibility between two idl (.restspec.json) files.
+   *
+   * @param prevRestspecPath previously existing idl file
+   * @param currRestspecPath current idl file
+   * @return true if the previous idl file is equivalent to the current one
+   */
+  public boolean check(String prevRestspecPath, String currRestspecPath)
+  {
+    return check(prevRestspecPath, currRestspecPath, CompatibilityLevel.EQUIVALENT);
   }
 
   /**
@@ -224,6 +292,18 @@ public class RestLiResourceModelCompatibilityChecker
     return summaryMessage.toString();
   }
 
+  private static String listCompatLevelOptions()
+  {
+    final StringBuilder options = new StringBuilder("<");
+    for (CompatibilityLevel compatLevel: CompatibilityLevel.values())
+    {
+      options.append(compatLevel.name().toLowerCase()).append("|");
+    }
+    options.replace(options.length() - 1, options.length(), ">");
+
+    return options.toString();
+  }
+
   private static void createSummaryForInfo(List<CompatibilityInfo> info,
                                            String description,
                                            StringBuilder summaryMessage)
@@ -241,6 +321,17 @@ public class RestLiResourceModelCompatibilityChecker
       summaryMessage.append("  ").append(issueIndex).append(") ").append(iter.next().toString()).append("\n");
       ++issueIndex;
     }
+  }
+
+  private boolean isCompatible(CompatibilityLevel compatLevel)
+  {
+    final List<CompatibilityInfo> unableToChecks = getUnableToChecks();
+    final List<CompatibilityInfo> incompatibles = getIncompatibles();
+    final List<CompatibilityInfo> compatibles = getCompatibles();
+
+    return ((unableToChecks.isEmpty() || compatLevel.ordinal() < CompatibilityLevel.BACKWARDS.ordinal()) &&
+        (incompatibles.isEmpty()  || compatLevel.ordinal() < CompatibilityLevel.BACKWARDS.ordinal()) &&
+        (compatibles.isEmpty()    || compatLevel.ordinal() < CompatibilityLevel.EQUIVALENT.ordinal()));
   }
 
   private boolean validateData(DataMap object, DataSchema schema, ValidationOptions options)

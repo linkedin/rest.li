@@ -14,15 +14,16 @@ project.sourceSets.all { SourceSet sourceSet ->
 
   final Project apiProject = project(':restli-int-test-api')
   final File apiIdlDir = apiProject.file(apiIdlDirRelativePath)
+  final String compatLevel = (project.hasProperty(IDL_COMPAT_REQUIREMENT_NAME) ? project.property(IDL_COMPAT_REQUIREMENT_NAME)
+                                                                               : 'equivalent')
 
   final Task checkIdlTask = project.task(sourceSet.name + 'CheckIdl',
                                          type: JavaExec,
                                          dependsOn: project.tasks[sourceSet.name + 'GenerateRestModel']) {
     main = 'com.linkedin.restli.tools.idlcheck.RestLiResourceModelCompatibilityChecker'
     classpath = restliToolsConfig + restliToolsConfig.allArtifacts.files
-    ignoreExitValue = (project.hasProperty(IDL_COMPAT_REQUIREMENT_NAME) &&
-                       project.property(IDL_COMPAT_REQUIREMENT_NAME).equalsIgnoreCase('ignore'))
     systemProperties(['generator.resolver.path': apiProject.file(dataSchemaRelativePath).path])
+    args(['--compat', compatLevel])
   }
   currIdlFiles.each {
     final String apiIdlFilePath = "${apiIdlDir.path}${File.separatorChar}${it.name}"

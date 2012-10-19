@@ -19,16 +19,15 @@ package com.linkedin.restli.tools.idlcheck;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.restli.restspec.AssocKeySchema;
 import com.linkedin.restli.restspec.AssocKeySchemaArray;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class TestRestLiResourceModelCompatibilityChecker
 {
@@ -70,7 +69,9 @@ public class TestRestLiResourceModelCompatibilityChecker
 
     final RestLiResourceModelCompatibilityChecker checker = new RestLiResourceModelCompatibilityChecker();
 
-    Assert.assertTrue(checker.check(IDLS_DIR + PREV_COLL_FILE, IDLS_DIR + CURR_COLL_PASS_FILE));
+    Assert.assertTrue(checker.check(IDLS_DIR + PREV_COLL_FILE,
+                                    IDLS_DIR + CURR_COLL_PASS_FILE,
+                                    CompatibilityLevel.BACKWARDS));
 
     final List<CompatibilityInfo> unableToChecks = checker.getUnableToChecks();
     final List<CompatibilityInfo> incompatibles = checker.getIncompatibles();
@@ -95,7 +96,9 @@ public class TestRestLiResourceModelCompatibilityChecker
 
     final RestLiResourceModelCompatibilityChecker checker = new RestLiResourceModelCompatibilityChecker();
 
-    Assert.assertTrue(checker.check(IDLS_DIR + PREV_ASSOC_FILE, IDLS_DIR + CURR_ASSOC_PASS_FILE));
+    Assert.assertTrue(checker.check(IDLS_DIR + PREV_ASSOC_FILE,
+                                    IDLS_DIR + CURR_ASSOC_PASS_FILE,
+                                    CompatibilityLevel.BACKWARDS));
 
     final List<CompatibilityInfo> unableToChecks = checker.getUnableToChecks();
     final List<CompatibilityInfo> incompatibles = checker.getIncompatibles();
@@ -160,7 +163,9 @@ public class TestRestLiResourceModelCompatibilityChecker
 
     final RestLiResourceModelCompatibilityChecker checker = new RestLiResourceModelCompatibilityChecker();
 
-    Assert.assertFalse(checker.check(IDLS_DIR + PREV_COLL_FILE, IDLS_DIR + CURR_COLL_FAIL_FILE));
+    Assert.assertFalse(checker.check(IDLS_DIR + PREV_COLL_FILE,
+                                     IDLS_DIR + CURR_COLL_FAIL_FILE,
+                                     CompatibilityLevel.BACKWARDS));
 
     final List<CompatibilityInfo> unableToChecks = checker.getUnableToChecks();
     final List<CompatibilityInfo> incompatibles = checker.getIncompatibles();
@@ -199,7 +204,9 @@ public class TestRestLiResourceModelCompatibilityChecker
 
     final RestLiResourceModelCompatibilityChecker checker = new RestLiResourceModelCompatibilityChecker();
 
-    Assert.assertFalse(checker.check(IDLS_DIR + PREV_ASSOC_FILE, IDLS_DIR + CURR_ASSOC_FAIL_FILE));
+    Assert.assertFalse(checker.check(IDLS_DIR + PREV_ASSOC_FILE,
+                                     IDLS_DIR + CURR_ASSOC_FAIL_FILE,
+                                     CompatibilityLevel.BACKWARDS));
 
     final List<CompatibilityInfo> unableToChecks = checker.getUnableToChecks();
     final List<CompatibilityInfo> incompatibles = checker.getIncompatibles();
@@ -222,7 +229,9 @@ public class TestRestLiResourceModelCompatibilityChecker
 
     final RestLiResourceModelCompatibilityChecker checker = new RestLiResourceModelCompatibilityChecker();
 
-    Assert.assertFalse(checker.check(IDLS_DIR + PREV_AS_FILE, IDLS_DIR + CURR_AS_FAIL_FILE));
+    Assert.assertFalse(checker.check(IDLS_DIR + PREV_AS_FILE,
+                                     IDLS_DIR + CURR_AS_FAIL_FILE,
+                                     CompatibilityLevel.BACKWARDS));
 
     final List<CompatibilityInfo> unableToChecks = checker.getUnableToChecks();
     final List<CompatibilityInfo> incompatibles = checker.getIncompatibles();
@@ -241,7 +250,9 @@ public class TestRestLiResourceModelCompatibilityChecker
   {
     final RestLiResourceModelCompatibilityChecker checker = new RestLiResourceModelCompatibilityChecker();
 
-    Assert.assertTrue(checker.check(IDLS_DIR + PREV_AS_FILE, IDLS_DIR + CURR_AS_PASS_FILE));
+    Assert.assertTrue(checker.check(IDLS_DIR + PREV_AS_FILE,
+                                    IDLS_DIR + CURR_AS_PASS_FILE,
+                                    CompatibilityLevel.BACKWARDS));
 
     final List<CompatibilityInfo> unableToChecks = checker.getUnableToChecks();
     final List<CompatibilityInfo> incompatibles = checker.getIncompatibles();
@@ -261,26 +272,19 @@ public class TestRestLiResourceModelCompatibilityChecker
     testUnableToChecks.add(new CompatibilityInfo(Arrays.<Object>asList(""),
                                                  CompatibilityInfo.Type.FILE_NOT_FOUND,
                                                  nonExistentFilename1));
+    testUnableToChecks.add(new CompatibilityInfo(Arrays.<Object>asList(""),
+                                                 CompatibilityInfo.Type.FILE_NOT_FOUND,
+                                                 nonExistentFilename2));
 
-    try
-    {
-      new FileInputStream(nonExistentFilename2);
-    }
-    catch (FileNotFoundException e)
-    {
-      testErrors.add(new CompatibilityInfo(Arrays.<Object>asList(""),
-                                           CompatibilityInfo.Type.OTHER_ERROR,
-                                           e.getMessage()));
-    }
+    final RestLiResourceModelCompatibilityChecker checker = new RestLiResourceModelCompatibilityChecker();
 
-    RestLiResourceModelCompatibilityChecker checker = new RestLiResourceModelCompatibilityChecker();
-
-    Assert.assertFalse(checker.check(nonExistentFilename1, nonExistentFilename2));
+    Assert.assertFalse(checker.check(nonExistentFilename1,
+                                     nonExistentFilename2,
+                                     CompatibilityLevel.BACKWARDS));
 
     final List<CompatibilityInfo> unableToChecks = checker.getUnableToChecks();
     final List<CompatibilityInfo> incompatibles = checker.getIncompatibles();
     Assert.assertEquals(unableToChecks.size(), testUnableToChecks.size());
-    Assert.assertEquals(incompatibles.size(), testErrors.size());
 
     for (CompatibilityInfo tutc : testUnableToChecks)
     {
