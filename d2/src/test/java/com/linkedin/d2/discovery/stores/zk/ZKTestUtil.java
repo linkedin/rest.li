@@ -66,17 +66,17 @@ public class ZKTestUtil
     return conn;
   }
 
-  public static ZKServer startZKServer(int port) throws  InterruptedException
+  public static ZKServer startZKServer() throws  InterruptedException
   {
     ZKServer zkServer = null;
     try
     {
-      zkServer = new ZKServer(port);
+      zkServer = new ZKServer();
       zkServer.startup();
     }
     catch (IOException e)
     {
-      fail("unable to instantiate real zk server on port " + port);
+      fail("unable to instantiate real zk server.");
       e.printStackTrace();
     }
 

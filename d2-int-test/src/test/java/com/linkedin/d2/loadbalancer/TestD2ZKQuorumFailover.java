@@ -41,13 +41,14 @@ public class TestD2ZKQuorumFailover extends D2BaseTest
     _zkUriString = "zk://"+_quorum.getHosts();
     _zkHosts = _quorum.getHosts().split(",");
 
-    _cli = new LoadBalancerClientCli(_quorum.getHosts(), "/d2");
     // Register clusters/services with zookeeper _quorum
-    _cli.runDiscovery(_quorum.getHosts(), "/d2", D2_CONFIG_DATA);
+    LoadBalancerClientCli.runDiscovery(_quorum.getHosts(), "/d2", D2_CONFIG_DATA);
+
     // Echo servers startup
     startAllEchoServers();
     assertAllEchoServersRunning(_echoServers);
     // Get LoadBalancer Client
+    _cli = new LoadBalancerClientCli(_quorum.getHosts(), "/d2");
     _client = _cli.createZKFSTogglingLBClient(_quorum.getHosts(), "/d2", null);
     assertAllEchoServersRegistered(_cli.getZKClient(), _zkUriString, _echoServers);
     assertQuorumProcessAllRequests(D2_CONFIG_DATA);

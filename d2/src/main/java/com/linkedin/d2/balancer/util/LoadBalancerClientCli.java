@@ -330,7 +330,7 @@ public class LoadBalancerClientCli
     }
   }
 
-  public int runDiscovery(String zkserverHostPort, String d2path, File jsonConfigFile) throws Exception
+  public static int runDiscovery(String zkserverHostPort, String d2path, File jsonConfigFile) throws Exception
   {
     if (jsonConfigFile.exists())
     {
@@ -348,7 +348,7 @@ public class LoadBalancerClientCli
     return -1;
   }
 
-  public int runDiscovery(String zkserverHostPort, String d2path, String jsonConfigData) throws Exception
+  public static int runDiscovery(String zkserverHostPort, String d2path, String jsonConfigData) throws Exception
   {
     _log.info("Reading d2 config data:" + jsonConfigData);
     ObjectMapper mapper = new ObjectMapper();
@@ -359,7 +359,7 @@ public class LoadBalancerClientCli
   }
 
   @SuppressWarnings("unchecked")
-  private int runDiscovery(String zkserverHostPort, String d2path, Map<String, Object> configMap) throws Exception
+  private static int runDiscovery(String zkserverHostPort, String d2path, Map<String, Object> configMap) throws Exception
   {
     String zkHosts = zkserverHostPort.replace("zk://", "");
 

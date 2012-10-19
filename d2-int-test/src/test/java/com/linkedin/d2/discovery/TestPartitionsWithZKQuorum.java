@@ -66,8 +66,8 @@ public class TestPartitionsWithZKQuorum extends D2BaseTest
   {
     _echoServers = new ArrayList<LoadBalancerEchoServer>();
     setup();
+    assertEquals(LoadBalancerClientCli.runDiscovery(_quorum.getHosts(), "/d2", D2_CONFIG_DEFAULT_PARTITION_DATA), 0);
     _cli = new LoadBalancerClientCli(_quorum.getHosts(), "/d2");
-    assertEquals(_cli.runDiscovery(_quorum.getHosts(), "/d2", D2_CONFIG_DEFAULT_PARTITION_DATA), 0);
     _client = _cli.createZKFSTogglingLBClient(_quorum.getHosts(), "/d2", null);
     // Echo servers startup
     startDefaultPartitionEchoServers();
@@ -91,8 +91,8 @@ public class TestPartitionsWithZKQuorum extends D2BaseTest
   {
     _echoServers = new ArrayList<LoadBalancerEchoServer>();
     setup();
+    assertEquals(LoadBalancerClientCli.runDiscovery(_quorum.getHosts(), "/d2", D2_CONFIG_CUSTOM_PARTITION_DATA), 0);
     _cli = new LoadBalancerClientCli(_quorum.getHosts(), "/d2");
-    assertEquals(_cli.runDiscovery(_quorum.getHosts(), "/d2", D2_CONFIG_CUSTOM_PARTITION_DATA), 0);
     _client = _cli.createZKFSTogglingLBClient(_quorum.getHosts(), "/d2", null);
     // Echo servers startup
     Map<Integer, Double> partitionWeight = new HashMap<Integer, Double>();
@@ -117,8 +117,8 @@ public class TestPartitionsWithZKQuorum extends D2BaseTest
   {
     _echoServers = new ArrayList<LoadBalancerEchoServer>();
     setup();
+    assertEquals(LoadBalancerClientCli.runDiscovery(_quorum.getHosts(), "/d2", D2_CONFIG_DATA), 0);
     _cli = new LoadBalancerClientCli(_quorum.getHosts(), "/d2");
-    assertEquals(_cli.runDiscovery(_quorum.getHosts(), "/d2", D2_CONFIG_DATA), 0);
     _client = _cli.createZKFSTogglingLBClient(_quorum.getHosts(), "/d2", null);
     // Echo servers startup
     Map<Integer, Double> partitionWeight = new HashMap<Integer, Double>();

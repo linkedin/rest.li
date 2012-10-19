@@ -18,7 +18,6 @@ public class TestD2ConfigWithZKQuorum extends D2BaseTest
   private static final String       HOST = "127.0.0.1";
   private static final int          QUORUM_SIZE = 9;
   private ZKQuorum                  _quorum;
-  private LoadBalancerClientCli     _cli;
 
   private void setup() throws Exception
   {
@@ -26,7 +25,6 @@ public class TestD2ConfigWithZKQuorum extends D2BaseTest
     _quorum = new ZKQuorum(QUORUM_SIZE);
     _quorum.startAll();
     _quorum.assertAllPeersUp();
-    _cli = new LoadBalancerClientCli(_quorum.getHosts(), "/d2");
   }
 
   @AfterMethod
@@ -44,7 +42,7 @@ public class TestD2ConfigWithZKQuorum extends D2BaseTest
   public void testD2ConfigWithZKQuorumV3DegraderDefaultPartitionAllValidHosts() throws Exception
   {
     setup();
-    assertEquals(_cli.runDiscovery(_quorum.getHosts(), "/d2", D2_CONFIG_DEFAULT_PARTITION_DATA), 0);
+    assertEquals(LoadBalancerClientCli.runDiscovery(_quorum.getHosts(), "/d2", D2_CONFIG_DEFAULT_PARTITION_DATA), 0);
   }
 
   public void testD2ConfigWithZKQuorumV3DegraderDefaultPartitionFollowerPeerDown() throws Exception
@@ -53,7 +51,7 @@ public class TestD2ConfigWithZKQuorum extends D2BaseTest
     String connectionString = _quorum.getHosts();
     ZKPeer follower = _quorum.getQuorumFollower();
     follower.shutdownPeer();
-    assertEquals(_cli.runDiscovery(connectionString, "/d2", D2_CONFIG_DEFAULT_PARTITION_DATA), 0);
+    assertEquals(LoadBalancerClientCli.runDiscovery(connectionString, "/d2", D2_CONFIG_DEFAULT_PARTITION_DATA), 0);
   }
 
   public void testD2ConfigWithZKQuorumV3DegraderDefaultPartitionLeaderPeerDown() throws Exception
@@ -62,7 +60,7 @@ public class TestD2ConfigWithZKQuorum extends D2BaseTest
     String connectionString = _quorum.getHosts();
     ZKPeer leader = _quorum.getQuorumLeader();
     leader.shutdownPeer();
-    assertEquals(_cli.runDiscovery(connectionString, "/d2", D2_CONFIG_DEFAULT_PARTITION_DATA), 0);
+    assertEquals(LoadBalancerClientCli.runDiscovery(connectionString, "/d2", D2_CONFIG_DEFAULT_PARTITION_DATA), 0);
   }
 
   public void testD2ConfigWithZKQuorumV3DegraderDefaultPartitionMultiplePeersDown() throws Exception
@@ -75,19 +73,19 @@ public class TestD2ConfigWithZKQuorum extends D2BaseTest
     {
       _quorum.shutdown(it.next());
     }
-    assertEquals(_cli.runDiscovery(connectionString, "/d2", D2_CONFIG_DEFAULT_PARTITION_DATA), 0);
+    assertEquals(LoadBalancerClientCli.runDiscovery(connectionString, "/d2", D2_CONFIG_DEFAULT_PARTITION_DATA), 0);
   }
 
   public void testD2ConfigWithZKQuorumV3DegraderCustomPartitionAllValidHosts() throws Exception
   {
     setup();
-    assertEquals(_cli.runDiscovery(_quorum.getHosts(), "/d2", D2_CONFIG_CUSTOM_PARTITION_DATA), 0);
+    assertEquals(LoadBalancerClientCli.runDiscovery(_quorum.getHosts(), "/d2", D2_CONFIG_CUSTOM_PARTITION_DATA), 0);
   }
 
   public void testD2ConfigWithZKQuorumV3DegraderCustomPartitionAllValidHosts2() throws Exception
   {
     setup();
-    assertEquals(_cli.runDiscovery(_quorum.getHosts(), "/d2", D2_CONFIG_CUSTOM_PARTITION_DATA2), 0);
+    assertEquals(LoadBalancerClientCli.runDiscovery(_quorum.getHosts(), "/d2", D2_CONFIG_CUSTOM_PARTITION_DATA2), 0);
   }
 
   public void testD2ConfigWithZKQuorumV3DegraderCustomPartitionFollowerPeerDown() throws Exception
@@ -96,7 +94,7 @@ public class TestD2ConfigWithZKQuorum extends D2BaseTest
     String connectionString = _quorum.getHosts();
     ZKPeer follower = _quorum.getQuorumFollower();
     follower.shutdownPeer();
-    assertEquals(_cli.runDiscovery(connectionString, "/d2", D2_CONFIG_DEFAULT_PARTITION_DATA), 0);
+    assertEquals(LoadBalancerClientCli.runDiscovery(connectionString, "/d2", D2_CONFIG_DEFAULT_PARTITION_DATA), 0);
   }
 
   public void testD2ConfigWithZKQuorumV3DegraderCustomPartitionMultiplePeersDown() throws Exception
@@ -109,7 +107,7 @@ public class TestD2ConfigWithZKQuorum extends D2BaseTest
     {
       _quorum.shutdown(it.next());
     }
-    assertEquals(_cli.runDiscovery(connectionString, "/d2", D2_CONFIG_DEFAULT_PARTITION_DATA), 0);
+    assertEquals(LoadBalancerClientCli.runDiscovery(connectionString, "/d2", D2_CONFIG_DEFAULT_PARTITION_DATA), 0);
   }
 
   public void testD2ConfigWithZKQuorumV3DegraderCustomPartitionLeaderPeerDown() throws Exception
@@ -118,28 +116,28 @@ public class TestD2ConfigWithZKQuorum extends D2BaseTest
     String connectionString = _quorum.getHosts();
     ZKPeer leader = _quorum.getQuorumLeader();
     leader.shutdownPeer();
-    assertEquals(_cli.runDiscovery(connectionString, "/d2", D2_CONFIG_DEFAULT_PARTITION_DATA), 0);
+    assertEquals(LoadBalancerClientCli.runDiscovery(connectionString, "/d2", D2_CONFIG_DEFAULT_PARTITION_DATA), 0);
   }
 
   public void testD2ConfigWithZKQuorumV3DegraderDefaultPartitionInvalidHost() throws Exception
   {
     setup();
     String connectionString = _quorum.getHosts() + "," + HOST + ":9999";
-    assertEquals(_cli.runDiscovery(connectionString, "/d2", D2_CONFIG_DEFAULT_PARTITION_DATA), 0);
+    assertEquals(LoadBalancerClientCli.runDiscovery(connectionString, "/d2", D2_CONFIG_DEFAULT_PARTITION_DATA), 0);
   }
 
   public void testD2ConfigWithZKQuorumV3DegraderDefaultPartitionNullHost() throws Exception
   {
     setup();
     String connectionString = _quorum.getHosts() + ",,";
-    assertEquals(_cli.runDiscovery(connectionString, "/d2", D2_CONFIG_DEFAULT_PARTITION_DATA), 0);
+    assertEquals(LoadBalancerClientCli.runDiscovery(connectionString, "/d2", D2_CONFIG_DEFAULT_PARTITION_DATA), 0);
   }
 
   public void testD2ConfigWithZKQuorumV3DegraderCustomPartitionNullHost() throws Exception
   {
     setup();
     String connectionString = _quorum.getHosts() + ",";
-    assertEquals(_cli.runDiscovery(connectionString, "/d2", D2_CONFIG_DEFAULT_PARTITION_DATA), 0);
+    assertEquals(LoadBalancerClientCli.runDiscovery(connectionString, "/d2", D2_CONFIG_DEFAULT_PARTITION_DATA), 0);
   }
 
   private void teardown() throws Exception
@@ -147,13 +145,6 @@ public class TestD2ConfigWithZKQuorum extends D2BaseTest
     try
     {
     _quorum.shutdownAll(true);
-    }
-    catch (Exception e)
-    {
-    }
-    try
-    {
-      _cli.shutdown();
     }
     catch (Exception e)
     {
