@@ -4,6 +4,9 @@
 Integrate compatibility level into idl checker. The exit code of the main function now depends on both
 the check result and the level.
 
+(RB=106155)
+Fix incorrect handling of absent optional complex query parameters.
+
 1.6.0
 -----
 (RB=101499)
