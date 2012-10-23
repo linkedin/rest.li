@@ -2,6 +2,11 @@ final Configuration restliToolsConfig = project(':restli-tools').configurations.
 final String IDL_COMPAT_REQUIREMENT_NAME = 'rest.model.compatibility'
 
 project.sourceSets.all { SourceSet sourceSet ->
+  if (sourceSet == project.sourceSets.test)
+  {
+    return
+  }
+
   final String currIdlDirPath = "src${File.separatorChar}${sourceSet.name}GeneratedRest${File.separatorChar}idl"
   final String apiIdlDirRelativePath = "src${File.separatorChar}${sourceSet.name}${File.separatorChar}idl"
   final String dataSchemaRelativePath = "src${File.separatorChar}${sourceSet.name}${File.separatorChar}pegasus"

@@ -137,7 +137,7 @@ public class RestLiResourceModelCompatibilityChecker
       allSummaries.append(checker.getSummary());
     }
 
-    if (compat != CompatibilityLevel.OFF && !result)
+    if (compat != CompatibilityLevel.OFF && allSummaries.length() > 0)
     {
       System.out.println(allSummaries);
     }
