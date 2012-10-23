@@ -1,0 +1,109 @@
+{
+  "name" : "testAnnotation",
+  "namespace" : "com.linkedin.restli.restspec",
+  "path" : "/testAnnotation",
+  "schema" : "com.linkedin.restli.common.EmptyRecord",
+  "doc" : "generated from: com.linkedin.restli.restspec.TestAnnotationResource",
+  "collection" : {
+    "identifier" : {
+      "name" : "testAnnotationId",
+      "type" : "long"
+    },
+    "supports" : [ "create", "get" ],
+    "methods" : [ {
+      "method" : "create",
+      "annotations" : {
+        "namedAnnotation" : {
+          "intArrayField" : [ 3, 2, 1 ],
+          "longField" : 21,
+          "myName" : "resource method annotation 2"
+        }
+      }
+    }, {
+      "method" : "get",
+      "parameters" : [ {
+        "name" : "extra",
+        "type" : "string",
+        "annotations" : {
+          "com.linkedin.restli.restspec.UnnamedAnnotation" : {
+            "value" : 123
+          }
+        }
+      } ],
+      "annotations" : {
+        "namedAnnotation" : {
+          "byteField" : "\u0011",
+          "byteStringField" : "\u0002\u0007\t",
+          "floatField" : 4.2,
+          "myName" : "resource method annotation"
+        }
+      }
+    } ],
+    "finders" : [ {
+      "name" : "testFinder",
+      "parameters" : [ {
+        "name" : "title",
+        "type" : "string",
+        "annotations" : {
+          "namedAnnotation" : {
+            "myName" : "finder parameter annotation"
+          }
+        }
+      } ],
+      "annotations" : {
+        "namedAnnotation" : {
+          "complexAnnotationArrayField" : [ {
+            "used1" : 111,
+            "used2" : 222
+          }, {
+            "used1" : 333,
+            "used2" : 444
+          } ],
+          "enumField" : "ENUM_MEMBER_2",
+          "myName" : "finder annotation"
+        },
+        "partial" : {
+          "used1" : 11
+        }
+      }
+    } ],
+    "actions" : [ {
+      "name" : "testAction",
+      "parameters" : [ {
+        "name" : "num",
+        "type" : "int",
+        "annotations" : {
+          "com.linkedin.restli.restspec.UnnamedAnnotation" : {
+            "value" : 456
+          }
+        }
+      } ],
+      "returns" : "int",
+      "annotations" : {
+        "namedAnnotation" : {
+          "classField" : "com.linkedin.restli.restspec.TestAnnotationResource",
+          "myName" : "action annotation",
+          "simpleAnnotationArrayField" : [ {
+            "value" : 7
+          }, {
+            "value" : 27
+          }, {
+            "value" : -1
+          } ]
+        }
+      }
+    } ],
+    "entity" : {
+      "path" : "/testAnnotation/{testAnnotationId}"
+    }
+  },
+  "annotations" : {
+    "com.linkedin.restli.restspec.EmptyAnnotation" : true,
+    "com.linkedin.restli.restspec.PartialInclusiveAnnotation" : {
+      "used" : 1
+    },
+    "namedAnnotation" : {
+      "myName" : "class-level annotation"
+    }
+  }
+}

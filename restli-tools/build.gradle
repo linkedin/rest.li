@@ -23,9 +23,9 @@ dependencies {
 }
 
 test {
-  systemProperties['test.projectDir'] = projectDir.toString()
+  systemProperties['test.projectDir'] = project.projectDir.path
 }
 
 allTests {
-  systemProperties['test.projectDir'] = projectDir.toString()
+  systemProperties['test.projectDir'] = project.projectDir.path
 }

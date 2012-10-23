@@ -16,23 +16,6 @@
 
 package com.linkedin.restli.internal.server.model;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Pattern;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.schema.DataSchema;
@@ -78,6 +61,23 @@ import com.linkedin.restli.server.annotations.RestLiCollectionCompoundKey;
 import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.resources.ComplexKeyResource;
 import com.linkedin.restli.server.resources.KeyValueResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -103,32 +103,38 @@ public final class RestLiAnnotationReader
    */
   public static ResourceModel processResource(final Class<?> resourceClass)
   {
+    final ResourceModel model;
     Set<ResourceModel> existingResourceModels = new HashSet<ResourceModel>();
 
-    if ((resourceClass.isAnnotationPresent(RestLiCollection.class)
-        || resourceClass.isAnnotationPresent(RestLiAssociation.class) || resourceClass.isAnnotationPresent(RestLiCollectionCompoundKey.class)))
+    if ((resourceClass.isAnnotationPresent(RestLiCollection.class) ||
+         resourceClass.isAnnotationPresent(RestLiAssociation.class) ||
+         resourceClass.isAnnotationPresent(RestLiCollectionCompoundKey.class)))
     {
       // If any of these annotations, a subclass of KeyValueResource is expected
       if (!KeyValueResource.class.isAssignableFrom(resourceClass))
       {
-        throw new RestLiInternalException("resource class '" + resourceClass
-            + "' declares RestLi annotation" + " but does not implement "
+        throw new RestLiInternalException("Resource class '" + resourceClass.getName()
+            + "' declares RestLi annotation but does not implement "
             + KeyValueResource.class.getName() + " interface.");
       }
 
       @SuppressWarnings("unchecked")
       Class<? extends KeyValueResource<?, ?>> clazz =
           (Class<? extends KeyValueResource<?, ?>>) resourceClass;
-      return processCollection(clazz, existingResourceModels);
+      model = processCollection(clazz, existingResourceModels);
     }
-
-    if (resourceClass.isAnnotationPresent(RestLiActions.class))
+    else if (resourceClass.isAnnotationPresent(RestLiActions.class))
     {
-      return processActions(resourceClass);
+      model = processActions(resourceClass);
+    }
+    else
+    {
+      throw new ResourceConfigException("Class '" + resourceClass.getName()
+          + "' must be annotated with a valid @RestLi... annotation");
     }
 
-    throw new ResourceConfigException("Class '" + resourceClass.getName()
-        + "' must be annotated with a valid @RestLi... annotation");
+    model.setCustomAnnotation(ResourceModelAnnotation.getAnnotationsMap(resourceClass.getAnnotations()));
+    return model;
   }
 
   private static ResourceModel processCollection(final Class<? extends KeyValueResource<?, ?>> collectionResourceClass,
@@ -243,6 +249,12 @@ public final class RestLiAnnotationReader
         resourceClass.getAnnotation(RestLiCollectionCompoundKey.class);
     RestLiAssociation assocAnno = resourceClass.getAnnotation(RestLiAssociation.class);
 
+    if (resourceClass.isAnnotationPresent(RestLiActions.class))
+    {
+      throw new ResourceConfigException("Resource class '" + resourceClass.getName()
+                                            + "' cannot have both @RestLiCollection and @RestLiActions annotations.");
+    }
+
     int annoCount = 0;
     annoCount += collAnno != null ? 1 : 0;
     annoCount += collCKAnno != null ? 1 : 0;
@@ -276,7 +288,8 @@ public final class RestLiAnnotationReader
    */
   private static Parameter getPositionalParameter(final ResourceModel model,
                                                   final ResourceMethod methodType,
-                                                  final int idx)
+                                                  final int idx,
+                                                  final AnnotationSet annotations)
   {
     switch (methodType)
     {
@@ -323,7 +336,8 @@ public final class RestLiAnnotationReader
                             false,
                             null,
                             Parameter.ParamType.POST,
-                            false);
+                            false,
+                            annotations);
           return p;
         }
         break;
@@ -338,7 +352,8 @@ public final class RestLiAnnotationReader
                             false,
                             null,
                             Parameter.ParamType.BATCH,
-                            false);
+                            false,
+                            annotations);
           return p;
         }
         break;
@@ -353,7 +368,8 @@ public final class RestLiAnnotationReader
                             false,
                             null,
                             Parameter.ParamType.BATCH,
-                            false);
+                            false,
+                            annotations);
           return p;
         }
         break;
@@ -368,7 +384,8 @@ public final class RestLiAnnotationReader
                             false,
                             null,
                             Parameter.ParamType.BATCH,
-                            false);
+                            false,
+                            annotations);
           return p;
         }
         break;
@@ -383,7 +400,8 @@ public final class RestLiAnnotationReader
                             false,
                             null,
                             Parameter.ParamType.BATCH,
-                            false);
+                            false,
+                            annotations);
           return p;
         }
         break;
@@ -398,7 +416,8 @@ public final class RestLiAnnotationReader
                             false,
                             null,
                             Parameter.ParamType.BATCH,
-                            false);
+                            false,
+                            annotations);
           return p;
         }
         break;
@@ -417,7 +436,8 @@ public final class RestLiAnnotationReader
                          false,
                          null,
                          Parameter.ParamType.POST,
-                         false);
+                         false,
+                         AnnotationSet.EMPTY);
   }
 
   @SuppressWarnings("unchecked")
@@ -429,7 +449,8 @@ public final class RestLiAnnotationReader
                          false,
                          null,
                          Parameter.ParamType.KEY,
-                         false);
+                         false,
+                         AnnotationSet.EMPTY);
   }
 
   private static Object getDefaultValue(final Optional optional, final Class<?> paramType)
@@ -460,7 +481,7 @@ public final class RestLiAnnotationReader
       AnnotationSet paramAnnotations = new AnnotationSet(paramsAnnos[idx]);
       Class<?> paramType = method.getParameterTypes()[idx];
 
-      Parameter<?> param = getPositionalParameter(model, methodType, idx);
+      Parameter<?> param = getPositionalParameter(model, methodType, idx, paramAnnotations);
 
       // if no positional definition, look for custom annotated parameters
       if (param == null)
@@ -483,11 +504,11 @@ public final class RestLiAnnotationReader
         }
         else if (paramAnnotations.contains(CallbackParam.class))
         {
-          param = buildCallbackParam(method, methodType, idx, paramType);
+          param = buildCallbackParam(method, methodType, idx, paramType, paramAnnotations);
         }
         else if (paramAnnotations.contains(ParSeqContext.class))
         {
-          param = buildParSeqContextParam(method, methodType, idx, paramType);
+          param = buildParSeqContextParam(method, methodType, idx, paramType, paramAnnotations);
         }
         else
         {
@@ -516,7 +537,8 @@ public final class RestLiAnnotationReader
   private static Parameter buildCallbackParam(final Method method,
                                               final ResourceMethod methodType,
                                               final int idx,
-                                              final Class<?> paramType)
+                                              final Class<?> paramType,
+                                              final AnnotationSet annotations)
   {
     if (!Callback.class.equals(paramType))
     {
@@ -533,14 +555,16 @@ public final class RestLiAnnotationReader
                       false,
                       null,
                       Parameter.ParamType.CALLBACK,
-                      false);
+                      false,
+                      annotations);
     return param;
   }
 
   private static Parameter<com.linkedin.parseq.Context> buildParSeqContextParam(final Method method,
                                                                                 final ResourceMethod methodType,
                                                                                 final int idx,
-                                                                                final Class<?> paramType)
+                                                                                final Class<?> paramType,
+                                                                                final AnnotationSet annotations)
   {
     if (!com.linkedin.parseq.Context.class.equals(paramType))
     {
@@ -556,7 +580,8 @@ public final class RestLiAnnotationReader
                                                       false,
                                                       null,
                                                       Parameter.ParamType.PARSEQ_CONTEXT,
-                                                      false);
+                                                      false,
+                                                      annotations);
   }
 
   @SuppressWarnings("unchecked")
@@ -648,7 +673,8 @@ public final class RestLiAnnotationReader
                       optional != null,
                       defaultContext,
                       Parameter.ParamType.CONTEXT,
-                      false);
+                      false,
+                      annotations);
     return param;
   }
 
@@ -666,7 +692,8 @@ public final class RestLiAnnotationReader
                       optional != null,
                       getDefaultValue(optional, paramType),
                       Parameter.ParamType.KEY,
-                      true);
+                      true,
+                      annotations);
     return param;
   }
 
@@ -690,7 +717,8 @@ public final class RestLiAnnotationReader
                         optional != null,
                         getDefaultValue(optional, paramType),
                         Parameter.ParamType.POST,
-                        true);
+                        true,
+                        annotations);
     }
     catch (Exception e)
     {
@@ -725,7 +753,8 @@ public final class RestLiAnnotationReader
                         optional != null,
                         getDefaultValue(optional, paramType),
                         Parameter.ParamType.QUERY,
-                        true);
+                        true,
+                        annotations);
     }
     catch (Exception e)
     {
@@ -954,7 +983,8 @@ public final class RestLiAnnotationReader
                                                    queryParameters,
                                                    queryType,
                                                    metadataType,
-                                                   getInterfaceType(method));
+                                                   getInterfaceType(method),
+                                                   ResourceModelAnnotation.getAnnotationsMap(method.getAnnotations()));
       validateFinderMethod(finderMethodDescriptor, model);
 
       if (!Modifier.isPublic(method.getModifiers()))
@@ -1010,7 +1040,8 @@ public final class RestLiAnnotationReader
       model.addResourceMethodDescriptor(ResourceMethodDescriptor.createForRestful(resourceMethod,
                                                                                   method,
                                                                                   parameters,
-                                                                                  getInterfaceType(method)));
+                                                                                  getInterfaceType(method),
+                                                                                  ResourceModelAnnotation.getAnnotationsMap(method.getAnnotations())));
     }
   }
 
@@ -1082,7 +1113,8 @@ public final class RestLiAnnotationReader
         model.addResourceMethodDescriptor(ResourceMethodDescriptor.createForRestful(resourceMethod,
                                                                                     method,
                                                                                     parameters,
-                                                                                    getInterfaceType(method)));
+                                                                                    getInterfaceType(method),
+                                                                                    ResourceModelAnnotation.getAnnotationsMap(method.getAnnotations())));
       }
     }
   }
@@ -1163,7 +1195,8 @@ public final class RestLiAnnotationReader
                                                                                actionAnno.resourceLevel(),
                                                                                returnClass,
                                                                                returnTyperefSchema,
-                                                                               getInterfaceType(method)));
+                                                                               getInterfaceType(method),
+                                                                               ResourceModelAnnotation.getAnnotationsMap(method.getAnnotations())));
 
   }
 

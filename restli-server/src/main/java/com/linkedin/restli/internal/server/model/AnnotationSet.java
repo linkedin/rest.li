@@ -20,7 +20,9 @@
 
 package com.linkedin.restli.internal.server.model;
 
+
 import java.lang.annotation.Annotation;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,6 +34,8 @@ import java.util.Map;
 public class AnnotationSet
 {
   private final Map<Class<? extends Annotation>, Annotation> _map;
+
+  public static final AnnotationSet EMPTY = new AnnotationSet(new Annotation[0]);
 
   /**
    * Construct from annotations array.
@@ -83,5 +87,11 @@ public class AnnotationSet
       }
     }
     return result;
+  }
+
+  public Annotation[] getAll()
+  {
+    final Collection<Annotation> allAnnotations = _map.values();
+    return allAnnotations.toArray(new Annotation[allAnnotations.size()]);
   }
 }

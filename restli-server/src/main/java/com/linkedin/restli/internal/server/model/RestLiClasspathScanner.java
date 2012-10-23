@@ -222,6 +222,7 @@ class RestLiClasspathScanner
               if (_annotations.contains(a.annotationType()))
               {
                 _matchedClasses.add(clazz);
+                break;
               }
             }
           }

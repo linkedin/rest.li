@@ -16,19 +16,21 @@
 
 package com.linkedin.restli.internal.server.model;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
+import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.resources.ComplexKeyResource;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  *
@@ -55,12 +57,13 @@ public class ResourceModel
   private final Class<? extends RecordTemplate> _keyParamsClass;
 
   private final Map<String, Class<?>>           _keyClasses;
-
   private final Class<? extends RecordTemplate> _valueClass;
 
   private final List<ResourceMethodDescriptor>  _resourceMethodDescriptors;
 
-  private final Map<String, ResourceModel>            _pathSubResourceMap;
+  private final Map<String, ResourceModel>      _pathSubResourceMap;
+
+  private DataMap                               _customAnnotations;
 
   /**
    * Constructor.
@@ -162,7 +165,6 @@ public class ResourceModel
     return keyNames;
   }
 
-
   /**
    * Add a {@link ResourceMethodDescriptor} to the model.
    *
@@ -192,6 +194,11 @@ public class ResourceModel
   public void setParentResourceModel(final ResourceModel parentResourceModel)
   {
     _parentResourceModel = parentResourceModel;
+  }
+
+  public void setCustomAnnotation(DataMap customAnnotationData)
+  {
+    _customAnnotations = customAnnotationData;
   }
 
   /**
@@ -413,5 +420,10 @@ public class ResourceModel
   public Class<? extends RecordTemplate> getKeyParamsClass()
   {
     return _keyParamsClass;
+  }
+
+  public DataMap getCustomAnnotationData()
+  {
+    return _customAnnotations;
   }
 }

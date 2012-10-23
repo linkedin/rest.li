@@ -36,6 +36,12 @@
       "doc" : "Documentation for this parameter",
       "type" : "string",
       "optional" : true
+    },
+    {
+      "name" : "annotations",
+      "doc": "custom annotation data",
+      "type" : { "type" : "map", "values" : "CustomAnnotationSchema" },
+      "optional" : true
     }
   ]
 }

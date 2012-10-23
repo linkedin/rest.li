@@ -48,6 +48,12 @@
       "doc" : "details of action set, if this resource is an action set",
       "type" : "ActionsSetSchema",
       "optional" : true
+    },
+    {
+      "name" : "annotations",
+      "doc": "custom annotation data",
+      "type" : { "type" : "map", "values" : "CustomAnnotationSchema" },
+      "optional" : true
     }
   ]
 }

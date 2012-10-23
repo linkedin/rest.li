@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.internal.server.model;
 
+import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.template.FieldDef;
 import com.linkedin.restli.server.annotations.ActionParam;
@@ -51,13 +52,17 @@ public class Parameter<T> extends FieldDef<T>
   private final boolean _isArray; // true if the parameter is an array
   private final Class<?> _itemType; // array item type or null
 
+  private final AnnotationSet _annotations;
+  private final DataMap _customAnnotations;
+
   public Parameter(final String name,
                    final Class<T> type,
                    final TyperefDataSchema typerefSchema,
                    final boolean optional,
                    final T defaultValue,
                    final ParamType paramType,
-                   final boolean custom)
+                   final boolean custom,
+                   final AnnotationSet annotations)
   {
     super(name, type);
 
@@ -69,6 +74,8 @@ public class Parameter<T> extends FieldDef<T>
 
     _isArray = getType().isArray();
     _itemType = getType().getComponentType();
+    _annotations = annotations;
+    _customAnnotations = ResourceModelAnnotation.getAnnotationsMap(annotations.getAll());
   }
 
   public boolean isOptional()
@@ -109,6 +116,16 @@ public class Parameter<T> extends FieldDef<T>
   public Class<?> getItemType()
   {
     return _itemType;
+  }
+
+  public AnnotationSet getAnnotations()
+  {
+    return _annotations;
+  }
+
+  public DataMap getCustomAnnotationData()
+  {
+    return _customAnnotations;
   }
 
   /**

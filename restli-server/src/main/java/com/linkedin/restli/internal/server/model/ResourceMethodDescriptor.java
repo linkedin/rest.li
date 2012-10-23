@@ -16,15 +16,16 @@
 
 package com.linkedin.restli.internal.server.model;
 
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
+import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.server.ResourceLevel;
+
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author dellamag
@@ -48,6 +49,7 @@ public final class ResourceMethodDescriptor
   private final Class<?>                                _actionReturnType;
   private final TyperefDataSchema                       _actionReturnTyperefSchema;
   private final InterfaceType                           _interfaceType;
+  private final DataMap                                 _customAnnotations;
 
   /**
    * Finder resource method descriptor factory.
@@ -63,7 +65,8 @@ public final class ResourceMethodDescriptor
                                                          final List<Parameter<?>> parameters,
                                                          final String finderName,
                                                          final Class<? extends RecordTemplate> metadataType,
-                                                         final InterfaceType interfaceType)
+                                                         final InterfaceType interfaceType,
+                                                         final DataMap customAnnotations)
   {
     return new ResourceMethodDescriptor(ResourceMethod.FINDER,
                                         method,
@@ -74,7 +77,8 @@ public final class ResourceMethodDescriptor
                                         null,
                                         null,
                                         metadataType,
-                                        interfaceType);
+                                        interfaceType,
+                                        customAnnotations);
   }
 
 
@@ -97,7 +101,8 @@ public final class ResourceMethodDescriptor
                                                final ResourceLevel actionResourceType,
                                                final Class<?> actionReturnType,
                                                final TyperefDataSchema actionReturnTyperefSchema,
-                                               final InterfaceType interfaceType)
+                                               final InterfaceType interfaceType,
+                                               final DataMap customAnnotations)
   {
     return new ResourceMethodDescriptor(ResourceMethod.ACTION,
                                         method,
@@ -108,7 +113,8 @@ public final class ResourceMethodDescriptor
                                         actionReturnType,
                                         actionReturnTyperefSchema,
                                         null,
-                                        interfaceType);
+                                        interfaceType,
+                                        customAnnotations);
   }
 
   /**
@@ -126,7 +132,8 @@ public final class ResourceMethodDescriptor
     return createForRestful(type,
                             method,
                             Collections.<Parameter<?>> emptyList(),
-                            interfaceType);
+                            interfaceType,
+                            null);
   }
 
   /**
@@ -141,7 +148,8 @@ public final class ResourceMethodDescriptor
   public static ResourceMethodDescriptor createForRestful(final ResourceMethod type,
                                                           final Method method,
                                                           final List<Parameter<?>> parameters,
-                                                          final InterfaceType interfaceType)
+                                                          final InterfaceType interfaceType,
+                                                          final DataMap customAnnotations)
   {
     return new ResourceMethodDescriptor(type,
                                         method,
@@ -152,7 +160,8 @@ public final class ResourceMethodDescriptor
                                         null,
                                         null,
                                         null,
-                                        interfaceType);
+                                        interfaceType,
+                                        customAnnotations);
   }
 
   /**
@@ -167,7 +176,8 @@ public final class ResourceMethodDescriptor
                                    final Class<?> actionReturnType,
                                    final TyperefDataSchema actionReturnTyperefSchema,
                                    final Class<? extends RecordTemplate> finderMetadataType,
-                                   final InterfaceType interfaceType)
+                                   final InterfaceType interfaceType,
+                                   final DataMap customAnnotations)
   {
     super();
     _type = type;
@@ -180,6 +190,7 @@ public final class ResourceMethodDescriptor
     _actionReturnTyperefSchema = actionReturnTyperefSchema;
     _finderMetadataType = finderMetadataType;
     _interfaceType = interfaceType;
+    _customAnnotations = customAnnotations;
   }
 
   /**
@@ -331,6 +342,11 @@ public final class ResourceMethodDescriptor
   public InterfaceType getInterfaceType()
   {
     return _interfaceType;
+  }
+
+  public DataMap getCustomAnnotationData()
+  {
+    return _customAnnotations;
   }
 
   @Override

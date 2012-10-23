@@ -110,6 +110,7 @@ public class RestLiResourceModelExporterCmdLineApp
     catch (Throwable e)
     {
       log.error("Error writing IDL files", e);
+      System.exit(1);
     }
   }
 }

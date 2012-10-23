@@ -19,6 +19,12 @@
       "doc" : "list of query parameters for this method",
       "type" : { "type" : "array", "items" : "ParameterSchema" },
       "optional" : true
+    },
+    {
+      "name" : "annotations",
+      "doc": "custom annotation data",
+      "type" : { "type" : "map", "values" : "CustomAnnotationSchema" },
+      "optional" : true
     }
   ]
 }

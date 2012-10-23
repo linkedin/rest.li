@@ -38,6 +38,12 @@
       "doc" : "list of association keys for this finder - only present if this finder takes multiple association keys",
       "type" : { "type" : "array", "items" : "string" },
       "optional" : true
+    },
+    {
+      "name" : "annotations",
+      "doc": "custom annotation data",
+      "type" : { "type" : "map", "values" : "CustomAnnotationSchema" },
+      "optional" : true
     }
   ]
 }

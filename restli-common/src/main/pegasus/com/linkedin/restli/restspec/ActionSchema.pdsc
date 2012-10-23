@@ -31,6 +31,12 @@
       "doc" : "list of exception types thrown by this action",
       "type" : { "type" : "array", "items" : "string" },
       "optional" : true
+    },
+    {
+      "name" : "annotations",
+      "doc": "custom annotation data",
+      "type" : { "type" : "map", "values" : "CustomAnnotationSchema" },
+      "optional" : true
     }
   ]
 }

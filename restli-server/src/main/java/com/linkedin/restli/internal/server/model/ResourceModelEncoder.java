@@ -16,13 +16,8 @@
 
 package com.linkedin.restli.internal.server.model;
 
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 
+import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.JsonBuilder;
 import com.linkedin.data.schema.NamedDataSchema;
@@ -40,6 +35,7 @@ import com.linkedin.restli.restspec.AssocKeySchema;
 import com.linkedin.restli.restspec.AssocKeySchemaArray;
 import com.linkedin.restli.restspec.AssociationSchema;
 import com.linkedin.restli.restspec.CollectionSchema;
+import com.linkedin.restli.restspec.CustomAnnotationSchemaMap;
 import com.linkedin.restli.restspec.EntitySchema;
 import com.linkedin.restli.restspec.FinderSchema;
 import com.linkedin.restli.restspec.FinderSchemaArray;
@@ -54,6 +50,14 @@ import com.linkedin.restli.restspec.RestMethodSchemaArray;
 import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.resources.ComplexKeyResource;
+
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
 
 /**
  * Encodes a ResourceModel (runtime-reflection oriented class) into the JSON-serializable
@@ -131,6 +135,12 @@ public class ResourceModelEncoder
     else
     {
       appendCollection(rootNode, resourceModel);
+    }
+
+    final DataMap customAnnotation = resourceModel.getCustomAnnotationData();
+    if (!customAnnotation.isEmpty())
+    {
+      rootNode.setAnnotations(new CustomAnnotationSchemaMap(resourceModel.getCustomAnnotationData()));
     }
 
     return rootNode;
@@ -461,6 +471,12 @@ public class ResourceModelEncoder
           action.setReturns(returnTypeString);
         }
 
+        final DataMap customAnnotation = resourceMethodDescriptor.getCustomAnnotationData();
+        if (!customAnnotation.isEmpty())
+        {
+          action.setAnnotations(new CustomAnnotationSchemaMap(customAnnotation));
+        }
+
         actionsArray.add(action);
       }
     }
@@ -522,6 +538,13 @@ public class ResourceModelEncoder
           metadataSchema.setType(buildDataSchemaType(metadataType));
           finder.setMetadata(metadataSchema);
         }
+
+        final DataMap customAnnotation = resourceMethodDescriptor.getCustomAnnotationData();
+        if (!customAnnotation.isEmpty())
+        {
+          finder.setAnnotations(new CustomAnnotationSchemaMap(customAnnotation));
+        }
+
         findersArray.add(finder);
       }
     }
@@ -585,6 +608,12 @@ public class ResourceModelEncoder
         paramSchema.setDoc(paramDoc);
       }
 
+      final DataMap customAnnotation = param.getCustomAnnotationData();
+      if (!customAnnotation.isEmpty())
+      {
+        paramSchema.setAnnotations(new CustomAnnotationSchemaMap(customAnnotation));
+      }
+
       parameterSchemaArray.add(paramSchema);
     }
 
@@ -632,6 +661,13 @@ public class ResourceModelEncoder
       {
         restMethod.setParameters(parameters);
       }
+
+      final DataMap customAnnotation = descriptor.getCustomAnnotationData();
+      if (!customAnnotation.isEmpty())
+      {
+        restMethod.setAnnotations(new CustomAnnotationSchemaMap(customAnnotation));
+      }
+
       restMethods.add(restMethod);
     }
 
