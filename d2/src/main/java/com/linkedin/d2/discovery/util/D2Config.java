@@ -326,37 +326,52 @@ public class D2Config
 
     _zkConnection.start();
 
-    _log.info("Cluster configuration:\n" + clusters);
-    writeConfig(ZKFSUtil.clusterPath(_basePath), new ClusterPropertiesJsonSerializer(),
-                new ClusterPropertiesJsonSerializer(), clusters, _clusterDefaults);
-    _log.info("Wrote cluster configuration");
-
-    _log.info("Service configuration:\n" + services);
-    writeConfig(ZKFSUtil.servicePath(_basePath), new ServicePropertiesJsonSerializer(),
-                new ServicePropertiesJsonSerializer(), services, _serviceDefaults);
-    _log.info("Wrote service configuration");
-
-    if (!serviceVariants.isEmpty())
+    try
     {
-      for (Map.Entry<String,Map<String,Map<String,Object>>> entry : serviceVariants.entrySet())
+      _log.info("Cluster configuration:\n" + clusters);
+      writeConfig(ZKFSUtil.clusterPath(_basePath), new ClusterPropertiesJsonSerializer(),
+                  new ClusterPropertiesJsonSerializer(), clusters, _clusterDefaults);
+      _log.info("Wrote cluster configuration");
+
+      _log.info("Service configuration:\n" + services);
+      writeConfig(ZKFSUtil.servicePath(_basePath), new ServicePropertiesJsonSerializer(),
+                  new ServicePropertiesJsonSerializer(), services, _serviceDefaults);
+      _log.info("Wrote service configuration");
+
+      if (!serviceVariants.isEmpty())
       {
-        if (_log.isDebugEnabled())
+        for (Map.Entry<String,Map<String,Map<String,Object>>> entry : serviceVariants.entrySet())
         {
-          _log.info("serviceVariant: "+ entry + "\n");
+          if (_log.isDebugEnabled())
+          {
+            _log.info("serviceVariant: "+ entry + "\n");
+          }
+          else
+          {
+            _log.info("serviceVariant: "+ entry.getKey() + "\n");
+          }
+          writeConfig(ZKFSUtil.servicePath(_basePath,entry.getKey()), new ServicePropertiesJsonSerializer(),
+                      new ServicePropertiesJsonSerializer(), entry.getValue(), _serviceDefaults);
         }
-        else
-        {
-          _log.info("serviceVariant: "+ entry.getKey() + "\n");
-        }
-        writeConfig(ZKFSUtil.servicePath(_basePath,entry.getKey()), new ServicePropertiesJsonSerializer(),
-                    new ServicePropertiesJsonSerializer(), entry.getValue(), _serviceDefaults);
+        _log.info("Wrote service variant configurations");
       }
-      _log.info("Wrote service variant configurations");
+
+      _log.info("Configuration complete");
+
+      return NO_ERROR_EXIT_CODE;
     }
-
-    _log.info("Configuration complete");
-
-    return NO_ERROR_EXIT_CODE;
+    finally
+    {
+      try
+      {
+        _zkConnection.shutdown();
+      }
+      catch (InterruptedException e)
+      {
+        Thread.currentThread().interrupt();
+        _log.warn("ZooKeeper shutdown interrupted", e);
+      }
+    }
   }
 
   private <T> void writeConfig(String path, PropertySerializer<T> serializer,
