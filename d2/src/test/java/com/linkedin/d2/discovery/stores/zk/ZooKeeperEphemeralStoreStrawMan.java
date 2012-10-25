@@ -27,6 +27,9 @@ import com.linkedin.d2.discovery.event.PropertyEventThread;
 import com.linkedin.d2.discovery.stores.PropertyStoreException;
 import com.linkedin.d2.discovery.stores.PropertyStringSerializer;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStoreTest.PropertyStringMerger;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+
 
 public class ZooKeeperEphemeralStoreStrawMan
 {
@@ -45,7 +48,8 @@ public class ZooKeeperEphemeralStoreStrawMan
 
     listenTos.add("foo12");
 
-    PropertyEventBus<String> bus = new PropertyEventBusImpl<String>(new PropertyEventThread("ZK test"), zk);
+    ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+    PropertyEventBus<String> bus = new PropertyEventBusImpl<String>(executorService, zk);
 
     bus.register(listenTos, new PropertyEventSubscriber<String>()
     {
@@ -95,5 +99,6 @@ public class ZooKeeperEphemeralStoreStrawMan
     }
 
     zkClient.getZooKeeper().close();
+    executorService.shutdown();
   }
 }

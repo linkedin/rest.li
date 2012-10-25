@@ -134,6 +134,18 @@ public class SimpleLoadBalancerStateJmx implements SimpleLoadBalancerStateJmxMBe
   }
 
   @Override
+  public long getDelayedExecution()
+  {
+    return _state.getDelayedExecution();
+  }
+
+  @Override
+  public void setDelayedExecution(long milliseconds)
+  {
+    _state.setDelayedExecution(milliseconds);
+  }
+
+  @Override
   public void listenToService(String serviceName)
   {
     _state.listenToService(serviceName, new NullStateListenerCallback());

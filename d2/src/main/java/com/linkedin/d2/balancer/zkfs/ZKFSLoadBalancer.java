@@ -79,8 +79,7 @@ public class ZKFSLoadBalancer
   private final TogglingLoadBalancerFactory _loadBalancerFactory;
   private final File _zkFlagFile;
   private final ZKFSDirectory _directory;
-
-  private final PropertyEventThread _thread;
+  private volatile long _delayedExecution;
   private final ScheduledExecutorService _executor;
   private final KeyMapper _keyMapper;
 
@@ -97,7 +96,7 @@ public class ZKFSLoadBalancer
 
   public static interface TogglingLoadBalancerFactory
   {
-    TogglingLoadBalancer createLoadBalancer(ZKConnection connection, PropertyEventThread thread);
+    TogglingLoadBalancer createLoadBalancer(ZKConnection connection, ScheduledExecutorService executorService);
   }
 
   /**
@@ -135,8 +134,18 @@ public class ZKFSLoadBalancer
     _directory = new ZKFSDirectory(basePath);
 
     _executor = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("D2 PropertyEventExecutor"));
-    _thread = new PropertyEventExecutor("Load Balancer property thread", _executor);
     _keyMapper = new ConsistentHashKeyMapper(this);
+    _delayedExecution = 1000;
+  }
+
+  public long getDelayedExecution()
+  {
+    return _delayedExecution;
+  }
+
+  public void setDelayedExecution(long milliseconds)
+  {
+    _delayedExecution = milliseconds;
   }
 
   @Override
@@ -192,7 +201,7 @@ public class ZKFSLoadBalancer
     }
 
     _zkConnection = new ZKConnection(_connectString, _sessionTimeout);
-    final TogglingLoadBalancer balancer = _loadBalancerFactory.createLoadBalancer(_zkConnection, _thread);
+    final TogglingLoadBalancer balancer = _loadBalancerFactory.createLoadBalancer(_zkConnection, _executor);
 
     // _currentLoadBalancer will never be null except the first time this method is called.
     // In this case we want the not-yet-started load balancer to service client requests.  In
@@ -221,7 +230,7 @@ public class ZKFSLoadBalancer
     {
       throw new IllegalStateException("Startup already in progress");
     }
-    _thread.send(new PropertyEventThread.PropertyEvent("startup")
+    _executor.execute(new PropertyEventThread.PropertyEvent("startup")
     {
 
       @Override
@@ -251,8 +260,7 @@ public class ZKFSLoadBalancer
             if (startupCallback != null)
             {
               // Noone has enabled the stores yet either way
-              LOG.error("No response from ZooKeeper within {}ms, enabling backup stores",
-                        _initialZKTimeout);
+              LOG.error("No response from ZooKeeper within {}ms, enabling backup stores", _initialZKTimeout);
               balancer.enableBackup(startupCallback);
             }
           }
@@ -451,14 +459,34 @@ public class ZKFSLoadBalancer
 
                   // We shut down the old LoadBalancer here, which shuts down resources it created,
                   // but not the stores we created.
-                  _balancer.shutdown(new PropertyEventThread.PropertyEventShutdownCallback()
+                  // However there is a concurrency edge case that we should handle here by delaying the shutdown.
+                  // See example below:
+                  //
+                  // Thread 1 in DynamicClient.java         Thread 2 in ZKFSLoadBalancer.java
+                  // client = _balancer.getClient()
+                  //                                        We receive ZK state change -> ZK connection is expired
+                  //                                        ZKListener shuts down load balancer which eventually
+                  //                                        shutdown all clients
+                  // client.send() -> ERROR because
+                  // the client is in shut down state
+                  // so we need to delay the the shutdown until we replace the _currentLoadBalancer with
+                  // the new LoadBalancer and the old client holder in DynamicClient has finished calling send()
+                  _executor.schedule(new Runnable()
                   {
                     @Override
-                    public void done()
+                    public void run()
                     {
-                      LOG.info("Shut down old LoadBalancer after ZooKeeper session expiration");
+                      _balancer.shutdown(new PropertyEventThread.PropertyEventShutdownCallback()
+                      {
+                        @Override
+                        public void done()
+                        {
+                          LOG.info("Shut down old LoadBalancer after ZooKeeper session expiration");
+                        }
+                      });
                     }
-                  });
+                  }, _delayedExecution, TimeUnit.MILLISECONDS);
+
                 }
 
                 @Override
@@ -468,6 +496,8 @@ public class ZKFSLoadBalancer
                 }
               };
 
+              // create a new load balancer and swap the old balancer with the new load balancer then the callback
+              // will shutdown the old balancer
               start(callback);
 
               break;
@@ -481,24 +511,6 @@ public class ZKFSLoadBalancer
           }
         }
       });
-    }
-  }
-
-  private class PropertyEventExecutor extends PropertyEventThread
-  {
-    private final ExecutorService _executor;
-
-    public PropertyEventExecutor(String name, ExecutorService executor)
-    {
-      super(name);
-      _executor = executor;
-    }
-
-    @Override
-    public boolean send(PropertyEvent message)
-    {
-      _executor.execute(message);
-      return true;
     }
   }
 

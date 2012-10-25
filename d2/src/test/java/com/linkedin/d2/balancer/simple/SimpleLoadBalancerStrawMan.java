@@ -37,6 +37,9 @@ import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+
 
 public class SimpleLoadBalancerStrawMan
 {
@@ -59,20 +62,19 @@ public class SimpleLoadBalancerStrawMan
 
     // listen for service updates (could be a glu discovery client, zk discovery client,
     // config discovery client, etc)
-    PropertyEventThread thread = new PropertyEventThread("straw man thread");
+    ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
     MockStore<ServiceProperties> serviceRegistry = new MockStore<ServiceProperties>();
     MockStore<ClusterProperties> clusterRegistry = new MockStore<ClusterProperties>();
     MockStore<UriProperties> uriRegistry = new MockStore<UriProperties>();
 
     SimpleLoadBalancerState state =
-        new SimpleLoadBalancerState(thread,
+        new SimpleLoadBalancerState(executorService,
                                     uriRegistry,
                                     clusterRegistry,
                                     serviceRegistry,
                                     clientFactories,
                                     loadBalancerStrategyFactories);
 
-    thread.start();
 
     // create the load balancer
     SimpleLoadBalancer loadBalancer = new SimpleLoadBalancer(state);

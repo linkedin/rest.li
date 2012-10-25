@@ -22,6 +22,7 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
+import com.linkedin.d2.discovery.event.SynchronousExecutorService;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -35,6 +36,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -73,7 +76,6 @@ import com.linkedin.d2.balancer.util.hashing.MD5Hash;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.d2.discovery.PropertySerializer;
-import com.linkedin.d2.discovery.event.PropertyEventThread;
 import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
 import com.linkedin.d2.discovery.stores.PropertyStore;
 import com.linkedin.d2.discovery.stores.file.FileStore;
@@ -114,7 +116,7 @@ public class SimpleLoadBalancerTest
       FileUtils.deleteDirectory(dirToDelete);
     }
   }
-
+  
   @Test(groups = { "small", "back-end" })
   public void testLoadBalancerSmoke() throws URISyntaxException,
           ServiceUnavailableException,
@@ -132,8 +134,7 @@ public class SimpleLoadBalancerTest
       MockStore<ClusterProperties> clusterRegistry = new MockStore<ClusterProperties>();
       MockStore<UriProperties> uriRegistry = new MockStore<UriProperties>();
 
-      PropertyEventThread thread = new PropertyEventThread("test thread");
-      thread.start();
+      ScheduledExecutorService executorService = new SynchronousExecutorService();
 
       //loadBalancerStrategyFactories.put("rr", new RandomLoadBalancerStrategyFactory());
       loadBalancerStrategyFactories.put("degrader", new DegraderLoadBalancerStrategyFactoryV3());
@@ -142,7 +143,7 @@ public class SimpleLoadBalancerTest
       // HttpClientFactory();
 
       SimpleLoadBalancerState state =
-          new SimpleLoadBalancerState(thread,
+          new SimpleLoadBalancerState(executorService,
                                       uriRegistry,
                                       clusterRegistry,
                                       serviceRegistry,
@@ -213,11 +214,9 @@ public class SimpleLoadBalancerTest
         fail("unable to shutdown state");
       }
 
-      thread.interrupt();
+      executorService.shutdownNow();
 
-      thread.join(100);
-
-      assertFalse(thread.isAlive(), "Property event thread should have shut down!");
+      assertTrue(executorService.isShutdown(), "ExecutorService should have shut down!");
     }
   }
 
@@ -239,15 +238,13 @@ public class SimpleLoadBalancerTest
       MockStore<ClusterProperties> clusterRegistry = new MockStore<ClusterProperties>();
       MockStore<UriProperties> uriRegistry = new MockStore<UriProperties>();
 
-      PropertyEventThread thread = new PropertyEventThread("test thread");
-      thread.start();
-
+      ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
       loadBalancerStrategyFactories.put("degrader", new DegraderLoadBalancerStrategyFactoryV3());
 
       clientFactories.put("http", new DoNothingClientFactory());
 
       SimpleLoadBalancerState state =
-          new SimpleLoadBalancerState(thread,
+          new SimpleLoadBalancerState(executorService,
               uriRegistry,
               clusterRegistry,
               serviceRegistry,
@@ -481,11 +478,9 @@ public class SimpleLoadBalancerTest
         fail("unable to shutdown state");
       }
 
-      thread.interrupt();
+      executorService.shutdownNow();
 
-      thread.join(100);
-
-      assertFalse(thread.isAlive(), "Property event thread should have shut down!");
+      assertTrue(executorService.isShutdown(), "ExecutorService should have shut down!");
     }
   }
 

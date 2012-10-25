@@ -21,6 +21,7 @@ import static com.linkedin.d2.discovery.util.LogUtil.info;
 import static com.linkedin.d2.discovery.util.LogUtil.trace;
 import static com.linkedin.d2.discovery.util.LogUtil.warn;
 
+import com.linkedin.r2.util.NamedThreadFactory;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,6 +33,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -86,9 +90,10 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   private final AtomicLong                                                               _version;
 
   private final Map<String, Set<String>>                                                 _servicesPerCluster;
-  private final PropertyEventThread                                                      _thread;
+  private final ScheduledExecutorService                                                 _executor;
   private final List<SimpleLoadBalancerStateListener>                                    _listeners;
 
+  private volatile long                                                                  _delayedExecution;
   /**
    * Map from cluster name => uri => tracker client.
    */
@@ -169,29 +174,29 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
    */
 
   @SuppressWarnings("unchecked")
-  public SimpleLoadBalancerState(PropertyEventThread thread,
+  public SimpleLoadBalancerState(ScheduledExecutorService executorService,
                                  PropertyEventPublisher<UriProperties> uriPublisher,
                                  PropertyEventPublisher<ClusterProperties> clusterPublisher,
                                  PropertyEventPublisher<ServiceProperties> servicePublisher,
                                  Map<String, TransportClientFactory> clientFactories,
                                  Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories)
   {
-    this(thread,
-         new PropertyEventBusImpl<UriProperties>(thread, uriPublisher),
-         new PropertyEventBusImpl<ClusterProperties>(thread, clusterPublisher),
-         new PropertyEventBusImpl<ServiceProperties>(thread, servicePublisher),
+    this(executorService,
+         new PropertyEventBusImpl<UriProperties>(executorService, uriPublisher),
+         new PropertyEventBusImpl<ClusterProperties>(executorService, clusterPublisher),
+         new PropertyEventBusImpl<ServiceProperties>(executorService, servicePublisher),
          clientFactories,
          loadBalancerStrategyFactories);
   }
 
-  public SimpleLoadBalancerState(PropertyEventThread thread,
+  public SimpleLoadBalancerState(ScheduledExecutorService executorService,
                                  PropertyEventBus<UriProperties> uriBus,
                                  PropertyEventBus<ClusterProperties> clusterBus,
                                  PropertyEventBus<ServiceProperties> serviceBus,
                                  Map<String, TransportClientFactory> clientFactories,
                                  Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories)
   {
-    _thread = thread;
+    _executor = executorService;
     _uriProperties =
         new ConcurrentHashMap<String, LoadBalancerStateItem<UriProperties>>();
     _clusterInfo =
@@ -226,13 +231,14 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     _clusterClients = new ConcurrentHashMap<String, Map<String, TransportClient>>();
     _listeners =
         Collections.synchronizedList(new ArrayList<SimpleLoadBalancerStateListener>());
+    _delayedExecution = 1000;
   }
 
   public void register(final SimpleLoadBalancerStateListener listener)
   {
     trace(_log, "register listener: ", listener);
 
-    _thread.send(new PropertyEvent("add listener for state")
+    _executor.execute(new PropertyEvent("add listener for state")
     {
       @Override
       public void run()
@@ -246,7 +252,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   {
     trace(_log, "unregister listener: ", listener);
 
-    _thread.send(new PropertyEvent("remove listener for state")
+    _executor.execute(new PropertyEvent("remove listener for state")
     {
       @Override
       public void run()
@@ -268,7 +274,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     trace(_log, "shutdown");
 
     // shutdown all three registries, all tracker clients, and the event thread
-    _thread.send(new PropertyEvent("shutdown load balancer state")
+    _executor.execute(new PropertyEvent("shutdown load balancer state")
     {
       @Override
       public void run()
@@ -289,7 +295,6 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
             shutdown.done();
           }
         }), transportClients.size());
-
 
         info(_log, "shutting down cluster clients");
 
@@ -424,7 +429,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   {
     trace(_log, "setVersion: ", version);
 
-    _thread.send(new PropertyEvent("set version to: " + version)
+    _executor.execute(new PropertyEvent("set version to: " + version)
     {
       @Override
       public void run()
@@ -446,6 +451,16 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   public boolean isListeningToService(String serviceName)
   {
     return _serviceSubscriber.isListeningToProperty(serviceName);
+  }
+
+  public long getDelayedExecution()
+  {
+    return _delayedExecution;
+  }
+
+  public void setDelayedExecution(long delayedExecution)
+  {
+    _delayedExecution = delayedExecution;
   }
 
   @Override
@@ -821,7 +836,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
 
         // Replace the cluster clients with the newly instantiated map, before we instantiate the
         // the tracker clients. getTrackerClient() will use the cluster client from this map.
-        Map<String,TransportClient> oldClusterClients = _clusterClients.put(clusterName, newClusterClients);
+        final Map<String,TransportClient> oldClusterClients = _clusterClients.put(clusterName, newClusterClients);
 
         Map<URI,TrackerClient> newTrackerClients;
         UriProperties uriProperties = uriItem == null ? null : uriItem.getProperty();
@@ -849,26 +864,45 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
         // No need to shut down oldTrackerClients, because they all point directly to the TransportClient for the cluster
 
         // We do need to shut down the old cluster clients
+        // However there is a concurrency edge case that we should handle here by delaying the shutdown.
+        // Let's say there's a request to getClient() at the same time as new event coming to handlePut()
+        // Thread 1                                                   Thread 2
+        // _client = _loadBalancerState.getClient()
+        //                                                            handlePut() is called
+        //                                                            shutdown all transportClients
+        // _client.sendRequest()
+        //
+        // ERROR because thread 1 sendRequest is sending a request to client that's being shutdown by thread 2
+        // So if we introduce a delay before shutting down the old client, thread 1 sendRequest() will happen
+        // after the call to getClient() so we won't have this problem.
         if (oldClusterClients != null)
         {
-          for (TransportClient client : oldClusterClients.values())
+          _executor.schedule(new Runnable()
           {
-            Callback<None> callback = new Callback<None>()
+            @Override
+            public void run()
             {
-              @Override
-              public void onError(Throwable e)
+              for (TransportClient client : oldClusterClients.values())
               {
-                _log.warn("Failed to shut down old cluster TransportClient", e);
-              }
+                Callback<None> callback = new Callback<None>()
+                {
+                  @Override
+                  public void onError(Throwable e)
+                  {
+                    _log.warn("Failed to shut down old cluster TransportClient", e);
+                  }
 
-              @Override
-              public void onSuccess(None result)
-              {
-                _log.info("Shut down old cluster TransportClient");
+                  @Override
+                  public void onSuccess(None result)
+                  {
+                    _log.info("Shut down old cluster TransportClient");
+                  }
+                };
+                client.shutdown(callback);
               }
-            };
-            client.shutdown(callback);
-          }
+            }
+          }, _delayedExecution, TimeUnit.MILLISECONDS);
+
         }
 
         // refresh all services on this cluster in case the prioritized schemes

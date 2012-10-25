@@ -15,4 +15,5 @@ dependencies {
   compile externalDependency.javaxInject
   compile externalDependency.parseq
   testCompile externalDependency.testng
+  testCompile project(path: ':d2', configuration: 'testArtifacts')
 }

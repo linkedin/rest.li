@@ -45,6 +45,7 @@ import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 
+import com.linkedin.r2.util.NamedThreadFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -53,7 +54,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class LoadBalancerEchoClient
@@ -175,12 +178,14 @@ public class LoadBalancerEchoClient
 
     // chains
     PropertyEventThread thread = new PropertyEventThread("echo client event thread");
+    ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory(
+                        "echo client event thread"));
 
     // start up the world
     thread.start();
 
     PropertyEventBus<ServiceProperties> serviceBus =
-        new PropertyEventBusImpl<ServiceProperties>(thread, zkServiceRegistry);
+        new PropertyEventBusImpl<ServiceProperties>(executorService, zkServiceRegistry);
     serviceBus.register(fsServiceStore);
     new ZooKeeperTogglingStore<ServiceProperties>(zkServiceRegistry,
                                                   fsServiceStore,
@@ -188,12 +193,12 @@ public class LoadBalancerEchoClient
                                                   true);
 
     PropertyEventBus<UriProperties> uriBus =
-        new PropertyEventBusImpl<UriProperties>(thread, zkUriRegistry);
+        new PropertyEventBusImpl<UriProperties>(executorService, zkUriRegistry);
     uriBus.register(fsUriStore);
     new ZooKeeperTogglingStore<UriProperties>(zkUriRegistry, fsUriStore, uriBus, true);
 
     PropertyEventBus<ClusterProperties> clusterBus =
-        new PropertyEventBusImpl<ClusterProperties>(thread, zkClusterRegistry);
+        new PropertyEventBusImpl<ClusterProperties>(executorService, zkClusterRegistry);
     clusterBus.register(fsClusterStore);
     new ZooKeeperTogglingStore<ClusterProperties>(zkClusterRegistry,
                                                   fsClusterStore,
@@ -214,7 +219,7 @@ public class LoadBalancerEchoClient
 
     // create the state
     SimpleLoadBalancerState state =
-        new SimpleLoadBalancerState(thread,
+        new SimpleLoadBalancerState(executorService,
                                     uriBus,
                                     clusterBus,
                                     serviceBus,

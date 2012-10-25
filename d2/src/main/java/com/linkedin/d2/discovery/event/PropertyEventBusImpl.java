@@ -27,6 +27,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+
 
 /**
  * @author Steven Ihde
@@ -35,7 +37,7 @@ import java.util.Set;
 
 public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
 {
-  private final PropertyEventThread _thread;
+  private final ExecutorService _thread;
   private PropertyEventPublisher<T> _publisher;
   private final Map<String,T> _properties = new HashMap<String,T>();
   private final Map<String,List<PropertyEventSubscriber<T>>> _subscribers = new HashMap<String,List<PropertyEventSubscriber<T>>>();
@@ -48,14 +50,14 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
    * to the executor, which is assumed to be single-threaded.
    */
 
-  public PropertyEventBusImpl(PropertyEventThread thread)
+  public PropertyEventBusImpl(ExecutorService executorService)
   {
-    _thread = thread;
+    _thread = executorService;
   }
 
-  public PropertyEventBusImpl(PropertyEventThread thread, PropertyEventPublisher<T> publisher)
+  public PropertyEventBusImpl(ExecutorService executorService, PropertyEventPublisher<T> publisher)
   {
-    this(thread);
+    this(executorService);
     _publisher = publisher;
     _publisher.setBus(this);
   }
@@ -63,7 +65,7 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
   @Override
   public void register(final PropertyEventSubscriber<T> listener)
   {
-    _thread.send(new PropertyEvent("PropertyEventBus.registerAll")
+    _thread.execute(new PropertyEvent("PropertyEventBus.registerAll")
     {
       @Override
       public void run()
@@ -76,7 +78,7 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
   @Override
   public void unregister(final PropertyEventSubscriber<T> listener)
   {
-    _thread.send(new PropertyEvent("PropertyEventBus.unregisterAll")
+    _thread.execute(new PropertyEvent("PropertyEventBus.unregisterAll")
     {
       @Override
       public void run()
@@ -90,7 +92,7 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
   public void register(final Set<String> propertyNames,
                        final PropertyEventSubscriber<T> subscriber)
   {
-    _thread.send(new PropertyEvent("PropertyEventBus.register " + propertyNames)
+    _thread.execute(new PropertyEvent("PropertyEventBus.register " + propertyNames)
     {
       public void run()
       {
@@ -127,7 +129,7 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
   public void unregister(final Set<String> propertyNames,
                          final PropertyEventSubscriber<T> subscriber)
   {
-    _thread.send(new PropertyEvent("PropertyEventBus.unregister " + propertyNames)
+    _thread.execute(new PropertyEvent("PropertyEventBus.unregister " + propertyNames)
     {
       public void run()
       {
@@ -152,7 +154,7 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
   public void setPublisher(final PropertyEventPublisher<T> publisher)
   {
 
-    _thread.send(new PropertyEvent("PropertyEventBus.setPublisher")
+    _thread.execute(new PropertyEvent("PropertyEventBus.setPublisher")
     {
       public void run()
       {
@@ -176,7 +178,7 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
   @Override
   public void publishInitialize(final String prop, final T value)
   {
-    _thread.send(new PropertyEvent("PropertyEventBus.publishInitialize " + prop)
+    _thread.execute(new PropertyEvent("PropertyEventBus.publishInitialize " + prop)
     {
       public void run()
       {
@@ -204,7 +206,7 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
   @Override
   public void publishAdd(final String prop, final T value)
   {
-    _thread.send(new PropertyEvent("PropertyEventBus.publishAdd " + prop)
+    _thread.execute(new PropertyEvent("PropertyEventBus.publishAdd " + prop)
     {
       public void run()
       {
@@ -224,7 +226,7 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
   @Override
   public void publishRemove(final String prop)
   {
-    _thread.send(new PropertyEvent("PropertyEventBus.publishRemove " + prop)
+    _thread.execute(new PropertyEvent("PropertyEventBus.publishRemove " + prop)
     {
       public void run()
       {

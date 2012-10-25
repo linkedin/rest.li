@@ -36,9 +36,8 @@ import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerTest;
 import com.linkedin.d2.balancer.strategies.random.RandomLoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.random.RandomLoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
-import com.linkedin.d2.discovery.event.PropertyEventThread;
 import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
-import com.linkedin.d2.discovery.event.SynchronousPropertyEventThread;
+import com.linkedin.d2.discovery.event.SynchronousExecutorService;
 import com.linkedin.d2.discovery.stores.mock.MockStore;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
@@ -47,6 +46,7 @@ import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportCallbackAdapter;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.util.clock.SystemClock;
+import java.util.concurrent.ScheduledExecutorService;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -76,7 +76,7 @@ import static org.testng.Assert.fail;
 
 public class SimpleLoadBalancerStateTest
 {
-  private PropertyEventThread                                                      _thread;
+  private ScheduledExecutorService                                                  _executorService;
   private MockStore<UriProperties>                                                 _uriRegistry;
   private MockStore<ClusterProperties>                                             _clusterRegistry;
   private MockStore<ServiceProperties>                                             _serviceRegistry;
@@ -101,7 +101,7 @@ public class SimpleLoadBalancerStateTest
 
   public void reset()
   {
-    _thread = new SynchronousPropertyEventThread("test");
+    _executorService = new SynchronousExecutorService();
     _uriRegistry = new MockStore<UriProperties>();
     _clusterRegistry = new MockStore<ClusterProperties>();
     _serviceRegistry = new MockStore<ServiceProperties>();
@@ -114,7 +114,7 @@ public class SimpleLoadBalancerStateTest
     _loadBalancerStrategyFactories.put("degraderV3", new DegraderLoadBalancerStrategyFactoryV3());
 
     _state =
-        new SimpleLoadBalancerState(_thread,
+        new SimpleLoadBalancerState(_executorService,
                                     _uriRegistry,
                                     _clusterRegistry,
                                     _serviceRegistry,
@@ -732,7 +732,7 @@ public class SimpleLoadBalancerStateTest
     // set up state
     _state.listenToService("service-1", new NullStateListenerCallback());
     _state.listenToCluster("cluster-1", new NullStateListenerCallback());
-
+    _state.setDelayedExecution(0);
     _serviceRegistry.put("service-1", new ServiceProperties("service-1",
                                                             "cluster-1",
                                                             "/test",

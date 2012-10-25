@@ -55,4 +55,8 @@ public interface SimpleLoadBalancerStateJmxMBean
   void listenToService(final String serviceName);
 
   void listenToCluster(final String clusterName);
+
+  long getDelayedExecution();
+
+  void setDelayedExecution(long milliseconds);
 }

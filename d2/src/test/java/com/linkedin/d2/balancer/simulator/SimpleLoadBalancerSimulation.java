@@ -65,6 +65,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static org.testng.Assert.assertEquals;
@@ -106,7 +107,7 @@ public class SimpleLoadBalancerSimulation
   private MockStore<ClusterProperties>                                             _clusterRegistry;
   private SimpleLoadBalancer                                                       _loadBalancer;
   private SimpleLoadBalancerState                                                  _state;
-  private PropertyEventThread                                                      _thread;
+  private ScheduledExecutorService                                                 _executorService;
   private PropertyStoreFactory<ClusterProperties>                                  _clusterStoreFactory;
   private PropertyStoreFactory<ServiceProperties>                                  _serviceStoreFactory;
   private PropertyStoreFactory<UriProperties>                                      _uriStoreFactory;
@@ -182,8 +183,7 @@ public class SimpleLoadBalancerSimulation
 
     // load balancer state
 
-    _thread = new PropertyEventThread("lb simulation thread");
-    _thread.start();
+    _executorService = Executors.newSingleThreadScheduledExecutor();;
 
     // pretend that these are zk stores
     _serviceRegistry = new MockStore<ServiceProperties>();
@@ -194,7 +194,7 @@ public class SimpleLoadBalancerSimulation
         new HashMap<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>>();
     _clientFactories = new HashMap<String, TransportClientFactory>();
     _state =
-        new SimpleLoadBalancerState(_thread,
+        new SimpleLoadBalancerState(_executorService,
                                     _uriRegistry,
                                     _clusterRegistry,
                                     _serviceRegistry,
@@ -318,7 +318,7 @@ public class SimpleLoadBalancerSimulation
         fail("unable to shutdown state");
       }
 
-      _thread.join(100);
+
     }
     catch (InterruptedException e)
     {
@@ -407,7 +407,7 @@ public class SimpleLoadBalancerSimulation
         fail("unable to shutdown state");
       }
 
-      _thread.join(100);
+
     }
     catch (InterruptedException e)
     {
@@ -569,7 +569,7 @@ public class SimpleLoadBalancerSimulation
         fail("unable to shutdown state");
       }
 
-      _thread.join(100);
+
     }
     catch (InterruptedException e)
     {

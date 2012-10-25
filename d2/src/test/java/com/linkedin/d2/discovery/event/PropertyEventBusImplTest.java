@@ -22,6 +22,8 @@ package com.linkedin.d2.discovery.event;
 
 import com.linkedin.d2.discovery.stores.mock.MockStore;
 
+
+import java.util.concurrent.ScheduledExecutorService;
 import org.testng.annotations.Test;
 
 /**
@@ -37,10 +39,9 @@ public class PropertyEventBusImplTest extends PropertyEventBusTest
   {
     // TODO rewrite tests in the parent class so they work with either sync or async, and
     // test both modes of operation.
-    PropertyEventThread t = new SynchronousPropertyEventThread("test thread");
-    t.start();
+    ScheduledExecutorService executorService = new SynchronousExecutorService();
     PropertyEventPublisher<String> publisher = new MockStore<String>();
-    PropertyEventBus<String> bus = new PropertyEventBusImpl<String>(t, publisher);
+    PropertyEventBus<String> bus = new PropertyEventBusImpl<String>(executorService, publisher);
     return bus;
   }
 

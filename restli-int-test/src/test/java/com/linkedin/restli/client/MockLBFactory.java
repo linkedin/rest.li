@@ -31,7 +31,7 @@ import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyFactoryV3;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
-import com.linkedin.d2.discovery.event.PropertyEventThread;
+import com.linkedin.d2.discovery.event.SynchronousExecutorService;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 
@@ -63,20 +63,18 @@ public class MockLBFactory
 
     clientFactories.put("http", new HttpClientFactory());
 
-    PropertyEventThread thread = new SynchronousPropertyEventThread("properties");
+    SynchronousExecutorService executorService = new SynchronousExecutorService();
     MockStore<ServiceProperties> serviceRegistry = new MockStore<ServiceProperties>();
     MockStore<ClusterProperties> clusterRegistry = new MockStore<ClusterProperties>();
     MockStore<UriProperties> uriRegistry = new MockStore<UriProperties>();
 
     SimpleLoadBalancerState state =
-        new SimpleLoadBalancerState(thread,
+        new SimpleLoadBalancerState(executorService,
                                     uriRegistry,
                                     clusterRegistry,
                                     serviceRegistry,
                                     clientFactories,
                                     loadBalancerStrategyFactories);
-
-    thread.start();
 
     state.listenToService("greetings", new LoadBalancerState.NullStateListenerCallback());
     state.listenToService("groups", new LoadBalancerState.NullStateListenerCallback());

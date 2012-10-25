@@ -45,6 +45,7 @@ import com.linkedin.d2.discovery.stores.zk.ZooKeeperPropertyMerger;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.common.util.None;
+import java.util.concurrent.ScheduledExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -129,7 +130,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
   }
 
   @Override
-  public TogglingLoadBalancer createLoadBalancer(ZKConnection zkConnection, PropertyEventThread thread)
+  public TogglingLoadBalancer createLoadBalancer(ZKConnection zkConnection, ScheduledExecutorService executorService)
   {
     _log.info("Using d2ServicePath: " + _d2ServicePath);
     ZooKeeperPermanentStore<ClusterProperties> zkClusterRegistry = createPermanentStore(
@@ -143,9 +144,9 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     FileStore<ServiceProperties> fsServiceStore = createFileStore(_d2ServicePath, new ServicePropertiesJsonSerializer());
     FileStore<UriProperties> fsUriStore = createFileStore("uris", new UriPropertiesJsonSerializer());
 
-    PropertyEventBus<ClusterProperties> clusterBus = new PropertyEventBusImpl<ClusterProperties>(thread);
-    PropertyEventBus<ServiceProperties> serviceBus = new PropertyEventBusImpl<ServiceProperties>(thread);
-    PropertyEventBus<UriProperties> uriBus = new PropertyEventBusImpl<UriProperties>(thread);
+    PropertyEventBus<ClusterProperties> clusterBus = new PropertyEventBusImpl<ClusterProperties>(executorService);
+    PropertyEventBus<ServiceProperties> serviceBus = new PropertyEventBusImpl<ServiceProperties>(executorService);
+    PropertyEventBus<UriProperties> uriBus = new PropertyEventBusImpl<UriProperties>(executorService);
 
     // This ensures the filesystem store receives the events from the event bus so that
     // it can keep a local backup.
@@ -162,7 +163,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     TogglingPublisher<UriProperties> uriToggle = _factory.createUriToggle(zkUriRegistry, fsUriStore, uriBus);
 
     SimpleLoadBalancerState state = new SimpleLoadBalancerState(
-            thread, uriBus, clusterBus, serviceBus, _clientFactories, _loadBalancerStrategyFactories);
+            executorService, uriBus, clusterBus, serviceBus, _clientFactories, _loadBalancerStrategyFactories);
     SimpleLoadBalancer balancer = new SimpleLoadBalancer(state, _lbTimeout, _lbTimeoutUnit);
 
     TogglingLoadBalancer togLB = _factory.createBalancer(balancer, state, clusterToggle, serviceToggle, uriToggle);

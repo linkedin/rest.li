@@ -41,7 +41,6 @@ import com.linkedin.d2.balancer.zkfs.ZKFSUtil;
 import com.linkedin.d2.discovery.PropertySerializer;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
 import com.linkedin.d2.discovery.event.PropertyEventBusImpl;
-import com.linkedin.d2.discovery.event.PropertyEventThread;
 import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
 import com.linkedin.d2.discovery.stores.PropertyStore;
 import com.linkedin.d2.discovery.stores.PropertyStoreException;
@@ -62,6 +61,7 @@ import com.linkedin.r2.message.rpc.RpcRequestBuilder;
 import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import com.linkedin.r2.util.NamedThreadFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -76,6 +76,7 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.management.MBeanServerConnection;
@@ -350,7 +351,7 @@ public class LoadBalancerClientCli
     ObjectMapper mapper = new ObjectMapper();
     @SuppressWarnings("unchecked")
     Map<String, Object> configMap = (Map<String, Object>) mapper.readValue(jsonConfigData, HashMap.class);
-    
+
     return runDiscovery(zkserverHostPort, d2path, configMap);
   }
 
@@ -722,17 +723,15 @@ public class LoadBalancerClientCli
                                                                    uristoreString,
                                                                    new UriPropertiesJsonSerializer(),
                                                                    new UriPropertiesMerger());
-    // chains
-    PropertyEventThread thread = new PropertyEventThread("lb client event thread");
-    // start up the world
-    thread.start();
+
+    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1, new NamedThreadFactory("D2 PropertyEventExecutor"));
 
     PropertyEventBus<ServiceProperties> serviceBus =
-        new PropertyEventBusImpl<ServiceProperties>(thread, zkServiceRegistry);
+        new PropertyEventBusImpl<ServiceProperties>(executor, zkServiceRegistry);
     PropertyEventBus<UriProperties> uriBus =
-        new PropertyEventBusImpl<UriProperties>(thread, zkUriRegistry);
+        new PropertyEventBusImpl<UriProperties>(executor, zkUriRegistry);
     PropertyEventBus<ClusterProperties> clusterBus =
-        new PropertyEventBusImpl<ClusterProperties>(thread, zkClusterRegistry);
+        new PropertyEventBusImpl<ClusterProperties>(executor, zkClusterRegistry);
 
     Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
         new HashMap<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>>();
@@ -749,13 +748,13 @@ public class LoadBalancerClientCli
 
     // create the state
     SimpleLoadBalancerState state =
-        new SimpleLoadBalancerState(thread,
+        new SimpleLoadBalancerState(executor,
                                     uriBus,
                                     clusterBus,
                                     serviceBus,
                                     clientFactories,
                                     loadBalancerStrategyFactories);
-    
+
     SimpleLoadBalancer balancer = new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS);
     FutureCallback<None> callback = new FutureCallback<None>();
     balancer.start(callback);
@@ -763,9 +762,8 @@ public class LoadBalancerClientCli
 
     new JmxManager().registerLoadBalancer("balancer", balancer)
                     .registerLoadBalancerState("state", state)
-                    .registerPropertyEventThread("thread", thread)
-                    .registerZooKeeperPermanentStore("zkClusterRegistry",
-                                                     zkClusterRegistry)
+                    .registerScheduledThreadPoolExecutor("executorService", executor)
+                    .registerZooKeeperPermanentStore("zkClusterRegistry", zkClusterRegistry)
                     .registerZooKeeperPermanentStore("zkServiceRegistry",
                                                      zkServiceRegistry)
                     .registerZooKeeperEphemeralStore("zkUriRegistry", zkUriRegistry);
@@ -1010,7 +1008,7 @@ public class LoadBalancerClientCli
     StringBuilder sb = new StringBuilder();
     Set<String> currentservices = new HashSet<String>();
     Map<String,ZooKeeperPermanentStore<ServiceProperties>> zkServiceRegistryMap = new HashMap<String,ZooKeeperPermanentStore<ServiceProperties>>();
-    Map<String,List<String>> servicesGroupMap = new HashMap<String,List<String>>(); 
+    Map<String,List<String>> servicesGroupMap = new HashMap<String,List<String>>();
 
     // zk stores
     String clstoreString = zkserver + ZKFSUtil.clusterPath(d2path);
@@ -1209,7 +1207,7 @@ public class LoadBalancerClientCli
 
     return (temp);
   }
-  
+
   public void shutdown() throws Exception
   {
     if (_zkClusterRegistry != null)
@@ -1223,7 +1221,7 @@ public class LoadBalancerClientCli
         _log.error("Failed to shutdown ZooKeeperPermanentStore<ClusterProperties> zkClusterRegistry.");
       }
     }
-    
+
     if (_zkServiceRegistry != null)
     {
       try
@@ -1235,7 +1233,7 @@ public class LoadBalancerClientCli
         _log.error("Failed to shutdown ZooKeeperPermanentStore<ServiceProperties> zkServiceRegistry.");
       }
     }
-    
+
     if (_zkUriRegistry != null)
     {
       try
@@ -1293,7 +1291,7 @@ public class LoadBalancerClientCli
     {
       _log.error("Failed to delete directory " + _tmpDir);
     }
-    
+
     try
     {
       _zkclient.shutdown();

@@ -28,6 +28,7 @@ import com.linkedin.d2.discovery.stores.file.FileStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperPermanentStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperTogglingStore;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,10 +94,19 @@ public class JmxManager
     return this;
   }
 
+  @Deprecated
   public synchronized JmxManager registerPropertyEventThread(String name,
                                                              PropertyEventThread thread)
   {
     checkReg(new PropertyEventThreadJmx(thread), name);
+
+    return this;
+  }
+
+  public synchronized JmxManager registerScheduledThreadPoolExecutor(String name,
+                                                                     ScheduledThreadPoolExecutor executor)
+  {
+    checkReg(new ScheduledThreadPoolExecutorJmx(executor), name);
 
     return this;
   }
