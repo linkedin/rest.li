@@ -1,10 +1,21 @@
 {
+  "type": "record",
   "name": "AlbumEntry",
   "namespace": "com.linkedin.restli.example",
-  "type": "record",
   "doc": "An album for rest.li",
-  "fields": [ {"name": "albumId", "type": "long"},
-              {"name": "photoId", "type": "long"},
-              {"name": "addTime", "type": "long", "doc": "When the photo was added to the album"}
+  "fields": [
+    {
+      "name": "albumId",
+      "type": "long"
+    },
+    {
+      "name": "photoId",
+      "type": "long"
+    },
+    {
+      "name": "addTime",
+      "doc": "When the photo was added to the album",
+      "type": "long"
+    }
   ]
 }

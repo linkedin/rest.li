@@ -1,10 +1,20 @@
 {
+  "type": "record",
   "name": "EXIF",
   "namespace": "com.linkedin.restli.example",
-  "type": "record",
-  "fields": [ // "optional" is a pegasus extension, and is the recommended way to declare optional field
-              {"name": "isFlash", "type": "boolean", "optional": true, "default": true},
-              // import data model
-              {"name": "location", "type": "LatLong", "optional": true}
-            ]
+  "fields": [
+    {
+      "name": "isFlash",
+      "type": "boolean",
+      // "optional" is a pegasus extension, and is the recommended way to declare optional field
+      "optional": true,
+      "default": true
+    },
+    // import data model
+    {
+      "name": "location",
+      "type": "LatLong",
+      "optional": true
+    }
+  ]
 }

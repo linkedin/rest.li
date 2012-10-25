@@ -1,16 +1,33 @@
 {
+  "type": "record",
   // unique name of the schema
   "name": "Photo",
   "namespace": "com.linkedin.restli.example",
-  "type": "record",
   // (optional) documentation to schema users
   "doc": "A photo for rest.li",
-  "fields": [ {"name": "id", "type": "long"},
-              {"name": "urn", "type": "string"},
-              {"name": "title", "type": "string"},
-              // use type that is defined in another schema file
-              // types can be embedded in pdsc, but can only be referenced within its own file
-              {"name": "format", "type": "PhotoFormats"},
-              {"name": "exif", "type": "EXIF", "doc": "Exchangeable image file format"}
-            ]
+  "fields": [
+    {
+      "name": "id",
+      "type": "long"
+    },
+    {
+      "name": "urn",
+      "type": "string"
+    },
+    {
+      "name": "title",
+      "type": "string"
+    },
+    // use type that is defined in another schema file
+    // types can be embedded in pdsc, but can only be referenced within its own file
+    {
+      "name": "format",
+      "type": "PhotoFormats"
+    },
+    {
+      "name": "exif",
+      "doc": "Exchangeable image file format",
+      "type": "EXIF"
+    }
+  ]
 }
