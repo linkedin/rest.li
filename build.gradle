@@ -127,7 +127,7 @@ subprojects {
   }
 
   test {
-	  maxHeapSize = '1g'
+    maxHeapSize = '1g'
 
     useTestNG() {
       excludeGroups 'not_implemented'

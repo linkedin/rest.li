@@ -1,9 +1,12 @@
 {
-  "type": "record",
-  "name": "Project",
-  "namespace": "com.linkedin.repo.acl.api",
-  "doc": "A project",
-  "fields": [
-    {"name": "project_name", "type": "string"}
+  "type" : "record",
+  "name" : "Project",
+  "namespace" : "com.linkedin.repo.acl.api",
+  "doc" : "A project",
+  "fields" : [
+    {
+      "name" : "project_name",
+      "type" : "string"
+    }
   ]
 }

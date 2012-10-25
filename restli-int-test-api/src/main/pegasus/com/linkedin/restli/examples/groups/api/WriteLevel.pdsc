@@ -1,12 +1,11 @@
 {
-  "name": "WriteLevel",
+  "type" : "enum",
+  "name" : "WriteLevel",
   "namespace" : "com.linkedin.restli.examples.groups.api",
-  "type": "enum",
-  "symbols": [
+  "symbols" : [
     "NONE",
     "PREMODERATED",
     "DEFAULT",
     "FULL"
   ]
 }
-              

@@ -1,6 +1,6 @@
 {
-  "name": "PreModerationType",
-  "namespace": "com.linkedin.restli.examples.groups.api",
-  "type": "enum",
-  "symbols": ["NONE", "COMMENTS", "ALL" ]
+  "type" : "enum",
+  "name" : "PreModerationType",
+  "namespace" : "com.linkedin.restli.examples.groups.api",
+  "symbols" : [ "NONE", "COMMENTS", "ALL" ]
 }

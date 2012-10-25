@@ -1,57 +1,219 @@
 {
-  "type": "record",
-  "name": "Group",
-  "namespace": "com.linkedin.restli.examples.groups.api",
-  "doc": "A Group record",
-  "fields": [
-    {"name": "id", "type": "int", "doc": "This field is read-only, and will be automatically assigned when the group is POSTed."},
-    {"name": "vanityUrl", "type": "string"},
-    {"name": "parentGroupId", "type": "int", "doc": "Parent group references"},
-    {"name": "name", "type": "string", "doc": "Cannot be changed by owner/managers once set (only CS can change it)"},
-    {"name": "shortDescription", "type": "string"},
-    {"name": "description", "type": "string"},
-    {"name": "rules", "type": "string"},
-    {"name": "contactEmail", "type": "string"},
-    {"name": "category", "type": "int"},
-    {"name": "otherCategory", "type": "int"},
-    {"name": "badge", "type": "Badge"},
-    {"name": "homeSiteUrl", "type": "string"},
-    {"name": "smallLogoMediaUrl", "type": "string"},
-    {"name": "largeLogoMediaUrl", "type": "string"},
-    {"name": "location", "type": "Location", "doc": "An inlined Location struct"},
-    {"name": "locale", "type": "string"},
-    {"name": "sharingKey", "type": "string", "doc": "System-generated, read-only"},
-    {"name": "visibility", "type": "Visibility"},
-    {"name": "state", "type": "State", "default": "ACTIVE"},
-    {"name": "createdTimestamp", "type": "long", "doc": "This field is read-only. TODO Timestamp representation"},
-    {"name": "lastModifiedTimestamp", "type": "long", "doc": "This field is read-only."},
-    {"name": "isOpenToNonMembers", "type": "boolean"},
-    {"name": "approvalModes", "type": "int", "doc": "TODO This is really a bitset with each bit mapped to a setting enum. See ANetApprovalMode"},
-    {"name": "contactability", "type": "Contactability"},
-    {"name": "directoryPresence", "type": "DirectoryPresence"},
-    {"name": "hasMemberInvites", "type": "boolean"},
-    {"name": "numIdentityChanges", "type": "int", "doc": "System-maintained, read-only"},
-    {"name": "maxIdentityChanges", "type": "int", "doc": "CS-editable only"},
-    {"name": "maxMembers", "type": "int", "doc": "CS-editable only"},
-    {"name": "maxModerators", "type": "int", "doc": "CS-editable only"},
-    {"name": "maxSubgroups", "type": "int", "doc": "CS-editable only"},
-    {"name": "maxFeeds", "type": "int", "doc": "CS-editable only"},
-    {"name": "hasEmailExport", "type": "boolean"},
-    {"name": "categoriesEnabled", "type": "PostCategory"},
-    {"name": "hasNetworkUpdates", "type": "boolean"},
-    {"name": "hasMemberRoster", "type": "boolean"},
-    {"name": "hasSettings", "type": "boolean"},
-    {"name": "hideSubgroups", "type": "boolean"},
-    {"name": "categoriesForModeratorsOnly", "type": "PostCategory"},
-    {"name": "numMemberFlagsToDelete", "type": "int"},
-    {"name": "newsFormat", "type": "NewsFormat"},
-    {"name": "preModeration", "type": "PreModerationType"},
-    {"name": "preModerationCategories", "type": "PostCategory"},
-    {"name": "nonMemberPermissions", "type": "NonMemberPermissions"},
-    {"name": "openedToNonMembersTimestamp", "type": "long"},
-    {"name": "preModerateNewMembersPeriodInDays", "type": "int"},
-    {"name": "preModerateMembersWithLowConnections", "type": "boolean"},
-    {"name": "preApprovedEmailDomains", "type": {"type": "array", "items": "string"}},
-    {"name": "owner", "type": "GroupMembership", "doc": "Required when creating a group, not returned as part of the default representation (must be explicitly requested via 'fields'"}
+  "type" : "record",
+  "name" : "Group",
+  "namespace" : "com.linkedin.restli.examples.groups.api",
+  "doc" : "A Group record",
+  "fields" : [
+    {
+      "name" : "id",
+      "doc" : "This field is read-only, and will be automatically assigned when the group is POSTed.",
+      "type" : "int"
+    },
+    {
+      "name" : "vanityUrl",
+      "type" : "string"
+    },
+    {
+      "name" : "parentGroupId",
+      "doc" : "Parent group references",
+      "type" : "int"
+    },
+    {
+      "name" : "name",
+      "doc" : "Cannot be changed by owner/managers once set (only CS can change it)",
+      "type" : "string"
+    },
+    {
+      "name" : "shortDescription",
+      "type" : "string"
+    },
+    {
+      "name" : "description",
+      "type" : "string"
+    },
+    {
+      "name" : "rules",
+      "type" : "string"
+    },
+    {
+      "name" : "contactEmail",
+      "type" : "string"
+    },
+    {
+      "name" : "category",
+      "type" : "int"
+    },
+    {
+      "name" : "otherCategory",
+      "type" : "int"
+    },
+    {
+      "name" : "badge",
+      "type" : "Badge"
+    },
+    {
+      "name" : "homeSiteUrl",
+      "type" : "string"
+    },
+    {
+      "name" : "smallLogoMediaUrl",
+      "type" : "string"
+    },
+    {
+      "name" : "largeLogoMediaUrl",
+      "type" : "string"
+    },
+    {
+      "name" : "location",
+      "doc" : "An inlined Location struct",
+      "type" : "Location"
+    },
+    {
+      "name" : "locale",
+      "type" : "string"
+    },
+    {
+      "name" : "sharingKey",
+      "doc" : "System-generated, read-only",
+      "type" : "string"
+    },
+    {
+      "name" : "visibility",
+      "type" : "Visibility"
+    },
+    {
+      "name" : "state",
+      "type" : "State", "default" : "ACTIVE"
+    },
+    {
+      "name" : "createdTimestamp",
+      "doc" : "This field is read-only. TODO Timestamp representation",
+      "type" : "long"
+    },
+    {
+      "name" : "lastModifiedTimestamp",
+      "doc" : "This field is read-only.",
+      "type" : "long"
+    },
+    {
+      "name" : "isOpenToNonMembers",
+      "type" : "boolean"
+    },
+    {
+      "name" : "approvalModes",
+      "doc" : "TODO This is really a bitset with each bit mapped to a setting enum. See ANetApprovalMode",
+      "type" : "int"
+    },
+    {
+      "name" : "contactability",
+      "type" : "Contactability"
+    },
+    {
+      "name" : "directoryPresence",
+      "type" : "DirectoryPresence"
+    },
+    {
+      "name" : "hasMemberInvites",
+      "type" : "boolean"
+    },
+    {
+      "name" : "numIdentityChanges",
+      "doc" : "System-maintained, read-only",
+      "type" : "int"
+    },
+    {
+      "name" : "maxIdentityChanges",
+      "doc" : "CS-editable only",
+      "type" : "int"
+    },
+    {
+      "name" : "maxMembers",
+      "doc" : "CS-editable only",
+      "type" : "int"
+    },
+    {
+      "name" : "maxModerators",
+      "doc" : "CS-editable only",
+      "type" : "int"
+    },
+    {
+      "name" : "maxSubgroups",
+      "doc" : "CS-editable only",
+      "type" : "int"
+    },
+    {
+      "name" : "maxFeeds",
+      "doc" : "CS-editable only",
+      "type" : "int"
+    },
+    {
+      "name" : "hasEmailExport",
+      "type" : "boolean"
+    },
+    {
+      "name" : "categoriesEnabled",
+      "type" : "PostCategory"
+    },
+    {
+      "name" : "hasNetworkUpdates",
+      "type" : "boolean"
+    },
+    {
+      "name" : "hasMemberRoster",
+      "type" : "boolean"
+    },
+    {
+      "name" : "hasSettings",
+      "type" : "boolean"
+    },
+    {
+      "name" : "hideSubgroups",
+      "type" : "boolean"
+    },
+    {
+      "name" : "categoriesForModeratorsOnly",
+      "type" : "PostCategory"
+    },
+    {
+      "name" : "numMemberFlagsToDelete",
+      "type" : "int"
+    },
+    {
+      "name" : "newsFormat",
+      "type" : "NewsFormat"
+    },
+    {
+      "name" : "preModeration",
+      "type" : "PreModerationType"
+    },
+    {
+      "name" : "preModerationCategories",
+      "type" : "PostCategory"
+    },
+    {
+      "name" : "nonMemberPermissions",
+      "type" : "NonMemberPermissions"
+    },
+    {
+      "name" : "openedToNonMembersTimestamp",
+      "type" : "long"
+    },
+    {
+      "name" : "preModerateNewMembersPeriodInDays",
+      "type" : "int"
+    },
+    {
+      "name" : "preModerateMembersWithLowConnections",
+      "type" : "boolean"
+    },
+    {
+      "name" : "preApprovedEmailDomains",
+      "type" : { "type" : "array", "items" : "string" }
+    },
+    {
+      "name" : "owner",
+      "doc" : "Required when creating a group, not returned as part of the default representation (must be explicitly requested via 'fields'",
+      "type" : "GroupMembership"
+    }
   ]
 }

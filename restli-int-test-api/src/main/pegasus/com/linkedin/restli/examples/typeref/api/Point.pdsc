@@ -3,7 +3,13 @@
   "name" : "Point",
   "namespace" : "com.linkedin.restli.examples.typeref.api",
   "fields" : [
-    { "name" : "x", "type" : "double" },
-    { "name" : "y", "type" : "double" }
+    {
+      "name" : "x",
+      "type" : "double"
+    },
+    {
+      "name" : "y",
+      "type" : "double"
+    }
   ]
 }

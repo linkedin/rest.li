@@ -1,9 +1,23 @@
 {
-  "name": "IdentifierSchema",
-  "namespace": "com.linkedin.restli.restspec",
-  "type": "record",
-  "fields": [ {"name": "name", "type": "string", "doc": "name of the identifier"},
-              {"name": "type", "type": "string", "doc": "avro type of the identifier"},
-              {"name": "params", "type": "string", "doc": "avro type of the identifier parameters", "optional": true}
-            ]
+  "type" : "record",
+  "name" : "IdentifierSchema",
+  "namespace" : "com.linkedin.restli.restspec",
+  "fields" : [
+    {
+      "name" : "name",
+      "doc" : "name of the identifier",
+      "type" : "string"
+    },
+    {
+      "name" : "type",
+      "doc" : "avro type of the identifier",
+      "type" : "string"
+    },
+    {
+      "name" : "params",
+      "doc" : "avro type of the identifier parameters",
+      "type" : "string",
+      "optional" : true
+    }
+  ]
 }

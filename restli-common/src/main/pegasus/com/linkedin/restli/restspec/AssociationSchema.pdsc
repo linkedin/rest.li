@@ -1,12 +1,40 @@
 {
-  "name": "AssociationSchema",
-  "namespace": "com.linkedin.restli.restspec",
-  "type": "record",
-  "fields": [ {"name": "assocKeys", "type": {"type": "array", "items": "AssocKeySchema"}, "doc": "list of association keys for this association"},
-              {"name": "supports", "type": {"type": "array", "items": "string"}, "doc": "list of rest.li methods supported by this association, e.g., get, update, delete, batch_get"},
-              {"name": "methods", "type": {"type": "array", "items": "RestMethodSchema"}, "optional" : true, "doc": "details on rest methods supported by this association"},
-              {"name": "finders", "type": {"type": "array", "items": "FinderSchema"}, "optional" : true, "doc": "list of finders supported by this association"},
-              {"name": "actions", "type": {"type": "array", "items": "ActionSchema"}, "optional" : true, "doc": "list of actions supported by this association"},
-              {"name": "entity", "type": "EntitySchema", "doc": "details on the entities contained in this association"}
-            ]
+  "type" : "record",
+  "name" : "AssociationSchema",
+  "namespace" : "com.linkedin.restli.restspec",
+  "fields" : [
+    {
+      "name" : "assocKeys",
+      "doc" : "list of association keys for this association",
+      "type" : { "type" : "array", "items" : "AssocKeySchema" }
+    },
+    {
+      "name" : "supports",
+      "doc" : "list of rest.li methods supported by this association, e.g., get, update, delete, batch_get",
+      "type" : { "type" : "array", "items" : "string" }
+    },
+    {
+      "name" : "methods",
+      "doc" : "details on rest methods supported by this association",
+      "type" : { "type" : "array", "items" : "RestMethodSchema" },
+      "optional" : true
+    },
+    {
+      "name" : "finders",
+      "doc" : "list of finders supported by this association",
+      "type" : { "type" : "array", "items" : "FinderSchema" },
+      "optional" : true
+    },
+    {
+      "name" : "actions",
+      "doc" : "list of actions supported by this association",
+      "type" : { "type" : "array", "items" : "ActionSchema" },
+      "optional" : true
+    },
+    {
+      "name" : "entity",
+      "doc" : "details on the entities contained in this association",
+      "type" : "EntitySchema"
+    }
+  ]
 }

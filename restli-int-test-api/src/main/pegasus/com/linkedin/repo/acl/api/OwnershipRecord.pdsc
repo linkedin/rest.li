@@ -1,10 +1,16 @@
 {
-  "type": "record",
-  "name": "OwnershipRecord",
-  "namespace": "com.linkedin.repo.acl.api",
-  "doc": "An ownership record",
-  "fields": [
-    {"name": "owner_name", "type": "string"},
-    {"name": "acls", "type": {"type": "array", "items": "ACL"}}
+  "type" : "record",
+  "name" : "OwnershipRecord",
+  "namespace" : "com.linkedin.repo.acl.api",
+  "doc" : "An ownership record",
+  "fields" : [
+    {
+      "name" : "owner_name",
+      "type" : "string"
+    },
+    {
+      "name" : "acls",
+      "type" : { "type" : "array", "items" : "ACL" }
+    }
   ]
-}    
+}

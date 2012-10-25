@@ -1,9 +1,9 @@
 {
-    "type" : "typeref",
-    "name" : "CustomStringRef",
-    "namespace" : "com.linkedin.restli.server",
-    "ref"  : "string",
-    "java" : {
-        "class" : "com.linkedin.restli.server.custom.types.CustomString"
-    }
+  "type" : "typeref",
+  "name" : "CustomStringRef",
+  "namespace" : "com.linkedin.restli.server",
+  "ref" : "string",
+  "java" : {
+    "class" : "com.linkedin.restli.server.custom.types.CustomString"
+  }
 }

@@ -1,12 +1,41 @@
 {
-  "name": "ParameterSchema",
-  "namespace": "com.linkedin.restli.restspec",
-  "type": "record",
-  "fields": [ {"name": "name", "type": "string", "doc": "name of this parameter"},
-              {"name": "type", "type": "string", "doc": "avro type of this parameter"},
-              {"name": "items", "type": "string", "optional" : true, "doc": "type of individual items, if this is an array parameter (used for finder parameters)"},
-              {"name": "optional", "type": "boolean", "optional" : true, "doc": "indicates whether this parameter is optional.  omitted for required parameters"},
-              {"name": "default", "type": "string", "optional" : true, "doc": "indicates the default value for this parameter"},
-              {"name": "doc", "type": "string", "optional" : true, "doc": "Documentation for this parameter"}
-            ]
+  "type" : "record",
+  "name" : "ParameterSchema",
+  "namespace" : "com.linkedin.restli.restspec",
+  "fields" : [
+    {
+      "name" : "name",
+      "doc" : "name of this parameter",
+      "type" : "string"
+    },
+    {
+      "name" : "type",
+      "doc" : "avro type of this parameter",
+      "type" : "string"
+    },
+    {
+      "name" : "items",
+      "doc" : "type of individual items, if this is an array parameter (used for finder parameters)",
+      "type" : "string",
+      "optional" : true
+    },
+    {
+      "name" : "optional",
+      "doc" : "indicates whether this parameter is optional.  omitted for required parameters",
+      "type" : "boolean",
+      "optional" : true
+    },
+    {
+      "name" : "default",
+      "doc" : "indicates the default value for this parameter",
+      "type" : "string",
+      "optional" : true
+    },
+    {
+      "name" : "doc",
+      "doc" : "Documentation for this parameter",
+      "type" : "string",
+      "optional" : true
+    }
+  ]
 }

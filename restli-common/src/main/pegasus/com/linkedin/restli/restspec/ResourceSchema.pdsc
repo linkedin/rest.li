@@ -1,14 +1,53 @@
 {
-  "name": "ResourceSchema",
-  "namespace": "com.linkedin.restli.restspec",
-  "type": "record",
-  "fields": [ {"name": "name", "type": "string", "doc": "name of the resource"},
-              {"name": "namespace", "type": "string", "optional": true, "doc": "namespace of the resource"},
-              {"name": "path", "type": "string", "doc": "URI template for accessing the resource"},
-              {"name": "schema", "type": "string", "optional" : true, "doc": "Java-style fully-qualified class name for entities of this resource"},
-              {"name": "doc", "type": "string", "optional" : true, "doc": "Documentation for this resource"},
-              {"name": "collection", "type": "CollectionSchema", "optional" : true, "doc": "details of collection, if this resource is a collection"},
-              {"name": "association", "type": "AssociationSchema", "optional" : true, "doc": "details of association, if this resource is an association"},
-              {"name": "actionsSet", "type": "ActionsSetSchema", "optional" : true, "doc": "details of action set, if this resource is an action set"}
-            ]
+  "type" : "record",
+  "name" : "ResourceSchema",
+  "namespace" : "com.linkedin.restli.restspec",
+  "fields" : [
+    {
+      "name" : "name",
+      "doc" : "name of the resource",
+      "type" : "string"
+    },
+    {
+      "name" : "namespace",
+      "doc" : "namespace of the resource",
+      "type" : "string",
+      "optional" : true
+    },
+    {
+      "name" : "path",
+      "doc" : "URI template for accessing the resource",
+      "type" : "string"
+    },
+    {
+      "name" : "schema",
+      "doc" : "Java-style fully-qualified class name for entities of this resource",
+      "type" : "string",
+      "optional" : true
+    },
+    {
+      "name" : "doc",
+      "doc" : "Documentation for this resource",
+      "type" : "string",
+      "optional" : true
+    },
+    {
+      "name" : "collection",
+      "doc" : "details of collection, if this resource is a collection",
+      "type" : "CollectionSchema",
+      "optional" : true
+    },
+    {
+      "name" : "association",
+      "doc" : "details of association, if this resource is an association",
+      "type" : "AssociationSchema",
+      "optional" : true
+    },
+    {
+      "name" : "actionsSet",
+      "doc" : "details of action set, if this resource is an action set",
+      "type" : "ActionsSetSchema",
+      "optional" : true
+    }
+  ]
 }

@@ -1,8 +1,8 @@
 {
-  "name": "MembershipLevel",
+  "type" : "enum",
+  "name" : "MembershipLevel",
   "namespace" : "com.linkedin.restli.examples.groups.api",
-  "type": "enum",
-  "symbols": [
+  "symbols" : [
     "BLOCKED",
     "NON_MEMBER",
     "REQUESTING_TO_JOIN",
@@ -12,4 +12,3 @@
     "OWNER" 
   ]
 }
-              

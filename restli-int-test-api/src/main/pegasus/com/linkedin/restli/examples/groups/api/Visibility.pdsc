@@ -1,6 +1,6 @@
 {
-  "name": "Visibility",
-  "namespace": "com.linkedin.restli.examples.groups.api",
-  "type": "enum",
-  "symbols": [ "PUBLIC", "PRIVATE", "HIDDEN"]
+  "type" : "enum",
+  "name" : "Visibility",
+  "namespace" : "com.linkedin.restli.examples.groups.api",
+  "symbols" : [ "PUBLIC", "PRIVATE", "HIDDEN" ]
 }

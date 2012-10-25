@@ -1,6 +1,6 @@
 {
-  "name": "DirectoryPresence",
-  "namespace": "com.linkedin.restli.examples.groups.api",
-  "type": "enum",
-  "symbols": [ "NONE", "LINKEDIN", "PUBLIC" ]
+  "type" : "enum",
+  "name" : "DirectoryPresence",
+  "namespace" : "com.linkedin.restli.examples.groups.api",
+  "symbols" : [ "NONE", "LINKEDIN", "PUBLIC" ]
 }

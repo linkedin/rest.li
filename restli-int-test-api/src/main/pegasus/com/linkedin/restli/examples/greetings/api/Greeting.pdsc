@@ -1,10 +1,21 @@
 {
-  "type": "record",
-  "name": "Greeting",
-  "namespace": "com.linkedin.restli.examples.greetings.api",
-  "doc": "A greeting",
-  "fields": [ {"name": "id", "type": "long"},
-              {"name": "message", "type": "string"},
-              {"name": "tone", "type": "Tone", "doc":"tone"}
-            ]
+  "type" : "record",
+  "name" : "Greeting",
+  "namespace" : "com.linkedin.restli.examples.greetings.api",
+  "doc" : "A greeting",
+  "fields" : [
+    {
+      "name" : "id",
+      "type" : "long"
+    },
+    {
+      "name" : "message",
+      "type" : "string"
+    },
+    {
+      "name" : "tone",
+      "doc" : "tone",
+      "type" : "Tone"
+    }
+  ]
 }

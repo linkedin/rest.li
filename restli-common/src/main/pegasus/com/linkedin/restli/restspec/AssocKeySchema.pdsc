@@ -1,8 +1,17 @@
 {
-  "name": "AssocKeySchema",
-  "namespace": "com.linkedin.restli.restspec",
-  "type": "record",
-  "fields": [ {"name": "name", "type": "string", "doc": "name of association key"},
-              {"name": "type", "type": "string", "doc": "avro type of association key"}
-            ]
+  "type" : "record",
+  "name" : "AssocKeySchema",
+  "namespace" : "com.linkedin.restli.restspec",
+  "fields" : [
+    {
+      "name" : "name",
+      "doc" : "name of association key",
+      "type" : "string"
+    },
+    {
+      "name" : "type",
+      "doc" : "avro type of association key",
+      "type" : "string"
+    }
+  ]
 }

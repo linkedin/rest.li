@@ -1,23 +1,81 @@
 {
-  "type": "record",
-  "name": "ComplexKeyGroupMembership",
-  "namespace": "com.linkedin.restli.examples.groups.api",
-  "doc": "A GroupMembership entity",
-  "fields":  [{"name": "id", "type": "com.linkedin.restli.examples.groups.api.GroupMembershipKey", "doc": "Complex key consisting of groupID and memberID"},
-              {"name": "membershipLevel", "type": "com.linkedin.restli.examples.groups.api.MembershipLevel"},
-              {"name": "contactEmail", "type": "string", "doc":""},
-              {"name": "isPublicized", "type": "boolean", "doc":""},
-              {"name": "allowMessagesFromMembers", "type": "boolean", "doc":""},
-              {"name": "joinedTime", "type": "long", "doc":"This field is read-only."},
-              {"name": "resignedTime", "type": "long", "doc":"This field is read-only."},
-              {"name": "lastModifiedStateTime", "type": "long", "doc":"This field is read-only."},
-              {"name": "emailDigestFrequency", "type": "com.linkedin.restli.examples.groups.api.EmailDigestFrequency"},
-              {"name": "creationTime", "type": "long", "doc":"This field is read-only."},
-              {"name": "lastModifiedTime", "type": "long", "doc":"This field is read-only."},
-              {"name": "emailAnnouncementsFromManagers", "type": "boolean", "doc":""},
-              {"name": "emailForEveryNewPost", "type": "boolean", "doc":""},
-              {"name": "writeLevel", "type": "com.linkedin.restli.examples.groups.api.WriteLevel", "doc":"This field can only be accessed by moderators of the group"},
-              {"name": "firstName", "type": "string", "doc":"Denormalized from members"},
-              {"name": "lastName", "type": "string", "doc": "Denormalized from members"}
+  "type" : "record",
+  "name" : "ComplexKeyGroupMembership",
+  "namespace" : "com.linkedin.restli.examples.groups.api",
+  "doc" : "A GroupMembership entity",
+  "fields" :  [
+    {
+      "name" : "id",
+      "doc" : "Complex key consisting of groupID and memberID",
+      "type" : "com.linkedin.restli.examples.groups.api.GroupMembershipKey"
+    },
+    {
+      "name" : "membershipLevel",
+      "type" : "com.linkedin.restli.examples.groups.api.MembershipLevel"
+    },
+    {
+      "name" : "contactEmail",
+      "type" : "string"
+    },
+    {
+      "name" : "isPublicized",
+      "type" : "boolean"
+    },
+    {
+      "name" : "allowMessagesFromMembers",
+      "type" : "boolean"
+    },
+    {
+      "name" : "joinedTime",
+      "doc" : "This field is read-only.",
+      "type" : "long"
+    },
+    {
+      "name" : "resignedTime",
+      "doc" : "This field is read-only.",
+      "type" : "long"
+    },
+    {
+      "name" : "lastModifiedStateTime",
+      "doc" : "This field is read-only.",
+      "type" : "long"
+    },
+    {
+      "name" : "emailDigestFrequency",
+      "type" : "com.linkedin.restli.examples.groups.api.EmailDigestFrequency"
+    },
+    {
+      "name" : "creationTime",
+      "doc" : "This field is read-only.",
+      "type" : "long"
+    },
+    {
+      "name" : "lastModifiedTime",
+      "doc" : "This field is read-only.",
+      "type" : "long"
+    },
+    {
+      "name" : "emailAnnouncementsFromManagers",
+      "type" : "boolean"
+    },
+    {
+      "name" : "emailForEveryNewPost",
+      "type" : "boolean"
+    },
+    {
+      "name" : "writeLevel",
+      "doc" : "This field can only be accessed by moderators of the group",
+      "type" : "com.linkedin.restli.examples.groups.api.WriteLevel"
+    },
+    {
+      "name" : "firstName",
+      "doc" : "Denormalized from members",
+      "type" : "string"
+    },
+    {
+      "name" : "lastName",
+      "doc" : "Denormalized from members",
+      "type" : "string"
+    }
   ]
 }
