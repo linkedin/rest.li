@@ -121,7 +121,7 @@ public class ObjectIterator implements DataIterator
       }
       if (_current == null)
       {
-        _current = _stack.pop()._element;
+        _current = _stack.removeLast()._element;
       }
       return _current;
     }
