@@ -119,7 +119,7 @@ public interface Client
   void rpcRequest(RpcRequest request, RequestContext requestContext, Callback<RpcResponse> callback);
 
   /**
-   * Starts asynchronous shutdown of the client. This method should block minimally, if at all.
+   * Initiates asynchronous shutdown of the client. This method should block minimally, if at all.
    *
    * @param callback a callback to invoke when the shutdown is complete
    */

@@ -14,22 +14,19 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
-package com.linkedin.d2.balancer;
+/* $Id$ */
+package com.linkedin.r2.transport.common;
 
 
-import com.linkedin.r2.transport.common.StartableClient;
+import com.linkedin.common.callback.Callback;
+import com.linkedin.common.util.None;
 
 
 /**
- * @author David Hoa
- * @version $Revision: $
+ * @author Chris Pettitt
+ * @version $Revision$
  */
-
-public interface D2Client extends StartableClient
+public interface StartableClient extends Client
 {
-  Facilities getFacilities();
+  void start(Callback<None> callback);
 }

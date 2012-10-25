@@ -1,29 +1,33 @@
 package com.linkedin.d2.loadbalancer;
 
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
 
+import com.linkedin.d2.D2BaseTest;
+import com.linkedin.d2.balancer.clients.DynamicClient;
+import com.linkedin.d2.balancer.util.LoadBalancerClientCli;
+import com.linkedin.d2.balancer.util.LoadBalancerEchoServer;
+import com.linkedin.d2.balancer.util.LoadBalancerUtil;
+import com.linkedin.d2.quorum.ZKPeer;
+import com.linkedin.d2.quorum.ZKQuorum;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 
-import com.linkedin.d2.balancer.clients.DynamicClient;
-import com.linkedin.d2.balancer.util.LoadBalancerClientCli;
-import com.linkedin.d2.balancer.util.LoadBalancerEchoServer;
-import com.linkedin.d2.quorum.ZKPeer;
-import com.linkedin.d2.quorum.ZKQuorum;
-import com.linkedin.d2.D2BaseTest;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 @Test (groups = {"d2integration"})
 public class TestD2ZKQuorumFailover extends D2BaseTest
 {
+  private static final Logger _log = LoggerFactory.getLogger(TestD2ZKQuorumFailover.class);
+
   private static final int              QUORUM_SIZE = 9;
   private List<LoadBalancerEchoServer>  _echoServers;
   private String[]                      _zkHosts;
@@ -275,7 +279,7 @@ public class TestD2ZKQuorumFailover extends D2BaseTest
     }
     try
     {
-      _client.shutdown();
+      LoadBalancerUtil.syncShutdownClient(_client, _log);
     }
     catch (Exception e)
     {

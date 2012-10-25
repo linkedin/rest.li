@@ -1,20 +1,26 @@
+/*
+   Copyright (c) 2012 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package com.linkedin.restli.example;
 
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import com.linkedin.common.callback.Callback;
+import com.linkedin.d2.balancer.D2Client;
+import com.linkedin.d2.balancer.D2ClientBuilder;
 import com.linkedin.r2.RemoteInvocationException;
-import com.linkedin.r2.transport.common.Client;
-import com.linkedin.r2.transport.common.bridge.client.TransportClient;
-import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
-import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.client.FindRequest;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
@@ -28,8 +34,17 @@ import com.linkedin.restli.example.photos.AlbumEntryBuilders;
 import com.linkedin.restli.example.photos.AlbumsBuilders;
 import com.linkedin.restli.example.photos.PhotosBuilders;
 
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+
 /**
- * @author kjin
+ * @author Keren Jin
  */
 public class PhotoClient
 {
@@ -37,7 +52,7 @@ public class PhotoClient
                                         // RestLiExamplesServer
   private final RestClient _restClient;
 
-  /*
+  /**
    * This is a stand-alone app to demo the use of client-side Pegasus API. To run in,
    * com.linkedin.restli.example.RestLiExamplesServer has to be running.
    *
@@ -45,30 +60,21 @@ public class PhotoClient
    */
   public static void main(String[] args)
   {
-    // create HTTP Netty client with default properties
-    final TransportClient transClient =
-        new HttpClientFactory().getClient(Collections.<String, String> emptyMap());
-    // create an abstraction layer over the actual client, which supports both REST and
-    // RPC
-    final Client r2Client = new TransportClientAdapter(transClient);
     // REST client wrapper that simplifies the interface
-    RestClient restClient = new RestClient(r2Client, "http://localhost:" + PORT);
 
-    PhotoClient photoClient = new PhotoClient(restClient);
+    final D2Client d2Client = new D2ClientBuilder().build();
+    final RestClient restClient = new RestClient(d2Client, "d2://");
+    final PhotoClient photoClient = new PhotoClient(restClient);
 
     photoClient.processGet(args[0], new PrintWriter(System.out));
   }
-
-
 
   public PhotoClient(RestClient restClient)
   {
     this._restClient = restClient;
   }
 
-
-
-  public void processGet(String pathInfo, PrintWriter respWriter) // throws IOException
+  public void processGet(String pathInfo, PrintWriter respWriter)
   {
     /*
      * Supported URLs /fail just fail /album/<album_id> display album and the photos /
@@ -324,19 +330,18 @@ public class PhotoClient
 
   private void partialUpdatePhoto(PrintWriter respWriter, Long photoId) throws RemoteInvocationException
   {
-    Request<Photo> getReq = _photoBuilders.get().id(photoId).build();
-    ResponseFuture<Photo> getFuture = _restClient.sendRequest(getReq);
-    Response<Photo> getResp = getFuture.getResponse();
-    Photo originalPhoto = getResp.getEntity();
+    final Request<Photo> getReq = _photoBuilders.get().id(photoId).build();
+    final ResponseFuture<Photo> getFuture = _restClient.sendRequest(getReq);
+    final Response<Photo> getResp = getFuture.getResponse();
+    final Photo originalPhoto = getResp.getEntity();
 
     final Photo updatedPhoto = new Photo().setTitle("Partially Updated Photo");
-    PatchRequest<Photo> patch = PatchGenerator.diff(originalPhoto, updatedPhoto);
+    final PatchRequest<Photo> patch = PatchGenerator.diff(originalPhoto, updatedPhoto);
 
-    Request<EmptyRecord> partialUpdateRequest =
+    final Request<EmptyRecord> partialUpdateRequest =
         _photoBuilders.partialUpdate().id(photoId).input(patch).build();
-    int status = _restClient.sendRequest(partialUpdateRequest).getResponse().getStatus();
+    final int status = _restClient.sendRequest(partialUpdateRequest).getResponse().getStatus();
     respWriter.println("Partial update photo is successful: " + (status == 202));
-
   }
 
   private void findPhoto(PrintWriter respWriter) throws RemoteInvocationException
@@ -345,20 +350,20 @@ public class PhotoClient
     createPhoto(respWriter);
     createPhoto(respWriter);
 
-    Request<Photo> getReq = _photoBuilders.get().id(newPhotoId).build();
-    ResponseFuture<Photo> getFuture = _restClient.sendRequest(getReq);
-    Response<Photo> getResp = getFuture.getResponse();
-    Photo photo = getResp.getEntity();
+    final Request<Photo> getReq = _photoBuilders.get().id(newPhotoId).build();
+    final ResponseFuture<Photo> getFuture = _restClient.sendRequest(getReq);
+    final Response<Photo> getResp = getFuture.getResponse();
+    final Photo photo = getResp.getEntity();
 
-    FindRequest<Photo> findReq =
+    final FindRequest<Photo> findReq =
         _photoBuilders.findByTitleAndOrFormat()
                       .titleParam(photo.getTitle())
                       .formatParam(photo.getFormat())
                       .build();
 
-    CollectionResponse<Photo> crPhotos =
+    final CollectionResponse<Photo> crPhotos =
         _restClient.sendRequest(findReq).getResponse().getEntity();
-    List<Photo> photos = crPhotos.getElements();
+    final List<Photo> photos = crPhotos.getElements();
 
     respWriter.println("Found " + photos.size() + " photos with title "
         + photo.getTitle());
@@ -368,5 +373,4 @@ public class PhotoClient
   private static final PhotosBuilders     _photoBuilders      = new PhotosBuilders();
   private static final AlbumsBuilders     _albumBuilders      = new AlbumsBuilders();
   private static final AlbumEntryBuilders _albumEntryBuilders = new AlbumEntryBuilders();
-
 }

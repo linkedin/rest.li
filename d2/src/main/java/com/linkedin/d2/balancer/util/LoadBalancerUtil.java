@@ -16,8 +16,11 @@
 
 package com.linkedin.d2.balancer.util;
 
-import com.linkedin.r2.message.RequestContext;
 
+import com.linkedin.common.callback.Callback;
+import com.linkedin.common.util.None;
+import com.linkedin.d2.balancer.clients.DynamicClient;
+import com.linkedin.r2.message.RequestContext;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
@@ -27,9 +30,16 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Map.Entry;
+import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+import org.slf4j.Logger;
+
+import static com.linkedin.d2.discovery.util.LogUtil.info;
+import static com.linkedin.d2.discovery.util.LogUtil.warn;
+
 
 public class LoadBalancerUtil
 {
@@ -144,6 +154,42 @@ public class LoadBalancerUtil
     }
 
     return (temp);
+  }
+
+  public static void syncShutdownClient(DynamicClient client, Logger log)
+  {
+    info(log, "shutting down");
+
+    final CountDownLatch latch = new CountDownLatch(1);
+
+    client.shutdown(new Callback<None>()
+    {
+      public void onSuccess(None t)
+      {
+        latch.countDown();
+      }
+
+      public void onError(Throwable e)
+      {
+        latch.countDown();
+      }
+    });
+
+    try
+    {
+      if (!latch.await(5, TimeUnit.SECONDS))
+      {
+        warn(log, "unable to shutdown properly after 5 seconds");
+      }
+      else
+      {
+        info(log, "shutdown complete");
+      }
+    }
+    catch (InterruptedException e)
+    {
+      warn(log, "shutdown was interrupted");
+    }
   }
 
   public static class TargetHints

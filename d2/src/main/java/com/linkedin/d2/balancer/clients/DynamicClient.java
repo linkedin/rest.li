@@ -16,24 +16,14 @@
 
 package com.linkedin.d2.balancer.clients;
 
-import static com.linkedin.d2.discovery.util.LogUtil.debug;
-import static com.linkedin.d2.discovery.util.LogUtil.info;
-import static com.linkedin.d2.discovery.util.LogUtil.trace;
-import static com.linkedin.d2.discovery.util.LogUtil.warn;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
+import com.linkedin.common.callback.Callback;
+import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.D2Client;
 import com.linkedin.d2.balancer.Facilities;
-import com.linkedin.r2.message.RequestContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.linkedin.d2.balancer.LoadBalancer;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
-import com.linkedin.common.callback.Callback;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rpc.RpcRequest;
@@ -41,7 +31,13 @@ import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.AbstractClient;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
-import com.linkedin.common.util.None;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import static com.linkedin.d2.discovery.util.LogUtil.debug;
+import static com.linkedin.d2.discovery.util.LogUtil.info;
+import static com.linkedin.d2.discovery.util.LogUtil.trace;
+import static com.linkedin.d2.discovery.util.LogUtil.warn;
 
 public class DynamicClient extends AbstractClient implements D2Client
 {
@@ -116,6 +112,13 @@ public class DynamicClient extends AbstractClient implements D2Client
   }
 
   @Override
+  public void start(Callback<None> callback)
+  {
+    _log.info("starting D2 client");
+    _balancer.start(callback);
+  }
+
+  @Override
   public void shutdown(final Callback<None> callback)
   {
     info(_log, "shutting down dynamic client");
@@ -130,42 +133,6 @@ public class DynamicClient extends AbstractClient implements D2Client
         callback.onSuccess(None.none());
       }
     });
-  }
-
-  public void shutdown()
-  {
-    info(_log, "shutting down");
-
-    final CountDownLatch latch = new CountDownLatch(1);
-
-    shutdown(new Callback<None>()
-    {
-      public void onSuccess(None t)
-      {
-        latch.countDown();
-      }
-
-      public void onError(Throwable e)
-      {
-        latch.countDown();
-      }
-    });
-
-    try
-    {
-      if (!latch.await(5, TimeUnit.SECONDS))
-      {
-        warn(_log, "unable to shutdown properly after 5 seconds");
-      }
-      else
-      {
-        info(_log, "shutdown complete");
-      }
-    }
-    catch (InterruptedException e)
-    {
-      warn(_log, "shutdown was interrupted");
-    }
   }
 
   @Override

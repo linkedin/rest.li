@@ -1,7 +1,13 @@
 package com.linkedin.d2.discovery;
 
-import static org.testng.Assert.assertEquals;
 
+import com.linkedin.d2.D2BaseTest;
+import com.linkedin.d2.balancer.clients.DynamicClient;
+import com.linkedin.d2.balancer.util.LoadBalancerClientCli;
+import com.linkedin.d2.balancer.util.LoadBalancerEchoServer;
+import com.linkedin.d2.balancer.util.LoadBalancerUtil;
+import com.linkedin.d2.discovery.stores.PropertyStoreException;
+import com.linkedin.d2.quorum.ZKQuorum;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -10,26 +16,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 
-import com.linkedin.d2.balancer.clients.DynamicClient;
-import com.linkedin.d2.balancer.util.LoadBalancerClientCli;
-import com.linkedin.d2.balancer.util.LoadBalancerEchoServer;
-import com.linkedin.d2.D2BaseTest;
-import com.linkedin.d2.quorum.ZKQuorum;
-import com.linkedin.d2.discovery.stores.PropertyStoreException;
+import static org.testng.Assert.assertEquals;
 
 @Test (groups = {"d2integration"})
 public class TestPartitionsWithZKQuorum extends D2BaseTest
 {
+  private static final Logger           _log = LoggerFactory.getLogger(TestPartitionsWithZKQuorum.class);
+
   private List<LoadBalancerEchoServer>  _echoServers;
   private String[]                      _zkHosts;
   private ZKQuorum                      _quorum;
   private LoadBalancerClientCli         _cli;
-  DynamicClient                         _client;
+  private DynamicClient                 _client;
   private String                        _zkUriString;
 
   private void setup() throws IOException, Exception
@@ -169,7 +173,7 @@ public class TestPartitionsWithZKQuorum extends D2BaseTest
     }
     try
     {
-      _client.shutdown();
+      LoadBalancerUtil.syncShutdownClient(_client, _log);
     }
     catch (Exception e)
     {

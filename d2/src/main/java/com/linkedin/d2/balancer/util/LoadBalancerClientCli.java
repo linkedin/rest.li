@@ -16,53 +16,8 @@
 
 package com.linkedin.d2.balancer.util;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import javax.management.MBeanServerConnection;
-import javax.management.ObjectInstance;
-import javax.management.ObjectName;
-import javax.management.remote.JMXConnector;
-import javax.management.remote.JMXConnectorFactory;
-import javax.management.remote.JMXServiceURL;
-
-import com.linkedin.d2.balancer.zkfs.ZKFSComponentFactory;
-import com.linkedin.d2.balancer.zkfs.ZKFSLoadBalancer;
-import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
-import com.linkedin.d2.balancer.zkfs.ZKFSUtil;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
-
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.GnuParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
-import org.apache.commons.io.FileUtils;
-import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.Watcher.Event.KeeperState;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import sun.jvmstat.monitor.HostIdentifier;
-import sun.jvmstat.monitor.MonitoredHost;
-
 import com.linkedin.d2.balancer.clients.DynamicClient;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterPropertiesJsonSerializer;
@@ -79,6 +34,10 @@ import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyFactoryV2;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyFactoryV3;
 import com.linkedin.d2.balancer.strategies.random.RandomLoadBalancerStrategyFactory;
+import com.linkedin.d2.balancer.zkfs.ZKFSComponentFactory;
+import com.linkedin.d2.balancer.zkfs.ZKFSLoadBalancer;
+import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
+import com.linkedin.d2.balancer.zkfs.ZKFSUtil;
 import com.linkedin.d2.discovery.PropertySerializer;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
 import com.linkedin.d2.discovery.event.PropertyEventBusImpl;
@@ -103,6 +62,43 @@ import com.linkedin.r2.message.rpc.RpcRequestBuilder;
 import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import javax.management.MBeanServerConnection;
+import javax.management.ObjectInstance;
+import javax.management.ObjectName;
+import javax.management.remote.JMXConnector;
+import javax.management.remote.JMXConnectorFactory;
+import javax.management.remote.JMXServiceURL;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.io.FileUtils;
+import org.apache.zookeeper.Watcher.Event.KeeperState;
+import org.apache.zookeeper.ZooKeeper;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import sun.jvmstat.monitor.HostIdentifier;
+import sun.jvmstat.monitor.MonitoredHost;
+
 
 public class LoadBalancerClientCli
 {
@@ -414,7 +410,7 @@ public class LoadBalancerClientCli
       }
       finally
       {
-        client.shutdown();
+        LoadBalancerUtil.syncShutdownClient(_client, _log);
         zkclient.shutdown();
       }
     }
@@ -514,7 +510,7 @@ public class LoadBalancerClientCli
       {
         if (performShutdown)
         {
-          client.shutdown();
+          LoadBalancerUtil.syncShutdownClient(_client, _log);
           zkclient.shutdown();
         }
       }
@@ -1256,7 +1252,7 @@ public class LoadBalancerClientCli
     {
       if (_client != null)
       {
-        _client.shutdown();
+        LoadBalancerUtil.syncShutdownClient(_client, _log);
       }
     }
     catch (Exception e)

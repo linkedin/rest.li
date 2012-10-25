@@ -1,13 +1,13 @@
 package com.linkedin.d2.discovery;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-
+import com.linkedin.d2.D2BaseTest;
+import com.linkedin.d2.balancer.clients.DynamicClient;
+import com.linkedin.d2.balancer.util.LoadBalancerClientCli;
+import com.linkedin.d2.balancer.util.LoadBalancerEchoServer;
+import com.linkedin.d2.balancer.util.LoadBalancerUtil;
+import com.linkedin.d2.discovery.stores.zk.ZKServer;
+import com.linkedin.d2.discovery.stores.zk.ZKTestUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterTest;
@@ -15,12 +15,13 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
-import com.linkedin.d2.D2BaseTest;
-import com.linkedin.d2.balancer.clients.DynamicClient;
-import com.linkedin.d2.balancer.util.LoadBalancerClientCli;
-import com.linkedin.d2.balancer.util.LoadBalancerEchoServer;
-import com.linkedin.d2.discovery.stores.zk.ZKServer;
-import com.linkedin.d2.discovery.stores.zk.ZKTestUtil;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 @Test (groups = {"d2integration"})
 public class TestD2ConfigWithSingleZKFailover extends D2BaseTest
@@ -112,7 +113,7 @@ public class TestD2ConfigWithSingleZKFailover extends D2BaseTest
 
     try
     {
-      _client.shutdown();
+      LoadBalancerUtil.syncShutdownClient(_client, _log);
     }
     catch (Exception e)
     {
