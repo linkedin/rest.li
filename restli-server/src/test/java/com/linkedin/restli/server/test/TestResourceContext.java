@@ -23,6 +23,7 @@ package com.linkedin.restli.server.test;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.r2.message.RequestBuilder;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestMessageBuilder;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
@@ -53,7 +54,8 @@ public class TestResourceContext
     URI uri = URI.create(
             "groups/?count=10&emailDomain=foo.com&fields=locale,state&q=emailDomain&start=0");
 
-    ResourceContext context = new ResourceContextImpl(new PathKeysImpl(), new MockRequest(uri));
+    ResourceContext context = new ResourceContextImpl(new PathKeysImpl(), new MockRequest(uri),
+                                                      new RequestContext());
     MaskTree mask = context.getProjectionMask();
     Assert.assertEquals(mask.toString(), "{locale=1, state=1}");
   }
@@ -64,14 +66,16 @@ public class TestResourceContext
     URI uri = URI.create(
             "groups/?count=10&emailDomain=foo.com&fields=locale,state,location:(longitude,latitude)&q=emailDomain&start=0");
 
-    ResourceContext context = new ResourceContextImpl(new PathKeysImpl(), new MockRequest(uri));
+    ResourceContext context = new ResourceContextImpl(new PathKeysImpl(), new MockRequest(uri),
+                                                      new RequestContext());
     MaskTree mask = context.getProjectionMask();
     Assert.assertEquals(mask.toString(), "{location={longitude=1, latitude=1}, locale=1, state=1}");
 
     uri = URI.create(
             "groups/?fields=a:($*),b:($*:(c)),d:($*:(e,f))");
 
-    context = new ResourceContextImpl(new PathKeysImpl(), new MockRequest(uri));
+    context = new ResourceContextImpl(new PathKeysImpl(), new MockRequest(uri),
+                                      new RequestContext());
     mask = context.getProjectionMask();
     Assert.assertEquals(mask.toString(), "{d={$*={f=1, e=1}}, b={$*={c=1}}, a={$*=1}}");
 

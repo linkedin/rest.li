@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.server;
 
+import com.linkedin.r2.message.RequestContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,15 +98,16 @@ public class RestLiServer extends BaseRestServer
   }
 
   /**
-   * @see BaseRestServer#doHandleRequest(com.linkedin.r2.message.rest.RestRequest, com.linkedin.common.callback.Callback)
+   * @see BaseRestServer#doHandleRequest(com.linkedin.r2.message.rest.RestRequest,
+   * com.linkedin.r2.message.RequestContext, com.linkedin.common.callback.Callback)
    */
   @Override
-  protected void doHandleRequest(final RestRequest request,
+  protected void doHandleRequest(final RestRequest request, final RequestContext requestContext,
                                  final Callback<RestResponse> callback)
   {
     if (_docRequestHandler == null || !_docRequestHandler.isDocumentationRequest(request))
     {
-      handleResourceRequest(request, callback);
+      handleResourceRequest(request, requestContext, callback);
     }
     else
     {
@@ -113,13 +115,13 @@ public class RestLiServer extends BaseRestServer
     }
   }
 
-  private void handleResourceRequest(final RestRequest request,
+  private void handleResourceRequest(final RestRequest request, final RequestContext requestContext,
                                      final Callback<RestResponse> callback)
   {
     final RoutingResult method;
     try
     {
-      method = _router.process(request);
+      method = _router.process(request, requestContext);
     }
     catch (Exception e)
     {

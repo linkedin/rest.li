@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.linkedin.parseq.Engine;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestException;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -111,7 +112,7 @@ public class TestRestLiServer
       }
     };
 
-    _server.handleRequest(request, callback);
+    _server.handleRequest(request, new RequestContext(), callback);
   }
 
   @SuppressWarnings({"unchecked"})
@@ -152,7 +153,7 @@ public class TestRestLiServer
       }
     });
     EasyMock.replay(statusResource);
-    _server.handleRequest(request, callback);
+    _server.handleRequest(request, new RequestContext(), callback);
   }
 
   @Test
@@ -182,7 +183,7 @@ public class TestRestLiServer
       }
     };
 
-    _server.handleRequest(request, callback);
+    _server.handleRequest(request, new RequestContext(), callback);
   }
 
   @Test
@@ -217,7 +218,7 @@ public class TestRestLiServer
       }
     };
 
-    _server.handleRequest(request, callback);
+    _server.handleRequest(request, new RequestContext(), callback);
   }
 
   @Test
@@ -262,7 +263,7 @@ public class TestRestLiServer
       }
     };
 
-    _server.handleRequest(request, callback);
+    _server.handleRequest(request, new RequestContext(), callback);
   }
 
   @Test
@@ -312,7 +313,7 @@ public class TestRestLiServer
 
     try
     {
-      _server.handleRequest(request, callback);
+      _server.handleRequest(request, new RequestContext(), callback);
     }
     finally
     {

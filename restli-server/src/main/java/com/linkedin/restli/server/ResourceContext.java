@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.linkedin.data.transform.filter.request.MaskTree;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 
 /**
@@ -108,4 +109,11 @@ public interface ResourceContext
    * @param value - the value of the header
    */
   void setResponseHeader(String name, String value);
+
+  /**
+   * get the RequestContext associated with this request.
+   *
+   * @return RequestContext for the current context
+   */
+  RequestContext getRawRequestContext();
 }

@@ -21,6 +21,7 @@
 package test.r2.integ;
 
 import com.linkedin.common.callback.Callback;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
@@ -102,7 +103,7 @@ public class TestHttpServer
   {
 
     @Override
-    public void handleRequest(RestRequest request, Callback<RestResponse> callback)
+    public void handleRequest(RestRequest request, RequestContext requestContext, Callback<RestResponse> callback)
     {
       throw new RuntimeException("error for testing");
     }
@@ -111,7 +112,7 @@ public class TestHttpServer
   private static class FoobarHandler implements RestRequestHandler
   {
     @Override
-    public void handleRequest(RestRequest request, Callback<RestResponse> callback)
+    public void handleRequest(RestRequest request, RequestContext requestContext, Callback<RestResponse> callback)
     {
       RestResponseBuilder builder = new RestResponseBuilder();
       builder.setStatus(RestStatus.OK);

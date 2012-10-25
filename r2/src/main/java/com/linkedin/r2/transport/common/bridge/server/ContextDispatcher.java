@@ -18,6 +18,7 @@
 package com.linkedin.r2.transport.common.bridge.server;
 
 import com.linkedin.common.callback.Callback;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
@@ -51,7 +52,7 @@ public class ContextDispatcher implements TransportDispatcher
   };
   private static final RestRequestHandler DEFAULT_REST_HANDLER = new RestRequestHandler() {
     @Override
-    public void handleRequest(RestRequest req, Callback<RestResponse> callback)
+    public void handleRequest(RestRequest req, RequestContext requestContext, Callback<RestResponse> callback)
     {
       final RestResponse response =
               RestStatus.responseForStatus(RestStatus.NOT_FOUND, "No resource for URI: " + req.getURI());
@@ -98,6 +99,7 @@ public class ContextDispatcher implements TransportDispatcher
 
   @Override
   public void handleRestRequest(RestRequest req, Map<String, String> wireAttrs,
+                                RequestContext requestContext,
                                 TransportCallback<RestResponse> callback)
   {
     final RestRequestHandler handler = getHandler(req.getURI(), _restHandlers,
@@ -105,7 +107,7 @@ public class ContextDispatcher implements TransportDispatcher
 
     try
     {
-      handler.handleRequest(req, new TransportCallbackAdapter<RestResponse>(callback));
+      handler.handleRequest(req, requestContext, new TransportCallbackAdapter<RestResponse>(callback));
     }
     catch (Exception e)
     {

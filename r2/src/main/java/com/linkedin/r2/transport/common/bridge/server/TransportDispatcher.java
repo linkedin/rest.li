@@ -17,6 +17,7 @@
 /* $Id$ */
 package com.linkedin.r2.transport.common.bridge.server;
 
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rpc.RpcRequest;
@@ -46,10 +47,11 @@ public interface TransportDispatcher
   /**
    * Dispatch a {@link RestRequest}.
    *
-   * @param req the {@link RestRequest} to be dispatched.
+   * @param req the {@link com.linkedin.r2.message.rest.RestRequest} to be dispatched.
    * @param wireAttrs the wire attributes of the request.
-   * @param callback a {@link TransportCallback} to be called with the {@link RestResponse}.
+   * @param requestContext {@link com.linkedin.r2.message.RequestContext} context for the request
+   * @param callback a {@link com.linkedin.r2.transport.common.bridge.common.TransportCallback} to be called with the {@link com.linkedin.r2.message.rest.RestResponse}.
    */
   void handleRestRequest(RestRequest req, Map<String, String> wireAttrs,
-                         TransportCallback<RestResponse> callback);
+                         RequestContext requestContext, TransportCallback<RestResponse> callback);
 }

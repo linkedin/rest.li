@@ -23,6 +23,7 @@ package com.linkedin.restli.server.mock;
 import com.linkedin.data.ByteString;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.r2.message.RequestBuilder;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestMessageBuilder;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
@@ -175,7 +176,7 @@ public class TestInjectMockResourceFactory
     RestLiConfig config = new RestLiConfig();
     config.addResourcePackageNames("com.linkedin.restli.server.mock");
     RestLiServer server = new RestLiServer(config, factory);
-    server.handleRequest(new MockRequest(), new Callback<RestResponse>()
+    server.handleRequest(new MockRequest(), new RequestContext(), new Callback<RestResponse>()
     {
       @Override
       public void onError(Throwable e)

@@ -30,6 +30,7 @@ import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.data.transform.filter.request.MaskTree;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.PathSegment.PathSegmentSyntaxException;
@@ -51,6 +52,7 @@ public class ResourceContextImpl implements ServerResourceContext
   private final MaskTree                            _projectionMask;
   private final Map<String, String>                 _responseHeaders;
   private final Map<String, RestLiServiceException> _batchKeyErrors;
+  private final RequestContext                      _requestContext;
 
   /**
    * Default constructor.
@@ -59,7 +61,7 @@ public class ResourceContextImpl implements ServerResourceContext
    */
   public ResourceContextImpl() throws RestLiSyntaxException
   {
-    this(new PathKeysImpl(), null);
+    this(new PathKeysImpl(), null, new RequestContext());
   }
 
   /**
@@ -67,14 +69,17 @@ public class ResourceContextImpl implements ServerResourceContext
    *
    * @param pathKeys path keys object
    * @param request request
+   * @param requestContext context for the request
    * @throws RestLiSyntaxException if the syntax of query parameters in the request is
    *           incorrect
    */
-  public ResourceContextImpl(final MutablePathKeys pathKeys, final RestRequest request) throws
+  public ResourceContextImpl(final MutablePathKeys pathKeys, final RestRequest request,
+                             final RequestContext requestContext) throws
           RestLiSyntaxException
   {
     _pathKeys = pathKeys;
     _request = request;
+    _requestContext = requestContext;
 
     Map<String, List<String>> queryParameters =
         ArgumentUtils.getQueryParameters(_request != null ? _request.getURI()
@@ -224,6 +229,12 @@ public class ResourceContextImpl implements ServerResourceContext
   public void setResponseHeader(final String name, final String value)
   {
     _responseHeaders.put(name, value);
+  }
+
+  @Override
+  public RequestContext getRawRequestContext()
+  {
+    return _requestContext;
   }
 
   @Override

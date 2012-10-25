@@ -31,6 +31,7 @@ import com.linkedin.d2.discovery.stores.zk.ZKConnection;
 import com.linkedin.d2.discovery.stores.zk.ZKTestUtil;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.d2.jmx.JmxManager;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
@@ -447,7 +448,8 @@ public class LoadBalancerEchoServer
   public class RestDispatcher implements RestRequestHandler
   {
     @Override
-    public void handleRequest(RestRequest request, final Callback<RestResponse> callback)
+    public void handleRequest(RestRequest request, RequestContext requestContext,
+                              final Callback<RestResponse> callback)
     {
       System.out.println("REST server request: " + request.getEntity().asString("UTF-8"));
 

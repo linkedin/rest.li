@@ -76,7 +76,9 @@ public class DispatcherRequestFilter implements RpcRequestFilter, RestRequestFil
   {
     try
     {
-      _dispatcher.handleRestRequest(req, wireAttrs, createCallback(requestContext, nextFilter));
+      _dispatcher.handleRestRequest(req, wireAttrs, requestContext,
+                                    createCallback(requestContext, nextFilter)
+      );
     }
     catch (Exception e)
     {

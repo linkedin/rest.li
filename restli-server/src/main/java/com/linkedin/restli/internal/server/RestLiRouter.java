@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.regex.Pattern;
 
+import com.linkedin.r2.message.RequestContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,7 +80,7 @@ public class RestLiRouter
    * @param req {@link RestRequest}
    * @return {@link RoutingResult}
    */
-  public RoutingResult process(final RestRequest req)
+  public RoutingResult process(final RestRequest req, final RequestContext requestContext)
   {
     String path = req.getURI().getRawPath();
     if (path.length() < 2)
@@ -119,7 +120,7 @@ public class RestLiRouter
 
     try
     {
-      context = new ResourceContextImpl(new PathKeysImpl(), req);
+      context = new ResourceContextImpl(new PathKeysImpl(), req, requestContext);
     }
     catch (RestLiSyntaxException e)
     {

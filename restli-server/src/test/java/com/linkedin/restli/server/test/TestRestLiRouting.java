@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.linkedin.r2.message.RequestContext;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.spi.LoggerRepository;
@@ -78,7 +79,7 @@ public class TestRestLiRouting
     // #1 simple GET
     request = new RestRequestBuilder(new URI("/statuses/1")).setMethod("GET").build();
 
-    result = _router.process(request);
+    result = _router.process(request, new RequestContext());
     assertNotNull(result);
 
     resourceMethodDescriptor = result.getResourceMethod();
@@ -100,7 +101,7 @@ public class TestRestLiRouting
     request = new RestRequestBuilder(new URI("/follows/followerID:1;followeeID:2"))
              .setMethod("GET").build();
 
-    result = _router.process(request);
+    result = _router.process(request, new RequestContext());
     assertNotNull(result);
 
     resourceMethodDescriptor = result.getResourceMethod();
@@ -125,7 +126,7 @@ public class TestRestLiRouting
     request = new RestRequestBuilder(new URI("/follows?ids=followerID:1;followeeID:2,followerID:3;followeeID:4"))
               .setMethod("GET").build();
 
-    result = _router.process(request);
+    result = _router.process(request, new RequestContext());
     assertNotNull(result);
 
     resourceMethodDescriptor = result.getResourceMethod();
@@ -415,7 +416,7 @@ public class TestRestLiRouting
     // #1 route to root action
     request = new RestRequestBuilder(new URI("/accounts?action=register")).setMethod("POST").build();
 
-    result = _router.process(request);
+    result = _router.process(request, new RequestContext());
     assertNotNull(result);
     assertEquals(result.getResourceMethod().getActionName(), "register");
     assertEquals(result.getResourceMethod().getType(), ResourceMethod.ACTION);
@@ -423,7 +424,7 @@ public class TestRestLiRouting
     // #2 route to contextual action on a nested resource
     request = new RestRequestBuilder(new URI("/statuses/1/replies?action=replyToAll")).setMethod("POST").build();
 
-    result = _router.process(request);
+    result = _router.process(request, new RequestContext());
     assertNotNull(result);
     assertEquals(result.getResourceMethod().getActionName(), "replyToAll");
     assertEquals(result.getResourceMethod().getType(), ResourceMethod.ACTION);
@@ -473,7 +474,7 @@ public class TestRestLiRouting
       builder.setHeader("X-RestLi-Method", restliMethod);
     }
     RestRequest request = builder.build();
-    RoutingResult result = _router.process(request);
+    RoutingResult result = _router.process(request, new RequestContext());
 
     assertEquals(result.getResourceMethod().getType(), method);
     assertEquals(result.getResourceMethod().getResourceModel().getResourceClass(), resourceClass);
@@ -513,7 +514,7 @@ public class TestRestLiRouting
       throws URISyntaxException
   {
     RestRequest request = new RestRequestBuilder(new URI(uri)).setMethod(httpMethod).build();
-    RoutingResult result = _router.process(request);
+    RoutingResult result = _router.process(request, new RequestContext());
     assertEquals(result.getContext().getPathKeys().getBatchKeys(), batchCompoundKeys);
   }
 
@@ -529,7 +530,7 @@ public class TestRestLiRouting
     RestRequest request = builder.build();
     try
     {
-      RoutingResult r = _router.process(request);
+      RoutingResult r = _router.process(request, new RequestContext());
       fail("Expected RoutingException, got: " + r.toString());
     }
     catch (RoutingException e)
@@ -568,7 +569,7 @@ public class TestRestLiRouting
     // #1 simple GET
     request = new RestRequestBuilder(new URI("/test/foo/sub/bar")).setMethod("GET").build();
 
-    result = _router.process(request);
+    result = _router.process(request, new RequestContext());
     assertNotNull(result);
     PathKeys keys = result.getContext().getPathKeys();
     assertEquals(keys.getAsString("testId"), "foo");

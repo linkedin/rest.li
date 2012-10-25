@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.common.MessageType;
@@ -77,7 +78,8 @@ public class HttpDispatcher
         case REST:
           _dispatcher.handleRestRequest(HttpBridge.toRestRequest(req, headers),
                                         wireAttrs,
-                                        HttpBridge.httpToRestCallback(callback));
+                                        new RequestContext(), HttpBridge.httpToRestCallback(callback)
+          );
       }
     }
     catch (Exception e)

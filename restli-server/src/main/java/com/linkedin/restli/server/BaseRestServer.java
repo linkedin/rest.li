@@ -18,6 +18,7 @@ package com.linkedin.restli.server;
 
 import java.util.Map;
 
+import com.linkedin.r2.message.RequestContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,15 +45,15 @@ public abstract class BaseRestServer implements RestRequestHandler
 
   /**
    * @see com.linkedin.r2.transport.common.RestRequestHandler#handleRequest(com.linkedin.r2.message.rest.RestRequest,
-   *      com.linkedin.common.callback.Callback)
+   *      com.linkedin.r2.message.RequestContext, com.linkedin.common.callback.Callback)
    */
   @Override
-  public void handleRequest(final RestRequest request,
+  public void handleRequest(final RestRequest request, final RequestContext requestContext,
                             final Callback<RestResponse> callback)
   {
     try
     {
-      doHandleRequest(request, callback);
+      doHandleRequest(request, requestContext, callback);
     }
     catch (Exception e)
     {
@@ -62,6 +63,7 @@ public abstract class BaseRestServer implements RestRequestHandler
   }
 
   protected abstract void doHandleRequest(RestRequest request,
+                                          RequestContext requestContext,
                                           Callback<RestResponse> callback);
 
   protected RestLiConfig getConfig()

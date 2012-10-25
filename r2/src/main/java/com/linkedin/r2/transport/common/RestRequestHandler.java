@@ -18,6 +18,7 @@
 package com.linkedin.r2.transport.common;
 
 import com.linkedin.common.callback.Callback;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 
@@ -39,7 +40,8 @@ public interface RestRequestHandler
    * request.
    *
    * @param request the request to process
+   * @param requestContext {@link RequestContext} context for the request
    * @param callback the callback to notify when request processing has completed
    */
-  void handleRequest(RestRequest request, Callback<RestResponse> callback);
+  void handleRequest(RestRequest request, RequestContext requestContext, Callback<RestResponse> callback);
 }

@@ -18,6 +18,7 @@ package com.linkedin.restli.test;
 
 import java.io.IOException;
 
+import com.linkedin.r2.message.RequestContext;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -65,7 +66,7 @@ public class TestCharacterEncoding
       // RestLiServer.handleRequest() will invoke the application resource *and* the callback
       // *synchronously*, ensuring that the all instances of the callback are invoked before the
       // loop terminates.
-      server.handleRequest(restRequest, new Callback<RestResponse>()
+      server.handleRequest(restRequest, new RequestContext(), new Callback<RestResponse>()
       {
         @Override
         public void onError(Throwable e)

@@ -65,10 +65,10 @@ public class FilterChainDispatcher implements TransportDispatcher
 
   @Override
   public void handleRestRequest(RestRequest req, Map<String, String> wireAttrs,
+                                RequestContext requestContext,
                                 TransportCallback<RestResponse> callback)
   {
-    final RequestContext context = new RequestContext();
-    ResponseFilter.registerCallback(callback, context);
-    _filters.onRestRequest(req, context, wireAttrs);
+    ResponseFilter.registerCallback(callback, requestContext);
+    _filters.onRestRequest(req, requestContext, wireAttrs);
   }
 }

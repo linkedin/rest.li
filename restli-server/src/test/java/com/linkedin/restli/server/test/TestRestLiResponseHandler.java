@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.server.test;
 
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.restli.server.ActionResult;
 import com.linkedin.restli.server.GetResult;
 import java.io.ByteArrayInputStream;
@@ -255,7 +256,8 @@ public class TestRestLiResponseHandler
           throws IOException, URISyntaxException, RestLiSyntaxException
   {
     RestRequest request = buildRequest(uri);
-    RoutingResult routingResult = new RoutingResult(new ResourceContextImpl(new PathKeysImpl(), request), methodDescriptor);
+    RoutingResult routingResult = new RoutingResult(new ResourceContextImpl(new PathKeysImpl(), request,
+                                                                            new RequestContext()), methodDescriptor);
     RestResponse response;
     response = _responseHandler.buildResponse(request,
                                               routingResult,
@@ -619,7 +621,8 @@ public class TestRestLiResponseHandler
         ResourceMethodDescriptor.createForRestful(resourceMethod, method, InterfaceType.SYNC);
     model.addResourceMethodDescriptor(methodDescriptor);
 
-    return new RoutingResult(new ResourceContextImpl(new PathKeysImpl(), request), methodDescriptor);
+    return new RoutingResult(new ResourceContextImpl(new PathKeysImpl(), request,
+                                                     new RequestContext()), methodDescriptor);
   }
 
 
@@ -632,7 +635,8 @@ public class TestRestLiResponseHandler
         ResourceMethodDescriptor.createForRestful(ResourceMethod.FINDER, method, InterfaceType.SYNC);
     model.addResourceMethodDescriptor(methodDescriptor);
 
-    return new RoutingResult(new ResourceContextImpl(new PathKeysImpl(), request), methodDescriptor);
+    return new RoutingResult(new ResourceContextImpl(new PathKeysImpl(), request,
+                                                     new RequestContext()), methodDescriptor);
   }
 
   @RestLiCollection(name="test")

@@ -18,6 +18,7 @@ package com.linkedin.restli.server;
 
 import java.util.Map;
 
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
@@ -47,11 +48,12 @@ public class DelegatingTransportDispatcher implements TransportDispatcher
   @Override
   public void handleRestRequest(final RestRequest req,
                                 final Map<String, String> wireAttrs,
+                                final RequestContext requestContext,
                                 final TransportCallback<RestResponse> callback)
   {
     try
     {
-      _handler.handleRequest(req, new TransportCallbackAdapter<RestResponse>(callback));
+      _handler.handleRequest(req, requestContext, new TransportCallbackAdapter<RestResponse>(callback));
     }
     catch (Exception e)
     {

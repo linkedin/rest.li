@@ -20,6 +20,7 @@ package com.linkedin.r2.sample.echo.rest;
 import com.linkedin.data.ByteString;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.CallbackAdapter;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
@@ -43,7 +44,8 @@ public class RestEchoServer implements RestRequestHandler
     _echoService = echoService;
   }
 
-  public void handleRequest(RestRequest request, Callback<RestResponse> callback)
+  public void handleRequest(RestRequest request, RequestContext requestContext,
+                            Callback<RestResponse> callback)
   {
     final String msg = request.getEntity().asString(CHARSET);
     _echoService.echo(msg, new CallbackAdapter<RestResponse, String>(callback) {

@@ -31,6 +31,7 @@ import com.linkedin.data.transform.patch.request.PatchTree;
 import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.EngineBuilder;
 import com.linkedin.parseq.promise.Promises;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
@@ -1172,7 +1173,8 @@ public class TestRestLiMethodInvocation
                     .setMethod("POST").setEntity(jsonEntityBody.getBytes())
                     .build();
 
-    RoutingResult routingResult = new RoutingResult(new ResourceContextImpl(null, request), methodDescriptor);
+    RoutingResult routingResult = new RoutingResult(new ResourceContextImpl(null, request,
+                                                                            new RequestContext()), methodDescriptor);
 
     try {
       _invoker.invoke(routingResult, request, null);
@@ -1201,7 +1203,8 @@ public class TestRestLiMethodInvocation
                     .setMethod("POST").setEntity(jsonEntityBody.getBytes())
                     .build();
 
-    RoutingResult routingResult = new RoutingResult(new ResourceContextImpl(null, request), methodDescriptor);
+    RoutingResult routingResult = new RoutingResult(new ResourceContextImpl(null, request,
+                                                                            new RequestContext()), methodDescriptor);
 
     try {
       _invoker.invoke(routingResult, request, null);
@@ -1245,7 +1248,8 @@ public class TestRestLiMethodInvocation
                     .setMethod("GET")
                     .build();
 
-    RoutingResult routingResult = new RoutingResult(new ResourceContextImpl(null, request), methodDescriptor);
+    RoutingResult routingResult = new RoutingResult(new ResourceContextImpl(null, request,
+                                                                            new RequestContext()), methodDescriptor);
 
     try
     {
@@ -1270,7 +1274,8 @@ public class TestRestLiMethodInvocation
                     .setMethod("GET")
                     .build();
 
-    RoutingResult routingResult = new RoutingResult(new ResourceContextImpl(null, request), methodDescriptor);
+    RoutingResult routingResult = new RoutingResult(new ResourceContextImpl(null, request,
+                                                                            new RequestContext()), methodDescriptor);
 
     try
     {
@@ -1707,7 +1712,8 @@ public class TestRestLiMethodInvocation
         builder.setEntity(entityBody.getBytes());
       }
       RestRequest request = builder.build();
-      RoutingResult routingResult = new RoutingResult(new ResourceContextImpl(pathkeys, request), resourceMethodDescriptor);
+      RoutingResult routingResult = new RoutingResult(new ResourceContextImpl(pathkeys, request,
+                                                                              new RequestContext()), resourceMethodDescriptor);
       final CountDownLatch latch = new CountDownLatch(1);
       final RestLiCallback<Object> callback = new RestLiCallback<Object>(request, routingResult, new RestLiResponseHandler(), new Callback<RestResponse>()
       {
@@ -1792,7 +1798,8 @@ public class TestRestLiMethodInvocation
       }
       RestRequest request = builder.build();
       RoutingResult routingResult =
-          new RoutingResult(new ResourceContextImpl(pathkeys, request), methodDescriptor);
+          new RoutingResult(new ResourceContextImpl(pathkeys, request,
+                                                    new RequestContext()), methodDescriptor);
 
       _invoker.invoke(routingResult, request, callback);
       EasyMock.verify(resource);

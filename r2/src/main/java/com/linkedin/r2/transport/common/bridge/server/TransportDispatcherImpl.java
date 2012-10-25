@@ -17,6 +17,7 @@
 /* $Id$ */
 package com.linkedin.r2.transport.common.bridge.server;
 
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
@@ -73,6 +74,7 @@ import java.util.Map;
 
   @Override
   public void handleRestRequest(RestRequest req, Map<String, String> wireAttrs,
+                                RequestContext requestContext,
                                 TransportCallback<RestResponse> callback)
   {
     final URI address = req.getURI();
@@ -88,7 +90,7 @@ import java.util.Map;
 
     try
     {
-      handler.handleRequest(req, new TransportCallbackAdapter<RestResponse>(callback));
+      handler.handleRequest(req, requestContext, new TransportCallbackAdapter<RestResponse>(callback));
     }
     catch (Exception e)
     {
