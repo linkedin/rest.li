@@ -1282,6 +1282,39 @@ public class TestDataIterator
     assertFalse(or(Arrays.asList(alwaysFalse(), alwaysFalse(), alwaysFalse())).evaluate(null));
   }
 
+  @Test(dataProvider = "orders")
+  public void testInitialEmptyDataComplexFullIteration(final IterationOrder order) throws IOException
+  {
+    String input = "[ {}, \"a\" ]";
+    Object o = jsonToObject(input);
+    DataIterator i = Builder.create(o, null, order).dataIterator();
+
+    int count = 0;
+    while (i.next() != null)
+    {
+      count++;
+    }
+    assertEquals(count, 3, "iteration of " + input + " returned " + count + " elements instead of 3");
+  }
+
+  @Test(dataProvider = "orders")
+  public void testInitialEmptyDataComplexOrder(final IterationOrder order) throws IOException
+  {
+    String input = "{ \"a\": { \"b\": {} } }";
+    Object o = jsonToObject(input);
+    DataIterator i = Builder.create(o, null, order).dataIterator();
+
+    DataElement e = i.next();
+    if (order == IterationOrder.PRE_ORDER)
+    {
+      assertEquals(e.level(), 0, "preorder traversal of " + input + " started with level " + e.level());
+    }
+    else
+    {
+      assertEquals(e.level(), 2, "postorder traversal of " + input + " started with level " + e.level());
+    }
+  }
+
   public void benchmarkImmutable(int count, final IterationOrder order)
   {
     // create object to traverse
