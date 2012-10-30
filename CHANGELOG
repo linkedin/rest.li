@@ -1,10 +1,12 @@
+1.6.4
+-----
+(RB=103770)
+Allow custom annotations in resource classes to be passed to generated .restspec.json files.
+
 1.6.3
 -----
 (RB=107630)
 pass requestContext up to restli layer.
-
-(RB=103770)
-Allow custom annotations in resource classes to be passed to generated .restspec.json files.
 
 1.6.2
 -----
