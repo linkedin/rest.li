@@ -8,4 +8,4 @@ dependencies {
   testCompile externalDependency.testng
 }
 
-apply from: "${build_script_dir}/dataTemplate.gradle"
+apply from: "${buildScriptDirPath}/dataTemplate.gradle"

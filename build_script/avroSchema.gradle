@@ -1,17 +1,32 @@
+/*
+   Copyright (c) 2012 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 final Configuration dataAvroConfig = project(':data-avro').configurations.default
 final Configuration dataConfig = project(':data').configurations.default
 
 project.sourceSets.all { SourceSet sourceSet ->
   final inputDataSchemaDirPath = "src${File.separatorChar}${sourceSet.name}${File.separatorChar}pegasus"
-  final String outputDirPath = "src${File.separatorChar}${sourceSet.name}GeneratedAvroSchema${File.separatorChar}avro"
-
   final FileTree inputDataSchemaFiles = project.fileTree(dir: inputDataSchemaDirPath, includes: ["**${File.separatorChar}*.pdsc"])
   if (inputDataSchemaFiles.empty)
   {
     return;
   }
 
-  final Task generateAvroSchemaTask = project.task(sourceSet.name + 'GenerateAvroSchema', type: JavaExec) {
+  final String outputDirPath = rootProject.ext.build.getAvroSchemaOutDirPath(project, sourceSet)
+  rootProject.ext.build.avroSchemaTasks[sourceSet] = project.task(sourceSet.name + 'GenerateAvroSchema', type: JavaExec) {
     main = 'com.linkedin.data.avro.generator.AvroSchemaGenerator'
     classpath = dataAvroConfig + dataAvroConfig.allArtifacts.files + dataConfig + dataConfig.allArtifacts.files
     args outputDirPath
@@ -22,5 +37,5 @@ project.sourceSets.all { SourceSet sourceSet ->
     }
   }
 
-  project.tasks[sourceSet.getTaskName('', 'jar')].dependsOn(generateAvroSchemaTask)
+  project.tasks[sourceSet.getTaskName('', 'jar')].dependsOn(rootProject.ext.build.avroSchemaTasks[sourceSet])
 }

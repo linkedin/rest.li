@@ -1,18 +1,33 @@
+/*
+   Copyright (c) 2012 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 final Configuration restliToolsConfig = project(':restli-tools').configurations.default
 
 project.sourceSets.all { SourceSet sourceSet ->
   final inputIdlDirPath = "src${File.separatorChar}${sourceSet.name}${File.separatorChar}idl"
-  final String outputDirPath = "src${File.separatorChar}${sourceSet.name}GeneratedRest${File.separatorChar}java"
-
   final FileTree inputIdlFiles = project.fileTree(dir: inputIdlDirPath, includes: ["**${File.separatorChar}*.restspec.json"])
   if (inputIdlFiles.empty)
   {
     return;
   }
 
+  final String outputDirPath = rootProject.ext.build.getRestClientOutDirPath(project, sourceSet)
   sourceSet.java.srcDir(outputDirPath)
 
-  final Task generateRestClientTask = project.task(sourceSet.name + 'GenerateRestClient', type: JavaExec) {
+  rootProject.ext.build.restClientTasks[sourceSet] = project.task(sourceSet.name + 'GenerateRestClient', type: JavaExec) {
     main = 'com.linkedin.restli.tools.clientgen.RestRequestBuilderGenerator'
     classpath = restliToolsConfig + restliToolsConfig.allArtifacts.files
     args outputDirPath
@@ -24,5 +39,5 @@ project.sourceSets.all { SourceSet sourceSet ->
     }
   }
 
-  project.tasks[sourceSet.compileJavaTaskName].dependsOn(generateRestClientTask)
+  project.tasks[sourceSet.compileJavaTaskName].dependsOn(rootProject.ext.build.restClientTasks[sourceSet])
 }

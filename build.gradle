@@ -1,7 +1,6 @@
-ext.build_script_dir = "${projectDir.path}/build_script"
+project.ext.buildScriptDirPath = "${projectDir.path}/build_script"
+project.ext.isDefaultEnvironment = !project.hasProperty('overrideBuildEnvironment')
 
-ext.isDefaultEnvironment = !project.hasProperty('overrideBuildEnvironment')
- 
 File getEnvironmentScript()
 {
   final File env = file(isDefaultEnvironment ? 'defaultEnvironment.gradle' : project.overrideBuildEnvironment)
@@ -10,8 +9,9 @@ File getEnvironmentScript()
 }
 
 apply from: environmentScript
+apply from: "${buildScriptDirPath}/configBuildScript.gradle"
 
-ext.externalDependency = [
+project.ext.externalDependency = [
   'avro': 'org.apache.avro:avro:1.4.0',
   'cglib': 'cglib:cglib-nodep:2.2',
   'codemodel': 'com.sun.codemodel:codemodel:2.2',
@@ -42,12 +42,12 @@ ext.externalDependency = [
   'zookeeper': 'org.apache.zookeeper:zookeeper:3.3.0'
 ];
 
-if (!isDefaultEnvironment)
+if (!project.ext.isDefaultEnvironment)
 {
   spec.external.each { overrideDepKey, overrideDepValue ->
-    if (externalDependency[overrideDepKey] != null)
+    if (project.ext.externalDependency[overrideDepKey] != null)
     {
-      externalDependency[overrideDepKey] = overrideDepValue
+      project.ext.externalDependency[overrideDepKey] = overrideDepValue
     }
   }
 }
@@ -68,7 +68,7 @@ subprojects {
   apply plugin: 'java'
   apply plugin: 'eclipse'
 
-  apply from: "${build_script_dir}/cleanGenerated.gradle"
+  apply from: "${buildScriptDirPath}/cleanGenerated.gradle"
 
   sourceCompatibility = JavaVersion.VERSION_1_6
 

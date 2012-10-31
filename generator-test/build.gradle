@@ -9,5 +9,5 @@ dependencies {
 project.sourceSets.test.java.srcDir('src/test/javaPegasus')
 project.idea.module.testSourceDirs.add('src/test/javaPegasus')
 
-apply from: "${build_script_dir}/dataTemplate.gradle"
-apply from: "${build_script_dir}/avroSchema.gradle"
+apply from: "${buildScriptDirPath}/dataTemplate.gradle"
+apply from: "${buildScriptDirPath}/avroSchema.gradle"

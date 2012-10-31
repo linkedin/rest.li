@@ -21,7 +21,7 @@ dependencies {
   testRuntime externalDependency.objenesis
 }
 
-apply from: "${build_script_dir}/dataTemplate.gradle"
+apply from: "${buildScriptDirPath}/dataTemplate.gradle"
 
 test {
    systemProperties['test.projectDir'] = projectDir.toString()

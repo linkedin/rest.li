@@ -1,17 +1,31 @@
+/*
+   Copyright (c) 2012 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 final Configuration restliToolsConfig = project(':restli-tools').configurations.default
 
 project.sourceSets.all { SourceSet sourceSet ->
-  if (project.ext.resourcePackages[sourceSet.name] == null ||
-      project.ext.resourcePackages[sourceSet.name].empty)
+  if (project.ext.resourcePackages[sourceSet.name] == null || project.ext.resourcePackages[sourceSet.name].empty)
   {
     return;
   }
 
-  final String outputDirPath = "src${File.separatorChar}${sourceSet.name}GeneratedRest${File.separatorChar}idl"
-
-  final Task generateRestModelTask = project.task(sourceSet.name + 'GenerateRestModel',
-                                                  type: JavaExec,
-                                                  dependsOn: tasks[sourceSet.classesTaskName]) {
+  final String outputDirPath = rootProject.ext.build.getRestModelOutDirPath(project, sourceSet)
+  rootProject.ext.build.restModelTasks[sourceSet] = project.task(sourceSet.name + 'GenerateRestModel',
+                                                             type: JavaExec,
+                                                             dependsOn: tasks[sourceSet.classesTaskName]) {
     main = 'com.linkedin.restli.tools.idlgen.RestLiResourceModelExporterCmdLineApp'
     classpath = restliToolsConfig + restliToolsConfig.allArtifacts.files + sourceSet.compileClasspath + project.files(sourceSet.output.classesDir)
     args '-outdir'
@@ -25,5 +39,7 @@ project.sourceSets.all { SourceSet sourceSet ->
     }
   }
 
-  project.tasks[sourceSet.getTaskName('', 'jar')].dependsOn(generateRestModelTask)
+  // .restspec.json file generation requires class files be generated first
+  // make jar task, which always runs after class generation, depend on this task
+  project.tasks[sourceSet.getTaskName('', 'jar')].dependsOn(rootProject.ext.build.restModelTasks[sourceSet])
 }

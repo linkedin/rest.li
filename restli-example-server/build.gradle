@@ -23,8 +23,8 @@ ext.resourcePackages = [
 
 ext.apiProject = project(':restli-example-api')
 
-apply from: "${build_script_dir}/restModel.gradle"
-apply from: "${build_script_dir}/publishIdl.gradle"
+apply from: "${buildScriptDirPath}/restModel.gradle"
+apply from: "${buildScriptDirPath}/publishIdl.gradle"
 
 task startServer(dependsOn: ['build']) << {
   logging.captureStandardOutput LogLevel.INFO

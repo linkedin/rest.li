@@ -1,14 +1,27 @@
-File getGeneratedSourceDir(Project project, SourceSet sourceSet, String genType)
-{
-  return project.file("src${File.separatorChar}${sourceSet.name}Generated${genType}")
-}
+/*
+   Copyright (c) 2012 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
 
 project.sourceSets.all { SourceSet sourceSet ->
   final Task cleanGeneratedDirTask = project.task(sourceSet.getTaskName('clean', 'GeneratedDir')) << {
-    project.delete(getGeneratedSourceDir(project, sourceSet, 'DataTemplate'))
-    project.delete(getGeneratedSourceDir(project, sourceSet, 'Rest'))
-    project.delete(getGeneratedSourceDir(project, sourceSet, 'AvroSchema'))
+    project.delete(project.file(rootProject.ext.build.getDataTemplateOutDirPath(project, sourceSet)).parentFile)
+    project.delete(project.file(rootProject.ext.build.getAvroSchemaOutDirPath(project, sourceSet)).parentFile)
+    project.delete(project.file(rootProject.ext.build.getRestModelOutDirPath(project, sourceSet)).parentFile)
+    project.delete(project.file(rootProject.ext.build.getRestClientOutDirPath(project, sourceSet)).parentFile)
   }
+
   // make clean depends on deleting the generated directories
   project.tasks.clean.dependsOn(cleanGeneratedDirTask)
 }

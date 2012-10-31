@@ -87,7 +87,7 @@ task cleanGenerateGreetings(type: Delete) {
 clean.dependsOn(cleanGenerateGreetings)
 
 // Generate IDLs for ACL, Groups, and Greetings.
-ext.resourcePackages = [
+project.ext.resourcePackages = [
   'main': [
     'com.linkedin.restli.examples.groups.server',
     'com.linkedin.restli.examples.greetings.server',
@@ -98,14 +98,18 @@ ext.resourcePackages = [
   ]
 ]
 
-ext.apiProject = project(':restli-int-test-api')
+project.ext.apiProject = project(':restli-int-test-api')
 
-apply from: "${build_script_dir}/restModel.gradle"
-apply from: "${build_script_dir}/publishIdl.gradle"
+apply from: "${buildScriptDirPath}/restModel.gradle"
+apply from: "${buildScriptDirPath}/publishIdl.gradle"
+
+// gradle build does not depend on testJar, which pulls in the restModel generate task
+// explicitly make test task depend on it
+project.tasks.test.dependsOn(rootProject.ext.build.restModelTasks[project.sourceSets.test])
 
 test {
   systemProperties['test.projectDir'] = project.projectDir.path
-  systemProperties['test.idlDir'] = project.file("src${File.separatorChar}${project.sourceSets.test.name}GeneratedRest${File.separatorChar}idl").path
+  systemProperties['test.idlDir'] = rootProject.ext.build.getRestModelOutDirPath(project, project.sourceSets.test)
 }
 
 // TODO When using spawn: true, the server process seems to exit after when gradle exits

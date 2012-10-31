@@ -4,5 +4,5 @@ dependencies {
   compile project(':restli-client')
 }
 
-apply from: "${build_script_dir}/dataTemplate.gradle"
-apply from: "${build_script_dir}/restClient.gradle"
+apply from: "${buildScriptDirPath}/dataTemplate.gradle"
+apply from: "${buildScriptDirPath}/restClient.gradle"
