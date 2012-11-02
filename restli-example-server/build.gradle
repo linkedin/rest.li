@@ -26,7 +26,7 @@ ext.apiProject = project(':restli-example-api')
 apply from: "${buildScriptDirPath}/restModel.gradle"
 apply from: "${buildScriptDirPath}/publishIdl.gradle"
 
-task startServer(dependsOn: ['build']) << {
+task startExampleServer(dependsOn: ['build']) << {
   logging.captureStandardOutput LogLevel.INFO
   ant.java(classname:   'com.linkedin.restli.example.RestLiExamplesServer',
            fork:        true,

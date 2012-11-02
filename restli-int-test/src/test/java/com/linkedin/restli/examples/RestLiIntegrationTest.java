@@ -60,7 +60,7 @@ public class RestLiIntegrationTest
     reduceLogging(NETTY_CLIENT_LOGGER, Level.ERROR);
     reduceLogging(ASYNC_POOL_LOGGER, Level.FATAL);
 
-    _server = RestLiExamplesServer.createServer(_engine);
+    _server = RestLiIntTestServer.createServer(_engine);
     _server.start();
   }
 

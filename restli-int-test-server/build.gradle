@@ -116,7 +116,7 @@ test {
 // the groups example requires some application setup/wiring, hence the custom RestLiExamplesServer class
 task startServer(dependsOn: ['build']) << {
   logging.captureStandardOutput LogLevel.INFO
-  ant.java(classname: 'com.linkedin.restli.examples.RestLiExamplesServer', fork: true, output: '/tmp/restli-int-test-server.log',
+  ant.java(classname: 'com.linkedin.restli.examples.RestLiIntTestServer', fork: true, output: '/tmp/restli-int-test-server.log',
            classpath: "${sourceSets.main.runtimeClasspath.asPath}")
 }
 

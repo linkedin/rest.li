@@ -46,7 +46,7 @@ import org.apache.log4j.PropertyConfigurator;
 /**
  * @author dellamag
  */
-public class RestLiExamplesServer
+public class RestLiIntTestServer
 {
   public static final int PORT = 1338;
 

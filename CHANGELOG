@@ -1,6 +1,9 @@
 1.6.5
 -----
-
+(RB=109987)
+Rename startServer task in restli-example-server to startExampleServer.
+Rename RestLiExamplesServer in restli-int-test-server to RestLiIntTestServer.
+The old startServer task is still used to start the current restli-int-test-server.
 
 1.6.4
 -----
