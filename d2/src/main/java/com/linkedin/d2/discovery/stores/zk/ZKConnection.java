@@ -206,8 +206,7 @@ public class ZKConnection
 
   /**
    * checks if the path in zk exist or not. If it doesn't exist, will create the node.
-   * Warning: this method will create the path recursively but since the path will
-   * be shorter every recursive call, it should terminate.
+   *
    * @param path
    * @param callback
    */
