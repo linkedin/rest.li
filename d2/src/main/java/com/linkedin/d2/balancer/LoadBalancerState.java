@@ -36,17 +36,27 @@ import java.util.List;
  *
  * This class listens to PropertyStore to new updates so it can keep track
  * how many clients are available, what properties are related to the cluster,
- * which cluster corresponds to a service.
+ * which cluster corresponds to a service, etc
  *
- * Example: profile service is assigned to cluster 231 which consists of
- * machine #1 with URI dev1.linkedin.com:1111,
- * machine #2 with URI ...
- * ...
- * The cluster properties has timeout of 5000ms, etc.
+ * Example of state that we keep track of:
  *
- * Since this class knows all the clients, cluster properties, service name, we can
- * get a bunch of information like for this particular service what is the appropriate
- * load balancing strategy, for a particular cluster what is the clients that we can get, etc
+ * We have a service called Foo and Bar
+ * We have 10 servers, the addresses are myhost1.domain.com, myhost2.domain.com, ..., myhost10.domain.com
+ *
+ * We can create 2 clusters of servers for example:
+ * - cluster 1 consists of 4 servers from myhost1.domain.com to myhost4.domain.com
+ * - cluster 2 consists of 6 servers from myhost5.domain.com to myhost10.domain.com
+ * We'll assign service Foo to cluster 1 and service Bar to cluster 2.
+ *
+ * Let's say cluster 1 has timeout of 5000ms and cluster 2 has timeout of 7500 ms.
+ *
+ * When we start LoadBalancerState, it will first obtain all the information described
+ * above from the property store (can be zookeeper, filestore, in memory store).
+ *
+ * When there's a change, let's say another server was added to cluster 1. Then
+ * LoadBalancerState will be notified and it can adjust the state accordingly.
+ * Hence the state is a place to inquire things like for a given cluster what are its properties,
+ * or what are the server URI associated with a particular cluster, etc
  *
  */
 public interface LoadBalancerState

@@ -207,7 +207,7 @@ public class ZKConnection
   /**
    * checks if the path in zk exist or not. If it doesn't exist, will create the node.
    * Warning: this method will create the path recursively but since the path will
-   * be smaller every recursive call, it should terminate.
+   * be shorter every recursive call, it should terminate.
    * @param path
    * @param callback
    */
@@ -270,8 +270,8 @@ public class ZKConnection
    * Sets the data associated with a node in zookeeper. Use optimistic concurrency to set the data and
    * will try up to MAX_RETRIES (default config is set to 10)
    *
-   * The "unsafe" at the end of this method's name signifies that this method is thread unsafe.
-   * It doesn't mean the data is set to be unsafe.
+   * The "unsafe" at the end of this method's name signifies that this method can have race condition.
+   * It doesn't mean the data is set to be "unsafe".
    *
    * @param path
    * @param data
@@ -344,8 +344,8 @@ public class ZKConnection
    * remove a node in zookeeper. Use optimistic concurrency to remove the node and
    * will try up to MAX_RETRIES (default config is set to 10)
    *
-   * The "unsafe" at the end of this method's name signifies that this method is thread unsafe.
-   * It doesn't mean the data is set to be unsafe.
+   * The "unsafe" at the end of this method's name signifies that this method can have race condition.
+   * It doesn't mean the data is set to be "unsafe".
    *
    * @param path
    * @param callback

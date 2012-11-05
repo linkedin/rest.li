@@ -923,7 +923,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
                                                                           _version.incrementAndGet(),
                                                                           System.currentTimeMillis()));
 
-      // in case the load balancer strategy name changed, so we ALWAYS refresh strategies
+      // always refresh strategies when we receive cluster event
       if (discoveryProperties != null)
       {
         refreshServiceStrategies(discoveryProperties);
