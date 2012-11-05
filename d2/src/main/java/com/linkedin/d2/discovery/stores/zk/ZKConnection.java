@@ -266,11 +266,10 @@ public class ZKConnection
   }
 
   /**
-   * Sets the data associated with a node in zookeeper. Use optimistic concurrency to set the data and
-   * will try up to MAX_RETRIES (default config is set to 10)
+   * sets the data associated with a node in ZooKeeper.
    *
-   * The "unsafe" at the end of this method's name signifies that this method can have race condition.
-   * It doesn't mean the data is set to be "unsafe".
+   * "Unsafe" signifies that the node data is set unconditionally, overwriting any concurrent changes to the node data.
+   * The method will ignore any "BADVERSION" errors from ZooKeeper, up to MAX_RETRIES (default 10).
    *
    * @param path
    * @param data
@@ -340,11 +339,10 @@ public class ZKConnection
   }
 
   /**
-   * remove a node in zookeeper. Use optimistic concurrency to remove the node and
-   * will try up to MAX_RETRIES (default config is set to 10)
+   * removes a node in zookeeper.
    *
-   * The "unsafe" at the end of this method's name signifies that this method can have race condition.
-   * It doesn't mean the data is set to be "unsafe".
+   * "Unsafe" signifies that the node data is set unconditionally, overwriting any concurrent changes to the node data.
+   * The method will ignore any "BADVERSION" errors from ZooKeeper, up to MAX_RETRIES (default 10).
    *
    * @param path
    * @param callback
