@@ -39,7 +39,7 @@ import java.util.List;
  * which cluster corresponds to a service.
  *
  * Example: profile service is assigned to cluster 231 which consists of
- * machine #1 with URI ela4-2310.linkedin.com:8320/etc,
+ * machine #1 with URI dev1.linkedin.com:1111,
  * machine #2 with URI ...
  * ...
  * The cluster properties has timeout of 5000ms, etc.
