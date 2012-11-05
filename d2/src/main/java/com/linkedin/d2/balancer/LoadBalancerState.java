@@ -30,6 +30,25 @@ import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import java.net.URI;
 import java.util.List;
 
+
+/**
+ * This interface holds the "state" necessary for knowing how to load balance a request.
+ *
+ * This class listens to PropertyStore to new updates so it can keep track
+ * how many clients are available, what properties are related to the cluster,
+ * which cluster corresponds to a service.
+ *
+ * Example: profile service is assigned to cluster 231 which consists of
+ * machine #1 with URI ela4-2310.linkedin.com:8320/etc,
+ * machine #2 with URI ...
+ * ...
+ * The cluster properties has timeout of 5000ms, etc.
+ *
+ * Since this class knows all the clients, cluster properties, service name, we can
+ * get a bunch of information like for this particular service what is the appropriate
+ * load balancing strategy, for a particular cluster what is the clients that we can get, etc
+ *
+ */
 public interface LoadBalancerState
 {
   boolean isListeningToCluster(String clusterName);

@@ -23,6 +23,11 @@ import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.common.util.None;
 
+
+/**
+ * The interface for load balancing a request. The main method is to return a client
+ * to which the requester can pass the request, given request and some context.
+ */
 public interface LoadBalancer
 {
   TransportClient getClient(Request request, RequestContext requestContext) throws ServiceUnavailableException;

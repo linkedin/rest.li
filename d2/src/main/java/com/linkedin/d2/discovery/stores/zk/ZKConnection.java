@@ -62,7 +62,7 @@ public class ZKConnection
 
   private final String _connectString;
   private final int _timeout;
-  private final int _limit;
+  private final int _retryLimit;
   private final boolean _exponentialBackoff;
   private final ScheduledExecutorService _scheduler;
   private final long _initInterval;
@@ -84,17 +84,17 @@ public class ZKConnection
     this(connectString, timeout, 0);
   }
 
-  public ZKConnection(String connectString, int timeout, int limit)
+  public ZKConnection(String connectString, int timeout, int retryLimit)
   {
-    this(connectString, timeout, limit, false, null, 0);
+    this(connectString, timeout, retryLimit, false, null, 0);
   }
 
-  public ZKConnection(String connectString, int timeout, int limit, boolean exponentialBackoff,
+  public ZKConnection(String connectString, int timeout, int retryLimit, boolean exponentialBackoff,
                       ScheduledExecutorService scheduler, long initInterval)
   {
     _connectString = connectString;
     _timeout = timeout;
-    _limit = limit;
+    _retryLimit = retryLimit;
     _exponentialBackoff = exponentialBackoff;
     _scheduler = scheduler;
     _initInterval = initInterval;
@@ -111,7 +111,7 @@ public class ZKConnection
     // notified of connection state changes (without having to explicitly register)
     // and never notified of anything else.
     ZooKeeper  zk;
-    if (_limit <= 0)
+    if (_retryLimit <= 0)
     {
       zk = new ZooKeeper(_connectString, _timeout, new DefaultWatcher());
       LOG.info("Using vanilla ZooKeeper without retry.");
@@ -120,12 +120,11 @@ public class ZKConnection
     {
       zk = new RetryZooKeeper(_connectString,
                               _timeout,
-                              new DefaultWatcher(),
-                              _limit,
+                              new DefaultWatcher(), _retryLimit,
                               _exponentialBackoff,
                               _scheduler,
                               _initInterval);
-      LOG.info("Using RetryZooKeeper with retry limit set to " + _limit);
+      LOG.info("Using RetryZooKeeper with retry limit set to " + _retryLimit);
       if (_exponentialBackoff)
       {
         LOG.info("Exponential backoff enabled. Initial retry interval set to " + _initInterval + " ms.");
@@ -205,6 +204,13 @@ public class ZKConnection
     }
   }
 
+  /**
+   * checks if the path in zk exist or not. If it doesn't exist, will create the node.
+   * Warning: this method will create the path recursively but since the path will
+   * be smaller every recursive call, it should terminate.
+   * @param path
+   * @param callback
+   */
   public void ensurePersistentNodeExists(String path, final Callback<None> callback)
   {
     final ZooKeeper zk = zk();
@@ -260,6 +266,17 @@ public class ZKConnection
     }
   }
 
+  /**
+   * Sets the data associated with a node in zookeeper. Use optimistic concurrency to set the data and
+   * will try up to MAX_RETRIES (default config is set to 10)
+   *
+   * The "unsafe" at the end of this method's name signifies that this method is thread unsafe.
+   * It doesn't mean the data is set to be unsafe.
+   *
+   * @param path
+   * @param data
+   * @param callback
+   */
   public void setDataUnsafe(String path, byte[] data, Callback<None> callback)
   {
     setDataUnsafe(path, data, callback, 0);
@@ -323,6 +340,16 @@ public class ZKConnection
     }
   }
 
+  /**
+   * remove a node in zookeeper. Use optimistic concurrency to remove the node and
+   * will try up to MAX_RETRIES (default config is set to 10)
+   *
+   * The "unsafe" at the end of this method's name signifies that this method is thread unsafe.
+   * It doesn't mean the data is set to be unsafe.
+   *
+   * @param path
+   * @param callback
+   */
   public void removeNodeUnsafe(String path, Callback<None> callback)
   {
     removeNodeUnsafe(path, callback, 0);
@@ -393,6 +420,12 @@ public class ZKConnection
     }
   }
 
+  /**
+   * {@see removeNodeUnsafe} but remove recursively
+   *
+   * @param path
+   * @param callback
+   */
   public void removeNodeUnsafeRecursive(final String path, final Callback<None> callback)
   {
     final ZooKeeper zk = zk();

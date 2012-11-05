@@ -289,10 +289,25 @@ public class DegraderImpl implements Degrader
                      _outstandingLatency, _callTrackerStats.getOutstandingCount());
   }
 
+  /**
+   * checks if the stats that we used to compute drop rate is stale or not.
+   * Stale meaning, we use a certain interval (configured to be 5 seconds)
+   * to count the number of calls, latency, etc during that 5 seconds. So every 5 seconds we'll
+   * want to refresh the window of interval for counting.
+   *
+   * So if it's stale, we'll call CallTrackerImpl to refresh the window
+   *
+   * @param now
+   */
   private void checkStale(long now)
   {
     if (_callTrackerStats.stale(now))
     {
+      //this code is a bit strange at first i.e. why it's not _callTrackerStats = _callTracker.getCallStats();
+      //but instead it's just _callTracker.getCallStats(); even though getCallStats returns a new Object.
+      //but this is fine because getCallStats() will eventually call Tracker.rolloverStats() which has a listener!
+      //the listener is actually {@see DegraderImpl.rollOverStats(CallTracker.CallStats)} which will update
+      //_callTrackerStats with the new stats. So we're fine.
       _callTracker.getCallStats();
     }
   }

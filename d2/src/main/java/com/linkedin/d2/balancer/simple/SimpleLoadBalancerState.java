@@ -773,11 +773,11 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
       {
         _clusterInfo.put(listenTo, new ClusterInfoItem(discoveryProperties,
             PartitionAccessorFactory.getPartitionAccessor(discoveryProperties.getPartitionProperties())));
-        // update all tracker clients to use new cluster configs
-        LoadBalancerStateItem<UriProperties> uriItem =
-            _uriProperties.get(discoveryProperties.getClusterName());
 
         final String clusterName = discoveryProperties.getClusterName();
+        // update all tracker clients to use new cluster configs
+        LoadBalancerStateItem<UriProperties> uriItem =
+            _uriProperties.get(clusterName);
 
         ClusterInfoItem clusterInfoItem =
             _clusterInfo.get(clusterName);
@@ -923,7 +923,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
                                                                           _version.incrementAndGet(),
                                                                           System.currentTimeMillis()));
 
-      // in case the load balancer strategy name changed, refresh strategies
+      // in case the load balancer strategy name changed, so we ALWAYS refresh strategies
       if (discoveryProperties != null)
       {
         refreshServiceStrategies(discoveryProperties);
