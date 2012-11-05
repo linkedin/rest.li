@@ -46,11 +46,21 @@ public class TestRestSpecAnnotation
   }
 
   @Test
-  public void testAnnotations() throws FileNotFoundException
+  public void testExport() throws FileNotFoundException
   {
     final DataMap actualRestSpecData = DataMapUtils.readMap(new FileInputStream(GENERATED_IDL_DIR + TEST_ANNOTATION_FILE));
     final DataMap expectedRestSpecData = DataMapUtils.readMap(new FileInputStream(EXPECTED_IDL_DIR + TEST_ANNOTATION_FILE));
     Assert.assertEquals(actualRestSpecData, expectedRestSpecData);
+  }
+
+  @Test
+  public void testParse() throws FileNotFoundException
+  {
+    final DataMap generatedRestSpecData = DataMapUtils.readMap(new FileInputStream(GENERATED_IDL_DIR + TEST_ANNOTATION_FILE));
+    final ResourceSchema schema = new ResourceSchema(generatedRestSpecData);
+    Assert.assertTrue(schema.hasAnnotations());
+    final DataMap parsedRestSpecData = schema.getAnnotations().data();
+    Assert.assertEquals(parsedRestSpecData, generatedRestSpecData.getDataMap("annotations"));
   }
 
   private static final String RESOURCES_SUFFIX = "src" + File.separator + "test" + File.separator + "resources" + File.separator;

@@ -39,8 +39,8 @@
     },
     {
       "name" : "annotations",
-      "doc": "custom annotation data",
-      "type" : { "type" : "map", "values" : "CustomAnnotationSchema" },
+      "doc" : "custom annotation data",
+      "type" : "CustomAnnotationSchema",
       "optional" : true
     }
   ]
