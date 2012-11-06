@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-@RestSpecAnnotation(name = "partial", isDefaultSentinel = true)
+@RestSpecAnnotation(name = "partial", skipDefault = true)
 public @interface PartialExclusiveAnnotation
 {
   int used1() default 1;

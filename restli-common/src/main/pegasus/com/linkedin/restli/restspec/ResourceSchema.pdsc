@@ -2,6 +2,7 @@
   "type" : "record",
   "name" : "ResourceSchema",
   "namespace" : "com.linkedin.restli.restspec",
+  "include" : [ "CustomAnnotationSchema" ],
   "fields" : [
     {
       "name" : "name",
@@ -47,12 +48,6 @@
       "name" : "actionsSet",
       "doc" : "details of action set, if this resource is an action set",
       "type" : "ActionsSetSchema",
-      "optional" : true
-    },
-    {
-      "name" : "annotations",
-      "doc" : "custom annotation data",
-      "type" : "CustomAnnotationSchema",
       "optional" : true
     }
   ]

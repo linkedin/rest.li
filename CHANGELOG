@@ -5,6 +5,9 @@ Rename startServer task in restli-example-server to startExampleServer.
 Rename RestLiExamplesServer in restli-int-test-server to RestLiIntTestServer.
 The old startServer task is still used to start the current restli-int-test-server.
 
+(RB=110881)
+Change idl custom annotation default value of skipDefault to false.
+
 1.6.4
 -----
 (RB=103770)

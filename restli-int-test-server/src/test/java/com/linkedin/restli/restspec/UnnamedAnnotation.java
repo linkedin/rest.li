@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.METHOD, ElementType.PARAMETER})
-@RestSpecAnnotation(isDefaultSentinel = false)
+@RestSpecAnnotation
 public @interface UnnamedAnnotation
 {
   int value() default -1;

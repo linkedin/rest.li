@@ -16,7 +16,7 @@ import java.lang.annotation.Target;
 // alternatively, annotate with @RestSpecAnnotation(exclude = true)
 public @interface PartialInclusiveAnnotation
 {
-  @RestSpecAnnotation(isDefaultSentinel = true)
+  @RestSpecAnnotation(skipDefault = true)
   int used() default 0;
 
   String unused() default "";

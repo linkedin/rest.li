@@ -2,6 +2,7 @@
   "type" : "record",
   "name" : "RestMethodSchema",
   "namespace" : "com.linkedin.restli.restspec",
+  "include" : [ "CustomAnnotationSchema" ],
   "fields" : [
     {
       "name" : "method",
@@ -18,12 +19,6 @@
       "name" : "parameters",
       "doc" : "list of query parameters for this method",
       "type" : { "type" : "array", "items" : "ParameterSchema" },
-      "optional" : true
-    },
-    {
-      "name" : "annotations",
-      "doc" : "custom annotation data",
-      "type" : "CustomAnnotationSchema",
       "optional" : true
     }
   ]

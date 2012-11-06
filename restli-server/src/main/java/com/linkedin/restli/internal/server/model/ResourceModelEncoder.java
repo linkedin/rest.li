@@ -35,7 +35,7 @@ import com.linkedin.restli.restspec.AssocKeySchema;
 import com.linkedin.restli.restspec.AssocKeySchemaArray;
 import com.linkedin.restli.restspec.AssociationSchema;
 import com.linkedin.restli.restspec.CollectionSchema;
-import com.linkedin.restli.restspec.CustomAnnotationSchema;
+import com.linkedin.restli.restspec.CustomAnnotationContentSchemaMap;
 import com.linkedin.restli.restspec.EntitySchema;
 import com.linkedin.restli.restspec.FinderSchema;
 import com.linkedin.restli.restspec.FinderSchemaArray;
@@ -140,7 +140,7 @@ public class ResourceModelEncoder
     final DataMap customAnnotation = resourceModel.getCustomAnnotationData();
     if (!customAnnotation.isEmpty())
     {
-      rootNode.setAnnotations(new CustomAnnotationSchema(resourceModel.getCustomAnnotationData()));
+      rootNode.setAnnotations(new CustomAnnotationContentSchemaMap(resourceModel.getCustomAnnotationData()));
     }
 
     return rootNode;
@@ -474,7 +474,7 @@ public class ResourceModelEncoder
         final DataMap customAnnotation = resourceMethodDescriptor.getCustomAnnotationData();
         if (!customAnnotation.isEmpty())
         {
-          action.setAnnotations(new CustomAnnotationSchema(customAnnotation));
+          action.setAnnotations(new CustomAnnotationContentSchemaMap(customAnnotation));
         }
 
         actionsArray.add(action);
@@ -542,7 +542,7 @@ public class ResourceModelEncoder
         final DataMap customAnnotation = resourceMethodDescriptor.getCustomAnnotationData();
         if (!customAnnotation.isEmpty())
         {
-          finder.setAnnotations(new CustomAnnotationSchema(customAnnotation));
+          finder.setAnnotations(new CustomAnnotationContentSchemaMap(customAnnotation));
         }
 
         findersArray.add(finder);
@@ -611,7 +611,7 @@ public class ResourceModelEncoder
       final DataMap customAnnotation = param.getCustomAnnotationData();
       if (!customAnnotation.isEmpty())
       {
-        paramSchema.setAnnotations(new CustomAnnotationSchema(customAnnotation));
+        paramSchema.setAnnotations(new CustomAnnotationContentSchemaMap(customAnnotation));
       }
 
       parameterSchemaArray.add(paramSchema);
@@ -665,7 +665,7 @@ public class ResourceModelEncoder
       final DataMap customAnnotation = descriptor.getCustomAnnotationData();
       if (!customAnnotation.isEmpty())
       {
-        restMethod.setAnnotations(new CustomAnnotationSchema(customAnnotation));
+        restMethod.setAnnotations(new CustomAnnotationContentSchemaMap(customAnnotation));
       }
 
       restMethods.add(restMethod);

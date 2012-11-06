@@ -2,6 +2,7 @@
   "type" : "record",
   "name" : "ActionSchema",
   "namespace" : "com.linkedin.restli.restspec",
+  "include" : [ "CustomAnnotationSchema" ],
   "fields" : [
     {
       "name" : "name",
@@ -30,12 +31,6 @@
       "name" : "throws",
       "doc" : "list of exception types thrown by this action",
       "type" : { "type" : "array", "items" : "string" },
-      "optional" : true
-    },
-    {
-      "name" : "annotations",
-      "doc" : "custom annotation data",
-      "type" : "CustomAnnotationSchema",
       "optional" : true
     }
   ]

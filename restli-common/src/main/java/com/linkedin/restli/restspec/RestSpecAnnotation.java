@@ -47,12 +47,11 @@ public @interface RestSpecAnnotation
   boolean exclude() default DEFAULT_EXCLUDE;
 
   /**
-   * @return true if the the default value is sentinel and mean to make the annotated optional
-   *         sentinel default will not be output to .restspec.json
+   * @return true to skip outputting the member to .restspec.json when its value equals to the default value
    */
-  boolean isDefaultSentinel() default DEFAULT_IS_DEFAULT_SENTINEL;
+  boolean skipDefault() default DEFAULT_SKIP_DEFAULT;
 
-  static String DEFAULT_NAME = "";
-  static boolean DEFAULT_EXCLUDE = false;
-  static boolean DEFAULT_IS_DEFAULT_SENTINEL = true;
+  String DEFAULT_NAME = "";
+  boolean DEFAULT_EXCLUDE = false;
+  boolean DEFAULT_SKIP_DEFAULT = false;
 }

@@ -2,6 +2,7 @@
   "type" : "record",
   "name" : "ParameterSchema",
   "namespace" : "com.linkedin.restli.restspec",
+  "include" : [ "CustomAnnotationSchema" ],
   "fields" : [
     {
       "name" : "name",
@@ -35,12 +36,6 @@
       "name" : "doc",
       "doc" : "Documentation for this parameter",
       "type" : "string",
-      "optional" : true
-    },
-    {
-      "name" : "annotations",
-      "doc" : "custom annotation data",
-      "type" : "CustomAnnotationSchema",
       "optional" : true
     }
   ]

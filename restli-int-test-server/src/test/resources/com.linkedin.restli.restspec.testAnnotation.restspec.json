@@ -98,7 +98,8 @@
     }
   },
   "annotations" : {
-    "com.linkedin.restli.restspec.EmptyAnnotation" : true,
+    "com.linkedin.restli.restspec.EmptyAnnotation" : {
+    },
     "com.linkedin.restli.restspec.PartialInclusiveAnnotation" : {
       "used" : 1
     },

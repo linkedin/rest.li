@@ -2,6 +2,13 @@
   "type" : "record",
   "name" : "CustomAnnotationSchema",
   "namespace" : "com.linkedin.restli.restspec",
-  "doc" : "Unstructured record that represents arbitrary custom annotations for idl. Actual content is always a map with annotation's overridable member name as key and member value as value",
-  "fields" : []
+  "doc" : "Custom annotation for idl",
+  "fields" : [
+    {
+      "name" : "annotations",
+      "doc" : "custom annotation data",
+      "type" : { "type" : "map", "values" : "CustomAnnotationContentSchema" },
+      "optional" : true
+    }
+  ]
 }

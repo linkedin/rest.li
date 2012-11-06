@@ -165,7 +165,7 @@ public class ResourceModelAnnotation
       try
       {
         final Object memberValue = m.invoke(a);
-        if (methodTrait.isDefaultSentinel)
+        if (methodTrait.skipDefault)
         {
           final Object annotationDefault = m.getDefaultValue();
           if (annotationDefault != null && annotationDefault.equals(memberValue))
@@ -198,7 +198,7 @@ public class ResourceModelAnnotation
     {
       if (trait.masterTrait.isRestSpecAnnotated)
       {
-        return new AnnotationEntry(trait.masterTrait.name, true);
+        return new AnnotationEntry(trait.masterTrait.name, new DataMap());
       }
       else
       {
@@ -219,9 +219,9 @@ public class ResourceModelAnnotation
     if (classAnnotation == null)
     {
       trait.masterTrait = new MetaTrait(false,
-                                                       clazz.getCanonicalName(),
-                                                       true,
-                                                       RestSpecAnnotation.DEFAULT_IS_DEFAULT_SENTINEL);
+                                        clazz.getCanonicalName(),
+                                        true,
+                                        RestSpecAnnotation.DEFAULT_SKIP_DEFAULT);
     }
     else
     {
@@ -235,9 +235,9 @@ public class ResourceModelAnnotation
       if (methodAnnotation == null && !trait.masterTrait.exclude)
       {
         trait.memberTraits.put(m, new MetaTrait(trait.masterTrait.isRestSpecAnnotated,
-                                                               m.getName(),
-                                                               trait.masterTrait.exclude,
-                                                               trait.masterTrait.isDefaultSentinel));
+                                                m.getName(),
+                                                trait.masterTrait.exclude,
+                                                trait.masterTrait.skipDefault));
       }
       else if (methodAnnotation != null && !methodAnnotation.exclude())
       {
@@ -268,12 +268,12 @@ public class ResourceModelAnnotation
 
   private static class MetaTrait
   {
-    public MetaTrait(boolean isRestSpecAnnotated, String customKeyName, boolean exclude, boolean isDefaultSentinel)
+    public MetaTrait(boolean isRestSpecAnnotated, String customKeyName, boolean exclude, boolean skipDefault)
     {
       this.isRestSpecAnnotated = isRestSpecAnnotated;
       this.name = customKeyName;
       this.exclude = exclude;
-      this.isDefaultSentinel = isDefaultSentinel;
+      this.skipDefault = skipDefault;
     }
 
     public MetaTrait(RestSpecAnnotation a, String customName)
@@ -282,13 +282,13 @@ public class ResourceModelAnnotation
       final String annotatedName = a.name();
       this.name = RestSpecAnnotation.DEFAULT_NAME.equals(annotatedName) ? customName : annotatedName;
       this.exclude = a.exclude();
-      this.isDefaultSentinel = a.isDefaultSentinel();
+      this.skipDefault = a.skipDefault();
     }
 
     public final boolean isRestSpecAnnotated;
     public final String name;
     public final boolean exclude;
-    public final boolean isDefaultSentinel;
+    public final boolean skipDefault;
   }
 
   private static final Map<Class<? extends Annotation>, AnnotationTrait> _traits = new HashMap<Class<? extends Annotation>, AnnotationTrait>();

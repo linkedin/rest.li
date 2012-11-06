@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.METHOD, ElementType.PARAMETER})
-@RestSpecAnnotation(name = "namedAnnotation")
+@RestSpecAnnotation(name = "namedAnnotation", skipDefault = true)
 public @interface NamedAnnotation
 {
   enum AnnotationEnum
