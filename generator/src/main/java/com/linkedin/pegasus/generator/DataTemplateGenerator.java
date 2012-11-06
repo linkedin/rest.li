@@ -17,10 +17,6 @@
 package com.linkedin.pegasus.generator;
 
 
-import com.linkedin.data.schema.JsonBuilder;
-import com.linkedin.data.schema.SchemaToJsonEncoder;
-
-import com.linkedin.data.template.Custom;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayDeque;
@@ -36,10 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.linkedin.data.schema.PathSpec;
-
-import com.sun.codemodel.JCodeModel;
-import com.sun.codemodel.JPackage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,16 +44,20 @@ import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaLocation;
 import com.linkedin.data.schema.EnumDataSchema;
 import com.linkedin.data.schema.FixedDataSchema;
+import com.linkedin.data.schema.JsonBuilder;
 import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.schema.NamedDataSchema;
+import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.schema.PrimitiveDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.schema.SchemaToJsonEncoder;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
 import com.linkedin.data.template.BooleanArray;
 import com.linkedin.data.template.BooleanMap;
 import com.linkedin.data.template.BytesArray;
 import com.linkedin.data.template.BytesMap;
+import com.linkedin.data.template.Custom;
 import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.DirectArrayTemplate;
@@ -88,6 +84,7 @@ import com.sun.codemodel.ClassType;
 import com.sun.codemodel.JBlock;
 import com.sun.codemodel.JClass;
 import com.sun.codemodel.JClassAlreadyExistsException;
+import com.sun.codemodel.JCodeModel;
 import com.sun.codemodel.JDefinedClass;
 import com.sun.codemodel.JExpr;
 import com.sun.codemodel.JExpression;
@@ -96,6 +93,7 @@ import com.sun.codemodel.JFieldVar;
 import com.sun.codemodel.JInvocation;
 import com.sun.codemodel.JMethod;
 import com.sun.codemodel.JMod;
+import com.sun.codemodel.JPackage;
 import com.sun.codemodel.JVar;
 
 /**
@@ -103,7 +101,7 @@ import com.sun.codemodel.JVar;
  *
  * @author Eran Leshem
  */
-abstract public class DataTemplateGenerator extends CodeGenerator
+public abstract class DataTemplateGenerator extends CodeGenerator
 {
   /**
    * The system property that specifies whether to generate classes for externally resolved schemas
@@ -279,7 +277,7 @@ abstract public class DataTemplateGenerator extends CodeGenerator
     DataSchemaLocation loc = _classToDataSchemaLocationMap.get(clazz);
     if (loc != null)
     {
-      return (_sourceFiles.contains(loc.getSourceFile()) == false);
+      return _sourceFiles.contains(loc.getSourceFile()) == false;
     }
     //assume local
     return false;
@@ -312,7 +310,7 @@ abstract public class DataTemplateGenerator extends CodeGenerator
    *
    * @param className provides the class name.
    */
-  private void checkClassNameForSpecialSuffix(String className)
+  private static void checkClassNameForSpecialSuffix(String className)
   {
     for (String suffix : SPECIAL_SUFFIXES)
     {
@@ -421,7 +419,7 @@ abstract public class DataTemplateGenerator extends CodeGenerator
       }
       if (result == null)
       {
-        assert(schema == schema.getDereferencedDataSchema());
+        assert schema == schema.getDereferencedDataSchema();
         if (schema instanceof ComplexDataSchema)
         {
           JClass found = _schemaToClassMap.get(schema);
@@ -553,7 +551,7 @@ abstract public class DataTemplateGenerator extends CodeGenerator
   protected static DataSchema dereferenceIfTyperef(DataSchema schema)
   {
     DataSchema.Type type = schema.getType();
-    return (type == DataSchema.Type.TYPEREF ? ((TyperefDataSchema) schema).getRef() : null);
+    return type == DataSchema.Type.TYPEREF ? ((TyperefDataSchema) schema).getRef() : null;
   }
 
   protected CustomInfo firstCustomInfo(DataSchema schema)
@@ -744,7 +742,7 @@ abstract public class DataTemplateGenerator extends CodeGenerator
    * @return the {@link DataSchema} for the array items or map values of the
    *         generated class.
    */
-  private DataSchema schemaForArrayItemsOrMapValues(CustomInfo customInfo, DataSchema schema)
+  private static DataSchema schemaForArrayItemsOrMapValues(CustomInfo customInfo, DataSchema schema)
   {
     return customInfo != null ? customInfo.customSchema : schema.getDereferencedDataSchema();
   }
@@ -778,7 +776,7 @@ abstract public class DataTemplateGenerator extends CodeGenerator
     ArrayDataSchema bareSchema = new ArrayDataSchema(schemaForArrayItemsOrMapValues(customInfo, itemSchema));
     JVar schemaField = generateSchemaField(arrayClass, bareSchema);
 
-    generateConstructorWithNoArg(arrayClass, schemaField, _dataListClass, itemClass);
+    generateConstructorWithNoArg(arrayClass, _dataListClass);
     generateConstructorWithInitialCapacity(arrayClass, _dataListClass);
     generateConstructorWithCollection(arrayClass, itemClass);
     generateConstructorWithArg(arrayClass, schemaField, _dataListClass, itemClass, dataClass);
@@ -820,7 +818,7 @@ abstract public class DataTemplateGenerator extends CodeGenerator
     MapDataSchema bareSchema = new MapDataSchema(schemaForArrayItemsOrMapValues(customInfo, valueSchema));
     JVar schemaField = generateSchemaField(mapClass, bareSchema);
 
-    generateConstructorWithNoArg(mapClass, schemaField, _dataMapClass, valueClass);
+    generateConstructorWithNoArg(mapClass, _dataMapClass);
     generateConstructorWithInitialCapacity(mapClass, _dataMapClass);
     generateConstructorWithInitialCapacityAndLoadFactor(mapClass);
     generateConstructorWithMap(mapClass, valueClass);
@@ -853,7 +851,7 @@ abstract public class DataTemplateGenerator extends CodeGenerator
   private JClass generateUnion(UnionDataSchema schema, TyperefDataSchema typerefDataSchema)
           throws JClassAlreadyExistsException
   {
-    assert(typerefDataSchema.getRef() == schema);
+    assert typerefDataSchema.getRef() == schema;
 
     JDefinedClass unionClass = getPackage(typerefDataSchema.getNamespace())._class(JMod.PUBLIC, escapeReserved(typerefDataSchema.getName()));
     registerGeneratedClass(typerefDataSchema, unionClass);
@@ -1014,6 +1012,11 @@ abstract public class DataTemplateGenerator extends CodeGenerator
 
     templateClass._extends(RecordTemplate.class);
 
+    if (Boolean.TRUE.equals(schema.getProperties().get("deprecated")))
+    {
+      templateClass.annotate(Deprecated.class);
+    }
+
     generatePathSpecMethodsForRecord(templateClass, schema);
 
     JFieldVar schemaField = generateSchemaField(templateClass, schema);
@@ -1065,24 +1068,29 @@ abstract public class DataTemplateGenerator extends CodeGenerator
     }
   }
 
-  private boolean hasNestedFields(DataSchema schema)
+  private static boolean hasNestedFields(DataSchema schema)
   {
-    switch (schema.getDereferencedType())
+    while (true)
     {
+      switch (schema.getDereferencedType())
+      {
       case RECORD:
         return true;
       case UNION:
         return true;
       case ARRAY:
-        return hasNestedFields(((ArrayDataSchema) schema.getDereferencedDataSchema()).getItems());
+        schema = ((ArrayDataSchema) schema.getDereferencedDataSchema()).getItems();
+        continue;
       case MAP:
-        return hasNestedFields(((MapDataSchema) schema.getDereferencedDataSchema()).getValues());
+        schema = ((MapDataSchema) schema.getDereferencedDataSchema()).getValues();
+        continue;
       default:
         return false;
+      }
     }
   }
 
-  private DataSchema getCollectionChildSchema(DataSchema schema)
+  private static DataSchema getCollectionChildSchema(DataSchema schema)
   {
     switch (schema.getDereferencedType())
     {
@@ -1190,7 +1198,7 @@ abstract public class DataTemplateGenerator extends CodeGenerator
     noArgConstructor.body().invoke(SUPER).arg(JExpr._new(newClass)).arg(schemaField);
   }
 
-  private static void generateConstructorWithNoArg(JDefinedClass cls, JVar schemaField, JClass newClass, JClass elementClass)
+  private static void generateConstructorWithNoArg(JDefinedClass cls, JClass newClass)
   {
     JMethod noArgConstructor = cls.constructor(JMod.PUBLIC);
     noArgConstructor.body().invoke(THIS).arg(JExpr._new(newClass));
@@ -1357,8 +1365,8 @@ abstract public class DataTemplateGenerator extends CodeGenerator
                                         String name,
                                         DataSchema schema)
   {
-    assert(schema instanceof NamedDataSchema == false);
-    assert(schema instanceof PrimitiveDataSchema == false);
+    assert schema instanceof NamedDataSchema == false;
+    assert schema instanceof PrimitiveDataSchema == false;
 
     ClassInfo classInfo = classNameForUnnamedTraverse(parentClass, name, schema);
     String className = classInfo.fullName();
@@ -1502,7 +1510,7 @@ abstract public class DataTemplateGenerator extends CodeGenerator
       }
       else if (schemaFromClassName.equals(schema) == false)
       {
-        assert(schemaType == DataSchema.Type.ARRAY || schemaType == DataSchema.Type.MAP);
+        assert schemaType == DataSchema.Type.ARRAY || schemaType == DataSchema.Type.MAP;
         //
         // see schemaForArrayItemsOrMapValues
         //
@@ -1525,7 +1533,7 @@ abstract public class DataTemplateGenerator extends CodeGenerator
   /*
    * Return exception for trying to use null type outside of a union.
    */
-  private IllegalArgumentException nullTypeNotAllowed(JDefinedClass parentClass, String memberName)
+  private static IllegalArgumentException nullTypeNotAllowed(JDefinedClass parentClass, String memberName)
   {
     return new IllegalArgumentException("The null type can only be used in unions, null found" +
                                         parentClassAndMemberNameToString(parentClass, memberName));
@@ -1534,7 +1542,9 @@ abstract public class DataTemplateGenerator extends CodeGenerator
   /*
    * Return exception for unrecognized schema type.
    */
-  private IllegalStateException unrecognizedSchemaType(JDefinedClass parentClass, String memberName, DataSchema schema)
+  private static IllegalStateException unrecognizedSchemaType(JDefinedClass parentClass,
+                                                              String memberName,
+                                                              DataSchema schema)
   {
     return new IllegalStateException("Unrecognized schema: " + schema +
                                      parentClassAndMemberNameToString(parentClass, memberName));

@@ -1,0 +1,9 @@
+{
+  "type" : "record",
+  "name" : "Deprecated",
+  "namespace" : "com.linkedin.pegasus.generator.test",
+  "deprecated": true,
+  "fields" : [
+    { "name" : "sample", "type" : "int" }
+  ]
+}
