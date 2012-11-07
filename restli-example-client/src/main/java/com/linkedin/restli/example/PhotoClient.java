@@ -20,6 +20,8 @@ package com.linkedin.restli.example;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.d2.balancer.D2Client;
 import com.linkedin.d2.balancer.D2ClientBuilder;
+import com.linkedin.d2.balancer.util.LoadBalancerClientCli;
+import com.linkedin.d2.balancer.util.LoadBalancerUtil;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.restli.client.FindRequest;
 import com.linkedin.restli.client.Request;
@@ -61,6 +63,8 @@ public class PhotoClient
   public static void main(String[] args)
   {
     // REST client wrapper that simplifies the interface
+
+    LoadBalancerUtil.
 
     final D2Client d2Client = new D2ClientBuilder().build();
     final RestClient restClient = new RestClient(d2Client, "d2://");

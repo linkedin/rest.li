@@ -94,15 +94,39 @@
       }
     } ],
     "entity" : {
-      "path" : "/testAnnotation/{testAnnotationId}"
+      "path" : "/testAnnotation/{testAnnotationId}",
+      "subresources" : [ {
+        "name" : "testAnnotationSub",
+        "namespace" : "com.linkedin.restli.restspec",
+        "path" : "/testAnnotation/{testAnnotationId}/testAnnotationSub",
+        "schema" : "com.linkedin.restli.common.EmptyRecord",
+        "doc" : "generated from: com.linkedin.restli.restspec.TestAnnotationSubresource",
+        "collection" : {
+          "identifier" : {
+            "name" : "testAnnotationSubId",
+            "type" : "long"
+          },
+          "supports" : [ "delete" ],
+          "methods" : [ {
+            "method" : "delete",
+            "annotations" : {
+              "com.linkedin.restli.restspec.PartialInclusiveAnnotation" : {
+                "used" : 1
+              }
+            }
+          } ],
+          "entity" : {
+            "path" : "/testAnnotation/{testAnnotationId}/testAnnotationSub/{testAnnotationSubId}"
+          }
+        },
+        "annotations" : {
+          "com.linkedin.restli.restspec.EmptyAnnotation" : {
+          }
+        }
+      } ]
     }
   },
   "annotations" : {
-    "com.linkedin.restli.restspec.EmptyAnnotation" : {
-    },
-    "com.linkedin.restli.restspec.PartialInclusiveAnnotation" : {
-      "used" : 1
-    },
     "namedAnnotation" : {
       "myName" : "class-level annotation"
     }

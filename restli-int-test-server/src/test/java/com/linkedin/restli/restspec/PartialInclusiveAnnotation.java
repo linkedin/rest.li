@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
  * @author Keren Jin
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
+@Target(ElementType.METHOD)
 // annotation without @RestSpecAnnotation is always excluded
 // alternatively, annotate with @RestSpecAnnotation(exclude = true)
 public @interface PartialInclusiveAnnotation

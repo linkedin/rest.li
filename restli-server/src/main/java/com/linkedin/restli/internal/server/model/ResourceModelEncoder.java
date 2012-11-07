@@ -140,7 +140,7 @@ public class ResourceModelEncoder
     final DataMap customAnnotation = resourceModel.getCustomAnnotationData();
     if (!customAnnotation.isEmpty())
     {
-      rootNode.setAnnotations(new CustomAnnotationContentSchemaMap(resourceModel.getCustomAnnotationData()));
+      rootNode.setAnnotations(new CustomAnnotationContentSchemaMap(customAnnotation));
     }
 
     return rootNode;
@@ -373,6 +373,12 @@ public class ResourceModelEncoder
       if (!subResourceModel.isActions())
       {
         appendCollection(subresource, subResourceModel);
+      }
+
+      final DataMap customAnnotation = subResourceModel.getCustomAnnotationData();
+      if (!customAnnotation.isEmpty())
+      {
+        subresource.setAnnotations(new CustomAnnotationContentSchemaMap(customAnnotation));
       }
 
       subresources.add(subresource);

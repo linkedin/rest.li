@@ -23,10 +23,8 @@ import java.util.List;
 /**
  * @author Keren Jin
  */
-@NamedAnnotation(stringField = "class-level annotation")
-@PartialInclusiveAnnotation(used = 1, unused = "this value is ununsed")
-@EmptyAnnotation
 @RestLiCollection(name = "testAnnotation", namespace = "com.linkedin.restli.restspec")
+@NamedAnnotation(stringField = "class-level annotation")
 public class TestAnnotationResource extends CollectionResourceTemplate<Long, EmptyRecord>
 {
   @RestMethod.Get
