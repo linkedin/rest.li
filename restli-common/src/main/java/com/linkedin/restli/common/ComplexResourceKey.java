@@ -12,14 +12,13 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-*/
+ */
 
 package com.linkedin.restli.common;
 
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.validation.CoercionMode;
@@ -31,7 +30,6 @@ import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.jersey.api.uri.UriComponent;
 import com.linkedin.restli.internal.common.PathSegment.PathSegmentSyntaxException;
 import com.linkedin.restli.internal.common.QueryParamsDataMap;
-import com.linkedin.restli.internal.common.URLEscaper;
 import com.linkedin.restli.internal.common.URLEscaper.Escaping;
 
 /**
@@ -55,6 +53,10 @@ public class ComplexResourceKey<K extends RecordTemplate, P extends RecordTempla
   public ComplexResourceKey(K key, P params)
   {
     super();
+    if (key == null || key.data() == null)
+    {
+      throw new IllegalArgumentException("Key part of the complex resource key is required");
+    }
     this.key = key;
     this.params = params;
   }
@@ -66,26 +68,13 @@ public class ComplexResourceKey<K extends RecordTemplate, P extends RecordTempla
   {
     return key;
   }
-  /**
-   * @param key the key to set
-   */
-  public void setKey(K key)
-  {
-    this.key = key;
-  }
+
   /**
    * @return the params
    */
   public P getParams()
   {
     return params;
-  }
-  /**
-   * @param params the params to set
-   */
-  public void setParams(P params)
-  {
-    this.params = params;
   }
 
   @Override
@@ -94,17 +83,13 @@ public class ComplexResourceKey<K extends RecordTemplate, P extends RecordTempla
    */
   public String toString()
   {
-    if (key == null || key.data() == null)
-    {
-      return "";
-    }
-
-    return dataMapToString(key.data(), Escaping.NO_ESCAPING);
+    return QueryParamsDataMap.dataMapToQueryString(key.data(), Escaping.NO_ESCAPING);
   }
 
   /**
-   * The entire contents of the key converted to String, for cases where it is desired, such as
-   * when serializing the entire key, including the parameters in the request builders.
+   * The entire contents of the key converted to String, for cases where it is desired,
+   * such as when serializing the entire key, including the parameters in the request
+   * builders.
    *
    * @return a String
    */
@@ -115,69 +100,40 @@ public class ComplexResourceKey<K extends RecordTemplate, P extends RecordTempla
 
   public String toStringFull(Escaping escaping)
   {
-    // Params aren't meaningful without the key, so return empty string if the key is null or empty
-    if (key == null || key.data() == null)
-    {
-      return "";
-    }
-    DataMap keyDataMap = key.data();
-    if (params != null && params.data() != null)
-    {
-      keyDataMap.put(COMPLEX_KEY_PARAMS, params.data());
-    }
-    return dataMapToString(keyDataMap, escaping);
+    return QueryParamsDataMap.dataMapToQueryString(toDataMap(), escaping);
   }
 
   public DataMap toDataMap()
   {
     final DataMap m = new DataMap(key.data());
-    if (params != null)
+    if (params != null && params.data() != null)
     {
       m.put(COMPLEX_KEY_PARAMS, params.data());
     }
     return m;
   }
-  
-  /**
-   * Helper method to convert a DataMap into a string by concatenating key-value pairs with "&"
-   *
-   * @return a String
-   */
-  private static String dataMapToString(DataMap dataMap, Escaping escaping)
-  {
-    Map<String, String> queryStringParamsMap = QueryParamsDataMap.queryString(dataMap);
-    StringBuilder sb = new StringBuilder();
-    for (Entry<String, String> entry : queryStringParamsMap.entrySet())
-    {
-      String key = entry.getKey();
-      String value = URLEscaper.escape(entry.getValue(), escaping);
-      sb.append(key).append('=').append(value).append('&');
-    }
-    return sb.deleteCharAt(sb.length()-1).toString();
-  }
 
-  protected K key;
-  protected P params;
+  protected final K           key;
+  protected final P           params;
 
   private static final String COMPLEX_KEY_PARAMS = "$params";
-  
+
   /**
    * Build complex key instance from an untyped datamap representing a complex key as
    * defined in {@link QueryParamsDataMap}
    *
-   * @param dataMap
-   *          untyped DataMap - all primitive values are represented as strings.
-   * @param keyKeyClass
-   *          Class of the key component of {@link ComplexResourceKey}
-   * @param keyParamsClass
-   *          Class of the params component of {@link ComplexResourceKey}
+   * @param dataMap untyped DataMap - all primitive values are represented as strings.
+   * @param keyKeyClass Class of the key component of {@link ComplexResourceKey}
+   * @param keyParamsClass Class of the params component of {@link ComplexResourceKey}
    * @return {@link ComplexResourceKey} initialized with id and param values specified in
    *         the input DataMap
    */
   public static ComplexResourceKey<RecordTemplate, RecordTemplate> buildFromDataMap(DataMap dataMap,
-                                                                                   Class<? extends RecordTemplate> keyKeyClass,
-                                                                                   Class<? extends RecordTemplate> keyParamsClass)
+                                                                                    Class<? extends RecordTemplate> keyKeyClass,
+                                                                                    Class<? extends RecordTemplate> keyParamsClass)
   {
+    // Copy in case the original is immutable
+    dataMap = new DataMap(dataMap);
     // Separate key from its parameters (those are under "params" key in the total map)
     DataMap paramsDataMap = (DataMap) dataMap.remove(COMPLEX_KEY_PARAMS);
     RecordTemplate key = validateDataMap(dataMap, keyKeyClass);
@@ -187,8 +143,8 @@ public class ComplexResourceKey<K extends RecordTemplate, P extends RecordTempla
   }
 
   public static ComplexResourceKey<RecordTemplate, RecordTemplate> parseFromPathSegment(String currentPathSegment,
-                                                                                                  Class<? extends RecordTemplate> keyKeyClass,
-                                                                                                  Class<? extends RecordTemplate> keyParamsClass) throws PathSegmentSyntaxException
+                                                                                        Class<? extends RecordTemplate> keyKeyClass,
+                                                                                        Class<? extends RecordTemplate> keyParamsClass) throws PathSegmentSyntaxException
   {
     Map<String, List<String>> queryParameters =
         UriComponent.decodeQuery(URI.create("?" + currentPathSegment), true);
@@ -196,10 +152,12 @@ public class ComplexResourceKey<K extends RecordTemplate, P extends RecordTempla
     return buildFromDataMap(allParametersDataMap, keyKeyClass, keyParamsClass);
   }
 
-  private static RecordTemplate validateDataMap(DataMap dataMap, Class<? extends RecordTemplate> clazz)
+  private static RecordTemplate validateDataMap(DataMap dataMap,
+                                                Class<? extends RecordTemplate> clazz)
   {
     RecordTemplate recordTemplate = DataTemplateUtil.wrap(dataMap, clazz);
-    // Validate against the class schema with FixupMode.STRING_TO_PRIMITIVE to parse the strings into the
+    // Validate against the class schema with FixupMode.STRING_TO_PRIMITIVE to parse the
+    // strings into the
     // corresponding primitive types.
     ValidateDataAgainstSchema.validate(recordTemplate.data(),
                                        recordTemplate.schema(),

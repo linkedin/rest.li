@@ -16,6 +16,18 @@
 
 package com.linkedin.restli.docgen;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+
+import org.codehaus.jackson.impl.DefaultPrettyPrinter;
+
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.DataSchema;
@@ -70,16 +82,6 @@ import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import org.codehaus.jackson.impl.DefaultPrettyPrinter;
 
 /**
  * Generates a example requests for a given Resource IDL. Uses
@@ -157,11 +159,7 @@ public class RestLiExampleGenerator
     final ParameterSchemaArray params = restMethodSchema.getParameters();
     if (params != null)
     {
-      final Map<String, String> flattenQueryParamMap = getQueryParamMap(params, spec);
-      for (Map.Entry<String, String> e: flattenQueryParamMap.entrySet())
-      {
-        uriBuilder.queryParam(e.getKey(), e.getValue());
-      }
+      QueryParamsDataMap.addSortedParams(uriBuilder, getQueryParamMap(params, spec));
     }
 
     final Class<? extends RecordTemplate> valueClass = getClass(resourceSchema.getSchema());
@@ -267,11 +265,7 @@ public class RestLiExampleGenerator
     final ParameterSchemaArray params = finderSchema.getParameters();
     if (params != null)
     {
-      final Map<String, String> flattenQueryParamMap = getQueryParamMap(params, spec);
-      for (Map.Entry<String, String> e: flattenQueryParamMap.entrySet())
-      {
-        uriBuilder.queryParam(e.getKey(), e.getValue());
-      }
+      QueryParamsDataMap.addSortedParams(uriBuilder, getQueryParamMap(params, spec));
     }
 
     final AssociationSchema assocSchema = resourceSchema.getAssociation();
@@ -522,7 +516,7 @@ public class RestLiExampleGenerator
     }
   }
 
-  private Map<String, String> getQueryParamMap(ParameterSchemaArray params, RequestGenerationSpec spec)
+  private Map<String, List<String>> getQueryParamMap(ParameterSchemaArray params, RequestGenerationSpec spec)
   {
     final DataMap queryParamData = new DataMap();
 
@@ -597,11 +591,7 @@ public class RestLiExampleGenerator
 
       final DataMap batchRequestParamData = new DataMap();
       batchRequestParamData.put(RestConstants.QUERY_BATCH_IDS_PARAM, exampleList);
-      final Map<String, String> m = QueryParamsDataMap.queryString(batchRequestParamData);
-      for (Map.Entry<String, String> e: m.entrySet())
-      {
-        uriBuilder.queryParam(e.getKey(), e.getValue());
-      }
+      QueryParamsDataMap.addSortedParams(uriBuilder, batchRequestParamData);
     }
   }
 

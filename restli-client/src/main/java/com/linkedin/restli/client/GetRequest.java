@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-*/
+ */
 
 package com.linkedin.restli.client;
 
@@ -20,12 +20,12 @@ import java.net.URI;
 import java.util.Map;
 import java.util.Set;
 
+import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.internal.client.EntityResponseDecoder;
-
 
 /**
  * A request for reading an entity resource.
@@ -37,23 +37,28 @@ import com.linkedin.restli.internal.client.EntityResponseDecoder;
 public class GetRequest<T extends RecordTemplate> extends Request<T>
 {
   private final Class<T> _templateClass;
-  private final URI _baseURI;
-  private final String _id;
-  private final Set<PathSpec> _fields;
+  private final URI      _baseURI;
+  private final Object   _id;
 
   GetRequest(URI fullURI,
              Map<String, String> headers,
              Class<T> templateClass,
              URI baseURI,
-             String id,
-             Set<PathSpec> fields, ResourceSpec resourceSpec)
+             Object id,
+             DataMap queryParams,
+             ResourceSpec resourceSpec)
   {
-    super(fullURI, ResourceMethod.GET, null, headers, new EntityResponseDecoder<T>(templateClass), resourceSpec);
+    super(fullURI,
+          ResourceMethod.GET,
+          null,
+          headers,
+          new EntityResponseDecoder<T>(templateClass),
+          resourceSpec,
+          queryParams);
 
     _baseURI = baseURI;
     _templateClass = templateClass;
     _id = id;
-    _fields = fields;
   }
 
   public Class<T> getEntityClass()
@@ -66,13 +71,14 @@ public class GetRequest<T extends RecordTemplate> extends Request<T>
     return _baseURI;
   }
 
-  public String getId()
+  public Object getId()
   {
     return _id;
   }
 
+  @Override
   public Set<PathSpec> getFields()
   {
-    return _fields;
+    return super.getFields();
   }
 }

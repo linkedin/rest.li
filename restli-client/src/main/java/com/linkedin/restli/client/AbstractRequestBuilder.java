@@ -30,7 +30,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import com.linkedin.data.DataList;
@@ -38,7 +37,6 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.DataTemplateUtil;
-import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.jersey.api.uri.UriTemplate;
 import com.linkedin.restli.common.ComplexResourceKey;
@@ -59,16 +57,12 @@ import com.linkedin.util.ArgumentUtil;
 public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> implements
     RequestBuilder<R>
 {
-  private final String                            _baseURITemplate;
-  protected final Map<String, String>             _headers            = new HashMap<String, String>();
-  protected final Map<String, Collection<String>> _queryParams        = new HashMap<String, Collection<String>>();
-  protected final CompoundKey                     _assocKey           = new CompoundKey();
-  protected Set<PathSpec>                         _fields;
-  protected final Map<String, String>             _keys               = new HashMap<String, String>();
-  protected final ResourceSpec                    _resourceSpec;
-  // This is a DataMap to hold any schema-backed query parameters
-  protected final DataMap                         _queryParamsDataMap = new DataMap();
-  protected final DataList                        _keysDataList       = new DataList();
+  private final String                _baseURITemplate;
+  protected final Map<String, String> _headers     = new HashMap<String, String>();
+  protected final CompoundKey         _assocKey    = new CompoundKey();
+  protected final Map<String, String> _pathKeys    = new HashMap<String, String>();
+  protected final ResourceSpec        _resourceSpec;
+  protected final DataMap             _queryParams = new DataMap();
 
   protected AbstractRequestBuilder(String baseURITemplate, ResourceSpec resourceSpec)
   {
@@ -95,94 +89,93 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
 
   public AbstractRequestBuilder<K, V, R> pathKey(String name, Object value)
   {
-    addKey(name, keyToString(value, Escaping.NO_ESCAPING));
+    addPathKey(name, keyToString(value, Escaping.NO_ESCAPING));
     return this;
   }
 
+  /*
+   * Note that this method overrides the value at the given key, rather than adds to the collection
+   * of values for it.
+   */
   protected void addParam(String key, Object value)
   {
     if (value != null)
     {
       if (value instanceof Object[])
       {
-        _queryParams.put(key, stringify(Arrays.asList((Object[]) value)));
+        _queryParams.put(key, new DataList(stringify(Arrays.asList((Object[]) value))));
       }
       else if (value.getClass().isArray())
       { // not an array of objects but still an array - must be an array of primitives
-        _queryParams.put(key, stringify(value));
+        _queryParams.put(key, new DataList(stringify(value)));
       }
       else if (value instanceof DataTemplate)
       {
         @SuppressWarnings("rawtypes")
         DataTemplate dataTemplate = (DataTemplate)value;
-        _queryParamsDataMap.put(key, dataTemplate.data());
+        _queryParams.put(key, dataTemplate.data());
       }
       else if (value instanceof Iterable)
       {
-        _queryParams.put(key, stringify((Iterable<?>) value));
+        _queryParams.put(key, new DataList(stringify((Iterable<?>) value)));
       }
       else
       {
-        _queryParams.put(key, Collections.singleton(stringifySimpleValue(value)));
+        _queryParams.put(key, stringifySimpleValue(value));
       }
     }
   }
 
   /**
-   * To be called from the extending BatchXXXRequestBuilder classes that implement ids(K...) to branch
-   * depending on whether the resource key is a complex one.
+   * To be called from the extending BatchXXXRequestBuilder classes that implement
+   * ids(K...) or inputs()
    *
    * @param ids
    */
-  protected final void addKeyParams(Collection<K> ids)
+  protected final void addKeys(Collection<K> ids)
   {
-    // If this is a complex key resource, use different query params naming and semantics
-    // as described in {@link QueryParamsDataMap}
-    if (isComplexKeyResource())
+    if (ids == null)
     {
-      @SuppressWarnings("unchecked")
-      Collection<ComplexResourceKey<?, ?>> complexKeyIds =
-          (Collection<ComplexResourceKey<?, ?>>) ids;
-      for (ComplexResourceKey<?, ?> id : complexKeyIds)
-      {
-        addComplexKey(id);
-      }
-      //addComplexKeyParams();
+      throw new IllegalArgumentException("null id");
     }
-    // Otherwise, just add all the key values to the "ids" query parameter
-    else
+
+    Set<Object> allIds = new HashSet<Object>();
+    for (K id : ids)
     {
-      addParam(RestConstants.QUERY_BATCH_IDS_PARAM, ids);
+      addKey(allIds, id);
     }
+
+    DataList existingIds = (DataList)_queryParams.get(RestConstants.QUERY_BATCH_IDS_PARAM);
+    if (existingIds != null && !existingIds.isEmpty())
+    {
+      allIds.addAll(existingIds);
+    }
+
+    _queryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM,
+                     new DataList(new ArrayList<Object>(allIds)));
+
   }
 
-  /**
-   * If any complex parameters have been added, add them to query parameters using
-   * different naming and semantics as defined in {@link QueryParamsDataMap}
-   */
-  protected final void addComplexParams()
+  private void addKey(Set<Object> ids, Object id)
   {
-    if (!_keysDataList.isEmpty())
-    {
-      _queryParamsDataMap.put(RestConstants.QUERY_BATCH_IDS_PARAM, _keysDataList);
+    if (id == null) {
+      throw new IllegalArgumentException("Null key");
     }
-    // Resolves paths in the DataMap into individual query string parameters.
-    Map<String, String> queryStringParams =
-        QueryParamsDataMap.queryString(_queryParamsDataMap);
 
-    for (Entry<String, String> entry : queryStringParams.entrySet())
-    {
-      addParam(entry.getKey(), entry.getValue());
-    }
+    Object castId =
+        id instanceof ComplexResourceKey<?, ?>
+            ? ((ComplexResourceKey<?, ?>) id).toDataMap() : stringifySimpleValue(id);
+
+    ids.add(castId);
   }
 
   /**
    * Add an individual key to the DataList of keys, which will be later resolved into a collection
    * of individual query parameters.
    */
-  protected final void addComplexKey(ComplexResourceKey<?, ?> id)
+  protected final void addKey(K id)
   {
-    _keysDataList.add(id.toDataMap());
+    addKeys(Collections.singletonList(id));
   }
 
   /**
@@ -202,7 +195,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
 
   private String keyToString(Object key, Escaping escaping)
   {
-    if(key == null)
+    if (key == null)
     {
       return null;
     }
@@ -223,29 +216,11 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
     return result;
   }
 
-  /**
-   * Helper method to convert a collection of key Objects into a set of strings
-   * Result only used in tests; not used to create request url.
-   */
-  protected static Set<String> toStringSet(Collection<?> ids)
-  {
-    Set<String> idStrings = new HashSet<String>(ids.size());
-    for (Object id : ids)
-    {
-      if (id == null)
-      {
-        throw new IllegalArgumentException("null id");
-      }
-      idStrings.add(stringifySimpleValue(id));
-    }
-    return idStrings;
-  }
-
-  /** given a iterable of objects returns a collection of (non-null) toStrings */
-  private static Collection<String> stringify(Iterable<?> values)
+  /** given a iterable of objects returns a list of (non-null) toStrings */
+  private static List<String> stringify(Iterable<?> values)
   {
     assert values != null;
-    Collection<String> strings =
+    List<String> strings =
         new ArrayList<String>(values instanceof Collection ? ((Collection<?>) values).size() : 10);
     for (Object value : values)
     {
@@ -270,11 +245,11 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
   }
 
   /** given an array of primitives returns a collection of strings */
-  private static Collection<String> stringify(Object array)
+  private static List<String> stringify(Object array)
   {
     assert array != null && array.getClass().isArray();
     int len = Array.getLength(array);
-    Collection<String> strings = new ArrayList<String>(len);
+    List<String> strings = new ArrayList<String>(len);
     for (int i = 0; i < len; ++i)
     {
       Object value = Array.get(array, i);
@@ -286,13 +261,13 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
     return strings;
   }
 
-  protected void addKey(String key, Object value)
+  protected void addPathKey(String key, Object value)
   {
     if (value == null)
     {
       throw new IllegalArgumentException("Path key must be non-null");
     }
-    _keys.put(key, stringifySimpleValue(value));
+    _pathKeys.put(key, stringifySimpleValue(value));
   }
 
   protected void addAssocKey(String key, Object value)
@@ -302,23 +277,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
 
   protected void appendQueryParams(UriBuilder b)
   {
-    addComplexParams();
-    if (! _queryParams.isEmpty())
-    {
-      List<String> keyList = new ArrayList<String>(_queryParams.keySet());
-      Collections.sort(keyList);
-
-      for (String key: keyList)
-      {
-        List<String> strings = new ArrayList<String>(_queryParams.get(key));
-        Collections.sort(strings);
-        for (String string : strings)
-        {
-          // force full encoding as UriBuilder.queryParam(..) won't encode percent signs followed by hex digits
-          b.queryParam(URIUtil.encodeForQueryParam(key), URIUtil.encodeForQueryParam(string));
-        }
-      }
-    }
+    QueryParamsDataMap.addSortedParams(b, _queryParams);
   }
 
   protected final void appendAssocKeys(UriBuilder uriBuilder)
@@ -331,13 +290,13 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
     UriTemplate template = new UriTemplate(_baseURITemplate);
     for (String key : template.getTemplateVariables())
     {
-      if (! _keys.containsKey(key))
+      if (!_pathKeys.containsKey(key))
       {
         throw new IllegalStateException("Missing path key: '" + key + "'");
       }
     }
     Map<String, String> escapedKeys = new HashMap<String, String>();
-    for(Map.Entry<String, String> key : _keys.entrySet())
+    for(Map.Entry<String, String> key : _pathKeys.entrySet())
     {
       escapedKeys.put(key.getKey(), URLEscaper.escape(key.getValue(), Escaping.URL_ESCAPING));
     }
@@ -349,10 +308,10 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
   {
     if (_queryParams.containsKey(RestConstants.FIELDS_PARAM))
     {
-      throw new IllegalStateException("Fields already set on this request: " + _queryParams.get(RestConstants.FIELDS_PARAM));
+      throw new IllegalStateException("Fields already set on this request: "
+          + _queryParams.get(RestConstants.FIELDS_PARAM));
     }
 
-    _fields = new HashSet<PathSpec>(Arrays.asList(fieldPaths));
     addParam(RestConstants.FIELDS_PARAM, URIUtil.encodeFields(fieldPaths));
   }
 

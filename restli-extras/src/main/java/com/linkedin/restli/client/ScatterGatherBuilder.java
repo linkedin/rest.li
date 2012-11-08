@@ -20,21 +20,25 @@
 
 package com.linkedin.restli.client;
 
-import com.linkedin.common.callback.Callback;
-import com.linkedin.d2.balancer.KeyMapper;
-import com.linkedin.d2.balancer.ServiceUnavailableException;
-import com.linkedin.d2.balancer.util.MapKeyResult;
-import com.linkedin.data.schema.PathSpec;
-import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.r2.message.RequestContext;
-import com.linkedin.restli.common.BatchResponse;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+
+import com.linkedin.common.callback.Callback;
+import com.linkedin.d2.balancer.KeyMapper;
+import com.linkedin.d2.balancer.ServiceUnavailableException;
+import com.linkedin.d2.balancer.util.MapKeyResult;
+import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.PathSpec;
+import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.r2.message.RequestContext;
+import com.linkedin.restli.common.BatchResponse;
+import com.linkedin.restli.common.ComplexResourceKey;
 
 /**
  * @author Josh Walker
@@ -51,7 +55,7 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
     _mapper = mapper;
   }
 
-  // for those who do not care about trouble keys. 
+  // for those who do not care about trouble keys.
   @Deprecated
   public Collection<RequestInfo<T>> buildRequests(BatchGetRequest<T> request, RequestContext requestContext) throws
       ServiceUnavailableException
@@ -64,7 +68,24 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
   public ScatterGatherResult<T> buildRequestsV2(BatchGetRequest<T> request, RequestContext requestContext) throws
           ServiceUnavailableException
   {
-    Collection<String> ids = request.getIds();
+    // In case of complex keys need to convert a set of DataMap representations of the keys
+    // to ComplexResourceKeys.
+    Set<Object> idObjects = request.getIds();
+    Collection<String> ids = new HashSet<String>(idObjects.size());
+    for (Object o : idObjects)
+    {
+      if (request.getResourceSpec().getKeyKeyClass() != null && o instanceof DataMap)
+      {
+        o =
+            ComplexResourceKey.buildFromDataMap((DataMap) o,
+                                                request.getResourceSpec()
+                                                       .getKeyKeyClass(),
+                                                request.getResourceSpec()
+                                                       .getKeyParamsClass());
+      }
+      ids.add(o.toString());
+    }
+
     URI serviceUri;
     try
     {

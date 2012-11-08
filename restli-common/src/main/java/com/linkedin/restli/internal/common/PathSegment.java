@@ -66,7 +66,7 @@ public class PathSegment
    */
   public static PathSegment parse(String string) throws PathSegmentSyntaxException
   {
-    if (string == null || string.trim().length() == 0)
+    if (string == null || string.trim().isEmpty())
       return null;
 
     string = string.trim();
@@ -256,13 +256,13 @@ public class PathSegment
     }
   }
 
-  static class ListMap extends HashMap<Integer,Object>
+  static class ListMap extends HashMap<Integer, Object>
   {
     private static final long serialVersionUID = 1L;
   }
-  static class MapMap extends HashMap<String,Object>
+
+  static class MapMap extends HashMap<String, Object>
   {
     private static final long serialVersionUID = 1L;
-
   }
 }

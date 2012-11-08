@@ -18,6 +18,7 @@ package com.linkedin.restli.client;
 
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -25,16 +26,21 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.linkedin.data.DataList;
+import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.restli.common.BatchResponse;
+import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.client.BatchKVResponseDecoder;
 import com.linkedin.restli.internal.client.BatchResponseDecoder;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
+import com.linkedin.restli.internal.client.URIUtil;
+import com.linkedin.restli.internal.common.QueryParamsDataMap;
 
 
 /**
@@ -48,7 +54,6 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
     RestfulRequestBuilder<K, V, BatchGetRequest<V>>
 {
   private final RestResponseDecoder<BatchResponse<V>> _decoder;
-  private Set<String> _ids;
 
   /**
    * Batches multiple requests into a single batch request.
@@ -106,49 +111,90 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
     }
 
     BatchGetRequest<RT> firstRequest = requests.get(0);
+    ResourceSpec firstResourceSpec = firstRequest.getResourceSpec();
     URI baseURI = firstRequest.getBaseURI();
-    Set<String> ids = new HashSet<String>();
+    Set<PathSpec> firstFields = firstRequest.getFields();
+    Set<Object> ids = new HashSet<Object>();
 
     // Default to no fields or to first request's fields, depending on batchFields flag
-    Set<PathSpec> fields = batchFields? new HashSet<PathSpec>() : firstRequest.getFields();
+    Set<PathSpec> fields =
+        batchFields ? new HashSet<PathSpec>() : firstFields;
+
+    //Defensive shallow copy
+    DataMap firstQueryParams = new DataMap(firstRequest.getQueryParams());
+
+    firstQueryParams.remove(RestConstants.QUERY_BATCH_IDS_PARAM);
+    firstQueryParams.remove(RestConstants.FIELDS_PARAM);
 
     for (BatchGetRequest<RT> request : requests)
     {
-      if (! request.getBaseURI().equals(baseURI))
+      if (!request.getBaseURI().equals(baseURI))
       {
         throw new IllegalArgumentException("Requests must have same URI to batch");
       }
 
-      ids.addAll(request.getIds());
+      if (!request.getResourceSpec().equals(firstResourceSpec))
+      {
+        throw new IllegalArgumentException("Requests must be for the same resource to batch");
+      }
+
+      Set<Object> requestIds = request.getIds();
+      Set<PathSpec> requestFields = request.getFields();
+      // Defensive shallow copy
+      DataMap queryParams = new DataMap(request.getQueryParams());
+
+      queryParams.remove(RestConstants.FIELDS_PARAM);
+      queryParams.remove(RestConstants.QUERY_BATCH_IDS_PARAM);
+
+      // Enforce uniformity of query params excluding ids and fields
+      if (!firstQueryParams.equals(queryParams))
+      {
+        throw new IllegalArgumentException("Requests must have same parameters to batch");
+      }
+
+      if (requestIds != null && !requestIds.isEmpty())
+      {
+        ids.addAll(requestIds);
+      }
 
       if (batchFields)
       {
-        if (request.getFields() == null)
+        if (requestFields == null || requestFields.isEmpty())
         {
           // Need all fields
           fields = null;
         }
         else if (fields != null)
         {
-          fields.addAll(request.getFields());
+          fields.addAll(requestFields);
         }
       }
-      else if (! request.getFields().equals(firstRequest.getFields()))
+      else if (!requestFields.equals(firstFields))
       {
         throw new IllegalArgumentException("Requests must have same fields to batch");
       }
     }
 
+    firstQueryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM,
+                         new DataList(new ArrayList<Object>(ids)));
+
+    if (fields != null && !fields.isEmpty())
+    {
+      firstQueryParams.put(RestConstants.FIELDS_PARAM,
+                           URIUtil.encodeFields(fields.toArray(new PathSpec[0])));
+    }
+
     UriBuilder urlBuilder = UriBuilder.fromUri(baseURI);
-    urlBuilder.queryParam(RestConstants.QUERY_BATCH_IDS_PARAM, ids);
+    QueryParamsDataMap.addSortedParams(urlBuilder, firstQueryParams);
+
     URI uri = urlBuilder.build();
+
     return new BatchGetRequest<RT>(uri,
                                    firstRequest.getHeaders(),
                                    firstRequest.getResponseDecoder(),
                                    baseURI,
-                                   ids,
-                                   fields,
-                                   firstRequest.getResourceSpec());
+                                   firstQueryParams,
+                                   firstResourceSpec);
   }
 
   /**
@@ -160,17 +206,23 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
   public static <RT extends RecordTemplate> BatchGetRequest<RT> batch(GetRequest<RT> request)
   {
     URI baseURI = request.getBaseURI();
-    String id = request.getId();
+    Object id = request.getId();
+    DataMap queryParams = new DataMap(request.getQueryParams());
+    Object idsParam =
+        id instanceof ComplexResourceKey ? ((ComplexResourceKey<?, ?>) id).toDataMap()
+            : id.toString();
+    queryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM,
+                    new DataList(Collections.singletonList(idsParam)));
 
     UriBuilder urlBuilder = UriBuilder.fromUri(baseURI);
-    urlBuilder.queryParam(RestConstants.QUERY_BATCH_IDS_PARAM, id);
-    URI uri = urlBuilder.build();
-    return new BatchGetRequest<RT>(uri,
+    QueryParamsDataMap.addSortedParams(urlBuilder, queryParams);
+
+    return new BatchGetRequest<RT>(urlBuilder.build(),
                                    request.getHeaders(),
                                    new BatchResponseDecoder<RT>(request.getEntityClass()),
                                    baseURI,
-                                   Collections.singleton(id),
-                                   request.getFields(), request.getResourceSpec());
+                                   queryParams,
+                                   request.getResourceSpec());
   }
 
   public BatchGetRequestBuilder(String baseUriTemplate, Class<V> modelClass, ResourceSpec resourceSpec)
@@ -184,7 +236,6 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
   {
     super(baseUriTemplate, resourceSpec);
     _decoder = decoder;
-    _ids = Collections.emptySet();
   }
 
   public BatchGetRequestBuilder<K, V> ids(K... ids)
@@ -194,8 +245,7 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
 
   public BatchGetRequestBuilder<K, V> ids(Collection<K> ids)
   {
-    _ids = toStringSet(ids);
-    addKeyParams(ids);
+    addKeys(ids);
     return this;
   }
 
@@ -243,8 +293,7 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
                                   _headers,
                                   _decoder,
                                   baseUri,
-                                  _ids,
-                                  _fields,
+                                  _queryParams,
                                   _resourceSpec);
   }
 
@@ -268,8 +317,7 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
                                   _headers,
                                   decoder,
                                   baseUri,
-                                  _ids,
-                                  _fields,
+                                  _queryParams,
                                   _resourceSpec);
   }
 

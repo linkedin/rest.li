@@ -20,6 +20,7 @@ import java.net.URI;
 import java.util.Map;
 import java.util.Set;
 
+import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.BatchResponse;
@@ -35,24 +36,19 @@ import com.linkedin.restli.internal.client.RestResponseDecoder;
  *
  * @author Eran Leshem
  */
-public class BatchGetRequest<T extends RecordTemplate> extends Request<BatchResponse<T>>
+public class BatchGetRequest<T extends RecordTemplate> extends BatchRequest<BatchResponse<T>>
 {
-  private final URI _baseURI;
-  private final Set<String> _ids;
-  private final Set<PathSpec> _fields;
+  private final URI     _baseURI;
 
   BatchGetRequest(URI uri,
                   Map<String, String> headers,
                   RestResponseDecoder<BatchResponse<T>> decoder,
                   URI baseURI,
-                  Set<String> ids,
-                  Set<PathSpec> fields,
+                  DataMap queryParams,
                   ResourceSpec resourceSpec)
   {
-    super(uri, ResourceMethod.BATCH_GET, null, headers, decoder, resourceSpec);
+    super(uri, ResourceMethod.BATCH_GET, null, headers, decoder, resourceSpec, queryParams);
     _baseURI = baseURI;
-    _ids = ids;
-    _fields = fields;
   }
 
   public URI getBaseURI()
@@ -60,13 +56,9 @@ public class BatchGetRequest<T extends RecordTemplate> extends Request<BatchResp
     return _baseURI;
   }
 
-  public Set<String> getIds()
-  {
-    return _ids;
-  }
-
+  @Override
   public Set<PathSpec> getFields()
   {
-    return _fields;
+    return super.getFields();
   }
 }

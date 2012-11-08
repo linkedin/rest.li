@@ -15,7 +15,7 @@
 */
 
 /**
- * 
+ *
  */
 package com.linkedin.restli.client;
 
@@ -24,7 +24,7 @@ import com.linkedin.restli.common.ResourceSpec;
 
 /**
  * @author adubman
- * 
+ *
  */
 public abstract class RestfulRequestBuilder<K, V extends RecordTemplate, R extends Request<?>> extends
     AbstractRequestBuilder<K, V, R>
@@ -35,12 +35,20 @@ public abstract class RestfulRequestBuilder<K, V extends RecordTemplate, R exten
     super(baseURITemplate, resourceSpec);
   }
 
+  /**
+   * Note that this method overrides the value at the given key, rather than adds to the
+   * collection of values for it.
+   */
   public RestfulRequestBuilder<K, V, R> param(String key, Object value)
   {
     super.addParam(key, value);
     return this;
   }
 
+  /**
+   * Note that this method overrides the value at the given key, rather than adds to the
+   * collection of values for it.
+   */
   public RestfulRequestBuilder<K, V, R> reqParam(String key, Object value)
   {
     addReqParam(key, value);

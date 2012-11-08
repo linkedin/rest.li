@@ -96,7 +96,7 @@ public class GetRequestBuilder<K, V extends RecordTemplate> extends
                              _elementClass,
                              baseUri,
                              keyToString(_id),
-                             _fields,
+                             _queryParams,
                              _resourceSpec);
   }
 

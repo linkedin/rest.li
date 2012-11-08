@@ -20,17 +20,11 @@
 
 package com.linkedin.restli.internal.client;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.transform.filter.request.MaskCreator;
 import com.linkedin.data.transform.filter.request.MaskTree;
-import com.linkedin.restli.common.RestConstants;
-import com.linkedin.restli.internal.common.URIMaskUtil;
 import com.linkedin.jersey.api.uri.UriComponent;
+import com.linkedin.restli.internal.common.URIMaskUtil;
 
 /**
  * @author Josh Walker

@@ -27,6 +27,7 @@ import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.jersey.api.uri.UriComponent;
 import com.linkedin.restli.internal.common.PathSegment.PathSegmentSyntaxException;
+import com.linkedin.restli.internal.common.URLEscaper.Escaping;
 
 public class TestQueryParamsDataMap
 {
@@ -261,9 +262,9 @@ public class TestQueryParamsDataMap
     dataMap.put("memberID", 2);
     dataMap.put("groupID", 1);
 
-    Map<String, String> result = QueryParamsDataMap.queryString(dataMap);
-    Assert.assertEquals("2", result.get("memberID"));
-    Assert.assertEquals("1", result.get("groupID"));
+    Map<String, List<String>> result = QueryParamsDataMap.queryString(dataMap);
+    Assert.assertEquals("2", result.get("memberID").get(0));
+    Assert.assertEquals("1", result.get("groupID").get(0));
   }
 
   private DataMap queryParamsDataMap(String queryString) throws PathSegmentSyntaxException
@@ -284,15 +285,25 @@ public class TestQueryParamsDataMap
     nested.put("messy~", "value3");
     DataMap dataMap = new DataMap();
     dataMap.put("com.linkedin.groups.Group", nested);
-    Map<String, String> queryString = QueryParamsDataMap.queryString(dataMap);
-    Assert.assertEquals(queryString.get("com~2Elinkedin~2Egroups~2EGroup.messy~5Bkey1"), "value1");
-    Assert.assertEquals(queryString.get("com~2Elinkedin~2Egroups~2EGroup.messykey2~5D"), "value2");
-    Assert.assertEquals(queryString.get("com~2Elinkedin~2Egroups~2EGroup.messy~7E"), "value3");
+    Map<String, List<String>> queryString = QueryParamsDataMap.queryString(dataMap);
+    Assert.assertEquals(queryString.get("com~2Elinkedin~2Egroups~2EGroup.messy~5Bkey1").get(0), "value1");
+    Assert.assertEquals(queryString.get("com~2Elinkedin~2Egroups~2EGroup.messykey2~5D").get(0), "value2");
+    Assert.assertEquals(queryString.get("com~2Elinkedin~2Egroups~2EGroup.messy~7E").get(0), "value3");
 
     DataMap resultingDataMap = queryParamsDataMap("com~2Elinkedin~2Egroups~2EGroup.messy~5Bkey1=newValue1&com~2Elinkedin~2Egroups~2EGroup.messykey2~5D=newValue2&com~2Elinkedin~2Egroups~2EGroup.messy~7E=newValue3");
     DataMap group = resultingDataMap.getDataMap("com.linkedin.groups.Group");
     Assert.assertEquals(group.get("messy[key1"), "newValue1");
     Assert.assertEquals(group.get("messykey2]"), "newValue2");
     Assert.assertEquals(group.get("messy~"), "newValue3");
+  }
+
+  @Test
+  public void testSimpleKeys() throws PathSegmentSyntaxException
+  {
+    String testQS = "ids=1&ids=2&ids=3";
+    DataMap queryParamDataMap = queryParamsDataMap(testQS);
+    String queryString =
+        QueryParamsDataMap.dataMapToQueryString(queryParamDataMap, Escaping.NO_ESCAPING);
+    Assert.assertEquals(queryString, testQS);
   }
 }

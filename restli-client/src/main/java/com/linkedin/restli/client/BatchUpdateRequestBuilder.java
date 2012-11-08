@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-*/
+ */
 
 /**
  * $Id: $
@@ -27,9 +27,7 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.restli.common.BatchRequest;
-import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.ResourceSpec;
-import com.linkedin.restli.common.RestConstants;
 
 /**
  * @author Josh Walker
@@ -41,7 +39,9 @@ public class BatchUpdateRequestBuilder<K, V extends RecordTemplate> extends
 {
   private final BatchRequest<V> _input;
 
-  public BatchUpdateRequestBuilder(String baseUriTemplate, Class<V> valueClass, ResourceSpec resourceSpec)
+  public BatchUpdateRequestBuilder(String baseUriTemplate,
+                                   Class<V> valueClass,
+                                   ResourceSpec resourceSpec)
   {
     super(baseUriTemplate, resourceSpec);
     _input = new BatchRequest<V>(new DataMap(), valueClass);
@@ -50,20 +50,13 @@ public class BatchUpdateRequestBuilder<K, V extends RecordTemplate> extends
   public BatchUpdateRequestBuilder<K, V> input(K id, V entity)
   {
     _input.getEntities().put(keyToString(id), entity);
-    if (isComplexKeyResource())
-    {
-      addComplexKey((ComplexResourceKey<?,?>)id);
-    }
+    addKey(id);
     return this;
   }
 
-
   public BatchUpdateRequestBuilder<K, V> inputs(Map<K, V> entities)
   {
-    if (isComplexKeyResource())
-    {
-      addKeyParams(entities.keySet());
-    }
+    addKeys(entities.keySet());
     for (Map.Entry<K, V> entry : entities.entrySet())
     {
       _input.getEntities().put(keyToString(entry.getKey()), entry.getValue());
@@ -102,21 +95,16 @@ public class BatchUpdateRequestBuilder<K, V extends RecordTemplate> extends
   @Override
   public BatchUpdateRequest<K, V> build()
   {
-    if (!isComplexKeyResource())
-    {
-      addParam(RestConstants.QUERY_BATCH_IDS_PARAM, _input.getEntities().keySet());
-    }
-
     URI baseUri = bindPathKeys();
     UriBuilder b = UriBuilder.fromUri(baseUri);
     appendQueryParams(b);
 
     return new BatchUpdateRequest<K, V>(b.build(),
-                                  _headers,
-                                  baseUri,
-                                  _input,
-                                  _input.getEntities().keySet(),
-                                  _resourceSpec);
+                                        _headers,
+                                        baseUri,
+                                        _input,
+                                        _queryParams,
+                                        _resourceSpec);
   }
 
 }

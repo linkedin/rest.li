@@ -142,7 +142,13 @@ public class TestScatterGather extends RestLiIntegrationTest
         uriIds.addAll(Arrays.asList(value.split(",")));
       }
 
-      Set<String> theseIds = ((BatchGetRequest<Greeting>)requestInfo.getRequest()).getIds();
+      Set<Object> idObjects = ((BatchGetRequest<Greeting>)requestInfo.getRequest()).getIds();
+      Set<String> theseIds = new HashSet<String>(idObjects.size());
+      for (Object o : idObjects)
+      {
+        theseIds.add(o.toString());
+      }
+
       Assert.assertEquals(uriIds, theseIds);
 
       Assert.assertFalse(requestIdSets.contains(theseIds)); //no duplicate requests

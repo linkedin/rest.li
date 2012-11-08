@@ -16,9 +16,21 @@
 
 package com.linkedin.restli.client;
 
+import java.io.IOException;
+import java.net.URI;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.JacksonDataCodec;
-import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.EngineBuilder;
@@ -28,18 +40,6 @@ import com.linkedin.restli.client.test.TestRecord;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.RestConstants;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import java.io.IOException;
-import java.net.URI;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * Exercise {@link com.linkedin.restli.client.ParSeqRestClient}
@@ -178,7 +178,7 @@ public class ParSeqRestClientTest
                              clazz,
                              URI.create(""),
                              "foo",
-                             Collections.<PathSpec> emptySet(),
+                             new DataMap(),
                              null);
   }
 

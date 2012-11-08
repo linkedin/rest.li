@@ -43,10 +43,10 @@ import com.linkedin.restli.internal.client.ActionResponseDecoder;
 
 public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, ActionRequest<V>>
 {
-  private final Class<V> _elementClass;
-  private K _id;
-  private String _name;
-  private final Map<FieldDef<?> , Object> _actionParams = new HashMap<FieldDef<?>, Object>();
+  private final Class<V>                 _elementClass;
+  private K                              _id;
+  private String                         _name;
+  private final Map<FieldDef<?>, Object> _actionParams = new HashMap<FieldDef<?>, Object>();
 
   public ActionRequestBuilder(String baseUriTemplate, Class<V> elementClass, ResourceSpec resourceSpec)
   {
@@ -94,7 +94,7 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
     {
       throw new IllegalStateException("name required to build action request");
     }
-    
+
     UriBuilder b = UriBuilder.fromUri(bindPathKeys());
     if (_id != null)
     {

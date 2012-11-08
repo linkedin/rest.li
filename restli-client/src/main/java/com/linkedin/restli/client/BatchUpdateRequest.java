@@ -22,8 +22,8 @@ package com.linkedin.restli.client;
 
 import java.net.URI;
 import java.util.Map;
-import java.util.Set;
 
+import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.common.BatchRequest;
@@ -38,10 +38,9 @@ import com.linkedin.restli.internal.client.BatchKVResponseDecoder;
  */
 
 public class BatchUpdateRequest<K, V extends RecordTemplate>
-        extends Request<BatchKVResponse<K, UpdateStatus>>
+        extends com.linkedin.restli.client.BatchRequest<BatchKVResponse<K, UpdateStatus>>
 {
   private final URI _baseURI;
-  private final Set<String> _ids;
 
   //framework should ensure that ResourceSpec.getKeyClass() returns Class<K>
   @SuppressWarnings("unchecked")
@@ -49,7 +48,7 @@ public class BatchUpdateRequest<K, V extends RecordTemplate>
                   Map<String, String> headers,
                   URI baseURI,
                   BatchRequest<V> input,
-                  Set<String> ids,
+                  DataMap queryParams,
                   ResourceSpec resourceSpec)
   {
     super(uri,
@@ -61,18 +60,13 @@ public class BatchUpdateRequest<K, V extends RecordTemplate>
                                                       resourceSpec.getKeyParts(),
                                                       resourceSpec.getKeyKeyClass(),
                                                       resourceSpec.getKeyParamsClass()),
-          resourceSpec);
+          resourceSpec,
+          queryParams);
     _baseURI = baseURI;
-    _ids = ids;
   }
 
   public URI getBaseURI()
   {
     return _baseURI;
-  }
-
-  public Set<String> getIds()
-  {
-    return _ids;
   }
 }

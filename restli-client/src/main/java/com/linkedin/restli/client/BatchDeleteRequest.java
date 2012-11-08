@@ -22,8 +22,8 @@ package com.linkedin.restli.client;
 
 import java.net.URI;
 import java.util.Map;
-import java.util.Set;
 
+import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.common.ResourceMethod;
@@ -36,17 +36,16 @@ import com.linkedin.restli.internal.client.BatchKVResponseDecoder;
  * @version $Revision: $
  */
 
-public class BatchDeleteRequest<K, V extends RecordTemplate> extends Request<BatchKVResponse<K, UpdateStatus>>
+public class BatchDeleteRequest<K, V extends RecordTemplate> extends BatchRequest<BatchKVResponse<K, UpdateStatus>>
 {
   private final URI _baseURI;
-  private final Set<String> _ids;
 
   //framework should ensure that ResourceSpec.getKeyClass() returns Class<K>
   @SuppressWarnings("unchecked")
   BatchDeleteRequest(URI uri,
                   Map<String, String> headers,
                   URI baseURI,
-                  Set<String> ids,
+                  DataMap queryParams,
                   ResourceSpec resourceSpec)
   {
     super(uri,
@@ -58,18 +57,13 @@ public class BatchDeleteRequest<K, V extends RecordTemplate> extends Request<Bat
                                                       resourceSpec.getKeyParts(),
                                                       resourceSpec.getKeyKeyClass(),
                                                       resourceSpec.getKeyParamsClass()),
-          resourceSpec);
+          resourceSpec,
+          queryParams);
     _baseURI = baseURI;
-    _ids = ids;
   }
 
   public URI getBaseURI()
   {
     return _baseURI;
-  }
-
-  public Set<String> getIds()
-  {
-    return _ids;
   }
 }

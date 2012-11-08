@@ -12,19 +12,25 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-*/
+ */
 
 package com.linkedin.restli.client;
 
 import java.net.URI;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
+import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.HttpMethod;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
+import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
-
+import com.linkedin.restli.internal.common.IllegalMaskException;
+import com.linkedin.restli.internal.common.URIMaskUtil;
 
 /**
  * A type-bound Request for a resource.
@@ -35,12 +41,13 @@ import com.linkedin.restli.internal.client.RestResponseDecoder;
  */
 public class Request<T>
 {
-  private final URI _uri;
-  private final ResourceMethod _method;
-  private final RecordTemplate _input;
+  private final URI                    _uri;
+  private final ResourceMethod         _method;
+  private final RecordTemplate         _input;
   private final RestResponseDecoder<T> _decoder;
-  private final Map<String, String> _headers;
-  private final ResourceSpec _resourceSpec;
+  private final Map<String, String>    _headers;
+  private final ResourceSpec           _resourceSpec;
+  private final DataMap                _queryParams;
 
   public Request(URI uri,
                  ResourceMethod method,
@@ -49,12 +56,33 @@ public class Request<T>
                  RestResponseDecoder<T> decoder,
                  ResourceSpec resourceSpec)
   {
+    this(uri, method, input, headers, decoder, resourceSpec, null);
+  }
+
+  public Request(URI uri,
+                 ResourceMethod method,
+                 RecordTemplate input,
+                 Map<String, String> headers,
+                 RestResponseDecoder<T> decoder,
+                 ResourceSpec resourceSpec,
+                 DataMap queryParams)
+  {
     _uri = uri;
     _method = method;
     _input = input;
     _decoder = decoder;
-    _headers = headers;
+    _headers = Collections.unmodifiableMap(headers);
     _resourceSpec = resourceSpec;
+    if (queryParams == null)
+    {
+
+      _queryParams = null;
+    }
+    else
+    {
+      _queryParams = new DataMap(queryParams);
+      _queryParams.makeReadOnly();
+    }
   }
 
   public URI getUri()
@@ -118,7 +146,7 @@ public class Request<T>
 
     Request<?> request = (Request<?>) obj;
 
-    if (_input != null? !_input.equals(request._input) : request._input != null)
+    if (_input != null ? !_input.equals(request._input) : request._input != null)
     {
       return false;
     }
@@ -136,12 +164,42 @@ public class Request<T>
     return _uri.equals(request._uri);
   }
 
+  public DataMap getQueryParams()
+  {
+    return _queryParams;
+  }
+
+  /**
+   * This method is to be exposed in the extending classes when appropriate
+   */
+  protected Set<PathSpec> getFields()
+  {
+    String fieldsString = (String) _queryParams.get(RestConstants.FIELDS_PARAM);
+    if (fieldsString == null || fieldsString.trim().isEmpty())
+    {
+      return Collections.emptySet();
+    }
+
+    try
+    {
+      return URIMaskUtil.decodeMaskUriFormat(new StringBuilder(fieldsString))
+                        .getOperations()
+                        .keySet();
+    }
+    catch (IllegalMaskException e)
+    {
+      // Should never happen as the field value is formed by the framework code.
+      throw new IllegalArgumentException("Invalid fields parameter value: "
+          + fieldsString);
+    }
+  }
+
   @Override
   public int hashCode()
   {
     int result = _uri.hashCode();
     result = 31 * result + _method.hashCode();
-    result = 31 * result + (_input != null? _input.hashCode() : 0);
+    result = 31 * result + (_input != null ? _input.hashCode() : 0);
     result = 31 * result + _decoder.hashCode();
     return result;
   }
@@ -149,7 +207,7 @@ public class Request<T>
   @Override
   public String toString()
   {
-    return "RequestImpl{" + "_input=" + _input + ", _uri=" + _uri + ", _method=" + _method +
-            ", _decoderEntityClass=" + _decoder.getEntityClass() + '}';
+    return "RequestImpl{" + "_input=" + _input + ", _uri=" + _uri + ", _method="
+        + _method + ", _decoderEntityClass=" + _decoder.getEntityClass() + '}';
   }
 }

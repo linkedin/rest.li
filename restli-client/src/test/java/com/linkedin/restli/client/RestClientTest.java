@@ -20,27 +20,6 @@
 
 package com.linkedin.restli.client;
 
-import com.linkedin.common.callback.Callback;
-import com.linkedin.common.callback.FutureCallback;
-import com.linkedin.data.DataMap;
-import com.linkedin.data.codec.JacksonDataCodec;
-import com.linkedin.data.schema.PathSpec;
-import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.r2.RemoteInvocationException;
-import com.linkedin.r2.message.rest.RestException;
-import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.rest.RestResponseBuilder;
-import com.linkedin.r2.transport.common.Client;
-import com.linkedin.common.util.None;
-import com.linkedin.restli.common.EmptyRecord;
-import com.linkedin.restli.common.ErrorResponse;
-import com.linkedin.restli.common.RestConstants;
-import com.linkedin.restli.internal.client.EntityResponseDecoder;
-import org.easymock.Capture;
-import org.easymock.EasyMock;
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
 import java.io.IOException;
 import java.net.URI;
 import java.util.Collections;
@@ -49,6 +28,27 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import org.easymock.Capture;
+import org.easymock.EasyMock;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+import com.linkedin.common.callback.Callback;
+import com.linkedin.common.callback.FutureCallback;
+import com.linkedin.common.util.None;
+import com.linkedin.data.DataMap;
+import com.linkedin.data.codec.JacksonDataCodec;
+import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.r2.RemoteInvocationException;
+import com.linkedin.r2.message.rest.RestException;
+import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.message.rest.RestResponseBuilder;
+import com.linkedin.r2.transport.common.Client;
+import com.linkedin.restli.common.EmptyRecord;
+import com.linkedin.restli.common.ErrorResponse;
+import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.client.EntityResponseDecoder;
 
 /**
  * @author Steven Ihde
@@ -234,7 +234,13 @@ public class RestClientTest
 
   private <T extends RecordTemplate> Request<T> mockRequest(Class<T> clazz)
   {
-    return new GetRequest<T>(URI.create(""), Collections.<String,String>emptyMap(), clazz, URI.create(""), "foo", Collections.<PathSpec>emptySet(), null);
+    return new GetRequest<T>(URI.create(""),
+                             Collections.<String, String> emptyMap(),
+                             clazz,
+                             URI.create(""),
+                             "foo",
+                             new DataMap(),
+                             null);
   }
 
   private RestClient mockClient(String ERR_KEY, String ERR_VALUE, String ERR_MSG, int HTTP_CODE,

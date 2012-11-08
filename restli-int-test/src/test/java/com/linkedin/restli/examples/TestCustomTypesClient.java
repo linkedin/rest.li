@@ -21,18 +21,11 @@
 package com.linkedin.restli.examples;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 
-import com.linkedin.restli.client.BatchGetRequest;
-import com.linkedin.restli.client.GetRequest;
-import com.linkedin.restli.examples.greetings.client.CustomTypes2Builders;
-import com.linkedin.restli.examples.greetings.client.CustomTypes3Builders;
-import com.linkedin.restli.examples.greetings.client.CustomTypes4Builders;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -43,10 +36,15 @@ import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.client.ActionRequest;
+import com.linkedin.restli.client.BatchGetRequest;
 import com.linkedin.restli.client.FindRequest;
+import com.linkedin.restli.client.GetRequest;
 import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.examples.custom.types.CustomLong;
 import com.linkedin.restli.examples.greetings.api.Greeting;
+import com.linkedin.restli.examples.greetings.client.CustomTypes2Builders;
+import com.linkedin.restli.examples.greetings.client.CustomTypes3Builders;
+import com.linkedin.restli.examples.greetings.client.CustomTypes4Builders;
 import com.linkedin.restli.examples.greetings.client.CustomTypesBuilders;
 
 /**

@@ -23,8 +23,6 @@ package com.linkedin.restli.client;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
 
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.jersey.api.uri.UriBuilder;
@@ -38,14 +36,12 @@ import com.linkedin.restli.common.ResourceSpec;
 public class BatchDeleteRequestBuilder<K, V extends RecordTemplate> extends
     RestfulRequestBuilder<K, V, BatchDeleteRequest<K, V>>
 {
-  private Set<String> _ids;
 
   public BatchDeleteRequestBuilder(String baseUriTemplate,
                                    Class<V> valueClass,
                                    ResourceSpec resourceSpec)
   {
     super(baseUriTemplate, resourceSpec);
-    _ids = Collections.emptySet();
   }
 
   public BatchDeleteRequestBuilder<K, V> ids(K... ids)
@@ -55,8 +51,7 @@ public class BatchDeleteRequestBuilder<K, V extends RecordTemplate> extends
 
   public BatchDeleteRequestBuilder<K, V> ids(Collection<K> ids)
   {
-    _ids = toStringSet(ids);
-    addKeyParams(ids);
+    addKeys(ids);
     return this;
   }
 
@@ -95,7 +90,10 @@ public class BatchDeleteRequestBuilder<K, V extends RecordTemplate> extends
     UriBuilder b = UriBuilder.fromUri(baseUri);
     appendQueryParams(b);
 
-    return new BatchDeleteRequest<K, V>(b.build(), _headers, baseUri, _ids, _resourceSpec);
+    return new BatchDeleteRequest<K, V>(b.build(),
+                                        _headers,
+                                        baseUri,
+                                        _queryParams,
+                                        _resourceSpec);
   }
-
 }

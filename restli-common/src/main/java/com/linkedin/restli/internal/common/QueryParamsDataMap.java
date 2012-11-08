@@ -29,9 +29,13 @@ import java.util.regex.Pattern;
 import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.jersey.api.uri.UriBuilder;
+import com.linkedin.jersey.api.uri.UriComponent;
+import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.PathSegment.ListMap;
 import com.linkedin.restli.internal.common.PathSegment.MapMap;
 import com.linkedin.restli.internal.common.PathSegment.PathSegmentSyntaxException;
+import com.linkedin.restli.internal.common.URLEscaper.Escaping;
 
 /**
  * A utility class for parsing query parameters map into a DataMap.
@@ -50,6 +54,46 @@ public class QueryParamsDataMap
   {
   }
 
+  /**
+   * Helper method to convert a DataMap into a string by concatenating key-value pairs with "&",
+   * sorted by both key and value.
+   *
+   * @return a String
+   */
+  public static String dataMapToQueryString(DataMap dataMap, Escaping escaping)
+  {
+    if (dataMap == null || dataMap.isEmpty())
+    {
+      return "";
+    }
+
+    Map<String, List<String>> queryStringParamsMap = queryString(dataMap);
+
+    StringBuilder sb = new StringBuilder();
+    List<String> keys = new ArrayList<String>(queryStringParamsMap.keySet());
+    Collections.sort(keys);
+
+    for (String key : keys)
+    {
+      List<String> values = new ArrayList<String>(queryStringParamsMap.get(key));
+      Collections.sort(values);
+      for (String value : values)
+      {
+        sb.append(key)
+          .append(RestConstants.KEY_VALUE_DELIMITER)
+          .append(URLEscaper.escape(value, escaping))
+          .append(RestConstants.SIMPLE_KEY_DELIMITER);
+      }
+    }
+
+    if (sb.length() > 0)
+    {
+      sb.deleteCharAt(sb.length() - 1);
+    }
+
+    return sb.toString();
+  }
+
 
   /**
    * Create a map of query string parameters (name, value) from the provided DataMap, in
@@ -59,8 +103,8 @@ public class QueryParamsDataMap
    * @param dataMap a dataMap
    * @return the map of query string parameters.
    */
-  public static Map<String, String> queryString(DataMap dataMap){
-    Map<String, String> result = new HashMap<String, String>();
+  public static Map<String, List<String>> queryString(DataMap dataMap){
+    Map<String, List<String>> result = new HashMap<String, List<String>>();
     iterate("", dataMap, result);
     return result;
   }
@@ -68,7 +112,7 @@ public class QueryParamsDataMap
 
   private static void iterate(String keyPrefix,
                               DataComplex dataComplex,
-                              Map<String, String> result)
+                              Map<String, List<String>> result)
   {
     String separator = ("".equals(keyPrefix)) ? "" : PathSegment.PATH_SEPARATOR;
     if (dataComplex instanceof DataMap)
@@ -90,7 +134,7 @@ public class QueryParamsDataMap
     }
   }
 
-  private static void handleEntry(String keyPrefix, Object object, Map<String, String> result)
+  private static void handleEntry(String keyPrefix, Object object, Map<String, List<String>> result)
   {
     if (object instanceof DataComplex)
     {
@@ -98,8 +142,43 @@ public class QueryParamsDataMap
     }
     else
     {
-      String value = object.toString();
-      result.put(keyPrefix, value);
+      addListValue(keyPrefix, object, result);
+    }
+  }
+
+  /**
+   * For backwards compatibility must support multiple query parameter values, but only in case of
+   * primitive values, and only at the root level (the parameter name doesn't contain path separators ('.'))
+   * It follows, that for any complex values, the list keyed on the parameter name will only contain one element.
+   * This method, depending on the path in the datamap, represented by keyPrefix, will either put the provided
+   * (primitive) object in the location specified by keyPrefix, wrapped in a newly created singleton list, or
+   * add the object to the list at the specified location.
+   */
+  private static void addListValue(String keyPrefix,
+                               Object value,
+                               Map<String, List<String>> result)
+  {
+    assert (!(value instanceof DataComplex));
+    // If the current key designates a location in a datamap - the key should be unique - create a new
+    // list containing the value and put it in the map.
+    if (keyPrefix.contains(PathSegment.PATH_SEPARATOR))
+    {
+      result.put(keyPrefix, Collections.singletonList(value.toString()));
+    }
+    else
+    {
+      // Otherwise - simple query parameter - strip the index from the prefix and add the value to the list.
+      keyPrefix =
+          keyPrefix.contains("[") ? keyPrefix.substring(0, keyPrefix.indexOf('['))
+              : keyPrefix;
+      if (result.containsKey(keyPrefix))
+      {
+        result.get(keyPrefix).add(value.toString());
+      }
+      else
+      {
+        result.put(keyPrefix, new ArrayList<String>(Collections.singletonList(value.toString())));
+      }
     }
   }
 
@@ -219,7 +298,7 @@ public class QueryParamsDataMap
     if (dataMap == null)
       throw new IllegalArgumentException("Query parameters target data map is null");
 
-    if (key == null || key.size() == 0)
+    if (key == null || key.isEmpty())
       throw new IllegalArgumentException("Error parsing query parameters: query parameter name cannot be empty");
 
     PathSegment pathSegment = PathSegment.parse(key.get(0));
@@ -252,7 +331,7 @@ public class QueryParamsDataMap
    * @param map the Map to transform
    * @return DataMap or DataList, depending on the type of the input Map
    */
-  private static Object convertToDataCollection(Map<?, ?> map)
+  private static DataComplex convertToDataCollection(Map<?, ?> map)
   {
     // If this map is not an instance of ListMap, just call this method
     // recursively on every value that is itself a map
@@ -291,5 +370,44 @@ public class QueryParamsDataMap
     }
 
     throw new IllegalArgumentException("Only MapMap or ListMap input argument types are allowed");
+  }
+
+  /**
+   * Helper method to add the provided query params multimap to the provided UriBuilder, sorting both
+   * keys and values within the list for each key.
+   *
+   * @param uriBuilder
+   * @param params
+   */
+  public static void addSortedParams(UriBuilder uriBuilder,
+                                     Map<String, List<String>> params)
+  {
+    List<String> keysList = new ArrayList<String>(params.keySet());
+    Collections.sort(keysList);
+
+    for (String key : keysList)
+    {
+      // Create a new list to make sure it's modifiable and can be sorted.
+      List<String> values = new ArrayList<String>(params.get(key));
+      Collections.sort(values);
+      for (String value : values)
+      {
+        // force full encoding as UriBuilder.queryParam(..) won't encode percent signs
+        // followed by hex digits
+        uriBuilder.queryParam(UriComponent.encode(key, UriComponent.Type.QUERY_PARAM),
+                              UriComponent.encode(value, UriComponent.Type.QUERY_PARAM));
+      }
+    }
+  }
+
+  /**
+   * Same as above, but taking a DataMap representation of query parameters
+   *
+   * @param uriBuilder
+   * @param params
+   */
+  public static void addSortedParams(UriBuilder uriBuilder, DataMap params)
+  {
+    addSortedParams(uriBuilder, queryString(params));
   }
 }

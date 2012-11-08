@@ -30,15 +30,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import com.linkedin.data.schema.RecordDataSchema;
-import com.linkedin.data.template.DataTemplateUtil;
-import com.linkedin.data.template.DynamicRecordMetadata;
-import com.linkedin.data.template.DynamicRecordTemplate;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.PathSpec;
+import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.data.template.FieldDef;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.client.test.TestRecord;
@@ -382,7 +380,7 @@ public class TestClientBuilders
     Assert.assertTrue(request.isSafe());
     Assert.assertTrue(request.isIdempotent());
     checkBasicRequest(request,
-                      "test/id=1&message=KeyMessage&$params.message=ParamMessage&$params.id=10?testParam.id=123&testParam.message=ParamMessage",
+                      "test/$params.id=10&$params.message=ParamMessage&id=1&message=KeyMessage?testParam.id=123&testParam.message=ParamMessage",
                       ResourceMethod.GET,
                       null,
                       Collections.<String, String> emptyMap());
@@ -403,7 +401,7 @@ public class TestClientBuilders
     Assert.assertFalse(request.isSafe());
     Assert.assertTrue(request.isIdempotent());
     checkBasicRequest(request,
-                      "test/id=1&message=KeyMessage&$params.message=ParamMessage&$params.id=10?testParam.id=123&testParam.message=ParamMessage",
+                      "test/$params.id=10&$params.message=ParamMessage&id=1&message=KeyMessage?testParam.id=123&testParam.message=ParamMessage",
                       ResourceMethod.DELETE,
                       null,
                       Collections.<String, String> emptyMap());

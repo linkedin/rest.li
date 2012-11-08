@@ -27,7 +27,7 @@ import com.linkedin.data.template.RecordTemplate;
 
 /**
  * Runtime representation of resource spec.
- * 
+ *
  * @author Eran Leshem
  */
 public class ResourceSpecImpl implements ResourceSpec
@@ -168,15 +168,14 @@ public class ResourceSpecImpl implements ResourceSpec
                           Class<? extends RecordTemplate> valueClass,
                           Map<String, Class<?>> keyParts)
   {
-    _supportedMethods = Collections.unmodifiableSet(supportedMethods);
-    _actionRequestMetadata = Collections.emptyMap();
-    _actionResponseMetadata = Collections.emptyMap();
-    _keyClass = keyClass;
-    _keyKeyClass = keyKeyClass;
-    _keyParamsClass = keyParamsClass;
-    _valueClass = valueClass;
-    _keyParts = Collections.unmodifiableMap(keyParts);
-    Collections.<String, Class<?>>emptyMap();
+    this(supportedMethods,
+         Collections.<String, DynamicRecordMetadata> emptyMap(),
+         Collections.<String, DynamicRecordMetadata> emptyMap(),
+         keyClass,
+         keyKeyClass,
+         keyParamsClass,
+         valueClass,
+         keyParts);
   }
 
   /**
@@ -208,7 +207,6 @@ public class ResourceSpecImpl implements ResourceSpec
     _keyParamsClass = keyParamsClass;
     _valueClass = valueClass;
     _keyParts = Collections.unmodifiableMap(keyParts);
-    Collections.<String, Class<?>>emptyMap();
   }
 
   @Override
@@ -259,4 +257,45 @@ public class ResourceSpecImpl implements ResourceSpec
     return _actionResponseMetadata.get(methodName);
   }
 
+  @Override
+  public boolean equals(Object other)
+  {
+    if (this == other)
+      return true;
+
+    if (!(other instanceof ResourceSpecImpl))
+      return false;
+
+    ResourceSpecImpl resourceSpec = (ResourceSpecImpl)other;
+
+    return fieldEquals(_supportedMethods, resourceSpec._supportedMethods)
+        && fieldEquals(_keyClass, resourceSpec._keyClass)
+        && fieldEquals(_keyKeyClass, resourceSpec._keyKeyClass)
+        && fieldEquals(_keyParamsClass, resourceSpec._keyParamsClass)
+        && fieldEquals(_valueClass, resourceSpec._valueClass)
+        && fieldEquals(_keyParts, resourceSpec._keyParts);
+  }
+
+  private boolean fieldEquals(Object field1, Object field2)
+  {
+    return field1 == null ? field2 == null : field1.equals(field2);
+  }
+
+  @Override
+  public int hashCode()
+  {
+    int res = 7;
+    res = 11 * res + hashOrNull(_supportedMethods);
+    res = 11 * res + hashOrNull(_keyClass);
+    res = 11 * res + hashOrNull(_keyKeyClass);
+    res = 11 * res + hashOrNull(_keyParamsClass);
+    res = 11 * res + hashOrNull(_valueClass);
+    res = 11 * res + hashOrNull(_keyParts);
+    return res;
+  }
+
+  private int hashOrNull(Object o)
+  {
+    return o == null ? 0 : o.hashCode();
+  }
 }
