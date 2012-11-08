@@ -64,8 +64,6 @@ public class PhotoClient
   {
     // REST client wrapper that simplifies the interface
 
-    LoadBalancerUtil.
-
     final D2Client d2Client = new D2ClientBuilder().build();
     final RestClient restClient = new RestClient(d2Client, "d2://");
     final PhotoClient photoClient = new PhotoClient(restClient);
