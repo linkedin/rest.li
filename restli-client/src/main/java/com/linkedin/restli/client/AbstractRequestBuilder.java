@@ -180,14 +180,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
    */
   protected final void addComplexKey(ComplexResourceKey<?, ?> id)
   {
-    RecordTemplate key = id.getKey();
-    RecordTemplate params = id.getParams();
-    DataMap keyDataMap = new DataMap(key.data());
-    if (params != null)
-    {
-      keyDataMap.put(RestConstants.COMPLEX_KEY_PARAMS, params.data());
-    }
-    _keysDataList.add(keyDataMap);
+    _keysDataList.add(id.toDataMap());
   }
   
   /**

@@ -41,7 +41,6 @@ import com.linkedin.data.schema.PrimitiveDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
-import com.linkedin.data.schema.generator.SchemaSampleDataGenerator.DataGenerationSpec;
 import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
 import com.linkedin.data.schema.validation.ValidationOptions;
 import com.linkedin.data.schema.validation.ValidationResult;
@@ -102,7 +101,7 @@ public class TestSchemaSampleDataGenerator
     _dataSchemaTypeToprimitiveMapMap.put(DataSchema.Type.STRING, StringMap.class);
     _dataSchemaTypeToprimitiveMapMap.put(DataSchema.Type.BYTES, BytesMap.class);
 
-    _spec = new DataGenerationSpec();
+    _spec = new SchemaSampleDataGenerator.DataGenerationOptions();
   }
 
   @Test
@@ -255,5 +254,5 @@ public class TestSchemaSampleDataGenerator
   private Map<DataSchema.Type, Class<?>> _dataSchemaTypeToPrimitiveJavaTypeMap;
   private Map<DataSchema.Type, Class<? extends DirectArrayTemplate>> _dataSchemaTypeToprimitiveArrayMap;
   private Map<DataSchema.Type, Class<? extends DirectMapTemplate>> _dataSchemaTypeToprimitiveMapMap;
-  private DataGenerationSpec _spec;
+  private SchemaSampleDataGenerator.DataGenerationOptions _spec;
 }

@@ -23,15 +23,29 @@
     <h1>
       $resourceFullName Resource
     </h1>
-    <p>TODO DOCS</p>
 
     <dl>
+      #if ($resource.doc)
+        <p>
+          <dt>Documentation</dt>
+          <dd>$resource.doc</dd>
+        </p>
+      #end
+
       <dt>Resource Type</dt>
       <dd>$resourceType</dd>
       #if ($resourceType == "collection")
         <dt>Key</dt>
         #set ($identifier = $resource.collection.identifier)
-        <dd><span style="font-family: monospace">$identifier.name: $identifier.type</span></dd>
+        #if ($identifier.params)
+          #set ($identifierType = "<a href=$docBaseUri/data/$identifier.type>$identifier.type</a>")
+          #set ($identifierParams = "<dd><span style='font-family: monospace'>Parameter schema: <a href=$docBaseUri/data/$identifier.params>$identifier.params</a></span></dd>")
+        #else
+          #set ($identifierType = $identifier.type)
+          #set ($identifierParams = "")
+        #end
+        <dd><span style="font-family: monospace">$identifier.name: $identifierType</span></dd>
+        $identifierParams
       #elseif ($resourceType == "association")
         <dt>Keys</dt>
         #foreach ($assocKey in $resource.association.assocKeys)
@@ -65,7 +79,7 @@
      <thead>
        <tr>
          <th class="nobg">Method</th>
-         <th scope="col">Path</th>
+         <th scope="col">Example Path</th>
          <th scope="col">Doc</th>
        </tr>
      </thead>
@@ -73,9 +87,8 @@
        #foreach ($methodDocView in $restMethods)
        <tr>
          <th scope="row">$methodDocView.restMethodSchema.method</th>
-
-         <td style="font-family: monospace">#if ($methodDocView.capture) $methodDocView.capture.request.URI #end</td>
-         <td>$methodDocView.doc</td>
+         <td style="font-family: monospace">#if ($methodDocView.capture) $serverNodeUri$methodDocView.capture.request.URI #end</td>
+         <td>$!methodDocView.doc</td>
        </tr>
        #end
      </tbody>
@@ -89,37 +102,37 @@
       #foreach ($finder in $finders)
         #set ($finderSchema = $finder.finderSchema)
         <dt>$finderSchema.name</dt>
-        <dd style="background: #F0F0F0; border: 1px dashed black; padding: 12px;">
-          <p>$!finder.doc</p>
-          <dl>
-            #if ($finderSchema.parameters)
-            <dt>Parameters</dt>
-            <dd>
-              <ul class="nobullet">
-                #foreach ($param in $finderSchema.parameters)
-                  <li>
-                    $param.name:
-                    #if ($relatedSchemas.containsKey($param.type))
-                      <a href="$docBaseUri/data/$param.type">$param.type</a>
-                    #else
-                      $param.type
+        <p>$!finderSchema.doc</p>
+          #if ($finderSchema.parameters)
+            <dd style="background: #F0F0F0; border: 1px dashed black; padding: 12px;">
+              <dl>
+                <dt>Parameters</dt>
+                <dd>
+                  <ul class="nobullet">
+                    #foreach ($param in $finderSchema.parameters)
+                      <li>
+                        $param.name:
+                        #if ($relatedSchemas.containsKey($param.type))
+                          <a href="$docBaseUri/data/$param.type">$param.type</a>
+                        #else
+                          $param.type
+                        #end
+                        #if ($param.hasItems())
+                          &lt;
+                          #if ($relatedSchemas.containsKey($param.items))
+                            <a href="$docBaseUri/data/$param.items">$param.items</a>
+                          #else
+                            $param.items
+                          #end
+                          &gt;
+                        #end
+                      </li>
                     #end
-                    #if ($param.hasItems())
-                      &lt;
-                      #if ($relatedSchemas.containsKey($param.items))
-                        <a href="$docBaseUri/data/$param.items">$param.items</a>
-                      #else
-                        $param.items
-                      #end
-                      &gt;
-                    #end
-                  </li>
-                #end
-              </ul>
+                  </ul>
+                </dd>
+              </dl>
             </dd>
-            #end
-          </dl>
-        </dd>
+          #end
         <dd><pre class="prettyprint">curl -v -X GET $serverNodeUri$finder.capture.request.URI</pre></dd>
         <dd>
           <pre class="prettyprint">
@@ -144,55 +157,57 @@ $finder.prettyPrintResponseEntity
       #foreach ($action in $actions)
         #set ($actionSchema = $action.actionSchema)
         <dt>$actionSchema.name</dt>
-        <dd style="background: #F0F0F0; border: 1px dashed black; padding: 12px;">
-          <p>$!action.doc</p>
-          <dl>
-            #if ($actionSchema.parameters)
-            <dt>Parameters</dt>
-            <dd>
-              <ul class="nobullet">
-                #foreach ($param in $actionSchema.parameters)
-                  <li>
-                    $param.name:
-                    #if ($relatedSchemas.containsKey($param.type))
-                      <a href="$docBaseUri/data/$param.type">$param.type</a>
-                    #else
-                      $param.type
+        <p>$!actionSchema.doc</p>
+        #if ($actionSchema.parameters || $actionSchema.hasReturns() || $actionSchema.hasThrows())
+          <dd style="background: #F0F0F0; border: 1px dashed black; padding: 12px;">
+            <dl>
+              #if ($actionSchema.parameters)
+                <dt>Parameters</dt>
+                <dd>
+                  <ul class="nobullet">
+                    #foreach ($param in $actionSchema.parameters)
+                      <li>
+                        $param.name:
+                        #if ($relatedSchemas.containsKey($param.type))
+                          <a href="$docBaseUri/data/$param.type">$param.type</a>
+                        #else
+                          $param.type
+                        #end
+                        #if ($param.hasItems())
+                          &lt;
+                          #if ($relatedSchemas.containsKey($param.items))
+                            <a href="$docBaseUri/data/$param.items">$param.items</a>
+                          #else
+                            $param.items
+                          #end
+                          &gt;
+                        #end
+                      </li>
                     #end
-                    #if ($param.hasItems())
-                      &lt;
-                      #if ($relatedSchemas.containsKey($param.items))
-                        <a href="$docBaseUri/data/$param.items">$param.items</a>
-                      #else
-                        $param.items
-                      #end
-                      &gt;
-                    #end
-                  </li>
-                #end
-              </ul>
-            </dd>
-            #end
-            #if ($actionSchema.hasReturns())
-              <dt>Returns</dt>
-              <dd>
-                #if ($relatedSchemas.containsKey($actionSchema.returns))
-                  <a href="$docBaseUri/data/$actionSchema.returns">$actionSchema.returns</a>
-                #else
-                  $actionSchema.returns
-                #end
-              </dd>
-            #end
-            #if ($actionSchema.hasThrows())
-              <dt>Exceptions</dt>
-              <dd>
-                #foreach ($error in $actionSchema.throws)
-                  <a href="$docBaseUri/data/$error">$error</a>
-                #end
-              </dd>
-            #end
-          </dl>
-        </dd>
+                  </ul>
+                </dd>
+              #end
+              #if ($actionSchema.hasReturns())
+                <dt>Returns</dt>
+                <dd>
+                  #if ($relatedSchemas.containsKey($actionSchema.returns))
+                    <a href="$docBaseUri/data/$actionSchema.returns">$actionSchema.returns</a>
+                  #else
+                    $actionSchema.returns
+                  #end
+                </dd>
+              #end
+              #if ($actionSchema.hasThrows())
+                <dt>Exceptions</dt>
+                <dd>
+                  #foreach ($error in $actionSchema.throws)
+                    <a href="$docBaseUri/data/$error">$error</a>
+                  #end
+                </dd>
+              #end
+            </dl>
+          </dd>
+        #end
         #if ($action.capture)
           <dd>
             <pre class="prettyprint">

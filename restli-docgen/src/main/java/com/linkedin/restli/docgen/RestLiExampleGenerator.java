@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.docgen;
 
+import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaResolver;
@@ -27,17 +28,21 @@ import com.linkedin.data.template.JacksonDataTemplateCodec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.transform.patch.request.PatchCreator;
 import com.linkedin.jersey.api.uri.UriBuilder;
+import com.linkedin.jersey.api.uri.UriTemplate;
 import com.linkedin.r2.message.MessageBuilder;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.restli.common.BatchRequest;
 import com.linkedin.restli.common.CollectionRequest;
+import com.linkedin.restli.common.ComplexResourceKey;
+import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.HttpMethod;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.common.QueryParamsDataMap;
 import com.linkedin.restli.internal.server.ResourceContextImpl;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.internal.server.RestLiResponseHandler;
@@ -61,6 +66,7 @@ import com.linkedin.restli.server.BatchResult;
 import com.linkedin.restli.server.BatchUpdateResult;
 import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.CreateResponse;
+import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
@@ -122,26 +128,40 @@ public class RestLiExampleGenerator
                                                        RequestGenerationSpec spec)
   {
     final ResourceMethod restMethod = ResourceMethod.valueOf(restMethodSchema.getMethod().toUpperCase());
-
-    String path = getMethodPath(resourceSchema,
-                                COLLECTION_METHODS.contains(restMethod) ? ResourceLevel.COLLECTION : ResourceLevel.ENTITY);
-    if (path == null)
+    final String templatePath;
+    if (METHODS_WITHOUT_PARAMS.contains(restMethod) || BATCH_METHODS_WITH_PARAMS.contains(restMethod))
+    {
+      templatePath = resourceSchema.getPath();
+    }
+    else
+    {
+      templatePath = getEntityMethodPath(resourceSchema);
+    }
+    if (templatePath == null)
     {
       return null;
     }
 
-    // use $ instead of {} to create a valid URI
-    path = path.replaceAll("\\{|\\}", "\\$");
-    final UriBuilder uriBuilder = UriBuilder.fromPath(path);
-
     final ResourceModel model = _allResources.get(resourceSchema.getPath());
+    final Map<String, String> uriTemplateExampleValues = getUriTemplateExampleValues(model);
+    final UriBuilder uriBuilder = UriBuilder.fromPath(new UriTemplate(templatePath).createURI(uriTemplateExampleValues));
+
+    if (BATCH_METHODS_WITH_PARAMS.contains(restMethod))
+    {
+      buildBatchRequestExampleUri(model, uriBuilder);
+    }
+
     // TODO OFFLINE RestLiResponseHandler requires RoutingResult, which requires ResourceMethodDescriptor.
     final ResourceMethodDescriptor method = model.findMethod(restMethod);
 
     final ParameterSchemaArray params = restMethodSchema.getParameters();
     if (params != null)
     {
-      addParamsToUri(params, spec, uriBuilder);
+      final Map<String, String> flattenQueryParamMap = getQueryParamMap(params, spec);
+      for (Map.Entry<String, String> e: flattenQueryParamMap.entrySet())
+      {
+        uriBuilder.queryParam(e.getKey(), e.getValue());
+      }
     }
 
     final Class<? extends RecordTemplate> valueClass = getClass(resourceSchema.getSchema());
@@ -232,17 +252,11 @@ public class RestLiExampleGenerator
                                                    FinderSchema finderSchema,
                                                    RequestGenerationSpec spec)
   {
-    String path = getMethodPath(resourceSchema, ResourceLevel.COLLECTION);
-    if (path == null)
-    {
-      return null;
-    }
-
-    // use $ instead of {} to create a valid URI
-    path = path.replaceAll("\\{|\\}", "\\$");
-    final UriBuilder uriBuilder = UriBuilder.fromPath(path);
-
+    final String templatePath = resourceSchema.getPath();
     final ResourceModel model = _allResources.get(resourceSchema.getPath());
+    final Map<String, String> uriTemplateExampleValues = getUriTemplateExampleValues(model);
+    final UriBuilder uriBuilder = UriBuilder.fromPath(new UriTemplate(templatePath).createURI(uriTemplateExampleValues));
+
     // TODO OFFLINE RestLiResponseHandler requires RoutingResult, which requires ResourceMethodDescriptor.
     final ResourceMethodDescriptor method = model.findNamedMethod(finderSchema.getName());
 
@@ -253,7 +267,11 @@ public class RestLiExampleGenerator
     final ParameterSchemaArray params = finderSchema.getParameters();
     if (params != null)
     {
-      addParamsToUri(params, spec, uriBuilder);
+      final Map<String, String> flattenQueryParamMap = getQueryParamMap(params, spec);
+      for (Map.Entry<String, String> e: flattenQueryParamMap.entrySet())
+      {
+        uriBuilder.queryParam(e.getKey(), e.getValue());
+      }
     }
 
     final AssociationSchema assocSchema = resourceSchema.getAssociation();
@@ -302,19 +320,26 @@ public class RestLiExampleGenerator
                                                    ResourceLevel resourceLevel,
                                                    RequestGenerationSpec spec)
   {
-    String path = getMethodPath(resourceSchema, resourceLevel);
-    if (path == null)
+    final String templatePath;
+    if (resourceLevel == ResourceLevel.COLLECTION)
+    {
+      templatePath = resourceSchema.getPath();
+    }
+    else
+    {
+      templatePath = getEntityMethodPath(resourceSchema);
+    }
+    if (templatePath == null)
     {
       return null;
     }
 
-    // use $ instead of {} to create a valid URI
-    path = path.replaceAll("\\{|\\}", "\\$");
-    final UriBuilder uriBuilder = UriBuilder.fromPath(path);
+    final ResourceModel model = _allResources.get(resourceSchema.getPath());
+    final Map<String, String> uriTemplateExampleValues = getUriTemplateExampleValues(model);
+    final UriBuilder uriBuilder = UriBuilder.fromPath(new UriTemplate(templatePath).createURI(uriTemplateExampleValues));
 
     uriBuilder.queryParam(RestConstants.ACTION_PARAM, actionSchema.getName());
 
-    final ResourceModel model = _allResources.get(resourceSchema.getPath());
     // TODO OFFLINE RestLiResponseHandler requires RoutingResult, which requires ResourceMethodDescriptor.
     final ResourceMethodDescriptor method = model.findActionMethod(actionSchema.getName(), resourceLevel);
 
@@ -355,7 +380,7 @@ public class RestLiExampleGenerator
   }
 
   private static <R extends RecordTemplate> R buildRecordTemplate(Class<R> recordClass,
-                                                                  SchemaSampleDataGenerator.DataGenerationSpec spec)
+                                                                  SchemaSampleDataGenerator.DataGenerationOptions spec)
   {
     final DataSchema schema = DataTemplateUtil.getSchema(recordClass);
     if (schema == null || !(schema instanceof RecordDataSchema))
@@ -367,33 +392,26 @@ public class RestLiExampleGenerator
     return DataTemplateUtil.wrap(data, recordClass);
   }
 
-  private static String getMethodPath(ResourceSchema resourceSchema, ResourceLevel resourceLevel)
+  private static String getEntityMethodPath(ResourceSchema resourceSchema)
   {
-    if (resourceLevel == ResourceLevel.COLLECTION)
+    final CollectionSchema collection = resourceSchema.getCollection();
+    final AssociationSchema association = resourceSchema.getAssociation();
+    EntitySchema entity = null;
+    if (collection != null)
     {
-      return resourceSchema.getPath();
+      entity = collection.getEntity();
     }
-    else
+    else if (association != null)
     {
-      final CollectionSchema collection = resourceSchema.getCollection();
-      final AssociationSchema association = resourceSchema.getAssociation();
-      EntitySchema entity = null;
-      if (collection != null)
-      {
-        entity = collection.getEntity();
-      }
-      else if (association != null)
-      {
-        entity = association.getEntity();
-      }
-
-      if (entity == null)
-      {
-        return null;
-      }
-
-      return entity.getPath();
+      entity = association.getEntity();
     }
+
+    if (entity == null)
+    {
+      return null;
+    }
+
+    return entity.getPath();
   }
 
   private static <R extends RecordTemplate> CollectionResult<R, ? extends RecordTemplate>
@@ -455,6 +473,43 @@ public class RestLiExampleGenerator
     }
   }
 
+  /**
+   * Generate map of URI template name to its example value.
+   * This map can be used to create concrete example URI from template.
+   *
+   * @param model {@link ResourceModel} of which the path is generated for
+   * @return Map of URI template name to its example value
+   */
+  private Map<String, String> getUriTemplateExampleValues(ResourceModel model)
+  {
+    final Map<String, String> exampleValues = new HashMap<String, String>();
+
+    if (model != null)
+    {
+      if (model.getKeyKeyClass() == null)
+      {
+        for (Key key: model.getKeys())
+        {
+          final DataSchema keySchema = DataTemplateUtil.getSchema(key.getType());
+          final Object exampleKey = SchemaSampleDataGenerator.buildDataMappable(keySchema, _defaultSpec);
+          exampleValues.put(key.getName(), exampleKey.toString());
+        }
+      }
+      else
+      {
+        final RecordTemplate exampleKeyKey = buildRecordTemplate(model.getKeyKeyClass());
+        final RecordTemplate exampleKeyParams = buildRecordTemplate(model.getKeyParamsClass());
+        final ComplexResourceKey<RecordTemplate, RecordTemplate> complexKey =
+            new ComplexResourceKey<RecordTemplate, RecordTemplate>(exampleKeyKey, exampleKeyParams);
+        exampleValues.put(model.getKeyName(), complexKey.toStringFull());
+      }
+
+      exampleValues.putAll(getUriTemplateExampleValues(model.getParentResourceModel()));
+    }
+
+    return exampleValues;
+  }
+
   private void buildSubModels(String schemaNamePrefix, Iterable<ResourceModel> models)
   {
     for (ResourceModel model: models)
@@ -467,8 +522,10 @@ public class RestLiExampleGenerator
     }
   }
 
-  private void addParamsToUri(ParameterSchemaArray params, RequestGenerationSpec spec, UriBuilder uriBuilder)
+  private Map<String, String> getQueryParamMap(ParameterSchemaArray params, RequestGenerationSpec spec)
   {
+    final DataMap queryParamData = new DataMap();
+
     for (ParameterSchema param: params)
     {
       if (param.hasOptional() && param.isOptional() && !spec.includeOptionalParameters)
@@ -476,29 +533,74 @@ public class RestLiExampleGenerator
         continue;
       }
 
-      final List<Object> paramValues = new ArrayList<Object>();
       if (spec.useDefaultValues && param.hasDefault())
       {
-        paramValues.add(param.getDefault());
+        queryParamData.put(param.getName(), param.getDefault());
       }
       else if (param.hasItems())
       {
         final DataSchema itemsSchema = RestSpecCodec.textToSchema(param.getItems(), _schemaResolver);
         final int valueCount = (int)(Math.random() * 3) + 1;
+        final DataList arrayData = new DataList(valueCount);
         for (int i = 0; i < valueCount; ++i)
         {
-          paramValues.add(SchemaSampleDataGenerator.buildDataMappable(itemsSchema, _defaultSpec));
+          arrayData.add(SchemaSampleDataGenerator.buildDataMappable(itemsSchema, _defaultSpec));
         }
+        queryParamData.put(param.getName(), arrayData);
       }
       else
       {
         final DataSchema typeSchema = RestSpecCodec.textToSchema(param.getType(), _schemaResolver);
-        paramValues.add(SchemaSampleDataGenerator.buildDataMappable(typeSchema, _defaultSpec));
+        queryParamData.put(param.getName(), SchemaSampleDataGenerator.buildDataMappable(typeSchema, _defaultSpec));
+      }
+    }
+
+    return QueryParamsDataMap.queryString(queryParamData);
+  }
+
+  private void buildBatchRequestExampleUri(ResourceModel model, UriBuilder uriBuilder)
+  {
+    if (model.getKeyKeyClass() == null)
+    {
+      for (int i = 0; i < BATCH_REQUEST_EXAMPLE_COUNT; ++i)
+      {
+        if (model.getKeyClass() == CompoundKey.class)
+        {
+          final CompoundKey exampleCompoundKey = new CompoundKey();
+          for (Key key: model.getKeys())
+          {
+            final DataSchema keySchema = DataTemplateUtil.getSchema(key.getType());
+            final Object exampleKey = SchemaSampleDataGenerator.buildDataMappable(keySchema, _defaultSpec);
+            exampleCompoundKey.append(key.getName(), exampleKey);
+          }
+          uriBuilder.queryParam(RestConstants.QUERY_BATCH_IDS_PARAM, exampleCompoundKey);
+        }
+        else
+        {
+          final DataSchema keySchema = DataTemplateUtil.getSchema(model.getKeyClass());
+          final Object exampleKey = SchemaSampleDataGenerator.buildDataMappable(keySchema, _defaultSpec);
+          uriBuilder.queryParam(RestConstants.QUERY_BATCH_IDS_PARAM, exampleKey);
+        }
+      }
+    }
+    else
+    {
+      final DataList exampleList = new DataList();
+      for (int i = 0; i < BATCH_REQUEST_EXAMPLE_COUNT; ++i)
+      {
+          final RecordTemplate exampleKeyKey = buildRecordTemplate(model.getKeyKeyClass());
+          final RecordTemplate exampleKeyParams = buildRecordTemplate(model.getKeyParamsClass());
+          final ComplexResourceKey<RecordTemplate, RecordTemplate> complexKey =
+              new ComplexResourceKey<RecordTemplate, RecordTemplate>(exampleKeyKey, exampleKeyParams);
+        exampleList.add(complexKey.toDataMap());
       }
 
-      for (Object value: paramValues)
+      final DataMap batchRequestParamData = new DataMap();
+      batchRequestParamData.put(RestConstants.QUERY_BATCH_IDS_PARAM, exampleList);
+      final Map<String, String> m = QueryParamsDataMap.queryString(batchRequestParamData);
+      for (Map.Entry<String, String> e: m.entrySet())
       {
-        uriBuilder.queryParam(param.getName(), value.toString());
+        uriBuilder.queryParam(e.getKey(), e.getValue());
       }
     }
   }
@@ -542,17 +644,21 @@ public class RestLiExampleGenerator
     return new RequestResponsePair(request, response);
   }
 
-  private static final SchemaSampleDataGenerator.DataGenerationSpec _defaultSpec = new SchemaSampleDataGenerator.DataGenerationSpec();
-  private static final Set<ResourceMethod> COLLECTION_METHODS = new HashSet<ResourceMethod>();
+  private static final int BATCH_REQUEST_EXAMPLE_COUNT = 2;
+
+  private static final SchemaSampleDataGenerator.DataGenerationOptions _defaultSpec = new SchemaSampleDataGenerator.DataGenerationOptions();
+  private static final Set<ResourceMethod> METHODS_WITHOUT_PARAMS = new HashSet<ResourceMethod>();
+  private static final Set<ResourceMethod> BATCH_METHODS_WITH_PARAMS = new HashSet<ResourceMethod>();
   private static final JacksonDataTemplateCodec _codec = new JacksonDataTemplateCodec();
   static
   {
-    COLLECTION_METHODS.add(ResourceMethod.CREATE);
-    COLLECTION_METHODS.add(ResourceMethod.BATCH_GET);
-    COLLECTION_METHODS.add(ResourceMethod.BATCH_CREATE);
-    COLLECTION_METHODS.add(ResourceMethod.BATCH_DELETE);
-    COLLECTION_METHODS.add(ResourceMethod.BATCH_UPDATE);
-    COLLECTION_METHODS.add(ResourceMethod.BATCH_PARTIAL_UPDATE);
+    METHODS_WITHOUT_PARAMS.add(ResourceMethod.CREATE);
+    METHODS_WITHOUT_PARAMS.add(ResourceMethod.BATCH_CREATE);
+
+    BATCH_METHODS_WITH_PARAMS.add(ResourceMethod.BATCH_GET);
+    BATCH_METHODS_WITH_PARAMS.add(ResourceMethod.BATCH_DELETE);
+    BATCH_METHODS_WITH_PARAMS.add(ResourceMethod.BATCH_UPDATE);
+    BATCH_METHODS_WITH_PARAMS.add(ResourceMethod.BATCH_PARTIAL_UPDATE);
 
     _codec.setPrettyPrinter(new DefaultPrettyPrinter());
   }

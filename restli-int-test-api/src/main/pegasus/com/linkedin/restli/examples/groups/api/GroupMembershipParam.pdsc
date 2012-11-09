@@ -6,13 +6,11 @@
   "fields" :  [
     {
       "name" : "intParameter",
-      "type" : "int",
-      "doc" : ""
+      "type" : "int"
     },
     {
       "name" : "stringParameter",
-      "type" : "string",
-      "doc" : ""
+      "type" : "string"
     }
   ]
 }

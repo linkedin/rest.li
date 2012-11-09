@@ -22,7 +22,6 @@ import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.generator.SchemaSampleDataGenerator;
-import com.linkedin.data.schema.generator.SchemaSampleDataGenerator.DataGenerationSpec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.restli.common.HttpStatus;
@@ -176,10 +175,10 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
       }
 
       final ResourceMethodDocView docView = new ResourceMethodDocView(methodSchema,
-                                                                capture,
-                                                                getDoc(methodSchema),
-                                                                requestEntity,
-                                                                responseEntity);
+                                                                      capture,
+                                                                      getDoc(methodSchema),
+                                                                      requestEntity,
+                                                                      responseEntity);
       if (methodSchema instanceof RestMethodSchema)
       {
         restMethods.add(docView);
@@ -221,7 +220,7 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
     final Map<String, Object> pageModel = createPageModel();
     pageModel.put("dataModel", schema);
 
-    final DataMap example = SchemaSampleDataGenerator.buildRecordData(schema, new DataGenerationSpec());
+    final DataMap example = SchemaSampleDataGenerator.buildRecordData(schema, new SchemaSampleDataGenerator.DataGenerationOptions());
     try
     {
       pageModel.put("example", new String(_codec.mapToBytes(example)));

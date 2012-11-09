@@ -116,9 +116,19 @@ public class ComplexResourceKey<K extends RecordTemplate, P extends RecordTempla
     DataMap keyDataMap = key.data();
     if (params != null && params.data() != null)
     {
-      keyDataMap.put(RestConstants.COMPLEX_KEY_PARAMS, params.data());
+      keyDataMap.put(COMPLEX_KEY_PARAMS, params.data());
     }
     return dataMapToString(keyDataMap);
+  }
+
+  public DataMap toDataMap()
+  {
+    final DataMap m = new DataMap(key.data());
+    if (params != null)
+    {
+      m.put(COMPLEX_KEY_PARAMS, params.data());
+    }
+    return m;
   }
   
   /**
@@ -139,6 +149,8 @@ public class ComplexResourceKey<K extends RecordTemplate, P extends RecordTempla
   
   protected K key;
   protected P params;
+
+  private static final String COMPLEX_KEY_PARAMS = "$params";
   
   /**
    * Build complex key instance from an untyped datamap representing a complex key as
@@ -158,7 +170,7 @@ public class ComplexResourceKey<K extends RecordTemplate, P extends RecordTempla
                                                                                    Class<? extends RecordTemplate> keyParamsClass)
   {
     // Separate key from its parameters (those are under "params" key in the total map)
-    DataMap paramsDataMap = (DataMap) dataMap.remove(RestConstants.COMPLEX_KEY_PARAMS);
+    DataMap paramsDataMap = (DataMap) dataMap.remove(COMPLEX_KEY_PARAMS);
     RecordTemplate key = validateDataMap(dataMap, keyKeyClass);
     RecordTemplate params = validateDataMap(paramsDataMap, keyParamsClass);
 

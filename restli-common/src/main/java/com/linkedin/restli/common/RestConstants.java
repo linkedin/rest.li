@@ -40,7 +40,6 @@ public interface RestConstants
   String ACTION_PARAM = "action";
   String QUERY_TYPE_PARAM = "q";
   String QUERY_BATCH_IDS_PARAM = "ids";
-  String COMPLEX_KEY_PARAMS = "$params";
   String FIELDS_PARAM = "fields";
   /** delimiter used for separating (name=value) parts of compound key */
   char   SIMPLE_KEY_DELIMITER = '&';
