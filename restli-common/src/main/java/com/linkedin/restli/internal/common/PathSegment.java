@@ -24,16 +24,16 @@ import java.util.regex.Pattern;
 /**
  * Name[index] representation of a path segment of a dot-delimited path referencing an
  * entry in a complex data object.
- * 
+ *
  * @author adubman
- * 
+ *
  */
 public class PathSegment
 {
   public static final String      PATH_SEPARATOR = ".";
   private static final Pattern    INDEX_PATTERN  = Pattern.compile("(^.+)\\[(\\d+)\\]$");
   private static final char[]     ENCODED_CHARS  = { '[', ']', '.' };
-  public static final StringCodec CODEC          = new StringCodec('*', ENCODED_CHARS);
+  public static final AsciiHexEncoding CODEC          = new AsciiHexEncoding('~', ENCODED_CHARS);
   private final String            _name;
   private final Integer           _index;
 
@@ -41,23 +41,23 @@ public class PathSegment
   {
     // Should never happen as parse() checks that name is not empty
     assert (name != null);
-    
+
     try
     {
       this._name = CODEC.decode(name);
     }
-    catch (StringCodec.CannotDecodeException e1)
+    catch (AsciiHexEncoding.CannotDecodeException e1)
     {
       throw new PathSegmentSyntaxException("Cannot decode key name " + name);
     }
-    
+
     this._index = index;
   }
 
   /**
    * Parse a (possibly) indexed path segment out of a string. Make sure no path delimiters
-   * appear in the string, as this would not be an individual path segment. 
-   * 
+   * appear in the string, as this would not be an individual path segment.
+   *
    * @param string a string to parse.
    * @return an PathSegment object.
    * @throws PathSegmentSyntaxException
@@ -117,10 +117,10 @@ public class PathSegment
   public String toString()
   {
     StringBuilder sb = new StringBuilder(_name);
-    
+
     if (_index != null)
       sb.append("[").append(_index).append("]");
-    
+
     return sb.toString();
   }
 
@@ -128,7 +128,7 @@ public class PathSegment
    * Stores this object in the provided Map. In case of an indexed key use _name to
    * get a corresponding List, and _index for the element in the list. In case of
    * a simple key just put the value at the name key
-   * 
+   *
    * No overrides are allowed.
    * @param map the map to store the value in
    * @param value the value to put in the map
@@ -165,7 +165,7 @@ public class PathSegment
     {
       throw new PathSegmentSyntaxException("Conflicting references to key: " + toString());
     }
-    
+
     // Now put the value on the _index entry of the list if it's not there.
     // If it is - exception
     if (listMap.get(_index) != null)
@@ -176,7 +176,7 @@ public class PathSegment
 
   /**
    * Get the value referenced by this path segment in the provided DataMap
-   * 
+   *
    * The method assumes the current key is not a leaf segment of the key path, i.e.
    * it always references a Map value in the current Map.
    *
@@ -237,7 +237,7 @@ public class PathSegment
             + toString());
       }
     }
-    
+
     throw new PathSegmentSyntaxException("Conflicting references to key " + toString());
   }
 
@@ -255,7 +255,7 @@ public class PathSegment
       super(message);
     }
   }
-  
+
   static class ListMap extends HashMap<Integer,Object>
   {
     private static final long serialVersionUID = 1L;

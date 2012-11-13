@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.testng.Assert;
-
 import org.testng.annotations.Test;
 
 import com.linkedin.data.DataList;
@@ -60,19 +59,19 @@ public class TestQueryParamsDataMap
      * }
      */
     DataMap queryParamDataMap = queryParamsDataMap(testQS);
-    
+
     Assert.assertNotNull(queryParamDataMap);
     Assert.assertEquals("someFinder", queryParamDataMap.get("q"));
-    
+
     DataList ids = queryParamDataMap.getDataList("ids");
-    
+
     DataMap ids0 = ids.getDataMap(0);
     Assert.assertEquals(ids0.get("memberID"), "1");
     Assert.assertEquals(ids0.get("groupID"), "2");
     DataMap params = ids0.getDataMap("params");
     Assert.assertEquals(params.get("versionTag"), "tag1");
     Assert.assertEquals(params.get("authToken"), "tok1");
-    
+
     ids0 = ids.getDataMap(1);
     Assert.assertEquals(ids0.get("memberID"), "2");
     Assert.assertEquals(ids0.get("groupID"), "2");
@@ -80,8 +79,8 @@ public class TestQueryParamsDataMap
     Assert.assertEquals(params.get("versionTag"), "tag2");
     Assert.assertEquals(params.get("authToken"), "tok2");
   }
-  
-  
+
+
   /**
    * Test nested list and map cases
    */
@@ -102,43 +101,43 @@ public class TestQueryParamsDataMap
     Object keys = idDataMap.get("keys");
     Assert.assertTrue(keys instanceof DataList);
     DataList keysList = (DataList)keys;
-    
+
     Object parts = keysList.get(0);
     Assert.assertTrue(parts instanceof DataMap);
     DataMap partsDataMap = (DataMap)parts;
     Assert.assertEquals("part001", partsDataMap.get("part1"));
     Assert.assertEquals("part002", partsDataMap.get("part2"));
-    
+
     parts = keysList.get(1);
     Assert.assertTrue(parts instanceof DataMap);
     partsDataMap = (DataMap)parts;
     Assert.assertEquals("part011", partsDataMap.get("part1"));
     Assert.assertEquals("part012", partsDataMap.get("part2"));
-    
+
     id = idsList.get(1);
     Assert.assertTrue(id instanceof DataMap);
     idDataMap = (DataMap)id;
     keys = idDataMap.get("keys");
     Assert.assertTrue(keys instanceof DataList);
     keysList = (DataList)keys;
-    
+
     parts = keysList.get(0);
     Assert.assertTrue(parts instanceof DataMap);
     partsDataMap = (DataMap)parts;
     Assert.assertEquals("part101", partsDataMap.get("part1"));
     Assert.assertEquals("part102", partsDataMap.get("part2"));
-    
+
     parts = keysList.get(1);
     Assert.assertTrue(parts instanceof DataMap);
     partsDataMap = (DataMap)parts;
     Assert.assertEquals("part111", partsDataMap.get("part1"));
     Assert.assertEquals("part112", partsDataMap.get("part2"));
   }
-  
+
   /**
    * Test that the legacy simple (no multi-parts, no indices) keys still work
    * as expected, resulting in a list of values keyed on the parameter name.
-   * 
+   *
    * @throws Exception
    */
   @Test
@@ -147,7 +146,7 @@ public class TestQueryParamsDataMap
 
     DataMap queryParamDataMap = queryParamsDataMap(testQS);
     Assert.assertEquals("someFinder", queryParamDataMap.get("q"));
-    
+
     Object idsObj = queryParamDataMap.get("ids");
     Assert.assertTrue(idsObj instanceof DataList);
     DataList ids = (DataList)idsObj;
@@ -155,7 +154,7 @@ public class TestQueryParamsDataMap
     Assert.assertEquals(ids.get(1), "2");
     Assert.assertEquals(ids.get(2), "bla");
   }
-  
+
   /**
    * Test that if they key names are numeric, such as in ids.1=1, they are interpreted
    * as the keys in the resulting DataMap
@@ -173,7 +172,7 @@ public class TestQueryParamsDataMap
     Assert.assertEquals(ids.get("2"), "2");
     Assert.assertEquals(ids.get("3"), "3");
   }
-  
+
   /**
    * Test that key indices, such as ids[1]=1, are interpreted as the ordinal numbers
    * in the resulting DataList
@@ -191,12 +190,12 @@ public class TestQueryParamsDataMap
     Assert.assertEquals(ids.get(1), "1");
     Assert.assertEquals(ids.get(2), "2");
   }
-  
+
   /**
    * Test that if there are "holes" in the index sequence of the parameters,
    * they are collapsed in the resulting list, preserving the order of the
    * parameters
-   * 
+   *
    * @throws Exception
    */
   @Test
@@ -217,11 +216,11 @@ public class TestQueryParamsDataMap
     Assert.assertEquals(pathSegment.getName(), "abc");
     Assert.assertEquals(pathSegment.getIndex().intValue(), 123);
   }
-  
+
   @Test
   public void testPathSegmentMalformed() throws Exception {
     String[] malformedPathSegments = {"abc[123a]", "[123]", "abc[-123]"};
-        
+
     for (String pathSegmentString : malformedPathSegments)
     {
       PathSegment pathSegment = PathSegment.parse(pathSegmentString);
@@ -229,11 +228,11 @@ public class TestQueryParamsDataMap
       Assert.assertNull(pathSegment.getIndex());
     }
   }
-  
+
   /**
    * Test that reserved characters '[', ']', '.' in the parameter names are properly
    * processed when encoded
-   * 
+   *
    * @throws Exception
    */
   @Test
@@ -251,7 +250,7 @@ public class TestQueryParamsDataMap
     Assert.assertTrue(param instanceof DataList);
     Assert.assertEquals("[.]", ((DataList)param).get(0));
   }
-  
+
   @Test
   /**
    * Test query string representation of a DataMap representing a compound key
@@ -261,12 +260,12 @@ public class TestQueryParamsDataMap
     DataMap dataMap = new DataMap();
     dataMap.put("memberID", 2);
     dataMap.put("groupID", 1);
-    
+
     Map<String, String> result = QueryParamsDataMap.queryString(dataMap);
     Assert.assertEquals("2", result.get("memberID"));
     Assert.assertEquals("1", result.get("groupID"));
   }
-  
+
   private DataMap queryParamsDataMap(String queryString) throws PathSegmentSyntaxException
   {
     Map<String, List<String>> queryParameters =
@@ -274,5 +273,26 @@ public class TestQueryParamsDataMap
                                  true);
 
     return QueryParamsDataMap.parseDataMapKeys(queryParameters);
+  }
+
+  @Test
+  public void testKeysWithSpecialChars() throws Exception
+  {
+    DataMap nested = new DataMap();
+    nested.put("messy[key1", "value1");
+    nested.put("messykey2]", "value2");
+    nested.put("messy~", "value3");
+    DataMap dataMap = new DataMap();
+    dataMap.put("com.linkedin.groups.Group", nested);
+    Map<String, String> queryString = QueryParamsDataMap.queryString(dataMap);
+    Assert.assertEquals(queryString.get("com~2Elinkedin~2Egroups~2EGroup.messy~5Bkey1"), "value1");
+    Assert.assertEquals(queryString.get("com~2Elinkedin~2Egroups~2EGroup.messykey2~5D"), "value2");
+    Assert.assertEquals(queryString.get("com~2Elinkedin~2Egroups~2EGroup.messy~7E"), "value3");
+
+    DataMap resultingDataMap = queryParamsDataMap("com~2Elinkedin~2Egroups~2EGroup.messy~5Bkey1=newValue1&com~2Elinkedin~2Egroups~2EGroup.messykey2~5D=newValue2&com~2Elinkedin~2Egroups~2EGroup.messy~7E=newValue3");
+    DataMap group = resultingDataMap.getDataMap("com.linkedin.groups.Group");
+    Assert.assertEquals(group.get("messy[key1"), "newValue1");
+    Assert.assertEquals(group.get("messykey2]"), "newValue2");
+    Assert.assertEquals(group.get("messy~"), "newValue3");
   }
 }

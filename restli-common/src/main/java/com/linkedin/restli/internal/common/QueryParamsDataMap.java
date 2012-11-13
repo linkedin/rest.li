@@ -37,7 +37,7 @@ import com.linkedin.restli.internal.common.PathSegment.PathSegmentSyntaxExceptio
  * A utility class for parsing query parameters map into a DataMap.
  * Complex objects are represented by dot-delimited and possibly indexed
  * parameter names.
- * 
+ *
  * * @author adubman
  */
 
@@ -45,12 +45,12 @@ public class QueryParamsDataMap
 {
   private static final Pattern SEGMENT_DELIMITER_PATTERN =
                                                              Pattern.compile(Pattern.quote(PathSegment.PATH_SEPARATOR));
-  
+
   private QueryParamsDataMap()
   {
   }
-  
-  
+
+
   /**
    * Create a map of query string parameters (name, value) from the provided DataMap, in
    * the same manner as parseDataMapKeys() below created a DataMap from a map of query
@@ -64,8 +64,8 @@ public class QueryParamsDataMap
     iterate("", dataMap, result);
     return result;
   }
-  
-  
+
+
   private static void iterate(String keyPrefix,
                               DataComplex dataComplex,
                               Map<String, String> result)
@@ -76,7 +76,8 @@ public class QueryParamsDataMap
       DataMap dataMap = (DataMap) dataComplex;
       for (Entry<String, Object> entry : dataMap.entrySet())
       {
-        handleEntry(keyPrefix + separator + entry.getKey(), entry.getValue(), result);
+        String escapedKey = PathSegment.CODEC.encode(entry.getKey());
+        handleEntry(keyPrefix + separator + escapedKey, entry.getValue(), result);
       }
     }
     else if (dataComplex instanceof DataList)
@@ -88,7 +89,7 @@ public class QueryParamsDataMap
       }
     }
   }
-  
+
   private static void handleEntry(String keyPrefix, Object object, Map<String, String> result)
   {
     if (object instanceof DataComplex)
@@ -102,8 +103,8 @@ public class QueryParamsDataMap
   }
 
   /**
-   * Parse a multi-map representing query parameters into a DataMap, as follows. 
-   * 
+   * Parse a multi-map representing query parameters into a DataMap, as follows.
+   *
    * Multi-indexed parameter names, such as ids[0][2] or ids[0,2] are not
    * currently supported.
    *
@@ -136,9 +137,9 @@ public class QueryParamsDataMap
    * }
    *
    *
-   * Note: at this point the data map is not typed - all names and values are 
+   * Note: at this point the data map is not typed - all names and values are
    * parsed as strings.
-   * 
+   *
    * Note: when parsing indexed parameter names, those will be converted to a list,
    * preserving the order of the values according to the index, but ignoring any
    * possible "holes" in the index sequence. The index values therefore only
@@ -148,12 +149,12 @@ public class QueryParamsDataMap
    * @param queryParameters the query parameters
    * @return - the DataMap represented by potentially hierarchical keys encoded
    * by the multi-part parameter names.
-   * 
-   * @throws PathSegmentSyntaxException 
+   *
+   * @throws PathSegmentSyntaxException
    */
   public static DataMap parseDataMapKeys(Map<String, List<String>> queryParameters) throws PathSegmentSyntaxException
   {
-    // The parameters are parsed into an intermediary structure comprised of 
+    // The parameters are parsed into an intermediary structure comprised of
     // HashMap<String,Object> and HashMap<Integer,Object>, defined respectively
     // as MapMap and ListMap for convenience. This is done for two reasons:
     // - first, indexed keys representing lists are parsed into ListMaps keyed on
@@ -161,7 +162,7 @@ public class QueryParamsDataMap
     //   while we want to preserve the order.
     // - second, DataMap only accepts Data objects as values, so ListMaps cannot
     //   be stored there, so using an intermediary structure even for maps.
-    
+
     MapMap dataMap = new MapMap();
 
     for (Map.Entry<String, List<String>> entry : queryParameters.entrySet())
@@ -179,14 +180,14 @@ public class QueryParamsDataMap
       }
       else {
         String parameterName = entry.getKey();
-        // In case of multiple parameters ensure they are not delimited or 
+        // In case of multiple parameters ensure they are not delimited or
         // indexed and then simulate the index for each one.
         if (parameterName.contains(PathSegment.PATH_SEPARATOR))
           throw new PathSegmentSyntaxException("Multiple values of complex query parameter are not supported");
-    
+
         if (PathSegment.parse(parameterName).getIndex() != null)
           throw new PathSegmentSyntaxException("Multiple values of indexed query parameter are not supported");
-        
+
         int i=0;
         Iterator<String> iterator = valueList.iterator();
         while (iterator.hasNext())
@@ -200,11 +201,11 @@ public class QueryParamsDataMap
 
     return (DataMap)convertToDataCollection(dataMap);
   }
-  
+
   /**
    * Place a specified key-value pair into the supplied datamap. Treat the dot-delimited
    * key name as the path within the datamap to put the value to, as defined above.
-   * 
+   *
    * @param key
    *          - a list of key segments resulting from splitting query parameter name with
    *          '.'
@@ -242,11 +243,11 @@ public class QueryParamsDataMap
    *   those to DataList, preserving key order but ignoring any "holes" in key sequences.
    * - wherever encounters instances of MapMap (Map<String,Object>) converts them
    *   into DataMap.
-   * 
+   *
    * This is done since while parsing out indexed query parameters it's convenient to
    * parse them into a map due to arbitrary order in which they may appear, while if they
    * are defined in the schema as a list, a DataList is expected during validation.
-   * 
+   *
    * @param map the Map to transform
    * @return DataMap or DataList, depending on the type of the input Map
    */
