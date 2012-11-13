@@ -73,19 +73,32 @@ public class HttpClientFactory implements TransportClientFactory
 {
   private static final Logger LOG = LoggerFactory.getLogger(HttpClientFactory.class);
 
-  public static final String               POOL_SIZE_KEY        = "poolSize";
-  public static final String               REQUEST_TIMEOUT_KEY  = "requestTimeout";
-  public static final String               IDLE_TIMEOUT_KEY     = "idleTimeout";
-  public static final String               SHUTDOWN_TIMEOUT_KEY = "shutdownTimeout";
-  public static final String               MAX_RESPONSE_SIZE    = "maxResponseSize";
-  public static final String               SSL_CONTEXT          = "sslContext";
-  public static final String               SSL_PARAMS           = "sslParams";
-  public static final String               QUERY_POST_THRESHOLD = "queryPostThreshold";
+  public static final String HTTP_QUERY_POST_THRESHOLD = "http.queryPostThreshold";
+  public static final String HTTP_REQUEST_TIMEOUT = "http.requestTimeout";
+  public static final String HTTP_MAX_RESPONSE_SIZE = "http.maxResponseSize";
+  public static final String HTTP_POOL_SIZE = "http.poolSize";
+  public static final String HTTP_IDLE_TIMEOUT = "http.idleTimeout";
+  public static final String HTTP_SHUTDOWN_TIMEOUT = "http.shutdownTimeout";
+  public static final String HTTP_SSL_CONTEXT = "http.sslContext";
+  public static final String HTTP_SSL_PARAMS = "http.sslParams";
+
+  public static final int DEFAULT_POOL_SIZE = 200;
+  public static final int DEFAULT_REQUEST_TIMEOUT = 10000;
+  public static final int DEFAULT_IDLE_TIMEOUT = 30000;
+  public static final int DEFAULT_SHUTDOWN_TIMEOUT = 5000;
+  public static final int DEFAULT_MAX_RESPONSE_SIZE = 1024 * 1024 * 2;
+
   /**
-   * @deprecated use REQUEST_TIMEOUT_KEY instead
+   * The string below this is deprecated so use the equivalent above.
    */
-  @Deprecated
-  public static final String               GET_TIMEOUT_KEY      = "getTimeout";
+  public static final String OLD_GET_TIMEOUT_KEY = "getTimeout";
+  public static final String OLD_POOL_SIZE_KEY = "poolSize";
+  public static final String OLD_REQUEST_TIMEOUT_KEY = "requestTimeout";
+  public static final String OLD_IDLE_TIMEOUT_KEY = "idleTimeout";
+  public static final String OLD_SHUTDOWN_TIMEOUT_KEY = "shutdownTimeout";
+  public static final String OLD_MAX_RESPONSE_SIZE = "maxResponseSize";
+  public static final String OLD_SSL_CONTEXT = "sslContext";
+  public static final String OLD_SSL_PARAMS = "sslParams";
 
   private final ClientSocketChannelFactory _channelFactory;
   private final ScheduledExecutorService   _executor;
@@ -161,35 +174,83 @@ public class HttpClientFactory implements TransportClientFactory
 
     if (properties != null)
     {
-      if (properties.containsKey(SSL_CONTEXT))
+      //TODO remove the old keys after we finish migrating the old keys to the new keys
+      //================== here ====================//
+      if (properties.containsKey(OLD_SSL_CONTEXT))
       {
-        Object sslContextObj = properties.get(SSL_CONTEXT);
+        LOG.warn("Obsolete key " + OLD_SSL_CONTEXT + " is specified. Please use " + HTTP_SSL_CONTEXT + " instead");
+        Object sslContextObj = properties.get(OLD_SSL_CONTEXT);
         if (sslContextObj instanceof SSLContext)
         {
           sslContext = (SSLContext) sslContextObj;
-          properties.remove(SSL_CONTEXT);
+          properties.remove(OLD_SSL_CONTEXT);
         }
         else
         {
-          throw new IllegalArgumentException(SSL_CONTEXT + " property is of type "
+          throw new IllegalArgumentException(OLD_SSL_CONTEXT + " property is of type "
               + sslContextObj.getClass().getSimpleName()
               + " while must be SSLContext");
         }
       }
 
-      if (properties.containsKey(SSL_PARAMS))
+
+      if (properties.containsKey(OLD_SSL_PARAMS))
       {
-        Object sslParametersObj = properties.get(SSL_PARAMS);
+        Object sslParametersObj = properties.get(OLD_SSL_PARAMS);
         if (sslParametersObj instanceof SSLParameters)
         {
           sslParameters = (SSLParameters) sslParametersObj;
-          properties.remove(SSL_PARAMS);
+          properties.remove(OLD_SSL_PARAMS);
         }
         else
         {
-          throw new IllegalArgumentException(SSL_PARAMS + " property is of type "
+          throw new IllegalArgumentException(OLD_SSL_PARAMS + " property is of type "
               + sslParametersObj.getClass().getSimpleName()
               + " while must be SSLParameters");
+        }
+      }
+
+      //===================to here =================//
+
+      if (properties.containsKey(HTTP_SSL_CONTEXT))
+      {
+        if (sslContext != null)
+        {
+          LOG.warn("Both " + HTTP_SSL_CONTEXT + " and " + OLD_SSL_CONTEXT + " are specified so we use " +
+                       HTTP_SSL_CONTEXT);
+        }
+        Object sslContextObj = properties.get(HTTP_SSL_CONTEXT);
+        if (sslContextObj instanceof SSLContext)
+        {
+          sslContext = (SSLContext) sslContextObj;
+          properties.remove(HTTP_SSL_CONTEXT);
+        }
+        else
+        {
+          throw new IllegalArgumentException(OLD_SSL_CONTEXT + " property is of type "
+              + sslContextObj.getClass().getSimpleName()
+              + " while must be SSLContext");
+        }
+      }
+
+      if (properties.containsKey(HTTP_SSL_PARAMS))
+      {
+        if (sslContext != null)
+        {
+          LOG.warn("Both " + HTTP_SSL_PARAMS + " and " + OLD_SSL_PARAMS + " are specified so we use " +
+                       HTTP_SSL_PARAMS);
+        }
+        Object sslContextObj = properties.get(HTTP_SSL_PARAMS);
+        if (sslContextObj instanceof SSLContext)
+        {
+          sslContext = (SSLContext) sslContextObj;
+          properties.remove(HTTP_SSL_PARAMS);
+        }
+        else
+        {
+          throw new IllegalArgumentException(OLD_SSL_PARAMS + " property is of type "
+              + sslContextObj.getClass().getSimpleName()
+              + " while must be SSLContext");
         }
       }
 
@@ -248,71 +309,94 @@ public class HttpClientFactory implements TransportClientFactory
   }
 
   /**
+   * helper method to get value from properties as well as to print log warning if the key is old
+   * @param properties
+   * @param propertyKey
+   * @param newPropertyKey optional, if specified will be used to print log warning
+   * @return null if property key can't be found, integer otherwise
+   */
+  private Integer getIntValue(Map<String, String> properties, String propertyKey, String newPropertyKey)
+  {
+    if (properties == null)
+    {
+      LOG.warn("passed a null raw client properties");
+      return null;
+    }
+    if (properties.containsKey(propertyKey))
+    {
+      if (newPropertyKey != null)
+      {
+        LOG.warn("Obsolete key " + propertyKey + " is specified. Please use " + newPropertyKey + " instead");
+      }
+      return Integer.parseInt(properties.get(propertyKey));
+    }
+    else
+    {
+      return null;
+    }
+  }
+
+  /**
    * Testing aid.
    */
   HttpNettyClient getRawClient(Map<String, String> properties,
                                SSLContext sslContext,
                                SSLParameters sslParameters)
   {
-    int poolSize = 200;
-    int requestTimeout = 10000;
-    int idleTimeout = 30000;
-    int shutdownTimeout = 5000;
-    int maxResponseSize = 1024 * 1024 * 2;
-    int queryPostThreshold = Integer.MAX_VALUE;
+    Integer queryPostThreshold = getIntValue(properties, HTTP_QUERY_POST_THRESHOLD, null);
+    Integer poolSize = getIntValue(properties, HTTP_POOL_SIZE, null);
+    Integer requestTimeout = getIntValue(properties, HTTP_REQUEST_TIMEOUT, null);
+    Integer idleTimeout = getIntValue(properties, HTTP_IDLE_TIMEOUT, null);
+    Integer shutdownTimeout = getIntValue(properties, HTTP_SHUTDOWN_TIMEOUT, null);
+    Integer maxResponseSize = getIntValue(properties, HTTP_MAX_RESPONSE_SIZE, null);
 
-    // These can go away when support for getTimeout is completely removed
-    Integer getTimeoutObj = null;
-    Integer requestTimeoutObj = null;
+    //TODO these can go away when we migrate all obsolete config to new ones
+    Integer oldGetTimeout = getIntValue(properties, OLD_GET_TIMEOUT_KEY, HTTP_REQUEST_TIMEOUT);
+    Integer oldPoolSize = getIntValue(properties, OLD_POOL_SIZE_KEY, HTTP_POOL_SIZE);
+    Integer oldRequestTimeout = getIntValue(properties, OLD_REQUEST_TIMEOUT_KEY, HTTP_REQUEST_TIMEOUT);
+    Integer oldIdleTimeout = getIntValue(properties, OLD_IDLE_TIMEOUT_KEY, HTTP_IDLE_TIMEOUT);
+    Integer oldShutdownTimeout = getIntValue(properties, OLD_SHUTDOWN_TIMEOUT_KEY, HTTP_SHUTDOWN_TIMEOUT);
+    Integer oldMaxResponseSize = getIntValue(properties, OLD_MAX_RESPONSE_SIZE, HTTP_MAX_RESPONSE_SIZE);
 
-    for (Map.Entry<String, String> e : properties.entrySet())
+    poolSize = chooseNewOverOldWithDefault(oldPoolSize, poolSize, DEFAULT_POOL_SIZE, OLD_POOL_SIZE_KEY,
+                                           HTTP_POOL_SIZE);
+    idleTimeout = chooseNewOverOldWithDefault(oldIdleTimeout, idleTimeout, DEFAULT_IDLE_TIMEOUT,
+                                              OLD_IDLE_TIMEOUT_KEY, HTTP_IDLE_TIMEOUT);
+    shutdownTimeout = chooseNewOverOldWithDefault(oldShutdownTimeout, shutdownTimeout, DEFAULT_SHUTDOWN_TIMEOUT,
+                                                  OLD_SHUTDOWN_TIMEOUT_KEY, HTTP_SHUTDOWN_TIMEOUT);
+    maxResponseSize = chooseNewOverOldWithDefault(oldMaxResponseSize, maxResponseSize, DEFAULT_MAX_RESPONSE_SIZE,
+                                                  OLD_MAX_RESPONSE_SIZE, HTTP_MAX_RESPONSE_SIZE);
+    queryPostThreshold = chooseNewOverOldWithDefault(queryPostThreshold, null, Integer.MAX_VALUE,
+                                                     HTTP_QUERY_POST_THRESHOLD, null);
+    //we have the getTimeout, oldRequestTimeOut and requestTimeOut. RequestTimeout has the highest priority and
+    //getTimeout has the lowest priority.
+    if (requestTimeout != null && (oldRequestTimeout != null || oldGetTimeout != null))
     {
-      String name = e.getKey();
-      String value = e.getValue();
-      if (name.equals(POOL_SIZE_KEY))
-      {
-        poolSize = Integer.parseInt(value);
-      }
-      else if (name.equals(GET_TIMEOUT_KEY))
-      {
-        getTimeoutObj = Integer.parseInt(value);
-      }
-      else if (name.equals(REQUEST_TIMEOUT_KEY))
-      {
-        requestTimeoutObj = Integer.parseInt(value);
-      }
-      else if (name.equals(IDLE_TIMEOUT_KEY))
-      {
-        idleTimeout = Integer.parseInt(value);
-      }
-      else if (name.equals(SHUTDOWN_TIMEOUT_KEY))
-      {
-        shutdownTimeout = Integer.parseInt(value);
-      }
-      else if (name.equals(MAX_RESPONSE_SIZE))
-      {
-        maxResponseSize = Integer.parseInt(value);
-      }
-      else if (name.equals(QUERY_POST_THRESHOLD))
-      {
-        queryPostThreshold = Integer.parseInt(value);
-      }
+      LOG.warn(HTTP_REQUEST_TIMEOUT + " was specified as well as " + OLD_GET_TIMEOUT_KEY + " or " +
+      OLD_REQUEST_TIMEOUT_KEY + " so we will choose to use the value specified in " + HTTP_REQUEST_TIMEOUT );
     }
-
-    if (requestTimeoutObj != null)
+    else if (oldRequestTimeout != null && oldGetTimeout != null)
     {
-      requestTimeout = requestTimeoutObj;
-      if (getTimeoutObj != null && !getTimeoutObj.equals(requestTimeoutObj))
-      {
-        LOG.warn("Both requestTimeout of {} and getTimeout of {} were specified, ignoring obsolete getTimeout",
-                 requestTimeoutObj,
-                 getTimeoutObj);
-      }
+      LOG.warn("Both " + OLD_REQUEST_TIMEOUT_KEY + " and " + OLD_GET_TIMEOUT_KEY +
+                   " were specified so we will use the value specified in " + OLD_REQUEST_TIMEOUT_KEY);
     }
-    else if (getTimeoutObj != null)
+    if (requestTimeout == null)
     {
-      requestTimeout = getTimeoutObj;
-      LOG.warn("Obsolete getTimeout was specified, please specify requestTimeout as well");
+      if (oldRequestTimeout == null)
+      {
+        if (oldGetTimeout == null)
+        {
+          requestTimeout = DEFAULT_REQUEST_TIMEOUT;
+        }
+        else
+        {
+          requestTimeout = oldGetTimeout;
+        }
+      }
+      else
+      {
+        requestTimeout = oldRequestTimeout;
+      }
     }
 
     return new HttpNettyClient(_channelFactory,
@@ -326,6 +410,40 @@ public class HttpClientFactory implements TransportClientFactory
                                sslParameters,
                                queryPostThreshold);
   }
+
+  /**
+   * choose the new value over the old value. If both new and old are not specified, we'll use default value
+   *
+   * @param oldValue
+   * @param newValue
+   * @param defaultValue
+   * @param oldName
+   * @param newName
+   * @return
+   */
+  private Integer chooseNewOverOldWithDefault(Integer oldValue, Integer newValue, Integer defaultValue,
+                                              String oldName, String newName)
+  {
+    if (oldValue == null&& newValue == null)
+    {
+      return defaultValue;
+    }
+    else if (newValue != null && oldValue != null)
+    {
+      LOG.warn("Both " + oldName + " of "+
+                   oldValue + " and "+ newName +" of "+ newValue +" were specified, ignoring obsolete " + oldName);
+      return newValue;
+    }
+    else if (newValue != null && oldValue == null)
+    {
+      return  newValue;
+    }
+    else
+    {
+      return oldValue;
+    }
+  }
+
 
   /**
    * Initiates an orderly shutdown of the factory wherein no more clients will be created,

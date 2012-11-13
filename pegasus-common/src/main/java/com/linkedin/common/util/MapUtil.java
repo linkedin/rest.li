@@ -36,7 +36,7 @@ public class MapUtil
    * @return returned type is always {@code valueClass}
    */
   @SuppressWarnings("unchecked")
-  public static <K, V> V getWithDefault(final Map<K, Object> map,
+  public static <K, V> V getWithDefault(final Map<K, ? extends Object> map,
                                         final K key,
                                         final V defaultValue,
                                         final Class<V> valueClass)
@@ -80,7 +80,8 @@ public class MapUtil
       return (V) Boolean.valueOf(Boolean.parseBoolean(valStr));
     }
 
-    throw new IllegalArgumentException("Unsupported expected value type: " + valueClass);
+    throw new IllegalArgumentException("Unsupported expected value type: " + valueClass + " and value = " +
+                                           actualValue);
   }
 
   /**
@@ -90,13 +91,13 @@ public class MapUtil
    * @return returned type is always the same as the type of {@code defaultValue}
    */
   @SuppressWarnings("unchecked")
-  public static <K, V> V getWithDefault(final Map<K, Object> map,
+  public static <K, V> V getWithDefault(final Map<K, ? extends Object> map,
                                         final K key,
                                         final V defaultValue)
   {
     if (defaultValue == null)
     {
-      throw new IllegalArgumentException();
+      throw new IllegalArgumentException("received null default value for key = " + key);
     }
 
     return getWithDefault(map, key, defaultValue, (Class<V>) defaultValue.getClass());

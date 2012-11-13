@@ -242,27 +242,58 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
    * client continues to drop at the same drop rate as before their points have been reduced, then
    * the client would have its outbound request reduced by both reduction in points and the client's
    * drop rate. To avoid this, the drop rate is managed globally by the load balancing strategy and
-   * provided to each client. The strategy will alternate between adjusting the hash ring points or
-   * the global drop rate in order to avoid double penalizing a client.
+   * provided to each client. The strategy will ALTERNATE between adjusting the hash ring points or
+   * the global drop rate in order to avoid double penalizing a client. See below:
+   *
+   * Period 1
+   * We found the average latency is greater than high water mark.
+   * Then increase the global drop rate for this cluster (let's say from 0% to 20%)
+   * so 20% of all calls gets dropped.
+   * .
+   * .
+   * Period 2
+   * The average latency is still higher than high water mark and we found
+   * it is especially high for few specific clients in the cluster
+   * Then reduce the number of hash points for those clients in the hash ring, with the hope we'll
+   * redirect the traffic to "healthier" client and reduce the average latency
+   * .
+   * .
+   * Period 3
+   * The average latency is still higher than high water mark
+   * Then we will alternate strategy by increasing the global rate for the whole cluster again
+   * .
+   * .
+   * repeat until the latency becomes smaller than high water mark and higher than low water mark
+   * to maintain the state. If the latency becomes lower than low water mark that means the cluster
+   * is getting healthier so we can serve more traffic so we'll start recovery as explained below
    *
    * We also have a mechanism for recovery if the number of points in the hash ring is not
    * enough to receive traffic. The initialRecoveryLevel is a number between 0.0 and 1.0, and
-   * corresponds to a weight of the tracker client's full hash points.
-   * The reason for the weight is to allow an initialRecoveryLevel that corresponds to
-   * less than one hash point. This would be useful if a "cooling off" period is desirable for the
-   * misbehaving tracker clients, ie , given a full weight of 100 hash points,0.005 means that
-   * there will be one cooling off period before the client is reintroduced into the hash ring.
-   *
+   * corresponds to a weight of the tracker client's full hash points. e.g. if a client
+   * has a default 100 hash points in a ring, 0.0 means there's 0 point for the client in the ring
+   * and 1.0 means there are 100 points in the ring for the client.
    * The second configuration, rampFactor, will geometrically increase the
    * previous recoveryLevel if traffic still hasn't been seen for that tracker client.
    *
-   * For example, given initialRecoveryLevel = 0.01, rampFactor = 2, and default tracker client hash
+   * The reason for using weight instead of real points is to allow an initialRecoveryLevel that corresponds to
+   * less than one hash point. This would be useful if a "cooling off" period is desirable for the
+   * misbehaving tracker clients i.e. given a full weight of 100 hash points, 0.005 initialRecoverylevel
+   * 0 hashpoints at start and rampFactor = 2 means that there will be one cooling off period before the
+   * client is reintroduced into the hash ring (see below).
+   *
+   * Period 1
+   * 100 * 0.005 = 0.5 point -> So nothing in the hashring
+   *
+   * Period 2
+   * 100 * (0.005 * 2 because of rampfactor) = 1 point -> So we'll add one point in the hashring
+   *
+   * Another example, given initialRecoveryLevel = 0.01, rampFactor = 2, and default tracker client hash
    * points of 100, we will increase the hash points in this pattern on successive update States:
-   *  0.01, 0.02, 0.04, 0.08, 0.16, 0.32, etc., aborting as soon as
-   * calls are recorded for that tracker client.
+   * 0.01, 0.02, 0.04, 0.08, 0.16, 0.32, etc. -> 1, 2, 4, 8, 16, 32 points in the hashring and aborting
+   * as soon as calls are recorded for that tracker client.
    *
    * We also have highWaterMark and lowWaterMark as properties of the DegraderLoadBalancer strategy
-   * so that the strategy can make decisions on whether to start dropping traffic globally across
+   * so that the strategy can make decisions on whether to start dropping traffic GLOBALLY across
    * all tracker clients for this cluster. The amount of traffic to drop is controlled by the
    * globalStepUp and globalStepDown properties, where globalStepUp controls how much the global
    * drop rate increases per interval, and globalStepDown controls how much the global drop rate
@@ -289,11 +320,8 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
 
     double sumOfClusterLatencies = 0.0;
     double computedClusterDropSum = 0.0;
-    double computedClusterDropRate;
     double computedClusterWeight = 0.0;
     long totalClusterCallCount = 0;
-    double clientDropRate;
-    double newMaxDropRate;
     boolean hashRingChanges = false;
     boolean recoveryMapChanges = false;
 
@@ -313,7 +341,7 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
 
       sumOfClusterLatencies += averageLatency * callCount;
       totalClusterCallCount += callCount;
-      clientDropRate = client.getDegraderControl(DEFAULT_PARTITION_ID).getCurrentComputedDropRate();
+      double clientDropRate = client.getDegraderControl(DEFAULT_PARTITION_ID).getCurrentComputedDropRate();
       computedClusterDropSum += client.getPartitionWeight(DEFAULT_PARTITION_ID) * clientDropRate;
 
       computedClusterWeight += client.getPartitionWeight(DEFAULT_PARTITION_ID);
@@ -332,31 +360,32 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
         // due solely to low volume.
         if (recoveryMapContainsClient)
         {
-          double oldMaxDropRate = client.getDegraderControl(DEFAULT_PARTITION_ID).getMaxDropRate();
-          double transmissionRate = 1.0 - oldMaxDropRate;
-          if( transmissionRate <= 0.0)
+          // if it's the hash ring's turn to adjust, then adjust the maxDropRate.
+          // Otherwise, we let the call dropping strategy take it's turn, even if
+          // it may do nothing.
+          if(strategy == DegraderLoadBalancerState.Strategy.LOAD_BALANCE)
           {
-            // We use the initialRecoveryLevel to indicate how many points to initially set
-            // the tracker client to when traffic has stopped flowing to this node.
-            transmissionRate = initialRecoveryLevel;
-          }
-          else
-          {
-            transmissionRate *= ringRampFactor;
-            transmissionRate = Math.min(transmissionRate, 1.0);
-          }
-          newMaxDropRate = 1.0 - transmissionRate;
+            double oldMaxDropRate = client.getDegraderControl(DEFAULT_PARTITION_ID).getMaxDropRate();
+            double transmissionRate = 1.0 - oldMaxDropRate;
+            if( transmissionRate <= 0.0)
+            {
+              // We use the initialRecoveryLevel to indicate how many points to initially set
+              // the tracker client to when traffic has stopped flowing to this node.
+              transmissionRate = initialRecoveryLevel;
+            }
+            else
+            {
+              transmissionRate *= ringRampFactor;
+              transmissionRate = Math.min(transmissionRate, 1.0);
+            }
+            double newMaxDropRate = 1.0 - transmissionRate;
 
-          if (strategy == DegraderLoadBalancerState.Strategy.LOAD_BALANCE)
-          {
-            // if it's the hash ring's turn to adjust, then adjust the maxDropRate.
-            // Otherwise, we let the call dropping strategy take it's turn, even if
-            // it may do nothing.
+
             client.getDegraderControl(DEFAULT_PARTITION_ID).setMaxDropRate(newMaxDropRate);
           }
           recoveryMapChanges = true;
         }
-      }
+      } //else we don't really need to change the client maxDropRate.
       else if(recoveryMapContainsClient)
       {
         // else if the recovery map contains the client and the call count was > 0
@@ -378,7 +407,7 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
       }
     }
 
-    computedClusterDropRate = computedClusterDropSum / computedClusterWeight;
+    double computedClusterDropRate = computedClusterDropSum / computedClusterWeight;
     debug(_log, "total cluster call count: ", totalClusterCallCount);
     debug(_log,
           "computed cluster drop rate for ",
@@ -411,9 +440,6 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
     }
 
     debug(_log, "average cluster latency: ", newCurrentAvgClusterLatency);
-
-    // compute points for every node in the cluster
-    double computedClusterSuccessRate = computedClusterWeight - computedClusterDropRate;
 
     // This points map stores how many hash map points to allocate for each tracker client.
 
@@ -487,6 +513,8 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
     // if the strategy to try is Load balancing and there are new changes to the hash ring, or
     // if there were changes to the members of the cluster
     if ((strategy == DegraderLoadBalancerState.Strategy.LOAD_BALANCE && hashRingChanges == true) ||
+        // this boolean is there to make sure when we first generate a new state, we always start with LOAD_BALANCE
+        // strategy
          oldState.getClusterGenerationId() != clusterGenerationId)
     {
       // atomic overwrite

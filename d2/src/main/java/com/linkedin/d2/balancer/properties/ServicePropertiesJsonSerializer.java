@@ -19,7 +19,6 @@ package com.linkedin.d2.balancer.properties;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -92,22 +91,22 @@ public class ServicePropertiesJsonSerializer implements
   public ServiceProperties fromMap(Map<String,Object> map)
   {
     @SuppressWarnings("unchecked")
-    Map<String,Object> loadBalancerStrategyProperties = (Map<String,Object>)map.get("loadBalancerStrategyProperties");
+    Map<String,Object> loadBalancerStrategyProperties = (Map<String,Object>)map.get(PropertyKeys.LB_STRATEGY_PROPERTIES);
     if (loadBalancerStrategyProperties == null)
     {
       loadBalancerStrategyProperties = Collections.emptyMap();
     }
     @SuppressWarnings("unchecked")
-    List<String> loadBalancerStrategyList = (List<String>) map.get("loadBalancerStrategyList");
+    List<String> loadBalancerStrategyList = (List<String>) map.get(PropertyKeys.LB_STRATEGY_LIST);
     if (loadBalancerStrategyList == null)
     {
       loadBalancerStrategyList = Collections.emptyList();
     }
 
-    return new ServiceProperties((String) map.get("serviceName"),
-                                 (String) map.get("clusterName"),
-                                 (String) map.get("path"),
-                                 (String) map.get("loadBalancerStrategyName"),
+    return new ServiceProperties((String) map.get(PropertyKeys.SERVICE_NAME),
+                                 (String) map.get(PropertyKeys.CLUSTER_NAME),
+                                 (String) map.get(PropertyKeys.PATH),
+                                 (String) map.get(PropertyKeys.LB_STRATEGY_NAME),
                                  loadBalancerStrategyList,
                                  loadBalancerStrategyProperties);
 

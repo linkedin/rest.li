@@ -62,35 +62,39 @@ public class TrackerClient implements LoadBalancerClient
 
   public TrackerClient(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient wrappedClient)
   {
-    this(uri, partitionDataMap, wrappedClient, SystemClock.instance());
+    this(uri, partitionDataMap, wrappedClient, SystemClock.instance(), null);
   }
 
-  public TrackerClient(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient wrappedClient, Clock clock)
-  {
-    _uri = uri;
-    _wrappedClient = wrappedClient;
-    _callTracker = new CallTrackerImpl(Time.milliseconds(5000), clock);
-
-    Config config = new Config();
-
-    config.setCallTracker(_callTracker);
-    config.setClock(clock);
-    // The overrideDropRate will be globally determined by the DegraderLoadBalancerStrategy.
-    config.setOverrideDropRate(0.0);
-
-
-    int mapSize = partitionDataMap.size();
-    Map<Integer, PartitionState>partitionStates = new HashMap<Integer, PartitionState>(mapSize * 2);
-    for (Map.Entry<Integer, PartitionData> entry : partitionDataMap.entrySet())
+  public TrackerClient(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient wrappedClient,
+                       Clock clock, Config config)
     {
-      int partitionId = entry.getKey();
-      config.setName("TrackerClient Degrader: " + uri + ", partitionId: " + partitionId);
-      PartitionState partitionState = new PartitionState(entry.getValue(), config);
-      partitionStates.put(partitionId, partitionState);
+      _uri = uri;
+      _wrappedClient = wrappedClient;
+      _callTracker = new CallTrackerImpl(Time.milliseconds(5000), clock);
+
+      if (config == null)
+      {
+        config = new Config();
+      }
+
+      config.setCallTracker(_callTracker);
+      config.setClock(clock);
+      // The overrideDropRate will be globally determined by the DegraderLoadBalancerStrategy.
+      config.setOverrideDropRate(0.0);
+
+
+      int mapSize = partitionDataMap.size();
+      Map<Integer, PartitionState>partitionStates = new HashMap<Integer, PartitionState>(mapSize * 2);
+      for (Map.Entry<Integer, PartitionData> entry : partitionDataMap.entrySet())
+      {
+        int partitionId = entry.getKey();
+        config.setName("TrackerClient Degrader: " + uri + ", partitionId: " + partitionId);
+        PartitionState partitionState = new PartitionState(entry.getValue(), config);
+        partitionStates.put(partitionId, partitionState);
+      }
+      _partitionStates = Collections.unmodifiableMap(partitionStates);
+      debug(_log, "created tracker client: ", this);
     }
-    _partitionStates = Collections.unmodifiableMap(partitionStates);
-    debug(_log, "created tracker client: ", this);
-  }
 
   @Override
   public void restRequest(RestRequest request,
@@ -127,7 +131,7 @@ public class TrackerClient implements LoadBalancerClient
 
   public Double getPartitionWeight(int partitionId)
   {
-    // _partitionStates.get(partitionId) would not be null 
+    // _partitionStates.get(partitionId) would not be null
     PartitionData partitionData = _partitionStates.get(partitionId).getPartitionData();
 
     return partitionData == null ? null : partitionData.getWeight();
@@ -145,13 +149,13 @@ public class TrackerClient implements LoadBalancerClient
 
   public Degrader getDegrader(int partitionId)
   {
-    // _partitionStates.get(partitionId) would not be null 
+    // _partitionStates.get(partitionId) would not be null
     return _partitionStates.get(partitionId).getDegrader();
   }
 
   public DegraderControl getDegraderControl(int partitionId)
   {
-    // _partitionStates.get(partitionId) would not be null 
+    // _partitionStates.get(partitionId) would not be null
     return _partitionStates.get(partitionId).getDegraderControl();
   }
 

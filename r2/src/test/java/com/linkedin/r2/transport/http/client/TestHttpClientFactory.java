@@ -146,6 +146,82 @@ public class TestHttpClientFactory
   }
 
   @Test
+  public void testGetRawClient()
+  {
+    ExecutorService boss = Executors.newCachedThreadPool();
+    ExecutorService worker = Executors.newCachedThreadPool();
+    ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    ClientSocketChannelFactory channelFactory = new NioClientSocketChannelFactory(boss, worker);
+    HttpClientFactory factory = new HttpClientFactory(FilterChains.empty(), channelFactory, true, scheduler, true);
+
+    Map<String, String> properties = new HashMap<String, String>();
+
+    String oldGetTimeout = "5000";
+    String oldRequestTimeout = "6000";
+    String requestTimeout = "7000";
+    String oldPoolSize = "5";
+    String poolSize = "10";
+    String oldMaxResponse = "2000";
+    String maxResponse = "3000";
+    String idleTimeout = "8000";
+    String oldIdleTimeout = "12000";
+    String oldShutdownTimeout = "13000";
+    String shutdownTimeout = "14000";
+    HttpNettyClient client;
+
+    //test creation using default values
+    client = factory.getRawClient(properties);
+    Assert.assertEquals(client.getMaxResponseSize(), HttpClientFactory.DEFAULT_MAX_RESPONSE_SIZE);
+    Assert.assertEquals(client.getRequestTimeout(), HttpClientFactory.DEFAULT_REQUEST_TIMEOUT);
+    Assert.assertEquals(client.getShutdownTimeout(), HttpClientFactory.DEFAULT_SHUTDOWN_TIMEOUT);
+
+    //test creation using old config keys TODO remove this once we delete all the old config keys
+    properties.put(HttpClientFactory.OLD_GET_TIMEOUT_KEY, oldGetTimeout);
+    properties.put(HttpClientFactory.OLD_POOL_SIZE_KEY, oldPoolSize);
+    properties.put(HttpClientFactory.OLD_IDLE_TIMEOUT_KEY, oldIdleTimeout);
+    properties.put(HttpClientFactory.OLD_SHUTDOWN_TIMEOUT_KEY, oldShutdownTimeout);
+    properties.put(HttpClientFactory.OLD_MAX_RESPONSE_SIZE, oldMaxResponse);
+
+    client = factory.getRawClient(properties);
+    Assert.assertEquals(client.getMaxResponseSize(), Integer.parseInt(oldMaxResponse));
+    Assert.assertEquals(client.getRequestTimeout(), Integer.parseInt(oldGetTimeout));
+    Assert.assertEquals(client.getShutdownTimeout(), Integer.parseInt(oldShutdownTimeout));
+
+    properties.put(HttpClientFactory.OLD_REQUEST_TIMEOUT_KEY, oldRequestTimeout);
+    client = factory.getRawClient(properties);
+    Assert.assertEquals(client.getRequestTimeout(), Integer.parseInt(oldRequestTimeout));
+
+    //test if both old and new config keys are there
+    properties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, requestTimeout);
+    properties.put(HttpClientFactory.HTTP_POOL_SIZE, poolSize);
+    properties.put(HttpClientFactory.HTTP_IDLE_TIMEOUT, idleTimeout);
+    properties.put(HttpClientFactory.HTTP_MAX_RESPONSE_SIZE, maxResponse);
+    properties.put(HttpClientFactory.HTTP_SHUTDOWN_TIMEOUT, shutdownTimeout);
+    client = factory.getRawClient(properties);
+    Assert.assertEquals(client.getMaxResponseSize(), Integer.parseInt(maxResponse));
+    Assert.assertEquals(client.getRequestTimeout(), Integer.parseInt(requestTimeout));
+    Assert.assertEquals(client.getShutdownTimeout(), Integer.parseInt(shutdownTimeout));
+
+    //test using only new config keys
+    properties.remove(HttpClientFactory.OLD_GET_TIMEOUT_KEY);
+    properties.remove(HttpClientFactory.OLD_POOL_SIZE_KEY);
+    properties.remove(HttpClientFactory.OLD_IDLE_TIMEOUT_KEY);
+    properties.remove(HttpClientFactory.OLD_SHUTDOWN_TIMEOUT_KEY);
+    properties.remove(HttpClientFactory.OLD_MAX_RESPONSE_SIZE);
+
+    client = factory.getRawClient(properties);
+    Assert.assertEquals(client.getMaxResponseSize(), Integer.parseInt(maxResponse));
+    Assert.assertEquals(client.getRequestTimeout(), Integer.parseInt(requestTimeout));
+    Assert.assertEquals(client.getShutdownTimeout(), Integer.parseInt(shutdownTimeout));
+
+    properties.remove(HttpClientFactory.OLD_REQUEST_TIMEOUT_KEY);
+    client = factory.getRawClient(properties);
+    Assert.assertEquals(client.getMaxResponseSize(), Integer.parseInt(maxResponse));
+    Assert.assertEquals(client.getRequestTimeout(), Integer.parseInt(requestTimeout));
+    Assert.assertEquals(client.getShutdownTimeout(), Integer.parseInt(shutdownTimeout));
+  }
+
+  @Test
   public void testShutdownTimeout() throws ExecutionException, TimeoutException, InterruptedException
   {
     ExecutorService boss = Executors.newCachedThreadPool();

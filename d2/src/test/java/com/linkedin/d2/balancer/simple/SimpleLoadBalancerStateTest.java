@@ -212,10 +212,7 @@ public class SimpleLoadBalancerStateTest
 
     // then add a service
     _state.listenToService("service-1", new NullStateListenerCallback());
-    _serviceRegistry.put("service-1", new ServiceProperties("service-1",
-                                                            "cluster-1",
-                                                            "/test",
-                                                            "random"));
+    _serviceRegistry.put("service-1", new ServiceProperties("service-1", "cluster-1", "/test", "random"));
 
     // this should trigger a refresh
     assertEquals(listener.scheme, "http");
@@ -614,7 +611,7 @@ public class SimpleLoadBalancerStateTest
     Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>(2);
     partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
     clients.add(new TrackerClient(uri, partitionDataMap, new DegraderLoadBalancerTest.TestLoadBalancerClient(uri),
-                                  SystemClock.instance()));
+                                  SystemClock.instance(), null));
 
     for (int i = 0; i < 20; i++)
     {

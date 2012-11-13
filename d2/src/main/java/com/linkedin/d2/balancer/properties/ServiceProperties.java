@@ -58,9 +58,9 @@ public class ServiceProperties
                            List<String> loadBalancerStrategyList,
                            Map<String,Object> loadBalancerStrategyProperties)
   {
-    ArgumentUtil.notNull(serviceName, "serviceName");
-    ArgumentUtil.notNull(clusterName, "clusterName");
-    ArgumentUtil.notNull(path, "path");
+    ArgumentUtil.notNull(serviceName, PropertyKeys.SERVICE_NAME);
+    ArgumentUtil.notNull(clusterName, PropertyKeys.CLUSTER_NAME);
+    ArgumentUtil.notNull(path, PropertyKeys.PATH);
     ArgumentUtil.notNull(loadBalancerStrategyProperties, "loadBalancerStrategyProperties");
     if (loadBalancerStrategyName == null && (loadBalancerStrategyList == null || loadBalancerStrategyList.isEmpty()))
     {
@@ -155,4 +155,5 @@ public class ServiceProperties
       return false;
     return true;
   }
+
 }

@@ -324,7 +324,7 @@ public class DegraderLoadBalancerTest
     TrackerClient client = new TrackerClient(uri1,
         weightMap,
         new TestLoadBalancerClient(uri1),
-        new TestClock());
+        new TestClock(), null);
 
     clients.add(client);
 
@@ -425,9 +425,9 @@ public class DegraderLoadBalancerTest
     TestClock clock1 = new TestClock();
     TestClock clock2 = new TestClock();
     TrackerClient client1 =
-        new TrackerClient(uri1, getDefaultPartitionData(1d), new TestLoadBalancerClient(uri1), clock1);
+        new TrackerClient(uri1, getDefaultPartitionData(1d), new TestLoadBalancerClient(uri1), clock1, null);
     TrackerClient client2 =
-        new TrackerClient(uri2, getDefaultPartitionData(0.8d), new TestLoadBalancerClient(uri2), clock2);
+        new TrackerClient(uri2, getDefaultPartitionData(0.8d), new TestLoadBalancerClient(uri2), clock2, null);
 
     clients.add(client1);
     clients.add(client2);
@@ -580,15 +580,15 @@ public class DegraderLoadBalancerTest
     @SuppressWarnings("serial")
     TrackerClient client1 =  new TrackerClient(uri1,
         new HashMap<Integer, PartitionData>(){{put(0, new PartitionData(1d));}},
-        new TestLoadBalancerClient(uri1), clock1);
+        new TestLoadBalancerClient(uri1), clock1, null);
     @SuppressWarnings("serial")
     TrackerClient client2 =  new TrackerClient(uri2,
         new HashMap<Integer, PartitionData>(){{put(0, new PartitionData(0.5d)); put(1, new PartitionData(0.5d));}},
-        new TestLoadBalancerClient(uri2), clock2);
+        new TestLoadBalancerClient(uri2), clock2, null);
     @SuppressWarnings("serial")
     TrackerClient client3 =  new TrackerClient(uri3,
         new HashMap<Integer, PartitionData>(){{put(1, new PartitionData(1d));}},
-        new TestLoadBalancerClient(uri3), clock3);
+        new TestLoadBalancerClient(uri3), clock3, null);
 
 
     final int partitionId0 = 0;
@@ -741,9 +741,9 @@ public class DegraderLoadBalancerTest
     TestClock clock1 = new TestClock();
     TestClock clock2 = new TestClock();
     TrackerClient client1 =
-        new TrackerClient(uri1, getDefaultPartitionData(1d), new TestLoadBalancerClient(uri1), clock1);
+        new TrackerClient(uri1, getDefaultPartitionData(1d), new TestLoadBalancerClient(uri1), clock1, null);
     TrackerClient client2 =
-        new TrackerClient(uri2, getDefaultPartitionData(0.8d), new TestLoadBalancerClient(uri2), clock2);
+        new TrackerClient(uri2, getDefaultPartitionData(0.8d), new TestLoadBalancerClient(uri2), clock2, null);
 
     clients.add(client1);
     clients.add(client2);
@@ -1229,7 +1229,7 @@ public class DegraderLoadBalancerTest
       URIRequest request = new URIRequest(uri1);
 
       TrackerClient client1 =
-              new TrackerClient(uri1, getDefaultPartitionData(1d), new TestLoadBalancerClient(uri1), clock);
+              new TrackerClient(uri1, getDefaultPartitionData(1d), new TestLoadBalancerClient(uri1), clock, null);
 
       clients.add(client1);
 
@@ -1353,7 +1353,7 @@ public class DegraderLoadBalancerTest
     URIRequest request = new URIRequest(uri1);
 
     TrackerClient client1 =
-            new TrackerClient(uri1, getDefaultPartitionData(1d), new TestLoadBalancerClient(uri1), clock);
+            new TrackerClient(uri1, getDefaultPartitionData(1d), new TestLoadBalancerClient(uri1), clock, null);
 
     clients.add(client1);
 
@@ -1477,7 +1477,7 @@ public class DegraderLoadBalancerTest
     URIRequest request = new URIRequest(uri1);
 
     TrackerClient client1 =
-            new TrackerClient(uri1, getDefaultPartitionData(1d), new TestLoadBalancerClient(uri1), clock);
+            new TrackerClient(uri1, getDefaultPartitionData(1d), new TestLoadBalancerClient(uri1), clock, null);
 
     clients.add(client1);
 
@@ -1599,9 +1599,9 @@ public class DegraderLoadBalancerTest
     CallCompletion cc;
 
     TrackerClient client1 =
-            new TrackerClient(uri1, getDefaultPartitionData(1d), new TestLoadBalancerClient(uri1), clock);
+            new TrackerClient(uri1, getDefaultPartitionData(1d), new TestLoadBalancerClient(uri1), clock, null);
     TrackerClient client2 =
-            new TrackerClient(uri2, getDefaultPartitionData(1d), new TestLoadBalancerClient(uri2), clock);
+            new TrackerClient(uri2, getDefaultPartitionData(1d), new TestLoadBalancerClient(uri2), clock, null);
 
     clients.add(client1);
     clients.add(client2);
@@ -1733,7 +1733,7 @@ public class DegraderLoadBalancerTest
     CallCompletion cc;
 
     TrackerClient client1 =
-            new TrackerClient(uri1, getDefaultPartitionData(1d), new TestLoadBalancerClient(uri1), clock);
+            new TrackerClient(uri1, getDefaultPartitionData(1d), new TestLoadBalancerClient(uri1), clock, null);
 
     clients.add(client1);
 
@@ -1810,7 +1810,7 @@ public class DegraderLoadBalancerTest
   {
     Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>(2);
     partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1));
-    return new TrackerClient(uri, partitionDataMap, new TestLoadBalancerClient(uri), clock);
+    return new TrackerClient(uri, partitionDataMap, new TestLoadBalancerClient(uri), clock, null);
   }
 
   public static class TestLoadBalancerClient implements LoadBalancerClient

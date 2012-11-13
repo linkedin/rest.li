@@ -21,7 +21,9 @@ import static com.linkedin.d2.discovery.util.LogUtil.info;
 import static com.linkedin.d2.discovery.util.LogUtil.trace;
 import static com.linkedin.d2.discovery.util.LogUtil.warn;
 
-import com.linkedin.r2.util.NamedThreadFactory;
+import com.linkedin.d2.balancer.strategies.degrader.DegraderConfigFactory;
+import com.linkedin.util.clock.SystemClock;
+import com.linkedin.util.degrader.DegraderImpl;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,7 +35,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -63,7 +64,6 @@ import com.linkedin.d2.discovery.event.PropertyEventBus;
 import com.linkedin.d2.discovery.event.PropertyEventBusImpl;
 import com.linkedin.d2.discovery.event.PropertyEventPublisher;
 import com.linkedin.d2.discovery.event.PropertyEventSubscriber;
-import com.linkedin.d2.discovery.event.PropertyEventThread;
 import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEvent;
 import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
 import com.linkedin.r2.transport.common.TransportClientFactory;
@@ -672,13 +672,33 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
       // add tracker clients for uris that we aren't already tracking
       if (discoveryProperties != null)
       {
+        String clusterName = discoveryProperties.getClusterName();
         Map<URI, TrackerClient> trackerClients =
-            _trackerClients.get(discoveryProperties.getClusterName());
+            _trackerClients.get(clusterName);
 
         if (trackerClients == null)
         {
           trackerClients = new ConcurrentHashMap<URI, TrackerClient>();
           _trackerClients.put(discoveryProperties.getClusterName(), trackerClients);
+        }
+
+        // gets the cluster information for configuring the parameter for how DegraderImpl should behave for
+        // each tracker clients that we instantiate here. If there's no such information, then we'll instantiate
+        // each tracker clients with default configuration
+        ClusterInfoItem clusterInfoItem = _clusterInfo.get(clusterName);
+
+        DegraderImpl.Config config = null;
+        if (clusterInfoItem == null || clusterInfoItem.getClusterPropertiesItem() == null
+            || clusterInfoItem.getClusterPropertiesItem().getProperty() == null)
+        {
+          debug(_log, "trying to see if there's a special degraderImpl properties but clusterInfo is null " +
+              "for clustername = " + clusterName + " so we'll set config to default");
+        }
+        else
+        {
+          Map<String, String> degraderImplProperties =
+              clusterInfoItem.getClusterPropertiesItem().getProperty().getProperties();
+          config = DegraderConfigFactory.toDegraderConfig(degraderImplProperties);
         }
 
         for (URI uri : discoveryProperties.Uris())
@@ -687,7 +707,8 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
           {
             TrackerClient client = getTrackerClient(discoveryProperties.getClusterName(),
                 uri,
-                discoveryProperties.getPartitionDataMap(uri));
+                discoveryProperties.getPartitionDataMap(uri),
+                config);
 
             if (client != null)
             {
@@ -838,6 +859,22 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
         // the tracker clients. getTrackerClient() will use the cluster client from this map.
         final Map<String,TransportClient> oldClusterClients = _clusterClients.put(clusterName, newClusterClients);
 
+        // gets the cluster information for configuring the parameter for how DegraderImpl should behave for
+        // each tracker clients that we instantiate here. If there's no such information, then we'll instantiate
+        // each tracker clients with default configuration
+        DegraderImpl.Config config = null;
+
+        if (discoveryProperties.getProperties() == null)
+        {
+          debug(_log, "trying to see if there's a special degraderImpl properties but clusterInfo is null " +
+                        "for clustername = " + clusterName + " so we'll set config to default");
+        }
+        else
+        {
+          Map<String,String> degraderImplProperties = discoveryProperties.getProperties();
+          config = DegraderConfigFactory.toDegraderConfig(degraderImplProperties);
+        }
+
         Map<URI,TrackerClient> newTrackerClients;
         UriProperties uriProperties = uriItem == null ? null : uriItem.getProperty();
         if (uriProperties != null)
@@ -847,7 +884,8 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
           newTrackerClients = new ConcurrentHashMap<URI, TrackerClient>((int)Math.ceil(uris.size() / 0.75f), 0.75f, 1);
           for (URI uri : uris)
           {
-            TrackerClient trackerClient = getTrackerClient(clusterName, uri, uriProperties.getPartitionDataMap(uri));
+            TrackerClient trackerClient = getTrackerClient(clusterName, uri, uriProperties.getPartitionDataMap(uri),
+                                                           config);
             if (trackerClient != null)
             {
               newTrackerClients.put(uri, trackerClient);
@@ -1021,7 +1059,8 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     }
   }
 
-  private TrackerClient getTrackerClient(String clusterName, URI uri, Map<Integer, PartitionData> partitionDataMap)
+  private TrackerClient getTrackerClient(String clusterName, URI uri, Map<Integer, PartitionData> partitionDataMap,
+                                         DegraderImpl.Config config)
   {
     Map<String,TransportClient> clientsByScheme = _clusterClients.get(clusterName);
     if (clientsByScheme == null)
@@ -1037,7 +1076,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
           new Object[]{ clusterName, uri, partitionDataMap });
       return null;
     }
-    TrackerClient trackerClient = new TrackerClient(uri, partitionDataMap, client);
+    TrackerClient trackerClient = new TrackerClient(uri, partitionDataMap, client, SystemClock.instance(), config);
     return trackerClient;
   }
 

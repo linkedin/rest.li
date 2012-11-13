@@ -56,7 +56,7 @@ public class TrackerClientTest
     Clock clock = new SettableClock();
     Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>(2);
     partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(3d));
-    TrackerClient client = new TrackerClient(uri, partitionDataMap, wrappedClient, clock);
+    TrackerClient client = new TrackerClient(uri, partitionDataMap, wrappedClient, clock, null);
 
     assertEquals(client.getUri(), uri);
     Double clientWeight = client.getPartitionWeight(DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
