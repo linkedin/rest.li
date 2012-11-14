@@ -61,7 +61,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**
- * Test suite for {@link RestLiExampleGenerator}.
+ * Test suite for {@link com.linkedin.restli.docgen.RestLiExampleGenerator}.
  *
  * @author Keren Jin
  */

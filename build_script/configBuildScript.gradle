@@ -26,7 +26,7 @@ project.ext.build = [
   'restClientTasks': [:],
 
   'getDataTemplateOutDirPath': { Project project, SourceSet sourceSet ->
-    return getGeneratedSourceDirName(project, sourceSet, 'dataTemplate') + "${File.separatorChar}java"
+    return getGeneratedSourceDirName(project, sourceSet, 'DataTemplate') + "${File.separatorChar}java"
   },
   'getAvroSchemaOutDirPath': { Project project, SourceSet sourceSet ->
     return getGeneratedSourceDirName(project, sourceSet, 'AvroSchema') + "${File.separatorChar}avro"

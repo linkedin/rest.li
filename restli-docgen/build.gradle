@@ -9,7 +9,4 @@ dependencies {
   compile externalDependency.jacksonCoreAsl
   compile externalDependency.log4j
   compile externalDependency.velocity
-  testCompile project(':restli-int-test-api')
-  testCompile project.files({ return project(':restli-int-test-server').sourceSets.generated.output })
-  testCompile externalDependency.testng
 }
