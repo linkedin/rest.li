@@ -83,6 +83,6 @@ import java.util.Map;
   @Override
   public String toString()
   {
-    return "RestResponse[headers=" + getHeaders() + ",status=" + _status + ",entity=" + getEntity() + "]";
+    return "RestResponse[headers=" + getHeaders() + ",status=" + _status + ",entity size=" + getEntity().length() + "]";
   }
 }

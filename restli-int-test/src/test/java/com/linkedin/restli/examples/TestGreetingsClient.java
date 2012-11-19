@@ -345,7 +345,7 @@ public abstract class TestGreetingsClient extends RestLiIntegrationTest
     }
     catch (RestException e)
     {
-      Assert.assertTrue(e.getResponse().toString().contains("\"status\":400"));
+      Assert.assertEquals(e.getResponse().getStatus(), HttpStatus.S_400_BAD_REQUEST.getCode(), "expected 400 status");
     }
   }
 
