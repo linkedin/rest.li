@@ -50,6 +50,20 @@ public class RoutingException extends RuntimeException
     _status = status;
   }
 
+  /**
+   * @param message error message
+   * @param status HTTP response status
+   * @param cause throwable cause
+   */
+  public RoutingException(final String message, final int status, final Throwable cause)
+  {
+    super(message, cause);
+    _status = status;
+  }
+
+  /**
+   * @return HTTP response status
+   */
   public int getStatus()
   {
     return _status;

@@ -17,6 +17,11 @@
 package com.linkedin.restli.internal.server.model;
 
 
+import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.template.DynamicRecordMetadata;
+import com.linkedin.data.template.DynamicRecordTemplate;
+import com.linkedin.data.template.FieldDef;
+import com.linkedin.restli.common.ActionResponse;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.TyperefDataSchema;
@@ -87,7 +92,6 @@ public final class RestLiAnnotationReader
 {
   private static final Logger log = LoggerFactory.getLogger(RestLiAnnotationReader.class);
   private static final Pattern INVALID_CHAR_PATTERN = Pattern.compile("\\W");
-
   /**
    * This is a utility class.
    */
@@ -432,7 +436,7 @@ public final class RestLiAnnotationReader
   {
     return new Parameter("",
                          model.getValueClass(),
-                         null,
+                         getDataSchema(model.getValueClass(), null),
                          false,
                          null,
                          Parameter.ParamType.POST,
@@ -445,7 +449,7 @@ public final class RestLiAnnotationReader
   {
     return new Parameter(model.getKeyName(),
                          model.getKeyClass(),
-                         null,
+                         getDataSchema(model.getKeyClass(), null),
                          false,
                          null,
                          Parameter.ParamType.KEY,
@@ -609,8 +613,8 @@ public final class RestLiAnnotationReader
 
     if (methodType == ResourceMethod.ACTION
         && param.getParamType() == Parameter.ParamType.POST
-        && !checkParameterType(param.getType(),
-                               RestModelConstants.VALID_ACTION_PARAMETER_TYPES))
+            && !(checkParameterType(param.getType(),
+                                    RestModelConstants.VALID_ACTION_PARAMETER_TYPES) || param.getDataSchema() instanceof TyperefDataSchema))
     {
       throw new ResourceConfigException("Parameter '" + paramName + "' on "
           + buildMethodMessage(method) + " is not a valid type (" + param.getType() + ')');
@@ -619,7 +623,7 @@ public final class RestLiAnnotationReader
     if (methodType != ResourceMethod.ACTION
         && param.getParamType() == Parameter.ParamType.QUERY
         && !(checkParameterType(param.getType(),
-                                RestModelConstants.VALID_QUERY_PARAMETER_TYPES) || (param.getTyperefSchema() != null)))
+                                RestModelConstants.VALID_QUERY_PARAMETER_TYPES) || param.getDataSchema() instanceof TyperefDataSchema))
     {
       throw new ResourceConfigException("Parameter '" + paramName + "' on "
           + buildMethodMessage(method) + " is not a valid type (" + param.getType() + ')');
@@ -634,7 +638,7 @@ public final class RestLiAnnotationReader
           + " is a primitive type, but does not specify a default value in the @Optional annotation");
     }
 
-    final String checkTyperefMessage = checkTyperefSchema(param.getType(), param.getTyperefSchema());
+    final String checkTyperefMessage = checkTyperefSchema(param.getType(), param.getDataSchema());
     if (checkTyperefMessage != null)
     {
       throw new ResourceConfigException("Parameter '" + paramName + "' on "
@@ -688,7 +692,7 @@ public final class RestLiAnnotationReader
     param =
         new Parameter(assocKey.value(),
                       paramType,
-                      null,
+                      getDataSchema(paramType, null),
                       optional != null,
                       getDefaultValue(optional, paramType),
                       Parameter.ParamType.KEY,
@@ -713,19 +717,45 @@ public final class RestLiAnnotationReader
       param =
           new Parameter(paramName,
                         paramType,
-                        typerefInfo.getSchema(),
+                        getDataSchema(paramType, typerefInfo.getSchema()),
                         optional != null,
                         getDefaultValue(optional, paramType),
                         Parameter.ParamType.POST,
                         true,
                         annotations);
     }
+    catch (TemplateRuntimeException e)
+    {
+      throw new ResourceConfigException("DataSchema for parameter '" + paramName + "' of type " + paramType.getSimpleName() + " on "
+          + buildMethodMessage(method) + "cannot be found; type is invalid or requires typeref", e);
+    }
     catch (Exception e)
     {
       throw new ResourceConfigException("Typeref for parameter '" + paramName + "' on "
-          + buildMethodMessage(method) + " cannot be instantiated, " + e.getMessage());
+          + buildMethodMessage(method) + " cannot be instantiated, " + e.getMessage(), e);
     }
     return param;
+  }
+
+  private static DataSchema getDataSchema(Class<?> type, TyperefDataSchema typerefDataSchema)
+  {
+    if (type == Void.TYPE)
+    {
+      return null;
+    }
+    if (typerefDataSchema != null)
+    {
+      return typerefDataSchema;
+    }
+    else if (RestModelConstants.CLASSES_WITHOUT_SCHEMAS.contains(type))
+    {
+      return null;
+    }
+    else if (type.isArray())
+    {
+      return DataTemplateUtil.getSchema(type.getComponentType());
+    }
+    return DataTemplateUtil.getSchema(type);
   }
 
   @SuppressWarnings("unchecked")
@@ -749,17 +779,22 @@ public final class RestLiAnnotationReader
       param =
           new Parameter(queryParam.value(),
                         paramType,
-                        typerefInfo.getSchema(),
+                        getDataSchema(paramType, typerefInfo.getSchema()),
                         optional != null,
                         getDefaultValue(optional, paramType),
                         Parameter.ParamType.QUERY,
                         true,
                         annotations);
     }
+    catch (TemplateRuntimeException e)
+    {
+      throw new ResourceConfigException("DataSchema for parameter '" + paramName + "' of type " + paramType.getSimpleName() + " on "
+            + buildMethodMessage(method) + "cannot be found; type is invalid or requires typeref", e);
+    }
     catch (Exception e)
     {
       throw new ResourceConfigException("Typeref for parameter '" + paramName + "' on "
-          + buildMethodMessage(method) + " cannot be instantiated, " + e.getMessage());
+          + buildMethodMessage(method) + " cannot be instantiated, " + e.getMessage(), e);
     }
     return param;
   }
@@ -770,13 +805,14 @@ public final class RestLiAnnotationReader
         + method.getDeclaringClass().getName() + '\'';
   }
 
-  private static String checkTyperefSchema(final Class<?> type, final TyperefDataSchema typerefSchema)
+  private static String checkTyperefSchema(final Class<?> type, final DataSchema dataSchema)
   {
-    if (typerefSchema == null)
+    if (!(dataSchema instanceof TyperefDataSchema))
     {
       return null;
     }
 
+    TyperefDataSchema typerefSchema = (TyperefDataSchema)dataSchema;
     boolean ok;
     DataSchema.Type schemaType = typerefSchema.getDereferencedType();
     Class<?>[] validTypes =
@@ -1189,12 +1225,32 @@ public final class RestLiAnnotationReader
                                                       method.getName()));
     }
 
+    RecordDataSchema recordDataSchema = DynamicRecordMetadata.buildSchema(method.getName(),
+                                                                          parameters);
+
+    RecordDataSchema actionReturnRecordDataSchema;
+    FieldDef<?> returnFieldDef;
+    if(returnClass != Void.TYPE)
+    {
+      @SuppressWarnings("unchecked")
+      FieldDef<?> nonVoidFieldDef = new FieldDef(ActionResponse.VALUE_NAME, returnClass, getDataSchema(returnClass, returnTyperefSchema));
+      returnFieldDef = nonVoidFieldDef;
+      actionReturnRecordDataSchema = DynamicRecordMetadata.buildSchema(ActionResponse.class.getName(), Collections.singleton((returnFieldDef)));
+    }
+    else
+    {
+      returnFieldDef = null;
+      actionReturnRecordDataSchema = DynamicRecordMetadata.buildSchema(ActionResponse.class.getName(), Collections.<FieldDef<?>>emptyList());
+    }
+
+
     model.addResourceMethodDescriptor(ResourceMethodDescriptor.createForAction(method,
                                                                                parameters,
                                                                                actionName,
                                                                                actionAnno.resourceLevel(),
-                                                                               returnClass,
-                                                                               returnTyperefSchema,
+                                                                               returnFieldDef,
+                                                                               actionReturnRecordDataSchema,
+                                                                               recordDataSchema,
                                                                                getInterfaceType(method),
                                                                                ResourceModelAnnotation.getAnnotationsMap(method.getAnnotations())));
 

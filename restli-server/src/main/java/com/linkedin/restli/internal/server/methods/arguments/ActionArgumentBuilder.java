@@ -20,7 +20,6 @@
 
 package com.linkedin.restli.internal.server.methods.arguments;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.linkedin.data.DataMap;
@@ -29,15 +28,12 @@ import com.linkedin.data.schema.validation.RequiredMode;
 import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
 import com.linkedin.data.schema.validation.ValidationOptions;
 import com.linkedin.data.schema.validation.ValidationResult;
-import com.linkedin.data.template.DataTemplate;
-import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.DynamicRecordTemplate;
 import com.linkedin.data.template.TemplateOutputCastException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.model.Parameter;
-import com.linkedin.restli.internal.server.model.Parameter.ParamType;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.server.RoutingException;
@@ -64,20 +60,25 @@ public class ActionArgumentBuilder implements RestLiArgumentBuilder
       data = DataMapUtils.readMap(request.getEntity().asInputStream());
     }
 
-    // Just want the posted parameters
-    List<Parameter<?>> actionPostParams = new ArrayList<Parameter<?>>();
-    List<Parameter<?>> parameters = resourceMethodDescriptor.getParameters();
-    for (Parameter<?> p : parameters)
-    {
-      if (p.getParamType().equals(ParamType.POST))
-      {
-        actionPostParams.add(p);
-      }
-    }
     DynamicRecordTemplate template =
-        new DynamicRecordTemplate(resourceMethodDescriptor.getActionName(),
-                                  actionPostParams,
-                                  data);
+            new DynamicRecordTemplate(data, resourceMethodDescriptor.getRequestDataSchema());
+
+    ValidationResult result =
+            ValidateDataAgainstSchema.validate(data,
+                                               template.schema(),
+                                               new ValidationOptions(RequiredMode.IGNORE,
+                                                                     CoercionMode.NORMAL));
+
+    if (!result.isValid())
+    {
+      throw new RoutingException("Parameters of method '"
+                                         + resourceMethodDescriptor.getActionName()
+                                         + "' failed validation with error '"
+                                         + result.getMessages() + "'",
+                                 HttpStatus.S_400_BAD_REQUEST.getCode());
+    }
+
+    List<Parameter<?>> parameters = resourceMethodDescriptor.getParameters();
 
     Object[] arguments = new Object[parameters.size()];
     int i = 0;
@@ -115,32 +116,6 @@ public class ActionArgumentBuilder implements RestLiArgumentBuilder
         try
         {
           value = template.getValue(param);
-
-          Object toValidate = value;
-          if (value instanceof DataTemplate)
-          {
-            toValidate = ((DataTemplate) value).data();
-          }
-          else if (value instanceof Enum)
-          {
-            toValidate = value.toString();
-          }
-
-          // validate with fixup=true to ensure that we recursively coerce primitive
-          // fields to their schema-defined type.
-          ValidationResult result =
-              ValidateDataAgainstSchema.validate(toValidate,
-                                                 DataTemplateUtil.getSchema(param.getType()),
-                                                 new ValidationOptions(RequiredMode.IGNORE,
-                                                                       CoercionMode.NORMAL));
-          if (!result.isValid())
-          {
-            throw new RoutingException("Parameter '" + param.getName() + "' of method '"
-                                           + resourceMethodDescriptor.getActionName()
-                                           + "' failed validation with error '"
-                                           + result.getMessages() + "'",
-                                       HttpStatus.S_400_BAD_REQUEST.getCode());
-          }
         }
         catch (TemplateOutputCastException e)
         {

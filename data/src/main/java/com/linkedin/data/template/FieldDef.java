@@ -17,6 +17,10 @@
 package com.linkedin.data.template;
 
 
+import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.DataSchemaUtil;
+import com.linkedin.data.schema.RecordDataSchema;
+
 /**
  * A dynamic record template field definition.
  *
@@ -27,11 +31,41 @@ public class FieldDef<T>
 {
   private final String _name;
   private final Class<T> _type;
+  private final DataSchema _dataSchema;
+  private final Class<?> _dataClass;
+  private final RecordDataSchema.Field _field;
 
   public FieldDef(String name, Class<T> type)
   {
+    this(name, type, DataTemplateUtil.getSchema(type));
+  }
+
+  public FieldDef(String name, Class<T> type, DataSchema dataSchema)
+  {
     _name = name;
     _type = type;
+    _dataSchema = dataSchema;
+    _dataClass = getDataClassFromSchema(_dataSchema);
+
+    StringBuilder errorMessageBuilder = new StringBuilder();
+    _field = new RecordDataSchema.Field(_dataSchema);
+    _field.setName(_name, errorMessageBuilder);
+  }
+
+  private static Class<?> getDataClassFromSchema(DataSchema schema)
+  {
+    /**
+     * FieldDefs representing context, pagination, or things relating to synchronization will not
+     * have schemas, so we must allow for null schemas.
+     * See RestModelConstants.CLASSES_WITHOUT_SCHEMAS for a list.
+     *
+     * All other FieldDefs should have schemas, however.
+     */
+    if (schema == null)
+    {
+      return null;
+    }
+    return DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchemaClass(schema.getDereferencedType());
   }
 
   public String getName()
@@ -44,9 +78,63 @@ public class FieldDef<T>
     return _type;
   }
 
+  public DataSchema getDataSchema()
+  {
+    return _dataSchema;
+  }
+
+  public Class<?> getDataClass()
+  {
+    return _dataClass;
+  }
+
+  public RecordDataSchema.Field getField()
+  {
+    return _field;
+  }
+
   @Override
   public String toString()
   {
-    return "FieldDef{" + "_name='" + _name + '\'' + ", _type=" + _type.getName() + '}';
+    StringBuilder stringBuilder = new StringBuilder();
+    stringBuilder.append("FieldDef{_name='");
+    stringBuilder.append(_name);
+    stringBuilder.append("\', _type=");
+    stringBuilder.append(_type.getName());
+    if (_dataSchema != null)
+    {
+      stringBuilder.append(", _dataSchema=");
+      stringBuilder.append(_dataSchema.toString());
+    }
+    stringBuilder.append("}");
+    return stringBuilder.toString();
+  }
+
+  @Override
+  public boolean equals(Object object)
+  {
+    if (object instanceof FieldDef)
+    {
+      FieldDef other = (FieldDef) object;
+
+      boolean dataSchemaEquals;
+      if (this._dataSchema == null)
+      {
+        dataSchemaEquals = (other._dataSchema == null);
+      }
+      else
+      {
+        dataSchemaEquals = this._dataSchema.equals(other._dataSchema);
+      }
+
+      return this._name.equals(other._name) && this._type.equals(other._type) && dataSchemaEquals;
+    }
+    return false;
+  }
+
+  @Override
+  public int hashCode()
+  {
+    return 13*_name.hashCode() + 17*_type.hashCode() + 23*(_dataSchema == null? 1 :_dataSchema.hashCode());
   }
 }

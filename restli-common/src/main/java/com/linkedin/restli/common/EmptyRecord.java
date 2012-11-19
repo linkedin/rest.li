@@ -20,6 +20,8 @@
 
 package com.linkedin.restli.common;
 
+import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
 
 /**
@@ -29,6 +31,8 @@ import com.linkedin.data.template.RecordTemplate;
 
 public final class EmptyRecord extends RecordTemplate
 {
+  private final static RecordDataSchema SCHEMA = ((RecordDataSchema) DataTemplateUtil.parseSchema("{\"type\":\"record\",\"name\":\"EmptyRecord\",\"namespace\":\"com.linkedin.restli.common\",\"doc\":\"EmptyRecord\",\"fields\":[]}"));
+
   private EmptyRecord()
   {
     super(null, null);

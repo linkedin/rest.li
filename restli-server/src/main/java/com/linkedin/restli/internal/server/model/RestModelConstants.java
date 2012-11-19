@@ -17,6 +17,7 @@
 package com.linkedin.restli.internal.server.model;
 
 
+import com.linkedin.common.callback.Callback;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.template.AbstractArrayTemplate;
@@ -24,15 +25,24 @@ import com.linkedin.data.template.AbstractMapTemplate;
 import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.FixedTemplate;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.common.ComplexResourceKey;
+import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.server.ActionResult;
+import com.linkedin.restli.server.PagingContext;
+import com.linkedin.restli.server.annotations.Context;
+import com.linkedin.restli.server.annotations.ParSeqContext;
 import com.linkedin.restli.server.resources.AssociationResource;
 import com.linkedin.restli.server.resources.AssociationResourceAsync;
 import com.linkedin.restli.server.resources.CollectionResource;
 import com.linkedin.restli.server.resources.CollectionResourceAsync;
 import com.linkedin.restli.server.resources.ComplexKeyResource;
 import com.linkedin.restli.server.resources.ComplexKeyResourceAsync;
+
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -145,4 +155,13 @@ public interface RestModelConstants
       ComplexKeyResource.class,
       ComplexKeyResourceAsync.class
   };
+
+  Set<Class<?>> CLASSES_WITHOUT_SCHEMAS = new HashSet<Class<?>>(
+          Arrays.asList(
+                  new Class<?>[]{ComplexResourceKey.class,
+                          CompoundKey.class,
+                          Context.class,
+                          Callback.class,
+                          PagingContext.class,
+                          ParSeqContext.class}));
 }

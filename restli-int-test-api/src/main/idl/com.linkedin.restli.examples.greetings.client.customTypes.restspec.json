@@ -30,6 +30,14 @@
         "type" : "com.linkedin.restli.examples.typeref.api.DateRef"
       } ]
     } ],
+    "actions" : [ {
+      "name" : "action",
+      "parameters" : [ {
+        "name" : "l",
+        "type" : "com.linkedin.restli.examples.typeref.api.CustomLongRef"
+      } ],
+      "returns" : "long"
+    } ],
     "entity" : {
       "path" : "/customTypes/{customTypesId}"
     }

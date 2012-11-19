@@ -16,8 +16,9 @@
 
 package com.linkedin.restli.internal.server.model;
 
+import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.DataMap;
-import com.linkedin.data.schema.TyperefDataSchema;
+import com.linkedin.data.template.FieldDef;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.server.ResourceLevel;
@@ -46,8 +47,9 @@ public final class ResourceMethodDescriptor
   // only applies to actions
   private final String                                  _actionName;
   private final ResourceLevel                           _actionResourceLevel;
-  private final Class<?>                                _actionReturnType;
-  private final TyperefDataSchema                       _actionReturnTyperefSchema;
+  private final FieldDef<?>                             _actionReturnFieldDef;
+  private final RecordDataSchema                        _actionReturnRecordDataSchema;
+  private final RecordDataSchema                        _requestDataSchema;
   private final InterfaceType                           _interfaceType;
   private final DataMap                                 _customAnnotations;
 
@@ -76,6 +78,7 @@ public final class ResourceMethodDescriptor
                                         null,
                                         null,
                                         null,
+                                        null,
                                         metadataType,
                                         interfaceType,
                                         customAnnotations);
@@ -90,7 +93,8 @@ public final class ResourceMethodDescriptor
    * @param actionName action name
    * @param actionResourceType action {@link ResourceLevel}
    * @param actionReturnType action return type class
-   * @param actionReturnTyperefSchema action return {@link TyperefDataSchema}
+   * @param actionReturnRecordDataSchema the RecordDataSchema for the action return
+   * @param recordDataSchema the RecordDataSchema for the method
    * @param interfaceType resource method {@link InterfaceType}
    * @return action {@link ResourceMethodDescriptor}
    */
@@ -99,8 +103,9 @@ public final class ResourceMethodDescriptor
                                                final List<Parameter<?>> parameters,
                                                final String actionName,
                                                final ResourceLevel actionResourceType,
-                                               final Class<?> actionReturnType,
-                                               final TyperefDataSchema actionReturnTyperefSchema,
+                                               final FieldDef<?> actionReturnType,
+                                               final RecordDataSchema actionReturnRecordDataSchema,
+                                               final RecordDataSchema recordDataSchema,
                                                final InterfaceType interfaceType,
                                                final DataMap customAnnotations)
   {
@@ -111,7 +116,8 @@ public final class ResourceMethodDescriptor
                                         actionName,
                                         actionResourceType,
                                         actionReturnType,
-                                        actionReturnTyperefSchema,
+                                        actionReturnRecordDataSchema,
+                                        recordDataSchema,
                                         null,
                                         interfaceType,
                                         customAnnotations);
@@ -160,6 +166,7 @@ public final class ResourceMethodDescriptor
                                         null,
                                         null,
                                         null,
+                                        null,
                                         interfaceType,
                                         customAnnotations);
   }
@@ -173,8 +180,9 @@ public final class ResourceMethodDescriptor
                                    final String finderName,
                                    final String actionName,
                                    final ResourceLevel actionResourceLevel,
-                                   final Class<?> actionReturnType,
-                                   final TyperefDataSchema actionReturnTyperefSchema,
+                                   final FieldDef<?> actionReturnType,
+                                   final RecordDataSchema actionReturnRecordDataSchema,
+                                   final RecordDataSchema requestDataSchema,
                                    final Class<? extends RecordTemplate> finderMetadataType,
                                    final InterfaceType interfaceType,
                                    final DataMap customAnnotations)
@@ -186,8 +194,9 @@ public final class ResourceMethodDescriptor
     _finderName = finderName;
     _actionName = actionName;
     _actionResourceLevel = actionResourceLevel;
-    _actionReturnType = actionReturnType;
-    _actionReturnTyperefSchema = actionReturnTyperefSchema;
+    _actionReturnFieldDef = actionReturnType;
+    _actionReturnRecordDataSchema = actionReturnRecordDataSchema;
+    _requestDataSchema = requestDataSchema;
     _finderMetadataType = finderMetadataType;
     _interfaceType = interfaceType;
     _customAnnotations = customAnnotations;
@@ -310,12 +319,26 @@ public final class ResourceMethodDescriptor
 
   public Class<?> getActionReturnType()
   {
-    return _actionReturnType;
+    if (_actionReturnFieldDef == null)
+    {
+      return Void.TYPE;
+    }
+    return _actionReturnFieldDef.getType();
   }
 
-  public TyperefDataSchema getActionReturnTyperefSchema()
+  public FieldDef<?> getActionReturnFieldDef()
   {
-    return _actionReturnTyperefSchema;
+    return _actionReturnFieldDef;
+  }
+
+  public RecordDataSchema getActionReturnRecordDataSchema()
+  {
+    return _actionReturnRecordDataSchema;
+  }
+
+  public RecordDataSchema getRequestDataSchema()
+  {
+    return _requestDataSchema;
   }
 
   /**

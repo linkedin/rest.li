@@ -34,6 +34,7 @@ import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import com.linkedin.restli.client.ActionRequest;
 import com.linkedin.restli.client.FindRequest;
 import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.examples.custom.types.CustomLong;
@@ -85,11 +86,22 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
     Assert.assertEquals(elements.size(), 0);
   }
 
-  @Test void testDate() throws RemoteInvocationException
+  @Test
+  public void testDate() throws RemoteInvocationException
   {
     FindRequest<Greeting> request = CUSTOM_TYPES_BUILDERS.findByDate().dParam(new Date(100)).build();
     List<Greeting> elements = REST_CLIENT.sendRequest(request).getResponse().getEntity().getElements();
     Assert.assertEquals(elements.size(), 0);
+  }
+
+  @Test
+  public void testAction() throws RemoteInvocationException
+  {
+    Long l = 5L;
+    ActionRequest<Long> request = CUSTOM_TYPES_BUILDERS.actionAction().paramL(new CustomLong(l)).build();
+    Long result = REST_CLIENT.sendRequest(request).getResponse().getEntity();
+
+    Assert.assertEquals(l, result);
   }
 
 }

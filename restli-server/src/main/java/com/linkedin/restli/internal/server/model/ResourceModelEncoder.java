@@ -26,6 +26,7 @@ import com.linkedin.data.schema.SchemaToJsonEncoder;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.StringArray;
+import com.linkedin.restli.common.ActionResponse;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.restspec.ActionSchema;
@@ -193,28 +194,31 @@ public class ResourceModelEncoder
     }
   }
 
-  /**
-   * Variant of buildDataSchemaType that takes an additional argument for
-   * {@link TyperefDataSchema}. If {@link TyperefDataSchema} is not null, use provided
-   * {@link TyperefDataSchema} to construct JsonNode, else call
-   * {@link #buildDataSchemaType(Class)}.
-   */
-
-  private static String buildDataSchemaType(final Class<?> type,
-                                            final TyperefDataSchema typerefSchema)
+  private String buildDataSchemaType(final Class<?> type, final DataSchema dataSchema)
   {
     if (type.isArray())
     {
       return "array";
     }
-    else if (typerefSchema != null)
+    else if (dataSchema instanceof  TyperefDataSchema)
     {
-      // Use schema name
-      return typerefSchema.getFullName();
+      return ((TyperefDataSchema)dataSchema).getFullName();
     }
-    else
+    else if (dataSchema instanceof PrimitiveDataSchema || dataSchema instanceof NamedDataSchema)
     {
-      return buildDataSchemaType(type);
+      return dataSchema.getUnionMemberKey();
+    }
+
+    try
+    {
+      JsonBuilder builder = new JsonBuilder(JsonBuilder.Pretty.SPACES);
+      SchemaToJsonEncoder encoder = new NamedSchemaReferencingJsonEncoder(builder);
+      encoder.encode(dataSchema);
+      return builder.result();
+    }
+    catch (IOException e)
+    {
+      throw new RestLiInternalException("could not encode schema for '" + type.getName() + "'", e);
     }
   }
 
@@ -473,7 +477,7 @@ public class ResourceModelEncoder
         {
           String returnTypeString =
               buildDataSchemaType(returnType,
-                                  resourceMethodDescriptor.getActionReturnTyperefSchema());
+                                  resourceMethodDescriptor.getActionReturnRecordDataSchema().getField(ActionResponse.VALUE_NAME).getType());
           action.setReturns(returnTypeString);
         }
 
@@ -591,11 +595,11 @@ public class ResourceModelEncoder
 
       ParameterSchema paramSchema = new ParameterSchema();
       paramSchema.setName(param.getName());
-      paramSchema.setType(buildDataSchemaType(param.getType(), param.getTyperefSchema()));
+      paramSchema.setType(buildDataSchemaType(param.getType(), param.getDataSchema()));
 
       if (param.getItemType() != null)
       {
-        paramSchema.setItems(buildDataSchemaType(param.getItemType(), param.getTyperefSchema()));
+        paramSchema.setItems(buildDataSchemaType(param.getItemType(), param.getDataSchema()));
       }
 
       Object defaultValue = param.getDefaultValue();

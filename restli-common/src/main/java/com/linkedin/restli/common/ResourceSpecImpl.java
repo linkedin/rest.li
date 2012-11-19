@@ -20,6 +20,8 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
+import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.data.template.RecordTemplate;
 
 
@@ -30,12 +32,14 @@ import com.linkedin.data.template.RecordTemplate;
  */
 public class ResourceSpecImpl implements ResourceSpec
 {
-  private final Set<ResourceMethod>             _supportedMethods;
-  private final Class<?>                        _keyClass;
-  private final Class<? extends RecordTemplate> _keyKeyClass;
-  private final Class<? extends RecordTemplate> _keyParamsClass;
-  private final Class<? extends RecordTemplate> _valueClass;
-  private final Map<String, Class<?>>           _keyParts;
+  private final Set<ResourceMethod>                _supportedMethods;
+  private final Class<?>                           _keyClass;
+  private final Class<? extends RecordTemplate>    _keyKeyClass;
+  private final Class<? extends RecordTemplate>    _keyParamsClass;
+  private final Class<? extends RecordTemplate>    _valueClass;
+  private final Map<String, Class<?>>              _keyParts;
+  private final Map<String, DynamicRecordMetadata> _actionRequestMetadata;
+  private final Map<String, DynamicRecordMetadata> _actionResponseMetadata;
 
   /**
    * Initialize an empty ResourceSpecImpl.
@@ -43,6 +47,8 @@ public class ResourceSpecImpl implements ResourceSpec
   public ResourceSpecImpl()
   {
     this(Collections.<ResourceMethod> emptySet(),
+         Collections.<String, DynamicRecordMetadata> emptyMap(),
+         Collections.<String, DynamicRecordMetadata> emptyMap(),
          null,
          null,
          null,
@@ -54,10 +60,36 @@ public class ResourceSpecImpl implements ResourceSpec
    * Initialize a ResourceSpecImpl with the given data.
    *
    * @param supportedMethods Set of ResourceMethods supported
+   * @deprecated builder should pass in actionRequestMetadata and actionResponseMetadata
    */
+  @Deprecated
   public ResourceSpecImpl(Set<ResourceMethod> supportedMethods)
   {
     this(supportedMethods,
+         Collections.<String, DynamicRecordMetadata> emptyMap(),
+         Collections.<String, DynamicRecordMetadata> emptyMap(),
+         null,
+         null,
+         null,
+         null,
+         Collections.<String, Class<?>> emptyMap());
+  }
+
+
+  /**
+   * Initialize a ResourceSpecImpl with the given data.
+   *
+   * @param supportedMethods Set of ResourceMethods supported
+   * @param actionRequestMetadata Map from method name to method {@link RecordDataSchema}
+   * @param actionResponseMetadata Map from method name to response RecordDataSchema
+   */
+  public ResourceSpecImpl(Set<ResourceMethod> supportedMethods,
+                          Map<String, DynamicRecordMetadata> actionRequestMetadata,
+                          Map<String, DynamicRecordMetadata> actionResponseMetadata)
+  {
+    this(supportedMethods,
+         actionRequestMetadata,
+         actionResponseMetadata,
          null,
          null,
          null,
@@ -72,13 +104,49 @@ public class ResourceSpecImpl implements ResourceSpec
    * @param keyClass type of the key of the Resource
    * @param valueClass the type of the RecordTemplate the Resource manages
    * @param keyParts Map of key names to key types, if the keyClass is a ComplexKey
+   * @deprecated builder should pass in actionRequestMetadata and actionResponseMetadata
    */
+  @Deprecated
   public ResourceSpecImpl(Set<ResourceMethod> supportedMethods,
                           Class<?> keyClass,
                           Class<? extends RecordTemplate> valueClass,
                           Map<String, Class<?>> keyParts)
   {
-    this(supportedMethods, keyClass, null, null, valueClass, keyParts);
+    this(supportedMethods,
+         Collections.<String, DynamicRecordMetadata> emptyMap(),
+         Collections.<String, DynamicRecordMetadata> emptyMap(),
+         keyClass,
+         null,
+         null,
+         valueClass,
+         keyParts);
+  }
+
+  /**
+   * Initialize a ResourceSpecImpl with the given data.
+   *
+   * @param supportedMethods Set of ResourceMethods supported
+   * @param actionRequestMetadata Map from method name to method {@link RecordDataSchema}
+   * @param actionResponseMetadata Map from method name to response RecordDataSchema
+   * @param keyClass type of the key of the Resource
+   * @param valueClass the type of the RecordTemplate the Resource manages
+   * @param keyParts Map of key names to key types, if the keyClass is a ComplexKey
+   */
+  public ResourceSpecImpl(Set<ResourceMethod> supportedMethods,
+                          Map<String, DynamicRecordMetadata> actionRequestMetadata,
+                          Map<String, DynamicRecordMetadata> actionResponseMetadata,
+                          Class<?> keyClass,
+                          Class<? extends RecordTemplate> valueClass,
+                          Map<String, Class<?>> keyParts)
+  {
+    this(supportedMethods,
+         actionRequestMetadata,
+         actionResponseMetadata,
+         keyClass,
+         null,
+         null,
+         valueClass,
+         keyParts);
   }
 
   /**
@@ -90,7 +158,9 @@ public class ResourceSpecImpl implements ResourceSpec
    * @param keyParamsClass RecordTemplate type of parameters of the key, if the keyClass is a ComplexResourceKey
    * @param valueClass the type of the RecordTemplate that the Resource manages
    * @param keyParts Map of the key names to key types, if the keyClass is a ComplexKey
+   * @deprecated builder should pass in actionRequestMetadata and actionResponseMetadata
    */
+  @Deprecated
   public ResourceSpecImpl(Set<ResourceMethod> supportedMethods,
                           Class<?> keyClass,
                           Class<? extends RecordTemplate> keyKeyClass,
@@ -99,11 +169,46 @@ public class ResourceSpecImpl implements ResourceSpec
                           Map<String, Class<?>> keyParts)
   {
     _supportedMethods = Collections.unmodifiableSet(supportedMethods);
+    _actionRequestMetadata = Collections.emptyMap();
+    _actionResponseMetadata = Collections.emptyMap();
     _keyClass = keyClass;
     _keyKeyClass = keyKeyClass;
     _keyParamsClass = keyParamsClass;
     _valueClass = valueClass;
     _keyParts = Collections.unmodifiableMap(keyParts);
+    Collections.<String, Class<?>>emptyMap();
+  }
+
+  /**
+   * Initialize a ResourceSpecImpl with the given data.
+   *
+   * @param supportedMethods Set of ResourceMethods supported
+   * @param actionRequestMetadata Map from method name to method {@link RecordDataSchema}
+   * @param actionResponseMetadata Map from method name to response RecordDataSchema
+   * @param keyClass type of the key of the Resource
+   * @param keyKeyClass RecordTemplate type of the key, if the keyClass is a ComplexResourceKey
+   * @param keyParamsClass RecordTemplate type of parameters of the key, if the keyClass is a ComplexResourceKey
+   * @param valueClass the type of the RecordTemplate that the Resource manages
+   * @param keyParts Map of the key names to key types, if the keyClass is a ComplexKey
+   */
+  public ResourceSpecImpl(Set<ResourceMethod> supportedMethods,
+                          Map<String, DynamicRecordMetadata> actionRequestMetadata,
+                          Map<String, DynamicRecordMetadata> actionResponseMetadata,
+                          Class<?> keyClass,
+                          Class<? extends RecordTemplate> keyKeyClass,
+                          Class<? extends RecordTemplate> keyParamsClass,
+                          Class<? extends RecordTemplate> valueClass,
+                          Map<String, Class<?>> keyParts)
+  {
+    _supportedMethods = Collections.unmodifiableSet(supportedMethods);
+    _actionRequestMetadata = actionRequestMetadata;
+    _actionResponseMetadata = actionResponseMetadata;
+    _keyClass = keyClass;
+    _keyKeyClass = keyKeyClass;
+    _keyParamsClass = keyParamsClass;
+    _valueClass = valueClass;
+    _keyParts = Collections.unmodifiableMap(keyParts);
+    Collections.<String, Class<?>>emptyMap();
   }
 
   @Override
@@ -141,4 +246,17 @@ public class ResourceSpecImpl implements ResourceSpec
   {
     return _keyParamsClass;
   }
+
+  @Override
+  public DynamicRecordMetadata getRequestMetadata(String methodName)
+  {
+    return _actionRequestMetadata.get(methodName);
+  }
+
+  @Override
+  public DynamicRecordMetadata getActionResponseMetadata(String methodName)
+  {
+    return _actionResponseMetadata.get(methodName);
+  }
+
 }

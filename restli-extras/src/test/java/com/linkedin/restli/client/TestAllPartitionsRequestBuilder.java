@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 
+import com.linkedin.data.template.DynamicRecordMetadata;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -40,6 +41,8 @@ import com.linkedin.d2.balancer.util.hashing.ConsistentHashKeyMapper;
 import com.linkedin.d2.balancer.util.hashing.ConsistentHashRing;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.d2.balancer.util.hashing.StaticRingProvider;
+import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.FieldDef;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestException;
@@ -64,6 +67,8 @@ public class TestAllPartitionsRequestBuilder {
   private static final String TEST_URI = "test";
   private static final ResourceSpec _COLL_SPEC      =
       new ResourceSpecImpl(EnumSet.allOf(ResourceMethod.class),
+          Collections.<String, DynamicRecordMetadata> emptyMap(),
+          Collections.<String, DynamicRecordMetadata> emptyMap(),
           Long.class,
           null,
           null,
@@ -111,7 +116,8 @@ public class TestAllPartitionsRequestBuilder {
     AllPartitionsRequestBuilder<Greeting> searchRB = new AllPartitionsRequestBuilder<Greeting>(mapper);
     ActionRequestBuilder<Long, Greeting> builder = new ActionRequestBuilder<Long, Greeting>(TEST_URI, Greeting.class,
         null);
-    ActionRequest<Greeting> request = builder.name("action").param(new FieldDef<String>("p", String.class), "42").build();
+    ActionRequest<Greeting> request = builder.name("action").param(
+            new FieldDef<String>("p", String.class, DataTemplateUtil.getSchema(String.class)), "42").build();
 
     final Map<String, Greeting> results = new ConcurrentHashMap<String, Greeting>();
     final CountDownLatch latch = new CountDownLatch(PARTITION_NUM);

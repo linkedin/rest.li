@@ -175,8 +175,8 @@ public class TestRestLiResourceModels
     expectConfigException(InvalidResources.FinderNonRecordTemplateReturnType.class, "but found List<");
     expectConfigException(InvalidResources.FinderNonMatchingRecordTemplateReturnType.class, "but found List<");
     expectConfigException(InvalidResources.FinderNonMatchingRecordTemplateReturnTypeCollectionResult.class, "but found CollectionResult<");
-    expectConfigException(InvalidResources.FinderInvalidParameters.class, "is not a valid type");
-    expectConfigException(InvalidResources.FinderInvalidParameters2.class, "is not a valid type");
+    expectConfigException(InvalidResources.FinderInvalidParameters.class, "type is invalid or requires typeref");
+    expectConfigException(InvalidResources.FinderInvalidParameters2.class, "type is invalid or requires typeref");
     expectConfigException(InvalidResources.FinderUnannotatedParameters.class, "must annotate each parameter");
     expectConfigException(InvalidResources.FinderTwoDefaultsInOneClass.class, "duplicate @Finder");
     expectConfigException(InvalidResources.FinderTwoNamedInOneClass.class, "duplicate @Finder");
@@ -369,11 +369,11 @@ public class TestRestLiResourceModels
   public void testInvalidActions() throws Exception
   {
     expectConfigException(InvalidActions.ActionUnannotatedParameters.class, "must annotate each parameter");
-    expectConfigException(InvalidActions.ActionInvalidParameterTypes.class, "not a valid type");
+    expectConfigException(InvalidActions.ActionInvalidParameterTypes.class, "type is invalid or requires typeref");
     expectConfigException(InvalidActions.ActionInvalidReturnType.class, "invalid return type");
     expectConfigException(InvalidActions.ActionNameConflict.class, "Found duplicate");
     expectConfigException(InvalidActions.ActionInvalidReturnType2.class, "invalid return type");
-    expectConfigException(InvalidActions.ActionInvalidBytesParam.class, "not a valid type");
+    expectConfigException(InvalidActions.ActionInvalidBytesParam.class, "type is invalid or requires typeref");
   }
 
   @Test

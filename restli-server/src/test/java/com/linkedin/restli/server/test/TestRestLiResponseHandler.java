@@ -16,6 +16,12 @@
 
 package com.linkedin.restli.server.test;
 
+import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.data.template.DynamicRecordMetadata;
+import com.linkedin.data.template.DynamicRecordTemplate;
+import com.linkedin.data.template.FieldDef;
+import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.restli.server.ActionResult;
 import com.linkedin.restli.server.GetResult;
@@ -25,6 +31,7 @@ import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +56,7 @@ import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
 import com.linkedin.restli.server.BasicCollectionResult;
 import com.linkedin.restli.server.BatchCreateResult;
 import com.linkedin.restli.server.BatchUpdateResult;
+import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.CreateResponse;
@@ -279,7 +287,7 @@ public class TestRestLiResponseHandler
 
     // #1 simple record template
     response = _responseHandler.buildResponse(buildRequest(),
-                                              buildRoutingResult(true),
+                                              buildRoutingResultAction(Status.class),
                                               buildStatusRecord());
 
     checkResponse(response, 200, 3, ActionResponse.class.getName(), Status.class.getName(), true);
@@ -290,7 +298,7 @@ public class TestRestLiResponseHandler
     map.put("key1", "value1");
     map.put("key2", "value2");
     response = _responseHandler.buildResponse(buildRequest(),
-                                              buildRoutingResult(true),
+                                              buildRoutingResultAction(StringMap.class),
                                               map);
 
     checkResponse(response, 200, 3, ActionResponse.class.getName(), StringMap.class.getName(), true);
@@ -298,7 +306,7 @@ public class TestRestLiResponseHandler
 
     // #3 empty response
     response = _responseHandler.buildResponse(buildRequest(),
-                                              buildRoutingResult(true),
+                                              buildRoutingResultAction(Void.TYPE),
                                               null);
 
     checkResponse(response, 200, 1, null, null, false);
@@ -348,7 +356,7 @@ public class TestRestLiResponseHandler
     RestRequest request1 = buildRequest("/test?fields=f1,f2,f3");
     Status status = buildStatusWithFields("f1", "f2", "f3");
     response = _responseHandler.buildResponse(request1,
-                                              buildRoutingResult(false, request1),
+                                              buildRoutingResult(request1),
                                               status);
 
     checkResponse(response, 200, 2, Status.class.getName(), null, true);
@@ -357,7 +365,7 @@ public class TestRestLiResponseHandler
     // #2 some fields
     RestRequest request2 = buildRequest("/test?fields=f1,f3");
     response = _responseHandler.buildResponse(request2,
-                                              buildRoutingResult(false, request2),
+                                              buildRoutingResult(request2),
                                               status);
     assertTrue(status.data().containsKey("f2"));
 
@@ -367,7 +375,7 @@ public class TestRestLiResponseHandler
     // #3 no fields
     RestRequest request3 = buildRequest("/test?fields=");
     response = _responseHandler.buildResponse(request3,
-                                              buildRoutingResult(false, request3),
+                                              buildRoutingResult(request3),
                                               status);
 
     checkResponse(response, 200, 2, Status.class.getName(), null, true);
@@ -379,7 +387,7 @@ public class TestRestLiResponseHandler
     // #4 fields not in schema
     RestRequest request4 = buildRequest("/test?fields=f1,f99");
     response = _responseHandler.buildResponse(request4,
-                                              buildRoutingResult(false, request4),
+                                              buildRoutingResult(request4),
                                               status);
 
     checkResponse(response, 200, 2, Status.class.getName(), null, true);
@@ -405,7 +413,7 @@ public class TestRestLiResponseHandler
 
     RestRequest request1 = buildRequest("/test?fields=f1,f2:(f3,f4)");
     response = _responseHandler.buildResponse(request1,
-                                              buildRoutingResult(false, request1),
+                                              buildRoutingResult(request1),
                                               status);
 
     checkResponse(response, 200, 2, Status.class.getName(), null, true);
@@ -414,7 +422,7 @@ public class TestRestLiResponseHandler
     // #2 some fields
     RestRequest request2 = buildRequest("/test?fields=f1,f2:(f3)");
     response = _responseHandler.buildResponse(request2,
-                                              buildRoutingResult(false, request2),
+                                              buildRoutingResult(request2),
                                               status);
     assertTrue(status.data().containsKey("f2"));
 
@@ -424,7 +432,7 @@ public class TestRestLiResponseHandler
     // #3 no fields
     RestRequest request3 = buildRequest("/test?fields=");
     response = _responseHandler.buildResponse(request3,
-                                              buildRoutingResult(false, request3),
+                                              buildRoutingResult(request3),
                                               status);
 
     checkResponse(response, 200, 2, Status.class.getName(), null, true);
@@ -435,7 +443,7 @@ public class TestRestLiResponseHandler
     // #4 fields not in schema
     RestRequest request4 = buildRequest("/test?fields=f2:(f99)");
     response = _responseHandler.buildResponse(request4,
-                                              buildRoutingResult(false, request4),
+                                              buildRoutingResult(request4),
                                               status);
 
     checkResponse(response, 200, 2, Status.class.getName(), null, true);
@@ -568,7 +576,7 @@ public class TestRestLiResponseHandler
 
     final ActionResult<Status> actionResult = new ActionResult<Status>(status, HttpStatus.S_500_INTERNAL_SERVER_ERROR);
     response = _responseHandler.buildResponse(buildRequest(),
-                                              buildRoutingResult(true),
+                                              buildRoutingResultAction(Status.class),
                                               actionResult);
     checkResponse(response,
                   HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode(),
@@ -597,19 +605,71 @@ public class TestRestLiResponseHandler
   private final RoutingResult buildRoutingResult()
           throws SecurityException, NoSuchMethodException, RestLiSyntaxException
   {
-    return buildRoutingResult(false, null);
+    return buildRoutingResult(null);
   }
 
-  private final RoutingResult buildRoutingResult(boolean isAction)
-          throws SecurityException, NoSuchMethodException, RestLiSyntaxException
+  /**
+   * Creates a RoutingResult for an Action with the given returnType.
+   *
+   * @param actionReturnType the return type of the action.
+   * @return a RoutingResult
+   */
+  private final RoutingResult buildRoutingResultAction(Class actionReturnType)
+          throws NoSuchMethodException, RestLiSyntaxException
   {
-    return buildRoutingResult(isAction, null);
+
+    if (actionReturnType == Void.class)
+    {
+      actionReturnType = Void.TYPE;
+    }
+
+    // actual method passed in is irrelevant, since we are constructing a ResourceMethodDescriptor by hand.
+    Method method = ProjectionTestFixture.class.getMethod("batchGet", Set.class);
+
+    ResourceModel model = RestLiTestHelper.buildResourceModel(StatusCollectionResource.class);
+
+    String actionName = "return" + actionReturnType.getSimpleName();
+    List<Parameter<?>> parameters = Collections.<Parameter<?>>emptyList();
+
+    RecordDataSchema actionReturnRecordDataSchema;
+    FieldDef<?> returnFieldDef;
+    if (actionReturnType != Void.TYPE)
+    {
+      @SuppressWarnings("unchecked")
+      FieldDef<?> nonVoidFieldDef = new FieldDef(ActionResponse.VALUE_NAME,
+                                 actionReturnType,
+                                 DataTemplateUtil.getSchema(actionReturnType));
+      returnFieldDef = nonVoidFieldDef;
+      actionReturnRecordDataSchema = DynamicRecordMetadata.buildSchema(actionName,
+                                                                       Collections.singleton(returnFieldDef));
+    }
+    else
+    {
+      returnFieldDef = null;
+      actionReturnRecordDataSchema = DynamicRecordMetadata.buildSchema(actionName, Collections.<FieldDef<?>>emptyList());
+    }
+
+    ResourceMethodDescriptor methodDescriptor =
+            ResourceMethodDescriptor.createForAction(method,
+                                                     parameters,
+                                                     actionName,
+                                                     ResourceLevel.COLLECTION,
+                                                     returnFieldDef,
+                                                     actionReturnRecordDataSchema,
+                                                     DynamicRecordMetadata.buildSchema(actionName, parameters),
+                                                     InterfaceType.SYNC,
+                                                     new DataMap());
+
+    model.addResourceMethodDescriptor(methodDescriptor);
+
+    return new RoutingResult(new ResourceContextImpl(new PathKeysImpl(), null, new RequestContext()),
+                             methodDescriptor);
   }
 
-  private final RoutingResult buildRoutingResult(boolean isAction, RestRequest request)
+  private final RoutingResult buildRoutingResult(RestRequest request)
           throws SecurityException, NoSuchMethodException, RestLiSyntaxException
   {
-    return buildRoutingResult(isAction ? ResourceMethod.ACTION : ResourceMethod.GET, request);
+    return buildRoutingResult(ResourceMethod.GET, request);
   }
 
   private final RoutingResult buildRoutingResult(ResourceMethod resourceMethod, RestRequest request)

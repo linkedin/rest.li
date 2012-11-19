@@ -19,6 +19,8 @@ package com.linkedin.restli.internal.server.methods.response;
 import java.io.IOException;
 import java.util.Map;
 
+import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.template.FieldDef;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.ActionResponse;
 import com.linkedin.restli.common.HttpStatus;
@@ -53,7 +55,11 @@ public class ActionResponseBuilder implements RestLiResponseBuilder
     headers.put(RestConstants.HEADER_LINKEDIN_TYPE, ActionResponse.class.getName());
     headers.put(RestConstants.HEADER_LINKEDIN_SUB_TYPE, value.getClass().getName());
 
-    final ActionResponse<?> actionResponse = new ActionResponse<Object>(value);
+    RecordDataSchema actionReturnRecordDataSchema = routingResult.getResourceMethod().getActionReturnRecordDataSchema();
+    @SuppressWarnings("unchecked")
+    FieldDef<Object> actionReturnFieldDef = (FieldDef<Object>)routingResult.getResourceMethod().getActionReturnFieldDef();
+    final ActionResponse<?> actionResponse = new ActionResponse<Object>(value, actionReturnFieldDef, actionReturnRecordDataSchema);
+
     return new PartialRestResponse(status, actionResponse);
   }
 }

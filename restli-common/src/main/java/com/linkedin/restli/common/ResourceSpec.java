@@ -19,6 +19,8 @@ package com.linkedin.restli.common;
 import java.util.Map;
 import java.util.Set;
 
+import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.data.template.RecordTemplate;
 
 
@@ -58,4 +60,17 @@ public interface ResourceSpec
    * @return the parameters of the key, if the keyClass is a ComplexResourceKey
    */
   Class<? extends RecordTemplate> getKeyParamsClass();
+
+  /**
+   * @param methodName the name of the method
+   * @return the {@link DynamicRecordMetadata} of the method
+   */
+  public DynamicRecordMetadata getRequestMetadata(String methodName);
+
+  /**
+   * @param methodName the name of the method
+   * @return the {@link DynamicRecordMetadata} of the Response
+   */
+  public DynamicRecordMetadata getActionResponseMetadata(String methodName);
+
 }

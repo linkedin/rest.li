@@ -154,14 +154,13 @@ public class ArgumentBuilder
           Array.set(convertedValue,
                     j++,
                     convertSimpleValue(itemStringValue,
-                                       param.getTyperefSchema(),
+                                       param.getDataSchema(),
                                        param.getItemType()));
         }
       }
       else
       {
-        convertedValue =
-            convertSimpleValue(value, param.getTyperefSchema(), param.getType());
+        convertedValue = convertSimpleValue(value, param.getDataSchema(), param.getType());
       }
     }
 
@@ -205,21 +204,17 @@ public class ArgumentBuilder
   }
 
   private static Object convertSimpleValue(final String value,
-                                           final TyperefDataSchema schema,
+                                           final DataSchema schema,
                                            final Class<?> type)
   {
-    if (schema == null)
-    {
-      return ArgumentUtils.parseSimpleKey(value, type);
-    }
-    else
-    {
-      DataSchema.Type dereferencedType = schema.getDereferencedType(); // this gets me an
-                                                                       // enum LONG.
-      Object underlyingValue =
-          ArgumentUtils.parseSimpleKey(value,
-                                       DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchemaClass(dereferencedType));
-      return DataTemplateUtil.coerceOutput(underlyingValue, type);
-    }
+
+
+    DataSchema.Type dereferencedType = schema.getDereferencedType();
+
+    Object underlyingValue = schema.getDereferencedDataSchema().isComplex()?
+            value : ArgumentUtils.parseSimpleKey(value, DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchemaClass(dereferencedType));
+
+    return DataTemplateUtil.coerceOutput(underlyingValue, type);
+
   }
 }

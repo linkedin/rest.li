@@ -16,8 +16,8 @@
 
 package com.linkedin.restli.internal.server.model;
 
+import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.DataMap;
-import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.template.FieldDef;
 import com.linkedin.restli.server.annotations.ActionParam;
 import com.linkedin.restli.server.annotations.QueryParam;
@@ -45,7 +45,6 @@ public class Parameter<T> extends FieldDef<T>
   private final T _defaultValue;
 
   private final ParamType _paramType;
-  private final TyperefDataSchema _typerefSchema;
 
   private final boolean _custom;
 
@@ -57,19 +56,18 @@ public class Parameter<T> extends FieldDef<T>
 
   public Parameter(final String name,
                    final Class<T> type,
-                   final TyperefDataSchema typerefSchema,
+                   final DataSchema dataSchema,
                    final boolean optional,
                    final T defaultValue,
                    final ParamType paramType,
                    final boolean custom,
                    final AnnotationSet annotations)
   {
-    super(name, type);
+    super(name, type, dataSchema);
 
     _optional = optional;
     _defaultValue = defaultValue;
     _paramType = paramType;
-    _typerefSchema = typerefSchema;
     _custom = custom;
 
     _isArray = getType().isArray();
@@ -96,11 +94,6 @@ public class Parameter<T> extends FieldDef<T>
   public ParamType getParamType()
   {
     return _paramType;
-  }
-
-  public TyperefDataSchema getTyperefSchema()
-  {
-    return _typerefSchema;
   }
 
   public boolean isCustom()
@@ -141,10 +134,6 @@ public class Parameter<T> extends FieldDef<T>
       .append(_optional)
       .append(", paramType=")
       .append(_paramType);
-    if (_typerefSchema != null)
-    {
-      sb.append(", typerefSchema=").append(_typerefSchema.getFullName());
-    }
     return sb.toString();
   }
 }

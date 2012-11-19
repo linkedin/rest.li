@@ -17,6 +17,8 @@
 package com.linkedin.restli.internal.client;
 
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.template.FieldDef;
 import com.linkedin.restli.common.ActionResponse;
 
 
@@ -29,22 +31,24 @@ import com.linkedin.restli.common.ActionResponse;
  */
 public class ActionResponseDecoder<T> extends RestResponseDecoder<T>
 {
-  private final Class<T> _returnType;
+  private final FieldDef<T> _returnFieldDef;
+  private final RecordDataSchema _recordDataSchema;
 
-  public ActionResponseDecoder(Class<T> returnType)
+  public ActionResponseDecoder(FieldDef<T> returnFieldDef, RecordDataSchema schema) // todo fix usages of this function
   {
-    _returnType = returnType;
+    _returnFieldDef = returnFieldDef;
+    _recordDataSchema = schema;
   }
 
   @Override
   public Class<?> getEntityClass()
   {
-    return _returnType;
+    return _returnFieldDef.getType();
   }
 
   @Override
   protected T wrapResponse(DataMap dataMap)
   {
-    return new ActionResponse<T>(dataMap, _returnType).getValue();
+    return new ActionResponse<T>(dataMap, _returnFieldDef, _recordDataSchema).getValue();
   }
 }

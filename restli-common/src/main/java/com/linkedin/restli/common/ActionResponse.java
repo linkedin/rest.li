@@ -16,9 +16,12 @@
 
 package com.linkedin.restli.common;
 
-import java.util.Arrays;
+import java.util.Collections;
 
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.data.template.DynamicRecordTemplate;
 import com.linkedin.data.template.FieldDef;
 
@@ -30,34 +33,71 @@ import com.linkedin.data.template.FieldDef;
  */
 public final class ActionResponse<T> extends DynamicRecordTemplate
 {
-  private static final String VALUE_NAME = "value";
+  public static final String VALUE_NAME = "value";
 
   private final FieldDef<T> _valueFieldDef;
 
+  /**
+   * Initialize an ActionResponse based on the data returned from the RestLi
+   * server, the expected return type of the Action, and the RecordDataSchema for the
+   * Action return.
+   *
+   * @param data DataMap of the returned data
+   * @param valueFieldDef the {@link FieldDef} representing the action return.
+   * @param schema the {@link RecordDataSchema} of the Action return
+   */
   @SuppressWarnings({"unchecked"})
+  public ActionResponse(DataMap data, FieldDef<T> valueFieldDef, RecordDataSchema schema)
+  {
+    super(data, schema);
+    _valueFieldDef = valueFieldDef;
+  }
+
+  @SuppressWarnings({"unchecked"})
+  @Deprecated
   private ActionResponse(DataMap data, FieldDef<T> valueFieldDef)
   {
-    super(ActionResponse.class.getName(), Arrays.asList(valueFieldDef), data);
+    super(data, DynamicRecordMetadata.buildSchema(ActionResponse.class.getName(),
+                                                  Collections.<FieldDef<?>>singletonList(valueFieldDef)));
     _valueFieldDef = valueFieldDef;
   }
 
   /**
    * Initialize an ActionResponse based on the data returned from the RestLi
-   * server and the expected return type of the action.
+   * server, the expected return type of the Action, and the RecordDataSchema for the
+   * Action return.
    *
    * @param data DataMap of the returned data
    * @param valueClass expected return type of the Action
+   * @deprecated value {@link FieldDef} and associated {@link RecordDataSchema} should be computed
+   * in builders and passed in here rather than being computed on the fly.
+   *
    */
+  @Deprecated
   public ActionResponse(DataMap data, Class<T> valueClass)
   {
-    this(data, new FieldDef<T>(VALUE_NAME, valueClass));
+    this(data, new FieldDef<T>(VALUE_NAME, valueClass, DataTemplateUtil.getSchema(valueClass)));
+  }
+
+  /**
+   * Initialize an ActionResponse based on the expected return type of the action
+   *
+   * @param valueFieldDef the {@link FieldDef} representing the action return.
+   * @param schema the {@link RecordDataSchema} of the Action return
+   */
+  public ActionResponse(FieldDef<T> valueFieldDef, RecordDataSchema schema)
+  {
+    this(new DataMap(), valueFieldDef, schema);
   }
 
   /**
    * Initialize an ActionResponse based on the expected return type of the action
    *
    * @param valueClass Class of the type that the Action is expected to return
+   * @deprecated RecordDataSchema should be computed in builders and passed, rather than creating
+   * it on the fly.
    */
+  @Deprecated
   public ActionResponse(Class<T> valueClass)
   {
     this(new DataMap(), valueClass);
@@ -67,7 +107,21 @@ public final class ActionResponse<T> extends DynamicRecordTemplate
    * Initialize an ActionResponse based on the value result of the Action.
    *
    * @param value Class of the type that the Action is expected to return
+   * @param valueFieldDef the {@link FieldDef} representing the action return.
+   * @param schema the {@link RecordDataSchema} of the Action return
    */
+  public ActionResponse(T value, FieldDef<T> valueFieldDef, RecordDataSchema schema)
+  {
+    this (valueFieldDef, schema);
+    setValue(value);
+  }
+
+  /**
+   * Initialize an ActionResponse based on the value result of the Action.
+   *
+   * @param value Class of the type that the Action is expected to return
+   */
+  @Deprecated
   @SuppressWarnings({"unchecked"})
   public ActionResponse(T value)
   {

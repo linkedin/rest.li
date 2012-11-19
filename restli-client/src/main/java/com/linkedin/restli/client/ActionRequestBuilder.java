@@ -20,12 +20,18 @@
 
 package com.linkedin.restli.client;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.data.template.DynamicRecordTemplate;
 import com.linkedin.data.template.FieldDef;
 import com.linkedin.jersey.api.uri.UriBuilder;
+import com.linkedin.restli.common.ActionResponse;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.client.ActionResponseDecoder;
@@ -96,7 +102,42 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
     }
     appendQueryParams(b);
 
-    return new ActionRequest<V>(b.build(), new DynamicRecordTemplate(_name, _actionParams), _headers,  new ActionResponseDecoder<V>(_elementClass),
+    RecordDataSchema requestDataSchema;
+    RecordDataSchema actionResponseDataSchema;
+    FieldDef<?> responseFieldDef;
+
+    if (_resourceSpec.getRequestMetadata(_name) == null) // old builder code in use
+    {
+      requestDataSchema = DynamicRecordMetadata.buildSchema(_name, _actionParams.keySet());
+
+      Collection<FieldDef<?>> responseFieldDefCollection;
+      if (_elementClass == Void.class)
+      {
+        responseFieldDef = null;
+        responseFieldDefCollection = Collections.emptyList();
+      }
+      else
+      {
+        responseFieldDef = new FieldDef<V>(ActionResponse.VALUE_NAME, _elementClass, DataTemplateUtil.getSchema(_elementClass));
+        responseFieldDefCollection = Collections.<FieldDef<?>>singleton(responseFieldDef);
+      }
+      actionResponseDataSchema = DynamicRecordMetadata.buildSchema(_name,responseFieldDefCollection);
+    }
+    else
+    {
+      requestDataSchema =  _resourceSpec.getRequestMetadata(_name).getRecordDataSchema();
+      actionResponseDataSchema = _resourceSpec.getActionResponseMetadata(_name).getRecordDataSchema();
+      responseFieldDef = _resourceSpec.getActionResponseMetadata(_name).getFieldDef(ActionResponse.VALUE_NAME);
+    }
+
+    @SuppressWarnings("unchecked")
+    ActionResponseDecoder<V> actionResponseDecoder = new ActionResponseDecoder(responseFieldDef, actionResponseDataSchema);
+
+    return new ActionRequest<V>(b.build(),
+                                new DynamicRecordTemplate(requestDataSchema, _actionParams),
+                                _headers,
+                                actionResponseDecoder,
                                 _resourceSpec);
+
   }
 }

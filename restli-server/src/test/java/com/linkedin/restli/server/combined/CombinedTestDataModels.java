@@ -17,6 +17,8 @@
 package com.linkedin.restli.server.combined;
 
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
 
 /**
@@ -26,6 +28,8 @@ public class CombinedTestDataModels
 {
   public static class Foo extends RecordTemplate
   {
+    // schema content is irrelevant, this Foo is never used
+    private final static DataSchema SCHEMA = DataTemplateUtil.parseSchema("{\"type\":\"record\", \"name\":\"Foo\", \"namespace\":\"com.linkedin.restli.server.combined\", \"fields\" : [{ \"name\":\"booleanField\", \"type\":\"boolean\" }]}");
     public Foo(DataMap map)
     {
       super(map, null);
@@ -42,6 +46,8 @@ public class CombinedTestDataModels
 
   public static class DummyParamsPart extends RecordTemplate
   {
+    // schema content is irrelevant, DummyParamsPart is never used
+    private final static DataSchema SCHEMA = DataTemplateUtil.parseSchema("{\"type\":\"record\", \"name\":\"DummyParamsPart\", \"namespace\":\"com.linkedin.restli.server.combined\", \"fields\" : [{ \"name\":\"booleanField\", \"type\":\"boolean\" }]}");
     public DummyParamsPart(DataMap map)
     {
       super(map, null);

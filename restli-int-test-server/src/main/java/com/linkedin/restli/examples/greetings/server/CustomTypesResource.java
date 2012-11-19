@@ -24,6 +24,8 @@ import com.linkedin.restli.examples.custom.types.CustomLong;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.typeref.api.CustomLongRef;
 import com.linkedin.restli.examples.typeref.api.DateRef;
+import com.linkedin.restli.server.annotations.Action;
+import com.linkedin.restli.server.annotations.ActionParam;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.Optional;
 import com.linkedin.restli.server.annotations.QueryParam;
@@ -59,5 +61,11 @@ public class CustomTypesResource extends CollectionResourceTemplate<Long, Greeti
   public List<Greeting> date(@QueryParam(value="d", typeref= DateRef.class) Date d)
   {
     return Collections.emptyList();
+  }
+
+  @Action(name="action")
+  public long action(@ActionParam(value="l", typeref=CustomLongRef.class) CustomLong l)
+  {
+    return l.toLong();
   }
 }

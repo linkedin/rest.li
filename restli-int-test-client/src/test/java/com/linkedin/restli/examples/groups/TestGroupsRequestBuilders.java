@@ -24,6 +24,9 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.data.template.DynamicRecordMetadata;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -32,15 +35,11 @@ import com.linkedin.data.template.FieldDef;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.restli.client.ActionRequest;
-import com.linkedin.restli.client.BatchCreateRequestBuilder;
 import com.linkedin.restli.client.BatchGetRequest;
-import com.linkedin.restli.client.BatchGetRequestBuilder;
-import com.linkedin.restli.client.FindRequestBuilder;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.util.PatchGenerator;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionResponse;
-import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceMethod;
@@ -438,10 +437,17 @@ public class TestGroupsRequestBuilders
 
 
     Map<FieldDef<?> , Object> parameters = new HashMap<FieldDef<?> , Object>(1);
-    parameters.put(new FieldDef<TransferOwnershipRequest>("request", TransferOwnershipRequest.class), ownershipRequest);
-    DynamicRecordTemplate requestInput = new DynamicRecordTemplate("transferOwnership", parameters);
+    parameters.put(new FieldDef<TransferOwnershipRequest>("request", TransferOwnershipRequest.class,
+                                                          DataTemplateUtil.getSchema(TransferOwnershipRequest.class)), ownershipRequest);
+    DynamicRecordTemplate requestInput = createDynamicRecordTemplate("transferOwnership", parameters);
     String expectedUri = "groups/1?action=transferOwnership";
     checkRequestBuilder(request, ResourceMethod.ACTION, ActionResponseDecoder.class, null, expectedUri, requestInput);
+  }
+
+  private static DynamicRecordTemplate createDynamicRecordTemplate(String schemaName, Map<FieldDef<?>, Object> fieldDefs)
+  {
+    RecordDataSchema recordDataSchema = DynamicRecordMetadata.buildSchema(schemaName, fieldDefs.keySet());
+    return new DynamicRecordTemplate(recordDataSchema, fieldDefs);
   }
 
   @Test
@@ -592,7 +598,7 @@ public class TestGroupsRequestBuilders
     ActionRequest<Void> request = CONTACTS_BUILDERS.actionSpamContacts().groupIdKey(42).build();
 
     Map<FieldDef<?> , Object> parameters = new HashMap<FieldDef<?> , Object>(1);
-    DynamicRecordTemplate requestInput = new DynamicRecordTemplate("spamContacts", parameters);
+    DynamicRecordTemplate requestInput = createDynamicRecordTemplate("spamContacts", parameters);
 
     String expectedUri = "groups/42/contacts?action=spamContacts";
     checkRequestBuilder(request, ResourceMethod.ACTION, ActionResponseDecoder.class, null, expectedUri, requestInput);

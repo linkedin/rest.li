@@ -21,6 +21,7 @@
 package com.linkedin.restli.client;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -29,6 +30,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.data.template.DynamicRecordMetadata;
+import com.linkedin.data.template.DynamicRecordTemplate;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -58,6 +63,8 @@ public class TestClientBuilders
   public static final String SUBRESOURCE_URI = "foo/{key1}/bar/{key2}/baz";
   private static final ResourceSpec _COLL_SPEC      =
                                                         new ResourceSpecImpl(EnumSet.allOf(ResourceMethod.class),
+                                                                             Collections.<String, DynamicRecordMetadata> emptyMap(),
+                                                                             Collections.<String, DynamicRecordMetadata> emptyMap(),
                                                                              Long.class,
                                                                              null,
                                                                              null,
@@ -65,6 +72,8 @@ public class TestClientBuilders
                                                                              Collections.<String, Class<?>> emptyMap());
   private static final ResourceSpec _ASSOC_SPEC     =
                                                         new ResourceSpecImpl(EnumSet.allOf(ResourceMethod.class),
+                                                                             Collections.<String, DynamicRecordMetadata> emptyMap(),
+                                                                             Collections.<String, DynamicRecordMetadata> emptyMap(),
                                                                              CompoundKey.class,
                                                                              null,
                                                                              null,
@@ -72,6 +81,8 @@ public class TestClientBuilders
                                                                              Collections.<String, Class<?>> emptyMap());
   private static final ResourceSpec _COMPLEX_KEY_SPEC =
                                                           new ResourceSpecImpl(EnumSet.allOf(ResourceMethod.class),
+                                                                               Collections.<String, DynamicRecordMetadata> emptyMap(),
+                                                                               Collections.<String, DynamicRecordMetadata> emptyMap(),
                                                                                ComplexResourceKey.class,
                                                                                TestRecord.class,
                                                                                TestRecord.class,
@@ -81,9 +92,19 @@ public class TestClientBuilders
   @Test
   public void testActionRequestBuilder()
   {
+    FieldDef<String> pParam = new FieldDef<String>("p", String.class, DataTemplateUtil.getSchema(String.class));
+    Map<String, DynamicRecordMetadata> requestMetadataMap = new HashMap<String, DynamicRecordMetadata>();
+    DynamicRecordMetadata requestMetadata = new DynamicRecordMetadata("action", Collections.<FieldDef<?>>singleton(pParam));
+    requestMetadataMap.put("action", requestMetadata);
+    DynamicRecordMetadata responseMetadata = new DynamicRecordMetadata("action", Collections.<FieldDef<?>>emptyList());
+    Map<String, DynamicRecordMetadata> responseMetadataMap = new HashMap<String, DynamicRecordMetadata>();
+    responseMetadataMap.put("action", responseMetadata);
+    ResourceSpec resourceSpec = new ResourceSpecImpl(Collections.<ResourceMethod>emptySet(), requestMetadataMap, responseMetadataMap);
+
     ActionRequestBuilder<Long, TestRecord> builder = new ActionRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class,
-                                                                                                null);
-    ActionRequest<TestRecord> request = builder.name("action").param(new FieldDef<String>("p", String.class), "42").id(1L).build();
+                                                                                                resourceSpec);
+
+    ActionRequest<TestRecord> request = builder.name("action").param(pParam, "42").id(1L).build();
 
     Assert.assertEquals(request.getUri(), URI.create("test/1?action=action"));
     Assert.assertEquals(request.getMethod(), ResourceMethod.ACTION);
@@ -471,8 +492,19 @@ public class TestClientBuilders
   public void testBuilderPathKeys()
   {
 
+    List<FieldDef<?>> fieldDefs = new ArrayList<FieldDef<?>>();
+    fieldDefs.add(new FieldDef<Integer>("key1", Integer.class, DataTemplateUtil.getSchema(Integer.class)));
+    fieldDefs.add(new FieldDef<Integer>("key2", Integer.class, DataTemplateUtil.getSchema(Integer.class)));
+    DynamicRecordMetadata requestMetadata = new DynamicRecordMetadata("action", fieldDefs);
+    Map<String, DynamicRecordMetadata> requestMetadataMap = new HashMap<String, DynamicRecordMetadata>();
+    requestMetadataMap.put("action", requestMetadata);
+    DynamicRecordMetadata responseMetadata = new DynamicRecordMetadata("action", Collections.<FieldDef<?>>emptyList());
+    Map<String, DynamicRecordMetadata> responseMetadataMap = new HashMap<String, DynamicRecordMetadata>();
+    responseMetadataMap.put("action", responseMetadata);
+    ResourceSpec resourceSpec = new ResourceSpecImpl(Collections.<ResourceMethod>emptySet(), requestMetadataMap, responseMetadataMap);
+
     URI uri;
-    uri = new ActionRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, null).name("action").pathKey("key1", 1).pathKey("key2", 2).build().getUri();
+    uri = new ActionRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, resourceSpec).name("action").pathKey("key1", 1).pathKey("key2", 2).build().getUri();
     Assert.assertEquals(uri, URI.create("foo/1/bar/2/baz?action=action"));
 
     uri = new BatchGetRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, _COLL_SPEC).ids(1L,2L).pathKey("key1", 1).pathKey("key2", 2).build().getUri();

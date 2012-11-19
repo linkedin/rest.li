@@ -20,12 +20,15 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaResolver;
+import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.resolver.ClassNameDataSchemaResolver;
 import com.linkedin.data.schema.validation.RequiredMode;
 import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
 import com.linkedin.data.schema.validation.ValidationOptions;
 import com.linkedin.data.schema.validation.ValidationResult;
 import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.data.template.DynamicRecordMetadata;
+import com.linkedin.data.template.FieldDef;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.restli.common.ActionResponse;
@@ -54,6 +57,7 @@ import com.linkedin.restli.restspec.RestMethodSchemaArray;
 import com.linkedin.restli.server.ResourceLevel;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -334,7 +338,12 @@ public class TestExamplesGenerator
       throws IOException
   {
     final DataMap respData = _codec.bytesToMap(response.getEntity().copyBytes());
-    final ActionResponse<T> actionResp = new ActionResponse<T>(respData, recordClass);
+    final FieldDef<T> responseFieldDef = new FieldDef<T>(ActionResponse.VALUE_NAME,
+                                                         recordClass,
+                                                         DataTemplateUtil.getSchema(recordClass));
+    final RecordDataSchema recordDataSchema = DynamicRecordMetadata.buildSchema(ActionResponse.class.getName(),
+                                                                                Collections.<FieldDef<?>>singletonList(responseFieldDef));
+    final ActionResponse<T> actionResp = new ActionResponse<T>(respData, responseFieldDef, recordDataSchema);
     final DataSchema recordSchema = DataTemplateUtil.getSchema(recordClass);
 
     return ValidateDataAgainstSchema.validate(actionResp.getValue().data(), recordSchema, options);
