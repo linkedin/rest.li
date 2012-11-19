@@ -1,5 +1,10 @@
 1.6.9
 -----
+(RB=111712)
+Split original Restli example server/client into two versions: Basic and D2. The Basic version does not contain any D2 features.
+Improve the D2 version of server and client to fully utilize D2.
+Add gradle tasks to start all the variants of servers and clients.
+Add gradle task to write D2-related configuration to ZooKeeper.
 
 1.6.8
 -----

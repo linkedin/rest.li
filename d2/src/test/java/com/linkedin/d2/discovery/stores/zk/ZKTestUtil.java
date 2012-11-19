@@ -56,7 +56,7 @@ public class ZKTestUtil
     try
     {
       conn.start();
-      conn.waitForState(Watcher.Event.KeeperState.SyncConnected, timeout, TimeUnit.SECONDS);
+      conn.waitForState(Watcher.Event.KeeperState.SyncConnected, timeout, TimeUnit.MILLISECONDS);
     }
     catch (Exception e)
     {

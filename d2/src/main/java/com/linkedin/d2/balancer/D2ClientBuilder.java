@@ -17,6 +17,9 @@
 package com.linkedin.d2.balancer;
 
 
+import com.linkedin.common.callback.Callback;
+import com.linkedin.common.callback.FutureCallback;
+import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.clients.DynamicClient;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
@@ -26,11 +29,18 @@ import com.linkedin.d2.balancer.strategies.random.RandomLoadBalancerStrategyFact
 import com.linkedin.d2.balancer.zkfs.ZKFSComponentFactory;
 import com.linkedin.d2.balancer.zkfs.ZKFSLoadBalancer;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
+import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.message.rpc.RpcRequest;
+import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 
@@ -45,14 +55,29 @@ public class D2ClientBuilder
    */
   public D2Client build()
   {
+    final Map<String, TransportClientFactory> loadBalancerClientFactories;
+    if (_config.clientFactories == null)
+    {
+      loadBalancerClientFactories = createDefaultClientFactories();
+    }
+    else
+    {
+      loadBalancerClientFactories = _config.clientFactories;
+    }
+
     final ZKFSLoadBalancer loadBalancer = new ZKFSLoadBalancer(_config.zkHosts,
                                                                (int) _config.zkSessionTimeoutInMs,
                                                                (int) _config.zkStartupTimeoutInMs,
-                                                               createLoadBalancerFactory(),
+                                                               createLoadBalancerFactory(loadBalancerClientFactories),
                                                                _config.flagFile,
                                                                _config.basePath);
 
-    return new DynamicClient(loadBalancer, loadBalancer.getFacilities());
+    D2Client d2Client = new DynamicClient(loadBalancer, loadBalancer.getFacilities());
+    if (_config.clientFactories == null)
+    {
+      d2Client = new TransportClientFactoryAwareD2Client(d2Client, loadBalancerClientFactories.values());
+    }
+    return d2Client;
   }
 
   public D2ClientBuilder setZkHosts(String zkHosts)
@@ -104,6 +129,11 @@ public class D2ClientBuilder
     return this;
   }
 
+  /**
+   * Specify {@link TransportClientFactory} to generate the client for specific protocol.
+   * Caller is responsible to maintain the life cycle of the factories.
+   * If not specified, the default client factory map will be used, which is suboptimal in performance
+   */
   public D2ClientBuilder setClientFactories(Map<String, TransportClientFactory> clientFactories)
   {
     _config.clientFactories = clientFactories;
@@ -134,7 +164,7 @@ public class D2ClientBuilder
     return loadBalancerStrategyFactories;
   }
 
-  private ZKFSTogglingLoadBalancerFactoryImpl createLoadBalancerFactory()
+  private ZKFSLoadBalancer.TogglingLoadBalancerFactory createLoadBalancerFactory(Map<String, TransportClientFactory> loadBalancerClientFactories)
   {
     final ZKFSTogglingLoadBalancerFactoryImpl.ComponentFactory loadBalancerComponentFactory;
     if (_config.componentFactory == null)
@@ -144,16 +174,6 @@ public class D2ClientBuilder
     else
     {
       loadBalancerComponentFactory = _config.componentFactory;
-    }
-
-    final Map<String, TransportClientFactory> loadBalancerClientFactories;
-    if (_config.clientFactories == null)
-    {
-      loadBalancerClientFactories = createDefaultClientFactories();
-    }
-    else
-    {
-      loadBalancerClientFactories = _config.clientFactories;
     }
 
     final Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
@@ -182,5 +202,88 @@ public class D2ClientBuilder
     String fsBasePath = "/tmp/d2";
     ZKFSTogglingLoadBalancerFactoryImpl.ComponentFactory componentFactory = null;
     Map<String, TransportClientFactory> clientFactories = null;
+  }
+
+  private class TransportClientFactoryAwareD2Client implements D2Client
+  {
+    TransportClientFactoryAwareD2Client(D2Client d2Client, Collection<TransportClientFactory> clientFactories)
+    {
+      _d2Client = d2Client;
+      _clientFactories = clientFactories;
+    }
+
+    @Override
+    public Facilities getFacilities()
+    {
+      return _d2Client.getFacilities();
+    }
+
+    @Override
+    public void start(Callback<None> callback)
+    {
+      _d2Client.start(callback);
+    }
+
+    @Override
+    public Future<RestResponse> restRequest(RestRequest request)
+    {
+      return _d2Client.restRequest(request);
+    }
+
+    @Override
+    public Future<RestResponse> restRequest(RestRequest request, RequestContext requestContext)
+    {
+      return _d2Client.restRequest(request, requestContext);
+    }
+
+    @Override
+    public void restRequest(RestRequest request, Callback<RestResponse> callback)
+    {
+      _d2Client.restRequest(request, callback);
+    }
+
+    @Override
+    public void restRequest(RestRequest request, RequestContext requestContext, Callback<RestResponse> callback)
+    {
+      _d2Client.restRequest(request, requestContext, callback);
+    }
+
+    @Override
+    public Future<RpcResponse> rpcRequest(RpcRequest request)
+    {
+      return _d2Client.rpcRequest(request);
+    }
+
+    @Override
+    public Future<RpcResponse> rpcRequest(RpcRequest request, RequestContext requestContext)
+    {
+      return _d2Client.rpcRequest(request, requestContext);
+    }
+
+    @Override
+    public void rpcRequest(RpcRequest request, Callback<RpcResponse> callback)
+    {
+      _d2Client.rpcRequest(request, callback);
+    }
+
+    @Override
+    public void rpcRequest(RpcRequest request, RequestContext requestContext, Callback<RpcResponse> callback)
+    {
+      _d2Client.rpcRequest(request, requestContext, callback);
+    }
+
+    @Override
+    public void shutdown(Callback<None> callback)
+    {
+      _d2Client.shutdown(callback);
+
+      for (TransportClientFactory clientFactory: _clientFactories)
+      {
+        clientFactory.shutdown(new FutureCallback<None>());
+      }
+    }
+
+    private D2Client _d2Client;
+    private Collection<TransportClientFactory> _clientFactories;
   }
 }

@@ -11,17 +11,18 @@ public class AlbumDatabaseImpl implements AlbumDatabase
 {
   public AlbumDatabaseImpl(int numInitAlbums)
   {
-    // initialize 10 random albums at the first the resource class is loaded
+    final Random r = new Random();
+
+    // initialize some random albums at the first the resource class is loaded
     for (int i = 0; i < numInitAlbums; i++)
     {
       final long id = _currId.incrementAndGet();
-
-      final Random r = new Random();
-
       final long date = r.nextInt(Integer.MAX_VALUE);
-
-      final Album album =
-          new Album().setId(id).setUrn(String.valueOf(id)).setTitle("Awesome Album #" + id).setCreationTime(date);
+      final Album album = new Album()
+          .setId(id)
+          .setUrn(String.valueOf(id))
+          .setTitle("Awesome Album #" + id)
+          .setCreationTime(date);
 
       _data.put(album.getId(), album);
     }

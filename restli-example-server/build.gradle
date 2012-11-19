@@ -3,13 +3,16 @@ dependencies {
   compile project(':data')
   compile project(':r2')
   compile project(':r2-jetty')
+  compile project(':d2')
   compile project(':data-transform')
   compile project(':restli-docgen')
   compile project(':restli-server')
   compile project(':restli-common')
+  compile project(':pegasus-common')
   compile externalDependency.log4j
   compile externalDependency.javaxInject
   compile externalDependency.parseq
+  compile externalDependency.zookeeper
   testCompile externalDependency.testng
   testCompile externalDependency.easymock
 }
@@ -26,10 +29,20 @@ ext.apiProject = project(':restli-example-api')
 apply from: "${buildScriptDirPath}/restModel.gradle"
 apply from: "${buildScriptDirPath}/publishIdl.gradle"
 
-task startExampleServer(dependsOn: ['build']) << {
-  logging.captureStandardOutput LogLevel.INFO
-  ant.java(classname:   'com.linkedin.restli.example.RestLiExamplesServer',
-           fork:        true,
-           output:      '/tmp/restli-example-server.log',
-           classpath:   "${sourceSets.main.runtimeClasspath.asPath}")
+task startExampleD2Server(type: JavaExec, dependsOn: 'build') {
+  main = 'com.linkedin.restli.example.RestLiExampleD2Server'
+  classpath = sourceSets.main.runtimeClasspath
+  standardInput = System.in
+}
+
+task startExampleBasicServer(type: JavaExec, dependsOn: 'build') {
+  main = 'com.linkedin.restli.example.RestLiExampleBasicServer'
+  classpath = sourceSets.main.runtimeClasspath
+  standardInput = System.in
+}
+
+task exampleConfigDiscovery(type: JavaExec, dependsOn: 'build') {
+  main = 'com.linkedin.restli.example.D2ConfigDiscovery'
+  classpath = sourceSets.main.runtimeClasspath
+  args new File(sourceSets.main.output.resourcesDir, 'D2Config.json').path
 }

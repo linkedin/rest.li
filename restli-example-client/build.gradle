@@ -11,3 +11,15 @@ dependencies {
   testCompile externalDependency.easymock
   testCompile externalDependency.commonsHttpClient
 }
+
+task startExampleD2Client(type: JavaExec, dependsOn: 'build') {
+  main = 'com.linkedin.restli.example.RestLiExampleD2Client'
+  classpath = sourceSets.main.runtimeClasspath
+  args '/album/7'
+}
+
+task startExampleBasicClient(type: JavaExec, dependsOn: 'build') {
+  main = 'com.linkedin.restli.example.RestLiExampleBasicClient'
+  classpath = sourceSets.main.runtimeClasspath
+  args ''
+}

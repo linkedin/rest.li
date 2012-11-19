@@ -1,28 +1,14 @@
-/*
-   Copyright (c) 2012 LinkedIn Corp.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package com.linkedin.restli.example;
 
 
 import com.linkedin.common.callback.Callback;
-import com.linkedin.d2.balancer.D2Client;
-import com.linkedin.d2.balancer.D2ClientBuilder;
-import com.linkedin.d2.balancer.util.LoadBalancerClientCli;
-import com.linkedin.d2.balancer.util.LoadBalancerUtil;
+import com.linkedin.common.callback.FutureCallback;
+import com.linkedin.common.util.None;
 import com.linkedin.r2.RemoteInvocationException;
+import com.linkedin.r2.transport.common.Client;
+import com.linkedin.r2.transport.common.bridge.client.TransportClient;
+import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
+import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.client.FindRequest;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
@@ -38,6 +24,7 @@ import com.linkedin.restli.example.photos.PhotosBuilders;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
@@ -48,39 +35,42 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author Keren Jin
  */
-public class PhotoClient
+public class RestLiExampleBasicClient
 {
-  public static final int  PORT = 7279; // Must match that in restli-examples-server
-                                        // RestLiExamplesServer
-  private final RestClient _restClient;
-
   /**
    * This is a stand-alone app to demo the use of client-side Pegasus API. To run in,
    * com.linkedin.restli.example.RestLiExamplesServer has to be running.
    *
-   * The only argument is the path to the resource on the photo server, e.g. /album/1
+   * The only argument is the path to the resource on the photo server, e.g. /photos/1
    */
-  public static void main(String[] args)
+  public static void main(String[] args) throws Exception
   {
+    // create HTTP Netty client with default properties
+    final HttpClientFactory http = new HttpClientFactory();
+    final TransportClient transportClient = http.getClient(Collections.<String, String>emptyMap());
+    // create an abstraction layer over the actual client, which supports both REST and RPC
+    final Client r2Client = new TransportClientAdapter(transportClient);
     // REST client wrapper that simplifies the interface
+    final StringBuilder serverUrlBuilder = new StringBuilder("http://").append(SERVER_HOSTNAME).append(":").append(SERVER_PORT).append("/");
+    final RestClient restClient = new RestClient(r2Client, serverUrlBuilder.toString());
+    final RestLiExampleBasicClient photoClient = new RestLiExampleBasicClient(restClient);
 
-    final D2Client d2Client = new D2ClientBuilder().build();
-    final RestClient restClient = new RestClient(d2Client, "d2://");
-    final PhotoClient photoClient = new PhotoClient(restClient);
-
-    photoClient.processGet(args[0], new PrintWriter(System.out));
+    photoClient.sendRequest(args[0], new PrintWriter(System.out));
+    photoClient.shutdown();
+    http.shutdown(new FutureCallback<None>());
   }
 
-  public PhotoClient(RestClient restClient)
+  public RestLiExampleBasicClient(RestClient restClient)
   {
-    this._restClient = restClient;
+    _restClient = restClient;
   }
 
-  public void processGet(String pathInfo, PrintWriter respWriter)
+  public void sendRequest(String pathInfo, PrintWriter respWriter)
   {
-    /*
-     * Supported URLs /fail just fail /album/<album_id> display album and the photos /
-     * make photo, get photo, purge photos
+    /* Supported URLs
+     *  /fail: just fail
+     *  /album/<album_id>: display album
+     *  all others: make photos, get photos, purge photos
      */
     try
     {
@@ -96,11 +86,18 @@ public class PhotoClient
         }
         else
         {
-          final Long newPhotoId = createPhoto(respWriter);
+          // this track does not make any assumption on server
+          // we need to create photo first, find it and clean them up
+          // we use both sync and async approaches for creating
+
+          final long newPhotoId = createPhoto(respWriter);
           final CountDownLatch latch = new CountDownLatch(1);
           createPhotoAsync(respWriter, latch, newPhotoId);
           getPhoto(respWriter, newPhotoId);
           findPhoto(respWriter);
+          partialUpdatePhoto(respWriter, newPhotoId);
+          // photos and albums have IDs starting from 1
+          getAlbumSummary(respWriter, (long) new Random().nextInt(10) + 1);
           purgeAllPhotos(respWriter);
           try
           {
@@ -110,66 +107,68 @@ public class PhotoClient
           {
             respWriter.println(e.getMessage());
           }
-
-          final Long id = createPhoto(respWriter);
-          partialUpdatePhoto(respWriter, id);
-          // photos and albums have IDs starting from 1
-          getAlbumSummary(respWriter, (long) new Random().nextInt(10) + 1);
         }
       }
     }
     catch (RemoteInvocationException e)
     {
-      respWriter.println("RemoteInvocationException: " + e.getMessage());
+      respWriter.println("Error in example client: " + e.getMessage());
     }
     respWriter.flush();
-    respWriter.close();
   }
 
-  private Long createPhoto(PrintWriter respWriter) throws RemoteInvocationException
+  public void shutdown()
   {
-    // 1) make create photo request and send with the rest client asynchronously
-    // response of create request does not have body, therefore use EmptyRecord as
-    // template
+    _restClient.shutdown(new Callback<None>()
+    {
+      @Override
+      public void onError(Throwable e)
+      {
+        throw new RuntimeException("Error occurred during example client shutdown.", e);
+      }
+
+      @Override
+      public void onSuccess(None result)
+      {
+        System.out.println("Example client is shutdown.");
+      }
+    });
+  }
+
+  private long createPhoto(PrintWriter respWriter) throws RemoteInvocationException
+  {
+    // make create photo request and send with the rest client synchronously
+    // response of create request does not have body, therefore use EmptyRecord as template
 
     // create an instance of photo pragmatically
     // this resembles to photo-create.json
-    final LatLong newLatLong =
-        new LatLong().setLatitude(37.42394f).setLongitude(-122.0708f);
+    final LatLong newLatLong = new LatLong().setLatitude(37.42394f).setLongitude(-122.0708f);
     final EXIF newExif = new EXIF().setLocation(newLatLong);
-    final Photo newPhoto =
-        new Photo().setTitle("New Photo").setFormat(PhotoFormats.PNG).setExif(newExif);
+    final Photo newPhoto = new Photo().setTitle("New Photo").setFormat(PhotoFormats.PNG).setExif(newExif);
 
-    final Request<EmptyRecord> createReq1 =
-        _photoBuilders.create().input(newPhoto).build();
+    final Request<EmptyRecord> createReq1 = _photoBuilders.create().input(newPhoto).build();
     final ResponseFuture<EmptyRecord> createFuture1 = _restClient.sendRequest(createReq1);
     // Future.getResource() blocks until server responds
     final Response<EmptyRecord> createResp1 = createFuture1.getResponse();
 
     // HTTP header Location also shows the relative URI of the created resource
-    final Long newPhotoId = Long.parseLong(createResp1.getId());
+    final long newPhotoId = Long.parseLong(createResp1.getId());
     respWriter.println("New photo ID: " + newPhotoId);
 
     return newPhotoId;
   }
 
-  private void createPhotoAsync(final PrintWriter respWriter,
-                                       final CountDownLatch latch,
-                                       final Long newPhotoId)
+  /**
+   * make create photo request and send with the rest client asynchronously
+   */
+  private void createPhotoAsync(final PrintWriter respWriter, final CountDownLatch latch, final long newPhotoId)
   {
-    // 2) update photo with different data
-
     // this resembles to photo-create-id.json
     final LatLong newLatLong = new LatLong().setLatitude(40.725f).setLongitude(-74.005f);
     final EXIF newExif = new EXIF().setIsFlash(false).setLocation(newLatLong);
-    final Photo newPhoto =
-        new Photo().setId(123)
-                   .setTitle("Updated Photo")
-                   .setFormat(PhotoFormats.JPG)
-                   .setExif(newExif);
+    final Photo newPhoto = new Photo().setTitle("Updated Photo").setFormat(PhotoFormats.JPG).setExif(newExif);
 
-    final Request<EmptyRecord> createReq2 =
-        _photoBuilders.update().id(newPhotoId).input(newPhoto).build();
+    final Request<EmptyRecord> createReq2 = _photoBuilders.update().id(newPhotoId).input(newPhoto).build();
 
     // send request with callback
     _restClient.sendRequest(createReq2, new Callback<Response<EmptyRecord>>()
@@ -194,36 +193,26 @@ public class PhotoClient
   }
 
   /**
-   * Retrieve the album information and each photo in the album. The photos are retrieved
-   * in parallel.
+   * Retrieve the album information and each photo in the album. The photos are retrieved in parallel.
    */
-  private void getAlbum(PrintWriter respWriter, Long albumId) throws RemoteInvocationException
+  private void getAlbum(PrintWriter respWriter, long albumId) throws RemoteInvocationException
   {
-    // get the album
+    // get the specific album
     final Request<Album> getAlbumReq = _albumBuilders.get().id(albumId).build();
     final ResponseFuture<Album> getAlbumFuture = _restClient.sendRequest(getAlbumReq);
     final Response<Album> getResp = getAlbumFuture.getResponse();
     final Album album = getResp.getEntity();
 
-    respWriter.println("<!DOCTYPE html>");
-    respWriter.println("<html><head><title>");
     respWriter.println(album.getTitle());
-    respWriter.println("</title><body>");
-    respWriter.println("<h1>" + album.getTitle() + "</h1>");
     respWriter.println("Created on " + new Date(album.getCreationTime()));
 
     // get the album's entries
-    final FindRequest<AlbumEntry> searchReq =
-        _albumEntryBuilders.findBySearch().albumIdParam(albumId).build();
-    final ResponseFuture<CollectionResponse<AlbumEntry>> responseFuture =
-        _restClient.sendRequest(searchReq);
-    final Response<CollectionResponse<AlbumEntry>> response =
-        responseFuture.getResponse();
-    final List<AlbumEntry> entries =
-        new ArrayList<AlbumEntry>(response.getEntity().getElements());
+    final FindRequest<AlbumEntry> searchReq = _albumEntryBuilders.findBySearch().albumIdParam(albumId).build();
+    final ResponseFuture<CollectionResponse<AlbumEntry>> responseFuture = _restClient.sendRequest(searchReq);
+    final Response<CollectionResponse<AlbumEntry>> response = responseFuture.getResponse();
+    final List<AlbumEntry> entries = new ArrayList<AlbumEntry>(response.getEntity().getElements());
 
-    // intentional fail
-    entries.add(new AlbumEntry().setAlbumId(1337).setPhotoId(42));
+    entries.add(new AlbumEntry().setAlbumId(-1).setPhotoId(9999));
 
     // don't return until all photo requests done
     final CountDownLatch latch = new CountDownLatch(entries.size());
@@ -250,7 +239,6 @@ public class PhotoClient
         public void onError(Throwable e)
         {
           photos[finalI] = e;
-          latch.countDown();
         }
       });
     }
@@ -260,7 +248,9 @@ public class PhotoClient
       // wait for all requests to finish
       latch.await(2, TimeUnit.SECONDS);
       if (latch.getCount() > 0)
+      {
         respWriter.println("Failed to retrieve some photo(s)");
+      }
     }
     catch (InterruptedException e)
     {
@@ -274,63 +264,72 @@ public class PhotoClient
       final AlbumEntry entry = entries.get(i);
       if (val instanceof Throwable)
       {
-        respWriter.println("<h2>Failed to load photo " + entry.getPhotoId() + "</h2>");
-        respWriter.println("<pre>");
+        respWriter.println("Failed to load photo " + entry.getPhotoId());
+        respWriter.println("Stack trace:");
         ((Throwable) val).printStackTrace(respWriter);
-        respWriter.println("</pre>");
+        respWriter.println();
       }
       else if (val instanceof Photo)
       {
         final Photo photo = (Photo) val;
-        respWriter.println("<h2>" + photo.getTitle() + "</h2>");
-        respWriter.println("<pre>");
+        respWriter.println("Photo " + photo.getTitle() + ":");
         respWriter.println(photo);
-        respWriter.println("</pre>");
         respWriter.println("Added on " + new Date(entry.getAddTime()));
       }
       else
+      {
         throw new AssertionError("expected photo or exception");
+      }
     }
-    respWriter.println("</body>");
-    respWriter.println("</html>");
   }
 
-  private void getPhoto(PrintWriter respWriter, Long newPhotoId) throws RemoteInvocationException
+  /**
+   * send request to retrieve created photo
+   */
+  private void getPhoto(PrintWriter respWriter, long newPhotoId) throws RemoteInvocationException
   {
-    // 3) get request to retrieve created photo
     final Request<Photo> getReq = _photoBuilders.get().id(newPhotoId).build();
     final ResponseFuture<Photo> getFuture = _restClient.sendRequest(getReq);
     final Response<Photo> getResp = getFuture.getResponse();
     respWriter.println("Photo: " + getResp.getEntity().toString());
   }
 
+  /**
+   * call action purge to delete all photos on server
+   */
   private void purgeAllPhotos(PrintWriter respWriter) throws RemoteInvocationException
   {
-    // 4) call action purge to delete all photos on server
     final Request<Integer> purgeReq = _photoBuilders.actionPurge().build();
     final ResponseFuture<Integer> purgeFuture = _restClient.sendRequest(purgeReq);
     final Response<Integer> purgeResp = purgeFuture.getResponse();
-    respWriter.println("Purged: " + purgeResp.getEntity());
+    respWriter.println("Purged " + purgeResp.getEntity() + " photos");
   }
 
-  private void getAlbumSummary(PrintWriter respWriter, Long newAlbumId) throws RemoteInvocationException
+  /**
+   * retrieve album
+   */
+  private void getAlbumSummary(PrintWriter respWriter, long newAlbumId) throws RemoteInvocationException
   {
-    // 5) get request to retrieve created photo
     final Request<Album> getReq = _albumBuilders.get().id(newAlbumId).build();
     final ResponseFuture<Album> getFuture = _restClient.sendRequest(getReq);
     final Response<Album> getResp = getFuture.getResponse();
     respWriter.println("Album: " + getResp.getEntity().toString());
   }
 
+  /**
+   * failed request that try to access non-existing photo and throw RestException
+   */
   private void getNonPhoto() throws RemoteInvocationException
   {
-    // *) failed request that try to access non-existing photo and throw RestException
     final Request<Photo> failReq = _photoBuilders.get().id(-1L).build();
     final ResponseFuture<Photo> failFuture = _restClient.sendRequest(failReq);
     final Response<Photo> failResponse = failFuture.getResponse();
   }
 
-  private void partialUpdatePhoto(PrintWriter respWriter, Long photoId) throws RemoteInvocationException
+  /**
+   *
+   */
+  private void partialUpdatePhoto(PrintWriter respWriter, long photoId) throws RemoteInvocationException
   {
     final Request<Photo> getReq = _photoBuilders.get().id(photoId).build();
     final ResponseFuture<Photo> getFuture = _restClient.sendRequest(getReq);
@@ -340,15 +339,17 @@ public class PhotoClient
     final Photo updatedPhoto = new Photo().setTitle("Partially Updated Photo");
     final PatchRequest<Photo> patch = PatchGenerator.diff(originalPhoto, updatedPhoto);
 
-    final Request<EmptyRecord> partialUpdateRequest =
-        _photoBuilders.partialUpdate().id(photoId).input(patch).build();
+    final Request<EmptyRecord> partialUpdateRequest = _photoBuilders.partialUpdate().id(photoId).input(patch).build();
     final int status = _restClient.sendRequest(partialUpdateRequest).getResponse().getStatus();
     respWriter.println("Partial update photo is successful: " + (status == 202));
   }
 
+  /**
+   * use Finder to find the photo with some criteria
+   */
   private void findPhoto(PrintWriter respWriter) throws RemoteInvocationException
   {
-    final Long newPhotoId = createPhoto(respWriter);
+    final long newPhotoId = createPhoto(respWriter);
     createPhoto(respWriter);
     createPhoto(respWriter);
 
@@ -357,22 +358,26 @@ public class PhotoClient
     final Response<Photo> getResp = getFuture.getResponse();
     final Photo photo = getResp.getEntity();
 
-    final FindRequest<Photo> findReq =
-        _photoBuilders.findByTitleAndOrFormat()
-                      .titleParam(photo.getTitle())
-                      .formatParam(photo.getFormat())
-                      .build();
+    final FindRequest<Photo> findReq = _photoBuilders
+        .findByTitleAndOrFormat()
+        .titleParam(photo.getTitle())
+        .formatParam(photo.getFormat())
+        .build();
 
-    final CollectionResponse<Photo> crPhotos =
-        _restClient.sendRequest(findReq).getResponse().getEntity();
+    final CollectionResponse<Photo> crPhotos = _restClient.sendRequest(findReq).getResponse().getEntity();
     final List<Photo> photos = crPhotos.getElements();
 
-    respWriter.println("Found " + photos.size() + " photos with title "
-        + photo.getTitle());
+    respWriter.println("Found " + photos.size() + " photos with title " + photo.getTitle());
   }
 
+  private static final String SERVER_HOSTNAME = "localhost";
+  private static final int SERVER_PORT = 7279;
+
   // builder is convenient way to generate rest.li request
-  private static final PhotosBuilders     _photoBuilders      = new PhotosBuilders();
-  private static final AlbumsBuilders     _albumBuilders      = new AlbumsBuilders();
+  private static final PhotosBuilders _photoBuilders          = new PhotosBuilders();
+  private static final AlbumsBuilders _albumBuilders          = new AlbumsBuilders();
   private static final AlbumEntryBuilders _albumEntryBuilders = new AlbumEntryBuilders();
+
+  private final RestClient _restClient;
 }
+

@@ -45,9 +45,10 @@ public class TestAlbumEntryResource
     // we use InjectResourceFactory from pegasus to manually inject the dependency
 
     SimpleBeanProvider beanProvider = new SimpleBeanProvider();
+    final PhotoDatabase photoDb = new PhotoDatabaseImpl(10);
+    beanProvider.add("photoDb", photoDb);
     beanProvider.add("albumDb", new AlbumDatabaseImpl(10));
-    beanProvider.add("albumEntryDb", new AlbumEntryDatabaseImpl());
-    beanProvider.add("photoDb", new PhotoDatabaseImpl(10));
+    beanProvider.add("albumEntryDb", new AlbumEntryDatabaseImpl(photoDb, 3));
 
     final InjectResourceFactory factory = new InjectResourceFactory(beanProvider);
     final Map<String, ResourceModel> pathRootResourceMap =

@@ -1,0 +1,38 @@
+{
+  "clusterDefaults": {
+    "prioritizedSchemes": [
+      "http"
+      ],
+    "properties": {
+      "requestTimeout": "5000"
+    }
+  },
+  "serviceDefaults": {
+    "loadBalancerStrategyProperties": {
+      "maxClusterLatencyWithoutDegrading": "500",
+      "updateIntervalsMs": "5000",
+      "defaultSuccessfulTransmissionWeight": "1.0",
+      "pointsPerWeight": "100"
+    },
+    "loadBalancerStrategyList": [
+      "degraderV3"
+    ]
+  },
+  "serviceVariants": {},
+  "extraClusterServiceConfigurations": {},
+  "clusterServiceConfigurations": {
+    "RestLiExampleCluster": {
+      "services": {
+        "photos": {
+          "path": "/photos"
+        },
+        "albums": {
+          "path": "/albums"
+        },
+        "albumEntry": {
+          "path": "/albumEntry"
+        }
+      }
+    }
+  }
+}

@@ -14,13 +14,13 @@ public class PhotoDatabaseImpl implements PhotoDatabase
 {
   public PhotoDatabaseImpl(int numInitPhotos)
   {
-    // initialize numInitPhotos random photo at the first the resource class is loaded
+    final Random r = new Random();
+
+    // initialize some random photo at the first the resource class is loaded
     for (int i = 0; i < numInitPhotos; i++)
     {
       final long id = _currId.incrementAndGet();
       final PhotoFormats[] formats = PhotoFormats.values();
-
-      final Random r = new Random();
 
       final LatLong ll = new LatLong().setLatitude(r.nextFloat() * 180 - 90).setLongitude(r.nextFloat() * 180 - 90);
       final EXIF e = new EXIF().setLocation(ll);
