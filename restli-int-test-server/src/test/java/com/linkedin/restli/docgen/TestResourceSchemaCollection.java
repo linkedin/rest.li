@@ -38,6 +38,9 @@ public class TestResourceSchemaCollection
     final Map<String, ResourceType> expectedTypes = new HashMap<String, ResourceType>();
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.actions", ResourceType.ACTIONS);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.customTypes", ResourceType.COLLECTION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.customTypes2", ResourceType.COLLECTION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.customTypes3", ResourceType.ASSOCIATION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.customTypes2.customTypes4", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.exceptions", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.exceptions2", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.greetings", ResourceType.COLLECTION);

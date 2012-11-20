@@ -3,18 +3,24 @@
 
 1.6.7
 -----
+(RB=108674)
+Custom Types will now work as keys.
+Keys keep track of their own schemas.
+Reference types for keys are annotated in the class level annotation, as a new parameter in
+RestLiCollection as keyTyperefClass, or as part of the @Key annotation for associations.
+
 (RB=TBD)
 Added docgen to restli-server-standalone config.
 
 (RB=101117)
 Custom Types will now work with action parameters.
 FieldDefs/Params now keep track of their own schemas.
-Action parameter metadata is now calculated in a static block in generated builder code -- 
+Action parameter metadata is now calculated in a static block in generated builder code --
 no longer generated on the fly at call-time.
-Action response metadata is now also calculated in a static block or in the AnnotationReader, 
+Action response metadata is now also calculated in a static block or in the AnnotationReader,
 rather than on the fly at call-time.
 
-Fixed a typeref bug that would cause non-custom type typerefs to appear in builders as their 
+Fixed a typeref bug that would cause non-custom type typerefs to appear in builders as their
 reference types rather than their underlying types.
 
 1.6.6

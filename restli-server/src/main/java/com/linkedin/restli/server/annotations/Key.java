@@ -20,6 +20,8 @@
 
 package com.linkedin.restli.server.annotations;
 
+import com.linkedin.data.template.TyperefInfo;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -33,6 +35,12 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface Key
 {
+  /** name */
   String name();
+
+  /** type */
   Class<?> type();
+
+  /** typeref */
+  Class<? extends TyperefInfo> typeref() default RestAnnotations.NULL_TYPEREF_INFO.class;
 }

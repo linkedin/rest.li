@@ -1,0 +1,23 @@
+{
+  "name" : "customTypes3",
+  "namespace" : "com.linkedin.restli.examples.greetings.client",
+  "path" : "/customTypes3",
+  "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+  "doc" : "generated from: com.linkedin.restli.examples.greetings.server.CustomTypesResource3",
+  "association" : {
+    "assocKeys" : [ {
+      "name" : "dateId",
+      "type" : "com.linkedin.restli.examples.typeref.api.DateRef"
+    }, {
+      "name" : "longId",
+      "type" : "com.linkedin.restli.examples.typeref.api.CustomLongRef"
+    } ],
+    "supports" : [ "get" ],
+    "methods" : [ {
+      "method" : "get"
+    } ],
+    "entity" : {
+      "path" : "/customTypes3/longId={longId}&dateId={dateId}"
+    }
+  }
+}

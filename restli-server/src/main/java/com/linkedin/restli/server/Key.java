@@ -16,6 +16,9 @@
 
 package com.linkedin.restli.server;
 
+import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.template.DataTemplateUtil;
+
 /**
  * @author dellamag
  */
@@ -23,17 +26,31 @@ public class Key
 {
   private final String _name;
   private final Class<?> _type;
+  private final DataSchema _dataSchema;
 
   /**
-   * Constructor.
+   * Constructor. Infers DataSchema from given type.
    *
    * @param name key name
    * @param type key class
    */
   public Key(final String name, final Class<?> type)
   {
+    this(name, type,  DataTemplateUtil.getSchema(type));
+  }
+
+  /**
+   * Constructor.
+   *
+   * @param name key name
+   * @param type key type
+   * @param schema DataSchema for key type
+   */
+  public Key(final String name, final Class<?> type, final DataSchema schema)
+  {
     _name = name;
     _type = type;
+    _dataSchema = schema;
   }
 
   public String getName()
@@ -44,6 +61,11 @@ public class Key
   public Class<?> getType()
   {
     return _type;
+  }
+
+  public DataSchema getDataSchema()
+  {
+    return _dataSchema;
   }
 
   @Override

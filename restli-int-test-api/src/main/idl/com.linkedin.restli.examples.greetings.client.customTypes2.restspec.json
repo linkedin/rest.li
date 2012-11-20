@@ -1,0 +1,42 @@
+{
+  "name" : "customTypes2",
+  "namespace" : "com.linkedin.restli.examples.greetings.client",
+  "path" : "/customTypes2",
+  "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+  "doc" : "generated from: com.linkedin.restli.examples.greetings.server.CustomTypesResource2",
+  "collection" : {
+    "identifier" : {
+      "name" : "customTypes2Id",
+      "type" : "com.linkedin.restli.examples.typeref.api.CustomLongRef"
+    },
+    "supports" : [ "batch_get", "get" ],
+    "methods" : [ {
+      "method" : "get"
+    }, {
+      "method" : "batch_get"
+    } ],
+    "entity" : {
+      "path" : "/customTypes2/{customTypes2Id}",
+      "subresources" : [ {
+        "name" : "customTypes4",
+        "namespace" : "com.linkedin.restli.examples.greetings.client",
+        "path" : "/customTypes2/{customTypes2Id}/customTypes4",
+        "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+        "doc" : "generated from: com.linkedin.restli.examples.greetings.server.CustomTypesResource4",
+        "collection" : {
+          "identifier" : {
+            "name" : "customTypes4Id",
+            "type" : "com.linkedin.restli.examples.typeref.api.CustomLongRef"
+          },
+          "supports" : [ "get" ],
+          "methods" : [ {
+            "method" : "get"
+          } ],
+          "entity" : {
+            "path" : "/customTypes2/{customTypes2Id}/customTypes4/{customTypes4Id}"
+          }
+        }
+      } ]
+    }
+  }
+}

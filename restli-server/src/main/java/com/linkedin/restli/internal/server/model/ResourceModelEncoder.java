@@ -157,6 +157,11 @@ public class ResourceModelEncoder
 
     final DataSchema schema = DataTemplateUtil.getSchema(type);
 
+    return buildDataSchemaType(schema);
+  }
+
+  /*package*/ static String buildDataSchemaType(DataSchema schema)
+  {
     if (schema instanceof PrimitiveDataSchema || schema instanceof NamedDataSchema)
     {
       return schema.getUnionMemberKey();
@@ -171,7 +176,7 @@ public class ResourceModelEncoder
     }
     catch (IOException e)
     {
-      throw new RestLiInternalException("could not encode schema for '" + type.getName() + "'", e);
+      throw new RestLiInternalException("could not encode schema for '" + schema.toString() +  "'", e);
     }
   }
 
@@ -194,7 +199,7 @@ public class ResourceModelEncoder
     }
   }
 
-  private String buildDataSchemaType(final Class<?> type, final DataSchema dataSchema)
+  private static String buildDataSchemaType(final Class<?> type, final DataSchema dataSchema)
   {
     if (type.isArray())
     {
@@ -414,7 +419,7 @@ public class ResourceModelEncoder
     {
       AssocKeySchema assocKeySchema = new AssocKeySchema();
       assocKeySchema.setName(key.getName());
-      assocKeySchema.setType(buildDataSchemaType(key.getType()));
+      assocKeySchema.setType(buildDataSchemaType(key.getType(), key.getDataSchema()));
       assocKeySchemaArray.add(assocKeySchema);
     }
 
@@ -736,7 +741,8 @@ public class ResourceModelEncoder
     }
     else
     {
-      identifierSchema.setType(buildDataSchemaType(collectionResource.getKeyClass()));
+      Key key = collectionResource.getPrimaryKey();
+      identifierSchema.setType(buildDataSchemaType(key.getType(), key.getDataSchema()));
     }
 
     collectionNode.setIdentifier(identifierSchema);

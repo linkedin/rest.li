@@ -21,10 +21,18 @@
 package com.linkedin.restli.examples;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
+import com.linkedin.restli.client.BatchGetRequest;
+import com.linkedin.restli.client.GetRequest;
+import com.linkedin.restli.examples.greetings.client.CustomTypes2Builders;
+import com.linkedin.restli.examples.greetings.client.CustomTypes3Builders;
+import com.linkedin.restli.examples.greetings.client.CustomTypes4Builders;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -53,6 +61,9 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
   private static final String URI_PREFIX = "http://localhost:1338/";
   private static final RestClient REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
   private static final CustomTypesBuilders CUSTOM_TYPES_BUILDERS = new CustomTypesBuilders();
+  private static final CustomTypes2Builders CUSTOM_TYPES_2_BUILDERS = new CustomTypes2Builders();
+  private static final CustomTypes3Builders CUSTOM_TYPES_3_BUILDERS = new CustomTypes3Builders();
+  private static final CustomTypes4Builders CUSTOM_TYPES_4_BUILDERS = new CustomTypes4Builders();
 
   @BeforeClass
   public void initClass() throws Exception
@@ -71,7 +82,7 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
   {
     FindRequest<Greeting> request = CUSTOM_TYPES_BUILDERS.findByCustomLong().lParam(new CustomLong(5L)).build();
     List<Greeting> elements = REST_CLIENT.sendRequest(request).getResponse().getEntity().getElements();
-    Assert.assertEquals(elements.size(), 0);
+    Assert.assertEquals(0, elements.size());
   }
 
   @Test
@@ -83,7 +94,7 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
 
     FindRequest<Greeting> request = CUSTOM_TYPES_BUILDERS.findByCustomLongArray().lsParam(ls).build();
     List<Greeting> elements = REST_CLIENT.sendRequest(request).getResponse().getEntity().getElements();
-    Assert.assertEquals(elements.size(), 0);
+    Assert.assertEquals(0, elements.size());
   }
 
   @Test
@@ -91,17 +102,60 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
   {
     FindRequest<Greeting> request = CUSTOM_TYPES_BUILDERS.findByDate().dParam(new Date(100)).build();
     List<Greeting> elements = REST_CLIENT.sendRequest(request).getResponse().getEntity().getElements();
-    Assert.assertEquals(elements.size(), 0);
+    Assert.assertEquals(0, elements.size());
   }
 
   @Test
   public void testAction() throws RemoteInvocationException
   {
-    Long l = 5L;
-    ActionRequest<Long> request = CUSTOM_TYPES_BUILDERS.actionAction().paramL(new CustomLong(l)).build();
+    Long lo = 5L;
+    ActionRequest<Long> request = CUSTOM_TYPES_BUILDERS.actionAction().paramL(new CustomLong(lo)).build();
     Long result = REST_CLIENT.sendRequest(request).getResponse().getEntity();
 
-    Assert.assertEquals(l, result);
+    Assert.assertEquals(lo, result);
+  }
+
+  @Test
+  public void testCollectionGet() throws RemoteInvocationException
+  {
+    Long lo = 5L;
+    GetRequest<Greeting> request = CUSTOM_TYPES_2_BUILDERS.get().id(new CustomLong(lo)).build();
+    Greeting result = REST_CLIENT.sendRequest(request).getResponse().getEntity();
+
+    Assert.assertEquals(lo, result.getId());
+  }
+
+  @Test
+  public void testCollectionBatchGet() throws RemoteInvocationException
+  {
+    BatchGetRequest<Greeting> request = CUSTOM_TYPES_2_BUILDERS.batchGet().ids(new CustomLong(1L), new CustomLong(2L), new CustomLong(3L)).build();
+    Map<String,Greeting> greetings = REST_CLIENT.sendRequest(request).getResponse().getEntity().getResults();
+
+    Assert.assertEquals(3, greetings.size());
+  }
+
+  @Test
+  public void testCollectionSubResourceGet() throws RemoteInvocationException
+  {
+    Long id2 = 2L;
+    Long id4 = 4L;
+    GetRequest<Greeting> request = CUSTOM_TYPES_4_BUILDERS.get().customTypes2IdKey(new CustomLong(id2)).id(new CustomLong(id4)).build();
+    Greeting result = REST_CLIENT.sendRequest(request).getResponse().getEntity();
+
+    Assert.assertEquals(new Long(id2*id4), result.getId());
+  }
+
+  @Test
+  public void testAssociationGet() throws RemoteInvocationException
+  {
+    Long lo = 5L;
+    Long date = 13L;
+    CustomTypes3Builders.Key key = new CustomTypes3Builders.Key().setLongId(new CustomLong(lo)).setDateId(new Date(date));
+
+    GetRequest<Greeting> request = CUSTOM_TYPES_3_BUILDERS.get().id(key).build();
+    Greeting result = REST_CLIENT.sendRequest(request).getResponse().getEntity();
+
+    Assert.assertEquals( new Long(lo+date), result.getId());
   }
 
 }

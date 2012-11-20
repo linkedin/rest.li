@@ -20,6 +20,8 @@
 
 package com.linkedin.restli.server.annotations;
 
+import com.linkedin.data.template.TyperefInfo;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -43,4 +45,6 @@ public @interface RestLiCollection
 
   /** The symbolic name of the key for this resource e.g. 'groupID'. Optional, defaults to "id" */
   String keyName() default RestAnnotations.DEFAULT;
+
+  Class<? extends TyperefInfo> keyTyperefClass() default RestAnnotations.NULL_TYPEREF_INFO.class;
 }

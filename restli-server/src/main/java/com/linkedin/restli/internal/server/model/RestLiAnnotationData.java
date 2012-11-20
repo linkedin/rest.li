@@ -20,6 +20,9 @@
 
 package com.linkedin.restli.internal.server.model;
 
+import com.linkedin.data.schema.TyperefDataSchema;
+import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.data.template.TyperefInfo;
 import com.linkedin.restli.server.annotations.Key;
 import com.linkedin.restli.server.annotations.RestAnnotations;
 import com.linkedin.restli.server.annotations.RestLiAssociation;
@@ -38,6 +41,7 @@ public class RestLiAnnotationData
   private final String   _namespace;
   private final Key[]    _keys;
   private final String   _keyName;
+  private final Class<? extends TyperefInfo> _typerefInfoClass;
 
   /**
    * @param collectionAnno {@link RestLiCollection} annotation
@@ -49,6 +53,7 @@ public class RestLiAnnotationData
     _namespace = collectionAnno.namespace();
     _keys = null;
     _keyName = RestAnnotations.DEFAULT.equals(collectionAnno.keyName()) ? null : collectionAnno.keyName();
+    _typerefInfoClass = RestAnnotations.NULL_TYPEREF_INFO.class.equals(collectionAnno.keyTyperefClass()) ? null : collectionAnno.keyTyperefClass();
   }
 
   /**
@@ -61,6 +66,7 @@ public class RestLiAnnotationData
     _namespace = collectionAnno.namespace();
     _keys = collectionAnno.keys();
     _keyName = null;
+    _typerefInfoClass = null;
   }
 
   /**
@@ -73,6 +79,7 @@ public class RestLiAnnotationData
     _namespace = associationAnno.namespace();
     _keys = associationAnno.assocKeys();
     _keyName = null;
+    _typerefInfoClass = null;
   }
 
   /**
@@ -113,6 +120,11 @@ public class RestLiAnnotationData
   public String keyName()
   {
     return _keyName;
+  }
+
+  public Class<? extends TyperefInfo> typerefInfoClass()
+  {
+    return _typerefInfoClass;
   }
 
 }

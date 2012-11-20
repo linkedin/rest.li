@@ -153,14 +153,15 @@ public class ArgumentBuilder
           }
           Array.set(convertedValue,
                     j++,
-                    convertSimpleValue(itemStringValue,
-                                       param.getDataSchema(),
-                                       param.getItemType()));
+                    ArgumentUtils.convertSimpleValue(itemStringValue,
+                                                     param.getDataSchema(),
+                                                     param.getItemType(),
+                                                     false));
         }
       }
       else
       {
-        convertedValue = convertSimpleValue(value, param.getDataSchema(), param.getType());
+        convertedValue = ArgumentUtils.convertSimpleValue(value, param.getDataSchema(), param.getType(), false);
       }
     }
 
@@ -201,20 +202,5 @@ public class ArgumentBuilder
                                        new ValidationOptions(RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT,
                                                              CoercionMode.STRING_TO_PRIMITIVE));
     return paramRecordTemplate;
-  }
-
-  private static Object convertSimpleValue(final String value,
-                                           final DataSchema schema,
-                                           final Class<?> type)
-  {
-
-
-    DataSchema.Type dereferencedType = schema.getDereferencedType();
-
-    Object underlyingValue = schema.getDereferencedDataSchema().isComplex()?
-            value : ArgumentUtils.parseSimpleKey(value, DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchemaClass(dereferencedType));
-
-    return DataTemplateUtil.coerceOutput(underlyingValue, type);
-
   }
 }

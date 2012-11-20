@@ -54,6 +54,7 @@ import com.linkedin.restli.server.BatchDeleteRequest;
 import com.linkedin.restli.server.BatchPatchRequest;
 import com.linkedin.restli.server.BatchUpdateRequest;
 import com.linkedin.restli.server.CreateResponse;
+import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.ResourceLevel;
@@ -1421,9 +1422,9 @@ public class TestRestLiMethodInvocation
 
     try
     {
-      Map<String, Class<?>> keys = new HashMap<String, Class<?>>();
-      keys.put("foo", Integer.class);
-      keys.put("bar", String.class);
+      Set<Key> keys = new HashSet<Key>(2);
+      keys.add(new Key("foo", Integer.class));
+      keys.add(new Key("bar", String.class));
 
       Set<String> expectedKeys = new HashSet<String>(Arrays.asList("foo", "bar"));
       Assert.assertEquals(expectedKeys, ArgumentUtils.parseCompoundKey("foo:42;bar:abcd", keys).getPartKeys());

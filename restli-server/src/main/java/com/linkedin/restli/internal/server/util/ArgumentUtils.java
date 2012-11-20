@@ -24,12 +24,17 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLDecoder;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.DataSchemaUtil;
+import com.linkedin.restli.server.Key;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -229,9 +234,33 @@ public class ArgumentUtils
    * @param partialKeys a set of {@link com.linkedin.restli.server.Key} objects specifying
    *          names and types of the constituent simple keys
    * @return a runtime-typesafe CompoundKey
+   *
+   * @deprecated Should take a Collection of fully formed {@link Key}s.
    */
+  @Deprecated
   public static CompoundKey parseCompoundKey(final String urlString,
                                              final Map<String, Class<?>> partialKeys)
+  {
+    Collection<Key> keys = new ArrayList<Key>(partialKeys.size());
+    for(Map.Entry<String, Class<?>> entry : partialKeys.entrySet())
+    {
+      keys.add(new Key(entry.getKey(), entry.getValue()));
+    }
+    return parseCompoundKey(urlString, keys);
+  }
+
+  /**
+   * The method parses out runtime-typesafe simple keys for the compound key based on the
+   * provided key set for the resource.
+   *
+   * @param urlString a string representation of the compound key in the form:
+   *          name1:value1;name2:value2...
+   * @param keys a set of {@link com.linkedin.restli.server.Key} objects specifying
+   *          names and types of the constituent simple keys
+   * @return a runtime-typesafe CompoundKey
+   */
+  public static CompoundKey parseCompoundKey(final String urlString,
+                                             final Collection<Key> keys)
   {
     if (urlString == null || urlString.trim().isEmpty())
     {
@@ -247,12 +276,12 @@ public class ArgumentUtils
     StringBuilder legacyParseError = new StringBuilder();
     StringBuilder currentParseError = new StringBuilder();
     CompoundKey legacyParsedKey = parseCompoundKey(urlString,
-                                                   partialKeys,
+                                                   keys,
                                                    legacyParseError,
                                                    LEGACY_SIMPLE_KEY_DELIMETER_PATTERN,
                                                    LEGACY_KEY_VALUE_DELIMETER_PATTERN);
     CompoundKey currentParsedKey = parseCompoundKey(urlString,
-                                                    partialKeys,
+                                                    keys,
                                                     currentParseError,
                                                     SIMPLE_KEY_DELIMETER_PATTERN,
                                                     KEY_VALUE_DELIMETER_PATTERN);
@@ -260,7 +289,7 @@ public class ArgumentUtils
     {
       boolean legacy = legacyParsedKey.getNumParts() > currentParsedKey.getNumParts();
       _log.warn("Ambiguous compound key syntax, using heuristic decision for '{}', legacy: {}",
-               urlString, String.valueOf(legacy));
+                urlString, String.valueOf(legacy));
       return legacy ? legacyParsedKey : currentParsedKey;
     }
     else if (legacyParsedKey == null && currentParsedKey == null)
@@ -283,12 +312,41 @@ public class ArgumentUtils
    * @param simpleKeyDelimiterPattern delimiter of constituent keys in the compound key
    * @param keyValueDelimiterPattern delimiter of key and value in a constituent key
    * @return {@link CompoundKey} parsed from the input string
+   *
+   * @deprecated Should take a Collection of fully formed {@link Key}s.
    */
+  @Deprecated
   public static CompoundKey parseCompoundKey(final String urlString,
                                              final Map<String, Class<?>> partialKeys,
                                              final StringBuilder errorMessageBuilder,
                                              final Pattern simpleKeyDelimiterPattern,
                                              final Pattern keyValueDelimiterPattern)
+          throws RoutingException
+  {
+    Collection<Key> keys = new ArrayList<Key>(partialKeys.size());
+    for(Map.Entry<String, Class<?>> entry : partialKeys.entrySet())
+    {
+      keys.add(new Key(entry.getKey(), entry.getValue()));
+    }
+    return parseCompoundKey(urlString, keys, errorMessageBuilder, simpleKeyDelimiterPattern, keyValueDelimiterPattern);
+  }
+
+  /**
+   * Parse {@link CompoundKey} from its String representation.
+   *
+   * @param urlString {@link CompoundKey} string representation
+   * @param keys {@link CompoundKey} constituent keys' classes keyed on their names
+   * @param errorMessageBuilder {@link StringBuilder} to build error message if necessary
+   * @param simpleKeyDelimiterPattern delimiter of constituent keys in the compound key
+   * @param keyValueDelimiterPattern delimiter of key and value in a constituent key
+   * @return {@link CompoundKey} parsed from the input string
+   */
+  public static CompoundKey parseCompoundKey(final String urlString,
+                                             final Collection<Key> keys,
+                                             final StringBuilder errorMessageBuilder,
+                                             final Pattern simpleKeyDelimiterPattern,
+                                             final Pattern keyValueDelimiterPattern)
+          throws RoutingException
   {
     String[] simpleKeys = simpleKeyDelimiterPattern.split(urlString.trim());
     CompoundKey compoundKey = new CompoundKey();
@@ -317,7 +375,8 @@ public class ArgumentUtils
         throw new RestLiInternalException(e);
       }
       // Key is not found in the set defined for the resource
-      if (!partialKeys.containsKey(name))
+      Key currentKey = getKeyWithName(keys, name);
+      if (currentKey == null)
       {
         errorMessageBuilder.append("Unknown key part named '");
         errorMessageBuilder.append(name);
@@ -337,11 +396,21 @@ public class ArgumentUtils
         throw new RestLiInternalException(e);
       }
 
-      // Assuming the compound key is never nested, i.e. the simple keys are always
-      // primitive.
-      compoundKey.append(name, parseSimpleKey(decodedStringValue, partialKeys.get(name)));
+      compoundKey.append(name, convertSimpleValue(decodedStringValue, currentKey.getDataSchema(), currentKey.getType(), false));
     }
     return compoundKey;
+  }
+
+  private static Key getKeyWithName(Collection<Key> keys, String keyName)
+  {
+    for (Key key: keys)
+    {
+      if (key.getName().equals(keyName))
+      {
+        return key;
+      }
+    }
+    return null;
   }
 
   /**
@@ -399,7 +468,7 @@ public class ArgumentUtils
   {
     if (CompoundKey.class.isAssignableFrom(resource.getKeyClass()))
     {
-      return parseCompoundKey(value.toString(), resource.getKeyClasses());
+      return parseCompoundKey(value, resource.getKeys());
     }
     else if (ComplexResourceKey.class.isAssignableFrom(resource.getKeyClass()))
     {
@@ -409,7 +478,8 @@ public class ArgumentUtils
     }
     else
     {
-      return ValueConverter.coerceString(value, resource.getKeyClass());
+      Key key = resource.getPrimaryKey();
+      return convertSimpleValue(value, key.getDataSchema(), key.getType(), true);
     }
   }
 
@@ -420,8 +490,11 @@ public class ArgumentUtils
    * @param value string to parse
    * @param keyClass key class
    * @return parameter value in the correct type.
+   * @throws RoutingException if value cannot be correctly converted to the keyClass or keyClass
+   * does not represent a primitive or enum.
    */
   public static Object parseSimpleKey(final String value, final Class<?> keyClass)
+          throws RoutingException
   {
     if (CompoundKey.class.isAssignableFrom(keyClass)
         || ComplexResourceKey.class.isAssignableFrom(keyClass))
@@ -430,25 +503,65 @@ public class ArgumentUtils
                                  HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode());
     }
 
+    return parseBasicValue(value, keyClass);
+  }
+
+  private static Object parseBasicValue(String value, Class<?> targetClass)
+          throws RoutingException
+  {
     try
     {
-      return ValueConverter.coerceString(value, keyClass);
+      return ValueConverter.coerceString(value, targetClass);
     }
     catch (NumberFormatException e)
     {
       // thrown from Integer.valueOf or Long.valueOf
-      throw new RoutingException(String.format("Key value '%s' must be of type '%s'",
+      throw new RoutingException(String.format("Value '%s' must be of type '%s'",
                                                value,
-                                               keyClass.getName()),
+                                               targetClass.getName()),
                                  HttpStatus.S_400_BAD_REQUEST.getCode());
     }
     catch (IllegalArgumentException e)
     {
       // thrown from Enum.valueOf
-      throw new RoutingException(String.format("Key parameter value '%s' is invalid",
+      throw new RoutingException(String.format("Parameter value '%s' is invalid",
                                                value),
                                  HttpStatus.S_400_BAD_REQUEST.getCode());
     }
+  }
+
+  /**
+   *
+   * @param value the stringified value
+   * @param schema the schema of the type
+   * @param type a non-complex type to convert to
+   * @param optionalValue if the value is optional or not.
+   * @return the converted value
+   * @throws RoutingException if optionalValue is false and the value cannot be converted.
+   */
+  public static Object convertSimpleValue(final String value,
+                                          final DataSchema schema,
+                                          final Class<?> type,
+                                          final boolean optionalValue)
+          throws RoutingException
+  {
+    DataSchema.Type dereferencedType = schema.getDereferencedType();
+
+    Object underlyingValue;
+    if (schema.getDereferencedDataSchema().isComplex())
+    {
+      underlyingValue = value;
+    }
+    else if (optionalValue)
+    {
+      underlyingValue = ValueConverter.coerceString(value, DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchemaClass(dereferencedType));
+    }
+    else
+    {
+      underlyingValue = parseBasicValue(value, DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchemaClass(dereferencedType));
+    }
+
+    return DataTemplateUtil.coerceOutput(underlyingValue, type);
   }
 
   /**

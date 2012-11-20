@@ -8,6 +8,9 @@ import java.lang.annotation.Target;
 
 
 /**
+ * Empty custom annotation for .restspec.json which should show up as
+ * "com.linkedin.restli.restspec.EmptyAnnotation" : {}
+ *
  * @author Keren Jin
  */
 @Retention(RetentionPolicy.RUNTIME)

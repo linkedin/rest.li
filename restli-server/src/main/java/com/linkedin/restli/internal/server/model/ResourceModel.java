@@ -49,8 +49,7 @@ public class ResourceModel
   private ResourceModel                         _parentResourceModel;
 
   private final Set<Key>                        _keys;
-  private final String                          _keyName;
-  private final Class<?>                        _keyClass;
+  private final Key                             _primaryKey;
   // These are the classes of the complex resource key RecordTemplate-derived
   // constituents Key and Params
   private final Class<? extends RecordTemplate> _keyKeyClass;
@@ -68,7 +67,7 @@ public class ResourceModel
   /**
    * Constructor.
    *
-   * @param keyClass resource key class
+   * @param primaryKey the primary {@link Key} of this resource
    * @param keyKeyClass class of the key part of a {@link ComplexResourceKey} if this is a
    *          {@link ComplexKeyResource}
    * @param keyParamsClass class of the param part of a {@link ComplexResourceKey} if this
@@ -78,11 +77,10 @@ public class ResourceModel
    * @param resourceClass resource class
    * @param parentResourceClass parent resource class
    * @param name resource name
-   * @param keyName resource key name
    * @param resourceType {@link ResourceType}
    * @param namespace namespace
    */
-  public ResourceModel(final Class<?> keyClass,
+  public ResourceModel(final Key primaryKey,
                        final Class<? extends RecordTemplate> keyKeyClass,
                        final Class<? extends RecordTemplate> keyParamsClass,
                        final Set<Key> keys,
@@ -90,11 +88,9 @@ public class ResourceModel
                        final Class<?> resourceClass,
                        final Class<?> parentResourceClass,
                        final String name,
-                       final String keyName,
                        final ResourceType resourceType,
                        final String namespace)
   {
-    _keyClass = keyClass;
     _keyKeyClass = keyKeyClass;
     _keyParamsClass = keyParamsClass;
     _keys = keys;
@@ -110,9 +106,52 @@ public class ResourceModel
     _root = (parentResourceClass == null);
     _parentResourceClass = parentResourceClass;
     _resourceMethodDescriptors = new ArrayList<ResourceMethodDescriptor>(5);
-    _keyName = keyName;
+    _primaryKey = primaryKey;
     _resourceType = resourceType;
     _pathSubResourceMap = new HashMap<String, ResourceModel>();
+  }
+
+  /**
+   * Constructor.
+   *
+   * @param keyClass resource key class
+   * @param keyKeyClass class of the key part of a {@link ComplexResourceKey} if this is a
+   *          {@link ComplexKeyResource}
+   * @param keyParamsClass class of the param part of a {@link ComplexResourceKey} if this
+   *          is a {@link ComplexKeyResource}
+   * @param keys set of resource keys
+   * @param valueClass resource value class
+   * @param resourceClass resource class
+   * @param parentResourceClass parent resource class
+   * @param name resource name
+   * @param keyName resource key name
+   * @param resourceType {@link ResourceType}
+   * @param namespace namespace
+   *
+   * @deprecated should pass in a fully formed primary key rather than a class and a name
+   */
+  @Deprecated
+  public ResourceModel(final Class<?> keyClass,
+                       final Class<? extends RecordTemplate> keyKeyClass,
+                       final Class<? extends RecordTemplate> keyParamsClass,
+                       final Set<Key> keys,
+                       final Class<? extends RecordTemplate> valueClass,
+                       final Class<?> resourceClass,
+                       final Class<?> parentResourceClass,
+                       final String name,
+                       final String keyName,
+                       final ResourceType resourceType,
+                       final String namespace)
+  {
+    this(new Key(keyName, keyClass),
+         keyKeyClass,
+         keyParamsClass,
+         keys, valueClass,
+         resourceClass,
+         parentResourceClass,
+         name,
+         resourceType,
+         namespace);
   }
 
   public ResourceType getResourceType()
@@ -122,7 +161,7 @@ public class ResourceModel
 
   public Class<?> getKeyClass()
   {
-    return _keyClass;
+    return _primaryKey.getType();
   }
 
   public Set<Key> getKeys()
@@ -409,7 +448,12 @@ public class ResourceModel
 
   public String getKeyName()
   {
-    return _keyName;
+    return _primaryKey.getName();
+  }
+
+  public Key getPrimaryKey()
+  {
+    return _primaryKey;
   }
 
   public Class<? extends RecordTemplate> getKeyKeyClass()

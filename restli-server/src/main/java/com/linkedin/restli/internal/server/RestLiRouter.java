@@ -356,7 +356,7 @@ public class RestLiRouter
                                 final String pathSegment)
  {
     CompoundKey compoundKey =
-        ArgumentUtils.parseCompoundKey(pathSegment, resource.getKeyClasses());
+        ArgumentUtils.parseCompoundKey(pathSegment, resource.getKeys());
 
     for (String simpleKeyName : compoundKey.getPartKeys())
     {

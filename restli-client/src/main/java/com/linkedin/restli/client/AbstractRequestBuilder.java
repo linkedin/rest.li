@@ -218,13 +218,14 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
     }
     else
     {
-      result = URLEscaper.escape(key.toString(), escaping);
+      result = URLEscaper.escape(stringifySimpleValue(key), escaping);
     }
     return result;
   }
 
   /**
    * Helper method to convert a collection of key Objects into a set of strings
+   * Result only used in tests; not used to create request url.
    */
   protected static Set<String> toStringSet(Collection<?> ids)
   {
@@ -235,7 +236,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
       {
         throw new IllegalArgumentException("null id");
       }
-      idStrings.add(id.toString());
+      idStrings.add(stringifySimpleValue(id));
     }
     return idStrings;
   }
@@ -291,7 +292,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
     {
       throw new IllegalArgumentException("Path key must be non-null");
     }
-    _keys.put(key, value.toString());
+    _keys.put(key, stringifySimpleValue(value));
   }
 
   protected void addAssocKey(String key, Object value)

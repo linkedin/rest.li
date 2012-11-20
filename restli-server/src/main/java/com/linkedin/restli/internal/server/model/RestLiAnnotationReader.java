@@ -209,17 +209,15 @@ public final class RestLiAnnotationReader
       keyName = annotationData.keyName();
     }
 
+    Key primaryKey = buildKey(name, keyName, keyClass, annotationData.typerefInfoClass());
     Set<Key> keys = new HashSet<Key>();
     if (annotationData.keys() == null)
     {
-      keys.add(new Key(keyName, keyClass));
+      keys.add(primaryKey);
     }
     else
     {
-      for (com.linkedin.restli.server.annotations.Key keyAnno : annotationData.keys())
-      {
-        keys.add(new Key(keyAnno.name(), keyAnno.type()));
-      }
+      keys.addAll(buildKeys(name, annotationData.keys()));
     }
 
     Class<?> parentResourceClass =
@@ -227,7 +225,7 @@ public final class RestLiAnnotationReader
             : annotationData.parent();
 
     ResourceModel collectionModel =
-        new ResourceModel(keyClass,
+        new ResourceModel(primaryKey,
                           keyKeyClass,
                           keyParamsClass,
                           keys,
@@ -235,7 +233,6 @@ public final class RestLiAnnotationReader
                           collectionResourceClass,
                           parentResourceClass,
                           name,
-                          keyName,
                           resourceType,
                           namespace);
     addCollectionResourceMethods(collectionResourceClass, collectionModel);
@@ -449,7 +446,7 @@ public final class RestLiAnnotationReader
   {
     return new Parameter(model.getKeyName(),
                          model.getKeyClass(),
-                         getDataSchema(model.getKeyClass(), null),
+                         model.getPrimaryKey().getDataSchema(),
                          false,
                          null,
                          Parameter.ParamType.KEY,
@@ -657,6 +654,37 @@ public final class RestLiAnnotationReader
     }
   }
 
+  private static Set<Key> buildKeys(String resourceName,
+                                    com.linkedin.restli.server.annotations.Key[] annoKeys)
+  {
+    Set<Key> keys = new HashSet<Key>();
+    for(com.linkedin.restli.server.annotations.Key key : annoKeys)
+    {
+      keys.add(buildKey(resourceName, key.name(), key.type(), key.typeref()));
+    }
+    return keys;
+  }
+
+  private static Key buildKey(String resourceName,
+                              String keyName, Class<?> keyType, Class<? extends TyperefInfo> typerefInfoClass)
+  {
+    try
+    {
+      return new Key(keyName, keyType, getDataSchema(keyType, getSchemaFromTyperefInfo(typerefInfoClass)));
+    }
+    catch (TemplateRuntimeException e)
+    {
+      throw new ResourceConfigException("DataSchema for key '" + keyName + "' of type " + keyType + " on resource "
+                                                + resourceName + "cannot be found; type is invalid or requires typeref", e);
+    }
+    catch (Exception e)
+    {
+      throw new ResourceConfigException("Typeref for parameter '" + keyName + "' on resource "
+                                                + resourceName + " cannot be instantiated, " + e.getMessage(), e);
+    }
+
+  }
+
   @SuppressWarnings("unchecked")
   private static Parameter buildContextParam(final AnnotationSet annotations,
                                              final Class<?> paramType)
@@ -713,11 +741,10 @@ public final class RestLiAnnotationReader
     Class<? extends TyperefInfo> typerefInfoClass = actionParam.typeref();
     try
     {
-      TyperefInfo typerefInfo = typerefInfoClass.newInstance();
       param =
           new Parameter(paramName,
                         paramType,
-                        getDataSchema(paramType, typerefInfo.getSchema()),
+                        getDataSchema(paramType, getSchemaFromTyperefInfo(typerefInfoClass)),
                         optional != null,
                         getDefaultValue(optional, paramType),
                         Parameter.ParamType.POST,
@@ -735,6 +762,19 @@ public final class RestLiAnnotationReader
           + buildMethodMessage(method) + " cannot be instantiated, " + e.getMessage(), e);
     }
     return param;
+  }
+
+  private static TyperefDataSchema getSchemaFromTyperefInfo(Class<? extends TyperefInfo> typerefInfoClass)
+          throws IllegalAccessException, InstantiationException
+  {
+    if (typerefInfoClass == null)
+    {
+      return null;
+    }
+
+    TyperefInfo typerefInfo = typerefInfoClass.newInstance();
+    return typerefInfo.getSchema();
+
   }
 
   private static DataSchema getDataSchema(Class<?> type, TyperefDataSchema typerefDataSchema)
@@ -775,11 +815,10 @@ public final class RestLiAnnotationReader
     Class<? extends TyperefInfo> typerefInfoClass = queryParam.typeref();
     try
     {
-      TyperefInfo typerefInfo = typerefInfoClass.newInstance();
       param =
           new Parameter(queryParam.value(),
                         paramType,
-                        getDataSchema(paramType, typerefInfo.getSchema()),
+                        getDataSchema(paramType, getSchemaFromTyperefInfo(typerefInfoClass)),
                         optional != null,
                         getDefaultValue(optional, paramType),
                         Parameter.ParamType.QUERY,
@@ -1181,8 +1220,7 @@ public final class RestLiAnnotationReader
     Class<? extends TyperefInfo> typerefInfoClass = actionAnno.returnTyperef();
     try
     {
-      TyperefInfo typerefInfo = typerefInfoClass.newInstance();
-      returnTyperefSchema = typerefInfo.getSchema();
+      returnTyperefSchema = getSchemaFromTyperefInfo(typerefInfoClass);
     }
     catch (Exception e)
     {
@@ -1330,18 +1368,15 @@ public final class RestLiAnnotationReader
 
     String namespace = actionsAnno.namespace();
 
-    ResourceModel actionResourceModel = new ResourceModel(null, // key class
+    ResourceModel actionResourceModel = new ResourceModel(null, // primary key
                                                           null, // key key class
                                                           null, // key params class
                                                           Collections.<Key> emptySet(), // keys
                                                           null, // value class
-                                                          actionResourceClass, // resource
-                                                                               // class
+                                                          actionResourceClass, // resource class
                                                           null, // parent resource class
                                                           name, // name
-                                                          null, // key name
-                                                          ResourceType.ACTIONS, // resource
-                                                                                // type
+                                                          ResourceType.ACTIONS, // resource type
                                                           namespace); // namespace
     for (Method method : actionResourceClass.getDeclaredMethods())
     {
