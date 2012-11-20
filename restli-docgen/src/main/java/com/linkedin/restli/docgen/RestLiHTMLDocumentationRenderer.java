@@ -111,7 +111,7 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
 
     final Map<String, Object> pageModel = createPageModel();
     pageModel.put("resource", resourceSchema);
-    pageModel.put("resourceName", resourceName);
+    pageModel.put("resourceName", ResourceSchemaUtil.getFullName(resourceSchema));
     pageModel.put("resourceType", getResourceType(resourceSchema));
     pageModel.put("subResources", _resourceSchemas.getSubResources(resourceSchema));
 

@@ -190,7 +190,7 @@ public class RestLiJSONDocumentationRenderer implements RestLiDocumentationRende
     final DataMap resources = outputMap.getDataMap("resources");
     final DataMap models = outputMap.getDataMap("models");
 
-    resources.put(resourceSchema.getNamespace() + '.' + resourceSchema.getName(), resourceSchema.data());
+    resources.put(ResourceSchemaUtil.getFullName(resourceSchema), resourceSchema.data());
     addRelatedModels(resourceSchema, models);
 
     final List<ResourceSchema> subresources = _relationships.getResourceSchemaCollection().getSubResources(resourceSchema);
@@ -198,7 +198,7 @@ public class RestLiJSONDocumentationRenderer implements RestLiDocumentationRende
     {
       for (ResourceSchema subresource: subresources)
       {
-        resources.put(subresource.getNamespace() + '.' + subresource.getName(), subresource.data());
+        resources.put(ResourceSchemaUtil.getFullName(subresource), subresource.data());
         addRelatedModels(subresource, models);
       }
     }
