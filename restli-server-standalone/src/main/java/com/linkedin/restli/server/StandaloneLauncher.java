@@ -17,6 +17,7 @@
 package com.linkedin.restli.server;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -28,6 +29,7 @@ import com.linkedin.r2.filter.FilterChains;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.http.server.HttpServer;
 import com.linkedin.r2.transport.http.server.HttpServerFactory;
+import com.linkedin.restli.docgen.DefaultDocumentationRequestHandler;
 import com.linkedin.restli.server.resources.PrototypeResourceFactory;
 
 /**
@@ -56,6 +58,8 @@ public class StandaloneLauncher
     _packages = packages;
 
     final RestLiConfig config = new RestLiConfig();
+    config.setDocumentationRequestHandler(new DefaultDocumentationRequestHandler());
+    config.setServerNodeUri(URI.create("/"));
     config.addResourcePackageNames(_packages);
 
     final int numCores = Runtime.getRuntime().availableProcessors();

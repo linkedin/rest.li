@@ -1,5 +1,11 @@
+1.6.8
+-----
+
 1.6.7
 -----
+(RB=TBD)
+Added docgen to restli-server-standalone config.
+
 (RB=101117)
 Custom Types will now work with action parameters.
 FieldDefs/Params now keep track of their own schemas.

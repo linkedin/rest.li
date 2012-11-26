@@ -1,5 +1,6 @@
 dependencies {
   compile project (':restli-server')
+  compile project (':restli-docgen')
   compile project (':r2-jetty')
   compile project (':r2')
   compile externalDependency.log4j
