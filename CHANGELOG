@@ -3,6 +3,10 @@
 
 1.6.7
 -----
+(RB=111517)
+Fix a bug in batching multiple get requests into one, and refactor query parameters handling in
+Request and RequestBuilder hierarchy.
+
 (RB=108674)
 Custom Types will now work as keys.
 Keys keep track of their own schemas.
