@@ -1,5 +1,9 @@
+1.6.9
+-----
+
 1.6.8
 -----
+Revert "Don't log entity body in Rest{Request,Response}Impl.toString(), since it's likely to log sensitive data."
 
 1.6.7
 -----
