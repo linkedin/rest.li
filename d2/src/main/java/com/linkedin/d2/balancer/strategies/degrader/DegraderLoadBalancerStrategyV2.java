@@ -56,16 +56,14 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
   private volatile DegraderLoadBalancerState          _state;
 
   // this controls access to updateState: only one thread should update the state at any one time.
-  private AtomicBoolean                               _updateUnderway;
   private volatile Object                             _lock;
 
 
-  public DegraderLoadBalancerStrategyV2(DegraderLoadBalancerStrategyConfig config)
+  public DegraderLoadBalancerStrategyV2(DegraderLoadBalancerStrategyConfig config, String serviceName)
   {
     _updateEnabled = true;
 
     setConfig(config);
-    _updateUnderway = new AtomicBoolean(false);
     _lock = new Object();
     _state =
             new DegraderLoadBalancerState(_config.getUpdateIntervalMs(),
@@ -73,7 +71,8 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
                                           _config.getClock().currentTimeMillis(),
                                           DegraderLoadBalancerState.Strategy.LOAD_BALANCE,
                                           0, 0, false,
-                                          new HashMap<TrackerClient, Double>());
+                                          new HashMap<TrackerClient, Double>(),
+                                          serviceName);
   }
 
   @Override
@@ -186,10 +185,10 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
     DegraderLoadBalancerState currentState = getState();
     DegraderLoadBalancerStrategyConfig config = getConfig();
 
-    if(shouldUpdate(clusterGenerationId, currentState, config, _updateEnabled) &&
-            _updateUnderway.compareAndSet(false, true))
+    if(shouldUpdate(clusterGenerationId, currentState, config, _updateEnabled))
     {
-      info(_log, "updating for cluster generation id: ", clusterGenerationId);
+      info(_log, "updating for cluster generation id: " + clusterGenerationId + " state last updated timestamp: " +
+      currentState.getLastUpdated());
 
       debug(_log, "old state was: ", currentState);
 
@@ -197,7 +196,6 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
       {
         _state = updateState(clusterGenerationId, trackerClients, currentState, config);
         assert(_state.isInitialized());
-        _updateUnderway.set(false);
         _lock.notifyAll();
       }
     }
@@ -206,7 +204,7 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
     {
       synchronized (_lock)
       {
-        while (!_state.isInitialized() && _updateUnderway.get() == true)
+        while (!_state.isInitialized())
         {
           // wait til state is populated
           try
@@ -355,8 +353,8 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
             // Otherwise, we let the call dropping strategy take it's turn, even if
             // it may do nothing.
             client.getDegraderControl(DEFAULT_PARTITION_ID).setMaxDropRate(newMaxDropRate);
-            recoveryMapChanges = true;
           }
+          recoveryMapChanges = true;
         }
       }
       else if(recoveryMapContainsClient)
@@ -394,11 +392,23 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
       // if the cluster has not been called recently (total cluster call count is <= 0)
       // and we already have a state with the same set of URIs (same cluster generation),
       // and no clients are in rehab, then don't change anything.
-      return oldState;
+      debug(_log, "New state is the same as the old state so we're not changing anything. Old state = " + oldState);
+      return new DegraderLoadBalancerState(config.getUpdateIntervalMs(),
+                                                  clusterGenerationId, oldState.getPointsMap(),
+                                                  config.getClock().currentTimeMillis(), oldState.getStrategy(),
+                                                  oldState.getCurrentOverrideDropRate(),
+                                                  oldState.getCurrentAvgClusterLatency(),
+                                                  true,
+                                                  oldRecoveryMap,
+                                                  oldState.getServiceName());
     }
 
     // update our overrides.
-    double newCurrentAvgClusterLatency = sumOfClusterLatencies / totalClusterCallCount;
+    double newCurrentAvgClusterLatency = -1;
+    if (totalClusterCallCount > 0)
+    {
+      newCurrentAvgClusterLatency = sumOfClusterLatencies / totalClusterCallCount;
+    }
 
     debug(_log, "average cluster latency: ", newCurrentAvgClusterLatency);
 
@@ -489,7 +499,7 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
                                         currentOverrideDropRate,
                                         newCurrentAvgClusterLatency,
                                         true,
-                                        newRecoveryMap);
+                                        newRecoveryMap, oldState.getServiceName());
       _log.warn("Strategy changed: newState=" + newState + ", config=" + config);
     }
     else
@@ -506,7 +516,7 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
       // overrideDropRate, and that their hash ring bump ups will also alternate with this
       // overrideDropRate adjustment, if necessary. This is fine because the first priority is
       // to get the cluster latency stabilized
-      if (newCurrentAvgClusterLatency != Double.NaN )
+      if (newCurrentAvgClusterLatency > 0 )
       {
         if (newCurrentAvgClusterLatency >= config.getHighWaterMark() && currentOverrideDropRate != 1.0)
         {
@@ -546,7 +556,8 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
                                             newDropLevel,
                                             newCurrentAvgClusterLatency,
                                             true,
-                                            oldRecoveryMap);
+                                            oldRecoveryMap,
+                                            oldState.getServiceName());
 
       _log.warn("Strategy changed: newState=" + newState + ", config=" + config);
 
@@ -641,7 +652,8 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
     return updateEnabled
         && (currentState.getClusterGenerationId() != clusterGenerationId ||
             config.getClock().currentTimeMillis() - currentState.getLastUpdated() >= config.getUpdateIntervalMs() ||
-            currentState.getClusterGenerationId() == -1);
+            currentState.getClusterGenerationId() == -1)
+        && currentState.compareAndSetUpdateStarted();
   }
 
   /**
@@ -722,7 +734,8 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
                                              _state.getCurrentOverrideDropRate(),
                                              _state.getCurrentAvgClusterLatency(),
                                              _state.isInitialized(),
-                                             _state.getRecoveryMap());
+                                             _state.getRecoveryMap(),
+                                             _state.getServiceName());
 
     _state = newState;
   }
@@ -752,6 +765,8 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
     private final long      _updateIntervalMs;
     private final long      _clusterGenerationId;
     private final Ring<URI> _ring;
+    private final String    _serviceName;
+
     @SuppressWarnings("unchecked")
     private final Map<URI, Integer>                  _pointsMap;
 
@@ -782,6 +797,11 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
     // events.
     private final boolean     _initialized;
 
+    // We will only update a state once. In reality we only use a state ONCE per instance.
+    // After it's used, a state will be discarded and a new instance will take over
+    // so this boolean is to make sure multiple threads are not updating the state more than once
+    private AtomicBoolean _updateStarted;
+
     public DegraderLoadBalancerState(long updateIntervalMs,
                                      long clusterGenerationId,
                                      Map<URI,Integer> pointsMap,
@@ -790,7 +810,8 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
                                      double currentOverrideDropRate,
                                      double currentAvgClusterLatency,
                                      boolean initState,
-                                     Map<TrackerClient,Double> recoveryMap)
+                                     Map<TrackerClient,Double> recoveryMap,
+                                     String serviceName)
     {
       _lastUpdated = lastUpdated;
       _updateIntervalMs = updateIntervalMs;
@@ -806,6 +827,17 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
       _recoveryMap = (recoveryMap != null) ?
               Collections.unmodifiableMap(new HashMap<TrackerClient,Double>(recoveryMap)) :
               Collections.<TrackerClient,Double>emptyMap();
+      _updateStarted = new AtomicBoolean(false);
+      _serviceName = serviceName;
+    }
+    private String getServiceName()
+    {
+      return _serviceName;
+    }
+
+    private boolean compareAndSetUpdateStarted()
+    {
+      return _updateStarted.compareAndSet(false, true);
     }
 
     public long getLastUpdated()
@@ -865,7 +897,10 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
           + ", _lastUpdated=" + _lastUpdated + ", _pointsMap=" + _pointsMap
           + ", _updateIntervalMs=" + _updateIntervalMs
           + ", _currentOverrideDropRate=" + _currentOverrideDropRate
-          + ", _currentAvgClusterLatency=" + _currentAvgClusterLatency + "]";
+          + ", _currentAvgClusterLatency=" + _currentAvgClusterLatency
+          + ", _strategy=" + _strategy
+          + ", _recoveryMap=" + _recoveryMap
+          + ", _serviceName="+ _serviceName + "]";
     }
   }
 }

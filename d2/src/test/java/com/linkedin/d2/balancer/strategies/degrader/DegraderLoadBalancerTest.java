@@ -22,9 +22,11 @@ import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.LoadBalancerClient;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.properties.PartitionData;
+import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.util.URIRequest;
 import com.linkedin.d2.balancer.util.hashing.ConsistentHashRing;
 import com.linkedin.d2.balancer.util.hashing.ConsistentHashRing.Point;
+import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.d2.balancer.util.hashing.URIRegexHash;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.r2.message.Request;
@@ -40,6 +42,7 @@ import com.linkedin.util.clock.SettableClock;
 import com.linkedin.util.clock.SystemClock;
 import com.linkedin.util.clock.Time;
 import com.linkedin.util.degrader.CallCompletion;
+import com.linkedin.util.degrader.CallTracker;
 import com.linkedin.util.degrader.DegraderControl;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -59,6 +62,8 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
+
 
 public class DegraderLoadBalancerTest
 {
@@ -73,7 +78,7 @@ public class DegraderLoadBalancerTest
     test.testWeightedBalancingRing();
   }
 
-  public static TrackerClient getTrackerClient(DegraderLoadBalancerStrategyV3 strategy,
+  public static TrackerClient getTrackerClient(LoadBalancerStrategy strategy,
                                                Request request,
                                                RequestContext requestContext,
                                                long clusterGenerationId,
@@ -137,7 +142,8 @@ public class DegraderLoadBalancerTest
   {
     DegraderLoadBalancerStrategyV3 strategy =
         new DegraderLoadBalancerStrategyV3(new DegraderLoadBalancerStrategyConfig(5000,
-                                                                                Double.MAX_VALUE));
+                                                                                Double.MAX_VALUE),
+                                           "DegraderLoadBalancerTest");
     List<TrackerClient> clients = new ArrayList<TrackerClient>();
     SettableClock clock1 = new SettableClock();
     SettableClock clock2 = new SettableClock();
@@ -174,7 +180,8 @@ public class DegraderLoadBalancerTest
     // max so we don't time out from lag on testing machine
     DegraderLoadBalancerStrategyV3 strategy =
         new DegraderLoadBalancerStrategyV3(new DegraderLoadBalancerStrategyConfig(5000,
-                                                                                Double.MAX_VALUE));
+                                                                                Double.MAX_VALUE),
+                                           "DegraderLoadBalancerTest");
     List<TrackerClient> clients = new ArrayList<TrackerClient>();
     TestClock clock1 = new TestClock();
     TestClock clock2 = new TestClock();
@@ -210,7 +217,10 @@ public class DegraderLoadBalancerTest
     // check for average cluster latency < max latency
     // max so we don't time out from lag on testing machine
     DegraderLoadBalancerStrategyV3 strategy =
-        new DegraderLoadBalancerStrategyV3(new DegraderLoadBalancerStrategyConfig(5000, -1d));
+        new DegraderLoadBalancerStrategyV3(new DegraderLoadBalancerStrategyConfig(5000, -1d),
+                                           "DegraderLoadBalancerTest"
+
+        );
     List<TrackerClient> clients = new ArrayList<TrackerClient>();
     TestClock clock1 = new TestClock();
     TestClock clock2 = new TestClock();
@@ -907,7 +917,8 @@ public class DegraderLoadBalancerTest
                     DegraderLoadBalancerStrategyConfig.DEFAULT_HIGH_WATER_MARK,
                     DegraderLoadBalancerStrategyConfig.DEFAULT_LOW_WATER_MARK,
                     DegraderLoadBalancerStrategyConfig.DEFAULT_GLOBAL_STEP_UP,
-                    DegraderLoadBalancerStrategyConfig.DEFAULT_GLOBAL_STEP_DOWN));
+                    DegraderLoadBalancerStrategyConfig.DEFAULT_GLOBAL_STEP_DOWN),
+            "DegraderLoadBalancerTest");
     List<TrackerClient> clients = new ArrayList<TrackerClient>(NUM_SERVERS);
 
     for (int i = 0; i < NUM_SERVERS; i++)
@@ -1034,7 +1045,21 @@ public class DegraderLoadBalancerTest
     myMap.put("ringRampFactor", 2.0);
     myMap.put("updateIntervalMs", timeInterval);
     int stepsToFullRecovery = 0;
-    clusterRecovery1TC(myMap, clock, stepsToFullRecovery, timeInterval);
+
+    //test Strategy V3
+    DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.configFromMap(myMap);
+    DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest");
+    DegraderLoadBalancerStrategyAdapter strategy = new DegraderLoadBalancerStrategyAdapter(strategyV3);
+    clusterRecovery1TC(myMap, clock, stepsToFullRecovery, timeInterval, strategy, null,
+                       DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState.Strategy.LOAD_BALANCE);
+
+    //test Strategy V2
+    config = DegraderLoadBalancerStrategyConfig.configFromMap(myMap);
+    DegraderLoadBalancerStrategyV2 strategyV2 = new DegraderLoadBalancerStrategyV2(config, "DegraderLoadBalancerTest");
+    strategy = new DegraderLoadBalancerStrategyAdapter(strategyV2);
+    clusterRecovery1TC(myMap, clock, stepsToFullRecovery, timeInterval, strategy,
+                       DegraderLoadBalancerStrategyV2.DegraderLoadBalancerState.Strategy.LOAD_BALANCE,
+                       null);
   }
 
   @Test(groups = { "small", "back-end" })
@@ -1050,18 +1075,278 @@ public class DegraderLoadBalancerTest
     myMap.put("updateIntervalMs", timeInterval);
     // it will take two intervals for the TC to be reintroduced into the hash ring.
     int stepsToFullRecovery = 1;
-    clusterRecovery1TC(myMap, clock, stepsToFullRecovery, timeInterval);
+
+    //test Strategy V3
+    DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.configFromMap(myMap);
+    DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest");
+    DegraderLoadBalancerStrategyAdapter strategy = new DegraderLoadBalancerStrategyAdapter(strategyV3);
+    clusterRecovery1TC(myMap, clock, stepsToFullRecovery, timeInterval, strategy, null,
+                       DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState.Strategy.LOAD_BALANCE);
+
+    //test Strategy V2
+    config = DegraderLoadBalancerStrategyConfig.configFromMap(myMap);
+    DegraderLoadBalancerStrategyV2 strategyV2 = new DegraderLoadBalancerStrategyV2(config, "DegraderLoadBalancerTest");
+    strategy = new DegraderLoadBalancerStrategyAdapter(strategyV2);
+    clusterRecovery1TC(myMap, clock, stepsToFullRecovery, timeInterval, strategy,
+                       DegraderLoadBalancerStrategyV2.DegraderLoadBalancerState.Strategy.LOAD_BALANCE,
+                       null);
   }
 
+  private static class DegraderLoadBalancerStrategyAdapter implements LoadBalancerStrategy
+  {
+
+    final DegraderLoadBalancerStrategyV3 _strategyV3;
+    final DegraderLoadBalancerStrategyV2 _strategyV2;
+    final LoadBalancerStrategy _strategy;
+
+    private DegraderLoadBalancerStrategyAdapter(DegraderLoadBalancerStrategyV2 strategyV2)
+    {
+      _strategyV2 = strategyV2;
+      _strategyV3 = null;
+      _strategy = strategyV2;
+    }
+
+    private DegraderLoadBalancerStrategyAdapter(DegraderLoadBalancerStrategyV3 strategyV3)
+    {
+      _strategyV2 = null;
+      _strategyV3 = strategyV3;
+      _strategy = strategyV3;
+    }
+
+
+    public TrackerClient getTrackerClient(Request request,
+                                          RequestContext requestContext,
+                                          long clusterGenerationId,
+                                          int partitionId,
+                                          List<TrackerClient> trackerClients)
+    {
+      return _strategy.getTrackerClient(request, requestContext, clusterGenerationId, partitionId, trackerClients);
+    }
+
+    public Ring<URI> getRing(long clusterGenerationId, int partitionId, List<TrackerClient> trackerClients)
+    {
+      return _strategy.getRing(clusterGenerationId, partitionId, trackerClients);
+    }
+
+    public void setStrategyV3(int partitionID,
+                              DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState.Strategy
+                              strategy)
+    {
+      _strategyV3.setStrategy(partitionID, strategy);
+    }
+
+    public void setStrategyV2(DegraderLoadBalancerStrategyV2.DegraderLoadBalancerState.Strategy strategy)
+    {
+      _strategyV2.setStrategy(strategy);
+    }
+
+    public void setStrategyToCallDrop()
+    {
+      if (_strategyV2 != null)
+      {
+        _strategyV2.setStrategy(DegraderLoadBalancerStrategyV2.DegraderLoadBalancerState.Strategy.CALL_DROPPING);
+      }
+      else if (_strategyV3 != null)
+      {
+        _strategyV3.setStrategy(DEFAULT_PARTITION_ID,
+                                DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState.Strategy.
+                                    CALL_DROPPING);
+      }
+      else
+      {
+        throw new IllegalStateException("should have either strategyV2 or V3");
+      }
+    }
+
+    public double getCurrentOverrideDropRate()
+    {
+      if (_strategyV2 != null)
+      {
+        return _strategyV2.getCurrentOverrideDropRate();
+      }
+      else
+      {
+        return _strategyV3.getState().getPartitionState(DEFAULT_PARTITION_ID).getCurrentOverrideDropRate();
+      }
+    }
+  }
+
+  @Test(groups = { "small", "back-end" })
+  public void testClusterRecoveryAfter100PercentDropCall()
+  {
+    Map<String, Object> myMap = new HashMap<String, Object>();
+    Long timeInterval = 5000L;
+    TestClock clock = new TestClock();
+    myMap.put("clock", clock);
+    // We want the degrader to have one cooling off period, and then re-enter the ring. This
+    myMap.put("initialRecoveryLevel", 0.005);
+    myMap.put("ringRampFactor", 2.0);
+    myMap.put("updateIntervalMs", timeInterval);
+    myMap.put("globalStepUp", 1.0);
+    myMap.put("globalStepDown", 0.8);
+
+
+    //test Strategy V3
+    DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.configFromMap(myMap);
+    DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest");
+    DegraderLoadBalancerStrategyAdapter strategy = new DegraderLoadBalancerStrategyAdapter(strategyV3);
+    clusterTotalRecovery1TC(myMap,
+                            clock,
+                            timeInterval,
+                            strategy);
+
+    //test Strategy V2
+    config = DegraderLoadBalancerStrategyConfig.configFromMap(myMap);
+    DegraderLoadBalancerStrategyV2 strategyV2 = new DegraderLoadBalancerStrategyV2(config, "DegraderLoadBalancerTest");
+    strategy = new DegraderLoadBalancerStrategyAdapter(strategyV2);
+    clusterTotalRecovery1TC(myMap,
+                            clock,
+                            timeInterval,
+                            strategy);
+  }
+
+  /**
+   * simulates the situation where a cluster latency gets so high that we will reduce the number of
+   * points in hashring to 0 and then increase the call drop rate to 1.0
+   * This will causes the cluster to receive no traffic and we want to see if the cluster can recover
+   * from such situation.
+   * @param myMap
+   * @param clock
+   * @param timeInterval
+   * @param strategy
+   */
+  public void clusterTotalRecovery1TC(Map<String, Object> myMap, TestClock clock,
+                                   Long timeInterval,
+                                   DegraderLoadBalancerStrategyAdapter strategy)
+    {
+      final int NUM_CHECKS = 5;
+      final Long TIME_INTERVAL = timeInterval;
+
+      DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.configFromMap(myMap);
+
+      List<TrackerClient> clients = new ArrayList<TrackerClient>();
+      URI uri1 = URI.create("http://test.linkedin.com:3242/fdsaf");
+      URIRequest request = new URIRequest(uri1);
+
+      TrackerClient client1 =
+              new TrackerClient(uri1, getDefaultPartitionData(1d), new TestLoadBalancerClient(uri1), clock);
+
+      clients.add(client1);
+
+      // force client1 to be disabled
+      DegraderControl dcClient1Default = client1.getDegraderControl(DEFAULT_PARTITION_ID);
+      dcClient1Default.setOverrideMinCallCount(5);
+      dcClient1Default.setMinCallCount(5);
+      dcClient1Default.setMaxDropRate(1d);
+      dcClient1Default.setUpStep(1.0d);
+
+      List<CallCompletion> ccList = new ArrayList<CallCompletion>();
+      CallCompletion cc;
+      for (int j = 0; j < NUM_CHECKS; j++)
+
+      {
+        cc = client1.getCallTracker().startCall();
+
+        ccList.add(cc);
+      }
+
+      // add high latency and errors to shut off traffic to this tracker client.
+      clock.addMs(3500);
+
+      for (Iterator<CallCompletion> iter = ccList.listIterator(); iter.hasNext();)
+      {
+        cc = iter.next();
+        cc.endCallWithError();
+        iter.remove();
+      }
+
+      // go to next time interval.
+      clock.addMs(TIME_INTERVAL);
+
+      Assert.assertEquals(dcClient1Default.getCurrentComputedDropRate(), 1.0);
+
+      // trigger a state update
+      TrackerClient resultTC = getTrackerClient(strategy, request, new RequestContext(), 1, clients);
+
+      // now we mimic the high latency and force the state to drop all calls so to make
+      // the overrideClusterDropRate to 1.0
+      ccList = new ArrayList<CallCompletion>();
+      for (int j = 0; j < NUM_CHECKS; j++)
+      {
+        cc = client1.getCallTracker().startCall();
+
+        ccList.add(cc);
+      }
+
+      //make sure that the latency is really high
+      clock.addMs(3500);
+
+      for (Iterator<CallCompletion> iter = ccList.listIterator(); iter.hasNext();)
+      {
+        cc = iter.next();
+        cc.endCallWithError();
+        iter.remove();
+      }
+
+      // go to next time interval.
+      clock.addMs(TIME_INTERVAL);
+
+      // trigger a state update
+      resultTC = getTrackerClient(strategy, request, new RequestContext(), 1, clients);
+
+      //this time the cluster override drop rate is set to 1.0 so resultTC should be null because we drop the client
+      assertNull(resultTC);
+      assertEquals(strategy.getCurrentOverrideDropRate(), config.getGlobalStepUp());
+
+      // add another time interval
+      clock.addMs(TIME_INTERVAL);
+
+      // usually we alternate between LoadBalancing and CallDropping strategy but we want to test
+      // call dropping strategy
+      strategy.setStrategyToCallDrop();
+
+      // we simulate call drop by not calling callCompletion endCall() or endCallWithEror() like we did above
+      // because override drop rate is set to 1.0 that means all call will be dropped so resultTc should be null
+      resultTC = getTrackerClient(strategy, request, new RequestContext(), 1, clients);
+
+      // this time the cluster override drop rate is set to 0.2 because we're recovering
+      assertEquals(strategy.getCurrentOverrideDropRate(), 1 - config.getGlobalStepDown());
+
+       // add another time interval
+      clock.addMs(TIME_INTERVAL);
+
+      // set the strategy to callDropping again
+      strategy.setStrategyToCallDrop();
+
+      // because override drop rate is set to 0.2 and we simulate as if we still don't get any call
+      // this cycle we will set the override drop rate to 0
+      resultTC = getTrackerClient(strategy, request, new RequestContext(), 1, clients);
+      assertEquals(strategy.getCurrentOverrideDropRate(), 0.0);
+    }
+
+  /**
+   * helper method to test DegraderLoadBalancerStrategy recovery with 1 TrackerClient.
+   *
+   * We want to test DegraderV2 and V3 with 2 different strategies : LoadBalacing and Call Dropping.
+   * So this method needs to able to handle all 4 permutations.
+   *
+   * @param myMap
+   * @param clock
+   * @param stepsToFullRecovery
+   * @param timeInterval
+   * @param strategy
+   */
   public void clusterRecovery1TC(Map<String, Object> myMap, TestClock clock,
-                                 int stepsToFullRecovery, Long timeInterval)
+                                 int stepsToFullRecovery, Long timeInterval,
+                                 DegraderLoadBalancerStrategyAdapter strategy,
+                                 DegraderLoadBalancerStrategyV2.DegraderLoadBalancerState.Strategy strategyV2,
+                                 DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState.Strategy strategyV3)
   {
     final int NUM_CHECKS = 5;
     final Long TIME_INTERVAL = timeInterval;
     int localStepsToFullRecovery = stepsToFullRecovery;
 
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.configFromMap(myMap);
-    DegraderLoadBalancerStrategyV3 strategy = new DegraderLoadBalancerStrategyV3(config);
 
     List<TrackerClient> clients = new ArrayList<TrackerClient>();
     URI uri1 = URI.create("http://test.linkedin.com:3242/fdsaf");
@@ -1122,8 +1407,18 @@ public class DegraderLoadBalancerTest
         // go to next time interval.
         clock.addMs(TIME_INTERVAL);
         // try adjusting the hash ring on this updateState
-        strategy.setStrategy(DEFAULT_PARTITION_ID,
-            DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState.Strategy.LOAD_BALANCE);
+        if (strategyV3 != null)
+        {
+          strategy.setStrategyV3(DEFAULT_PARTITION_ID, strategyV3);
+        }
+        else if (strategyV2 != null)
+        {
+          strategy.setStrategyV2(strategyV2);
+        }
+        else
+        {
+          fail("should set strategy (either LoadBalance or Degrader");
+        }
         resultTC = getTrackerClient(strategy, request, new RequestContext(), 1, clients);
         localStepsToFullRecovery--;
       }
@@ -1175,7 +1470,7 @@ public class DegraderLoadBalancerTest
     myMap.put("lowWaterMark", lowWaterMark);
 
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.configFromMap(myMap);
-    DegraderLoadBalancerStrategyV3 strategy = new DegraderLoadBalancerStrategyV3(config);
+    DegraderLoadBalancerStrategyV3 strategy = new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest");
 
     List<TrackerClient> clients = new ArrayList<TrackerClient>();
     URI uri1 = URI.create("http://test.linkedin.com:3242/fdsaf");
@@ -1293,7 +1588,7 @@ public class DegraderLoadBalancerTest
     TestClock clock = new TestClock();
     myMap.put("clock", clock);
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.configFromMap(myMap);
-    DegraderLoadBalancerStrategyV3 strategy = new DegraderLoadBalancerStrategyV3(config);
+    DegraderLoadBalancerStrategyV3 strategy = new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest");
 
     List<TrackerClient> clients = new ArrayList<TrackerClient>();
     URI uri1 = URI.create("http://test.linkedin.com:3242/fdsaf");
@@ -1428,7 +1723,7 @@ public class DegraderLoadBalancerTest
     TestClock clock = new TestClock();
     myMap.put("clock", clock);
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.configFromMap(myMap);
-    DegraderLoadBalancerStrategyV3 strategy = new DegraderLoadBalancerStrategyV3(config);
+    DegraderLoadBalancerStrategyV3 strategy = new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest");
 
     List<TrackerClient> clients = new ArrayList<TrackerClient>();
     URI uri1 = URI.create("http://test.linkedin.com:3242/fdsaf");
@@ -1494,12 +1789,14 @@ public class DegraderLoadBalancerTest
   public static DegraderLoadBalancerStrategyV3 getStrategy()
   {
     return new DegraderLoadBalancerStrategyV3(new DegraderLoadBalancerStrategyConfig(5000,
-                                                                                   100d));
+                                                                                   100d),
+                                              "DegraderLoadBalancerTest");
   }
 
   public static DegraderLoadBalancerStrategyV3 getStrategy(Map<String,Object> map)
   {
-    return new DegraderLoadBalancerStrategyV3(DegraderLoadBalancerStrategyConfig.configFromMap(map));
+    return new DegraderLoadBalancerStrategyV3(DegraderLoadBalancerStrategyConfig.configFromMap(map),
+                                              "DegraderLoadBalancerTest");
   }
 
   public static TrackerClient getClient(URI uri)
