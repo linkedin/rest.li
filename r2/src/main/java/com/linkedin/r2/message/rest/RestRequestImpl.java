@@ -97,6 +97,6 @@ import java.util.Map;
   @Override
   public String toString()
   {
-    return "RestRequest[headers=" + getHeaders() + ",uri=" + _uri + ",method=" + _method + ",entity size=" + getEntity().length() + "]";
+    return "RestRequest[headers=" + getHeaders() + ",uri=" + _uri + ",method=" + _method + ",entity=" + getEntity() + "]";
   }
 }
