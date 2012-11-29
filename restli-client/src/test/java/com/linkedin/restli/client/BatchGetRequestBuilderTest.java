@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.client;
 
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -25,13 +26,19 @@ import java.util.Set;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.DynamicRecordMetadata;
+import com.linkedin.jersey.api.uri.UriComponent;
+import com.linkedin.jersey.core.util.MultivaluedMap;
 import com.linkedin.restli.client.test.TestRecord;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpecImpl;
+import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.common.PathSegment.PathSegmentSyntaxException;
+import com.linkedin.restli.internal.common.QueryParamsDataMap;
 
 /**
  * Unit test for BatchGetRequestBuilder.
@@ -67,14 +74,16 @@ public class BatchGetRequestBuilderTest
     Assert.assertEquals(batchRequest.getBaseURI(), request.getBaseURI());
     Assert.assertEquals(batchRequest.getUri().toString(), expectedUri);
     Assert.assertEquals(batchRequest.getFields(), request.getFields());
-    Assert.assertEquals(batchRequest.getIds().size(), 1);
-    Assert.assertEquals(batchRequest.getIds().iterator().next(), request.getId());
+    Assert.assertEquals(batchRequest.getIdObjects().size(), 1);
+    Assert.assertEquals(batchRequest.getIdObjects().iterator().next(), request.getIdObject());
   }
 
   @Test
   public void testComplexKeyBatchConversion()
   {
-    String expectedUri = "/?fields=message,id&ids=$params.id%3D1%26$params.message%3DparamMessage1%26id%3D1%26message%3DkeyMessage1&param=paramValue";
+    // Comment for the review - this appears to be breaking wire protocol, but it doesn't. Request batching
+    // for complex keys never worked, and the old format was incorrect.
+    String expectedUri = "/?fields=message,id&ids%5B0%5D.$params.id=1&ids%5B0%5D.$params.message=paramMessage1&ids%5B0%5D.id=1&ids%5B0%5D.message=keyMessage1&param=paramValue";
     GetRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> requestBuilder =
         new GetRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord>("/",
                                                                                       TestRecord.class,
@@ -89,8 +98,8 @@ public class BatchGetRequestBuilderTest
     Assert.assertEquals(batchRequest.getBaseURI(), request.getBaseURI());
     Assert.assertEquals(batchRequest.getUri().toString(), expectedUri);
     Assert.assertEquals(batchRequest.getFields(), request.getFields());
-    Assert.assertEquals(batchRequest.getIds().size(), 1);
-    Assert.assertEquals(batchRequest.getIds().iterator().next(), request.getId());
+    Assert.assertEquals(batchRequest.getIdObjects().size(), 1);
+    Assert.assertEquals(batchRequest.getIdObjects().iterator().next(), request.getIdObject());
   }
 
   @Test
@@ -126,7 +135,7 @@ public class BatchGetRequestBuilderTest
     Assert.assertEquals(batchingRequest.getBaseURI(), batchRequest1.getBaseURI());
     Assert.assertEquals(batchingRequest.getFields(),
                         new HashSet<PathSpec>(Arrays.asList(FIELDS.id(), FIELDS.message())));
-    Assert.assertEquals(batchingRequest.getIds(),
+    Assert.assertEquals(batchingRequest.getIdObjects(),
                         new HashSet<String>(Arrays.asList("1", "2", "3")));
   }
 
@@ -176,17 +185,42 @@ public class BatchGetRequestBuilderTest
     @SuppressWarnings("unchecked")
     BatchGetRequest<TestRecord> batchingRequest =
         BatchGetRequestBuilder.batch(Arrays.asList(batchRequest1, batchRequest2));
-    Assert.assertEquals(batchingRequest.getUri().toString(), expectedUri);
+
+    URI actualUri = batchingRequest.getUri();
+    MultivaluedMap actualParams = UriComponent.decodeQuery(actualUri, true);
+    MultivaluedMap expectedUriParams =
+        UriComponent.decodeQuery(URI.create(expectedUri), true);
+    DataMap expectedParamsDataMap = null;
+    DataMap actualParamsDataMap = null;
+    try
+    {
+      expectedParamsDataMap = QueryParamsDataMap.parseDataMapKeys(expectedUriParams);
+      actualParamsDataMap = QueryParamsDataMap.parseDataMapKeys(actualParams);
+    }
+    catch (PathSegmentSyntaxException e)
+    {
+      // Should never happen
+      throw new RuntimeException(e);
+    }
+
+    Assert.assertEquals(actualUri.getPath(), "/");
+    // Apparently due to using set to compact the list of ids in
+    // BatchGetRequestBuilder.batch() the order of the parameters on the url is no longer
+    // reliable.
+    DataList actualIds =
+        (DataList) actualParamsDataMap.remove(RestConstants.QUERY_BATCH_IDS_PARAM);
+    DataList expectedIds =
+        (DataList) expectedParamsDataMap.remove(RestConstants.QUERY_BATCH_IDS_PARAM);
+    Assert.assertEquals(new HashSet<Object>(actualIds), new HashSet<Object>(expectedIds));
+    Assert.assertEquals(actualParamsDataMap, expectedParamsDataMap);
     Assert.assertEquals(batchingRequest.getBaseURI(), batchRequest1.getBaseURI());
     Assert.assertEquals(batchingRequest.getFields(),
                         new HashSet<PathSpec>(Arrays.asList(FIELDS.id(), FIELDS.message())));
-    Set<Object> ids = batchingRequest.getIds();
+    Set<Object> ids = batchingRequest.getIdObjects();
     Set<String> idStrs = new HashSet<String>(ids.size());
     for (Object id : ids)
     {
-      idStrs.add(ComplexResourceKey.buildFromDataMap((DataMap) id,
-                                                     TestRecord.class,
-                                                     TestRecord.class).toString());
+      idStrs.add(id.toString());
     }
     Assert.assertEquals(idStrs,
                         new HashSet<String>(Arrays.asList("id=3&message=keyMessage3",
@@ -294,7 +328,7 @@ public class BatchGetRequestBuilderTest
     Assert.assertEquals(batchingRequest.getBaseURI(), batchRequest1.getBaseURI());
     Assert.assertEquals(batchingRequest.getFields(),
                         new HashSet<PathSpec>(Arrays.asList(FIELDS.id())));
-    Assert.assertEquals(batchingRequest.getIds(),
+    Assert.assertEquals(batchingRequest.getIdObjects(),
                         new HashSet<String>(Arrays.asList("1", "2", "3")));
   }
 
@@ -353,7 +387,7 @@ public class BatchGetRequestBuilderTest
                                                    batchRequestBuilder2.build()));
     Assert.assertEquals(batchingRequest.getBaseURI(), batchRequest1.getBaseURI());
     Assert.assertEquals(batchingRequest.getFields(), Collections.emptySet());
-    Assert.assertEquals(batchingRequest.getIds(),
+    Assert.assertEquals(batchingRequest.getIdObjects(),
                         new HashSet<String>(Arrays.asList("1", "2", "3")));
   }
 
@@ -380,7 +414,7 @@ public class BatchGetRequestBuilderTest
                                                    batchRequestBuilder2.build()));
     Assert.assertEquals(batchingRequest.getBaseURI(), batchRequest1.getBaseURI());
     Assert.assertEquals(batchingRequest.getFields(), Collections.emptySet());
-    Assert.assertEquals(batchingRequest.getIds(),
+    Assert.assertEquals(batchingRequest.getIdObjects(),
                         new HashSet<String>(Arrays.asList("1", "2", "3")));
   }
 
@@ -407,7 +441,7 @@ public class BatchGetRequestBuilderTest
                                                    batchRequestBuilder2.build()));
     Assert.assertEquals(batchingRequest.getBaseURI(), batchRequest1.getBaseURI());
     Assert.assertEquals(batchingRequest.getFields(), Collections.emptySet());
-    Assert.assertEquals(batchingRequest.getIds(),
+    Assert.assertEquals(batchingRequest.getIdObjects(),
                         new HashSet<String>(Arrays.asList("1", "2", "3")));
   }
 }

@@ -138,7 +138,7 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
         throw new IllegalArgumentException("Requests must be for the same resource to batch");
       }
 
-      Set<Object> requestIds = request.getIds();
+      Set<Object> requestIds = request.getIdObjects();
       Set<PathSpec> requestFields = request.getFields();
       // Defensive shallow copy
       DataMap queryParams = new DataMap(request.getQueryParams());
@@ -175,8 +175,21 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
       }
     }
 
-    firstQueryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM,
-                         new DataList(new ArrayList<Object>(ids)));
+    // If ComplexResourceKey, convert keys to DataMaps before adding to query params
+    DataList idsDataList = new DataList(ids.size());
+    if (firstResourceSpec.getKeyClass() == ComplexResourceKey.class)
+    {
+      for (Object obj : ids)
+      {
+        assert (obj instanceof ComplexResourceKey<?, ?>);
+        idsDataList.add(((ComplexResourceKey<?, ?>) obj).toDataMap());
+      }
+    }
+    else
+    {
+      idsDataList.addAll(new ArrayList<Object>(ids));
+    }
+    firstQueryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM, idsDataList);
 
     if (fields != null && !fields.isEmpty())
     {
@@ -206,7 +219,7 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
   public static <RT extends RecordTemplate> BatchGetRequest<RT> batch(GetRequest<RT> request)
   {
     URI baseURI = request.getBaseURI();
-    Object id = request.getId();
+    Object id = request.getIdObject();
     DataMap queryParams = new DataMap(request.getQueryParams());
     Object idsParam =
         id instanceof ComplexResourceKey ? ((ComplexResourceKey<?, ?>) id).toDataMap()

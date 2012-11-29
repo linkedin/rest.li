@@ -33,12 +33,10 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.util.MapKeyResult;
-import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.restli.common.BatchResponse;
-import com.linkedin.restli.common.ComplexResourceKey;
 
 /**
  * @author Josh Walker
@@ -68,21 +66,10 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
   public ScatterGatherResult<T> buildRequestsV2(BatchGetRequest<T> request, RequestContext requestContext) throws
           ServiceUnavailableException
   {
-    // In case of complex keys need to convert a set of DataMap representations of the keys
-    // to ComplexResourceKeys.
-    Set<Object> idObjects = request.getIds();
+    Set<Object> idObjects = request.getIdObjects();
     Collection<String> ids = new HashSet<String>(idObjects.size());
     for (Object o : idObjects)
     {
-      if (request.getResourceSpec().getKeyKeyClass() != null && o instanceof DataMap)
-      {
-        o =
-            ComplexResourceKey.buildFromDataMap((DataMap) o,
-                                                request.getResourceSpec()
-                                                       .getKeyKeyClass(),
-                                                request.getResourceSpec()
-                                                       .getKeyParamsClass());
-      }
       ids.add(o.toString());
     }
 

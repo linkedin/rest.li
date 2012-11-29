@@ -142,7 +142,7 @@ public class TestScatterGather extends RestLiIntegrationTest
         uriIds.addAll(Arrays.asList(value.split(",")));
       }
 
-      Set<Object> idObjects = ((BatchGetRequest<Greeting>)requestInfo.getRequest()).getIds();
+      Set<Object> idObjects = ((BatchGetRequest<Greeting>)requestInfo.getRequest()).getIdObjects();
       Set<String> theseIds = new HashSet<String>(idObjects.size());
       for (Object o : idObjects)
       {

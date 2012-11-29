@@ -156,6 +156,10 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
 
   }
 
+  /**
+   * Adds the provided id to the provided set of objects that can be put into a DataMap (i.e. DataObject of String)
+   * If the id is an instance of ComplexResourceKey, convert to DataMap, otherwise stringify.
+   */
   private void addKey(Set<Object> ids, Object id)
   {
     if (id == null) {
@@ -232,7 +236,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
     return strings;
   }
 
-  private static String stringifySimpleValue(Object value)
+  static String stringifySimpleValue(Object value)
   {
     Class<?> valueClass = value.getClass();
     if (DataTemplateUtil.hasCoercer(valueClass))

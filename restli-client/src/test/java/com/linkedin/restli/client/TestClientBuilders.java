@@ -119,7 +119,7 @@ public class TestClientBuilders
                                                                                                     _COLL_SPEC);
     BatchGetRequest<TestRecord> request = builder.ids(1L, 2L, 3L).fields(TestRecord.fields().id(), TestRecord.fields().message()).build();
     Assert.assertEquals(request.getBaseURI(), URI.create(TEST_URI));
-    Assert.assertEquals(request.getIds(), new HashSet<String>(Arrays.asList("1", "2", "3")));
+    Assert.assertEquals(request.getIdObjects(), new HashSet<String>(Arrays.asList("1", "2", "3")));
     Assert.assertEquals(request.getFields(), new HashSet<PathSpec>(Arrays.asList(
             TestRecord.fields().id(), TestRecord.fields().message())));
     Assert.assertEquals(request.isSafe(), true);
@@ -146,7 +146,7 @@ public class TestClientBuilders
 
     // Compare key sets. Note that have to convert keys to Strings as the request internally converts them to string
     HashSet<String> expectedIds = new HashSet<String>(Arrays.asList(key1.toString(), key2.toString()));
-    Assert.assertEquals(request.getIds(), expectedIds);
+    Assert.assertEquals(request.getIdObjects(), expectedIds);
     Assert.assertEquals(request.getFields(), new HashSet<PathSpec>(Arrays.asList(
             TestRecord.fields().id(), TestRecord.fields().message())));
     Assert.assertEquals(request.isSafe(), true);
@@ -166,7 +166,7 @@ public class TestClientBuilders
     List<Long> ids = Arrays.asList(1L, 2L, 3L);
     BatchGetRequest<TestRecord> request = builder.ids(ids).fields(TestRecord.fields().id(), TestRecord.fields().message()).build();
     Assert.assertEquals(request.getBaseURI(), URI.create(TEST_URI));
-    Assert.assertEquals(request.getIds(), new HashSet<String>(Arrays.asList("1", "2", "3")));
+    Assert.assertEquals(request.getIdObjects(), new HashSet<String>(Arrays.asList("1", "2", "3")));
     Assert.assertEquals(request.getFields(), new HashSet<PathSpec>(Arrays.asList(
             TestRecord.fields().id(), TestRecord.fields().message())));
     Assert.assertEquals(request.isSafe(), true);
@@ -187,7 +187,7 @@ public class TestClientBuilders
     updates.put(3L, new TestRecord());
     BatchUpdateRequest<Long, TestRecord> request = builder.inputs(updates).build();
     Assert.assertEquals(request.getBaseURI(), URI.create(TEST_URI));
-    Assert.assertEquals(request.getIds(), new HashSet<String>(Arrays.asList("1", "2", "3")));
+    Assert.assertEquals(request.getIdObjects(), new HashSet<String>(Arrays.asList("1", "2", "3")));
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), true);
 
@@ -211,7 +211,7 @@ public class TestClientBuilders
     builder.input(3L, new PatchRequest<TestRecord>());
     BatchPartialUpdateRequest<Long, TestRecord> request = builder.build();
     Assert.assertEquals(request.getBaseURI(), URI.create(TEST_URI));
-    Assert.assertEquals(request.getIds(), new HashSet<String>(Arrays.asList("1", "2", "3")));
+    Assert.assertEquals(request.getIdObjects(), new HashSet<String>(Arrays.asList("1", "2", "3")));
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), false);
 
@@ -231,7 +231,7 @@ public class TestClientBuilders
             new BatchDeleteRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC);
     BatchDeleteRequest<Long, TestRecord> request = builder.ids(1L, 2L, 3L).build();
     Assert.assertEquals(request.getBaseURI(), URI.create(TEST_URI));
-    Assert.assertEquals(request.getIds(), new HashSet<String>(Arrays.asList("1", "2", "3")));
+    Assert.assertEquals(request.getIdObjects(), new HashSet<String>(Arrays.asList("1", "2", "3")));
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), true);
 
@@ -327,7 +327,7 @@ public class TestClientBuilders
     GetRequestBuilder<Long, TestRecord> builder = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC);
     GetRequest<TestRecord> request = builder.id(1L).fields(TestRecord.fields().id(), TestRecord.fields().message()).build();
     Assert.assertEquals(request.getBaseURI(), URI.create(TEST_URI));
-    Assert.assertEquals(request.getId(), String.valueOf(1L));
+    Assert.assertEquals(request.getIdObject(), String.valueOf(1L));
     Assert.assertEquals(request.getFields(), new HashSet<PathSpec>(Arrays.asList(
             TestRecord.fields().id(), TestRecord.fields().message())));
     Assert.assertEquals(request.isSafe(), true);

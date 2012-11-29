@@ -122,21 +122,26 @@ public class ComplexResourceKey<K extends RecordTemplate, P extends RecordTempla
    * Build complex key instance from an untyped datamap representing a complex key as
    * defined in {@link QueryParamsDataMap}
    *
-   * @param dataMap untyped DataMap - all primitive values are represented as strings.
+   * @param keyDataMap untyped DataMap - all primitive values are represented as strings.
    * @param keyKeyClass Class of the key component of {@link ComplexResourceKey}
    * @param keyParamsClass Class of the params component of {@link ComplexResourceKey}
    * @return {@link ComplexResourceKey} initialized with id and param values specified in
    *         the input DataMap
    */
-  public static ComplexResourceKey<RecordTemplate, RecordTemplate> buildFromDataMap(DataMap dataMap,
+  public static ComplexResourceKey<RecordTemplate, RecordTemplate> buildFromDataMap(DataMap keyDataMap,
                                                                                     Class<? extends RecordTemplate> keyKeyClass,
                                                                                     Class<? extends RecordTemplate> keyParamsClass)
   {
     // Copy in case the original is immutable
-    dataMap = new DataMap(dataMap);
+    keyDataMap = new DataMap(keyDataMap);
+
     // Separate key from its parameters (those are under "params" key in the total map)
-    DataMap paramsDataMap = (DataMap) dataMap.remove(COMPLEX_KEY_PARAMS);
-    RecordTemplate key = validateDataMap(dataMap, keyKeyClass);
+    DataMap paramsDataMap = (DataMap) keyDataMap.remove(COMPLEX_KEY_PARAMS);
+    if (paramsDataMap == null)
+    {
+      paramsDataMap = new DataMap();
+    }
+    RecordTemplate key = validateDataMap(keyDataMap, keyKeyClass);
     RecordTemplate params = validateDataMap(paramsDataMap, keyParamsClass);
 
     return new ComplexResourceKey<RecordTemplate, RecordTemplate>(key, params);
@@ -164,5 +169,33 @@ public class ComplexResourceKey<K extends RecordTemplate, P extends RecordTempla
                                        new ValidationOptions(RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT,
                                                              CoercionMode.STRING_TO_PRIMITIVE));
     return recordTemplate;
+  }
+
+  /** @see java.lang.Object#hashCode() */
+  @Override
+  public int hashCode()
+  {
+    final int prime = 31;
+    int result = 1;
+    // Key cannot be null
+    result = prime * result + key.hashCode();
+    result = prime * result + ((params == null) ? 0 : params.hashCode());
+    return result;
+  }
+
+  /** @see java.lang.Object#equals(java.lang.Object) */
+  @Override
+  public boolean equals(Object obj)
+  {
+    if (this == obj)
+      return true;
+    if (obj == null)
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
+    ComplexResourceKey<?, ?> other = (ComplexResourceKey<?, ?>) obj;
+    // Key cannot be null
+    return key.equals(other.key) && params == null ? other.params == null
+        : (params.equals(other.params));
   }
 }

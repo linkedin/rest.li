@@ -23,6 +23,7 @@ import java.util.Set;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.internal.client.EntityResponseDecoder;
@@ -71,9 +72,22 @@ public class GetRequest<T extends RecordTemplate> extends Request<T>
     return _baseURI;
   }
 
-  public Object getId()
+  public Object getIdObject()
   {
-    return _id;
+    if (_id instanceof ComplexResourceKey)
+    {
+      return _id;
+    }
+    else
+    {
+      return AbstractRequestBuilder.stringifySimpleValue(_id);
+    }
+  }
+
+  @Deprecated
+  public String getId()
+  {
+    return _id == null ? null : _id.toString();
   }
 
   @Override

@@ -71,11 +71,11 @@ public class Request<T>
     _method = method;
     _input = input;
     _decoder = decoder;
-    _headers = Collections.unmodifiableMap(headers);
+    _headers = headers == null ? null : Collections.unmodifiableMap(headers);
     _resourceSpec = resourceSpec;
+
     if (queryParams == null)
     {
-
       _queryParams = null;
     }
     else

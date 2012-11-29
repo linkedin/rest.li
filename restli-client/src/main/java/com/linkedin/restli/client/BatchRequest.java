@@ -12,11 +12,12 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-*/
+ */
 
 package com.linkedin.restli.client;
 
 import java.net.URI;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -24,6 +25,7 @@ import java.util.Set;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
@@ -59,17 +61,54 @@ public class BatchRequest<T> extends Request<T>
   }
 
   /**
-   * This method is to be exposed in the extending classes when appropriate
+   * Return ids of this batch request as object. At the query params datamap level complex
+   * keys are represented as datamaps. Need to convert them back to ComplexResourceKeys
+   * before returning.
+   *
+   * @return
    */
-  public Set<Object> getIds()
+  public Set<Object> getIdObjects()
   {
-    Set<Object> result = new HashSet<Object>();
-    DataList idsList = (DataList) getQueryParams().get(RestConstants.QUERY_BATCH_IDS_PARAM);
+    DataList idsList =
+        (DataList) getQueryParams().get(RestConstants.QUERY_BATCH_IDS_PARAM);
     if (idsList == null || idsList.isEmpty())
     {
-      return result;
+      return Collections.emptySet();
     }
-    result.addAll(idsList);
+
+    Set<Object> result = new HashSet<Object>(idsList.size());
+
+    if (getResourceSpec().getKeyClass() == ComplexResourceKey.class)
+    {
+      for (Object key : idsList)
+      {
+        assert (key instanceof DataMap);
+        result.add(ComplexResourceKey.buildFromDataMap((DataMap) key,
+                                                       getResourceSpec().getKeyKeyClass(),
+                                                       getResourceSpec().getKeyParamsClass()));
+
+      }
+    }
+    else
+    {
+      result.addAll(idsList);
+    }
+    return result;
+  }
+
+  @Deprecated
+  public Set<String> getIds()
+  {
+    Set<Object> idObjects = getIdObjects();
+    if (idObjects.isEmpty())
+    {
+      return Collections.emptySet();
+    }
+    HashSet<String> result = new HashSet<String>(idObjects.size());
+    for (Object obj : idObjects)
+    {
+      result.add(obj.toString());
+    }
     return result;
   }
 }
