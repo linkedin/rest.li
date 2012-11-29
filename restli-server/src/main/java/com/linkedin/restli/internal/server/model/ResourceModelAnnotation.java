@@ -56,8 +56,9 @@ public class ResourceModelAnnotation
     return annotationData;
   }
 
-  private static Object annotationMemberToDataMappable(Object memberValue, Class<?> memberClass)
+  private static Object annotationMemberToDataMappable(Object memberValue)
   {
+    final Class<?> memberClass = memberValue.getClass();
     final Object dataMappable;
 
     if (memberClass == boolean.class ||
@@ -103,8 +104,7 @@ public class ResourceModelAnnotation
         final int memberArrayLen = Array.getLength(memberValue);
         for (int i = 0; i < memberArrayLen; ++i)
         {
-          // explicit class information is necessary, because Proxy is used to represent internal annotation
-          final Object elemDataMappable = annotationMemberToDataMappable(Array.get(memberValue, i), memberClass.getComponentType());
+          final Object elemDataMappable = annotationMemberToDataMappable(Array.get(memberValue, i));
           if (elemDataMappable instanceof DataMap)
           {
             final DataMap elemDataMap = (DataMap) elemDataMappable;
@@ -127,11 +127,19 @@ public class ResourceModelAnnotation
         }
       }
     }
-    else if (memberClass.isAnnotation())
+    // Annotation's getClass() yields a Proxy with sun.reflect.annotation.AnnotationInvocationHandler as the InvocationHandler
+    else if (memberValue instanceof Annotation)
     {
       final AnnotationEntry entry = getAnnotationData((Annotation) memberValue, false);
-      dataMappable = new DataMap();
-      ((DataMap) dataMappable).put(entry.name, entry.data);
+      if (entry == null)
+      {
+        dataMappable = null;
+      }
+      else
+      {
+        dataMappable = new DataMap();
+        ((DataMap) dataMappable).put(entry.name, entry.data);
+      }
     }
     else
     {
@@ -149,11 +157,11 @@ public class ResourceModelAnnotation
     AnnotationTrait trait = _traits.get(annotationClass);
     if (trait == null)
     {
-      trait = getTraits(annotationClass);
+      trait = getTraits(annotationClass, isTopLevel);
       _traits.put(annotationClass, trait);
     }
 
-    for (Method m : annotationClass.getDeclaredMethods())
+    for (Method m: annotationClass.getDeclaredMethods())
     {
       final MetaTrait methodTrait = trait.memberTraits.get(m);
       if (methodTrait == null ||
@@ -174,7 +182,7 @@ public class ResourceModelAnnotation
           }
         }
 
-        final Object dataMappableValue = annotationMemberToDataMappable(memberValue, memberValue.getClass());
+        final Object dataMappableValue = annotationMemberToDataMappable(memberValue);
         if (dataMappableValue != null)
         {
           data.put(methodTrait.isRestSpecAnnotated ? methodTrait.name : m.getName(), dataMappableValue);
@@ -211,7 +219,7 @@ public class ResourceModelAnnotation
     }
   }
 
-  private static AnnotationTrait getTraits(Class<? extends Annotation> clazz)
+  private static AnnotationTrait getTraits(Class<? extends Annotation> clazz, boolean isTopLevel)
   {
     final AnnotationTrait trait = new AnnotationTrait();
 
@@ -220,7 +228,7 @@ public class ResourceModelAnnotation
     {
       trait.masterTrait = new MetaTrait(false,
                                         clazz.getCanonicalName(),
-                                        true,
+                                        isTopLevel,
                                         RestSpecAnnotation.DEFAULT_SKIP_DEFAULT);
     }
     else

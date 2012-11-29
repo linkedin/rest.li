@@ -52,7 +52,7 @@ public class TestAnnotationResource extends CollectionResourceTemplate<Long, Emp
                    booleanField = false,
                    enumField = NamedAnnotation.AnnotationEnum.ENUM_MEMBER_2,
                    complexAnnotationArrayField = {@PartialExclusiveAnnotation(used1 = 111, used2 = 222),
-                                            @PartialExclusiveAnnotation(used1 = 333, used2 = 444)})
+                                                  @PartialExclusiveAnnotation(used1 = 333, used2 = 444)})
   @PartialExclusiveAnnotation(used1 = 11, unused = "this value is also ununsed")
   public List<EmptyRecord> testFinder(@Context PagingContext pagingContext,
                                       @QueryParam("title") @Optional @NamedAnnotation(stringField = "finder parameter annotation") String criterion)
@@ -63,7 +63,8 @@ public class TestAnnotationResource extends CollectionResourceTemplate<Long, Emp
   @Action(name = "testAction", resourceLevel = ResourceLevel.COLLECTION)
   @NamedAnnotation(stringField = "action annotation",
                    classField = TestAnnotationResource.class,
-                   simpleAnnotationArrayField = {@UnnamedAnnotation(7), @UnnamedAnnotation(27), @UnnamedAnnotation()})
+                   simpleAnnotationArrayField = {@UnnamedAnnotation(7), @UnnamedAnnotation(27), @UnnamedAnnotation()},
+                   normalAnnotationField = @NormalAnnotation(included = "included", excluded = "excluded"))
   public int testAction(@ActionParam("num") @UnnamedAnnotation(456) int num)
   {
     return num;

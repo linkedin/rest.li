@@ -28,6 +28,9 @@ import java.io.FileNotFoundException;
 
 
 /**
+ * This test does not generate the idl files.
+ * Instead, it relies on the fact that test idl files are generated before tests start in gradle build.
+ *
  * @author Keren Jin
  */
 public class TestRestSpecAnnotation

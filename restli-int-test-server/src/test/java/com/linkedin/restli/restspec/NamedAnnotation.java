@@ -35,4 +35,5 @@ public @interface NamedAnnotation
   int[] intArrayField() default {};
   UnnamedAnnotation[] simpleAnnotationArrayField() default {};
   PartialExclusiveAnnotation[] complexAnnotationArrayField() default {};
+  NormalAnnotation normalAnnotationField() default @NormalAnnotation();
 }
