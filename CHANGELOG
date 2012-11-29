@@ -1,7 +1,12 @@
-1.6.10
+1.6.11
 ------
 (RB=116643)
 All sub-level idl custom annotations are always included in class level.
+
+1.6.10
+------
+(RB=116608)
+Preserve PropertyEventBusImpl constructor backward compatibility
 
 1.6.9
 -----
