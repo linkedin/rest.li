@@ -104,17 +104,7 @@ public class ResourceModelAnnotation
         final int memberArrayLen = Array.getLength(memberValue);
         for (int i = 0; i < memberArrayLen; ++i)
         {
-          final Object elemDataMappable = annotationMemberToDataMappable(Array.get(memberValue, i));
-          if (elemDataMappable instanceof DataMap)
-          {
-            final DataMap elemDataMap = (DataMap) elemDataMappable;
-            assert(elemDataMap.size() == 1);
-            dataMappableList.add(elemDataMap.values().iterator().next());
-          }
-          else
-          {
-            dataMappableList.add(elemDataMappable);
-          }
+          dataMappableList.add(annotationMemberToDataMappable(Array.get(memberValue, i)));
         }
 
         if (dataMappableList.isEmpty())
@@ -137,8 +127,7 @@ public class ResourceModelAnnotation
       }
       else
       {
-        dataMappable = new DataMap();
-        ((DataMap) dataMappable).put(entry.name, entry.data);
+        dataMappable = entry.data;
       }
     }
     else

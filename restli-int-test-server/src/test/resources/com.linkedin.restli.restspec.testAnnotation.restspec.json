@@ -84,9 +84,7 @@
           "classField" : "com.linkedin.restli.restspec.TestAnnotationResource",
           "myName" : "action annotation",
           "normalAnnotationField" : {
-            "com.linkedin.restli.restspec.NormalAnnotation" : {
-              "included" : "included"
-            }
+            "included" : "included"
           },
           "simpleAnnotationArrayField" : [ {
             "value" : 7
