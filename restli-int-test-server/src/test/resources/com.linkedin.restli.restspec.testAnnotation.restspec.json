@@ -1,4 +1,9 @@
 {
+  "annotations" : {
+    "namedAnnotation" : {
+      "myName" : "class-level annotation"
+    }
+  },
   "name" : "testAnnotation",
   "namespace" : "com.linkedin.restli.restspec",
   "path" : "/testAnnotation",
@@ -11,25 +16,15 @@
     },
     "supports" : [ "create", "get" ],
     "methods" : [ {
-      "method" : "create",
       "annotations" : {
         "namedAnnotation" : {
           "intArrayField" : [ 3, 2, 1 ],
           "longField" : 21,
           "myName" : "resource method annotation 2"
         }
-      }
+      },
+      "method" : "create"
     }, {
-      "method" : "get",
-      "parameters" : [ {
-        "name" : "extra",
-        "type" : "string",
-        "annotations" : {
-          "com.linkedin.restli.restspec.UnnamedAnnotation" : {
-            "value" : 123
-          }
-        }
-      } ],
       "annotations" : {
         "namedAnnotation" : {
           "byteField" : "\u0011",
@@ -37,19 +32,19 @@
           "floatField" : 4.2,
           "myName" : "resource method annotation"
         }
-      }
+      },
+      "method" : "get",
+      "parameters" : [ {
+        "annotations" : {
+          "com.linkedin.restli.restspec.UnnamedAnnotation" : {
+            "value" : 123
+          }
+        },
+        "name" : "extra",
+        "type" : "string"
+      } ]
     } ],
     "finders" : [ {
-      "name" : "testFinder",
-      "parameters" : [ {
-        "name" : "title",
-        "type" : "string",
-        "annotations" : {
-          "namedAnnotation" : {
-            "myName" : "finder parameter annotation"
-          }
-        }
-      } ],
       "annotations" : {
         "namedAnnotation" : {
           "complexAnnotationArrayField" : [ {
@@ -65,20 +60,19 @@
         "partial" : {
           "used1" : 11
         }
-      }
+      },
+      "name" : "testFinder",
+      "parameters" : [ {
+        "annotations" : {
+          "namedAnnotation" : {
+            "myName" : "finder parameter annotation"
+          }
+        },
+        "name" : "title",
+        "type" : "string"
+      } ]
     } ],
     "actions" : [ {
-      "name" : "testAction",
-      "parameters" : [ {
-        "name" : "num",
-        "type" : "int",
-        "annotations" : {
-          "com.linkedin.restli.restspec.UnnamedAnnotation" : {
-            "value" : 456
-          }
-        }
-      } ],
-      "returns" : "int",
       "annotations" : {
         "namedAnnotation" : {
           "classField" : "com.linkedin.restli.restspec.TestAnnotationResource",
@@ -91,14 +85,28 @@
           }, {
             "value" : 27
           }, {
-            "value" : -1
           } ]
         }
-      }
+      },
+      "name" : "testAction",
+      "parameters" : [ {
+        "annotations" : {
+          "com.linkedin.restli.restspec.UnnamedAnnotation" : {
+            "value" : 456
+          }
+        },
+        "name" : "num",
+        "type" : "int"
+      } ],
+      "returns" : "int"
     } ],
     "entity" : {
       "path" : "/testAnnotation/{testAnnotationId}",
       "subresources" : [ {
+        "annotations" : {
+          "com.linkedin.restli.restspec.EmptyAnnotation" : {
+          }
+        },
         "name" : "testAnnotationSub",
         "namespace" : "com.linkedin.restli.restspec",
         "path" : "/testAnnotation/{testAnnotationId}/testAnnotationSub",
@@ -111,27 +119,18 @@
           },
           "supports" : [ "delete" ],
           "methods" : [ {
-            "method" : "delete",
             "annotations" : {
               "com.linkedin.restli.restspec.PartialInclusiveAnnotation" : {
                 "used" : 1
               }
-            }
+            },
+            "method" : "delete"
           } ],
           "entity" : {
             "path" : "/testAnnotation/{testAnnotationId}/testAnnotationSub/{testAnnotationSubId}"
           }
-        },
-        "annotations" : {
-          "com.linkedin.restli.restspec.EmptyAnnotation" : {
-          }
         }
       } ]
-    }
-  },
-  "annotations" : {
-    "namedAnnotation" : {
-      "myName" : "class-level annotation"
     }
   }
 }

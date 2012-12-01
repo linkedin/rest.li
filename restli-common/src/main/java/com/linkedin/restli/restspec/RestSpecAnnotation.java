@@ -53,5 +53,5 @@ public @interface RestSpecAnnotation
 
   String DEFAULT_NAME = "";
   boolean DEFAULT_EXCLUDE = false;
-  boolean DEFAULT_SKIP_DEFAULT = false;
+  boolean DEFAULT_SKIP_DEFAULT = true;
 }

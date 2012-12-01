@@ -1,5 +1,7 @@
 1.6.11
 ------
+Changed RestSpecAnnotation.skipDefault default from false to true.
+
 (RB=116643)
 All sub-level idl custom annotations are always included in class level.
 
