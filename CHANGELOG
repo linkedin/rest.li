@@ -1,5 +1,6 @@
 1.6.11
 ------
+(RB=117601)
 Changed RestSpecAnnotation.skipDefault default from false to true.
 
 (RB=116643)
