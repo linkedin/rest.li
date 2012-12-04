@@ -4,5 +4,7 @@ dependencies {
   compile externalDependency.netty
   compile externalDependency.servletApi
   compile externalDependency.mina
+  compile externalDependency.mail
+  compile externalDependency.commonsIo
   testCompile externalDependency.testng
 }

@@ -80,6 +80,7 @@ public class HttpClientFactory implements TransportClientFactory
   public static final String               MAX_RESPONSE_SIZE    = "maxResponseSize";
   public static final String               SSL_CONTEXT          = "sslContext";
   public static final String               SSL_PARAMS           = "sslParams";
+  public static final String               QUERY_POST_THRESHOLD = "queryPostThreshold";
   /**
    * @deprecated use REQUEST_TIMEOUT_KEY instead
    */
@@ -258,6 +259,7 @@ public class HttpClientFactory implements TransportClientFactory
     int idleTimeout = 30000;
     int shutdownTimeout = 5000;
     int maxResponseSize = 1024 * 1024 * 2;
+    int queryPostThreshold = Integer.MAX_VALUE;
 
     // These can go away when support for getTimeout is completely removed
     Integer getTimeoutObj = null;
@@ -291,6 +293,10 @@ public class HttpClientFactory implements TransportClientFactory
       {
         maxResponseSize = Integer.parseInt(value);
       }
+      else if (name.equals(QUERY_POST_THRESHOLD))
+      {
+        queryPostThreshold = Integer.parseInt(value);
+      }
     }
 
     if (requestTimeoutObj != null)
@@ -317,7 +323,8 @@ public class HttpClientFactory implements TransportClientFactory
                                shutdownTimeout,
                                maxResponseSize,
                                sslContext,
-                               sslParameters);
+                               sslParameters,
+                               queryPostThreshold);
   }
 
   /**

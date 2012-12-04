@@ -20,9 +20,12 @@
 
 package com.linkedin.r2.transport.http.client;
 
+import com.linkedin.r2.message.rest.QueryTunnelUtil;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
@@ -32,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
+import javax.mail.MessagingException;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLParameters;
@@ -95,6 +99,7 @@ import com.linkedin.r2.util.TimeoutRunnable;
   private final int _maxResponseSize;
 
   private final String _requestTimeoutMessage;
+  private final int _queryPostThreshold;
 
   /**
    * Creates a new HttpNettyClient.
@@ -124,10 +129,11 @@ import com.linkedin.r2.util.TimeoutRunnable;
          shutdownTimeout,
          maxResponseSize,
          null,
-         null);
+         null,
+         Integer.MAX_VALUE);
   }
 
-/**
+  /**
    * Same as {@link #HttpNettyClient(ClientSocketChannelFactory, ScheduledExecutorService, int, int, int, int, int) except also takes
    * javax.netty.ssl.SSLContext for channel over SSL.
    *
@@ -142,7 +148,7 @@ import com.linkedin.r2.util.TimeoutRunnable;
    * @param {@link {@link SSLContext}
    */
   public HttpNettyClient(ClientSocketChannelFactory factory,
-                       ScheduledExecutorService executor,
+                         ScheduledExecutorService executor,
                          int poolSize,
                          int requestTimeout,
                          int idleTimeout,
@@ -150,6 +156,46 @@ import com.linkedin.r2.util.TimeoutRunnable;
                          int maxResponseSize,
                          SSLContext sslContext,
                          SSLParameters sslParameters)
+  {
+    this(factory,
+         executor,
+         poolSize,
+         requestTimeout,
+         idleTimeout,
+         shutdownTimeout,
+         maxResponseSize,
+         null,
+         null,
+         Integer.MAX_VALUE);
+  }
+
+/**
+   * Same as {@link
+ * #HttpNettyClient(ClientSocketChannelFactory, ScheduledExecutorService, int, int, int,
+ * int, int, SSLContext, SSLParameters) except also takes
+   * a threshold for the max length of url query params. Above this threshold, requests will be tunneled as POSTS
+   *
+   * @param factory The ClientSocketChannelFactory; it is the caller's responsibility to
+   *          shut it down
+   * @param executor an executor; it is the caller's responsibility to shut it down
+   * @param poolSize Maximum size of the underlying HTTP connection pool
+   * @param requestTimeout timeout, in ms, to get a connection from the pool or create one
+   * @param idleTimeout interval after which idle connections will be automatically closed
+   * @param shutdownTimeout timeout, in ms, the client should wait after shutdown is
+   *          initiated before terminating outstanding requests
+   * @param {@link {@link SSLContext}
+   * @param length of query params above which requests will be tunneled as POSTS
+   */
+  public HttpNettyClient(ClientSocketChannelFactory factory,
+                       ScheduledExecutorService executor,
+                         int poolSize,
+                         int requestTimeout,
+                         int idleTimeout,
+                         int shutdownTimeout,
+                         int maxResponseSize,
+                         SSLContext sslContext,
+                         SSLParameters sslParameters,
+                         int queryPostThreshold)
   {
     _maxResponseSize = maxResponseSize;
     _channelPoolManager =
@@ -162,6 +208,7 @@ import com.linkedin.r2.util.TimeoutRunnable;
     _requestTimeout = requestTimeout;
     _shutdownTimeout = shutdownTimeout;
     _requestTimeoutMessage = "Exceeded request timeout of " + _requestTimeout + "ms";
+    _queryPostThreshold = queryPostThreshold;
   }
 
   HttpNettyClient(ChannelPoolFactory factory,
@@ -176,6 +223,7 @@ import com.linkedin.r2.util.TimeoutRunnable;
     _requestTimeout = requestTimeout;
     _shutdownTimeout = shutdownTimeout;
     _requestTimeoutMessage = "Exceeded request timeout of " + _requestTimeout + "ms";
+    _queryPostThreshold = Integer.MAX_VALUE;
   }
 
   @Override
@@ -318,9 +366,26 @@ import com.linkedin.r2.util.TimeoutRunnable;
       port = scheme.equalsIgnoreCase("http") ? HTTP_DEFAULT_PORT : HTTPS_DEFAULT_PORT;
     }
 
-    final RestRequest newRequest = new RestRequestBuilder(request)
-            .overwriteHeaders(WireAttributeHelper.toWireAttributes(wireAttrs))
-            .build();
+    final RestRequest newRequest;
+    try {
+      newRequest= QueryTunnelUtil.encode(new RestRequestBuilder(request).overwriteHeaders(WireAttributeHelper.toWireAttributes(
+          wireAttrs)).build(), _queryPostThreshold);
+    }
+    catch (IOException e)
+    {
+      errorResponse(callback, e);
+      return;
+    }
+    catch (URISyntaxException e)
+    {
+      errorResponse(callback, e);
+      return;
+    }
+    catch (MessagingException e)
+    {
+      errorResponse(callback, e);
+      return;
+    }
 
     // TODO investigate DNS resolution and timing
     SocketAddress address = new InetSocketAddress(host, port);

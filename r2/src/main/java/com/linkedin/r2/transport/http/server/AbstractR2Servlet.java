@@ -17,6 +17,8 @@
 /* $Id$ */
 package com.linkedin.r2.transport.http.server;
 
+
+import com.linkedin.r2.message.rest.QueryTunnelUtil;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -26,6 +28,7 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
+import javax.mail.MessagingException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -94,7 +97,7 @@ public abstract class AbstractR2Servlet extends HttpServlet
   }
 
   private void serviceNoContinuation(final HttpServletRequest req, final HttpServletResponse resp)
-          throws ServletException, IOException
+      throws ServletException, IOException
   {
     RestRequest restRequest;
     try
@@ -107,9 +110,14 @@ public abstract class AbstractR2Servlet extends HttpServlet
       writeToServletResponse(TransportResponseImpl.success(restResponse), resp);
       return;
     }
+    catch (MessagingException e)
+    {
+      RestResponse restResponse = RestStatus.responseForError(RestStatus.BAD_REQUEST, e);
+      writeToServletResponse(TransportResponseImpl.success(restResponse), resp);
+      return;
+    }
 
-    final AtomicReference<TransportResponse<RestResponse>> result =
-        new AtomicReference<TransportResponse<RestResponse>>();
+    final AtomicReference<TransportResponse<RestResponse>> result = new AtomicReference<TransportResponse<RestResponse>>();
     final CountDownLatch latch = new CountDownLatch(1);
     TransportCallback<RestResponse> callback = new TransportCallback<RestResponse>()
     {
@@ -135,7 +143,7 @@ public abstract class AbstractR2Servlet extends HttpServlet
 
   private RestRequest readFromServletRequest(HttpServletRequest req) throws IOException,
       ServletException,
-      URISyntaxException
+      URISyntaxException, MessagingException
   {
     StringBuilder sb = new StringBuilder();
     sb.append(extractPathInfo(req));
@@ -169,8 +177,7 @@ public abstract class AbstractR2Servlet extends HttpServlet
       }
       rb.setEntity(buf);
     }
-    return rb.build();
-
+    return QueryTunnelUtil.decode(rb.build());
   }
 
   /**

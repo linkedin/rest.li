@@ -39,7 +39,9 @@ project.ext.externalDependency = [
   'slf4jLog4j12': 'org.slf4j:slf4j-log4j12:1.6.2',
   'testng': 'org.testng:testng:6.4',
   'velocity': 'org.apache.velocity:velocity:1.5',
-  'zookeeper': 'org.apache.zookeeper:zookeeper:3.3.0'
+  'zookeeper': 'org.apache.zookeeper:zookeeper:3.3.0',
+  'mail': 'javax.mail:mail:1.4.1',
+  "commonsIo": "commons-io:commons-io:1.4"
 ];
 
 if (!project.ext.isDefaultEnvironment)
