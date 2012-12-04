@@ -1,5 +1,11 @@
+1.6.12
+------
+
 1.6.11
 ------
+(RB=115603)
+Fix a bug in DegraderLoadBalancerStrategyV2 and DegraderLoadBalancerStrategyV3 that will not recover if we reach complete degraded state
+
 (RB=117601)
 Changed RestSpecAnnotation.skipDefault default from false to true.
 
