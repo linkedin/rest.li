@@ -484,7 +484,7 @@ public class RestLiExampleGenerator
       {
         for (Key key: model.getKeys())
         {
-          final DataSchema keySchema = DataTemplateUtil.getSchema(key.getType());
+          final DataSchema keySchema = key.getDataSchema();
           final Object exampleKey = SchemaSampleDataGenerator.buildDataMappable(keySchema, _defaultSpec);
           exampleValues.put(key.getName(), exampleKey.toString());
         }
@@ -556,14 +556,18 @@ public class RestLiExampleGenerator
   {
     if (model.getKeyKeyClass() == null)
     {
+      // non-complex key case
+
       for (int i = 0; i < BATCH_REQUEST_EXAMPLE_COUNT; ++i)
       {
         if (model.getKeyClass() == CompoundKey.class)
         {
+          // compound key case
+
           final CompoundKey exampleCompoundKey = new CompoundKey();
           for (Key key: model.getKeys())
           {
-            final DataSchema keySchema = DataTemplateUtil.getSchema(key.getType());
+            final DataSchema keySchema = key.getDataSchema();
             final Object exampleKey = SchemaSampleDataGenerator.buildDataMappable(keySchema, _defaultSpec);
             exampleCompoundKey.append(key.getName(), exampleKey);
           }
@@ -571,7 +575,9 @@ public class RestLiExampleGenerator
         }
         else
         {
-          final DataSchema keySchema = DataTemplateUtil.getSchema(model.getKeyClass());
+          // single key case
+
+          final DataSchema keySchema = model.getPrimaryKey().getDataSchema();
           final Object exampleKey = SchemaSampleDataGenerator.buildDataMappable(keySchema, _defaultSpec);
           uriBuilder.queryParam(RestConstants.QUERY_BATCH_IDS_PARAM, exampleKey);
         }
@@ -579,13 +585,15 @@ public class RestLiExampleGenerator
     }
     else
     {
+      // complex key case
+
       final DataList exampleList = new DataList();
       for (int i = 0; i < BATCH_REQUEST_EXAMPLE_COUNT; ++i)
       {
-          final RecordTemplate exampleKeyKey = buildRecordTemplate(model.getKeyKeyClass());
-          final RecordTemplate exampleKeyParams = buildRecordTemplate(model.getKeyParamsClass());
-          final ComplexResourceKey<RecordTemplate, RecordTemplate> complexKey =
-              new ComplexResourceKey<RecordTemplate, RecordTemplate>(exampleKeyKey, exampleKeyParams);
+        final RecordTemplate exampleKeyKey = buildRecordTemplate(model.getKeyKeyClass());
+        final RecordTemplate exampleKeyParams = buildRecordTemplate(model.getKeyParamsClass());
+        final ComplexResourceKey<RecordTemplate, RecordTemplate> complexKey =
+            new ComplexResourceKey<RecordTemplate, RecordTemplate>(exampleKeyKey, exampleKeyParams);
         exampleList.add(complexKey.toDataMap());
       }
 

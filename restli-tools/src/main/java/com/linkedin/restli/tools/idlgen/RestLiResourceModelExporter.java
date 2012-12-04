@@ -29,11 +29,14 @@ import com.sun.tools.javadoc.Main;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import org.apache.commons.io.output.NullWriter;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,17 +89,18 @@ public class RestLiResourceModelExporter
       flatClasspath = StringUtils.join(classpath, ":");
     }
 
+    final PrintWriter sysoutWriter = new PrintWriter(System.out, true);
+    final PrintWriter nullWriter = new PrintWriter(new NullWriter());
     final String[] javadocArgs = new String[] {
         "-classpath", flatClasspath,
         "-sourcepath", StringUtils.join(sourcePaths, ":"),
-        "-subpackages", StringUtils.join(resourcePackages, ":"),
-        "-doclet", "com.linkedin.restli.tools.idlgen.RestLiDoclet"
+        "-subpackages", StringUtils.join(resourcePackages, ":")
     };
-    Main.execute(apiName, javadocArgs);
+    Main.execute(apiName, sysoutWriter, nullWriter, nullWriter, "com.linkedin.restli.tools.idlgen.RestLiDoclet", javadocArgs);
 
     log.info("Exporting IDL files...");
 
-    GeneratorResult result = generateIDLFiles(apiName, outdir, rootResourceMap);
+    final GeneratorResult result = generateIDLFiles(apiName, outdir, rootResourceMap);
 
     log.info("Done!");
 
