@@ -16,6 +16,10 @@
     "methods" : [ {
       "method" : "get"
     } ],
+    "finders" : [ {
+      "name" : "dateOnly",
+      "assocKeys" : [ "dateId" ]
+    } ],
     "entity" : {
       "path" : "/customTypes3/longId={longId}&dateId={dateId}"
     }

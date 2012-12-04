@@ -3,6 +3,10 @@
 
 1.6.11
 ------
+(RB=118345)
+Fix a bug where @AssocKeys of CustomTypes would cause IDL generation to crash.
+Added test cases for @AssocKeys of CustomTypes.
+
 (RB=115603)
 Fix a bug in DegraderLoadBalancerStrategyV2 and DegraderLoadBalancerStrategyV3 that will not recover if we reach complete degraded state
 

@@ -497,7 +497,7 @@ public final class RestLiAnnotationReader
         }
         else if (paramAnnotations.contains(AssocKey.class))
         {
-          param = buildAssocKeyParam(paramAnnotations, paramType);
+          param = buildAssocKeyParam(method, paramAnnotations, paramType);
         }
         else if (paramAnnotations.contains(Context.class))
         {
@@ -711,21 +711,37 @@ public final class RestLiAnnotationReader
   }
 
   @SuppressWarnings("unchecked")
-  private static Parameter buildAssocKeyParam(final AnnotationSet annotations,
+  private static Parameter buildAssocKeyParam(final Method method,
+                                              final AnnotationSet annotations,
                                               final Class<?> paramType)
   {
     Parameter param;
     AssocKey assocKey = annotations.get(AssocKey.class);
     Optional optional = annotations.get(Optional.class);
-    param =
-        new Parameter(assocKey.value(),
-                      paramType,
-                      getDataSchema(paramType, null),
-                      optional != null,
-                      getDefaultValue(optional, paramType),
-                      Parameter.ParamType.KEY,
-                      true,
-                      annotations);
+    Class<? extends TyperefInfo> typerefInfoClass = assocKey.typeref();
+    try
+    {
+      param =
+          new Parameter(assocKey.value(),
+                        paramType,
+                        getDataSchema(paramType, getSchemaFromTyperefInfo(typerefInfoClass)),
+                        optional != null,
+                        getDefaultValue(optional, paramType),
+                        Parameter.ParamType.KEY,
+                        true,
+                        annotations);
+    }
+    catch (TemplateRuntimeException e)
+    {
+      throw new ResourceConfigException("DataSchema for assocKey '" + assocKey.value() + "' of type " + paramType.getSimpleName() + " on "
+                                                + buildMethodMessage(method) + "cannot be found; type is invalid or requires typeref", e);
+    }
+    catch (Exception e)
+    {
+      throw new ResourceConfigException("Typeref for assocKey '" + assocKey.value() + "' on "
+                                                + buildMethodMessage(method) + " cannot be instantiated, " + e.getMessage(), e);
+    }
+
     return param;
   }
 

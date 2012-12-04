@@ -26,6 +26,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import com.linkedin.restli.common.CollectionResponse;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -154,6 +155,15 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
     Greeting result = REST_CLIENT.sendRequest(request).getResponse().getEntity();
 
     Assert.assertEquals( new Long(lo+date), result.getId());
+  }
+
+  @Test
+  public void testAssocKey() throws RemoteInvocationException
+  {
+    FindRequest<Greeting> request = CUSTOM_TYPES_3_BUILDERS.findByDateOnly().dateIdKey(new Date(13L)).build();
+    List<Greeting> response = REST_CLIENT.sendRequest(request).getResponse().getEntity().getElements();
+
+    Assert.assertEquals(0, response.size());
   }
 
 }

@@ -150,6 +150,23 @@ public class TestCustomTypesRequestBuilders
     checkRequestBuilder(request, ResourceMethod.GET, EntityResponseDecoder.class, Greeting.class, expectedUri, null);
   }
 
+  @Test
+  public void testAssocKey() throws IOException, RestException
+  {
+    // curl -v GET http://localhost:1338/customTypes3/dateId=13?q=dateOnly
+    String expectedUri = "customTypes3/dateId=13?q=dateOnly";
+
+    // normally coercer registration is handled in RestliAnnotationReader,
+    // but that isn't run here because this is just a unit test.  So, we need to
+    // force registration of the DateCoercer because it isn't contained in Date itself.
+    new DateCoercer();
+
+    FindRequest<Greeting> request = CUSTOM_TYPES_3_BUILDERS.findByDateOnly().dateIdKey(new Date(13L)).build();
+
+    checkRequestBuilder(request, ResourceMethod.FINDER, CollectionResponseDecoder.class, Greeting.class, expectedUri, null);
+
+  }
+
 
   private static void checkRequestBuilder(Request<?> request, ResourceMethod resourceMethod,
                                           Class<? extends RestResponseDecoder> responseDecoderClass, Class<?> templateClass,
