@@ -502,8 +502,15 @@ public class TestClientBuilders
     ResourceSpec resourceSpec = new ResourceSpecImpl(Collections.<ResourceMethod>emptySet(), requestMetadataMap, responseMetadataMap);
 
     URI uri;
-    uri = new ActionRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, resourceSpec).name("action").pathKey("key1", 1).pathKey("key2", 2).build().getUri();
-    Assert.assertEquals(uri, URI.create("foo/1/bar/2/baz?action=action"));
+    ActionRequest<TestRecord> request;
+    request = new ActionRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, resourceSpec).name("action").pathKey("key1", 1).pathKey("key2", 2).build();
+    Assert.assertEquals(request.getUri(), URI.create("foo/1/bar/2/baz?action=action"));
+    Assert.assertEquals(request.getResourcePath().toArray(), new String[] {"foo", "bar", "baz"});
+
+    // test with keys containing URL escaped chars
+    request = new ActionRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, resourceSpec).name("action").pathKey("key1", "http://example.com/images/1.png").pathKey("key2", "http://example.com/images/2.png").build();
+    Assert.assertEquals(request.getUri(), URI.create("foo/http%3A%2F%2Fexample.com%2Fimages%2F1.png/bar/http%3A%2F%2Fexample.com%2Fimages%2F2.png/baz?action=action"));
+    Assert.assertEquals(request.getResourcePath().toArray(), new String[] {"foo", "bar", "baz"});
 
     uri = new BatchGetRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, _COLL_SPEC).ids(1L,2L).pathKey("key1", 1).pathKey("key2", 2).build().getUri();
     Assert.assertEquals(uri, URI.create("foo/1/bar/2/baz?ids=1&ids=2"));

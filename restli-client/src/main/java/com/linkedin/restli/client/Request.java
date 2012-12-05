@@ -17,7 +17,9 @@
 package com.linkedin.restli.client;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -31,6 +33,8 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
 import com.linkedin.restli.internal.common.IllegalMaskException;
 import com.linkedin.restli.internal.common.URIMaskUtil;
+import com.linkedin.restli.internal.common.URLEscaper;
+import com.linkedin.restli.internal.common.URLEscaper.Escaping;
 
 /**
  * A type-bound Request for a resource.
@@ -88,6 +92,26 @@ public class Request<T>
   public URI getUri()
   {
     return _uri;
+  }
+
+  /**
+   * Returns the resource path parts as a list.
+   *
+   * The resource path of a root resource with a URI of "x/key1" has a resource is a list with one part: ["x"].
+   *
+   * The resource path of a sub-resource with a URI of "x/key1/y/key2" is a list with two parts: ["x", "y"].
+   *
+   * @return the resource path parts as a list.
+   */
+  public List<String> getResourcePath()
+  {
+    List<String> resourcePath = new ArrayList<String>(1);
+    String[] pathParts = _uri.getRawPath().split("/");
+    for(int i = 0; i < pathParts.length; i += 2)
+    {
+      resourcePath.add(URLEscaper.unescape(pathParts[i], Escaping.URL_ESCAPING));
+    }
+    return resourcePath;
   }
 
   public ResourceMethod getMethod()

@@ -10,6 +10,9 @@ Fix bug in Avro schema and data translator that occurs when optional typeref
 of union present. Significantly improve test coverage for typeref for avro
 data and schema translation.
 
+(RB=118838)
+Add Request.getResourcePath() to provide access to the resource path parts that uniquely identify what resource the request is for.
+
 1.6.11
 ------
 (RB=118345)
