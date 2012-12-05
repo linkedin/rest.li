@@ -23,7 +23,13 @@
         "type" : "int"
       },
       "assocKeys" : [ "q", "changed_key" ]
-    } ],
+    }, {
+       "name" : "find_assocKey_upgrade",
+       "assocKey" : "singular"
+     }, {
+       "name" : "find_assocKey_downgrade",
+       "assocKey" : "plural"
+     } ],
     "actions" : [ {
       "name" : "anotherAction",
       "doc" : "Deletes all greetings",

@@ -30,6 +30,7 @@ import com.linkedin.data.schema.validation.ValidationOptions;
 import com.linkedin.data.schema.validation.ValidationResult;
 import com.linkedin.data.template.GetMode;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.data.template.StringArray;
 import com.linkedin.data.template.WrappingArrayTemplate;
 import com.linkedin.restli.restspec.ActionSchema;
 import com.linkedin.restli.restspec.ActionsSetSchema;
@@ -829,13 +830,40 @@ public class RestLiResourceModelCompatibilityChecker
                       prevRec.getMetadata(GetMode.DEFAULT),
                       currRec.getMetadata(GetMode.DEFAULT));
 
-    checkEqualSingleValue(prevRec.schema().getField("assocKey"),
-                          prevRec.getAssocKey(GetMode.DEFAULT),
-                          currRec.getAssocKey(GetMode.DEFAULT));
+    final String prevAssocKey = prevRec.getAssocKey(GetMode.DEFAULT);
+    final String currAssocKey = currRec.getAssocKey(GetMode.DEFAULT);
+    final StringArray prevAssocKeys = prevRec.getAssocKeys(GetMode.DEFAULT);
+    final StringArray currAssocKeys = currRec.getAssocKeys(GetMode.DEFAULT);
 
-    checkEqualSingleValue(prevRec.schema().getField("assocKeys"),
-                          prevRec.getAssocKeys(GetMode.DEFAULT),
-                          currRec.getAssocKeys(GetMode.DEFAULT));
+    // assocKey and assocKeys are mutually exclusive
+    assert((prevAssocKey == null || prevAssocKeys == null) && (currAssocKey == null || currAssocKeys == null));
+
+    // assocKey is deprecated
+    // assocKey upgrading to single-element assocKeys is compatible
+    // the opposite direction is deprecated thus incompatible
+
+    if (prevAssocKeys == null && currAssocKeys == null)
+    {
+      checkEqualSingleValue(prevRec.schema().getField("assocKey"), prevAssocKey, currAssocKey);
+    }
+    else if (prevAssocKey == null && currAssocKey == null)
+    {
+      checkEqualSingleValue(prevRec.schema().getField("assocKeys"), prevAssocKeys, currAssocKeys);
+    }
+    else if (prevAssocKeys == null)
+    {
+      // upgrade case
+
+      final StringArray upgradedPrevAssocKeys = new StringArray();
+      upgradedPrevAssocKeys.add(prevAssocKey);
+      checkEqualSingleValue(prevRec.schema().getField("assocKey"), upgradedPrevAssocKeys, currAssocKeys);
+    }
+    else
+    {
+      // downgrade case
+
+      addInfo("assocKeys", CompatibilityInfo.Type.FINDER_ASSOCKEYS_DOWNGRADE);
+    }
   }
 
   private void checkParameterSchema(ParameterSchema prevRec, ParameterSchema currRec)

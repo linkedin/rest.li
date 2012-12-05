@@ -33,6 +33,7 @@ public class CompatibilityInfo
   enum Type
   {
     FILE_NOT_FOUND(Level.UNABLE_TO_CHECK, "File not found: %s"),
+    FINDER_ASSOCKEYS_DOWNGRADE(Level.INCOMPATIBLE, "Finder AssocKeys may not be downgraded to AssocKey"),
     ARRAY_NOT_CONTAIN(Level.INCOMPATIBLE, "Current field must contain these values: %s"),
     ARRAY_NOT_EQUAL(Level.INCOMPATIBLE, "Current field must be these values: %s"),
     ARRAY_MISSING_ELEMENT(Level.INCOMPATIBLE, "\"%s\" has been removed from the current field"),

@@ -30,6 +30,12 @@
         }
       },
       "assocKeys" : [ "q", "s" ]
+    }, {
+      "name" : "find_assocKey_upgrade",
+      "assocKeys" : [ "singular" ]
+    }, {
+      "name" : "find_assocKey_downgrade",
+      "assocKeys" : [ "plural" ]
     } ],
     "actions" : [ {
       "name" : "anotherAction",

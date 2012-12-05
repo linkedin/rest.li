@@ -1,5 +1,10 @@
-1.6.12
+1.6.13
 ------
+(RB=118576)
+In idl compatibility checker, allow finder AssocKey to be upgraded to AssocKeys, but disallow the opposite direction.
+
+1.6.12
+-----
 (RB=118288)
 Fix bug in Avro generator in which referenced schema is not generated even
 if schema file or name is explicitly mentioned as input args to avro schema
@@ -13,12 +18,12 @@ data and schema translation.
 (RB=118838)
 Add Request.getResourcePath() to provide access to the resource path parts that uniquely identify what resource the request is for.
 
-1.6.11
-------
 (RB=118345)
 Fix a bug where @AssocKeys of CustomTypes would cause IDL generation to crash.
 Added test cases for @AssocKeys of CustomTypes.
 
+1.6.11
+------
 (RB=115603)
 Fix a bug in DegraderLoadBalancerStrategyV2 and DegraderLoadBalancerStrategyV3 that will not recover if we reach complete degraded state
 

@@ -77,14 +77,14 @@ public class TestRestLiResourceModelCompatibilityChecker
     final List<CompatibilityInfo> incompatibles = checker.getIncompatibles();
     final List<CompatibilityInfo> compatibles = checker.getCompatibles();
 
-    Assert.assertEquals(unableToChecks.size(), 0);
-    Assert.assertEquals(incompatibles.size(), 0);
-
-    Assert.assertEquals(compatibles.size(), testDiffs.size());
     for (CompatibilityInfo di : testDiffs)
     {
       Assert.assertTrue(compatibles.contains(di), "Reported compatibles should contain: " + di.toString());
     }
+
+    Assert.assertEquals(unableToChecks.size(), 0);
+    Assert.assertEquals(incompatibles.size(), 0);
+    Assert.assertEquals(compatibles.size(), testDiffs.size());
   }
 
   @Test
@@ -104,14 +104,14 @@ public class TestRestLiResourceModelCompatibilityChecker
     final List<CompatibilityInfo> incompatibles = checker.getIncompatibles();
     final List<CompatibilityInfo> compatibles = checker.getCompatibles();
 
-    Assert.assertEquals(unableToChecks.size(), 0);
-    Assert.assertEquals(incompatibles.size(), 0);
-
-    Assert.assertEquals(compatibles.size(), testDiffs.size());
     for (CompatibilityInfo di : testDiffs)
     {
       Assert.assertTrue(compatibles.contains(di), "Reported compatibles should contain: " + di.toString());
     }
+
+    Assert.assertEquals(unableToChecks.size(), 0);
+    Assert.assertEquals(incompatibles.size(), 0);
+    Assert.assertEquals(compatibles.size(), testDiffs.size());
   }
 
   @Test
@@ -133,6 +133,8 @@ public class TestRestLiResourceModelCompatibilityChecker
                                          CompatibilityInfo.Type.VALUE_NOT_EQUAL,
                                          new StringArray(Arrays.asList("q", "s")),
                                          new StringArray(Arrays.asList("q", "changed_key"))));
+    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "finders", "find_assocKey_downgrade", "assocKeys"),
+                                         CompatibilityInfo.Type.FINDER_ASSOCKEYS_DOWNGRADE));
     testErrors.add(new PartialMessageCompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "anotherAction", "parameters", "someString", "type"),
                                                        CompatibilityInfo.Type.TYPE_UNKNOWN,
                                                        new String[] {"StringRef", "cannot be resolved"}));
@@ -170,13 +172,13 @@ public class TestRestLiResourceModelCompatibilityChecker
     final List<CompatibilityInfo> unableToChecks = checker.getUnableToChecks();
     final List<CompatibilityInfo> incompatibles = checker.getIncompatibles();
 
-    Assert.assertEquals(incompatibles.size(), testErrors.size());
     for (CompatibilityInfo te : testErrors)
     {
       Assert.assertTrue(incompatibles.contains(te), "Reported incompatibles should contain: " + te.toString());
     }
 
     Assert.assertEquals(unableToChecks.size(), 0);
+    Assert.assertEquals(incompatibles.size(), testErrors.size());
   }
 
   @Test
@@ -211,13 +213,13 @@ public class TestRestLiResourceModelCompatibilityChecker
     final List<CompatibilityInfo> unableToChecks = checker.getUnableToChecks();
     final List<CompatibilityInfo> incompatibles = checker.getIncompatibles();
 
-    Assert.assertEquals(incompatibles.size(), testErrors.size());
     for (CompatibilityInfo te : testErrors)
     {
       Assert.assertTrue(incompatibles.contains(te), "Reported incompatibles should contain: " + te.toString());
     }
 
     Assert.assertEquals(unableToChecks.size(), 0);
+    Assert.assertEquals(incompatibles.size(), testErrors.size());
   }
 
   @Test
@@ -236,13 +238,13 @@ public class TestRestLiResourceModelCompatibilityChecker
     final List<CompatibilityInfo> unableToChecks = checker.getUnableToChecks();
     final List<CompatibilityInfo> incompatibles = checker.getIncompatibles();
 
-    Assert.assertEquals(incompatibles.size(), testErrors.size());
     for (CompatibilityInfo te : testErrors)
     {
       Assert.assertTrue(incompatibles.contains(te), "Reported incompatibles should contain: " + te.toString());
     }
 
     Assert.assertEquals(unableToChecks.size(), 0);
+    Assert.assertEquals(incompatibles.size(), testErrors.size());
   }
 
   @Test
@@ -284,7 +286,6 @@ public class TestRestLiResourceModelCompatibilityChecker
 
     final List<CompatibilityInfo> unableToChecks = checker.getUnableToChecks();
     final List<CompatibilityInfo> incompatibles = checker.getIncompatibles();
-    Assert.assertEquals(unableToChecks.size(), testUnableToChecks.size());
 
     for (CompatibilityInfo tutc : testUnableToChecks)
     {
@@ -294,6 +295,8 @@ public class TestRestLiResourceModelCompatibilityChecker
     {
       Assert.assertTrue(incompatibles.contains(te), "Reported incompatibles should contain: " + te.toString());
     }
+
+    Assert.assertEquals(unableToChecks.size(), testUnableToChecks.size());
   }
 
   private class PartialMessageCompatibilityInfo extends CompatibilityInfo
