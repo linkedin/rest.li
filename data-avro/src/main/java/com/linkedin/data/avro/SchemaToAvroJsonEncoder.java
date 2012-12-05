@@ -298,29 +298,24 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
   protected boolean encodeCustomAvroSchema(DataSchema schema) throws IOException
   {
     boolean encodedCustomAvroSchema = false;
-    AvroOverride avroOverride = _dataSchemaToAvroOverrideMap.get(schema);
-    if (avroOverride == null)
+    AvroOverride avroOverride = _avroOverrideMap.getAvroOverride(schema);
+    _avroOverrideFactory.emitExceptionIfThereAreErrors();
+    if (avroOverride != null)
     {
-      avroOverride = _avroOverrideFactory.createFromDataSchema(schema);
-      _avroOverrideFactory.emitExceptionIfThereAreErrors();
-      if (avroOverride != null)
+      if (avroOverride.getAccessCount() == 1)
       {
-        _dataSchemaToAvroOverrideMap.put(schema, avroOverride);
         _builder.writeData(avroOverride.getAvroSchemaDataMap());
         encodedCustomAvroSchema = true;
       }
-    }
-    else if (avroOverride != NO_AVRO_OVERRIDE)
-    {
-      _builder.writeString(avroOverride.getAvroSchemaFullName());
-      encodedCustomAvroSchema = true;
+      else
+      {
+        _builder.writeString(avroOverride.getAvroSchemaFullName());
+        encodedCustomAvroSchema = true;
+      }
     }
     return encodedCustomAvroSchema;
   }
 
-  private static final AvroOverride NO_AVRO_OVERRIDE = new AvroOverride(null, null, null, null);
-
-  private final IdentityHashMap<DataSchema, AvroOverride> _dataSchemaToAvroOverrideMap = new IdentityHashMap<DataSchema, AvroOverride>();
   private final IdentityHashMap<RecordDataSchema.Field, Object> _fieldDefaultValues;
   private final DataToAvroSchemaTranslationOptions _options;
 
@@ -362,4 +357,6 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
     }
 
   };
+
+  private final AvroOverrideMap _avroOverrideMap = new AvroOverrideMap(_avroOverrideFactory);
 }

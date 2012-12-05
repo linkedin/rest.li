@@ -29,22 +29,20 @@ import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.testng.annotations.Test;
 
+import static com.linkedin.data.TestUtil.dataSchemaFromString;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
 
 public class TestCustomAvroSchema
 {
-  private static final String DATA_SCHEMA_JSON =
-    "{\n" +
-    "  \"type\" : \"record\",\n" +
-    "  \"name\" : \"AnyRecord\",\n" +
-    "  \"namespace\" : \"com.linkedin.data.avro.test\",\n" +
-    "  \"fields\" : [],\n" +
-    "  \"avro\" : {\n" +
-    "    \"translator\" : {\n" +
-    "      \"class\" : \"com.linkedin.data.avro.AnyRecordTranslator\"\n" +
-    "    },\n" +
-    "    \"schema\" : {\n" +
+  private static final String ANYRECORD_AVRO_NAME =
+    "\"com.linkedin.data.avro.test.avro.AvroAnyRecord\"";
+
+  private static final String ANYRECORD_AVRO_SCHEMA_JSON =
+    "    {\n" +
     "      \"type\" : \"record\",\n" +
     "      \"name\" : \"AvroAnyRecord\",\n" +
     "      \"namespace\" : \"com.linkedin.data.avro.test.avro\",\n" +
@@ -58,65 +56,48 @@ public class TestCustomAvroSchema
     "          \"type\" : \"string\"\n" +
     "        }\n" +
     "      ]\n" +
-    "    }\n" +
-    "  }" +
-    "}" +
+    "    }\n";
+
+  private static final String ANYRECORD_DATA_SCHEMA_JSON =
     "{\n" +
     "  \"type\" : \"record\",\n" +
-    "  \"name\" : \"AnyRecordClient\",\n" +
+    "  \"name\" : \"AnyRecord\",\n" +
+    "  \"namespace\" : \"com.linkedin.data.avro.test\",\n" +
+    "  \"fields\" : [],\n" +
+    "  \"avro\" : {\n" +
+    "    \"translator\" : {\n" +
+    "      \"class\" : \"com.linkedin.data.avro.AnyRecordTranslator\"\n" +
+    "    },\n" +
+    "    \"schema\" : " +
+    ANYRECORD_AVRO_SCHEMA_JSON +
+    "  }\n" +
+    "}\n";
+
+  private static final String DATA_SCHEMA_JSON_TEMPLATE =
+    ANYRECORD_DATA_SCHEMA_JSON +
+    "{\n" +
+    "  \"type\" : \"typeref\",\n" +
+    "  \"name\" : \"a.b.AnyRecordRef\",\n" +
+    "  \"ref\" : \"com.linkedin.data.avro.test.AnyRecord\"\n" +
+    "}\n" +
+    "{\n" +
+    "  \"type\" : \"record\",\n" +
+    "  \"name\" : \"FooRecord\",\n" +
     "  \"namespace\" : \"com.linkedin.data.avro.test\",\n" +
     "  \"fields\" : [\n" +
-    "    {\n" +
-    "      \"name\" : \"required\",\n" +
-    "      \"type\" : \"AnyRecord\"\n" +
-    "    },\n" +
-    "    {\n" +
-    "      \"name\" : \"optional\",\n" +
-    "      \"type\" : \"AnyRecord\",\n" +
-    "      \"optional\" : true\n" +
-    "    },\n" +
-    "    {\n" +
-    "      \"name\" : \"array\",\n" +
-    "      \"type\" : { \"type\" : \"array\", \"items\" : \"AnyRecord\" }\n" +
-    "    },\n" +
-    "    {\n" +
-    "      \"name\" : \"map\",\n" +
-    "      \"type\" : { \"type\" : \"map\", \"values\" : \"AnyRecord\" }\n" +
-    "    },\n" +
-    "    {\n" +
-    "      \"name\" : \"union\",\n" +
-    "      \"type\" : [ \"string\", \"AnyRecord\" ]\n" +
-    "    },\n" +
-    "    {\n" +
-    "      \"name\" : \"unionOptional\",\n" +
-    "      \"type\" : [ \"string\", \"AnyRecord\" ],\n" +
-    "      \"optional\" : true\n" +
-    "    }\n" +
+    "    ##FIELDS" +
     "  ]\n" +
     "}";
 
-  private static final RecordDataSchema ANYRECORD_SCHEMA;
-  private static final RecordDataSchema ANYRECORDCLIENT_SCHEMA;
-
-  static
-  {
-    try
-    {
-      SchemaParser parser = TestUtil.schemaParserFromString(DATA_SCHEMA_JSON);
-      List<DataSchema> schemas = parser.topLevelDataSchemas();
-      ANYRECORD_SCHEMA = (RecordDataSchema) schemas.get(0);
-      ANYRECORDCLIENT_SCHEMA = (RecordDataSchema) schemas.get(1);
-    }
-    catch (IOException e)
-    {
-      throw new IllegalStateException(e);
-    }
-  }
-
-  public static final String ANYRECORD_SCHEMA_FULLNAME = ANYRECORD_SCHEMA.getFullName();
-
-  private static final String ANYRECORD_AVRO_JSON = "{\"type\":\"record\",\"name\":\"AvroAnyRecord\",\"namespace\":\"com.linkedin.data.avro.test.avro\",\"fields\":[{\"name\":\"type\",\"type\":\"string\"},{\"name\":\"value\",\"type\":\"string\"}]}";
-  private static final String ANYRECORDCLIENT_AVRO_JSON = "{\"type\":\"record\",\"name\":\"AnyRecordClient\",\"namespace\":\"com.linkedin.data.avro.test\",\"fields\":[{\"name\":\"required\",\"type\":{\"type\":\"record\",\"name\":\"AvroAnyRecord\",\"namespace\":\"com.linkedin.data.avro.test.avro\",\"fields\":[{\"name\":\"type\",\"type\":\"string\"},{\"name\":\"value\",\"type\":\"string\"}]}},{\"name\":\"optional\",\"type\":[\"null\",\"com.linkedin.data.avro.test.avro.AvroAnyRecord\"],\"default\":null},{\"name\":\"array\",\"type\":{\"type\":\"array\",\"items\":\"com.linkedin.data.avro.test.avro.AvroAnyRecord\"}},{\"name\":\"map\",\"type\":{\"type\":\"map\",\"values\":\"com.linkedin.data.avro.test.avro.AvroAnyRecord\"}},{\"name\":\"union\",\"type\":[\"string\",\"com.linkedin.data.avro.test.avro.AvroAnyRecord\"]},{\"name\":\"unionOptional\",\"type\":[\"null\",\"string\",\"com.linkedin.data.avro.test.avro.AvroAnyRecord\"],\"default\":null}]}";
+  private static final String AVRO_SCHEMA_JSON_TEMPLATE =
+    "{\n" +
+    "  \"type\" : \"record\",\n" +
+    "  \"name\" : \"FooRecord\",\n" +
+    "  \"namespace\" : \"com.linkedin.data.avro.test\",\n" +
+    "  \"fields\" : [\n" +
+    "    ##FIELDS" +
+    "  ]\n" +
+    "}";
 
   @Test
   public void testSchemaTranslation() throws IOException
@@ -124,20 +105,17 @@ public class TestCustomAvroSchema
     Object inputs[][] =
       {
         {
-          ANYRECORD_SCHEMA,
-          ANYRECORD_AVRO_JSON
-        },
-        {
-          ANYRECORDCLIENT_SCHEMA,
-          ANYRECORDCLIENT_AVRO_JSON
+          ANYRECORD_DATA_SCHEMA_JSON,
+          ANYRECORD_AVRO_SCHEMA_JSON
         }
       };
 
     for (Object[] row : inputs)
     {
-      DataSchema schema = (DataSchema) row[0];
+      String dataSchemaJson = (String) row[0];
       String avroSchemaJson = (String) row[1];
 
+      DataSchema schema = dataSchemaFromString(dataSchemaJson);
       String avroJsonOutput = SchemaTranslator.dataToAvroSchemaJson(schema);
       assertEquals(TestUtil.dataMapFromString(avroJsonOutput), TestUtil.dataMapFromString(avroSchemaJson));
       Schema avroSchema = Schema.parse(avroJsonOutput);
@@ -148,178 +126,158 @@ public class TestCustomAvroSchema
     }
   }
 
-  private static final Schema ANYRECORD_AVRO_SCHEMA = SchemaTranslator.dataToAvroSchema(ANYRECORD_SCHEMA);
-  private static final Schema ANYRECORDCLIENT_AVRO_SCHEMA = SchemaTranslator.dataToAvroSchema(ANYRECORDCLIENT_SCHEMA);
-
   @Test
-  public void testCustomDataTranslation() throws IOException
+  public void testCustomSchemaAndDataTranslation() throws IOException
   {
     Object[][] inputs =
       {
         {
-          ANYRECORD_SCHEMA,
-          ANYRECORD_AVRO_SCHEMA,
-          "{ \"Foo\" : { \"int\" : 1 } }",
-          "{ \"type\" : \"Foo\", \"value\" : \"{\\\"int\\\":1}\" }"
+          // required field
+          "{ \"name\" : \"required\", \"type\" : \"AnyRecord\" }",
+          "{ \"name\" : \"required\", \"type\" : ##ANYRECORD_FULL_JSON }",
+          "{ " +
+          "  \"required\" : { \"Foo\" : { \"int\" : 1 } } " +
+          "}",
+          "{ " +
+          "  \"required\" : { \"type\" : \"Foo\", \"value\" : \"{\\\"int\\\":1}\" } " +
+          "}"
         },
         {
-          // required field
-          ANYRECORDCLIENT_SCHEMA,
-          ANYRECORDCLIENT_AVRO_SCHEMA,
+          // required field, appears more than once
+          "{ \"name\" : \"required\", \"type\" : \"AnyRecord\" }, " +
+          "{ \"name\" : \"again\", \"type\" : \"AnyRecord\" }",
+          "{ \"name\" : \"required\", \"type\" : ##ANYRECORD_FULL_JSON }," +
+          "{ \"name\" : \"again\", \"type\" : ##ANYRECORD_NAME }",
           "{ " +
           "  \"required\" : { \"Foo\" : { \"int\" : 1 } }, " +
-          "  \"array\" : [], \"map\" : {}, " +
-          "  \"union\" : { \"string\" : \"u1\" } " +
+          "  \"again\" : { \"Bar\" : { \"string\" : \"s\" } }" +
           "}",
           "{ " +
           "  \"required\" : { \"type\" : \"Foo\", \"value\" : \"{\\\"int\\\":1}\" }, " +
-          "  \"optional\" : null, " +
-          "  \"array\" : [], \"map\" : {}, " +
-          "  \"union\" : { \"string\" : \"u1\" }, " +
-          "  \"unionOptional\" : null " +
+          "  \"again\" : { \"type\" : \"Bar\", \"value\" : \"{\\\"string\\\":\\\"s\\\"}\" } " +
           "}"
         },
         {
           // optional field
-          ANYRECORDCLIENT_SCHEMA,
-          ANYRECORDCLIENT_AVRO_SCHEMA,
+          "{ \"name\" : \"optional\", \"type\" : \"AnyRecord\", \"optional\" : true }",
+          "{ \"name\" : \"optional\", \"type\" : [ \"null\", ##ANYRECORD_FULL_JSON ], \"default\" : null }",
           "{ " +
-          "  \"required\" : { \"Foo\" : { \"int\" : 1 } }, " +
-          "  \"optional\" : { \"Foo\" : { \"int\" : 2 } }, " +
-          "  \"array\" : [], \"map\" : {}, " +
-          "  \"union\" : { \"string\" : \"u1\" } " +
+          "  \"optional\" : { \"Foo\" : { \"int\" : 2 } } " +
           "}",
           "{ " +
-          "  \"required\" : { \"type\" : \"Foo\", \"value\" : \"{\\\"int\\\":1}\" }, " +
           "  \"optional\" : { \"AvroAnyRecord\" : { \"type\" : \"Foo\", \"value\" : \"{\\\"int\\\":2}\" } }, " +
-          "  \"array\" : [], \"map\" : {}, " +
-          "  \"union\" : { \"string\" : \"u1\" }, " +
-          "  \"unionOptional\" : null " +
           "}"
         },
         {
           // array element
-          ANYRECORDCLIENT_SCHEMA,
-          ANYRECORDCLIENT_AVRO_SCHEMA,
+          "{ \"name\" : \"array\", \"type\" : { \"type\" : \"array\", \"items\" : \"AnyRecord\" } }",
+          "{ \"name\" : \"array\", \"type\" : { \"type\" : \"array\", \"items\" : ##ANYRECORD_FULL_JSON } }",
           "{ " +
-          "  \"required\" : { \"Foo\" : { \"int\" : 1 } }, " +
-          "  \"array\" : [ { \"Foo\" : { \"int\" : 2 } } ], " +
-          "  \"map\" : {}, " +
-          "  \"union\" : { \"string\" : \"u1\" } " +
+          "  \"array\" : [ { \"Foo\" : { \"int\" : 2 } } ] " +
           "}",
           "{ " +
-          "  \"required\" : { \"type\" : \"Foo\", \"value\" : \"{\\\"int\\\":1}\" }, " +
-          "  \"optional\" : null, " +
-          "  \"array\" : [ { \"type\" : \"Foo\", \"value\" : \"{\\\"int\\\":2}\" } ], " +
-          "  \"map\" : {}, " +
-          "  \"union\" : { \"string\" : \"u1\" }, " +
-          "  \"unionOptional\" : null " +
+          "  \"array\" : [ { \"type\" : \"Foo\", \"value\" : \"{\\\"int\\\":2}\" } ] " +
           "}"
         },
         {
           // map entry
-          ANYRECORDCLIENT_SCHEMA,
-          ANYRECORDCLIENT_AVRO_SCHEMA,
+          "{ \"name\" : \"map\", \"type\" : { \"type\" : \"map\", \"values\" : \"AnyRecord\" } }",
+          "{ \"name\" : \"map\", \"type\" : { \"type\" : \"map\", \"values\" : ##ANYRECORD_FULL_JSON } }",
           "{ " +
-          "  \"required\" : { \"Foo\" : { \"int\" : 1 } }, " +
-          "  \"array\" : [], " +
-          "  \"map\" : { \"2\" : { \"Foo\" : { \"int\" : 2 } } }, " +
-          "  \"union\" : { \"string\" : \"u1\" } " +
+          "  \"map\" : { \"2\" : { \"Foo\" : { \"int\" : 2 } } } " +
           "}",
           "{ " +
-          "  \"required\" : { \"type\" : \"Foo\", \"value\" : \"{\\\"int\\\":1}\" }, " +
-          "  \"optional\" : null, " +
-          "  \"array\" : [], " +
-          "  \"map\" : { \"2\" : { \"type\" : \"Foo\", \"value\" : \"{\\\"int\\\":2}\" } }, " +
-          "  \"union\" : { \"string\" : \"u1\" }, " +
-          "  \"unionOptional\" : null " +
+          "  \"map\" : { \"2\" : { \"type\" : \"Foo\", \"value\" : \"{\\\"int\\\":2}\" } } " +
           "}"
         },
         {
           // union member
-          ANYRECORDCLIENT_SCHEMA,
-          ANYRECORDCLIENT_AVRO_SCHEMA,
+          "{ \"name\" : \"union\", \"type\" : [ \"AnyRecord\", \"string\" ] }",
+          "{ \"name\" : \"union\", \"type\" : [ ##ANYRECORD_FULL_JSON, \"string\" ] }",
           "{ " +
-          "  \"required\" : { \"Foo\" : { \"int\" : 1 } }, " +
-          "  \"array\" : [], " +
-          "  \"map\" : {}, " +
           "  \"union\" : { \"com.linkedin.data.avro.test.AnyRecord\" : { \"Foo\" : { \"int\" : 2 } } } " +
           "}",
           "{ " +
-          "  \"required\" : { \"type\" : \"Foo\", \"value\" : \"{\\\"int\\\":1}\" }, " +
-          "  \"optional\" : null, " +
-          "  \"array\" : [], " +
-          "  \"map\" : {}, " +
-          "  \"union\" : { \"AvroAnyRecord\" : { \"type\" : \"Foo\", \"value\" : \"{\\\"int\\\":2}\" } }, " +
-          "  \"unionOptional\" : null " +
+          "  \"union\" : { \"AvroAnyRecord\" : { \"type\" : \"Foo\", \"value\" : \"{\\\"int\\\":2}\" } } " +
           "}"
         },
         {
           // optional union field, field value is custom AnyRecord
-          ANYRECORDCLIENT_SCHEMA,
-          ANYRECORDCLIENT_AVRO_SCHEMA,
+          "{ \"name\" : \"union\", \"type\" : [ \"AnyRecord\", \"string\" ], \"optional\" : true }",
+          "{ \"name\" : \"union\", \"type\" : [ \"null\", ##ANYRECORD_FULL_JSON, \"string\" ], \"default\" : null }",
           "{ " +
-          "  \"required\" : { \"Foo\" : { \"int\" : 1 } }, " +
-          "  \"array\" : [], " +
-          "  \"map\" : {}, " +
-          "  \"union\" : { \"string\" : \"u1\" }, " +
-          "  \"unionOptional\" : { \"com.linkedin.data.avro.test.AnyRecord\" : { \"Foo\" : { \"int\" : 2 } } } " +
+          "  \"union\" : { \"com.linkedin.data.avro.test.AnyRecord\" : { \"Foo\" : { \"int\" : 2 } } } " +
           "}",
           "{ " +
-          "  \"required\" : { \"type\" : \"Foo\", \"value\" : \"{\\\"int\\\":1}\" }, " +
-          "  \"optional\" : null, " +
-          "  \"array\" : [], " +
-          "  \"map\" : {}, " +
-          "  \"union\" : { \"string\" : \"u1\" }, " +
-          "  \"unionOptional\" : { \"AvroAnyRecord\" : { \"type\" : \"Foo\", \"value\" : \"{\\\"int\\\":2}\" } } " +
+          "  \"union\" : { \"AvroAnyRecord\" : { \"type\" : \"Foo\", \"value\" : \"{\\\"int\\\":2}\" } } " +
           "}"
         },
         {
           // optional union field, field is absent.
-          ANYRECORDCLIENT_SCHEMA,
-          ANYRECORDCLIENT_AVRO_SCHEMA,
+          "{ \"name\" : \"union\", \"type\" : [ \"AnyRecord\", \"string\" ], \"optional\" : true }",
+          "{ \"name\" : \"union\", \"type\" : [ \"null\", ##ANYRECORD_FULL_JSON, \"string\" ], \"default\" : null }",
+          "{ }",
           "{ " +
-          "  \"required\" : { \"Foo\" : { \"int\" : 1 } }, " +
-          "  \"array\" : [], " +
-          "  \"map\" : {}, " +
-          "  \"union\" : { \"string\" : \"u1\" } " +
-          "}",
-          "{ " +
-          "  \"required\" : { \"type\" : \"Foo\", \"value\" : \"{\\\"int\\\":1}\" }, " +
-          "  \"optional\" : null, " +
-          "  \"array\" : [], " +
-          "  \"map\" : {}, " +
-          "  \"union\" : { \"string\" : \"u1\" }, " +
-          "  \"unionOptional\" : null " +
+          "  \"union\" : null " +
           "}"
         }
       };
 
-    boolean debug = false;
     for (Object[] row : inputs)
     {
-      RecordDataSchema schema = (RecordDataSchema) row[0];
-      Schema avroSchema = (Schema) row[1];
+      String dataSchemaFieldsJson = (String) row[0];
+      String avroSchemaFieldsJson = (String) row[1];
       String dataJson = (String) row[2];
       String avroDataJson = (String) row[3];
 
-      if (debug)
-      {
-        TestUtil.out.println(schema);
-        TestUtil.out.println(avroSchema);
-      }
+      translate(dataSchemaFieldsJson, avroSchemaFieldsJson, dataJson, avroDataJson);
 
-      // translate from Data to Avro generic
-
-      DataMap inputDataMap = TestUtil.dataMapFromString(dataJson);
-      GenericRecord genericRecord = DataTranslator.dataMapToGenericRecord(inputDataMap, schema);
-      GenericRecord expectedGenericRecord = AvroUtil.genericRecordFromJson(avroDataJson, avroSchema);
-      assertEquals(genericRecord.toString(), expectedGenericRecord.toString());
-
-      // translate form Avro generic back to Data
-
-      Object data = DataTranslator.genericRecordToDataMap(genericRecord, schema, avroSchema);
-      assertEquals(data, inputDataMap);
+      String dataSchemaFieldsJsonWithTyperef = dataSchemaFieldsJson.replace("AnyRecord", "a.b.AnyRecordRef");
+      assertTrue(dataSchemaFieldsJsonWithTyperef.contains("a.b.AnyRecordRef"));
+      translate(dataSchemaFieldsJsonWithTyperef, avroSchemaFieldsJson, dataJson, avroDataJson);
     }
+  }
+
+  private void translate(String dataSchemaFieldsJson, String avroSchemaFieldsJson, String dataJson, String avroDataJson)
+    throws IOException
+  {
+    boolean debug = false;
+
+    String fullSchemaJson = DATA_SCHEMA_JSON_TEMPLATE.replace("##FIELDS", dataSchemaFieldsJson);
+    String avroSchemaFieldsJsonAfterVariableExpansion =
+      avroSchemaFieldsJson
+        .replace("##ANYRECORD_FULL_JSON", ANYRECORD_AVRO_SCHEMA_JSON)
+        .replace("##ANYRECORD_NAME", ANYRECORD_AVRO_NAME);
+    String fullAvroSchemaJson = AVRO_SCHEMA_JSON_TEMPLATE.replace("##FIELDS", avroSchemaFieldsJsonAfterVariableExpansion);
+
+    SchemaParser parser = TestUtil.schemaParserFromString(fullSchemaJson);
+    assertFalse(parser.hasError(), parser.errorMessage());
+    RecordDataSchema schema = (RecordDataSchema) parser.topLevelDataSchemas().get(2);
+
+    String avroJsonOutput = SchemaTranslator.dataToAvroSchemaJson(schema);
+    assertEquals(TestUtil.dataMapFromString(avroJsonOutput), TestUtil.dataMapFromString(fullAvroSchemaJson));
+    Schema avroSchema = Schema.parse(avroJsonOutput);
+    Schema avroSchema2 = SchemaTranslator.dataToAvroSchema(schema);
+    assertEquals(avroSchema, avroSchema2);
+    String avroSchemaToString = avroSchema.toString();
+    assertEquals(Schema.parse(avroSchemaToString), Schema.parse(fullAvroSchemaJson));
+
+    if (debug)
+    {
+      TestUtil.out.println(schema);
+      TestUtil.out.println(avroSchema);
+    }
+
+    // translate from Data to Avro generic
+
+    DataMap inputDataMap = TestUtil.dataMapFromString(dataJson);
+    GenericRecord genericRecord = DataTranslator.dataMapToGenericRecord(inputDataMap, schema);
+    GenericRecord expectedGenericRecord = AvroUtil.genericRecordFromJson(avroDataJson, avroSchema);
+    assertEquals(genericRecord.toString(), expectedGenericRecord.toString());
+
+    // translate form Avro generic back to Data
+
+    Object data = DataTranslator.genericRecordToDataMap(genericRecord, schema, avroSchema);
+    assertEquals(data, inputDataMap);
   }
 }

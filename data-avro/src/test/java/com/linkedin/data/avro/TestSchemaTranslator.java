@@ -59,8 +59,6 @@ public class TestSchemaTranslator
   @Test
   public void testToAvroSchema() throws IOException
   {
-    boolean debug = false;
-
     final String emptyFooSchema = "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ ] }";
     final String emptyFooValue = "{}";
 
@@ -72,6 +70,10 @@ public class TestSchemaTranslator
     {
       // {
       //   1st element is the Pegasus schema in JSON.
+      //     The string may be marked with ##T_START and ##T_END markers. The markers are used for typeref testing.
+      //     If the string these markers, then two schemas will be constructed and tested.
+      //     The first schema replaces these markers with two empty strings.
+      //     The second schema replaces these markers with a typeref enclosing the type between these markers.
       //   Each following element is an Object array,
       //     1st element of this array is an array of OptionalDefaultMode's to be used for default translation.
       //     2nd element is either a string or an Exception.
@@ -86,7 +88,7 @@ public class TestSchemaTranslator
       // }
       {
         // custom properties :
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ], \"version\" : 1 }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END } ], \"version\" : 1 }",
         new Object[] {
           allModes,
            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ], \"version\" : 1 }"
@@ -94,7 +96,7 @@ public class TestSchemaTranslator
       },
       {
         // required, optional not specified
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END } ] }",
         new Object[] {
           allModes,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ] }"
@@ -102,7 +104,7 @@ public class TestSchemaTranslator
       },
       {
         // required and has default
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\", \"default\" : 42 } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"default\" : 42 } ] }",
         new Object[] {
           allModes,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\", \"default\" : 42 } ] }",
@@ -112,7 +114,7 @@ public class TestSchemaTranslator
       },
       {
         // required, optional is false
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\", \"optional\" : false } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"optional\" : false } ] }",
         new Object[] {
           allModes,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ] }"
@@ -120,7 +122,7 @@ public class TestSchemaTranslator
       },
       {
         // required, optional is false and has default
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\", \"default\" : 42, \"optional\" : false } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"default\" : 42, \"optional\" : false } ] }",
         new Object[] {
           allModes,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\", \"default\" : 42 } ] }",
@@ -130,7 +132,7 @@ public class TestSchemaTranslator
       },
       {
         // optional is true
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\", \"optional\" : true } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"optional\" : true } ] }",
         new Object[] {
           allModes,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
@@ -140,7 +142,7 @@ public class TestSchemaTranslator
       },
       {
         // optional and has default
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\", \"optional\" : true, \"default\" : 42 } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"optional\" : true, \"default\" : 42 } ] }",
         new Object [] {
           translateDefault,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"null\" ], \"default\" : 42 } ] }",
@@ -156,7 +158,7 @@ public class TestSchemaTranslator
       },
       {
         // optional and has default, enum type
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fruits\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] }, \"optional\" : true, \"default\" : \"APPLE\" } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"enum\", \"name\" : \"fruits\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] } ##T_END, \"optional\" : true, \"default\" : \"APPLE\" } ] }",
         new Object [] {
           translateDefault,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ { \"type\" : \"enum\", \"name\" : \"fruits\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] }, \"null\" ], \"default\" : \"APPLE\" } ] }",
@@ -172,7 +174,7 @@ public class TestSchemaTranslator
       },
       {
         // optional and has default with namespaced type
-        "{ \"type\" : \"record\", \"name\" : \"a.b.foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"record\", \"name\" : \"b.c.bar\", \"fields\" : [ ] }, \"default\" : {  }, \"optional\" : true } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"a.b.foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"record\", \"name\" : \"b.c.bar\", \"fields\" : [ ] } ##T_END, \"default\" : {  }, \"optional\" : true } ] }",
         new Object[] {
           translateDefault,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"namespace\" : \"a.b\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"bar\", \"namespace\" : \"b.c\", \"fields\" : [  ] }, \"null\" ], \"default\" : {  } } ] }",
@@ -233,7 +235,7 @@ public class TestSchemaTranslator
       },
       {
         // required union without null
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"string\" ] } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"int\", \"string\" ] ##T_END } ] }",
         new Object[] {
           allModes,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"string\" ] } ] }"
@@ -241,7 +243,7 @@ public class TestSchemaTranslator
       },
       {
         // required union with null
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"string\" ] } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"null\", \"string\" ] ##T_END } ] }",
         new Object[] {
           allModes,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"string\" ] } ] }"
@@ -249,7 +251,7 @@ public class TestSchemaTranslator
       },
       {
         // optional union without null
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"string\" ], \"optional\" : true } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"int\", \"string\" ] ##T_END, \"optional\" : true } ] }",
         new Object[] {
           allModes,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
@@ -259,7 +261,7 @@ public class TestSchemaTranslator
       },
       {
         // optional union with null
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"optional\" : true } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"null\", \"int\", \"string\" ] ##T_END, \"optional\" : true } ] }",
         new Object[] {
           allModes,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
@@ -269,7 +271,7 @@ public class TestSchemaTranslator
       },
       {
         // optional union without null and default is 1st member type
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"string\" ], \"default\" : { \"int\" : 42 }, \"optional\" : true } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"int\", \"string\" ] ##T_END, \"default\" : { \"int\" : 42 }, \"optional\" : true } ] }",
         new Object[] {
           translateDefault,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"string\", \"null\" ], \"default\" : 42 } ] }",
@@ -285,7 +287,7 @@ public class TestSchemaTranslator
       },
       {
         // optional union without null and default is 2nd member type
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"string\" ], \"default\" : { \"string\" : \"abc\" }, \"optional\" : true } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"int\", \"string\" ] ##T_END, \"default\" : { \"string\" : \"abc\" }, \"optional\" : true } ] }",
         new Object[] {
           translateDefault,
           IllegalArgumentException.class,
@@ -300,7 +302,7 @@ public class TestSchemaTranslator
       },
       {
         // optional union with null and non-null default, default is 1st member type
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"null\", \"string\" ], \"default\" : { \"int\" : 42 }, \"optional\" : true } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"int\", \"null\", \"string\" ] ##T_END, \"default\" : { \"int\" : 42 }, \"optional\" : true } ] }",
         new Object[] {
           translateDefault,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"null\", \"string\" ], \"default\" : 42 } ] }",
@@ -316,7 +318,7 @@ public class TestSchemaTranslator
       },
       {
         // optional union with null and non-null default, default is 2nd member type
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"null\", \"string\" ], \"default\" : null, \"optional\" : true } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"int\", \"null\", \"string\" ] ##T_END, \"default\" : null, \"optional\" : true } ] }",
         new Object[] {
           translateDefault,
           IllegalArgumentException.class,
@@ -331,7 +333,7 @@ public class TestSchemaTranslator
       },
       {
         // optional union with null and non-null default, default is 3rd member type
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"null\", \"string\" ], \"default\" : { \"string\" : \"abc\" }, \"optional\" : true } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"int\", \"null\", \"string\" ] ##T_END, \"default\" : { \"string\" : \"abc\" }, \"optional\" : true } ] }",
         new Object[] {
           translateDefault,
           IllegalArgumentException.class,
@@ -346,7 +348,7 @@ public class TestSchemaTranslator
       },
       {
         // optional union with null and null default, default is 1st member type
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null, \"optional\" : true } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"null\", \"int\", \"string\" ] ##T_END, \"default\" : null, \"optional\" : true } ] }",
         new Object[] {
           allModes,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
@@ -356,7 +358,7 @@ public class TestSchemaTranslator
       },
       {
         // optional union but with circular references with inconsistent defaults, inconsistent because optional field has default, and also missing (which requires default to be null)
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"foo\", \"string\" ], \"default\" : { \"foo\" : { } }, \"optional\" : true } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"foo\", \"string\" ] ##T_END, \"default\" : { \"foo\" : { } }, \"optional\" : true } ] }",
         new Object[] {
           translateDefault,
           IllegalArgumentException.class,
@@ -371,7 +373,7 @@ public class TestSchemaTranslator
       },
       {
         // optional union but with circular references with but with consistent defaults (the only default that works is null for circularly referenced unions)
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"foo\" ], \"default\" : null, \"optional\" : true } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"null\", \"foo\" ] ##T_END, \"default\" : null, \"optional\" : true } ] }",
         new Object[] {
           allModes,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"foo\" ], \"default\" : null } ] }",
@@ -380,42 +382,56 @@ public class TestSchemaTranslator
         }
       },
       {
-        // typeref in record field
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"typeref\", \"name\" : \"IntRef\", \"ref\" : \"int\" } } ] }",
+        // typeref of fixed
+        "##T_START { \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ] } ##T_END",
         new Object[] {
           allModes,
-          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ] }"
+          "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ] }"
         }
       },
       {
-        // typeref in record field, optional
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"typeref\", \"name\" : \"IntRef\", \"ref\" : \"int\" }, \"optional\" : true } ] }",
+        // typeref of enum
+        "##T_START { \"type\" : \"enum\", \"name\" : \"Fruits\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] } ##T_END",
         new Object[] {
           allModes,
-          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
-          emptyFooSchema,
-          emptyFooValue
+          "{ \"type\" : \"enum\", \"name\" : \"Fruits\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] }"
         }
       },
       {
-        // typeref in record field, optional and has default value
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"typeref\", \"name\" : \"IntRef\", \"ref\" : \"int\" }, \"optional\" : true, \"default\" : 42 } ] }",
+        // typeref of fixed
+        "##T_START { \"type\" : \"fixed\", \"name\" : \"Md5\", \"size\" : 16 } ##T_END",
         new Object[] {
-          translateDefault,
-          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"null\" ], \"default\" : 42 } ] }",
-          emptyFooSchema,
-          emptyFooValue
-        },
+          allModes,
+          "{ \"type\" : \"fixed\", \"name\" : \"Md5\", \"size\" : 16 }"
+        }
+      },
+      {
+        // typeref of array
+        "##T_START { \"type\" : \"array\", \"items\" : \"int\" } ##T_END",
         new Object[] {
-          translateToNull,
-          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
-          emptyFooSchema,
-          emptyFooValue
+          allModes,
+          "{ \"type\" : \"array\", \"items\" : \"int\" }"
+        }
+      },
+      {
+        // typeref of map
+        "##T_START { \"type\" : \"map\", \"values\" : \"int\" } ##T_END",
+        new Object[] {
+          allModes,
+          "{ \"type\" : \"map\", \"values\" : \"int\" }"
+        }
+      },
+      {
+        // typeref of union
+        "##T_START [ \"null\", \"int\" ] ##T_END",
+        new Object[] {
+          allModes,
+          "[ \"null\", \"int\" ]"
         }
       },
       {
         // typeref in array
-        "{ \"type\" : \"array\", \"items\" : { \"type\" : \"typeref\", \"name\" : \"IntRef\", \"ref\" : \"int\" } }",
+        "{ \"type\" : \"array\", \"items\" : ##T_START \"int\" ##T_END }",
         new Object[] {
           allModes,
           "{ \"type\" : \"array\", \"items\" : \"int\" }"
@@ -423,7 +439,7 @@ public class TestSchemaTranslator
       },
       {
         // typeref in map
-        "{ \"type\" : \"map\", \"values\" : { \"type\" : \"typeref\", \"name\" : \"IntRef\", \"ref\" : \"int\" } }",
+        "{ \"type\" : \"map\", \"values\" : ##T_START \"int\" ##T_END }",
         new Object[] {
           allModes,
           "{ \"type\" : \"map\", \"values\" : \"int\" }"
@@ -431,7 +447,7 @@ public class TestSchemaTranslator
       },
       {
         // typeref in union
-        "[ \"null\", { \"type\" : \"typeref\", \"name\" : \"IntRef\", \"ref\" : \"int\" } ]",
+        "[ \"null\", ##T_START \"int\" ##T_END ]",
         new Object[] {
           allModes,
           "[ \"null\", \"int\" ]"
@@ -439,7 +455,7 @@ public class TestSchemaTranslator
       },
       {
         // record field with union with typeref, without null in record field
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", { \"type\" : \"typeref\", \"name\" : \"IntRef\", \"ref\" : \"int\" } ] } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", ##T_START \"int\" ##T_END ] } ] }",
         new Object[] {
           allModes,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", \"int\" ] } ] }"
@@ -447,7 +463,7 @@ public class TestSchemaTranslator
       },
       {
         // record field with union with typeref, without null and default is 1st member type and not typeref-ed
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", { \"type\" : \"typeref\", \"name\" : \"IntRef\", \"ref\" : \"int\" } ], \"default\" : { \"string\" : \"abc\" } } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", ##T_START \"int\" ##T_END ], \"default\" : { \"string\" : \"abc\" } } ] }",
         new Object[] {
           allModes,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", \"int\" ], \"default\" : \"abc\" } ] }",
@@ -457,7 +473,7 @@ public class TestSchemaTranslator
       },
       {
         // record field with union with typeref, without null and default is 1st member type and typeref-ed
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ { \"type\" : \"typeref\", \"name\" : \"IntRef\", \"ref\" : \"int\" }, \"string\" ], \"default\" : { \"int\" : 42 } } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"string\" ], \"default\" : { \"int\" : 42 } } ] }",
         new Object[] {
           allModes,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"string\" ], \"default\" : 42 } ] }",
@@ -467,7 +483,7 @@ public class TestSchemaTranslator
       },
       {
         // record field with union with typeref, without null and default is 2nd member type and not typeref-ed
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ { \"type\" : \"typeref\", \"name\" : \"IntRef\", \"ref\" : \"int\" }, \"string\" ], \"default\" : { \"string\" : \"abc\" } } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"string\" ], \"default\" : { \"string\" : \"abc\" } } ] }",
         new Object[] {
           allModes,
           IllegalArgumentException.class,
@@ -476,7 +492,7 @@ public class TestSchemaTranslator
       },
       {
         // record field with union with typeref, without null and default is 2nd member type and typeref-ed
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", { \"type\" : \"typeref\", \"name\" : \"IntRef\", \"ref\" : \"int\" } ], \"default\" : { \"int\" : 42 } } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", ##T_START \"int\" ##T_END ], \"default\" : { \"int\" : 42 } } ] }",
         new Object[] {
           allModes,
           IllegalArgumentException.class,
@@ -485,7 +501,7 @@ public class TestSchemaTranslator
       },
       {
         // record field with union with typeref, without null and optional
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", { \"type\" : \"typeref\", \"name\" : \"IntRef\", \"ref\" : \"int\" } ], \"optional\" : true } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", ##T_START \"int\" ##T_END ], \"optional\" : true } ] }",
         new Object[] {
           allModes,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"string\", \"int\" ], \"default\" : null } ] }",
@@ -495,7 +511,7 @@ public class TestSchemaTranslator
       },
       {
         // record field with union with typeref, without null and optional, default is 1st member and not typeref-ed
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", { \"type\" : \"typeref\", \"name\" : \"IntRef\", \"ref\" : \"int\" } ], \"optional\" : true, \"default\" : { \"string\" : \"abc\" } } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", ##T_START \"int\" ##T_END ], \"optional\" : true, \"default\" : { \"string\" : \"abc\" } } ] }",
         new Object[] {
           translateDefault,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", \"int\", \"null\" ], \"default\" : \"abc\" } ] }",
@@ -511,7 +527,7 @@ public class TestSchemaTranslator
       },
       {
         // record field with union with typeref, without null and optional, default is 1st member and typeref-ed
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ { \"type\" : \"typeref\", \"name\" : \"IntRef\", \"ref\" : \"int\" }, \"string\" ], \"optional\" : true, \"default\" : { \"int\" : 42 } } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"string\" ], \"optional\" : true, \"default\" : { \"int\" : 42 } } ] }",
         new Object[] {
           translateDefault,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"string\", \"null\" ], \"default\" : 42 } ] }",
@@ -527,7 +543,7 @@ public class TestSchemaTranslator
       },
       {
         // record field with union with typeref, without null and optional, default is 2nd member and not typeref-ed
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ { \"type\" : \"typeref\", \"name\" : \"IntRef\", \"ref\" : \"int\" }, \"string\" ], \"optional\" : true, \"default\" : { \"string\" : \"abc\" } } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"string\" ], \"optional\" : true, \"default\" : { \"string\" : \"abc\" } } ] }",
         new Object[] {
           translateDefault,
           IllegalArgumentException.class,
@@ -542,7 +558,7 @@ public class TestSchemaTranslator
       },
       {
         // record field with union with typeref, without null and optional, default is 2nd member and typeref-ed
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", { \"type\" : \"typeref\", \"name\" : \"IntRef\", \"ref\" : \"int\" } ], \"optional\" : true, \"default\" : { \"int\" : 42 } } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", ##T_START \"int\" ##T_END ], \"optional\" : true, \"default\" : { \"int\" : 42 } } ] }",
         new Object[] {
           translateDefault,
           IllegalArgumentException.class,
@@ -557,7 +573,7 @@ public class TestSchemaTranslator
       },
       {
         // record field with union with typeref, with null 1st member
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"typeref\", \"name\" : \"IntRef\", \"ref\" : \"int\" } ] } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", ##T_START \"int\" ##T_END ] } ] }",
         new Object[] {
           allModes,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ] } ] }"
@@ -565,7 +581,7 @@ public class TestSchemaTranslator
       },
       {
         // record field with union with typeref, with null 1st member, default is 1st member and null
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"typeref\", \"name\" : \"IntRef\", \"ref\" : \"int\" } ], \"default\" : null } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", ##T_START \"int\" ##T_END ], \"default\" : null } ] }",
         new Object[] {
           allModes,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }"
@@ -573,7 +589,7 @@ public class TestSchemaTranslator
       },
       {
         // record field with union with typeref, with null 1st member, default is last member and typeref-ed
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"typeref\", \"name\" : \"IntRef\", \"ref\" : \"int\" } ], \"default\" : { \"int\" : 42 } } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", ##T_START \"int\" ##T_END ], \"default\" : { \"int\" : 42 } } ] }",
         new Object[] {
           allModes,
           IllegalArgumentException.class,
@@ -582,7 +598,7 @@ public class TestSchemaTranslator
       },
       {
         // record field with union with typeref with null 1st member, and optional
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"typeref\", \"name\" : \"IntRef\", \"ref\" : \"int\" } ], \"optional\" : true } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", ##T_START \"int\" ##T_END ], \"optional\" : true } ] }",
         new Object[] {
           allModes,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
@@ -592,7 +608,7 @@ public class TestSchemaTranslator
       },
       {
         // record field with union with typeref with null 1st member, and optional, default is 1st member and null
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"typeref\", \"name\" : \"IntRef\", \"ref\" : \"int\" } ], \"optional\" : true, \"default\" : null } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", ##T_START \"int\" ##T_END ], \"optional\" : true, \"default\" : null } ] }",
         new Object[] {
           allModes,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
@@ -602,7 +618,7 @@ public class TestSchemaTranslator
       },
       {
         // record field with union with typeref with null 1st member, and optional, default is last member and typeref-ed
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"typeref\", \"name\" : \"IntRef\", \"ref\" : \"int\" } ], \"optional\" : true, \"default\" : { \"int\" : 42 } } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", ##T_START \"int\" ##T_END ], \"optional\" : true, \"default\" : { \"int\" : 42 } } ] }",
         new Object[] {
           translateDefault,
           IllegalArgumentException.class,
@@ -617,7 +633,7 @@ public class TestSchemaTranslator
       },
       {
         // record field with union with typeref, with null last member
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ { \"type\" : \"typeref\", \"name\" : \"IntRef\", \"ref\" : \"int\" }, \"null\" ] } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"null\" ] } ] }",
         new Object[] {
           allModes,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"null\" ] } ] }"
@@ -625,7 +641,7 @@ public class TestSchemaTranslator
       },
       {
         // record field with union with typeref, with null last member, default is 1st member and typeref-ed
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ { \"type\" : \"typeref\", \"name\" : \"IntRef\", \"ref\" : \"int\" }, \"null\" ], \"default\" : { \"int\" : 42 } } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"null\" ], \"default\" : { \"int\" : 42 } } ] }",
         new Object[] {
           allModes,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"null\" ], \"default\" : 42 } ] }",
@@ -635,7 +651,7 @@ public class TestSchemaTranslator
       },
       {
         // record field with union with typeref, with null last member, default is last member and null
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ { \"type\" : \"typeref\", \"name\" : \"IntRef\", \"ref\" : \"int\" }, \"null\" ], \"default\" : null } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"null\" ], \"default\" : null } ] }",
         new Object[] {
           allModes,
           IllegalArgumentException.class,
@@ -644,7 +660,7 @@ public class TestSchemaTranslator
       },
       {
         // record field with union with typeref, with null last member, and optional
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ { \"type\" : \"typeref\", \"name\" : \"IntRef\", \"ref\" : \"int\" }, \"null\" ], \"optional\" : true } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"null\" ], \"optional\" : true } ] }",
         new Object[] {
           allModes,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
@@ -654,7 +670,7 @@ public class TestSchemaTranslator
       },
       {
         // record field with union with typeref, with null last member, and optional, default is 1st member and typeref-ed
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ { \"type\" : \"typeref\", \"name\" : \"IntRef\", \"ref\" : \"int\" }, \"null\" ], \"optional\" : true, \"default\" : { \"int\" : 42 } } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"null\" ], \"optional\" : true, \"default\" : { \"int\" : 42 } } ] }",
         new Object[] {
           translateDefault,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"null\" ], \"default\" : 42 } ] }",
@@ -670,7 +686,7 @@ public class TestSchemaTranslator
       },
       {
         // record field with union with typeref, with null last member, and optional, default is last member and null
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ { \"type\" : \"typeref\", \"name\" : \"IntRef\", \"ref\" : \"int\" }, \"null\" ], \"optional\" : true, \"default\" : null } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"null\" ], \"optional\" : true, \"default\" : null } ] }",
         new Object[] {
           translateDefault,
           IllegalArgumentException.class,
@@ -685,7 +701,7 @@ public class TestSchemaTranslator
       },
       {
         // array of union with no default
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] } } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : ##T_START [ \"int\", \"string\" ] ##T_END } } ] }",
         new Object[] {
           allModes,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] } } ] }"
@@ -693,7 +709,7 @@ public class TestSchemaTranslator
       },
       {
         // array of union with default, default value uses only 1st member type
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] }, \"default\" : [ { \"int\" : 42 }, { \"int\" : 13 } ] } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] } ##T_END, \"default\" : [ { \"int\" : 42 }, { \"int\" : 13 } ] } ] }",
         new Object[] {
           allModes,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] }, \"default\" : [ 42, 13 ] } ] }",
@@ -703,7 +719,7 @@ public class TestSchemaTranslator
       },
       {
         // array of union with default, default value uses only 1st null member type
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : [ \"null\", \"string\" ] }, \"default\" : [ null, null ] } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : ##T_START [ \"null\", \"string\" ] ##T_END }, \"default\" : [ null, null ] } ] }",
         new Object[] {
           allModes,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : [ \"null\", \"string\" ] }, \"default\" : [ null, null ] } ] }",
@@ -713,7 +729,7 @@ public class TestSchemaTranslator
       },
       {
         // array of union with default, default value uses 2nd member type
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] }, \"default\" : [ { \"int\" : 42 }, { \"string\" : \"abc\" } ] } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] } ##T_END, \"default\" : [ { \"int\" : 42 }, { \"string\" : \"abc\" } ] } ] }",
         new Object[] {
           allModes,
           IllegalArgumentException.class,
@@ -722,7 +738,7 @@ public class TestSchemaTranslator
       },
       {
         // optional array of union with no default
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] }, \"optional\" : true } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : ##T_START [ \"int\", \"string\" ] ##T_END }, \"optional\" : true } ] }",
         new Object[] {
           allModes,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] } ], \"default\" : null } ] }",
@@ -732,7 +748,7 @@ public class TestSchemaTranslator
       },
       {
         // optional array of union with default, default value uses only 1st member type
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] }, \"optional\" : true, \"default\" : [ { \"int\" : 42 }, { \"int\" : 13 } ] } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] } ##T_END, \"optional\" : true, \"default\" : [ { \"int\" : 42 }, { \"int\" : 13 } ] } ] }",
         new Object[] {
           translateDefault,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] }, \"null\" ], \"default\" : [ 42, 13 ] } ] }",
@@ -748,7 +764,7 @@ public class TestSchemaTranslator
       },
       {
         // optional array of union with default, default value uses 2nd member type
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] }, \"optional\" : true, \"default\" : [ { \"int\" : 42 }, { \"string\" : \"abc\" } ] } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : ##T_START [ \"int\", \"string\" ] ##T_END }, \"optional\" : true, \"default\" : [ { \"int\" : 42 }, { \"string\" : \"abc\" } ] } ] }",
         new Object[] {
           translateDefault,
           IllegalArgumentException.class,
@@ -763,7 +779,7 @@ public class TestSchemaTranslator
       },
       {
         // map of union with no default
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] } } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : ##T_START [ \"int\", \"string\" ] ##T_END } } ] }",
         new Object[] {
           allModes,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] } } ] }",
@@ -771,7 +787,7 @@ public class TestSchemaTranslator
       },
       {
         // map of union with default, default value uses only 1st member type
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] }, \"default\" : { \"m1\" : { \"int\" : 42 } } } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] } ##T_END, \"default\" : { \"m1\" : { \"int\" : 42 } } } ] }",
         new Object[] {
           allModes,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] }, \"default\" : { \"m1\" : 42 } } ] }",
@@ -781,7 +797,7 @@ public class TestSchemaTranslator
       },
       {
         // map of union with default, default value uses only 1st null member type
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : [ \"null\", \"string\" ] }, \"default\" : { \"m1\" : null } } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : ##T_START [ \"null\", \"string\" ] ##T_END }, \"default\" : { \"m1\" : null } } ] }",
         new Object[] {
           allModes,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : [ \"null\", \"string\" ] }, \"default\" : { \"m1\" : null } } ] }",
@@ -791,7 +807,7 @@ public class TestSchemaTranslator
       },
       {
         // map of union with default, default value uses 2nd member type
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] }, \"default\" : { \"m1\" : { \"string\" : \"abc\" } } } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] } ##T_END, \"default\" : { \"m1\" : { \"string\" : \"abc\" } } } ] }",
         new Object[] {
           allModes,
           IllegalArgumentException.class,
@@ -800,7 +816,7 @@ public class TestSchemaTranslator
       },
       {
         // optional map of union with no default
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] }, \"optional\" : true } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : ##T_START [ \"int\", \"string\" ] ##T_END }, \"optional\" : true } ] }",
         new Object[] {
           allModes,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] } ], \"default\" : null } ] }",
@@ -810,7 +826,7 @@ public class TestSchemaTranslator
       },
       {
         // optional map of union with default, default value uses only 1st member type
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] }, \"optional\" : true, \"default\" : { \"m1\" : { \"int\" : 42 } } } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] } ##T_END, \"optional\" : true, \"default\" : { \"m1\" : { \"int\" : 42 } } } ] }",
         new Object[] {
           translateDefault,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] }, \"null\" ], \"default\" : { \"m1\" : 42 } } ] }",
@@ -826,7 +842,7 @@ public class TestSchemaTranslator
       },
       {
         // optional map of union with default, default value uses 2nd member type
-        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] }, \"optional\" : true, \"default\" : { \"m1\" : { \"string\" : \"abc\" } } } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : ##T_START [ \"int\", \"string\" ] ##T_END }, \"optional\" : true, \"default\" : { \"m1\" : { \"string\" : \"abc\" } } } ] }",
         new Object[] {
           translateDefault,
           IllegalArgumentException.class,
@@ -845,13 +861,13 @@ public class TestSchemaTranslator
         "  \"type\" : \"record\", " +
         "  \"name\" : \"foo\", " +
         "  \"include\" : [ " +
-        "    { " +
+        "    ##T_START { " +
         "      \"type\" : \"record\", " +
         "      \"name\" : \"bar\", " +
         "      \"fields\" : [ " +
         "        { \"name\" : \"b1\", \"type\" : \"int\" } " +
         "      ] " +
-        "    } " +
+        "    } ##T_END " +
         "  ], " +
         "  \"fields\" : [ " +
         "    { " +
@@ -907,83 +923,108 @@ public class TestSchemaTranslator
     for (Object[] row : inputs)
     {
       String schemaText = (String) row[0];
-      if (debug) System.out.println(schemaText);
-
-      for (int i = 1; i < row.length; i++)
+      if (schemaText.contains("##T_START"))
       {
-        Object[] modeInputs = (Object[]) row[i];
-        OptionalDefaultMode optionalDefaultModes[] = (OptionalDefaultMode[]) modeInputs[0];
-        for (OptionalDefaultMode optionalDefaultMode : optionalDefaultModes)
+        assertTrue(schemaText.contains("##T_END"));
+        String noTyperefSchemaText = schemaText.replace("##T_START", "").replace("##T_END", "");
+        assertFalse(noTyperefSchemaText.contains("##T_"));
+        assertFalse(noTyperefSchemaText.contains("typeref"));
+        String typerefSchemaText = schemaText
+          .replace("##T_START", "{ \"type\" : \"typeref\", \"name\" : \"Ref\", \"ref\" : ")
+          .replace("##T_END", "}");
+        assertFalse(typerefSchemaText.contains("##T_"));
+        assertTrue(typerefSchemaText.contains("typeref"));
+        testToAvroSchema(noTyperefSchemaText, row);
+        testToAvroSchema(typerefSchemaText, row);
+      }
+      else
+      {
+        assertFalse(schemaText.contains("##"));
+        testToAvroSchema(schemaText, row);
+      }
+    }
+  }
+
+  private void testToAvroSchema(String schemaText, Object[] row) throws IOException
+  {
+    boolean debug = false;
+
+    if (debug) System.out.println(schemaText);
+
+    for (int i = 1; i < row.length; i++)
+    {
+      Object[] modeInputs = (Object[]) row[i];
+      OptionalDefaultMode optionalDefaultModes[] = (OptionalDefaultMode[]) modeInputs[0];
+      for (OptionalDefaultMode optionalDefaultMode : optionalDefaultModes)
+      {
+        Object expected = modeInputs[1];
+        DataSchema schema = TestUtil.dataSchemaFromString(schemaText);
+        String preTranslateSchemaText = schema.toString();
+        Exception exc = null;
+        String avroTextFromSchema = null;
+        try
         {
-          Object expected = modeInputs[1];
-          DataSchema schema = TestUtil.dataSchemaFromString(schemaText);
-          String preTranslateSchemaText = schema.toString();
-          Exception exc = null;
-          String avroTextFromSchema = null;
-          try
+          avroTextFromSchema = SchemaTranslator.dataToAvroSchemaJson(
+            schema,
+            new DataToAvroSchemaTranslationOptions(optionalDefaultMode, JsonBuilder.Pretty.SPACES)
+          );
+          if (debug) System.out.println(optionalDefaultMode + ", Avro Schema: " + avroTextFromSchema);
+        }
+        catch (Exception e)
+        {
+          exc = e;
+          if (debug) System.out.println(e);
+        }
+        if (expected instanceof String)
+        {
+          assertNull(exc);
+
+          String avroText = (String) expected;
+          assertEquals(avroTextFromSchema, avroText);
+          String postTranslateSchemaText = schema.toString();
+          assertEquals(preTranslateSchemaText, postTranslateSchemaText);
+
+          // make sure Avro accepts it
+          Schema avroSchema = Schema.parse(avroTextFromSchema);
+
+          if (optionalDefaultMode == DataToAvroSchemaTranslationOptions.DEFAULT_OPTIONAL_DEFAULT_MODE)
           {
-            avroTextFromSchema = SchemaTranslator.dataToAvroSchemaJson(
-              schema,
-              new DataToAvroSchemaTranslationOptions(optionalDefaultMode, JsonBuilder.Pretty.SPACES)
+            // use other dataToAvroSchemaJson
+            String avroSchema2Json = SchemaTranslator.dataToAvroSchemaJson(
+              TestUtil.dataSchemaFromString(schemaText)
             );
-            if (debug) System.out.println(optionalDefaultMode + ", Avro Schema: " + avroTextFromSchema);
+            @SuppressWarnings("deprecation")
+            String avroSchema2JsonCompact = SchemaTranslator.dataToAvroSchemaJson(
+              TestUtil.dataSchemaFromString(schemaText),
+              JsonBuilder.Pretty.COMPACT
+            );
+            assertEquals(avroSchema2Json, avroSchema2JsonCompact);
+            Schema avroSchema2 = Schema.parse(avroSchema2Json);
+            assertEquals(avroSchema2, avroSchema);
+
+            // use dataToAvroSchema
+            Schema avroSchema3 = SchemaTranslator.dataToAvroSchema(TestUtil.dataSchemaFromString(schemaText));
+            assertEquals(avroSchema3, avroSchema2);
           }
-          catch (Exception e)
+
+          if (modeInputs.length >= 4)
           {
-            exc = e;
-            if (debug) System.out.println(e);
+            // check if the translated default value is good by using it.
+            // writer schema and Avro JSON value should not include fields with default values.
+            String writerSchemaText = (String) modeInputs[2];
+            String avroValueJson = (String) modeInputs[3];
+            Schema writerSchema = Schema.parse(writerSchemaText);
+            genericRecordFromString(avroValueJson, writerSchema, avroSchema);
           }
-          if (expected instanceof String)
-          {
-            assertNull(exc);
-
-            String avroText = (String) expected;
-            assertEquals(avroTextFromSchema, avroText);
-            String postTranslateSchemaText = schema.toString();
-            assertEquals(preTranslateSchemaText, postTranslateSchemaText);
-
-            // make sure Avro accepts it
-            Schema avroSchema = Schema.parse(avroTextFromSchema);
-
-            if (optionalDefaultMode == DataToAvroSchemaTranslationOptions.DEFAULT_OPTIONAL_DEFAULT_MODE)
-            {
-              // use other dataToAvroSchemaJson
-              String avroSchema2Json = SchemaTranslator.dataToAvroSchemaJson(
-                TestUtil.dataSchemaFromString(schemaText)
-              );
-              @SuppressWarnings("deprecation")
-              String avroSchema2JsonCompact = SchemaTranslator.dataToAvroSchemaJson(
-                TestUtil.dataSchemaFromString(schemaText),
-                JsonBuilder.Pretty.COMPACT
-              );
-              assertEquals(avroSchema2Json, avroSchema2JsonCompact);
-              Schema avroSchema2 = Schema.parse(avroSchema2Json);
-              assertEquals(avroSchema2, avroSchema);
-
-              // use dataToAvroSchema
-              Schema avroSchema3 = SchemaTranslator.dataToAvroSchema(TestUtil.dataSchemaFromString(schemaText));
-              assertEquals(avroSchema3, avroSchema2);
-            }
-
-            if (modeInputs.length >= 4)
-            {
-              // check if the translated default value is good by using it.
-              // writer schema and Avro JSON value should not include fields with default values.
-              String writerSchemaText = (String) modeInputs[2];
-              String avroValueJson = (String) modeInputs[3];
-              Schema writerSchema = Schema.parse(writerSchemaText);
-              genericRecordFromString(avroValueJson, writerSchema, avroSchema);
-            }
-          }
-          else
-          {
-            Class<?> expectedExceptionClass = (Class<?>) expected;
-            String expectedString = (String) modeInputs[2];
-            assertNotNull(exc);
-            assertNull(avroTextFromSchema);
-            assertTrue(expectedExceptionClass.isInstance(exc));
-            assertTrue(exc.getMessage().contains(expectedString), "\"" + exc.getMessage() + "\" does not contain \"" + expectedString + "\"");
-          }
+        }
+        else
+        {
+          Class<?> expectedExceptionClass = (Class<?>) expected;
+          String expectedString = (String) modeInputs[2];
+          assertNotNull(exc);
+          assertNull(avroTextFromSchema);
+          assertTrue(expectedExceptionClass.isInstance(exc));
+          assertTrue(exc.getMessage().contains(expectedString), "\"" + exc.getMessage() + "\" does not contain \"" + expectedString + "\"");
         }
       }
     }

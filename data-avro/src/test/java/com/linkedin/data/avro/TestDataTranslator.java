@@ -34,25 +34,31 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 import org.apache.avro.Schema;
 
 public class TestDataTranslator
 {
-  static public final PrintStream out = new PrintStream(new FileOutputStream(FileDescriptor.out));
+  public static final PrintStream out = new PrintStream(new FileOutputStream(FileDescriptor.out));
+
+  public static final String ONE_WAY = "ONE_WAY";
 
   @Test
   public void TestDataTranslator() throws IOException
   {
     boolean debug = false;
-    final String ONE_WAY = "ONE_WAY";
 
     String[][][] inputs =
     {
       // {
       //   {
-      //      1 string holding the Pegasus schema in JSON
+      //     1 string holding the Pegasus schema in JSON.
+      //       The string may be marked with ##T_START and ##T_END markers. The markers are used for typeref testing.
+      //       If the string these markers, then two schemas will be constructed and tested.
+      //       The first schema replaces these markers with two empty strings.
+      //       The second schema replaces these markers with a typeref enclosing the type between these markers.
       //   },
       //   {
       //     1st string is input DataMap, JSON will be deserialized into DataMap.
@@ -70,7 +76,7 @@ public class TestDataTranslator
           "  \"type\" : \"record\",\n" +
           "  \"name\" : \"Foo\",\n" +
           "  \"fields\" : [\n" +
-          "    { \"name\" : \"intRequired\", \"type\" : \"int\" }\n" +
+          "    { \"name\" : \"intRequired\", \"type\" : ##T_START \"int\" ##T_END }\n" +
           "  ]\n" +
           "}\n"
         },
@@ -98,7 +104,7 @@ public class TestDataTranslator
           "  \"type\" : \"record\",\n" +
           "  \"name\" : \"Foo\",\n" +
           "  \"fields\" : [\n" +
-          "    { \"name\" : \"longRequired\", \"type\" : \"long\" }\n" +
+          "    { \"name\" : \"longRequired\", \"type\" : ##T_START \"long\" ##T_END }\n" +
           "  ]\n" +
           "}\n"
         },
@@ -126,7 +132,7 @@ public class TestDataTranslator
           "  \"type\" : \"record\",\n" +
           "  \"name\" : \"Foo\",\n" +
           "  \"fields\" : [\n" +
-          "    { \"name\" : \"floatRequired\", \"type\" : \"float\" }\n" +
+          "    { \"name\" : \"floatRequired\", \"type\" : ##T_START \"float\" ##T_END }\n" +
           "  ]\n" +
           "}\n"
         },
@@ -154,7 +160,7 @@ public class TestDataTranslator
           "  \"type\" : \"record\",\n" +
           "  \"name\" : \"Foo\",\n" +
           "  \"fields\" : [\n" +
-          "    { \"name\" : \"doubleRequired\", \"type\" : \"double\" }\n" +
+          "    { \"name\" : \"doubleRequired\", \"type\" : ##T_START \"double\" ##T_END }\n" +
           "  ]\n" +
           "}\n"
         },
@@ -182,7 +188,7 @@ public class TestDataTranslator
           "  \"type\" : \"record\",\n" +
           "  \"name\" : \"Foo\",\n" +
           "  \"fields\" : [\n" +
-          "    { \"name\" : \"booleanRequired\", \"type\" : \"boolean\" }\n" +
+          "    { \"name\" : \"booleanRequired\", \"type\" : ##T_START \"boolean\" ##T_END }\n" +
           "  ]\n" +
           "}\n"
         },
@@ -214,7 +220,7 @@ public class TestDataTranslator
           "  \"type\" : \"record\",\n" +
           "  \"name\" : \"Foo\",\n" +
           "  \"fields\" : [\n" +
-          "    { \"name\" : \"stringRequired\", \"type\" : \"string\" }\n" +
+          "    { \"name\" : \"stringRequired\", \"type\" : ##T_START \"string\" ##T_END }\n" +
           "  ]\n" +
           "}\n"
         },
@@ -242,10 +248,7 @@ public class TestDataTranslator
           "  \"type\" : \"record\",\n" +
           "  \"name\" : \"Foo\",\n" +
           "  \"fields\" : [\n" +
-          "    {\n" +
-          "      \"name\" : \"bytesRequired\",\n" +
-          "      \"type\" : \"bytes\"\n" +
-          "    }\n" +
+          "    { \"name\" : \"bytesRequired\", \"type\" : ##T_START \"bytes\" ##T_END }\n" +
           "  ]\n" +
           "}\n"
         },
@@ -279,7 +282,7 @@ public class TestDataTranslator
           "  \"fields\" : [\n" +
           "    {\n" +
           "      \"name\" : \"fixedRequired\",\n" +
-          "      \"type\" : { \"type\" : \"fixed\", \"name\" : \"Fixed5\", \"size\" : 5 }\n" +
+          "      \"type\" : ##T_START { \"type\" : \"fixed\", \"name\" : \"Fixed5\", \"size\" : 5 } ##T_END\n" +
           "    }\n" +
           "  ]\n" +
           "}\n"
@@ -318,11 +321,11 @@ public class TestDataTranslator
           "  \"fields\" : [\n" +
           "    {\n" +
           "      \"name\" : \"enumRequired\",\n" +
-          "      \"type\" : {\n" +
+          "      \"type\" : ##T_START {\n" +
           "        \"name\" : \"Fruits\",\n" +
           "        \"type\" : \"enum\",\n" +
           "        \"symbols\" : [ \"APPLE\", \"ORANGE\" ]\n" +
-          "      }\n" +
+          "      } ##T_END\n" +
           "    }\n" +
           "  ]\n" +
           "}\n"
@@ -357,14 +360,14 @@ public class TestDataTranslator
           "  \"fields\" : [\n" +
           "    {\n" +
           "      \"name\" : \"arrayRequired\",\n" +
-          "      \"type\" : {\n" +
+          "      \"type\" : ##T_START {\n" +
           "        \"type\" : \"array\",\n" +
           "        \"items\" : {\n" +
           "          \"name\" : \"Fruits\",\n" +
           "          \"type\" : \"enum\",\n" +
           "          \"symbols\" : [ \"APPLE\", \"ORANGE\" ]\n" +
           "        }\n" +
-          "      }\n" +
+          "      } ##T_END\n" +
           "    }\n" +
           "  ]\n" +
           "}\n"
@@ -407,10 +410,10 @@ public class TestDataTranslator
           "  \"fields\" : [\n" +
           "    {\n" +
           "      \"name\" : \"mapRequired\",\n" +
-          "      \"type\" : {\n" +
+          "      \"type\" : ##T_START {\n" +
           "        \"type\" : \"map\",\n" +
           "        \"values\" : \"int\" " +
-          "      }\n" +
+          "      } ##T_END\n" +
           "    }\n" +
           "  ]\n" +
           "}\n"
@@ -453,7 +456,7 @@ public class TestDataTranslator
           "  \"fields\" : [\n" +
           "    {\n" +
           "      \"name\" : \"unionRequired\",\n" +
-          "      \"type\" : [ \"int\", \"string\", \"foo.Foo\" ]\n" +
+          "      \"type\" : ##T_START [ \"int\", \"string\", \"foo.Foo\" ] ##T_END\n" +
           "    }\n" +
           "  ]\n" +
           "}\n"
@@ -496,7 +499,7 @@ public class TestDataTranslator
           "  \"fields\" : [\n" +
           "    {\n" +
           "      \"name\" : \"bar\",\n" +
-          "      \"type\" : {\n" +
+          "      \"type\" : ##T_START {\n" +
           "        \"name\" : \"Bar\",\n" +
           "        \"type\" : \"record\",\n" +
           "        \"fields\" : [\n" +
@@ -505,7 +508,7 @@ public class TestDataTranslator
           "            \"type\" : \"int\"\n" +
           "          }\n" +
           "        ]\n" +
-          "      }\n" +
+          "      } ##T_END\n" +
           "    }\n" +
           "  ]\n" +
           "}\n"
@@ -531,7 +534,7 @@ public class TestDataTranslator
           "  \"fields\" : [\n" +
           "    {\n" +
           "      \"name\" : \"intOptional\",\n" +
-          "      \"type\" : \"int\",\n" +
+          "      \"type\" : ##T_START \"int\" ##T_END,\n" +
           "      \"optional\" : true\n" +
           "    }\n" +
           "  ]\n" +
@@ -567,7 +570,7 @@ public class TestDataTranslator
           "  \"fields\" : [\n" +
           "    {\n" +
           "      \"name\" : \"unionOptional\",\n" +
-          "      \"type\" : [ \"int\", \"string\" ],\n" +
+          "      \"type\" : ##T_START [ \"int\", \"string\" ] ##T_END,\n" +
           "      \"optional\" : true\n" +
           "    }\n" +
           "  ]\n" +
@@ -607,7 +610,7 @@ public class TestDataTranslator
           "  \"fields\" : [\n" +
           "    {\n" +
           "      \"name\" : \"unionOptional\",\n" +
-          "      \"type\" : [ \"null\", \"string\" ],\n" +
+          "      \"type\" : ##T_START [ \"null\", \"string\" ] ##T_END,\n" +
           "      \"optional\" : true\n" +
           "    }\n" +
           "  ]\n" +
@@ -646,7 +649,7 @@ public class TestDataTranslator
           "  \"fields\" : [\n" +
           "    {\n" +
           "      \"name\" : \"enumOptional\",\n" +
-          "      \"type\" : { \"type\" : \"enum\", \"name\" : \"foo.bar\", \"symbols\" : [ \"A\", \"B\" ] },\n" +
+          "      \"type\" : ##T_START { \"type\" : \"enum\", \"name\" : \"foo.bar\", \"symbols\" : [ \"A\", \"B\" ] } ##T_END,\n" +
           "      \"optional\" : true\n" +
           "    }\n" +
           "  ]\n" +
@@ -678,7 +681,7 @@ public class TestDataTranslator
           "  \"fields\" : [\n" +
           "    {\n" +
           "      \"name\" : \"enumOptional\",\n" +
-          "      \"type\" : { \"type\" : \"enum\", \"name\" : \"foo.bar\", \"symbols\" : [ \"A\", \"B\" ] },\n" +
+          "      \"type\" : ##T_START { \"type\" : \"enum\", \"name\" : \"foo.bar\", \"symbols\" : [ \"A\", \"B\" ] } ##T_END,\n" +
           "      \"optional\" : true\n" +
           "    }\n" +
           "  ]\n" +
@@ -701,94 +704,163 @@ public class TestDataTranslator
           "Error processing /enumOptional"
         },
       },
+      {
+        // record with optional union field of records
+        {
+          "{\n" +
+          "  \"type\" : \"record\",\n" +
+          "  \"name\" : \"Foo\",\n" +
+          "  \"fields\" : [\n" +
+          "    {\n" +
+          "      \"name\" : \"unionOptional\",\n" +
+          "      \"type\" : ##T_START [\n" +
+          "        { \"type\" : \"record\", \"name\" : \"R1\", \"fields\" : [ { \"name\" : \"r1\", \"type\" : \"string\" } ] },\n" +
+          "        { \"type\" : \"record\", \"name\" : \"R2\", \"fields\" : [ { \"name\" : \"r2\", \"type\" : \"int\" } ] },\n" +
+          "        \"int\",\n" +
+          "        \"string\"\n" +
+          "      ] ##T_END,\n" +
+          "      \"optional\" : true\n" +
+          "    }\n" +
+          "  ]\n" +
+          "}\n"
+        },
+        {
+          "{ }",
+          "{\"unionOptional\":null}"
+        },
+        {
+          "{ \"unionOptional\" : { \"R1\" : { \"r1\" : \"value\" } } }",
+          "{\"unionOptional\":{\"R1\":{\"r1\":\"value\"}}}"
+        },
+        {
+          "{ \"unionOptional\" : { \"R2\" : { \"r2\" : 52 } } }",
+          "{\"unionOptional\":{\"R2\":{\"r2\":52}}}"
+        },
+        {
+          "{ \"unionOptional\" : { \"int\" : 52 } }",
+          "{\"unionOptional\":{\"int\":52}}"
+        },
+        {
+          "{ \"unionOptional\" : { \"string\" : \"value\" } }",
+          "{\"unionOptional\":{\"string\":\"value\"}}"
+        },
+        {
+          "{ \"unionOptional\" : {} }",
+          "Error processing /unionOptional"
+        },
+      },
     };
 
     // test translation of Pegasus DataMap to Avro GenericRecord.
     for (String[][] row : inputs)
     {
       String schemaText = row[0][0];
-      if (debug) out.print(schemaText);
-      RecordDataSchema recordDataSchema = (RecordDataSchema) TestUtil.dataSchemaFromString(schemaText);
-      Schema avroSchema = SchemaTranslator.dataToAvroSchema(recordDataSchema);
-
-      if (debug) out.println(avroSchema);
-
-      // translate data
-      for (int col = 1; col < row.length; col++)
+      if (schemaText.contains("##T_START"))
       {
-        String result;
-        GenericRecord avroRecord = null;
-        Exception exc = null;
+        assertTrue(schemaText.contains("##T_END"));
+        String noTyperefSchemaText = schemaText.replace("##T_START", "").replace("##T_END", "");
+        assertFalse(noTyperefSchemaText.contains("##T_"));
+        assertFalse(noTyperefSchemaText.contains("typeref"));
+        String typerefSchemaText = schemaText
+          .replace("##T_START", "{ \"type\" : \"typeref\", \"name\" : \"Ref\", \"ref\" : ")
+          .replace("##T_END", "}");
+        assertFalse(typerefSchemaText.contains("##T_"));
+        assertTrue(typerefSchemaText.contains("typeref"));
+        testDataTranslation(noTyperefSchemaText, row);
+        testDataTranslation(typerefSchemaText, row);
+      }
+      else
+      {
+        assertFalse(schemaText.contains("##"));
+        testDataTranslation(schemaText, row);
+      }
+    }
+  }
 
-        if (debug) out.println(col + " DataMap: " + row[col][0]);
-        DataMap dataMap = TestUtil.dataMapFromString(row[col][0]);
+  private void testDataTranslation(String schemaText, String[][] row) throws IOException
+  {
+    boolean debug = false;
 
-        // translate from Pegasus to Avro
-        try
+    if (debug) out.print(schemaText);
+    RecordDataSchema recordDataSchema = (RecordDataSchema) TestUtil.dataSchemaFromString(schemaText);
+    Schema avroSchema = SchemaTranslator.dataToAvroSchema(recordDataSchema);
+
+    if (debug) out.println(avroSchema);
+
+    // translate data
+    for (int col = 1; col < row.length; col++)
+    {
+      String result;
+      GenericRecord avroRecord = null;
+      Exception exc = null;
+
+      if (debug) out.println(col + " DataMap: " + row[col][0]);
+      DataMap dataMap = TestUtil.dataMapFromString(row[col][0]);
+
+      // translate from Pegasus to Avro
+      try
+      {
+        avroRecord = DataTranslator.dataMapToGenericRecord(dataMap, recordDataSchema, avroSchema);
+        String avroJson = AvroUtil.jsonFromGenericRecord(avroRecord);
+        if (debug) out.println(col + " GenericRecord: " + avroJson);
+        result = avroJson;
+      }
+      catch (Exception e)
+      {
+        exc = e;
+        result = TestUtil.stringFromException(e);
+        if (debug) out.println(col + " Exception: " + result);
+      }
+
+      int start = 1;
+      boolean oneWay = false;
+      if (start < row[col].length && row[col][start] == ONE_WAY)
+      {
+        oneWay = true;
+        start++;
+      }
+
+      // verify
+      for (int i = start; i < row[col].length; i++)
+      {
+        if (debug) out.println(col + " Test:" + row[col][i]);
+        if (debug && exc != null && result.contains(row[col][i]) == false) exc.printStackTrace(out);
+        assertTrue(result.contains(row[col][i]));
+      }
+
+      if (avroRecord != null)
+      {
+        // translate from Avro back to Pegasus
+        DataMap dataMapResult = DataTranslator.genericRecordToDataMap(avroRecord, recordDataSchema, avroSchema);
+        ValidationResult vr = ValidateDataAgainstSchema.validate(dataMap,
+                                                                 recordDataSchema,
+                                                                 new ValidationOptions(RequiredMode.MUST_BE_PRESENT,
+                                                                                       CoercionMode.NORMAL));
+        DataMap fixedInputDataMap = (DataMap) vr.getFixed();
+        assertTrue(vr.isValid());
+        if (oneWay == false)
         {
-          avroRecord = DataTranslator.dataMapToGenericRecord(dataMap, recordDataSchema, avroSchema);
-          String avroJson = AvroUtil.jsonFromGenericRecord(avroRecord);
-          if (debug) out.println(col + " GenericRecord: " + avroJson);
-          result = avroJson;
+          assertEquals(dataMapResult, fixedInputDataMap);
         }
-        catch (Exception e)
+
+        // serialize avroRecord to binary and back
+        byte[] avroBytes = AvroUtil.bytesFromGenericRecord(avroRecord);
+        GenericRecord avroRecordFromBytes = AvroUtil.genericRecordFromBytes(avroBytes, avroRecord.getSchema());
+        byte[] avroBytesAgain = AvroUtil.bytesFromGenericRecord(avroRecordFromBytes);
+        assertEquals(avroBytes, avroBytesAgain);
+
+        // check result of roundtrip binary serialization
+        DataMap dataMapFromBinaryResult = DataTranslator.genericRecordToDataMap(avroRecordFromBytes, recordDataSchema, avroSchema);
+        vr = ValidateDataAgainstSchema.validate(dataMapFromBinaryResult,
+                                                recordDataSchema,
+                                                new ValidationOptions(RequiredMode.MUST_BE_PRESENT,
+                                                                      CoercionMode.NORMAL));
+        fixedInputDataMap = (DataMap) vr.getFixed();
+        assertTrue(vr.isValid());
+        if (oneWay == false)
         {
-          exc = e;
-          result = TestUtil.stringFromException(e);
-          if (debug) out.println(col + " Exception: " + result);
+          assertEquals(dataMapResult, fixedInputDataMap);
         }
-
-        int start = 1;
-        boolean oneWay = false;
-        if (start < row[col].length && row[col][start] == ONE_WAY)
-        {
-          oneWay = true;
-          start++;
-        }
-
-        // verify
-        for (int i = start; i < row[col].length; i++)
-        {
-          if (debug) out.println(col + " Test:" + row[col][i]);
-          if (debug && exc != null && result.contains(row[col][i]) == false) exc.printStackTrace(out);
-          assertTrue(result.contains(row[col][i]));
-        }
-
-        if (avroRecord != null)
-        {
-          // translate from Avro back to Pegasus
-          DataMap dataMapResult = DataTranslator.genericRecordToDataMap(avroRecord, recordDataSchema, avroSchema);
-          ValidationResult vr = ValidateDataAgainstSchema.validate(dataMap,
-                                                                   recordDataSchema,
-                                                                   new ValidationOptions(RequiredMode.MUST_BE_PRESENT,
-                                                                                         CoercionMode.NORMAL));
-          DataMap fixedInputDataMap = (DataMap) vr.getFixed();
-          assertTrue(vr.isValid());
-          if (oneWay == false)
-          {
-            assertEquals(dataMapResult, fixedInputDataMap);
-          }
-
-          // serialize avroRecord to binary and back
-          byte[] avroBytes = AvroUtil.bytesFromGenericRecord(avroRecord);
-          GenericRecord avroRecordFromBytes = AvroUtil.genericRecordFromBytes(avroBytes, avroRecord.getSchema());
-          byte[] avroBytesAgain = AvroUtil.bytesFromGenericRecord(avroRecordFromBytes);
-          assertEquals(avroBytes, avroBytesAgain);
-
-          // check result of roundtrip binary serialization
-          DataMap dataMapFromBinaryResult = DataTranslator.genericRecordToDataMap(avroRecordFromBytes, recordDataSchema, avroSchema);
-          vr = ValidateDataAgainstSchema.validate(dataMapFromBinaryResult,
-                                                  recordDataSchema,
-                                                  new ValidationOptions(RequiredMode.MUST_BE_PRESENT,
-                                                                        CoercionMode.NORMAL));
-          fixedInputDataMap = (DataMap) vr.getFixed();
-          assertTrue(vr.isValid());
-          if (oneWay == false)
-          {
-            assertEquals(dataMapResult, fixedInputDataMap);
-          }
-        }
-
       }
     }
   }

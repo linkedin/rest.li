@@ -435,7 +435,7 @@ public class SchemaTranslator
       boolean isOptional = field.getOptional();
       if (isOptional)
       {
-        if (fieldDataSchema.getType() != DataSchema.Type.UNION)
+        if (fieldDataSchema.getDereferencedType() != DataSchema.Type.UNION)
         {
           if (fieldValue == null)
           {

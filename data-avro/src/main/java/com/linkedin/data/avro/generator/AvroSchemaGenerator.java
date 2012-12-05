@@ -21,16 +21,22 @@ import com.linkedin.data.avro.DataToAvroSchemaTranslationOptions;
 import com.linkedin.data.avro.OptionalDefaultMode;
 import com.linkedin.data.avro.SchemaTranslator;
 import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.DataSchemaLocation;
+import com.linkedin.data.schema.DataSchemaResolver;
+import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.generator.AbstractGenerator;
+import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.apache.avro.Schema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,6 +60,23 @@ public class AvroSchemaGenerator extends AbstractGenerator
   public static final String GENERATOR_AVRO_TRANSLATE_OPTIONAL_DEFAULT = "generator.avro.optional.default";
 
   private static final Logger _log = LoggerFactory.getLogger(AvroSchemaGenerator.class);
+
+  private final Set<DataSchemaLocation> _sourceLocations = new HashSet<DataSchemaLocation>();
+
+  /**
+   * Sources as set.
+   */
+  private final Set<String> _sources = new HashSet<String>();
+
+  /**
+   * Map of output file and the schema that should be written in the output file.
+   */
+  private final Map<File, String> _fileToAvroSchemaMap = new HashMap<File, String>();
+
+  /**
+   * Options that specify how Avro schema should be generated.
+   */
+  private final DataToAvroSchemaTranslationOptions _options = new DataToAvroSchemaTranslationOptions();
 
   /**
    * Generate Avro avsc files from {@link RecordDataSchema}s.
@@ -110,6 +133,10 @@ public class AvroSchemaGenerator extends AbstractGenerator
   {
     initSchemaResolver();
 
+    _fileToAvroSchemaMap.clear();
+    _sourceLocations.clear();
+    _sources.addAll(Arrays.asList(sources));
+
     List<File> sourceFiles = parseSources(sources);
 
     if (getMessage().length() > 0)
@@ -130,32 +157,24 @@ public class AvroSchemaGenerator extends AbstractGenerator
     outputAvroSchemas(targetDirectory);
   }
 
-  private Map<String, String> _nameToAvroSchema = new HashMap<String, String>();
-  private final DataToAvroSchemaTranslationOptions _options = new DataToAvroSchemaTranslationOptions();
+  @Override
+  protected void parseFile(File schemaSourceFile) throws IOException
+  {
+    super.parseFile(schemaSourceFile);
+    _sourceLocations.add(new FileDataSchemaLocation(schemaSourceFile));
+  }
 
   @Override
   protected void handleSchema(DataSchema schema)
   {
-    if (schema instanceof RecordDataSchema == false)
-    {
-      // avro only allows records to be top level schemas
-      return;
-    }
-    String preTranslateSchemaText = schema.toString();
-    RecordDataSchema recordDataSchema = (RecordDataSchema) schema;
-    String fullName = recordDataSchema.getFullName();
-    Schema avroSchema = SchemaTranslator.dataToAvroSchema(recordDataSchema);
-    String avroSchemaText = avroSchema.toString();
-    _nameToAvroSchema.put(fullName, avroSchemaText);
-    String postTranslateSchemaText = schema.toString();
-    assert(preTranslateSchemaText.equals(postTranslateSchemaText));
+    // no-op
   }
 
   protected void outputAvroSchemas(File targetDirectory) throws IOException
   {
-    for (Map.Entry<String, String> entry : _nameToAvroSchema.entrySet())
+    for (Map.Entry<File, String> entry : _fileToAvroSchemaMap.entrySet())
     {
-      File generatedFile = fileForAvroSchema(entry.getKey(), targetDirectory);
+      File generatedFile = entry.getKey();
       File parentDir = generatedFile.getParentFile();
       if (parentDir.isDirectory() == false)
         parentDir.mkdirs();
@@ -167,12 +186,35 @@ public class AvroSchemaGenerator extends AbstractGenerator
 
   protected List<File> targetFiles(File targetDirectory)
   {
-    ArrayList<File> generatedFiles = new ArrayList<File>(_nameToAvroSchema.size());
-    for (String fullName : _nameToAvroSchema.keySet())
+    ArrayList<File> generatedFiles = new ArrayList<File>();
+
+    DataSchemaResolver resolver = getSchemaResolver();
+    Map<String, DataSchemaLocation> nameToLocations = resolver.nameToDataSchemaLocations();
+    Map<String, NamedDataSchema> nameToSchema = resolver.bindings();
+
+    for (Map.Entry<String, DataSchemaLocation> entry : nameToLocations.entrySet())
     {
-      File generatedFile = fileForAvroSchema(fullName, targetDirectory);
-      generatedFiles.add(generatedFile);
+      String fullName = entry.getKey();
+      DataSchemaLocation location = entry.getValue();
+      if (_sourceLocations.contains(location) || _sources.contains(fullName))
+      {
+        NamedDataSchema schema = nameToSchema.get(fullName);
+        if (schema instanceof RecordDataSchema)
+        {
+          RecordDataSchema recordDataSchema = (RecordDataSchema) schema;
+          File generatedFile = fileForAvroSchema(fullName, targetDirectory);
+          generatedFiles.add(generatedFile);
+
+          String preTranslateSchemaText = recordDataSchema.toString();
+          Schema avroSchema = SchemaTranslator.dataToAvroSchema(recordDataSchema);
+          String avroSchemaText = avroSchema.toString();
+          _fileToAvroSchemaMap.put(generatedFile, avroSchemaText);
+          String postTranslateSchemaText = recordDataSchema.toString();
+          assert(preTranslateSchemaText.equals(postTranslateSchemaText));
+        }
+      }
     }
+
     return generatedFiles;
   }
 

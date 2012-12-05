@@ -326,6 +326,10 @@ public class SchemaParser extends AbstractDataParser
     // Either primitive or name
     String fullName = computeFullName(name);
     DataSchema found = lookupName(fullName);
+    if (found == null && !name.equals(fullName))
+    {
+      found = lookupName(name);
+    }
     if (found == null)
     {
       StringBuilder sb = startErrorMessage(name).append("\"").append(name).append("\"");

@@ -1644,4 +1644,70 @@ public class TestDataSchema
     Assert.assertEquals(schema.getSymbols(), Arrays.asList(orderedSymbols));
 
   }
+
+  @Test
+  public void testNameLookup() throws IOException
+  {
+    String[][] inputs = {
+      {
+        // refer to Ref within Record
+        "{ \"type\" : \"typeref\", \"name\" : \"Ref\", \"ref\" : \"string\" }\n" +
+        "{ \"type\" : \"record\", \"name\" : \"Record\", \"fields\" : [ { \"name\" : \"ref\", \"type\" : \"Ref\" } ] }",
+        "{ \"type\" : \"typeref\", \"name\" : \"Ref\", \"ref\" : \"string\" }",
+        "{ \"type\" : \"record\", \"name\" : \"Record\", \"fields\" : [ { \"name\" : \"ref\", \"type\" : { \"type\" : \"typeref\", \"name\" : \"Ref\", \"ref\" : \"string\" } } ] }",
+      },
+      {
+        // refer to a.b.Ref within Record
+        "{ \"type\" : \"typeref\", \"name\" : \"a.b.Ref\", \"ref\" : \"string\" }\n" +
+        "{ \"type\" : \"record\", \"name\" : \"Record\", \"fields\" : [ { \"name\" : \"ref\", \"type\" : \"a.b.Ref\" } ] }",
+        "{ \"type\" : \"typeref\", \"name\" : \"a.b.Ref\", \"ref\" : \"string\" }",
+        "{ \"type\" : \"record\", \"name\" : \"Record\", \"fields\" : [ { \"name\" : \"ref\", \"type\" : { \"type\" : \"typeref\", \"name\" : \"a.b.Ref\", \"ref\" : \"string\" } } ] }",
+      },
+      {
+        // refer to Ref within a.b.Record
+        "{ \"type\" : \"typeref\", \"name\" : \"Ref\", \"ref\" : \"string\" }\n" +
+        "{ \"type\" : \"record\", \"name\" : \"a.b.Record\", \"fields\" : [ { \"name\" : \"ref\", \"type\" : \"Ref\" } ] }",
+        "{ \"type\" : \"typeref\", \"name\" : \"Ref\", \"ref\" : \"string\" }",
+        "{ \"type\" : \"record\", \"name\" : \"a.b.Record\", \"fields\" : [ { \"name\" : \"ref\", \"type\" : { \"type\" : \"typeref\", \"name\" : \"Ref\", \"namespace\" : \"\", \"ref\" : \"string\" } } ] }",
+      },
+      {
+        // refer to a.b.Ref within a.b.Record using Ref (not fullname)
+        "{ \"type\" : \"typeref\", \"name\" : \"a.b.Ref\", \"ref\" : \"string\" }\n" +
+        "{ \"type\" : \"record\", \"name\" : \"a.b.Record\", \"fields\" : [ { \"name\" : \"ref\", \"type\" : \"Ref\" } ] }",
+        "{ \"type\" : \"typeref\", \"name\" : \"a.b.Ref\", \"ref\" : \"string\" }",
+        "{ \"type\" : \"record\", \"name\" : \"a.b.Record\", \"fields\" : [ { \"name\" : \"ref\", \"type\" : { \"type\" : \"typeref\", \"name\" : \"a.b.Ref\", \"ref\" : \"string\" } } ] }",
+      },
+      {
+        // refer to a.b.Ref within a.b.Record using a.b.Ref (fullname)
+        "{ \"type\" : \"typeref\", \"name\" : \"a.b.Ref\", \"ref\" : \"string\" }\n" +
+        "{ \"type\" : \"record\", \"name\" : \"a.b.Record\", \"fields\" : [ { \"name\" : \"ref\", \"type\" : \"a.b.Ref\" } ] }",
+        "{ \"type\" : \"typeref\", \"name\" : \"a.b.Ref\", \"ref\" : \"string\" }",
+        "{ \"type\" : \"record\", \"name\" : \"a.b.Record\", \"fields\" : [ { \"name\" : \"ref\", \"type\" : { \"type\" : \"typeref\", \"name\" : \"a.b.Ref\", \"ref\" : \"string\" } } ] }",
+      },
+      {
+        // both Ref and a.b.Ref present, refer a.b.Ref within a.b.Record using Ref (not fulname)
+        "{ \"type\" : \"typeref\", \"name\" : \"Ref\", \"ref\" : \"string\" }\n" +
+        "{ \"type\" : \"typeref\", \"name\" : \"a.b.Ref\", \"ref\" : \"string\" }\n" +
+        "{ \"type\" : \"record\", \"name\" : \"a.b.Record\", \"fields\" : [ { \"name\" : \"ref\", \"type\" : \"Ref\" } ] }",
+        "{ \"type\" : \"typeref\", \"name\" : \"Ref\", \"ref\" : \"string\" }",
+        "{ \"type\" : \"typeref\", \"name\" : \"a.b.Ref\", \"ref\" : \"string\" }",
+        "{ \"type\" : \"record\", \"name\" : \"a.b.Record\", \"fields\" : [ { \"name\" : \"ref\", \"type\" : { \"type\" : \"typeref\", \"name\" : \"a.b.Ref\", \"ref\" : \"string\" } } ] }",
+      },
+    };
+
+    for (String[] row : inputs)
+    {
+      int i = 0;
+      String schemaText = row[i++];
+      SchemaParser parser = schemaParserFromString(schemaText);
+      assertFalse(parser.hasError(), parser.errorMessage());
+      List<DataSchema> topLevelSchemas = parser.topLevelDataSchemas();
+      for (DataSchema schema : topLevelSchemas)
+      {
+        String expected = row[i++];
+        DataSchema schemaFromExpected = dataSchemaFromString(expected);
+        assertEquals(schema, schemaFromExpected);
+      }
+    }
+  }
 }

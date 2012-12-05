@@ -127,13 +127,10 @@ public class DataTranslator implements DataTranslatorContext
     }
   }
 
-  private static final AvroOverride NO_AVRO_OVERRIDE = new AvroOverride(null, null, null, null);
-
   private static final GenericData _genericData = GenericData.get();
 
   protected final Deque<Object> _path = new ArrayDeque<Object>();
   protected final MessageList _messageList = new MessageList();
-  protected final IdentityHashMap<DataSchema, AvroOverride> _dataSchemaToAvroOverrideMap = new IdentityHashMap<DataSchema, AvroOverride>();
   protected final AvroOverrideFactory _avroOverrideFactory = new AvroOverrideFactory()
   {
     {
@@ -147,6 +144,8 @@ public class DataTranslator implements DataTranslatorContext
     }
   };
 
+  protected final AvroOverrideMap _avroOverrideMap = new AvroOverrideMap(_avroOverrideFactory);
+
   protected DataTranslator()
   {
   }
@@ -158,27 +157,9 @@ public class DataTranslator implements DataTranslatorContext
   }
 
 
-  AvroOverride getAvroOverride(DataSchema schema)
+  protected AvroOverride getAvroOverride(DataSchema schema)
   {
-    AvroOverride avroOverride;
-    if (schema.getType() != DataSchema.Type.RECORD)
-    {
-      avroOverride = null;
-    }
-    else
-    {
-      avroOverride = _dataSchemaToAvroOverrideMap.get(schema);
-      if (avroOverride == NO_AVRO_OVERRIDE)
-      {
-        avroOverride = null;
-      }
-      else if (avroOverride == null)
-      {
-        avroOverride = _avroOverrideFactory.createFromDataSchema(schema);
-        _dataSchemaToAvroOverrideMap.put(schema, avroOverride == null ? NO_AVRO_OVERRIDE : avroOverride);
-      }
-    }
-    return avroOverride;
+    return _avroOverrideMap.getAvroOverride(schema);
   }
 
   protected void checkMessageListForErrorsAndThrowDataTranslationException()
@@ -317,7 +298,7 @@ public class DataTranslator implements DataTranslatorContext
             }
             DataSchema fieldDataSchema = field.getType();
             Schema fieldAvroSchema = avroSchema.getField(fieldName).schema();
-            if (isOptional && (fieldDataSchema.getType() != DataSchema.Type.UNION))
+            if (isOptional && (fieldDataSchema.getDereferencedType() != DataSchema.Type.UNION))
             {
               // Avro schema should be union with 2 types: null and the field's type.
               Map.Entry<String, Schema> fieldAvroEntry = findUnionMember(fieldDataSchema, fieldAvroSchema);
@@ -530,7 +511,7 @@ public class DataTranslator implements DataTranslatorContext
             boolean isOptional = field.getOptional();
             if (isOptional)
             {
-              if (fieldDataSchema.getType() != DataSchema.Type.UNION)
+              if (fieldDataSchema.getDereferencedType() != DataSchema.Type.UNION)
               {
                 if (fieldValue == null)
                 {

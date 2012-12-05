@@ -74,6 +74,7 @@ class AvroOverride
   private final DataMap _avroSchemaDataMap;
   private final String _customDataTranslatorClassName;
   private final CustomDataTranslator _customDataTranslator;
+  private int _accessCount;
 
   AvroOverride(String avroSchemaFullName, DataMap avroSchemaDataMap, String customDataTranslatorClassName, CustomDataTranslator customDataTranslator)
   {
@@ -81,6 +82,7 @@ class AvroOverride
     _avroSchemaDataMap = avroSchemaDataMap;
     _customDataTranslatorClassName = customDataTranslatorClassName;
     _customDataTranslator = customDataTranslator;
+    _accessCount = 0;
   }
 
   String getAvroSchemaFullName()
@@ -101,5 +103,15 @@ class AvroOverride
   CustomDataTranslator getCustomDataTranslator()
   {
     return _customDataTranslator;
+  }
+
+  int getAccessCount()
+  {
+    return _accessCount;
+  }
+
+  void incrementAccessCount()
+  {
+    _accessCount++;
   }
 }
