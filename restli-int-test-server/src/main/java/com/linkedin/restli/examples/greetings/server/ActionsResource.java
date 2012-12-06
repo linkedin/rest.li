@@ -53,6 +53,18 @@ public class ActionsResource
   private final static ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
   private final static int                      DELAY     = 100;
 
+  @Action(name="returnInt")
+  public int returnPrimitive()
+  {
+    return 0;
+  }
+
+  @Action(name="returnBool")
+  public boolean returnBool()
+  {
+    return true;
+  }
+
   @Action(name="ultimateAnswer")
   public Integer testAction()
   {

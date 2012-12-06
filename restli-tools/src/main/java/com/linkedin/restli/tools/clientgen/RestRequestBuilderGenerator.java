@@ -29,9 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.DynamicRecordMetadata;
-import com.linkedin.data.template.DynamicRecordTemplate;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonParseException;
@@ -805,7 +803,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
                                                                                 returnType);
     String actionName = action.getName();
 
-    String actionBuilderClassName = capitalize(resourceName) + "Do" + capitalize(actionName) + "Builder"; // aha!
+    String actionBuilderClassName = capitalize(resourceName) + "Do" + capitalize(actionName) + "Builder";
     JDefinedClass actionBuilderClass = facadeClass.getPackage()._class(JMod.PUBLIC, actionBuilderClassName);
     annotate(actionBuilderClass, null);
     actionBuilderClass._extends(vanillaActionBuilderClass.narrow(actionBuilderClass));

@@ -19,7 +19,6 @@ package com.linkedin.restli.internal.server.model;
 
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.DynamicRecordMetadata;
-import com.linkedin.data.template.DynamicRecordTemplate;
 import com.linkedin.data.template.FieldDef;
 import com.linkedin.restli.common.ActionResponse;
 import com.linkedin.common.callback.Callback;
@@ -1245,7 +1244,7 @@ public final class RestLiAnnotationReader
           + "' cannot be instantiated, " + e.getMessage());
     }
 
-    Class<?> returnClass = getLogicalReturnClass(method);
+    Class<?> returnClass = getBoxedTypeFromPrimitive(getLogicalReturnClass(method));
     if (ActionResult.class.isAssignableFrom(returnClass))
     {
       assert(returnType instanceof ParameterizedType);
@@ -1308,6 +1307,30 @@ public final class RestLiAnnotationReader
                                                                                getInterfaceType(method),
                                                                                ResourceModelAnnotation.getAnnotationsMap(method.getAnnotations())));
 
+  }
+
+  private static Class<?> getBoxedTypeFromPrimitive(Class<?> type)
+  {
+    if (type.isPrimitive())
+    {
+      if(type == boolean.class)
+        return Boolean.class;
+      if(type == byte.class)
+        return Byte.class;
+      if(type == char.class)
+        return Character.class;
+      if(type == double.class)
+        return Double.class;
+      if(type == float.class)
+        return Float.class;
+      if(type == int.class)
+        return Integer.class;
+      if(type == long.class)
+        return Long.class;
+      if(type == short.class)
+        return Short.class;
+    }
+    return type;
   }
 
   private static void validateActionReturnType(final Method method)

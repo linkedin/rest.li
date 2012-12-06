@@ -56,6 +56,18 @@ public class TestActionsResource extends RestLiIntegrationTest
   }
 
   @Test
+  public void testPrimitiveReturningActions() throws RemoteInvocationException
+  {
+    ActionRequest<Integer> intRequest = ACTIONS_BUILDERS.actionReturnInt().build();
+    Integer integer = REST_CLIENT.sendRequest(intRequest).getResponse().getEntity();
+    Assert.assertEquals(0, integer.intValue());
+
+    ActionRequest<Boolean> boolRequest = ACTIONS_BUILDERS.actionReturnBool().build();
+    Boolean bool = REST_CLIENT.sendRequest(boolRequest).getResponse().getEntity();
+    Assert.assertTrue(bool);
+  }
+
+  @Test
   public void testActionsSet() throws RemoteInvocationException
   {
     ActionRequest<Integer> request = ACTIONS_BUILDERS.actionUltimateAnswer().build();

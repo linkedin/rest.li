@@ -34,7 +34,7 @@ public class ActionResponseDecoder<T> extends RestResponseDecoder<T>
   private final FieldDef<T> _returnFieldDef;
   private final RecordDataSchema _recordDataSchema;
 
-  public ActionResponseDecoder(FieldDef<T> returnFieldDef, RecordDataSchema schema) // todo fix usages of this function
+  public ActionResponseDecoder(FieldDef<T> returnFieldDef, RecordDataSchema schema)
   {
     _returnFieldDef = returnFieldDef;
     _recordDataSchema = schema;

@@ -1,3 +1,9 @@
+1.7.1
+-----
+(RB=119121)
+Fixed an issue where Actions that declare their return types as primitives (return int instead of
+Integer, for example) no longer fail while trying to coercer the response into the correct type.
+
 1.7.0
 -----
 (RB=116297)

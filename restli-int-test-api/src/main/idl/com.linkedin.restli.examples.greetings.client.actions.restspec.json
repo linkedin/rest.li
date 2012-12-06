@@ -77,6 +77,12 @@
       } ],
       "returns" : "string"
     }, {
+      "name" : "returnBool",
+      "returns" : "boolean"
+    }, {
+      "name" : "returnInt",
+      "returns" : "int"
+    }, {
       "name" : "timeout"
     }, {
       "name" : "timeoutCallback"
