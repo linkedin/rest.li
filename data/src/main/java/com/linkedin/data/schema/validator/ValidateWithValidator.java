@@ -116,7 +116,7 @@ public class ValidateWithValidator
 
   private static class Result implements ValidationResult
   {
-    private final List<Message> _messages = new MessageList();
+    private final List<Message> _messages = new MessageList<Message>();
 
     private boolean _valid = true;
     private Object _fixed = null;

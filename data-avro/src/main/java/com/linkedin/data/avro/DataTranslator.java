@@ -130,7 +130,7 @@ public class DataTranslator implements DataTranslatorContext
   private static final GenericData _genericData = GenericData.get();
 
   protected final Deque<Object> _path = new ArrayDeque<Object>();
-  protected final MessageList _messageList = new MessageList();
+  protected final MessageList<Message> _messageList = new MessageList<Message>();
   protected final AvroOverrideFactory _avroOverrideFactory = new AvroOverrideFactory()
   {
     {

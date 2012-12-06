@@ -198,7 +198,7 @@ public class DataSchemaAnnotationValidator implements Validator
   private DataSchema _schema = DataSchemaConstants.NULL_DATA_SCHEMA;
   private Map<String, Class<? extends Validator>> _classMap = Collections.emptyMap();
   private Map<Object, List<Validator>> _cache = Collections.emptyMap();
-  private MessageList _initMessages = new MessageList();
+  private MessageList<Message> _initMessages = new MessageList<Message>();
 
   private static final List<Validator> NO_VALIDATORS = Collections.emptyList();
 

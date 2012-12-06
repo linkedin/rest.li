@@ -25,7 +25,7 @@ import java.util.Formatter;
  */
 public class MessageUtil
 {
-  public static StringBuilder appendMessages(StringBuilder sb, Collection<Message> messages)
+  public static StringBuilder appendMessages(StringBuilder sb, Collection<? extends Message> messages)
   {
     Formatter formatter = new Formatter(sb);
     Appendable appendable = formatter.out();
@@ -46,9 +46,23 @@ public class MessageUtil
     return sb;
   }
 
-  public static String messagesToString(Collection<Message> messages)
+  public static String messagesToString(Collection<? extends Message> messages)
   {
     StringBuilder sb = new StringBuilder();
     return appendMessages(sb, messages).toString();
+  }
+
+  public static boolean messagesContainsErrors(Collection<? extends Message> messages)
+  {
+    boolean error = false;
+    for (Message m : messages)
+    {
+      if (m.isError())
+      {
+        error = true;
+        break;
+      }
+    }
+    return error;
   }
 }

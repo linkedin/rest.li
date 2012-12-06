@@ -661,7 +661,7 @@ public final class ValidateDataAgainstSchema
       _valid = false;
     }
 
-    private MessageList _messages = new MessageList();
+    private MessageList<Message> _messages = new MessageList<Message>();
 
     @Override
     public boolean hasFix()

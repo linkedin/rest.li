@@ -106,24 +106,52 @@ public class Message
    */
   public Formatter format(Formatter formatter, String fieldSeparator)
   {
-    formatter.format(isError() ? "ERROR" : "INFO");
-    Appendable appendable = formatter.out();
+    formatError(formatter);
+    formatSeparator(formatter, fieldSeparator);
+    formatPath(formatter);
+    formatSeparator(formatter, fieldSeparator);
+    formatArgs(formatter);
+    return formatter;
+  }
+
+  protected void formatSeparator(Formatter formatter, String fieldSeparator)
+  {
     try
     {
-      appendable.append(fieldSeparator);
-      for (Object component : _path)
-      {
-        appendable.append(DataElement.SEPARATOR);
-        appendable.append(component.toString());
-      }
-      appendable.append(fieldSeparator);
+      Appendable out = formatter.out();
+      out.append(fieldSeparator);
     }
     catch (IOException e)
     {
       throw new IllegalStateException(e);
     }
+  }
+
+  protected void formatError(Formatter formatter)
+  {
+    formatter.format(isError() ? "ERROR" : "INFO");
+  }
+
+  protected void formatPath(Formatter formatter)
+  {
+    Appendable appendable = formatter.out();
+    try
+    {
+      for (Object component : _path)
+      {
+        appendable.append(DataElement.SEPARATOR);
+        appendable.append(component.toString());
+      }
+    }
+    catch (IOException e)
+    {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  protected void formatArgs(Formatter formatter)
+  {
     formatter.format(_format, _args);
-    return formatter;
   }
 
   /**

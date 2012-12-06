@@ -42,7 +42,7 @@ public class DynamicRecordTemplate extends RecordTemplate
    * @param name provides the name of the record type.
    * @param fieldDefs defines the fields of the record type.
    * @param data provides the underlying data that backs this {@link DynamicRecordTemplate}.
-   * @deprecated RecordDataSchema should be computed in builders and passed, rather than creating
+   * @deprecated {@link RecordDataSchema} should be computed in builders and passed, rather than creating
    * it on the fly.
    */
   @Deprecated
@@ -55,7 +55,7 @@ public class DynamicRecordTemplate extends RecordTemplate
    * Construct a new {@link DynamicRecordTemplate}.
    *
    * @param data provides the underlying data that backs this {@link DynamicRecordTemplate}.
-   * @param schema the schema for the DynamicRecordTemplate.
+   * @param schema the schema for the {@link DynamicRecordTemplate}.
    */
   public DynamicRecordTemplate(DataMap data, RecordDataSchema schema)
   {
@@ -67,7 +67,7 @@ public class DynamicRecordTemplate extends RecordTemplate
    *
    * @param name provides the name of the record type.
    * @param fieldDefs defines the fields of the record type.
-   * @deprecated RecordDataSchema should be computed in builders and passed, rather than creating
+   * @deprecated {@link RecordDataSchema} should be computed in builders and passed, rather than creating
    * it on the fly.
    */
   @Deprecated
@@ -79,7 +79,7 @@ public class DynamicRecordTemplate extends RecordTemplate
   /**
    * Construct a new {@link DynamicRecordTemplate}
    *
-   * @param schema the schema for the DynamicRecordTemplate.
+   * @param schema the schema for the {@link DynamicRecordTemplate}.
    */
   public DynamicRecordTemplate(RecordDataSchema schema)
   {
@@ -91,7 +91,7 @@ public class DynamicRecordTemplate extends RecordTemplate
    *
    * @param name provides the name of the record type.
    * @param fieldDefValues defines the fields of the record type and the value of each field.
-   * @deprecated RecordDataSchema should be computed in builders and passed, rather than creating
+   * @deprecated {@link RecordDataSchema} should be computed in builders and passed, rather than creating
    * it on the fly.
    */
   @Deprecated
@@ -111,7 +111,6 @@ public class DynamicRecordTemplate extends RecordTemplate
    *
    * @param schema provides the schema for the record type.
    * @param fieldDefValues defines the fields of the record type.
-   * it on the fly.
    */
   @SuppressWarnings({"unchecked"})
   public DynamicRecordTemplate(RecordDataSchema schema, Map<FieldDef<?>, Object> fieldDefValues)
@@ -189,8 +188,8 @@ public class DynamicRecordTemplate extends RecordTemplate
    * If this fails, it is because the FieldDef passed in was not the same fieldDef used to create
    * the RecordDataSchema.
    *
-   * @param fieldDef fieldDef to check.
-   * @return true if the fieldDef belongs to the schema of this DynamicRecordTemplate, false otherwise.
+   * @param fieldDef provides the {@link FieldDef} to check.
+   * @return true if the provided fieldDef belongs to the schema of this {@link DynamicRecordTemplate}, false otherwise.
    */
   private boolean fieldDefInRecord(FieldDef<?> fieldDef)
   {

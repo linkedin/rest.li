@@ -58,7 +58,7 @@ public class TestAvroOverrideFactory
 
   private static class MyAvroOverrideFactory extends AvroOverrideFactory
   {
-    private MessageList _messageList = new MessageList();
+    private MessageList<Message> _messageList = new MessageList<Message>();
     private static final Object[] _path = new Object[0];
 
     MyAvroOverrideFactory()

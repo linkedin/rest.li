@@ -19,7 +19,11 @@
  */
 package com.linkedin.data.transform;
 
+import com.linkedin.data.message.Message;
 import com.linkedin.data.message.MessageList;
+import java.util.Collection;
+import java.util.List;
+
 
 /**
  * Data processing exception containing list of errors that occurred during processing. If
@@ -33,8 +37,8 @@ public class DataProcessingException extends Exception
 {
 
   private static final long serialVersionUID = 1;
-  private final MessageList _messages;
-  private final String      _mainMessage;
+  private final List<Message> _messages;
+  private final String _mainMessage;
 
   /**
    * Initialize a {@link DataProcessingException}.
@@ -43,7 +47,7 @@ public class DataProcessingException extends Exception
    * @param messages Array of {@link com.linkedin.data.message.Message Message}s
    *                 encountered during data processing
    */
-  public DataProcessingException(String mainMessage, MessageList messages)
+  public DataProcessingException(String mainMessage, List<Message> messages)
   {
     super();
     _mainMessage = mainMessage;
@@ -61,7 +65,7 @@ public class DataProcessingException extends Exception
    *
    * @return list of error messages which occurred during data processing
    */
-  public MessageList getMessages()
+  public List<Message> getMessages()
   {
     return _messages;
   }

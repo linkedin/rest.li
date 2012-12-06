@@ -21,7 +21,7 @@ import java.util.ArrayList;
 /**
  * Extends {@code java.util.ArrayList<Message>} by overriding the {@link #toString()} method.
  */
-public class MessageList extends ArrayList<Message>
+public class MessageList<T extends Message> extends ArrayList<T>
 {
   private static final long serialVersionUID = 1L;
 
@@ -38,15 +38,6 @@ public class MessageList extends ArrayList<Message>
 
   public boolean isError()
   {
-    boolean error = false;
-    for (Message m : this)
-    {
-      if (m.isError())
-      {
-        error = true;
-        break;
-      }
-    }
-    return error;
+    return MessageUtil.messagesContainsErrors(this);
   }
 }

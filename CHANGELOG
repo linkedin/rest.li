@@ -1,5 +1,14 @@
-1.6.15
+1.7.0
 -----
+(RB=116297)
+Add Schema compatibility checker. See com.linkedin.data.schema.compatibility.CompatibilityChecker and
+CompatibilityOptions for details.
+
+There is a change in MessageList class to take a type parameter. This is binary compatible but may
+result in unchecked compilation warning/errors (depending on compiler setting.) Impact should be
+minimum since this class is mostly for use within pegasus. However, it leaked by data-transform
+package by DataProcessingException. This has been fixed to use List<Message> instead of MessageList.
+
 (RB=118831)
 In idl compatibility checker, allow parameter optional to be upgraded to default, and allow default to be downgraded to optional.
 
@@ -11,8 +20,6 @@ Add PageIncrement.FIXED to better support post-filtered search result paging.
 (RB=118380)
 Add handling of long queries via X-HTTP-Method-Override
 
-1.6.13
-------
 (RB=118576)
 In idl compatibility checker, allow finder AssocKey to be upgraded to AssocKeys, but disallow the opposite direction.
 

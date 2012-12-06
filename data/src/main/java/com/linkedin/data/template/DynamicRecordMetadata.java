@@ -27,8 +27,8 @@ public class DynamicRecordMetadata
    * Construct {@link DynamicRecordMetadata} that keeps track of a {@link DynamicRecordTemplate}'s
    * {@link RecordDataSchema} and the {@link FieldDef}s used to create it.
    *
-   * @param name name of the DynamicRecord
-   * @param fieldDefs
+   * @param name provides the name of the dynamic record.
+   * @param fieldDefs provides the {@link FieldDef}s of dynamic record.
    */
   public DynamicRecordMetadata(String name, Collection<? extends FieldDef<?>> fieldDefs)
   {
@@ -42,12 +42,12 @@ public class DynamicRecordMetadata
   }
 
   /**
-   * Build the schema of a DynamicRecordTemplate.
+   * Build the schema of a {@link DynamicRecordTemplate}.
    *
    * @param name the name of the record.
    * @param fieldDefs the fields of the record.
-   * @throws IllegalArgumentException if the {@link RecordDataSchema.Field} of the fieldDefs are
-   * already set.
+   * @throws IllegalArgumentException if the {@link com.linkedin.data.schema.RecordDataSchema.Field} of the fieldDefs
+   *                                  are already set.
    */
   public static RecordDataSchema buildSchema(String name, Collection<? extends FieldDef<?>> fieldDefs)
   {

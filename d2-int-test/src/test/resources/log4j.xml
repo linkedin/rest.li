@@ -27,10 +27,12 @@
 		<priority value="error" />
 		<appender-ref ref="console" />
 	</root>
-    <root>
+
+  <!--
+  <root>
 		<priority value="info" />
 		<appender-ref ref="file" />
 	</root>
-
+  -->
 
 </log4j:configuration>

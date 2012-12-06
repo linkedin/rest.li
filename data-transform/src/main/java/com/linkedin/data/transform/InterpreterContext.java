@@ -32,7 +32,7 @@ public class InterpreterContext
 {
 
   //stores error messages
-  private final MessageList _errorMessages = new MessageList();
+  private final MessageList<Message> _errorMessages = new MessageList<Message>();
 
   //current instruction is in every method that needs to add error message, because
   //instruction stores path; instead of passing instruction as parameter, it is accessible
@@ -98,7 +98,7 @@ public class InterpreterContext
    * Returns error messages that occurred during data processing.
    * @return list of error messages that occurred during data processing
    */
-  public MessageList getErrorMessages()
+  public MessageList<Message> getErrorMessages()
   {
     return _errorMessages;
   }
