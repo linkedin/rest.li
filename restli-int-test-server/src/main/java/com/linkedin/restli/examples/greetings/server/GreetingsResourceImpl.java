@@ -32,6 +32,7 @@ import com.linkedin.data.template.StringMap;
 import com.linkedin.data.transform.DataProcessingException;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.PatchRequest;
+import com.linkedin.restli.examples.greetings.api.Empty;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.SearchMetadata;
 import com.linkedin.restli.examples.greetings.api.Tone;
@@ -46,6 +47,7 @@ import com.linkedin.restli.server.BatchResult;
 import com.linkedin.restli.server.BatchUpdateRequest;
 import com.linkedin.restli.server.BatchUpdateResult;
 import com.linkedin.restli.server.CollectionResult;
+import com.linkedin.restli.server.CollectionResult.PageIncrement;
 import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.ResourceLevel;
@@ -263,6 +265,33 @@ class GreetingsResourceImpl implements KeyValueResource<Long,Greeting>
       }
     }
     return greetings;
+  }
+
+  @Finder("searchWithPostFilter")
+  public CollectionResult<Greeting, Empty> searchWithPostFilter(@Context PagingContext ctx)
+  {
+    List<Greeting> greetings = new ArrayList<Greeting>();
+    int idx = 0;
+    int start = ctx.getStart();
+    int stop = start + ctx.getCount();
+    for (Greeting g : _db.values())
+    {
+      if (idx++ >= ctx.getStart())
+      {
+        greetings.add(g);
+        if (idx == stop)
+        {
+          break;
+        }
+      }
+    }
+
+    if(greetings.size() > 0) greetings.remove(0); // for testing, using a post-filter that just removes the first element
+
+    int total = _db.values().size();
+    // but we keep the numElements returned as the full count despite the fact that with the filter removed 1
+    // this is to keep paging consistent even in the presence of a post filter.
+    return new CollectionResult<Greeting, Empty>(greetings, total, null, PageIncrement.FIXED);
   }
 
   @Finder("searchWithTones")

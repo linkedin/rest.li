@@ -15,6 +15,7 @@ import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.methods.AnyRecord;
 import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.CollectionResult;
+import com.linkedin.restli.server.CollectionResult.PageIncrement;
 
 public class CollectionResponseBuilder implements RestLiResponseBuilder
 {
@@ -35,6 +36,7 @@ public class CollectionResponseBuilder implements RestLiResponseBuilder
       return buildResponseImpl(request,
                                routingResult,
                                result,
+                               PageIncrement.RELATIVE,
                                null,
                                null,
                                headers);
@@ -49,6 +51,7 @@ public class CollectionResponseBuilder implements RestLiResponseBuilder
       return buildResponseImpl(request,
                                routingResult,
                                collectionResult.getElements(),
+                               collectionResult.getPageIncrement(),
                                collectionResult.getMetadata(),
                                collectionResult.getTotal(),
                                headers);
@@ -58,6 +61,7 @@ public class CollectionResponseBuilder implements RestLiResponseBuilder
   private static PartialRestResponse buildResponseImpl(final RestRequest request,
                                                        final RoutingResult routingResult,
                                                        final List<? extends RecordTemplate> elements,
+                                                       final PageIncrement pageIncrement,
                                                        final RecordTemplate customMetadata,
                                                        final Integer totalResults,
                                                        final Map<String, String> headers)
@@ -69,11 +73,13 @@ public class CollectionResponseBuilder implements RestLiResponseBuilder
     CollectionResponse<AnyRecord> collectionResponse =
         new CollectionResponse<AnyRecord>(AnyRecord.class);
 
+
     CollectionMetadata pagingMetadata =
         RestUtils.buildMetadata(request.getURI(),
                                 routingResult.getContext(),
                                 routingResult.getResourceMethod(),
                                 elements,
+                                pageIncrement,
                                 totalResults);
     collectionResponse.setPaging(pagingMetadata);
 

@@ -56,6 +56,11 @@
         "type" : "com.linkedin.restli.examples.greetings.api.SearchMetadata"
       }
     }, {
+      "name" : "searchWithPostFilter",
+      "metadata" : {
+        "type" : "com.linkedin.restli.examples.greetings.api.Empty"
+      }
+    }, {
       "name" : "searchWithTones",
       "parameters" : [ {
         "name" : "tones",

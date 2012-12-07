@@ -25,27 +25,93 @@ public class CollectionResult<T extends RecordTemplate, MD extends RecordTemplat
   private final List<T> _elements;
   private final MD      _metadata;
   private final Integer _total;
+  private final PageIncrement _pageIncrement;
 
+  public enum PageIncrement
+  {
+    /**
+     * Paging is relative to the returned element count.
+     *
+     * I.e. If start=10, count=10 is requested, and 9 elements and total=100 is
+     * returned, then next page is start=19, count=10.
+     *
+     * If total is null, once a page contains less than 'count' results, it
+     * is considered to be the last page and the next page link will be excluded.
+     */
+    RELATIVE,
+
+    /**
+     * Paging is based on the 'total' elements.
+     *
+     * I.e. If start=10, count=10 is requested, and 9 elements and total=100 is
+     * returned, then next page is start=20, count=10.
+     *
+     * 'total' must be non-null when using FIXED.
+     */
+    FIXED
+  }
+
+  /**
+   * Constructor. Uses the default page increment mode of {@link PageIncrement#RELATIVE}.  Metadata is null.  Next page
+   * links will only be displayed if elements size is equal to requested page count.
+   *
+   * @param elements provides the elements in current page of collection results.
+   */
   public CollectionResult(final List<T> elements)
   {
     this(elements, null, null);
   }
 
+  /**
+   * Constructor.  Uses the default page increment mode of {@link PageIncrement#RELATIVE}.  Metadata is null.
+   *
+   * If total is null, next page links will only be displayed if elements size is equal to
+   * requested page count.
+   *
+   * @param elements provides the elements in current page of collection results.
+   * @param total provides the total elements, required if using {@link PageIncrement#FIXED}
+   */
   public CollectionResult(final List<T> elements, final Integer total)
   {
     this(elements, total, null);
   }
 
+  /**
+   * Constructor.  Uses the default page increment mode of {@link PageIncrement#RELATIVE}.
+   * @param elements provides the elements in current page of collection results.
+   * @param total provides the total elements, required if using {@link PageIncrement#FIXED}
+   * @param metadata provides search result metadata, as defined by the application.
+   */
   public CollectionResult(final List<T> elements, final Integer total, final MD metadata)
+  {
+    this(elements, total, metadata, PageIncrement.RELATIVE);
+  }
+
+  /**
+   * Constructor.
+   *
+   * @param elements provides the elements in current page of collection results.
+   * @param total provides the total elements, required if using {@link PageIncrement#FIXED}
+   * @param metadata provides search result metadata, as defined by the application.
+   * @param pageIncrement Provides the page increment mode.
+   */
+  public CollectionResult(final List<T> elements, final Integer total, final MD metadata, final PageIncrement pageIncrement)
   {
     _elements = elements;
     _total = total;
     _metadata = metadata;
+    _pageIncrement = pageIncrement;
+    if(_pageIncrement == PageIncrement.FIXED && _total == null) throw new IllegalArgumentException("'total' must be non null if PageIncrement is FIXED.");
   }
 
   public List<T> getElements()
   {
     return _elements;
+  }
+
+  public PageIncrement getPageIncrement()
+  {
+    return _pageIncrement;
   }
 
   public boolean getHasTotal()

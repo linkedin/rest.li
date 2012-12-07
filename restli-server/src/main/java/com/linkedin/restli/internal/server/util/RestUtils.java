@@ -35,6 +35,7 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
+import com.linkedin.restli.server.CollectionResult.PageIncrement;
 import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RoutingException;
@@ -50,6 +51,7 @@ public class RestUtils
                                                  final ResourceContext resourceContext,
                                                  final ResourceMethodDescriptor methodDescriptor,
                                                  final List<?> resultElements,
+                                                 final PageIncrement pageIncrement,
                                                  final Integer totalResults)
   {
     CollectionMetadata metadata = new CollectionMetadata();
@@ -74,7 +76,6 @@ public class RestUtils
     }
 
     LinkArray links = new LinkArray();
-    int numElements = resultElements.size();
 
     //links use count as the step interval, so links don't make sense with count==0
     if (pagingContext.getCount() > 0)
@@ -91,11 +92,11 @@ public class RestUtils
         prevLink.setType("application/json");
         links.add(prevLink);
       }
+
       // next link if there are more results, or we returned a full page
-      if ((totalResults != null && (pagingContext.getStart() + numElements < totalResults))
-          || (numElements == pagingContext.getCount()))
+      Integer nextStart = getNextPageStart(resultElements.size(), totalResults, pagingContext, pageIncrement);
+      if (nextStart != null)
       {
-        int nextStart = pagingContext.getStart() + numElements;
         // R2 doesn't expose host/port => can't build absolute URI (this is ok, as
         // relative URIs internally
         String nextUri =
@@ -110,6 +111,41 @@ public class RestUtils
       metadata.setLinks(links);
     }
     return metadata;
+  }
+
+  private static Integer getNextPageStart(int elementsOnCurrentPage,
+                                          final Integer totalResults,
+                                          PagingContext pagingContext,
+                                          final PageIncrement pageIncrement)
+  {
+    if(pageIncrement == PageIncrement.RELATIVE)
+    {
+      if ((totalResults != null && (pagingContext.getStart() + elementsOnCurrentPage < totalResults))
+          || (elementsOnCurrentPage == pagingContext.getCount()))
+      {
+        return pagingContext.getStart() + elementsOnCurrentPage;
+      }
+      else
+      {
+        return null; // no next page
+      }
+    }
+    else if (pageIncrement == PageIncrement.FIXED)
+    {
+      if(totalResults == null) throw new IllegalStateException("'total' must be non-null when PageIncrement is FIXED"); // this is also checked by the CollectionResult constructor
+      if(pagingContext.getStart() + pagingContext.getCount() < totalResults)
+      {
+        return pagingContext.getStart() + pagingContext.getCount();
+      }
+      else
+      {
+        return null; // no next page
+      }
+    }
+    else
+    {
+      throw new IllegalStateException("Unrecognized enumeration value: " + pageIncrement);
+    }
   }
 
   private static String buildPaginatedUri(final URI requestUri,

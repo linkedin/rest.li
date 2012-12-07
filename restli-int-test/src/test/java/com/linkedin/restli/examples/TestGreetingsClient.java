@@ -48,10 +48,12 @@ import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.client.util.PatchGenerator;
 import com.linkedin.restli.common.BatchResponse;
+import com.linkedin.restli.common.CollectionMetadata;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.CreateStatus;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.common.Link;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.SearchMetadata;
@@ -65,7 +67,7 @@ import com.linkedin.restli.examples.groups.api.TransferOwnershipRequest;
  *
  * @author Eran Leshem
  */
-public abstract class TestGreetingsClient extends RestLiIntegrationTest
+public class TestGreetingsClient extends RestLiIntegrationTest
 {
   private static final Client CLIENT = new TransportClientAdapter(new HttpClientFactory().getClient(Collections.<String, String>emptyMap()));
   private static final String URI_PREFIX = "http://localhost:1338/";
@@ -75,7 +77,7 @@ public abstract class TestGreetingsClient extends RestLiIntegrationTest
 
   public TestGreetingsClient(String resName)
   {
-    GREETINGS_BUILDERS = new GreetingsBuilders(resName);
+    GREETINGS_BUILDERS = new GreetingsBuilders("greetings");
   }
 
   @BeforeClass
@@ -266,6 +268,22 @@ public abstract class TestGreetingsClient extends RestLiIntegrationTest
       Assert.assertEquals(g.getTone(), Tone.FRIENDLY);
       Assert.assertNotNull(g.getMessage());
     }
+  }
+
+  @Test
+  public void testSearchWithPostFilter() throws RemoteInvocationException
+  {
+    Request<CollectionResponse<Greeting>> findRequest = GREETINGS_BUILDERS.findBySearchWithPostFilter().paginate(0, 5).build();
+    CollectionResponse<Greeting> entity = REST_CLIENT.sendRequest(findRequest).getResponse().getEntity();
+    CollectionMetadata paging = entity.getPaging();
+    Assert.assertEquals(paging.getStart(), 0);
+    Assert.assertEquals(paging.getCount(), 5);
+    Assert.assertEquals(entity.getElements().size(), 4); // expected to be 4 instead of 5 because of post filter
+
+    // to accommodate post filtering, even though 4 are returned, next page should be 5-10.
+    Link next = paging.getLinks().get(0);
+    Assert.assertEquals(next.getRel(), "next");
+    Assert.assertEquals(next.getHref(), "/greetings?count=5&start=5&q=searchWithPostFilter");
   }
 
   @Test
