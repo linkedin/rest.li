@@ -148,9 +148,6 @@ public class DegraderLoadBalancerStrategyConfig
    * When someone invoke this method, we will honor the use of http.loadBalancer>ringRampFactor (0.2) to
    * create the strategy. However if we can't find http.loadBalancer.ringRampFactor in the config, we'll use
    * the value in ringRampFactor.
-   *
-   * @param map
-   * @return
    */
   public static DegraderLoadBalancerStrategyConfig createHttpConfigFromMap(Map<String,Object> map)
   {
@@ -320,8 +317,6 @@ public class DegraderLoadBalancerStrategyConfig
 
   /**
    * constructs a  DegraderLoadBalancerStrategyConfig from the given map.
-   * @param map
-   * @return
    */
   public static DegraderLoadBalancerStrategyConfig configFromMap(Map<String,Object> map)
   {

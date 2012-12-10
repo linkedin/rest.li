@@ -64,8 +64,6 @@ public class BatchRequest<T> extends Request<T>
    * Return ids of this batch request as object. At the query params datamap level complex
    * keys are represented as datamaps. Need to convert them back to ComplexResourceKeys
    * before returning.
-   *
-   * @return
    */
   public Set<Object> getIdObjects()
   {

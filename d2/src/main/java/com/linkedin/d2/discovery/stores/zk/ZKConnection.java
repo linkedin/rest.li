@@ -418,7 +418,7 @@ public class ZKConnection
   }
 
   /**
-   * see removeNodeUnsafe() but remove recursively
+   * see {@link #removeNodeUnsafe} but remove recursively
    *
    * @param path
    * @param callback
