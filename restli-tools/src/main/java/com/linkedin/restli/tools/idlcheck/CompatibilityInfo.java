@@ -48,7 +48,8 @@ public class CompatibilityInfo
     PARAMETER_NEW_OPTIONAL(Level.COMPATIBLE, "New optional parameter \"%s\"is added"),
     OPTIONAL_PARAMETER(Level.COMPATIBLE, "Previous optional parameter is changed to currently required"),
     OPTIONAL_VALUE(Level.COMPATIBLE, "Optional field \"%s\" was previously missing but currently present"),
-    SUPERSET(Level.COMPATIBLE, "Current values have these extra values: %s");
+    SUPERSET(Level.COMPATIBLE, "Current values have these extra values: %s"),
+    VALUE_DIFFERENT(Level.COMPATIBLE, "Previous value \"%s\" is changed to \"%s\"");
 
     public String getDescription(Object[] parameters)
     {

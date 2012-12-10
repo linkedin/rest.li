@@ -13,5 +13,5 @@ public enum CompatibilityLevel
   OFF,
   IGNORE,
   BACKWARDS,
-  EQUIVALENT;
+  EQUIVALENT
 }

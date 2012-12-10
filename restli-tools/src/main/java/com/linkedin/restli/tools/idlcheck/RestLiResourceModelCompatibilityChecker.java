@@ -64,9 +64,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
 
 /**
  * Check backwards compatibility between pairs of idl (.restspec.json) files. The check result messages are categorized.
@@ -250,27 +250,27 @@ public class RestLiResourceModelCompatibilityChecker
    * @return check results in the unable to check category.
    *         empty collection if called before checking any files
    */
-  public List<CompatibilityInfo> getUnableToChecks()
+  public Collection<CompatibilityInfo> getUnableToChecks()
   {
-    return Collections.unmodifiableList(_info.get(CompatibilityInfo.Level.UNABLE_TO_CHECK));
+    return Collections.unmodifiableCollection(_info.get(CompatibilityInfo.Level.UNABLE_TO_CHECK));
   }
 
   /**
    * @return check results in the backwards incompatibility category.
    *         empty collection if called before checking any files
    */
-  public List<CompatibilityInfo> getIncompatibles()
+  public Collection<CompatibilityInfo> getIncompatibles()
   {
-    return Collections.unmodifiableList(_info.get(CompatibilityInfo.Level.INCOMPATIBLE));
+    return Collections.unmodifiableCollection(_info.get(CompatibilityInfo.Level.INCOMPATIBLE));
   }
 
   /**
    * @return check results in the backwards compatibility category.
    *         empty collection if called before checking any files
    */
-  public List<CompatibilityInfo> getCompatibles()
+  public Collection<CompatibilityInfo> getCompatibles()
   {
-    return Collections.unmodifiableList(_info.get(CompatibilityInfo.Level.COMPATIBLE));
+    return Collections.unmodifiableCollection(_info.get(CompatibilityInfo.Level.COMPATIBLE));
   }
 
   /**
@@ -287,7 +287,7 @@ public class RestLiResourceModelCompatibilityChecker
 
     if (summaryMessage.length() != 0)
     {
-      summaryMessage.insert(0, new StringBuilder().append("\nidl compatibility report between published \"").append(_prevRestspecPath).append("\" and current \"").append(_currRestspecPath).append("\":\n").toString());
+      summaryMessage.insert(0, "\nidl compatibility report between published \"" + _prevRestspecPath + "\" and current \"" + _currRestspecPath + "\":\n");
     }
 
     return summaryMessage.toString();
@@ -305,7 +305,7 @@ public class RestLiResourceModelCompatibilityChecker
     return options.toString();
   }
 
-  private static void createSummaryForInfo(List<CompatibilityInfo> info,
+  private static void createSummaryForInfo(Collection<CompatibilityInfo> info,
                                            String description,
                                            StringBuilder summaryMessage)
   {
@@ -314,25 +314,24 @@ public class RestLiResourceModelCompatibilityChecker
       return;
     }
 
-    summaryMessage.append(description + ":\n");
+    summaryMessage.append(description).append(":\n");
     int issueIndex = 1;
-    final Iterator<CompatibilityInfo> iter = info.iterator();
-    while (iter.hasNext())
+    for (CompatibilityInfo i: info)
     {
-      summaryMessage.append("  ").append(issueIndex).append(") ").append(iter.next().toString()).append("\n");
+      summaryMessage.append("  ").append(issueIndex).append(") ").append(i.toString()).append("\n");
       ++issueIndex;
     }
   }
 
   private boolean isCompatible(CompatibilityLevel compatLevel)
   {
-    final List<CompatibilityInfo> unableToChecks = getUnableToChecks();
-    final List<CompatibilityInfo> incompatibles = getIncompatibles();
-    final List<CompatibilityInfo> compatibles = getCompatibles();
+    final Collection<CompatibilityInfo> unableToChecks = getUnableToChecks();
+    final Collection<CompatibilityInfo> incompatibles = getIncompatibles();
+    final Collection<CompatibilityInfo> compatibles = getCompatibles();
 
     return ((unableToChecks.isEmpty() || compatLevel.ordinal() < CompatibilityLevel.BACKWARDS.ordinal()) &&
-        (incompatibles.isEmpty()  || compatLevel.ordinal() < CompatibilityLevel.BACKWARDS.ordinal()) &&
-        (compatibles.isEmpty()    || compatLevel.ordinal() < CompatibilityLevel.EQUIVALENT.ordinal()));
+        (incompatibles.isEmpty()      || compatLevel.ordinal() < CompatibilityLevel.BACKWARDS.ordinal()) &&
+        (compatibles.isEmpty()        || compatLevel.ordinal() < CompatibilityLevel.EQUIVALENT.ordinal()));
   }
 
   private boolean validateData(DataMap object, DataSchema schema, ValidationOptions options)
@@ -454,7 +453,7 @@ public class RestLiResourceModelCompatibilityChecker
     {
       if (container.size() > containee.size())
       {
-        final List<? extends Object> diff = new ArrayList<Object>(container);
+        final List<Object> diff = new ArrayList<Object>(container);
         diff.removeAll(containee);
         addInfo(field.getName(), CompatibilityInfo.Type.SUPERSET, diff);
       }
@@ -654,10 +653,9 @@ public class RestLiResourceModelCompatibilityChecker
       currRemainder.put(currArray.get(i).data().getString(keyName), i);
     }
 
-    for (int i = 0; i < prevArray.size(); ++i)
+    for (RecordTemplate prevElement: prevArray)
     {
       // find prev and curr element with same key name
-      final RecordTemplate prevElement = prevArray.get(i);
       final String prevKey = prevElement.data().getString(keyName);
       final Integer currIndex = currRemainder.get(prevKey);
 
@@ -732,7 +730,7 @@ public class RestLiResourceModelCompatibilityChecker
     {
       // all parameters only appear in curr must not be required
       final ParameterSchema param = currArray.get(paramIndex);
-      if (param.hasOptional() && param.isOptional())
+      if (isQueryParameterOptional(param.isOptional(), param.getDefault(GetMode.DEFAULT)))
       {
         addInfo(CompatibilityInfo.Type.PARAMETER_NEW_OPTIONAL, param.getName());
       }
@@ -883,13 +881,22 @@ public class RestLiResourceModelCompatibilityChecker
       checkType("type", prevRec.getType(), currRec.getType(), false);
     }
 
-    checkParameterOptionality(prevRec.schema().getField("optional"),
-                              prevRec.isOptional(GetMode.DEFAULT),
-                              currRec.isOptional(GetMode.DEFAULT));
+    final Boolean prevOptional = prevRec.isOptional(GetMode.DEFAULT);
+    final Boolean currOptional = currRec.isOptional(GetMode.DEFAULT);
+    final String prevDefault = prevRec.getDefault(GetMode.DEFAULT);
+    final String currDefault = currRec.getDefault(GetMode.DEFAULT);
 
-    checkEqualSingleValue(prevRec.schema().getField("default"),
-                          prevRec.getDefault(GetMode.DEFAULT),
-                          currRec.getDefault(GetMode.DEFAULT));
+    // {@link com.linkedin.restli.internal.server.model.ResourceModelEncoder} assures that "optional" and "default" are mutually exclusive.
+    assert((prevOptional == null || prevDefault == null) && (currOptional == null || currDefault == null));
+
+    checkParameterOptionality(prevRec.schema().getField("optional"),
+                              isQueryParameterOptional(prevOptional, prevDefault),
+                              isQueryParameterOptional(currOptional, currDefault));
+
+    if (prevDefault != null && currDefault != null && !prevDefault.equals(currDefault))
+    {
+      addInfo("default", CompatibilityInfo.Type.VALUE_DIFFERENT, prevDefault, currDefault);
+    }
   }
 
   private void checkMetadataSchema(MetadataSchema prevRec, MetadataSchema currRec)
@@ -990,12 +997,21 @@ public class RestLiResourceModelCompatibilityChecker
                              currRec.getParameters(GetMode.DEFAULT));
   }
 
+  /**
+   * Query parameter is considered compatible if both the old and new are optional or has non-null default value.
+   */
+  private boolean isQueryParameterOptional(Boolean isOptional, String defaultValue)
+  {
+    return (isOptional == null ? defaultValue != null : isOptional);
+  }
+
   private static final String GENERATOR_RESOLVER_PATH = "generator.resolver.path";
   private static final RestSpecCodec _codec = new RestSpecCodec();
   private static final Logger log = LoggerFactory.getLogger(RestLiResourceModelCompatibilityChecker.class);
 
   private final DataSchemaResolver _schemaResolver;
-  private final Map<CompatibilityInfo.Level, List<CompatibilityInfo>> _info = new HashMap<CompatibilityInfo.Level, List<CompatibilityInfo>>();
+  private final Map<CompatibilityInfo.Level, Collection<CompatibilityInfo>> _info =
+      new HashMap<CompatibilityInfo.Level, Collection<CompatibilityInfo>>();
   private String _prevRestspecPath;
   private String _currRestspecPath;
 

@@ -38,21 +38,21 @@
       "assocKeys" : [ "plural" ]
     } ],
     "actions" : [ {
-      "name" : "anotherAction",
-      "doc" : "Changed description for anotherAction",
+      "name" : "oneAction",
+      "doc" : "An imaginary action",
       "parameters" : [ {
         "name" : "bitfield",
         "type" : {
           "type" : "array",
           "items" : "boolean"
-        }
+        },
+        "default" : "[]"
       }, {
         "name" : "request",
         "type" : "com.linkedin.groups.api.TransferOwnershipRequest"
       }, {
         "name" : "someString",
-        "type" : "string",
-        "default" : "default"
+        "type" : "string"
       }, {
         "name" : "stringMap",
         "type" : {
@@ -72,21 +72,21 @@
       "path" : "/greetings/{id}",
       "actions" : [ {
         "name" : "anotherAction",
-        "doc" : "Deletes all greetings",
+        "doc" : "Fictional action",
         "parameters" : [ {
-          "name" : "bitfield",
+          "name" : "bitmap",
           "type" : {
             "type" : "array",
             "items" : "boolean"
           }
         }, {
-          "name" : "request",
+          "name" : "subRequest",
           "type" : "com.linkedin.groups.api.TransferOwnershipRequest"
         }, {
-          "name" : "someString",
+          "name" : "subString",
           "type" : "string"
         }, {
-          "name" : "stringMap",
+          "name" : "subMap",
           "type" : {
             "type" : "map",
             "values" : "string"
@@ -104,7 +104,7 @@
         }, {
           "name" : "b",
           "type" : "string",
-          "default" : "default"
+          "default" : "changed"
         }, {
           "name" : "c",
           "type" : "com.linkedin.groups.api.TransferOwnershipRequest"

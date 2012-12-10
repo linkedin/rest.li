@@ -16,18 +16,20 @@
 
 package com.linkedin.restli.tools.idlcheck;
 
+
+import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.restli.restspec.AssocKeySchema;
 import com.linkedin.restli.restspec.AssocKeySchemaArray;
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
+import java.util.HashSet;
+
 
 public class TestRestLiResourceModelCompatibilityChecker
 {
@@ -51,7 +53,7 @@ public class TestRestLiResourceModelCompatibilityChecker
   @Test
   public void testPassCollectionFile()
   {
-    final ArrayList<CompatibilityInfo> testDiffs = new ArrayList<CompatibilityInfo>();
+    final Collection<CompatibilityInfo> testDiffs = new HashSet<CompatibilityInfo>();
     testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList(""),
                                         CompatibilityInfo.Type.OPTIONAL_VALUE, "namespace"));
     testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "supports"),
@@ -60,12 +62,14 @@ public class TestRestLiResourceModelCompatibilityChecker
                                         CompatibilityInfo.Type.OPTIONAL_PARAMETER));
     testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "finders", "search", "parameters"),
                                         CompatibilityInfo.Type.PARAMETER_NEW_OPTIONAL, "newParam"));
-    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "anotherAction", "parameters"),
+    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "oneAction", "parameters"),
                                         CompatibilityInfo.Type.PARAMETER_NEW_OPTIONAL, "newParam"));
+    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "oneAction", "parameters", "someString"),
+                                        CompatibilityInfo.Type.OPTIONAL_PARAMETER));
     testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "exceptionTest", "throws"),
                                         CompatibilityInfo.Type.SUPERSET, Arrays.asList("java.lang.NullPointerException")));
-    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "entity", "actions", "someAction", "parameters", "c"),
-                                        CompatibilityInfo.Type.OPTIONAL_VALUE, "optional"));
+    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "entity", "actions", "someAction", "parameters", "b", "default"),
+                                        CompatibilityInfo.Type.VALUE_DIFFERENT, "default", "changed"));
 
     final RestLiResourceModelCompatibilityChecker checker = new RestLiResourceModelCompatibilityChecker();
 
@@ -73,24 +77,25 @@ public class TestRestLiResourceModelCompatibilityChecker
                                     IDLS_DIR + CURR_COLL_PASS_FILE,
                                     CompatibilityLevel.BACKWARDS));
 
-    final List<CompatibilityInfo> unableToChecks = checker.getUnableToChecks();
-    final List<CompatibilityInfo> incompatibles = checker.getIncompatibles();
-    final List<CompatibilityInfo> compatibles = checker.getCompatibles();
+    final Collection<CompatibilityInfo> unableToChecks = checker.getUnableToChecks();
+    final Collection<CompatibilityInfo> incompatibles = checker.getIncompatibles();
+    final Collection<CompatibilityInfo> compatibles = new HashSet<CompatibilityInfo>(checker.getCompatibles());
 
     for (CompatibilityInfo di : testDiffs)
     {
       Assert.assertTrue(compatibles.contains(di), "Reported compatibles should contain: " + di.toString());
+      compatibles.remove(di);
     }
 
-    Assert.assertEquals(unableToChecks.size(), 0);
-    Assert.assertEquals(incompatibles.size(), 0);
-    Assert.assertEquals(compatibles.size(), testDiffs.size());
+    Assert.assertTrue(unableToChecks.isEmpty());
+    Assert.assertTrue(incompatibles.isEmpty());
+    Assert.assertTrue(compatibles.isEmpty());
   }
 
   @Test
   public void testPassAssociationFile()
   {
-    final ArrayList<CompatibilityInfo> testDiffs = new ArrayList<CompatibilityInfo>();
+    final Collection<CompatibilityInfo> testDiffs = new HashSet<CompatibilityInfo>();
     testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "association", "methods", "create", "parameters"),
                                         CompatibilityInfo.Type.PARAMETER_NEW_OPTIONAL, "type"));
 
@@ -100,24 +105,28 @@ public class TestRestLiResourceModelCompatibilityChecker
                                     IDLS_DIR + CURR_ASSOC_PASS_FILE,
                                     CompatibilityLevel.BACKWARDS));
 
-    final List<CompatibilityInfo> unableToChecks = checker.getUnableToChecks();
-    final List<CompatibilityInfo> incompatibles = checker.getIncompatibles();
-    final List<CompatibilityInfo> compatibles = checker.getCompatibles();
+    final Collection<CompatibilityInfo> unableToChecks = checker.getUnableToChecks();
+    final Collection<CompatibilityInfo> incompatibles = checker.getIncompatibles();
+    final Collection<CompatibilityInfo> compatibles = new HashSet<CompatibilityInfo>(checker.getCompatibles());
 
     for (CompatibilityInfo di : testDiffs)
     {
       Assert.assertTrue(compatibles.contains(di), "Reported compatibles should contain: " + di.toString());
+      compatibles.remove(di);
     }
 
-    Assert.assertEquals(unableToChecks.size(), 0);
-    Assert.assertEquals(incompatibles.size(), 0);
-    Assert.assertEquals(compatibles.size(), testDiffs.size());
+    Assert.assertTrue(unableToChecks.isEmpty());
+    Assert.assertTrue(incompatibles.isEmpty());
+    Assert.assertTrue(compatibles.isEmpty());
   }
 
   @Test
   public void testFailCollectionFile()
   {
-    final ArrayList<CompatibilityInfo> testErrors = new ArrayList<CompatibilityInfo>();
+    final SchemaParser sp = new SchemaParser();
+    sp.parse(new ByteArrayInputStream("\"StringRef\"".getBytes()));
+
+    final Collection<CompatibilityInfo> testErrors = new HashSet<CompatibilityInfo>();
     testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "identifier", "params"),
                                          CompatibilityInfo.Type.TYPE_INCOMPATIBLE, "string", "long"));
     testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "supports"),
@@ -135,31 +144,33 @@ public class TestRestLiResourceModelCompatibilityChecker
                                          new StringArray(Arrays.asList("q", "changed_key"))));
     testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "finders", "find_assocKey_downgrade", "assocKeys"),
                                          CompatibilityInfo.Type.FINDER_ASSOCKEYS_DOWNGRADE));
-    testErrors.add(new PartialMessageCompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "anotherAction", "parameters", "someString", "type"),
-                                                       CompatibilityInfo.Type.TYPE_UNKNOWN,
-                                                       new String[] {"StringRef", "cannot be resolved"}));
-    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "anotherAction", "parameters", "someString"),
-                                         CompatibilityInfo.Type.VALUE_WRONG_OPTIONALITY, "default"));
-    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "anotherAction", "parameters", "stringMap", "type"),
+    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "oneAction", "parameters", "someString", "type"),
+                                         CompatibilityInfo.Type.TYPE_UNKNOWN,
+                                         sp.errorMessage()));
+    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "oneAction", "parameters", "stringMap", "type"),
                                          CompatibilityInfo.Type.TYPE_INCOMPATIBLE,
                                          "{\"values\":\"string\",\"type\":\"map\"}",
                                          "{\"values\":\"int\",\"type\":\"map\"}"));
     testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "entity", "actions", "anotherAction", "parameters"),
-                                         CompatibilityInfo.Type.ARRAY_MISSING_ELEMENT, "stringMap"));
+                                         CompatibilityInfo.Type.ARRAY_MISSING_ELEMENT, "subMap"));
     testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "entity", "actions", "exceptionTest", "throws"),
                                          CompatibilityInfo.Type.ARRAY_NOT_CONTAIN,
                                          new StringArray(Arrays.asList("com.linkedin.groups.api.GroupOwnerException",
                                                                        "java.io.FileNotFoundException"))));
     testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "entity", "actions", "someAction", "parameters", "b", "type"),
                                          CompatibilityInfo.Type.TYPE_INCOMPATIBLE, "string", "int"));
-    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "entity", "actions", "someAction", "parameters", "b", "default"),
-                                         CompatibilityInfo.Type.VALUE_NOT_EQUAL, "default", "0"));
     testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "entity", "actions", "someAction", "parameters", "c", "optional"),
                                          CompatibilityInfo.Type.PARAMETER_WRONG_OPTIONALITY));
     testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "entity", "actions", "someAction", "parameters"),
                                          CompatibilityInfo.Type.ARRAY_MISSING_ELEMENT, "e"));
-    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "entity", "actions", "someAction", "parameters"),
-                                         CompatibilityInfo.Type.PARAMETER_NEW_REQUIRED, "f"));
+    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("",
+                                                               "collection",
+                                                               "entity",
+                                                               "actions",
+                                                               "someAction",
+                                                               "parameters"),
+                                         CompatibilityInfo.Type.PARAMETER_NEW_REQUIRED,
+                                         "f"));
     testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "entity", "actions", "someAction", "returns"),
                                          CompatibilityInfo.Type.TYPE_MISSING));
 
@@ -169,16 +180,17 @@ public class TestRestLiResourceModelCompatibilityChecker
                                      IDLS_DIR + CURR_COLL_FAIL_FILE,
                                      CompatibilityLevel.BACKWARDS));
 
-    final List<CompatibilityInfo> unableToChecks = checker.getUnableToChecks();
-    final List<CompatibilityInfo> incompatibles = checker.getIncompatibles();
+    final Collection<CompatibilityInfo> unableToChecks = checker.getUnableToChecks();
+    final Collection<CompatibilityInfo> incompatible = new HashSet<CompatibilityInfo>(checker.getIncompatibles());
 
     for (CompatibilityInfo te : testErrors)
     {
-      Assert.assertTrue(incompatibles.contains(te), "Reported incompatibles should contain: " + te.toString());
+      Assert.assertTrue(incompatible.contains(te), "Reported incompatibles should contain: " + te.toString());
+      incompatible.remove(te);
     }
 
-    Assert.assertEquals(unableToChecks.size(), 0);
-    Assert.assertEquals(incompatibles.size(), testErrors.size());
+    Assert.assertTrue(unableToChecks.isEmpty());
+    Assert.assertTrue(incompatible.isEmpty());
   }
 
   @Test
@@ -188,7 +200,7 @@ public class TestRestLiResourceModelCompatibilityChecker
     prevAssocKey.setName("key1");
     prevAssocKey.setType("string");
 
-    final ArrayList<CompatibilityInfo> testErrors = new ArrayList<CompatibilityInfo>();
+    final Collection<CompatibilityInfo> testErrors = new HashSet<CompatibilityInfo>();
     testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "association", "assocKeys"),
                                          CompatibilityInfo.Type.ARRAY_NOT_EQUAL,
                                          new AssocKeySchemaArray(Arrays.asList(prevAssocKey))));
@@ -210,22 +222,23 @@ public class TestRestLiResourceModelCompatibilityChecker
                                      IDLS_DIR + CURR_ASSOC_FAIL_FILE,
                                      CompatibilityLevel.BACKWARDS));
 
-    final List<CompatibilityInfo> unableToChecks = checker.getUnableToChecks();
-    final List<CompatibilityInfo> incompatibles = checker.getIncompatibles();
+    final Collection<CompatibilityInfo> unableToChecks = checker.getUnableToChecks();
+    final Collection<CompatibilityInfo> incompatibles = new HashSet<CompatibilityInfo>(checker.getIncompatibles());
 
     for (CompatibilityInfo te : testErrors)
     {
       Assert.assertTrue(incompatibles.contains(te), "Reported incompatibles should contain: " + te.toString());
+      incompatibles.remove(te);
     }
 
-    Assert.assertEquals(unableToChecks.size(), 0);
-    Assert.assertEquals(incompatibles.size(), testErrors.size());
+    Assert.assertTrue(unableToChecks.isEmpty());
+    Assert.assertTrue(incompatibles.isEmpty());
   }
 
   @Test
   public void testFailActionsSetFile()
   {
-    final ArrayList<CompatibilityInfo> testErrors = new ArrayList<CompatibilityInfo>();
+    final Collection<CompatibilityInfo> testErrors = new HashSet<CompatibilityInfo>();
     testErrors.add(new CompatibilityInfo(Arrays.<Object>asList(""),
                                          CompatibilityInfo.Type.VALUE_WRONG_OPTIONALITY, "actionsSet"));
 
@@ -235,16 +248,17 @@ public class TestRestLiResourceModelCompatibilityChecker
                                      IDLS_DIR + CURR_AS_FAIL_FILE,
                                      CompatibilityLevel.BACKWARDS));
 
-    final List<CompatibilityInfo> unableToChecks = checker.getUnableToChecks();
-    final List<CompatibilityInfo> incompatibles = checker.getIncompatibles();
+    final Collection<CompatibilityInfo> unableToChecks = checker.getUnableToChecks();
+    final Collection<CompatibilityInfo> incompatibles = new HashSet<CompatibilityInfo>(checker.getIncompatibles());
 
     for (CompatibilityInfo te : testErrors)
     {
       Assert.assertTrue(incompatibles.contains(te), "Reported incompatibles should contain: " + te.toString());
+      incompatibles.remove(te);
     }
 
-    Assert.assertEquals(unableToChecks.size(), 0);
-    Assert.assertEquals(incompatibles.size(), testErrors.size());
+    Assert.assertTrue(unableToChecks.isEmpty());
+    Assert.assertTrue(incompatibles.isEmpty());
   }
 
   @Test
@@ -256,11 +270,11 @@ public class TestRestLiResourceModelCompatibilityChecker
                                     IDLS_DIR + CURR_AS_PASS_FILE,
                                     CompatibilityLevel.BACKWARDS));
 
-    final List<CompatibilityInfo> unableToChecks = checker.getUnableToChecks();
-    final List<CompatibilityInfo> incompatibles = checker.getIncompatibles();
+    final Collection<CompatibilityInfo> unableToChecks = checker.getUnableToChecks();
+    final Collection<CompatibilityInfo> incompatibles = checker.getIncompatibles();
 
-    Assert.assertEquals(unableToChecks.size(), 0);
-    Assert.assertEquals(incompatibles.size(), 0);
+    Assert.assertTrue(unableToChecks.isEmpty());
+    Assert.assertTrue(incompatibles.isEmpty());
   }
 
   @Test
@@ -268,8 +282,7 @@ public class TestRestLiResourceModelCompatibilityChecker
   {
     final String nonExistentFilename1 = "NonExistentFile1";
     final String nonExistentFilename2 = "NonExistentFile2";
-    final ArrayList<CompatibilityInfo> testUnableToChecks = new ArrayList<CompatibilityInfo>();
-    final ArrayList<CompatibilityInfo> testErrors = new ArrayList<CompatibilityInfo>();
+    final Collection<CompatibilityInfo> testUnableToChecks = new HashSet<CompatibilityInfo>();
 
     testUnableToChecks.add(new CompatibilityInfo(Arrays.<Object>asList(""),
                                                  CompatibilityInfo.Type.FILE_NOT_FOUND,
@@ -284,79 +297,17 @@ public class TestRestLiResourceModelCompatibilityChecker
                                      nonExistentFilename2,
                                      CompatibilityLevel.BACKWARDS));
 
-    final List<CompatibilityInfo> unableToChecks = checker.getUnableToChecks();
-    final List<CompatibilityInfo> incompatibles = checker.getIncompatibles();
+    final Collection<CompatibilityInfo> unableToChecks = new HashSet<CompatibilityInfo>(checker.getUnableToChecks());
+    final Collection<CompatibilityInfo> incompatibles = new HashSet<CompatibilityInfo>(checker.getIncompatibles());
 
     for (CompatibilityInfo tutc : testUnableToChecks)
     {
       Assert.assertTrue(unableToChecks.contains(tutc), "Reported unable-to-checks should contain: " + tutc.toString());
-    }
-    for (CompatibilityInfo te : testErrors)
-    {
-      Assert.assertTrue(incompatibles.contains(te), "Reported incompatibles should contain: " + te.toString());
+      unableToChecks.remove(tutc);
     }
 
-    Assert.assertEquals(unableToChecks.size(), testUnableToChecks.size());
-  }
-
-  private class PartialMessageCompatibilityInfo extends CompatibilityInfo
-  {
-    public PartialMessageCompatibilityInfo(List<Object> path, Type type, String[] messageTokens)
-    {
-      super(path, type);
-      _messageTokens = messageTokens;
-    }
-
-    @Override
-    public int hashCode()
-    {
-      return new HashCodeBuilder(17, 29).
-          append(_type).
-          append(_path).
-          toHashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj)
-    {
-      if (this == obj)
-      {
-        return true;
-      }
-
-      if (obj == null)
-      {
-        return false;
-      }
-
-      if (!obj.getClass().isAssignableFrom(getClass()))
-      {
-        return false;
-      }
-
-      final CompatibilityInfo other = (CompatibilityInfo) obj;
-      if (!new EqualsBuilder().
-          append(_type, other._type).
-          append(_path, other._path).
-          isEquals())
-      {
-        return false;
-      }
-
-      assert(other._parameters.length == 1);
-
-      for (String token: _messageTokens)
-      {
-        if (!((String) other._parameters[0]).contains(token))
-        {
-          return false;
-        }
-      }
-
-      return true;
-    }
-
-    private String[] _messageTokens;
+    Assert.assertTrue(unableToChecks.isEmpty());
+    Assert.assertTrue(incompatibles.isEmpty());
   }
 
   private static final String IDLS_SUFFIX = "idls" + File.separator;

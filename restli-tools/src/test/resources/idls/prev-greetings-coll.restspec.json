@@ -33,14 +33,15 @@
       "assocKeys" : [ "plural" ]
     } ],
     "actions" : [ {
-      "name" : "anotherAction",
-      "doc" : "Deletes all greetings",
+      "name" : "oneAction",
+      "doc" : "An imaginary action",
       "parameters" : [ {
         "name" : "bitfield",
         "type" : {
           "type" : "array",
           "items" : "boolean"
-        }
+        },
+        "default" : "[]"
       }, {
         "name" : "request",
         "type" : "com.linkedin.groups.api.TransferOwnershipRequest"
@@ -63,21 +64,21 @@
       "path" : "/greetings/{id}",
       "actions" : [ {
         "name" : "anotherAction",
-        "doc" : "Deletes all greetings",
+        "doc" : "Fictional action",
         "parameters" : [ {
-          "name" : "bitfield",
+          "name" : "bitmap",
           "type" : {
             "type" : "array",
             "items" : "boolean"
           }
         }, {
-          "name" : "request",
+          "name" : "subRequest",
           "type" : "com.linkedin.groups.api.TransferOwnershipRequest"
         }, {
-          "name" : "someString",
+          "name" : "subString",
           "type" : "string"
         }, {
-          "name" : "stringMap",
+          "name" : "subMap",
           "type" : {
             "type" : "map",
             "values" : "string"
@@ -91,7 +92,7 @@
         "parameters" : [ {
           "name" : "a",
           "type" : "int",
-          "default" : "1"
+          "optional" : true
         }, {
           "name" : "b",
           "type" : "string",
