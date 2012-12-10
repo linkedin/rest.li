@@ -389,13 +389,8 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       // if the cluster has not been called recently (total cluster call count is <= 0)
       // and we already have a state with the same set of URIs (same cluster generation),
       // and no clients are in rehab, then don't change anything.
-      return new PartitionDegraderLoadBalancerState(clusterGenerationId, config.getClock().currentTimeMillis(), true,
-                                                    oldState.getPointsMap(),
-                                                    oldState.getStrategy(),
-                                                    oldState.getCurrentOverrideDropRate(),
-                                                    oldState.getCurrentAvgClusterLatency(),
-                                                    oldState.getRecoveryMap(),
-                                                    oldState.getServiceName());
+      return new PartitionDegraderLoadBalancerState(oldState, clusterGenerationId,
+                                                    config.getClock().currentTimeMillis());
     }
 
     // update our overrides.
@@ -896,10 +891,31 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     // We will only update a state once. In reality we only use a state ONCE per instance.
     // After it's used, a state will be discarded and a new instance will take over
     // so this boolean is to make sure multiple threads are not updating the state more than once
-    private AtomicBoolean _updateStarted;
+    private final AtomicBoolean _updateStarted;
 
     // We consider this PartitionDegraderLoadBalancerState to be initialized when after an updatePartitionState.
     private final boolean   _initialized;
+
+    /**
+     * This constructor will copy the internal data structure shallowly unlike the other constructor.
+     */
+    public PartitionDegraderLoadBalancerState(PartitionDegraderLoadBalancerState state,
+                                              long clusterGenerationId,
+                                              long lastUpdated)
+    {
+      _clusterGenerationId = clusterGenerationId;
+      _ring = state._ring;
+      _pointsMap = state._pointsMap;
+      _strategy = state._strategy;
+      _currentOverrideDropRate = state._currentOverrideDropRate;
+      _currentAvgClusterLatency = state._currentAvgClusterLatency;
+      _recoveryMap = state._recoveryMap;
+      _initialized = state._initialized;
+      _lastUpdated = lastUpdated;
+      _updateStarted = new AtomicBoolean(false);
+      _serviceName = state._serviceName;
+
+    }
 
     public PartitionDegraderLoadBalancerState(long clusterGenerationId,
                                      long lastUpdated,
@@ -914,14 +930,14 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       _clusterGenerationId = clusterGenerationId;
       _ring = new ConsistentHashRing<URI>(pointsMap);
       _pointsMap = (pointsMap != null) ?
-              Collections.unmodifiableMap(new HashMap<URI,Integer>(pointsMap)) :
-              Collections.<URI,Integer>emptyMap();
+            Collections.unmodifiableMap(new HashMap<URI,Integer>(pointsMap)) :
+            Collections.<URI,Integer>emptyMap();
       _strategy = strategy;
       _currentOverrideDropRate = currentOverrideDropRate;
       _currentAvgClusterLatency = currentAvgClusterLatency;
       _recoveryMap = (recoveryMap != null) ?
-              Collections.unmodifiableMap(new HashMap<TrackerClient,Double>(recoveryMap)) :
-              Collections.<TrackerClient,Double>emptyMap();
+          Collections.unmodifiableMap(new HashMap<TrackerClient,Double>(recoveryMap)) :
+          Collections.<TrackerClient,Double>emptyMap();
       _initialized = initState;
       _lastUpdated = lastUpdated;
       _updateStarted = new AtomicBoolean(false);
