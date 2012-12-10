@@ -3,6 +3,9 @@
 (RB=118380)
 Add handling of long queries via X-HTTP-Method-Override
 
+(RB=119617)
+Add PageIncrement.FIXED to better support post-filtered search result paging.
+
 1.6.13
 ------
 (RB=118576)
