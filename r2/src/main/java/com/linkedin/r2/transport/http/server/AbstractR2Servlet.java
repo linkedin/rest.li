@@ -18,7 +18,6 @@
 package com.linkedin.r2.transport.http.server;
 
 
-import com.linkedin.r2.message.rest.QueryTunnelUtil;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -43,6 +42,7 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestStatus;
+import com.linkedin.r2.message.rest.QueryTunnelUtil;
 import com.linkedin.r2.transport.common.WireAttributeHelper;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponse;

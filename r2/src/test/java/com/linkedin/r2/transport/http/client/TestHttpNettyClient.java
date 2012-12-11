@@ -351,7 +351,7 @@ public class TestHttpNettyClient
   {
     try
     {
-      new HttpNettyClient(_factory, _scheduler, 1, 1, 1, 1, 1, null, new SSLParameters());
+      new HttpNettyClient(_factory, _scheduler, 1, 1, 1, 1, 1, null, new SSLParameters(), Integer.MAX_VALUE);
     }
     catch (IllegalArgumentException e)
     {
@@ -381,7 +381,8 @@ public class TestHttpNettyClient
                           1,
                           1,
                           SSLContext.getDefault(),
-                          sslParameters);
+                          sslParameters,
+                          Integer.MAX_VALUE);
     }
     catch (IllegalArgumentException e)
     {
@@ -409,7 +410,8 @@ public class TestHttpNettyClient
                         1,
                         1,
                         SSLContext.getDefault(),
-                        sslParameters);
+                        sslParameters,
+                        Integer.MAX_VALUE);
   }
 
   // Test that cannot set protocols in SSLParameters that don't have any match in
@@ -432,7 +434,8 @@ public class TestHttpNettyClient
                           1,
                           1,
                           SSLContext.getDefault(),
-                          sslParameters);
+                          sslParameters,
+                          Integer.MAX_VALUE);
     }
     catch (IllegalArgumentException e)
     {
@@ -460,7 +463,8 @@ public class TestHttpNettyClient
                         1,
                         1,
                         SSLContext.getDefault(),
-                        sslParameters);
+                        sslParameters,
+                        Integer.MAX_VALUE);
   }
 
   /*

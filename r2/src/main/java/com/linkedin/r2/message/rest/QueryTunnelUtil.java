@@ -17,27 +17,33 @@ import javax.mail.internet.ContentType;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMultipart;
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
  * Encode and decode functions for tunnelling requests. Long queries can be passed by moving the query
- * param line into the body, and the request reformulated into a POST. The original method is specified
- * by X-HTTP-Method-Override.
- * Tunneled request bodies can be in one of two forms:
+ * param line into the body, and reformulating the request as a POST. The original method is specified
+ * by the X-HTTP-Method-Override header.
+ *
+ * Tunneled request bodies can have one of two forms:
  *     1. x-www-form-urlencoded with query params stored in the body
  *     2. Content-Type of multipart/mixed with 2 sections
  *         The first section should be of type x-www-form-urlencoded and contain the query params
- *         The second should contain any body, along with it's associated content-type
+ *         The second should contain what would have been the original
+ *         body, along with it's associated content-type
  *
- *         Example: Call http://localhost?ids=1,2,3 with a JSON body
- *           curl -v  -X POST -H "X-HTTP-Method-Override: GET" -H "Content-Type: multipart/mixed, boundary=xyz"
- *                --data $'--xyz\r\nContent-Type: application/x-www-form-urlencoded\r\n\r\nids=1,2,3\r\n--xyz\r\n
+ *     Example: Call http://localhost?ids=1,2,3 with no body
+ *         curl -X POST -H "X-HTTP-Method-Override: GET" -H "Content-Type: application/x-www-form-urlencoded"
+ *              --data $'ids=1,2,3' http://localhost
+ *
+ *     Example: Call http://localhost?ids=1,2,3 with a JSON body
+ *         curl -X POST -H "X-HTTP-Method-Override: GET" -H "Content-Type: multipart/mixed, boundary=xyz"
+ *              --data $'--xyz\r\nContent-Type: application/x-www-form-urlencoded\r\n\r\nids=1,2,3\r\n--xyz\r\n
  *                Content-Type: application/json\r\n\r\n{"foo":"bar"}\r\n--xyz--'
- *                http://localhost
+ *              http://localhost
  *
- *         Example: Call http://localhost?ids=1,2,3 with no body
- *           curl -v  -X POST -H "X-HTTP-Method-Override: GET" -H "Content-Type: application/x-www-form-urlencoded"
- *                --data $'ids=1,2,3' http://localhost
+
  */
 public class QueryTunnelUtil
 {
@@ -48,6 +54,8 @@ public class QueryTunnelUtil
   private static final String MIXED = "mixed";
   private static final String CONTENT_LENGTH = "Content-Length";
   private static final String UTF8 = "UTF-8";
+  private static final Charset UTF8CHARSET = Charset.forName(UTF8);
+  static final Logger LOG = LoggerFactory.getLogger(QueryTunnelUtil.class);
 
   /**
    * class supports static methods only
@@ -92,7 +100,7 @@ public class QueryTunnelUtil
     if (entity == null || entity.length() == 0)
     {
       requestBuilder.setHeader(HEADER_CONTENT_TYPE, FORM_URL_ENCODED);
-      requestBuilder.setEntity(ByteString.copyString(query, Charset.forName(UTF8)));
+      requestBuilder.setEntity(ByteString.copyString(query, UTF8CHARSET));
     }
     else
     {
@@ -133,7 +141,7 @@ public class QueryTunnelUtil
     String query = null;
     byte[] entity = new byte[0];
 
-    // All encoded requests will have a content type
+    // All encoded requests must have a content type. If the header is missing, ContentType throws an exception
     ContentType contentType = new ContentType(request.getHeader(HEADER_CONTENT_TYPE));
 
     RestRequestBuilder requestBuilder = request.builder();
@@ -195,16 +203,25 @@ public class QueryTunnelUtil
         }
         else if (entity.length <= 0)
         {
-          // Assume any other content is the intended entity.
-          // NOTE: This will silently ignore any additional body segments
+          // Assume the first non-urlencoded content we come to is the intended entity.
           entity = IOUtils.toByteArray((ByteArrayInputStream) part.getContent());
           h.put(CONTENT_LENGTH, Integer.toString(entity.length));
           h.put(HEADER_CONTENT_TYPE, part.getContentType());
         }
+        else
+        {
+          // If it's not form-urlencoded and we've already found another section,
+          // this has to be be an extra body section, which we have no way to handle.
+          // Proceed with the request as if the 1st part we found was the expected body,
+          // but log a warning in case some client is constructing a request that doesn't
+          // follow the rules.
+          String unexpectedContentType = part.getContentType();
+          LOG.warn("Unexpected body part in X-HTTP-Method-Override request, type=" + unexpectedContentType);
+        }
       }
     }
 
-    // Based on what we've found, modify the request, then build it.
+    // Based on what we've found, construct the modified request.
     if (query != null && query.length() > 0)
     {
       requestBuilder.setURI(new URI(request.getURI().toString() + "?" + query));
@@ -233,7 +250,8 @@ public class QueryTunnelUtil
     // Create current entity with the associated type
     MimeBodyPart dataPart = new MimeBodyPart();
 
-    dataPart.setContent(entity.copyBytes(), entityContentType);
+    ContentType contentType = new ContentType(entityContentType);
+    dataPart.setContent(entity.copyBytes(), contentType.getBaseType());
     dataPart.setHeader(HEADER_CONTENT_TYPE, entityContentType);
 
     // Encode query params as form-urlencoded

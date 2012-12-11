@@ -20,7 +20,6 @@
 
 package com.linkedin.r2.transport.http.client;
 
-import com.linkedin.r2.message.rest.QueryTunnelUtil;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -61,6 +60,7 @@ import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.message.rest.QueryTunnelUtil;
 import com.linkedin.r2.message.rpc.RpcRequest;
 import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.MessageType;
@@ -102,16 +102,9 @@ import com.linkedin.r2.util.TimeoutRunnable;
   private final int _queryPostThreshold;
 
   /**
-   * Creates a new HttpNettyClient.
+   * Creates a new HttpNettyClient with some default parameters
    *
-   * @param factory The ClientSocketChannelFactory; it is the caller's responsibility to
-   *          shut it down
-   * @param executor an executor; it is the caller's responsibility to shut it down
-   * @param poolSize Maximum size of the underlying HTTP connection pool
-   * @param requestTimeout timeout, in ms, to get a connection from the pool or create one
-   * @param idleTimeout interval after which idle connections will be automatically closed
-   * @param shutdownTimeout timeout, in ms, the client should wait after shutdown is
-   *          initiated before terminating outstanding requests
+   * @see #HttpNettyClient(ClientSocketChannelFactory,ScheduledExecutorService,int,int,int,int,int,SSLContext,SSLParameters,int)
    */
   public HttpNettyClient(ClientSocketChannelFactory factory,
                          ScheduledExecutorService executor,
@@ -133,47 +126,8 @@ import com.linkedin.r2.util.TimeoutRunnable;
          Integer.MAX_VALUE);
   }
 
-  /**
-   * Same as {@link #HttpNettyClient(ClientSocketChannelFactory, ScheduledExecutorService, int, int, int, int, int) except also takes
-   * javax.netty.ssl.SSLContext for channel over SSL.
-   *
-   * @param factory The ClientSocketChannelFactory; it is the caller's responsibility to
-   *          shut it down
-   * @param executor an executor; it is the caller's responsibility to shut it down
-   * @param poolSize Maximum size of the underlying HTTP connection pool
-   * @param requestTimeout timeout, in ms, to get a connection from the pool or create one
-   * @param idleTimeout interval after which idle connections will be automatically closed
-   * @param shutdownTimeout timeout, in ms, the client should wait after shutdown is
-   *          initiated before terminating outstanding requests
-   * @param {@link {@link SSLContext}
-   */
-  public HttpNettyClient(ClientSocketChannelFactory factory,
-                         ScheduledExecutorService executor,
-                         int poolSize,
-                         int requestTimeout,
-                         int idleTimeout,
-                         int shutdownTimeout,
-                         int maxResponseSize,
-                         SSLContext sslContext,
-                         SSLParameters sslParameters)
-  {
-    this(factory,
-         executor,
-         poolSize,
-         requestTimeout,
-         idleTimeout,
-         shutdownTimeout,
-         maxResponseSize,
-         null,
-         null,
-         Integer.MAX_VALUE);
-  }
-
 /**
-   * Same as {@link
- * #HttpNettyClient(ClientSocketChannelFactory, ScheduledExecutorService, int, int, int,
- * int, int, SSLContext, SSLParameters) except also takes
-   * a threshold for the max length of url query params. Above this threshold, requests will be tunneled as POSTS
+   * Creates a new HttpNettyClient
    *
    * @param factory The ClientSocketChannelFactory; it is the caller's responsibility to
    *          shut it down
@@ -183,8 +137,10 @@ import com.linkedin.r2.util.TimeoutRunnable;
    * @param idleTimeout interval after which idle connections will be automatically closed
    * @param shutdownTimeout timeout, in ms, the client should wait after shutdown is
    *          initiated before terminating outstanding requests
-   * @param {@link {@link SSLContext}
-   * @param length of query params above which requests will be tunneled as POSTS
+   * @param maxResponseSize
+   * @param sslContext {@link SSLContext}
+   * @param sslParameters {@link SSLParameters}with overloaded construct
+   * @param queryPostThreshold length of query params above which requests will be tunneled as POSTS
    */
   public HttpNettyClient(ClientSocketChannelFactory factory,
                        ScheduledExecutorService executor,
@@ -367,9 +323,12 @@ import com.linkedin.r2.util.TimeoutRunnable;
     }
 
     final RestRequest newRequest;
-    try {
-      newRequest= QueryTunnelUtil.encode(new RestRequestBuilder(request).overwriteHeaders(WireAttributeHelper.toWireAttributes(
-          wireAttrs)).build(), _queryPostThreshold);
+    try
+    {
+      newRequest= QueryTunnelUtil.encode(new RestRequestBuilder(request)
+                                             .overwriteHeaders(WireAttributeHelper.toWireAttributes(wireAttrs))
+                                             .build(),
+                                         _queryPostThreshold);
     }
     catch (IOException e)
     {
@@ -480,8 +439,8 @@ import com.linkedin.r2.util.TimeoutRunnable;
      *
      * @param sslContext {@link SSLContext} to be used for TLS-enabled channel pipeline.
      * @param sslParameters {@link SSLParameters} to configure {@link SSLEngine}s created
-     *          from sslContext. This is somewhat redundant to {@link
-     *          SSLContext.#getDefaultSSLParameters()}, but those turned out to be
+     *          from sslContext. This is somewhat redundant to
+     *          SSLContext.getDefaultSSLParameters(), but those turned out to be
      *          exceedingly difficult to configure, so we can't pass all desired
      *          configuration in sslContext.
      */

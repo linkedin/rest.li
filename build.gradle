@@ -30,6 +30,7 @@ project.ext.externalDependency = [
   'jettyUtil': 'org.mortbay.jetty:jetty-util:6.1.26',
   'json': 'org.json:json:20070829',
   'log4j': 'log4j:log4j:1.2.15',
+  'mail': 'javax.mail:mail:1.4.1',
   'mina': 'org.apache.mina:mina-core:1.1.7',
   'netty': 'org.jboss.netty:netty:3.2.3.Final',
   'objenesis': 'org.objenesis:objenesis:1.2',
@@ -39,9 +40,7 @@ project.ext.externalDependency = [
   'slf4jLog4j12': 'org.slf4j:slf4j-log4j12:1.6.2',
   'testng': 'org.testng:testng:6.4',
   'velocity': 'org.apache.velocity:velocity:1.5',
-  'zookeeper': 'org.apache.zookeeper:zookeeper:3.3.0',
-  'mail': 'javax.mail:mail:1.4.1',
-  "commonsIo": "commons-io:commons-io:1.4"
+  'zookeeper': 'org.apache.zookeeper:zookeeper:3.3.0'
 ];
 
 if (!project.ext.isDefaultEnvironment)
