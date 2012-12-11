@@ -60,6 +60,15 @@ allprojects {
   tasks.withType(Compile).all { Compile compile ->
     compile.options.compilerArgs = ['-Xlint', '-Xlint:-path', '-Werror']
   }
+
+  apply plugin: 'maven'
+
+  project.group = 'com.linkedin.pegasus'
+
+  repositories {
+    mavenLocal()
+    mavenCentral()
+  }
 }
 
 task wrapper(type: Wrapper) {

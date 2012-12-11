@@ -1,5 +1,12 @@
 1.7.1
 -----
+(RB=120249)
+Copy 'pegasus' gradle plugin into pegasus codebase from RUM, so 3rd party developers have access to
+the build tools required for a working development flow.  Also add maven central and maven local as repos
+so developers can publish pegasus artifacts to their local repo and build standalone apps based on those
+artifacts (this part will not be needed after we push pegasus artifacts to the maven central repo but 
+helps in the short term).
+
 (RB=119121)
 Fixed an issue where Actions that declare their return types as primitives (return int instead of
 Integer, for example) no longer fail while trying to coercer the response into the correct type.
