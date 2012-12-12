@@ -605,13 +605,28 @@ public class SchemaParser extends AbstractDataParser
   /**
    * Determine include and fields order without location information.
    *
-   * This requires parsing include and fields to determine which names are
-   * defined and referenced by include and fields. If fields defines names
-   * used by include, then fields is before include. If include defines
-   * names used by fields, then include is before fields. If both fields and
+   * <p>
+   * If fields and include is not parsed in the correct order, there
+   * may be unresolvable name parse errors. For example, this can
+   * occur if fields define a type X and include references the type X.
+   * If include is parsed before fields, then X will not be resolvable
+   * because fields have not been parsed and X had not been defined.
+   * <p>
+   * Determining correct order requires pre-parsing include and fields
+   * to determine which names are defined and referenced by include and
+   * fields. If fields defines names used by include, then fields should
+   * be parsed before include. If include defines names used by fields,
+   * then include should be parsed before fields. If both fields and
    * include define and use names from the other, then we cannot determine
-   * an order. If order cannot be defined emit an error message and continue
-   * processing assuming fields is after include.
+   * a correct parse order. If order cannot be defined, this method will
+   * emit an error message and continue processing assuming fields is
+   * after include.
+   * <p>
+   * Location information is not available, if the parser is invoked
+   * using parse method other than {@link #parse(java.io.InputStream)},
+   * e.g. {@link #parse(java.util.List)}, {@link #parseObject(Object)},
+   * {@link #parseFields(RecordDataSchema, com.linkedin.data.DataList)},
+   * {@link #parseUnion(com.linkedin.data.DataList)}.
    *
    * @param includeList provides the list of includes, cannot be null.
    * @param fieldsList provides the list of fields, cannot be null.

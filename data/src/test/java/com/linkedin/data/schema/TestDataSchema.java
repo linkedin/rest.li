@@ -749,7 +749,7 @@ public class TestDataSchema
         "}",
         new String[] { "f1", "f2" }
       },
-      // include before fields
+      // fields before include
       {
         "{ " +
         "  \"type\" : \"record\", " +
@@ -1212,8 +1212,6 @@ public class TestDataSchema
 
     for (String schemaTemplate : testSchemas )
     {
-      // test schema from string
-
       if (debug) System.out.println(schemaTemplate);
 
       for (String[] sub : substitutions)
@@ -1234,6 +1232,11 @@ public class TestDataSchema
             String schemaText = schemaTemplate.replaceAll("##DEFINE", includeSchema).replaceAll("##REFERENCE", fieldType);
             if (debug) System.out.println(schemaText);
 
+            // if fields and include order parsing is not done
+            // in the right order, then the schema parsing will
+            // fail with unable to resolve ##REFERENCE that is
+            // defined somewhere in ##DEFINE
+
             testIncludeForSchemaText(schemaText, expectedFields);
           }
         }
@@ -1243,13 +1246,12 @@ public class TestDataSchema
 
   private void testIncludeForSchemaText(String schemaText, String[] expectedFields) throws IOException
   {
+    // test schema with DataLocation
     SchemaParser parser = schemaParserFromString(schemaText);
     RecordDataSchema recordDataSchema = testIncludeWithSchemaParserOutputForExpectedFields(parser, expectedFields);
 
-    // test schema from DataMap
-    InputStream inputStream = inputStreamFromString(schemaText);
-    SchemaParser dataMapSchemaParser = new SchemaParser();
-    dataMapSchemaParser.parse(inputStream); // no location information
+    // test schema without DataLocation
+    SchemaParser dataMapSchemaParser = schemaParserFromObjectsString(schemaText); // no location information
     RecordDataSchema recordDataSchemaFromDataMap = testIncludeWithSchemaParserOutputForExpectedFields(
       dataMapSchemaParser,
       expectedFields);
@@ -1328,6 +1330,7 @@ public class TestDataSchema
 
     if (debug) out.println(schemaText);
 
+    // test schema with DataLocation
     SchemaParser parser = schemaParserFromString(schemaText);
     String message = parser.errorMessage();
     if (debug) { out.println(parser.schemasToString()) ; out.println(message); }
@@ -1336,10 +1339,8 @@ public class TestDataSchema
     checkEachLineStartsWithLocation(message);
     checkExpected(message, expected, index);
 
-    // test schema from DataMap
-    InputStream inputStream = inputStreamFromString(schemaText);
-    parser = new SchemaParser();
-    parser.parse(inputStream); // no location information
+    // test schema without DataLocation
+    parser = schemaParserFromObjectsString(schemaText); // no location information
     message = parser.errorMessage();
     if (debug) { out.println(parser.schemasToString()) ; out.println(message); }
     assertTrue(parser.hasError());

@@ -76,12 +76,12 @@ public class PegasusDataTemplateGenerator extends DataTemplateGenerator
     if (upToDate(sourceFiles, targetFiles))
     {
       modifiedFiles = Collections.emptyList();
-      log("Target files are up-to-date: " + targetFiles);
+      log.info("Target files are up-to-date: " + targetFiles);
     }
     else
     {
       modifiedFiles = targetFiles;
-      log("Generating " + targetFiles.size() + " files: " + targetFiles);
+      log.info("Generating " + targetFiles.size() + " files: " + targetFiles);
       validateDefinedClassRegistration();
       getCodeModel().build(new FileCodeWriter(targetDirectory, true));
     }

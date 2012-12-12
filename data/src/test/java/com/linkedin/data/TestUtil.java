@@ -17,6 +17,7 @@
 package com.linkedin.data;
 
 import com.linkedin.data.codec.DataCodec;
+import com.linkedin.data.codec.DataLocation;
 import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.SchemaParser;
@@ -32,6 +33,7 @@ import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -118,6 +120,19 @@ public class TestUtil
     return parser;
   }
 
+  static public SchemaParser schemaParserFromObjects(List<Object> objects) throws IOException
+  {
+    SchemaParser parser = new SchemaParser();
+    parser.parse(objects);
+    return parser;
+  }
+
+  static public SchemaParser schemaParserFromObjectsString(String stringOfObjects) throws IOException
+  {
+    List<Object> objects = objectsFromString(stringOfObjects);
+    return schemaParserFromObjects(objects);
+  }
+
   static public DataSchema dataSchemaFromString(String s) throws IOException
   {
     SchemaParser parser = schemaParserFromString(s);
@@ -129,7 +144,23 @@ public class TestUtil
     return parser.topLevelDataSchemas().get(parser.topLevelDataSchemas().size() - 1);
   }
 
-  private static final DataCodec codec = new JacksonDataCodec();
+  private static final JacksonDataCodec codec = new JacksonDataCodec();
+
+  public static List<Object> objectsFromString(String string) throws IOException
+  {
+    return objectsFromInputStream(inputStreamFromString(string));
+  }
+
+  public static List<Object> objectsFromInputStream(InputStream inputStream) throws IOException
+  {
+    StringBuilder errorMessageBuilder = new StringBuilder();
+    List<Object> objects = codec.parse(inputStream, errorMessageBuilder, new HashMap<Object, DataLocation>());
+    if (errorMessageBuilder.length() > 0)
+    {
+      throw new IOException(errorMessageBuilder.toString());
+    }
+    return objects;
+  }
 
   public static DataMap dataMapFromString(String json) throws IOException
   {

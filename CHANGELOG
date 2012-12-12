@@ -1,7 +1,10 @@
 1.7.1
 -----
-(RB=)
+(RB=120743)
 Infer order of include and fields properties of record if location information is not available.
+
+Change generated and up-to-date log messages to info. This was useful initially for debugging. Since
+it has not been a problem, changing to info will reduce build output noise from generator.
 
 (RB=120925)
 Add requisite maven configuration and pom generation to root build.gradle to enable releasing pegasus 
