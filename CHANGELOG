@@ -1,5 +1,9 @@
 1.7.1
 -----
+(RB=120925)
+Add requisite maven configuration and pom generation to root build.gradle to enable releasing pegasus 
+to maven central.
+
 (RB=120249)
 Copy 'pegasus' gradle plugin into pegasus codebase from RUM, so 3rd party developers have access to
 the build tools required for a working development flow.  Also add maven central and maven local as repos

@@ -59,15 +59,6 @@ allprojects {
   tasks.withType(Compile).all { Compile compile ->
     compile.options.compilerArgs = ['-Xlint', '-Xlint:-path', '-Werror']
   }
-
-  apply plugin: 'maven'
-
-  project.group = 'com.linkedin.pegasus'
-
-  repositories {
-    mavenLocal()
-    mavenCentral()
-  }
 }
 
 task wrapper(type: Wrapper) {
@@ -99,6 +90,16 @@ subprojects {
 
   if (isDefaultEnvironment)
   {
+    apply plugin: 'maven'
+    apply plugin: 'signing'
+
+    project.group = 'com.linkedin.pegasus'
+
+    repositories {
+      mavenLocal()
+      mavenCentral()
+    }
+
     task sourcesJar(type: Jar, dependsOn: classes) {
       from sourceSets.main.allSource
       classifier = 'sources'
@@ -110,8 +111,97 @@ subprojects {
     }
 
     artifacts {
+      archives jar
       archives sourcesJar
       archives javadocJar
+    }
+
+    signing {
+      sign configurations.archives
+    }
+
+    uploadArchives {
+      repositories {
+        mavenDeployer {
+          beforeDeployment { MavenDeployment deployment -> signPom(deployment) }
+
+          repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+            authentication(userName: sonatypeUsername, password: sonatypePassword)
+          }
+
+          pom.project {
+            name project.name
+            packaging 'jar'
+            description 'Pegasus is a framework for building robust, scalable service architectures using dynamic discovery and simple asychronous type-checked REST + JSON APIs.'
+            url 'http://github.com/linkedin/pegasus'
+
+            scm {
+              url 'git@github.com:linkedin/pegasus.git'
+              connection 'scm:git:git@github.com:linkedin/pegasus.git'
+              developerConnection 'scm:git:git@github.com:linkedin/pegasus.git'
+            }
+
+             licenses {
+               license {
+                 name 'The Apache Software License, Version 2.0'
+                 url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                 distribution 'repo'
+               }
+             }
+
+             developers {
+               developer {
+                 id 'sweeboonlim'
+                 name 'Swee Lim'
+               }
+               developer {
+                 id 'sihde'
+                 name 'Steve Ihde'
+               }
+               developer {
+                 id 'mtagle'
+                 name 'Moira Tagle'
+               }
+               developer {
+                 id 'adublinkedin'
+                 name 'Alex Dubman'
+               }
+               developer {
+                 id 'CrendKing'
+                 name 'Keren Jin'
+               }
+               developer {
+                 id 'DuglsYoung'
+                 name 'Doug Young'
+               }
+               developer {
+                 id 'osumampouw'
+                 name 'Oby Sumampouw'
+               }
+               developer {
+                 id 'davidhoa'
+                 name 'David Hoa'
+               }
+               developer {
+                 id 'cpettitt'
+                 name 'Chris Pettitt'
+               }
+               developer {
+                 id 'chikit'
+                 name 'Chi Kit Chan'
+               }
+               developer {
+                 id 'apy101'
+                 name 'Angelika Clayton'
+               }
+               developer {
+                 id 'jpbetz'
+                 name 'Joe Betz'
+               }
+            }
+          }
+        }
+      }
     }
   }
 
@@ -144,7 +234,7 @@ subprojects {
       excludeGroups 'integration'
       excludeGroups 'd2integration'
       excludeGroups 'integration_external_product_dependent'
-	  excludeGroups 'known_issue'
+    excludeGroups 'known_issue'
     }
   }
 
@@ -166,7 +256,7 @@ subprojects {
 
   //all functional tests which are expected to pass assuming proper environment setup
   task allTests(type: Test) {
-	  maxHeapSize = '1g'
+    maxHeapSize = '1g'
 
     useTestNG() {
       excludeGroups 'known_issue'
@@ -188,9 +278,9 @@ subprojects {
   }
 
   task knownIssuesTests(type: Test) {
-	  useTestNG() {
+    useTestNG() {
       includeGroups 'known_issue'
-	  }
+    }
   }
 
   task allFailingTests(type: Test) {
