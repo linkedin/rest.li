@@ -22,6 +22,7 @@ import com.linkedin.data.Data;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -29,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+import sun.net.idn.StringPrep;
 
 import static com.linkedin.data.TestUtil.*;
 import static org.testng.Assert.*;
@@ -627,12 +629,11 @@ public class TestDataSchema
   @Test
   public void testInclude() throws IOException
   {
-    // Test the presense of included fields.
-    //
+    // Test the presence of included fields.
     // Array of tests, each test is an array of 2 or more elements.
     //   index 0 - the input to the schema parsers.
-    //   index >= 1 - names of fields that should be present the last schema in the input.
-    String[][] testData = {
+    //   index 1 - names of fields that should be present the last schema in the input.
+    Object[][] testData = {
       // include
       {
         "{ " +
@@ -654,7 +655,7 @@ public class TestDataSchema
         "    } "+
         "  ] " +
         "}",
-        "f1", "b1"
+        new String[] { "f1", "b1" }
       },
       // include with typeref
       {
@@ -683,7 +684,7 @@ public class TestDataSchema
         "    } "+
         "  ] " +
         "}",
-        "f1", "b1"
+        new String[] { "f1", "b1" }
       },
       // include with include (transitive include)
       {
@@ -720,22 +721,643 @@ public class TestDataSchema
         "    } "+
         "  ] " +
         "}",
-        "b1", "f1", "j1"
+        new String[] { "b1", "f1", "j1" }
       },
+      // include before fields
+      {
+        "{ " +
+        "  \"type\" : \"record\", " +
+        "  \"name\" : \"a.b.bar\", " +
+        "  \"include\" : [ " +
+        "    { " +
+        "      \"type\" : \"record\", " +
+        "      \"name\" : \"foo\", " +
+        "      \"fields\" : [ " +
+        "        { " +
+        "          \"name\" : \"f1\", " +
+        "          \"type\" : \"int\" " +
+        "        } " +
+        "      ] " +
+        "    } " +
+        "  ]," +
+        "  \"fields\" : [ " +
+        "    { " +
+        "      \"name\" : \"f2\", " +
+        "      \"type\" : \"foo\" "+
+        "    } " +
+        "  ] " +
+        "}",
+        new String[] { "f1", "f2" }
+      },
+      // include before fields
+      {
+        "{ " +
+        "  \"type\" : \"record\", " +
+        "  \"name\" : \"a.b.bar\", " +
+        "  \"fields\" : [" +
+        "    { " +
+        "      \"name\" : \"f1\", " +
+        "      \"type\" : { " +
+        "        \"type\" : \"record\", " +
+        "        \"name\" : \"foo\", " +
+        "        \"fields\" : [ " +
+        "          { " +
+        "            \"name\" : \"f2\", " +
+        "            \"type\" : \"int\" " +
+        "          } " +
+        "        ] " +
+        "      } " +
+        "    } " +
+        "  ]," +
+        "  \"include\" : [ \"foo\" ]" +
+        "}",
+        new String[] { "f1", "f2" }
+      },
+      // include before fields, test namespace handling
+      {
+        "{ " +
+        "  \"type\" : \"record\", " +
+        "  \"name\" : \"a.b.bar\", " +
+        "  \"include\" : [ " +
+        "    { " +
+        "      \"type\" : \"record\", " +
+        "      \"name\" : \"b.c.foo\", " +
+        "      \"fields\" : [ " +
+        "        { " +
+        "          \"name\" : \"i1\", " +
+        "          \"type\" : { \"type\" : \"enum\", \"name\" : \"fruits\", \"symbols\" : [] } " +
+        "        } " +
+        "      ] " +
+        "    }, " +
+        "    { " +
+        "      \"type\" : \"record\", " +
+        "      \"name\" : \"foofoo\", " +
+        "      \"fields\" : [ " +
+        "        { " +
+        "          \"name\" : \"i2\", " +
+        "          \"type\" : \"int\" " +
+        "        } " +
+        "      ] " +
+        "    } " +
+        "  ]," +
+        "  \"fields\" : [ " +
+        "    { " +
+        "      \"name\" : \"f1\", " +
+        "      \"type\" : \"b.c.fruits\" "+
+        "    }, " +
+        "    { " +
+        "      \"name\" : \"f2\", " +
+        "      \"type\" : \"b.c.foo\" "+
+        "    }, " +
+        "    { " +
+        "      \"name\" : \"f3\", " +
+        "      \"type\" : \"foofoo\" "+
+        "    } " +
+        "  ] " +
+        "}",
+        new String[] { "i1", "i2", "f1", "f2", "f3"}
+      },
+      // fields before include, test namespace handling
+      {
+        "{ " +
+        "  \"type\" : \"record\", " +
+        "  \"name\" : \"a.b.bar\", " +
+        "  \"fields\" : [ " +
+        "    { " +
+        "      \"name\" : \"f1\", " +
+        "      \"type\" : { " +
+        "        \"type\" : \"record\", " +
+        "        \"name\" : \"b.c.foo\", " +
+        "        \"fields\" : [ " +
+        "          { " +
+        "            \"name\" : \"i1\", " +
+        "            \"type\" : { \"type\" : \"enum\", \"name\" : \"fruits\", \"symbols\" : [] } " +
+        "          } " +
+        "        ] " +
+        "      } " +
+        "    }, " +
+        "    { " +
+        "      \"name\" : \"f2\", " +
+        "      \"type\" : { " +
+        "        \"type\" : \"record\", " +
+        "        \"name\" : \"foofoo\", " +
+        "        \"fields\" : [ " +
+        "          { " +
+        "            \"name\" : \"i2\", " +
+        "            \"type\" : \"int\" " +
+        "          } " +
+        "        ] " +
+        "      } " +
+        "    }, " +
+        "    { " +
+        "      \"name\" : \"f3\", " +
+        "      \"type\" : \"foofoo\" "+
+        "    }, " +
+        "    { " +
+        "      \"name\" : \"f4\", " +
+        "      \"type\" : \"b.c.foo\" "+
+        "    }, " +
+        "    { " +
+        "      \"name\" : \"f5\", " +
+        "      \"type\" : \"b.c.fruits\" "+
+        "    } " +
+        "  ], " +
+        "  \"include\" : [ " +
+        "    \"b.c.foo\", \"foofoo\" " +
+        "  ] " +
+        "}",
+        new String[] { "i1", "i2", "f1", "f2", "f3", "f4", "f5"}
+      }
     };
 
-    for (String[] test : testData)
+    for (Object[] test : testData)
     {
-      SchemaParser parser = schemaParserFromString(test[0]);
-      List<DataSchema> topLevelSchemas = parser.topLevelDataSchemas();
-      assertFalse(topLevelSchemas.isEmpty());
-      DataSchema lastSchema = topLevelSchemas.get(topLevelSchemas.size() - 1);
-      assertSame(lastSchema.getClass(), RecordDataSchema.class);
-      RecordDataSchema recordDataSchema = (RecordDataSchema) lastSchema;
-      for (int i = 1; i < test.length; ++i)
+      // test schema from string
+
+      String schemaText = (String) test[0];
+      String[] expectedFields = (String[]) test[1];
+
+      testIncludeForSchemaText(schemaText, expectedFields);
+    }
+  }
+
+  private String typerefSchema(String refName, String schemaText)
+  {
+    return
+      "{ " +
+      "  \"type\" : \"typeref\", " +
+      "  \"name\" : " + refName + ", " +
+      "  \"ref\" : " + schemaText +
+      "}";
+  }
+
+  private String mapSchema(String values)
+  {
+    return "{ \"type\" : \"map\", \"values\" : " + values + " }";
+  }
+
+  private String arraySchema(String items)
+  {
+    return "{ \"type\" : \"array\", \"items\" : " + items + " }";
+  }
+
+  @Test
+  public void testIncludeFieldsOrdering() throws IOException
+  {
+    final String fooName = "\"foo\"";
+    final String fooSchema =
+      "{ " +
+      "  \"type\" : \"record\", " +
+      "  \"name\" : " + fooName + ", " +
+      "  \"fields\" : [ " +
+      "    { " +
+      "      \"name\" : \"f1\", " +
+      "      \"type\" : \"int\" " +
+      "    } " +
+      "  ] " +
+      "}";
+
+    final String fooRefName = "\"fooRef\"";
+    final String fooRefSchema = typerefSchema(fooRefName, fooSchema);
+
+    final String fruitsName = "\"fruits\"";
+    final String fruitsSchema = "{ \"type\" : \"enum\", \"name\" : " + fruitsName + ", \"symbols\" : [ \"APPLE\" ] }";
+
+    final String fruitsRefName = "\"fruitsRef\"";
+    final String fruitsRefSchema = typerefSchema(fruitsRefName, fruitsSchema);
+
+    final String md5Name = "\"md5\"";
+    final String md5Schema = "{ \"type\" : \"fixed\", \"name\" : " + md5Name + ", \"size\" : 16 }";
+
+    final String md5RefName = "\"md5Ref\"";
+    final String md5RefSchema = typerefSchema(md5RefName, md5Schema);
+
+    final String unionSchema = "[ \"string\", \"int\", " + fruitsRefSchema + ", " + md5RefSchema + ", " + fooRefSchema + "]";
+
+    final String unionRefName = "\"unionRef\"";
+    final String unionRefSchema = typerefSchema(unionRefName, unionSchema);
+
+    // record containing enum, fixed, record
+
+    final String recordName = "\"r1\"";
+    final String recordSchema =
+      "{ " +
+      "  \"type\" : \"record\", " +
+      "  \"name\" : " + recordName + ", " +
+      "  \"fields\" : [ " +
+      "    { " +
+      "      \"name\" : \"r1fruits\", " +
+      "      \"type\" : " + fruitsRefSchema +
+      "    }, " +
+      "    { " +
+      "      \"name\" : \"r1Foo\", " +
+      "      \"type\" : " + fooRefSchema +
+      "    }, " +
+      "    { " +
+      "      \"name\" : \"r1Md5\", " +
+      "      \"type\" : " + md5RefSchema +
+      "    } " +
+      "  ] " +
+      "}";
+
+    final String recordRefName = "\"r1Ref\"";
+    final String recordRefSchema = typerefSchema(recordRefName, recordSchema);
+
+    // record containing union of enum, fixed, record
+
+    final String rUnionName = "\"r2\"";
+    final String rUnionSchema =
+      "{ " +
+      "  \"type\" : \"record\", " +
+      "  \"name\" : " + rUnionName + ", " +
+      "  \"fields\" : [ " +
+      "    { " +
+      "      \"name\" : \"r2Union\", " +
+      "      \"type\" : " + unionRefSchema +
+      "    } " +
+      "  ] " +
+      "}";
+
+    final String rUnionRefName = "\"r2Ref\"";
+    final String rUnionRefSchema = typerefSchema(rUnionRefName, rUnionSchema);
+
+    // record containing arrays of enum, fixed, record
+
+    final String rArrayName = "\"r3\"";
+    final String rArraySchema =
+      "{ " +
+      "  \"type\" : \"record\", " +
+      "  \"name\" : " + rArrayName + ", " +
+      "  \"fields\" : [ " +
+      "    { " +
+      "      \"name\" : \"r3fruits\", " +
+      "      \"type\" : " + arraySchema(fruitsRefSchema) +
+      "    }, " +
+      "    { " +
+      "      \"name\" : \"r3Foo\", " +
+      "      \"type\" : " + arraySchema(fooRefSchema) +
+      "    }, " +
+      "    { " +
+      "      \"name\" : \"r3Md5\", " +
+      "      \"type\" : " + arraySchema(md5RefSchema) +
+      "    } " +
+      "  ] " +
+      "}";
+
+    final String rArrayRefName = "\"r3Ref\"";
+    final String rArrayRefSchema = typerefSchema(rArrayRefName, rArraySchema);
+
+    // record containing maps of enum, fixed, record
+
+    final String rMapName = "\"r3\"";
+    final String rMapSchema =
+      "{ " +
+      "  \"type\" : \"record\", " +
+      "  \"name\" : " + rMapName + ", " +
+      "  \"fields\" : [ " +
+      "    { " +
+      "      \"name\" : \"r3fruits\", " +
+      "      \"type\" : " + mapSchema(fruitsRefSchema) +
+      "    }, " +
+      "    { " +
+      "      \"name\" : \"r3Foo\", " +
+      "      \"type\" : " + mapSchema(fooRefSchema) +
+      "    }, " +
+      "    { " +
+      "      \"name\" : \"r3Md5\", " +
+      "      \"type\" : " + mapSchema(md5RefSchema) +
+      "    } " +
+      "  ] " +
+      "}";
+
+    final String rMapRefName = "\"r3Ref\"";
+    final String rMapRefSchema = typerefSchema(rMapRefName, rMapSchema);
+
+    final String[][] substitutions =
       {
-        assertNotNull(recordDataSchema.getField(test[i]));
+        // enum
+
+        {
+          fruitsSchema,
+          fruitsName,
+        },
+        {
+          fruitsRefSchema,
+          fruitsName,
+          fruitsRefName
+        },
+
+        // record
+
+        {
+          fooSchema,
+          fooName,
+        },
+        {
+          fooRefSchema,
+          fooName,
+          fooRefName
+        },
+
+        // fixed
+
+        {
+          md5Schema,
+          md5Name,
+        },
+        {
+          md5RefSchema,
+          md5Name,
+          md5RefName
+        },
+
+        // union
+
+        {
+          unionSchema,
+          fruitsName,
+          fruitsRefName,
+          md5Name,
+          md5RefName,
+          fooName,
+          fooRefName,
+        },
+        {
+          unionRefSchema,
+          fruitsName,
+          fruitsRefName,
+          md5Name,
+          md5RefName,
+          fooName,
+          fooRefName,
+          unionRefName,
+        },
+
+        // record
+
+        {
+          recordSchema,
+          fruitsName,
+          fruitsRefName,
+          md5Name,
+          md5RefName,
+          fooName,
+          fooRefName,
+        },
+        {
+          recordRefSchema,
+          fruitsName,
+          fruitsRefName,
+          md5Name,
+          md5RefName,
+          fooName,
+          fooRefName,
+          recordRefName
+        },
+
+        // record of union
+
+        {
+          rUnionRefSchema,
+          fruitsName,
+          fruitsRefName,
+          md5Name,
+          md5RefName,
+          fooName,
+          fooRefName,
+          rUnionRefName
+        },
+
+        // record of arrays
+
+        {
+          rArrayRefSchema,
+          fruitsName,
+          fruitsRefName,
+          md5Name,
+          md5RefName,
+          fooName,
+          fooRefName,
+          rArrayRefName
+        },
+
+        // record of maps
+
+        {
+          rMapRefSchema,
+          fruitsName,
+          fruitsRefName,
+          md5Name,
+          md5RefName,
+          fooName,
+          fooRefName,
+          rMapRefName
+        },
+
+      };
+
+    final String[] testSchemas =
+      {
+        // include before fields
+        "{ " +
+        "  \"type\" : \"record\", " +
+        "  \"name\" : \"a.b.bar\", " +
+        "  \"include\" : [ " +
+        "     { " +
+        "       \"type\" : \"record\", " +
+        "       \"name\" : \"inc\", " +
+        "       \"fields\" : [ " +
+        "         { " +
+        "           \"name\" : \"f1\", " +
+        "           \"type\" : ##DEFINE " +
+        "         } " +
+        "       ]" +
+        "     } " +
+        "  ]," +
+        "  \"fields\" : [ " +
+        "    { " +
+        "      \"name\" : \"f2\", " +
+        "      \"type\" : ##REFERENCE "+
+        "    }" +
+        "  ] " +
+        "}",
+        // fields before include
+        "{ " +
+        "  \"type\" : \"record\", " +
+        "  \"name\" : \"a.b.bar\", " +
+        "  \"fields\" : [ " +
+        "    { " +
+        "      \"name\" : \"f2\", " +
+        "      \"type\" : ##DEFINE "+
+        "    }" +
+        "  ], " +
+        "  \"include\" : [ " +
+        "     { " +
+        "       \"type\" : \"record\", " +
+        "       \"name\" : \"inc\", " +
+        "       \"fields\" : [ " +
+        "         { " +
+        "           \"name\" : \"f1\", " +
+        "           \"type\" : ##REFERENCE " +
+        "         } " +
+        "       ] " +
+        "     } " +
+        "  ]" +
+        "}",
+      };
+
+    final String[] expectedFields = { "f1", "f2" };
+
+    boolean debug = false;
+
+    for (String schemaTemplate : testSchemas )
+    {
+      // test schema from string
+
+      if (debug) System.out.println(schemaTemplate);
+
+      for (String[] sub : substitutions)
+      {
+        String include = sub[0];
+        String[] includes =
+          {
+            include,
+            arraySchema(include),
+            mapSchema(include)
+          };
+        for (String includeSchema : includes)
+        {
+          for (int i = 1; i < sub.length; i++)
+          {
+            String fieldType = sub[i];
+
+            String schemaText = schemaTemplate.replaceAll("##DEFINE", includeSchema).replaceAll("##REFERENCE", fieldType);
+            if (debug) System.out.println(schemaText);
+
+            testIncludeForSchemaText(schemaText, expectedFields);
+          }
+        }
       }
+    }
+  }
+
+  private void testIncludeForSchemaText(String schemaText, String[] expectedFields) throws IOException
+  {
+    SchemaParser parser = schemaParserFromString(schemaText);
+    RecordDataSchema recordDataSchema = testIncludeWithSchemaParserOutputForExpectedFields(parser, expectedFields);
+
+    // test schema from DataMap
+    InputStream inputStream = inputStreamFromString(schemaText);
+    SchemaParser dataMapSchemaParser = new SchemaParser();
+    dataMapSchemaParser.parse(inputStream); // no location information
+    RecordDataSchema recordDataSchemaFromDataMap = testIncludeWithSchemaParserOutputForExpectedFields(
+      dataMapSchemaParser,
+      expectedFields);
+
+    assertEquals(recordDataSchemaFromDataMap, recordDataSchema);
+  }
+
+  private RecordDataSchema testIncludeWithSchemaParserOutputForExpectedFields(SchemaParser parser,
+                                                                              String[] expectedFields) throws IOException
+  {
+    if (parser.hasError())
+    {
+      throw new IOException(parser.errorMessage());
+    }
+    List<DataSchema> topLevelSchemas = parser.topLevelDataSchemas();
+    assertFalse(topLevelSchemas.isEmpty());
+    DataSchema lastSchema = topLevelSchemas.get(topLevelSchemas.size() - 1);
+    assertSame(lastSchema.getClass(), RecordDataSchema.class);
+    RecordDataSchema recordDataSchema = (RecordDataSchema) lastSchema;
+    for (String f : expectedFields)
+    {
+      assertNotNull(recordDataSchema.getField(f));
+    }
+    return recordDataSchema;
+  }
+
+  @Test
+  public void testIncludeInvalidTypes() throws IOException
+  {
+    final String schemaTemplate =
+      "{ " +
+      "  \"type\" : \"record\", " +
+      "  \"name\" : \"a.b.bar\", " +
+      "  \"include\" : [ ##TYPE ], " +
+      "  \"fields\" : [] " +
+      "}";
+
+    final String[] types =
+      {
+        "\"null\"",
+        "\"int\"",
+        "\"long\"",
+        "\"float\"",
+        "\"double\"",
+        "\"string\"",
+        "\"bytes\"",
+        "\"boolean\"",
+        arraySchema("\"int\""),
+        mapSchema("\"int\""),
+        "{ \"type\" : \"enum\", \"name\" : \"fruits\", \"symbols\" : [] }",
+        "{ \"type\" : \"fixed\", \"name\" : \"md5\", \"size\" : 16 }",
+        "[ \"int\", \"string\" ]"
+      };
+
+    final String[] expected = { "cannot include", "because it is not a record" };
+
+    for (String baseType : types)
+    {
+      final String[] derivedTypes = { baseType, typerefSchema("\"xyz\"", baseType) };
+      for (String t : derivedTypes)
+      {
+        String schemaText = schemaTemplate.replaceAll("##TYPE", t);
+        checkBadSchema(schemaText, expected);
+      }
+    }
+  }
+
+  private void checkBadSchema(String schemaText, String[] expected) throws IOException
+  {
+    checkBadSchema(schemaText, expected, 0);
+  }
+
+  private void checkBadSchema(String schemaText, String[] expected, int index) throws IOException
+  {
+    boolean debug = false;
+
+    if (debug) out.println(schemaText);
+
+    SchemaParser parser = schemaParserFromString(schemaText);
+    String message = parser.errorMessage();
+    if (debug) { out.println(parser.schemasToString()) ; out.println(message); }
+    assertTrue(parser.hasError());
+    assertFalse(message.isEmpty());
+    checkEachLineStartsWithLocation(message);
+    checkExpected(message, expected, index);
+
+    // test schema from DataMap
+    InputStream inputStream = inputStreamFromString(schemaText);
+    parser = new SchemaParser();
+    parser.parse(inputStream); // no location information
+    message = parser.errorMessage();
+    if (debug) { out.println(parser.schemasToString()) ; out.println(message); }
+    assertTrue(parser.hasError());
+    assertFalse(message.isEmpty());
+    checkExpected(message, expected, index);
+  }
+
+  private void checkExpected(String text, String[] contains)
+  {
+    checkExpected(text, contains, 0);
+  }
+
+  private void checkExpected(String text, String[] contains, int startIndex)
+  {
+    for (int i = startIndex; i < contains.length; i++)
+    {
+      String expected = contains[i];
+      assertTrue(text.contains(expected), text + " should contain \"" + expected + "\"");
     }
   }
 
@@ -1600,23 +2222,11 @@ public class TestDataSchema
       },
     };
 
-    boolean debug = false;
-
     for (String[] input : badInputs)
     {
-      String schema = input[0];
-      if (debug) out.println(schema);
-      SchemaParser parser = schemaParserFromString(schema);
-      String message = parser.errorMessage();
-      if (debug) { out.println(parser.schemasToString()) ; out.println(message); }
-      assertTrue(parser.hasError());
-      assertFalse(message.isEmpty());
-      checkEachLineStartsWithLocation(message);
-      for (int i = 1; i < input.length; i++)
-      {
-        String expected = input[i];
-        assertTrue(message.contains(expected), message + " should contain \"" + expected + "\"");
-      }
+      int i = 0;
+      String schema = input[i++];
+      checkBadSchema(schema, input, i);
     }
   }
 

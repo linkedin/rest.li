@@ -31,9 +31,11 @@ import com.linkedin.data.schema.validation.ValidationResult;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static com.linkedin.data.schema.DataSchemaConstants.*;
 
@@ -380,20 +382,18 @@ public class SchemaParser extends AbstractDataParser
    */
   protected DataSchema dataMapToDataSchema(DataMap map)
   {
-    // potentially just {type=SomeType}, (where SomeType is primitive) in which case this should just return SomeType.
-    // this also accepts things like {type=a, name=b}
-    // This is kind of dumb but it is also how the out-of-the-box avro parser works.
-    String s = getString(map, TYPE_KEY, true);
-    if (DataSchemaUtil.typeStringToPrimitiveDataSchema(s) != null)
-    {
-      return stringToDataSchema(s);
-    }
-
     DataSchema.Type type = getType(map);
     if (type == null)
     {
       return null;
     }
+
+    DataSchema primitiveSchema = DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchema(type);
+    if (primitiveSchema != null)
+    {
+      return primitiveSchema;
+    }
+
     ComplexDataSchema schema = null;
     NamedDataSchema namedSchema = null;
     String saveCurrentNamespace = getCurrentNamespace();
@@ -462,14 +462,11 @@ public class SchemaParser extends AbstractDataParser
         List<RecordDataSchema.Field> fields = new ArrayList<RecordDataSchema.Field>();
 
         DataList includeList = getDataList(map, INCLUDE_KEY, false);
-        DataLocation includeListLocation = lookupDataLocation(includeList);
         DataList fieldsList = getDataList(map, FIELDS_KEY, true);
-        DataLocation fieldsListLocation = lookupDataLocation(fieldsList);
 
         // the parser must parse fields and include in the same order that they appear in the input.
         // determine whether to process fields first or include first
-        boolean fieldsBeforeInclude =
-          (includeList != null && fieldsList != null && includeListLocation.compareTo(fieldsListLocation) > 0);
+        boolean fieldsBeforeInclude = fieldsBeforeIncludes(includeList, fieldsList);
 
         if (fieldsBeforeInclude)
         {
@@ -571,6 +568,270 @@ public class SchemaParser extends AbstractDataParser
       recordSchema.setInclude(include);
     }
     return fields;
+  }
+
+  /**
+   * Determine if fields is before includes.
+   *
+   * @param includeList provides the list of includes, may be null.
+   * @param fieldsList provides the list of fields, may be null.
+   * @return whether fields is before includes.
+   */
+  private boolean fieldsBeforeIncludes(DataList includeList, DataList fieldsList)
+  {
+    boolean fieldsFirst;
+    if (includeList == null || fieldsList == null)
+    {
+      // order does not matter
+      fieldsFirst = false;
+    }
+    else
+    {
+      DataLocation includeListLocation = lookupDataLocation(includeList);
+      DataLocation fieldsListLocation = lookupDataLocation(fieldsList);
+
+      if (fieldsListLocation != null && includeListLocation != null && includeListLocation.compareTo(fieldsListLocation) > 0)
+      {
+        fieldsFirst = true;
+      }
+      else
+      {
+        fieldsFirst = fieldsBeforeIncludeWithoutLocation(includeList, fieldsList);
+      }
+    }
+    return fieldsFirst;
+  }
+
+  /**
+   * Determine include and fields order without location information.
+   *
+   * This requires parsing include and fields to determine which names are
+   * defined and referenced by include and fields. If fields defines names
+   * used by include, then fields is before include. If include defines
+   * names used by fields, then include is before fields. If both fields and
+   * include define and use names from the other, then we cannot determine
+   * an order. If order cannot be defined emit an error message and continue
+   * processing assuming fields is after include.
+   *
+   * @param includeList provides the list of includes, cannot be null.
+   * @param fieldsList provides the list of fields, cannot be null.
+   * @return returns whether fields is before includes.
+   */
+  private boolean fieldsBeforeIncludeWithoutLocation(DataList includeList, DataList fieldsList)
+  {
+    assert includeList != null;
+    assert fieldsList != null;
+
+    StringBuilder saveErrorMessageBuilder = _errorMessageBuilder;
+
+    DefinedAndReferencedNames includeNames = new DefinedAndReferencedNames().execute(includeList);
+    DefinedAndReferencedNames fieldsNames = new DefinedAndReferencedNames().execute(fieldsList);
+
+    boolean includeReferenceFields = includeNames.references(fieldsNames);
+    boolean fieldsReferenceInclude = fieldsNames.references(includeNames);
+
+    _errorMessageBuilder = saveErrorMessageBuilder;
+
+    boolean fieldsFirst;
+
+    if (includeReferenceFields == true && fieldsReferenceInclude == true)
+    {
+      startErrorMessage(includeList).append("Cannot determine whether include is before fields without location, include is assumed to be before fields");
+      fieldsFirst = false;
+    }
+    else
+    {
+      fieldsFirst = includeReferenceFields;
+    }
+
+    return fieldsFirst;
+  }
+
+  private class DefinedAndReferencedNames
+  {
+    private final StringBuilder _stringBuilder = new StringBuilder();
+    private final Set<Name> _defines = new HashSet<Name>();
+    private final Set<Name> _references = new HashSet<Name>();
+
+    /**
+     * Parse list of schemas for defined and referenced names.
+     *
+     * @param list provides the Data representation of a list of schemas.
+     * @return this instance.
+     */
+    private DefinedAndReferencedNames execute(DataList list)
+    {
+      StringBuilder saveErrorMessageBuilder = _errorMessageBuilder;
+      _errorMessageBuilder = _stringBuilder;
+      parseList(list);
+      _errorMessageBuilder = saveErrorMessageBuilder;
+      return this;
+    }
+
+    /**
+     * Returns true if this instance's references one of the names defined in other.
+     */
+    private boolean references(DefinedAndReferencedNames other)
+    {
+      for (Object ref : _references)
+      {
+        if (other._defines.contains(ref))
+        {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    /**
+     * Parse for defined and referenced names.
+     *
+     * @param object provides the Data representation of the schema, may be null.
+     */
+    private void parseObject(Object object)
+    {
+      if (object == null)
+      {
+        return;
+      }
+
+      Class<?> objectClass = object.getClass();
+
+      if (objectClass == String.class)
+      {
+        String text = (String) object;
+        DataSchema primitiveSchema = DataSchemaUtil.typeStringToPrimitiveDataSchema(text);
+        if (primitiveSchema == null)
+        {
+          Name name = new Name(text, getCurrentNamespace(), errorMessageBuilder());
+          _references.add(name);
+        }
+      }
+      else if (objectClass == DataList.class)
+      {
+        parseList((DataList) object);
+      }
+      else if (objectClass == DataMap.class)
+      {
+        parseMap((DataMap) object);
+      }
+    }
+
+    /**
+     * Parse list of schemas for defined and referenced names.
+     *
+     * @param list provides the Data representation of a list of schemas.
+     */
+    private void parseList(DataList list)
+    {
+      for (Object o : list)
+      {
+        parseObject(o);
+      }
+    }
+
+    /**
+     * Parse schema represented by a {@link DataMap}.
+     *
+     * @param map provides the {@link DataMap} representation of the schema.
+     */
+    private void parseMap(DataMap map)
+    {
+      Object typeValue = map.get(TYPE_KEY);
+      if (typeValue != null)
+      {
+        Class<?> typeClass = typeValue.getClass();
+        if (typeClass == DataMap.class)
+        {
+          parseObject(typeValue);
+        }
+        else if (typeClass == DataList.class)
+        {
+          parseList((DataList) typeValue);
+        }
+        else if (typeClass == String.class)
+        {
+          String typeString = (String) typeValue;
+          DataSchema.Type type = DataSchemaUtil.typeStringToComplexDataSchemaType(typeString);
+          if (type == null)
+          {
+            parseObject(typeString);
+          }
+          else
+          {
+            parseComplex(map, type);
+          }
+        }
+      }
+    }
+
+    /**
+     * Parse schema for definitions and references.
+     *
+     * @param map provides the {@link DataMap} representation of the schema.
+     * @param type provides the type of the schema.
+     */
+    private void parseComplex(DataMap map, DataSchema.Type type)
+    {
+      String saveCurrentNamespace = getCurrentNamespace();
+
+      if (NAMED_DATA_SCHEMA_TYPE_SET.contains(type))
+      {
+        Name name = getNameFromDataMap(map, NAME_KEY, saveCurrentNamespace);
+        _defines.add(name);
+        setCurrentNamespace(name.getNamespace());
+        List<Name> aliasNames = getAliases(map);
+        if (aliasNames != null)
+        {
+          _defines.addAll(aliasNames);
+        }
+      }
+      switch (type)
+      {
+        case ARRAY:
+          Object items = map.get(ITEMS_KEY);
+          parseObject(items);
+          break;
+        case MAP:
+          Object values = map.get(VALUES_KEY);
+          parseObject(values);
+          break;
+        case TYPEREF:
+          Object ref = map.get(REF_KEY);
+          parseObject(ref);
+          break;
+        case RECORD:
+          DataList includeList = getDataList(map, INCLUDE_KEY, false);
+          if (includeList != null)
+          {
+            parseList(includeList);
+          }
+          DataList fieldsList = getDataList(map, FIELDS_KEY, true);
+          if (fieldsList != null)
+          {
+            for (Object o : fieldsList)
+            {
+              if (o.getClass() == DataMap.class)
+              {
+                DataMap fieldMap = (DataMap) o;
+                Object fieldType = fieldMap.get(TYPE_KEY);
+                parseObject(fieldType);
+              }
+            }
+          }
+          break;
+        default:
+          // do nothing
+      }
+
+      setCurrentNamespace(saveCurrentNamespace);
+    }
+
+    @Override
+    public String toString()
+    {
+      return "defines=" + _defines + " references=" + _references + (_errorMessageBuilder.length() > 0 ? " messages=" + _errorMessageBuilder : "");
+    }
   }
 
   /**
@@ -739,11 +1000,11 @@ public class SchemaParser extends AbstractDataParser
    * and return a "null" type.
    *
    * @param map to parse.
-   * @return the type determined from the "type" field.
+   * @return the type determined from the "type" field or null if type is not valid.
    */
   protected DataSchema.Type getType(DataMap map)
   {
-    DataSchema.Type type = DataSchema.Type.NULL;
+    DataSchema.Type type = null;
     String s = getString(map, TYPE_KEY, true);
     if (s != null)
     {
@@ -754,7 +1015,15 @@ public class SchemaParser extends AbstractDataParser
       }
       else
       {
-        startErrorMessage(map).append("\"").append(s).append("\" is an invalid type.\n");
+        DataSchema primitiveDataSchema = DataSchemaUtil.typeStringToPrimitiveDataSchema(s);
+        if (primitiveDataSchema != null)
+        {
+          type = primitiveDataSchema.getType();
+        }
+        else
+        {
+          startErrorMessage(map).append("\"").append(s).append("\" is an invalid type.\n");
+        }
       }
     }
     return type;
@@ -835,5 +1104,4 @@ public class SchemaParser extends AbstractDataParser
   private final Map<Object, DataLocation> _dataLocationMap = new IdentityHashMap<Object, DataLocation>();
   private StringBuilder _errorMessageBuilder = new StringBuilder();
   private ValidationOptions _validationOptions = new ValidationOptions(RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT, CoercionMode.NORMAL);
-
 }

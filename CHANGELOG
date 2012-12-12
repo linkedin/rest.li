@@ -1,5 +1,8 @@
 1.7.1
 -----
+(RB=)
+Infer order of include and fields properties of record if location information is not available.
+
 (RB=120925)
 Add requisite maven configuration and pom generation to root build.gradle to enable releasing pegasus 
 to maven central.
