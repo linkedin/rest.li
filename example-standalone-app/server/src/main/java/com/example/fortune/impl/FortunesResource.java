@@ -14,11 +14,11 @@
    limitations under the License.
 */
 
-package com.linkedin.restli.example.impl;
+package com.example.fortune.impl;
 
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
-import com.linkedin.restli.example.Fortune;
+import com.example.fortune.Fortune;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,9 +27,9 @@ import java.util.Map;
  *
  * @author Doug Young
  */
-@RestLiCollection(name = "fortune", namespace = "com.linkedin.restli.example")
+@RestLiCollection(name = "fortunes", namespace = "com.example.fortune")
 
-public class FortuneResource extends CollectionResourceTemplate<Long, Fortune>
+public class FortunesResource extends CollectionResourceTemplate<Long, Fortune>
 {
   // Create trivial db for fortunes
   static Map<Long, String> fortunes = new HashMap<Long, String>();

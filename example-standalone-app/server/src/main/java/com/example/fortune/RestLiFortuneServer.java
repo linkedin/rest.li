@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-package com.linkedin.restli.example;
+package com.example.fortune;
 
 
 import com.linkedin.r2.transport.http.server.HttpServer;
@@ -35,7 +35,7 @@ public class RestLiFortuneServer
     // Create a config that supplies a path to our Resources.
     // Resources will be loaded and used automatically
     RestLiConfig config = new RestLiConfig();
-    config.addResourcePackageNames("com.linkedin.restli.example.impl");
+    config.addResourcePackageNames("com.example.fortune.impl");
 
     // Create and run an HTTP server on port 7279 for the RestLiServer
     HttpServer server = new HttpServerFactory()

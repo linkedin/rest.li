@@ -2,10 +2,9 @@ apply plugin: 'pegasus'
 apply plugin: 'java'
 
 dependencies {
-  compile "com.linkedin.pegasus:restli-client:1.6.14"
-  dataTemplateCompile "com.linkedin.pegasus:data:1.6.14"
-  dataTemplateGenerator "com.linkedin.pegasus:generator:1.6.14"
-  
-  restClientCompile "com.linkedin.pegasus:restli-client:1.6.14"
-  restTools "com.linkedin.pegasus:restli-tools:1.6.14"
+  compile "com.linkedin.pegasus:restli-client:1.7.0"
+  dataTemplateCompile "com.linkedin.pegasus:data:1.7.0"
+  dataTemplateGenerator "com.linkedin.pegasus:generator:1.7.0"
+  restClientCompile "com.linkedin.pegasus:restli-client:1.7.0"
+  restTools "com.linkedin.pegasus:restli-tools:1.7.0"
 }

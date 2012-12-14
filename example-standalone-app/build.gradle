@@ -1,13 +1,16 @@
- apply plugin: 'idea'
- apply plugin: 'eclipse'
+apply plugin: 'idea'
+apply plugin: 'eclipse'
 
 buildscript {
   repositories {
     mavenLocal()
     mavenCentral()
+    maven { 
+       url "https://oss.sonatype.org/content/repositories/comlinkedin-461/"
+    }
   }
   dependencies {
-    classpath group: 'com.linkedin.pegasus', name: 'gradle-plugins', version: '1.6.14'
+    classpath group: 'com.linkedin.pegasus', name: 'gradle-plugins', version: '1.7.0'
   }
 }
 
@@ -22,5 +25,8 @@ subprojects {
   repositories {
     mavenLocal()
     mavenCentral()
+    maven { 
+       url "https://oss.sonatype.org/content/repositories/comlinkedin-461/"
+    }
   }
 }

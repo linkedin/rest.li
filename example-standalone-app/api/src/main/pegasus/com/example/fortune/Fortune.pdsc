@@ -1,7 +1,7 @@
 {
   "type": "record",
   "name": "Fortune",
-  "namespace": "com.linkedin.restli.example",
+  "namespace": "com.example.fortune",
   "doc": "Generate a fortune cookie",
   "fields": [
     {
