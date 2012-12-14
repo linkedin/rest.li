@@ -1,0 +1,23 @@
+apply plugin: 'java'
+
+dependencies {
+  compile project(path: ':api', configuration: 'restClient')
+
+  compile "com.linkedin.pegasus:pegasus-common:1.6.14"
+  compile "com.linkedin.pegasus:r2:1.6.14"
+  compile "com.linkedin.pegasus:d2:1.6.14"
+  compile "com.linkedin.pegasus:restli-client:1.6.14"
+  compile "com.linkedin.pegasus:data:1.6.14"
+  compile "com.linkedin.pegasus:restli-common:1.6.14"
+  compile "log4j:log4j:1.2.15"
+  testCompile "org.testng:testng:6.4"
+  testCompile "org.easymock:easymock:3.1"
+  testCompile "commons-httpclient:commons-httpclient:3.1"
+}
+
+
+task startExampleBasicClient(type: JavaExec, dependsOn: 'build') {
+  main = 'com.linkedin.restli.example.RestLiExampleBasicClient'
+  classpath = sourceSets.main.runtimeClasspath
+  args ''
+}

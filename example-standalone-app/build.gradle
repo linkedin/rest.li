@@ -1,0 +1,26 @@
+ apply plugin: 'idea'
+ apply plugin: 'eclipse'
+
+buildscript {
+  repositories {
+    mavenLocal()
+    mavenCentral()
+  }
+  dependencies {
+    classpath group: 'com.linkedin.pegasus', name: 'gradle-plugins', version: '1.6.14'
+  }
+}
+
+subprojects {
+  apply plugin: 'eclipse'
+  apply plugin: 'maven'
+  apply plugin: 'idea'
+  apply plugin: 'eclipse'
+
+  sourceCompatibility = JavaVersion.VERSION_1_6
+
+  repositories {
+    mavenLocal()
+    mavenCentral()
+  }
+}
