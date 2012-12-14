@@ -1,4 +1,4 @@
-1.7.1
+1.7.2
 -----
 (RB=120743)
 Infer order of include and fields properties of record if location information is not available.
@@ -20,6 +20,10 @@ helps in the short term).
 (RB=119121)
 Fixed an issue where Actions that declare their return types as primitives (return int instead of
 Integer, for example) no longer fail while trying to coercer the response into the correct type.
+
+1.7.1
+-----
+Bad build, not published
 
 1.7.0
 -----
