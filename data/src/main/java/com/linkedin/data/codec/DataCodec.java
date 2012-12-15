@@ -36,6 +36,7 @@ public interface DataCodec
    * @return the encoding used to encode serialized strings.
    */
   public String getStringEncoding();
+
   /**
    * Serialize a {@link DataMap} to a byte array.
    *
@@ -44,8 +45,9 @@ public interface DataCodec
    * @throws IOException if there is a serialization error.
    */
   public byte[] mapToBytes(DataMap map) throws IOException;
+
   /**
-   * De-serialize a byte array to a DataMap.
+   * De-serialize a byte array to a {@link DataMap}.
    *
    * @param input to de-serialize.
    * @return the DataMap de-serialized from the input.

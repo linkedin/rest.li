@@ -19,6 +19,7 @@ package com.linkedin.data;
 
 import com.linkedin.data.codec.BsonDataCodec;
 import com.linkedin.data.codec.DataCodec;
+import com.linkedin.data.codec.DataDecodingException;
 import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.codec.PsonDataCodec;
 import com.linkedin.data.collections.CheckedMap;
@@ -31,6 +32,7 @@ import java.io.PrintStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -1120,6 +1122,12 @@ public class TestData
     JacksonDataCodec codec = new JacksonDataCodec();
     testDataCodec(codec, referenceDataMap1);
 
+    DataList list1 = codec.bytesToList("[7,27,279]".getBytes());
+    assertEquals(list1, new DataList(Arrays.asList(7, 27, 279)));
+
+    DataList list2 = new DataList(Arrays.asList(321, 21, 1));
+    assertEquals(codec.listToBytes(list2), "[321,21,1]".getBytes());
+
     DataMap map3 = getMapFromJson(codec, "{ \"a\" : null }");
     // out.println(map3.getError());
     assertSame(map3.get("a"), Data.NULL);
@@ -1220,20 +1228,26 @@ public class TestData
     }
   }
 
-  @Test
-  public void testJacksonDataCodecErrors()
+  @Test(expectedExceptions = IOException.class)
+  public void testJacksonDataCodecErrorEmptyInput() throws IOException
   {
-    JacksonDataCodec codec = new JacksonDataCodec();
-    try
-    {
-      ByteArrayInputStream in = new ByteArrayInputStream(new byte[0]);
-      codec.readMap(in);
-      Assert.fail("expected IOException");
-    }
-    catch (IOException e)
-    {
-      //expected
-    }
+    final JacksonDataCodec codec = new JacksonDataCodec();
+    final ByteArrayInputStream in = new ByteArrayInputStream(new byte[0]);
+    codec.readMap(in);
+  }
+
+  @Test(expectedExceptions = DataDecodingException.class)
+  public void testJacksonDataCodecErrorToList() throws IOException
+  {
+    final JacksonDataCodec codec = new JacksonDataCodec();
+    codec.bytesToList("{\"A\": 1}".getBytes());
+  }
+
+  @Test(expectedExceptions = DataDecodingException.class)
+  public void testJacksonDataCodecErrorToMap() throws IOException
+  {
+    final JacksonDataCodec codec = new JacksonDataCodec();
+    codec.bytesToMap("[1, 2, 3]".getBytes());
   }
 
   /*

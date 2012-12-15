@@ -19,6 +19,7 @@ package com.linkedin.data.codec;
 
 import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
+import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import java.io.ByteArrayInputStream;
@@ -89,6 +90,18 @@ public class JacksonDataCodec implements DataCodec
     return objectToBytes(map);
   }
 
+  /**
+   * Serialize a {@link DataList} to a byte array.
+   *
+   * @param list to serialize.
+   * @return the output serialized from the {@link DataList}.
+   * @throws IOException if there is a serialization error.
+   */
+  public byte[] listToBytes(DataList list) throws IOException
+  {
+    return objectToBytes(list);
+  }
+
   protected byte[] objectToBytes(Object object) throws IOException
   {
     ByteArrayOutputStream out = new ByteArrayOutputStream(_defaultBufferSize);
@@ -99,8 +112,21 @@ public class JacksonDataCodec implements DataCodec
   @Override
   public DataMap bytesToMap(byte[] input) throws IOException
   {
-    Parser parser = new Parser();
-    return parser.parse(input);
+    final Parser parser = new Parser();
+    return parser.parse(new ByteArrayInputStream(input), DataMap.class);
+  }
+
+  /**
+   * De-serialize a byte array to a {@link DataList}.
+   *
+   * @param input to de-serialize.
+   * @return the DataList de-serialized from the input.
+   * @throws IOException if there is a de-serialization error.
+   */
+  public DataList bytesToList(byte[] input) throws IOException
+  {
+    final Parser parser = new Parser();
+    return parser.parse(new ByteArrayInputStream(input), DataList.class);
   }
 
   @Override
@@ -131,8 +157,8 @@ public class JacksonDataCodec implements DataCodec
   @Override
   public DataMap readMap(InputStream in) throws IOException
   {
-    Parser parser = new Parser();
-    return parser.parse(in);
+    final Parser parser = new Parser();
+    return parser.parse(in, DataMap.class);
   }
 
   @Deprecated
@@ -420,12 +446,7 @@ public class JacksonDataCodec implements DataCodec
       return list;
     }
 
-    DataMap parse(byte[] input) throws JsonParseException, IOException
-    {
-      return parse(new ByteArrayInputStream(input));
-    }
-
-    DataMap parse(InputStream in) throws IOException
+    <T extends DataComplex> T parse(InputStream in, Class<T> expectType) throws IOException
     {
       _errorBuilder = null;
       if (_debug)
@@ -434,18 +455,44 @@ public class JacksonDataCodec implements DataCodec
       }
 
       _parser = _jsonFactory.createJsonParser(in);
-      JsonToken token = _parser.nextToken();
-      if (! JsonToken.START_OBJECT.equals(token))
+      final JsonToken token = _parser.nextToken();
+      final T result;
+      if (expectType == DataMap.class)
       {
-        throw new DataDecodingException("Missing JSON start token");
+        if (!JsonToken.START_OBJECT.equals(token))
+        {
+          throw new DataDecodingException("JSON text for object must start with \"{\".\"");
+        }
+
+        final DataMap map = new DataMap();
+        parseDataMap(map);
+        if (_errorBuilder != null)
+        {
+          map.addError(_errorBuilder.toString());
+        }
+        result = expectType.cast(map);
       }
-      DataMap map = new DataMap();
-      parseDataMap(map);
-      if (_errorBuilder != null)
+      else if (expectType == DataList.class)
       {
-        map.addError(_errorBuilder.toString());
+        if (!JsonToken.START_ARRAY.equals(token))
+        {
+          throw new DataDecodingException("JSON text for array must start with \"[\".\"");
+        }
+
+        final DataList list = new DataList();
+        parseDataList(list);
+        if (_errorBuilder != null)
+        {
+          //list.addError(_errorBuilder.toString());
+        }
+        result = expectType.cast(list);
       }
-      return map;
+      else
+      {
+        throw new DataDecodingException("Expected type must be either DataMap or DataList.");
+      }
+
+      return result;
     }
 
     private DataLocation currentDataLocation()
