@@ -19,13 +19,11 @@ package com.linkedin.restli.server.test;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.DynamicRecordMetadata;
-import com.linkedin.data.template.DynamicRecordTemplate;
 import com.linkedin.data.template.FieldDef;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.restli.server.ActionResult;
 import com.linkedin.restli.server.GetResult;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -214,7 +212,7 @@ public class TestRestLiResponseHandler
                                      new CollectionResult<Status, CollectionMetadata>(buildStatusList(5), 10, metadata));
     checkCollectionResponse(response, 5, 0, 5, 1, 10, null, null);
     CollectionResponse<Status> collectionResponse =
-      DataMapUtils.readCollectionResponse(new ByteArrayInputStream(response.getEntity().asAvroString().getBytes()),
+      DataMapUtils.readCollectionResponse(response.getEntity().asInputStream(),
                                           Status.class);
     assertEquals(new CollectionMetadata(collectionResponse.getMetadataRaw()), metadata);
 
@@ -327,7 +325,7 @@ public class TestRestLiResponseHandler
 
     checkResponse(response, 400, 3, ErrorResponse.class.getName(), null, true, true);
     DataMap dataMap =
-        DataMapUtils.readMap(new ByteArrayInputStream(response.getEntity().asAvroString().getBytes()));
+        DataMapUtils.readMap(response.getEntity().asInputStream());
 
     assertEquals(dataMap.getInteger("status"), Integer.valueOf(400));
     assertEquals(dataMap.getString("message"), "missing fields");
@@ -340,7 +338,7 @@ public class TestRestLiResponseHandler
 
     checkResponse(response, 400, 3, ErrorResponse.class.getName(), null, true, true);
     dataMap =
-        DataMapUtils.readMap(new ByteArrayInputStream(response.getEntity().asAvroString().getBytes()));
+        DataMapUtils.readMap(response.getEntity().asInputStream());
 
     assertEquals(dataMap.getInteger("status"), Integer.valueOf(400));
     assertEquals(dataMap.getString("message"), "missing fields");
@@ -467,7 +465,7 @@ public class TestRestLiResponseHandler
     checkResponse(response, 200, 3, CollectionResponse.class.getName(), null, true);
 
     DataMap dataMap =
-        DataMapUtils.readMap(new ByteArrayInputStream(response.getEntity().asAvroString().getBytes()));
+        DataMapUtils.readMap(response.getEntity().asInputStream());
     CollectionResponse<Status> collectionResponse = new CollectionResponse<Status>(dataMap, Status.class);
     assertEquals(collectionResponse.getElements().size(), 10);
     for (Status status : collectionResponse.getElements())
@@ -497,7 +495,7 @@ public class TestRestLiResponseHandler
     checkResponse(response, 200, 3, CollectionResponse.class.getName(), null, true);
 
     DataMap dataMap =
-        DataMapUtils.readMap(new ByteArrayInputStream(response.getEntity().asAvroString().getBytes()));
+        DataMapUtils.readMap(response.getEntity().asInputStream());
     CollectionResponse<Status> collectionResponse = new CollectionResponse<Status>(dataMap, Status.class);
     assertEquals(collectionResponse.getElements().size(), 10);
     for (Status status : collectionResponse.getElements())
@@ -527,7 +525,7 @@ public class TestRestLiResponseHandler
     checkResponse(response, 200, 3, BatchResponse.class.getName(), Status.class.getName(), true);
 
     DataMap dataMap =
-        DataMapUtils.readMap(new ByteArrayInputStream(response.getEntity().asAvroString().getBytes()));
+        DataMapUtils.readMap(response.getEntity().asInputStream());
     BatchResponse<Status> batchResponse = new BatchResponse<Status>(dataMap, Status.class);
     assertEquals(batchResponse.getResults().size(), 10);
     for (Status status : batchResponse.getResults().values())
@@ -827,7 +825,7 @@ public class TestRestLiResponseHandler
                                        String nextLink)
   {
     CollectionResponse<Status> collectionResponse =
-      DataMapUtils.readCollectionResponse(new ByteArrayInputStream(response.getEntity().asAvroString().getBytes()),
+      DataMapUtils.readCollectionResponse(response.getEntity().asInputStream(),
                                           Status.class);
 
     assertEquals(collectionResponse.getElements().size(), numElements);

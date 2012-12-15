@@ -17,6 +17,7 @@
 package com.linkedin.data.template;
 
 import com.linkedin.data.ByteString;
+import com.linkedin.data.Data;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.DataSchema;
@@ -285,7 +286,7 @@ public class DataTemplateUtil
   public static DataSchema parseSchema(String schemaText, DataSchemaResolver schemaResolver) throws IllegalArgumentException
   {
     SchemaParser parser = SchemaParserFactory.instance().create(schemaResolver);
-    parser.parse(new ByteArrayInputStream(schemaText.getBytes()));
+    parser.parse(new ByteArrayInputStream(schemaText.getBytes(Data.UTF_8_CHARSET)));
     if (parser.hasError())
     {
       if (debug)

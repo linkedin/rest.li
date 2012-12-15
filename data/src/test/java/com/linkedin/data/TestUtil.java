@@ -16,7 +16,6 @@
 
 package com.linkedin.data;
 
-import com.linkedin.data.codec.DataCodec;
 import com.linkedin.data.codec.DataLocation;
 import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.schema.DataSchema;
@@ -33,7 +32,6 @@ import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -108,7 +106,7 @@ public class TestUtil
 
   static public InputStream inputStreamFromString(String s) throws UnsupportedEncodingException
   {
-    byte[] bytes = s.getBytes("UTF-8");
+    byte[] bytes = s.getBytes(Data.UTF_8_CHARSET);
     ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
     return bais;
   }
@@ -164,7 +162,7 @@ public class TestUtil
 
   public static DataMap dataMapFromString(String json) throws IOException
   {
-    return codec.bytesToMap(json.getBytes());
+    return codec.bytesToMap(json.getBytes(Data.UTF_8_CHARSET));
   }
 
   public static boolean deleteRecursive(String path, boolean debug) throws FileNotFoundException
@@ -228,7 +226,7 @@ public class TestUtil
       File parentFile = file.getParentFile();
       parentFile.mkdirs();
       FileOutputStream outputStream = new FileOutputStream(file);
-      outputStream.write(entry.getValue().getBytes());
+      outputStream.write(entry.getValue().getBytes(Data.UTF_8_CHARSET));
       outputStream.close();
       result.put(file, entry);
     }
@@ -247,7 +245,7 @@ public class TestUtil
       if (debug) out.println("  adding " + filename);
       JarEntry jarEntry = new JarEntry(filename);
       jarStream.putNextEntry(jarEntry);
-      jarStream.write(entry.getValue().getBytes());
+      jarStream.write(entry.getValue().getBytes(Data.UTF_8_CHARSET));
     }
     jarStream.close();
     jarFileStream.close();

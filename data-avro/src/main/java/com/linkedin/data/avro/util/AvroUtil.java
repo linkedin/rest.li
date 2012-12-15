@@ -16,56 +16,58 @@
 
 package com.linkedin.data.avro.util;
 
+import com.linkedin.data.avro.AvroAdapter;
+import com.linkedin.data.avro.AvroAdapterFinder;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.Decoder;
-import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.io.Encoder;
-import org.apache.avro.io.JsonDecoder;
-import org.apache.avro.io.JsonEncoder;
 
 public class AvroUtil
 {
-  static public String jsonFromGenericRecord(GenericRecord record) throws IOException
+  public static String jsonFromGenericRecord(GenericRecord record) throws IOException
   {
     GenericDatumWriter<GenericRecord> writer = new GenericDatumWriter<GenericRecord>();
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    Encoder jsonEncoder = new JsonEncoder(record.getSchema(), outputStream);
+    AvroAdapter avroAdapter = AvroAdapterFinder.getAvroAdapter();
+    Encoder jsonEncoder = avroAdapter.createJsonEncoder(record.getSchema(), outputStream);
     writer.setSchema(record.getSchema());
     writer.write(record, jsonEncoder);
     jsonEncoder.flush();
     return outputStream.toString();
   }
 
-  static public byte[] bytesFromGenericRecord(GenericRecord record) throws IOException
+  public static byte[] bytesFromGenericRecord(GenericRecord record) throws IOException
   {
     GenericDatumWriter<GenericRecord> writer = new GenericDatumWriter<GenericRecord>();
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    Encoder binaryEncoder = new BinaryEncoder(outputStream);
+    AvroAdapter avroAdapter = AvroAdapterFinder.getAvroAdapter();
+    Encoder binaryEncoder = avroAdapter.createBinaryEncoder(outputStream);
     writer.setSchema(record.getSchema());
     writer.write(record, binaryEncoder);
     binaryEncoder.flush();
     return outputStream.toByteArray();
   }
 
-  static public GenericRecord genericRecordFromBytes(byte[] bytes, Schema schema) throws IOException
+  public static GenericRecord genericRecordFromBytes(byte[] bytes, Schema schema) throws IOException
   {
     GenericDatumReader<GenericRecord> reader = new GenericDatumReader<GenericRecord>();
-    Decoder binaryDecoder = DecoderFactory.defaultFactory().createBinaryDecoder(bytes, null);
+    AvroAdapter avroAdapter = AvroAdapterFinder.getAvroAdapter();
+    Decoder binaryDecoder = avroAdapter.createBinaryDecoder(bytes);
     reader.setSchema(schema);
     GenericRecord record = reader.read(null, binaryDecoder);
     return record;
   }
 
-  static public GenericRecord genericRecordFromJson(String json, Schema schema) throws IOException
+  public static GenericRecord genericRecordFromJson(String json, Schema schema) throws IOException
   {
     GenericDatumReader<GenericRecord> reader = new GenericDatumReader<GenericRecord>();
-    Decoder jsonDecoder = new JsonDecoder(schema, json);
+    AvroAdapter avroAdapter = AvroAdapterFinder.getAvroAdapter();
+    Decoder jsonDecoder = avroAdapter.createJsonDecoder(schema, json);
     reader.setSchema(schema);
     GenericRecord record = reader.read(null, jsonDecoder);
     return record;

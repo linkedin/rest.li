@@ -24,7 +24,6 @@ import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.SchemaParser;
 import java.io.IOException;
-import java.util.List;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.testng.annotations.Test;
@@ -38,8 +37,11 @@ import static org.testng.Assert.assertTrue;
 
 public class TestCustomAvroSchema
 {
-  private static final String ANYRECORD_AVRO_NAME =
+  private static final String ANYRECORD_AVRO_FULL_NAME =
     "\"com.linkedin.data.avro.test.avro.AvroAnyRecord\"";
+
+  private static final String ANYRECORD_AVRO_UNION_MEMBER =
+    "\"##NS(com.linkedin.data.avro.test.avro.)AvroAnyRecord\"";
 
   private static final String ANYRECORD_AVRO_SCHEMA_JSON =
     "    {\n" +
@@ -165,7 +167,7 @@ public class TestCustomAvroSchema
           "  \"optional\" : { \"Foo\" : { \"int\" : 2 } } " +
           "}",
           "{ " +
-          "  \"optional\" : { \"AvroAnyRecord\" : { \"type\" : \"Foo\", \"value\" : \"{\\\"int\\\":2}\" } }, " +
+          "  \"optional\" : { ##ANYRECORD_AVRO_UNION_MEMBER : { \"type\" : \"Foo\", \"value\" : \"{\\\"int\\\":2}\" } }, " +
           "}"
         },
         {
@@ -198,7 +200,7 @@ public class TestCustomAvroSchema
           "  \"union\" : { \"com.linkedin.data.avro.test.AnyRecord\" : { \"Foo\" : { \"int\" : 2 } } } " +
           "}",
           "{ " +
-          "  \"union\" : { \"AvroAnyRecord\" : { \"type\" : \"Foo\", \"value\" : \"{\\\"int\\\":2}\" } } " +
+          "  \"union\" : { ##ANYRECORD_AVRO_UNION_MEMBER : { \"type\" : \"Foo\", \"value\" : \"{\\\"int\\\":2}\" } } " +
           "}"
         },
         {
@@ -209,7 +211,7 @@ public class TestCustomAvroSchema
           "  \"union\" : { \"com.linkedin.data.avro.test.AnyRecord\" : { \"Foo\" : { \"int\" : 2 } } } " +
           "}",
           "{ " +
-          "  \"union\" : { \"AvroAnyRecord\" : { \"type\" : \"Foo\", \"value\" : \"{\\\"int\\\":2}\" } } " +
+          "  \"union\" : { ##ANYRECORD_AVRO_UNION_MEMBER : { \"type\" : \"Foo\", \"value\" : \"{\\\"int\\\":2}\" } } " +
           "}"
         },
         {
@@ -229,6 +231,8 @@ public class TestCustomAvroSchema
       String avroSchemaFieldsJson = (String) row[1];
       String dataJson = (String) row[2];
       String avroDataJson = (String) row[3];
+      avroDataJson = avroDataJson.replaceAll("##ANYRECORD_AVRO_UNION_MEMBER", ANYRECORD_AVRO_UNION_MEMBER);
+      avroDataJson = TestAvroUtil.namespaceProcessor(avroDataJson);
 
       translate(dataSchemaFieldsJson, avroSchemaFieldsJson, dataJson, avroDataJson);
 
@@ -247,7 +251,7 @@ public class TestCustomAvroSchema
     String avroSchemaFieldsJsonAfterVariableExpansion =
       avroSchemaFieldsJson
         .replace("##ANYRECORD_FULL_JSON", ANYRECORD_AVRO_SCHEMA_JSON)
-        .replace("##ANYRECORD_NAME", ANYRECORD_AVRO_NAME);
+        .replace("##ANYRECORD_NAME", ANYRECORD_AVRO_FULL_NAME);
     String fullAvroSchemaJson = AVRO_SCHEMA_JSON_TEMPLATE.replace("##FIELDS", avroSchemaFieldsJsonAfterVariableExpansion);
 
     SchemaParser parser = TestUtil.schemaParserFromString(fullSchemaJson);

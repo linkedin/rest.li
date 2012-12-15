@@ -89,7 +89,7 @@ public class SchemaTranslator
     String avroJson = avroSchema.toString();
     SchemaParser parser = SchemaParserFactory.instance().create(null);
     parser.getValidationOptions().setAvroUnionMode(true);
-    parser.parse(new ByteArrayInputStream(avroJson.getBytes()));
+    parser.parse(new ByteArrayInputStream(avroJson.getBytes(Data.UTF_8_CHARSET)));
     if (parser.hasError())
     {
       throw new IllegalArgumentException(parser.errorMessage());
@@ -118,7 +118,7 @@ public class SchemaTranslator
   {
     String jsonAvroSchema = dataToAvroSchemaJson(dataSchema, new DataToAvroSchemaTranslationOptions());
     // Avro Schema parser does not validate default values !!!
-    return Schema.parse(jsonAvroSchema);
+    return AvroAdapterFinder.getAvroAdapter().stringToAvroSchema(jsonAvroSchema);
   }
 
   /**
@@ -134,7 +134,7 @@ public class SchemaTranslator
   {
     String jsonAvroSchema = dataToAvroSchemaJson(dataSchema, options);
     // Avro Schema parser does not validate default values !!!
-    return Schema.parse(jsonAvroSchema);
+    return AvroAdapterFinder.getAvroAdapter().stringToAvroSchema(jsonAvroSchema);
   }
 
   /**

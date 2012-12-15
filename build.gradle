@@ -13,6 +13,7 @@ apply from: "${buildScriptDirPath}/configBuildScript.gradle"
 
 project.ext.externalDependency = [
   'avro': 'org.apache.avro:avro:1.4.0',
+  'avro_1_6': 'org.apache.avro:avro:1.6.3',
   'cglib': 'cglib:cglib-nodep:2.2',
   'codemodel': 'com.sun.codemodel:codemodel:2.2',
   'commonsCli': 'commons-cli:commons-cli:1.0',
@@ -23,6 +24,7 @@ project.ext.externalDependency = [
   'easymock': 'org.easymock:easymock:3.1',
   'googleCollections': 'com.google.collections:google-collections:1.0-rc2',
   'jacksonCoreAsl': 'org.codehaus.jackson:jackson-core-asl:1.4.2',
+  'jacksonCoreAsl_1_8': 'org.codehaus.jackson:jackson-core-asl:1.8.8',
   'jacksonMapperAsl': 'org.codehaus.jackson:jackson-mapper-asl:1.4.2',
   'javaxInject': 'javax.inject:javax.inject:1',
   'jdkTools': files("${System.getProperty('java.home')}/../lib/tools.jar"),

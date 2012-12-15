@@ -16,6 +16,7 @@
 
 package com.linkedin.data.schema.generator;
 
+import com.linkedin.data.Data;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -256,7 +257,7 @@ public class SchemaSampleDataGenerator
         data = Math.random() > .5 ? true : false;
         break;
       case BYTES:
-        data = ByteString.copy("some bytes".getBytes());
+        data = ByteString.copy("some bytes".getBytes(Data.UTF_8_CHARSET));
         break;
       case DOUBLE:
         data = Math.random() * 100;

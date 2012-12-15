@@ -17,6 +17,7 @@
 package com.linkedin.data.schema.resolver;
 
 
+import com.linkedin.data.Data;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
 import com.linkedin.data.schema.DataSchema;
@@ -93,7 +94,7 @@ public class TestDataSchemaResolver
                                                 StringBuilder errorMessageBuilder)
     {
       String input = _map.get(((MapResolverLocation) location).getMapKey());
-      return input == null ? null : new ByteArrayInputStream(input.getBytes());
+      return input == null ? null : new ByteArrayInputStream(input.getBytes(Data.UTF_8_CHARSET));
     }
 
     public static class MapResolverLocation implements DataSchemaLocation

@@ -46,7 +46,7 @@ public class TestDataTranslator
   public static final String ONE_WAY = "ONE_WAY";
 
   @Test
-  public void TestDataTranslator() throws IOException
+  public void testDataTranslator() throws IOException
   {
     boolean debug = false;
 
@@ -471,7 +471,7 @@ public class TestDataTranslator
         },
         {
           "{ \"unionRequired\" : { \"foo.Foo\" : { \"unionRequired\" : { \"int\" : 5 } } } }",
-          "{\"unionRequired\":{\"Foo\":{\"unionRequired\":{\"int\":5}}}}"
+          "{\"unionRequired\":{\"##NS(foo.)Foo\":{\"unionRequired\":{\"int\":5}}}}"
         },
         {
           "{ }",
@@ -661,11 +661,11 @@ public class TestDataTranslator
         },
         {
           "{ \"enumOptional\" : \"A\" } }",
-          "{\"enumOptional\":{\"bar\":\"A\"}}"
+          "{\"enumOptional\":{\"##NS(foo.)bar\":\"A\"}}"
         },
         {
           "{ \"enumOptional\" : \"B\" } }",
-          "{\"enumOptional\":{\"bar\":\"B\"}}"
+          "{\"enumOptional\":{\"##NS(foo.)bar\":\"B\"}}"
         },
         {
           "{ \"enumOptional\" : {} }",
@@ -693,11 +693,11 @@ public class TestDataTranslator
         },
         {
           "{ \"enumOptional\" : \"A\" } }",
-          "{\"enumOptional\":{\"bar\":\"A\"}}"
+          "{\"enumOptional\":{\"##NS(foo.)bar\":\"A\"}}"
         },
         {
           "{ \"enumOptional\" : \"B\" } }",
-          "{\"enumOptional\":{\"bar\":\"B\"}}"
+          "{\"enumOptional\":{\"##NS(foo.)bar\":\"B\"}}"
         },
         {
           "{ \"enumOptional\" : {} }",
@@ -825,7 +825,11 @@ public class TestDataTranslator
       {
         if (debug) out.println(col + " Test:" + row[col][i]);
         if (debug && exc != null && result.contains(row[col][i]) == false) exc.printStackTrace(out);
-        assertTrue(result.contains(row[col][i]));
+        String expectedBeforeNamespaceProcessor  = row[col][i];
+        String expected = TestAvroUtil.namespaceProcessor(expectedBeforeNamespaceProcessor);
+        if (debug && expected != expectedBeforeNamespaceProcessor) out.println(" Expected:" + expected);
+
+        assertTrue(result.contains(expected));
       }
 
       if (avroRecord != null)

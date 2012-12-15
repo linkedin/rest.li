@@ -17,6 +17,7 @@
 package com.linkedin.restli.tools.idlcheck;
 
 
+import com.linkedin.data.Data;
 import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.restli.restspec.AssocKeySchema;
@@ -124,7 +125,7 @@ public class TestRestLiResourceModelCompatibilityChecker
   public void testFailCollectionFile()
   {
     final SchemaParser sp = new SchemaParser();
-    sp.parse(new ByteArrayInputStream("\"StringRef\"".getBytes()));
+    sp.parse(new ByteArrayInputStream("\"StringRef\"".getBytes(Data.UTF_8_CHARSET)));
 
     final Collection<CompatibilityInfo> testErrors = new HashSet<CompatibilityInfo>();
     testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "identifier", "params"),

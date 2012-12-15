@@ -19,6 +19,7 @@ package com.linkedin.data;
 
 import com.linkedin.util.ArgumentUtil;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -106,6 +107,11 @@ public class Data
    * Constant value used to indicate that a null value was de-serialized.
    */
   public static final Null NULL = Null.getInstance();
+
+  /**
+   * Charset UTF-8
+   */
+  public static final Charset UTF_8_CHARSET = Charset.forName("UTF-8");
 
   /**
    * Callback interface invoked by traverse method.

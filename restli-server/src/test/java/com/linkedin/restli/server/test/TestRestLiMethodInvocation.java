@@ -20,6 +20,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.ByteString;
+import com.linkedin.data.Data;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.DataTemplateUtil;
@@ -1171,7 +1172,7 @@ public class TestRestLiMethodInvocation
 
     RestRequest request =
             new RestRequestBuilder(new URI("/accounts?action=register"))
-                    .setMethod("POST").setEntity(jsonEntityBody.getBytes())
+                    .setMethod("POST").setEntity(jsonEntityBody.getBytes(Data.UTF_8_CHARSET))
                     .build();
 
     RoutingResult routingResult = new RoutingResult(new ResourceContextImpl(null, request,
@@ -1201,7 +1202,7 @@ public class TestRestLiMethodInvocation
 
     RestRequest request =
             new RestRequestBuilder(new URI("/accounts?action=spamTweets"))
-                    .setMethod("POST").setEntity(jsonEntityBody.getBytes())
+                    .setMethod("POST").setEntity(jsonEntityBody.getBytes(Data.UTF_8_CHARSET))
                     .build();
 
     RoutingResult routingResult = new RoutingResult(new ResourceContextImpl(null, request,
@@ -1710,7 +1711,7 @@ public class TestRestLiMethodInvocation
       RestRequestBuilder builder = new RestRequestBuilder(new URI(uri)).setMethod(httpMethod);
       if (entityBody != null)
       {
-        builder.setEntity(entityBody.getBytes());
+        builder.setEntity(entityBody.getBytes(Data.UTF_8_CHARSET));
       }
       RestRequest request = builder.build();
       RoutingResult routingResult = new RoutingResult(new ResourceContextImpl(pathkeys, request,
@@ -1795,7 +1796,7 @@ public class TestRestLiMethodInvocation
           new RestRequestBuilder(new URI(uri)).setMethod(httpMethod);
       if (entityBody != null)
       {
-        builder.setEntity(entityBody.getBytes());
+        builder.setEntity(entityBody.getBytes(Data.UTF_8_CHARSET));
       }
       RestRequest request = builder.build();
       RoutingResult routingResult =

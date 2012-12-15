@@ -1112,7 +1112,7 @@ public class TestData
 
   private DataMap getMapFromJson(JacksonDataCodec codec, String input) throws JsonParseException, IOException
   {
-    byte[] bytes = input.getBytes();
+    byte[] bytes = input.getBytes(Data.UTF_8_CHARSET);
     return codec.bytesToMap(bytes);
   }
 

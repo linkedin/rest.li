@@ -38,7 +38,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.avro.Schema;
@@ -219,7 +218,7 @@ public class DataTranslator implements DataTranslatorContext
           result = ((Number) value).doubleValue();
           break;
         case STRING:
-          result = ((Utf8) value).toString();
+          result = value.toString();
           break;
         case BYTES:
           ByteBuffer byteBuffer = (ByteBuffer) value;
@@ -391,6 +390,7 @@ public class DataTranslator implements DataTranslatorContext
   private static class DataMapToGenericRecordTranslator extends DataTranslator
   {
     private static final Object BAD_RESULT = CustomDataTranslator.AVRO_BAD_RESULT;
+    private final AvroAdapter _avroAdapter = AvroAdapterFinder.getAvroAdapter();
 
     private Object translate(Object value, DataSchema dataSchema, Schema avroSchema)
     {
@@ -444,7 +444,7 @@ public class DataTranslator implements DataTranslatorContext
             result = BAD_RESULT;
             break;
           }
-          result = new GenericData.EnumSymbol(enumValue);
+          result = _avroAdapter.createEnumSymbol(avroSchema, enumValue);
           break;
         case FIXED:
           byte[] bytes = translateBytes(value);

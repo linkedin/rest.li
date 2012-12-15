@@ -17,6 +17,7 @@
 package com.linkedin.data.schema.util;
 
 
+import com.linkedin.data.Data;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.schema.DataSchema;
@@ -50,7 +51,7 @@ class Conversions
     String inputSchemaAsString = schema.toString();
     try
     {
-      ByteArrayInputStream inputStream = new ByteArrayInputStream(inputSchemaAsString.getBytes("UTF-8"));
+      ByteArrayInputStream inputStream = new ByteArrayInputStream(inputSchemaAsString.getBytes(Data.UTF_8_CHARSET));
       JacksonDataCodec codec = new JacksonDataCodec();
       DataMap schemaAsDataMap = codec.readMap(inputStream);
       return schemaAsDataMap;

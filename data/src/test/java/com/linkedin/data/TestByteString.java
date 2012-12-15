@@ -74,9 +74,9 @@ public class TestByteString
   @Test
   public void testAsString() throws UnsupportedEncodingException
   {
-    final byte[] bytes = "test string".getBytes("UTF-8");
+    final byte[] bytes = "test string".getBytes(Data.UTF_8_CHARSET);
     final ByteString bs = ByteString.copy(bytes);
-    Assert.assertEquals("test string", bs.asString("UTF-8"));
+    Assert.assertEquals("test string", bs.asString(Data.UTF_8_CHARSET));
   }
 
   @Test

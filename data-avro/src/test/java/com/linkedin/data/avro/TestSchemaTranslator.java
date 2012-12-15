@@ -17,6 +17,7 @@
 package com.linkedin.data.avro;
 
 
+import com.linkedin.data.Data;
 import com.linkedin.data.TestUtil;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.JsonBuilder;
@@ -37,10 +38,11 @@ import static org.testng.Assert.*;
 
 public class TestSchemaTranslator
 {
+
   static public GenericRecord genericRecordFromString(String jsonString, Schema writerSchema, Schema readerSchema) throws IOException
   {
     GenericDatumReader<GenericRecord> reader = new GenericDatumReader<GenericRecord>(writerSchema, readerSchema);
-    byte[] bytes = jsonString.getBytes("UTF-8");
+    byte[] bytes = jsonString.getBytes(Data.UTF_8_CHARSET);
     Decoder binaryDecoder = DecoderFactory.defaultFactory().createBinaryDecoder(bytes, null);
     GenericRecord record = reader.read(null, binaryDecoder);
     return record;
@@ -1271,7 +1273,7 @@ public class TestSchemaTranslator
 
       SchemaParser parser = new SchemaParser();
       parser.getValidationOptions().setAvroUnionMode(true);
-      InputStream stream = new ByteArrayInputStream(readerSchemaText.getBytes());
+      InputStream stream = new ByteArrayInputStream(readerSchemaText.getBytes(Data.UTF_8_CHARSET));
       parser.parse(stream);
       if (debug) System.out.println(parser.errorMessage());
       assertFalse(parser.hasError());

@@ -16,6 +16,7 @@
 
 package com.linkedin.data.schema.generator;
 
+import com.linkedin.data.Data;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
 import com.linkedin.data.schema.DataSchema;
@@ -120,7 +121,7 @@ public class TestAbstractGenerator
           generatedFile.getParentFile().mkdirs();
           if (_debug) out.println((generatedFile.exists() ? "exists " : "does not exist ") + generatedFile + " lastModified " + generatedFile.lastModified());
           FileOutputStream os = new FileOutputStream(generatedFile);
-          os.write(schema.toString().getBytes());
+          os.write(schema.toString().getBytes(Data.UTF_8_CHARSET));
           os.close();
           if (_debug) out.println("generated " + generatedFile);
         }

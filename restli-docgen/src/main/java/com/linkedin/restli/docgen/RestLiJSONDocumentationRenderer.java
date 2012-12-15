@@ -17,6 +17,7 @@
 package com.linkedin.restli.docgen;
 
 
+import com.linkedin.data.Data;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.schema.NamedDataSchema;
@@ -176,7 +177,7 @@ public class RestLiJSONDocumentationRenderer implements RestLiDocumentationRende
         while (schemaItr.hasNext())
         {
           final NamedDataSchema currResource = (NamedDataSchema) schemaItr.next().getObject();
-          relatedSchemas.put(currResource.getFullName(), _codec.bytesToMap(currResource.toString().getBytes()));
+          relatedSchemas.put(currResource.getFullName(), _codec.bytesToMap(currResource.toString().getBytes(Data.UTF_8_CHARSET)));
         }
         _relatedSchemaCache.put(resourceSchema, relatedSchemas);
       }
@@ -207,7 +208,7 @@ public class RestLiJSONDocumentationRenderer implements RestLiDocumentationRende
   private void renderDataModel(NamedDataSchema schema, DataMap outputMap) throws IOException
   {
     final DataMap models = outputMap.getDataMap("models");
-    final DataMap schemaData = _codec.bytesToMap(schema.toString().getBytes());
+    final DataMap schemaData = _codec.bytesToMap(schema.toString().getBytes(Data.UTF_8_CHARSET));
     models.put(schema.getFullName(), schemaData);
   }
 

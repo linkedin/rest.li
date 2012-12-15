@@ -329,7 +329,7 @@ public class JacksonDataCodec implements DataCodec
     try
     {
       JsonFactory factory = new JsonFactory();
-      JsonParser parser = factory.createJsonParser(new ByteArrayInputStream(json.getBytes()));
+      JsonParser parser = factory.createJsonParser(new ByteArrayInputStream(json.getBytes(Data.UTF_8_CHARSET)));
       JsonToken token = parser.nextToken();
       assert(token == JsonToken.START_OBJECT);
       token = parser.nextToken();

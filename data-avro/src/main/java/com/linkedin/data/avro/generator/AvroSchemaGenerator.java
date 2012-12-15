@@ -20,6 +20,7 @@ package com.linkedin.data.avro.generator;
 import com.linkedin.data.avro.DataToAvroSchemaTranslationOptions;
 import com.linkedin.data.avro.OptionalDefaultMode;
 import com.linkedin.data.avro.SchemaTranslator;
+import com.linkedin.data.Data;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaLocation;
 import com.linkedin.data.schema.DataSchemaResolver;
@@ -179,7 +180,7 @@ public class AvroSchemaGenerator extends AbstractGenerator
       if (parentDir.isDirectory() == false)
         parentDir.mkdirs();
       FileOutputStream os = new FileOutputStream(generatedFile, false);
-      os.write(entry.getValue().getBytes());
+      os.write(entry.getValue().getBytes(Data.UTF_8_CHARSET));
       os.close();
     }
   }
