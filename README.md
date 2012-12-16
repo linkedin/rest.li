@@ -38,4 +38,4 @@ associations between entities.
 
 Getting Started
 ---------------
-Check our [wiki](wiki) and the [Quick Start Guide](Quick-Start-Guide.md).
+Check our [wiki](pegasus/wiki) and the [Quick Start Guide](pegasus/wiki/Quick-Start-Guide).
