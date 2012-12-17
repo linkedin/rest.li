@@ -29,8 +29,8 @@ import org.apache.avro.generic.GenericData;
  * that will be returned by calls to {@link #getAvroAdapter()}.
  * <p>
  * If neither system property has been specified, then the default chooser
- * (see {@link DefaultAvroAdapterChooser}) is used to determine the
- * appropriate builti-in {@link AvroAdapter} to use.
+ * built into this class will be used to determine the appropriate
+ * builti-in {@link AvroAdapter} to use.
  */
 public class AvroAdapterFinder
 {
