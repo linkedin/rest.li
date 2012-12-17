@@ -1,5 +1,10 @@
 1.7.3
 -----
+(RB=122016)
+Add support for Avro 1.6. To use Avro 1.6, depend on data-avro_1_6.
+Also fix getBytes() to explicitly specify UTF-8. This has no impact
+on platforms whose default encoding is UTF-8.
+
 (RB=121948)
 Add DataList serialization and deserialization to JacksonDataCodec.
 

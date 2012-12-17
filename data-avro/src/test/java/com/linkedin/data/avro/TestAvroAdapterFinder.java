@@ -2,7 +2,9 @@ package com.linkedin.data.avro;
 
 
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
@@ -16,11 +18,19 @@ public class TestAvroAdapterFinder
   private final String CHOOSER_PROPERTY = "com.linkedin.data.avro.AvroAdapterChooser";
   private final String ADAPTER_PROPERTY = "com.linkedin.data.avro.AvroAdapter";
 
-  @BeforeMethod
+  private final static AvroAdapter _avroAdapter = AvroAdapterFinder.getAvroAdapter();
+
+  @BeforeMethod @AfterMethod
   private void clearProperties()
   {
     System.clearProperty(CHOOSER_PROPERTY);
     System.clearProperty(ADAPTER_PROPERTY);
+  }
+
+  @Test
+  public void testDefaultAvroAdapter()
+  {
+    assertEquals(_avroAdapter.getClass(), AvroAdapter_1_4.class);
   }
 
   @Test
