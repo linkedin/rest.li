@@ -1,0 +1,21 @@
+This is a standalone example that demonstrates a very simple RestLi
+client and server. The code and logic behind it is described in detail
+in:
+
+https://github.com/linkedin/pegasus/wiki/Quickstart:-A-Tutorial-Introduction-to-RestLi
+
+To build, use gradle 1.3 or greater, execute the following at the top level:
+
+gradle build
+
+You can then run the server with:
+
+gradle startFortunesServer
+
+Once running, you can send a GET request to the server with:
+
+curl -v http://localhost:7279/fortunes/1
+
+or run the client with
+
+gradle startFortunesClient
