@@ -1,5 +1,7 @@
 1.7.5
 -----
+(RB=)
+Move PsonDataCodec from test to main source dir.
 
 1.7.4
 -----
