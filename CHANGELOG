@@ -1,3 +1,11 @@
+1.7.5
+-----
+
+1.7.4
+-----
+(RB=122372)
+RequestContext should not be shared across requests in ParSeqRestClient
+
 1.7.3
 -----
 (RB=122016)

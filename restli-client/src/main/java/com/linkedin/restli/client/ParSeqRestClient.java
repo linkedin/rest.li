@@ -32,7 +32,6 @@ import com.linkedin.r2.message.RequestContext;
  */
 public class ParSeqRestClient
 {
-  private static final RequestContext EMPTY_REQUEST_CONTEXT = new RequestContext();
   private final RestClient            _wrappedClient;
 
   public ParSeqRestClient(final RestClient wrappedClient)
@@ -48,7 +47,7 @@ public class ParSeqRestClient
    */
   public <T> Promise<Response<T>> sendRequest(final Request<T> request)
   {
-    return sendRequest(request, EMPTY_REQUEST_CONTEXT);
+    return sendRequest(request, new RequestContext());
   }
 
   /**
@@ -107,7 +106,7 @@ public class ParSeqRestClient
    */
   public <T> Task<Response<T>> createTask(final Request<T> request)
   {
-    return createTask(request, EMPTY_REQUEST_CONTEXT);
+    return createTask(request, new RequestContext());
   }
 
   /**
@@ -121,7 +120,7 @@ public class ParSeqRestClient
   public <T> Task<Response<T>> createTask(final Request<T> request,
                                           final RequestContext requestContext)
   {
-    return createTask(request.getUri().getPath(), request, EMPTY_REQUEST_CONTEXT);
+    return createTask(request.getUri().getPath(), request, requestContext);
   }
 
   /**

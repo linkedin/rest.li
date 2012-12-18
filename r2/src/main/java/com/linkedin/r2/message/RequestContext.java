@@ -24,6 +24,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * RequestContext should not be shared across requests.
+ *
  * @author Josh Walker
  * @version $Revision: $
  */
