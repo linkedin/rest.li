@@ -78,15 +78,15 @@ public class PsonDataCodec implements DataCodec
       return _encodeStringLength;
     }
 
-    public Options setEncodeContainerCount(boolean value)
+    public Options setEncodeCollectionCount(boolean value)
     {
-      _encodeContainerCount = value;
+      _encodeCollectionCount = value;
       return this;
     }
 
-    public boolean getEncodeContainerCount()
+    public boolean getEncodeCollectionCount()
     {
-      return _encodeContainerCount;
+      return _encodeCollectionCount;
     }
 
     public Options setBufferSize(Integer value)
@@ -104,7 +104,7 @@ public class PsonDataCodec implements DataCodec
     public String toString()
     {
       return
-        "encodeContainerCount=" + _encodeContainerCount +
+        "encodeCollectionCount=" + _encodeCollectionCount +
         ", encodeStringLength=" + _encodeStringLength +
         (_bufferSize != null ? ", bufferSize=" + _bufferSize : "");
     }
@@ -120,7 +120,7 @@ public class PsonDataCodec implements DataCodec
         return false;
       Options other = (Options) o;
       return
-        (_encodeContainerCount == other._encodeContainerCount) &&
+        (_encodeCollectionCount == other._encodeCollectionCount) &&
         (_encodeStringLength == other._encodeStringLength) &&
         (_bufferSize == null ? _bufferSize == other._bufferSize : _bufferSize.equals(other._bufferSize));
     }
@@ -129,13 +129,13 @@ public class PsonDataCodec implements DataCodec
     public int hashCode()
     {
       return
-        ((_encodeContainerCount ? 3131 : 0) +
+        ((_encodeCollectionCount ? 3131 : 0) +
          (_encodeStringLength ? 31310000 : 0)) ^
         (_bufferSize != null ? _bufferSize.hashCode() : 0);
     }
 
     private boolean _encodeStringLength = false;
-    private boolean _encodeContainerCount = false;
+    private boolean _encodeCollectionCount = false;
     private Integer _bufferSize = null;
   }
 
@@ -280,7 +280,7 @@ public class PsonDataCodec implements DataCodec
     private final HashMap<String, Integer> _keyMap = new HashMap<String, Integer>(200);
     private int _keyIndex = 1;
     private final boolean _encodeStringLength = _options.getEncodeStringLength();
-    private final boolean _encodeContainerCount = _options.getEncodeContainerCount();
+    private final boolean _encodeCollectionCount = _options.getEncodeCollectionCount();
 
     protected PsonSerializer()
     {
@@ -379,7 +379,7 @@ public class PsonDataCodec implements DataCodec
     @Override
     public void startMap(DataMap map) throws CharacterCodingException
     {
-      if (_encodeContainerCount)
+      if (_encodeCollectionCount)
       {
         start(PSON_OBJECT_WITH_COUNT);
         _buffer.putVarUnsignedInt(map.size());
@@ -425,7 +425,7 @@ public class PsonDataCodec implements DataCodec
     @Override
     public void startList(DataList list) throws CharacterCodingException
     {
-      if (_encodeContainerCount)
+      if (_encodeCollectionCount)
       {
         start(PSON_ARRAY_WITH_COUNT);
         _buffer.putVarUnsignedInt(list.size());

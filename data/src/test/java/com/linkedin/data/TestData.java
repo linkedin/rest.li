@@ -45,7 +45,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import org.codehaus.jackson.JsonEncoding;
 import org.codehaus.jackson.JsonParseException;
-import org.testng.Assert;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -1285,10 +1284,10 @@ public class TestData
     PsonDataCodec codec = new PsonDataCodec();
     PsonDataCodec.Options options[] =
       {
-        new PsonDataCodec.Options().setEncodeContainerCount(false).setEncodeStringLength(false),
-        new PsonDataCodec.Options().setEncodeContainerCount(false).setEncodeStringLength(true),
-        new PsonDataCodec.Options().setEncodeContainerCount(true).setEncodeStringLength(false),
-        new PsonDataCodec.Options().setEncodeContainerCount(true).setEncodeStringLength(true),
+        new PsonDataCodec.Options().setEncodeCollectionCount(false).setEncodeStringLength(false),
+        new PsonDataCodec.Options().setEncodeCollectionCount(false).setEncodeStringLength(true),
+        new PsonDataCodec.Options().setEncodeCollectionCount(true).setEncodeStringLength(false),
+        new PsonDataCodec.Options().setEncodeCollectionCount(true).setEncodeStringLength(true),
       };
 
     PsonDataCodec.Options lastOption = null;

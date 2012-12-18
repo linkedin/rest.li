@@ -61,10 +61,10 @@ public class TestCloudPerformance
   {
     DataCodec codecs[] = {
       new JacksonDataCodec(),
-      new PsonDataCodec().setOptions(new PsonDataCodec.Options().setEncodeContainerCount(false).setEncodeStringLength(false)),
-      new PsonDataCodec().setOptions(new PsonDataCodec.Options().setEncodeContainerCount(false).setEncodeStringLength(true)),
-      new PsonDataCodec().setOptions(new PsonDataCodec.Options().setEncodeContainerCount(true).setEncodeStringLength(false)),
-      new PsonDataCodec().setOptions(new PsonDataCodec.Options().setEncodeContainerCount(true).setEncodeStringLength(true)),
+      new PsonDataCodec().setOptions(new PsonDataCodec.Options().setEncodeCollectionCount(false).setEncodeStringLength(false)),
+      new PsonDataCodec().setOptions(new PsonDataCodec.Options().setEncodeCollectionCount(false).setEncodeStringLength(true)),
+      new PsonDataCodec().setOptions(new PsonDataCodec.Options().setEncodeCollectionCount(true).setEncodeStringLength(false)),
+      new PsonDataCodec().setOptions(new PsonDataCodec.Options().setEncodeCollectionCount(true).setEncodeStringLength(true)),
     };
 
     if (_testOnly == false)
