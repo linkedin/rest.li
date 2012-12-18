@@ -1,41 +1,48 @@
 What is Pegasus?
 ================
-Pegasus is a framework for building robust, scalable service architectures
-using dynamic discovery and simple asychronous type-checked REST + JSON APIs.
+Pegasus is a REST+JSON framework for building robust, scalable service
+architectures using dynamic discovery and simple asynchronous APIs.
 
-Components
-----------
-Pegasus comprises the following major components:
+Pegasus fills a niche for building RESTful service architectures at scale,
+offering a developer workflow for defining data and REST APIs that promotes
+uniform interfaces, consistent data modeling, type-safety, and compatibility
+checked API evolution.
 
-### data/
+# No, Really.  What is Pegasus?
 
-The pegasus data layer, which provides an in-memory data
-representation structurally equivalent to JSON, serialization to/from JSON
-format, and a schema-definition language for specifying data format.
+Oh, you want to see some code, don't you?
 
-### generator/
+Basically, pegasus is a framework where you define schema's for your data:
 
-The pegasus data template code generation tool, which generates
-type-safe Java APIs for manipulating pegasus data objects.
+    {
+      "name" : "Greeting", "namespace" : "com.example.greetings", "type" : "record",
+      "fields" : [
+        { "name" : "message", "type" : "string" }
+      ]
+    }
 
-### r2/
+Write servers:
 
-The pegasus request/response layer, which provides fully asynchronous
-abstractions for transport protocols, along with implementations
-for HTTP based on Netty and Jetty.
+    @RestLiCollection(name = "greetings")
+    class GreetingsResource extends CollectionResourceTemplate<Long, Message> {
+      public Greeting get(Long key) {
+        return new Greeting().setMessage("Good morning!");
+      }
+    }
 
-### d2/
+And then write clients:
 
-The pegasus dynamic discovery layer, which uses Apache Zookeeper to
-maintain cluster information.  D2 provides client-side software load balancing.
+    Response<Greeting> response = restClient.sendRequest(new GreetingsBuilders.get().id(1L).build()).get();
+    System.out.println(response.getEntity().getMessage());
 
-### restli-*/
+And get all the benefits of a robust, scalable REST+JSON framework.
 
-The pegasus Rest.li framework, which provides a simple framework
-for building and consuming RESTful resources.  Rest.li provides resource
-patterns which streamline common CRUD use cases for collections of entities and
-associations between entities.
+# Full Documentation
 
-Getting Started
----------------
-Check our [wiki](pegasus/wiki) and the [Quick Start Guide](pegasus/wiki/Quick-Start-Guide).
+See our [wiki](http://github.com/linkedin/pegasus/wiki) for full documentation and examples.
+
+Quickstart Guides and Examples
+------------------------------
+
+* [Quickstart - a step-by-step tutorial on the basics](http://github.com/linkedin/pegasus/wiki/Quickstart:-A-Tutorial-Introduction-to-RestLi)
+* [Guided walkthrough of an example application](http://github.com/linkedin/pegasus/wiki/Quick-Start-Guide)
