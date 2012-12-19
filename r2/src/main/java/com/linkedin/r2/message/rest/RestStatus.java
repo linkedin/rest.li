@@ -49,6 +49,28 @@ public class RestStatus
   }
 
   /**
+   * return trues iff the status code indicates an HTTP 4xx status.
+   *
+   * @param status the status code to be checked.
+   * @return true iff the status code is in the 4xx range.
+   */
+  public static boolean isClientError(int status)
+  {
+    return status >= 400 && status < 500;
+  }
+
+  /**
+   * return trues iff the status code indicates an HTTP 5xx status.
+   *
+   * @param status the status code to be checked.
+   * @return true iff the status code is in the 5xx range.
+   */
+  public static boolean isServerError(int status)
+  {
+    return status >= 500 && status < 600;
+  }
+
+  /**
    * Return a new {@link RestResponse} message with the specified status code.
    *
    * @param status the status code to use for the response message.

@@ -25,6 +25,7 @@ package com.linkedin.util.degrader;
  * @version $Rev$
  */
 
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -286,7 +287,8 @@ public class DegraderImpl implements Degrader
                      _callTrackerStats.getIntervalEndTime(), _lastIntervalDroppedRate,
                      _callTrackerStats.getCallCount(),
                      _latency, _callTrackerStats.getErrorRate(),
-                     _outstandingLatency, _callTrackerStats.getOutstandingCount());
+                     _outstandingLatency, _callTrackerStats.getOutstandingCount(),
+                     _callTrackerStats.getCurrentErrorCountsMap());
   }
 
   /**
@@ -488,6 +490,8 @@ public class DegraderImpl implements Degrader
     private final double _errorRate;
     private final long   _outstandingLatency;
     private final int    _outstandingCount;
+    private final Map<String, Integer> _currentErrorCountsMap;
+
 
     private Stats(double currentDropRate, double currentComputedDropRate,
                   long currentCountTotal,
@@ -498,7 +502,7 @@ public class DegraderImpl implements Degrader
                   int callCount,
                   long latency,
                   double errorRate,
-                  long outstandingLatency, int outstandingCount)
+                  long outstandingLatency, int outstandingCount, Map<String,Integer> errorCountsMap)
     {
       _currentDropRate = currentDropRate;
       _currentComputedDropRate = currentComputedDropRate;
@@ -514,6 +518,7 @@ public class DegraderImpl implements Degrader
       _errorRate = errorRate;
       _outstandingLatency = outstandingLatency;
       _outstandingCount = outstandingCount;
+      _currentErrorCountsMap = errorCountsMap;
     }
     public double getCurrentDropRate()
     {
@@ -570,6 +575,10 @@ public class DegraderImpl implements Degrader
     public int getOutstandingCount()
     {
       return _outstandingCount;
+    }
+    public Map<String, Integer> getCurrentErrorCountsMap()
+    {
+      return _currentErrorCountsMap;
     }
   }
 

@@ -17,6 +17,10 @@
 /* $Id$ */
 package com.linkedin.util.degrader;
 
+
+import java.util.Map;
+
+
 /**
  * @author Chris Pettitt
  * @version $Revision$
@@ -32,4 +36,11 @@ public interface CallCompletion
    * Used to indicate that a call completed with an error.
    */
   void endCallWithError();
+
+  /**
+   * Used to indicate that a call completed with an error.
+   *
+   * @param errorCounts auxillary data that indicates what kind of error it is and how it should be counted for tracking
+   */
+  void endCallWithError(Map<String, Integer> errorCounts);
 }

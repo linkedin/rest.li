@@ -20,9 +20,12 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.LoadBalancerClient;
 import com.linkedin.d2.balancer.properties.PartitionData;
+import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.message.rest.RestStatus;
 import com.linkedin.r2.message.rpc.RpcRequest;
 import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
@@ -38,6 +41,7 @@ import com.linkedin.util.degrader.Degrader;
 import com.linkedin.util.degrader.DegraderControl;
 import com.linkedin.util.degrader.DegraderImpl;
 import com.linkedin.util.degrader.DegraderImpl.Config;
+import com.linkedin.util.degrader.ErrorConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -189,7 +193,33 @@ public class TrackerClient implements LoadBalancerClient
     {
       if (response.hasError())
       {
-        _callCompletion.endCallWithError();
+        Throwable throwable = response.getError();
+        Map<String, Integer> errorCounts = new HashMap<String, Integer>();
+        if (throwable instanceof RemoteInvocationException)
+        {
+          errorCounts.put(ErrorConstants.REMOTE_INVOCATION_ERROR, 1);
+        }
+        else if (throwable instanceof RestException)
+        {
+          RestException exception = (RestException) throwable;
+          if (exception.getResponse() != null && RestStatus.isClientError(exception.getResponse().getStatus()))
+          {
+            errorCounts.put(ErrorConstants.HTTP_400_ERRORS, 1);
+          }
+          else if (exception.getResponse() != null && RestStatus.isServerError(exception.getResponse().getStatus()))
+          {
+            errorCounts.put(ErrorConstants.HTTP_500_ERRORS, 1);
+          }
+          else
+          {
+            errorCounts.put(ErrorConstants.GENERAL_ERROR, 1);
+          }
+        }
+        else
+        {
+          errorCounts.put(ErrorConstants.GENERAL_ERROR, 1);
+        }
+        _callCompletion.endCallWithError(errorCounts);
       }
       else
       {

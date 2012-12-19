@@ -20,6 +20,8 @@ package com.linkedin.util.degrader;
 
 
 import com.linkedin.common.stats.LongStats;
+import java.util.Map;
+
 
 /**
  * @author Dave Messink
@@ -120,6 +122,18 @@ public interface CallTracker
      * @return true if stats is stale.
      */
     boolean stale(long currentTimeMillis);
+
+    /**
+     * Get the total counts for specific error that we're tracking.
+     * @return the total count for specific errors i.e. remoteInvocation error, 4xx level error, 5xx level errors.
+     */
+    public Map<String, Integer> getTotalErrorCountsMap();
+
+    /**
+     * Get the current counts for specific error that we are tracking for this time interval
+     * @return the count for specific errors i.e. remoteInvocation error, 4xx level error, 5xx level errors.
+     */
+    public Map<String, Integer> getCurrentErrorCountsMap();
 
     /**
      * Returns the time at the start of the sampling interval.
