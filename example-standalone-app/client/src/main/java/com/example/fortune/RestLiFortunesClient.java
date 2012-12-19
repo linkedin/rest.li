@@ -18,7 +18,7 @@ import java.util.Collections;
 /**
  * @author Doug Young
  */
-public class RestLiFortuneClient
+public class RestLiFortunesClient
 {
   /**
    * This stand-alone app demos the client-side Pegasus API.

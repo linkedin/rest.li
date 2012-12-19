@@ -28,7 +28,7 @@ import com.linkedin.restli.server.RestLiServer;
  *
  * @author Doug Young
  */
-public class RestLiFortuneServer
+public class RestLiFortunesServer
 {
   public static void main(String[] args) throws Exception
   {

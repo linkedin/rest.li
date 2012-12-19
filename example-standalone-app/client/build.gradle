@@ -11,9 +11,7 @@ dependencies {
   testCompile "commons-httpclient:commons-httpclient:3.1"
 }
 
-
-task startFortunesClient(type: JavaExec, dependsOn: 'build') {
-  main = 'com.linkedin.restli.example.RestLiExampleBasicClient'
+task startFortunesClient(type: JavaExec) {
+  main = 'com.example.fortune.RestLiFortunesClient'
   classpath = sourceSets.main.runtimeClasspath
-  args ''
 }

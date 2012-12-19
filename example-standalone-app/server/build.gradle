@@ -19,7 +19,7 @@ dependencies {
 }
 
 task startFortunesServer(type: JavaExec) {
-  main = 'com.example.fortune.RestLiFortuneServer'
+  main = 'com.example.fortune.RestLiFortunesServer'
   classpath = sourceSets.main.runtimeClasspath
   standardInput = System.in
 }
