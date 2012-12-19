@@ -40,6 +40,7 @@ import java.util.Map;
 public class DataTemplateUtil
 {
   public static final String SCHEMA_FIELD_NAME = "SCHEMA";
+  public static final String TYPEREFINFO_FIELD_NAME = "TYPEREFINFO";
   public static final String UNKNOWN_ENUM = "$UNKNOWN";
   public static final PrintStream out = new PrintStream(new FileOutputStream(FileDescriptor.out));
   private static final boolean debug = false;
@@ -304,9 +305,46 @@ public class DataTemplateUtil
   }
 
   /**
+   * Gets the {@link TyperefInfo} for a given data template.
+   *
+   * The data template has a {@link TyperefInfo} if it extends {@link HasTyperefInfo}
+   * and has private static final holding the {@link TyperefInfo}.
+   *
+   * @param type is a generated data template.
+   * @return null if the generated data template does not have a {@link TyperefInfo}
+   *         else return the {@link TyperefInfo} of the data template.
+   */
+  public static TyperefInfo getTyperefInfo(Class<? extends DataTemplate> type)
+  {
+    TyperefInfo typerefInfo;
+    if (HasTyperefInfo.class.isAssignableFrom(type))
+    {
+      try
+      {
+        Field typerefInfoField = type.getDeclaredField(TYPEREFINFO_FIELD_NAME);
+        typerefInfoField.setAccessible(true);
+        typerefInfo = (TyperefInfo) typerefInfoField.get(null);
+      }
+      catch (IllegalAccessException e)
+      {
+        throw new RuntimeException("Error evaluating TyperefInfo for class: " + type.getName(), e);
+      }
+      catch (NoSuchFieldException e)
+      {
+        typerefInfo = null;
+      }
+    }
+    else
+    {
+      typerefInfo = null;
+    }
+    return typerefInfo;
+  }
+
+  /**
    * Gets the data schema for a given java type.
    *
-   * @param type to get a schema for. Has to be primitive or a data template.
+   * @param type to get a schema for. Has to be primitive or a generated data template.
    * @throws TemplateRuntimeException if the {@link DataSchema} for the specified type cannot be provided.
    */
   public static DataSchema getSchema(Class<?> type) throws TemplateRuntimeException
@@ -321,7 +359,7 @@ public class DataTemplateUtil
     {
       Field schemaField = type.getDeclaredField(SCHEMA_FIELD_NAME);
       schemaField.setAccessible(true);
-      DataSchema schema = (DataSchema)schemaField.get(null);
+      DataSchema schema = (DataSchema) schemaField.get(null);
       if (schema == null)
       {
         throw new TemplateRuntimeException("Class missing schema: " + type.getName());

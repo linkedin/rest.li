@@ -68,6 +68,7 @@ import com.linkedin.data.template.FixedTemplate;
 import com.linkedin.data.template.FloatArray;
 import com.linkedin.data.template.FloatMap;
 import com.linkedin.data.template.GetMode;
+import com.linkedin.data.template.HasTyperefInfo;
 import com.linkedin.data.template.IntegerArray;
 import com.linkedin.data.template.IntegerMap;
 import com.linkedin.data.template.LongArray;
@@ -855,6 +856,19 @@ public abstract class DataTemplateGenerator extends CodeGenerator
 
     JDefinedClass unionClass = getPackage(typerefDataSchema.getNamespace())._class(JMod.PUBLIC, escapeReserved(typerefDataSchema.getName()));
     registerGeneratedClass(typerefDataSchema, unionClass);
+
+    JDefinedClass typerefInfoClass = unionClass._class(JMod.PRIVATE | JMod.STATIC | JMod.FINAL, "UnionTyperefInfo");
+    generateTyperef(typerefDataSchema, typerefInfoClass);
+
+    JFieldVar typerefInfoField = unionClass.field(JMod.PRIVATE | JMod.STATIC | JMod.FINAL,
+                                                  TyperefInfo.class,
+                                                  DataTemplateUtil.TYPEREFINFO_FIELD_NAME);
+    typerefInfoField.init(JExpr._new(typerefInfoClass));
+
+    unionClass._implements(HasTyperefInfo.class);
+    JMethod typerefInfoMethod = unionClass.method(JMod.PUBLIC, TyperefInfo.class, "typerefInfo");
+    typerefInfoMethod.body()._return(typerefInfoField);
+
     return generateUnion(schema, unionClass);
   }
 
@@ -989,9 +1003,13 @@ public abstract class DataTemplateGenerator extends CodeGenerator
   private JDefinedClass generateTyperef(TyperefDataSchema schema) throws JClassAlreadyExistsException
   {
     JDefinedClass typerefClass = getPackage(schema.getNamespace())._class(escapeReserved(schema.getName()));
-
-    typerefClass.javadoc().append(schema.getDoc());
     registerGeneratedClass(schema, typerefClass);
+    return generateTyperef(schema, typerefClass);
+  }
+
+  private JDefinedClass generateTyperef(TyperefDataSchema schema, JDefinedClass typerefClass)
+  {
+    typerefClass.javadoc().append(schema.getDoc());
 
     typerefClass._extends(TyperefInfo.class);
 
