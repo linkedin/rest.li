@@ -721,26 +721,11 @@ public class TestCallTracker
                         "Total error count is incorrect");
 
     dones.remove(0).endCallWithError();
-    Map<String, Integer> remoteInvocationError = new HashMap<String,Integer>();
-    Map<String, Integer> http400Error = new HashMap<String, Integer>();
-    Map<String, Integer> http500Error = new HashMap<String, Integer>();
-    //the next 2 counts as if there are 2,3 errors
-    Map<String, Integer> twoErrors = new HashMap<String, Integer>();
-    Map<String, Integer> threeErrors = new HashMap<String, Integer>();
-    remoteInvocationError.put(ErrorConstants.REMOTE_INVOCATION_ERROR, 1);
-    http400Error.put(ErrorConstants.HTTP_400_ERRORS, 1);
-    http500Error.put(ErrorConstants.HTTP_500_ERRORS, 1);
-    twoErrors.put(ErrorConstants.GENERAL_ERROR, 1);
-    twoErrors.put(ErrorConstants.HTTP_500_ERRORS, 1);
-    threeErrors.put(ErrorConstants.HTTP_400_ERRORS, 1);
-    threeErrors.put(ErrorConstants.HTTP_500_ERRORS, 1);
-    threeErrors.put(ErrorConstants.REMOTE_INVOCATION_ERROR, 1);
-
-    dones.remove(0).endCallWithError(remoteInvocationError);
-    dones.remove(0).endCallWithError(http400Error);
-    dones.remove(0).endCallWithError(http500Error);
-    dones.remove(0).endCallWithError(twoErrors);
-    dones.remove(0).endCallWithError(threeErrors);
+    dones.remove(0).endCallWithError(ErrorConstants.REMOTE_INVOCATION_ERROR);
+    dones.remove(0).endCallWithError(ErrorConstants.HTTP_400_ERRORS);
+    dones.remove(0).endCallWithError(ErrorConstants.HTTP_500_ERRORS);
+    dones.remove(0).endCallWithError(ErrorConstants.GENERAL_ERROR);
+    dones.remove(0).endCallWithError(null);
     Assert.assertEquals(_callTracker.getCurrentConcurrency(), 0, "Concurrency is incorrect");
     Assert.assertEquals(_callTracker.getCurrentCallCountTotal(), startCallCountTotal + 15,
                         "Total call count is incorrect");
@@ -748,14 +733,14 @@ public class TestCallTracker
                         "Total call start count is incorrect");
     Assert.assertEquals(_callTracker.getCurrentErrorCountTotal(), startErrorCountTotal + 8,
                         "Total error count is incorrect");
-    Assert.assertEquals(_callTracker.getTotalErrorCountsMap().get(ErrorConstants.REMOTE_INVOCATION_ERROR), new Integer(2),
+    Assert.assertEquals(_callTracker.getTotalErrorCountsMap().get(ErrorConstants.REMOTE_INVOCATION_ERROR), new Integer(1),
                         "Total remote invocation error is incorrect");
-    Assert.assertEquals(_callTracker.getTotalErrorCountsMap().get(ErrorConstants.HTTP_400_ERRORS), new Integer(2),
+    Assert.assertEquals(_callTracker.getTotalErrorCountsMap().get(ErrorConstants.HTTP_400_ERRORS), new Integer(1),
                         "Total http 400 error is incorrect");
-    Assert.assertEquals(_callTracker.getTotalErrorCountsMap().get(ErrorConstants.HTTP_500_ERRORS), new Integer(3),
+    Assert.assertEquals(_callTracker.getTotalErrorCountsMap().get(ErrorConstants.HTTP_500_ERRORS), new Integer(1),
                         "Total http 500 error is incorrect");
-    Assert.assertEquals(_callTracker.getTotalErrorCountsMap().get(ErrorConstants.GENERAL_ERROR), new Integer(1),
-                            "Total http 500 error is incorrect");
+    Assert.assertEquals(_callTracker.getTotalErrorCountsMap().get(ErrorConstants.GENERAL_ERROR), new Integer(5),
+                            "Total general error is incorrect");
     _clock.setCurrentTimeMillis(startTime + INTERVAL * 2);
 
 

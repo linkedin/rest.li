@@ -39,8 +39,7 @@ public interface CallCompletion
 
   /**
    * Used to indicate that a call completed with an error.
-   *
-   * @param errorCounts auxillary data that indicates what kind of error it is and how it should be counted for tracking
+   * @param errorType auxillary data that indicates what kind of error it is and how it should be counted for tracking
    */
-  void endCallWithError(Map<String, Integer> errorCounts);
+  void endCallWithError(String errorType);
 }

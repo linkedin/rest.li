@@ -316,12 +316,12 @@ public class CallTrackerImpl implements CallTracker
     }
 
     @Override
-    public void endCallWithError(Map<String, Integer> errorCounts)
+    public void endCallWithError(String errorType)
     {
-      endCall(true, errorCounts);
+      endCall(true, errorType);
     }
 
-    private void endCall(boolean hasError, Map<String, Integer> errorCounts)
+    private void endCall(boolean hasError, String errorType)
     {
       if (_done.compareAndSet(false, true))
       {
@@ -333,7 +333,7 @@ public class CallTrackerImpl implements CallTracker
 
           if (_start >= _lastResetTime)
           {
-            addCallData(duration, hasError, currentTime, errorCounts);
+            addCallData(duration, hasError, currentTime, errorType);
           }
 
           // Concurrency is not reset
@@ -359,28 +359,27 @@ public class CallTrackerImpl implements CallTracker
     }
   }
 
-  private void addCallData(long duration, boolean hasError, long currentTime, Map<String, Integer> errorCounts)
+
+  private void addCallData(long duration, boolean hasError, long currentTime, String errorType)
   {
-    _tracker.addNewData(currentTime, hasError, duration, errorCounts);
+    _tracker.addNewData(currentTime, hasError, duration, errorType);
 
     // Has to be after addNewData
     if (hasError)
     {
       _errorCountTotal++;
-      if (errorCounts != null)
+      if (errorType == null)
       {
-        for (Map.Entry<String,Integer> entry : errorCounts.entrySet())
-        {
-          Integer count = _totalErrorCountsMap.get(entry.getKey());
-          if (count == null)
-          {
-            _totalErrorCountsMap.put(entry.getKey(), entry.getValue());
-          }
-          else
-          {
-            _totalErrorCountsMap.put(entry.getKey(), count + entry.getValue());
-          }
-        }
+        errorType = ErrorConstants.GENERAL_ERROR;
+      }
+      Integer count = _totalErrorCountsMap.get(errorType);
+      if (count == null)
+      {
+        _totalErrorCountsMap.put(errorType, 1);
+      }
+      else
+      {
+        _totalErrorCountsMap.put(errorType, count + 1);
       }
     }
 
@@ -485,7 +484,7 @@ public class CallTrackerImpl implements CallTracker
     /**
      * this method is called to track the number of calls made during this interval
      */
-    private void addNewData(long currentTime, boolean hasError, long duration, Map<String, Integer> errorCounts)
+    private void addNewData(long currentTime, boolean hasError, long duration, String errorType)
     {
       getStatsWithCurrentTime(currentTime);
       _callTimeTracking.addValue(duration);
@@ -493,17 +492,19 @@ public class CallTrackerImpl implements CallTracker
       {
         _errorCount++;
       }
-      if (errorCounts != null)
+      if (errorType == null)
       {
-        for (Map.Entry<String, Integer> entry : errorCounts.entrySet())
-        {
-          Integer count = _errorCountsMap.get(entry.getKey());
-          if (count == null)
-          {
-            count = 0;
-          }
-          count += entry.getValue();
-        }
+        errorType = ErrorConstants.GENERAL_ERROR;
+      }
+
+      Integer count = _errorCountsMap.get(errorType);
+      if (count == null)
+      {
+        _errorCountsMap.put(errorType, 1);
+      }
+      else
+      {
+        _errorCountsMap.put(errorType, count + 1);
       }
     }
 

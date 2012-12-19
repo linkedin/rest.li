@@ -194,32 +194,30 @@ public class TrackerClient implements LoadBalancerClient
       if (response.hasError())
       {
         Throwable throwable = response.getError();
-        Map<String, Integer> errorCounts = new HashMap<String, Integer>();
         if (throwable instanceof RemoteInvocationException)
         {
-          errorCounts.put(ErrorConstants.REMOTE_INVOCATION_ERROR, 1);
+          _callCompletion.endCallWithError(ErrorConstants.REMOTE_INVOCATION_ERROR);
         }
         else if (throwable instanceof RestException)
         {
           RestException exception = (RestException) throwable;
           if (exception.getResponse() != null && RestStatus.isClientError(exception.getResponse().getStatus()))
           {
-            errorCounts.put(ErrorConstants.HTTP_400_ERRORS, 1);
+            _callCompletion.endCallWithError(ErrorConstants.HTTP_400_ERRORS);
           }
           else if (exception.getResponse() != null && RestStatus.isServerError(exception.getResponse().getStatus()))
           {
-            errorCounts.put(ErrorConstants.HTTP_500_ERRORS, 1);
+            _callCompletion.endCallWithError(ErrorConstants.HTTP_500_ERRORS);
           }
           else
           {
-            errorCounts.put(ErrorConstants.GENERAL_ERROR, 1);
+            _callCompletion.endCallWithError(ErrorConstants.GENERAL_ERROR);
           }
         }
         else
         {
-          errorCounts.put(ErrorConstants.GENERAL_ERROR, 1);
+          _callCompletion.endCallWithError(ErrorConstants.GENERAL_ERROR);
         }
-        _callCompletion.endCallWithError(errorCounts);
       }
       else
       {
