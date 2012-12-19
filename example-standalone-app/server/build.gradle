@@ -6,7 +6,6 @@ pegasus.main.idlOptions.addIdlItem(['com.example.fortune.impl'])
 
 dependencies {
   compile project(path: ':api', configuration: 'dataTemplate')
-
   compile "com.linkedin.pegasus:r2:1.7.0"
   compile "com.linkedin.pegasus:r2-jetty:1.7.0"
   compile "com.linkedin.pegasus:restli-server:1.7.0"

@@ -2,7 +2,6 @@ apply plugin: 'java'
 
 dependencies {
   compile project(path: ':api', configuration: 'restClient')
-
   compile "com.linkedin.pegasus:pegasus-common:1.7.0"
   compile "com.linkedin.pegasus:r2:1.7.0"
   compile "com.linkedin.pegasus:restli-client:1.7.0"
