@@ -14,24 +14,19 @@
    limitations under the License.
 */
 
+
 package com.linkedin.restli.examples.greetings.server;
 
-import com.linkedin.restli.examples.greetings.api.Greeting;
+
+import com.linkedin.restli.examples.greetings.api.ToneFacet;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
 
 
 /**
- * A Subresource whose unqualified name is identical to its parent
- *
- * N.B. The only reason a namespace is specified on this resource is to avoid clashing when the
- * client builders are generated.
- *
  * @author Keren Jin
  */
-@RestLiCollection(parent = NoNamespaceResource.class,
-                  name = NoNamespaceResource.RESOURCE_NAME,
-                  namespace = "com.linkedin.restli.examples")
-public class IdenticallyNamedSubResource extends CollectionResourceTemplate<Long, Greeting>
+@RestLiCollection(parent = NoNamespaceSubResource.class, name = "subSub")
+public class SubSubResource extends CollectionResourceTemplate<Long, ToneFacet>
 {
 }

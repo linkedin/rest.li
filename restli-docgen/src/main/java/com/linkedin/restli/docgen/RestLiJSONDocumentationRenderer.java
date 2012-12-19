@@ -25,6 +25,7 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.server.RoutingException;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.HashMap;
@@ -194,7 +195,8 @@ public class RestLiJSONDocumentationRenderer implements RestLiDocumentationRende
     resources.put(ResourceSchemaUtil.getFullName(resourceSchema), resourceSchema.data());
     addRelatedModels(resourceSchema, models);
 
-    final List<ResourceSchema> subresources = _relationships.getResourceSchemaCollection().getSubResources(resourceSchema);
+    final List<ResourceSchema> subresources = _relationships.getResourceSchemaCollection().getAllSubResources(
+        resourceSchema);
     if (subresources != null)
     {
       for (ResourceSchema subresource: subresources)

@@ -270,7 +270,7 @@ public class RestLiResourceRelationship
       }
     };
 
-    _resourceSchemas.visit(visitor);
+    ResourceSchemaCollection.visitResources(_resourceSchemas.getResources().values(), visitor);
   }
 
   private final ResourceSchemaCollection _resourceSchemas;

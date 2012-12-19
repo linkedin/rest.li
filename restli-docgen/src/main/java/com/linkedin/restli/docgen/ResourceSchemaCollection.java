@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.docgen;
 
+
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.server.RestLiInternalException;
@@ -36,11 +37,13 @@ import com.linkedin.restli.restspec.RestMethodSchema;
 import com.linkedin.restli.restspec.RestMethodSchemaArray;
 import com.linkedin.restli.restspec.RestSpecCodec;
 import com.linkedin.restli.server.ResourceLevel;
+
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -67,7 +70,7 @@ public class ResourceSchemaCollection
   {
     final ResourceModelEncoder encoder = new ResourceModelEncoder(new NullDocsProvider());
     final Map<String, ResourceSchema> schemaMap = new TreeMap<String, ResourceSchema>();
-    for (ResourceModel resource: rootResources.values())
+    for (ResourceModel resource : rootResources.values())
     {
       schemaMap.put(resource.getName(), encoder.buildResourceSchema(resource));
     }
@@ -120,6 +123,17 @@ public class ResourceSchemaCollection
   }
 
   /**
+   * @param visitor {@link ResourceSchemaVisitior} to visit all resource schemas with the specified visitor
+   */
+  public static void visitResources(Collection<ResourceSchema> resources, ResourceSchemaVisitior visitor)
+  {
+    for (ResourceSchema schema : resources)
+    {
+      processResourceSchema(visitor, new ArrayList<ResourceSchema>(), schema);
+    }
+  }
+
+  /**
    * Store the specified root resources plus the discover subresources
    * @param rootResources root resources in {@link ResourceSchema} type
    */
@@ -135,7 +149,7 @@ public class ResourceSchemaCollection
       public void visitResourceSchema(VisitContext context,
                                       ResourceSchema resourceSchema)
       {
-        String qualifiedResourceName = context.getResourcePath();
+        final String qualifiedResourceName = context.getResourcePath();
         if (!_allResources.containsKey(qualifiedResourceName))
         {
           flattenSubResources.put(qualifiedResourceName, resourceSchema);
@@ -152,7 +166,8 @@ public class ResourceSchemaCollection
         }
       }
     };
-    this.visit(visitor);
+
+    visitResources(_allResources.values(), visitor);
     _allResources.putAll(flattenSubResources);
   }
 
@@ -177,28 +192,44 @@ public class ResourceSchemaCollection
   }
 
   /**
-   * @param ancestorSchema a root resource schema
-   * @return schema of all subresources that are the descendants of the specified resource
+   * @param parentSchema a parent resource schema
+   * @return schema of direct subresources of the specified resource
    */
-  public List<ResourceSchema> getSubResources(ResourceSchema ancestorSchema)
+  public List<ResourceSchema> getSubResources(ResourceSchema parentSchema)
   {
-    return _subResources.get(ancestorSchema);
+    return _subResources.get(parentSchema);
   }
 
   /**
-   * @param visitor {@link ResourceSchemaVisitior} to visit all resource schemas with the specified visitor
+   * @param ancestorSchema a root resource schema
+   * @return schema of all nested subresources that are the descendants of the specified resource
    */
-  public void visit(ResourceSchemaVisitior visitor)
+  public List<ResourceSchema> getAllSubResources(ResourceSchema ancestorSchema)
   {
-    for (ResourceSchema schema : _allResources.values())
-    {
-      processResourceSchema(visitor, new ArrayList<ResourceSchema>(), schema);
-    }
+    return getAllSubResourcesRecursive(ancestorSchema, new ArrayList<ResourceSchema>());
   }
 
-  private void processResourceSchema(ResourceSchemaVisitior visitor,
-                                     List<ResourceSchema> hierarchy,
-                                     ResourceSchema resourceSchema)
+  private List<ResourceSchema> getAllSubResourcesRecursive(ResourceSchema parentSchema,
+                                                           List<ResourceSchema> accumulator)
+  {
+    final List<ResourceSchema> subResources = getSubResources(parentSchema);
+    if (subResources == null)
+    {
+      return null;
+    }
+
+    accumulator.addAll(subResources);
+    for (ResourceSchema sub : subResources)
+    {
+      getAllSubResourcesRecursive(sub, accumulator);
+    }
+
+    return accumulator;
+  }
+
+  private static void processResourceSchema(ResourceSchemaVisitior visitor,
+                                            List<ResourceSchema> hierarchy,
+                                            ResourceSchema resourceSchema)
   {
     hierarchy.add(resourceSchema);
 
@@ -239,9 +270,9 @@ public class ResourceSchemaCollection
   }
 
 
-  private void processEntitySchema(ResourceSchemaVisitior visitor,
-                                   ResourceSchemaVisitior.VisitContext context,
-                                   EntitySchema entitySchema)
+  private static void processEntitySchema(ResourceSchemaVisitior visitor,
+                                          ResourceSchemaVisitior.VisitContext context,
+                                          EntitySchema entitySchema)
   {
     visitor.visitEntityResource(context, entitySchema);
 
@@ -256,10 +287,10 @@ public class ResourceSchemaCollection
     }
   }
 
-  private void processRestMethods(ResourceSchemaVisitior visitor,
-                                  ResourceSchemaVisitior.VisitContext context,
-                                  RecordTemplate containingResourceType,
-                                  RestMethodSchemaArray methods)
+  private static void processRestMethods(ResourceSchemaVisitior visitor,
+                                         ResourceSchemaVisitior.VisitContext context,
+                                         RecordTemplate containingResourceType,
+                                         RestMethodSchemaArray methods)
   {
     if (methods != null)
     {
@@ -281,10 +312,10 @@ public class ResourceSchemaCollection
     }
   }
 
-  private void processFinders(ResourceSchemaVisitior visitor,
-                              ResourceSchemaVisitior.VisitContext context,
-                              RecordTemplate containingResourceType,
-                              FinderSchemaArray finders)
+  private static void processFinders(ResourceSchemaVisitior visitor,
+                                     ResourceSchemaVisitior.VisitContext context,
+                                     RecordTemplate containingResourceType,
+                                     FinderSchemaArray finders)
   {
     if (finders != null)
     {
@@ -307,10 +338,10 @@ public class ResourceSchemaCollection
   }
 
 
-  private void processActions(ResourceSchemaVisitior visitor,
-                              ResourceSchemaVisitior.VisitContext context,
-                              RecordTemplate containingResourceType,
-                              ActionSchemaArray actions)
+  private static void processActions(ResourceSchemaVisitior visitor,
+                                     ResourceSchemaVisitior.VisitContext context,
+                                     RecordTemplate containingResourceType,
+                                     ActionSchemaArray actions)
   {
     if (actions != null)
     {
@@ -336,7 +367,7 @@ public class ResourceSchemaCollection
     }
   }
 
-  private ResourceSchemaVisitior.VisitContext buildContext(List<ResourceSchema> hierarchy)
+  private static ResourceSchemaVisitior.VisitContext buildContext(List<ResourceSchema> hierarchy)
   {
     final StringBuilder resourcePath = new StringBuilder();
     for (ResourceSchema resourceSchema : hierarchy)

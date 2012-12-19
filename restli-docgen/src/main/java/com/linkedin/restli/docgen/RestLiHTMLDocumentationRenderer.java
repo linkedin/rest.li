@@ -36,6 +36,11 @@ import com.linkedin.restli.restspec.RestMethodSchema;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.RestLiServer;
 import com.linkedin.restli.server.RoutingException;
+import org.apache.commons.lang.exception.ExceptionUtils;
+import org.codehaus.jackson.impl.DefaultPrettyPrinter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
@@ -44,10 +49,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import org.apache.commons.lang.exception.ExceptionUtils;
-import org.codehaus.jackson.impl.DefaultPrettyPrinter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Renders static HTML documentation for a set of rest.li resources. This class is
@@ -106,12 +107,13 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
     final ResourceSchema resourceSchema = _resourceSchemas.getResource(resourceName);
     if (resourceSchema == null)
     {
-      throw new RoutingException(String.format("Resource named '%s' does not exist", resourceName), HttpStatus.S_404_NOT_FOUND.getCode()) ;
+      throw new RoutingException(String.format("Resource \"%s\" does not exist", resourceName), HttpStatus.S_404_NOT_FOUND.getCode()) ;
     }
 
     final Map<String, Object> pageModel = createPageModel();
     pageModel.put("resource", resourceSchema);
-    pageModel.put("resourceName", ResourceSchemaUtil.getFullName(resourceSchema));
+    pageModel.put("resourceName", resourceName);
+    pageModel.put("resourceFullName", ResourceSchemaUtil.getFullName(resourceSchema));
     pageModel.put("resourceType", getResourceType(resourceSchema));
     pageModel.put("subResources", _resourceSchemas.getSubResources(resourceSchema));
 
@@ -120,7 +122,7 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
     final List<ResourceMethodDocView> actions = new ArrayList<ResourceMethodDocView>();
 
     final MethodGatheringResourceSchemaVisitor visitor = new MethodGatheringResourceSchemaVisitor(resourceName);
-    _resourceSchemas.visit(visitor);
+    ResourceSchemaCollection.visitResources(_resourceSchemas.getResources().values(), visitor);
 
     final RestLiExampleGenerator.RequestGenerationSpec spec = new RestLiExampleGenerator.RequestGenerationSpec();
     for (RecordTemplate methodSchema : visitor.getAllMethods())

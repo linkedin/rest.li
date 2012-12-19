@@ -1,9 +1,3 @@
-#if ($resource.namespace)
-  #set ($resourceFullName = "${resource.namespace}.$resourceName")
-#else
-  #set ($resourceFullName = $resourceName)
-#end
-
 <html>
 <head>
   <title>Resource::$resource.name</title>
@@ -60,7 +54,7 @@
         <dt>Subresources</dt>
         #foreach ($subResource in $subResources)
           <dd>
-            <a href="$resourceName.$subResource.name">$resourceFullName.$subResource.name</a>
+            <a href="$resourceName.$subResource.name">$resourceName.$subResource.name</a>
           </dd>
         #end
       #end
