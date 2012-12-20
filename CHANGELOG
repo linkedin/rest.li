@@ -1,5 +1,13 @@
 1.7.6
 -----
+(RB=122933)
+If union is named because it is typeref'ed, the typeref schema was
+originally not available through the generated code. This change
+add a new HasTyperefInfo interface. If the union is named through
+through typeref, the generated subclass of UnionTemplate will also
+implement this interface. This interface provides the TyperefInfo
+of the typeref that names the union.
+
 (RB=121895)
 Fix encoding bug in QueryTunnel Util.
 Make ByteString.toString() to return a summary instead of the whole
