@@ -305,15 +305,35 @@ public final class ByteString
   }
 
   /**
-   * Return an Avro representation of the bytes in this {@link ByteString}.
+   * Return a summary of the contents of this {@link ByteString}.  This summary is of reasonable size,
+   * regardless of the length of this {@link ByteString}.
    *
-   * Same as {@link #asAvroString()}.
-   *
-   * @return the String representation of this {@link ByteString}
+   * @return a summary representation of this {@link ByteString}
    */
   @Override
   public String toString()
   {
-    return asAvroString();
+    final int NUM_BYTES = 4;
+    StringBuilder sb = new StringBuilder();
+    sb.append("ByteString(length=");
+    sb.append(length());
+    if (_bytes.length > 0)
+    {
+      sb.append(",bytes=");
+      for (int i = 0; i < Math.min(_bytes.length, NUM_BYTES); i++)
+      {
+        sb.append(String.format("%02x", (int) _bytes[i] & 0xff));
+      }
+      if (_bytes.length > NUM_BYTES * 2)
+      {
+        sb.append("...");
+      }
+      for (int i = Math.max(NUM_BYTES, _bytes.length - NUM_BYTES); i < _bytes.length; i++)
+      {
+        sb.append(String.format("%02x", (int)_bytes[i] & 0xff));
+      }
+    }
+    sb.append(")");
+    return sb.toString();
   }
 }

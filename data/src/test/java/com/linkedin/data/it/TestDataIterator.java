@@ -77,9 +77,18 @@ public class TestDataIterator
         s.append("name=").append(current.getName());
       }
       s.append(", class=").append(current.getValue().getClass().getName());
-      if ((current.getValue() instanceof DataComplex) == false)
+      Object value = current.getValue();
+      if ((value instanceof DataComplex) == false)
       {
-        s.append(", value=").append(current.getValue().toString());
+        s.append(", value=");
+        if (value instanceof ByteString)
+        {
+          s.append(((ByteString)value).asAvroString());
+        }
+        else
+        {
+          s.append(value.toString());
+        }
       }
       s.append("\n");
     }

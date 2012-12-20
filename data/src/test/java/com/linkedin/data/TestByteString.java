@@ -163,4 +163,52 @@ public class TestByteString
 
     Assert.assertEquals(bytes, out.toByteArray());
   }
+
+  @Test
+  public void testToStringUpToEight()
+  {
+    for (int i = 1; i <= 8; i++)
+    {
+      StringBuilder sb = new StringBuilder();
+      final byte[] bytes = new byte[i];
+      for (int j = 0; j < i; j++)
+      {
+        bytes[j] = (byte)j;
+        sb.append(String.format("%02x", j));
+      }
+
+      Assert.assertTrue(ByteString.copy(bytes).toString().contains("bytes=" + sb.toString()));
+
+    }
+  }
+
+  @Test
+  public void testToStringIncludesHeadAndTail()
+  {
+    final byte[] bytes = new byte[16384];
+
+    bytes[0] = -34;
+    bytes[1] = -83;
+    bytes[bytes.length - 2] = -66;
+    bytes[bytes.length - 1] = -17;
+    String s = ByteString.copy(bytes).toString();
+    Assert.assertTrue(s.contains("bytes=dead"));
+    Assert.assertTrue(s.contains("beef)"));
+  }
+
+  @Test
+  public void testToStringNegative()
+  {
+    // make sure "negative" bytes are represented as positive numbers e.g. ff for -1
+    Assert.assertTrue(ByteString.copy(new byte[] { -1 }).toString().contains("bytes=ff"));
+  }
+
+  @Test
+  public void testToStringBoundedSize()
+  {
+    final byte[] bytes = new byte[16384];
+
+    // large byte strings should have constant size toString()
+    Assert.assertTrue(ByteString.copy(bytes).toString().length() < 100);
+  }
 }
