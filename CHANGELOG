@@ -1,3 +1,13 @@
+1.7.6
+-----
+(RB=121895)
+Fix encoding bug in QueryTunnel Util.
+Make ByteString.toString() to return a summary instead of the whole
+array as an Avro string.
+HttpBridge for RPC requests should not log the whole entity.
+Remove Entity body from Request/Response toString().
+
+
 1.7.5
 -----
 (RB=122512)
