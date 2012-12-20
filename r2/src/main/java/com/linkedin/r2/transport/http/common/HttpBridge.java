@@ -44,8 +44,6 @@ import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
  */
 public class HttpBridge
 {
-  private static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
-
   /**
    * Wrap application callback for incoming RestResponse with a "generic" HTTP callback.
    *
@@ -212,10 +210,6 @@ public class HttpBridge
         final RestResponse httpResponse = response.getResponse();
         final TransportResponse<RpcResponse> newResponse;
 
-        final ByteString entity = !response.hasError()
-                ? httpResponse.getEntity()
-                : ByteString.empty();
-
         if (!response.hasError())
         {
           if (!RestStatus.isOK(httpResponse.getStatus()))
@@ -224,15 +218,13 @@ public class HttpBridge
                 TransportResponseImpl.error(new RemoteInvocationException("Received error "
                                                 + httpResponse.getStatus()
                                                 + " from server for URI "
-                                                + uri
-                                                + ": "
-                                                + entity.asString(DEFAULT_CHARSET)),
+                                                + uri),
                                             response.getWireAttributes());
           }
           else
           {
             newResponse = TransportResponseImpl.success(new RpcResponseBuilder()
-                    .setEntity(entity)
+                    .setEntity(httpResponse.getEntity())
                     .build(), response.getWireAttributes());
           }
         }
