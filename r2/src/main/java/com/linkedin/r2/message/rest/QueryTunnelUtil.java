@@ -1,24 +1,24 @@
 package com.linkedin.r2.message.rest;
 
 import com.linkedin.data.ByteString;
-import java.io.ByteArrayInputStream;
+import com.linkedin.data.Data;
+import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.activation.DataSource;
+import javax.mail.MessagingException;
+import javax.mail.internet.ContentType;
+import javax.mail.internet.MimeBodyPart;
+import javax.mail.internet.MimeMultipart;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
-import javax.activation.DataSource;
-import javax.mail.MessagingException;
-import javax.mail.internet.ContentType;
-import javax.mail.internet.MimeBodyPart;
-import javax.mail.internet.MimeMultipart;
-import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 /**
@@ -54,7 +54,6 @@ public class QueryTunnelUtil
   private static final String MIXED = "mixed";
   private static final String CONTENT_LENGTH = "Content-Length";
   private static final String UTF8 = "UTF-8";
-  private static final Charset UTF8CHARSET = Charset.forName(UTF8);
   static final Logger LOG = LoggerFactory.getLogger(QueryTunnelUtil.class);
 
   /**
@@ -100,7 +99,7 @@ public class QueryTunnelUtil
     if (entity == null || entity.length() == 0)
     {
       requestBuilder.setHeader(HEADER_CONTENT_TYPE, FORM_URL_ENCODED);
-      requestBuilder.setEntity(ByteString.copyString(query, UTF8CHARSET));
+      requestBuilder.setEntity(ByteString.copyString(query, Data.UTF_8_CHARSET));
     }
     else
     {
@@ -153,7 +152,7 @@ public class QueryTunnelUtil
     // Simple case, just extract query params from entity, append to query, and clear entity
     if (contentType.getBaseType().equals(FORM_URL_ENCODED))
     {
-      query = request.getEntity().toString();
+      query = request.getEntity().asString(Data.UTF_8_CHARSET);
       h.remove(HEADER_CONTENT_TYPE);
       h.remove(CONTENT_LENGTH);
     }
@@ -199,12 +198,12 @@ public class QueryTunnelUtil
         if (part.isMimeType(FORM_URL_ENCODED) && query == null)
         {
           // Assume the first segment we come to that is urlencoded is the tunneled query params
-          query = IOUtils.toString((ByteArrayInputStream) part.getContent(), UTF8);
+          query = IOUtils.toString((InputStream) part.getContent(), UTF8);
         }
         else if (entity.length <= 0)
         {
           // Assume the first non-urlencoded content we come to is the intended entity.
-          entity = IOUtils.toByteArray((ByteArrayInputStream) part.getContent());
+          entity = IOUtils.toByteArray((InputStream) part.getContent());
           h.put(CONTENT_LENGTH, Integer.toString(entity.length));
           h.put(HEADER_CONTENT_TYPE, part.getContentType());
         }

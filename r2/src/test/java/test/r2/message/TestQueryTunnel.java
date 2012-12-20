@@ -74,6 +74,21 @@ public class TestQueryTunnel
   }
 
   @Test
+  public void testNonAsciiParams() throws Exception
+  {
+    StringBuilder sb = new StringBuilder("http://localhost:7279?");
+    sb.append("eWithAcuteAccent=\u00e9");
+    sb.append("&");
+    sb.append("chineseCharacter=\u4e80");
+
+    RestRequest req = new RestRequestBuilder(new URI(sb.toString())).setMethod("GET").build();
+
+    RestRequest roundTrip = QueryTunnelUtil.decode(QueryTunnelUtil.encode(req, 0));
+
+    Assert.assertEquals(req, roundTrip);
+  }
+
+  @Test
   public void testPostWithEntity() throws Exception
   {
     // Test a request with an entity and a query string, to be encoded as multipart/mixed
