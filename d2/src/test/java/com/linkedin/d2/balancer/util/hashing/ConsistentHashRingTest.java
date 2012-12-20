@@ -21,6 +21,8 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -140,5 +142,26 @@ public class ConsistentHashRingTest
     {
       assertEquals(count.getValue().get(), count.getKey().intValue());
     }
+  }
+
+  @Test(groups = { "small", "back-end" })
+  public void test2ItemsWithOnePoint()
+      throws URISyntaxException
+  {
+    Map<URI, Integer> pointsMap = new HashMap<URI, Integer>();
+    URI uri1 = new URI("http://ext23.corp.linkedin.com:231/ajdi");
+    URI uri2 = new URI("http://ext66.corp.linkedin.com:231/ajdi");
+    pointsMap.put(uri1, 1);
+    pointsMap.put(uri2, 1);
+    ConsistentHashRing<URI> test = new ConsistentHashRing<URI>(pointsMap);
+    //we will produce 2 points with value -590810423 for uri1 and 742698789 for uri2
+    //test edge case
+    URI lowEdgeUri = test.get(-600000000);
+    URI highEdgeUri = test.get(800000000);
+    URI midURI = test.get(0);
+    assertEquals(lowEdgeUri, uri1);
+    assertEquals(highEdgeUri, uri1);
+    assertEquals(midURI, uri2);
+
   }
 }

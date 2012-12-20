@@ -24,8 +24,10 @@ import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.Map.Entry;
 
@@ -47,7 +49,7 @@ public class ConsistentHashRing<T> implements Ring<T>
   private static final Charset UTF8 = Charset.forName("UTF-8");
 
   private final MessageDigest  _md;
-  private final Set<Point<T>>  _points;
+  private final SortedSet<Point<T>> _points;
 
   private T[]                  _objects;
   private int[]                _ring;
@@ -182,11 +184,53 @@ public class ConsistentHashRing<T> implements Ring<T>
     return _ring;
   }
 
+  String printRingArea()
+  {
+    if (_points != null && !_points.isEmpty())
+    {
+      Map<T, Double> coverageMap = new HashMap<T, Double>();
+      Double curr = new Double(Integer.MIN_VALUE);
+      T firstElement = null;
+      //we know points are sortedSet and the iterator is iterating from low to high
+      for (Point<T> point : _points)
+      {
+        if (firstElement == null)
+        {
+          firstElement = point.getT();
+        }
+        Double currentCoverage = point.getHash() - curr;
+        curr = new Double(point.getHash());
+        Double area = coverageMap.get(point.getT());
+        if (area == null)
+        {
+          area = 0.0;
+        }
+        area += currentCoverage;
+        coverageMap.put(point.getT(), area);
+      }
+      //don't forget to take into account the last chunk of area
+      Double remainingArea = new Double(Integer.MAX_VALUE - curr);
+      Double area = coverageMap.get(firstElement);
+      area += remainingArea;
+      coverageMap.put(firstElement, area);
+      StringBuilder builder = new StringBuilder();
+      builder.append("Area percentage in the hash ring is [");
+      Double sizeOfInt = new Double(Integer.MAX_VALUE) - new Double(Integer.MIN_VALUE);
+      for (Map.Entry<T, Double> entry : coverageMap.entrySet())
+      {
+        Double percentage = entry.getValue() * 100 / sizeOfInt;
+        builder.append(String.format("%s=%.2f%%, ",entry.getKey(), percentage));
+      }
+      builder.append("]");
+      return builder.toString();
+    }
+    return "Ring is currently null or empty";
+  }
+
   @Override
   public String toString()
   {
-    return "ConsistentHashRing [_md=" + _md + ", _points=" + _points + ", _ring="
-        + Arrays.toString(_ring) + ", _objects=" + Arrays.toString(_objects) + "]";
+    return "ConsistentHashRing [_md=" + _md + printRingArea() + "]";
   }
 
   /**

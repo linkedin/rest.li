@@ -421,7 +421,9 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
       // if the cluster has not been called recently (total cluster call count is <= 0)
       // and we already have a state with the same set of URIs (same cluster generation),
       // and no clients are in rehab, then don't change anything.
-      debug(_log, "New state is the same as the old state so we're not changing anything. Old state = " + oldState);
+      debug(_log, "New state is the same as the old state so we're not changing anything. Old state = ", oldState
+          , ", config=", config);
+
       return new DegraderLoadBalancerState(oldState, clusterGenerationId, config.getUpdateIntervalMs(),
                                            config.getClock().currentTimeMillis());
     }
@@ -946,7 +948,8 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
           + ", _currentAvgClusterLatency=" + _currentAvgClusterLatency
           + ", _strategy=" + _strategy
           + ", _recoveryMap=" + _recoveryMap
-          + ", _serviceName="+ _serviceName + "]";
+          + ", _serviceName="+ _serviceName
+          + ", _hashRingCoverage=" + _ring + "]";
     }
   }
 }
