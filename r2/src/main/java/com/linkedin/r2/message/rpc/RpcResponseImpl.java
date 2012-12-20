@@ -51,6 +51,6 @@ import com.linkedin.data.ByteString;
   @Override
   public String toString()
   {
-    return "RpcResponse[entity=" + getEntity() + "]";
+    return "RpcResponse[entityLength=" + getEntity().length() + "]";
   }
 }

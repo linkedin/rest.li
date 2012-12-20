@@ -21,6 +21,7 @@
 package test.r2.integ;
 
 import com.linkedin.common.callback.FutureCallback;
+import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.filter.FilterChains;
 import com.linkedin.r2.message.rest.RestException;
@@ -172,20 +173,9 @@ public abstract class AbstractEchoServiceTest
       callback.get();
       Assert.fail("Should have thrown an exception");
     }
-    catch (Exception e)
+    catch (ExecutionException e)
     {
-      Throwable t = e;
-      StringBuilder msgs = new StringBuilder();
-      do
-      {
-        msgs.append(t.getMessage());
-        msgs.append("|");
-        t = t.getCause();
-      }
-      while (t != null);
-
-      Assert.assertTrue(msgs.indexOf("service failure") != -1,
-              "expected to find exception message 'service failure':" + msgs);
+      Assert.assertTrue(e.getCause() instanceof RemoteInvocationException);
     }
   }
 
@@ -203,20 +193,9 @@ public abstract class AbstractEchoServiceTest
       callback.get();
       Assert.fail("Should have thrown an exception");
     }
-    catch (Exception e)
+    catch (ExecutionException e)
     {
-      Throwable t = e;
-      StringBuilder msgs = new StringBuilder();
-      do
-      {
-        msgs.append(t.getMessage());
-        msgs.append("|");
-        t = t.getCause();
-      }
-      while (t != null);
-
-      Assert.assertTrue(msgs.indexOf("service failure") != -1,
-              "expected to find exception message 'service failure':" + msgs);
+      Assert.assertTrue(e.getCause() instanceof RemoteInvocationException);
     }
   }
 

@@ -87,6 +87,6 @@ import java.net.URI;
   @Override
   public String toString()
   {
-    return "RpcRequest[uri=" + getURI() + ",entity=" + getEntity() + "]";
+    return "RpcRequest[uri=" + getURI() + ",entityLength=" + getEntity().length() + "]";
   }
 }
