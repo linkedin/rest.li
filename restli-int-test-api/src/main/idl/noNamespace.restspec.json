@@ -23,7 +23,23 @@
           },
           "supports" : [ ],
           "entity" : {
-            "path" : "/noNamespace/{noNamespaceId}/noNamespaceSub/{noNamespaceSubId}"
+            "path" : "/noNamespace/{noNamespaceId}/noNamespaceSub/{noNamespaceSubId}",
+            "subresources" : [ {
+              "name" : "subSub",
+              "path" : "/noNamespace/{noNamespaceId}/noNamespaceSub/{noNamespaceSubId}/subSub",
+              "schema" : "com.linkedin.restli.examples.greetings.api.ToneFacet",
+              "doc" : "generated from: com.linkedin.restli.examples.greetings.server.SubSubResource",
+              "collection" : {
+                "identifier" : {
+                  "name" : "subSubId",
+                  "type" : "long"
+                },
+                "supports" : [ ],
+                "entity" : {
+                  "path" : "/noNamespace/{noNamespaceId}/noNamespaceSub/{noNamespaceSubId}/subSub/{subSubId}"
+                }
+              }
+            } ]
           }
         }
       }, {

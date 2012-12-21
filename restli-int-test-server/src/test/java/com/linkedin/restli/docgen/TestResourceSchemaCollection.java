@@ -60,6 +60,7 @@ public class TestResourceSchemaCollection
     expectedTypes.put("com.linkedin.restli.examples.groups.client.groups.contacts", ResourceType.COLLECTION);
     expectedTypes.put("noNamespace", ResourceType.COLLECTION);
     expectedTypes.put("noNamespace.noNamespaceSub", ResourceType.COLLECTION);
+    expectedTypes.put("noNamespace.noNamespaceSub.subSub", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.noNamespace.noNamespace", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.typeref.client.typeref", ResourceType.COLLECTION);
 
