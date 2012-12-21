@@ -287,7 +287,7 @@ public class DataTemplateUtil
   public static DataSchema parseSchema(String schemaText, DataSchemaResolver schemaResolver) throws IllegalArgumentException
   {
     SchemaParser parser = SchemaParserFactory.instance().create(schemaResolver);
-    parser.parse(new ByteArrayInputStream(schemaText.getBytes(Data.UTF_8_CHARSET)));
+    parser.parse(schemaText);
     if (parser.hasError())
     {
       if (debug)

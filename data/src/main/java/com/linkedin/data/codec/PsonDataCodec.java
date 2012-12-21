@@ -23,6 +23,7 @@ package com.linkedin.data.codec;
 
 import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
+import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import java.io.IOException;
@@ -159,25 +160,18 @@ public class PsonDataCodec implements DataCodec
     return _options;
   }
 
-  @Override
-  public String getStringEncoding()
-  {
-    return UTF_8;
-  }
-
-  private PsonSerializer serialize(DataMap map) throws IOException
+  private PsonSerializer serialize(DataComplex map) throws IOException
   {
     PsonSerializer serializer = new PsonSerializer();
-    serializer.serializeMap(map);
+    serializer.serialize(map);
     return serializer;
   }
 
-  @Override
-  public byte[] mapToBytes(DataMap map) throws IOException
+  protected byte[] complexToBytes(DataComplex complex) throws IOException
   {
     try
     {
-      byte[] bytes = serialize(map).toBytes();
+      byte[] bytes = serialize(complex).toBytes();
       return bytes;
     }
     catch (RuntimeException exc)
@@ -188,8 +182,7 @@ public class PsonDataCodec implements DataCodec
     }
   }
 
-  @Override
-  public DataMap bytesToMap(byte[] input) throws IOException
+  protected <T extends DataComplex> T bytesToComplex(byte[] input, Class<T> clazz) throws IOException
   {
     try
     {
@@ -198,7 +191,45 @@ public class PsonDataCodec implements DataCodec
           new BufferChain(ByteOrder.LITTLE_ENDIAN, input, _options.getBufferSize()) :
           new BufferChain(ByteOrder.LITTLE_ENDIAN, input);
       PsonParser psonParser = new PsonParser(buffer);
-      return psonParser.readMap();
+      return clazz.cast(psonParser.read());
+    }
+    catch (RuntimeException exc)
+    {
+      // do not want RuntimeException from BufferChain propagating
+      // as RuntimeException to client code.
+      throw new IOException("Unexpected RuntimeException", exc);
+    }
+  }
+
+  @Override
+  public byte[] mapToBytes(DataMap map) throws IOException
+  {
+    return complexToBytes(map);
+  }
+
+  @Override
+  public byte[] listToBytes(DataList list) throws IOException
+  {
+    return complexToBytes(list);
+  }
+
+  @Override
+  public DataMap bytesToMap(byte[] input) throws IOException
+  {
+    return bytesToComplex(input, DataMap.class);
+  }
+
+  @Override
+  public DataList bytesToList(byte[] input) throws IOException
+  {
+    return bytesToComplex(input, DataList.class);
+  }
+
+  protected void writeComplex(DataComplex complex, OutputStream out) throws IOException
+  {
+    try
+    {
+      serialize(complex).writeToOutputStream(out);
     }
     catch (RuntimeException exc)
     {
@@ -211,9 +242,27 @@ public class PsonDataCodec implements DataCodec
   @Override
   public void writeMap(DataMap map, OutputStream out) throws IOException
   {
+    writeComplex(map, out);
+  }
+
+  @Override
+  public void writeList(DataList list, OutputStream out) throws IOException
+  {
+    writeComplex(list, out);
+  }
+
+  protected <T extends DataComplex> T readComplex(InputStream in, Class<T> clazz) throws IOException
+  {
     try
     {
-      serialize(map).writeToOutputStream(out);
+      BufferChain buffer =
+        (_testMode && _options.getBufferSize() != null) ?
+          new BufferChain(ByteOrder.LITTLE_ENDIAN, _options.getBufferSize()) :
+          new BufferChain(ByteOrder.LITTLE_ENDIAN);
+      buffer.readFromInputStream(in);
+      buffer.rewind();
+      PsonParser psonParser = new PsonParser(buffer);
+      return clazz.cast(psonParser.read());
     }
     catch (RuntimeException exc)
     {
@@ -226,23 +275,13 @@ public class PsonDataCodec implements DataCodec
   @Override
   public DataMap readMap(InputStream in) throws IOException
   {
-    try
-    {
-      BufferChain buffer =
-        (_testMode && _options.getBufferSize() != null) ?
-          new BufferChain(ByteOrder.LITTLE_ENDIAN, _options.getBufferSize()) :
-          new BufferChain(ByteOrder.LITTLE_ENDIAN);
-      buffer.readFromInputStream(in);
-      buffer.rewind();
-      PsonParser psonParser = new PsonParser(buffer);
-      return psonParser.readMap();
-    }
-    catch (RuntimeException exc)
-    {
-      // do not want RuntimeException from BufferChain propagating
-      // as RuntimeException to client code.
-      throw new IOException("Unexpected RuntimeException", exc);
-    }
+    return readComplex(in, DataMap.class);
+  }
+
+  @Override
+  public DataList readList(InputStream in) throws IOException
+  {
+    return readComplex(in, DataList.class);
   }
 
   @Override
@@ -458,7 +497,7 @@ public class PsonDataCodec implements DataCodec
       _buffer.position(endPos);
     }
 
-    private void serializeMap(DataMap map) throws IOException
+    private void serialize(DataComplex map) throws IOException
     {
       _buffer.put(HEADER, 0, HEADER.length);
       Data.traverse(map, this);
@@ -503,7 +542,7 @@ public class PsonDataCodec implements DataCodec
       return sb.toString();
     }
 
-    DataMap readMap() throws IOException
+    Object read() throws IOException
     {
       byte header[] = new byte[HEADER.length];
       _buffer.get(header, 0, header.length);
@@ -512,7 +551,7 @@ public class PsonDataCodec implements DataCodec
         throw new IOException("Expecting header " + bytesToString(HEADER) + " but got " + bytesToString(header));
       }
 
-      return (DataMap) parseValue();
+      return parseValue();
     }
 
     DataList parseArray(boolean withCount) throws IOException

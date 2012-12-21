@@ -89,7 +89,7 @@ public class SchemaTranslator
     String avroJson = avroSchema.toString();
     SchemaParser parser = SchemaParserFactory.instance().create(null);
     parser.getValidationOptions().setAvroUnionMode(true);
-    parser.parse(new ByteArrayInputStream(avroJson.getBytes(Data.UTF_8_CHARSET)));
+    parser.parse(avroJson);
     if (parser.hasError())
     {
       throw new IllegalArgumentException(parser.errorMessage());

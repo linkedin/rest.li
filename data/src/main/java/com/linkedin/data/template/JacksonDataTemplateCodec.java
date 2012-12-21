@@ -31,6 +31,8 @@ import com.linkedin.data.schema.UnionDataSchema;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,19 +43,13 @@ import org.codehaus.jackson.JsonGenerator;
 
 public class JacksonDataTemplateCodec extends JacksonDataCodec
 {
-  public void writeDataTemplate(DataTemplate<?> template, OutputStream out, boolean order) throws IOException
-  {
-   writeDataTemplate(template.data(), template.schema(), out, order);
-  }
-
-  public void writeDataTemplate(Object data,
-                                DataSchema schema,
-                                OutputStream out,
-                                boolean order) throws IOException
+  protected void writeDataTemplate(Object data,
+                                   DataSchema schema,
+                                   JsonGenerator generator,
+                                   boolean order) throws IOException
   {
     if (order)
     {
-      JsonGenerator generator = createJsonGenerator(out);
       JsonTraverseCallback callback = new SchemaOrderTraverseCallback(schema, generator);
       Data.traverse(data, callback);
       generator.flush();
@@ -61,13 +57,46 @@ public class JacksonDataTemplateCodec extends JacksonDataCodec
     }
     else
     {
-      writeObject(data, out);
+      writeObject(data, generator);
     }
+  }
+
+  public void writeDataTemplate(DataTemplate<?> template, OutputStream out, boolean order) throws IOException
+  {
+    writeDataTemplate(template.data(), template.schema(), out, order);
+  }
+
+  public void writeDataTemplate(DataTemplate<?> template, Writer out, boolean order) throws IOException
+  {
+    writeDataTemplate(template.data(), template.schema(), out, order);
+  }
+
+  public void writeDataTemplate(Object data,
+                                DataSchema schema,
+                                OutputStream out,
+                                boolean order) throws IOException
+  {
+    JsonGenerator generator = createJsonGenerator(out);
+    writeDataTemplate(data, schema, generator, order);
+  }
+
+  public void writeDataTemplate(Object data,
+                                DataSchema schema,
+                                Writer out,
+                                boolean order) throws IOException
+  {
+    JsonGenerator generator = createJsonGenerator(out);
+    writeDataTemplate(data, schema, generator, order);
   }
 
   public void writeDataTemplate(DataTemplate<?> template, OutputStream out) throws IOException
   {
-    writeObject(template.data(), out);
+    writeObject(template.data(), createJsonGenerator(out));
+  }
+
+  public void writeDataTemplate(DataTemplate<?> template, Writer out) throws IOException
+  {
+    writeObject(template.data(), createJsonGenerator(out));
   }
 
   public byte[] dataTemplateToBytes(DataTemplate<?> template, boolean order) throws IOException
@@ -84,9 +113,29 @@ public class JacksonDataTemplateCodec extends JacksonDataCodec
     }
   }
 
+  public String dataTemplateToString(DataTemplate<?> template, boolean order) throws IOException
+  {
+    if (order)
+    {
+      StringWriter out = new StringWriter(_defaultBufferSize);
+      writeDataTemplate(template, out, order);
+      return out.toString();
+    }
+    else
+    {
+      return dataTemplateToString(template);
+    }
+  }
+
   public byte[] dataTemplateToBytes(DataTemplate<?> template) throws IOException
   {
     return objectToBytes(template.data());
+  }
+
+
+  public String dataTemplateToString(DataTemplate<?> template) throws IOException
+  {
+    return objectToString(template.data());
   }
 
   /**

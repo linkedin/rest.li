@@ -22,6 +22,7 @@ import com.linkedin.data.codec.DataCodec;
 import com.linkedin.data.codec.DataDecodingException;
 import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.codec.PsonDataCodec;
+import com.linkedin.data.codec.TextDataCodec;
 import com.linkedin.data.collections.CheckedMap;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -29,6 +30,8 @@ import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -127,7 +130,7 @@ public class TestData
 
   final DataList referenceDataList1 = new DataList();
 
-  final Map<String, DataMap> inputs = new TreeMap<String, DataMap>();
+  final Map<String, DataComplex> inputs = new TreeMap<String, DataComplex>();
 
   @BeforeTest
   public void setup()
@@ -250,7 +253,8 @@ public class TestData
       {
         list1.add("12345678901234567890");
       }
-      inputs.put("List of 100 20-character strings", map1);
+      inputs.put("List of 100 20-character strings", list1);
+      inputs.put("Map containing list of 100 20-character strings", map1);
     }
 
     {
@@ -261,7 +265,8 @@ public class TestData
       {
         list1.add(ByteString.copyAvroString("12345678901234567890", false));
       }
-      inputs.put("List of 100 20-byte bytes", map1);
+      inputs.put("List of 100 20-byte bytes", list1);
+      inputs.put("Map containing list of 100 20-byte bytes", map1);
     }
 
     {
@@ -1097,22 +1102,127 @@ public class TestData
     Data.dump("map", map3, "", sb3);
 
     assertEquals(sb3.toString(), sb1.toString());
+
+    if (codec instanceof TextDataCodec)
+    {
+      TextDataCodec textCodec = (TextDataCodec) codec;
+
+      // test mapToString
+
+      String string = textCodec.mapToString(map);
+      if (debug) out.println(string);
+
+      // test stringToMap
+
+      DataMap map4 = textCodec.stringToMap(string);
+      StringBuilder sb4 = new StringBuilder();
+      Data.dump("map", map4, "", sb4);
+      assertEquals(sb4.toString(), sb1.toString());
+
+      // test writeMap
+
+      StringWriter writer = new StringWriter();
+      textCodec.writeMap(map, writer);
+      assertEquals(writer.toString(), string);
+
+      // test readMap
+
+      StringReader reader = new StringReader(string);
+      DataMap map5 = textCodec.readMap(reader);
+      StringBuilder sb5 = new StringBuilder();
+      Data.dump("map", map5, "", sb5);
+    }
+  }
+
+  public void testDataCodec(DataCodec codec, DataList list) throws IOException
+  {
+    boolean debug = false;
+
+    StringBuilder sb1 = new StringBuilder();
+    Data.dump("list", list, "", sb1);
+    if (debug) out.print(sb1);
+
+    // test listToBytes
+
+    byte[] bytes = codec.listToBytes(list);
+    if (debug) TestUtil.dumpBytes(out, bytes);
+
+    // test bytesToList
+
+    DataList list2 = codec.bytesToList(bytes);
+    StringBuilder sb2 = new StringBuilder();
+    Data.dump("list", list2, "", sb2);
+    assertEquals(sb2.toString(), sb1.toString());
+
+    // test writeList
+
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream(bytes.length * 2);
+    codec.writeList(list, outputStream);
+    byte[] outputStreamBytes = outputStream.toByteArray();
+    assertEquals(outputStreamBytes, bytes);
+
+    // test readList
+
+    ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStreamBytes);
+    DataList list3 = codec.readList(inputStream);
+    StringBuilder sb3 = new StringBuilder();
+    Data.dump("list", list3, "", sb3);
+
+    assertEquals(sb3.toString(), sb1.toString());
+
+
+    if (codec instanceof TextDataCodec)
+    {
+      TextDataCodec textCodec = (TextDataCodec) codec;
+
+      // test listToString
+
+      String string = textCodec.listToString(list);
+      if (debug) out.println(string);
+
+      // test stringToList
+
+      DataList list4 = textCodec.stringToList(string);
+      StringBuilder sb4 = new StringBuilder();
+      Data.dump("list", list4, "", sb4);
+      assertEquals(sb4.toString(), sb1.toString());
+
+      // test writeList
+
+      StringWriter writer = new StringWriter();
+      textCodec.writeList(list, writer);
+      assertEquals(writer.toString(), string);
+
+      // test readList
+
+      StringReader reader = new StringReader(string);
+      DataList list5 = textCodec.readList(reader);
+      StringBuilder sb5 = new StringBuilder();
+      Data.dump("list", list5, "", sb5);
+    }
   }
 
   public void testDataCodec(DataCodec codec) throws IOException
   {
     // out.println(codec.getClass().getName());
-    for (Map.Entry<String, DataMap> e : inputs.entrySet())
+    for (Map.Entry<String, DataComplex> e : inputs.entrySet())
     {
       // out.println(e.getKey());
-      testDataCodec(codec, e.getValue());
+      DataComplex value = e.getValue();
+      if (value.getClass() == DataMap.class)
+      {
+        testDataCodec(codec, (DataMap) value);
+      }
+      else
+      {
+        testDataCodec(codec, (DataList) value);
+      }
     }
   }
 
   private DataMap getMapFromJson(JacksonDataCodec codec, String input) throws JsonParseException, IOException
   {
-    byte[] bytes = input.getBytes(Data.UTF_8_CHARSET);
-    return codec.bytesToMap(bytes);
+    return codec.stringToMap(input);
   }
 
   @Test
@@ -1145,8 +1255,9 @@ public class TestData
     assertEquals(map6.get("a"), "b");
 
     // Test getStringEncoding
-    assertEquals(codec.getStringEncoding(), "UTF-8");
-    assertEquals(codec.getStringEncoding(), JsonEncoding.UTF8.getJavaName());
+    String encoding = codec.getStringEncoding();
+    assertEquals(encoding, "UTF-8");
+    assertEquals(encoding, JsonEncoding.UTF8.getJavaName());
   }
 
   @Test
@@ -1263,9 +1374,6 @@ public class TestData
   {
     BsonDataCodec codec = new BsonDataCodec();
     testDataCodec(codec);
-
-    // Test getStringEncoding
-    assertEquals(codec.getStringEncoding(), "UTF-8");
   }
 
   @Test
@@ -1305,9 +1413,6 @@ public class TestData
 
       lastOption = option;
     }
-
-    // Test getStringEncoding
-    assertEquals(codec.getStringEncoding(), "UTF-8");
   }
 
   @Test
@@ -2128,10 +2233,14 @@ public class TestData
   @Parameters("count")
   public void perfTest(@Optional("1000") int count) throws IOException
   {
-    for (Map.Entry<String, DataMap> e : inputs.entrySet())
+    for (Map.Entry<String, DataComplex> e : inputs.entrySet())
     {
-      out.println("------------- " + e.getKey() + " -------------");
-      perfTest(count, e.getValue());
+      Object value = e.getValue();
+      if (value.getClass() == DataMap.class)
+      {
+        out.println("------------- " + e.getKey() + " -------------");
+        perfTest(count, (DataMap) value);
+      }
     }
   }
 }

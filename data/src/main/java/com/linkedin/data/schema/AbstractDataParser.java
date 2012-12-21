@@ -24,6 +24,7 @@ import com.linkedin.data.codec.DataLocation;
 import com.linkedin.data.codec.JacksonDataCodec;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -80,6 +81,27 @@ abstract public class AbstractDataParser
     try
     {
       objects = _codec.parse(inputStream, errorMessageBuilder(), dataLocationMap());
+    }
+    catch (IOException e)
+    {
+      errorMessageBuilder().append(e).append("\n");
+      e.printStackTrace();
+      return Collections.emptyList();
+    }
+    return objects;
+  }
+
+  /**
+   * Parse an {@link Reader} containing JSON to a list of Data objects.
+   *
+   * @param reader containing JSON.
+   */
+  protected List<Object> jsonReaderToObjects(Reader reader)
+  {
+    List<Object> objects;
+    try
+    {
+      objects = _codec.parse(reader, errorMessageBuilder(), dataLocationMap());
     }
     catch (IOException e)
     {

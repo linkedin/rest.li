@@ -17,26 +17,23 @@
 package com.linkedin.data.codec;
 
 
+import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
- * Interface for a coder and decoder that serializes a {@link DataMap} to a byte array
- * and de-serializes byte array to a {@link DataMap}.
+ * Interface for a coder and decoder that serializes and de-serializes
+ * {@link DataMap}'s or {@link DataList}'s to and from binary data.
+ *
+ * The input binary data may be a byte array or an {@link InputStream}.
+ * The output binary data may be a byte array or an {@link OutputStream}.
  *
  * @author slim
  */
 public interface DataCodec
 {
-  /**
-   * Return the encoding used to encode serialized strings, usually it is UTF-8.
-   *
-   * @return the encoding used to encode serialized strings.
-   */
-  public String getStringEncoding();
-
   /**
    * Serialize a {@link DataMap} to a byte array.
    *
@@ -44,16 +41,34 @@ public interface DataCodec
    * @return the output serialized from the {@link DataMap}.
    * @throws IOException if there is a serialization error.
    */
-  public byte[] mapToBytes(DataMap map) throws IOException;
+  byte[] mapToBytes(DataMap map) throws IOException;
+
+  /**
+   * Serialize a {@link DataList} to a byte array.
+   *
+   * @param list to serialize.
+   * @return the output serialized from the {@link DataList}.
+   * @throws IOException if there is a serialization error.
+   */
+  byte[] listToBytes(DataList list) throws IOException;
 
   /**
    * De-serialize a byte array to a {@link DataMap}.
    *
    * @param input to de-serialize.
-   * @return the DataMap de-serialized from the input.
+   * @return the {@link DataMap} de-serialized from the input.
    * @throws IOException if there is a de-serialization error.
    */
-  public DataMap bytesToMap(byte[] input) throws IOException;
+  DataMap bytesToMap(byte[] input) throws IOException;
+
+  /**
+   * De-serialize a byte array to a {@link DataList}.
+   *
+   * @param input to de-serialize.
+   * @return the {@link DataList} de-serialized from the input.
+   * @throws IOException if there is a de-serialization error.
+   */
+  DataList bytesToList(byte[] input) throws IOException;
 
   /**
    * Writes a {@link DataMap} to the supplied {@link OutputStream}.
@@ -68,8 +83,26 @@ public interface DataCodec
    * Returns a {@link DataMap} from data consumed from the given {@link InputStream}.
    *
    * @param in the {@link InputStream} from which to read.
-   * @return a {@link DataMap} representation of the {@link InputStream}.
+   * @return a {@link DataMap} representation of read from the {@link InputStream}.
    * @throws IOException if there is an error during de-serialization.
    */
   DataMap readMap(InputStream in) throws IOException;
+
+  /**
+   * Writes a {@link DataList} to the supplied {@link OutputStream}.
+   *
+   * @param list the map to write to {@code out}
+   * @param out the {@link OutputStream} to write to
+   * @throws IOException if there is an error during serialization
+   */
+  void writeList(DataList list, OutputStream out) throws IOException;
+
+  /**
+   * Returns a {@link DataList} from data consumed from the given {@link InputStream}.
+   *
+   * @param in the {@link InputStream} from which to read.
+   * @return a {@link DataList} representation of read from the {@link InputStream}.
+   * @throws IOException if there is an error during de-serialization.
+   */
+  DataList readList(InputStream in) throws IOException;
 }

@@ -22,11 +22,13 @@ import com.linkedin.data.Data;
 import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Reader;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -49,7 +51,7 @@ import org.codehaus.jackson.PrettyPrinter;
  *
  * @author slim
  */
-public class JacksonDataCodec implements DataCodec
+public class JacksonDataCodec implements TextDataCodec
 {
   public JacksonDataCodec()
   {
@@ -90,49 +92,88 @@ public class JacksonDataCodec implements DataCodec
     return objectToBytes(map);
   }
 
-  /**
-   * Serialize a {@link DataList} to a byte array.
-   *
-   * @param list to serialize.
-   * @return the output serialized from the {@link DataList}.
-   * @throws IOException if there is a serialization error.
-   */
+  @Override
+  public String mapToString(DataMap map) throws IOException
+  {
+    return objectToString(map);
+  }
+
+  @Override
   public byte[] listToBytes(DataList list) throws IOException
   {
     return objectToBytes(list);
   }
 
+  @Override
+  public String listToString(DataList list) throws IOException
+  {
+    return objectToString(list);
+  }
+
   protected byte[] objectToBytes(Object object) throws IOException
   {
     ByteArrayOutputStream out = new ByteArrayOutputStream(_defaultBufferSize);
-    writeObject(object, out);
+    writeObject(object, createJsonGenerator(out));
     return out.toByteArray();
+  }
+
+  protected String objectToString(Object object) throws IOException
+  {
+    StringWriter out = new StringWriter(_defaultBufferSize);
+    writeObject(object, createJsonGenerator(out));
+    return out.toString();
   }
 
   @Override
   public DataMap bytesToMap(byte[] input) throws IOException
   {
     final Parser parser = new Parser();
-    return parser.parse(new ByteArrayInputStream(input), DataMap.class);
+    return parser.parse(_jsonFactory.createJsonParser(input), DataMap.class);
   }
 
-  /**
-   * De-serialize a byte array to a {@link DataList}.
-   *
-   * @param input to de-serialize.
-   * @return the DataList de-serialized from the input.
-   * @throws IOException if there is a de-serialization error.
-   */
+  @Override
+  public DataMap stringToMap(String input) throws IOException
+  {
+    final Parser parser = new Parser();
+    return parser.parse(_jsonFactory.createJsonParser(input), DataMap.class);
+  }
+
+  @Override
   public DataList bytesToList(byte[] input) throws IOException
   {
     final Parser parser = new Parser();
-    return parser.parse(new ByteArrayInputStream(input), DataList.class);
+    return parser.parse(_jsonFactory.createJsonParser(input), DataList.class);
+  }
+
+  @Override
+  public DataList stringToList(String input) throws IOException
+  {
+    final Parser parser = new Parser();
+    return parser.parse(_jsonFactory.createJsonParser(input), DataList.class);
   }
 
   @Override
   public void writeMap(DataMap map, OutputStream out) throws IOException
   {
-    writeObject(map, out);
+    writeObject(map, createJsonGenerator(out));
+  }
+
+  @Override
+  public void writeMap(DataMap map, Writer out) throws IOException
+  {
+    writeObject(map, createJsonGenerator(out));
+  }
+
+  @Override
+  public void writeList(DataList list, OutputStream out) throws IOException
+  {
+    writeObject(list, createJsonGenerator(out));
+  }
+
+  @Override
+  public void writeList(DataList list, Writer out) throws IOException
+  {
+    writeObject(list, createJsonGenerator(out));
   }
 
   protected JsonGenerator createJsonGenerator(OutputStream out) throws IOException
@@ -145,9 +186,18 @@ public class JacksonDataCodec implements DataCodec
     return generator;
   }
 
-  protected void writeObject(Object object, OutputStream out) throws IOException
+  protected JsonGenerator createJsonGenerator(Writer out) throws IOException
   {
-    JsonGenerator generator = createJsonGenerator(out);
+    final JsonGenerator generator = _jsonFactory.createJsonGenerator(out);
+    if (_prettyPrinter != null)
+    {
+      generator.setPrettyPrinter(_prettyPrinter);
+    }
+    return generator;
+  }
+
+  protected void writeObject(Object object, JsonGenerator generator) throws IOException
+  {
     JsonTraverseCallback callback = new JsonTraverseCallback(generator);
     Data.traverse(object, callback);
     generator.flush();
@@ -158,7 +208,29 @@ public class JacksonDataCodec implements DataCodec
   public DataMap readMap(InputStream in) throws IOException
   {
     final Parser parser = new Parser();
-    return parser.parse(in, DataMap.class);
+    return parser.parse(_jsonFactory.createJsonParser(in), DataMap.class);
+  }
+
+  @Override
+  public DataMap readMap(Reader in) throws IOException
+  {
+    final Parser parser = new Parser();
+    return parser.parse(_jsonFactory.createJsonParser(in), DataMap.class);
+  }
+
+
+  @Override
+  public DataList readList(InputStream in) throws IOException
+  {
+    final Parser parser = new Parser();
+    return parser.parse(_jsonFactory.createJsonParser(in), DataList.class);
+  }
+
+  @Override
+  public DataList readList(Reader in) throws IOException
+  {
+    final Parser parser = new Parser();
+    return parser.parse(_jsonFactory.createJsonParser(in), DataList.class);
   }
 
   @Deprecated
@@ -184,7 +256,27 @@ public class JacksonDataCodec implements DataCodec
     throws IOException
   {
     Parser parser = new Parser(true);
-    return parser.parse(in, mesg, locationMap);
+    return parser.parse(_jsonFactory.createJsonParser(in), mesg, locationMap);
+  }
+
+  /**
+   * Reads an {@link Reader} and parses its contents into a list of Data objects.
+   *
+   * @param in provides the {@link Reader}
+   * @param mesg provides the {@link StringBuilder} to store validation error messages,
+   *             such as duplicate keys in the same {@link DataMap}.
+   * @param locationMap provides where to store the mapping of a Data object
+   *                    to its location in the in the {@link Reader}. may be
+   *                    {@code null} if this mapping is not needed by the caller.
+   *                    This map should usually be an {@link IdentityHashMap}.
+   * @return the list of Data objects parsed from the {@link Reader}.
+   * @throws IOException if there is a syntax error in the input.
+   */
+  public List<Object> parse(Reader in, StringBuilder mesg, Map<Object, DataLocation> locationMap)
+    throws IOException
+  {
+    Parser parser = new Parser(true);
+    return parser.parse(_jsonFactory.createJsonParser(in), mesg, locationMap);
   }
 
   public void objectToJsonGenerator(Object object, JsonGenerator generator) throws IOException
@@ -329,7 +421,7 @@ public class JacksonDataCodec implements DataCodec
     try
     {
       JsonFactory factory = new JsonFactory();
-      JsonParser parser = factory.createJsonParser(new ByteArrayInputStream(json.getBytes(Data.UTF_8_CHARSET)));
+      JsonParser parser = factory.createJsonParser(json);
       JsonToken token = parser.nextToken();
       assert(token == JsonToken.START_OBJECT);
       token = parser.nextToken();
@@ -423,7 +515,7 @@ public class JacksonDataCodec implements DataCodec
       return sortedMap;
     }
 
-    List<Object> parse(InputStream in, StringBuilder mesg, Map<Object, DataLocation> locationMap)
+    List<Object> parse(JsonParser parser, StringBuilder mesg, Map<Object, DataLocation> locationMap)
       throws JsonParseException, IOException
     {
       _locationMap = locationMap;
@@ -435,7 +527,7 @@ public class JacksonDataCodec implements DataCodec
          _nameStack = new ArrayDeque<Object>();
       }
 
-      _parser = _jsonFactory.createJsonParser(in);
+      _parser = parser;
       JsonToken token;
       while ((token = _parser.nextToken()) != null)
       {
@@ -446,7 +538,7 @@ public class JacksonDataCodec implements DataCodec
       return list;
     }
 
-    <T extends DataComplex> T parse(InputStream in, Class<T> expectType) throws IOException
+    <T extends DataComplex> T parse(JsonParser parser, Class<T> expectType) throws IOException
     {
       _errorBuilder = null;
       if (_debug)
@@ -454,7 +546,7 @@ public class JacksonDataCodec implements DataCodec
          _nameStack = new ArrayDeque<Object>();
       }
 
-      _parser = _jsonFactory.createJsonParser(in);
+      _parser = parser;
       final JsonToken token = _parser.nextToken();
       final T result;
       if (expectType == DataMap.class)

@@ -18,7 +18,6 @@ package com.linkedin.data.it;
 
 
 import com.linkedin.data.ByteString;
-import com.linkedin.data.Data;
 import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
@@ -53,7 +52,7 @@ public class TestDataIterator
   {
     JacksonDataCodec codec = new JacksonDataCodec();
     String input = "{ \"key\" : " + s + " }";
-    DataMap map = codec.bytesToMap(input.getBytes(Data.UTF_8_CHARSET));
+    DataMap map = TestUtil.dataMapFromString(input);
     return map.get("key");
   }
 

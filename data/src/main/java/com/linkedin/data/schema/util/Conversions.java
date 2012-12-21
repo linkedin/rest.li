@@ -51,9 +51,8 @@ class Conversions
     String inputSchemaAsString = schema.toString();
     try
     {
-      ByteArrayInputStream inputStream = new ByteArrayInputStream(inputSchemaAsString.getBytes(Data.UTF_8_CHARSET));
       JacksonDataCodec codec = new JacksonDataCodec();
-      DataMap schemaAsDataMap = codec.readMap(inputStream);
+      DataMap schemaAsDataMap = codec.stringToMap(inputSchemaAsString);
       return schemaAsDataMap;
     }
     catch (IOException e)

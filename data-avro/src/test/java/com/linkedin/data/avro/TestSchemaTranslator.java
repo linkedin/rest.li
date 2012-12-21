@@ -1273,8 +1273,7 @@ public class TestSchemaTranslator
 
       SchemaParser parser = new SchemaParser();
       parser.getValidationOptions().setAvroUnionMode(true);
-      InputStream stream = new ByteArrayInputStream(readerSchemaText.getBytes(Data.UTF_8_CHARSET));
-      parser.parse(stream);
+      parser.parse(readerSchemaText);
       if (debug) System.out.println(parser.errorMessage());
       assertFalse(parser.hasError());
 

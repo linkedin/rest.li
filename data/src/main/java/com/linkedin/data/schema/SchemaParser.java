@@ -29,6 +29,8 @@ import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
 import com.linkedin.data.schema.validation.ValidationOptions;
 import com.linkedin.data.schema.validation.ValidationResult;
 import java.io.InputStream;
+import java.io.Reader;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -142,6 +144,37 @@ public class SchemaParser extends AbstractDataParser
   {
     List<Object> objects = jsonInputStreamToObjects(inputStream);
     parse(objects);
+  }
+
+  /**
+   * Parse a JSON representation of a schema from a {@link Reader}.
+   *
+   * The top level {@link DataSchema}'s parsed are in {@link #topLevelDataSchemas}.
+   * These are the types that are not defined within other types.
+   * Parse errors are in {@link #errorMessageBuilder} and indicated
+   * by {@link #hasError()}.
+   *
+   * @param reader with the JSON representation of the schema.
+   */
+  public void parse(Reader reader)
+  {
+    List<Object> objects = jsonReaderToObjects(reader);
+    parse(objects);
+  }
+
+  /**
+   * Parse a JSON representation of a schema from a string
+   *
+   * The top level {@link DataSchema}'s parsed are in {@link #topLevelDataSchemas}.
+   * These are the types that are not defined within other types.
+   * Parse errors are in {@link #errorMessageBuilder} and indicated
+   * by {@link #hasError()}.
+   *
+   * @param json with the JSON representation of the schema.
+   */
+  public void parse(String json)
+  {
+    parse(new StringReader(json));
   }
 
   /**

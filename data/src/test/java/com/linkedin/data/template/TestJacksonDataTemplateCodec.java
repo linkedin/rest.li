@@ -24,6 +24,8 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.ArrayDataSchema;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +35,7 @@ import static com.linkedin.data.TestUtil.asList;
 import static com.linkedin.data.TestUtil.asMap;
 import static com.linkedin.data.template.TestRecordAndUnionTemplate.Foo;
 import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 
 /**
@@ -42,27 +45,62 @@ public class TestJacksonDataTemplateCodec
 {
   public String dataMapToString(DataMap map) throws IOException
   {
-    byte[] bytes = _jacksonDataTemplateCodec.mapToBytes(map);
-    String result = new String(bytes, _jacksonDataTemplateCodec.getStringEncoding());
-    return result;
+    return _jacksonDataTemplateCodec.mapToString(map);
   }
+
   public String templateToString(DataTemplate<?> template, boolean order) throws IOException
   {
-    byte[] bytes = _jacksonDataTemplateCodec.dataTemplateToBytes(template, order);
-    String result = new String(bytes, _jacksonDataTemplateCodec.getStringEncoding());
+    String resultFromString = _jacksonDataTemplateCodec.dataTemplateToString(template, order);
+
+    StringWriter writer = new StringWriter();
+    _jacksonDataTemplateCodec.writeDataTemplate(template, writer, order);
+    String resultFromWriter = writer.toString();
+    assertEquals(resultFromString, resultFromWriter);
+
+    writer = new StringWriter();
+    _jacksonDataTemplateCodec.writeDataTemplate(template.data(), template.schema(), writer, order);
+    resultFromWriter = writer.toString();
+    assertEquals(resultFromString, resultFromWriter);
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     _jacksonDataTemplateCodec.writeDataTemplate(template, out, order);
-    byte[] outBytes = out.toByteArray();
-    assertEquals(bytes, outBytes);
+    byte[] bytesFromOutputStream = out.toByteArray();
+    assertTrue(Arrays.equals(bytesFromOutputStream, resultFromString.getBytes(Data.UTF_8_CHARSET)));
 
-    return result;
+    out = new ByteArrayOutputStream();
+    _jacksonDataTemplateCodec.writeDataTemplate(template.data(), template.schema(), out, order);
+    bytesFromOutputStream = out.toByteArray();
+    assertTrue(Arrays.equals(bytesFromOutputStream, resultFromString.getBytes(Data.UTF_8_CHARSET)));
+
+    byte[] bytesFromBytes = _jacksonDataTemplateCodec.dataTemplateToBytes(template, order);
+    assertTrue(Arrays.equals(bytesFromBytes, bytesFromOutputStream));
+
+    byte[] bytesFromString = resultFromString.getBytes(Data.UTF_8_CHARSET);
+    assertTrue(Arrays.equals(bytesFromString, bytesFromOutputStream));
+
+    if (order == false)
+    {
+      String s = _jacksonDataTemplateCodec.dataTemplateToString(template);
+      assertEquals(s, resultFromString);
+
+      writer = new StringWriter();
+      _jacksonDataTemplateCodec.writeDataTemplate(template, writer);
+      assertEquals(writer.toString(), resultFromString);
+
+      out = new ByteArrayOutputStream();
+      _jacksonDataTemplateCodec.writeDataTemplate(template, out);
+      assertTrue(Arrays.equals(out.toByteArray(), bytesFromString));
+
+      byte[] bytes = _jacksonDataTemplateCodec.dataTemplateToBytes(template);
+      assertTrue(Arrays.equals(bytes, bytesFromString));
+    }
+
+    return resultFromString;
   }
+
   public DataMap stringToDataMap(String s) throws IOException
   {
-    byte[] bytes = s.getBytes(_jacksonDataTemplateCodec.getStringEncoding());
-    DataMap result = _jacksonDataTemplateCodec.bytesToMap(bytes);
-    return result;
+    return _jacksonDataTemplateCodec.stringToMap(s);
   }
 
   @Test

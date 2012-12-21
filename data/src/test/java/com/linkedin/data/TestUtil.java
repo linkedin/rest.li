@@ -162,7 +162,7 @@ public class TestUtil
 
   public static DataMap dataMapFromString(String json) throws IOException
   {
-    return codec.bytesToMap(json.getBytes(Data.UTF_8_CHARSET));
+    return codec.stringToMap(json);
   }
 
   public static boolean deleteRecursive(String path, boolean debug) throws FileNotFoundException

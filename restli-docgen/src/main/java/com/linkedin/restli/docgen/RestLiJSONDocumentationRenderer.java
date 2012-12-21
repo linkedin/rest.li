@@ -178,7 +178,7 @@ public class RestLiJSONDocumentationRenderer implements RestLiDocumentationRende
         while (schemaItr.hasNext())
         {
           final NamedDataSchema currResource = (NamedDataSchema) schemaItr.next().getObject();
-          relatedSchemas.put(currResource.getFullName(), _codec.bytesToMap(currResource.toString().getBytes(Data.UTF_8_CHARSET)));
+          relatedSchemas.put(currResource.getFullName(), _codec.stringToMap(currResource.toString()));
         }
         _relatedSchemaCache.put(resourceSchema, relatedSchemas);
       }
@@ -210,7 +210,7 @@ public class RestLiJSONDocumentationRenderer implements RestLiDocumentationRende
   private void renderDataModel(NamedDataSchema schema, DataMap outputMap) throws IOException
   {
     final DataMap models = outputMap.getDataMap("models");
-    final DataMap schemaData = _codec.bytesToMap(schema.toString().getBytes(Data.UTF_8_CHARSET));
+    final DataMap schemaData = _codec.stringToMap(schema.toString());
     models.put(schema.getFullName(), schemaData);
   }
 

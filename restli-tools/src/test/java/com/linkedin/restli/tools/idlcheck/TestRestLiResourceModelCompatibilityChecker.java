@@ -125,7 +125,7 @@ public class TestRestLiResourceModelCompatibilityChecker
   public void testFailCollectionFile()
   {
     final SchemaParser sp = new SchemaParser();
-    sp.parse(new ByteArrayInputStream("\"StringRef\"".getBytes(Data.UTF_8_CHARSET)));
+    sp.parse("\"StringRef\"");
 
     final Collection<CompatibilityInfo> testErrors = new HashSet<CompatibilityInfo>();
     testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "identifier", "params"),

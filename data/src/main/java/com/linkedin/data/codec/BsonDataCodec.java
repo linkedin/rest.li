@@ -19,6 +19,7 @@ package com.linkedin.data.codec;
 
 import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
+import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import java.io.IOException;
@@ -62,14 +63,7 @@ public class BsonDataCodec implements DataCodec
     _bufferSize = bufferSize;
   }
 
-  @Override
-  public String getStringEncoding()
-  {
-    return UTF_8;
-  }
-
-  @Override
-  public byte[] mapToBytes(DataMap map) throws IOException
+  protected byte[] complexToBytes(DataComplex complex) throws IOException
   {
     try
     {
@@ -77,7 +71,7 @@ public class BsonDataCodec implements DataCodec
         (_bufferSize == null) ?
         new BsonTraverseCallback() :
         new BsonTraverseCallback(_bufferSize);
-      Data.traverse(map, callback);
+      Data.traverse(complex, callback);
       byte[] bytes = callback.toBytes();
       return bytes;
     }
@@ -90,7 +84,18 @@ public class BsonDataCodec implements DataCodec
   }
 
   @Override
-  public DataMap bytesToMap(byte[] input) throws IOException
+  public byte[] mapToBytes(DataMap map) throws IOException
+  {
+    return complexToBytes(map);
+  }
+
+  @Override
+  public byte[] listToBytes(DataList list) throws IOException
+  {
+    return complexToBytes(list);
+  }
+
+  protected <T extends DataComplex> T bytesToComplex(byte[] input, Class<T> clazz) throws IOException
   {
     try
     {
@@ -99,7 +104,38 @@ public class BsonDataCodec implements DataCodec
         new BufferChain(ByteOrder.LITTLE_ENDIAN, input, _bufferSize) :
         new BufferChain(ByteOrder.LITTLE_ENDIAN, input);
       BsonParser bsonParser = new BsonParser(buffer);
-      return bsonParser.parseMap();
+      return bsonParser.parseComplex(clazz);
+    }
+    catch (RuntimeException exc)
+    {
+      // do not want RuntimeException from BufferChain propagating
+      // as RuntimeException to client code.
+      throw new IOException("Unexpected RuntimeException", exc);
+    }
+  }
+
+  @Override
+  public DataMap bytesToMap(byte[] input) throws IOException
+  {
+    return bytesToComplex(input, DataMap.class);
+  }
+
+  @Override
+  public DataList bytesToList(byte[] input) throws IOException
+  {
+    return bytesToComplex(input, DataList.class);
+  }
+
+  protected void writeComplex(DataComplex complex, OutputStream out) throws IOException
+  {
+    try
+    {
+      BsonTraverseCallback callback =
+          (_bufferSize == null) ?
+              new BsonTraverseCallback() :
+              new BsonTraverseCallback(_bufferSize);
+      Data.traverse(complex, callback);
+      callback.writeToOutputStream(out);
     }
     catch (RuntimeException exc)
     {
@@ -112,14 +148,27 @@ public class BsonDataCodec implements DataCodec
   @Override
   public void writeMap(DataMap map, OutputStream out) throws IOException
   {
+    writeComplex(map, out);
+  }
+
+  @Override
+  public void writeList(DataList list, OutputStream out) throws IOException
+  {
+    writeComplex(list, out);
+  }
+
+  protected <T extends DataComplex> T readComplex(InputStream in, Class<T> clazz) throws IOException
+  {
     try
     {
-      BsonTraverseCallback callback =
-          (_bufferSize == null) ?
-              new BsonTraverseCallback() :
-              new BsonTraverseCallback(_bufferSize);
-      Data.traverse(map, callback);
-      callback.writeToOutputStream(out);
+      BufferChain buffer =
+          (_testMode && _bufferSize != null) ?
+              new BufferChain(ByteOrder.LITTLE_ENDIAN, _bufferSize) :
+              new BufferChain(ByteOrder.LITTLE_ENDIAN);
+      buffer.readFromInputStream(in);
+      buffer.rewind();
+      BsonParser bsonParser = new BsonParser(buffer);
+      return bsonParser.parseComplex(clazz);
     }
     catch (RuntimeException exc)
     {
@@ -132,23 +181,13 @@ public class BsonDataCodec implements DataCodec
   @Override
   public DataMap readMap(InputStream in) throws IOException
   {
-    try
-    {
-      BufferChain buffer =
-          (_testMode && _bufferSize != null) ?
-              new BufferChain(ByteOrder.LITTLE_ENDIAN, _bufferSize) :
-              new BufferChain(ByteOrder.LITTLE_ENDIAN);
-      buffer.readFromInputStream(in);
-      buffer.rewind();
-      BsonParser bsonParser = new BsonParser(buffer);
-      return bsonParser.parseMap();
-    }
-    catch (RuntimeException exc)
-    {
-      // do not want RuntimeException from BufferChain propagating
-      // as RuntimeException to client code.
-      throw new IOException("Unexpected RuntimeException", exc);
-    }
+    return readComplex(in, DataMap.class);
+  }
+
+  @Override
+  public DataList readList(InputStream in) throws IOException
+  {
+    return readComplex(in, DataList.class);
   }
 
   static final byte ZERO_BYTE = 0;
@@ -475,6 +514,22 @@ public class BsonDataCodec implements DataCodec
           updateParent(list, map, name, o);
         }
         bsonType = _buffer.get();
+      }
+    }
+
+    <T extends DataComplex> T parseComplex(Class<T> clazz) throws IOException
+    {
+      if (clazz == DataMap.class)
+      {
+        return clazz.cast(parseMap());
+      }
+      else if (clazz == DataList.class)
+      {
+        return clazz.cast(parseList());
+      }
+      else
+      {
+        throw new IllegalStateException("Unknown DataComplex class " + clazz.getName());
       }
     }
 

@@ -1,6 +1,12 @@
 1.7.7
 -----
+(RB=123370)
+Add TextDataCodec to support serializing and deserializing to String, Writer and Reader.
+Move getStringEncoding() from DataCodec to TextDataCodec interface. This is potentially
+a backwards incompatible change.
 
+Replace use of ByteArrayInputStream(string.getBytes(Data.UTF_8_CHARSET)) with new JacksonDataCodec
+and SchemaParser APIs that take String as input.
 
 1.7.6
 -----
