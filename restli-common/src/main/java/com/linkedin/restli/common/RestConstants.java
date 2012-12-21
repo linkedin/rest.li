@@ -17,6 +17,9 @@
 package com.linkedin.restli.common;
 
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public interface RestConstants
 {
@@ -32,8 +35,13 @@ public interface RestConstants
   String HEADER_VALUE_ERROR_APPLICATION = "APP";
   String HEADER_ID = "X-LinkedIn-Id";
   String HEADER_LOCATION = "Location";
+  String HEADER_ACCEPT = "Accept";
   String HEADER_CONTENT_TYPE = "Content-Type";
   String HEADER_VALUE_APPLICATION_JSON = "application/json";
+  String HEADER_VALUE_APPLICATION_PSON = "application/x-pson";
+  String HEADER_VALUE_ACCEPT_ANY = "*/*";
+
+  List<String> SUPPORTED_MIME_TYPES = Arrays.asList(HEADER_VALUE_APPLICATION_PSON, HEADER_VALUE_APPLICATION_JSON);
   
   String START_PARAM = "start";
   String COUNT_PARAM = "count";
@@ -49,4 +57,5 @@ public interface RestConstants
   Charset DEFAULT_CHARSET = Charset.forName(DEFAULT_CHARSET_NAME);
 
   String RESOURCE_MODEL_FILENAME_EXTENSION = ".restspec.json";
+
 }

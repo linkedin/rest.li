@@ -17,8 +17,11 @@
 package com.linkedin.restli.internal.server.util;
 
 import java.net.URI;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
+import com.linkedin.r2.message.rest.RestRequest;
 import org.apache.commons.lang.StringUtils;
 
 import com.linkedin.data.DataMap;
@@ -77,6 +80,12 @@ public class RestUtils
 
     LinkArray links = new LinkArray();
 
+    String bestEncoding = RestConstants.HEADER_VALUE_APPLICATION_JSON;
+    if (resourceContext.getRawRequest() != null)
+    {
+      bestEncoding = pickBestEncoding(resourceContext.getRequestHeaders().get(RestConstants.HEADER_ACCEPT));
+    }
+
     //links use count as the step interval, so links don't make sense with count==0
     if (pagingContext.getCount() > 0)
     {
@@ -89,7 +98,7 @@ public class RestUtils
         Link prevLink = new Link();
         prevLink.setRel("prev");
         prevLink.setHref(prevUri);
-        prevLink.setType("application/json");
+        prevLink.setType(bestEncoding);
         links.add(prevLink);
       }
 
@@ -104,7 +113,7 @@ public class RestUtils
         Link nextLink = new Link();
         nextLink.setRel("next");
         nextLink.setHref(nextUri);
-        nextLink.setType("application/json");
+        nextLink.setType(bestEncoding);
         links.add(nextLink);
       }
 
@@ -199,6 +208,13 @@ public class RestUtils
   static
   {
     EMPTY_DATAMAP.makeReadOnly();
+  }
+
+  public static String pickBestEncoding(String acceptHeader)
+  {
+    if (acceptHeader == null || acceptHeader.isEmpty())
+      return RestConstants.HEADER_VALUE_APPLICATION_JSON;
+    return MIMEParse.bestMatch(RestConstants.SUPPORTED_MIME_TYPES, acceptHeader);
   }
 
   /**

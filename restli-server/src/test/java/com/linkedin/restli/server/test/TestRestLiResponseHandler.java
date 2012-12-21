@@ -16,15 +16,23 @@
 
 package com.linkedin.restli.server.test;
 
+import com.linkedin.data.codec.DataCodec;
+import com.linkedin.data.codec.JacksonDataCodec;
+import com.linkedin.data.codec.PsonDataCodec;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.data.template.FieldDef;
+import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.restli.server.ActionResult;
 import com.linkedin.restli.server.GetResult;
+
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -58,11 +66,13 @@ import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.CreateResponse;
+import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
 
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import com.linkedin.data.DataMap;
@@ -89,57 +99,138 @@ public class TestRestLiResponseHandler
 {
   private final RestLiResponseHandler _responseHandler = new RestLiResponseHandler();
 
+  private static final String APPLICATION_JSON = "application/json";
+  private static final String APPLICATION_PSON = "application/x-pson";
+
+  private static final Map<String, String> JSON_ACCEPT_HEADERS  = Collections.singletonMap("Accept", APPLICATION_JSON);
+  private static final Map<String, String> PSON_ACCEPT_HEADERS  = Collections.singletonMap("Accept", APPLICATION_PSON);
+  private static final Map<String, String> EMPTY_ACCEPT_HEADERS = Collections.emptyMap();
+  private static final Map<String, String> ANY_ACCEPT_HEADERS   = Collections.singletonMap("Accept", "*/*");
+
+  private static final PsonDataCodec PSON_DATA_CODEC = new PsonDataCodec();
+  private static final JacksonDataCodec JACKSON_DATA_CODEC = new JacksonDataCodec();
+
   private static final String EXPECTED_STATUS_JSON = doubleQuote("{'text':'test status'}");
   private static final String EXPECTED_STATUS_ACTION_RESPONSE_JSON = doubleQuote("{'value':") + EXPECTED_STATUS_JSON + '}';
+  private static final String EXPECTED_STATUS_PSON = "#!PSON1\n!\u0081text\u0000\ttest status\u0000\u0080";
+  private static final String EXPECTED_STATUS_ACTION_RESPONSE_PSON = "#!PSON1\n!\u0081value\u0000!\u0083text\u0000\ttest status\u0000\u0080\u0080";
 
-  private RestResponse invokeResponseHandler(String path, Object body, ResourceMethod method) throws Exception
+  private RestResponse invokeResponseHandler(String path,
+                                             Object body,
+                                             ResourceMethod method,
+                                             Map<String, String> headers) throws Exception
   {
-    RestRequest req = buildRequest(path);
+    RestRequest req = buildRequest(path, headers);
     RoutingResult routing = buildRoutingResult(method, req);
     return _responseHandler.buildResponse(req, routing, body);
   }
 
+  private static enum AcceptTypeData
+  {
+    JSON  (JSON_ACCEPT_HEADERS,   APPLICATION_JSON,   JACKSON_DATA_CODEC),
+    PSON  (PSON_ACCEPT_HEADERS,   APPLICATION_PSON,   PSON_DATA_CODEC),
+    EMPTY (EMPTY_ACCEPT_HEADERS,  APPLICATION_JSON,   JACKSON_DATA_CODEC),
+    ANY   (ANY_ACCEPT_HEADERS,    APPLICATION_JSON,   JACKSON_DATA_CODEC);
+
+    public Map<String, String> acceptHeaders;
+    public String              responseContentType;
+    public DataCodec           dataCodec;
+
+    private AcceptTypeData(Map<String, String> acceptHeaders, String responseContentType, DataCodec dataCodec)
+    {
+      this.acceptHeaders = acceptHeaders;
+      this.responseContentType = responseContentType;
+      this.dataCodec = dataCodec;
+    }
+  }
+
   @Test
-  public void testBasicResponses() throws Exception
+  private void checkInvalidAcceptHeaders() throws Exception
+  {
+    Map<String, String> badAcceptHeaders = Collections.singletonMap("Accept", "foo/bar");
+
+    // check response with body (expect 406 error)
+    try
+    {
+      RestResponse response = invokeResponseHandler("/test", buildStatusRecord(), ResourceMethod.GET,
+                                                    badAcceptHeaders);
+      Assert.fail();
+    }
+    catch (RoutingException e)
+    {
+      Assert.assertEquals(e.getStatus(), 406);
+    }
+
+    // check response without body (expect no error)
+    RestResponse response = invokeResponseHandler("/test", new CreateResponse(HttpStatus.S_201_CREATED), ResourceMethod.CREATE, badAcceptHeaders);
+    checkResponse(response, 201, 0, null, null, null, false, false);
+  }
+
+  @DataProvider(name="statusData")
+  public Object[][] statusData()
+  {
+    return new Object[][]
+      {
+        { AcceptTypeData.EMPTY, EXPECTED_STATUS_JSON },
+        { AcceptTypeData.ANY, EXPECTED_STATUS_JSON },
+        { AcceptTypeData.JSON, EXPECTED_STATUS_JSON },
+        { AcceptTypeData.PSON, EXPECTED_STATUS_PSON }
+      };
+  }
+
+  @Test(dataProvider = "statusData")
+  public void testBasicResponses(AcceptTypeData acceptTypeData, String expectedStatus) throws Exception
   {
     RestResponse response;
     // #1 simple record template
-    response = invokeResponseHandler("/test", buildStatusRecord(), ResourceMethod.GET);
+    response = invokeResponseHandler("/test", buildStatusRecord(), ResourceMethod.GET, acceptTypeData.acceptHeaders);
 
-    checkResponse(response, 200, 2, Status.class.getName(), null, true);
-    assertEquals(response.getEntity().asAvroString(), EXPECTED_STATUS_JSON);
+    checkResponse(response, 200, 2, acceptTypeData.responseContentType, Status.class.getName(), null, true);
+    assertEquals(response.getEntity().asAvroString(), expectedStatus);
 
     // #2 create (with id)
-    response = invokeResponseHandler("/test", new CreateResponse(1), ResourceMethod.CREATE);
-    checkResponse(response, 201, 3, null, null, false);
+    response = invokeResponseHandler("/test", new CreateResponse(1), ResourceMethod.CREATE, acceptTypeData.acceptHeaders);
+    checkResponse(response, 201, 2, null, null, null, false);
     assertEquals(response.getHeader(RestConstants.HEADER_LOCATION), "/test/1");
     assertEquals(response.getHeader(RestConstants.HEADER_ID), "1");
 
     // #2.1 create (without id)
     response = invokeResponseHandler("/test", new CreateResponse(HttpStatus.S_201_CREATED),
-                                     ResourceMethod.CREATE);
-    checkResponse(response, 201, 1, null, null, false);
+                                     ResourceMethod.CREATE, acceptTypeData.acceptHeaders);
+    checkResponse(response, 201, 0, null, null, null, false);
 
     // #2.2 create (with id and slash at the end of uri)
-    response = invokeResponseHandler("/test/", new CreateResponse(1), ResourceMethod.CREATE);
-    checkResponse(response, 201, 3, null, null, false);
+    response = invokeResponseHandler("/test/", new CreateResponse(1), ResourceMethod.CREATE, acceptTypeData.acceptHeaders);
+    checkResponse(response, 201, 2, null, null, null, false);
     assertEquals(response.getHeader(RestConstants.HEADER_LOCATION), "/test/1");
     assertEquals(response.getHeader(RestConstants.HEADER_ID), "1");
 
     // #2.3 create (without id and slash at the end of uri)
     response = invokeResponseHandler("/test/", new CreateResponse(HttpStatus.S_201_CREATED),
-                                     ResourceMethod.CREATE);
-    checkResponse(response, 201, 1, null, null, false);
+                                     ResourceMethod.CREATE, acceptTypeData.acceptHeaders);
+    checkResponse(response, 201, 0, null, null, null, false);
 
     // #3 update
     response = invokeResponseHandler("/test", new UpdateResponse(HttpStatus.S_204_NO_CONTENT),
-                                     ResourceMethod.UPDATE);
-    checkResponse(response, 204, 1, null, null, false);
+                                     ResourceMethod.UPDATE, acceptTypeData.acceptHeaders);
+    checkResponse(response, 204, 0, null, null, null, false);
 
   }
 
-  @Test
-  public void testBatchResponses() throws Exception
+  @DataProvider(name="basicData")
+  public Object[][] basicData()
+  {
+    return new Object[][]
+      {
+        { AcceptTypeData.EMPTY },
+        { AcceptTypeData.ANY },
+        { AcceptTypeData.JSON },
+        { AcceptTypeData.PSON }
+      };
+  }
+
+  @Test(dataProvider = "basicData")
+  public void testBatchResponses(AcceptTypeData acceptTypeData) throws Exception
   {
     RestResponse response;
 
@@ -148,22 +239,22 @@ public class TestRestLiResponseHandler
     map.put(1L, buildStatusRecord());
     map.put(2L, buildStatusRecord());
     map.put(3L, buildStatusRecord());
-    response = invokeResponseHandler("/test", map, ResourceMethod.BATCH_GET);
-    checkResponse(response, 200, 3, BatchResponse.class.getName(), Status.class.getName(), true);
+    response = invokeResponseHandler("/test", map, ResourceMethod.BATCH_GET, acceptTypeData.acceptHeaders);
+    checkResponse(response, 200, 3, acceptTypeData.responseContentType, BatchResponse.class.getName(), Status.class.getName(), true);
 
     Map<Long, UpdateResponse> updateStatusMap = new HashMap<Long, UpdateResponse>();
     updateStatusMap.put(1L, new UpdateResponse(HttpStatus.S_204_NO_CONTENT));
     updateStatusMap.put(2L, new UpdateResponse(HttpStatus.S_204_NO_CONTENT));
     updateStatusMap.put(3L, new UpdateResponse(HttpStatus.S_204_NO_CONTENT));
     BatchUpdateResult<Long, Status> batchUpdateResult = new BatchUpdateResult<Long, Status>(updateStatusMap);
-    response = invokeResponseHandler("/test", batchUpdateResult, ResourceMethod.BATCH_UPDATE);
-    checkResponse(response, 200, 3, BatchResponse.class.getName(), UpdateStatus.class.getName(), true);
+    response = invokeResponseHandler("/test", batchUpdateResult, ResourceMethod.BATCH_UPDATE, acceptTypeData.acceptHeaders);
+    checkResponse(response, 200, 3, acceptTypeData.responseContentType, BatchResponse.class.getName(), UpdateStatus.class.getName(), true);
 
-    response = invokeResponseHandler("/test", batchUpdateResult, ResourceMethod.BATCH_PARTIAL_UPDATE);
-    checkResponse(response, 200, 3, BatchResponse.class.getName(), UpdateStatus.class.getName(), true);
+    response = invokeResponseHandler("/test", batchUpdateResult, ResourceMethod.BATCH_PARTIAL_UPDATE, acceptTypeData.acceptHeaders);
+    checkResponse(response, 200, 3, acceptTypeData.responseContentType, BatchResponse.class.getName(), UpdateStatus.class.getName(), true);
 
-    response = invokeResponseHandler("/test", batchUpdateResult, ResourceMethod.BATCH_DELETE);
-    checkResponse(response, 200, 3, BatchResponse.class.getName(), UpdateStatus.class.getName(), true);
+    response = invokeResponseHandler("/test", batchUpdateResult, ResourceMethod.BATCH_DELETE, acceptTypeData.acceptHeaders);
+    checkResponse(response, 200, 3, acceptTypeData.responseContentType, BatchResponse.class.getName(), UpdateStatus.class.getName(), true);
 
     List<CreateResponse> createResponses = new ArrayList<CreateResponse>();
     createResponses.add(new CreateResponse("42", HttpStatus.S_204_NO_CONTENT));
@@ -171,37 +262,39 @@ public class TestRestLiResponseHandler
     createResponses.add(new CreateResponse(HttpStatus.S_500_INTERNAL_SERVER_ERROR));
     BatchCreateResult<Long, Status> batchCreateResult = new BatchCreateResult<Long, Status>(createResponses);
 
-    response = invokeResponseHandler("/test", batchCreateResult, ResourceMethod.BATCH_CREATE);
-    checkResponse(response, 200, 3, CollectionResponse.class.getName(), CreateStatus.class.getName(), true);
+    response = invokeResponseHandler("/test", batchCreateResult, ResourceMethod.BATCH_CREATE, acceptTypeData.acceptHeaders);
+    checkResponse(response, 200, 3, acceptTypeData.responseContentType, CollectionResponse.class.getName(), CreateStatus.class.getName(), true);
   }
 
-  @Test
-  public void testCollections() throws Exception
+  @Test(dataProvider = "basicData")
+  public void testCollections(AcceptTypeData acceptTypeData) throws Exception
   {
     ResourceModel resourceModel = buildResourceModel(StatusCollectionResource.class);
     ResourceMethodDescriptor methodDescriptor = resourceModel.findNamedMethod("search");
 
     RestResponse response;
     // #1 check datamap/entity structure
-    response = _responseHandler.buildResponse(buildRequest(),
+    response = _responseHandler.buildResponse(buildRequest(acceptTypeData.acceptHeaders),
                                               new RoutingResult(new ResourceContextImpl(), methodDescriptor),
                                               buildStatusList(3));
 
-    checkResponse(response, 200, 3, CollectionResponse.class.getName(), Status.class.getName(), true);
+    checkResponse(response, 200, 3, acceptTypeData.responseContentType, CollectionResponse.class.getName(), Status.class.getName(), true);
 
     String baseUri = "/test?someParam=foo";
 
     // #1.1 using CollectionResult
     response = invokeResponseHandler(baseUri + "&start=0&count=5",
                                      methodDescriptor,
-                                     new BasicCollectionResult<Status>(buildStatusList(5)));
-    checkCollectionResponse(response, 5, 0, 5, 1, null, null, null);
+                                     new BasicCollectionResult<Status>(buildStatusList(5)),
+                                     acceptTypeData.acceptHeaders);
+    checkCollectionResponse(response, 5, 0, 5, 1, null, null, null, acceptTypeData);
 
     // #1.1 using CollectionResult (with total)
     response = invokeResponseHandler(baseUri + "&start=0&count=5",
                                      methodDescriptor,
-                                     new BasicCollectionResult<Status>(buildStatusList(5), 10));
-    checkCollectionResponse(response, 5, 0, 5, 1, 10, null, null);
+                                     new BasicCollectionResult<Status>(buildStatusList(5), 10),
+                                     acceptTypeData.acceptHeaders);
+    checkCollectionResponse(response, 5, 0, 5, 1, 10, null, null, acceptTypeData);
 
     // using CollectionResult with metadata RecordTemplate
     CollectionMetadata metadata = new CollectionMetadata();
@@ -209,59 +302,64 @@ public class TestRestLiResponseHandler
 
     response = invokeResponseHandler(baseUri + "&start=0&count=5",
                                      methodDescriptor,
-                                     new CollectionResult<Status, CollectionMetadata>(buildStatusList(5), 10, metadata));
-    checkCollectionResponse(response, 5, 0, 5, 1, 10, null, null);
-    CollectionResponse<Status> collectionResponse =
-      DataMapUtils.readCollectionResponse(response.getEntity().asInputStream(),
-                                          Status.class);
+                                     new CollectionResult<Status, CollectionMetadata>(buildStatusList(5), 10, metadata),
+                                     acceptTypeData.acceptHeaders);
+    checkCollectionResponse(response, 5, 0, 5, 1, 10, null, null, acceptTypeData);
+    DataMap dataMap = acceptTypeData.dataCodec.readMap(response.getEntity().asInputStream());
+    CollectionResponse<Status> collectionResponse = new CollectionResponse<Status>(dataMap, Status.class);
     assertEquals(new CollectionMetadata(collectionResponse.getMetadataRaw()), metadata);
 
 
     // #2 pagination: first page, no next
     response = invokeResponseHandler(baseUri + "&start=0&count=5",
                                      methodDescriptor,
-                                     buildStatusList(3));
-    checkCollectionResponse(response, 3, 0, 5, 0, null, null, null);
-
-// assertEquals(collectionResponse.getPaging().getLinks().get(0).getHref(), baseUri + "&start="
+                                     buildStatusList(3),
+                                     acceptTypeData.acceptHeaders);
+    checkCollectionResponse(response, 3, 0, 5, 0, null, null, null, acceptTypeData);
 
     // #3 pagination: first page, has next (boundary case)
     response = invokeResponseHandler(baseUri + "&start=0&count=5",
                                      methodDescriptor,
-                                     buildStatusList(5));
-    checkCollectionResponse(response, 5, 0, 5, 1, null, null, "/test?count=5&start=5&someParam=foo");
+                                     buildStatusList(5),
+                                     acceptTypeData.acceptHeaders);
+    checkCollectionResponse(response, 5, 0, 5, 1, null, null, "/test?count=5&start=5&someParam=foo", acceptTypeData);
 
     // #4 pagination: second page, has prev/ext
     response = invokeResponseHandler(baseUri + "&start=5&count=5",
                                      methodDescriptor,
-                                     buildStatusList(5));
-    checkCollectionResponse(response, 5, 5, 5, 2, null, "/test?count=5&start=0&someParam=foo", "/test?count=5&start=10&someParam=foo");
+                                     buildStatusList(5),
+                                     acceptTypeData.acceptHeaders);
+    checkCollectionResponse(response, 5, 5, 5, 2, null, "/test?count=5&start=0&someParam=foo", "/test?count=5&start=10&someParam=foo", acceptTypeData);
 
 
     // #5 pagination:last page, has prev
     response = invokeResponseHandler(baseUri + "&start=10&count=5",
                                      methodDescriptor,
-                                     buildStatusList(4));
-    checkCollectionResponse(response, 4, 10, 5, 1, null, "/test?count=5&start=5&someParam=foo", null);
+                                     buildStatusList(4),
+                                     acceptTypeData.acceptHeaders);
+    checkCollectionResponse(response, 4, 10, 5, 1, null, "/test?count=5&start=5&someParam=foo", null, acceptTypeData);
 
     response = invokeResponseHandler(baseUri + "&start=10&count=5",
                                      methodDescriptor,
-                                     new BasicCollectionResult<Status>(buildStatusList(4), 15));
-    checkCollectionResponse(response, 4, 10, 5, 2, 15, "/test?count=5&start=5&someParam=foo", "/test?count=5&start=14&someParam=foo");
+                                     new BasicCollectionResult<Status>(buildStatusList(4), 15),
+                                     acceptTypeData.acceptHeaders);
+    checkCollectionResponse(response, 4, 10, 5, 2, 15, "/test?count=5&start=5&someParam=foo", "/test?count=5&start=14&someParam=foo", acceptTypeData);
 
     response = invokeResponseHandler(baseUri + "&start=10&count=5",
                                      methodDescriptor,
-                                     new BasicCollectionResult<Status>(buildStatusList(4), 14));
-    checkCollectionResponse(response, 4, 10, 5, 1, 14, "/test?count=5&start=5&someParam=foo", null);
+                                     new BasicCollectionResult<Status>(buildStatusList(4), 14),
+                                     acceptTypeData.acceptHeaders);
+    checkCollectionResponse(response, 4, 10, 5, 1, 14, "/test?count=5&start=5&someParam=foo", null, acceptTypeData);
 
   }
 
   private RestResponse invokeResponseHandler(String uri,
                                              ResourceMethodDescriptor methodDescriptor,
-                                             Object result)
+                                             Object result,
+                                             Map<String, String> headers)
           throws IOException, URISyntaxException, RestLiSyntaxException
   {
-    RestRequest request = buildRequest(uri);
+    RestRequest request = buildRequest(uri, headers);
     RoutingResult routingResult = new RoutingResult(new ResourceContextImpl(new PathKeysImpl(), request,
                                                                             new RequestContext()), methodDescriptor);
     RestResponse response;
@@ -277,195 +375,221 @@ public class TestRestLiResponseHandler
     // TODO HIGH
   }
 
+  @DataProvider(name="statusActionData")
+  public Object[][] statusActionData()
+  {
+    return new Object[][]
+      {
+        {
+          AcceptTypeData.EMPTY,
+          EXPECTED_STATUS_ACTION_RESPONSE_JSON,
+          doubleQuote("{'value':{'key2':'value2','key1':'value1'}}")
+        },
+        {
+          AcceptTypeData.ANY,
+          EXPECTED_STATUS_ACTION_RESPONSE_JSON,
+          doubleQuote("{'value':{'key2':'value2','key1':'value1'}}")
+        },
+        {
+          AcceptTypeData.JSON,
+          EXPECTED_STATUS_ACTION_RESPONSE_JSON,
+          doubleQuote("{'value':{'key2':'value2','key1':'value1'}}")
+        },
+        {
+          AcceptTypeData.PSON,
+          EXPECTED_STATUS_ACTION_RESPONSE_PSON,
+          "#!PSON1\n!\u0081value\u0000!\u0083key2\u0000\tvalue2\u0000\u0085key1\u0000\tvalue1\u0000\u0080\u0080"
+        }
+      };
+  }
 
-  @Test
-  public void testActions() throws Exception
+  @Test(dataProvider = "statusActionData")
+  public void testActions(AcceptTypeData acceptTypeData, String response1, String response2) throws Exception
   {
     RestResponse response;
 
     // #1 simple record template
-    response = _responseHandler.buildResponse(buildRequest(),
+    response = _responseHandler.buildResponse(buildRequest(acceptTypeData.acceptHeaders),
                                               buildRoutingResultAction(Status.class),
                                               buildStatusRecord());
 
-    checkResponse(response, 200, 3, ActionResponse.class.getName(), Status.class.getName(), true);
-    assertEquals(response.getEntity().asAvroString(), EXPECTED_STATUS_ACTION_RESPONSE_JSON);
+    checkResponse(response, 200, 3, acceptTypeData.responseContentType, ActionResponse.class.getName(), Status.class.getName(), true);
+    assertEquals(response.getEntity().asAvroString(), response1);
 
     // #2 DataTemplate response
     StringMap map = new StringMap();
     map.put("key1", "value1");
     map.put("key2", "value2");
-    response = _responseHandler.buildResponse(buildRequest(),
+    response = _responseHandler.buildResponse(buildRequest(acceptTypeData.acceptHeaders),
                                               buildRoutingResultAction(StringMap.class),
                                               map);
 
-    checkResponse(response, 200, 3, ActionResponse.class.getName(), StringMap.class.getName(), true);
-    assertEquals(response.getEntity().asAvroString(), doubleQuote("{'value':{'key2':'value2','key1':'value1'}}"));
+    checkResponse(response, 200, 3, acceptTypeData.responseContentType, ActionResponse.class.getName(), StringMap.class.getName(), true);
+    assertEquals(response.getEntity().asAvroString(), response2);
 
     // #3 empty response
-    response = _responseHandler.buildResponse(buildRequest(),
+    response = _responseHandler.buildResponse(buildRequest(acceptTypeData.acceptHeaders),
                                               buildRoutingResultAction(Void.TYPE),
                                               null);
 
-    checkResponse(response, 200, 1, null, null, false);
+    checkResponse(response, 200, 0, null, null, null, false);
     assertEquals(response.getEntity().asAvroString(), "");
   }
 
-  @Test
-  void testRestErrors() throws Exception
+  @Test(dataProvider = "basicData")
+  void testRestErrors(AcceptTypeData acceptTypeData) throws Exception
   {
     RestResponse response;
     RestLiServiceException ex;
-    
+
     // #1
     ex = new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, "missing fields");
-    response = _responseHandler.buildResponse(buildRequest(),
+    response = _responseHandler.buildResponse(buildRequest(acceptTypeData.acceptHeaders),
                                               buildRoutingResult(),
                                               ex);
 
-    checkResponse(response, 400, 3, ErrorResponse.class.getName(), null, true, true);
-    DataMap dataMap =
-        DataMapUtils.readMap(response.getEntity().asInputStream());
+    checkResponse(response, 400, 3, acceptTypeData.responseContentType, ErrorResponse.class.getName(), null, true, true);
+    DataMap dataMap = acceptTypeData.dataCodec.readMap(response.getEntity().asInputStream());
 
     assertEquals(dataMap.getInteger("status"), Integer.valueOf(400));
     assertEquals(dataMap.getString("message"), "missing fields");
 
     // #2
     ex = new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, "missing fields").setServiceErrorCode(11);
-    response = _responseHandler.buildResponse(buildRequest(),
+    response = _responseHandler.buildResponse(buildRequest(acceptTypeData.acceptHeaders),
                                               buildRoutingResult(),
                                               ex);
 
-    checkResponse(response, 400, 3, ErrorResponse.class.getName(), null, true, true);
-    dataMap =
-        DataMapUtils.readMap(response.getEntity().asInputStream());
+    checkResponse(response, 400, 3, acceptTypeData.responseContentType, ErrorResponse.class.getName(), null, true, true);
+    dataMap = acceptTypeData.dataCodec.readMap(response.getEntity().asInputStream());
 
     assertEquals(dataMap.getInteger("status"), Integer.valueOf(400));
     assertEquals(dataMap.getString("message"), "missing fields");
     assertEquals(dataMap.getInteger("serviceErrorCode"), Integer.valueOf(11));
   }
 
-  @Test
-  public void testFieldProjection_records() throws Exception
+  @Test(dataProvider = "basicData")
+  public void testFieldProjection_records(AcceptTypeData acceptTypeData)
+          throws Exception
   {
     RestResponse response;
 
     // #1 all fields
-    RestRequest request1 = buildRequest("/test?fields=f1,f2,f3");
+    RestRequest request1 = buildRequest("/test?fields=f1,f2,f3", acceptTypeData.acceptHeaders);
     Status status = buildStatusWithFields("f1", "f2", "f3");
     response = _responseHandler.buildResponse(request1,
                                               buildRoutingResult(request1),
                                               status);
 
-    checkResponse(response, 200, 2, Status.class.getName(), null, true);
+    checkResponse(response, 200, 2, acceptTypeData.responseContentType, Status.class.getName(), null, true);
     checkProjectedFields(response, new String[] {"f1", "f2", "f3"}, new String[0]);
 
     // #2 some fields
-    RestRequest request2 = buildRequest("/test?fields=f1,f3");
+    RestRequest request2 = buildRequest("/test?fields=f1,f3", acceptTypeData.acceptHeaders);
     response = _responseHandler.buildResponse(request2,
                                               buildRoutingResult(request2),
                                               status);
     assertTrue(status.data().containsKey("f2"));
 
-    checkResponse(response, 200, 2, Status.class.getName(), null, true);
+    checkResponse(response, 200, 2, acceptTypeData.responseContentType, Status.class.getName(), null, true);
     checkProjectedFields(response, new String[] {"f1", "f3"}, new String[] {"f2"});
 
     // #3 no fields
-    RestRequest request3 = buildRequest("/test?fields=");
+    RestRequest request3 = buildRequest("/test?fields=", acceptTypeData.acceptHeaders);
     response = _responseHandler.buildResponse(request3,
                                               buildRoutingResult(request3),
                                               status);
 
-    checkResponse(response, 200, 2, Status.class.getName(), null, true);
+    checkResponse(response, 200, 2, acceptTypeData.responseContentType, Status.class.getName(), null, true);
     checkProjectedFields(response, new String[]{}, new String[]{"f1", "f2", "f3"});
     assertTrue(status.data().containsKey("f1"));
     assertTrue(status.data().containsKey("f2"));
     assertTrue(status.data().containsKey("f3"));
 
     // #4 fields not in schema
-    RestRequest request4 = buildRequest("/test?fields=f1,f99");
+    RestRequest request4 = buildRequest("/test?fields=f1,f99", acceptTypeData.acceptHeaders);
     response = _responseHandler.buildResponse(request4,
                                               buildRoutingResult(request4),
                                               status);
 
-    checkResponse(response, 200, 2, Status.class.getName(), null, true);
+    checkResponse(response, 200, 2, acceptTypeData.responseContentType, Status.class.getName(), null, true);
     checkProjectedFields(response, new String[] {"f1"}, new String[] {"f2", "f3", "f99"});
     assertTrue(status.data().containsKey("f2"));
     assertTrue(status.data().containsKey("f3"));
   }
 
-  @Test
-  public void testFieldProjectionRecordsPALSyntax() throws Exception
+  @Test(dataProvider = "basicData")
+  public void testFieldProjectionRecordsPALSyntax(AcceptTypeData acceptTypeData)
+          throws Exception
   {
     RestResponse response;
 
     DataMap data = new DataMap(asMap(
             "f1", "value",
             "f2", new DataMap(asMap(
-                "f3", "value",
-                "f4", "value"
+            "f3", "value",
+            "f4", "value"
     ))));
 
     // #1 all fields
     Status status = new Status(data);
 
-    RestRequest request1 = buildRequest("/test?fields=f1,f2:(f3,f4)");
+    RestRequest request1 = buildRequest("/test?fields=f1,f2:(f3,f4)", acceptTypeData.acceptHeaders);
     response = _responseHandler.buildResponse(request1,
                                               buildRoutingResult(request1),
                                               status);
 
-    checkResponse(response, 200, 2, Status.class.getName(), null, true);
+    checkResponse(response, 200, 2, acceptTypeData.responseContentType, Status.class.getName(), null, true);
     checkProjectedFields(response, new String[] {"f1", "f2", "f3"}, new String[0]);
 
     // #2 some fields
-    RestRequest request2 = buildRequest("/test?fields=f1,f2:(f3)");
+    RestRequest request2 = buildRequest("/test?fields=f1,f2:(f3)", acceptTypeData.acceptHeaders);
     response = _responseHandler.buildResponse(request2,
                                               buildRoutingResult(request2),
                                               status);
     assertTrue(status.data().containsKey("f2"));
 
-    checkResponse(response, 200, 2, Status.class.getName(), null, true);
+    checkResponse(response, 200, 2, acceptTypeData.responseContentType, Status.class.getName(), null, true);
     checkProjectedFields(response, new String[] {"f1", "f2", "f3"}, new String[] {"f4"});
 
     // #3 no fields
-    RestRequest request3 = buildRequest("/test?fields=");
+    RestRequest request3 = buildRequest("/test?fields=", acceptTypeData.acceptHeaders);
     response = _responseHandler.buildResponse(request3,
                                               buildRoutingResult(request3),
                                               status);
 
-    checkResponse(response, 200, 2, Status.class.getName(), null, true);
+    checkResponse(response, 200, 2, acceptTypeData.responseContentType, Status.class.getName(), null, true);
     checkProjectedFields(response, new String[]{}, new String[]{"f1", "f2", "f3", "f4"});
     assertTrue(status.data().containsKey("f1"));
     assertTrue(status.data().containsKey("f2"));
 
     // #4 fields not in schema
-    RestRequest request4 = buildRequest("/test?fields=f2:(f99)");
+    RestRequest request4 = buildRequest("/test?fields=f2:(f99)", acceptTypeData.acceptHeaders);
     response = _responseHandler.buildResponse(request4,
                                               buildRoutingResult(request4),
                                               status);
 
-    checkResponse(response, 200, 2, Status.class.getName(), null, true);
+    checkResponse(response, 200, 2, acceptTypeData.responseContentType, Status.class.getName(), null, true);
     checkProjectedFields(response, new String[] {"f2"}, new String[] {"f1", "f3", "f99"});
     assertTrue(status.data().containsKey("f2"));
   }
 
-
-  @Test
-  public void testFieldProjection_collections_CollectionResult() throws Exception
+  @Test(dataProvider = "basicData")
+  public void testFieldProjection_collections_CollectionResult(AcceptTypeData acceptTypeData)
+          throws Exception
   {
     RestResponse response;
 
     BasicCollectionResult<Status> statusCollection = buildStatusCollectionResult(10, "f1", "f2",
                                                                                  "f3");
-    RestRequest request = buildRequest("/test?fields=f1,f2");
+    RestRequest request = buildRequest("/test?fields=f1,f2", acceptTypeData.acceptHeaders);
     response = _responseHandler.buildResponse(request,
                                               buildRoutingResultFinder(request),
                                               statusCollection);
 
-    checkResponse(response, 200, 3, CollectionResponse.class.getName(), null, true);
+    checkResponse(response, 200, 3, acceptTypeData.responseContentType, CollectionResponse.class.getName(), null, true);
 
-    DataMap dataMap =
-        DataMapUtils.readMap(response.getEntity().asInputStream());
+    DataMap dataMap = acceptTypeData.dataCodec.readMap(response.getEntity().asInputStream());
     CollectionResponse<Status> collectionResponse = new CollectionResponse<Status>(dataMap, Status.class);
     assertEquals(collectionResponse.getElements().size(), 10);
     for (Status status : collectionResponse.getElements())
@@ -476,26 +600,25 @@ public class TestRestLiResponseHandler
     }
 
     // ensure that output status objects were not modified by rest.li!
-    Status status = statusCollection.getElements().get(1);
-    assertNotNull(status);
-    assertTrue(status.data().containsKey("f3"));
+    Status status1 = statusCollection.getElements().get(1);
+    assertNotNull(status1);
+    assertTrue(status1.data().containsKey("f3"));
   }
 
-  @Test
-  public void testFieldProjection_collections_List() throws Exception
+  @Test(dataProvider = "basicData")
+  public void testFieldProjection_collections_List(AcceptTypeData acceptTypeData) throws Exception
   {
     RestResponse response;
 
     List<Status> statusCollection = buildStatusListResult(10, "f1", "f2", "f3");
-    RestRequest request = buildRequest("/test?fields=f1,f2");
+    RestRequest request = buildRequest("/test?fields=f1,f2", acceptTypeData.acceptHeaders);
     response = _responseHandler.buildResponse(request,
                                               buildRoutingResultFinder(request),
                                               statusCollection);
 
-    checkResponse(response, 200, 3, CollectionResponse.class.getName(), null, true);
+    checkResponse(response, 200, 3, acceptTypeData.responseContentType, CollectionResponse.class.getName(), null, true);
 
-    DataMap dataMap =
-        DataMapUtils.readMap(response.getEntity().asInputStream());
+    DataMap dataMap = acceptTypeData.dataCodec.readMap(response.getEntity().asInputStream());
     CollectionResponse<Status> collectionResponse = new CollectionResponse<Status>(dataMap, Status.class);
     assertEquals(collectionResponse.getElements().size(), 10);
     for (Status status : collectionResponse.getElements())
@@ -506,26 +629,25 @@ public class TestRestLiResponseHandler
     }
 
     // ensure that output status objects were not modified by rest.li!
-    Status status = statusCollection.get(1);
-    assertNotNull(status);
-    assertTrue(status.data().containsKey("f3"));
+    Status status1 = statusCollection.get(1);
+    assertNotNull(status1);
+    assertTrue(status1.data().containsKey("f3"));
   }
 
-  @Test
-  public void testFieldProjection_batch() throws Exception
+  @Test(dataProvider = "basicData")
+  public void testFieldProjection_batch(AcceptTypeData acceptTypeData) throws Exception
   {
     RestResponse response;
 
     Map<Integer, Status> statusBatch = buildStatusBatchResponse(10, "f1", "f2", "f3");
-    RestRequest request = buildRequest("/test?ids=1,2,3&fields=f1,f2");
+    RestRequest request = buildRequest("/test?ids=1,2,3&fields=f1,f2", acceptTypeData.acceptHeaders);
     response = _responseHandler.buildResponse(request,
                                               buildRoutingResult(ResourceMethod.BATCH_GET, request),
                                               statusBatch);
 
-    checkResponse(response, 200, 3, BatchResponse.class.getName(), Status.class.getName(), true);
+    checkResponse(response, 200, 3, acceptTypeData.responseContentType, BatchResponse.class.getName(), Status.class.getName(), true);
 
-    DataMap dataMap =
-        DataMapUtils.readMap(response.getEntity().asInputStream());
+    DataMap dataMap = acceptTypeData.dataCodec.readMap(response.getEntity().asInputStream());
     BatchResponse<Status> batchResponse = new BatchResponse<Status>(dataMap, Status.class);
     assertEquals(batchResponse.getResults().size(), 10);
     for (Status status : batchResponse.getResults().values())
@@ -536,13 +658,13 @@ public class TestRestLiResponseHandler
     }
 
     // ensure that output map was not modified by rest.li!
-    Status status = statusBatch.get(1);
-    assertNotNull(status);
-    assertTrue(status.data().containsKey("f3"));
+    Status status1 = statusBatch.get(1);
+    assertNotNull(status1);
+    assertTrue(status1.data().containsKey("f3"));
   }
 
-  @Test
-  public void testApplicationSpecifiedHeaders() throws Exception
+  @Test(dataProvider = "basicData")
+  public void testApplicationSpecifiedHeaders(AcceptTypeData acceptTypeData) throws Exception
   {
     String testHeaderName = "X-LI-TEST-HEADER";
     String testHeaderValue = "test";
@@ -554,50 +676,62 @@ public class TestRestLiResponseHandler
     RoutingResult routingResult = new RoutingResult(context, methodDescriptor);
 
     RestResponse response;
-    response = _responseHandler.buildResponse(buildRequest(),
+    response = _responseHandler.buildResponse(buildRequest(acceptTypeData.acceptHeaders),
                                               routingResult,
                                               buildStatusList(3));
 
     Assert.assertEquals(response.getHeader(testHeaderName), testHeaderValue);
   }
 
-  @Test
-  public void testWrapperResults() throws Exception
+  @DataProvider(name="statusesData")
+  public Object[][] statusesData()
+  {
+    return new Object[][]
+      {
+        { AcceptTypeData.EMPTY, EXPECTED_STATUS_JSON, EXPECTED_STATUS_ACTION_RESPONSE_JSON },
+        { AcceptTypeData.ANY, EXPECTED_STATUS_JSON, EXPECTED_STATUS_ACTION_RESPONSE_JSON },
+        { AcceptTypeData.JSON, EXPECTED_STATUS_JSON, EXPECTED_STATUS_ACTION_RESPONSE_JSON },
+        { AcceptTypeData.PSON, EXPECTED_STATUS_PSON, EXPECTED_STATUS_ACTION_RESPONSE_PSON }
+      };
+  }
+
+  @Test(dataProvider = "statusesData")
+  public void testWrapperResults(AcceptTypeData acceptTypeData, String expectedStatus, String expectedActionStatus) throws Exception
   {
     RestResponse response;
     final Status status = buildStatusRecord();
 
     final GetResult<Status> getResult = new GetResult<Status>(status, HttpStatus.S_500_INTERNAL_SERVER_ERROR);
-    response = invokeResponseHandler("/test", getResult, ResourceMethod.GET);
-    checkResponse(response, HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode(), 2, Status.class.getName(), null, true);
-    assertEquals(response.getEntity().asAvroString(), EXPECTED_STATUS_JSON);
+    response = invokeResponseHandler("/test", getResult, ResourceMethod.GET, acceptTypeData.acceptHeaders);
+    checkResponse(response, HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode(), 2, acceptTypeData.responseContentType, Status.class.getName(), null, true);
+    assertEquals(response.getEntity().asAvroString(), expectedStatus);
 
     final ActionResult<Status> actionResult = new ActionResult<Status>(status, HttpStatus.S_500_INTERNAL_SERVER_ERROR);
-    response = _responseHandler.buildResponse(buildRequest(),
+    response = _responseHandler.buildResponse(buildRequest(acceptTypeData.acceptHeaders),
                                               buildRoutingResultAction(Status.class),
                                               actionResult);
     checkResponse(response,
                   HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode(),
                   3,
+                  acceptTypeData.responseContentType,
                   ActionResponse.class.getName(),
                   Status.class.getName(),
                   true);
-    assertEquals(response.getEntity().asAvroString(), EXPECTED_STATUS_ACTION_RESPONSE_JSON);
-
+    assertEquals(response.getEntity().asAvroString(), expectedActionStatus);
   }
 
   // *****************
   // Helper methods
   // *****************
 
-  private final RestRequest buildRequest() throws URISyntaxException
+  private final RestRequest buildRequest(Map<String, String> headers) throws URISyntaxException
   {
-    return buildRequest("/test");
+    return buildRequest("/test", headers);
   }
 
-  private final RestRequest buildRequest(String uri) throws URISyntaxException
+  private final RestRequest buildRequest(String uri, Map<String, String> headers) throws URISyntaxException
   {
-    return new RestRequestBuilder(new URI(uri)).setMethod("DONT_CARE").build();
+    return new RestRequestBuilder(new URI(uri)).setMethod("DONT_CARE").setHeaders(headers).build();
   }
 
   private final RoutingResult buildRoutingResult()
@@ -714,16 +848,18 @@ public class TestRestLiResponseHandler
   private void checkResponse(RestResponse response,
                              int status,
                              int numHeaders,
+                             String contentType,
                              String type,
                              String subType,
                              boolean hasEntity)
   {
-    checkResponse(response, status, numHeaders, type, subType, false, hasEntity);
+    checkResponse(response, status, numHeaders, contentType, type, subType, false, hasEntity);
   }
 
   private void checkResponse(RestResponse response,
                              int status,
                              int numHeaders,
+                             String contentType,
                              String type,
                              String subType,
                              boolean hasError,
@@ -731,7 +867,7 @@ public class TestRestLiResponseHandler
   {
     assertEquals(response.getStatus(), status);
     assertEquals(response.getHeaders().size(), numHeaders);
-    assertEquals(response.getHeader("Content-Type"), "application/json");
+    assertEquals(response.getHeader(RestConstants.HEADER_CONTENT_TYPE), contentType);
     assertEquals(response.getHeader(RestConstants.HEADER_LINKEDIN_TYPE), type);
     if (subType != null)
     {
@@ -822,11 +958,12 @@ public class TestRestLiResponseHandler
                                        int numLinks,
                                        Integer total,
                                        String prevLink,
-                                       String nextLink)
+                                       String nextLink,
+                                       AcceptTypeData acceptTypeData)
+          throws Exception
   {
-    CollectionResponse<Status> collectionResponse =
-      DataMapUtils.readCollectionResponse(response.getEntity().asInputStream(),
-                                          Status.class);
+    DataMap dataMap = acceptTypeData.dataCodec.readMap(response.getEntity().asInputStream());
+    CollectionResponse<Status> collectionResponse = new CollectionResponse<Status>(dataMap, Status.class);
 
     assertEquals(collectionResponse.getElements().size(), numElements);
     assertEquals(collectionResponse.getPaging().getStart(), start);
@@ -842,34 +979,67 @@ public class TestRestLiResponseHandler
     }
     if (prevLink != null)
     {
-      checkLink(collectionResponse.getPaging().getLinks().get(0), "prev", prevLink);
+      checkLink(collectionResponse.getPaging().getLinks().get(0), "prev", prevLink, acceptTypeData.responseContentType);
     }
     if (nextLink != null)
     {
       int idx = prevLink != null ? 1 : 0;
-      checkLink(collectionResponse.getPaging().getLinks().get(idx), "next", nextLink);
+      checkLink(collectionResponse.getPaging().getLinks().get(idx), "next", nextLink, acceptTypeData.responseContentType);
     }
   }
 
-  private static void checkLink(Link link, String rel, String uri)
+  private static void checkLink(Link link, String rel, String uri, String type)
   {
     assertEquals(link.getRel(), rel);
     assertFalse(link.hasTitle());
-    assertEquals(link.getType(), "application/json");
+    assertEquals(link.getType(), type);
     assertEquals(link.getHref(), uri);
   }
 
   private static void checkProjectedFields(RestResponse response, String[] expectedFields, String[] missingFields)
+          throws UnsupportedEncodingException
   {
-    String responseBody = response.getEntity().asAvroString();
+
+    InputStream inputStream = response.getEntity().asInputStream();
+    String contentType = response.getHeader(RestConstants.HEADER_CONTENT_TYPE);
+
+    DataMap dataMap;
+    if (contentType.equalsIgnoreCase(APPLICATION_JSON))
+    {
+      dataMap = DataMapUtils.readMap(inputStream);
+    }
+    else if (contentType.equalsIgnoreCase(APPLICATION_PSON))
+    {
+      dataMap = DataMapUtils.readMapPson(inputStream);
+    }
+    else
+    {
+      throw new IllegalStateException("Unknown Content-Type value " + contentType + " found.");
+    }
+
     for (String field : expectedFields)
     {
-      assertTrue(responseBody.contains('"' + field + '"'));
+      assertTrue(DataMapContains(dataMap, field));
     }
     for (String field : missingFields)
     {
-      assertFalse(responseBody.contains('"' + field + '"'));
+      assertFalse(DataMapContains(dataMap, field));
     }
+  }
+
+  private static boolean DataMapContains(DataMap data, String field)
+  {
+    for(String key : data.keySet())
+    {
+      if (key.equals(field))
+        return true;
+
+      Object value = data.get(key);
+      if (value instanceof DataMap)
+        return DataMapContains((DataMap)value, field);
+    }
+    return false;
+
   }
 
   @SuppressWarnings("unchecked")

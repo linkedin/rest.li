@@ -21,6 +21,7 @@ import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.JacksonDataCodec;
+import com.linkedin.data.codec.PsonDataCodec;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.JacksonDataTemplateCodec;
@@ -36,6 +37,7 @@ import java.lang.reflect.InvocationTargetException;
 public class DataMapUtils
 {
   private static final JacksonDataCodec CODEC = new JacksonDataCodec();
+  private static final PsonDataCodec PSON_DATA_CODEC = new PsonDataCodec();
   private static final JacksonDataTemplateCodec TEMPLATE_CODEC = new JacksonDataTemplateCodec();
 
   /**
@@ -49,6 +51,24 @@ public class DataMapUtils
     try
     {
       return CODEC.readMap(stream);
+    }
+    catch (IOException e)
+    {
+      throw new RestLiInternalException(e);
+    }
+  }
+
+  /**
+   * Read {@link DataMap} from InputStream.
+   *
+   * @param stream input stream
+   * @return {link @DataMap}
+   */
+  public static DataMap readMapPson(final InputStream stream)
+  {
+    try
+    {
+      return PSON_DATA_CODEC.readMap(stream);
     }
     catch (IOException e)
     {
@@ -197,9 +217,9 @@ public class DataMapUtils
   }
 
   /**
-   * Encode {@link DataMap} as byte array using {@link JacksonDataCodec}.
+   * Encode {@link DataMap} as a byte array using {@link JacksonDataCodec}.
    *
-   * @param dataMap input (@link DataMap}
+   * @param dataMap input {@link DataMap}
    * @return byte array
    */
   public static byte[] mapToBytes(final DataMap dataMap)
@@ -239,6 +259,24 @@ public class DataMapUtils
     else
     {
       throw new IllegalStateException("Unknown DataComplex type: " + value.getClass());
+    }
+  }
+
+  /**
+   * Encode the {@link DataMap} as a byte array using {@link PsonDataCodec}.
+   *
+   * @param dataMap input {@link DataMap}
+   * @return byte array
+   */
+  public static byte[] mapToPsonBytes(final DataMap dataMap)
+  {
+    try
+    {
+      return PSON_DATA_CODEC.mapToBytes(dataMap);
+    }
+    catch (IOException e)
+    {
+      throw new RestLiInternalException(e);
     }
   }
 }

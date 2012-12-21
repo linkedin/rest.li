@@ -60,7 +60,7 @@ import java.util.Map;
  */
 public class PsonDataCodec implements DataCodec
 {
-  private static final byte[] HEADER = { 0x21, 0x23, 0x53, 0x50, 0x4e, 0x4f, 0x31, 0x0a };  // #!PSON1\n
+  private static final byte[] HEADER = { 0x23, 0x21, 0x50, 0x53, 0x4f, 0x4e, 0x31, 0x0a };  // #!PSON1\n
   private static final String UTF_8 = "UTF-8";
 
   private boolean _testMode;

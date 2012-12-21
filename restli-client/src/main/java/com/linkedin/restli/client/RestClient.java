@@ -37,6 +37,10 @@ import com.linkedin.restli.internal.client.RestResponseDecoder;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -65,10 +69,9 @@ import java.util.Map;
  *
  * <ul>
  * <li>No support for String URIs
- * <li>Clients do not define accept media types, not do they specify the expected response entity type.
- *     The thinking here is that entity encoding (JSON, BSON, whatever) is opaque
- *     to the application layer and content negotiation will be handled automatically for the client. We'll be
- *      dealing with DataTemplates over DataMaps.
+ * <li>Clients may define accept MIME types, the expected response entity type, and their preference order.
+ *     By default clients will send no accept headers and receive responses in and expect the server to
+ *     send responses in application/json format when there is no accept header.
  *  <li>TODO Do we need to support Accept-Language header for i18n profile use case?
  *  <li>No cookies
  *  <li>No (convenient) synchronous invocation mode (can just call Future.get())
@@ -88,14 +91,22 @@ import java.util.Map;
 public class RestClient
 {
   private static final JacksonDataCodec JACKSON_DATA_CODEC = new JacksonDataCodec();
+  private static final List<AcceptType> DEFAULT_ACCEPT_TYPES = Collections.emptyList();
 
   private final Client _client;
   private final String _uriPrefix;
+  private final List<AcceptType> _acceptTypes;
 
   public RestClient(Client client, String uriPrefix)
   {
+    this(client, uriPrefix, DEFAULT_ACCEPT_TYPES);
+  }
+
+  public RestClient(Client client, String uriPrefix, List<AcceptType> acceptTypes)
+  {
     _client = client;
     _uriPrefix = uriPrefix;
+    _acceptTypes = acceptTypes;
   }
 
   /**
@@ -141,6 +152,38 @@ public class RestClient
     RestLiCallbackAdapter<T> adapter = new RestLiCallbackAdapter<T>(request.getResponseDecoder(), callback);
     sendRequestImpl(requestContext, request.getUri(), request.getMethod(),
                     input != null ? input.data() : null, request.getHeaders(), adapter);
+  }
+
+  private void addAcceptHeaders(RestRequestBuilder builder)
+  {
+    if(!_acceptTypes.isEmpty() && builder.getHeader(RestConstants.HEADER_ACCEPT) == null)
+    {
+      builder.setHeader(RestConstants.HEADER_ACCEPT, createAcceptHeader());
+    }
+  }
+
+  private String createAcceptHeader()
+  {
+    if (_acceptTypes.size() == 1)
+    {
+      return _acceptTypes.get(0).getHeaderKey();
+    }
+
+    // general case
+    StringBuilder acceptHeader = new StringBuilder();
+    double currQ = 1.0;
+    Iterator<AcceptType> iterator = _acceptTypes.iterator();
+    while(iterator.hasNext())
+    {
+      acceptHeader.append(iterator.next().getHeaderKey());
+      acceptHeader.append(";q=");
+      acceptHeader.append(currQ);
+      currQ -= .1;
+      if (iterator.hasNext())
+        acceptHeader.append(",");
+    }
+
+    return acceptHeader.toString();
   }
 
   /**
@@ -215,10 +258,8 @@ public class RestClient
     RestRequestBuilder requestBuilder = new RestRequestBuilder(uri).setMethod(
             method.getHttpMethod().toString());
 
-    if (headers != null)
-    {
-      requestBuilder.setHeaders(headers);
-    }
+    requestBuilder.setHeaders(headers);
+    addAcceptHeaders(requestBuilder);
 
     if (method.getHttpMethod() == HttpMethod.POST)
     {
@@ -227,10 +268,31 @@ public class RestClient
 
     if (dataMap != null)
     {
-      requestBuilder.setEntity(JACKSON_DATA_CODEC.mapToBytes(dataMap)).setHeader("Content-Type", "application/json");
+      requestBuilder.setEntity(JACKSON_DATA_CODEC.mapToBytes(dataMap))
+                    .setHeader(RestConstants.HEADER_CONTENT_TYPE,
+                               RestConstants.HEADER_VALUE_APPLICATION_JSON);
     }
 
     return requestBuilder.build();
+  }
+
+  public static enum AcceptType
+  {
+    PSON(RestConstants.HEADER_VALUE_APPLICATION_PSON),
+    JSON(RestConstants.HEADER_VALUE_APPLICATION_JSON),
+    ANY(RestConstants.HEADER_VALUE_ACCEPT_ANY);
+
+    private String _headerKey;
+
+    private AcceptType(String headerKey)
+    {
+      _headerKey = headerKey;
+    }
+
+    public String getHeaderKey()
+    {
+      return _headerKey;
+    }
   }
 
   private static class RestLiCallbackAdapter<T> extends CallbackAdapter<Response<T>,RestResponse>

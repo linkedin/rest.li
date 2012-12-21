@@ -27,9 +27,11 @@ import java.lang.reflect.InvocationTargetException;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.JacksonDataCodec;
+import com.linkedin.data.codec.PsonDataCodec;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestLiDecodingException;
+import com.linkedin.restli.common.RestConstants;
 
 /**
  * Converts a raw RestResponse into a type-bound response.  The class is abstract
@@ -41,6 +43,7 @@ import com.linkedin.restli.client.RestLiDecodingException;
 public abstract class RestResponseDecoder<T>
 {
   private static final JacksonDataCodec JACKSON_DATA_CODEC = new JacksonDataCodec();
+  private static final PsonDataCodec    PSON_DATA_CODEC    = new PsonDataCodec();
 
   public Response<T> decodeResponse(RestResponse restResponse) throws RestLiDecodingException
   {
@@ -56,7 +59,16 @@ public abstract class RestResponseDecoder<T>
 
     try
     {
-      DataMap dataMap = JACKSON_DATA_CODEC.readMap(inputStream);
+      DataMap dataMap;
+      if ((RestConstants.HEADER_VALUE_APPLICATION_PSON)
+              .equalsIgnoreCase(restResponse.getHeader(RestConstants.HEADER_CONTENT_TYPE)))
+      {
+        dataMap = PSON_DATA_CODEC.readMap(inputStream);
+      }
+      else
+      {
+        dataMap = JACKSON_DATA_CODEC.readMap(inputStream);
+      }
       response.setEntity(wrapResponse(dataMap));
       return response;
     }

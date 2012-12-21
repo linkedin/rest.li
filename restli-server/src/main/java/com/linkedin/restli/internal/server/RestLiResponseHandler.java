@@ -34,9 +34,12 @@ import com.linkedin.restli.internal.server.methods.response.PartialRestResponse;
 import com.linkedin.restli.internal.server.methods.response.RestLiResponseBuilder;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
+import com.linkedin.restli.internal.server.util.MIMEParse;
+import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.RestLiServiceException;
+import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.resources.CollectionResource;
 
@@ -72,9 +75,6 @@ public class RestLiResponseHandler
   {
     Map<String, String> headers = new HashMap<String, String>();
     headers.putAll(((ServerResourceContext) routingResult.getContext()).getResponseHeaders());
-
-    headers.put(RestConstants.HEADER_CONTENT_TYPE,
-                RestConstants.HEADER_VALUE_APPLICATION_JSON);
 
     if (responseObject == null)
     {
@@ -115,10 +115,32 @@ public class RestLiResponseHandler
     if (partialResponse.hasData())
     {
       DataMap dataMap = partialResponse.getDataMap();
-      builder.setEntity(DataMapUtils.mapToBytes(dataMap));
+      String acceptTypes = request.getHeader(RestConstants.HEADER_ACCEPT);
+      builder = encodeResult(builder, dataMap, acceptTypes);
     }
 
     return builder.build();
+  }
+
+  private RestResponseBuilder encodeResult(RestResponseBuilder builder, DataMap dataMap, String acceptTypes)
+  {
+    String bestType = RestUtils.pickBestEncoding(acceptTypes);
+
+    if (RestConstants.HEADER_VALUE_APPLICATION_PSON.equalsIgnoreCase(bestType))
+    {
+      builder.setHeader(RestConstants.HEADER_CONTENT_TYPE, RestConstants.HEADER_VALUE_APPLICATION_PSON);
+      builder.setEntity(DataMapUtils.mapToPsonBytes(dataMap));
+    }
+    else if (RestConstants.HEADER_VALUE_APPLICATION_JSON.equalsIgnoreCase(bestType))
+    {
+      builder.setHeader(RestConstants.HEADER_CONTENT_TYPE, RestConstants.HEADER_VALUE_APPLICATION_JSON);
+      builder.setEntity(DataMapUtils.mapToBytes(dataMap));
+    }
+    else
+    {
+      throw new RoutingException("no acceptable types can be returned", 406);
+    }
+    return builder;
   }
 
   private RestLiResponseBuilder chooseResponseBuilder(final Object responseObject,

@@ -1,5 +1,32 @@
 1.7.9
 -----
+(RB=123406)
+Change to allow clients to request data in pson-encoded format (and interpet pson-encoded data),
+and for servers to be able to send pson-encoded responses.
+
+Clients can signify that a response should be in pson format by sending the request with the
+header "Accept-Type : application/x-pson".  The server will then encode the result in pson and
+send it back with the header "Content-Type : application/x-pson". If the client recieves a
+response with this header it will decode it with the pson codec.
+    
+Some headers will now work a bit differently:
+Content-Type headers will no longer be sent with responses unless there is actual body content
+to encode.  This change was made primarily to simplify picking the right header.  There's no
+point in trying to figure out the right content-type header to send back if there isn't
+actually any content to send.
+Accept-Type headers can now be sent with requests.  The default client won't send Accept-Type
+headers (same as the old code), but users can use the new RestClient constructor to create a
+client that will send Accept-Type headers.  Right now there are four basic options for
+Accept-Type headers:
+ - no header: server will send back result as application/json.  This is required for backwards
+   compatibility.
+ - application/json highest quality in header: server will send back result as application/json
+ - application/x-pson highest quality in header: server will send back result as
+   application/x-pson.  If the server code is old, result will be sent back as application/json
+ - */* highest quality in header: for now, server will send back result as application/json, if
+   no other accept types are found.  However, the server will prefer to send back responses in
+   formats that are explicitly mentioned in the header, even when they are lower quality than */*
+
 (RB=128653)
 ActionResponseDecoder.getEntity() will return Void.class if its fieldDef is 
 null, to preserve compatibility from before the Action response changes.
