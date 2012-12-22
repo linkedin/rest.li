@@ -16,11 +16,9 @@
 
 package com.linkedin.restli.internal.server.util;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.lang.reflect.InvocationTargetException;
 
+import com.linkedin.data.DataComplex;
+import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.schema.DataSchema;
@@ -29,6 +27,11 @@ import com.linkedin.data.template.JacksonDataTemplateCodec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.internal.server.RestLiInternalException;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
 
 public class DataMapUtils
 {
@@ -208,6 +211,34 @@ public class DataMapUtils
     catch (IOException e)
     {
       throw new RestLiInternalException(e);
+    }
+  }
+
+  public static byte[] listToBytes(final DataList dataList)
+  {
+    try
+    {
+      return CODEC.listToBytes(dataList);
+    }
+    catch (IOException e)
+    {
+      throw new RestLiInternalException(e);
+    }
+  }
+
+  public static byte[] dataComplexToBytes(DataComplex value)
+  {
+    if (value instanceof DataMap)
+    {
+      return DataMapUtils.mapToBytes((DataMap) value);
+    }
+    else if (value instanceof DataList)
+    {
+      return DataMapUtils.listToBytes((DataList) value);
+    }
+    else
+    {
+      throw new IllegalStateException("Unknown DataComplex type: " + value.getClass());
     }
   }
 }

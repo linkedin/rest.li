@@ -1051,9 +1051,10 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
   {
     typeSchema = typeSchema.trim();
 
+    // schema can be either a type object or a quote-wrapped name string
     if (!typeSchema.startsWith("{") && !typeSchema.startsWith("\""))
     {
-      //construct a valid JSON string to hand to the parser
+      // wrap the unquoted name with quotes
       typeSchema = "\"" + typeSchema + "\"";
     }
 
@@ -1078,16 +1079,18 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     if (schema instanceof TyperefDataSchema)
     {
       TyperefDataSchema typerefDataSchema = (TyperefDataSchema) schema;
-      String javaClassNameFromSchema = ArgumentUtils.getJavaClassNameFromSchema(typerefDataSchema);
-      if (javaClassNameFromSchema != null)
+      if (typerefDataSchema.getDereferencedDataSchema().getType() != DataSchema.Type.UNION)
       {
-        type = getCodeModel().directClass(javaClassNameFromSchema);
+        String javaClassNameFromSchema = ArgumentUtils.getJavaClassNameFromSchema(typerefDataSchema);
+        if (javaClassNameFromSchema != null)
+        {
+          type = getCodeModel().directClass(javaClassNameFromSchema);
+        }
+        else
+        {
+          type = getJavaBindingType(typerefDataSchema.getRef(), parentClass);
+        }
       }
-      else
-      {
-        type = getJavaBindingType(typerefDataSchema.getRef(), parentClass);
-      }
-
     }
     return type;
   }

@@ -854,6 +854,8 @@ public abstract class DataTemplateGenerator extends CodeGenerator
   {
     assert typerefDataSchema.getRef() == schema;
 
+    pushCurrentLocation(getSchemaResolver().nameToDataSchemaLocations().get(typerefDataSchema.getFullName()));
+
     JDefinedClass unionClass = getPackage(typerefDataSchema.getNamespace())._class(JMod.PUBLIC, escapeReserved(typerefDataSchema.getName()));
     registerGeneratedClass(typerefDataSchema, unionClass);
 
@@ -869,7 +871,9 @@ public abstract class DataTemplateGenerator extends CodeGenerator
     JMethod typerefInfoMethod = unionClass.method(JMod.PUBLIC, TyperefInfo.class, "typerefInfo");
     typerefInfoMethod.body()._return(typerefInfoField);
 
-    return generateUnion(schema, unionClass);
+    final JClass result = generateUnion(schema, unionClass);
+    popCurrentLocation();
+    return result;
   }
 
   private JClass generateUnion(UnionDataSchema schema, JDefinedClass unionClass)

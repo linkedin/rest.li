@@ -45,7 +45,7 @@ public class CompatibilityInfo
     TYPE_UNKNOWN(Level.INCOMPATIBLE, "Type cannot be resolved: %s"),
     VALUE_NOT_EQUAL(Level.INCOMPATIBLE, "Current value \"%2$s\" does not match the previous value \"%1$s\""),
     VALUE_WRONG_OPTIONALITY(Level.INCOMPATIBLE, "\"%s\" may not be removed because it exists in the previous version"),
-    PARAMETER_NEW_OPTIONAL(Level.COMPATIBLE, "New optional parameter \"%s\"is added"),
+    PARAMETER_NEW_OPTIONAL(Level.COMPATIBLE, "New optional parameter \"%s\" is added"),
     OPTIONAL_PARAMETER(Level.COMPATIBLE, "Previous optional parameter is changed to currently required"),
     OPTIONAL_VALUE(Level.COMPATIBLE, "Optional field \"%s\" was previously missing but currently present"),
     SUPERSET(Level.COMPATIBLE, "Current values have these extra values: %s"),

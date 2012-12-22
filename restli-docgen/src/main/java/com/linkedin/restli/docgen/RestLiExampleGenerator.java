@@ -16,17 +16,6 @@
 
 package com.linkedin.restli.docgen;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-
-import org.codehaus.jackson.impl.DefaultPrettyPrinter;
 
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
@@ -82,6 +71,17 @@ import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
+import org.codehaus.jackson.impl.DefaultPrettyPrinter;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * Generates a example requests for a given Resource IDL. Uses
@@ -346,7 +346,7 @@ public class RestLiExampleGenerator
       {
         assert(!param.hasItems());
         final DataSchema typeSchema = RestSpecCodec.textToSchema(param.getType(), _schemaResolver);
-        final Object value = SchemaSampleDataGenerator.buildDataMappable(typeSchema, _defaultSpec);
+        final Object value = SchemaSampleDataGenerator.buildData(typeSchema, _defaultSpec);
         requestEntity.put(param.getName(), value);
       }
     }
@@ -354,7 +354,7 @@ public class RestLiExampleGenerator
     if (actionSchema.hasReturns())
     {
       final DataSchema returnsSchema = RestSpecCodec.textToSchema(actionSchema.getReturns(), _schemaResolver);
-      responseEntity = SchemaSampleDataGenerator.buildDataMappable(returnsSchema, _defaultSpec);
+      responseEntity = SchemaSampleDataGenerator.buildData(returnsSchema, _defaultSpec);
 
       final Class<?> returnsClass = method.getActionReturnType();
       if (DataTemplate.class.isAssignableFrom(returnsClass))
@@ -485,7 +485,7 @@ public class RestLiExampleGenerator
         for (Key key: model.getKeys())
         {
           final DataSchema keySchema = key.getDataSchema();
-          final Object exampleKey = SchemaSampleDataGenerator.buildDataMappable(keySchema, _defaultSpec);
+          final Object exampleKey = SchemaSampleDataGenerator.buildData(keySchema, _defaultSpec);
           exampleValues.put(key.getName(), exampleKey.toString());
         }
       }
@@ -538,14 +538,14 @@ public class RestLiExampleGenerator
         final DataList arrayData = new DataList(valueCount);
         for (int i = 0; i < valueCount; ++i)
         {
-          arrayData.add(SchemaSampleDataGenerator.buildDataMappable(itemsSchema, _defaultSpec));
+          arrayData.add(SchemaSampleDataGenerator.buildData(itemsSchema, _defaultSpec));
         }
         queryParamData.put(param.getName(), arrayData);
       }
       else
       {
         final DataSchema typeSchema = RestSpecCodec.textToSchema(param.getType(), _schemaResolver);
-        queryParamData.put(param.getName(), SchemaSampleDataGenerator.buildDataMappable(typeSchema, _defaultSpec));
+        queryParamData.put(param.getName(), SchemaSampleDataGenerator.buildData(typeSchema, _defaultSpec));
       }
     }
 
@@ -568,7 +568,7 @@ public class RestLiExampleGenerator
           for (Key key: model.getKeys())
           {
             final DataSchema keySchema = key.getDataSchema();
-            final Object exampleKey = SchemaSampleDataGenerator.buildDataMappable(keySchema, _defaultSpec);
+            final Object exampleKey = SchemaSampleDataGenerator.buildData(keySchema, _defaultSpec);
             exampleCompoundKey.append(key.getName(), exampleKey);
           }
           uriBuilder.queryParam(RestConstants.QUERY_BATCH_IDS_PARAM, exampleCompoundKey);
@@ -578,7 +578,7 @@ public class RestLiExampleGenerator
           // single key case
 
           final DataSchema keySchema = model.getPrimaryKey().getDataSchema();
-          final Object exampleKey = SchemaSampleDataGenerator.buildDataMappable(keySchema, _defaultSpec);
+          final Object exampleKey = SchemaSampleDataGenerator.buildData(keySchema, _defaultSpec);
           uriBuilder.queryParam(RestConstants.QUERY_BATCH_IDS_PARAM, exampleKey);
         }
       }
@@ -606,7 +606,7 @@ public class RestLiExampleGenerator
   private void addAssocKeyToUri(AssocKeySchema assocKey, UriBuilder uriBuilder)
   {
     final DataSchema typeSchema = RestSpecCodec.textToSchema(assocKey.getType(), _schemaResolver);
-    final Object exampleValue = SchemaSampleDataGenerator.buildDataMappable(typeSchema, _defaultSpec);
+    final Object exampleValue = SchemaSampleDataGenerator.buildData(typeSchema, _defaultSpec);
     uriBuilder.queryParam(assocKey.getName(), exampleValue);
   }
 

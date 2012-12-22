@@ -24,8 +24,12 @@ import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.PrimitiveDataSchema;
 import com.linkedin.data.schema.SchemaToJsonEncoder;
 import com.linkedin.data.schema.TyperefDataSchema;
+import com.linkedin.data.schema.UnionDataSchema;
+import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.data.template.HasTyperefInfo;
 import com.linkedin.data.template.StringArray;
+import com.linkedin.data.template.TyperefInfo;
 import com.linkedin.restli.common.ActionResponse;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.internal.server.RestLiInternalException;
@@ -201,11 +205,12 @@ public class ResourceModelEncoder
 
   private static String buildDataSchemaType(final Class<?> type, final DataSchema dataSchema)
   {
+    final DataSchema schemaToEncode;
     if (type.isArray())
     {
       return "array";
     }
-    else if (dataSchema instanceof  TyperefDataSchema)
+    else if (dataSchema instanceof TyperefDataSchema)
     {
       return ((TyperefDataSchema)dataSchema).getFullName();
     }
@@ -213,12 +218,21 @@ public class ResourceModelEncoder
     {
       return dataSchema.getUnionMemberKey();
     }
+    else if (dataSchema instanceof UnionDataSchema && HasTyperefInfo.class.isAssignableFrom(type))
+    {
+      final TyperefInfo unionRef = DataTemplateUtil.getTyperefInfo(type.asSubclass(DataTemplate.class));
+      schemaToEncode = unionRef.getSchema();
+    }
+    else
+    {
+      schemaToEncode = dataSchema;
+    }
 
     try
     {
       JsonBuilder builder = new JsonBuilder(JsonBuilder.Pretty.SPACES);
       SchemaToJsonEncoder encoder = new NamedSchemaReferencingJsonEncoder(builder);
-      encoder.encode(dataSchema);
+      encoder.encode(schemaToEncode);
       return builder.result();
     }
     catch (IOException e)
@@ -607,14 +621,14 @@ public class ResourceModelEncoder
         paramSchema.setItems(buildDataSchemaType(param.getItemType(), param.getDataSchema()));
       }
 
-      Object defaultValue = param.getDefaultValue();
-      if (defaultValue == null && param.isOptional())
+      final Object defaultValueData = param.getDefaultValueData();
+      if (defaultValueData == null && param.isOptional())
       {
         paramSchema.setOptional(true);
       }
-      else if (defaultValue != null)
+      else if (defaultValueData != null)
       {
-        paramSchema.setDefault(defaultValue.toString());
+        paramSchema.setDefault(defaultValueData.toString());
       }
 
       String paramDoc = _docsProvider.getParamDoc(resourceMethodDescriptor.getMethod(), param.getName());

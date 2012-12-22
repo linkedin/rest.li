@@ -21,6 +21,10 @@
 package com.linkedin.restli.internal.common;
 
 
+import com.linkedin.data.ByteString;
+import com.linkedin.data.template.DataTemplateUtil;
+
+
 /**
  * @author Josh Walker
  * @version $Revision: $
@@ -31,9 +35,10 @@ public class ValueConverter
   /**
    * Attempt to coerce the given string into an object of the given class.
    *
-   * @param value the String value to coercer
+   * @param value the String value to coercer. could be null
    * @param clazz the class to coercer the string into
-   * @return an Object of the type coerced to
+   *              valid values are string, short, int, long, float, double (and equivalent boxed types), {@link ByteString} or enum.
+   * @return an Object of the type coerced to. if value is null, return null
    */
   public static Object coerceString(String value, Class<?> clazz)
   {
@@ -69,13 +74,15 @@ public class ValueConverter
     {
       return Long.valueOf(value);
     }
-    else if (Enum.class.isAssignableFrom(clazz))
+    else if (ByteString.class.equals(clazz))
     {
-      final Class<? extends Enum> enumClazz = clazz.asSubclass(Enum.class);
-      @SuppressWarnings("unchecked")
-      final Enum e = Enum.valueOf(enumClazz, value);
-      return e;
+      return ByteString.copyAvroString(value, true);
     }
-    throw new IllegalArgumentException("Cannot coerce String to type: " + clazz.getName());
+    else if (clazz.isEnum())
+    {
+      return DataTemplateUtil.coerceOutput(value, clazz);
+    }
+
+    throw new IllegalArgumentException("Cannot coerce String to type: " + value + " -> " + clazz.getName());
   }
 }

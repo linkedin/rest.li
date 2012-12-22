@@ -63,20 +63,22 @@ public interface RestModelConstants
       double.class,
       Double.class,
       Enum.class,
+      ByteString.class,
       DataTemplate.class,
 
       String[].class,
+      boolean[].class,
       Boolean[].class,
+      int[].class,
       Integer[].class,
+      long[].class,
       Long[].class,
+      float[].class,
       Float[].class,
+      double[].class,
       Double[].class,
       Enum[].class,
-      new boolean[0].getClass(),
-      new int[0].getClass(),
-      new long[0].getClass(),
-      new float[0].getClass(),
-      new double[0].getClass()
+      DataTemplate[].class
   };
 
   /*

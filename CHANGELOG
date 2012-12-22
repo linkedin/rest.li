@@ -1,3 +1,9 @@
+1.7.8
+-----
+(RB=119453)
+Add default value handling for query parameter in complex type, including all DataTemplate subclasses, array of simple types and complex types.
+Union can be used as query parameter type.
+
 1.7.7
 -----
 (RB=123370)

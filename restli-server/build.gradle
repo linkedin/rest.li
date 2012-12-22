@@ -13,6 +13,7 @@ dependencies {
   compile externalDependency.jacksonCoreAsl
   compile externalDependency.jacksonMapperAsl
   compile externalDependency.parseq
+  testCompile project(path: ':generator-test', configuration: 'testArtifacts')
   testCompile externalDependency.googleCollections
   testCompile externalDependency.testng
   testCompile externalDependency.easymock

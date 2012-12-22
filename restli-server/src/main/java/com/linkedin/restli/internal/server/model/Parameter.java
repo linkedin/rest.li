@@ -16,11 +16,43 @@
 
 package com.linkedin.restli.internal.server.model;
 
+import com.linkedin.data.ByteString;
+import com.linkedin.data.DataList;
+import com.linkedin.data.codec.JacksonDataCodec;
+import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
+import com.linkedin.data.schema.validation.ValidationOptions;
+import com.linkedin.data.schema.validation.ValidationResult;
+import com.linkedin.data.template.AbstractArrayTemplate;
+import com.linkedin.data.template.AbstractMapTemplate;
+import com.linkedin.data.template.BooleanArray;
+import com.linkedin.data.template.BytesArray;
+import com.linkedin.data.template.DataTemplate;
+import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.data.template.DirectArrayTemplate;
+import com.linkedin.data.template.DoubleArray;
 import com.linkedin.data.template.FieldDef;
+import com.linkedin.data.template.FixedTemplate;
+import com.linkedin.data.template.FloatArray;
+import com.linkedin.data.template.IntegerArray;
+import com.linkedin.data.template.LongArray;
+import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.data.template.StringArray;
+import com.linkedin.data.template.UnionTemplate;
+import com.linkedin.data.template.WrappingArrayTemplate;
+import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.common.ValueConverter;
+import com.linkedin.restli.server.ResourceConfigException;
 import com.linkedin.restli.server.annotations.ActionParam;
 import com.linkedin.restli.server.annotations.QueryParam;
+
+import java.io.IOException;
+import java.lang.reflect.Array;
+import java.util.HashMap;
+import java.util.Map;
+
 
 /**
  * Descriptor for a rest.li parameter. Applicable to both {@link QueryParam} (in Finders)
@@ -42,7 +74,8 @@ public class Parameter<T> extends FieldDef<T>
   }
 
   private final boolean _optional;
-  private final T _defaultValue;
+  private final Object _defaultValue;
+  private final Object _defaultValueData;
 
   private final ParamType _paramType;
 
@@ -58,7 +91,7 @@ public class Parameter<T> extends FieldDef<T>
                    final Class<T> type,
                    final DataSchema dataSchema,
                    final boolean optional,
-                   final T defaultValue,
+                   final Object defaultValueData,
                    final ParamType paramType,
                    final boolean custom,
                    final AnnotationSet annotations)
@@ -66,7 +99,8 @@ public class Parameter<T> extends FieldDef<T>
     super(name, type, dataSchema);
 
     _optional = optional;
-    _defaultValue = defaultValue;
+    _defaultValue = null;
+    _defaultValueData = defaultValueData;
     _paramType = paramType;
     _custom = custom;
 
@@ -83,12 +117,92 @@ public class Parameter<T> extends FieldDef<T>
 
   public boolean hasDefaultValue()
   {
-    return _defaultValue != null;
+    return _defaultValueData != null;
   }
 
   public Object getDefaultValue()
   {
-    return _defaultValue;
+    if (_defaultValueData == null)
+    {
+      return null;
+    }
+
+    final Object result;
+    if (_defaultValueData instanceof String)
+    {
+      final String _defaultValueString = (String) _defaultValueData;
+      try
+      {
+        if (getType().isArray())
+        {
+          final DataList valueAsDataList = _codec.stringToList(_defaultValueString);
+          final AbstractArrayTemplate<?> arrayTemplate;
+          if (DataTemplate.class.isAssignableFrom(_itemType))
+          {
+            final ArrayDataSchema arraySchema = new ArrayDataSchema(DataTemplateUtil.getSchema(_itemType));
+            arrayTemplate = new DynamicWrappedArray(valueAsDataList, arraySchema, _itemType);
+          }
+          else
+          {
+            final Class<? extends DirectArrayTemplate<?>> directArrayTemplateType = _componentTypeToDirectArrayTemplate.get(_itemType);
+            arrayTemplate = DataTemplateUtil.wrap(valueAsDataList, directArrayTemplateType);
+          }
+
+          validate(arrayTemplate, getType());
+
+          final Object resultArray = Array.newInstance(_itemType, arrayTemplate.size());
+          for (int i = 0; i < arrayTemplate.size(); ++i)
+          {
+            Array.set(resultArray, i, arrayTemplate.get(i));
+          }
+          result = resultArray;
+        }
+        else if (FixedTemplate.class.isAssignableFrom(getType()))
+        {
+          result = DataTemplateUtil.wrap(_defaultValueString, getType().asSubclass(FixedTemplate.class));
+          validate((FixedTemplate) result, getType());
+        }
+        else if (AbstractArrayTemplate.class.isAssignableFrom(getType()))
+        {
+          final DataList valueAsDataList = _codec.stringToList(_defaultValueString);
+          result = DataTemplateUtil.wrap(valueAsDataList, getType().asSubclass(AbstractArrayTemplate.class));
+          validate((AbstractArrayTemplate) result, getType());
+        }
+        else if (AbstractMapTemplate.class.isAssignableFrom(getType()) ||
+            UnionTemplate.class.isAssignableFrom(getType()) ||
+            RecordTemplate.class.isAssignableFrom(getType()))
+        {
+          final DataMap valueAsDataMap = _codec.stringToMap(_defaultValueString);
+          result = DataTemplateUtil.wrap(valueAsDataMap, getType().asSubclass(DataTemplate.class));
+          validate((DataTemplate) result, getType());
+        }
+        else
+        {
+          result = ValueConverter.coerceString(_defaultValueString, getType());
+        }
+      }
+      catch (IllegalArgumentException e)
+      {
+        throw new ResourceConfigException("Default value for parameter of type \""
+                                              + getType().getName() + "\" is not supported: " + e.getMessage(), e);
+      }
+      catch (IOException e)
+      {
+        throw new ResourceConfigException("Default value for parameter of type \""
+                                              + getType().getName() + "\" is not supported: " + e.getMessage(), e);
+      }
+    }
+    else
+    {
+      result = _defaultValueData;
+    }
+
+    return result;
+  }
+
+  public Object getDefaultValueData()
+  {
+    return _defaultValueData;
   }
 
   public ParamType getParamType()
@@ -135,5 +249,45 @@ public class Parameter<T> extends FieldDef<T>
       .append(", paramType=")
       .append(_paramType);
     return sb.toString();
+  }
+
+  private static void validate(DataTemplate data, Class<?> clazz)
+  {
+    final ValidationResult valResult = ValidateDataAgainstSchema.validate(data.data(),
+                                                                          data.schema(),
+                                                                          _defaultValOptions);
+    if (!valResult.isValid())
+    {
+      throw new IllegalArgumentException("Coercing String \"" + data.data() + "\" to type " + clazz.getName() + " failed due to schema validation: " + valResult.getMessages());
+    }
+  }
+
+  private static class DynamicWrappedArray extends WrappingArrayTemplate
+  {
+    @SuppressWarnings("unchecked")
+    private DynamicWrappedArray(DataList list, ArrayDataSchema schema, Class<?> elementClass)
+    {
+      super(list, schema, elementClass);
+    }
+  }
+
+  private static final JacksonDataCodec _codec = new JacksonDataCodec();
+  private static final ValidationOptions _defaultValOptions = new ValidationOptions();
+  private static final Map<Class<?>, Class<? extends DirectArrayTemplate<?>>> _componentTypeToDirectArrayTemplate =
+      new HashMap<Class<?>, Class<? extends DirectArrayTemplate<?>>>();
+  static
+  {
+    _componentTypeToDirectArrayTemplate.put(boolean.class, BooleanArray.class);
+    _componentTypeToDirectArrayTemplate.put(Boolean.class, BooleanArray.class);
+    _componentTypeToDirectArrayTemplate.put(int.class, IntegerArray.class);
+    _componentTypeToDirectArrayTemplate.put(Integer.class, IntegerArray.class);
+    _componentTypeToDirectArrayTemplate.put(long.class, LongArray.class);
+    _componentTypeToDirectArrayTemplate.put(Long.class, LongArray.class);
+    _componentTypeToDirectArrayTemplate.put(float.class, FloatArray.class);
+    _componentTypeToDirectArrayTemplate.put(Float.class, FloatArray.class);
+    _componentTypeToDirectArrayTemplate.put(double.class, DoubleArray.class);
+    _componentTypeToDirectArrayTemplate.put(Double.class, DoubleArray.class);
+    _componentTypeToDirectArrayTemplate.put(String.class, StringArray.class);
+    _componentTypeToDirectArrayTemplate.put(ByteString.class, BytesArray.class);
   }
 }

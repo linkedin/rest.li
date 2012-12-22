@@ -172,6 +172,7 @@ public class ArgumentBuilder
                                                         final Parameter<?> param)
   {
     Object paramValue = context.getStructuredParameter(param.getName());
+    DataTemplate paramRecordTemplate;
 
     if (paramValue == null)
     {
@@ -181,20 +182,19 @@ public class ArgumentBuilder
                                    HttpStatus.S_400_BAD_REQUEST.getCode());
       }
 
-      if (param.hasDefaultValue())
-      {
-        paramValue = param.getDefaultValue();
-      }
-      else
+      if (!param.hasDefaultValue())
       {
         return null;
       }
-    }
 
-    @SuppressWarnings("unchecked")
-    Class<? extends RecordTemplate> paramType =
-        (Class<? extends RecordTemplate>) param.getType();
-    DataTemplate paramRecordTemplate = DataTemplateUtil.wrap(paramValue, paramType);
+      paramRecordTemplate = (DataTemplate) param.getDefaultValue();
+    }
+    else
+    {
+      @SuppressWarnings("unchecked")
+      final Class<? extends RecordTemplate> paramType = (Class<? extends RecordTemplate>) param.getType();
+      paramRecordTemplate = DataTemplateUtil.wrap(paramValue, paramType);
+    }
     // Validate against the class schema with FixupMode.STRING_TO_PRIMITIVE to parse the
     // strings into the corresponding primitive types.
     ValidateDataAgainstSchema.validate(paramRecordTemplate.data(),

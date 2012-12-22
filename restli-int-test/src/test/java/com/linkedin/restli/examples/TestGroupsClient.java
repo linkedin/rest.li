@@ -494,17 +494,11 @@ public class TestGroupsClient extends RestLiIntegrationTest
     ComplexResourceKey<GroupMembershipKey, GroupMembershipParam> complexKey1 =
         buildComplexKey(1, 1, 10, "String1");
     ComplexKeyGroupMembership groupMembership1 =
-        buildComplexKeyGroupMembership(complexKey1.getKey(),
-                                       "alfred@test.linkedin.com",
-                                       "alfred",
-                                       "hitchcock");
+        buildComplexKeyGroupMembership(complexKey1.getKey(), "alfred@test.linkedin.com", "alfred", "hitchcock");
     ComplexResourceKey<GroupMembershipKey, GroupMembershipParam> complexKey2 =
         buildComplexKey(2, 1, 20, "String2");
     ComplexKeyGroupMembership groupMembership2 =
-        buildComplexKeyGroupMembership(complexKey2.getKey(),
-                                       "bruce@test.linkedin.com",
-                                       "bruce",
-                                       "willis");
+        buildComplexKeyGroupMembership(complexKey2.getKey(), "bruce@test.linkedin.com", "bruce", "willis");
     ComplexResourceKey<GroupMembershipKey, GroupMembershipParam> complexKey3 =
         buildComplexKey(3, 1, 30, "String3");
     ComplexKeyGroupMembership groupMembership3 =
@@ -575,6 +569,27 @@ public class TestGroupsClient extends RestLiIntegrationTest
     Set<CompoundKey> allResponseKeys = new HashSet<CompoundKey>(groupMemberships.getResults().keySet());
     allResponseKeys.addAll(groupMemberships.getErrors().keySet());
     Assert.assertEquals(allResponseKeys, allRequestedKeys);
+  }
+
+  @Test
+  public void testDefaultValue() throws RemoteInvocationException
+  {
+    // use server side default value for the RecordTemplate
+    REST_CLIENT.sendRequest(GROUPS_BUILDERS.findByComplexCircuit().build()).getResponse();
+
+    try
+    {
+      // specifying an instance of the RecordTemplate which mismatches the default will fail the request
+      final GroupMembershipParam newValue = new GroupMembershipParam();
+      newValue.setIntParameter(0);
+      newValue.setStringParameter("fail");
+      REST_CLIENT.sendRequest(GROUPS_BUILDERS.findByComplexCircuit().recordParam(newValue).build()).getResponse();
+    }
+    catch (RestLiResponseException e)
+    {
+      return;
+    }
+    Assert.fail("Expect exception when specifying the \"record\" query parameter different from the default");
   }
 
   private static ComplexResourceKey<GroupMembershipKey, GroupMembershipParam> buildComplexKey(int memberID,

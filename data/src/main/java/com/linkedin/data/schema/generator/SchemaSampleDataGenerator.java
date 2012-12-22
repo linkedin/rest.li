@@ -16,14 +16,8 @@
 
 package com.linkedin.data.schema.generator;
 
-import com.linkedin.data.Data;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.linkedin.data.ByteString;
+import com.linkedin.data.Data;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.ArrayDataSchema;
@@ -37,6 +31,12 @@ import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Generates example data given a Pegasus schema. The schema can be provided in a
@@ -176,14 +176,14 @@ public class SchemaSampleDataGenerator
     return buildRecordData(new ParentSchemas(), schema, spec);
   }
 
-  public static Object buildDataMappable(DataSchema schema, DataGenerationOptions spec)
+  public static Object buildData(DataSchema schema, DataGenerationOptions spec)
   {
-    return buildDataMappable(new ParentSchemas(), schema, null, spec);
+    return buildData(new ParentSchemas(), schema, null, spec);
   }
 
-  public static Object buildDataMappable(DataSchema schema, String fieldName, DataGenerationOptions spec)
+  public static Object buildData(DataSchema schema, String fieldName, DataGenerationOptions spec)
   {
-    return buildDataMappable(new ParentSchemas(), schema, fieldName, spec);
+    return buildData(new ParentSchemas(), schema, fieldName, spec);
   }
 
   private static DataMap buildRecordData(ParentSchemas parentSchemas, NamedDataSchema schema, DataGenerationOptions spec)
@@ -204,7 +204,7 @@ public class SchemaSampleDataGenerator
           }
           else
           {
-            value = buildDataMappable(parentSchemas, field.getType(), field.getName(), spec);
+            value = buildData(parentSchemas, field.getType(), field.getName(), spec);
           }
 
           // null is returned for NULL Pegasus type (used in unions, primarily)
@@ -221,22 +221,25 @@ public class SchemaSampleDataGenerator
     }
     else if (schema instanceof TyperefDataSchema)
     {
-      data.put("ref", buildDataMappable(parentSchemas, schema.getDereferencedDataSchema(), spec));
+      data.put("ref", buildData(parentSchemas, schema.getDereferencedDataSchema(), spec));
     }
     else
     {
-      data.put("value", buildDataMappable(parentSchemas, schema, spec));
+      data.put("value", buildData(parentSchemas, schema, spec));
     }
     parentSchemas.decrementReferences(schema);
     return data;
   }
 
-  private static Object buildDataMappable(ParentSchemas parentSchemas, DataSchema schema, DataGenerationOptions spec)
+  private static Object buildData(ParentSchemas parentSchemas, DataSchema schema, DataGenerationOptions spec)
   {
-    return buildDataMappable(parentSchemas, schema, null, spec);
+    return buildData(parentSchemas, schema, null, spec);
   }
 
-  private static Object buildDataMappable(ParentSchemas parentSchemas, DataSchema schema, String fieldName, DataGenerationOptions spec)
+  private static Object buildData(ParentSchemas parentSchemas,
+                                  DataSchema schema,
+                                  String fieldName,
+                                  DataGenerationOptions spec)
   {
     spec = preventRecursionIntoAlreadyTraversedSchemas(parentSchemas, spec, schema);
     parentSchemas.incrementReferences(schema);
@@ -248,13 +251,13 @@ public class SchemaSampleDataGenerator
         final DataList dataList = new DataList(spec.getArraySize());
         for (int i = 0; i < spec.getArraySize(); i++)
         {
-          final Object item = buildDataMappable(parentSchemas, ((ArrayDataSchema) derefSchema).getItems(), fieldName, spec);
+          final Object item = buildData(parentSchemas, ((ArrayDataSchema) derefSchema).getItems(), fieldName, spec);
           dataList.add(item);
         }
         data = dataList;
         break;
       case BOOLEAN:
-        data = Math.random() > .5 ? true : false;
+        data = (Math.random() > 0.5);
         break;
       case BYTES:
         data = ByteString.copy("some bytes".getBytes(Data.UTF_8_CHARSET));
@@ -289,7 +292,7 @@ public class SchemaSampleDataGenerator
         final DataMap dataMap = new DataMap();
         for (int i = 0; i < spec.getArraySize(); i++)
         {
-          final Object item = buildDataMappable(parentSchemas, ((MapDataSchema) derefSchema).getValues(), fieldName, spec);
+          final Object item = buildData(parentSchemas, ((MapDataSchema) derefSchema).getValues(), fieldName, spec);
           final int key = (int)(Math.random() * 1000) + 1000;
           dataMap.put(String.valueOf(key), item);
         }
@@ -306,14 +309,14 @@ public class SchemaSampleDataGenerator
         data = buildStringData(parentSchemas, fieldName, spec);
         break;
       case TYPEREF:
-        data = buildDataMappable(parentSchemas, derefSchema, fieldName, spec);
+        data = buildData(parentSchemas, derefSchema, fieldName, spec);
         break;
       case UNION:
         final UnionDataSchema unionSchema = (UnionDataSchema) derefSchema;
         final List<DataSchema> types = removeAlreadyTraversedSchemasFromUnionMemberList(parentSchemas, unionSchema.getTypes());
         final int unionIdx = (int)(Math.random() * types.size());
         final DataSchema unionItemSchema = types.get(unionIdx);
-        data = buildDataMappable(parentSchemas, unionItemSchema, fieldName, spec);
+        data = buildData(parentSchemas, unionItemSchema, fieldName, spec);
 
         if (data != null)
         {

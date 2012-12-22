@@ -22,6 +22,7 @@ import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.restspec.RestSpecAnnotation;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
@@ -37,10 +38,10 @@ public class ResourceModelAnnotation
 {
   public static DataMap getAnnotationsMap(Annotation[] as)
   {
-    return annotationsToDataMappable(as, true);
+    return annotationsToData(as, true);
   }
 
-  private static DataMap annotationsToDataMappable(Annotation[] as, boolean isTopLevel)
+  private static DataMap annotationsToData(Annotation[] as, boolean isTopLevel)
   {
     final DataMap annotationData = new DataMap();
 
@@ -56,10 +57,10 @@ public class ResourceModelAnnotation
     return annotationData;
   }
 
-  private static Object annotationMemberToDataMappable(Object memberValue)
+  private static Object annotationMemberToData(Object memberValue)
   {
     final Class<?> memberClass = memberValue.getClass();
-    final Object dataMappable;
+    final Object data;
 
     if (memberClass == boolean.class ||
         memberClass == Boolean.class ||
@@ -73,47 +74,47 @@ public class ResourceModelAnnotation
         memberClass == Double.class  ||
         memberClass == String.class)
     {
-      dataMappable = memberValue;
+      data = memberValue;
     }
     else if (memberClass == Byte.class)
     {
       final byte[] singleByteArray = {(Byte) memberValue};
-      dataMappable = ByteString.copy(singleByteArray);
+      data = ByteString.copy(singleByteArray);
     }
     else if (memberClass.isEnum())
     {
-      dataMappable = memberValue.toString();
+      data = memberValue.toString();
     }
     else if (memberClass == Class.class)
     {
-      dataMappable = ((Class<?>) memberValue).getCanonicalName();
+      data = ((Class<?>) memberValue).getCanonicalName();
     }
     else if (memberClass.isArray() && Array.getLength(memberValue) > 0)
     {
       if (memberClass == byte[].class)
       {
-        dataMappable = ByteString.copy((byte[]) memberValue);
+        data = ByteString.copy((byte[]) memberValue);
       }
       else if (memberClass == Annotation[].class)
       {
-        dataMappable = annotationsToDataMappable((Annotation[]) memberValue, false);
+        data = annotationsToData((Annotation[]) memberValue, false);
       }
       else
       {
-        final DataList dataMappableList = new DataList();
+        final DataList dataList = new DataList();
         final int memberArrayLen = Array.getLength(memberValue);
         for (int i = 0; i < memberArrayLen; ++i)
         {
-          dataMappableList.add(annotationMemberToDataMappable(Array.get(memberValue, i)));
+          dataList.add(annotationMemberToData(Array.get(memberValue, i)));
         }
 
-        if (dataMappableList.isEmpty())
+        if (dataList.isEmpty())
         {
-          dataMappable = null;
+          data = null;
         }
         else
         {
-          dataMappable = dataMappableList;
+          data = dataList;
         }
       }
     }
@@ -123,19 +124,19 @@ public class ResourceModelAnnotation
       final AnnotationEntry entry = getAnnotationData((Annotation) memberValue, false);
       if (entry == null)
       {
-        dataMappable = null;
+        data = null;
       }
       else
       {
-        dataMappable = entry.data;
+        data = entry.data;
       }
     }
     else
     {
-      dataMappable = null;
+      data = null;
     }
 
-    return dataMappable;
+    return data;
   }
 
   private static AnnotationEntry getAnnotationData(Annotation a, boolean isTopLevel)
@@ -171,10 +172,10 @@ public class ResourceModelAnnotation
           }
         }
 
-        final Object dataMappableValue = annotationMemberToDataMappable(memberValue);
-        if (dataMappableValue != null)
+        final Object valueData = annotationMemberToData(memberValue);
+        if (valueData != null)
         {
-          data.put(methodTrait.isRestSpecAnnotated ? methodTrait.name : m.getName(), dataMappableValue);
+          data.put(methodTrait.isRestSpecAnnotated ? methodTrait.name : m.getName(), valueData);
         }
       }
       catch (IllegalAccessException e)

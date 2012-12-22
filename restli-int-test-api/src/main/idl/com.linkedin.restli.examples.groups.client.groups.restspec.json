@@ -22,6 +22,48 @@
       "method" : "batch_get"
     } ],
     "finders" : [ {
+      "name" : "complexCircuit",
+      "parameters" : [ {
+        "name" : "nativeArray",
+        "type" : "array",
+        "items" : "double",
+        "default" : "[1.1, 2.2, 3.3]"
+      }, {
+        "name" : "coercedArray",
+        "type" : "array",
+        "items" : "int",
+        "default" : "[1.1, 2.2, 3.3]"
+      }, {
+        "name" : "wrappedArray",
+        "type" : "{ \"type\" : \"array\", \"items\" : \"int\" }",
+        "default" : "[2, 3, 4]"
+      }, {
+        "name" : "wrappedMap",
+        "type" : "{ \"type\" : \"map\", \"values\" : \"int\" }",
+        "default" : "{\"A\": 1, \"B\": 2}"
+      }, {
+        "name" : "bytes",
+        "type" : "bytes",
+        "default" : "\u0007"
+      }, {
+        "name" : "fixed",
+        "type" : "com.linkedin.restli.examples.typeref.api.Fixed16",
+        "default" : "\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000B\f\r\u000E\u000F\u0010"
+      }, {
+        "name" : "union",
+        "type" : "\"com.linkedin.restli.examples.typeref.api.Union\"",
+        "default" : "{\"string\": \"I'm String\"}"
+      }, {
+        "name" : "record",
+        "type" : "com.linkedin.restli.examples.groups.api.GroupMembershipParam",
+        "default" : "{\"intParameter\": 7, \"stringParameter\": \"success\"}"
+      }, {
+        "name" : "records",
+        "type" : "array",
+        "items" : "com.linkedin.restli.examples.groups.api.GroupMembershipParam",
+        "default" : "[{\"intParameter\": 7, \"stringParameter\": \"success\"}]"
+      } ]
+    }, {
       "name" : "emailDomain",
       "parameters" : [ {
         "name" : "emailDomain",

@@ -16,16 +16,6 @@
 
 package com.linkedin.data.schema.generator;
 
-import java.lang.reflect.ParameterizedType;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.Map;
-import java.util.Set;
-
-import org.testng.Assert;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
 
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataList;
@@ -68,6 +58,16 @@ import com.linkedin.pegasus.generator.test.InvalidSelfReference;
 import com.linkedin.pegasus.generator.test.SelfReference;
 import com.linkedin.pegasus.generator.test.TyperefTest;
 import com.linkedin.pegasus.generator.test.UnionTest;
+import org.testng.Assert;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
+
+import java.lang.reflect.ParameterizedType;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.Map;
+import java.util.Set;
 
 public class TestSchemaSampleDataGenerator
 {
@@ -110,12 +110,12 @@ public class TestSchemaSampleDataGenerator
     for (Map.Entry<DataSchema.Type, Class<?>> entry: _dataSchemaTypeToPrimitiveJavaTypeMap.entrySet())
     {
       final PrimitiveDataSchema schema = DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchema(entry.getKey());
-      final Object value = SchemaSampleDataGenerator.buildDataMappable(schema, _spec);
+      final Object value = SchemaSampleDataGenerator.buildData(schema, _spec);
       Assert.assertSame(value.getClass(), entry.getValue());
     }
 
     final PrimitiveDataSchema nullSchema = DataSchemaConstants.NULL_DATA_SCHEMA;
-    final Object nullData = SchemaSampleDataGenerator.buildDataMappable(nullSchema, _spec);
+    final Object nullData = SchemaSampleDataGenerator.buildData(nullSchema, _spec);
     Assert.assertNull(nullData);
   }
 
@@ -126,7 +126,7 @@ public class TestSchemaSampleDataGenerator
     {
       final PrimitiveDataSchema itemsSchema = DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchema(entry.getKey());
       final ArrayDataSchema arraySchema = new ArrayDataSchema(itemsSchema);
-      final DataList value = (DataList) SchemaSampleDataGenerator.buildDataMappable(arraySchema, _spec);
+      final DataList value = (DataList) SchemaSampleDataGenerator.buildData(arraySchema, _spec);
       final ParameterizedType arrayType = (ParameterizedType) entry.getValue().getGenericSuperclass();
       assert(arrayType.getRawType() == DirectArrayTemplate.class);
       Assert.assertSame(value.get(0).getClass(), arrayType.getActualTypeArguments()[0]);
@@ -140,7 +140,7 @@ public class TestSchemaSampleDataGenerator
     {
       final PrimitiveDataSchema valueSchema = DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchema(entry.getKey());
       final MapDataSchema mapSchema = new MapDataSchema(valueSchema);
-      final DataMap value = (DataMap) SchemaSampleDataGenerator.buildDataMappable(mapSchema, _spec);
+      final DataMap value = (DataMap) SchemaSampleDataGenerator.buildData(mapSchema, _spec);
       final ParameterizedType mapType = (ParameterizedType) entry.getValue().getGenericSuperclass();
       assert(mapType.getRawType() == DirectMapTemplate.class);
       Assert.assertSame(value.values().iterator().next().getClass(), mapType.getActualTypeArguments()[0]);
@@ -151,7 +151,7 @@ public class TestSchemaSampleDataGenerator
   public void testFixedSchema()
   {
     final FixedDataSchema schema = (FixedDataSchema) DataTemplateUtil.getSchema(FixedMD5.class);
-    final ByteString value = (ByteString) SchemaSampleDataGenerator.buildDataMappable(schema, _spec);
+    final ByteString value = (ByteString) SchemaSampleDataGenerator.buildData(schema, _spec);
     Assert.assertSame(value.length(), schema.getSize());
   }
 
@@ -159,7 +159,7 @@ public class TestSchemaSampleDataGenerator
   public void testEnumSchema()
   {
     final EnumDataSchema schema = (EnumDataSchema) DataTemplateUtil.getSchema(EnumFruits.class);
-    final String value = (String) SchemaSampleDataGenerator.buildDataMappable(schema, _spec);
+    final String value = (String) SchemaSampleDataGenerator.buildData(schema, _spec);
     EnumFruits.valueOf(value);
   }
 
@@ -185,7 +185,7 @@ public class TestSchemaSampleDataGenerator
 
     for (int i = 0; i < memberKeys.size() * 2; ++i)
     {
-      final DataMap value = (DataMap) SchemaSampleDataGenerator.buildDataMappable(schema, _spec);
+      final DataMap value = (DataMap) SchemaSampleDataGenerator.buildData(schema, _spec);
       if (value == null)
       {
         Assert.assertTrue(memberKeys.contains(nullMemberKey));
@@ -213,7 +213,8 @@ public class TestSchemaSampleDataGenerator
 
       final TyperefDataSchema fieldTyperefSchema = (TyperefDataSchema) field.getType();
       final Object fieldValue = value.get(field.getName());
-      final Object rebuildValue = SchemaSampleDataGenerator.buildDataMappable(fieldTyperefSchema.getDereferencedDataSchema(), _spec);
+      final Object rebuildValue = SchemaSampleDataGenerator.buildData(fieldTyperefSchema.getDereferencedDataSchema(),
+                                                                      _spec);
       Assert.assertSame(fieldValue.getClass(), rebuildValue.getClass());
     }
   }

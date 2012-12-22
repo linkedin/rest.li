@@ -17,24 +17,23 @@
 package com.linkedin.restli.internal.server.model;
 
 
-import com.linkedin.data.schema.RecordDataSchema;
-import com.linkedin.data.template.DynamicRecordMetadata;
-import com.linkedin.data.template.FieldDef;
-import com.linkedin.restli.common.ActionResponse;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.template.Custom;
 import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.data.template.DynamicRecordMetadata;
+import com.linkedin.data.template.FieldDef;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.TemplateRuntimeException;
 import com.linkedin.data.template.TyperefInfo;
 import com.linkedin.parseq.Task;
 import com.linkedin.parseq.promise.Promise;
+import com.linkedin.restli.common.ActionResponse;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceMethod;
-import com.linkedin.restli.internal.common.ValueConverter;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor.InterfaceType;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
@@ -453,17 +452,14 @@ public final class RestLiAnnotationReader
                          AnnotationSet.EMPTY);
   }
 
-  private static Object getDefaultValue(final Optional optional, final Class<?> paramType)
+  private static String getDefaultValueData(final Optional optional)
   {
-    if (optional == null)
+    if (optional == null || optional.value() == null || optional.value().equals(RestAnnotations.DEFAULT))
     {
       return null;
     }
-    else if (optional.value().equals(RestAnnotations.DEFAULT))
-    {
-      return null;
-    }
-    return convertDefaultValue(optional.value(), paramType);
+
+    return optional.value();
   }
 
   private static List<Parameter<?>> getParameters(final ResourceModel model,
@@ -725,7 +721,7 @@ public final class RestLiAnnotationReader
                         paramType,
                         getDataSchema(paramType, getSchemaFromTyperefInfo(typerefInfoClass)),
                         optional != null,
-                        getDefaultValue(optional, paramType),
+                        getDefaultValueData(optional),
                         Parameter.ParamType.KEY,
                         true,
                         annotations);
@@ -761,7 +757,7 @@ public final class RestLiAnnotationReader
                         paramType,
                         getDataSchema(paramType, getSchemaFromTyperefInfo(typerefInfoClass)),
                         optional != null,
-                        getDefaultValue(optional, paramType),
+                        getDefaultValueData(optional),
                         Parameter.ParamType.POST,
                         true,
                         annotations);
@@ -835,7 +831,7 @@ public final class RestLiAnnotationReader
                         paramType,
                         getDataSchema(paramType, getSchemaFromTyperefInfo(typerefInfoClass)),
                         optional != null,
-                        getDefaultValue(optional, paramType),
+                        getDefaultValueData(optional),
                         Parameter.ParamType.QUERY,
                         true,
                         annotations);
@@ -954,24 +950,6 @@ public final class RestLiAnnotationReader
     }
 
     return false;
-  }
-
-  private static Object convertDefaultValue(final String defaultValue, final Class<?> type)
-  {
-    if (defaultValue != null)
-    {
-      try
-      {
-        return ValueConverter.coerceString(defaultValue, type);
-      }
-      catch (IllegalArgumentException e)
-      {
-        throw new ResourceConfigException("Default value for parameter of type '"
-            + type.getName() + "' is not supported", e);
-      }
-    }
-
-    return null;
   }
 
   private static void addCollectionResourceMethods(final Class<?> resourceClass,

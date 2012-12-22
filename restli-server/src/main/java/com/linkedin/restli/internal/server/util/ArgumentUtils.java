@@ -554,7 +554,8 @@ public class ArgumentUtils
     }
     else if (optionalValue)
     {
-      underlyingValue = ValueConverter.coerceString(value, DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchemaClass(dereferencedType));
+      underlyingValue = ValueConverter.coerceString(value,
+                                                    DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchemaClass(dereferencedType));
     }
     else
     {

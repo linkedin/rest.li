@@ -57,8 +57,7 @@ public class CompoundKey
     for (Map.Entry<String, Object> entry : fieldValues.entrySet())
     {
       result.append(entry.getKey(),
-                    ValueConverter.coerceString(entry.getValue().toString(),
-                                                fieldTypes.get(entry.getKey())));
+                    ValueConverter.coerceString(entry.getValue().toString(), fieldTypes.get(entry.getKey())));
     }
     return result;
   }
