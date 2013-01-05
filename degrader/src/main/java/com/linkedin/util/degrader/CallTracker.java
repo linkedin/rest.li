@@ -91,6 +91,12 @@ public interface CallTracker
   long getCurrentErrorCountTotal();
 
   /**
+   * Returns the number of errors per ErrorType reported by calls since last reset.
+   * @return the number of errors per ErrorType reported by calls since last reset.
+   */
+  Map<ErrorType, Integer> getCurrentErrorTypeCountsTotal();
+
+  /**
    * Returns the current number of concurrent calls.
    * @return the current number of concurrent calls.
    */
@@ -124,16 +130,16 @@ public interface CallTracker
     boolean stale(long currentTimeMillis);
 
     /**
-     * Get the total counts for specific error that we're tracking.
-     * @return the total count for specific errors i.e. remoteInvocation error, 4xx level error, 5xx level errors.
+     * Returns the number of specific error type in the sample.
+     * @return the number of specific error type in the sample
      */
-    public Map<String, Integer> getTotalErrorCountsMap();
+    public Map<ErrorType, Integer> getErrorTypeCounts();
 
     /**
-     * Get the current counts for specific error that we are tracking for this time interval
-     * @return the count for specific errors i.e. remoteInvocation error, 4xx level error, 5xx level errors.
+     * Returns the number of specific error type (since last reset) at the end of sampling interval.
+     * @return the number of specific error type (since last reset) at the end of sampling interval.
      */
-    public Map<String, Integer> getCurrentErrorCountsMap();
+    public Map<ErrorType, Integer> getErrorTypeCountsTotal();
 
     /**
      * Returns the time at the start of the sampling interval.

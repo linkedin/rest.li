@@ -19,7 +19,6 @@
 package com.linkedin.util.degrader;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import java.util.Map;
@@ -687,16 +686,16 @@ public class TestCallTracker
     long startCallCountTotal = _callTracker.getCurrentCallCountTotal();
     long startErrorCountTotal = _callTracker.getCurrentErrorCountTotal();
 
-    List<CallCompletion> dones = startCall(_callTracker, 15);
+    List<CallCompletion> dones = startCall(_callTracker, 20);
 
     dones.remove(0).endCallWithError();
     endCall(dones, 3);
     dones.remove(0).endCallWithError();
 
-    Assert.assertEquals(_callTracker.getCurrentConcurrency(), 10, "Concurrency is incorrect");
+    Assert.assertEquals(_callTracker.getCurrentConcurrency(), 15, "Concurrency is incorrect");
     Assert.assertEquals(_callTracker.getCurrentCallCountTotal(), startCallCountTotal + 5,
                         "Total call count is incorrect");
-    Assert.assertEquals(_callTracker.getCurrentCallStartCountTotal(), startCallCountTotal + 15,
+    Assert.assertEquals(_callTracker.getCurrentCallStartCountTotal(), startCallCountTotal + 20,
                         "Total call start count is incorrect");
     Assert.assertEquals(_callTracker.getCurrentErrorCountTotal(), startErrorCountTotal + 2,
                         "Total error count is incorrect");
@@ -707,48 +706,129 @@ public class TestCallTracker
     Assert.assertEquals(_callTracker.getCallStats().getErrorCountTotal(), startErrorCountTotal + 2,
                         "Total error count is incorrect");
     Assert.assertEquals(_callTracker.getCallStats().getErrorRate(), 0.4, "Error rate is incorrect");
-    Assert.assertEquals(_callTracker.getCallStats().getConcurrentMax(), 15,
+    Assert.assertEquals(_callTracker.getCallStats().getConcurrentMax(), 20,
                         "Max concurrent is incorrect");
 
     endCall(dones, 4);
 
-    Assert.assertEquals(_callTracker.getCurrentConcurrency(), 6, "Concurrency is incorrect");
+    Assert.assertEquals(_callTracker.getCurrentConcurrency(), 11, "Concurrency is incorrect");
     Assert.assertEquals(_callTracker.getCurrentCallCountTotal(), startCallCountTotal + 9,
                         "Total call count is incorrect");
-    Assert.assertEquals(_callTracker.getCurrentCallStartCountTotal(), startCallCountTotal + 15,
+    Assert.assertEquals(_callTracker.getCurrentCallStartCountTotal(), startCallCountTotal + 20,
                         "Total call start count is incorrect");
     Assert.assertEquals(_callTracker.getCurrentErrorCountTotal(), startErrorCountTotal + 2,
                         "Total error count is incorrect");
 
     dones.remove(0).endCallWithError();
-    dones.remove(0).endCallWithError(ErrorConstants.REMOTE_INVOCATION_ERROR);
-    dones.remove(0).endCallWithError(ErrorConstants.HTTP_400_ERRORS);
-    dones.remove(0).endCallWithError(ErrorConstants.HTTP_500_ERRORS);
-    dones.remove(0).endCallWithError(ErrorConstants.GENERAL_ERROR);
-    dones.remove(0).endCallWithError(null);
-    Assert.assertEquals(_callTracker.getCurrentConcurrency(), 0, "Concurrency is incorrect");
+    dones.remove(0).endCallWithError(ErrorType.REMOTE_INVOCATION_ERROR);
+    dones.remove(0).endCallWithError(ErrorType.HTTP_400_ERROR);
+    dones.remove(0).endCallWithError(ErrorType.HTTP_500_ERROR);
+    dones.remove(0).endCallWithError(ErrorType.OTHER_REST_EXCEPTION_ERROR);
+    dones.remove(0).endCallWithError(ErrorType.OTHER_REST_EXCEPTION_ERROR);
+    Assert.assertEquals(_callTracker.getCurrentConcurrency(), 5, "Concurrency is incorrect");
     Assert.assertEquals(_callTracker.getCurrentCallCountTotal(), startCallCountTotal + 15,
                         "Total call count is incorrect");
-    Assert.assertEquals(_callTracker.getCurrentCallStartCountTotal(), startCallCountTotal + 15,
+    Assert.assertEquals(_callTracker.getCurrentCallStartCountTotal(), startCallCountTotal + 20,
                         "Total call start count is incorrect");
     Assert.assertEquals(_callTracker.getCurrentErrorCountTotal(), startErrorCountTotal + 8,
                         "Total error count is incorrect");
-    Assert.assertEquals(_callTracker.getTotalErrorCountsMap().get(ErrorConstants.REMOTE_INVOCATION_ERROR), new Integer(1),
-                        "Total remote invocation error is incorrect");
-    Assert.assertEquals(_callTracker.getTotalErrorCountsMap().get(ErrorConstants.HTTP_400_ERRORS), new Integer(1),
-                        "Total http 400 error is incorrect");
-    Assert.assertEquals(_callTracker.getTotalErrorCountsMap().get(ErrorConstants.HTTP_500_ERRORS), new Integer(1),
-                        "Total http 500 error is incorrect");
-    Assert.assertEquals(_callTracker.getTotalErrorCountsMap().get(ErrorConstants.GENERAL_ERROR), new Integer(5),
-                            "Total general error is incorrect");
+
+    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.REMOTE_INVOCATION_ERROR), new Integer(1),
+                        "Current remote invocation error count is incorrect");
+    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.HTTP_400_ERROR), new Integer(1),
+                        "Current http 400 error count is incorrect");
+    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.HTTP_500_ERROR), new Integer(1),
+                        "Current http 500 error count is incorrect");
+    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.OTHER_REST_EXCEPTION_ERROR), new Integer(2),
+                            "Current other rest exception error count is incorrect");
+
     _clock.setCurrentTimeMillis(startTime + INTERVAL * 2);
 
+    //getCallStats needs to wait for an interval before it produces the stats from previous interval
+    Map<ErrorType, Integer> errorTypeCounts = _callTracker.getCallStats().getErrorTypeCounts();
+    Map<ErrorType, Integer> errorTypeCountsTotal = _callTracker.getCallStats().getErrorTypeCountsTotal();
+    Assert.assertEquals(errorTypeCounts.get(ErrorType.REMOTE_INVOCATION_ERROR), new Integer(1),
+                        "Remote invocation error count is incorrect");
+    Assert.assertEquals(errorTypeCounts.get(ErrorType.HTTP_400_ERROR), new Integer(1),
+                        "Http 400 error count is incorrect");
+    Assert.assertEquals(errorTypeCounts.get(ErrorType.HTTP_500_ERROR), new Integer(1),
+                        "Http 500 error count is incorrect");
+    Assert.assertEquals(errorTypeCounts.get(ErrorType.OTHER_REST_EXCEPTION_ERROR), new Integer(2),
+                        "Other rest exception error count is incorrect");
+
+    Assert.assertEquals(errorTypeCountsTotal.get(ErrorType.REMOTE_INVOCATION_ERROR), new Integer(1),
+                        "Total Remote invocation error count is incorrect");
+    Assert.assertEquals(errorTypeCountsTotal.get(ErrorType.HTTP_400_ERROR), new Integer(1),
+                        "Total http 400 error count is incorrect");
+    Assert.assertEquals(errorTypeCountsTotal.get(ErrorType.HTTP_500_ERROR), new Integer(1),
+                        "Total http 5000 error count is incorrect");
+    Assert.assertEquals(errorTypeCountsTotal.get(ErrorType.OTHER_REST_EXCEPTION_ERROR), new Integer(2),
+                        "Total rest exception error count is incorrect");
 
     Assert.assertEquals(_callTracker.getCallStats().getErrorCount(), 6, "Error count is incorrect");
     Assert.assertEquals(_callTracker.getCallStats().getErrorCountTotal(), startErrorCountTotal + 8,
                         "Total error count is incorrect");
-    Assert.assertEquals(_callTracker.getCallStats().getErrorRate(), 0.60, "Error rate is incorrect");
-    Assert.assertEquals(_callTracker.getCallStats().getConcurrentMax(), 10,
+    Assert.assertEquals(_callTracker.getCallStats().getErrorRate(), 0.6, "Error rate is incorrect");
+    Assert.assertEquals(_callTracker.getCallStats().getConcurrentMax(), 15,
+                        "Max concurrent is incorrect");
+
+    //simulate that in the middle of interval we increment the error counts
+    dones.remove(0).endCallWithError(ErrorType.REMOTE_INVOCATION_ERROR);
+    dones.remove(0).endCallWithError(ErrorType.REMOTE_INVOCATION_ERROR);
+    dones.remove(0).endCallWithError(ErrorType.REMOTE_INVOCATION_ERROR);
+
+    //this change should be reflected in getCurrentErrorTypeCountsTotal
+    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.REMOTE_INVOCATION_ERROR), new Integer(4),
+                        "Current remote invocation error count is incorrect");
+    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.HTTP_400_ERROR), new Integer(1),
+                        "Current http 400 error count is incorrect");
+    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.HTTP_500_ERROR), new Integer(1),
+                        "Current http 500 error count is incorrect");
+    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.OTHER_REST_EXCEPTION_ERROR), new Integer(2),
+                            "Current other rest exception error count is incorrect");
+
+    //another simulation of change in the middle of interval
+    dones.remove(0).endCallWithError(ErrorType.HTTP_400_ERROR);
+    dones.remove(0).endCallWithError(ErrorType.HTTP_400_ERROR);
+
+    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.REMOTE_INVOCATION_ERROR), new Integer(4),
+                        "Current remote invocation error count is incorrect");
+    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.HTTP_400_ERROR), new Integer(3),
+                        "Current http 400 error is incorrect");
+    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.HTTP_500_ERROR), new Integer(1),
+                        "Current http 500 error is incorrect");
+    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.OTHER_REST_EXCEPTION_ERROR), new Integer(2),
+                            "Current other rest exception error count is incorrect");
+
+     _clock.setCurrentTimeMillis(startTime + INTERVAL * 3);
+
+    //now the getErrorTypeCounts and getErrorTypeCountsTotal should be different because at previous interval
+    //we only receive 3 REMOTE_INVOCATION_ERROR and 2 HTTP_400_ERROR
+    errorTypeCounts = _callTracker.getCallStats().getErrorTypeCounts();
+    errorTypeCountsTotal = _callTracker.getCallStats().getErrorTypeCountsTotal();
+
+    Assert.assertEquals(errorTypeCounts.get(ErrorType.REMOTE_INVOCATION_ERROR), new Integer(3),
+                        "Remote invocation error count is incorrect");
+    Assert.assertEquals(errorTypeCounts.get(ErrorType.HTTP_400_ERROR), new Integer(2),
+                        "Http 400 error count is incorrect");
+    Assert.assertNull(errorTypeCounts.get(ErrorType.HTTP_500_ERROR), "Http 500 error count is incorrect");
+    Assert.assertNull(errorTypeCounts.get(ErrorType.OTHER_REST_EXCEPTION_ERROR),
+                        "Other rest exception error count is incorrect");
+
+    Assert.assertEquals(errorTypeCountsTotal.get(ErrorType.REMOTE_INVOCATION_ERROR), new Integer(4),
+                        "Total Remote invocation error count is incorrect");
+    Assert.assertEquals(errorTypeCountsTotal.get(ErrorType.HTTP_400_ERROR), new Integer(3),
+                        "Total http 400 error count is incorrect");
+    Assert.assertEquals(errorTypeCountsTotal.get(ErrorType.HTTP_500_ERROR), new Integer(1),
+                        "Total http 5000 error count is incorrect");
+    Assert.assertEquals(errorTypeCountsTotal.get(ErrorType.OTHER_REST_EXCEPTION_ERROR), new Integer(2),
+                        "Total rest exception error count is incorrect");
+
+    Assert.assertEquals(_callTracker.getCallStats().getErrorCount(), 5, "Error count is incorrect");
+    Assert.assertEquals(_callTracker.getCallStats().getErrorCountTotal(), startErrorCountTotal + 13,
+                        "Total error count is incorrect");
+    Assert.assertEquals(_callTracker.getCallStats().getErrorRate(), 1.0, "Error rate is incorrect");
+    Assert.assertEquals(_callTracker.getCallStats().getConcurrentMax(), 5,
                         "Max concurrent is incorrect");
 
   }

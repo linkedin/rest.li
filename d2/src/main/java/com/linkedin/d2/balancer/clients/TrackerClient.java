@@ -41,7 +41,7 @@ import com.linkedin.util.degrader.Degrader;
 import com.linkedin.util.degrader.DegraderControl;
 import com.linkedin.util.degrader.DegraderImpl;
 import com.linkedin.util.degrader.DegraderImpl.Config;
-import com.linkedin.util.degrader.ErrorConstants;
+import com.linkedin.util.degrader.ErrorType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -196,27 +196,27 @@ public class TrackerClient implements LoadBalancerClient
         Throwable throwable = response.getError();
         if (throwable instanceof RemoteInvocationException)
         {
-          _callCompletion.endCallWithError(ErrorConstants.REMOTE_INVOCATION_ERROR);
+          _callCompletion.endCallWithError(ErrorType.REMOTE_INVOCATION_ERROR);
         }
         else if (throwable instanceof RestException)
         {
           RestException exception = (RestException) throwable;
           if (exception.getResponse() != null && RestStatus.isClientError(exception.getResponse().getStatus()))
           {
-            _callCompletion.endCallWithError(ErrorConstants.HTTP_400_ERRORS);
+            _callCompletion.endCallWithError(ErrorType.HTTP_400_ERROR);
           }
           else if (exception.getResponse() != null && RestStatus.isServerError(exception.getResponse().getStatus()))
           {
-            _callCompletion.endCallWithError(ErrorConstants.HTTP_500_ERRORS);
+            _callCompletion.endCallWithError(ErrorType.HTTP_500_ERROR);
           }
           else
           {
-            _callCompletion.endCallWithError(ErrorConstants.GENERAL_ERROR);
+            _callCompletion.endCallWithError(ErrorType.OTHER_REST_EXCEPTION_ERROR);
           }
         }
         else
         {
-          _callCompletion.endCallWithError(ErrorConstants.GENERAL_ERROR);
+          _callCompletion.endCallWithError();
         }
       }
       else

@@ -288,7 +288,7 @@ public class DegraderImpl implements Degrader
                      _callTrackerStats.getCallCount(),
                      _latency, _callTrackerStats.getErrorRate(),
                      _outstandingLatency, _callTrackerStats.getOutstandingCount(),
-                     _callTrackerStats.getCurrentErrorCountsMap());
+                     _callTrackerStats.getErrorTypeCountsTotal());
   }
 
   /**
@@ -490,7 +490,7 @@ public class DegraderImpl implements Degrader
     private final double _errorRate;
     private final long   _outstandingLatency;
     private final int    _outstandingCount;
-    private final Map<String, Integer> _currentErrorCountsMap;
+    private final Map<ErrorType, Integer> _currentErrorCountsMap;
 
 
     private Stats(double currentDropRate, double currentComputedDropRate,
@@ -502,7 +502,7 @@ public class DegraderImpl implements Degrader
                   int callCount,
                   long latency,
                   double errorRate,
-                  long outstandingLatency, int outstandingCount, Map<String,Integer> errorCountsMap)
+                  long outstandingLatency, int outstandingCount, Map<ErrorType,Integer> errorCountsMap)
     {
       _currentDropRate = currentDropRate;
       _currentComputedDropRate = currentComputedDropRate;
@@ -576,7 +576,7 @@ public class DegraderImpl implements Degrader
     {
       return _outstandingCount;
     }
-    public Map<String, Integer> getCurrentErrorCountsMap()
+    public Map<ErrorType, Integer> getCurrentErrorCountsMap()
     {
       return _currentErrorCountsMap;
     }

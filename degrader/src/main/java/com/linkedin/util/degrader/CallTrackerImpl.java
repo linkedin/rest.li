@@ -45,6 +45,7 @@ import com.linkedin.util.clock.SystemClock;
  * @author Dave Messink
  * @author Chris Pettitt
  * @author Swee Lim
+ * @author Oby Sumampouw
  * @version $Rev: 151859 $
  */
 
@@ -67,7 +68,7 @@ public class CallTrackerImpl implements CallTracker
   private int _concurrency;
   private long _sumOfOutstandingStartTimes;
   //Total counts of specific types of error like RemoteInvocation error, 400 errors, 500 errors
-  private Map<String, Integer> _totalErrorCountsMap;
+  private Map<ErrorType, Integer> _errorTypeCountsTotal;
 
   private Pending _pending = null;
 
@@ -85,7 +86,7 @@ public class CallTrackerImpl implements CallTracker
     _interval = interval;
     _lastStartTime = -1;
     _lastResetTime = _clock.currentTimeMillis();
-    _totalErrorCountsMap = new HashMap<String, Integer>();
+    _errorTypeCountsTotal = new HashMap<ErrorType, Integer>();
     /* create trackers for each resolution */
     _tracker = new Tracker();
   }
@@ -191,11 +192,6 @@ public class CallTrackerImpl implements CallTracker
     return _callCountTotal;
   }
 
-  public Map<String, Integer> getTotalErrorCountsMap()
-  {
-    return _totalErrorCountsMap;
-  }
-
   @Override
   public long getCurrentCallStartCountTotal()
   {
@@ -206,6 +202,12 @@ public class CallTrackerImpl implements CallTracker
   public long getCurrentErrorCountTotal()
   {
     return _errorCountTotal;
+  }
+
+  @Override
+  public Map<ErrorType, Integer> getCurrentErrorTypeCountsTotal()
+  {
+    return Collections.unmodifiableMap(new HashMap<ErrorType, Integer>(_errorTypeCountsTotal));
   }
 
   @Override
@@ -233,7 +235,7 @@ public class CallTrackerImpl implements CallTracker
       _callStartCountTotal = 0;
       _errorCountTotal = 0;
       _tracker.reset();
-      _totalErrorCountsMap.clear();
+      _errorTypeCountsTotal.clear();
       pending = checkForPending();
     }
     // Always deliver pending events without holding _lock to avoid deadlocks.
@@ -316,12 +318,12 @@ public class CallTrackerImpl implements CallTracker
     }
 
     @Override
-    public void endCallWithError(String errorType)
+    public void endCallWithError(ErrorType errorType)
     {
       endCall(true, errorType);
     }
 
-    private void endCall(boolean hasError, String errorType)
+    private void endCall(boolean hasError, ErrorType errorType)
     {
       if (_done.compareAndSet(false, true))
       {
@@ -360,7 +362,7 @@ public class CallTrackerImpl implements CallTracker
   }
 
 
-  private void addCallData(long duration, boolean hasError, long currentTime, String errorType)
+  private void addCallData(long duration, boolean hasError, long currentTime, ErrorType errorType)
   {
     _tracker.addNewData(currentTime, hasError, duration, errorType);
 
@@ -368,18 +370,17 @@ public class CallTrackerImpl implements CallTracker
     if (hasError)
     {
       _errorCountTotal++;
-      if (errorType == null)
+      if (errorType != null)
       {
-        errorType = ErrorConstants.GENERAL_ERROR;
-      }
-      Integer count = _totalErrorCountsMap.get(errorType);
-      if (count == null)
-      {
-        _totalErrorCountsMap.put(errorType, 1);
-      }
-      else
-      {
-        _totalErrorCountsMap.put(errorType, count + 1);
+        Integer count = _errorTypeCountsTotal.get(errorType);
+        if (count == null)
+        {
+          _errorTypeCountsTotal.put(errorType, 1);
+        }
+        else
+        {
+          _errorTypeCountsTotal.put(errorType, count + 1);
+        }
       }
     }
 
@@ -432,12 +433,12 @@ public class CallTrackerImpl implements CallTracker
     private int _concurrentMax;
     private final LongTracking _callTimeTracking;
     //this map is used to store the number of specific errors that happened in one interval only
-    private final Map<String, Integer> _errorCountsMap;
+    private final Map<ErrorType, Integer> _errorTypeCounts;
 
     private Tracker()
     {
       _callTimeTracking = new LongTracking();
-      _errorCountsMap = new HashMap<String, Integer>();
+      _errorTypeCounts = new HashMap<ErrorType, Integer>();
       reset();
     }
 
@@ -448,7 +449,7 @@ public class CallTrackerImpl implements CallTracker
       _errorCount = 0;
       _concurrentMax = _concurrency;
       _callTimeTracking.reset();
-      _errorCountsMap.clear();
+      _errorTypeCounts.clear();
     }
 
     private void reset()
@@ -474,7 +475,7 @@ public class CallTrackerImpl implements CallTracker
         _concurrentMax,
         _concurrency == 0 ? 0 : (_sumOfOutstandingStartTimes / _concurrency),
         _concurrency,
-        _callTimeTracking.getStats(), _totalErrorCountsMap, _errorCountsMap);
+        _callTimeTracking.getStats(), _errorTypeCounts, _errorTypeCountsTotal);
 
       resetStats(endTime);
 
@@ -484,7 +485,7 @@ public class CallTrackerImpl implements CallTracker
     /**
      * this method is called to track the number of calls made during this interval
      */
-    private void addNewData(long currentTime, boolean hasError, long duration, String errorType)
+    private void addNewData(long currentTime, boolean hasError, long duration, ErrorType errorType)
     {
       getStatsWithCurrentTime(currentTime);
       _callTimeTracking.addValue(duration);
@@ -492,20 +493,19 @@ public class CallTrackerImpl implements CallTracker
       {
         _errorCount++;
       }
-      if (errorType == null)
+      if (errorType != null)
       {
-        errorType = ErrorConstants.GENERAL_ERROR;
+        Integer count = _errorTypeCounts.get(errorType);
+        if (count == null)
+        {
+          _errorTypeCounts.put(errorType, 1);
+        }
+        else
+        {
+          _errorTypeCounts.put(errorType, count + 1);
+        }
       }
-
-      Integer count = _errorCountsMap.get(errorType);
-      if (count == null)
-      {
-        _errorCountsMap.put(errorType, 1);
-      }
-      else
-      {
-        _errorCountsMap.put(errorType, count + 1);
-      }
+      //we don't have to track the error if errorType is null
     }
 
     private CallStats getMostRecentStats()
@@ -610,8 +610,8 @@ public class CallTrackerImpl implements CallTracker
     private final long      _outstandingStartTimeAvg;
     private final int       _outstandingCount;
     private final LongStats _callTimeStats;
-    private final Map<String, Integer> _totalErrorCountsMap;
-    private final Map<String, Integer> _currentErrorCountsMap;
+    private final Map<ErrorType, Integer> _errorTypeCounts;
+    private final Map<ErrorType, Integer> _errorTypeCountsTotal;
 
     public CallTrackerStats()
     {
@@ -635,8 +635,8 @@ public class CallTrackerImpl implements CallTracker
       _outstandingCount = 0;
 
       _callTimeStats = new LongStats();
-      _totalErrorCountsMap = new HashMap<String, Integer>();
-      _currentErrorCountsMap = new HashMap<String, Integer>();
+      _errorTypeCounts = Collections.emptyMap();
+      _errorTypeCountsTotal = Collections.emptyMap();
     }
 
     public CallTrackerStats(
@@ -652,8 +652,8 @@ public class CallTrackerImpl implements CallTracker
       long outstandingStartTimeAvg,
       int  outstandingCount,
       LongStats callTimeStats,
-      Map<String, Integer> totalErrorCountsMap,
-      Map<String, Integer> errorCountsMap
+      Map<ErrorType, Integer> errorTypeCounts,
+      Map<ErrorType, Integer> errorTypeCountsTotal
     )
     {
       _intervalConfigured = intervalConfigured;
@@ -671,18 +671,18 @@ public class CallTrackerImpl implements CallTracker
       _outstandingCount = outstandingCount;
 
       _callTimeStats = callTimeStats;
-      _totalErrorCountsMap = totalErrorCountsMap;
-      _currentErrorCountsMap = errorCountsMap;
+      _errorTypeCounts = Collections.unmodifiableMap(new HashMap<ErrorType, Integer>(errorTypeCounts));
+      _errorTypeCountsTotal = Collections.unmodifiableMap(new HashMap<ErrorType, Integer>(errorTypeCountsTotal));
     }
 
-    public Map<String, Integer> getTotalErrorCountsMap()
+    public Map<ErrorType, Integer> getErrorTypeCounts()
     {
-      return new HashMap<String, Integer>(_totalErrorCountsMap);
+      return _errorTypeCounts;
     }
 
-    public Map<String, Integer> getCurrentErrorCountsMap()
+    public Map<ErrorType, Integer> getErrorTypeCountsTotal()
     {
-      return new HashMap<String, Integer>(_currentErrorCountsMap);
+      return _errorTypeCountsTotal;
     }
 
     @Override
@@ -813,8 +813,8 @@ public class CallTrackerImpl implements CallTracker
           ", CallTime90Pct=" + callTimeStats.get90Pct() +
           ", CallTime95Pct=" + callTimeStats.get95Pct() +
           ", CallTime99Pct=" + callTimeStats.get99Pct() +
-          ", TotalErrorCountsMap=" + this.getTotalErrorCountsMap() +
-          ", CurrentErrorCountsMap=" + this.getCurrentErrorCountsMap()
+          ", ErrorTypeCounts=" + this.getErrorTypeCounts() +
+          ", ErrorTypeCountsTotal=" + this.getErrorTypeCountsTotal()
         );
     }
   }

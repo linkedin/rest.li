@@ -18,9 +18,6 @@
 package com.linkedin.util.degrader;
 
 
-import java.util.Map;
-
-
 /**
  * @author Chris Pettitt
  * @version $Revision$
@@ -41,5 +38,5 @@ public interface CallCompletion
    * Used to indicate that a call completed with an error.
    * @param errorType auxillary data that indicates what kind of error it is and how it should be counted for tracking
    */
-  void endCallWithError(String errorType);
+  void endCallWithError(ErrorType errorType);
 }
