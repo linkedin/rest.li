@@ -14,26 +14,32 @@ Oh, you want to see some code, don't you?
 
 Basically, pegasus is a framework where you define schema's for your data:
 
-    {
-      "name" : "Greeting", "namespace" : "com.example.greetings", "type" : "record",
-      "fields" : [
-        { "name" : "message", "type" : "string" }
-      ]
-    }
+```json
+{
+  "name" : "Greeting", "namespace" : "com.example.greetings", "type" : "record",
+  "fields" : [
+    { "name" : "message", "type" : "string" }
+  ]
+}
+```
 
 Write servers:
 
-    @RestLiCollection(name = "greetings")
-    class GreetingsResource extends CollectionResourceTemplate<Long, Message> {
-      public Greeting get(Long key) {
-        return new Greeting().setMessage("Good morning!");
-      }
-    }
+```java
+@RestLiCollection(name = "greetings")
+class GreetingsResource extends CollectionResourceTemplate<Long, Message> {
+  public Greeting get(Long key) {
+    return new Greeting().setMessage("Good morning!");
+  }
+}
+```
 
 And then write clients:
 
-    Response<Greeting> response = restClient.sendRequest(new GreetingsBuilders.get().id(1L).build()).get();
-    System.out.println(response.getEntity().getMessage());
+```java
+Response<Greeting> response = restClient.sendRequest(new GreetingsBuilders.get().id(1L).build()).get();
+System.out.println(response.getEntity().getMessage());
+```
 
 And get all the benefits of a robust, scalable REST+JSON framework.
 
