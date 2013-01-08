@@ -48,7 +48,7 @@ public class DegraderLoadBalancerStrategyFactoryV2 implements
   {
     debug(_log, "created a degrader load balancer strategyV2");
 
-    return new DegraderLoadBalancerStrategyV2(DegraderLoadBalancerStrategyConfig.configFromMap(strategyProperties),
+    return new DegraderLoadBalancerStrategyV2(DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(strategyProperties),
                                               serviceName);
   }
 }
