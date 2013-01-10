@@ -1,18 +1,18 @@
-What is Pegasus?
+What is Rest.li?
 ================
-Pegasus is a REST+JSON framework for building robust, scalable service
+Rest.li is a REST+JSON framework for building robust, scalable service
 architectures using dynamic discovery and simple asynchronous APIs.
 
-Pegasus fills a niche for building RESTful service architectures at scale,
+Rest.li fills a niche for building RESTful service architectures at scale,
 offering a developer workflow for defining data and REST APIs that promotes
 uniform interfaces, consistent data modeling, type-safety, and compatibility
 checked API evolution.
 
-# No, Really.  What is Pegasus?
+# No, Really.  What is Rest.li?
 
 Oh, you want to see some code, don't you?
 
-Basically, pegasus is a framework where you define schema's for your data:
+Basically, rest.li is a framework where you define schema's for your data:
 
 ```json
 {
@@ -45,10 +45,10 @@ And get all the benefits of a robust, scalable REST+JSON framework.
 
 # Full Documentation
 
-See our [wiki](http://github.com/linkedin/pegasus/wiki) for full documentation and examples.
+See our [wiki](http://github.com/linkedin/rest.li/wiki) for full documentation and examples.
 
 Quickstart Guides and Examples
 ------------------------------
 
-* [Quickstart - a step-by-step tutorial on the basics](http://github.com/linkedin/pegasus/wiki/Quickstart:-A-Tutorial-Introduction-to-RestLi)
-* [Guided walkthrough of an example application](http://github.com/linkedin/pegasus/wiki/Quick-Start-Guide)
+* [Quickstart - a step-by-step tutorial on the basics](http://github.com/linkedin/rest.li/wiki/Quickstart:-A-Tutorial-Introduction-to-RestLi)
+* [Guided walkthrough of an example application](http://github.com/linkedin/rest.li/wiki/Quick-Start-Guide)
