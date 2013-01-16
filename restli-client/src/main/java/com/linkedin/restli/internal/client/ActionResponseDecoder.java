@@ -43,7 +43,7 @@ public class ActionResponseDecoder<T> extends RestResponseDecoder<T>
   @Override
   public Class<?> getEntityClass()
   {
-    return _returnFieldDef.getType();
+    return _returnFieldDef == null ? null : _returnFieldDef.getType();
   }
 
   @Override

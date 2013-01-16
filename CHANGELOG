@@ -1,8 +1,14 @@
+1.7.9
+-----
+
 1.7.8
 -----
 (RB=119453)
 Add default value handling for query parameter in complex type, including all DataTemplate subclasses, array of simple types and complex types.
 Union can be used as query parameter type.
+
+(RB=127439)
+Fix NPE resulting from calling .getEntityClass() on an ActionResponseDecoder for a void-returning Action. 
 
 1.7.7
 -----
