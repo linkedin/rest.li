@@ -187,7 +187,7 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
 
     if(shouldUpdate(clusterGenerationId, currentState, config, _updateEnabled))
     {
-      info(_log, "updating for cluster generation id: " + clusterGenerationId + " state last updated timestamp: " +
+      debug(_log, "updating for cluster generation id: " + clusterGenerationId + " state last updated timestamp: " +
       currentState.getLastUpdated());
 
       debug(_log, "old state was: ", currentState);
