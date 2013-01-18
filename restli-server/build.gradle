@@ -10,6 +10,7 @@ dependencies {
   compile externalDependency.slf4jLog4j12
   compile externalDependency.log4j
   compile externalDependency.commonsLang
+  compile externalDependency.commonsIo
   compile externalDependency.jacksonCoreAsl
   compile externalDependency.jacksonMapperAsl
   compile externalDependency.parseq

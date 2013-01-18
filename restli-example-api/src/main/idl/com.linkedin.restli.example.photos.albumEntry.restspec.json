@@ -3,7 +3,7 @@
   "namespace" : "com.linkedin.restli.example.photos",
   "path" : "/albumEntry",
   "schema" : "com.linkedin.restli.example.AlbumEntry",
-  "doc" : "Many-many association between photos and albums.\n\ngenerated from: com.linkedin.restli.example.impl.AlbumEntryResource",
+  "doc" : "Many-many association between photos and albums.\n \n <pre>\n   new AlbumEntryBuilders().findBySearch()\n     .albumIdParam(5)\n     .photoIdParam(100)\n     .build();\n </pre>\n \n See also:\n\ngenerated from: com.linkedin.restli.example.impl.AlbumEntryResource",
   "association" : {
     "assocKeys" : [ {
       "name" : "albumId",
@@ -31,15 +31,18 @@
       "parameters" : [ {
         "name" : "albumId",
         "type" : "long",
-        "optional" : true
+        "optional" : true,
+        "doc" : "provides the id to match for albums to match,  if not provided, it is treated as a wildcard"
       }, {
         "name" : "photoId",
         "type" : "long",
-        "optional" : true
+        "optional" : true,
+        "doc" : "provides the id to match for photos to match,  if not provided, it is treated as a wildcard"
       } ]
     } ],
     "actions" : [ {
       "name" : "purge",
+      "doc" : "Delete all entries in the db with matching album/photo IDs. If either albumId or photoId\n params are not supplied they are treated as a wildcard.",
       "parameters" : [ {
         "name" : "albumId",
         "type" : "long",

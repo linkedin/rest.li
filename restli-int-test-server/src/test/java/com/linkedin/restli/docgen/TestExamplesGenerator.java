@@ -78,7 +78,7 @@ public class TestExamplesGenerator
                                                                      GroupsResource2.class,
                                                                      GroupContactsResource2.class,
                                                                      GroupMembershipsResource2.class);
-    final ResourceSchemaCollection resourceSchemas = ResourceSchemaCollection.createFromResourceModels(resources);
+    final ResourceSchemaCollection resourceSchemas = ResourceSchemaCollection.loadOrCreateResourceSchema(resources);
     final RestLiExampleGenerator.RequestGenerationSpec spec = new RestLiExampleGenerator.RequestGenerationSpec();
     final DataSchemaResolver schemaResolver = new ClassNameDataSchemaResolver();
     final RestLiExampleGenerator generator = new RestLiExampleGenerator(resourceSchemas,

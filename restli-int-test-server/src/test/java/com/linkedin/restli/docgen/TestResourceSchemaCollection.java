@@ -44,7 +44,7 @@ public class TestResourceSchemaCollection
                                    "com.linkedin.restli.examples.greetings.server",
                                    "com.linkedin.restli.examples.typeref.server");
     final Map<String, ResourceModel> rootResources = new RestLiApiBuilder(config).build();
-    _schemas = ResourceSchemaCollection.createFromResourceModels(rootResources);
+    _schemas = ResourceSchemaCollection.loadOrCreateResourceSchema(rootResources);
   }
 
   @Test

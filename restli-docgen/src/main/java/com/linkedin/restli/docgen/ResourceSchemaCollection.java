@@ -59,20 +59,22 @@ import java.util.TreeMap;
 public class ResourceSchemaCollection
 {
   /**
-   * Create {@link ResourceSchemaCollection} from specified root {@link ResourceModel}.
+   * For each given {@link ResourceModel}, the classpath is checked for a .restspec.json 
+   * matching the name of the {@link ResourceModel},  if found it is loaded.  If a .restspec.json file 
+   * is not found, one is created {@link ResourceSchemaCollection} from specified root {@link ResourceModel}.
    * All resources will be recursively traversed to discover subresources.
    * Root resources not specified are excluded.
    *
    * @param rootResources root resources in ResourceModel type
    * @return constructed ResourceSchemaCollection
    */
-  public static ResourceSchemaCollection createFromResourceModels(Map<String, ResourceModel> rootResources)
+  public static ResourceSchemaCollection loadOrCreateResourceSchema(Map<String, ResourceModel> rootResources)
   {
     final ResourceModelEncoder encoder = new ResourceModelEncoder(new NullDocsProvider());
     final Map<String, ResourceSchema> schemaMap = new TreeMap<String, ResourceSchema>();
     for (ResourceModel resource : rootResources.values())
     {
-      schemaMap.put(resource.getName(), encoder.buildResourceSchema(resource));
+      schemaMap.put(resource.getName(), encoder.loadOrBuildResourceSchema(resource));
     }
 
     return new ResourceSchemaCollection(schemaMap);

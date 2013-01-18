@@ -44,6 +44,13 @@ import com.linkedin.restli.server.resources.AssociationResourceTemplate;
 /**
  * Many-many association between photos and albums.
  *
+ * <pre>
+ *   new AlbumEntryBuilders().findBySearch()
+ *     .albumIdParam(5)
+ *     .photoIdParam(100)
+ *     .build();
+ * </pre>
+ *
  * @author jnwang
  */
 @RestLiAssociation(
@@ -179,6 +186,11 @@ public class AlbumEntryResource extends AssociationResourceTemplate<AlbumEntry>
   // the IDs
   // return JSON object of the action result
   // if called on wrong resource level, HTTP 400 is responded
+  /**
+   * Delete all entries in the db with matching album/photo IDs. If either albumId or photoId
+   * params are not supplied they are treated as a wildcard. 
+   * 
+   */
   @Action(name = "purge", resourceLevel = ResourceLevel.COLLECTION)
   public int purge(@Optional @ActionParam("albumId") Long albumId,
                    @Optional @ActionParam("photoId") Long photoId)
@@ -189,6 +201,10 @@ public class AlbumEntryResource extends AssociationResourceTemplate<AlbumEntry>
   /**
    * Find all entries matching the given album and photo IDs. <code>null</code> is treated
    * as a wildcard.
+   * 
+   * @param albumId provides the id to match for albums to match,  if not provided, it is treated as a wildcard
+   * @param photoId provides the id to match for photos to match,  if not provided, it is treated as a wildcard
+   * @return a list of {@link AlbumEntry} matching the  given parameters
    */
   @Finder("search")
   public List<AlbumEntry> search(@Optional @QueryParam("albumId") Long albumId,

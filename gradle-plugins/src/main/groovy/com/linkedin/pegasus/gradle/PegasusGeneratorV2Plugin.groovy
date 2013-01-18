@@ -750,7 +750,12 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
         // tasks which declare no output should always assume outputs UP-TO-DATE
         publishRestModelTask.outputs.upToDateWhen { true }
 
-        proj.tasks[sourceSet.getTaskName('', 'jar')].dependsOn(publishRestModelTask)
+        final Task jarTask = proj.tasks[sourceSet.getTaskName('', 'jar')]
+        final SourceSet restSourceSet = proj.sourceSets.findByName(getGeneratedSourceSetName(sourceSet, REST_GEN_TYPE))
+        if(restSourceSet != null) {
+          jarTask.from(restSourceSet.resources) // add any .restspec.json files as resources to the jar
+        }
+        jarTask.dependsOn(publishRestModelTask)
       }
     }
   }
@@ -1036,6 +1041,9 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
     SourceSet targetSourceSet = project.sourceSets.add(targetSourceSetName) {
       java {
         srcDir "src${File.separatorChar}${targetSourceSetName}${File.separatorChar}java"
+      }
+      resources {
+        srcDir "src${File.separatorChar}${targetSourceSetName}${File.separatorChar}idl"
       }
       compileClasspath = dataModels + project.configurations.restClientCompile
     }

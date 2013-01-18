@@ -45,7 +45,7 @@ public class DefaultDocumentationRequestHandler implements RestLiDocumentationRe
   public void initialize(RestLiConfig config, Map<String, ResourceModel> rootResources)
   {
     final DataSchemaResolver schemaResolver = new ClassNameDataSchemaResolver();
-    final ResourceSchemaCollection resourceSchemas = ResourceSchemaCollection.createFromResourceModels(rootResources);
+    final ResourceSchemaCollection resourceSchemas = ResourceSchemaCollection.loadOrCreateResourceSchema(rootResources);
     final RestLiResourceRelationship relationships = new RestLiResourceRelationship(resourceSchemas, schemaResolver);
 
     _htmlRenderer = new RestLiHTMLDocumentationRenderer(config.getServerNodeUri(),

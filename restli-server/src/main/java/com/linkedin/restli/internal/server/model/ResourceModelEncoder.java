@@ -17,7 +17,20 @@
 package com.linkedin.restli.internal.server.model;
 
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
+import org.apache.commons.io.IOUtils;
+
 import com.linkedin.data.DataMap;
+import com.linkedin.data.codec.DataCodec;
+import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.JsonBuilder;
 import com.linkedin.data.schema.NamedDataSchema;
@@ -32,6 +45,7 @@ import com.linkedin.data.template.StringArray;
 import com.linkedin.data.template.TyperefInfo;
 import com.linkedin.restli.common.ActionResponse;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.restspec.ActionSchema;
 import com.linkedin.restli.restspec.ActionSchemaArray;
@@ -56,13 +70,6 @@ import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.resources.ComplexKeyResource;
 
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-
 
 /**
  * Encodes a ResourceModel (runtime-reflection oriented class) into the JSON-serializable
@@ -72,6 +79,8 @@ import java.util.List;
  */
 public class ResourceModelEncoder
 {
+  private final DataCodec codec = new JacksonDataCodec();
+  
   public interface DocsProvider
   {
     /**
@@ -149,6 +158,47 @@ public class ResourceModelEncoder
     }
 
     return rootNode;
+  }
+  
+  /**
+   * Checks if a matching .restspec.json file exists in the classpath for the given {@link ResourceModel}.
+   * If one is found it is loaded.  If not, one is built from the {@link ResourceModel}.
+   * 
+   * The .restspec.json is preferred because it contains the exact idl that was generated for the resource
+   * and also includees includes javadoc from the server class in the restspec.json.
+   * 
+   * @param resourceModel provides the name and namespace of the schema to load or build
+   * @return the {@link ResourceSchema} for the given {@link ResourceModel}
+   */
+  public ResourceSchema loadOrBuildResourceSchema(final ResourceModel resourceModel)
+  {
+    StringBuilder resourceFilePath = new StringBuilder(File.separator);
+    if (resourceModel.getNamespace() != null)
+    {
+      resourceFilePath.append(resourceModel.getNamespace());
+      resourceFilePath.append(".");
+    }
+    resourceFilePath.append(resourceModel.getName());
+    resourceFilePath.append(RestConstants.RESOURCE_MODEL_FILENAME_EXTENSION);
+    
+    try
+    {
+      InputStream stream = this.getClass().getClassLoader().getResourceAsStream(resourceFilePath.toString());
+      if(stream == null)
+      {
+        // restspec.json file not found, building one instead
+        return buildResourceSchema(resourceModel);
+      }
+      else
+      {
+        DataMap resourceSchemaDataMap = codec.bytesToMap(IOUtils.toByteArray(stream));
+        return new ResourceSchema(resourceSchemaDataMap);
+      }
+    }
+    catch (IOException e)
+    {
+      throw new RuntimeException("Failed to read " + resourceFilePath.toString() + " from classpath.", e);
+    }
   }
 
   /*package*/ static String buildDataSchemaType(final Class<?> type)

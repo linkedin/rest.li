@@ -283,10 +283,15 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
     String doc = null;
     if (method instanceof RestMethodSchema)
     {
-      doc = _restMethodDocsMap.get(((RestMethodSchema)method).getMethod());
-      if (doc == null)
+      RestMethodSchema restMethodSchema = ((RestMethodSchema) method);
+      doc = restMethodSchema.getDoc();
+      if (doc == null || doc.trim().length() == 0) // if no javadoc is supplied, fallback to generic doc string
       {
-        log.warn(String.format("No doc string for REST method %s", doc));
+        doc = _restMethodDocsMap.get(restMethodSchema.getMethod());
+        if (doc == null)
+        {
+          log.warn(String.format("No doc string for REST method %s", doc));
+        }
       }
     }
 
