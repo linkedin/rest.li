@@ -1,5 +1,9 @@
 1.7.9
 -----
+(RB=128653)
+ActionResponseDecoder.getEntity() will return Void.class if its fieldDef is 
+null, to preserve compatibility from before the Action response changes.
+
 (RB=128251)
 Add javadoc to rest.li docgen and include restspec.json files as resource in rest.li server jars.
 

@@ -110,7 +110,7 @@ public class TestClientBuilders
     Assert.assertEquals(request.getInput().data().get("p"), "42");
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), false);
-    Assert.assertNull(request.getResponseDecoder().getEntityClass());
+    Assert.assertEquals(request.getResponseDecoder().getEntityClass(), Void.class);
   }
 
   @Test

@@ -34,16 +34,25 @@ public class ActionResponseDecoder<T> extends RestResponseDecoder<T>
   private final FieldDef<T> _returnFieldDef;
   private final RecordDataSchema _recordDataSchema;
 
+  /**
+   * @param returnFieldDef the {@link FieldDef} of the response.
+   *                       If this is null, it is assumed that the entity class of the response is void.
+   * @param schema the {@link RecordDataSchema} of the response.
+   */
   public ActionResponseDecoder(FieldDef<T> returnFieldDef, RecordDataSchema schema)
   {
     _returnFieldDef = returnFieldDef;
     _recordDataSchema = schema;
   }
 
+  /**
+   * @return the type of the response {@link FieldDef},
+   * or {@code Void.class} if the response {@link FieldDef} is null.
+   */
   @Override
   public Class<?> getEntityClass()
   {
-    return _returnFieldDef == null ? null : _returnFieldDef.getType();
+    return _returnFieldDef == null ? Void.class : _returnFieldDef.getType();
   }
 
   @Override
