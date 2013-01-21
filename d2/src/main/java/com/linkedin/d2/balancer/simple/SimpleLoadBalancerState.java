@@ -241,7 +241,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     _executor.execute(new PropertyEvent("add listener for state")
     {
       @Override
-      public void run()
+      public void innerRun()
       {
         _listeners.add(listener);
       }
@@ -255,7 +255,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     _executor.execute(new PropertyEvent("remove listener for state")
     {
       @Override
-      public void run()
+      public void innerRun()
       {
         _listeners.remove(listener);
       }
@@ -277,7 +277,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     _executor.execute(new PropertyEvent("shutdown load balancer state")
     {
       @Override
-      public void run()
+      public void innerRun()
       {
         // put all tracker clients into a single set for convenience
         Set<TransportClient> transportClients = new HashSet<TransportClient>();
@@ -432,7 +432,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     _executor.execute(new PropertyEvent("set version to: " + version)
     {
       @Override
-      public void run()
+      public void innerRun()
       {
         info(_log, "set global version to: ", version);
 

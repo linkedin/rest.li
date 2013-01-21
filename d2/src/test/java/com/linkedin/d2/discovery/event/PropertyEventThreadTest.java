@@ -77,7 +77,7 @@ public class PropertyEventThreadTest
     }
 
     @Override
-    public void run()
+    public void innerRun()
     {
       _count.incrementAndGet();
     }

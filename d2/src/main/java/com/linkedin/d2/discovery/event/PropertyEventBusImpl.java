@@ -81,7 +81,7 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
     _thread.send(new PropertyEvent("PropertyEventBus.registerAll")
     {
       @Override
-      public void run()
+      public void innerRun()
       {
         _allPropertySubscribers.add(listener);
       }
@@ -94,7 +94,7 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
     _thread.send(new PropertyEvent("PropertyEventBus.unregisterAll")
     {
       @Override
-      public void run()
+      public void innerRun()
       {
         _allPropertySubscribers.remove(listener);
       }
@@ -107,7 +107,7 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
   {
     _thread.send(new PropertyEvent("PropertyEventBus.register " + propertyNames)
     {
-      public void run()
+      public void innerRun()
       {
         for (final String prop : propertyNames)
         {
@@ -144,7 +144,7 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
   {
     _thread.send(new PropertyEvent("PropertyEventBus.unregister " + propertyNames)
     {
-      public void run()
+      public void innerRun()
       {
         for (final String prop : propertyNames)
         {
@@ -169,7 +169,7 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
 
     _thread.send(new PropertyEvent("PropertyEventBus.setPublisher")
     {
-      public void run()
+      public void innerRun()
       {
         if (_publisher != null)
         {
@@ -193,7 +193,7 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
   {
     _thread.send(new PropertyEvent("PropertyEventBus.publishInitialize " + prop)
     {
-      public void run()
+      public void innerRun()
       {
         // Because the bus can switch publishers, a new publisher may consider an event
         // an "initialize", but if the bus has previously seen that property, we will treat
@@ -221,7 +221,7 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
   {
     _thread.send(new PropertyEvent("PropertyEventBus.publishAdd " + prop)
     {
-      public void run()
+      public void innerRun()
       {
         // Ignore unless the property has been initialized
         if (_properties.containsKey(prop))
@@ -241,7 +241,7 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
   {
     _thread.send(new PropertyEvent("PropertyEventBus.publishRemove " + prop)
     {
-      public void run()
+      public void innerRun()
       {
         // Ignore unless the property has been initialized
         if (_properties.containsKey(prop))

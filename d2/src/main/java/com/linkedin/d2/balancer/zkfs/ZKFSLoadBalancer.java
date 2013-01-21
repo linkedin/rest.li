@@ -234,7 +234,7 @@ public class ZKFSLoadBalancer
     {
 
       @Override
-      public void run()
+      public void innerRun()
       {
         _zkConnection.addStateListener(new ZKListener(balancer));
         try

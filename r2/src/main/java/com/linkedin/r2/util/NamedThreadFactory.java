@@ -24,6 +24,10 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
+ * an UncaughtExceptionHandler can be specified in the constructor if uncaught exceptions need to be
+ * caught. If the NamedThreadFactory is used with an ExecutorService then the exceptions are caught
+ * and stashed away, so there is no point in using specifying an UncaughtExceptionHandler in those cases.
+ *
  * @author Steven Ihde
  * @version $Revision: $
  */
@@ -33,6 +37,7 @@ public class NamedThreadFactory implements ThreadFactory
   private static final AtomicInteger _instanceNumber = new AtomicInteger();
   private final AtomicInteger _threadNumber = new AtomicInteger();
   private final String _namePrefix;
+  private final UncaughtExceptionHandler _uncaughtExceptionHandler;
 
   /**
    * Construct a new instance with the specified name.
@@ -41,7 +46,13 @@ public class NamedThreadFactory implements ThreadFactory
    */
   public NamedThreadFactory(String name)
   {
+    this(name, null);
+  }
+
+  public NamedThreadFactory(String name, UncaughtExceptionHandler uncaughtExceptionHandler)
+  {
     _namePrefix = name + "-" + _instanceNumber.incrementAndGet();
+    _uncaughtExceptionHandler = uncaughtExceptionHandler;
   }
 
   /**
@@ -52,7 +63,15 @@ public class NamedThreadFactory implements ThreadFactory
    */
   public Thread newThread(Runnable runnable)
   {
+    Thread newThread;
     String name = _namePrefix + "-" + _threadNumber.incrementAndGet();
-    return new Thread(runnable, name);
+
+    newThread = new Thread(runnable, name);
+    if (_uncaughtExceptionHandler != null)
+    {
+      newThread.setUncaughtExceptionHandler(_uncaughtExceptionHandler);
+    }
+
+    return newThread;
   }
 }

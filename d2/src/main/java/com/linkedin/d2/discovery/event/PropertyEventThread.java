@@ -159,6 +159,21 @@ public class PropertyEventThread extends Thread
     {
       return "PropertyEvent [_description=" + _description + "]";
     }
+
+    @Override
+    final public void run()
+    {
+      try
+      {
+        innerRun();
+      }
+      catch (RuntimeException e)
+      {
+        _log.error("Received exception from: " + _description, e);
+      }
+    }
+
+    abstract public void innerRun();
   }
 
   public static interface PropertyEventShutdownCallback
