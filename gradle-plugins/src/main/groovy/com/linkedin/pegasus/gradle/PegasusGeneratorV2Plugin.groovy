@@ -737,12 +737,13 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
         // publish the generated rest model to api project
         // it always does compatibility check before copying files
         // the file copy can be turned off by "rest.model.noPublish" flag
+        File idlGenerationDir = apiProject.mkdir(getIdlRelativePath(sourceSet))
         final Task publishRestModelTask = proj.task(sourceSet.getTaskName('publish', 'restModel'),
                                                     type: PublishIdl,
                                                     dependsOn: generateRestModelTask) {
           from getSuffixedFiles(project, generateRestModelTask.destinationDir, IDL_FILE_SUFFIX)
           // apiIdlDir is annotated as @InputDirectory, whose existence is validated before executing the task
-          into apiProject.mkdir(getIdlRelativePath(sourceSet))
+          into idlGenerationDir
           resolverPath = apiProject.files(getDataSchemaRelativePath(project, sourceSet)) + getDataModelConfig(apiProject, sourceSet)
           toolsClasspath = proj.configurations.restTools
         }
@@ -751,10 +752,7 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
         publishRestModelTask.outputs.upToDateWhen { true }
 
         final Task jarTask = proj.tasks[sourceSet.getTaskName('', 'jar')]
-        final SourceSet restSourceSet = proj.sourceSets.findByName(getGeneratedSourceSetName(sourceSet, REST_GEN_TYPE))
-        if(restSourceSet != null) {
-          jarTask.from(restSourceSet.resources) // add any .restspec.json files as resources to the jar
-        }
+        jarTask.from(idlGenerationDir) // add any .restspec.json files as resources to the jar
         jarTask.dependsOn(publishRestModelTask)
       }
     }
@@ -1041,9 +1039,6 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
     SourceSet targetSourceSet = project.sourceSets.add(targetSourceSetName) {
       java {
         srcDir "src${File.separatorChar}${targetSourceSetName}${File.separatorChar}java"
-      }
-      resources {
-        srcDir "src${File.separatorChar}${targetSourceSetName}${File.separatorChar}idl"
       }
       compileClasspath = dataModels + project.configurations.restClientCompile
     }
