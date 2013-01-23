@@ -131,6 +131,15 @@ public class DegraderLoadBalancerStrategyConfig
     _globalStepDown = globalStepDown;
   }
 
+  private static <V> V getWithDefault(Map<String,Object> map, String oldKey, String httpKey, V defaultValue,
+                                      Class<V> valueClass)
+  {
+
+    V oldValue = MapUtil.getWithDefault(map, oldKey, null, valueClass);
+    V httpValue = MapUtil.getWithDefault(map, httpKey, null, valueClass);
+    return chooseNewValueOverOldValueGivenDefaultValue(oldValue, httpValue, defaultValue, oldKey, httpKey);
+  }
+
   /**
    * Creates a DegraderLoadBalancerStrategyConfig that prefers to use HTTP specific properties key.
    * If the properties cannot be found we will attempt to use the default properties key. If
@@ -151,168 +160,70 @@ public class DegraderLoadBalancerStrategyConfig
    */
   public static DegraderLoadBalancerStrategyConfig createHttpConfigFromMap(Map<String,Object> map)
   {
-    Long oldUpdateIntervalMs = MapUtil.getWithDefault(map,
-                                         PropertyKeys.LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS, null,
-                                         Long.class);
-    Double oldMaxClusterLatencyWithoutDegrading = MapUtil.getWithDefault(map,
-            PropertyKeys.LB_STRATEGY_PROPERTIES_MAX_CLUSTER_LATENCY_WITHOUT_DEGRADING, null,
-            Double.class);
-    Double oldDefaultSuccessfulTransmissionWeight = MapUtil.getWithDefault(map,
-            PropertyKeys.LB_STRATEGY_PROPERTIES_DEFAULT_SUCCESSFUL_TRANSMISSION_WEIGHT, null,
-            Double.class);
-    Integer oldPointsPerWeight = MapUtil.getWithDefault(map,
-                                            PropertyKeys.LB_STRATEGY_PROPERTIES_POINTS_PER_WEIGHT, null,
-                                            Integer.class);
-    String oldHashMethod = MapUtil.getWithDefault(map,
-        PropertyKeys.LB_HASH_METHOD, null, String.class);
-
     Clock clock = MapUtil.getWithDefault(map, PropertyKeys.CLOCK,
                                          DEFAULT_CLOCK, Clock.class);
 
-    Double oldInitialRecoveryLevel = MapUtil.getWithDefault(map,
-                                                         PropertyKeys.LB_INITIAL_RECOVERY_LEVEL, null,
-                                                         Double.class);
+    Long updateIntervalMs =
+        getWithDefault(map, PropertyKeys.LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS,
+                       PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS,
+                       DEFAULT_UPDATE_INTERVAL_MS, Long.class);
 
-    Double oldRingRampFactor = MapUtil.getWithDefault(map,
-                                                   PropertyKeys.LB_RING_RAMP_FACTOR, null,
-                                                   Double.class);
+    Double maxClusterLatencyWithoutDegrading =
+        getWithDefault(map,
+                       PropertyKeys.LB_STRATEGY_PROPERTIES_MAX_CLUSTER_LATENCY_WITHOUT_DEGRADING,
+                       PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_MAX_CLUSTER_LATENCY_WITHOUT_DEGRADING,
+                       DEFAULT_MAX_CLUSTER_LATENCY_WITHOUT_DEGRADING, Double.class);
 
-    Double oldHighWaterMark = MapUtil.getWithDefault(map,
-                                                  PropertyKeys.LB_HIGH_WATER_MARK, null,
-                                                  Double.class);
-    Double oldLowWaterMark = MapUtil.getWithDefault(map,
-                                                 PropertyKeys.LB_LOW_WATER_MARK, null,
-                                                 Double.class);
+    Double defaultSuccessfulTransmissionWeight =
+        getWithDefault(map,
+                       PropertyKeys.LB_STRATEGY_PROPERTIES_DEFAULT_SUCCESSFUL_TRANSMISSION_WEIGHT,
+                       PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_DEFAULT_SUCCESSFUL_TRANSMISSION_WEIGHT,
+                       DEFAULT_SUCCESSFUL_TRANSMISSION_WEIGHT, Double.class);
 
-    Double oldGlobalStepUp = MapUtil.getWithDefault(map,
-                                                 PropertyKeys.LB_GLOBAL_STEP_UP, null,
-                                                 Double.class);
-    Double oldGlobalStepDown = MapUtil.getWithDefault(map,
-                                                   PropertyKeys.LB_GLOBAL_STEP_DOWN, null,
-                                                   Double.class);
+    Integer pointsPerWeight =
+        getWithDefault(map, PropertyKeys.LB_STRATEGY_PROPERTIES_POINTS_PER_WEIGHT,
+                       PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_POINTS_PER_WEIGHT,
+                       DEFAULT_POINTS_PER_WEIGHT, Integer.class);
 
-    @SuppressWarnings("unchecked")
-    Map<String,Object> oldHashConfig = (Map<String,Object>)map.get(PropertyKeys.LB_HASH_CONFIG);
-    if (oldHashConfig == null)
-    {
-      oldHashConfig = Collections.emptyMap();
-    }
+    String hashMethod =
+        getWithDefault(map, PropertyKeys.LB_HASH_METHOD,
+                       PropertyKeys.HTTP_LB_HASH_METHOD, null, String.class);
 
-    //the following are the http config
-    Long httpUpdateIntervalMs = MapUtil.getWithDefault(map,
-                                                       PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS,
-                                                       null, Long.class);
+    Double initialRecoveryLevel =
+        getWithDefault(map, PropertyKeys.LB_INITIAL_RECOVERY_LEVEL,
+                       PropertyKeys.HTTP_LB_INITIAL_RECOVERY_LEVEL,
+                       DEFAULT_INITIAL_RECOVERY_LEVEL, Double.class);
 
-    Double httpMaxClusterLatencyWithoutDegrading = MapUtil.getWithDefault(map,
-                              PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_MAX_CLUSTER_LATENCY_WITHOUT_DEGRADING,
-                                       null, Double.class);
-    Double httpDefaultSuccessfulTransmissionWeight = MapUtil.getWithDefault(map,
-                PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_DEFAULT_SUCCESSFUL_TRANSMISSION_WEIGHT,
-                null, Double.class);
-    Integer httpPointsPerWeight = MapUtil.getWithDefault(map,
-                                                         PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_POINTS_PER_WEIGHT,
-                                                         null, Integer.class);
+    Double ringRampFactor =
+        getWithDefault(map, PropertyKeys.LB_RING_RAMP_FACTOR,
+                       PropertyKeys.HTTP_LB_RING_RAMP_FACTOR, DEFAULT_RAMP_FACTOR,
+                       Double.class);
 
-    String httpHashMethod = MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_HASH_METHOD, null, String.class);
+    Double highWaterMark =
+        getWithDefault(map, PropertyKeys.LB_HIGH_WATER_MARK, PropertyKeys.HTTP_LB_HIGH_WATER_MARK,
+                       DEFAULT_HIGH_WATER_MARK, Double.class);
 
-    Double httpInitialRecoveryLevel = MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_INITIAL_RECOVERY_LEVEL,
-                                                             null, Double.class);
-    Double httpRingRampFactor = MapUtil.getWithDefault(map,
-                                                       PropertyKeys.HTTP_LB_RING_RAMP_FACTOR,
-                                                       null, Double.class);
+    Double lowWaterMark =
+        getWithDefault(map, PropertyKeys.LB_LOW_WATER_MARK, PropertyKeys.HTTP_LB_LOW_WATER_MARK,
+                       DEFAULT_LOW_WATER_MARK, Double.class);
 
-    Double httpHighWaterMark = MapUtil.getWithDefault(map,
-                                                  PropertyKeys.HTTP_LB_HIGH_WATER_MARK,
-                                                  null, Double.class);
-    Double httpLowWaterMark = MapUtil.getWithDefault(map,
-                                                 PropertyKeys.HTTP_LB_LOW_WATER_MARK,
-                                                 null, Double.class);
+    Double globalStepUp = getWithDefault(map, PropertyKeys.LB_GLOBAL_STEP_UP, PropertyKeys.HTTP_LB_GLOBAL_STEP_UP,
+                                         DEFAULT_GLOBAL_STEP_UP, Double.class);
 
-    Double httpGlobalStepUp = MapUtil.getWithDefault(map,
-                                                 PropertyKeys.HTTP_LB_GLOBAL_STEP_UP,
-                                                 null, Double.class);
-    Double httpGlobalStepDown = MapUtil.getWithDefault(map,
-                                                   PropertyKeys.HTTP_LB_GLOBAL_STEP_DOWN,
-                                                   null, Double.class);
-
-    Long updateIntervalMs = chooseNewValueOverOldValueGivenDefaultValue(oldUpdateIntervalMs, httpUpdateIntervalMs,
-                                                                        DEFAULT_UPDATE_INTERVAL_MS,
-                                                                        PropertyKeys.LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS,
-                                                                        PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS);
-
-    Double maxClusterLatencyWithoutDegrading = chooseNewValueOverOldValueGivenDefaultValue(
-        oldMaxClusterLatencyWithoutDegrading, httpMaxClusterLatencyWithoutDegrading,
-        DEFAULT_MAX_CLUSTER_LATENCY_WITHOUT_DEGRADING, PropertyKeys.LB_STRATEGY_PROPERTIES_MAX_CLUSTER_LATENCY_WITHOUT_DEGRADING,
-        PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_MAX_CLUSTER_LATENCY_WITHOUT_DEGRADING
-    );
-
-    Double defaultSuccessfulTransmissionWeight = chooseNewValueOverOldValueGivenDefaultValue(
-        oldDefaultSuccessfulTransmissionWeight, httpDefaultSuccessfulTransmissionWeight,
-        DEFAULT_SUCCESSFUL_TRANSMISSION_WEIGHT, PropertyKeys.LB_STRATEGY_PROPERTIES_DEFAULT_SUCCESSFUL_TRANSMISSION_WEIGHT,
-        PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_DEFAULT_SUCCESSFUL_TRANSMISSION_WEIGHT
-    );
+    Double globalStepDown = getWithDefault(map, PropertyKeys.LB_GLOBAL_STEP_DOWN, PropertyKeys.HTTP_LB_GLOBAL_STEP_DOWN,
+                                           DEFAULT_GLOBAL_STEP_DOWN, Double.class);
 
     @SuppressWarnings("unchecked")
-    Map<String,Object> httpHashConfig = (Map<String,Object>)map.get(PropertyKeys.HTTP_LB_HASH_CONFIG);
-    if (httpHashConfig == null)
-    {
-      httpHashConfig = Collections.emptyMap();
-    }
-
-    Integer pointsPerWeight = chooseNewValueOverOldValueGivenDefaultValue(oldPointsPerWeight, httpPointsPerWeight,
-                                                                          DEFAULT_POINTS_PER_WEIGHT,
-                                                                          PropertyKeys.LB_STRATEGY_PROPERTIES_POINTS_PER_WEIGHT,
-                                                                          PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_POINTS_PER_WEIGHT);
-
-    String hashMethod = chooseNewValueOverOldValueGivenDefaultValue(oldHashMethod, httpHashMethod, null,
-                                                                    PropertyKeys.LB_HASH_METHOD,
-                                                                    PropertyKeys.HTTP_LB_HASH_METHOD);
-
-    Double initialRecoveryLevel = chooseNewValueOverOldValueGivenDefaultValue(oldInitialRecoveryLevel,
-                                                                                  httpInitialRecoveryLevel,
-                                                                                  DEFAULT_INITIAL_RECOVERY_LEVEL,
-                                                                                  PropertyKeys.LB_INITIAL_RECOVERY_LEVEL,
-                                                                                  PropertyKeys.HTTP_LB_INITIAL_RECOVERY_LEVEL);
-
-    Double ringRampFactor = chooseNewValueOverOldValueGivenDefaultValue(oldRingRampFactor,
-                                                                           httpRingRampFactor,
-                                                                           DEFAULT_RAMP_FACTOR,
-                                                                           PropertyKeys.LB_RING_RAMP_FACTOR,
-                                                                           PropertyKeys.HTTP_LB_RING_RAMP_FACTOR);
-
-    Double highWaterMark = chooseNewValueOverOldValueGivenDefaultValue(oldHighWaterMark,
-                                                                          httpHighWaterMark,
-                                                                          DEFAULT_HIGH_WATER_MARK,
-                                                                          PropertyKeys.LB_HIGH_WATER_MARK,
-                                                                          PropertyKeys.HTTP_LB_HIGH_WATER_MARK);
-
-    Double lowWaterMark = chooseNewValueOverOldValueGivenDefaultValue(oldLowWaterMark, httpLowWaterMark,
-                                                                      DEFAULT_LOW_WATER_MARK,
-                                                                      PropertyKeys.LB_LOW_WATER_MARK,
-                                                                      PropertyKeys.HTTP_LB_LOW_WATER_MARK);
-
-    Double globalStepUp = chooseNewValueOverOldValueGivenDefaultValue(oldGlobalStepUp, httpGlobalStepUp,
-                                                                      DEFAULT_GLOBAL_STEP_UP,
-                                                                      PropertyKeys.LB_GLOBAL_STEP_UP,
-                                                                      PropertyKeys.HTTP_LB_GLOBAL_STEP_UP);
-
-    Double globalStepDown = chooseNewValueOverOldValueGivenDefaultValue(oldGlobalStepDown, httpGlobalStepDown,
-                                                                        DEFAULT_GLOBAL_STEP_DOWN,
-                                                                        PropertyKeys.LB_GLOBAL_STEP_DOWN,
-                                                                        PropertyKeys.HTTP_LB_GLOBAL_STEP_DOWN);
-
-    @SuppressWarnings("unchecked")
-    Map<String,Object> hashConfig = (Map<String,Object>) chooseNewValueOverOldValueGivenDefaultValue(oldHashConfig,
-                                                                                                     httpHashConfig,
-                                                                                            Collections.emptyMap(),
-                                                                                            PropertyKeys.LB_HASH_CONFIG,
-                                                                                            PropertyKeys.HTTP_LB_HASH_CONFIG);
+    Map<String,Object> hashConfig = getWithDefault(map, PropertyKeys.LB_HASH_CONFIG,
+                                                   PropertyKeys.HTTP_LB_HASH_CONFIG,
+                                                   Collections.emptyMap(),
+                                                   Map.class);
 
     return new DegraderLoadBalancerStrategyConfig(
-            updateIntervalMs, maxClusterLatencyWithoutDegrading,
-            defaultSuccessfulTransmissionWeight, pointsPerWeight, hashMethod, hashConfig,
-            clock, initialRecoveryLevel, ringRampFactor, highWaterMark, lowWaterMark,
-            globalStepUp, globalStepDown);
+        updateIntervalMs, maxClusterLatencyWithoutDegrading,
+        defaultSuccessfulTransmissionWeight, pointsPerWeight, hashMethod, hashConfig,
+        clock, initialRecoveryLevel, ringRampFactor, highWaterMark, lowWaterMark,
+        globalStepUp, globalStepDown);
   }
 
   /**
