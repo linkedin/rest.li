@@ -1,5 +1,15 @@
+1.7.10
+------
+
 1.7.9
 -----
+(RB=129334)
+add try/catch to PropertyEvent runnables, add UnhandledExceptionHandler to NamedThreadFactory
+
+(RB=129193)
+fix a bug where the LoadBalancer config gets overwritten by empty map and causes D2 Strategy
+to not instantiate properly
+
 (RB=123406)
 Change to allow clients to request data in pson-encoded format (and interpet pson-encoded data),
 and for servers to be able to send pson-encoded responses.
