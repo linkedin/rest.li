@@ -21,13 +21,6 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.clients.DynamicClient;
-import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
-import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
-import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyFactoryV2;
-import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyFactoryV3;
-import com.linkedin.d2.balancer.strategies.random.RandomLoadBalancerStrategyFactory;
-import com.linkedin.d2.balancer.zkfs.ZKFSComponentFactory;
-import com.linkedin.d2.balancer.zkfs.ZKFSLoadBalancer;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -55,27 +48,37 @@ public class D2ClientBuilder
    */
   public D2Client build()
   {
-    final Map<String, TransportClientFactory> loadBalancerClientFactories;
-    if (_config.clientFactories == null)
-    {
-      loadBalancerClientFactories = createDefaultClientFactories();
-    }
-    else
-    {
-      loadBalancerClientFactories = _config.clientFactories;
-    }
+    final Map<String, TransportClientFactory> transportClientFactories = (_config.clientFactories == null) ?
+        createDefaultTransportClientFactories() :  // if user didn't provide transportClientFactories we'll use default ones
+        _config.clientFactories;
 
-    final ZKFSLoadBalancer loadBalancer = new ZKFSLoadBalancer(_config.zkHosts,
-                                                               (int) _config.zkSessionTimeoutInMs,
-                                                               (int) _config.zkStartupTimeoutInMs,
-                                                               createLoadBalancerFactory(loadBalancerClientFactories),
-                                                               _config.flagFile,
-                                                               _config.basePath);
+    final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
+        new ZKFSLoadBalancerWithFacilitiesFactory() :
+        _config.lbWithFacilitiesFactory;
 
-    D2Client d2Client = new DynamicClient(loadBalancer, loadBalancer.getFacilities());
-    if (_config.clientFactories == null)
+    final D2ClientConfig cfg = new D2ClientConfig(_config.zkHosts,
+                  _config.zkSessionTimeoutInMs,
+                  _config.zkStartupTimeoutInMs,
+                  _config.lbWaitTimeout,
+                  _config.lbWaitUnit,
+                  _config.flagFile,
+                  _config.basePath,
+                  _config.fsBasePath,
+                  _config.componentFactory,
+                  transportClientFactories,
+                  _config.lbWithFacilitiesFactory);
+
+    final LoadBalancerWithFacilities loadBalancer = loadBalancerFactory.create(cfg);
+
+    D2Client d2Client = new DynamicClient(loadBalancer, loadBalancer);
+
+    /**
+     * If we created default transport client factories, we need to shut them down when d2Client
+     * is being shut down.
+     */
+    if (_config.clientFactories != transportClientFactories)
     {
-      d2Client = new TransportClientFactoryAwareD2Client(d2Client, loadBalancerClientFactories.values());
+      d2Client = new TransportClientFactoryAwareD2Client(d2Client, transportClientFactories.values());
     }
     return d2Client;
   }
@@ -140,69 +143,20 @@ public class D2ClientBuilder
     return this;
   }
 
-  private Map<String, TransportClientFactory> createDefaultClientFactories()
+  public D2ClientBuilder setLoadBalancerWithFacilitiesFactory(LoadBalancerWithFacilitiesFactory lbWithFacilitiesFactory)
+  {
+    _config.lbWithFacilitiesFactory = lbWithFacilitiesFactory;
+    return this;
+  }
+
+  private Map<String, TransportClientFactory> createDefaultTransportClientFactories()
   {
     final Map<String, TransportClientFactory> clientFactories = new HashMap<String, TransportClientFactory>();
     clientFactories.put("http", new HttpClientFactory());
     return clientFactories;
   }
 
-  private Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> createDefaultLoadBalancerStrategyFactories()
-  {
-    final Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
-        new HashMap<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>>();
-
-    final RandomLoadBalancerStrategyFactory randomStrategyFactory = new RandomLoadBalancerStrategyFactory();
-    final DegraderLoadBalancerStrategyFactoryV2 degraderStrategyFactoryV2 = new DegraderLoadBalancerStrategyFactoryV2();
-    final DegraderLoadBalancerStrategyFactoryV3 degraderStrategyFactoryV3 = new DegraderLoadBalancerStrategyFactoryV3();
-
-    loadBalancerStrategyFactories.put("random", randomStrategyFactory);
-    loadBalancerStrategyFactories.put("degrader", degraderStrategyFactoryV2);
-    loadBalancerStrategyFactories.put("degraderV2", degraderStrategyFactoryV2);
-    loadBalancerStrategyFactories.put("degraderV3", degraderStrategyFactoryV3);
-
-    return loadBalancerStrategyFactories;
-  }
-
-  private ZKFSLoadBalancer.TogglingLoadBalancerFactory createLoadBalancerFactory(Map<String, TransportClientFactory> loadBalancerClientFactories)
-  {
-    final ZKFSTogglingLoadBalancerFactoryImpl.ComponentFactory loadBalancerComponentFactory;
-    if (_config.componentFactory == null)
-    {
-      loadBalancerComponentFactory = new ZKFSComponentFactory();
-    }
-    else
-    {
-      loadBalancerComponentFactory = _config.componentFactory;
-    }
-
-    final Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
-        createDefaultLoadBalancerStrategyFactories();
-
-    return new ZKFSTogglingLoadBalancerFactoryImpl(loadBalancerComponentFactory,
-                                                   _config.lbWaitTimeout,
-                                                   _config.lbWaitUnit,
-                                                   _config.basePath,
-                                                   _config.fsBasePath,
-                                                   loadBalancerClientFactories,
-                                                   loadBalancerStrategyFactories);
-  }
-
-  private final Config _config = new Config();
-
-  private class Config
-  {
-    String zkHosts = "localhost:2121";
-    long zkSessionTimeoutInMs = 3600000L;
-    long zkStartupTimeoutInMs = 10000L;
-    long lbWaitTimeout = 5000L;
-    TimeUnit lbWaitUnit = TimeUnit.MILLISECONDS;
-    String flagFile = "/no/flag/file/set";
-    String basePath = "/d2";
-    String fsBasePath = "/tmp/d2";
-    ZKFSTogglingLoadBalancerFactoryImpl.ComponentFactory componentFactory = null;
-    Map<String, TransportClientFactory> clientFactories = null;
-  }
+  private final D2ClientConfig _config = new D2ClientConfig();
 
   private class TransportClientFactoryAwareD2Client implements D2Client
   {

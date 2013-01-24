@@ -1,6 +1,12 @@
-1.7.13
+1.8.1
 ------
 
+1.8.0
+------
+Increasing version to 1.8.0, because 126830 is wire-compatible, but compile-incompatible.
+
+(RB=129457)
+Modified D2ClientBuilder to accept load balancer factory as a parameter.
 
 1.7.12
 ------

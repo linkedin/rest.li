@@ -26,9 +26,9 @@ import com.linkedin.d2.balancer.Directory;
 import com.linkedin.d2.balancer.Facilities;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.LoadBalancer;
+import com.linkedin.d2.balancer.LoadBalancerWithFacilities;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
-import com.linkedin.d2.balancer.util.DelegatingFacilities;
 import com.linkedin.d2.balancer.util.DirectoryProvider;
 import com.linkedin.d2.balancer.util.KeyMapperProvider;
 import com.linkedin.d2.balancer.util.MapKeyResult;
@@ -51,7 +51,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.net.URI;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -67,7 +66,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 
 public class ZKFSLoadBalancer
-        implements LoadBalancer, DirectoryProvider, KeyMapperProvider, HashRingProvider,
+        implements LoadBalancerWithFacilities, DirectoryProvider, KeyMapperProvider, HashRingProvider,
         ClientFactoryProvider
 {
   private static final Logger LOG = LoggerFactory.getLogger(ZKFSLoadBalancer.class);
@@ -344,7 +343,7 @@ public class ZKFSLoadBalancer
    */
   public Facilities getFacilities()
   {
-    return new DelegatingFacilities(this, this, this);
+    return this;
   }
 
   private boolean suppressZK()
