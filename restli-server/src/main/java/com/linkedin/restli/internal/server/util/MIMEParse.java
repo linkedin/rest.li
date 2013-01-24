@@ -116,8 +116,6 @@ public final class MIMEParse
    * In addition this function also guarantees that there is a value for 'q'
    * in the params dictionary, filling it in with a proper default if
    * necessary.
-   *
-   * @param range
    */
   protected static ParseResults parseMediaRange(String range)
   {
@@ -167,9 +165,6 @@ public final class MIMEParse
    * tuple of the fitness value and the value of the 'q' quality parameter of
    * the best match, or (-1, 0) if no match was found. Just as for
    * quality_parsed(), 'parsed_ranges' must be a list of parsed media ranges.
-   *
-   * @param mimeType
-   * @param parsedRanges
    */
   protected static FitnessAndQuality fitnessAndQualityParsed(String mimeType,
                                                              Collection<ParseResults> parsedRanges)
@@ -215,10 +210,6 @@ public final class MIMEParse
    * parameter of the best match, 0 if no match was found. This function
    * bahaves the same as quality() except that 'parsed_ranges' must be a list
    * of parsed media ranges.
-   *
-   * @param mimeType
-   * @param parsedRanges
-   * @return
    */
   protected static float qualityParsed(String mimeType,
                                        Collection<ParseResults> parsedRanges)
@@ -249,10 +240,6 @@ public final class MIMEParse
    *
    * MimeParse.bestMatch(Arrays.asList(new String[]{"application/xbel+xml",
    * "text/xml"}), "text/*;q=0.5,*; q=0.1") 'text/xml'
-   *
-   * @param supported
-   * @param header
-   * @return
    */
   public static String bestMatch(Collection<String> supported, String header)
   {

@@ -297,8 +297,8 @@ public class RestClientTest
 
   private <T extends RecordTemplate> ResponseFuture<T> sendRequest(SendRequestOption option,
                                                                    RestClient client,
-                                                                   Request request,
-                                                                   RequestBuilder requestBuilder)
+                                                                   Request<T> request,
+                                                                   RequestBuilder<Request<T>> requestBuilder)
   {
     switch (option)
     {
@@ -317,8 +317,8 @@ public class RestClientTest
 
   private <T extends RecordTemplate> void sendRequest(SendRequestOption option,
                                                       RestClient client,
-                                                      Request request,
-                                                      RequestBuilder requestBuilder,
+                                                      Request<T> request,
+                                                      RequestBuilder<Request<T>> requestBuilder,
                                                       Callback<Response<T>> callback)
   {
     switch (option)

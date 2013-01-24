@@ -1,5 +1,9 @@
 1.7.10
 ------
+(RB=129645)
+Add methods for common uses for ResponseFuture.getResponseEntity and RestClient.sendRequest(RequestBuilde ...)
+client.sendRequest(builder.build()).getResponse().getEntity() can be simplified as follow to
+client.sendRequest(builder).getResponseEntity();
 
 1.7.9
 -----

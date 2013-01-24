@@ -19,7 +19,7 @@ public enum ErrorType
   HTTP_500_ERROR,
 
   /**
-   * Represents an error that is caused by {@link com.linkedin.r2.RemoteInvocationException} when calling another server
+   * Represents an error that is caused by {@code com.linkedin.r2.RemoteInvocationException} when calling another server
    */
   REMOTE_INVOCATION_ERROR,
 
