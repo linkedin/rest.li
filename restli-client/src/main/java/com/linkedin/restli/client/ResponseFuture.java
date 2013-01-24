@@ -36,4 +36,14 @@ public interface ResponseFuture<T> extends Future<Response<T>>
   Response<T> getResponse() throws RemoteInvocationException;
 
   Response<T> getResponse(long timeout, TimeUnit unit) throws RemoteInvocationException, TimeoutException;
+
+  /**
+   * Same as {@link #getResponse()} followed by {@link com.linkedin.restli.client.Response#getEntity()}.
+   */
+  T getResponseEntity() throws RemoteInvocationException;
+
+  /**
+   * Same as {@link #getResponse(long, TimeUnit)} followed by {@link com.linkedin.restli.client.Response#getEntity()}.
+   */
+  T getResponseEntity(long timeout, TimeUnit unit) throws RemoteInvocationException, TimeoutException;
 }

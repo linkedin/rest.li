@@ -90,12 +90,10 @@ public class ResponseFutureImpl<T> implements ResponseFuture<T>
   }
 
   @Override
-  public Response<T> getResponse(long timeout, TimeUnit unit)
-          throws RemoteInvocationException, TimeoutException
+  public Response<T> getResponse(long timeout, TimeUnit unit) throws RemoteInvocationException, TimeoutException
   {
     return getResponseImpl(FutureDereferenceStrategy.USE_TIMEOUT, timeout, unit);
   }
-
 
   private Response<T> getResponseImpl(FutureDereferenceStrategy dereferenceStrategy, long timeout, TimeUnit unit)
           throws TimeoutException, RemoteInvocationException
@@ -121,6 +119,18 @@ public class ResponseFutureImpl<T> implements ResponseFuture<T>
       // and is not suitable to throw on the current thread.
       throw ExceptionUtil.exceptionForThrowable(e.getCause(), true);
     }
+  }
+
+  @Override
+  public T getResponseEntity() throws RemoteInvocationException
+  {
+    return getResponse().getEntity();
+  }
+
+  @Override
+  public T getResponseEntity(long timeout, TimeUnit unit) throws TimeoutException, RemoteInvocationException
+  {
+    return getResponse(timeout, unit).getEntity();
   }
 
   @Override

@@ -20,6 +20,8 @@
 
 package com.linkedin.restli.client;
 
+import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.rest.RestRequest;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Collections;
@@ -32,6 +34,7 @@ import java.util.concurrent.TimeoutException;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import com.linkedin.common.callback.Callback;
@@ -57,6 +60,12 @@ import com.linkedin.restli.internal.client.EntityResponseDecoder;
 
 public class RestClientTest
 {
+  private static final RequestContext DEFAULT_REQUEST_CONTEXT = new RequestContext();
+  static
+  {
+    DEFAULT_REQUEST_CONTEXT.putLocalAttr("attr1", "1");
+  }
+
   @Test
   public void testEmptyErrorResponse()
   {
@@ -106,8 +115,113 @@ public class RestClientTest
 
   }
 
-  @Test
-  public void testRestLiResponseExceptionFuture() throws RemoteInvocationException, TimeoutException, IOException
+  private enum SendRequestOption
+  {
+    REQUEST_NO_CONTEXT(false, false),
+    REQUEST_WITH_CONTEXT(false, true),
+    REQUESTBUILDER_NO_CONTEXT(true, false),
+    REQUESTBUILDER_WITH_CONTEXT(true, true);
+
+    private SendRequestOption(boolean requestBuilder, boolean context)
+    {
+      _requestBuilder = requestBuilder;
+      _context = context;
+    }
+
+    private final boolean _requestBuilder;
+    private final boolean _context;
+  }
+
+  private enum GetResponseOption
+  {
+    GET,
+    GET_RESPONSE,
+    GET_RESPONSE_ENTITY
+  }
+
+  private enum TimeoutOption
+  {
+    NO_TIMEOUT(null, null),
+    THIRTY_SECONDS(30L, TimeUnit.SECONDS);
+
+    private TimeoutOption(Long l, TimeUnit timeUnit)
+    {
+      _l = l;
+      _timeUnit = timeUnit;
+    }
+
+    private final Long _l;
+    private final TimeUnit _timeUnit;
+  }
+
+  @DataProvider(name = "sendRequestOptions")
+  private Object[][] sendRequestOptions()
+  {
+    Object[][] result = new Object[SendRequestOption.values().length * TimeoutOption.values().length][];
+    int i = 0;
+    for (SendRequestOption sendRequestOption : SendRequestOption.values())
+    {
+      for (TimeoutOption timeoutOption : TimeoutOption.values())
+      {
+        result[i++] = new Object[] { sendRequestOption, timeoutOption };
+      }
+    }
+    return result;
+  }
+
+  @DataProvider(name = "sendRequestAndGetResponseOptions")
+  private Object[][] sendRequestAndGetResponseOptions()
+  {
+    Object[][] result = new Object[SendRequestOption.values().length *
+                                   GetResponseOption.values().length *
+                                   TimeoutOption.values().length][];
+    int i = 0;
+    for (SendRequestOption sendRequestOption : SendRequestOption.values())
+    {
+      for (GetResponseOption getResponseOption : GetResponseOption.values() )
+      {
+        for (TimeoutOption timeoutOption : TimeoutOption.values())
+        {
+          result[i++] = new Object[] { sendRequestOption, getResponseOption, timeoutOption };
+        }
+      }
+    }
+    return result;
+  }
+
+  @Test(dataProvider = "sendRequestAndGetResponseOptions")
+  public void testRestLiResponseFuture(SendRequestOption sendRequestOption,
+                                       GetResponseOption getResponseOption,
+                                       TimeoutOption timeoutOption)
+    throws ExecutionException, RemoteInvocationException,
+           TimeoutException, InterruptedException, IOException
+  {
+    final String ERR_KEY = "someErr";
+    final String ERR_VALUE = "WHOOPS!";
+    final String ERR_MSG = "whoops2";
+    final int HTTP_CODE = 200;
+    final int APP_CODE = 666;
+
+    RestClient client = mockClient(ERR_KEY, ERR_VALUE, ERR_MSG, HTTP_CODE, APP_CODE);
+    Request<ErrorResponse> request = mockRequest(ErrorResponse.class);
+    RequestBuilder<Request<ErrorResponse>> requestBuilder = mockRequestBuilder(request);
+
+    ResponseFuture<ErrorResponse> future = sendRequest(sendRequestOption, client, request, requestBuilder);
+    Response<ErrorResponse> response = getOkResponse(getResponseOption, future, timeoutOption);
+    ErrorResponse e = response.getEntity();
+
+    Assert.assertEquals(HTTP_CODE, response.getStatus());
+    Assert.assertEquals(ERR_VALUE, e.getErrorDetails().get(ERR_KEY));
+    Assert.assertEquals(APP_CODE, e.getServiceErrorCode());
+    Assert.assertEquals(ERR_MSG, e.getMessage());
+    verifyResponseHeader(sendRequestOption, response.getHeaders());
+  }
+
+  @Test(dataProvider = "sendRequestAndGetResponseOptions")
+  public void testRestLiResponseExceptionFuture(SendRequestOption sendRequestOption,
+                                                GetResponseOption getResponseOption,
+                                                TimeoutOption timeoutOption)
+    throws RemoteInvocationException, TimeoutException, InterruptedException, IOException
   {
     final String ERR_KEY = "someErr";
     final String ERR_VALUE = "WHOOPS!";
@@ -116,87 +230,21 @@ public class RestClientTest
     final int APP_CODE = 666;
 
     RestClient client = mockClient(ERR_KEY, ERR_VALUE, ERR_MSG, HTTP_CODE, APP_CODE);
-    Request<EmptyRecord> req = mockRequest(EmptyRecord.class);
+    Request<EmptyRecord> request = mockRequest(EmptyRecord.class);
+    RequestBuilder<Request<EmptyRecord>> requestBuilder = mockRequestBuilder(request);
 
-    try
-    {
-      client.sendRequest(req).getResponse(30, TimeUnit.SECONDS);
-      Assert.fail("Should have thrown");
-    }
-    catch (RestLiResponseException e)
-    {
-      Assert.assertEquals(HTTP_CODE, e.getStatus());
-      Assert.assertEquals(ERR_VALUE, e.getErrorDetails().get(ERR_KEY));
-      Assert.assertEquals(APP_CODE, e.getServiceErrorCode());
-      Assert.assertEquals(ERR_MSG, e.getServiceErrorMessage());
-    }
+    ResponseFuture<EmptyRecord> future = sendRequest(sendRequestOption, client, request, requestBuilder);
+    RestLiResponseException e = getErrorResponse(getResponseOption, future, timeoutOption);
+
+    Assert.assertEquals(HTTP_CODE, e.getStatus());
+    Assert.assertEquals(ERR_VALUE, e.getErrorDetails().get(ERR_KEY));
+    Assert.assertEquals(APP_CODE, e.getServiceErrorCode());
+    Assert.assertEquals(ERR_MSG, e.getServiceErrorMessage());
+    verifyResponseHeader(sendRequestOption, e.getResponse().getHeaders());
   }
 
-  @Test
-  public void testRestLiResponseExceptionFutureStandard()
-          throws TimeoutException, IOException, ExecutionException, InterruptedException
-  {
-    final String ERR_KEY = "someErr";
-    final String ERR_VALUE = "WHOOPS!";
-    final String ERR_MSG = "whoops2";
-    final int HTTP_CODE = 400;
-    final int APP_CODE = 666;
-
-    RestClient client = mockClient(ERR_KEY, ERR_VALUE, ERR_MSG, HTTP_CODE, APP_CODE);
-    Request<EmptyRecord> req = mockRequest(EmptyRecord.class);
-
-    try
-    {
-      client.sendRequest(req).get(30, TimeUnit.SECONDS);
-      Assert.fail("Should have thrown");
-    }
-    catch (ExecutionException e)
-    {
-      Throwable cause = e.getCause();
-      Assert.assertEquals(RestLiResponseException.class, cause.getClass());
-      RestLiResponseException rlre = (RestLiResponseException)cause;
-      Assert.assertEquals(HTTP_CODE, rlre.getStatus());
-      Assert.assertEquals(ERR_VALUE, rlre.getErrorDetails().get(ERR_KEY));
-      Assert.assertEquals(APP_CODE, rlre.getServiceErrorCode());
-      Assert.assertEquals(ERR_MSG, rlre.getServiceErrorMessage());
-    }
-  }
-
-  @Test
-  public void testRestLiResponseExceptionCallback()
-          throws ExecutionException, TimeoutException, InterruptedException
-  {
-    final String ERR_KEY = "someErr";
-    final String ERR_VALUE = "WHOOPS!";
-    final String ERR_MSG = "whoops2";
-    final int HTTP_CODE = 400;
-    final int APP_CODE = 666;
-
-    RestClient client = mockClient(ERR_KEY, ERR_VALUE, ERR_MSG, HTTP_CODE, APP_CODE);
-    Request<EmptyRecord> req = mockRequest(EmptyRecord.class);
-
-    FutureCallback<Response<EmptyRecord>> callback = new FutureCallback<Response<EmptyRecord>>();
-    try
-    {
-      client.sendRequest(req, callback);
-      callback.get(30, TimeUnit.SECONDS);
-      Assert.fail("Should have thrown");
-    }
-    catch (ExecutionException e)
-    {
-      Throwable cause = e.getCause();
-      Assert.assertTrue(cause instanceof RestException, "Expected RestLiResponseException not " + cause.getClass().getName());
-      RestLiResponseException rlre = (RestLiResponseException)cause;
-      Assert.assertEquals(HTTP_CODE, rlre.getStatus());
-      Assert.assertEquals(ERR_VALUE, rlre.getErrorDetails().get(ERR_KEY));
-      Assert.assertEquals(APP_CODE, rlre.getServiceErrorCode());
-      Assert.assertEquals(ERR_MSG, rlre.getServiceErrorMessage());
-
-    }
-  }
-
-  @Test
-  public void testRestLiResponseExceptionCallbackOld()
+  @Test(dataProvider = "sendRequestOptions")
+  public void testRestLiResponseExceptionCallback(SendRequestOption option, TimeoutOption timeoutOption)
           throws ExecutionException, TimeoutException, InterruptedException, RestLiDecodingException
   {
     final String ERR_KEY = "someErr";
@@ -206,18 +254,33 @@ public class RestClientTest
     final int APP_CODE = 666;
 
     RestClient client = mockClient(ERR_KEY, ERR_VALUE, ERR_MSG, HTTP_CODE, APP_CODE);
-    Request<EmptyRecord> req = mockRequest(EmptyRecord.class);
+    Request<EmptyRecord> request = mockRequest(EmptyRecord.class);
+    RequestBuilder<Request<EmptyRecord>> requestBuilder = mockRequestBuilder(request);
 
     FutureCallback<Response<EmptyRecord>> callback = new FutureCallback<Response<EmptyRecord>>();
     try
     {
-      client.sendRequest(req, callback);
-      callback.get(30, TimeUnit.SECONDS);
+      sendRequest(option, client, request, requestBuilder, callback);
+      Long l = timeoutOption._l;
+      TimeUnit timeUnit = timeoutOption._timeUnit;
+      Response<EmptyRecord> response = l == null ? callback.get() : callback.get(l, timeUnit);
       Assert.fail("Should have thrown");
     }
     catch (ExecutionException e)
     {
+      // New
+
       Throwable cause = e.getCause();
+      Assert.assertTrue(cause instanceof RestLiResponseException, "Expected RestLiResponseException not " + cause.getClass().getName());
+      RestLiResponseException rlre = (RestLiResponseException)cause;
+      Assert.assertEquals(HTTP_CODE, rlre.getStatus());
+      Assert.assertEquals(ERR_VALUE, rlre.getErrorDetails().get(ERR_KEY));
+      Assert.assertEquals(APP_CODE, rlre.getServiceErrorCode());
+      Assert.assertEquals(ERR_MSG, rlre.getServiceErrorMessage());
+      verifyResponseHeader(option, rlre.getResponse().getHeaders());
+
+      // Old
+
       Assert.assertTrue(cause instanceof RestException, "Expected RestException not " + cause.getClass().getName());
       RestException re = (RestException)cause;
       RestResponse r = re.getResponse();
@@ -228,8 +291,152 @@ public class RestClientTest
       Assert.assertEquals(ERR_VALUE, er.getErrorDetails().get(ERR_KEY));
       Assert.assertEquals(APP_CODE, er.getServiceErrorCode());
       Assert.assertEquals(ERR_MSG, er.getMessage());
-
+      verifyResponseHeader(option, re.getResponse().getHeaders());
     }
+  }
+
+  private <T extends RecordTemplate> ResponseFuture<T> sendRequest(SendRequestOption option,
+                                                                   RestClient client,
+                                                                   Request request,
+                                                                   RequestBuilder requestBuilder)
+  {
+    switch (option)
+    {
+      case REQUEST_NO_CONTEXT:
+        return client.sendRequest(request);
+      case REQUEST_WITH_CONTEXT:
+        return client.sendRequest(request, DEFAULT_REQUEST_CONTEXT);
+      case REQUESTBUILDER_NO_CONTEXT:
+        return client.sendRequest(requestBuilder);
+      case REQUESTBUILDER_WITH_CONTEXT:
+        return client.sendRequest(requestBuilder, DEFAULT_REQUEST_CONTEXT);
+      default:
+        throw new IllegalStateException();
+    }
+  }
+
+  private <T extends RecordTemplate> void sendRequest(SendRequestOption option,
+                                                      RestClient client,
+                                                      Request request,
+                                                      RequestBuilder requestBuilder,
+                                                      Callback<Response<T>> callback)
+  {
+    switch (option)
+    {
+      case REQUEST_NO_CONTEXT:
+        client.sendRequest(request, callback);
+        break;
+      case REQUEST_WITH_CONTEXT:
+        client.sendRequest(request, DEFAULT_REQUEST_CONTEXT, callback);
+        break;
+      case REQUESTBUILDER_NO_CONTEXT:
+        client.sendRequest(requestBuilder, callback);
+        break;
+      case REQUESTBUILDER_WITH_CONTEXT:
+        client.sendRequest(requestBuilder, DEFAULT_REQUEST_CONTEXT, callback);
+        break;
+      default:
+        throw new IllegalStateException();
+    }
+  }
+
+  private <T extends RecordTemplate> Response<T> getOkResponse(GetResponseOption option,
+                                                               ResponseFuture<T> future,
+                                                               TimeoutOption timeoutOption)
+    throws ExecutionException, InterruptedException, TimeoutException, RemoteInvocationException
+  {
+    Response<T> result = null;
+    Long l = timeoutOption._l;
+    TimeUnit timeUnit = timeoutOption._timeUnit;
+    switch (option)
+    {
+      case GET:
+        result = l == null ? future.get() : future.get(l, timeUnit);
+        break;
+      case GET_RESPONSE:
+        result = l == null ? future.getResponse() : future.getResponse(l, timeUnit);
+        break;
+      case GET_RESPONSE_ENTITY:
+        T entity = l == null ? future.getResponseEntity() : future.getResponseEntity(l, timeUnit);
+        result = future.getResponse();
+        Assert.assertSame(entity, result.getEntity());
+        break;
+      default:
+        throw new IllegalStateException();
+    }
+    return result;
+  }
+
+  private <T extends RecordTemplate> RestLiResponseException getErrorResponse(GetResponseOption option,
+                                                                              ResponseFuture<T> future,
+                                                                              TimeoutOption timeoutOption)
+    throws InterruptedException, TimeoutException, RemoteInvocationException
+  {
+    Response<T> response = null;
+    RestLiResponseException result = null;
+    Long l = timeoutOption._l;
+    TimeUnit timeUnit = timeoutOption._timeUnit;
+    switch (option)
+    {
+      case GET:
+        try
+        {
+          response = l == null ? future.get() : future.get(l, timeUnit);
+          Assert.fail("Should have thrown");
+        }
+        catch (ExecutionException e)
+        {
+          Throwable cause = e.getCause();
+          Assert.assertTrue(cause instanceof RestException, "Expected RestLiResponseException not " + cause.getClass().getName());
+          result = (RestLiResponseException) cause;
+        }
+        break;
+      case GET_RESPONSE:
+        try
+        {
+          response = l == null ? future.getResponse() : future.getResponse(l, timeUnit);
+          Assert.fail("Should have thrown");
+        }
+        catch (RestLiResponseException e)
+        {
+          result = e;
+        }
+        break;
+      case GET_RESPONSE_ENTITY:
+        try
+        {
+          T entity = l == null ? future.getResponseEntity() : future.getResponseEntity(l, timeUnit);
+          Assert.fail("Should have thrown");
+        }
+        catch (RestLiResponseException e)
+        {
+          result = e;
+        }
+        break;
+      default:
+        throw new IllegalStateException();
+    }
+    return result;
+  }
+
+  private void verifyResponseHeader(SendRequestOption option, Map<String, String> headers)
+  {
+    for (Map.Entry<String, Object> attr : DEFAULT_REQUEST_CONTEXT.getLocalAttrs().entrySet())
+    {
+      Assert.assertEquals(headers.get(attr.getKey()), option._context ? attr.getValue().toString() : null);
+    }
+  }
+
+  private <T extends RecordTemplate> RequestBuilder<Request<T>> mockRequestBuilder(final Request<T> request)
+  {
+    return new RequestBuilder<Request<T>>()
+    {
+      @Override
+      public Request<T> build()
+      {
+        return request;
+      }
+    };
   }
 
   private <T extends RecordTemplate> Request<T> mockRequest(Class<T> clazz)
@@ -243,17 +450,46 @@ public class RestClientTest
                              null);
   }
 
-  private RestClient mockClient(String ERR_KEY, String ERR_VALUE, String ERR_MSG, int HTTP_CODE,
-                                int APP_CODE)
+  private static class MyMockClient extends MockClient
+  {
+    private RequestContext _requestContext;
+
+    private MyMockClient(int httpCode, Map<String, String> headers, byte[] bytes)
+    {
+      super(httpCode, headers, bytes);
+    }
+
+    @Override
+    public void restRequest(RestRequest request, RequestContext requestContext,
+                            Callback<RestResponse> callback)
+    {
+      Assert.assertNotNull(requestContext);
+      _requestContext = requestContext;
+      super.restRequest(request, requestContext, callback);
+    }
+
+    @Override
+    protected Map<String, String> headers()
+    {
+      Map<String, String> headers = new HashMap<String, String>(super.headers());
+      for (Map.Entry<String, Object> attr : _requestContext.getLocalAttrs().entrySet())
+      {
+        headers.put(attr.getKey(), attr.getValue().toString());
+      }
+      return headers;
+    }
+  }
+
+  private RestClient mockClient(String errKey, String errValue, String errMsg, int httpCode, int appCode)
   {
     ErrorResponse er = new ErrorResponse();
 
     DataMap errMap = new DataMap();
-    errMap.put(ERR_KEY, ERR_VALUE);
+    errMap.put(errKey, errValue);
     er.setErrorDetails(errMap);
-    er.setStatus(HTTP_CODE);
-    er.setMessage(ERR_MSG);
-    er.setServiceErrorCode(APP_CODE);
+    er.setStatus(httpCode);
+    er.setMessage(errMsg);
+    er.setServiceErrorCode(appCode);
 
     byte[] mapBytes;
     try
@@ -269,7 +505,6 @@ public class RestClientTest
     headers.put(RestConstants.HEADER_LINKEDIN_TYPE, er.getClass().getName());
     headers.put(RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE, RestConstants.HEADER_VALUE_ERROR_APPLICATION);
 
-    return new RestClient(new MockClient(HTTP_CODE, headers, mapBytes), "http://localhost");
+    return new RestClient(new MyMockClient(httpCode, headers, mapBytes), "http://localhost");
   }
-
 }

@@ -62,9 +62,9 @@ public class MockClient extends AbstractClient
     TransportCallback<RestResponse> adapter = HttpBridge.restToHttpCallback(new TransportCallbackAdapter<RestResponse>(callback), request);
 
     RestResponse response = new RestResponseBuilder()
-            .setStatus(_status)
-            .setHeaders(_headers)
-            .setEntity(_body)
+            .setStatus(status())
+            .setHeaders(headers())
+            .setEntity(body())
             .build();
 
     adapter.onResponse(TransportResponseImpl.success(response));
@@ -81,5 +81,20 @@ public class MockClient extends AbstractClient
   public void shutdown(Callback<None> callback)
   {
 
+  }
+
+  protected int status()
+  {
+    return _status;
+  }
+
+  protected Map<String, String> headers()
+  {
+    return _headers;
+  }
+
+  protected byte[] body()
+  {
+    return _body;
   }
 }

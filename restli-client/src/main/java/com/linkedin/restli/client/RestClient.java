@@ -126,12 +126,26 @@ public class RestClient
    * @param requestContext context for the request
    * @return response future
    */
-  public <T> ResponseFuture<T> sendRequest(Request<T> request,
-                                                                  RequestContext requestContext)
+  public <T> ResponseFuture<T> sendRequest(Request<T> request, RequestContext requestContext)
   {
     FutureCallback<Response<T>> callback = new FutureCallback<Response<T>>();
     sendRequest(request, requestContext, callback);
     return new ResponseFutureImpl<T>(callback);
+  }
+
+  /**
+   * Sends a type-bound REST request, returning a future.
+   *
+   *
+   * @param requestBuilder to invoke {@link com.linkedin.restli.client.RequestBuilder#build()} on to obtain the request
+   *                       to send.
+   * @param requestContext context for the request
+   * @return response future
+   */
+  public <T> ResponseFuture<T> sendRequest(RequestBuilder<? extends Request<T>> requestBuilder,
+                                           RequestContext requestContext)
+  {
+    return sendRequest(requestBuilder.build(), requestContext);
   }
 
   /**
@@ -145,8 +159,8 @@ public class RestClient
    *                 a {@link RestLiResponseException} containing the error details.
    */
   public <T> void sendRequest(final Request<T> request,
-                                                     RequestContext requestContext,
-                                                     Callback<Response<T>> callback)
+                              RequestContext requestContext,
+                              Callback<Response<T>> callback)
   {
     RecordTemplate input = request.getInput();
     RestLiCallbackAdapter<T> adapter = new RestLiCallbackAdapter<T>(request.getResponseDecoder(), callback);
@@ -187,6 +201,24 @@ public class RestClient
   }
 
   /**
+   * Sends a type-bound REST request using a callback.
+   *
+   * @param requestBuilder to invoke {@link com.linkedin.restli.client.RequestBuilder#build()} on to obtain the request
+   *                       to send.
+   * @param requestContext context for the request
+   * @param callback to call on request completion. In the event of an error, the callback
+   *                 will receive a {@link com.linkedin.r2.RemoteInvocationException}. If a valid
+   *                 error response was received from the remote server, the callback will receive
+   *                 a {@link RestLiResponseException} containing the error details.
+   */
+  public <T> void sendRequest(final RequestBuilder<? extends Request<T>> requestBuilder,
+                              RequestContext requestContext,
+                              Callback<Response<T>> callback)
+  {
+    sendRequest(requestBuilder.build(), requestContext, callback);
+  }
+
+  /**
    * Sends a type-bound REST request, returning a future
    * @param request to send
    * @return response future
@@ -194,6 +226,18 @@ public class RestClient
   public <T> ResponseFuture<T> sendRequest(Request<T> request)
   {
     return sendRequest(request, new RequestContext());
+  }
+
+  /**
+   * Sends a type-bound REST request, returning a future
+   *
+   * @param requestBuilder to invoke {@link com.linkedin.restli.client.RequestBuilder#build()} on to obtain the request
+   *                       to send.
+   * @return response future
+   */
+  public <T> ResponseFuture<T> sendRequest(RequestBuilder<? extends Request<T>> requestBuilder)
+  {
+    return sendRequest(requestBuilder.build(), new RequestContext());
   }
 
   /**
@@ -205,10 +249,24 @@ public class RestClient
    *                 error response was received from the remote server, the callback will receive
    *                 a {@link RestLiResponseException} containing the error details.
    */
-  public <T> void sendRequest(final Request<T> request,
-                                                     Callback<Response<T>> callback)
+  public <T> void sendRequest(final Request<T> request, Callback<Response<T>> callback)
   {
     sendRequest(request, new RequestContext(), callback);
+  }
+
+  /**
+   * Sends a type-bound REST request using a callback.
+   *
+   * @param requestBuilder to invoke {@link com.linkedin.restli.client.RequestBuilder#build()} on to obtain the request
+   *                       to send.
+   * @param callback to call on request completion. In the event of an error, the callback
+   *                 will receive a {@link com.linkedin.r2.RemoteInvocationException}. If a valid
+   *                 error response was received from the remote server, the callback will receive
+   *                 a {@link RestLiResponseException} containing the error details.
+   */
+  public <T> void sendRequest(final RequestBuilder<? extends Request<T>> requestBuilder, Callback<Response<T>> callback)
+  {
+    sendRequest(requestBuilder.build(), new RequestContext(), callback);
   }
 
   /**
@@ -224,11 +282,11 @@ public class RestClient
    *                 a {@link com.linkedin.r2.message.rest.RestException} containing the error details.
    */
   private <T> void sendRequestImpl(RequestContext requestContext,
-                                  URI uri,
-                                  ResourceMethod method,
-                                  DataMap dataMap,
-                                  Map<String, String> headers,
-                                  RestLiCallbackAdapter<T> callback)
+                                   URI uri,
+                                   ResourceMethod method,
+                                   DataMap dataMap,
+                                   Map<String, String> headers,
+                                   RestLiCallbackAdapter<T> callback)
   {
     try
     {
