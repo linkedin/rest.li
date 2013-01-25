@@ -2,11 +2,11 @@ apply plugin: 'java'
 
 dependencies {
   compile project(path: ':api', configuration: 'restClient')
-  compile "com.linkedin.pegasus:pegasus-common:1.7.0"
-  compile "com.linkedin.pegasus:r2:1.7.0"
-  compile "com.linkedin.pegasus:restli-client:1.7.0"
-  compile "com.linkedin.pegasus:data:1.7.0"
-  compile "com.linkedin.pegasus:restli-common:1.7.0"
+  compile spec.product.pegasus.pegasusCommon
+  compile spec.product.pegasus.r2
+  compile spec.product.pegasus.restliClient
+  compile spec.product.pegasus.data
+  compile spec.product.pegasus.restliCommon
   testCompile "commons-httpclient:commons-httpclient:3.1"
 }
 

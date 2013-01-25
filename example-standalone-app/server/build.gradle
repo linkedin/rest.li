@@ -1,4 +1,4 @@
-apply plugin: 'java'
+apply plugin: 'jetty'
 apply plugin: 'pegasus'
 
 ext.apiProject = project(':api')
@@ -6,19 +6,13 @@ pegasus.main.idlOptions.addIdlItem(['com.example.fortune.impl'])
 
 dependencies {
   compile project(path: ':api', configuration: 'dataTemplate')
-  compile "com.linkedin.pegasus:r2:1.7.0"
-  compile "com.linkedin.pegasus:r2-jetty:1.7.0"
-  compile "com.linkedin.pegasus:restli-server:1.7.0"
-  compile "com.linkedin.pegasus:restli-common:1.7.0"
-  compile "com.linkedin.pegasus:pegasus-common:1.7.0"
-  restTools "com.linkedin.pegasus:restli-tools:1.7.0"
+  compile spec.product.pegasus.r2
+  compile spec.product.pegasus.r2Jetty
+  compile spec.product.pegasus.restliServer
+  compile spec.product.pegasus.restliCommon
+  compile spec.product.pegasus.pegasusCommon
+  restTools spec.product.pegasus.restliTools
 
   // need to figure out why this is not already in the classpath..
  compile files("${System.properties['java.home']}/../lib/tools.jar")
-}
-
-task startFortunesServer(type: JavaExec) {
-  main = 'com.example.fortune.RestLiFortunesServer'
-  classpath = sourceSets.main.runtimeClasspath
-  standardInput = System.in
 }

@@ -1,16 +1,33 @@
 apply plugin: 'idea'
 apply plugin: 'eclipse'
 
+pegasusVersion = "1.7.11"
+spec = [
+  "product" : [
+    "pegasus" : [
+      "data" : "com.linkedin.pegasus:data:"+pegasusVersion,
+      "generator" : "com.linkedin.pegasus:generator:"+pegasusVersion,
+      "restliClient" : "com.linkedin.pegasus:restli-client:"+pegasusVersion,
+      "restliServer" : "com.linkedin.pegasus:restli-server:"+pegasusVersion,
+      "restliTools" : "com.linkedin.pegasus:restli-tools:"+pegasusVersion,
+      "pegasusCommon" : "com.linkedin.pegasus:pegasus-common:"+pegasusVersion,
+      "restliCommon" : "com.linkedin.pegasus:restli-common:"+pegasusVersion,
+      "r2" : "com.linkedin.pegasus:r2:"+pegasusVersion,
+      "r2Jetty" : "com.linkedin.pegasus:r2-jetty:"+pegasusVersion
+    ]
+  ]
+]
+
 buildscript {
   repositories {
     mavenLocal()
     mavenCentral()
     maven { 
-       url "https://oss.sonatype.org/content/repositories/comlinkedin-461/"
+       url "https://oss.sonatype.org/content/repositories/comlinkedin-252/"
     }
   }
   dependencies {
-    classpath group: 'com.linkedin.pegasus', name: 'gradle-plugins', version: '1.7.0'
+    classpath group: 'com.linkedin.pegasus', name: 'gradle-plugins', version: '1.7.11'
   }
 }
 
@@ -26,7 +43,7 @@ subprojects {
     mavenLocal()
     mavenCentral()
     maven { 
-       url "https://oss.sonatype.org/content/repositories/comlinkedin-461/"
+       url "https://oss.sonatype.org/content/repositories/comlinkedin-252/"
     }
   }
 }
