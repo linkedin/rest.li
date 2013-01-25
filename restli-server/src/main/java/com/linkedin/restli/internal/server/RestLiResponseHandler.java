@@ -34,7 +34,6 @@ import com.linkedin.restli.internal.server.methods.response.PartialRestResponse;
 import com.linkedin.restli.internal.server.methods.response.RestLiResponseBuilder;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
-import com.linkedin.restli.internal.server.util.MIMEParse;
 import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.CreateResponse;
@@ -138,7 +137,7 @@ public class RestLiResponseHandler
     }
     else
     {
-      throw new RoutingException("no acceptable types can be returned", 406);
+      throw new RoutingException("No acceptable types can be returned", HttpStatus.S_406_NOT_ACCEPTABLE.getCode());
     }
     return builder;
   }

@@ -158,7 +158,7 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
 
           if (capture.getRequest().getEntity().length() > 0)
           {
-            entityMap = DataMapUtils.readMap(capture.getRequest().getEntity().asInputStream());
+            entityMap = DataMapUtils.readMap(capture.getRequest());
             requestEntity = new String(_codec.mapToBytes(entityMap));
           }
 
@@ -166,7 +166,7 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
               capture.getResponse().getEntity() != null &&
               capture.getResponse().getEntity().length() > 0)
           {
-            entityMap = DataMapUtils.readMap(capture.getResponse().getEntity().asInputStream());
+            entityMap = DataMapUtils.readMap(capture.getResponse());
             responseEntity = new String(_codec.mapToBytes(entityMap));
           }
         }

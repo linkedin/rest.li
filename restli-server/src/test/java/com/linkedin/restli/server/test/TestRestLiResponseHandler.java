@@ -23,15 +23,12 @@ import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.data.template.FieldDef;
-import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.restli.server.ActionResult;
 import com.linkedin.restli.server.GetResult;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -145,7 +142,7 @@ public class TestRestLiResponseHandler
   }
 
   @Test
-  private void checkInvalidAcceptHeaders() throws Exception
+  private void testInvalidAcceptHeaders() throws Exception
   {
     Map<String, String> badAcceptHeaders = Collections.singletonMap("Accept", "foo/bar");
 
@@ -262,7 +259,7 @@ public class TestRestLiResponseHandler
     createResponses.add(new CreateResponse(HttpStatus.S_500_INTERNAL_SERVER_ERROR));
     BatchCreateResult<Long, Status> batchCreateResult = new BatchCreateResult<Long, Status>(createResponses);
 
-    response = invokeResponseHandler("/test", batchCreateResult, ResourceMethod.BATCH_CREATE, acceptTypeData.acceptHeaders);
+    response = invokeResponseHandler("/test", batchCreateResult, ResourceMethod.BATCH_CREATE, acceptTypeData.acceptHeaders); // here
     checkResponse(response, 200, 3, acceptTypeData.responseContentType, CollectionResponse.class.getName(), CreateStatus.class.getName(), true);
   }
 
@@ -999,23 +996,7 @@ public class TestRestLiResponseHandler
   private static void checkProjectedFields(RestResponse response, String[] expectedFields, String[] missingFields)
           throws UnsupportedEncodingException
   {
-
-    InputStream inputStream = response.getEntity().asInputStream();
-    String contentType = response.getHeader(RestConstants.HEADER_CONTENT_TYPE);
-
-    DataMap dataMap;
-    if (contentType.equalsIgnoreCase(APPLICATION_JSON))
-    {
-      dataMap = DataMapUtils.readMap(inputStream);
-    }
-    else if (contentType.equalsIgnoreCase(APPLICATION_PSON))
-    {
-      dataMap = DataMapUtils.readMapPson(inputStream);
-    }
-    else
-    {
-      throw new IllegalStateException("Unknown Content-Type value " + contentType + " found.");
-    }
+    DataMap dataMap = DataMapUtils.readMap(response);
 
     for (String field : expectedFields)
     {

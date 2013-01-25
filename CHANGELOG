@@ -1,6 +1,8 @@
 1.8.2
 ------
-
+(RB=130545)
+Allow clients to send request bodies in pson format. Upgraded servers will be
+able to interpet bodies in pson format.
 
 1.8.1
 -----

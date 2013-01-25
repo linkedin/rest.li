@@ -70,7 +70,7 @@ public class TestExceptionsResource2 extends RestLiIntegrationTest
     catch (RestLiResponseException e)
     {
       Assert.assertEquals(e.getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode());
-      final DataMap respEntityMap = DataMapUtils.readMap(e.getResponse().getEntity().asInputStream());
+      final DataMap respEntityMap = DataMapUtils.readMap(e.getResponse());
       Assert.assertEquals(respEntityMap, new Greeting().setMessage("Hello, sorry for the mess").data());
     }
   }
@@ -87,7 +87,7 @@ public class TestExceptionsResource2 extends RestLiIntegrationTest
     catch (RestLiResponseException e)
     {
       Assert.assertEquals(e.getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode());
-      final DataMap respEntityMap = DataMapUtils.readMap(e.getResponse().getEntity().asInputStream());
+      final DataMap respEntityMap = DataMapUtils.readMap(e.getResponse());
       Assert.assertSame(respEntityMap.getInteger("value"), 42);
     }
   }
