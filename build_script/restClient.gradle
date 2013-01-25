@@ -18,7 +18,7 @@ final Configuration restliToolsConfig = project(':restli-tools').configurations.
 
 project.sourceSets.all { SourceSet sourceSet ->
   final inputIdlDirPath = "src${File.separatorChar}${sourceSet.name}${File.separatorChar}idl"
-  final FileTree inputIdlFiles = project.fileTree(dir: inputIdlDirPath, includes: ["**${File.separatorChar}*.restspec.json"])
+  final FileTree inputIdlFiles = project.fileTree(dir: inputIdlDirPath, includes: ["**${File.separatorChar}*.restspec.json".toString()])
   if (inputIdlFiles.empty)
   {
     return;

@@ -18,7 +18,7 @@ final Configuration generatorConfig = project(':generator').configurations.defau
 
 project.sourceSets.all { SourceSet sourceSet ->
   final inputDataSchemaDirPath = "src${File.separatorChar}${sourceSet.name}${File.separatorChar}pegasus"
-  final FileTree inputDataSchemaFiles = project.fileTree(dir: inputDataSchemaDirPath, includes: ["**${File.separatorChar}*.pdsc"])
+  final FileTree inputDataSchemaFiles = project.fileTree(dir: inputDataSchemaDirPath, includes: ["**${File.separatorChar}*.pdsc".toString()])
   if (inputDataSchemaFiles.empty)
   {
     return;

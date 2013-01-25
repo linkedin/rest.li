@@ -25,7 +25,7 @@ project.sourceSets.all { SourceSet sourceSet ->
   }
 
   final String currIdlDirPath = "src${File.separatorChar}${sourceSet.name}GeneratedRest${File.separatorChar}idl"
-  final FileTree currIdlFiles = project.fileTree(dir: currIdlDirPath, includes: ["**${File.separatorChar}*.restspec.json"])
+  final FileTree currIdlFiles = project.fileTree(dir: currIdlDirPath, includes: ["**${File.separatorChar}*.restspec.json".toString()])
   if (currIdlFiles.empty)
   {
     return;
