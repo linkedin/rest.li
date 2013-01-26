@@ -20,17 +20,6 @@
 
 package com.linkedin.restli.client;
 
-import java.lang.reflect.Array;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
@@ -49,13 +38,24 @@ import com.linkedin.restli.internal.common.URLEscaper;
 import com.linkedin.restli.internal.common.URLEscaper.Escaping;
 import com.linkedin.util.ArgumentUtil;
 
+import java.lang.reflect.Array;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 /**
  * @author Josh Walker
  * @version $Revision: $
  */
 
-public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> implements
-    RequestBuilder<R>
+public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> implements RequestBuilder<R>
 {
   private final String                _baseURITemplate;
   protected final Map<String, String> _headers     = new HashMap<String, String>();
@@ -103,7 +103,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
     {
       if (value instanceof Object[])
       {
-        _queryParams.put(key, new DataList(stringify(Arrays.asList((Object[]) value))));
+        _queryParams.put(key, new DataList(coerceIterable(Arrays.asList((Object[]) value))));
       }
       else if (value.getClass().isArray())
       { // not an array of objects but still an array - must be an array of primitives
@@ -117,7 +117,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
       }
       else if (value instanceof Iterable)
       {
-        _queryParams.put(key, new DataList(stringify((Iterable<?>) value)));
+        _queryParams.put(key, new DataList(coerceIterable((Iterable<?>) value)));
       }
       else
       {
@@ -220,20 +220,37 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
     return result;
   }
 
-  /** given a iterable of objects returns a list of (non-null) toStrings */
-  private static List<String> stringify(Iterable<?> values)
+  /**
+   * given an iterable of objects returns a list of (non-null) Objects,
+   * which can be Strings or DataMap
+   * */
+  private static List<Object> coerceIterable(Iterable<?> values)
   {
     assert values != null;
-    List<String> strings =
-        new ArrayList<String>(values instanceof Collection ? ((Collection<?>) values).size() : 10);
+    List<Object> objects =
+        new ArrayList<Object>(values instanceof Collection ? ((Collection<?>) values).size() : 10);
     for (Object value : values)
     {
       if (value != null)
       {
-        strings.add(stringifySimpleValue(value));
+        objects.add(coerceObject(value));
       }
     }
-    return strings;
+    return objects;
+  }
+
+  private static Object coerceObject(Object value)
+  {
+    if (value instanceof DataTemplate)
+    {
+      @SuppressWarnings("rawtypes")
+      DataTemplate result = (DataTemplate)value;
+      return result.data();
+    }
+    else
+    {
+      return stringifySimpleValue(value);
+    }
   }
 
   static String stringifySimpleValue(Object value)
@@ -313,7 +330,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
     if (_queryParams.containsKey(RestConstants.FIELDS_PARAM))
     {
       throw new IllegalStateException("Fields already set on this request: "
-          + _queryParams.get(RestConstants.FIELDS_PARAM));
+                                          + _queryParams.get(RestConstants.FIELDS_PARAM));
     }
 
     addParam(RestConstants.FIELDS_PARAM, URIUtil.encodeFields(fieldPaths));

@@ -22,7 +22,7 @@ project.sourceSets.all { SourceSet sourceSet ->
     return;
   }
 
-  final String outputDirPath = rootProject.ext.build.getRestModelOutDirPath(project, sourceSet)
+  final String outputDirPath = rootProject.ext.build.getRestModelOutDirPath(sourceSet)
   rootProject.ext.build.restModelTasks[sourceSet] = project.task(sourceSet.name + 'GenerateRestModel',
                                                              type: JavaExec,
                                                              dependsOn: tasks[sourceSet.classesTaskName]) {

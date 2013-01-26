@@ -16,18 +16,8 @@
 
 package com.linkedin.restli.examples;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
+import com.linkedin.data.template.IntegerArray;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
@@ -65,6 +55,7 @@ import com.linkedin.restli.examples.groups.api.GroupContact;
 import com.linkedin.restli.examples.groups.api.GroupMembership;
 import com.linkedin.restli.examples.groups.api.GroupMembershipKey;
 import com.linkedin.restli.examples.groups.api.GroupMembershipParam;
+import com.linkedin.restli.examples.groups.api.GroupMembershipParamArray;
 import com.linkedin.restli.examples.groups.api.GroupMembershipQueryParam;
 import com.linkedin.restli.examples.groups.api.GroupMembershipQueryParamArray;
 import com.linkedin.restli.examples.groups.api.MembershipLevel;
@@ -78,6 +69,18 @@ import com.linkedin.restli.examples.groups.client.GroupMembershipsFindByMemberBu
 import com.linkedin.restli.examples.groups.client.GroupsBatchGetBuilder;
 import com.linkedin.restli.examples.groups.client.GroupsBuilders;
 import com.linkedin.restli.examples.groups.client.GroupsFindByEmailDomainBuilder;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -590,6 +593,30 @@ public class TestGroupsClient extends RestLiIntegrationTest
       return;
     }
     Assert.fail("Expect exception when specifying the \"record\" query parameter different from the default");
+  }
+
+  @Test
+  public void testSimpleArrayParameter() throws RemoteInvocationException
+  {
+    final Collection<Integer> coll = Arrays.asList(1, 2, 3);
+    final IntegerArray array = new IntegerArray(coll);
+
+    REST_CLIENT.sendRequest(GROUPS_BUILDERS.findByComplexCircuit().coercedArrayParam(coll).build()).getResponse();
+    REST_CLIENT.sendRequest(GROUPS_BUILDERS.findByComplexCircuit().coercedArrayParam(array).build()).getResponse();
+  }
+
+  @Test
+  public void testComplexArrayParameter() throws RemoteInvocationException
+  {
+    final GroupMembershipParam elem = new GroupMembershipParam();
+    elem.setIntParameter(7);
+    elem.setStringParameter("success");
+
+    final Collection<GroupMembershipParam> array = Arrays.asList(elem, elem);
+
+    REST_CLIENT.sendRequest(GROUPS_BUILDERS.findByComplexCircuit().recordsParam(Arrays.asList(elem)).build()).getResponse();
+    REST_CLIENT.sendRequest(GROUPS_BUILDERS.findByComplexCircuit().recordsParam(array).build()).getResponse();
+    REST_CLIENT.sendRequest(GROUPS_BUILDERS.findByComplexCircuit().recordsParam(new GroupMembershipParamArray(array)).build()).getResponse();
   }
 
   private static ComplexResourceKey<GroupMembershipKey, GroupMembershipParam> buildComplexKey(int memberID,

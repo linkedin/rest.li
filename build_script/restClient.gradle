@@ -24,20 +24,31 @@ project.sourceSets.all { SourceSet sourceSet ->
     return;
   }
 
-  final String outputDirPath = rootProject.ext.build.getRestClientOutDirPath(project, sourceSet)
+  final String outputDirPath = rootProject.ext.build.getRestClientOutDirPath(sourceSet)
   sourceSet.java.srcDir(outputDirPath)
 
-  rootProject.ext.build.restClientTasks[sourceSet] = project.task(sourceSet.name + 'GenerateRestClient', type: JavaExec) {
+  final Task dataTemplateCompileTask = rootProject.ext.build.dataTemplateCompileTasks[sourceSet];
+  rootProject.ext.build.restClientGenerateTasks[sourceSet] = project.task(sourceSet.name + 'GenerateRestClient', type: JavaExec) {
     main = 'com.linkedin.restli.tools.clientgen.RestRequestBuilderGenerator'
     classpath = restliToolsConfig + restliToolsConfig.allArtifacts.files
     args outputDirPath
     args inputIdlFiles
-    systemProperties(['generator.resolver.path': "src${File.separatorChar}${sourceSet.name}${File.separatorChar}pegasus",
+    systemProperties(['generator.resolver.path': "src${File.separatorChar}${sourceSet.name}${File.separatorChar}pegasus:" + dataTemplateCompileTask.destinationDir.path,
                       'generator.rest.generate.datatemplates': 'false'])
     doFirst {
       project.mkdir(outputDirPath)
     }
   }
 
-  project.tasks[sourceSet.compileJavaTaskName].dependsOn(rootProject.ext.build.restClientTasks[sourceSet])
+  // compile generated request builder classes in a separate task before the regular Java classes are compiled
+  final Task restClientCompileTask = project.task(sourceSet.name + 'CompileRestClient',
+                                                  type: JavaCompile,
+                                                  dependsOn: rootProject.ext.build.restClientGenerateTasks[sourceSet]) {
+    classpath = sourceSet.compileClasspath + project.files(dataTemplateCompileTask.destinationDir)
+    destinationDir = project.file(project.tasks[sourceSet.compileJavaTaskName].destinationDir.path + 'RestClient')
+    source outputDirPath
+  }
+  rootProject.ext.build.restClientCompileTasks[sourceSet] = restClientCompileTask
+
+  project.tasks[sourceSet.compileJavaTaskName].dependsOn(restClientCompileTask)
 }

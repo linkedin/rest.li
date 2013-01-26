@@ -20,25 +20,16 @@
 
 package com.linkedin.restli.client;
 
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-
-import org.testng.Assert;
-import org.testng.annotations.Test;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.data.template.FieldDef;
+import com.linkedin.data.template.IntegerArray;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.jersey.api.uri.UriBuilder;
+import com.linkedin.jersey.api.uri.UriComponent;
 import com.linkedin.restli.client.test.TestRecord;
 import com.linkedin.restli.client.util.PatchGenerator;
 import com.linkedin.restli.common.BatchRequest;
@@ -49,6 +40,19 @@ import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.ResourceSpecImpl;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Josh Walker
@@ -335,6 +339,32 @@ public class TestClientBuilders
     Assert.assertEquals(request.isIdempotent(), true);
 
     checkBasicRequest(request, "test/1?fields=message,id", ResourceMethod.GET, null, Collections.<String, String>emptyMap());
+  }
+
+  @Test
+  public void testBuilderParam()
+  {
+    final GetRequestBuilder<Long, TestRecord> builder = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC);
+    final Collection<Integer> coll = Arrays.asList(3, 4, 5);
+    final IntegerArray array = new IntegerArray(coll);
+    final GetRequest<TestRecord> request = builder
+                                          .id(1L)
+                                          .reqParam("simpleKey", 2)
+                                          .param("arrayKey1", coll)
+                                          .param("arrayKey2", array)
+                                          .build();
+    final URI expectedUri = UriBuilder
+                           .fromPath(TEST_URI)
+                           .segment("1")
+                           .queryParam("simpleKey", 2)
+                           .queryParam("arrayKey1", 3)
+                           .queryParam("arrayKey1", 4)
+                           .queryParam("arrayKey1", 5)
+                           .queryParam("arrayKey2", 3)
+                           .queryParam("arrayKey2", 4)
+                           .queryParam("arrayKey2", 5)
+                           .build();
+    Assert.assertEquals(UriComponent.decodeQuery(request.getUri(), true), UriComponent.decodeQuery(expectedUri, true));
   }
 
   @Test

@@ -374,17 +374,17 @@ public abstract class DataTemplateGenerator extends CodeGenerator
     }
   }
 
-  DataSchemaLocation currentLocation()
+  protected DataSchemaLocation currentLocation()
   {
     return _locationStack.getLast();
   }
 
-  void pushCurrentLocation(DataSchemaLocation location)
+  protected void pushCurrentLocation(DataSchemaLocation location)
   {
     _locationStack.addLast(location);
   }
 
-  void popCurrentLocation()
+  protected void popCurrentLocation()
   {
     _locationStack.removeLast();
   }
