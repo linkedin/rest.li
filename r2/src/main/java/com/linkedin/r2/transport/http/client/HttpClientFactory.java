@@ -174,97 +174,14 @@ public class HttpClientFactory implements TransportClientFactory
 
     if (properties != null)
     {
-      //TODO remove the old keys after we finish migrating the old keys to the new keys
-      //================== here ====================//
-      if (properties.containsKey(OLD_SSL_CONTEXT))
+      // TODO once references to old keys are eliminated, these should become calls to coerceAndRemoveFromMap().
+      sslContext = coerceOldAndNew(OLD_SSL_CONTEXT, HTTP_SSL_CONTEXT, properties, SSLContext.class);
+      sslParameters = coerceOldAndNew(OLD_SSL_PARAMS, HTTP_SSL_PARAMS, properties,
+                                      SSLParameters.class);
+
+      for (Map.Entry<String, ?> entry : properties.entrySet())
       {
-        LOG.warn("Obsolete key " + OLD_SSL_CONTEXT + " is specified. Please use " + HTTP_SSL_CONTEXT + " instead");
-        Object sslContextObj = properties.get(OLD_SSL_CONTEXT);
-        if (sslContextObj instanceof SSLContext)
-        {
-          sslContext = (SSLContext) sslContextObj;
-          properties.remove(OLD_SSL_CONTEXT);
-        }
-        else
-        {
-          throw new IllegalArgumentException(OLD_SSL_CONTEXT + " property is of type "
-              + sslContextObj.getClass().getSimpleName()
-              + " while must be SSLContext");
-        }
-      }
-
-
-      if (properties.containsKey(OLD_SSL_PARAMS))
-      {
-        Object sslParametersObj = properties.get(OLD_SSL_PARAMS);
-        if (sslParametersObj instanceof SSLParameters)
-        {
-          sslParameters = (SSLParameters) sslParametersObj;
-          properties.remove(OLD_SSL_PARAMS);
-        }
-        else
-        {
-          throw new IllegalArgumentException(OLD_SSL_PARAMS + " property is of type "
-              + sslParametersObj.getClass().getSimpleName()
-              + " while must be SSLParameters");
-        }
-      }
-
-      //===================to here =================//
-
-      if (properties.containsKey(HTTP_SSL_CONTEXT))
-      {
-        if (sslContext != null)
-        {
-          LOG.warn("Both " + HTTP_SSL_CONTEXT + " and " + OLD_SSL_CONTEXT + " are specified so we use " +
-                       HTTP_SSL_CONTEXT);
-        }
-        Object sslContextObj = properties.get(HTTP_SSL_CONTEXT);
-        if (sslContextObj instanceof SSLContext)
-        {
-          sslContext = (SSLContext) sslContextObj;
-          properties.remove(HTTP_SSL_CONTEXT);
-        }
-        else
-        {
-          throw new IllegalArgumentException(OLD_SSL_CONTEXT + " property is of type "
-              + sslContextObj.getClass().getSimpleName()
-              + " while must be SSLContext");
-        }
-      }
-
-      if (properties.containsKey(HTTP_SSL_PARAMS))
-      {
-        if (sslContext != null)
-        {
-          LOG.warn("Both " + HTTP_SSL_PARAMS + " and " + OLD_SSL_PARAMS + " are specified so we use " +
-                       HTTP_SSL_PARAMS);
-        }
-        Object sslContextObj = properties.get(HTTP_SSL_PARAMS);
-        if (sslContextObj instanceof SSLContext)
-        {
-          sslContext = (SSLContext) sslContextObj;
-          properties.remove(HTTP_SSL_PARAMS);
-        }
-        else
-        {
-          throw new IllegalArgumentException(OLD_SSL_PARAMS + " property is of type "
-              + sslContextObj.getClass().getSimpleName()
-              + " while must be SSLContext");
-        }
-      }
-
-      for (Map.Entry<String, ? extends Object> entry : properties.entrySet())
-      {
-        if (entry.getValue() instanceof String)
-        {
-          stringProperties.put(entry.getKey(), (String) entry.getValue());
-        }
-        else
-        {
-          throw new IllegalArgumentException("Property " + entry.getKey() + "is of type "
-              + entry.getValue().getClass().getSimpleName() + " while must be String");
-        }
+        stringProperties.put(entry.getKey(), coerce(entry.getKey(), entry.getValue(), String.class));
       }
     }
 
@@ -274,6 +191,47 @@ public class HttpClientFactory implements TransportClientFactory
   HttpNettyClient getRawClient(Map<String, String> properties)
   {
     return getRawClient(properties, null, null);
+  }
+
+  private static <T> T coerceOldAndNew(String oldKey, String newKey, Map<String, ?> props,
+                                       Class<T> valueClass)
+  {
+    T oldValue = coerceAndRemoveFromMap(oldKey, props, valueClass);
+    T value = coerceAndRemoveFromMap(newKey, props, valueClass);
+
+    if (oldValue != null)
+    {
+      if (value != null)
+      {
+        LOG.warn("Ignoring obsolete key " + oldKey + " in favor of " + newKey);
+      }
+      else
+      {
+        LOG.warn("Using deprecated key " + oldKey + "; please switch to " + newKey);
+        value = oldValue;
+      }
+    }
+    return value;
+  }
+
+  private static <T> T coerceAndRemoveFromMap(String key, Map<String, ?> props, Class<T> valueClass)
+  {
+    return coerce(key, props.remove(key), valueClass);
+  }
+
+  private static <T> T coerce(String key, Object value, Class<T> valueClass)
+  {
+    if (value == null)
+    {
+      return null;
+    }
+    if (!valueClass.isInstance(value))
+    {
+      throw new IllegalArgumentException(
+              "Property " + key + " is of type " + value.getClass().getName() +
+              " but must be " + valueClass.getName());
+    }
+    return valueClass.cast(value);
   }
 
 

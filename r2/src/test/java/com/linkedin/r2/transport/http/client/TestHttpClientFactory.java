@@ -33,6 +33,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import org.jboss.netty.channel.socket.ClientSocketChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.testng.Assert;
@@ -48,6 +49,9 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
 
 /**
  * @author Steven Ihde
@@ -219,6 +223,77 @@ public class TestHttpClientFactory
     Assert.assertEquals(client.getMaxResponseSize(), Integer.parseInt(maxResponse));
     Assert.assertEquals(client.getRequestTimeout(), Integer.parseInt(requestTimeout));
     Assert.assertEquals(client.getShutdownTimeout(), Integer.parseInt(shutdownTimeout));
+  }
+
+  @Test
+  public void testOldSSLProperties() throws Exception
+  {
+    HttpClientFactory factory = new HttpClientFactory();
+    Map<String,Object> params = new HashMap<String, Object>();
+    SSLParameters sslParameters = new SSLParameters();
+    sslParameters.setProtocols(new String[]{ "Unsupported" });
+    params.put(HttpClientFactory.OLD_SSL_CONTEXT, SSLContext.getDefault());
+    params.put(HttpClientFactory.OLD_SSL_PARAMS, sslParameters);
+
+    try
+    {
+      factory.getClient(params);
+      Assert.fail("Should have failed");
+    }
+    catch (IllegalArgumentException e)
+    {
+      Assert.assertTrue(e.getMessage().contains("None of the requested protocols: [Unsupported] are found in SSLContext"),
+                        "Unexpected error message " + e.getMessage());
+    }
+  }
+
+  @Test
+  public void testNewSSLProperties() throws Exception
+  {
+    HttpClientFactory factory = new HttpClientFactory();
+    Map<String,Object> params = new HashMap<String, Object>();
+    SSLParameters sslParameters = new SSLParameters();
+    sslParameters.setProtocols(new String[]{ "Unsupported" });
+    params.put(HttpClientFactory.HTTP_SSL_CONTEXT, SSLContext.getDefault());
+    params.put(HttpClientFactory.HTTP_SSL_PARAMS, sslParameters);
+
+    try
+    {
+      factory.getClient(params);
+      Assert.fail("Should have failed");
+    }
+    catch (IllegalArgumentException e)
+    {
+      Assert.assertTrue(e.getMessage().contains("None of the requested protocols: [Unsupported] are found in SSLContext"),
+                        "Unexpected error message " + e.getMessage());
+    }
+  }
+
+  @Test
+  public void testOldAndNewSSLParams() throws Exception
+  {
+    HttpClientFactory factory = new HttpClientFactory();
+    Map<String,Object> params = new HashMap<String, Object>();
+    SSLParameters sslParameters = new SSLParameters();
+    sslParameters.setProtocols(new String[]{ "Unsupported" });
+
+    SSLParameters oldSslParameters = new SSLParameters();
+    oldSslParameters.setProtocols(new String[]{ "OLDSSLPARAMETERS" });
+
+    params.put(HttpClientFactory.HTTP_SSL_CONTEXT, SSLContext.getDefault());
+    params.put(HttpClientFactory.HTTP_SSL_PARAMS, sslParameters);
+    params.put(HttpClientFactory.OLD_SSL_PARAMS, oldSslParameters);
+
+    try
+    {
+      factory.getClient(params);
+      Assert.fail("Should have failed");
+    }
+    catch (IllegalArgumentException e)
+    {
+      Assert.assertTrue(e.getMessage().contains("None of the requested protocols: [Unsupported] are found in SSLContext"),
+                        "Unexpected error message " + e.getMessage());
+    }
   }
 
   @Test
