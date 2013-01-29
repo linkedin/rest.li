@@ -19,10 +19,7 @@
         "optional" : false
       } ],
       "metadata" : {
-        "type" : {
-          "type" : "array",
-          "items" : "int"
-        }
+        "type" : { "type" : "array", "items" : "int" }
       },
       "assocKeys" : [ "q", "s" ]
     }, {
@@ -37,10 +34,8 @@
       "doc" : "An imaginary action",
       "parameters" : [ {
         "name" : "bitfield",
-        "type" : {
-          "type" : "array",
-          "items" : "boolean"
-        },
+        "type" : "array",
+        "items" : "boolean",
         "default" : "[]"
       }, {
         "name" : "request",
@@ -66,10 +61,7 @@
         "doc" : "Fictional action",
         "parameters" : [ {
           "name" : "bitmap",
-          "type" : {
-            "type" : "array",
-            "items" : "boolean"
-          }
+          "type" : { "type" : "array", "items" : "boolean" }
         }, {
           "name" : "subRequest",
           "type" : "com.linkedin.groups.api.TransferOwnershipRequest"

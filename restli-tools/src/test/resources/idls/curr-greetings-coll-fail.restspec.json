@@ -35,10 +35,8 @@
       "doc" : "An imaginary action",
       "parameters" : [ {
         "name" : "bitfield",
-        "type" : {
-          "type" : "array",
-          "items" : "boolean"
-        },
+        "type" : "array",
+        "items" : "int",
         "optional" : true
       }, {
         "name" : "request",
@@ -66,10 +64,8 @@
         "doc" : "Fictional action",
         "parameters" : [ {
           "name" : "bitmap",
-          "type" : {
-            "type" : "array",
-            "items" : "boolean"
-          }
+          "type" : "array",
+          "items" : "boolean"
         }, {
           "name" : "subRequest",
           "type" : "com.linkedin.groups.api.TransferOwnershipRequest"

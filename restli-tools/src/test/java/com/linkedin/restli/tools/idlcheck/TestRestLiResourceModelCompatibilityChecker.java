@@ -17,7 +17,6 @@
 package com.linkedin.restli.tools.idlcheck;
 
 
-import com.linkedin.data.Data;
 import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.restli.restspec.AssocKeySchema;
@@ -25,7 +24,6 @@ import com.linkedin.restli.restspec.AssocKeySchemaArray;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
@@ -63,8 +61,12 @@ public class TestRestLiResourceModelCompatibilityChecker
                                         CompatibilityInfo.Type.OPTIONAL_PARAMETER));
     testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "finders", "search", "parameters"),
                                         CompatibilityInfo.Type.PARAMETER_NEW_OPTIONAL, "newParam"));
+    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "finders", "search", "parameters", "tone"),
+                                        CompatibilityInfo.Type.DEPRECATED, "The \"items\" field"));
     testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "oneAction", "parameters"),
                                         CompatibilityInfo.Type.PARAMETER_NEW_OPTIONAL, "newParam"));
+    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "oneAction", "parameters", "bitfield"),
+                                        CompatibilityInfo.Type.DEPRECATED, "The \"items\" field"));
     testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "oneAction", "parameters", "someString"),
                                         CompatibilityInfo.Type.OPTIONAL_PARAMETER));
     testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "exceptionTest", "throws"),
@@ -141,6 +143,8 @@ public class TestRestLiResourceModelCompatibilityChecker
                                          new StringArray(Arrays.asList("q", "changed_key"))));
     testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "finders", "find_assocKey_downgrade", "assocKeys"),
                                          CompatibilityInfo.Type.FINDER_ASSOCKEYS_DOWNGRADE));
+    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "oneAction", "parameters", "bitfield", "items"),
+                                         CompatibilityInfo.Type.TYPE_INCOMPATIBLE, "boolean", "int"));
     testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "oneAction", "parameters", "someString", "type"),
                                          CompatibilityInfo.Type.TYPE_UNKNOWN,
                                          sp.errorMessage()));
@@ -186,6 +190,8 @@ public class TestRestLiResourceModelCompatibilityChecker
     }
 
     Assert.assertTrue(incompatible.isEmpty());
+
+    // ignore compatibles
   }
 
   @Test

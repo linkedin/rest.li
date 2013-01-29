@@ -17,6 +17,9 @@ Fix bug that builder methods with Iterable<? extends DataTemplate> parameter are
 Update build scripts.
 Use Gradle 1.5.
 
+(RB=130743)
+Add special rule of idl compatibility checker to handle the deprecated "items" field.
+
 1.8.22
 ------
 (RB=162206)

@@ -19,6 +19,7 @@ package com.linkedin.restli.tools.idlcheck;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.message.Message;
+import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.RecordDataSchema.Field;
@@ -729,6 +730,27 @@ public class RestLiResourceModelCompatibilityChecker
     return result;
   }
 
+  private String getParameterItems(ParameterSchema param)
+  {
+    if (param.hasItems())
+    {
+      addInfo(CompatibilityInfo.Type.DEPRECATED, "The \"items\" field");
+      return param.getItems(GetMode.DEFAULT);
+    }
+
+    final DataSchema paramDataSchema = RestSpecCodec.textToSchema(param.getType(GetMode.DEFAULT), _schemaResolver);
+    if (paramDataSchema instanceof ArrayDataSchema)
+    {
+      // Union member key works because previously only primitive types are allowed for items field
+      return ((ArrayDataSchema) paramDataSchema).getItems().getUnionMemberKey();
+    }
+    else
+    {
+      addInfo("type", CompatibilityInfo.Type.TYPE_INCOMPATIBLE, "items", paramDataSchema.getType());
+      return null;
+    }
+  }
+
   private void checkResourceSchema(ResourceSchema prevRec, ResourceSchema currRec)
   {
     checkEqualSingleValue(prevRec.schema().getField("name"),
@@ -852,15 +874,30 @@ public class RestLiResourceModelCompatibilityChecker
                           prevRec.getName(GetMode.DEFAULT),
                           currRec.getName(GetMode.DEFAULT));
 
+    /*
+    Compatibility of the deprecated "items" field:
+    O: Has items   X: Has Not items
+    prev  curr  Result
+     O     O    Check type compatibility of "items" field
+     O     X    If curr type is ArrayDataSchema, extract curr's "items" and check compatibility of "items"
+                Otherwise, incompatible
+     X     O    Same as above
+     X     X    Check type compatibility of "type" field
+
+    In any case, emit "deprecated" compatible message if non-array "items" field is found.
+     */
     if (prevRec.hasItems() || currRec.hasItems())
     {
-      checkEqualSingleValue(prevRec.schema().getField("type"), prevRec.getType(), currRec.getType());
-
-      checkType("items", prevRec.getItems(), currRec.getItems(), true);
+      final String prevItems = getParameterItems(prevRec);
+      final String currItems = getParameterItems(currRec);
+      if (prevItems != null && currItems != null)
+      {
+        checkType("items", prevItems, currItems, false);
+      }
     }
     else
     {
-      checkType("type", prevRec.getType(), currRec.getType(), false);
+      checkType("type", prevRec.getType(GetMode.DEFAULT), currRec.getType(GetMode.DEFAULT), false);
     }
 
     final Boolean prevOptional = prevRec.isOptional(GetMode.DEFAULT);
@@ -883,7 +920,7 @@ public class RestLiResourceModelCompatibilityChecker
 
   private void checkMetadataSchema(MetadataSchema prevRec, MetadataSchema currRec)
   {
-    checkType("type", prevRec.getType(), currRec.getType(), false);
+    checkType("type", prevRec.getType(GetMode.DEFAULT), currRec.getType(GetMode.DEFAULT), false);
   }
 
   private void checkActionSchema(ActionSchema prevRec, ActionSchema currRec)
