@@ -2,7 +2,6 @@ dependencies {
   compile project(':data')
   compile project(':restli-common')
   compile project(':restli-client')
-  testCompile externalDependency.testng
 }
 
 apply from: "${buildScriptDirPath}/dataTemplate.gradle"

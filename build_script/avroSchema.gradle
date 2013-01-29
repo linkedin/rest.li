@@ -25,7 +25,7 @@ project.sourceSets.all { SourceSet sourceSet ->
     return;
   }
 
-  final String outputDirPath = rootProject.ext.build.getAvroSchemaOutDirPath(sourceSet)
+  final String outputDirPath = rootProject.ext.build.getAvroSchemaOutDirPath(project, sourceSet)
   rootProject.ext.build.avroSchemaTasks[sourceSet] = project.task(sourceSet.name + 'GenerateAvroSchema', type: JavaExec) {
     main = 'com.linkedin.data.avro.generator.AvroSchemaGenerator'
     classpath = dataAvroConfig + dataAvroConfig.allArtifacts.files + dataConfig + dataConfig.allArtifacts.files

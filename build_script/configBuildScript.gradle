@@ -14,29 +14,27 @@
    limitations under the License.
 */
 
-String getGeneratedSourceDirName(SourceSet sourceSet, String genType)
+String getGeneratedSourceDirName(Project project, SourceSet sourceSet, String genType)
 {
-  return "src${File.separatorChar}${sourceSet.name}Generated${genType}"
+  return "${project.projectDir.path}${File.separatorChar}src${File.separatorChar}${sourceSet.name}Generated${genType}"
 }
 
 project.ext.build = [
-  'dataTemplateGenerateTasks': [:],
-  'dataTemplateCompileTasks': [:],
+  'dataTemplateTasks': [:],
   'avroSchemaTasks': [:],
   'restModelTasks': [:],
-  'restClientGenerateTasks': [:],
-  'restClientCompileTasks': [:],
+  'restClientTasks': [:],
 
-  'getDataTemplateOutDirPath': { SourceSet sourceSet ->
-    return getGeneratedSourceDirName(sourceSet, 'DataTemplate') + "${File.separatorChar}java"
+  'getDataTemplateOutDirPath': { Project project, SourceSet sourceSet ->
+    return getGeneratedSourceDirName(project, sourceSet, 'DataTemplate') + "${File.separatorChar}java"
   },
-  'getAvroSchemaOutDirPath': { SourceSet sourceSet ->
-    return getGeneratedSourceDirName(sourceSet, 'AvroSchema') + "${File.separatorChar}avro"
+  'getAvroSchemaOutDirPath': { Project project, SourceSet sourceSet ->
+    return getGeneratedSourceDirName(project, sourceSet, 'AvroSchema') + "${File.separatorChar}avro"
   },
-  'getRestModelOutDirPath': { SourceSet sourceSet ->
-    return getGeneratedSourceDirName( sourceSet, 'Rest') + "${File.separatorChar}idl"
+  'getRestModelOutDirPath': { Project project, SourceSet sourceSet ->
+    return getGeneratedSourceDirName(project, sourceSet, 'Rest') + "${File.separatorChar}idl"
   },
-  'getRestClientOutDirPath': { SourceSet sourceSet ->
-    return getGeneratedSourceDirName(sourceSet, 'Rest') + "${File.separatorChar}java"
+  'getRestClientOutDirPath': { Project project, SourceSet sourceSet ->
+    return getGeneratedSourceDirName(project, sourceSet, 'Rest') + "${File.separatorChar}java"
   }
 ]

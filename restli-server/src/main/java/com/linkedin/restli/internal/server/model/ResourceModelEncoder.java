@@ -17,10 +17,20 @@
 package com.linkedin.restli.internal.server.model;
 
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
+import org.apache.commons.io.IOUtils;
+
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.DataCodec;
 import com.linkedin.data.codec.JacksonDataCodec;
-import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.JsonBuilder;
 import com.linkedin.data.schema.NamedDataSchema;
@@ -59,16 +69,6 @@ import com.linkedin.restli.restspec.RestMethodSchemaArray;
 import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.resources.ComplexKeyResource;
-import org.apache.commons.io.IOUtils;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 
 
 /**
@@ -80,7 +80,7 @@ import java.util.List;
 public class ResourceModelEncoder
 {
   private final DataCodec codec = new JacksonDataCodec();
-
+  
   public interface DocsProvider
   {
     /**
@@ -159,14 +159,14 @@ public class ResourceModelEncoder
 
     return rootNode;
   }
-
+  
   /**
    * Checks if a matching .restspec.json file exists in the classpath for the given {@link ResourceModel}.
    * If one is found it is loaded.  If not, one is built from the {@link ResourceModel}.
-   *
+   * 
    * The .restspec.json is preferred because it contains the exact idl that was generated for the resource
    * and also includees includes javadoc from the server class in the restspec.json.
-   *
+   * 
    * @param resourceModel provides the name and namespace of the schema to load or build
    * @return the {@link ResourceSchema} for the given {@link ResourceModel}
    */
@@ -180,7 +180,7 @@ public class ResourceModelEncoder
     }
     resourceFilePath.append(resourceModel.getName());
     resourceFilePath.append(RestConstants.RESOURCE_MODEL_FILENAME_EXTENSION);
-
+    
     try
     {
       InputStream stream = this.getClass().getClassLoader().getResourceAsStream(resourceFilePath.toString());
@@ -203,7 +203,14 @@ public class ResourceModelEncoder
 
   /*package*/ static String buildDataSchemaType(final Class<?> type)
   {
+    //TODO: deprecate and remove "items" field from IDL and encode arrays as pegasus schemas in the "type" field
+    if (type.isArray())
+    {
+      return "array";
+    }
+
     final DataSchema schema = DataTemplateUtil.getSchema(type);
+
     return buildDataSchemaType(schema);
   }
 
@@ -251,7 +258,7 @@ public class ResourceModelEncoder
     final DataSchema schemaToEncode;
     if (type.isArray())
     {
-      schemaToEncode = new ArrayDataSchema(dataSchema);
+      return "array";
     }
     else if (dataSchema instanceof TyperefDataSchema)
     {
@@ -658,6 +665,11 @@ public class ResourceModelEncoder
       ParameterSchema paramSchema = new ParameterSchema();
       paramSchema.setName(param.getName());
       paramSchema.setType(buildDataSchemaType(param.getType(), param.getDataSchema()));
+
+      if (param.getItemType() != null)
+      {
+        paramSchema.setItems(buildDataSchemaType(param.getItemType(), param.getDataSchema()));
+      }
 
       final Object defaultValueData = param.getDefaultValueData();
       if (defaultValueData == null && param.isOptional())

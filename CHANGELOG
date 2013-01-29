@@ -1,5 +1,6 @@
 1.8.1
 ------
+Revert RB 126830 until compatibility issues are resolved.
 
 1.8.0
 ------
@@ -22,6 +23,9 @@ Fix bug that builder methods with Iterable<? extends DataTemplate> parameter are
 ------
 (RB=130026)
 Change build scripts to work with Gradle 1.3.
+
+(RB=130083)
+Add RestliServlet to provide developers with a simple way to build a war using rest.li.
 
 1.7.10
 ------

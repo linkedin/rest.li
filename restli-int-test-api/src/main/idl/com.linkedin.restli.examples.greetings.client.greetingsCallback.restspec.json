@@ -64,7 +64,8 @@
       "name" : "searchWithTones",
       "parameters" : [ {
         "name" : "tones",
-        "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.Tone\" }",
+        "type" : "array",
+        "items" : "com.linkedin.restli.examples.greetings.api.Tone",
         "optional" : true
       } ]
     } ],

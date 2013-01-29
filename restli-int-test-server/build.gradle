@@ -109,7 +109,7 @@ project.tasks.test.dependsOn(rootProject.ext.build.restModelTasks[project.source
 
 test {
   systemProperties['test.projectDir'] = project.projectDir.path
-  systemProperties['test.idlDir'] = project.file(rootProject.ext.build.getRestModelOutDirPath(project.sourceSets.test)).path
+  systemProperties['test.idlDir'] = rootProject.ext.build.getRestModelOutDirPath(project, project.sourceSets.test)
 }
 
 // TODO When using spawn: true, the server process seems to exit after when gradle exits

@@ -20,7 +20,8 @@
       "name" : "customLongArray",
       "parameters" : [ {
         "name" : "ls",
-        "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.typeref.api.CustomLongRef\" }"
+        "type" : "array",
+        "items" : "com.linkedin.restli.examples.typeref.api.CustomLongRef"
       } ]
     }, {
       "name" : "date",

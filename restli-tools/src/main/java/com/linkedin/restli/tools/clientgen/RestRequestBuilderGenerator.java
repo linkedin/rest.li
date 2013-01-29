@@ -16,17 +16,35 @@
 
 package com.linkedin.restli.tools.clientgen;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import com.linkedin.data.schema.ArrayDataSchema;
+import com.linkedin.data.template.DynamicRecordMetadata;
+import org.codehaus.jackson.JsonFactory;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.JsonParser;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.TyperefDataSchema;
-import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
 import com.linkedin.data.schema.validation.RequiredMode;
 import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
 import com.linkedin.data.schema.validation.ValidationOptions;
 import com.linkedin.data.schema.validation.ValidationResult;
 import com.linkedin.data.template.DataTemplateUtil;
-import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.data.template.FieldDef;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.StringArray;
@@ -81,26 +99,6 @@ import com.sun.codemodel.JMod;
 import com.sun.codemodel.JPackage;
 import com.sun.codemodel.JVar;
 import com.sun.codemodel.writer.FileCodeWriter;
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.JsonParser;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Generates Java request builders from Rest.li idl.
@@ -109,20 +107,6 @@ import java.util.Set;
  */
 public class RestRequestBuilderGenerator extends DataTemplateGenerator
 {
-  private static class JavaBinding
-  {
-    /**
-     * schemaClass provides the class from which the schema can be obtained
-     * schemaClass may be different from valueClass if the actual schema is a typeref
-     * in the case of a typeref, the TyperefInfo class cannot be a valueClass but is a schemaClass
-     */
-    private JClass schemaClass;
-    /**
-     * value class is used for method params and return types
-     */
-    private JClass valueClass;
-  }
-
   private static final String GENERATOR_REST_GENERATE_DATATEMPLATES = "generator.rest.generate.datatemplates";
   private static final Logger log = LoggerFactory.getLogger(RestRequestBuilderGenerator.class);
   private static final String NAME = "name";
@@ -137,8 +121,6 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
   private final JClass _classClass = getCodeModel().ref(Class.class);
   private final JClass _objectClass = getCodeModel().ref(Object.class);
   private boolean _generateDataTemplates = true;
-  private final HashSet<JClass> _generatedArrayClasses = new HashSet<JClass>();
-  private final ClassLoader _classLoader;
 
   private static final RestSpecCodec _codec = new RestSpecCodec();
 
@@ -156,12 +138,6 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
 
     RestRequestBuilderGenerator generator = new RestRequestBuilderGenerator();
     generator.run(args[0], Arrays.copyOfRange(args, 1, args.length));
-  }
-
-  public RestRequestBuilderGenerator()
-  {
-    super();
-    _classLoader = getClassLoader();
   }
 
   /**
@@ -208,23 +184,6 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
   }
 
   @Override
-  protected boolean hideClass(JDefinedClass clazz)
-  {
-    if (_generateDataTemplates || _generatedArrayClasses.contains(clazz))
-    {
-      try
-      {
-        Class.forName(clazz.fullName(), false, _classLoader);
-      }
-      catch (ClassNotFoundException e)
-      {
-        return false;
-      }
-    }
-    return super.hideClass(clazz);
-  }
-
-  @Override
   protected List<File> parseSources(String[] sourcePaths)
   {
     initDataTemplateGen();
@@ -262,10 +221,9 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
           sourceFiles.add(sourceFile);
           try
           {
-            ResourceSchema resource = _codec.readResourceSchema(new FileInputStream(sourceFile));
-            pushCurrentLocation(new FileDataSchemaLocation(sourceFile));
+            ResourceSchema resource = _codec.readResourceSchema(
+                    new FileInputStream(sourceFile));
             generateResourceFacade(resource, sourceFile.getAbsolutePath(), new HashMap<String, JClass>());
-            popCurrentLocation();
           }
           catch (JClassAlreadyExistsException e)
           {
@@ -361,12 +319,12 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
       // ComplexKeyResource parameterized by those two.
       if (collection.getIdentifier().getParams() == null)
       {
-        keyClass = getJavaBindingType(collection.getIdentifier().getType(), facadeClass).valueClass;
+        keyClass = getJavaBindingType(collection.getIdentifier().getType(), facadeClass);
       }
       else
       {
-        keyKeyClass = getJavaBindingType(collection.getIdentifier().getType(), facadeClass).valueClass;
-        keyParamsClass = getJavaBindingType(collection.getIdentifier().getParams(), facadeClass).valueClass;
+        keyKeyClass = getJavaBindingType(collection.getIdentifier().getType(), facadeClass);
+        keyParamsClass = getJavaBindingType(collection.getIdentifier().getParams(), facadeClass);
         keyClass = getCodeModel().ref(ComplexResourceKey.class).narrow(keyKeyClass, keyParamsClass);
       }
       pathKeyTypes.put(keyName, keyClass);
@@ -412,7 +370,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     JFieldVar resourceSpecField = facadeClass.field(JMod.PRIVATE | JMod.STATIC | JMod.FINAL, _resourceSpecClass, "_resourceSpec");
     if (!isActionsSet)
     {
-      JClass schemaClass = getJavaBindingType(resource.getSchema(), null).schemaClass;
+      JClass schemaClass = getJavaBindingType(resource.getSchema(), null);
 
       Set<ResourceMethod> supportedMethods = getSupportedMethods(supportsList);
       JInvocation supportedMethodsExpr;
@@ -599,11 +557,10 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
    */
   private JInvocation createFieldDef(String name, String type, JDefinedClass parent)
   {
-    JavaBinding binding = getJavaBindingType(type, parent);
-    JExpression schema = getCodeModel().ref(DataTemplateUtil.class).staticInvoke("getSchema").arg(binding.schemaClass.dotclass());
-    JInvocation fieldDefInvocation = JExpr._new(getCodeModel().ref(FieldDef.class).narrow(binding.valueClass))
-        .arg(name).arg(binding.valueClass.dotclass())
-        .arg(schema);
+    JClass jType = getJavaBindingType(type, parent);
+    JClass schemaClass = getSchemaClass(type, parent);
+    JExpression schema = getCodeModel().ref(DataTemplateUtil.class).staticInvoke("getSchema").arg(schemaClass.dotclass());
+    JInvocation fieldDefInvocation = JExpr._new(getCodeModel().ref(FieldDef.class).narrow(jType)).arg(name).arg(jType.dotclass()).arg(schema);
     return fieldDefInvocation;
   }
 
@@ -622,13 +579,13 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
    * @return JClass as described above
    */
   private JClass getKeyClass(CollectionSchema collection, JDefinedClass facadeClass) {
-    JClass keyClass = getJavaBindingType(collection.getIdentifier().getType(), facadeClass).valueClass;
+    JClass keyClass = getJavaBindingType(collection.getIdentifier().getType(), facadeClass);
     if (collection.getIdentifier().getParams() == null)
     {
       return keyClass;
     }
 
-    JClass paramsClass = getJavaBindingType(collection.getIdentifier().getParams(), facadeClass).valueClass;
+    JClass paramsClass = getJavaBindingType(collection.getIdentifier().getParams(), facadeClass);
 
     return getCodeModel().ref(ComplexResourceKey.class).narrow(keyClass, paramsClass);
   }
@@ -731,45 +688,23 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     {
       String paramName = param.getName();
       boolean optional = param.isOptional()==null ? false : param.isOptional();
-      String methodName = nameCamelCase(paramName + "Param");
+      JMethod typesafeMethod = derivedBuilderClass.method(JMod.PUBLIC, derivedBuilderClass, nameCamelCase(paramName + "Param"));
 
       JClass paramClass;
       if ("array".equals(param.getType()))
       {
-        final JClass paramItemsClass = getJavaBindingType(param.getItems(), facadeClass).valueClass;
-        paramClass = getCodeModel().ref(Iterable.class).narrow(paramItemsClass);
+        JClass paramItemClass = getJavaBindingType(param.getItems(), facadeClass);
+        paramClass = getCodeModel().ref(Iterable.class).narrow(paramItemClass);
       }
       else
       {
-        final DataSchema typeSchema = RestSpecCodec.textToSchema(param.getType(), getSchemaResolver());
-
-        // we deprecate the "items" field from ParameterSchema, which generates Iterable<Foo> in the builder
-        // instead, we use the standard way to represent arrays, which generates FooArray
-        // for backwards compatibility, add the method with Iterable<Foo> parameter
-        if (typeSchema instanceof ArrayDataSchema)
-        {
-          final DataSchema itemsSchema = ((ArrayDataSchema) typeSchema).getItems();
-          final JClass paramItemsClass = getJavaBindingType(itemsSchema, facadeClass).valueClass;
-          final JClass iterableItemsClass = getCodeModel().ref(Iterable.class).narrow(paramItemsClass);
-
-          final JMethod typesafeMethod = derivedBuilderClass.method(JMod.PUBLIC, derivedBuilderClass, methodName);
-          final JVar typesafeMethodParam = typesafeMethod.param(iterableItemsClass, "value");
-          typesafeMethod.body().add(JExpr._super().invoke(optional ? "param" : "reqParam")
-                                        .arg(paramName)
-                                        .arg(typesafeMethodParam));
-          typesafeMethod.body()._return(JExpr._this());
-
-          generateParamJavadoc(typesafeMethod, typesafeMethodParam, param);
-        }
-
-        paramClass = getJavaBindingType(typeSchema, facadeClass).valueClass;
+        paramClass = getJavaBindingType(param.getType(), facadeClass);
       }
 
-      final JMethod typesafeMethod = derivedBuilderClass.method(JMod.PUBLIC, derivedBuilderClass, methodName);
-      final JVar typesafeMethodParam = typesafeMethod.param(paramClass, "value");
+      JVar typesafeMethodParam = typesafeMethod.param(paramClass, "value");
       typesafeMethod.body().add(JExpr._super().invoke(optional ? "param" : "reqParam")
-                                    .arg(paramName)
-                                    .arg(typesafeMethodParam));
+                                        .arg(paramName)
+                                        .arg(typesafeMethodParam));
       typesafeMethod.body()._return(JExpr._this());
 
       generateParamJavadoc(typesafeMethod, typesafeMethodParam, param);
@@ -888,14 +823,15 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
       for (ParameterSchema param : action.getParameters())
       {
         String paramName = param.getName();
-        JavaBinding binding = getJavaBindingType(param.getType(), facadeClass);
+        JClass bindingType = getJavaBindingType(param.getType(), facadeClass);
+        JClass schemaClass = getSchemaClass(param.getType(), facadeClass);
 
         JMethod typesafeMethod = actionBuilderClass.method(JMod.PUBLIC, actionBuilderClass,
                                                            "param" + capitalize(paramName));
-        JVar typesafeMethodParam = typesafeMethod.param(binding.valueClass, "value");
+        JVar typesafeMethodParam = typesafeMethod.param(bindingType, "value");
 
         JClass dataTemplateUtil = getCodeModel().ref(DataTemplateUtil.class);
-        JExpression dataSchema = dataTemplateUtil.staticInvoke("getSchema").arg(binding.schemaClass.dotclass());
+        JExpression dataSchema = dataTemplateUtil.staticInvoke("getSchema").arg(schemaClass.dotclass());
 
         typesafeMethod.body().add(JExpr._super().invoke("param")
                                           .arg(resourceSpecField
@@ -985,7 +921,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     for (AssocKeySchema assocKey : associationSchema.getAssocKeys())
     {
       String name = assocKey.getName();
-      JClass clazz = getJavaBindingType(assocKey.getType(), facadeClass).valueClass;
+      JClass clazz = getJavaBindingType(assocKey.getType(), facadeClass);
 
       JMethod typesafeSetter = typesafeKeyClass.method(JMod.PUBLIC, typesafeKeyClass, "set" + nameCapsCase(name));
       JVar setterParam = typesafeSetter.param(clazz, name);
@@ -1084,7 +1020,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     JClass returnType;
     if (returns != null)
     {
-      returnType = getJavaBindingType(returns, facadeClass).valueClass;
+      returnType = getJavaBindingType(returns, facadeClass);
     }
     else
     {
@@ -1092,6 +1028,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     }
     return returnType;
   }
+
 
   private static String getName(JsonNode namedEntry)
   {
@@ -1110,26 +1047,34 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     }
   }
 
-  private JavaBinding getJavaBindingType(String typeSchema, JDefinedClass parentClass)
+    private JClass getJavaBindingType(String typeSchema, JDefinedClass parentClass)
   {
-    return getJavaBindingType(RestSpecCodec.textToSchema(typeSchema, getSchemaResolver()), parentClass);
-  }
+    typeSchema = typeSchema.trim();
 
-  private JavaBinding getJavaBindingType(DataSchema schema, JDefinedClass parentClass)
-  {
-    final JavaBinding binding = new JavaBinding();
-
-    if (_generateDataTemplates || schema instanceof ArrayDataSchema)
+    // schema can be either a type object or a quote-wrapped name string
+    if (!typeSchema.startsWith("{") && !typeSchema.startsWith("\""))
     {
-      binding.schemaClass = processSchema(schema, parentClass, null);
-      if (schema instanceof ArrayDataSchema)
-      {
-        _generatedArrayClasses.add(binding.schemaClass);
-      }
+      // wrap the unquoted name with quotes
+      typeSchema = "\"" + typeSchema + "\"";
     }
 
-    binding.schemaClass = getClassRefForSchema(schema, parentClass);
-    binding.valueClass = getClassRefForSchema(schema, parentClass);
+    DataSchema schema = DataTemplateUtil.parseSchema(typeSchema, getSchemaResolver());
+
+    return getJavaBindingType(schema, parentClass);
+  }
+
+  private JClass getJavaBindingType(DataSchema schema, JDefinedClass parentClass)
+  {
+    JClass type;
+
+    if (_generateDataTemplates)
+    {
+      type = processSchema(schema, parentClass, null);
+    }
+    else
+    {
+      type = getClassRefForSchema(schema, parentClass);
+    }
 
     if (schema instanceof TyperefDataSchema)
     {
@@ -1139,16 +1084,38 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
         String javaClassNameFromSchema = ArgumentUtils.getJavaClassNameFromSchema(typerefDataSchema);
         if (javaClassNameFromSchema != null)
         {
-          binding.valueClass = getCodeModel().directClass(javaClassNameFromSchema);
+          type = getCodeModel().directClass(javaClassNameFromSchema);
         }
         else
         {
-          binding.valueClass = getJavaBindingType(typerefDataSchema.getRef(), parentClass).valueClass;
+          type = getJavaBindingType(typerefDataSchema.getRef(), parentClass);
         }
       }
     }
+    return type;
+  }
 
-    return binding;
+  private JClass getSchemaClass(String typeSchema, JDefinedClass parentClass)
+  {
+    typeSchema = typeSchema.trim();
+
+    if (!typeSchema.startsWith("{") && !typeSchema.startsWith("\""))
+    {
+      //construct a valid JSON string to hand to the parser
+      typeSchema = "\"" + typeSchema + "\"";
+    }
+
+    DataSchema schema = DataTemplateUtil.parseSchema(typeSchema, getSchemaResolver());
+    JClass type;
+
+    if (_generateDataTemplates)
+    {
+      return processSchema(schema, parentClass, null);
+    }
+    else
+    {
+      return getClassRefForSchema(schema, parentClass);
+    }
   }
 
   private static String normalizeUnderscores(String name)

@@ -16,10 +16,10 @@
 
 project.sourceSets.all { SourceSet sourceSet ->
   final Task cleanGeneratedDirTask = project.task(sourceSet.getTaskName('clean', 'GeneratedDir')) << {
-    project.delete(project.file(rootProject.ext.build.getDataTemplateOutDirPath(sourceSet)).parentFile)
-    project.delete(project.file(rootProject.ext.build.getAvroSchemaOutDirPath(sourceSet)).parentFile)
-    project.delete(project.file(rootProject.ext.build.getRestModelOutDirPath(sourceSet)).parentFile)
-    project.delete(project.file(rootProject.ext.build.getRestClientOutDirPath(sourceSet)).parentFile)
+    project.delete(project.file(rootProject.ext.build.getDataTemplateOutDirPath(project, sourceSet)).parentFile)
+    project.delete(project.file(rootProject.ext.build.getAvroSchemaOutDirPath(project, sourceSet)).parentFile)
+    project.delete(project.file(rootProject.ext.build.getRestModelOutDirPath(project, sourceSet)).parentFile)
+    project.delete(project.file(rootProject.ext.build.getRestClientOutDirPath(project, sourceSet)).parentFile)
   }
 
   // make clean depends on deleting the generated directories
