@@ -1,16 +1,20 @@
-1.8.1
+1.8.2
 ------
+
+
+1.8.1
+-----
 Revert RB 126830 until compatibility issues are resolved.
 
 1.8.0
-------
+-----
 Increasing version to 1.8.0, because 126830 is wire-compatible, but compile-incompatible.
 
 (RB=129457)
 Modified D2ClientBuilder to accept load balancer factory as a parameter.
 
 1.7.12
-------
+-----
 (RB=130083)
 Add RestliServlet to provide developers with a simple way to build a war using rest.li.
 
@@ -20,7 +24,7 @@ To make it backwards compatibile, request builders can still use Iterable parame
 Fix bug that builder methods with Iterable<? extends DataTemplate> parameter are not working.
 
 1.7.11
-------
+-----
 (RB=130026)
 Change build scripts to work with Gradle 1.3.
 
@@ -28,7 +32,7 @@ Change build scripts to work with Gradle 1.3.
 Add RestliServlet to provide developers with a simple way to build a war using rest.li.
 
 1.7.10
-------
+-----
 (RB=129645)
 Add methods for common uses for ResponseFuture.getResponseEntity and RestClient.sendRequest(RequestBuilde ...)
 client.sendRequest(builder.build()).getResponse().getEntity() can be simplified as follow to
