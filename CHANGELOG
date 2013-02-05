@@ -1,5 +1,8 @@
 1.8.2
 ------
+(RB=131451)
+Add PatchTreeRecorder & PatchRequestRecorder to build patches that allow you to remove fields.
+
 (RB=130545)
 Allow clients to send request bodies in pson format. Upgraded servers will be
 able to interpet bodies in pson format.
