@@ -26,13 +26,13 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.regex.Pattern;
 
-import com.linkedin.r2.message.RequestContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
@@ -397,13 +397,6 @@ public class RestLiRouter
     }
   }
 
-  //TODO: support for the comma-delimited bulk syntax is necessary for backwards compatibility
-  //with legacy code.  This case should be eliminated if it can be verified that no clients
-  //are using the legacy syntax.
-  private static final char   BULK_CALL_KEY_SEPARATOR = ',';
-  private static final Pattern BULK_CALL_KEY_SEPARATOR_PATTERN =
-      Pattern.compile(Pattern.quote(String.valueOf(BULK_CALL_KEY_SEPARATOR)));
-
   private void parseBatchKeysParameter(final ResourceModel resource,
                                        final ServerResourceContext context)
   {
@@ -440,30 +433,25 @@ public class RestLiRouter
       List<String> ids = context.getParameterValues(RestConstants.QUERY_BATCH_IDS_PARAM);
       for (String id : ids)
       {
-        // legacy implementation used comma to separate multiple ids inside one ids parameter - we'll handle that here
-        String[] keys = BULK_CALL_KEY_SEPARATOR_PATTERN.split(id);
-        for (String key : keys)
+        try
         {
-          try
-          {
-            context.getPathKeys()
-                   .appendBatchValue(ArgumentUtils.parseOptionalKey(key, resource));
-          }
-          catch (NumberFormatException e)
-          {
-            log.warn("Caught NumberFormatException parsing batch key '" + key + "', skipping key.");
-            context.getBatchKeyErrors().put(key, new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, null, e));
-          }
-          catch (IllegalArgumentException e)
-          {
-            log.warn("Caught IllegalArgumentException parsing batch key '" + key + "', skipping key.");
-            context.getBatchKeyErrors().put(key, new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, null, e));
-          }
-          catch (PathSegmentSyntaxException e)
-          {
-            log.warn("Caught PathSegmentSyntaxException parsing batch key '" + key + "', skipping key.");
-            context.getBatchKeyErrors().put(key, new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, null, e));
-          }
+          context.getPathKeys()
+                 .appendBatchValue(ArgumentUtils.parseOptionalKey(id, resource));
+        }
+        catch (NumberFormatException e)
+        {
+          log.warn("Caught NumberFormatException parsing batch key '" + id + "', skipping key.");
+          context.getBatchKeyErrors().put(id, new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, null, e));
+        }
+        catch (IllegalArgumentException e)
+        {
+          log.warn("Caught IllegalArgumentException parsing batch key '" + id + "', skipping key.");
+          context.getBatchKeyErrors().put(id, new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, null, e));
+        }
+        catch (PathSegmentSyntaxException e)
+        {
+          log.warn("Caught PathSegmentSyntaxException parsing batch key '" + id + "', skipping key.");
+          context.getBatchKeyErrors().put(id, new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, null, e));
         }
       }
     }

@@ -7,6 +7,9 @@ Add PatchTreeRecorder & PatchRequestRecorder to build patches that allow you to 
 Allow clients to send request bodies in pson format. Upgraded servers will be
 able to interpet bodies in pson format.
 
+(RB=133781)
+Remove legacy server code that uses ',' as separator for batch_get ids.  Correct format is "?ids=1&ids=2".
+
 1.8.1
 -----
 Revert RB 126830 until compatibility issues are resolved.
