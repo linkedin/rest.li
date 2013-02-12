@@ -169,20 +169,19 @@ public class HttpClientFactory implements TransportClientFactory
     // Translate the new Map<String, Object> into the old Map<String, String> + SSLContext
     // and SSLParameters params.
     Map<String, String> stringProperties = new HashMap<String, String>(properties.size());
-    SSLContext sslContext = null;
-    SSLParameters sslParameters = null;
+    SSLContext sslContext;
+    SSLParameters sslParameters;
 
-    if (properties != null)
+    // Copy the properties map since we don't want to mutate the passed-in map by removing keys
+    properties = new HashMap<String,Object>(properties);
+    // TODO once references to old keys are eliminated, these should become calls to coerceAndRemoveFromMap().
+    sslContext = coerceOldAndNew(OLD_SSL_CONTEXT, HTTP_SSL_CONTEXT, properties, SSLContext.class);
+    sslParameters = coerceOldAndNew(OLD_SSL_PARAMS, HTTP_SSL_PARAMS, properties,
+                                    SSLParameters.class);
+
+    for (Map.Entry<String, ?> entry : properties.entrySet())
     {
-      // TODO once references to old keys are eliminated, these should become calls to coerceAndRemoveFromMap().
-      sslContext = coerceOldAndNew(OLD_SSL_CONTEXT, HTTP_SSL_CONTEXT, properties, SSLContext.class);
-      sslParameters = coerceOldAndNew(OLD_SSL_PARAMS, HTTP_SSL_PARAMS, properties,
-                                      SSLParameters.class);
-
-      for (Map.Entry<String, ?> entry : properties.entrySet())
-      {
-        stringProperties.put(entry.getKey(), coerce(entry.getKey(), entry.getValue(), String.class));
-      }
+      stringProperties.put(entry.getKey(), coerce(entry.getKey(), entry.getValue(), String.class));
     }
 
     return getClient(stringProperties, sslContext, sslParameters);

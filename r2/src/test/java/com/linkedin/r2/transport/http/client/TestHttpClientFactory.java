@@ -237,7 +237,7 @@ public class TestHttpClientFactory
 
     try
     {
-      factory.getClient(params);
+      factory.getClient(Collections.unmodifiableMap(params));
       Assert.fail("Should have failed");
     }
     catch (IllegalArgumentException e)
@@ -259,7 +259,7 @@ public class TestHttpClientFactory
 
     try
     {
-      factory.getClient(params);
+      factory.getClient(Collections.unmodifiableMap(params));
       Assert.fail("Should have failed");
     }
     catch (IllegalArgumentException e)
@@ -286,7 +286,7 @@ public class TestHttpClientFactory
 
     try
     {
-      factory.getClient(params);
+      factory.getClient(Collections.unmodifiableMap(params));
       Assert.fail("Should have failed");
     }
     catch (IllegalArgumentException e)
