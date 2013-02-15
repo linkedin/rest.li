@@ -1,4 +1,6 @@
-<center><img src=https://github.com/linkedin/rest.li/wiki/restli-logo-white-small.png></center>
+<p align="center">
+  <img src="https://github.com/linkedin/rest.li/wiki/restli-logo-white-small.png"/>
+</p>
 
 What is Rest.li?
 ================
