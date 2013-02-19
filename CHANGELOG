@@ -1,6 +1,8 @@
 1.8.4
 -----
-
+(RB=136944)
+Allow Content-Types to include an optional Charset.  For now it is ignored, but including it will
+no longer allow either the client or the server to be unable to parse the Content-Type.
 
 1.8.3
 -----

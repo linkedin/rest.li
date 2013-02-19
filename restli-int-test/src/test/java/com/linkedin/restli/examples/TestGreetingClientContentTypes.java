@@ -181,6 +181,36 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
     Assert.assertEquals(response2, response1 + "Again");
   }
 
+  @Test
+  public void testPostsWithCharset() throws RemoteInvocationException
+  {
+    RestClient restClient = new RestClient(CLIENT, URI_PREFIX);
 
+    ActionRequest<Greeting> request = GREETINGS_BUILDERS.actionSomeAction().id(1L)
+      .paramA(1)
+      .paramB("")
+      .paramC(new TransferOwnershipRequest())
+      .paramD(new TransferOwnershipRequest())
+      .paramE(3)
+      .header("Content-Type", "application/json; charset=UTF-8")
+      .build();
+
+    Response<Greeting> response = restClient.sendRequest(request).getResponse();
+
+    Greeting actionGreeting = response.getEntity();
+    Assert.assertEquals(actionGreeting.getMessage(), "This is a newly created greeting");
+
+    Greeting createGreeting = new Greeting();
+    createGreeting.setMessage("Hello there!");
+    createGreeting.setTone(Tone.FRIENDLY);
+
+    CreateRequest<Greeting> createRequest = GREETINGS_BUILDERS
+      .create()
+      .input(createGreeting)
+      .header("Content-Type", "application/json; charset=UTF-8")
+      .build();
+    Response<EmptyRecord> emptyRecordResponse = restClient.sendRequest(createRequest).getResponse();
+    Assert.assertNull(emptyRecordResponse.getHeader(RestConstants.HEADER_CONTENT_TYPE));
+  }
 
 }

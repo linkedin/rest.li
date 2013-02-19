@@ -36,6 +36,8 @@ import com.linkedin.restli.internal.client.ExceptionUtil;
 import com.linkedin.restli.internal.client.ResponseFutureImpl;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
 
+import javax.mail.internet.ContentType;
+import javax.mail.internet.ParseException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -215,25 +217,38 @@ public class RestClient
   {
     if (dataMap != null)
     {
-      String contentType = builder.getHeader(RestConstants.HEADER_CONTENT_TYPE);
+      String header = builder.getHeader(RestConstants.HEADER_CONTENT_TYPE);
 
       ContentType type;
-      if(contentType == null)
+      if(header == null)
       {
         type = _contentType;
         builder.setHeader(RestConstants.HEADER_CONTENT_TYPE, type.getHeaderKey());
       }
-      else if (contentType.equalsIgnoreCase(RestConstants.HEADER_VALUE_APPLICATION_JSON))
-      {
-        type = ContentType.JSON;
-      }
-      else if (contentType.equalsIgnoreCase(RestConstants.HEADER_VALUE_APPLICATION_PSON))
-      {
-        type = ContentType.PSON;
-      }
       else
       {
-        throw new IllegalStateException("Unknown Content-Type: " + contentType);
+        javax.mail.internet.ContentType contentType;
+        try
+        {
+          contentType = new javax.mail.internet.ContentType(header);
+        }
+        catch (ParseException e)
+        {
+          throw new IllegalStateException("Unable to parse Content-Type: " + header);
+        }
+
+        if (contentType.getBaseType().equalsIgnoreCase(RestConstants.HEADER_VALUE_APPLICATION_JSON))
+        {
+          type = ContentType.JSON;
+        }
+        else if (contentType.getBaseType().equalsIgnoreCase(RestConstants.HEADER_VALUE_APPLICATION_PSON))
+        {
+          type = ContentType.PSON;
+        }
+        else
+        {
+          throw new IllegalStateException("Unknown Content-Type: " + contentType.toString());
+        }
       }
 
       switch (type)
