@@ -524,7 +524,7 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
                                         newCurrentAvgClusterLatency,
                                         true,
                                         newRecoveryMap, oldState.getServiceName());
-      _log.info("Strategy updated: newState=" + newState + ", config=" + config);
+      _log.warn("Strategy updated: newState=" + newState + ", config=" + config);
     }
     else
     {
@@ -583,7 +583,7 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
                                             oldRecoveryMap,
                                             oldState.getServiceName());
 
-      _log.info("Strategy updated: newState=" + newState + ", config=" + config);
+      _log.warn("Strategy updated: newState=" + newState + ", config=" + config);
 
       points = oldPointsMap;
     }

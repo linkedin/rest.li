@@ -720,11 +720,11 @@ public class TestCallTracker
                         "Total error count is incorrect");
 
     dones.remove(0).endCallWithError();
-    dones.remove(0).endCallWithError(ErrorType.REMOTE_INVOCATION_ERROR);
-    dones.remove(0).endCallWithError(ErrorType.HTTP_400_ERROR);
-    dones.remove(0).endCallWithError(ErrorType.HTTP_500_ERROR);
-    dones.remove(0).endCallWithError(ErrorType.OTHER_REST_EXCEPTION_ERROR);
-    dones.remove(0).endCallWithError(ErrorType.OTHER_REST_EXCEPTION_ERROR);
+    dones.remove(0).endCallWithError(ErrorType.REMOTE_INVOCATION_EXCEPTION);
+    dones.remove(0).endCallWithError(ErrorType.CLOSED_CHANNEL_EXCEPTION);
+    dones.remove(0).endCallWithError(ErrorType.CLOSED_CHANNEL_EXCEPTION);
+    dones.remove(0).endCallWithError(ErrorType.CONNECT_EXCEPTION);
+    dones.remove(0).endCallWithError(ErrorType.CONNECT_EXCEPTION);
     Assert.assertEquals(_callTracker.getCurrentConcurrency(), 5, "Concurrency is incorrect");
     Assert.assertEquals(_callTracker.getCurrentCallCountTotal(), startCallCountTotal + 15,
                         "Total call count is incorrect");
@@ -733,37 +733,31 @@ public class TestCallTracker
     Assert.assertEquals(_callTracker.getCurrentErrorCountTotal(), startErrorCountTotal + 8,
                         "Total error count is incorrect");
 
-    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.REMOTE_INVOCATION_ERROR), new Integer(1),
-                        "Current remote invocation error count is incorrect");
-    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.HTTP_400_ERROR), new Integer(1),
-                        "Current http 400 error count is incorrect");
-    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.HTTP_500_ERROR), new Integer(1),
-                        "Current http 500 error count is incorrect");
-    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.OTHER_REST_EXCEPTION_ERROR), new Integer(2),
-                            "Current other rest exception error count is incorrect");
+    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.REMOTE_INVOCATION_EXCEPTION), new Integer(1),
+                        "Current remote invocation exception count is incorrect");
+    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.CLOSED_CHANNEL_EXCEPTION), new Integer(2),
+                        "Current closed channel exception count is incorrect");
+    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.CONNECT_EXCEPTION), new Integer(2),
+                        "Current connect exception count is incorrect");
 
     _clock.setCurrentTimeMillis(startTime + INTERVAL * 2);
 
     //getCallStats needs to wait for an interval before it produces the stats from previous interval
     Map<ErrorType, Integer> errorTypeCounts = _callTracker.getCallStats().getErrorTypeCounts();
     Map<ErrorType, Integer> errorTypeCountsTotal = _callTracker.getCallStats().getErrorTypeCountsTotal();
-    Assert.assertEquals(errorTypeCounts.get(ErrorType.REMOTE_INVOCATION_ERROR), new Integer(1),
-                        "Remote invocation error count is incorrect");
-    Assert.assertEquals(errorTypeCounts.get(ErrorType.HTTP_400_ERROR), new Integer(1),
-                        "Http 400 error count is incorrect");
-    Assert.assertEquals(errorTypeCounts.get(ErrorType.HTTP_500_ERROR), new Integer(1),
-                        "Http 500 error count is incorrect");
-    Assert.assertEquals(errorTypeCounts.get(ErrorType.OTHER_REST_EXCEPTION_ERROR), new Integer(2),
-                        "Other rest exception error count is incorrect");
+    Assert.assertEquals(errorTypeCounts.get(ErrorType.REMOTE_INVOCATION_EXCEPTION), new Integer(1),
+                        "Remote invocation exception count is incorrect");
+    Assert.assertEquals(errorTypeCounts.get(ErrorType.CLOSED_CHANNEL_EXCEPTION), new Integer(2),
+                        "Closed channel exception count is incorrect");
+    Assert.assertEquals(errorTypeCounts.get(ErrorType.CONNECT_EXCEPTION), new Integer(2),
+                        "Connect exception count is incorrect");
 
-    Assert.assertEquals(errorTypeCountsTotal.get(ErrorType.REMOTE_INVOCATION_ERROR), new Integer(1),
-                        "Total Remote invocation error count is incorrect");
-    Assert.assertEquals(errorTypeCountsTotal.get(ErrorType.HTTP_400_ERROR), new Integer(1),
-                        "Total http 400 error count is incorrect");
-    Assert.assertEquals(errorTypeCountsTotal.get(ErrorType.HTTP_500_ERROR), new Integer(1),
-                        "Total http 5000 error count is incorrect");
-    Assert.assertEquals(errorTypeCountsTotal.get(ErrorType.OTHER_REST_EXCEPTION_ERROR), new Integer(2),
-                        "Total rest exception error count is incorrect");
+    Assert.assertEquals(errorTypeCountsTotal.get(ErrorType.REMOTE_INVOCATION_EXCEPTION), new Integer(1),
+                        "Total remote invocation exception count is incorrect");
+    Assert.assertEquals(errorTypeCountsTotal.get(ErrorType.CLOSED_CHANNEL_EXCEPTION), new Integer(2),
+                        "Total closed channel exception count is incorrect");
+    Assert.assertEquals(errorTypeCountsTotal.get(ErrorType.CONNECT_EXCEPTION), new Integer(2),
+                        "Total connect exception count is incorrect");
 
     Assert.assertEquals(_callTracker.getCallStats().getErrorCount(), 6, "Error count is incorrect");
     Assert.assertEquals(_callTracker.getCallStats().getErrorCountTotal(), startErrorCountTotal + 8,
@@ -773,32 +767,28 @@ public class TestCallTracker
                         "Max concurrent is incorrect");
 
     //simulate that in the middle of interval we increment the error counts
-    dones.remove(0).endCallWithError(ErrorType.REMOTE_INVOCATION_ERROR);
-    dones.remove(0).endCallWithError(ErrorType.REMOTE_INVOCATION_ERROR);
-    dones.remove(0).endCallWithError(ErrorType.REMOTE_INVOCATION_ERROR);
+    dones.remove(0).endCallWithError(ErrorType.REMOTE_INVOCATION_EXCEPTION);
+    dones.remove(0).endCallWithError(ErrorType.REMOTE_INVOCATION_EXCEPTION);
+    dones.remove(0).endCallWithError(ErrorType.REMOTE_INVOCATION_EXCEPTION);
 
     //this change should be reflected in getCurrentErrorTypeCountsTotal
-    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.REMOTE_INVOCATION_ERROR), new Integer(4),
-                        "Current remote invocation error count is incorrect");
-    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.HTTP_400_ERROR), new Integer(1),
-                        "Current http 400 error count is incorrect");
-    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.HTTP_500_ERROR), new Integer(1),
-                        "Current http 500 error count is incorrect");
-    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.OTHER_REST_EXCEPTION_ERROR), new Integer(2),
-                            "Current other rest exception error count is incorrect");
+    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.REMOTE_INVOCATION_EXCEPTION), new Integer(4),
+                        "Current remote invocation exception count is incorrect");
+    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.CLOSED_CHANNEL_EXCEPTION), new Integer(2),
+                        "Current closed channel exception count is incorrect");
+    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.CONNECT_EXCEPTION), new Integer(2),
+                        "Current connect exception count is incorrect");
 
     //another simulation of change in the middle of interval
-    dones.remove(0).endCallWithError(ErrorType.HTTP_400_ERROR);
-    dones.remove(0).endCallWithError(ErrorType.HTTP_400_ERROR);
+    dones.remove(0).endCallWithError(ErrorType.CLOSED_CHANNEL_EXCEPTION);
+    dones.remove(0).endCallWithError(ErrorType.CLOSED_CHANNEL_EXCEPTION);
 
-    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.REMOTE_INVOCATION_ERROR), new Integer(4),
-                        "Current remote invocation error count is incorrect");
-    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.HTTP_400_ERROR), new Integer(3),
-                        "Current http 400 error is incorrect");
-    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.HTTP_500_ERROR), new Integer(1),
-                        "Current http 500 error is incorrect");
-    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.OTHER_REST_EXCEPTION_ERROR), new Integer(2),
-                            "Current other rest exception error count is incorrect");
+    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.REMOTE_INVOCATION_EXCEPTION), new Integer(4),
+                        "Current remote invocation exception count is incorrect");
+    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.CLOSED_CHANNEL_EXCEPTION), new Integer(4),
+                        "Current closed channel exception count is incorrect");
+    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.CONNECT_EXCEPTION), new Integer(2),
+                        "Current connect exception count is incorrect");
 
      _clock.setCurrentTimeMillis(startTime + INTERVAL * 3);
 
@@ -807,22 +797,18 @@ public class TestCallTracker
     errorTypeCounts = _callTracker.getCallStats().getErrorTypeCounts();
     errorTypeCountsTotal = _callTracker.getCallStats().getErrorTypeCountsTotal();
 
-    Assert.assertEquals(errorTypeCounts.get(ErrorType.REMOTE_INVOCATION_ERROR), new Integer(3),
-                        "Remote invocation error count is incorrect");
-    Assert.assertEquals(errorTypeCounts.get(ErrorType.HTTP_400_ERROR), new Integer(2),
-                        "Http 400 error count is incorrect");
-    Assert.assertNull(errorTypeCounts.get(ErrorType.HTTP_500_ERROR), "Http 500 error count is incorrect");
-    Assert.assertNull(errorTypeCounts.get(ErrorType.OTHER_REST_EXCEPTION_ERROR),
-                        "Other rest exception error count is incorrect");
+    Assert.assertEquals(errorTypeCounts.get(ErrorType.REMOTE_INVOCATION_EXCEPTION), new Integer(3),
+                        "Remote invocation exception count is incorrect");
+    Assert.assertEquals(errorTypeCounts.get(ErrorType.CLOSED_CHANNEL_EXCEPTION), new Integer(2),
+                        "Closed channel exception count is incorrect");
+    Assert.assertNull(errorTypeCounts.get(ErrorType.CONNECT_EXCEPTION), "Connect exception count is incorrect");
 
-    Assert.assertEquals(errorTypeCountsTotal.get(ErrorType.REMOTE_INVOCATION_ERROR), new Integer(4),
-                        "Total Remote invocation error count is incorrect");
-    Assert.assertEquals(errorTypeCountsTotal.get(ErrorType.HTTP_400_ERROR), new Integer(3),
-                        "Total http 400 error count is incorrect");
-    Assert.assertEquals(errorTypeCountsTotal.get(ErrorType.HTTP_500_ERROR), new Integer(1),
-                        "Total http 5000 error count is incorrect");
-    Assert.assertEquals(errorTypeCountsTotal.get(ErrorType.OTHER_REST_EXCEPTION_ERROR), new Integer(2),
-                        "Total rest exception error count is incorrect");
+    Assert.assertEquals(errorTypeCountsTotal.get(ErrorType.REMOTE_INVOCATION_EXCEPTION), new Integer(4),
+                        "Total remote invocation exception count is incorrect");
+    Assert.assertEquals(errorTypeCountsTotal.get(ErrorType.CLOSED_CHANNEL_EXCEPTION), new Integer(4),
+                        "Total closed channel exception count is incorrect");
+    Assert.assertEquals(errorTypeCountsTotal.get(ErrorType.CONNECT_EXCEPTION), new Integer(2),
+                        "Total connect exception count is incorrect");
 
     Assert.assertEquals(_callTracker.getCallStats().getErrorCount(), 5, "Error count is incorrect");
     Assert.assertEquals(_callTracker.getCallStats().getErrorCountTotal(), startErrorCountTotal + 13,

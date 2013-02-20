@@ -43,6 +43,20 @@ import static com.linkedin.d2.discovery.util.LogUtil.warn;
 
 public class LoadBalancerUtil
 {
+
+  public static Throwable findOriginalThrowable(Throwable throwable)
+  {
+    //just to make sure we don't go to infinite loop. Most exception is less than 100 level deep.
+    int depth = 0;
+    Throwable original = throwable;
+    while (original.getCause() != null && depth < 100)
+    {
+      original = original.getCause();
+      depth++;
+    }
+    return original;
+  }
+
   public static String join(Collection<?> toJoin, String joinBy)
   {
     if (toJoin == null)

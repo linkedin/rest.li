@@ -130,14 +130,14 @@ public interface CallTracker
     boolean stale(long currentTimeMillis);
 
     /**
-     * Returns the number of specific error type in the sample.
-     * @return the number of specific error type in the sample
+     * Returns the number of {@link ErrorType} in the sample.
+     * @return the number of {@link ErrorType} in the sample
      */
     public Map<ErrorType, Integer> getErrorTypeCounts();
 
     /**
-     * Returns the number of specific error type (since last reset) at the end of sampling interval.
-     * @return the number of specific error type (since last reset) at the end of sampling interval.
+     * Returns the number of {@link ErrorType} since last reset at the end of sampling interval.
+     * @return the number of {@link ErrorType} since last reset at the end of sampling interval.
      */
     public Map<ErrorType, Integer> getErrorTypeCountsTotal();
 

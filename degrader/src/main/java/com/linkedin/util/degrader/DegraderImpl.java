@@ -288,7 +288,7 @@ public class DegraderImpl implements Degrader
                      _callTrackerStats.getCallCount(),
                      _latency, _callTrackerStats.getErrorRate(),
                      _outstandingLatency, _callTrackerStats.getOutstandingCount(),
-                     _callTrackerStats.getErrorTypeCountsTotal());
+                     _callTrackerStats.getErrorTypeCounts());
   }
 
   /**
@@ -451,7 +451,7 @@ public class DegraderImpl implements Degrader
   {
     return (_callTrackerStats.getCallCount() >= adjustedMinCallCount() &&
             (_latency >= _config.getHighLatency() ||
-             _callTrackerStats.getErrorRate() >= _config.getHighErrorRate())) ||
+             getErrorRateToDegrade() >= _config.getHighErrorRate())) ||
            (_callTrackerStats.getOutstandingCount() >= _config.getMinOutstandingCount() &&
             _outstandingLatency >= _config.getHighOutstanding());
   }
@@ -460,9 +460,38 @@ public class DegraderImpl implements Degrader
   {
     return _callTrackerStats.getCallCount() >= adjustedMinCallCount() &&
            _latency <= _config.getLowLatency() &&
-           _callTrackerStats.getErrorRate() <= _config.getLowErrorRate() &&
+           getErrorRateToDegrade() <= _config.getLowErrorRate() &&
            (_callTrackerStats.getOutstandingCount() < _config.getMinOutstandingCount() ||
             _outstandingLatency <= _config.getLowOutstanding());
+  }
+
+  /**
+   * Counts the rate of CONNECT_EXCEPTION, CLOSED_CHANNEL_EXCEPTION that happens during an interval.
+   * We only consider this type of exception for degrading trackerClient. Other errors maybe legitimate
+   * so we don't want to punish the server for exceptions that the server is not responsible for e.g.
+   * bad user input, frameTooLongException, etc.
+   *
+   * @return
+   */
+  private double getErrorRateToDegrade()
+  {
+    Map<ErrorType, Integer> errorTypeCounts = _callTrackerStats.getErrorTypeCounts();
+    Integer connectExceptionCount = errorTypeCounts.get(ErrorType.CONNECT_EXCEPTION);
+    if (connectExceptionCount == null)
+    {
+      connectExceptionCount = 0;
+    }
+    Integer closedChannelExceptionCount = errorTypeCounts.get(ErrorType.CLOSED_CHANNEL_EXCEPTION);
+    if (closedChannelExceptionCount == null)
+    {
+      closedChannelExceptionCount = 0;
+    }
+    return safeDivide(connectExceptionCount + closedChannelExceptionCount, _callTrackerStats.getCallCount());
+  }
+
+  private double safeDivide(double numerator, double denominator)
+  {
+    return denominator != 0 ? numerator / denominator : 0;
   }
 
   public static enum LatencyToUse
@@ -490,7 +519,7 @@ public class DegraderImpl implements Degrader
     private final double _errorRate;
     private final long   _outstandingLatency;
     private final int    _outstandingCount;
-    private final Map<ErrorType, Integer> _currentErrorCountsMap;
+    private final Map<ErrorType, Integer> _errorCountsMap;
 
 
     private Stats(double currentDropRate, double currentComputedDropRate,
@@ -518,8 +547,9 @@ public class DegraderImpl implements Degrader
       _errorRate = errorRate;
       _outstandingLatency = outstandingLatency;
       _outstandingCount = outstandingCount;
-      _currentErrorCountsMap = errorCountsMap;
+      _errorCountsMap = errorCountsMap;
     }
+
     public double getCurrentDropRate()
     {
       return _currentDropRate;
@@ -576,9 +606,9 @@ public class DegraderImpl implements Degrader
     {
       return _outstandingCount;
     }
-    public Map<ErrorType, Integer> getCurrentErrorCountsMap()
+    public Map<ErrorType, Integer> getErrorCountsMap()
     {
-      return _currentErrorCountsMap;
+      return _errorCountsMap;
     }
   }
 

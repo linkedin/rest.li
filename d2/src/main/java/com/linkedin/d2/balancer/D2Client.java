@@ -25,6 +25,14 @@ import com.linkedin.r2.transport.common.StartableClient;
 
 
 /**
+ * D2Client interface provides a way for anyone to interact with the  admin tools
+ * for accessing D2 internals. In this case, Facilities provides a way for the user to
+ * investigate D2 directory structure (either in Zookeeper or in FileStore or other store
+ * implementation of D2) and few others. In short, Facilities is like an admin tools to D2 internals.
+ *
+ * It does NOT provide ability to serve rest or rpc request. For that ability we have
+ * already had {@see Client} interface.
+ *
  * @author David Hoa
  * @version $Revision: $
  */

@@ -45,8 +45,10 @@ import com.linkedin.util.clock.Time;
 import com.linkedin.util.degrader.CallCompletion;
 import com.linkedin.util.degrader.DegraderControl;
 import com.linkedin.util.degrader.DegraderImpl;
+import com.linkedin.util.degrader.ErrorType;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Random;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -1508,11 +1510,17 @@ public class DegraderLoadBalancerTest
   }
 
   /**
-   * simulates calling clients.
-   * @param milliseconds latency in ms
+   * simulates calling clients
+   * @param milliseconds latency of the call
+   * @param qps qps of traffic per client
+   * @param clients list of clients being called
+   * @param clock
+   * @param timeInterval
+   * @param withError calling client with error that we don't use for load balancing (any generic error)
+   * @param withQualifiedDegraderError calling client with error that we use for load balancing
    */
   private void callClients(long milliseconds, double qps, List<TrackerClient> clients, TestClock clock,
-                           long timeInterval, boolean withError)
+                           long timeInterval, boolean withError, boolean withQualifiedDegraderError)
   {
     LinkedList<CallCompletion> callCompletions = new LinkedList<CallCompletion>();
     int callHowManyTimes = (int)((qps * timeInterval) / 1000);
@@ -1524,12 +1532,26 @@ public class DegraderLoadBalancerTest
         callCompletions.add(cc);
       }
     }
+    Random random = new Random();
     clock.addMs(milliseconds);
+
     for (CallCompletion cc : callCompletions)
     {
       if (withError)
       {
         cc.endCallWithError();
+      }
+      else if (withQualifiedDegraderError)
+      {
+        //choose a random error type
+        if (random.nextBoolean())
+        {
+          cc.endCallWithError(ErrorType.CLOSED_CHANNEL_EXCEPTION);
+        }
+        else
+        {
+          cc.endCallWithError(ErrorType.CONNECT_EXCEPTION);
+        }
       }
       else
       {
@@ -1544,6 +1566,8 @@ public class DegraderLoadBalancerTest
    * simulates calling all the clients with the given QPS according to the given interval.
    * Then verify that the DegraderLoadBalancerState behaves as expected.
    * @param expectedPointsPerClient we'll verify if the points are smaller than the number given here
+   * @param isCalledWithError
+   * @param isCalledWithErrorForLoadBalancing
    */
   private TrackerClient simulateAndTestOneInterval(long timeInterval,
                                                    TestClock clock,
@@ -1554,9 +1578,11 @@ public class DegraderLoadBalancerTest
                                                    Integer expectedPointsPerClient,
                                                    boolean isExpectingDropCallStrategyForNewState,
                                                    double expectedClusterOverrideDropRate,
-                                                   long latency)
+                                                   long latency,
+                                                   boolean isCalledWithError,
+                                                   boolean isCalledWithErrorForLoadBalancing)
   {
-    callClients(latency, qps, clients, clock, timeInterval, false);
+    callClients(latency, qps, clients, clock, timeInterval, isCalledWithError, isCalledWithErrorForLoadBalancing);
     //create any random URIRequest because we just need a URI to be hashed to get the point in hash ring anyway
     if (clients != null && !clients.isEmpty())
     {
@@ -1590,12 +1616,13 @@ public class DegraderLoadBalancerTest
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
     myMap.put(PropertyKeys.LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
-
     //we need to override the min call count to 0 because we're testing a service with low traffic.
     //if we don't do this, the computedDropRate will not change and we will never be able to recover
     //after we degraded the cluster.
     Map<String,String> degraderImplProperties = new HashMap<String, String>();
-    degraderImplProperties.put(PropertyKeys.DEGRADER_OVERRIDE_MIN_CALL_COUNT, "0");
+    degraderImplProperties.put(PropertyKeys.DEGRADER_MIN_CALL_COUNT, "1");
+    degraderImplProperties.put(PropertyKeys.DEGRADER_HIGH_ERROR_RATE, "0.5");
+    degraderImplProperties.put(PropertyKeys.DEGRADER_LOW_ERROR_RATE, "0.2");
     DegraderImpl.Config degraderConfig = DegraderConfigFactory.toDegraderConfig(degraderImplProperties);
     double qps = 0.3;
 
@@ -1604,14 +1631,14 @@ public class DegraderLoadBalancerTest
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
     DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest");
     DegraderLoadBalancerStrategyAdapter strategy = new DegraderLoadBalancerStrategyAdapter(strategyV3);
-    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps);
+    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps, degraderConfig);
 
     //test Strategy V2
     clients = createTrackerClient(1, clock, degraderConfig);
     config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
     DegraderLoadBalancerStrategyV2 strategyV2 = new DegraderLoadBalancerStrategyV2(config, "DegraderLoadBalancerTest");
     strategy = new DegraderLoadBalancerStrategyAdapter(strategyV2);
-    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps);
+    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps, degraderConfig);
   }
 
   @Test(groups = { "small", "back-end" })
@@ -1622,12 +1649,13 @@ public class DegraderLoadBalancerTest
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
     myMap.put(PropertyKeys.LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
-
     //we need to override the min call count to 0 because we're testing a service with low traffic.
     //if we don't do this, the computedDropRate will not change and we will never be able to recover
     //after we degraded the cluster.
     Map<String,String> degraderImplProperties = new HashMap<String, String>();
-    degraderImplProperties.put(PropertyKeys.DEGRADER_OVERRIDE_MIN_CALL_COUNT, "0");
+    degraderImplProperties.put(PropertyKeys.DEGRADER_MIN_CALL_COUNT, "1");
+    degraderImplProperties.put(PropertyKeys.DEGRADER_HIGH_ERROR_RATE, "0.5");
+    degraderImplProperties.put(PropertyKeys.DEGRADER_LOW_ERROR_RATE, "0.2");
     DegraderImpl.Config degraderConfig = DegraderConfigFactory.toDegraderConfig(degraderImplProperties);
     double qps = 0.3;
 
@@ -1636,14 +1664,14 @@ public class DegraderLoadBalancerTest
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
     DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest");
     DegraderLoadBalancerStrategyAdapter strategy = new DegraderLoadBalancerStrategyAdapter(strategyV3);
-    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps);
+    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps, degraderConfig);
 
     //test Strategy V2
-    clients = createTrackerClient(100, clock, degraderConfig);
+    clients = createTrackerClient(10, clock, degraderConfig);
     config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
     DegraderLoadBalancerStrategyV2 strategyV2 = new DegraderLoadBalancerStrategyV2(config, "DegraderLoadBalancerTest");
     strategy = new DegraderLoadBalancerStrategyAdapter(strategyV2);
-    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps);
+    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps, degraderConfig);
   }
 
 
@@ -1655,12 +1683,13 @@ public class DegraderLoadBalancerTest
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
     myMap.put(PropertyKeys.LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
-
     //we need to override the min call count to 0 because we're testing a service with low traffic.
     //if we don't do this, the computedDropRate will not change and we will never be able to recover
     //after we degraded the cluster.
     Map<String,String> degraderImplProperties = new HashMap<String, String>();
-    degraderImplProperties.put(PropertyKeys.DEGRADER_OVERRIDE_MIN_CALL_COUNT, "0");
+    degraderImplProperties.put(PropertyKeys.DEGRADER_MIN_CALL_COUNT, "1");
+    degraderImplProperties.put(PropertyKeys.DEGRADER_HIGH_ERROR_RATE, "0.5");
+    degraderImplProperties.put(PropertyKeys.DEGRADER_LOW_ERROR_RATE, "0.2");
     DegraderImpl.Config degraderConfig = DegraderConfigFactory.toDegraderConfig(degraderImplProperties);
     double qps = 0.3;
 
@@ -1669,14 +1698,14 @@ public class DegraderLoadBalancerTest
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
     DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest");
     DegraderLoadBalancerStrategyAdapter strategy = new DegraderLoadBalancerStrategyAdapter(strategyV3);
-    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps);
+    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps, degraderConfig);
 
     //test Strategy V2
     clients = createTrackerClient(100, clock, degraderConfig);
     config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
     DegraderLoadBalancerStrategyV2 strategyV2 = new DegraderLoadBalancerStrategyV2(config, "DegraderLoadBalancerTest");
     strategy = new DegraderLoadBalancerStrategyAdapter(strategyV2);
-    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps);
+    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps, degraderConfig);
   }
 
 
@@ -1688,21 +1717,25 @@ public class DegraderLoadBalancerTest
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
     myMap.put(PropertyKeys.LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
+    Map<String, String> degraderProperties = new HashMap<String,String>();
+    degraderProperties.put(PropertyKeys.DEGRADER_HIGH_ERROR_RATE, "0.5");
+    degraderProperties.put(PropertyKeys.DEGRADER_LOW_ERROR_RATE, "0.2");
+    DegraderImpl.Config degraderConfig = DegraderConfigFactory.toDegraderConfig(degraderProperties);
     double qps = 5.7;
 
     //test Strategy V3
-    List<TrackerClient> clients = createTrackerClient(100, clock, null);
+    List<TrackerClient> clients = createTrackerClient(1, clock, degraderConfig);
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
     DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest");
     DegraderLoadBalancerStrategyAdapter strategy = new DegraderLoadBalancerStrategyAdapter(strategyV3);
-    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps);
+    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps, degraderConfig);
 
     //test Strategy V2
-    clients = createTrackerClient(100, clock, null);
+    clients = createTrackerClient(1, clock, degraderConfig);
     config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
     DegraderLoadBalancerStrategyV2 strategyV2 = new DegraderLoadBalancerStrategyV2(config, "DegraderLoadBalancerTest");
     strategy = new DegraderLoadBalancerStrategyAdapter(strategyV2);
-    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps);
+    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps, degraderConfig);
   }
 
   @Test(groups = { "small", "back-end" })
@@ -1713,22 +1746,25 @@ public class DegraderLoadBalancerTest
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
     myMap.put(PropertyKeys.LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
-
+    Map<String, String> degraderProperties = new HashMap<String,String>();
+    degraderProperties.put(PropertyKeys.DEGRADER_HIGH_ERROR_RATE, "0.5");
+    degraderProperties.put(PropertyKeys.DEGRADER_LOW_ERROR_RATE, "0.2");
+    DegraderImpl.Config degraderConfig = DegraderConfigFactory.toDegraderConfig(degraderProperties);
     double qps = 6.3;
 
     //test Strategy V3
-    List<TrackerClient> clients = createTrackerClient(10, clock, null);
+    List<TrackerClient> clients = createTrackerClient(10, clock, degraderConfig);
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
     DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest");
     DegraderLoadBalancerStrategyAdapter strategy = new DegraderLoadBalancerStrategyAdapter(strategyV3);
-    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps);
+    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps, degraderConfig);
 
     //test Strategy V2
-    clients = createTrackerClient(100, clock, null);
+    clients = createTrackerClient(10, clock, degraderConfig);
     config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
     DegraderLoadBalancerStrategyV2 strategyV2 = new DegraderLoadBalancerStrategyV2(config, "DegraderLoadBalancerTest");
     strategy = new DegraderLoadBalancerStrategyAdapter(strategyV2);
-    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps);
+    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps, degraderConfig);
   }
 
 
@@ -1740,21 +1776,26 @@ public class DegraderLoadBalancerTest
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
     myMap.put(PropertyKeys.LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
+    myMap.put(PropertyKeys.LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
+    Map<String, String> degraderProperties = new HashMap<String,String>();
+    degraderProperties.put(PropertyKeys.DEGRADER_HIGH_ERROR_RATE, "0.5");
+    degraderProperties.put(PropertyKeys.DEGRADER_LOW_ERROR_RATE, "0.2");
+    DegraderImpl.Config degraderConfig = DegraderConfigFactory.toDegraderConfig(degraderProperties);
     double qps = 7.3;
 
     //test Strategy V3
-    List<TrackerClient> clients = createTrackerClient(100, clock, null);
+    List<TrackerClient> clients = createTrackerClient(100, clock, degraderConfig);
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
     DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest");
     DegraderLoadBalancerStrategyAdapter strategy = new DegraderLoadBalancerStrategyAdapter(strategyV3);
-    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps);
+    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps, degraderConfig);
 
     //test Strategy V2
-    clients = createTrackerClient(100, clock, null);
+    clients = createTrackerClient(100, clock, degraderConfig);
     config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
     DegraderLoadBalancerStrategyV2 strategyV2 = new DegraderLoadBalancerStrategyV2(config, "DegraderLoadBalancerTest");
     strategy = new DegraderLoadBalancerStrategyAdapter(strategyV2);
-    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps);
+    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps, degraderConfig);
   }
 
 
@@ -1766,21 +1807,25 @@ public class DegraderLoadBalancerTest
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
     myMap.put(PropertyKeys.LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
+    Map<String, String> degraderProperties = new HashMap<String,String>();
+    degraderProperties.put(PropertyKeys.DEGRADER_HIGH_ERROR_RATE, "0.5");
+    degraderProperties.put(PropertyKeys.DEGRADER_LOW_ERROR_RATE, "0.2");
+    DegraderImpl.Config degraderConfig = DegraderConfigFactory.toDegraderConfig(degraderProperties);
     double qps = 121;
 
     //test Strategy V3
-    List<TrackerClient> clients = createTrackerClient(100, clock, null);
+    List<TrackerClient> clients = createTrackerClient(1, clock, degraderConfig);
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
     DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest");
     DegraderLoadBalancerStrategyAdapter strategy = new DegraderLoadBalancerStrategyAdapter(strategyV3);
-    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps);
+    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps, degraderConfig);
 
     //test Strategy V2
-    clients = createTrackerClient(100, clock, null);
+    clients = createTrackerClient(1, clock, degraderConfig);
     config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
     DegraderLoadBalancerStrategyV2 strategyV2 = new DegraderLoadBalancerStrategyV2(config, "DegraderLoadBalancerTest");
     strategy = new DegraderLoadBalancerStrategyAdapter(strategyV2);
-    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps);
+    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps, degraderConfig);
   }
 
   @Test(groups = { "small", "back-end" })
@@ -1791,22 +1836,25 @@ public class DegraderLoadBalancerTest
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
     myMap.put(PropertyKeys.LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
-
+    Map<String, String> degraderProperties = new HashMap<String,String>();
+    degraderProperties.put(PropertyKeys.DEGRADER_HIGH_ERROR_RATE, "0.5");
+    degraderProperties.put(PropertyKeys.DEGRADER_LOW_ERROR_RATE, "0.2");
+    DegraderImpl.Config degraderConfig = DegraderConfigFactory.toDegraderConfig(degraderProperties);
     double qps = 93;
 
     //test Strategy V3
-    List<TrackerClient> clients = createTrackerClient(10, clock, null);
+    List<TrackerClient> clients = createTrackerClient(10, clock, degraderConfig);
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
     DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest");
     DegraderLoadBalancerStrategyAdapter strategy = new DegraderLoadBalancerStrategyAdapter(strategyV3);
-    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps);
+    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps, degraderConfig);
 
     //test Strategy V2
-    clients = createTrackerClient(100, clock, null);
+    clients = createTrackerClient(10, clock, degraderConfig);
     config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
     DegraderLoadBalancerStrategyV2 strategyV2 = new DegraderLoadBalancerStrategyV2(config, "DegraderLoadBalancerTest");
     strategy = new DegraderLoadBalancerStrategyAdapter(strategyV2);
-    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps);
+    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps, degraderConfig);
   }
 
 
@@ -1818,28 +1866,33 @@ public class DegraderLoadBalancerTest
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
     myMap.put(PropertyKeys.LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
+    Map<String, String> degraderProperties = new HashMap<String,String>();
+    degraderProperties.put(PropertyKeys.DEGRADER_HIGH_ERROR_RATE, "0.5");
+    degraderProperties.put(PropertyKeys.DEGRADER_LOW_ERROR_RATE, "0.2");
+    DegraderImpl.Config degraderConfig = DegraderConfigFactory.toDegraderConfig(degraderProperties);;
     double qps = 88;
 
     //test Strategy V3
-    List<TrackerClient> clients = createTrackerClient(100, clock, null);
+    List<TrackerClient> clients = createTrackerClient(100, clock, degraderConfig);
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
     DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest");
     DegraderLoadBalancerStrategyAdapter strategy = new DegraderLoadBalancerStrategyAdapter(strategyV3);
-    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps);
+    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps, degraderConfig);
 
     //test Strategy V2
-    clients = createTrackerClient(100, clock, null);
+    clients = createTrackerClient(100, clock, degraderConfig);
     config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
     DegraderLoadBalancerStrategyV2 strategyV2 = new DegraderLoadBalancerStrategyV2(config, "DegraderLoadBalancerTest");
     strategy = new DegraderLoadBalancerStrategyAdapter(strategyV2);
-    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps);
+    testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps, degraderConfig);
   }
 
   private void testDegraderLoadBalancerSimulator(DegraderLoadBalancerStrategyAdapter adapter,
                                                  TestClock clock,
                                                  long timeInterval,
                                                  List<TrackerClient> clients,
-                                                 double qps)
+                                                 double qps,
+                                                 DegraderImpl.Config degraderConfig)
   {
 
     long clusterGenerationId = 1;
@@ -1849,36 +1902,36 @@ public class DegraderLoadBalancerTest
     //1st round we use LOAD_BALANCING strategy. Since we have a high latency we will decrease the number of points
     //from 100 to 80 (transmissionRate * points per weight).
     TrackerClient resultTC = simulateAndTestOneInterval(timeInterval, clock, qps, clients, adapter, clusterGenerationId,
-                                                        80, true, 0.0, 4000);
+                                                        80, true, 0.0, 4000, false, false);
     assertNotNull(resultTC);
 
     //2nd round drop rate should be increased by DegraderLoadBalancerStrategyConfig.DEFAULT_GLOBAL_STEP_UP
     overrideDropRate += DegraderLoadBalancerStrategyConfig.DEFAULT_GLOBAL_STEP_UP;
     resultTC = simulateAndTestOneInterval(timeInterval, clock, qps, clients, adapter, clusterGenerationId,
                                           80, false,
-                                          overrideDropRate, 4000);
+                                          overrideDropRate, 4000, false, false);
 
     //3rd round. We alternate back to LOAD_BALANCING strategy and we drop the points even more
     resultTC = simulateAndTestOneInterval(timeInterval, clock, qps, clients, adapter, clusterGenerationId,
                                           39, true,
-                                          overrideDropRate, 4000);
+                                          overrideDropRate, 4000, false, false);
 
     //4th round. The drop rate should be increased again like 2nd round
     overrideDropRate += DegraderLoadBalancerStrategyConfig.DEFAULT_GLOBAL_STEP_UP;
     resultTC = simulateAndTestOneInterval(timeInterval, clock, qps, clients, adapter, clusterGenerationId,
                                           39, false,
-                                          overrideDropRate, 4000);
+                                          overrideDropRate, 4000, false, false);
 
     //5th round. Alternate to changing hash ring again.
     resultTC = simulateAndTestOneInterval(timeInterval, clock, qps, clients, adapter, clusterGenerationId,
                                               1, true,
-                                              overrideDropRate, 4000);
+                                              overrideDropRate, 4000, false, false);
 
     //6th round. Same as 5th round, we'll increase the drop rate
     overrideDropRate += DegraderLoadBalancerStrategyConfig.DEFAULT_GLOBAL_STEP_UP;
     resultTC = simulateAndTestOneInterval(timeInterval, clock, qps, clients, adapter, clusterGenerationId,
                                               1, false,
-                                              overrideDropRate, 4000);
+                                              overrideDropRate, 4000, false, false);
 
     //7th round. The # of point in hashring is at the minimum so we can't decrease it further. At this point the client
     //is in recovery mode. But since we can't change the hashring anymore, we'll always in CALL_DROPPING mode
@@ -1886,20 +1939,20 @@ public class DegraderLoadBalancerTest
     overrideDropRate += DegraderLoadBalancerStrategyConfig.DEFAULT_GLOBAL_STEP_UP;
     resultTC = simulateAndTestOneInterval(timeInterval, clock, qps, clients, adapter, clusterGenerationId,
                                               1, false,
-                                              overrideDropRate, 4000);
+                                              overrideDropRate, 4000, false, false);
 
     //8th round. We'll increase the drop rate to the max.
     overrideDropRate += DegraderLoadBalancerStrategyConfig.DEFAULT_GLOBAL_STEP_UP;
     resultTC = simulateAndTestOneInterval(timeInterval, clock, qps, clients, adapter, clusterGenerationId,
                                               1, false,
-                                              overrideDropRate, 4000);
+                                              overrideDropRate, 4000, false, false);
 
     //9th round, now we'll simulate as if there still a call even though we drop 100% of all request to get
     //tracker client. The assumption is there's some thread that still holds tracker client and we want
     //to make sure we can handle the request and we can't degrade the cluster even further.
     resultTC = simulateAndTestOneInterval(timeInterval, clock, qps, clients, adapter, clusterGenerationId,
                                                   1, false,
-                                                  overrideDropRate, 4000);
+                                                  overrideDropRate, 4000, false, false);
 
     //10th round, now we'll simulate as if there's no call because we dropped all request
     //even though we are in LOAD_BALANCING mode and this tracker client is in recovery mode and there's no call
@@ -1908,13 +1961,13 @@ public class DegraderLoadBalancerTest
     overrideDropRate -= DegraderLoadBalancerStrategyConfig.DEFAULT_GLOBAL_STEP_DOWN;
     resultTC = simulateAndTestOneInterval(timeInterval, clock, 0.0, clients, adapter, clusterGenerationId,
                                                       1, false,
-                                                      overrideDropRate, 4000);
+                                                      overrideDropRate, 4000, false, false);
 
     //11th round, this time we'll simulate the latency is now 1000 ms (so it's within low and high watermark). Drop rate
     //should stay the same and everything else should stay the same
     resultTC = simulateAndTestOneInterval(timeInterval, clock, qps, clients, adapter, clusterGenerationId,
                                                       1, false,
-                                                      overrideDropRate, 1000);
+                                                      overrideDropRate, 1000, false, false);
 
     //we'll simulate the client dying one by one until all the clients are gone
     int numberOfClients = clients.size();
@@ -1935,7 +1988,7 @@ public class DegraderLoadBalancerTest
       removedUris.add(removed.getUri());
       clusterGenerationId++;
       resultTC = simulateAndTestOneInterval(timeInterval, clock, qps, clients, adapter, clusterGenerationId,
-                                            1, isLoadBalancingStrategyTurn, overrideDropRate, 1000);
+                                            1, isLoadBalancingStrategyTurn, overrideDropRate, 1000, false, false);
       if (i == 1)
       {
         assertNull(resultTC);
@@ -1964,13 +2017,13 @@ public class DegraderLoadBalancerTest
       //in the hash ring for this client
       TrackerClient newClient = new TrackerClient(added.getUri(),
                                                   getDefaultPartitionData(1d),
-                                                  new TestLoadBalancerClient(added.getUri()), clock, null);
+                                                  new TestLoadBalancerClient(added.getUri()), clock, degraderConfig);
       clients.add(newClient);
       uris.add(added.getUri());
       removedUris.remove(added.getUri());
       clusterGenerationId++;
       resultTC = simulateAndTestOneInterval(timeInterval, clock, qps, clients, adapter, clusterGenerationId,
-                                            100, isLoadBalancingStrategyTurn, overrideDropRate, 1000);
+                                            100, isLoadBalancingStrategyTurn, overrideDropRate, 1000, false, false);
       if (resultTC != null)
       {
         assertTrue(uris.contains(resultTC.getUri()));
@@ -1988,16 +2041,65 @@ public class DegraderLoadBalancerTest
     {
       resultTC = simulateAndTestOneInterval(timeInterval, clock, qps, clients, adapter, clusterGenerationId,
                                                                       100, false,
-                                                                      overrideDropRate, 300);
+                                                                      overrideDropRate, 300, false, false);
     }
 
     //we should have recovered fully by this time
     overrideDropRate = 0.0;
     resultTC = simulateAndTestOneInterval(timeInterval, clock, qps, clients, adapter, clusterGenerationId,
                                                               100, false,
-                                                              overrideDropRate, 300);
+                                                              overrideDropRate, 300, false, false);
 
     assertNotNull(resultTC);
+
+    clusterGenerationId++;
+
+    //simulate the increase of certain error (connect exception, closedChannelException) rate will cause degradation.
+    simulateAndTestOneInterval(timeInterval, clock, qps, clients, adapter, clusterGenerationId,
+                                                                    80, true, 0.0, 300, false, true);
+
+    //switching to call dropping strategy
+    simulateAndTestOneInterval(timeInterval, clock, qps, clients, adapter, clusterGenerationId,
+                                                            80, false, 0.0, 300, false, true);
+
+    //continue the degradation
+    simulateAndTestOneInterval(timeInterval, clock, qps, clients, adapter, clusterGenerationId,
+                                                            39, true, 0.0, 300, false, true);
+
+    simulateAndTestOneInterval(timeInterval, clock, qps, clients, adapter, clusterGenerationId,
+                                                            39, false, 0.0, 300, false, true);
+
+    simulateAndTestOneInterval(timeInterval, clock, qps, clients, adapter, clusterGenerationId,
+                                                            1, true, 0.0, 300, false, true);
+
+    //now let's remove all the error and see how the cluster recover but we have to wait until next round because
+    //this round is CALL_DROP strategy
+    simulateAndTestOneInterval(timeInterval, clock, qps, clients, adapter, clusterGenerationId,
+                                                                1, false, 0.0, 300, false, false);
+
+    simulateAndTestOneInterval(timeInterval, clock, qps, clients, adapter, clusterGenerationId,
+                                                                39, true, 0.0, 300, false, false);
+
+    simulateAndTestOneInterval(timeInterval, clock, qps, clients, adapter, clusterGenerationId,
+                                                                39, false, 0.0, 300, false, false);
+
+    simulateAndTestOneInterval(timeInterval, clock, qps, clients, adapter, clusterGenerationId,
+                                                                80, true, 0.0, 300, false, false);
+
+    simulateAndTestOneInterval(timeInterval, clock, qps, clients, adapter, clusterGenerationId,
+                                                                80, false, 0.0, 300, false, false);
+
+    simulateAndTestOneInterval(timeInterval, clock, qps, clients, adapter, clusterGenerationId,
+                                                                100, true, 0.0, 300, false, false);
+
+    //make sure if we have error that is not from CONNECT_EXCEPTION or CLOSED_CHANNEL_EXCEPTION we don't degrade
+    simulateAndTestOneInterval(timeInterval, clock, qps, clients, adapter, clusterGenerationId,
+                                                                100, false, 0.0, 300, true, false);
+
+    //since there's no change in hash ring due to error NOT of CONNECT_EXCEPTION or CLOSED_CHANNEL_EXCEPTION,
+    //the strategy won't change to CALL_DROPPING
+    simulateAndTestOneInterval(timeInterval, clock, qps, clients, adapter, clusterGenerationId,
+                                                                100, false, 0.0, 300, true, false);
   }
 
   @Test(groups = { "small", "back-end" })

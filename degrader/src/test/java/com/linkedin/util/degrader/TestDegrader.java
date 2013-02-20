@@ -163,7 +163,7 @@ public class TestDegrader
     for (int i = 0; i < cc.length; ++i)
     {
       if (isError)
-        cc[i].endCallWithError();
+        cc[i].endCallWithError(ErrorType.CLOSED_CHANNEL_EXCEPTION);
       else
         cc[i].endCall();
     }

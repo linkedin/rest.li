@@ -20,6 +20,7 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.LoadBalancerClient;
 import com.linkedin.d2.balancer.properties.PartitionData;
+import com.linkedin.d2.balancer.util.LoadBalancerUtil;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestException;
@@ -42,6 +43,8 @@ import com.linkedin.util.degrader.DegraderControl;
 import com.linkedin.util.degrader.DegraderImpl;
 import com.linkedin.util.degrader.DegraderImpl.Config;
 import com.linkedin.util.degrader.ErrorType;
+import java.net.ConnectException;
+import java.nio.channels.ClosedChannelException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -196,22 +199,18 @@ public class TrackerClient implements LoadBalancerClient
         Throwable throwable = response.getError();
         if (throwable instanceof RemoteInvocationException)
         {
-          _callCompletion.endCallWithError(ErrorType.REMOTE_INVOCATION_ERROR);
-        }
-        else if (throwable instanceof RestException)
-        {
-          RestException exception = (RestException) throwable;
-          if (exception.getResponse() != null && RestStatus.isClientError(exception.getResponse().getStatus()))
+          Throwable originalThrowable = LoadBalancerUtil.findOriginalThrowable(throwable);
+          if (originalThrowable instanceof ConnectException)
           {
-            _callCompletion.endCallWithError(ErrorType.HTTP_400_ERROR);
+            _callCompletion.endCallWithError(ErrorType.CONNECT_EXCEPTION);
           }
-          else if (exception.getResponse() != null && RestStatus.isServerError(exception.getResponse().getStatus()))
+          else if (originalThrowable instanceof ClosedChannelException)
           {
-            _callCompletion.endCallWithError(ErrorType.HTTP_500_ERROR);
+            _callCompletion.endCallWithError(ErrorType.CLOSED_CHANNEL_EXCEPTION);
           }
           else
           {
-            _callCompletion.endCallWithError(ErrorType.OTHER_REST_EXCEPTION_ERROR);
+            _callCompletion.endCallWithError(ErrorType.REMOTE_INVOCATION_EXCEPTION);
           }
         }
         else

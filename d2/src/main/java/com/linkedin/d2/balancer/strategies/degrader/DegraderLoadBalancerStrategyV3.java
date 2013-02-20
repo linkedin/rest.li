@@ -497,7 +497,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                         newCurrentAvgClusterLatency,
                                         newRecoveryMap,
                                         oldState.getServiceName());
-      _log.info("Strategy updated: partitionId= " + partitionId + ", newState=" + newState + ", config=" + config);
+      _log.warn("Strategy updated: partitionId= " + partitionId + ", newState=" + newState + ", config=" + config);
     }
     else
     {
@@ -554,7 +554,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                             oldRecoveryMap,
                                             oldState.getServiceName());
 
-      _log.info( "Strategy updated: partitionId=" + partitionId + ", newState=" + newState + ", config=" + config);
+      _log.warn( "Strategy updated: partitionId=" + partitionId + ", newState=" + newState + ", config=" + config);
 
       points = oldPointsMap;
     }
