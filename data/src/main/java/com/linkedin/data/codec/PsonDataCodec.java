@@ -61,7 +61,6 @@ import java.util.Map;
 public class PsonDataCodec implements DataCodec
 {
   private static final byte[] HEADER = { 0x23, 0x21, 0x50, 0x53, 0x4f, 0x4e, 0x31, 0x0a };  // #!PSON1\n
-  private static final String UTF_8 = "UTF-8";
 
   private boolean _testMode;
   private Options _options = new Options();
@@ -135,7 +134,7 @@ public class PsonDataCodec implements DataCodec
         (_bufferSize != null ? _bufferSize.hashCode() : 0);
     }
 
-    private boolean _encodeStringLength = false;
+    private boolean _encodeStringLength = true;
     private boolean _encodeCollectionCount = false;
     private Integer _bufferSize = null;
   }
@@ -304,7 +303,8 @@ public class PsonDataCodec implements DataCodec
   final static byte PSON_BINARY = 6;
   final static byte PSON_STRING_EMPTY = 8;
   final static byte PSON_STRING = 9;
-  final static byte PSON_STRING_WITH_LENGTH = 10;
+  final static byte PSON_STRING_WITH_LENGTH_4 = 10;
+  final static byte PSON_STRING_WITH_LENGTH_2 = 11;
   final static byte PSON_ARRAY_EMPTY = 16;
   final static byte PSON_ARRAY = 17;
   final static byte PSON_ARRAY_WITH_COUNT = 18;
@@ -312,6 +312,8 @@ public class PsonDataCodec implements DataCodec
   final static byte PSON_OBJECT = 33;
   final static byte PSON_OBJECT_WITH_COUNT = 34;
   final static byte PSON_LAST = (byte) 0xff;
+
+  private final static int MAX_STRING_WITH_LENGTH_2 = Short.MAX_VALUE / 2 - 1;
 
   protected class PsonSerializer implements Data.TraverseCallback
   {
@@ -385,7 +387,6 @@ public class PsonDataCodec implements DataCodec
       }
       else if (_encodeStringLength)
       {
-        _buffer.put(PSON_STRING_WITH_LENGTH);
         putStringWithLength(value);
       }
       else
@@ -488,13 +489,29 @@ public class PsonDataCodec implements DataCodec
 
     private final void putStringWithLength(String s) throws CharacterCodingException
     {
-      BufferChain.Position startPos = _buffer.position();
-      _buffer.putInt(0);
-      _buffer.putUtf8CString(s);
-      BufferChain.Position endPos = _buffer.position();
-      _buffer.position(startPos);
-      _buffer.putInt(_buffer.offset(startPos, endPos) - 4);
-      _buffer.position(endPos);
+      int stringLength = s.length();
+      if (false && stringLength <= MAX_STRING_WITH_LENGTH_2)
+      {
+        _buffer.put(PSON_STRING_WITH_LENGTH_2);
+        BufferChain.Position startPos = _buffer.position();
+        _buffer.putShort((short) 0);
+        _buffer.putUtf8CString(s);
+        BufferChain.Position endPos = _buffer.position();
+        _buffer.position(startPos);
+        _buffer.putShort((short) (_buffer.offset(startPos, endPos) - 2));
+        _buffer.position(endPos);
+      }
+      else
+      {
+        _buffer.put(PSON_STRING_WITH_LENGTH_4);
+        BufferChain.Position startPos = _buffer.position();
+        _buffer.putInt(0);
+        _buffer.putUtf8CString(s);
+        BufferChain.Position endPos = _buffer.position();
+        _buffer.position(startPos);
+        _buffer.putInt(_buffer.offset(startPos, endPos) - 4);
+        _buffer.position(endPos);
+      }
     }
 
     private void serialize(DataComplex map) throws IOException
@@ -678,8 +695,11 @@ public class PsonDataCodec implements DataCodec
         case PSON_STRING:
           o = _buffer.getUtf8CString();
           break;
-        case PSON_STRING_WITH_LENGTH:
-          o = getStringWithLength();
+        case PSON_STRING_WITH_LENGTH_4:
+          o = getStringWithLength(_buffer.getInt());
+          break;
+        case PSON_STRING_WITH_LENGTH_2:
+          o = getStringWithLength(_buffer.getShort());
           break;
         case PSON_BOOLEAN:
           byte b = _buffer.get();
@@ -706,9 +726,8 @@ public class PsonDataCodec implements DataCodec
       return o;
     }
 
-    String getStringWithLength() throws IOException
+    private String getStringWithLength(int length) throws IOException
     {
-      int length = _buffer.getInt();
       if (length == 0)
       {
         throw new DataDecodingException("String size should not be 0");

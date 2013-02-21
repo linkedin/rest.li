@@ -35,7 +35,7 @@ public class TestRestClientRequestBuilder
 
   private static final DataMap ENTITY_BODY = new DataMap();
   private static final String  JSON_ENTITY_BODY = "{\"testFieldName\":\"testValue\",\"testInteger\":1}";
-  private static final String  PSON_ENTITY_BODY = "#!PSON1\n!\u0081testFieldName\u0000\ttestValue\u0000\u0083testInteger\u0000\u0002\u0001\u0000\u0000\u0000\u0080";
+  private static final String  PSON_ENTITY_BODY = "#!PSON1\n!\u0081testFieldName\u0000\n\n\u0000\u0000\u0000testValue\u0000\u0083testInteger\u0000\u0002\u0001\u0000\u0000\u0000\u0080";
   private static final String  CONTENT_TYPE_HEADER = "Content-Type";
   private static final String  ACCEPT_TYPE_HEADER = "Accept";
 
@@ -345,7 +345,7 @@ public class TestRestClientRequestBuilder
     EasyMock.expect(mockRequest.getUri()).andReturn(new URI("test"));
     EasyMock.expect(mockRequest.getMethod()).andReturn(method).once();
     EasyMock.expect(mockRecordTemplate.data()).andReturn(entityBody).once();
-    EasyMock.expect(mockRequest.getHeaders()).andReturn(Collections.emptyMap()).once();
+    EasyMock.expect(mockRequest.getHeaders()).andReturn(Collections.<String, String>emptyMap()).once();
 
     // sendRequestImpl
 

@@ -54,6 +54,7 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import static com.linkedin.data.TestUtil.asMap;
+import static com.linkedin.data.TestUtil.assertEquivalent;
 import static com.linkedin.data.TestUtil.dataMapFromString;
 import static org.testng.Assert.*;
 
@@ -276,6 +277,66 @@ public class TestData
       map1.put("map11", map11);
       map1.put("list11", list11);
       inputs.put("Map with empty map and list", map1);
+    }
+
+    {
+      DataMap dataMap = new DataMap();
+      dataMap.put("test", "Fourscore and seven years ago our fathers brought forth on this continent " +
+                          "a new nation, conceived in liberty and dedicated to the proposition that all men are created " +
+                          "equal. Now we are engaged in a great civil war, testing whether that nation or any nation so " +
+                          "conceived and so dedicated can long endure. We are met on a great battlefield of that war. " +
+                          "We have come to dedicate a portion of that field as a final resting-place for those who here " +
+                          "gave their lives that that nation might live. It is altogether fitting and proper that we " +
+                          "should do this. But in a larger sense, we cannot dedicate, we cannot consecrate, we cannot " +
+                          "hallow this ground. The brave men, living and dead who struggled here have consecrated it " +
+                          "far above our poor power to add or detract. The world will little note nor long remember " +
+                          "what we say here, but it can never forget what they did here. It is for us the living rather " +
+                          "to be dedicated here to the unfinished work which they who fought here have thus far so " +
+                          "nobly advanced. It is rather for us to be here dedicated to the great task remaining before " +
+                          "us--that from these honored dead we take increased devotion to that cause for which they " +
+                          "gave the last full measure of devotion--that we here highly resolve that these dead shall " +
+                          "not have died in vain, that this nation under God shall have a new birth of freedom, and " +
+                          "that government of the people, by the people, for the people shall not perish from the earth."
+      );
+      inputs.put("Map of long string", dataMap);
+    }
+
+    {
+      DataMap mapOfStrings = new DataMap();
+
+      ArrayList<Integer> lengths = new ArrayList<Integer>();
+
+      for (int stringLength = 0; stringLength < 1024; stringLength += 113)
+      {
+        lengths.add(stringLength);
+      }
+      for (int stringLength = 1024; stringLength < (Short.MAX_VALUE * 4); stringLength *= 2)
+      {
+        lengths.add(stringLength);
+      }
+
+      for (int stringLength : lengths)
+      {
+        DataMap dataMap = new DataMap();
+
+        StringBuilder stringBuilder = new StringBuilder(stringLength);
+        char character = 32;
+        for (int pos = 0; pos < stringLength; pos++)
+        {
+          if (character > 16384) character = 32;
+          stringBuilder.append(character);
+          character += 3;
+        }
+        // out.println("" + stringLength + " : " + (int) character);
+        String key = "test" + stringLength;
+        String value = stringBuilder.toString();
+        dataMap.put(key, value);
+        mapOfStrings.put(key, value);
+
+        inputs.put("Map of " + stringLength + " character string", dataMap);
+      }
+
+      inputs.put("Map of variable length strings", mapOfStrings);
     }
   }
 
@@ -1085,7 +1146,8 @@ public class TestData
     DataMap map2 = codec.bytesToMap(bytes);
     StringBuilder sb2 = new StringBuilder();
     Data.dump("map", map2, "", sb2);
-    assertEquals(sb2.toString(), sb1.toString());
+    if (debug) out.print(sb2);
+    assertEquivalent(map2, map);
 
     // test writeMap
 
@@ -1100,8 +1162,10 @@ public class TestData
     DataMap map3 = codec.readMap(inputStream);
     StringBuilder sb3 = new StringBuilder();
     Data.dump("map", map3, "", sb3);
+    if (debug) out.print(sb3);
 
-    assertEquals(sb3.toString(), sb1.toString());
+    assertEquivalent(map3, map);
+    assertEquivalent(map3, map2);
 
     if (codec instanceof TextDataCodec)
     {
@@ -1389,29 +1453,37 @@ public class TestData
   @Test
   public void testPsonDataCodec() throws IOException
   {
-    PsonDataCodec codec = new PsonDataCodec();
-    PsonDataCodec.Options options[] =
-      {
-        new PsonDataCodec.Options().setEncodeCollectionCount(false).setEncodeStringLength(false),
-        new PsonDataCodec.Options().setEncodeCollectionCount(false).setEncodeStringLength(true),
-        new PsonDataCodec.Options().setEncodeCollectionCount(true).setEncodeStringLength(false),
-        new PsonDataCodec.Options().setEncodeCollectionCount(true).setEncodeStringLength(true),
-      };
+    int[] bufferSizesToTest = { 17, 19, 23, 29, 31, 37, 41, 43, 47, 0 };
+    Boolean[] booleanValues = new Boolean[] { Boolean.TRUE, Boolean.FALSE };
+
+    PsonDataCodec codec = new PsonDataCodec(true);
 
     PsonDataCodec.Options lastOption = null;
-    for (PsonDataCodec.Options option : options)
+    for (int bufferSize : bufferSizesToTest)
     {
-      codec.setOptions(option);
-      testDataCodec(codec);
-
-      if (lastOption != null)
+      for (boolean encodeCollectionCount : booleanValues)
       {
-        assertFalse(option.equals(lastOption));
-        assertNotSame(option.hashCode(), lastOption.hashCode());
-        assertFalse(option.toString().equals(lastOption.toString()));
-      }
+        for (boolean encodeStringLength : booleanValues)
+        {
+          PsonDataCodec.Options option = new PsonDataCodec.Options();
+          option.setEncodeCollectionCount(encodeCollectionCount).setEncodeStringLength(encodeStringLength);
+          if (bufferSize != 0)
+          {
+            option.setBufferSize(bufferSize);
+          }
 
-      lastOption = option;
+          codec.setOptions(option);
+          testDataCodec(codec);
+
+          if (lastOption != null)
+          {
+            assertFalse(option.equals(lastOption));
+            assertNotSame(option.hashCode(), lastOption.hashCode());
+            assertFalse(option.toString().equals(lastOption.toString()));
+          }
+          lastOption = option;
+        }
+      }
     }
   }
 

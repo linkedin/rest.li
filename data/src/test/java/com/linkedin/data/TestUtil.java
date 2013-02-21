@@ -314,5 +314,93 @@ public class TestUtil
     }
   }
 
+  public static void assertEquivalent(Object actual, Object expected)
+  {
+    assertTrue(equivalent(actual, expected),
+               "Expected :" + expected + "\n" +
+               "Actual   :" + actual + "\n");
+  }
+
+  public static boolean equivalent(Object o1, Object o2)
+  {
+    assert(o1 != null);
+    assert(o2 != null);
+
+    boolean result = true;
+
+    if (o1 instanceof DataMap && o2 instanceof DataMap)
+    {
+      DataMap map1 = (DataMap) o1;
+      DataMap map2 = (DataMap) o2;
+      if (map1.size() != map2.size())
+      {
+        result = false;
+      }
+      else
+      {
+        for (Map.Entry<String, Object> entry : map1.entrySet())
+        {
+          String k1 = entry.getKey();
+          Object v1 = entry.getValue();
+          Object v2 = map2.get(k1);
+          if (v2 != null)
+          {
+            if (equivalent(v1, v2) == false)
+            {
+              result = false;
+              break;
+            }
+          }
+        }
+      }
+    }
+    else if (o1 instanceof DataList && o2 instanceof DataList)
+    {
+      DataList list1 = (DataList) o1;
+      DataList list2 = (DataList) o2;
+      if (list1.size() != list2.size())
+      {
+        result = false;
+      }
+      else
+      {
+        for (int i = 0; i < list1.size(); i++)
+        {
+          if (equivalent(list1.get(i), list2.get(i)) == false)
+          {
+            result = false;
+            break;
+          }
+        }
+      }
+    }
+    else
+    {
+      Object upgraded1 = upgradeLowerValueToUpperClassIfValueIsLowerClass(o1, o2.getClass());
+      Object upgraded2 = upgradeLowerValueToUpperClassIfValueIsLowerClass(o2, o1.getClass());
+      result = upgraded1.equals(upgraded2);
+    }
+    return result;
+  }
+
+  private static Object upgradeLowerValueToUpperClassIfValueIsLowerClass(Object lower, Class<?> upperClass)
+  {
+    Object result;
+    Class<?> lowerClass = lower.getClass();
+    if (upperClass == lowerClass)
+      result = lower;
+    else if (upperClass == ByteString.class && lowerClass == String.class)
+      result = ByteString.copyAvroString((String) lower, true);
+    else if (upperClass == Double.class && (lowerClass == Integer.class || lowerClass == Long.class || lowerClass == Float.class))
+      result = ((Number) lower).doubleValue();
+    else if (upperClass == Float.class && (lowerClass == Integer.class || lowerClass == Long.class))
+      result = ((Number) lower).floatValue();
+    else if (upperClass == Long.class && (lowerClass == Integer.class))
+      result = ((Number) lower).longValue();
+    else
+      result = lower;
+    return result;
+  }
+
   private static final Pattern LOCATION_REGEX = Pattern.compile("^\\d+,\\d+: .*$");
 }
