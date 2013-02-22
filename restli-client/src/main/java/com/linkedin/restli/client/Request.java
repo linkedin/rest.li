@@ -22,6 +22,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
+
+import org.apache.commons.lang.StringUtils;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.PathSpec;
@@ -45,6 +48,8 @@ import com.linkedin.restli.internal.common.URLEscaper.Escaping;
  */
 public class Request<T>
 {
+  private static final Pattern SLASH_PATTERN = Pattern.compile("/");
+
   private final URI                    _uri;
   private final ResourceMethod         _method;
   private final RecordTemplate         _input;
@@ -106,7 +111,7 @@ public class Request<T>
   public List<String> getResourcePath()
   {
     List<String> resourcePath = new ArrayList<String>(1);
-    String[] pathParts = _uri.getRawPath().split("/");
+    String[] pathParts = SLASH_PATTERN.split(_uri.getRawPath());
     for(int i = 0; i < pathParts.length; i += 2)
     {
       resourcePath.add(URLEscaper.unescape(pathParts[i], Escaping.URL_ESCAPING));
@@ -155,39 +160,6 @@ public class Request<T>
     return _method.getHttpMethod().isIdempotent();
   }
 
-  @Override
-  public boolean equals(Object obj)
-  {
-    if (this == obj)
-    {
-      return true;
-    }
-
-    if (obj == null || getClass() != obj.getClass())
-    {
-      return false;
-    }
-
-    Request<?> request = (Request<?>) obj;
-
-    if (_input != null ? !_input.equals(request._input) : request._input != null)
-    {
-      return false;
-    }
-
-    if (_method != request._method)
-    {
-      return false;
-    }
-
-    if (!_decoder.equals(request._decoder))
-    {
-      return false;
-    }
-
-    return _uri.equals(request._uri);
-  }
-
   public DataMap getQueryParams()
   {
     return _queryParams;
@@ -219,19 +191,56 @@ public class Request<T>
   }
 
   @Override
+  public boolean equals(Object obj)
+  {
+    if (this == obj)
+    {
+      return true;
+    }
+
+    if (obj == null || getClass() != obj.getClass())
+    {
+      return false;
+    }
+
+    Request<?> request = (Request<?>) obj;
+
+    if (_headers != null? !_headers.equals(request._headers) : request._headers != null)
+    {
+      return false;
+    }
+    if (_input != null? !_input.equals(request._input) : request._input != null)
+    {
+      return false;
+    }
+    if (_method != request._method)
+    {
+      return false;
+    }
+
+    return _uri.equals(request._uri);
+  }
+
+  @Override
   public int hashCode()
   {
     int result = _uri.hashCode();
     result = 31 * result + _method.hashCode();
-    result = 31 * result + (_input != null ? _input.hashCode() : 0);
-    result = 31 * result + _decoder.hashCode();
+    result = 31 * result + (_input != null? _input.hashCode() : 0);
+    result = 31 * result + (_headers != null? _headers.hashCode() : 0);
     return result;
   }
 
   @Override
   public String toString()
   {
-    return "RequestImpl{" + "_input=" + _input + ", _uri=" + _uri + ", _method="
-        + _method + ", _decoderEntityClass=" + _decoder.getEntityClass() + '}';
+    final StringBuilder sb = new StringBuilder();
+    sb.append(getClass().getName());
+    sb.append("{_headers=").append(_headers);
+    sb.append(", _input=").append(_input);
+    sb.append(", _method=").append(_method);
+    sb.append(", _uri=").append(StringUtils.abbreviate(_uri.toString(), 256));
+    sb.append('}');
+    return sb.toString();
   }
 }

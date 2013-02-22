@@ -324,4 +324,28 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
     return _resourceSpec.getKeyClass() == ComplexResourceKey.class;
   }
 
+  @Override
+  public String toString()
+  {
+    final StringBuilder sb = new StringBuilder();
+    sb.append(getClass().getName());
+    sb.append("{_assocKey=").append(_assocKey);
+    sb.append(", _baseURITemplate='").append(_baseURITemplate).append('\'');
+    sb.append(", _headers=").append(_headers);
+    sb.append(", _pathKeys=").append(_pathKeys);
+    sb.append(", _resourceSpec=").append(_resourceSpec);
+    sb.append(", _queryParams=").append(getBoundedString(_queryParams, 32));
+    sb.append('}');
+    return sb.toString();
+  }
+
+  private static String getBoundedString(Map<?, ?> map, int maxEntryCount)
+  {
+    if (map == null || map.size() < maxEntryCount)
+    {
+      return String.valueOf(map);
+    }
+
+    return new ArrayList<Map.Entry<?, ?>>(map.entrySet()).subList(0, maxEntryCount).toString() + " (truncated)";
+  }
 }
