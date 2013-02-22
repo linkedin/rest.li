@@ -3,6 +3,10 @@
 (RB=138254)
 Add pdsc file and validator for EmptyRecord.
 
+(RB=138178)
+Workaround bug in ScheduledThreadPoolExecutor that caused
+delays when calling HttpClientFactory.shutdown().
+
 1.8.4
 -----
 (RB=137488)
