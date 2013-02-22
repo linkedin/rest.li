@@ -1,6 +1,7 @@
 1.8.5
 -----
-
+(RB=138254)
+Add pdsc file and validator for EmptyRecord.
 
 1.8.4
 -----
