@@ -19,7 +19,6 @@ import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.EmptyRecord;
-import com.linkedin.restli.common.Link;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
@@ -40,13 +39,16 @@ import java.util.List;
  * @version $Revision: $
  */
 
-public class TestGreetingsClientAcceptTypes extends RestLiIntegrationTest
+public class TestGreetingClientContentTypes extends RestLiIntegrationTest
 {
-  private static final Client CLIENT = new TransportClientAdapter(new HttpClientFactory().getClient(Collections.<String, String>emptyMap()));
+  private static final Client CLIENT = new TransportClientAdapter(new HttpClientFactory().getClient(
+    Collections.<String, String>emptyMap()));
   private static final String URI_PREFIX = "http://localhost:1338/";
+  private static final List<RestClient.AcceptType> ACCEPT_TYPES = Collections.singletonList(RestClient.AcceptType.JSON);
+
   private final GreetingsBuilders GREETINGS_BUILDERS;
 
-  public TestGreetingsClientAcceptTypes(String resName)
+  public TestGreetingClientContentTypes(String resName)
   {
     GREETINGS_BUILDERS = new GreetingsBuilders("greetings");
   }
@@ -68,139 +70,42 @@ public class TestGreetingsClientAcceptTypes extends RestLiIntegrationTest
   {
     return new Object[][]
       {
-        { new RestClient(CLIENT, URI_PREFIX), "application/json" }, // default client
-        {
-          new RestClient(CLIENT,
-                         URI_PREFIX,
-                         Collections.singletonList(RestClient.AcceptType.PSON)),
-          "application/x-pson"
-        },
-        {
-          new RestClient(CLIENT,
-                         URI_PREFIX,
-                         Collections.singletonList(RestClient.AcceptType.JSON)),
-          "application/json"
-        },
-        {
-          new RestClient(CLIENT, URI_PREFIX,
-                         Collections.singletonList(
-                           RestClient.AcceptType.ANY)), "application/json"
-        },
-        {
-          new RestClient(CLIENT,
-                         URI_PREFIX,
-                         Arrays.asList(RestClient.AcceptType.PSON, RestClient.AcceptType.JSON)),
-          "application/x-pson"
-        },
-        {
-          new RestClient(CLIENT,
-                         URI_PREFIX,
-                         Arrays.asList(RestClient.AcceptType.JSON,RestClient.AcceptType.PSON)),
-          "application/json"
-        },
-        {
-          new RestClient(CLIENT,
-                         URI_PREFIX,
-                         Arrays.asList(RestClient.AcceptType.PSON, RestClient.AcceptType.ANY)),
-          "application/x-pson"
-        },
-        {
-          new RestClient(CLIENT,
-                         URI_PREFIX,
-                         Arrays.asList(RestClient.AcceptType.JSON, RestClient.AcceptType.ANY)),
-          "application/json"
-        },
-        {
-          new RestClient(CLIENT,
-                         URI_PREFIX,
-                         Arrays.asList(RestClient.AcceptType.ANY, RestClient.AcceptType.PSON)),
-          "application/x-pson"
-        },
-        {
-          new RestClient(CLIENT,
-                         URI_PREFIX,
-                         Arrays.asList(RestClient.AcceptType.ANY, RestClient.AcceptType.JSON)),
-          "application/json"
-        },
-        // accept types and content types
-        {
-          new RestClient(CLIENT,
-                         URI_PREFIX,
-                         RestClient.ContentType.JSON, Collections.<RestClient.AcceptType>emptyList()
-          ),
-          "application/json"
-        },
-        {
-          new RestClient(CLIENT,
-                         URI_PREFIX,
-                         RestClient.ContentType.JSON, Collections.singletonList(RestClient.AcceptType.JSON)
-          ),
-          "application/json"
-        },
-        {
-          new RestClient(CLIENT,
-                         URI_PREFIX,
-                         RestClient.ContentType.JSON, Collections.singletonList(RestClient.AcceptType.PSON)
-          ),
-          "application/x-pson"
-        },
-        {
-          new RestClient(CLIENT,
-                         URI_PREFIX,
-                         RestClient.ContentType.PSON, Collections.<RestClient.AcceptType>emptyList()
-          ),
-          "application/json"
-        },
-        {
-          new RestClient(CLIENT,
-                         URI_PREFIX,
-                         RestClient.ContentType.PSON, Collections.singletonList(RestClient.AcceptType.JSON)
-          ),
-          "application/json"
-        },
-        {
-          new RestClient(CLIENT,
-                         URI_PREFIX,
-                         RestClient.ContentType.PSON, Collections.singletonList(RestClient.AcceptType.PSON)
-          ),
-          "application/x-pson"
-        }
+        { new RestClient(CLIENT, URI_PREFIX) }, // default client
+        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.PSON, ACCEPT_TYPES) },
+        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.JSON, ACCEPT_TYPES) }
       };
   }
 
   @Test(dataProvider = "clientData")
-  public void testGet(RestClient restClient, String expectedContentType) throws RemoteInvocationException
+  public void testGet(RestClient restClient) throws
+    RemoteInvocationException
   {
     GetRequest<Greeting> request = GREETINGS_BUILDERS.get().id(1L).build();
-
     Response<Greeting> response = restClient.sendRequest(request).getResponse();
-    Assert.assertEquals(response.getHeader("Content-Type"), expectedContentType);
     Greeting greeting = response.getEntity();
     Assert.assertEquals(greeting.getId(), new Long(1));
   }
 
   @Test(dataProvider = "clientData")
-  public void testBatchGet(RestClient restClient, String expectedContentType)
-          throws RemoteInvocationException
+  public void testBatchGet(RestClient restClient)
+    throws RemoteInvocationException
   {
     List<Long> ids = Arrays.asList(1L, 2L, 3L, 4L);
     BatchGetRequest<Greeting> request = GREETINGS_BUILDERS.batchGet().ids(ids).build();
 
     Response<BatchResponse<Greeting>> response = restClient.sendRequest(request).getResponse();
-    Assert.assertEquals(response.getHeader(RestConstants.HEADER_CONTENT_TYPE), expectedContentType);
     BatchResponse<Greeting> batchResponse = response.getEntity();
     Assert.assertEquals(batchResponse.getResults().size(), ids.size());
   }
 
   @Test(dataProvider = "clientData")
-  public void testFinder(RestClient restClient, String expectedContentType)
-          throws RemoteInvocationException
+  public void testFinder(RestClient restClient)
+    throws RemoteInvocationException
   {
     FindRequest<Greeting> request = GREETINGS_BUILDERS.findBySearch().toneParam(Tone.SINCERE).paginate(1, 2).build();
 
     Response<CollectionResponse<Greeting>> response = restClient.sendRequest(
-            request).getResponse();
-    Assert.assertEquals(response.getHeader("Content-Type"), expectedContentType);
+      request).getResponse();
 
     CollectionResponse<Greeting> collectionResponse = response.getEntity();
     List<Greeting> greetings = collectionResponse.getElements();
@@ -210,34 +115,28 @@ public class TestGreetingsClientAcceptTypes extends RestLiIntegrationTest
       Assert.assertEquals(g.getTone(), Tone.SINCERE);
     }
     collectionResponse.getPaging().getLinks();
-
-    for (Link link : collectionResponse.getPaging().getLinks())
-    {
-      Assert.assertEquals(link.getType(), expectedContentType);
-    }
   }
 
   @Test(dataProvider = "clientData")
-  public void testAction(RestClient restClient, String expectedContentType)
-          throws RemoteInvocationException
+  public void testAction(RestClient restClient)
+    throws RemoteInvocationException
   {
     ActionRequest<Greeting> request = GREETINGS_BUILDERS.actionSomeAction().id(1L)
-            .paramA(1)
-            .paramB("")
-            .paramC(new TransferOwnershipRequest())
-            .paramD(new TransferOwnershipRequest())
-            .paramE(3)
-            .build();
+      .paramA(1)
+      .paramB("")
+      .paramC(new TransferOwnershipRequest())
+      .paramD(new TransferOwnershipRequest())
+      .paramE(3)
+      .build();
 
     Response<Greeting> response = restClient.sendRequest(request).getResponse();
-    Assert.assertEquals(response.getHeader("Content-Type"), expectedContentType);
 
     Greeting greeting = response.getEntity();
     Assert.assertEquals(greeting.getMessage(), "This is a newly created greeting");
   }
 
   @Test(dataProvider = "clientData")
-  public void testCreate(RestClient restClient, String expectedContentType) throws RemoteInvocationException
+  public void testCreate(RestClient restClient) throws RemoteInvocationException
   {
     Greeting greeting = new Greeting();
     greeting.setMessage("Hello there!");
@@ -250,7 +149,6 @@ public class TestGreetingsClientAcceptTypes extends RestLiIntegrationTest
 
     GetRequest<Greeting> getRequest = GREETINGS_BUILDERS.get().id(id).build();
     Response<Greeting> getResponse = restClient.sendRequest(getRequest).getResponse();
-    Assert.assertEquals(getResponse.getHeader(RestConstants.HEADER_CONTENT_TYPE), expectedContentType);
     Greeting responseGreeting = getResponse.getEntity();
 
     Assert.assertEquals(responseGreeting.getMessage(), greeting.getMessage());
@@ -258,12 +156,11 @@ public class TestGreetingsClientAcceptTypes extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = "clientData")
-  public void testUpdate(RestClient restClient, String expectedContentType) throws RemoteInvocationException, CloneNotSupportedException
+  public void testUpdate(RestClient restClient) throws RemoteInvocationException, CloneNotSupportedException
   {
     // GET
     Request<Greeting> request = GREETINGS_BUILDERS.get().id(1L).build();
     Response<Greeting> greetingResponse1 = restClient.sendRequest(request).getResponse();
-    Assert.assertEquals(greetingResponse1.getHeader("Content-Type"), expectedContentType);
 
     String response1 = greetingResponse1.getEntity().getMessage();
     Assert.assertNotNull(response1);
@@ -279,9 +176,41 @@ public class TestGreetingsClientAcceptTypes extends RestLiIntegrationTest
     // GET again, to verify that our POST worked.
     Request<Greeting> request2 = GREETINGS_BUILDERS.get().id(1L).build();
     Response<Greeting> greetingResponse2 = restClient.sendRequest(request2).getResponse();
-    Assert.assertEquals(greetingResponse2.getHeader("Content-Type"), expectedContentType);
 
     String response2 = greetingResponse2.getEntity().getMessage();
     Assert.assertEquals(response2, response1 + "Again");
   }
+
+  @Test
+  public void testPostsWithCharset() throws RemoteInvocationException
+  {
+    RestClient restClient = new RestClient(CLIENT, URI_PREFIX);
+
+    ActionRequest<Greeting> request = GREETINGS_BUILDERS.actionSomeAction().id(1L)
+      .paramA(1)
+      .paramB("")
+      .paramC(new TransferOwnershipRequest())
+      .paramD(new TransferOwnershipRequest())
+      .paramE(3)
+      .header("Content-Type", "application/json; charset=UTF-8")
+      .build();
+
+    Response<Greeting> response = restClient.sendRequest(request).getResponse();
+
+    Greeting actionGreeting = response.getEntity();
+    Assert.assertEquals(actionGreeting.getMessage(), "This is a newly created greeting");
+
+    Greeting createGreeting = new Greeting();
+    createGreeting.setMessage("Hello there!");
+    createGreeting.setTone(Tone.FRIENDLY);
+
+    CreateRequest<Greeting> createRequest = GREETINGS_BUILDERS
+      .create()
+      .input(createGreeting)
+      .header("Content-Type", "application/json; charset=UTF-8")
+      .build();
+    Response<EmptyRecord> emptyRecordResponse = restClient.sendRequest(createRequest).getResponse();
+    Assert.assertNull(emptyRecordResponse.getHeader(RestConstants.HEADER_CONTENT_TYPE));
+  }
+
 }

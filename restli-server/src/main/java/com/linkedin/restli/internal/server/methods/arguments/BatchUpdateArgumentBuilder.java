@@ -45,7 +45,7 @@ public class BatchUpdateArgumentBuilder implements RestLiArgumentBuilder
     Class<? extends RecordTemplate> valueClass =
         ArgumentUtils.getValueClass(routingResult);
 
-    DataMap dataMap = DataMapUtils.readMap(request.getEntity().asInputStream());
+    DataMap dataMap = DataMapUtils.readMap(request);
     Set<?> ids = routingResult.getContext().getPathKeys().getBatchKeys();
     Map inputMap = ArgumentUtils.buildBatchRequestMap(dataMap,
                                                       valueClass,

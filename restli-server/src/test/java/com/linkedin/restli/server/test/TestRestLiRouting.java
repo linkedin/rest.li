@@ -30,12 +30,13 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import com.linkedin.r2.message.RequestContext;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.spi.LoggerRepository;
 import org.testng.annotations.Test;
 
+import com.linkedin.jersey.api.uri.UriComponent;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.restli.common.CompoundKey;
@@ -51,7 +52,6 @@ import com.linkedin.restli.server.twitter.FollowsAssociativeResource;
 import com.linkedin.restli.server.twitter.RepliesCollectionResource;
 import com.linkedin.restli.server.twitter.StatusCollectionResource;
 import com.linkedin.restli.server.twitter.TwitterAccountsResource;
-import com.linkedin.jersey.api.uri.UriComponent;
 
 /**
  * @author dellamag
@@ -123,7 +123,7 @@ public class TestRestLiRouting
     // TODO Need a real associative resource
 
     // #4 Batch GET association
-    request = new RestRequestBuilder(new URI("/follows?ids=followerID:1;followeeID:2,followerID:3;followeeID:4"))
+    request = new RestRequestBuilder(new URI("/follows?ids=followerID:1;followeeID:2&ids=followerID:3;followeeID:4"))
               .setMethod("GET").build();
 
     result = _router.process(request, new RequestContext());
@@ -188,14 +188,14 @@ public class TestRestLiRouting
     expectRoutingException("/statuses%2F1", "GET");
     checkResult("/statuses/-1", "GET",
                 ResourceMethod.GET, StatusCollectionResource.class, "get", false, "statusID");
-    checkResult("/statuses?ids=1,2,3", "GET",
+    checkResult("/statuses?ids=1&ids=2&ids3", "GET",
                 ResourceMethod.BATCH_GET, StatusCollectionResource.class, "batchGet", true);
-    checkResult("/statuses?ids=1,2,3", "GET", "BATCH_GET",
+    checkResult("/statuses?ids=1&ids=2&ids=3", "GET", "BATCH_GET",
                 ResourceMethod.BATCH_GET, StatusCollectionResource.class, "batchGet", true);
     checkResult("/statuses", "POST", ResourceMethod.CREATE, StatusCollectionResource.class, "create", false);
     checkResult("/statuses", "POST", "CREATE", ResourceMethod.CREATE, StatusCollectionResource.class, "create", false);
     checkResult("/statuses/1/replies", "POST", ResourceMethod.CREATE, RepliesCollectionResource.class, "create", false, "statusID");
-    checkResult("/statuses/1/replies?ids=1,2,3", "GET",
+    checkResult("/statuses/1/replies?ids=1&ids=2&ids=3", "GET",
                 ResourceMethod.BATCH_GET, RepliesCollectionResource.class, "batchGet", true, "statusID");
     checkResult("/statuses/1", "PUT", ResourceMethod.UPDATE, StatusCollectionResource.class, "update", false);
     checkResult("/statuses/1", "PUT", "UPDATE", ResourceMethod.UPDATE, StatusCollectionResource.class, "update", false);
@@ -221,7 +221,7 @@ public class TestRestLiRouting
                 ResourceMethod.UPDATE, FollowsAssociativeResource.class, "update", false, "followerID", "followeeID");
     checkResult("/follows/followerID:1;followeeID:1", "POST",
                 ResourceMethod.PARTIAL_UPDATE, FollowsAssociativeResource.class, "update", false, "followerID", "followeeID");
-    checkResult("/follows?ids=followerID:1;followeeID:1,followerID:1;followeeID:3,followerID:1;followeeID:2", "GET",
+    checkResult("/follows?ids=followerID:1;followeeID:1&ids=followerID:1;followeeID:3&ids=followerID:1;followeeID:2", "GET",
                 ResourceMethod.BATCH_GET, FollowsAssociativeResource.class, "batchGet", true);
     checkResult("/follows?q=friends&userID=1", "GET",
                 ResourceMethod.FINDER, FollowsAssociativeResource.class, "getFriends", false);
@@ -232,8 +232,8 @@ public class TestRestLiRouting
     checkResult("/follows/followerID:1?q=other&someParam=value", "GET",
                 ResourceMethod.FINDER, FollowsAssociativeResource.class, "getOther", false);
 
-    checkBatchKeys("/statuses?ids=1,2,3", "GET", new HashSet<Object>(Arrays.asList(1L, 2L, 3L)));
-    checkBatchKeys("/statuses?ids=1,%32,3", "GET", new HashSet<Object>(Arrays.asList(1L, 2L, 3L)));
+    checkBatchKeys("/statuses?ids=1&ids=2&ids=3", "GET", new HashSet<Object>(Arrays.asList(1L, 2L, 3L)));
+    checkBatchKeys("/statuses?ids=1&ids=%32&ids=3", "GET", new HashSet<Object>(Arrays.asList(1L, 2L, 3L)));
 
     checkResult("/statuses", "POST", "BATCH_CREATE", ResourceMethod.BATCH_CREATE, StatusCollectionResource.class, "batchCreate", false);
     checkResult("/statuses?ids=1&ids=2", "PUT", ResourceMethod.BATCH_UPDATE, StatusCollectionResource.class, "batchUpdate", true);
@@ -241,12 +241,12 @@ public class TestRestLiRouting
     checkResult("/statuses?ids=1&ids=2", "POST", "BATCH_PARTIAL_UPDATE", ResourceMethod.BATCH_PARTIAL_UPDATE, StatusCollectionResource.class, "batchUpdate", true);
     checkResult("/statuses?ids=1&ids=2", "DELETE", ResourceMethod.BATCH_DELETE, StatusCollectionResource.class, "batchDelete", true);
     checkResult("/statuses?ids=1&ids=2", "DELETE", "BATCH_DELETE", ResourceMethod.BATCH_DELETE, StatusCollectionResource.class, "batchDelete", true);
-    
+
     Level level = disableWarningLogging(RestLiRouter.class);
     try {
       //the following two cases would log warnings
-      checkBatchKeys("/statuses?ids=1,,3", "GET", new HashSet<Object>(Arrays.asList(1L, 3L)));
-      checkBatchKeys("/statuses?ids=1,abc,3", "GET", new HashSet<Object>(Arrays.asList(1L, 3L)));
+      checkBatchKeys("/statuses?ids=1&ids=&ids=3", "GET", new HashSet<Object>(Arrays.asList(1L, 3L)));
+      checkBatchKeys("/statuses?ids=1&ids=abc&ids=3", "GET", new HashSet<Object>(Arrays.asList(1L, 3L)));
     }
     finally
     {
@@ -278,7 +278,7 @@ public class TestRestLiRouting
     _router = new RestLiRouter(pathRootResourceMap);
 
     expectRoutingException("/statuses/1", "GET", "CREATE");
-    expectRoutingException("/statuses?ids=1,2,3", "GET", "CREATE");
+    expectRoutingException("/statuses?ids=1&ids=2&ids=3", "GET", "CREATE");
     expectRoutingException("/statuses", "POST", "GET");
     expectRoutingException("/statuses/1", "PUT", "CREATE");
     expectRoutingException("/statuses/1", "POST", "CREATE");

@@ -41,6 +41,7 @@ import com.linkedin.data.template.FieldDef;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.client.test.TestRecord;
 import com.linkedin.restli.client.util.PatchGenerator;
+import com.linkedin.restli.client.util.PatchRequestRecorder;
 import com.linkedin.restli.common.BatchRequest;
 import com.linkedin.restli.common.CollectionRequest;
 import com.linkedin.restli.common.ComplexResourceKey;
@@ -352,6 +353,23 @@ public class TestClientBuilders
     Assert.assertEquals(request.isIdempotent(), false);
 
     checkBasicRequest(request, "test/1", ResourceMethod.PARTIAL_UPDATE, patch, Collections.<String, String>emptyMap());
+  }
+
+  @Test
+  public void testPatchGenerateAndPatchRequestRecorderGenerateIdenticalPatches()
+      throws CloneNotSupportedException
+  {
+    TestRecord t1 = new TestRecord();
+    TestRecord t2 = new TestRecord(t1.data().copy());
+    t2.setId(1L);
+    t2.setMessage("Foo Bar Baz");
+    PatchRequest<TestRecord> patchFromGenerator = PatchGenerator.diff(t1, t2);
+
+    PatchRequestRecorder<TestRecord> patchRecorder = new PatchRequestRecorder<TestRecord>(TestRecord.class);
+    patchRecorder.getRecordingProxy().setId(1L).setMessage("Foo Bar Baz");
+    PatchRequest<TestRecord> patchFromRecorder = patchRecorder.generatePatchRequest();
+
+    Assert.assertEquals(patchFromRecorder.getPatchDocument(), patchFromGenerator.getPatchDocument());
   }
 
   @Test

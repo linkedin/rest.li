@@ -155,8 +155,6 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
     String subKey = key2();
 
     GetRequest<Message> request = new StringKeysSubBuilders().get().parentKeyKey(parentKey).id(subKey).build();
-    System.err.println(parentKey + " " + subKey);
-    System.err.println(request.getUri());
     Message response = REST_CLIENT.sendRequest(request).get().getEntity();
     Assert.assertNotNull(response);
     Assert.assertEquals(response.getId(), parentKey + " " + subKey, "Message should be key1 + ' ' + key2 for subResourceKey(key1,key2)");

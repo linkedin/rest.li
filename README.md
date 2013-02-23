@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://github.com/linkedin/rest.li/wiki/restli-logo-white-small.png"/>
+</p>
+
 What is Rest.li?
 ================
 Rest.li is a REST+JSON framework for building robust, scalable service
@@ -27,7 +31,7 @@ Write servers:
 
 ```java
 @RestLiCollection(name = "greetings")
-class GreetingsResource extends CollectionResourceTemplate<Long, Message> {
+class GreetingsResource extends CollectionResourceTemplate<Long, Greeting> {
   public Greeting get(Long key) {
     return new Greeting().setMessage("Good morning!");
   }
@@ -45,10 +49,10 @@ And get all the benefits of a robust, scalable REST+JSON framework.
 
 # Full Documentation
 
-See our [wiki](http://github.com/linkedin/rest.li/wiki) for full documentation and examples.
+See our [wiki](https://github.com/linkedin/rest.li/wiki) for full documentation and examples.
 
 Quickstart Guides and Examples
 ------------------------------
 
-* [Quickstart - a step-by-step tutorial on the basics](http://github.com/linkedin/rest.li/wiki/Quickstart:-A-Tutorial-Introduction-to-RestLi)
-* [Guided walkthrough of an example application](http://github.com/linkedin/rest.li/wiki/Quick-Start-Guide)
+* [Quickstart - a step-by-step tutorial on the basics](https://github.com/linkedin/rest.li/wiki/Quickstart:-A-Tutorial-Introduction-to-Rest.Li)
+* [Guided walkthrough of an example application](https://github.com/linkedin/rest.li/wiki/Quick-Start-Guide)

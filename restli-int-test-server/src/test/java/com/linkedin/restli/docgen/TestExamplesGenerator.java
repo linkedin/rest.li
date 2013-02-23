@@ -118,7 +118,7 @@ public class TestExamplesGenerator
 
     final ActionSchema greetingsPurge = findCollectionAction(greetings, "purge");
     capture = generator.generateActionExample(greetings, greetingsPurge, ResourceLevel.COLLECTION, spec);
-    final DataMap purgeResponse = DataMapUtils.readMap(capture.getResponse().getEntity().asInputStream());
+    final DataMap purgeResponse = DataMapUtils.readMap(capture.getResponse());
     Assert.assertTrue(purgeResponse.containsKey("value"));
 
     final ActionSchema greetingsUpdateTone = findEntityAction(greetings, "updateTone");

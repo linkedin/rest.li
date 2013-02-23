@@ -23,15 +23,12 @@ import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.data.template.FieldDef;
-import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.restli.server.ActionResult;
 import com.linkedin.restli.server.GetResult;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -112,8 +109,8 @@ public class TestRestLiResponseHandler
 
   private static final String EXPECTED_STATUS_JSON = doubleQuote("{'text':'test status'}");
   private static final String EXPECTED_STATUS_ACTION_RESPONSE_JSON = doubleQuote("{'value':") + EXPECTED_STATUS_JSON + '}';
-  private static final String EXPECTED_STATUS_PSON = "#!PSON1\n!\u0081text\u0000\ttest status\u0000\u0080";
-  private static final String EXPECTED_STATUS_ACTION_RESPONSE_PSON = "#!PSON1\n!\u0081value\u0000!\u0083text\u0000\ttest status\u0000\u0080\u0080";
+  private static final String EXPECTED_STATUS_PSON = "#!PSON1\n!\u0081text\u0000\n\f\u0000\u0000\u0000test status\u0000\u0080";
+  private static final String EXPECTED_STATUS_ACTION_RESPONSE_PSON = "#!PSON1\n!\u0081value\u0000!\u0083text\u0000\n\f\u0000\u0000\u0000test status\u0000\u0080\u0080";
 
   private RestResponse invokeResponseHandler(String path,
                                              Object body,
@@ -145,7 +142,7 @@ public class TestRestLiResponseHandler
   }
 
   @Test
-  private void checkInvalidAcceptHeaders() throws Exception
+  private void testInvalidAcceptHeaders() throws Exception
   {
     Map<String, String> badAcceptHeaders = Collections.singletonMap("Accept", "foo/bar");
 
@@ -262,7 +259,7 @@ public class TestRestLiResponseHandler
     createResponses.add(new CreateResponse(HttpStatus.S_500_INTERNAL_SERVER_ERROR));
     BatchCreateResult<Long, Status> batchCreateResult = new BatchCreateResult<Long, Status>(createResponses);
 
-    response = invokeResponseHandler("/test", batchCreateResult, ResourceMethod.BATCH_CREATE, acceptTypeData.acceptHeaders);
+    response = invokeResponseHandler("/test", batchCreateResult, ResourceMethod.BATCH_CREATE, acceptTypeData.acceptHeaders); // here
     checkResponse(response, 200, 3, acceptTypeData.responseContentType, CollectionResponse.class.getName(), CreateStatus.class.getName(), true);
   }
 
@@ -398,7 +395,7 @@ public class TestRestLiResponseHandler
         {
           AcceptTypeData.PSON,
           EXPECTED_STATUS_ACTION_RESPONSE_PSON,
-          "#!PSON1\n!\u0081value\u0000!\u0083key2\u0000\tvalue2\u0000\u0085key1\u0000\tvalue1\u0000\u0080\u0080"
+          "#!PSON1\n!\u0081value\u0000!\u0083key2\u0000\n\u0007\u0000\u0000\u0000value2\u0000\u0085key1\u0000\n\u0007\u0000\u0000\u0000value1\u0000\u0080\u0080"
         }
       };
   }
@@ -425,7 +422,8 @@ public class TestRestLiResponseHandler
                                               map);
 
     checkResponse(response, 200, 3, acceptTypeData.responseContentType, ActionResponse.class.getName(), StringMap.class.getName(), true);
-    assertEquals(response.getEntity().asAvroString(), response2);
+    String actual = response.getEntity().asAvroString();
+    assertEquals(actual, response2);
 
     // #3 empty response
     response = _responseHandler.buildResponse(buildRequest(acceptTypeData.acceptHeaders),
@@ -999,23 +997,7 @@ public class TestRestLiResponseHandler
   private static void checkProjectedFields(RestResponse response, String[] expectedFields, String[] missingFields)
           throws UnsupportedEncodingException
   {
-
-    InputStream inputStream = response.getEntity().asInputStream();
-    String contentType = response.getHeader(RestConstants.HEADER_CONTENT_TYPE);
-
-    DataMap dataMap;
-    if (contentType.equalsIgnoreCase(APPLICATION_JSON))
-    {
-      dataMap = DataMapUtils.readMap(inputStream);
-    }
-    else if (contentType.equalsIgnoreCase(APPLICATION_PSON))
-    {
-      dataMap = DataMapUtils.readMapPson(inputStream);
-    }
-    else
-    {
-      throw new IllegalStateException("Unknown Content-Type value " + contentType + " found.");
-    }
+    DataMap dataMap = DataMapUtils.readMap(response);
 
     for (String field : expectedFields)
     {

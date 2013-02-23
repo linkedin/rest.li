@@ -43,7 +43,7 @@ public class BatchCreateArgumentBuilder
   {
     Class<? extends RecordTemplate> valueClass =
         ArgumentUtils.getValueClass(routingResult);
-    DataMap dataMap = DataMapUtils.readMap(request.getEntity().asInputStream());
+    DataMap dataMap = DataMapUtils.readMap(request);
     @SuppressWarnings({ "unchecked" })
     CollectionRequest collectionRequest = new CollectionRequest(dataMap, valueClass);
     @SuppressWarnings({ "unchecked" })

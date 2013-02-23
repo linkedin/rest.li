@@ -57,7 +57,7 @@ public class ActionArgumentBuilder implements RestLiArgumentBuilder
     }
     else
     {
-      data = DataMapUtils.readMap(request.getEntity().asInputStream());
+      data = DataMapUtils.readMap(request);
     }
 
     DynamicRecordTemplate template =

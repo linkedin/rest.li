@@ -21,8 +21,10 @@ import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.io.Reader;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -162,6 +164,15 @@ public class BufferChain
     initCoders();
   }
 
+  private BufferChain(ByteOrder order, ArrayList<ByteBuffer> byteBuffers, int bufferSize)
+  {
+    _order = order;
+    _currentBuffer = byteBuffers.get(0);
+    _currentIndex = 0;
+    _bufferList = byteBuffers;
+    initCoders();
+  }
+
   // testing use
   BufferChain(ByteOrder order, byte[] bytes, int bufferSize)
   {
@@ -170,7 +181,8 @@ public class BufferChain
     _order = order;
     int more = bytes.length;
     int offset = 0;
-    while (more > 0) {
+    while (more > 0)
+    {
       _currentBuffer = allocateByteBuffer(_bufferSize);
       _currentIndex = _bufferList.size() - 1;
       int length = (more < _bufferSize ? more : _bufferSize);
@@ -531,14 +543,13 @@ public class BufferChain
    * @return the next UTF-8 encoded string.
    * @throws BufferUnderflowException if the buffer chain is exhausted.
    */
-  public String getUtf8CString()
+  public String getUtf8CString() throws IOException
   {
-    CharBuffer charBuffer = CharBuffer.allocate(DEFAULT_STRING_LENGTH);
-    _decoder.reset();
+    ArrayList<ByteBuffer> bufferList = null;
+    boolean foundZeroByte = false;
+    int numBytes = 0;
 
-    boolean found = false;
-    boolean first = true;
-    while (found == false && advanceBufferIfCurrentBufferHasNoRemaining())
+    while (foundZeroByte == false && advanceBufferIfCurrentBufferHasNoRemaining())
     {
       int position = _currentBuffer.position();
       byte[] array = _currentBuffer.array();
@@ -546,41 +557,26 @@ public class BufferChain
       int limit = _currentBuffer.limit();
       int arrayLimit = arrayOffset + limit;
       int arrayStart = arrayOffset + position;
-      int i = arrayStart;
-      while (i < arrayLimit && array[i] != ZERO_BYTE)
+      int arrayIndex = arrayStart;
+      while (arrayIndex < arrayLimit && array[arrayIndex] != ZERO_BYTE)
       {
-        i++;
+        arrayIndex++;
       }
-      // out.println("arrayOffset " + arrayOffset + " arrayLimit " + arrayLimit + " i " + i);
-      found = (i < arrayLimit);
-      if (i == arrayStart && first)
+
+      foundZeroByte = (arrayIndex < arrayLimit);
+      int bytesInCurrentBuffer = arrayIndex - arrayStart;
+      numBytes += bytesInCurrentBuffer;
+      if (foundZeroByte == false || numBytes != bytesInCurrentBuffer)
       {
-        _currentBuffer.get();
-        // fast path for empty string
-        return "";
+        bufferList = accummulateByteBuffers(bufferList, bytesInCurrentBuffer);
       }
-      else if (found)
-      {
-        int length = i - arrayStart;
-        _currentBuffer.limit(_currentBuffer.position() + length);
-        _decoder.decode(_currentBuffer, charBuffer, true);
-        _currentBuffer.limit(limit);
-      }
-      else
-      {
-        _decoder.decode(_currentBuffer, charBuffer, false);
-      }
-      position = 0;
-      first = false;
     }
-    if (found) {
-      _currentBuffer.get();
+
+    if (foundZeroByte == false)
+    {
+      throw new BufferUnderflowException();
     }
-    _decoder.flush(charBuffer);
-    charBuffer.flip();
-    String s = charBuffer.toString();
-    // out.println(s);
-    return s;
+    return bufferToUtf8CString(numBytes, bufferList);
   }
 
   /**
@@ -604,42 +600,92 @@ public class BufferChain
       }
       return "";
     }
-
-    CharBuffer charBuffer = CharBuffer.allocate(length);
-    _decoder.reset();
+    ArrayList<ByteBuffer> bufferList = null;
+    int numBytes = 0;
 
     int more = length - 1;
     while (more > 0 && advanceBufferIfCurrentBufferHasNoRemaining())
     {
       int remaining = _currentBuffer.remaining();
-      if (remaining > more)
+      int bytesInCurrentBuffer = Math.min(remaining, more);
+      more -= bytesInCurrentBuffer;
+
+      numBytes += bytesInCurrentBuffer;
+      if (length != bytesInCurrentBuffer)
       {
-        remaining = more;
-        int limit = _currentBuffer.limit();
-        _currentBuffer.limit(_currentBuffer.position() + remaining);
-        _decoder.decode(_currentBuffer, charBuffer, true);
-        _currentBuffer.limit(limit);
+        bufferList = accummulateByteBuffers(bufferList, bytesInCurrentBuffer);
       }
-      else
-      {
-        _decoder.decode(_currentBuffer, charBuffer, (remaining == more));
-      }
-      more -= remaining;
     }
-    if (more > 0)
+    if (numBytes != length - 1)
     {
       throw new BufferUnderflowException();
     }
-    byte b = get();
-    if (b != ZERO_BYTE)
+    return bufferToUtf8CString(numBytes, bufferList);
+  }
+
+  private ArrayList<ByteBuffer> accummulateByteBuffers(ArrayList<ByteBuffer> bufferList, int bytesInCurrentBuffer)
+  {
+    byte[] array = _currentBuffer.array();
+    int position = _currentBuffer.position();
+    int arrayOffset = _currentBuffer.arrayOffset();
+    int arrayStart = arrayOffset + position;
+    int newPosition = position + bytesInCurrentBuffer;
+
+    ByteBuffer byteBuffer = ByteBuffer.wrap(array, arrayStart, bytesInCurrentBuffer);
+    byteBuffer.order(_order);
+    _currentBuffer.position(newPosition);
+    if (bufferList == null)
+      bufferList = new ArrayList<ByteBuffer>();
+    bufferList.add(byteBuffer);
+    return bufferList;
+  }
+
+  private String bufferToUtf8CString(int numBytes, ArrayList<ByteBuffer> bufferList) throws IOException
+  {
+    String result;
+    if (numBytes == 0)
     {
-      throw new DataDecodingException("C string not terminated with null");
+      result = "";
     }
-    _decoder.flush(charBuffer);
-    charBuffer.flip();
-    String s = charBuffer.toString();
-    // out.println(s);
-    return s;
+    else if (bufferList == null)
+    {
+      _decoder.reset();
+      CharBuffer charBuffer = CharBuffer.allocate(numBytes); // char should be smaller than # of bytes in buffer.
+      int limit = _currentBuffer.limit();
+      _currentBuffer.limit(_currentBuffer.position() + numBytes);
+      checkCoderResult(_decoder.decode(_currentBuffer, charBuffer, true));
+      _currentBuffer.limit(limit);
+      _decoder.flush(charBuffer);
+      charBuffer.flip();
+      result = charBuffer.toString();
+    }
+    else
+    {
+      char[] charBuffer = new char[numBytes]; // char should be smaller than # of bytes in buffer.
+      BufferChain chain = new BufferChain(_order, bufferList, _bufferSize);
+      InputStream inputStream = chain.asInputStream();
+      Reader reader = new InputStreamReader(inputStream, _charset);
+      int offset = 0;
+      int remaining = numBytes;
+      int charactersRead;
+      while ((charactersRead = reader.read(charBuffer, offset, remaining)) > 0)
+      {
+        offset += charactersRead;
+        remaining -= charactersRead;
+      }
+      result = new String(charBuffer, 0, offset);
+    }
+    advanceBufferIfCurrentBufferHasNoRemaining();
+    _currentBuffer.get(); // terminal zero byte
+    return result;
+  }
+
+  private void checkCoderResult(CoderResult coderResult) throws IOException
+  {
+    if (coderResult != CoderResult.UNDERFLOW)
+    {
+      throw new IllegalStateException("Unexpected character decoder error " + coderResult);
+    }
   }
 
   /*
@@ -1024,7 +1070,8 @@ public class BufferChain
     @Override
     public int read(byte[] dst, int offset, int length)
     {
-      return _bufferChain.read(dst, offset, length);
+      int bytes = _bufferChain.read(dst, offset, length);
+      return bytes == 0 ? -1 : bytes;
     }
 
     @Override

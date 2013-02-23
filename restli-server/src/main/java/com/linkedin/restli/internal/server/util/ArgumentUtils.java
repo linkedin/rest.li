@@ -95,7 +95,7 @@ public class ArgumentUtils
   {
     try
     {
-      return DataMapUtils.read(request.getEntity().asInputStream(), recordClass);
+      return DataMapUtils.read(request, recordClass);
     }
     catch (IOException e)
     {

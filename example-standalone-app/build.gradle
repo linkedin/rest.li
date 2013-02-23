@@ -1,7 +1,18 @@
 apply plugin: 'idea'
 apply plugin: 'eclipse'
 
-pegasusVersion = "1.7.11"
+// add rest.li's gradle plugins so they can be used throughout project
+buildscript {
+  repositories {
+    mavenLocal()
+    mavenCentral()
+  }
+  dependencies {
+    classpath "com.linkedin.pegasus:gradle-plugins:1.8.3"
+  }
+}
+
+pegasusVersion = "1.8.3"
 spec = [
   "product" : [
     "pegasus" : [
@@ -13,23 +24,11 @@ spec = [
       "pegasusCommon" : "com.linkedin.pegasus:pegasus-common:"+pegasusVersion,
       "restliCommon" : "com.linkedin.pegasus:restli-common:"+pegasusVersion,
       "r2" : "com.linkedin.pegasus:r2:"+pegasusVersion,
-      "r2Jetty" : "com.linkedin.pegasus:r2-jetty:"+pegasusVersion
+      "r2Jetty" : "com.linkedin.pegasus:r2-jetty:"+pegasusVersion,
+      "gradlePlugins" : "com.linkedin.pegasus:gradle-plugins:"+pegasusVersion
     ]
   ]
 ]
-
-buildscript {
-  repositories {
-    mavenLocal()
-    mavenCentral()
-    maven { 
-       url "https://oss.sonatype.org/content/repositories/comlinkedin-252/"
-    }
-  }
-  dependencies {
-    classpath group: 'com.linkedin.pegasus', name: 'gradle-plugins', version: '1.7.11'
-  }
-}
 
 subprojects {
   apply plugin: 'eclipse'
@@ -42,9 +41,6 @@ subprojects {
   repositories {
     mavenLocal()
     mavenCentral()
-    maven { 
-       url "https://oss.sonatype.org/content/repositories/comlinkedin-252/"
-    }
   }
 }
 

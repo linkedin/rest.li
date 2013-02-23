@@ -1,6 +1,36 @@
+1.8.5
+-----
+
+
+1.8.4
+-----
+(RB=137488)
+Fix to PSON deserialization issues.
+PSON responses should not deserialize correctly.
+The default representation for PSON strings is now a length-encoded string.
+All length encoded strings are now encoded with a two byte length by default.  This is a backwards-
+incompatible change.
+
+(RB=136944)
+Allow Content-Types to include an optional Charset.  For now it is ignored, but including it will
+no longer allow either the client or the server to be unable to parse the Content-Type.
+
+1.8.3
+-----
+(RB=135225)
+Fix UnsupportedOperationException from UnmodifiableMap in SimpleLoadBalancerState.
+
 1.8.2
 ------
+(RB=131451)
+Add PatchTreeRecorder & PatchRequestRecorder to build patches that allow you to remove fields.
 
+(RB=130545)
+Allow clients to send request bodies in pson format. Upgraded servers will be
+able to interpet bodies in pson format.
+
+(RB=133781)
+Remove legacy server code that uses ',' as separator for batch_get ids.  Correct format is "?ids=1&ids=2".
 
 1.8.1
 -----

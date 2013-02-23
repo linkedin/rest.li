@@ -22,6 +22,7 @@ import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.JacksonDataCodec;
+import com.linkedin.data.codec.PsonDataCodec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -35,10 +36,12 @@ import com.linkedin.restli.internal.client.ExceptionUtil;
 import com.linkedin.restli.internal.client.ResponseFutureImpl;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
 
+import javax.mail.internet.ContentType;
+import javax.mail.internet.ParseException;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -90,23 +93,32 @@ import java.util.Map;
  */
 public class RestClient
 {
-  private static final JacksonDataCodec JACKSON_DATA_CODEC = new JacksonDataCodec();
-  private static final List<AcceptType> DEFAULT_ACCEPT_TYPES = Collections.emptyList();
+  private static final JacksonDataCodec  JACKSON_DATA_CODEC = new JacksonDataCodec();
+  private static final PsonDataCodec     PSON_DATA_CODEC    = new PsonDataCodec();
+  private static final List<AcceptType>  DEFAULT_ACCEPT_TYPES = Collections.emptyList();
+  private static final ContentType DEFAULT_CONTENT_TYPE = ContentType.JSON;
 
   private final Client _client;
   private final String _uriPrefix;
   private final List<AcceptType> _acceptTypes;
+  private final ContentType _contentType;
 
   public RestClient(Client client, String uriPrefix)
   {
-    this(client, uriPrefix, DEFAULT_ACCEPT_TYPES);
+    this(client, uriPrefix, DEFAULT_CONTENT_TYPE, DEFAULT_ACCEPT_TYPES);
   }
 
   public RestClient(Client client, String uriPrefix, List<AcceptType> acceptTypes)
   {
+    this(client, uriPrefix, DEFAULT_CONTENT_TYPE, acceptTypes);
+  }
+
+  public RestClient(Client client, String uriPrefix, ContentType contentType, List<AcceptType> acceptTypes)
+  {
     _client = client;
     _uriPrefix = uriPrefix;
     _acceptTypes = acceptTypes;
+    _contentType = contentType;
   }
 
   /**
@@ -198,6 +210,60 @@ public class RestClient
     }
 
     return acceptHeader.toString();
+  }
+
+  private void addEntityAndContentTypeHeaders(RestRequestBuilder builder, DataMap dataMap)
+    throws IOException
+  {
+    if (dataMap != null)
+    {
+      String header = builder.getHeader(RestConstants.HEADER_CONTENT_TYPE);
+
+      ContentType type;
+      if(header == null)
+      {
+        type = _contentType;
+        builder.setHeader(RestConstants.HEADER_CONTENT_TYPE, type.getHeaderKey());
+      }
+      else
+      {
+        javax.mail.internet.ContentType contentType;
+        try
+        {
+          contentType = new javax.mail.internet.ContentType(header);
+        }
+        catch (ParseException e)
+        {
+          throw new IllegalStateException("Unable to parse Content-Type: " + header);
+        }
+
+        if (contentType.getBaseType().equalsIgnoreCase(RestConstants.HEADER_VALUE_APPLICATION_JSON))
+        {
+          type = ContentType.JSON;
+        }
+        else if (contentType.getBaseType().equalsIgnoreCase(RestConstants.HEADER_VALUE_APPLICATION_PSON))
+        {
+          type = ContentType.PSON;
+        }
+        else
+        {
+          throw new IllegalStateException("Unknown Content-Type: " + contentType.toString());
+        }
+      }
+
+      switch (type)
+      {
+        case PSON:
+          builder.setEntity(PSON_DATA_CODEC.mapToBytes(dataMap));
+          break;
+        case JSON:
+          builder.setEntity(JACKSON_DATA_CODEC.mapToBytes(dataMap));
+          break;
+        default:
+          throw new IllegalStateException("Unknown ContentType:" + type);
+      }
+    }
+
   }
 
   /**
@@ -318,17 +384,11 @@ public class RestClient
 
     requestBuilder.setHeaders(headers);
     addAcceptHeaders(requestBuilder);
+    addEntityAndContentTypeHeaders(requestBuilder, dataMap);
 
     if (method.getHttpMethod() == HttpMethod.POST)
     {
       requestBuilder.setHeader(RestConstants.HEADER_RESTLI_REQUEST_METHOD, method.toString());
-    }
-
-    if (dataMap != null)
-    {
-      requestBuilder.setEntity(JACKSON_DATA_CODEC.mapToBytes(dataMap))
-                    .setHeader(RestConstants.HEADER_CONTENT_TYPE,
-                               RestConstants.HEADER_VALUE_APPLICATION_JSON);
     }
 
     return requestBuilder.build();
@@ -343,6 +403,24 @@ public class RestClient
     private String _headerKey;
 
     private AcceptType(String headerKey)
+    {
+      _headerKey = headerKey;
+    }
+
+    public String getHeaderKey()
+    {
+      return _headerKey;
+    }
+  }
+
+  public static enum ContentType
+  {
+    PSON(RestConstants.HEADER_VALUE_APPLICATION_PSON),
+    JSON(RestConstants.HEADER_VALUE_APPLICATION_JSON);
+
+    private String _headerKey;
+
+    private ContentType(String headerKey)
     {
       _headerKey = headerKey;
     }
