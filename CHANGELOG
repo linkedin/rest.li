@@ -1,5 +1,8 @@
 1.8.6
 -----
+(RB=139285)
+Fix up RestLiServiceException.toString() and update ErrorResponse
+schema to correctly reflect optional fields.
 
 1.8.5
 -----

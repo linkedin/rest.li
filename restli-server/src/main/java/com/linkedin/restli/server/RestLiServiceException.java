@@ -65,7 +65,7 @@ public class RestLiServiceException extends RuntimeException
     return _serviceErrorCode != null;
   }
 
-  public int getServiceErrorCode()
+  public Integer getServiceErrorCode()
   {
     return _serviceErrorCode;
   }
@@ -89,7 +89,19 @@ public class RestLiServiceException extends RuntimeException
   @Override
   public String toString()
   {
-    return "RestLiServiceException [_status=" + _status + ", _serviceErrorCode="
-        + _serviceErrorCode + ", _errorDetails=" + _errorDetails + "]";
+    StringBuilder sb = new StringBuilder();
+    sb.append(getClass().getName());
+    sb.append(" [HTTP Status:").append(_status.getCode());
+    if (_serviceErrorCode != null)
+    {
+      sb.append(", serviceErrorCode:").append(_serviceErrorCode);
+    }
+    sb.append("]");
+    String message = getLocalizedMessage();
+    if (message != null)
+    {
+      sb.append(": ").append(message);
+    }
+    return sb.toString();
   }
 }
