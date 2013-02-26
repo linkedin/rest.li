@@ -5,10 +5,6 @@
   "doc": "Generate a fortune cookie",
   "fields": [
     {
-      "name": "id",
-      "type": "long"
-    },
-    {
       "name": "fortune",
       "type": "string",
       "doc": "The Fortune cookie string"
