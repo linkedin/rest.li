@@ -427,6 +427,15 @@ public class ResourceModelEncoder
     resourceSchema.setActionsSet(actionsNode);
   }
 
+  private static final Comparator<ResourceSchema> _resourceSchemaComparator = new Comparator<ResourceSchema>()
+  {
+    @Override
+    public int compare(ResourceSchema resourceSchema, ResourceSchema resourceSchema2)
+    {
+      return resourceSchema.getName().compareTo(resourceSchema2.getName());
+    }
+  };
+
   private void appendEntity(final CollectionSchema collectionSchema,
                             final ResourceModel resourceModel)
   {
@@ -459,6 +468,7 @@ public class ResourceModelEncoder
 
     if (subresources.size() > 0)
     {
+      Collections.sort(subresources, _resourceSchemaComparator);
       entityNode.setSubresources(subresources);
     }
 

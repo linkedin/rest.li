@@ -12,6 +12,22 @@
     "entity" : {
       "path" : "/noNamespace/{noNamespaceId}",
       "subresources" : [ {
+        "name" : "noNamespace",
+        "namespace" : "com.linkedin.restli.examples",
+        "path" : "/noNamespace/{noNamespaceId}/noNamespace",
+        "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+        "doc" : "A Subresource whose unqualified name is identical to its parent\n\n N.B. The only reason a namespace is specified on this resource is to avoid clashing when the\n client builders are generated.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.IdenticallyNamedSubResource",
+        "collection" : {
+          "identifier" : {
+            "name" : "noNamespaceId",
+            "type" : "long"
+          },
+          "supports" : [ ],
+          "entity" : {
+            "path" : "/noNamespace/{noNamespaceId}/noNamespace/{noNamespaceId}"
+          }
+        }
+      }, {
         "name" : "noNamespaceSub",
         "path" : "/noNamespace/{noNamespaceId}/noNamespaceSub",
         "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
@@ -40,22 +56,6 @@
                 }
               }
             } ]
-          }
-        }
-      }, {
-        "name" : "noNamespace",
-        "namespace" : "com.linkedin.restli.examples",
-        "path" : "/noNamespace/{noNamespaceId}/noNamespace",
-        "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
-        "doc" : "A Subresource whose unqualified name is identical to its parent\n\n N.B. The only reason a namespace is specified on this resource is to avoid clashing when the\n client builders are generated.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.IdenticallyNamedSubResource",
-        "collection" : {
-          "identifier" : {
-            "name" : "noNamespaceId",
-            "type" : "long"
-          },
-          "supports" : [ ],
-          "entity" : {
-            "path" : "/noNamespace/{noNamespaceId}/noNamespace/{noNamespaceId}"
           }
         }
       } ]
