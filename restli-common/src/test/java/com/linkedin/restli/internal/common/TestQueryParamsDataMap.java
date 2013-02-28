@@ -219,14 +219,27 @@ public class TestQueryParamsDataMap
   }
 
   @Test
+  public void testShortPathSegment() throws Exception {
+    PathSegment pathSegment = PathSegment.parse("a[1]");
+    Assert.assertEquals(pathSegment.getName(), "a");
+    Assert.assertEquals(pathSegment.getIndex().intValue(), 1);
+  }
+
+  @Test
   public void testPathSegmentMalformed() throws Exception {
-    String[] malformedPathSegments = {"abc[123a]", "[123]", "abc[-123]"};
+    String[] malformedPathSegments = {"abc[123a]", "[123]", "abc[-123]", "abc[]"};
 
     for (String pathSegmentString : malformedPathSegments)
     {
-      PathSegment pathSegment = PathSegment.parse(pathSegmentString);
-      Assert.assertEquals(pathSegment.getName(), pathSegmentString);
-      Assert.assertNull(pathSegment.getIndex());
+      try
+      {
+        PathSegment.parse(pathSegmentString);
+        Assert.fail("Failed to throw PathSegmentSyntaxException for: " + pathSegmentString);
+      }
+      catch (PathSegmentSyntaxException e)
+      {
+        // success
+      }
     }
   }
 

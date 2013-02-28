@@ -17,10 +17,8 @@
 package com.linkedin.restli.internal.common;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -255,26 +253,26 @@ public class QueryParamsDataMap
       List<String> valueList = entry.getValue();
       if (valueList.size() == 1)
       {
-        List<String> key = Arrays.asList(SEGMENT_DELIMITER_PATTERN.split(entry.getKey()));
+        String[] key = SEGMENT_DELIMITER_PATTERN.split(entry.getKey());
         parseParameter(key, valueList.get(0), dataMap);
       }
-      else {
+      else
+      {
         String parameterName = entry.getKey();
         // In case of multiple parameters ensure they are not delimited or
         // indexed and then simulate the index for each one.
-        if (parameterName.contains(PathSegment.PATH_SEPARATOR))
+        if(parameterName.indexOf('.') != -1)
           throw new PathSegmentSyntaxException("Multiple values of complex query parameter are not supported");
 
-        if (PathSegment.parse(parameterName).getIndex() != null)
+        if(parameterName.charAt(parameterName.length()-1) == ']')
           throw new PathSegmentSyntaxException("Multiple values of indexed query parameter are not supported");
 
-        int i=0;
-        Iterator<String> iterator = valueList.iterator();
-        while (iterator.hasNext())
+        if(dataMap.containsKey(parameterName))
+          throw new PathSegmentSyntaxException("Conflicting references to key " + parameterName + "[0]");
+
+        else
         {
-          String key = parameterName + "[" + i + "]";
-          i++;
-          parseParameter(Arrays.asList(key), iterator.next(), dataMap);
+          dataMap.put(parameterName, new DataList(valueList));
         }
       }
     }
@@ -287,34 +285,28 @@ public class QueryParamsDataMap
    * key name as the path within the datamap to put the value to, as defined above.
    *
    * @param key
-   *          - a list of key segments resulting from splitting query parameter name with
+   *          - an array of key segments resulting from splitting query parameter name with
    *          '.'
    * @param value the value to be associated with the key
    * @param dataMap the MapMap to place the key-value pairs into
    * @throws PathSegmentSyntaxException
    */
-  private static void parseParameter(List<String> key, String value, MapMap dataMap) throws PathSegmentSyntaxException
+  private static void parseParameter(String key[], String value, MapMap dataMap) throws PathSegmentSyntaxException
   {
-    if (dataMap == null)
-      throw new IllegalArgumentException("Query parameters target data map is null");
-
-    if (key == null || key.isEmpty())
+    if (key == null || key.length == 0)
       throw new IllegalArgumentException("Error parsing query parameters: query parameter name cannot be empty");
 
-    PathSegment pathSegment = PathSegment.parse(key.get(0));
-
-    // If a leaf, store the value
-    if (key.size() == 1)
+    MapMap currentMap = dataMap;
+    for(int index = 0; index < key.length - 1; index++)
     {
-      pathSegment.putOnDataMap(dataMap, value);
+      // get the DataMap referenced by the current path segment
+      // and parse the rest of the path recursively
+      PathSegment pathSegment = PathSegment.parse(key[index]);
+      currentMap = pathSegment.getNextLevelMap(currentMap);
     }
-    // Otherwise, get the DataMap referenced by the current path segment
-    // and parse the rest of the path recursively
-    else
-    {
-      MapMap nextLevelDataMap = pathSegment.getNextLevelMap(dataMap);
-      parseParameter(key.subList(1, key.size()), value, nextLevelDataMap);
-    }
+    // For the leaf, store the value
+    PathSegment pathSegment = PathSegment.parse(key[key.length - 1]);
+    pathSegment.putOnDataMap(currentMap, value);
   }
 
   /**

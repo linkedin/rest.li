@@ -17,7 +17,6 @@
 package com.linkedin.restli.internal.common;
 
 import java.util.HashMap;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
@@ -58,6 +57,8 @@ public class PathSegment
    * Parse a (possibly) indexed path segment out of a string. Make sure no path delimiters
    * appear in the string, as this would not be an individual path segment.
    *
+   * Input string may not contains '.' char or spaces.
+   *
    * @param string a string to parse.
    * @return an PathSegment object.
    * @throws PathSegmentSyntaxException
@@ -66,35 +67,43 @@ public class PathSegment
    */
   public static PathSegment parse(String string) throws PathSegmentSyntaxException
   {
-    if (string == null || string.trim().isEmpty())
+    if (string == null || string.isEmpty())
+    {
       return null;
+    }
 
-    string = string.trim();
+    if(string.charAt(string.length()-1) == ']')
+    {
+      int startBraceIdx = string.lastIndexOf('[');
+      if(startBraceIdx <= 0)
+      {
+        if(startBraceIdx == -1)
+          throw new PathSegmentSyntaxException("Path segment parsing error.  '[' expected but not found: " + string);
+        else
+          throw new PathSegmentSyntaxException("Path segment parsing error.  Path segment name expected before '[' but not found: " + string);
+      }
 
-    if (string.contains(PATH_SEPARATOR))
-      throw new PathSegmentSyntaxException("Path segment parsing error.");
+      String name = string.substring(0, startBraceIdx);
+      String indexStr = string.substring(startBraceIdx+1, string.length()-1);
 
-    Matcher matcher = INDEX_PATTERN.matcher(string);
-
-    if (!matcher.find())
+      try
+      {
+        int index = Integer.parseInt(indexStr);
+        if(index < 0)
+        {
+          throw new PathSegmentSyntaxException("Path segment parsing error.  Negative integer key index not allowed: " + string);
+        }
+        return new PathSegment(name, index);
+      }
+      catch (NumberFormatException e)
+      {
+        throw new PathSegmentSyntaxException("Path segment parsing error. Invalid Non-integer key index:  " + string);
+      }
+    }
+    else
+    {
       return new PathSegment(string, null); // Not an indexed key
-
-    String name = matcher.group(1);
-    String indexStr = matcher.group(2);
-
-    int index;
-
-    try
-    {
-      index = Integer.parseInt(indexStr);
     }
-    catch (NumberFormatException e)
-    {
-      // Should never happen as the regex only matches integers in this group
-      throw new PathSegmentSyntaxException("Only integer key indices are allowed");
-    }
-
-    return new PathSegment(name, index);
   }
 
   /**
