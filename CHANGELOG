@@ -14,6 +14,9 @@ resources are added or removed. (This is due to internal use of HashMap.)
 (RB=140005)
 add ClientBuilderUtil.addSuffixToBaseName.
 
+(RB=140198)
+Fix bug in translating null value in a union with null when translating from Avro data to Pegasus.
+
 1.8.4
 -----
 (RB=137488)
