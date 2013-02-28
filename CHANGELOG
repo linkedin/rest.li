@@ -7,6 +7,9 @@ Add pdsc file and validator for EmptyRecord.
 Workaround bug in ScheduledThreadPoolExecutor that caused
 delays when calling HttpClientFactory.shutdown().
 
+(RB=140005)
+add ClientBuilderUtil.addSuffixToBaseName.
+
 1.8.4
 -----
 (RB=137488)
