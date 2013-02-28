@@ -491,6 +491,43 @@ public class TestDataTranslator
         }
       },
       {
+        // record with array of union with null field
+        // this is to check that translation of union with null that does not get converted to optional,
+        // and that null union member translates correctly from Data to Avro and Avro to Data.
+        {
+          "{\n" +
+          "  \"type\" : \"record\",\n" +
+          "  \"name\" : \"foo.Foo\",\n" +
+          "  \"fields\" : [\n" +
+          "    {\n" +
+          "      \"name\" : \"arrayOfUnionWitNull\",\n" +
+          "      \"type\" : ##T_START { \"type\" : \"array\", \"items\" : [ \"int\", \"null\" ] } ##T_END\n" +
+          "    }\n" +
+          "  ]\n" +
+          "}\n"
+        },
+        {
+          "{ \"arrayOfUnionWitNull\" : [ { \"int\" : 5 } ] }",
+          "{\"arrayOfUnionWitNull\":[{\"int\":5}]}"
+        },
+        {
+          "{ \"arrayOfUnionWitNull\" : [ null ] }",
+          "{\"arrayOfUnionWitNull\":[null]}"
+        },
+        {
+          "{ }",
+          "Error processing /arrayOfUnionWitNull"
+        },
+        {
+          "{ \"arrayOfUnionWitNull\" : [ {} ] }",
+          "Error processing /arrayOfUnionWitNull/0"
+        },
+        {
+          "{ \"arrayOfUnionWitNull\" : [ { \"bad\" : 0 } ] }",
+          "Error processing /arrayOfUnionWitNull/0"
+        }
+      },
+      {
         // record with record field.
         {
           "{ \n" +

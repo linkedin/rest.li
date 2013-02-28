@@ -315,29 +315,28 @@ public class DataTranslator implements DataTranslatorContext
           break;
         case UNION:
           UnionDataSchema unionDataSchema = (UnionDataSchema) dereferencedDataSchema;
-          Object memberValue;
-          if (value == null)
-          {
-            memberValue = Data.NULL;
-          }
-          else
-          {
-            memberValue = value;
-          }
-          Map.Entry<DataSchema, Schema> memberSchemas = findUnionMemberSchema(memberValue, unionDataSchema, avroSchema);
+          Map.Entry<DataSchema, Schema> memberSchemas = findUnionMemberSchema(value, unionDataSchema, avroSchema);
           if (memberSchemas == null)
           {
             result = BAD_RESULT;
             break;
           }
-          DataSchema memberDataSchema = memberSchemas.getKey();
-          Schema memberAvroSchema = memberSchemas.getValue();
-          String key = memberDataSchema.getUnionMemberKey();
-          dataMap = new DataMap(1);
-          _path.addLast(key);
-          dataMap.put(key, translate(memberValue, memberDataSchema, memberAvroSchema));
-          _path.removeLast();
-          result = dataMap;
+          if (value == null)
+          {
+            // schema must be "null" schema
+            result = Data.NULL;
+          }
+          else
+          {
+            DataSchema memberDataSchema = memberSchemas.getKey();
+            Schema memberAvroSchema = memberSchemas.getValue();
+            String key = memberDataSchema.getUnionMemberKey();
+            dataMap = new DataMap(1);
+            _path.addLast(key);
+            dataMap.put(key, translate(value, memberDataSchema, memberAvroSchema));
+            _path.removeLast();
+            result = dataMap;
+          }
           break;
         default:
           appendMessage("schema type unknown %1$s", dereferencedDataSchema.getType()) ;
