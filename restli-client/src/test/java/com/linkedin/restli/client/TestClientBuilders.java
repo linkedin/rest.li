@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import com.linkedin.restli.client.util.ClientBuilderUtil;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -630,5 +631,19 @@ public class TestClientBuilders
     Assert.assertEquals(request.getHeaders(), expectedHeaders);
   }
 
+  @Test
+  public void testSuffixAppender()
+  {
+    String baseName1 = "Foobar";
+    String baseName2 = "BarBaz";
+    String suffix1 = "WestCoast";
+    String suffix2 = "EastCoast";
+
+    Assert.assertEquals(ClientBuilderUtil.addSuffixToBaseName(baseName1, suffix1), baseName1 + "-" + suffix1);
+    Assert.assertEquals(ClientBuilderUtil.addSuffixToBaseName(baseName1, suffix2), baseName1 + "-" + suffix2);
+    Assert.assertEquals(ClientBuilderUtil.addSuffixToBaseName(baseName2, suffix1), baseName2 + "-" + suffix1);
+    Assert.assertEquals(ClientBuilderUtil.addSuffixToBaseName(baseName2, suffix2), baseName2 + "-" + suffix2);
+    Assert.assertEquals(ClientBuilderUtil.addSuffixToBaseName(baseName2, null), baseName2);
+  }
 
 }
