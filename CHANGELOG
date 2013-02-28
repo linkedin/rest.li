@@ -11,6 +11,9 @@ delays when calling HttpClientFactory.shutdown().
 Order subresources when restspec.json is exported. This avoids massive changes in restspec.json when
 resources are added or removed. (This is due to internal use of HashMap.)
 
+(RB=140005)
+add ClientBuilderUtil.addSuffixToBaseName.
+
 1.8.4
 -----
 (RB=137488)
