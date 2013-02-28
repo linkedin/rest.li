@@ -7,6 +7,10 @@ Add pdsc file and validator for EmptyRecord.
 Workaround bug in ScheduledThreadPoolExecutor that caused
 delays when calling HttpClientFactory.shutdown().
 
+(RB=139799)
+Order subresources when restspec.json is exported. This avoids massive changes in restspec.json when
+resources are added or removed. (This is due to internal use of HashMap.)
+
 1.8.4
 -----
 (RB=137488)
