@@ -48,6 +48,6 @@ public class FortunesResource extends CollectionResourceTemplate<Long, Fortune>
       fortune = "Your luck has run out. No fortune for id="+key;
 
     // return an object that represents the fortune cookie
-    return new Fortune().setId(key).setFortune(fortune);
+    return new Fortune().setFortune(fortune);
   }
 }

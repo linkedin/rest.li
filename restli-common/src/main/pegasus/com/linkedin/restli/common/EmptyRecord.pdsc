@@ -1,0 +1,11 @@
+{
+  "type" : "record",
+  "name" : "EmptyRecord",
+  "namespace" : "com.linkedin.restli.common",
+  "doc" : "An literally empty record",
+  "fields" : [ ],
+  "validate" :
+  {
+    "com.linkedin.restli.common.EmptyRecordValidator" : { }
+  }
+}

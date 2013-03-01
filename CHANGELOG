@@ -1,6 +1,21 @@
 1.8.5
 -----
+(RB=138254)
+Add pdsc file and validator for EmptyRecord.
 
+(RB=138178)
+Workaround bug in ScheduledThreadPoolExecutor that caused
+delays when calling HttpClientFactory.shutdown().
+
+(RB=139799)
+Order subresources when restspec.json is exported. This avoids massive changes in restspec.json when
+resources are added or removed. (This is due to internal use of HashMap.)
+
+(RB=140005)
+add ClientBuilderUtil.addSuffixToBaseName.
+
+(RB=140198)
+Fix bug in translating null value in a union with null when translating from Avro data to Pegasus.
 
 1.8.4
 -----

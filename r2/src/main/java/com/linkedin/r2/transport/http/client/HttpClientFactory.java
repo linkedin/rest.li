@@ -471,6 +471,12 @@ public class HttpClientFactory implements TransportClientFactory
     }
     if (_shutdownExecutor)
     {
+      // Due to a bug in ScheduledThreadPoolExecutor, shutdownNow() returns cancelled
+      // tasks as though they were still pending execution.  If the executor has a large
+      // number of cancelled tasks, shutdownNow() could take a long time to copy the array
+      // of tasks.  Calling shutdown() first will purge the cancelled tasks.  Bug filed with
+      // Oracle; will provide bug number when available.  May be fixed in JDK7 already.
+      _executor.shutdown();
       _executor.shutdownNow();
       LOG.info("Scheduler shutdown complete");
     }
