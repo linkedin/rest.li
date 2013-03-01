@@ -17,6 +17,9 @@ add ClientBuilderUtil.addSuffixToBaseName.
 (RB=140198)
 Fix bug in translating null value in a union with null when translating from Avro data to Pegasus.
 
+(RB=140010)
+Performance tuning for requests with large numbers of query params.
+
 1.8.4
 -----
 (RB=137488)
