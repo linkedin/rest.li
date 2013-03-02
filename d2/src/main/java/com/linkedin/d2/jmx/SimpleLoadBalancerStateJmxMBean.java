@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.jmx;
 
+import java.net.URISyntaxException;
 import java.util.List;
 
 public interface SimpleLoadBalancerStateJmxMBean
@@ -59,4 +60,18 @@ public interface SimpleLoadBalancerStateJmxMBean
   long getDelayedExecution();
 
   void setDelayedExecution(long milliseconds);
+
+  /**
+   * @param clusterName this can be obtained through serviceProperty
+   * @return returns a list of tracker clients URI (this will include banned URI for the cluster)
+   */
+  String getServerUrisForClusterName(String clusterName);
+
+  /**
+   *
+   * @param trackerClientUri the URI for trackerClient
+   * @return the trackerClient information for that URI
+   */
+  String getTrackerClientInformation(String trackerClientUri, String clusterName) throws URISyntaxException;
+
 }

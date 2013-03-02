@@ -503,6 +503,26 @@ public class DegraderImpl implements Degrader
     PCT99
   }
 
+  @Override
+  public String toString()
+  {
+    StringBuilder builder = new StringBuilder();
+    builder.append("[name = " + _name + ",");
+    builder.append(" maxDropDuration = " + _dropRate + ",");
+    builder.append(" computedDropRate = " + _dropRate + ",");
+    builder.append(" dropRate = " + _dropRate + ",");
+    builder.append(" latency = " + _dropRate + ",");
+    builder.append(" outstandingLatency = " + _dropRate + ",");
+    builder.append(" lastIntervalCountTotal = " + _dropRate + ",");
+    builder.append(" lastIntervalDroppedCountTotal = " + _dropRate + ",");
+    builder.append(" lastIntervalDroppedRate = " + _dropRate + ",");
+    builder.append(" lastNotDroppRate = " + _dropRate + ",");
+    builder.append(" countTotal = " + _dropRate + ",");
+    builder.append(" noOverrideDropCountTotal = " + _dropRate + ",");
+    builder.append(" droppedCountTotal = " + _dropRate + "]");
+    return builder.toString();
+  }
+
   public static class Stats
   {
     private final double _currentDropRate;

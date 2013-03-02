@@ -21,6 +21,10 @@
 package com.linkedin.d2.jmx;
 
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
+import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
+import java.net.URI;
+import java.util.Map;
+
 
 public class DegraderLoadBalancerStrategyV3Jmx implements DegraderLoadBalancerStrategyV3JmxMBean
 {
@@ -43,5 +47,18 @@ public class DegraderLoadBalancerStrategyV3Jmx implements DegraderLoadBalancerSt
   public String toString()
   {
     return "DegraderLoadBalancerStrategyV3Jmx [_strategy=" + _strategy + "]";
+  }
+
+  @Override
+  public int getTotalPointsInHashRing()
+  {
+    Map<URI, Integer> uris = _strategy.getState().getPartitionState(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).
+        getPointsMap();
+    int total = 0;
+    for (Map.Entry<URI, Integer> entry : uris.entrySet())
+    {
+      total += entry.getValue();
+    }
+    return total;
   }
 }

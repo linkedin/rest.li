@@ -534,6 +534,10 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
                                         true,
                                         newRecoveryMap, oldState.getServiceName());
       _log.warn("Strategy updated: newState=" + newState + ", config=" + config);
+      if (!_log.isDebugEnabled())
+      {
+        _log.debug("HashRing coverage=" + newState.getRing() );
+      }
     }
     else
     {
@@ -593,6 +597,10 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
                                             oldState.getServiceName());
 
       _log.warn("Strategy updated: newState=" + newState + ", config=" + config);
+      if (!_log.isDebugEnabled())
+      {
+        _log.debug("HashRing coverage=" + newState.getRing() );
+      }
 
       points = oldPointsMap;
     }
@@ -957,8 +965,7 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
           + ", _currentAvgClusterLatency=" + _currentAvgClusterLatency
           + ", _strategy=" + _strategy
           + ", _recoveryMap=" + _recoveryMap
-          + ", _serviceName="+ _serviceName
-          + ", _hashRingCoverage=" + _ring + "]";
+          + ", _serviceName="+ _serviceName+ "]";
     }
   }
 }

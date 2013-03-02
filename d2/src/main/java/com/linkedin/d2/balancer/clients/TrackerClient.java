@@ -227,7 +227,7 @@ public class TrackerClient implements LoadBalancerClient
     }
   }
 
-  // we origanize all data of a partition together so we don't have to maintain multiple maps in tracker client
+  // we organize all data of a partition together so we don't have to maintain multiple maps in tracker client
   private class PartitionState
   {
     private final Degrader _degrader;
@@ -264,6 +264,7 @@ public class TrackerClient implements LoadBalancerClient
       StringBuilder sb = new StringBuilder();
       sb.append("{_partitionData = ");
       sb.append(_partitionData);
+      sb.append("\n _degrader = " + _degrader);
       sb.append("}");
       return sb.toString();
     }

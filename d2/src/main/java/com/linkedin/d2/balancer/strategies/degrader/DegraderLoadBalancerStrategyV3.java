@@ -506,7 +506,12 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                         newCurrentAvgClusterLatency,
                                         newRecoveryMap,
                                         oldState.getServiceName());
+
       _log.warn("Strategy updated: partitionId= " + partitionId + ", newState=" + newState + ", config=" + config);
+      if (!_log.isDebugEnabled())
+      {
+        _log.debug("HashRing coverage=" + newState.getRing());
+      }
     }
     else
     {
@@ -563,7 +568,12 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                             oldRecoveryMap,
                                             oldState.getServiceName());
 
-      _log.warn( "Strategy updated: partitionId=" + partitionId + ", newState=" + newState + ", config=" + config);
+      _log.warn("Strategy updated: partitionId= " + partitionId + ", newState=" + newState + ", config=" + config);
+
+      if (!_log.isDebugEnabled())
+      {
+        _log.debug("HashRing coverage=" + newState.getRing());
+      }
 
       points = oldPointsMap;
     }
@@ -673,7 +683,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
    *
    * The returned state is not a snapshot, but just the underlying state (which may change at any time).
    */
-  DegraderLoadBalancerState getState()
+  public DegraderLoadBalancerState getState()
   {
     return _state;
   }
@@ -757,7 +767,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     return _state.getPartitionState(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getCurrentOverrideDropRate();
   }
 
-  static class DegraderLoadBalancerState
+  public static class DegraderLoadBalancerState
   {
     private volatile AtomicReferenceArray<PartitionDegraderLoadBalancerState> _partitionStates;
     // this controls access to updatePartitionState for each partition:
@@ -829,7 +839,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     }
 
     // this method never returns null
-    PartitionDegraderLoadBalancerState getPartitionState(int partitionId)
+    public PartitionDegraderLoadBalancerState getPartitionState(int partitionId)
     {
       if (_partitionCount < partitionId + 1)
       {
@@ -867,7 +877,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
    * @author criccomini
    *
    */
-  static class PartitionDegraderLoadBalancerState
+  public static class PartitionDegraderLoadBalancerState
   {
     // These are the different strategies we have for handling load and bad situations:
     // load balancing (involves adjusting the number of points for a tracker client in the hash ring). or
@@ -1019,8 +1029,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
           + ", _currentAvgClusterLatency=" + _currentAvgClusterLatency
           + ", _strategy=" + _strategy
           + ", _recoveryMap=" + _recoveryMap
-          + ", _serviceName="+ _serviceName
-          + ", _hashRingCoverage=" + _ring + "]";
+          + ", _serviceName="+ _serviceName + "]";
     }
   }
 }

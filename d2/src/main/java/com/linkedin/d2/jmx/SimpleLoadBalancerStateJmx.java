@@ -16,6 +16,9 @@
 
 package com.linkedin.d2.jmx;
 
+import com.linkedin.d2.balancer.clients.TrackerClient;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -143,6 +146,21 @@ public class SimpleLoadBalancerStateJmx implements SimpleLoadBalancerStateJmxMBe
   public void setDelayedExecution(long milliseconds)
   {
     _state.setDelayedExecution(milliseconds);
+  }
+
+  @Override
+  public String getServerUrisForClusterName(String clusterName)
+  {
+    return _state.getServerUrisForClusterName(clusterName).toString();
+  }
+
+  @Override
+  public String getTrackerClientInformation(String trackerClientUri, String clusterName)
+      throws URISyntaxException
+  {
+    URI uri = new URI(trackerClientUri);
+    TrackerClient client = _state.getClient(clusterName, uri);
+    return client.toString();
   }
 
   @Override

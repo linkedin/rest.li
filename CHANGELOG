@@ -13,6 +13,9 @@ comments for context.
 Potential fix for Avro Schema Translator transient problem where
 some embedded/contained schemas are not being translated.
 
+(RB=144188)
+Added jmx methods to query trackerClient and number of hashpoint.
+
 1.8.6
 -----
 (RB=139285)

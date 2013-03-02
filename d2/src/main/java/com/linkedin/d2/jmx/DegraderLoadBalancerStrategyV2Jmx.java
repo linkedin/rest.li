@@ -22,6 +22,10 @@ package com.linkedin.d2.jmx;
 
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV2;
 
+import java.net.URI;
+import java.util.Map;
+
+
 /**
  * @author David Hoa
  * @version $Revision: $
@@ -49,5 +53,17 @@ public class DegraderLoadBalancerStrategyV2Jmx implements DegraderLoadBalancerSt
   public String toString()
   {
     return "DegraderLoadBalancerStrategyV2Jmx [_strategy=" + _strategy + "]";
+  }
+
+  @Override
+  public int getTotalPointsInHashRing()
+  {
+    Map<URI, Integer> uris = _strategy.getState().getPointsMap();
+    int total = 0;
+    for (Map.Entry<URI, Integer> entry : uris.entrySet())
+    {
+      total += entry.getValue();
+    }
+    return total;
   }
 }

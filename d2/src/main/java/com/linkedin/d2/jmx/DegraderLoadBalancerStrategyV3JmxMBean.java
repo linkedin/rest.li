@@ -33,4 +33,6 @@ public interface DegraderLoadBalancerStrategyV3JmxMBean
 
   String toString();
 
+  int getTotalPointsInHashRing();
+
 }

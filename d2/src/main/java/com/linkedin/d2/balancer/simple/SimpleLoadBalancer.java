@@ -527,12 +527,14 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       die(serviceName, "Error in finding the partition for URI: " + requestUri + ", " + e.getMessage());
     }
 
+    List<TrackerClient> clientsToLoadBalance = null;
+
     for (LoadBalancerState.SchemeStrategyPair pair : orderedStrategies)
     {
       LoadBalancerStrategy strategy = pair.getStrategy();
       String scheme = pair.getScheme();
 
-      List<TrackerClient> clientsToLoadBalance = getPotentialClients(clusterName, cluster, uris, scheme, partitionId);
+      clientsToLoadBalance = getPotentialClients(clusterName, cluster, uris, scheme, partitionId);
 
       trackerClient =
           strategy.getTrackerClient(request, requestContext, uriItem.getVersion(), partitionId, clientsToLoadBalance);
@@ -552,7 +554,16 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
 
     if (trackerClient == null)
     {
-      die(serviceName, "unable to find a tracker client for: " + serviceName + " in partition: " + partitionId);
+      if (clientsToLoadBalance == null || clientsToLoadBalance.isEmpty())
+      {
+        die(serviceName, "unable to find a tracker client for: " + serviceName + " in partition: " + partitionId);
+      }
+      else
+      {
+        die(serviceName, "unable to find a tracker client for: " + serviceName + " in partition: " + partitionId +
+        " even though we have a selection of " + clientsToLoadBalance.size() + " clients. The strategy did not select" +
+        " any client. Maybe the cluster is degraded");
+      }
     }
     return trackerClient;
   }
