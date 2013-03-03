@@ -16,29 +16,27 @@
 
 package com.linkedin.pegasus.generator.test;
 
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
 import com.linkedin.data.template.GetMode;
 import com.linkedin.data.template.RequiredFieldNotPresentException;
 import com.linkedin.data.template.SetMode;
-import java.lang.reflect.Method;
-import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertSame;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.*;
+
 
 public class TestRecord
 {
   @Test
   public void testIntField()
   {
-    Exception exc = null;
     RecordTest record = new RecordTest();
 
-    Integer intValue = 13;
     assertFalse(record.hasIntField());
     assertEquals(record.getIntField(GetMode.NULL), null);
     assertEquals(record.getIntField(GetMode.DEFAULT), null);
+    Exception exc;
     try
     {
       exc = null;
@@ -62,25 +60,13 @@ public class TestRecord
     assertTrue(exc != null);
     assertTrue(exc instanceof RequiredFieldNotPresentException);
 
+    Integer intValue = 13;
     record.setIntField(intValue);
     assertTrue(record.hasIntField());
     assertEquals(record.getIntField(GetMode.NULL), intValue);
     assertEquals(record.getIntField(GetMode.DEFAULT), intValue);
     assertEquals(record.getIntField(GetMode.STRICT), intValue);
     assertEquals(record.getIntField(), intValue);
-  }
-
-  public void dumpMethods(Class<?> clazz)
-  {
-    for (Method m : clazz.getMethods())
-    {
-      System.out.print(m.getName());
-      for (Class<?> c : m.getParameterTypes())
-      {
-        System.out.print(" " + c.getName());
-      }
-      System.out.println();
-    }
   }
 
   @Test
@@ -108,16 +94,15 @@ public class TestRecord
   @Test
   public void testIntOptionalField()
   {
-    Exception exc = null;
     RecordTest record = new RecordTest();
 
-    Integer intValue = 13;
     assertFalse(record.hasIntOptionalField());
     assertEquals(record.getIntOptionalField(GetMode.NULL), null);
     assertEquals(record.getIntOptionalField(GetMode.DEFAULT), null);
     assertEquals(record.getIntOptionalField(GetMode.STRICT), null);
     assertEquals(record.getIntOptionalField(), null);
 
+    Integer intValue = 13;
     record.setIntOptionalField(intValue);
     assertTrue(record.hasIntOptionalField());
     assertEquals(record.getIntOptionalField(GetMode.NULL), intValue);
@@ -129,17 +114,16 @@ public class TestRecord
   @Test
   public void testIntDefaultField()
   {
-    Exception exc = null;
     RecordTest record = new RecordTest();
 
-    Integer defaultValue = 17;
-    Integer intValue = 13;
     assertFalse(record.hasIntDefaultField());
     assertEquals(record.getIntDefaultField(GetMode.NULL), null);
+    Integer defaultValue = 17;
     assertEquals(record.getIntDefaultField(GetMode.DEFAULT), defaultValue);
     assertEquals(record.getIntDefaultField(GetMode.STRICT), defaultValue);
     assertEquals(record.getIntDefaultField(), defaultValue);
 
+    Integer intValue = 13;
     record.setIntDefaultField(intValue);
     assertTrue(record.hasIntDefaultField());
     assertEquals(record.getIntDefaultField(GetMode.NULL), intValue);
@@ -151,22 +135,55 @@ public class TestRecord
   @Test
   public void testIntDefaultOptionalField()
   {
-    Exception exc = null;
     RecordTest record = new RecordTest();
 
-    Integer defaultValue = 42;
-    Integer intValue = 13;
     assertFalse(record.hasIntDefaultOptionalField());
     assertEquals(record.getIntDefaultOptionalField(GetMode.NULL), null);
+    Integer defaultValue = 42;
     assertEquals(record.getIntDefaultOptionalField(GetMode.DEFAULT), defaultValue);
     assertEquals(record.getIntDefaultOptionalField(GetMode.STRICT), defaultValue);
     assertEquals(record.getIntDefaultOptionalField(), defaultValue);
 
+    Integer intValue = 13;
     record.setIntDefaultOptionalField(intValue);
     assertTrue(record.hasIntDefaultOptionalField());
     assertEquals(record.getIntDefaultOptionalField(GetMode.NULL), intValue);
     assertEquals(record.getIntDefaultOptionalField(GetMode.DEFAULT), intValue);
     assertEquals(record.getIntDefaultOptionalField(GetMode.STRICT), intValue);
     assertEquals(record.getIntDefaultOptionalField(), intValue);
+  }
+
+  @Test
+  public void testClone() throws CloneNotSupportedException
+  {
+    RecordTest record = new RecordTest();
+    record.setBooleanField(true);
+    record.setDoubleField(5.6);
+    record.setEnumField(EnumFruits.APPLE);
+    record.setRecordField(new RecordBar());
+    RecordTest clone = record.clone();
+    assertEquals(record, clone);
+    Assert.assertNotSame(record, clone);
+    Assert.assertNotSame(record.data(), clone.data());
+    assertSame(record.getRecordField(), clone.getRecordField());
+  }
+
+  @Test
+  public void testCopy() throws CloneNotSupportedException
+  {
+    RecordTest record = new RecordTest();
+    record.setBooleanField(true);
+    record.setDoubleField(5.6);
+    record.setEnumField(EnumFruits.APPLE);
+    RecordBar recordBar = new RecordBar();
+    recordBar.setLocation("foo");
+    record.setRecordField(recordBar);
+    RecordTest copy = record.copy();
+    assertEquals(record, copy);
+    Assert.assertNotSame(record, copy);
+    Assert.assertNotSame(record.data(), copy.data());
+    Assert.assertNotSame(record.getRecordField(), copy.getRecordField());
+    record.getRecordField().setLocation("bar");
+    assertEquals(copy.getRecordField().getLocation(), "foo");
   }
 }

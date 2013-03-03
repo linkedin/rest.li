@@ -16,9 +16,10 @@
 
 package com.linkedin.data.template;
 
+import java.util.IdentityHashMap;
+
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.RecordDataSchema;
-import java.util.IdentityHashMap;
 
 /**
  * Abstract {@link DataTemplate} for records.
@@ -69,6 +70,27 @@ public abstract class RecordTemplate implements DataTemplate<DataMap>
     clone._map = clone._map.clone();
     clone._cache = (IdentityHashMap<Object, DataTemplate<?>>) clone._cache.clone();
     return clone;
+  }
+
+  /**
+   * Returns a deep copy of the {@link RecordTemplate}.
+   *
+   * This method copies the underlying {@link DataMap}.
+   * The copied {@link RecordTemplate} proxies the new copied Data object.
+   *
+   * Since copying an underlying {@link DataMap} performs a deep copy, this method has the semantics of a deep copy.
+   *
+   * @return a deep copy of the RecordTemplate.
+   * @throws CloneNotSupportedException if the {@link RecordTemplate} or
+   *                                    its underlying {@link DataMap}
+   *                                    cannot be copied.
+   */
+  public RecordTemplate copy() throws CloneNotSupportedException
+  {
+    RecordTemplate copy = (RecordTemplate) super.clone();
+    copy._map = _map.copy();
+    copy._cache = new IdentityHashMap<Object, DataTemplate<?>>();
+    return copy;
   }
 
   @Override

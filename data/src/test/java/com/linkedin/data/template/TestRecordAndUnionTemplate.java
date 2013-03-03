@@ -17,39 +17,40 @@
 package com.linkedin.data.template;
 
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.testng.annotations.Test;
+
 import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
-import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.TestUtil;
 import com.linkedin.data.schema.EnumDataSchema;
 import com.linkedin.data.schema.FixedDataSchema;
 import com.linkedin.data.schema.IntegerDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import org.testng.annotations.Test;
 
-import static com.linkedin.data.TestUtil.asList;
-import static com.linkedin.data.TestUtil.asMap;
 import static org.testng.Assert.*;
 
+
 /**
- * Unit tests for record and union {@link DataTemplate}'s.
- *
- * @author slim
- */
+* Unit tests for record and union {@link DataTemplate}'s.
+*
+* @author slim
+*/
 public class TestRecordAndUnionTemplate
 {
   public static class Bar extends RecordTemplate
   {
-    public final static RecordDataSchema SCHEMA = (RecordDataSchema) DataTemplateUtil.parseSchema
+    public static final RecordDataSchema SCHEMA = (RecordDataSchema) DataTemplateUtil.parseSchema
     (
       "{ \"type\" : \"record\", \"name\" : \"Bar\", \"fields\" : [ { \"name\" : \"int\", \"type\" : \"int\" } ] }"
     );
-    private final static RecordDataSchema.Field FIELD_int = SCHEMA.getField("int");
+    private static final RecordDataSchema.Field FIELD_int = SCHEMA.getField("int");
 
     public Bar()
     {
@@ -89,7 +90,7 @@ public class TestRecordAndUnionTemplate
     }
   }
 
-  public static enum EnumType
+  public enum EnumType
   {
     APPLE,
     ORANGE,
@@ -110,7 +111,7 @@ public class TestRecordAndUnionTemplate
   public static class Foo extends RecordTemplate
   {
 
-    public final static RecordDataSchema SCHEMA = (RecordDataSchema) DataTemplateUtil.parseSchema
+    public static final RecordDataSchema SCHEMA = (RecordDataSchema) DataTemplateUtil.parseSchema
     (
      "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [\n" +
      "{ \"name\" : \"boolean\", \"type\" : \"boolean\", \"default\" : true }, \n" +
@@ -133,24 +134,24 @@ public class TestRecordAndUnionTemplate
      "] }"
     );
 
-    static public final RecordDataSchema.Field FIELD_boolean = SCHEMA.getField("boolean");
-    static public final RecordDataSchema.Field FIELD_int = SCHEMA.getField("int");
-    static public final RecordDataSchema.Field FIELD_long = SCHEMA.getField("long");
-    static public final RecordDataSchema.Field FIELD_float = SCHEMA.getField("float");
-    static public final RecordDataSchema.Field FIELD_double = SCHEMA.getField("double");
-    static public final RecordDataSchema.Field FIELD_string = SCHEMA.getField("string");
-    static public final RecordDataSchema.Field FIELD_bytes = SCHEMA.getField("bytes");
+    public static final RecordDataSchema.Field FIELD_boolean = SCHEMA.getField("boolean");
+    public static final RecordDataSchema.Field FIELD_int = SCHEMA.getField("int");
+    public static final RecordDataSchema.Field FIELD_long = SCHEMA.getField("long");
+    public static final RecordDataSchema.Field FIELD_float = SCHEMA.getField("float");
+    public static final RecordDataSchema.Field FIELD_double = SCHEMA.getField("double");
+    public static final RecordDataSchema.Field FIELD_string = SCHEMA.getField("string");
+    public static final RecordDataSchema.Field FIELD_bytes = SCHEMA.getField("bytes");
 
-    static public final RecordDataSchema.Field FIELD_enum = SCHEMA.getField("enum");
+    public static final RecordDataSchema.Field FIELD_enum = SCHEMA.getField("enum");
 
-    static public final RecordDataSchema.Field FIELD_fixed = SCHEMA.getField("fixed");
-    static public final RecordDataSchema.Field FIELD_array = SCHEMA.getField("array");
-    static public final RecordDataSchema.Field FIELD_arrayRecord = SCHEMA.getField("recordArray");
-    static public final RecordDataSchema.Field FIELD_record = SCHEMA.getField("record");
-    static public final RecordDataSchema.Field FIELD_recordNoDefault = SCHEMA.getField("recordNoDefault");
-    static public final RecordDataSchema.Field FIELD_recordOptional = SCHEMA.getField("recordOptional");
+    public static final RecordDataSchema.Field FIELD_fixed = SCHEMA.getField("fixed");
+    public static final RecordDataSchema.Field FIELD_array = SCHEMA.getField("array");
+    public static final RecordDataSchema.Field FIELD_arrayRecord = SCHEMA.getField("recordArray");
+    public static final RecordDataSchema.Field FIELD_record = SCHEMA.getField("record");
+    public static final RecordDataSchema.Field FIELD_recordNoDefault = SCHEMA.getField("recordNoDefault");
+    public static final RecordDataSchema.Field FIELD_recordOptional = SCHEMA.getField("recordOptional");
 
-    static public final RecordDataSchema.Field FIELD_union = SCHEMA.getField("union");
+    public static final RecordDataSchema.Field FIELD_union = SCHEMA.getField("union");
 
     public Foo()
     {
@@ -781,12 +782,27 @@ public class TestRecordAndUnionTemplate
       return this;
     }
 
-    static public class Union extends UnionTemplate
+    @Override
+    public Foo clone()
+        throws CloneNotSupportedException
     {
-      static public final UnionDataSchema SCHEMA = (UnionDataSchema) FIELD_union.getType();
-      static public final IntegerDataSchema MEMBER_int = (IntegerDataSchema) SCHEMA.getType("int");
-      static public final EnumDataSchema MEMBER_EnumType = (EnumDataSchema) SCHEMA.getType("EnumType");
-      static public final RecordDataSchema MEMBER_Bar = (RecordDataSchema) SCHEMA.getType("Bar");
+        return (Foo) super.clone();
+    }
+
+    @Override
+    public Foo copy()
+        throws CloneNotSupportedException
+    {
+        return (Foo) super.copy();
+    }
+
+
+    public static class Union extends UnionTemplate
+    {
+      public static final UnionDataSchema SCHEMA = (UnionDataSchema) FIELD_union.getType();
+      public static final IntegerDataSchema MEMBER_int = (IntegerDataSchema) SCHEMA.getType("int");
+      public static final EnumDataSchema MEMBER_EnumType = (EnumDataSchema) SCHEMA.getType("EnumType");
+      public static final RecordDataSchema MEMBER_Bar = (RecordDataSchema) SCHEMA.getType("Bar");
 
       public Union()
       {
@@ -893,29 +909,28 @@ public class TestRecordAndUnionTemplate
   @Test
   public void testGetMode()
   {
-    Exception exc = null;
     Foo foo1 = new Foo();
 
     // has default value of -1
     assertFalse(foo1.hasInt());
     assertTrue(foo1.getInt(GetMode.NULL) == null);
-    assertEquals(foo1.getInt(GetMode.DEFAULT), new Integer(-1));
-    assertEquals(foo1.getInt(GetMode.STRICT), new Integer(-1));
-    assertEquals(foo1.getInt(), new Integer(-1));
+    assertEquals(foo1.getInt(GetMode.DEFAULT), Integer.valueOf(-1));
+    assertEquals(foo1.getInt(GetMode.STRICT), Integer.valueOf(-1));
+    assertEquals(foo1.getInt(), Integer.valueOf(-1));
     assertFalse(foo1.hasInt());
     foo1.setInt(42);
     assertTrue(foo1.hasInt());
-    assertEquals(foo1.getInt(), new Integer(42));
-    assertEquals(foo1.getInt(GetMode.NULL), new Integer(42));
-    assertEquals(foo1.getInt(GetMode.DEFAULT), new Integer(42));
-    assertEquals(foo1.getInt(GetMode.STRICT), new Integer(42));
+    assertEquals(foo1.getInt(), Integer.valueOf(42));
+    assertEquals(foo1.getInt(GetMode.NULL), Integer.valueOf(42));
+    assertEquals(foo1.getInt(GetMode.DEFAULT), Integer.valueOf(42));
+    assertEquals(foo1.getInt(GetMode.STRICT), Integer.valueOf(42));
     assertTrue(foo1.hasInt());
     foo1.removeInt();
     assertFalse(foo1.hasInt());
     assertTrue(foo1.getInt(GetMode.NULL) == null);
-    assertEquals(foo1.getInt(GetMode.DEFAULT), new Integer(-1));
-    assertEquals(foo1.getInt(GetMode.STRICT), new Integer(-1));
-    assertEquals(foo1.getInt(), new Integer(-1));
+    assertEquals(foo1.getInt(GetMode.DEFAULT), Integer.valueOf(-1));
+    assertEquals(foo1.getInt(GetMode.STRICT), Integer.valueOf(-1));
+    assertEquals(foo1.getInt(), Integer.valueOf(-1));
 
     Bar bar1 = new Bar();
     bar1.setInt(888);
@@ -931,21 +946,22 @@ public class TestRecordAndUnionTemplate
     assertFalse(foo1.hasRecord());
     foo1.setRecord(bar1);
     assertTrue(foo1.hasRecord());
-    assertEquals(foo1.getRecord().getInt(), new Integer(888));
-    assertEquals(foo1.getRecord(GetMode.NULL).getInt(), new Integer(888));
-    assertEquals(foo1.getRecord(GetMode.DEFAULT).getInt(), new Integer(888));
-    assertEquals(foo1.getRecord(GetMode.STRICT).getInt(), new Integer(888));
+    assertEquals(foo1.getRecord().getInt(), Integer.valueOf(888));
+    assertEquals(foo1.getRecord(GetMode.NULL).getInt(), Integer.valueOf(888));
+    assertEquals(foo1.getRecord(GetMode.DEFAULT).getInt(), Integer.valueOf(888));
+    assertEquals(foo1.getRecord(GetMode.STRICT).getInt(), Integer.valueOf(888));
     assertTrue(foo1.hasRecord());
     foo1.removeRecord();
     assertFalse(foo1.hasRecord());
     assertTrue(foo1.getRecord(GetMode.NULL) == null);
-    assertEquals(foo1.getRecord(GetMode.DEFAULT).getInt(), new Integer(-6));
-    assertEquals(foo1.getRecord(GetMode.STRICT).getInt(), new Integer(-6));
+    assertEquals(foo1.getRecord(GetMode.DEFAULT).getInt(), Integer.valueOf(-6));
+    assertEquals(foo1.getRecord(GetMode.STRICT).getInt(), Integer.valueOf(-6));
 
     // required and no default value
     assertFalse(foo1.hasLong());
     assertTrue(foo1.getLong(GetMode.NULL) == null);
     assertTrue(foo1.getLong(GetMode.DEFAULT) == null);
+    Exception exc;
     try
     {
       exc = null;
@@ -969,12 +985,12 @@ public class TestRecordAndUnionTemplate
     assertTrue(exc != null);
     assertTrue(exc instanceof RequiredFieldNotPresentException);
     assertFalse(foo1.hasLong());
-    foo1.setLong(42);
+    foo1.setLong(42L);
     assertTrue(foo1.hasLong());
-    assertEquals(foo1.getLong(), new Long(42));
-    assertEquals(foo1.getLong(GetMode.NULL), new Long(42));
-    assertEquals(foo1.getLong(GetMode.DEFAULT), new Long(42));
-    assertEquals(foo1.getLong(GetMode.STRICT), new Long(42));
+    assertEquals(foo1.getLong(), Long.valueOf(42L));
+    assertEquals(foo1.getLong(GetMode.NULL), Long.valueOf(42L));
+    assertEquals(foo1.getLong(GetMode.DEFAULT), Long.valueOf(42L));
+    assertEquals(foo1.getLong(GetMode.STRICT), Long.valueOf(42L));
     assertTrue(foo1.hasLong());
     foo1.removeLong();
     assertFalse(foo1.hasLong());
@@ -1012,10 +1028,10 @@ public class TestRecordAndUnionTemplate
     assertFalse(foo1.hasFloat());
     foo1.setFloat(17.0f);
     assertTrue(foo1.hasFloat());
-    assertEquals(foo1.getFloat(), new Float(17.0f));
-    assertEquals(foo1.getFloat(GetMode.NULL), new Float(17.0f));
-    assertEquals(foo1.getFloat(GetMode.DEFAULT), new Float(17.0f));
-    assertEquals(foo1.getFloat(GetMode.STRICT), new Float(17.0f));
+    assertEquals(foo1.getFloat(), 17.0f);
+    assertEquals(foo1.getFloat(GetMode.NULL), 17.0f);
+    assertEquals(foo1.getFloat(GetMode.DEFAULT), 17.0f);
+    assertEquals(foo1.getFloat(GetMode.STRICT), 17.0f);
     assertTrue(foo1.hasFloat());
     foo1.removeFloat();
     assertFalse(foo1.hasFloat());
@@ -1027,22 +1043,22 @@ public class TestRecordAndUnionTemplate
     // optional and has default value
     assertFalse(foo1.hasDouble());
     assertTrue(foo1.getDouble(GetMode.NULL) == null);
-    assertEquals(foo1.getDouble(GetMode.DEFAULT), new Double(-4.0));
-    assertEquals(foo1.getDouble(GetMode.STRICT), new Double(-4.0));
-    assertEquals(foo1.getDouble(), new Double(-4.0));
+    assertEquals(foo1.getDouble(GetMode.DEFAULT), -4.0);
+    assertEquals(foo1.getDouble(GetMode.STRICT), -4.0);
+    assertEquals(foo1.getDouble(), -4.0);
     assertFalse(foo1.hasDouble());
     foo1.setDouble(87.0);
     assertTrue(foo1.hasDouble());
-    assertEquals(foo1.getDouble(), new Double(87.0));
-    assertEquals(foo1.getDouble(GetMode.NULL), new Double(87.0));
-    assertEquals(foo1.getDouble(GetMode.DEFAULT), new Double(87.0));
-    assertEquals(foo1.getDouble(GetMode.STRICT), new Double(87.0));
+    assertEquals(foo1.getDouble(), 87.0);
+    assertEquals(foo1.getDouble(GetMode.NULL), 87.0);
+    assertEquals(foo1.getDouble(GetMode.DEFAULT), 87.0);
+    assertEquals(foo1.getDouble(GetMode.STRICT), 87.0);
     assertTrue(foo1.hasDouble());
     foo1.removeDouble();
     assertFalse(foo1.hasDouble());
-    assertEquals(foo1.getDouble(GetMode.DEFAULT), new Double(-4.0));
-    assertEquals(foo1.getDouble(GetMode.STRICT), new Double(-4.0));
-    assertEquals(foo1.getDouble(), new Double(-4.0));
+    assertEquals(foo1.getDouble(GetMode.DEFAULT), -4.0);
+    assertEquals(foo1.getDouble(GetMode.STRICT), -4.0);
+    assertEquals(foo1.getDouble(), -4.0);
 
     // record with no default value
     assertFalse(foo1.hasRecordNoDefault());
@@ -1073,10 +1089,10 @@ public class TestRecordAndUnionTemplate
     assertFalse(foo1.hasRecordNoDefault());
     foo1.setRecordNoDefault(bar1);
     assertTrue(foo1.hasRecordNoDefault());
-    assertEquals(foo1.getRecordNoDefault().getInt(), new Integer(888));
-    assertEquals(foo1.getRecordNoDefault(GetMode.NULL).getInt(), new Integer(888));
-    assertEquals(foo1.getRecordNoDefault(GetMode.DEFAULT).getInt(), new Integer(888));
-    assertEquals(foo1.getRecordNoDefault(GetMode.STRICT).getInt(), new Integer(888));
+    assertEquals(foo1.getRecordNoDefault().getInt(), Integer.valueOf(888));
+    assertEquals(foo1.getRecordNoDefault(GetMode.NULL).getInt(), Integer.valueOf(888));
+    assertEquals(foo1.getRecordNoDefault(GetMode.DEFAULT).getInt(), Integer.valueOf(888));
+    assertEquals(foo1.getRecordNoDefault(GetMode.STRICT).getInt(), Integer.valueOf(888));
     assertTrue(foo1.hasRecordNoDefault());
     foo1.removeRecordNoDefault();
     assertFalse(foo1.hasRecordNoDefault());
@@ -1109,7 +1125,6 @@ public class TestRecordAndUnionTemplate
   @Test
   public void testSetMode()
   {
-    Exception exc = null;
     Foo foo1 = new Foo();
 
     //
@@ -1142,28 +1157,28 @@ public class TestRecordAndUnionTemplate
 
     // mandatory complex field
     assertFalse(foo1.hasRecord());
-    foo1.setRecord((new Bar()).setInt(42));
+    foo1.setRecord(new Bar().setInt(42));
     assertEquals(foo1.getRecord().getInt().intValue(), 42);
-    foo1.setRecord((new Bar()).setInt(44), SetMode.IGNORE_NULL);
+    foo1.setRecord(new Bar().setInt(44), SetMode.IGNORE_NULL);
     assertEquals(foo1.getRecord().getInt().intValue(), 44);
-    foo1.setRecord((new Bar()).setInt(46), SetMode.REMOVE_IF_NULL);
+    foo1.setRecord(new Bar().setInt(46), SetMode.REMOVE_IF_NULL);
     assertEquals(foo1.getRecord().getInt().intValue(), 46);
-    foo1.setRecord((new Bar()).setInt(48), SetMode.REMOVE_OPTIONAL_IF_NULL);
+    foo1.setRecord(new Bar().setInt(48), SetMode.REMOVE_OPTIONAL_IF_NULL);
     assertEquals(foo1.getRecord().getInt().intValue(), 48);
-    foo1.setRecord((new Bar()).setInt(50), SetMode.DISALLOW_NULL);
+    foo1.setRecord(new Bar().setInt(50), SetMode.DISALLOW_NULL);
     assertEquals(foo1.getInt().intValue(), 50);
 
     // mandatory complex field
     assertFalse(foo1.hasRecordOptional());
-    foo1.setRecordOptional((new Bar()).setInt(42));
+    foo1.setRecordOptional(new Bar().setInt(42));
     assertEquals(foo1.getRecordOptional().getInt().intValue(), 42);
-    foo1.setRecordOptional((new Bar()).setInt(44), SetMode.IGNORE_NULL);
+    foo1.setRecordOptional(new Bar().setInt(44), SetMode.IGNORE_NULL);
     assertEquals(foo1.getRecordOptional().getInt().intValue(), 44);
-    foo1.setRecordOptional((new Bar()).setInt(46), SetMode.REMOVE_IF_NULL);
+    foo1.setRecordOptional(new Bar().setInt(46), SetMode.REMOVE_IF_NULL);
     assertEquals(foo1.getRecordOptional().getInt().intValue(), 46);
-    foo1.setRecordOptional((new Bar()).setInt(48), SetMode.REMOVE_OPTIONAL_IF_NULL);
+    foo1.setRecordOptional(new Bar().setInt(48), SetMode.REMOVE_OPTIONAL_IF_NULL);
     assertEquals(foo1.getRecordOptional().getInt().intValue(), 48);
-    foo1.setRecordOptional((new Bar()).setInt(50), SetMode.DISALLOW_NULL);
+    foo1.setRecordOptional(new Bar().setInt(50), SetMode.DISALLOW_NULL);
     assertEquals(foo1.getInt().intValue(), 50);
 
     // primitive mandatory field with null
@@ -1182,6 +1197,7 @@ public class TestRecordAndUnionTemplate
     foo1.setInt(44, SetMode.REMOVE_IF_NULL);
     assertEquals(foo1.getInt(GetMode.NULL).intValue(), 44);
     // REMOVE_OPTIONAL_IF_NULL
+    Exception exc;
     try
     {
       exc = null;
@@ -1300,7 +1316,7 @@ public class TestRecordAndUnionTemplate
     foo1 = new Foo();
     foo1.setRecord(null, SetMode.IGNORE_NULL);
     assertFalse(foo1.hasRecord());
-    foo1.setRecord((new Bar()).setInt(42));
+    foo1.setRecord(new Bar().setInt(42));
     foo1.setRecord(null, SetMode.IGNORE_NULL);
     assertEquals(foo1.getRecord(GetMode.NULL).getInt().intValue(), 42);
     // REMOVE_IF_NULL
@@ -1308,7 +1324,7 @@ public class TestRecordAndUnionTemplate
     assertFalse(foo1.hasRecord());
     foo1.setRecord(null, SetMode.REMOVE_IF_NULL);
     assertFalse(foo1.hasRecord());
-    foo1.setRecord((new Bar()).setInt(44), SetMode.REMOVE_IF_NULL);
+    foo1.setRecord(new Bar().setInt(44), SetMode.REMOVE_IF_NULL);
     assertEquals(foo1.getRecord(GetMode.NULL).getInt().intValue(), 44);
     // REMOVE_OPTIONAL_IF_NULL
     try
@@ -1337,7 +1353,7 @@ public class TestRecordAndUnionTemplate
     assertTrue(exc != null);
     assertTrue(exc instanceof IllegalArgumentException);
     assertFalse(foo1.hasRecord());
-    foo1.setRecord((new Bar()).setInt(46), SetMode.REMOVE_OPTIONAL_IF_NULL);
+    foo1.setRecord(new Bar().setInt(46), SetMode.REMOVE_OPTIONAL_IF_NULL);
     // DISALLOW_NULL
     try
     {
@@ -1365,7 +1381,7 @@ public class TestRecordAndUnionTemplate
     assertTrue(exc != null);
     assertTrue(exc instanceof NullPointerException);
     assertFalse(foo1.hasRecord());
-    foo1.setRecord((new Bar()).setInt(48), SetMode.DISALLOW_NULL);
+    foo1.setRecord(new Bar().setInt(48), SetMode.DISALLOW_NULL);
     assertEquals(foo1.getRecord(GetMode.NULL).getInt().intValue(), 48);
 
     //
@@ -1375,7 +1391,7 @@ public class TestRecordAndUnionTemplate
     foo1 = new Foo();
     foo1.setRecordOptional(null, SetMode.IGNORE_NULL);
     assertFalse(foo1.hasRecordOptional());
-    foo1.setRecordOptional((new Bar()).setInt(42));
+    foo1.setRecordOptional(new Bar().setInt(42));
     foo1.setRecordOptional(null, SetMode.IGNORE_NULL);
     assertEquals(foo1.getRecordOptional(GetMode.NULL).getInt().intValue(), 42);
     // REMOVE_IF_NULL
@@ -1383,14 +1399,14 @@ public class TestRecordAndUnionTemplate
     assertFalse(foo1.hasRecordOptional());
     foo1.setRecordOptional(null, SetMode.REMOVE_IF_NULL);
     assertFalse(foo1.hasRecordOptional());
-    foo1.setRecordOptional((new Bar()).setInt(44), SetMode.REMOVE_IF_NULL);
+    foo1.setRecordOptional(new Bar().setInt(44), SetMode.REMOVE_IF_NULL);
     assertEquals(foo1.getRecordOptional(GetMode.NULL).getInt().intValue(), 44);
     // REMOVE_OPTIONAL_IF_NULL
     foo1.setRecordOptional(null, SetMode.REMOVE_OPTIONAL_IF_NULL);
     assertFalse(foo1.hasRecordOptional());
     foo1.setRecordOptional(null, SetMode.REMOVE_OPTIONAL_IF_NULL);
     assertFalse(foo1.hasRecordOptional());
-    foo1.setRecordOptional((new Bar()).setInt(46), SetMode.REMOVE_OPTIONAL_IF_NULL);
+    foo1.setRecordOptional(new Bar().setInt(46), SetMode.REMOVE_OPTIONAL_IF_NULL);
     assertEquals(foo1.getRecordOptional(GetMode.NULL).getInt().intValue(), 46);
     // DISALLOW_NULL
     try
@@ -1419,16 +1435,16 @@ public class TestRecordAndUnionTemplate
     assertTrue(exc != null);
     assertTrue(exc instanceof NullPointerException);
     assertFalse(foo1.hasRecordOptional());
-    foo1.setRecordOptional((new Bar()).setInt(48), SetMode.DISALLOW_NULL);
+    foo1.setRecordOptional(new Bar().setInt(48), SetMode.DISALLOW_NULL);
     assertEquals(foo1.getRecordOptional(GetMode.NULL).getInt().intValue(), 48);
   }
 
   @Test
   public void testSchema()
   {
-    assertEquals(Bar.SCHEMA, (new Bar().schema()));
-    assertEquals(Foo.SCHEMA, (new Foo().schema()));
-    assertEquals(Foo.Union.SCHEMA, (new Foo.Union().schema()));
+    assertEquals(Bar.SCHEMA, new Bar().schema());
+    assertEquals(Foo.SCHEMA, new Foo().schema());
+    assertEquals(Foo.Union.SCHEMA, new Foo.Union().schema());
   }
 
   @Test
@@ -1437,13 +1453,13 @@ public class TestRecordAndUnionTemplate
     List<EnumType> good = Arrays.asList(EnumType.APPLE, EnumType.ORANGE, EnumType.BANANA);
     Foo foo = new Foo();
     Integer lastHashCode = null;
-    for (EnumType i : good)
+    for (EnumType type : good)
     {
-      foo.setEnum(i);
+      foo.setEnum(type);
       int newHashCode = foo.hashCode();
       if (lastHashCode != null)
       {
-        assertTrue(newHashCode != lastHashCode);
+        assertTrue(newHashCode != lastHashCode.intValue());
       }
       assertEquals(newHashCode, foo.data().hashCode());
       lastHashCode = newHashCode;
@@ -1458,19 +1474,26 @@ public class TestRecordAndUnionTemplate
     for (Boolean aBoolean : good)
     {
       // Object
-      foo.setBoolean(aBoolean);
+      foo.setBoolean(aBoolean, SetMode.DISALLOW_NULL);
       assertEquals(foo.isBoolean(), aBoolean);
       assertTrue(foo.hasBoolean());
-      assertEquals(foo.toString(), "{boolean=" + aBoolean + "}");
+      assertEquals(foo.toString(), "{boolean=" + aBoolean + '}');
       Exception exc = null;
       try
       {
-        Foo fooClone = (Foo) foo.clone();
+        Foo fooClone = foo.clone();
         assertEquals(foo, fooClone);
         fooClone.removeBoolean();
         assertTrue(foo.hasBoolean());
         assertEquals(foo.isBoolean(), aBoolean);
         assertFalse(fooClone.hasBoolean());
+
+        Foo fooCopy = foo.copy();
+        assertEquals(foo, fooCopy);
+        fooCopy.removeBoolean();
+        assertTrue(foo.hasBoolean());
+        assertEquals(foo.isBoolean(), aBoolean);
+        assertFalse(fooCopy.hasBoolean());
       }
       catch (CloneNotSupportedException e)
       {
@@ -1482,19 +1505,26 @@ public class TestRecordAndUnionTemplate
       assertEquals(foo.toString(), "{}");
 
       // primitive
-      foo.setBoolean(aBoolean);
+      foo.setBoolean(aBoolean.booleanValue());
       assertEquals(foo.isBoolean(), aBoolean);
       assertTrue(foo.hasBoolean());
       assertEquals(foo.toString(), "{boolean=" + aBoolean + '}');
       exc = null;
       try
       {
-        Foo fooClone = (Foo) foo.clone();
+        Foo fooClone = foo.clone();
         assertEquals(foo, fooClone);
         fooClone.removeBoolean();
         assertTrue(foo.hasBoolean());
         assertEquals(foo.isBoolean(), aBoolean);
         assertFalse(fooClone.hasBoolean());
+
+        Foo fooCopy = foo.copy();
+        assertEquals(foo, fooCopy);
+        fooCopy.removeBoolean();
+        assertTrue(foo.hasBoolean());
+        assertEquals(foo.isBoolean(), aBoolean);
+        assertFalse(fooCopy.hasBoolean());
       }
       catch (CloneNotSupportedException e)
       {
@@ -1506,7 +1536,7 @@ public class TestRecordAndUnionTemplate
       assertEquals(foo.toString(), "{}");
     }
 
-    List<?> badInput = asList(3, "abc", new DataList());
+    List<?> badInput = TestUtil.asList(3, "abc", new DataList());
 
     DataMap map = new DataMap();
     foo = new Foo(map);
@@ -1516,7 +1546,7 @@ public class TestRecordAndUnionTemplate
       Exception exc = null;
       try
       {
-        Boolean result = foo.isBoolean();
+        foo.isBoolean();
       }
       catch (Exception e)
       {
@@ -1527,11 +1557,11 @@ public class TestRecordAndUnionTemplate
     }
 
     // legacy test
-    Boolean t[] = { true, false, true };
+    Boolean[] t = { true, false, true };
     foo = new Foo();
-    foo.set1Boolean(t[0]);
+    foo.set1Boolean(t[0].booleanValue());
     assertEquals(foo.isBoolean(), t[0]);
-    foo.set2Boolean(t[1]);
+    foo.set2Boolean(t[1].booleanValue());
     assertEquals(foo.isBoolean(), t[1]);
     foo.set2Boolean(t[2], SetMode.DISALLOW_NULL);
     assertEquals(foo.isBoolean(), t[2]);
@@ -1544,22 +1574,29 @@ public class TestRecordAndUnionTemplate
   {
     List<EnumType> good = Arrays.asList(EnumType.APPLE, EnumType.ORANGE, EnumType.BANANA);
     Foo foo = new Foo();
-    for (EnumType i : good)
+    for (EnumType type : good)
     {
-      foo.setEnum(i);
-      assertEquals(foo.getEnum(), i);
+      foo.setEnum(type);
+      assertEquals(foo.getEnum(), type);
       assertTrue(foo.hasEnum());
-      assertEquals(foo.toString(), "{enum=" + i + "}");
+      assertEquals(foo.toString(), "{enum=" + type + '}');
 
       Exception exc = null;
       try
       {
-        Foo fooClone = (Foo) foo.clone();
+        Foo fooClone = foo.clone();
         assertEquals(foo, fooClone);
         fooClone.removeEnum();
         assertTrue(foo.hasEnum());
-        assertEquals(foo.getEnum(), i);
+        assertEquals(foo.getEnum(), type);
         assertFalse(fooClone.hasEnum());
+
+        Foo fooCopy = foo.copy();
+        assertEquals(foo, fooCopy);
+        fooCopy.removeEnum();
+        assertTrue(foo.hasEnum());
+        assertEquals(foo.getEnum(), type);
+        assertFalse(fooCopy.hasEnum());
       }
       catch (CloneNotSupportedException e)
       {
@@ -1571,7 +1608,7 @@ public class TestRecordAndUnionTemplate
       assertEquals(foo.toString(), "{}");
     }
 
-    List<?> badInput = asList(false, "abc", new DataList());
+    List<?> badInput = TestUtil.asList(false, "abc", new DataList());
 
     DataMap map = new DataMap();
     foo = new Foo(map);
@@ -1604,7 +1641,7 @@ public class TestRecordAndUnionTemplate
     assertEquals(foo.getEnum(), EnumType.BANANA);
 
     // legacy test
-    EnumType t[] = { EnumType.APPLE, EnumType.ORANGE, EnumType.BANANA };
+    EnumType[] t = { EnumType.APPLE, EnumType.ORANGE, EnumType.BANANA };
     foo = new Foo();
     foo.set1Enum(t[0]);
     assertEquals(foo.getEnum(), t[0]);
@@ -1623,19 +1660,26 @@ public class TestRecordAndUnionTemplate
     Foo foo = new Foo();
     for (Integer i : good)
     {
-      foo.setInt(i);
+      foo.setInt(i.intValue());
       assertEquals(foo.getInt(), i);
       assertTrue(foo.hasInt());
-      assertEquals(foo.toString(), "{int=" + i + "}");
+      assertEquals(foo.toString(), "{int=" + i + '}');
       Exception exc = null;
       try
       {
-        Foo fooClone = (Foo) foo.clone();
+        Foo fooClone = foo.clone();
         assertEquals(foo, fooClone);
         fooClone.removeInt();
         assertTrue(foo.hasInt());
         assertEquals(foo.getInt(), i);
         assertFalse(fooClone.hasInt());
+
+        Foo fooCopy = foo.copy();
+        assertEquals(foo, fooCopy);
+        fooCopy.removeInt();
+        assertTrue(foo.hasInt());
+        assertEquals(foo.getInt(), i);
+        assertFalse(fooCopy.hasInt());
       }
       catch (CloneNotSupportedException e)
       {
@@ -1647,7 +1691,7 @@ public class TestRecordAndUnionTemplate
       assertEquals(foo.toString(), "{}");
     }
 
-    List<?> badInput = asList(false, "abc", new DataList());
+    List<?> badInput = TestUtil.asList(false, "abc", new DataList());
 
     DataMap map = new DataMap();
     foo = new Foo(map);
@@ -1657,7 +1701,7 @@ public class TestRecordAndUnionTemplate
       Exception exc = null;
       try
       {
-        Integer result = foo.getInt();
+        foo.getInt();
       }
       catch (Exception e)
       {
@@ -1667,8 +1711,8 @@ public class TestRecordAndUnionTemplate
       assertTrue(exc instanceof TemplateOutputCastException);
     }
 
-    List<?> castFrom = asList(88L, 99.0f, 77.0);
-    List<?> castTo = asList(88, 99, 77);
+    List<?> castFrom = TestUtil.asList(88L, 99.0f, 77.0);
+    List<?> castTo = TestUtil.asList(88, 99, 77);
     for (int i = 0; i < castFrom.size(); ++i)
     {
       map.put("int", castFrom.get(i));
@@ -1677,11 +1721,11 @@ public class TestRecordAndUnionTemplate
     }
 
     // legacy test
-    Integer t[] = { 77, 88, 99 };
+    Integer[] t = { 77, 88, 99 };
     foo = new Foo();
-    foo.set1Int(t[0]);
+    foo.set1Int(t[0].intValue());
     assertEquals(foo.getInt(), t[0]);
-    foo.set2Int(t[1]);
+    foo.set2Int(t[1].intValue());
     assertEquals(foo.getInt(), t[1]);
     foo.set2Int(t[2], SetMode.DISALLOW_NULL);
     assertEquals(foo.getInt(), t[2]);
@@ -1694,21 +1738,28 @@ public class TestRecordAndUnionTemplate
   {
     List<Long> good = Arrays.asList(11L, 22L, 33L);
     Foo foo = new Foo();
-    for (Long i : good)
+    for (Long aLong : good)
     {
-      foo.setLong(i);
-      assertEquals(foo.getLong(), i);
+      foo.setLong(aLong.longValue());
+      assertEquals(foo.getLong(), aLong);
       assertTrue(foo.hasLong());
-      assertEquals(foo.toString(), "{long=" + i + "}");
+      assertEquals(foo.toString(), "{long=" + aLong + '}');
       Exception exc = null;
       try
       {
-        Foo fooClone = (Foo) foo.clone();
+        Foo fooClone = foo.clone();
         assertEquals(foo, fooClone);
         fooClone.removeLong();
         assertTrue(foo.hasLong());
-        assertEquals(foo.getLong(), i);
+        assertEquals(foo.getLong(), aLong);
         assertFalse(fooClone.hasLong());
+
+        Foo fooCopy = foo.copy();
+        assertEquals(foo, fooCopy);
+        fooCopy.removeLong();
+        assertTrue(foo.hasLong());
+        assertEquals(foo.getLong(), aLong);
+        assertFalse(fooCopy.hasLong());
       }
       catch (CloneNotSupportedException e)
       {
@@ -1720,7 +1771,7 @@ public class TestRecordAndUnionTemplate
       assertEquals(foo.toString(), "{}");
     }
 
-    List<?> badInput = asList(false, "abc", new DataList());
+    List<?> badInput = TestUtil.asList(false, "abc", new DataList());
 
     DataMap map = new DataMap();
     foo = new Foo(map);
@@ -1730,7 +1781,7 @@ public class TestRecordAndUnionTemplate
       Exception exc = null;
       try
       {
-        Long result = foo.getLong();
+        foo.getLong();
       }
       catch (Exception e)
       {
@@ -1740,8 +1791,8 @@ public class TestRecordAndUnionTemplate
       assertTrue(exc instanceof TemplateOutputCastException);
     }
 
-    List<?> castFrom = asList(88, 99.0f, 77.0);
-    List<?> castTo = asList(88L, 99L, 77L);
+    List<?> castFrom = TestUtil.asList(88, 99.0f, 77.0);
+    List<?> castTo = TestUtil.asList(88L, 99L, 77L);
     for (int i = 0; i < castFrom.size(); ++i)
     {
       map.put("long", castFrom.get(i));
@@ -1750,11 +1801,11 @@ public class TestRecordAndUnionTemplate
     }
 
     // legacy test
-    Long t[] = { 77L, 88L, 99L };
+    Long[] t = { 77L, 88L, 99L };
     foo = new Foo();
-    foo.set1Long(t[0]);
+    foo.set1Long(t[0].longValue());
     assertEquals(foo.getLong(), t[0]);
-    foo.set2Long(t[1]);
+    foo.set2Long(t[1].longValue());
     assertEquals(foo.getLong(), t[1]);
     foo.set2Long(t[2], SetMode.DISALLOW_NULL);
     assertEquals(foo.getLong(), t[2]);
@@ -1769,19 +1820,26 @@ public class TestRecordAndUnionTemplate
     Foo foo = new Foo();
     for (Float i : good)
     {
-      foo.setFloat(i);
+      foo.setFloat(i.floatValue());
       assertEquals(foo.getFloat(), i);
       assertTrue(foo.hasFloat());
-      assertEquals(foo.toString(), "{float=" + i + "}");
+      assertEquals(foo.toString(), "{float=" + i + '}');
       Exception exc = null;
       try
       {
-        Foo fooClone = (Foo) foo.clone();
+        Foo fooClone = foo.clone();
         assertEquals(foo, fooClone);
         fooClone.removeFloat();
         assertTrue(foo.hasFloat());
         assertEquals(foo.getFloat(), i);
         assertFalse(fooClone.hasFloat());
+
+        Foo fooCopy = foo.copy();
+        assertEquals(foo, fooCopy);
+        fooCopy.removeFloat();
+        assertTrue(foo.hasFloat());
+        assertEquals(foo.getFloat(), i);
+        assertFalse(fooCopy.hasFloat());
       }
       catch (CloneNotSupportedException e)
       {
@@ -1793,7 +1851,7 @@ public class TestRecordAndUnionTemplate
       assertEquals(foo.toString(), "{}");
     }
 
-    List<?> badInput = asList(false, "abc", new DataList());
+    List<?> badInput = TestUtil.asList(false, "abc", new DataList());
 
     DataMap map = new DataMap();
     foo = new Foo(map);
@@ -1803,7 +1861,7 @@ public class TestRecordAndUnionTemplate
       Exception exc = null;
       try
       {
-        Float result = foo.getFloat();
+        foo.getFloat();
       }
       catch (Exception e)
       {
@@ -1813,8 +1871,8 @@ public class TestRecordAndUnionTemplate
       assertTrue(exc instanceof TemplateOutputCastException);
     }
 
-    List<?> castFrom = asList(88, 99.0, 77.0);
-    List<?> castTo = asList(88.0f, 99.0f, 77.0f);
+    List<?> castFrom = TestUtil.asList(88, 99.0, 77.0);
+    List<?> castTo = TestUtil.asList(88.0f, 99.0f, 77.0f);
     for (int i = 0; i < castFrom.size(); ++i)
     {
       map.put("float", castFrom.get(i));
@@ -1823,11 +1881,11 @@ public class TestRecordAndUnionTemplate
     }
 
     // legacy test
-    Float t[] = { 77f, 88f, 99f };
+    Float[] t = {77.0f, 88.0f, 99.0f};
     foo = new Foo();
-    foo.set1Float(t[0]);
+    foo.set1Float(t[0].floatValue());
     assertEquals(foo.getFloat(), t[0]);
-    foo.set2Float(t[1]);
+    foo.set2Float(t[1].floatValue());
     assertEquals(foo.getFloat(), t[1]);
     foo.set2Float(t[2], SetMode.DISALLOW_NULL);
     assertEquals(foo.getFloat(), t[2]);
@@ -1840,21 +1898,28 @@ public class TestRecordAndUnionTemplate
   {
     List<Double> good = Arrays.asList(11.0, 22.0, 33.0);
     Foo foo = new Foo();
-    for (Double i : good)
+    for (Double aDouble : good)
     {
-      foo.setDouble(i);
-      assertEquals(foo.getDouble(), i);
+      foo.setDouble(aDouble.doubleValue());
+      assertEquals(foo.getDouble(), aDouble);
       assertTrue(foo.hasDouble());
-      assertEquals(foo.toString(), "{double=" + i + "}");
+      assertEquals(foo.toString(), "{double=" + aDouble + '}');
       Exception exc = null;
       try
       {
-        Foo fooClone = (Foo) foo.clone();
+        Foo fooClone = foo.clone();
         assertEquals(foo, fooClone);
         fooClone.removeDouble();
         assertTrue(foo.hasDouble());
-        assertEquals(foo.getDouble(), i);
+        assertEquals(foo.getDouble(), aDouble);
         assertFalse(fooClone.hasDouble());
+
+        Foo fooCopy = foo.copy();
+        assertEquals(foo, fooCopy);
+        fooCopy.removeDouble();
+        assertTrue(foo.hasDouble());
+        assertEquals(foo.getDouble(), aDouble);
+        assertFalse(fooCopy.hasDouble());
       }
       catch (CloneNotSupportedException e)
       {
@@ -1866,7 +1931,7 @@ public class TestRecordAndUnionTemplate
       assertEquals(foo.toString(), "{}");
     }
 
-    List<?> badInput = asList(false, "abc", new DataList());
+    List<?> badInput = TestUtil.asList(false, "abc", new DataList());
 
     DataMap map = new DataMap();
     foo = new Foo(map);
@@ -1876,7 +1941,7 @@ public class TestRecordAndUnionTemplate
       Exception exc = null;
       try
       {
-        Double result = foo.getDouble();
+        foo.getDouble();
       }
       catch (Exception e)
       {
@@ -1886,8 +1951,8 @@ public class TestRecordAndUnionTemplate
       assertTrue(exc instanceof TemplateOutputCastException);
     }
 
-    List<?> castFrom = asList(88, 99L, 77.0f);
-    List<?> castTo = asList(88.0, 99.0, 77.0);
+    List<?> castFrom = TestUtil.asList(88, 99L, 77.0f);
+    List<?> castTo = TestUtil.asList(88.0, 99.0, 77.0);
     for (int i = 0; i < castFrom.size(); ++i)
     {
       map.put("double", castFrom.get(i));
@@ -1896,11 +1961,11 @@ public class TestRecordAndUnionTemplate
     }
 
     // legacy test
-    Double t[] = { 77.0, 88.0, 99.0 };
+    Double[] t = { 77.0, 88.0, 99.0 };
     foo = new Foo();
-    foo.set1Double(t[0]);
+    foo.set1Double(t[0].doubleValue());
     assertEquals(foo.getDouble(), t[0]);
-    foo.set2Double(t[1]);
+    foo.set2Double(t[1].doubleValue());
     assertEquals(foo.getDouble(), t[1]);
     foo.set2Double(t[2], SetMode.DISALLOW_NULL);
     assertEquals(foo.getDouble(), t[2]);
@@ -1913,21 +1978,28 @@ public class TestRecordAndUnionTemplate
   {
     List<String> good = Arrays.asList("11", "22.0", "33.0");
     Foo foo = new Foo();
-    for (String i : good)
+    for (String s : good)
     {
-      foo.setString(i);
-      assertEquals(foo.getString(), i);
+      foo.setString(s);
+      assertEquals(foo.getString(), s);
       assertTrue(foo.hasString());
-      assertEquals(foo.toString(), "{string=" + i + "}");
+      assertEquals(foo.toString(), "{string=" + s + '}');
       Exception exc = null;
       try
       {
-        Foo fooClone = (Foo) foo.clone();
+        Foo fooClone = foo.clone();
         assertEquals(foo, fooClone);
         fooClone.removeString();
         assertTrue(foo.hasString());
-        assertEquals(foo.getString(), i);
+        assertEquals(foo.getString(), s);
         assertFalse(fooClone.hasString());
+
+        Foo fooCopy = foo.copy();
+        assertEquals(foo, fooCopy);
+        fooCopy.removeString();
+        assertTrue(foo.hasString());
+        assertEquals(foo.getString(), s);
+        assertFalse(fooCopy.hasString());
       }
       catch (CloneNotSupportedException e)
       {
@@ -1939,7 +2011,7 @@ public class TestRecordAndUnionTemplate
       assertEquals(foo.toString(), "{}");
     }
 
-    List<?> badInput = asList(false, 4, 5L, 6.0f, 7.0, new DataList());
+    List<?> badInput = TestUtil.asList(false, 4, 5L, 6.0f, 7.0, new DataList());
 
     DataMap map = new DataMap();
     foo = new Foo(map);
@@ -1949,7 +2021,7 @@ public class TestRecordAndUnionTemplate
       Exception exc = null;
       try
       {
-         String result = foo.getString();
+        foo.getString();
       }
       catch (Exception e)
       {
@@ -1960,7 +2032,7 @@ public class TestRecordAndUnionTemplate
     }
 
     // legacy test
-    String t[] = { "77", "88", "99" };
+    String[] t = { "77", "88", "99" };
     foo = new Foo();
     foo.set1String(t[0]);
     assertEquals(foo.getString(), t[0]);
@@ -1977,21 +2049,28 @@ public class TestRecordAndUnionTemplate
   {
     List<ByteString> good = Arrays.asList(ByteString.copyAvroString("11", false), ByteString.copyAvroString("22", false), ByteString.copyAvroString("33", false));
     Foo foo = new Foo();
-    for (ByteString i : good)
+    for (ByteString byteString : good)
     {
-      foo.setBytes(i);
-      assertEquals(foo.getBytes(), i);
+      foo.setBytes(byteString);
+      assertEquals(foo.getBytes(), byteString);
       assertTrue(foo.hasBytes());
-      assertEquals(foo.toString(), "{bytes=" + i + "}");
+      assertEquals(foo.toString(), "{bytes=" + byteString + '}');
       Exception exc = null;
       try
       {
-        Foo fooClone = (Foo) foo.clone();
+        Foo fooClone = foo.clone();
         assertEquals(foo, fooClone);
         fooClone.removeBytes();
         assertTrue(foo.hasBytes());
-        assertEquals(foo.getBytes(), i);
+        assertEquals(foo.getBytes(), byteString);
         assertFalse(fooClone.hasBytes());
+
+        Foo fooCopy = foo.copy();
+        assertEquals(foo, fooCopy);
+        fooCopy.removeBytes();
+        assertTrue(foo.hasBytes());
+        assertEquals(foo.getBytes(), byteString);
+        assertFalse(fooCopy.hasBytes());
       }
       catch (CloneNotSupportedException e)
       {
@@ -2003,7 +2082,7 @@ public class TestRecordAndUnionTemplate
       assertEquals(foo.toString(), "{}");
     }
 
-    List<?> badInput = asList(false, 33, "\u0100", new DataList());
+    List<?> badInput = TestUtil.asList(false, 33, "\u0100", new DataList());
 
     DataMap map = new DataMap();
     foo = new Foo(map);
@@ -2013,7 +2092,7 @@ public class TestRecordAndUnionTemplate
       Exception exc = null;
       try
       {
-        ByteString result = foo.getBytes();
+        foo.getBytes();
       }
       catch (Exception e)
       {
@@ -2023,8 +2102,8 @@ public class TestRecordAndUnionTemplate
       assertTrue(exc instanceof TemplateOutputCastException);
     }
 
-    List<?> castFrom = asList("88");
-    List<?> castTo = asList(ByteString.copyAvroString("88", false));
+    List<?> castFrom = TestUtil.asList("88");
+    List<?> castTo = TestUtil.asList(ByteString.copyAvroString("88", false));
     for (int i = 0; i < castFrom.size(); ++i)
     {
       map.put("bytes", castFrom.get(i));
@@ -2033,7 +2112,7 @@ public class TestRecordAndUnionTemplate
     }
 
     // legacy test
-    ByteString t[] = {
+    ByteString[] t = {
       ByteString.copyAvroString("apple", false), 
       ByteString.copyAvroString("orange", false), 
       ByteString.copyAvroString("banana", false) 
@@ -2069,28 +2148,35 @@ public class TestRecordAndUnionTemplate
       {
         exc = e;
       }
-      assert(exc == null);
+      assert exc == null;
     }
     Foo foo = new Foo();
-    int index = 0;
-    for (FixedType i : good)
+    for (FixedType fixedType : good)
     {
-      foo.setFixed(i);
-      assertEquals(foo.getFixed(), i);
-      assertEquals(foo.getFixed().bytes(), i.bytes());
-      assertSame(foo.getFixed().bytes(), i.bytes());
+      foo.setFixed(fixedType);
+      assertEquals(foo.getFixed(), fixedType);
+      assertEquals(foo.getFixed().bytes(), fixedType.bytes());
+      assertSame(foo.getFixed().bytes(), fixedType.bytes());
       assertTrue(foo.hasFixed());
-      assertEquals(foo.toString(), "{fixed=" + i.bytes() + "}");
+      assertEquals(foo.toString(), "{fixed=" + fixedType.bytes() + '}');
       Exception exc = null;
       try
       {
-        Foo fooClone = (Foo) foo.clone();
+        Foo fooClone = foo.clone();
         assertEquals(foo, fooClone);
         assertSame(fooClone.getFixed(), foo.getFixed());
         fooClone.removeFixed();
         assertTrue(foo.hasFixed());
-        assertEquals(foo.getFixed(), i);
+        assertEquals(foo.getFixed(), fixedType);
         assertFalse(fooClone.hasFixed());
+
+        Foo fooCopy = foo.copy();
+        assertEquals(foo, fooCopy);
+        assertNotSame(fooCopy.getFixed(), foo.getFixed());
+        fooCopy.removeFixed();
+        assertTrue(foo.hasFixed());
+        assertEquals(foo.getFixed(), fixedType);
+        assertFalse(fooCopy.hasFixed());
       }
       catch (CloneNotSupportedException e)
       {
@@ -2100,10 +2186,9 @@ public class TestRecordAndUnionTemplate
       foo.removeFixed();
       assertFalse(foo.hasFixed());
       assertEquals(foo.toString(), "{}");
-      index++;
     }
 
-    List<?> badInput = asList(false, "abc", new DataMap(), ByteString.empty(), ByteString.copyAvroString("abc", false));
+    List<?> badInput = TestUtil.asList(false, "abc", new DataMap(), ByteString.empty(), ByteString.copyAvroString("abc", false));
 
     DataMap map = new DataMap();
     foo = new Foo(map);
@@ -2113,7 +2198,7 @@ public class TestRecordAndUnionTemplate
       Exception exc = null;
       try
       {
-        FixedType result = foo.getFixed();
+        foo.getFixed();
       }
       catch (Exception e)
       {
@@ -2123,8 +2208,8 @@ public class TestRecordAndUnionTemplate
       assertTrue(exc instanceof TemplateOutputCastException);
     }
 
-    List<?> castFrom = asList("8888");
-    List<?> castTo = asList(ByteString.copyAvroString("8888", false));
+    List<?> castFrom = TestUtil.asList("8888");
+    List<?> castTo = TestUtil.asList(ByteString.copyAvroString("8888", false));
     for (int i = 0; i < castFrom.size(); ++i)
     {
       map.put("fixed", castFrom.get(i));
@@ -2139,25 +2224,33 @@ public class TestRecordAndUnionTemplate
     List<Bar> good = Arrays.asList(new Bar(), new Bar(), new Bar());
     Foo foo = new Foo();
     int index = 0;
-    for (Bar i : good)
+    for (Bar bar : good)
     {
       int value = index * index;
-      i.setInt(value);
-      foo.setRecord(i);
-      assertEquals(foo.getRecord(), i);
-      assertSame(foo.getRecord(), i);
+      bar.setInt(value);
+      foo.setRecord(bar);
+      assertEquals(foo.getRecord(), bar);
+      assertSame(foo.getRecord(), bar);
       assertTrue(foo.hasRecord());
       assertEquals(foo.toString(), "{record={int=" + value + "}}");
       Exception exc = null;
       try
       {
-        Foo fooClone = (Foo) foo.clone();
+        Foo fooClone = foo.clone();
         assertEquals(foo, fooClone);
         assertSame(fooClone.getRecord(), foo.getRecord());
         fooClone.removeRecord();
         assertTrue(foo.hasRecord());
-        assertEquals(foo.getRecord(), i);
+        assertEquals(foo.getRecord(), bar);
         assertFalse(fooClone.hasRecord());
+
+        Foo fooCopy = foo.copy();
+        assertEquals(foo, fooCopy);
+        assertNotSame(fooCopy.getRecord(), foo.getRecord());
+        fooCopy.removeRecord();
+        assertTrue(foo.hasRecord());
+        assertEquals(foo.getRecord(), bar);
+        assertFalse(fooCopy.hasRecord());
       }
       catch (CloneNotSupportedException e)
       {
@@ -2170,7 +2263,7 @@ public class TestRecordAndUnionTemplate
       index++;
     }
 
-    List<?> badInput = asList(false, "abc", new DataList());
+    List<?> badInput = TestUtil.asList(false, "abc", new DataList());
 
     DataMap map = new DataMap();
     foo = new Foo(map);
@@ -2180,7 +2273,7 @@ public class TestRecordAndUnionTemplate
       Exception exc = null;
       try
       {
-        Bar result = foo.getRecord();
+        foo.getRecord();
       }
       catch (Exception e)
       {
@@ -2210,25 +2303,33 @@ public class TestRecordAndUnionTemplate
     List<IntegerArray> good = Arrays.asList(new IntegerArray(), new IntegerArray(), new IntegerArray());
     Foo foo = new Foo();
     int index = 0;
-    for (IntegerArray i : good)
+    for (IntegerArray integerArray : good)
     {
       int value = index * index;
-      i.add(value);
-      foo.setArray(i);
-      assertEquals(foo.getArray(), i);
-      assertSame(foo.getArray(), i);
+      integerArray.add(value);
+      foo.setArray(integerArray);
+      assertEquals(foo.getArray(), integerArray);
+      assertSame(foo.getArray(), integerArray);
       assertTrue(foo.hasArray());
       assertEquals(foo.toString(), "{array=[" + value + "]}");
       Exception exc = null;
       try
       {
-        Foo fooClone = (Foo) foo.clone();
+        Foo fooClone = foo.clone();
         assertEquals(foo, fooClone);
         assertSame(fooClone.getArray(), foo.getArray());
         fooClone.removeArray();
         assertTrue(foo.hasArray());
-        assertEquals(foo.getArray(), i);
+        assertEquals(foo.getArray(), integerArray);
         assertFalse(fooClone.hasArray());
+
+        Foo fooCopy = foo.copy();
+        assertEquals(foo, fooCopy);
+        assertNotSame(fooCopy.getArray(), foo.getArray());
+        fooCopy.removeArray();
+        assertTrue(foo.hasArray());
+        assertEquals(foo.getArray(), integerArray);
+        assertFalse(fooCopy.hasArray());
       }
       catch (CloneNotSupportedException e)
       {
@@ -2241,7 +2342,7 @@ public class TestRecordAndUnionTemplate
       index++;
     }
 
-    List<?> badInput = asList(false, "abc", new DataMap());
+    List<?> badInput = TestUtil.asList(false, "abc", new DataMap());
 
     DataMap map = new DataMap();
     foo = new Foo(map);
@@ -2251,7 +2352,7 @@ public class TestRecordAndUnionTemplate
       Exception exc = null;
       try
       {
-        IntegerArray result = foo.getArray();
+        foo.getArray();
       }
       catch (Exception e)
       {
@@ -2265,7 +2366,7 @@ public class TestRecordAndUnionTemplate
   @Test
   public void testUnionField() throws CloneNotSupportedException
   {
-    List<?> badOutput = asList(false, "abc", new DataList());
+    List<?> badOutput = TestUtil.asList(false, "abc", new DataList());
 
     DataMap map = new DataMap();
     Foo foo = new Foo(map);
@@ -2275,7 +2376,7 @@ public class TestRecordAndUnionTemplate
       Exception exc = null;
       try
       {
-        Foo.Union result = foo.getUnion();
+        foo.getUnion();
       }
       catch (Exception e)
       {
@@ -2289,15 +2390,15 @@ public class TestRecordAndUnionTemplate
     List<Object> badOutputMap = new ArrayList<Object>();
     badOutputMap.add(Data.NULL);
     badOutputMap.add(new DataMap());
-    badOutputMap.add(new DataMap(asMap("int", 1, "invalid", 2)));
-    badOutputMap.add(new DataMap(asMap("invalid", 2)));
+    badOutputMap.add(new DataMap(TestUtil.asMap("int", 1, "invalid", 2)));
+    badOutputMap.add(new DataMap(TestUtil.asMap("invalid", 2)));
     for (Object bad : badOutputMap)
     {
       map.put("union", bad);
       Exception exc = null;
       try
       {
-        DataSchema result = foo.getUnion().memberType();
+        foo.getUnion().memberType();
       }
       catch (Exception e)
       {
@@ -2316,24 +2417,24 @@ public class TestRecordAndUnionTemplate
     assertFalse(union2.isNull());
     assertTrue(union2.isInt());
     assertEquals(union2.getInt(), value);
-    assertTrue(union2.memberType() == Foo.Union.MEMBER_int);
+    assertSame(union2.memberType(), Foo.Union.MEMBER_int);
     assertNull(union2.getBar());
     int lastHashCode = union2.hashCode();
     Foo.Union lastUnion = (Foo.Union) union2.clone();
 
     // test union set and get wrapped
     unionMap.clear();
-    Bar bar = new Bar();
     value = 32;
-    bar.setInt(value);
+    Bar bar = new Bar();
+    bar.setInt(value.intValue());
     union2.setBar(bar);
     assertFalse(union2.isNull());
     assertTrue(union2.isBar());
     assertEquals(union2.getBar().getInt(), value);
-    assertTrue(union2.memberType() == Foo.Union.MEMBER_Bar);
+    assertSame(union2.memberType(), Foo.Union.MEMBER_Bar);
     assertNull(union2.getInt());
     assertTrue(union2.equals(union2));
-    assertFalse(union2.equals(null));
+    assertNotNull(union2);
     assertFalse(union2.equals(new Object()));
     int hashCode = union2.hashCode();
     assertFalse(hashCode == lastHashCode);
@@ -2342,7 +2443,7 @@ public class TestRecordAndUnionTemplate
     lastUnion = (Foo.Union) union2.clone();
 
     // test union clone with wrapped member
-    Exception exc = null;
+    Exception exc;
     try
     {
       exc = null;
@@ -2351,7 +2452,7 @@ public class TestRecordAndUnionTemplate
       assertFalse(unionClone.isInt());
       assertTrue(unionClone.isBar());
       assertEquals(unionClone.getBar().getInt(), value);
-      assertTrue(unionClone.getBar() == union2.getBar());
+      assertSame(unionClone.getBar(), union2.getBar());
       assertEquals(unionClone.getBar(), union2.getBar());
       assertEquals(unionClone, union2);
     }
@@ -2380,17 +2481,16 @@ public class TestRecordAndUnionTemplate
     assertFalse(union2.isNull());
     assertTrue(union2.isInt());
     assertEquals(union2.getInt(), value);
-    assertTrue(union2.memberType() == Foo.Union.MEMBER_int);
+    assertSame(union2.memberType(), Foo.Union.MEMBER_int);
     assertEquals(union2.toString(), "{int=127}");
     assertNull(union2.getBar());
     assertTrue(union2.equals(union2));
-    assertFalse(union2.equals(null));
+    assertNotNull(union2);
     assertFalse(union2.equals(new Object()));
     hashCode = union2.hashCode();
     assertFalse(hashCode == lastHashCode);
-    lastHashCode = hashCode;
     assertFalse(union2.equals(lastUnion));
-    lastUnion = (Foo.Union) union2.clone();
+    union2.clone();
 
     // test union clone with direct member
     try
@@ -2405,7 +2505,7 @@ public class TestRecordAndUnionTemplate
       assertSame(unionClone.getInt(), union2.getInt());
       assertEquals(unionClone, union2);
       Integer newValue = 256;
-      unionClone.setInt(newValue);
+      unionClone.setInt(newValue.intValue());
       assertEquals(unionClone.getInt(), newValue);
       assertEquals(union2.getInt(), value);
     }
@@ -2491,7 +2591,7 @@ public class TestRecordAndUnionTemplate
     // test legacy
     union = new Foo.Union(new DataMap());
     Integer i = 43;
-    union.set2Int(i); // legacy set
+    union.set2Int(i.intValue()); // legacy set
     assertTrue(union.isInt());
     assertEquals(union.getInt(), i);
     assertFalse(union.isEnumType());
@@ -2510,7 +2610,7 @@ public class TestRecordAndUnionTemplate
     assertNull(union.getInt());
 
     i = 66;
-    union.set2Int(i); // legacy set
+    union.set2Int(i.intValue()); // legacy set
     assertTrue(union.isInt());
     assertEquals(union.getInt(), i);
     assertFalse(union.isEnumType());

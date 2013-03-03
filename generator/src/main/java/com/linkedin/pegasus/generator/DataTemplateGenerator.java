@@ -1062,6 +1062,9 @@ public abstract class DataTemplateGenerator extends CodeGenerator
       }
     }
 
+    overrideCopier(templateClass, "clone");
+    overrideCopier(templateClass, "copy");
+
     List<NamedDataSchema> includes = schema.getInclude();
     for (NamedDataSchema includedSchema : includes)
     {
@@ -1069,6 +1072,14 @@ public abstract class DataTemplateGenerator extends CodeGenerator
     }
 
     return templateClass;
+  }
+
+  private static void overrideCopier(JDefinedClass templateClass, String methodName)
+  {
+    JMethod copierMethod = templateClass.method(JMod.PUBLIC, templateClass, methodName);
+    copierMethod.annotate(Override.class);
+    copierMethod._throws(CloneNotSupportedException.class);
+    copierMethod.body()._return(JExpr.cast(templateClass, JExpr._super().invoke(methodName)));
   }
 
   /**
