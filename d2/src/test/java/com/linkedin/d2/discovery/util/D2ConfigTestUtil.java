@@ -61,6 +61,22 @@ public class D2ConfigTestUtil
     generateClusters(clustersData);
   }
 
+  public D2ConfigTestUtil(Map<String,List<String>> clustersData, String defaultColo,
+                          Map<String,Map<String,Object>> extraClusterProperties)
+  {
+    this(clustersData, defaultColo, extraClusterProperties, new HashMap<String,List<String>>());
+  }
+
+  public D2ConfigTestUtil(Map<String,List<String>> clustersData, String defaultColo,
+                          Map<String,Map<String,Object>> extraClusterProperties,
+                          Map<String,List<String>> serviceGroupsData)
+  {
+    _loadBalancerStrategyList = Arrays.asList(new String[]{"degrader","degraderV3"});
+    setDefaults();
+    _clusterDefaults.put("defaultColo", defaultColo);
+    generateClusters(clustersData, extraClusterProperties, serviceGroupsData);
+  }
+
   public D2ConfigTestUtil(Map<String, List<String>> clusterData, Map<String, Object> partitionData)
   {
     _loadBalancerStrategyList = Arrays.asList(new String[]{"degraderV3"});
@@ -269,6 +285,13 @@ public class D2ConfigTestUtil
 
   public void generateClusters(Map<String,List<String>> clustersData)
   {
+    generateClusters(clustersData, null, new HashMap<String,List<String>>());
+  }
+
+  public void generateClusters(Map<String,List<String>> clustersData, Map<String,Map<String,Object>> clustersProperties,
+                               Map<String,List<String>> serviceGroupsData)
+  {
+
     //Cluster Service Configurations
     for (String clusterName : clustersData.keySet())
     {
@@ -284,11 +307,31 @@ public class D2ConfigTestUtil
       }
       services.put("services",tmps);
 
+      // clusterProperties like masterColo, peerColos, clusterVariants
+      if (clustersProperties != null)
+      {
+        Map<String,Object> clusterProperties = clustersProperties.get(clusterName);
+        if (clusterProperties != null)
+        {
+          services.putAll(clusterProperties);
+        }
+      }
+
       _clusterServiceConfigurations.put(clusterName, services);
+
+      // Service variants
+      for (String serviceGroupName : serviceGroupsData.keySet())
+      {
+        Map<String,Object> serviceGroup = new HashMap<String,Object>();
+        serviceGroup.put("type", "clusterVariantsList");
+        serviceGroup.put("clusterList", serviceGroupsData.get(serviceGroupName));
+        _serviceVariants.put(serviceGroupName, serviceGroup);
+      }
     }
   }
 
-  public void generateClusters(Map<String, List<String>> clustersData, Map<String, Object> partitionData)
+  public void generateClusters(Map<String, List<String>> clustersData,
+                               Map<String, Object> partitionData)
   {
     //Cluster Service Configurations
     for (String clusterName : clustersData.keySet())

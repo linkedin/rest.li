@@ -2,14 +2,14 @@
  * $Id: $
  */
 
-package com.linkedin.restli.client.util;
+package com.linkedin.d2.discovery.util;
 
 /**
  * @author David Hoa
  * @version $Revision: $
  */
 
-public class ClientBuilderUtil
+public class D2Utils
 {
   /**
    * addSuffixToBaseName will mutate a base name with a suffix in a known fashion.
@@ -22,7 +22,7 @@ public class ClientBuilderUtil
   {
     StringBuilder strBuilder = new StringBuilder();
     strBuilder.append(baseName);
-    if (suffix != null)
+    if (suffix != null && !suffix.isEmpty())
     {
       strBuilder.append("-").append(suffix);
     }

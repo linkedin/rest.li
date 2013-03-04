@@ -1,8 +1,14 @@
+1.8.7
+-----
+
 1.8.6
 -----
 (RB=139285)
 Fix up RestLiServiceException.toString() and update ErrorResponse
 schema to correctly reflect optional fields.
+
+(RB=141420)
+Add ColoVariants to D2Config
 
 1.8.5
 -----
