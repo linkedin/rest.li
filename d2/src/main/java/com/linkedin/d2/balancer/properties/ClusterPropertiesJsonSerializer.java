@@ -79,38 +79,38 @@ public class ClusterPropertiesJsonSerializer implements
   public ClusterProperties fromMap(Map<String, Object> map)
   {
     @SuppressWarnings("unchecked")
-    List<URI> bannedList = (List<URI>)map.get("banned");
+    List<URI> bannedList = (List<URI>)map.get(PropertyKeys.BANNED_URIS);
     if (bannedList == null)
     {
       bannedList = Collections.emptyList();
     }
     Set<URI> banned = new HashSet<URI>(bannedList);
 
-    String clusterName = PropertyUtil.checkAndGetValue(map, "clusterName", String.class, "ClusterProperties");
+    String clusterName = PropertyUtil.checkAndGetValue(map, PropertyKeys.CLUSTER_NAME, String.class, "ClusterProperties");
     @SuppressWarnings("unchecked")
-    List<String> prioritizedSchemes = (List<String>) map.get("prioritizedSchemes");
+    List<String> prioritizedSchemes = (List<String>) map.get(PropertyKeys.PRIORITIZED_SCHEMES);
     @SuppressWarnings("unchecked")
     Map<String, String> properties = (Map<String, String>) map.get("properties");
     @SuppressWarnings("unchecked")
-    Map<String, Object> partitionPropertiesMap = (Map<String, Object>)map.get("partitionProperties");
+    Map<String, Object> partitionPropertiesMap = (Map<String, Object>)map.get(PropertyKeys.PARTITION_PROPERTIES);
     PartitionProperties partitionProperties;
     String scope = "cluster: " + clusterName;
     if (partitionPropertiesMap != null)
     {
       PartitionProperties.PartitionType partitionType =
-          PropertyUtil.checkAndGetValue(partitionPropertiesMap, "partitionType", PartitionProperties.PartitionType.class, scope);
+          PropertyUtil.checkAndGetValue(partitionPropertiesMap, PropertyKeys.PARTITION_TYPE, PartitionProperties.PartitionType.class, scope);
       switch (partitionType)
       {
         case RANGE:
         {
           long keyRangeStart =
-              PropertyUtil.checkAndGetValue(partitionPropertiesMap, "keyRangeStart", Number.class, scope).longValue();
+              PropertyUtil.checkAndGetValue(partitionPropertiesMap, PropertyKeys.KEY_RANGE_START, Number.class, scope).longValue();
           long partitionSize =
-              PropertyUtil.checkAndGetValue(partitionPropertiesMap, "partitionSize", Number.class, scope).longValue();
+              PropertyUtil.checkAndGetValue(partitionPropertiesMap, PropertyKeys.PARTITION_SIZE, Number.class, scope).longValue();
           int partitionCount =
-              PropertyUtil.checkAndGetValue(partitionPropertiesMap, "partitionCount", Number.class, scope).intValue();
+              PropertyUtil.checkAndGetValue(partitionPropertiesMap, PropertyKeys.PARTITION_COUNT, Number.class, scope).intValue();
           String partitionKeyRegex =
-              PropertyUtil.checkAndGetValue(partitionPropertiesMap, "partitionKeyRegex", String.class, scope);
+              PropertyUtil.checkAndGetValue(partitionPropertiesMap, PropertyKeys.PARTITION_KEY_REGEX, String.class, scope);
           partitionProperties =
               new RangeBasedPartitionProperties(partitionKeyRegex, keyRangeStart, partitionSize, partitionCount);
 
@@ -119,11 +119,11 @@ public class ClusterPropertiesJsonSerializer implements
         case HASH:
         {
           int partitionCount =
-              PropertyUtil.checkAndGetValue(partitionPropertiesMap, "partitionCount", Number.class, scope).intValue();
+              PropertyUtil.checkAndGetValue(partitionPropertiesMap, PropertyKeys.PARTITION_COUNT, Number.class, scope).intValue();
           String partitionKeyRegex =
-              PropertyUtil.checkAndGetValue(partitionPropertiesMap, "partitionKeyRegex", String.class, scope);
+              PropertyUtil.checkAndGetValue(partitionPropertiesMap, PropertyKeys.PARTITION_KEY_REGEX, String.class, scope);
           HashBasedPartitionProperties.HashAlgorithm algorithm =
-              PropertyUtil.checkAndGetValue(partitionPropertiesMap, "hashAlgorithm", HashBasedPartitionProperties.HashAlgorithm.class, scope);
+              PropertyUtil.checkAndGetValue(partitionPropertiesMap, PropertyKeys.HASH_ALGORITHM, HashBasedPartitionProperties.HashAlgorithm.class, scope);
           partitionProperties =
               new HashBasedPartitionProperties(partitionKeyRegex, partitionCount, algorithm);
           break;

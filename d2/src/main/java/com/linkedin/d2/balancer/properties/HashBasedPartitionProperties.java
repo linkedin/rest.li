@@ -38,7 +38,7 @@ public class HashBasedPartitionProperties implements PartitionProperties
   }
   public HashBasedPartitionProperties(String partitionKeyRegex, int partitionCount, HashAlgorithm hashAlgorithm)
   {
-    ArgumentUtil.notNull(partitionKeyRegex, "partitionKeyRegex");
+    ArgumentUtil.notNull(partitionKeyRegex, PropertyKeys.PARTITION_KEY_REGEX);
     _partitionKeyRegex = partitionKeyRegex;
     _partitionCount = partitionCount;
     _hashAlgorithm = hashAlgorithm;

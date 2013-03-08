@@ -24,6 +24,13 @@ import com.linkedin.r2.message.RequestContext;
 import java.net.URI;
 import java.util.List;
 
+
+/**
+ * Interface for a strategy to choose a client given a list of clients.
+ *
+ * @author David Hoa (dhoa@linkedin.com)
+ * @author Oby Sumampouw (osumampouw@linkedin.com)
+ */
 public interface LoadBalancerStrategy
 {
   TrackerClient getTrackerClient(Request request,

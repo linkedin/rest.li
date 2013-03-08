@@ -41,6 +41,15 @@ import static com.linkedin.d2.discovery.util.LogUtil.debug;
 import static com.linkedin.d2.discovery.util.LogUtil.info;
 import static com.linkedin.d2.discovery.util.LogUtil.warn;
 
+
+/**
+ * Implementation of {@link LoadBalancerStrategy}. The strategy will choose a trackerClient based
+ * on multiple hints like latency, error rate and other call statistics. For more information about how we
+ * load balance a client see the method updateState().
+ *
+ * @author David Hoa (dhoa@linkedin.com)
+ * @author Oby Sumampouw (osumampouw@linkedin.com)
+ */
 public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
 {
   public static final String HASH_METHOD_NONE = "none";
