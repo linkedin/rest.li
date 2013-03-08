@@ -76,7 +76,7 @@ public class RestException extends RemoteInvocationException
    */
   public RestException(RestResponse response, String message)
   {
-    super(message + ": " + response.getEntity().asAvroString());
+    super(message);
     _response = response;
   }
 

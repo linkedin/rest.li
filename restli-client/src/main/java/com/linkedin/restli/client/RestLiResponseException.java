@@ -59,6 +59,13 @@ public class RestLiResponseException extends RestException
     _errorResponse = errorResponse;
   }
 
+  public RestLiResponseException(ErrorResponse errorResponse)
+  {
+    super(RestResponse.NO_RESPONSE, errorResponse.getMessage());
+    _status = errorResponse.getStatus();
+    _errorResponse = errorResponse;
+  }
+
   public int getStatus()
   {
     return _status;
