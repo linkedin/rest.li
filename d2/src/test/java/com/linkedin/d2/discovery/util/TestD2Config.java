@@ -41,6 +41,7 @@ import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperPermanentStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.Assert;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -50,6 +51,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -816,4 +818,344 @@ public class TestD2Config
     }
   }
 
+  @Test
+  public void testSuffixAppender()
+  {
+    String baseName1 = "Foobar";
+    String baseName2 = "BarBaz";
+    String suffix1 = "WestCoast";
+    String suffix2 = "EastCoast";
+
+    Assert.assertEquals(D2Utils.addSuffixToBaseName(baseName1, suffix1), baseName1 + "-" + suffix1);
+    Assert.assertEquals(D2Utils.addSuffixToBaseName(baseName1, suffix2), baseName1 + "-" + suffix2);
+    Assert.assertEquals(D2Utils.addSuffixToBaseName(baseName2, suffix1), baseName2 + "-" + suffix1);
+    Assert.assertEquals(D2Utils.addSuffixToBaseName(baseName2, suffix2), baseName2 + "-" + suffix2);
+    Assert.assertEquals(D2Utils.addSuffixToBaseName(baseName2, null), baseName2);
+  }
+
+
+  @Test
+  public static void testSingleClusterNoColo() throws IOException, InterruptedException, URISyntaxException, Exception
+  {
+    List<String> serviceList = new ArrayList<String>();
+    serviceList.add("service-1_1");
+    serviceList.add("service-1_2");
+    @SuppressWarnings("serial")
+    Map<String,List<String>> clustersData = new HashMap<String,List<String>>();
+    clustersData.put("cluster-1", serviceList);
+
+    List<String> clusterList = new ArrayList<String>();
+    clusterList.add("cluster-1");
+
+    Map<String,Object> clusterProperties = new HashMap<String,Object>();
+    Map<String,List<String>> peerColoList = new HashMap<String,List<String>>();
+    Map<String,String> masterColoList = new HashMap<String,String>();
+    Map<String,Map<String,Object>> clustersProperties = new HashMap<String,Map<String,Object>>();
+    clustersProperties.put("cluster-1", clusterProperties);
+    String defaultColo = "";
+    D2ConfigTestUtil d2Conf = new D2ConfigTestUtil( clustersData, defaultColo, clustersProperties);
+
+    assertEquals(d2Conf.runDiscovery(_zkHosts), 0);
+
+    verifyColoClusterAndServices(clustersData, peerColoList, masterColoList, defaultColo);
+  }
+
+  @Test
+  public static void testSingleColoCluster() throws IOException, InterruptedException, URISyntaxException, Exception
+  {
+    List<String> serviceList = new ArrayList<String>();
+    serviceList.add("service-1_1");
+    serviceList.add("service-1_2");
+    @SuppressWarnings("serial")
+    Map<String,List<String>> clustersData = new HashMap<String,List<String>>();
+    String cluster1Name = "cluster-1";
+    clustersData.put(cluster1Name, serviceList);
+
+    List<String> clusterList = new ArrayList<String>();
+    clusterList.add(cluster1Name);
+
+    Map<String,Object> clusterProperties = new HashMap<String,Object>();
+    List<String> peerColos = new ArrayList<String>();
+    peerColos.add("WestCoast");
+    peerColos.add("EastCoast");
+    Map<String,List<String>> peerColoList = new HashMap<String,List<String>>();
+    peerColoList.put(cluster1Name, peerColos);
+    clusterProperties.put("coloVariants", peerColos);
+    String masterColo = "WestCoast";
+    clusterProperties.put("masterColo", masterColo);
+    Map<String,String> masterColoList = new HashMap<String,String>();
+    masterColoList.put(cluster1Name, masterColo);
+    Map<String,Map<String,Object>> clustersProperties = new HashMap<String,Map<String,Object>>();
+    clustersProperties.put(cluster1Name, clusterProperties);
+    String defaultColo = "EastCoast";
+    D2ConfigTestUtil d2Conf = new D2ConfigTestUtil( clustersData, defaultColo, clustersProperties);
+
+    assertEquals(d2Conf.runDiscovery(_zkHosts), 0);
+
+    verifyColoClusterAndServices(clustersData, peerColoList, masterColoList, defaultColo);
+  }
+
+  @Test
+  public static void testSingleClusterNoColoWithDefaultColo()
+    throws IOException, InterruptedException, URISyntaxException, Exception
+  {
+    List<String> serviceList = new ArrayList<String>();
+    serviceList.add("service-1_1");
+    serviceList.add("service-1_2");
+    @SuppressWarnings("serial")
+    Map<String,List<String>> clustersData = new HashMap<String,List<String>>();
+    clustersData.put("cluster-1", serviceList);
+
+    List<String> clusterList = new ArrayList<String>();
+    clusterList.add("cluster-1");
+
+    Map<String,Object> clusterProperties = new HashMap<String,Object>();
+    Map<String,List<String>> peerColoList = new HashMap<String,List<String>>();
+    Map<String,String> masterColoList = new HashMap<String,String>();
+    Map<String,Map<String,Object>> clustersProperties = new HashMap<String,Map<String,Object>>();
+    clustersProperties.put("cluster-1", clusterProperties);
+    String defaultColo = "EastCoast";
+    D2ConfigTestUtil d2Conf = new D2ConfigTestUtil( clustersData, defaultColo, clustersProperties);
+
+    assertEquals(d2Conf.runDiscovery(_zkHosts), 0);
+
+    verifyColoClusterAndServices(clustersData, peerColoList, masterColoList, defaultColo);
+  }
+
+  // make sure the only thing that will trigger the generation of coloVariants is the presence of
+  // a "coloVariants" cluster property.
+  @Test
+  public static void testSingleClusterNoColoWithDefaultColoMasterColo() throws IOException, InterruptedException, URISyntaxException, Exception
+  {
+    List<String> serviceList = new ArrayList<String>();
+    serviceList.add("service-1_1");
+    serviceList.add("service-1_2");
+    @SuppressWarnings("serial")
+    Map<String,List<String>> clustersData = new HashMap<String,List<String>>();
+    clustersData.put("cluster-1", serviceList);
+
+    List<String> clusterList = new ArrayList<String>();
+    clusterList.add("cluster-1");
+
+    Map<String,Object> clusterProperties = new HashMap<String,Object>();
+    Map<String,List<String>> peerColoList = new HashMap<String,List<String>>();
+    String masterColo = "WestCoast";
+    clusterProperties.put("masterColo", masterColo);
+    Map<String,String> masterColoList = new HashMap<String,String>();
+    Map<String,Map<String,Object>> clustersProperties = new HashMap<String,Map<String,Object>>();
+
+    clustersProperties.put("cluster-1", clusterProperties);
+    String defaultColo = "EastCoast";
+    D2ConfigTestUtil d2Conf = new D2ConfigTestUtil( clustersData, defaultColo, clustersProperties);
+
+    assertEquals(d2Conf.runDiscovery(_zkHosts), 0);
+
+    verifyColoClusterAndServices(clustersData, peerColoList, masterColoList, defaultColo);
+  }
+
+  @Test
+  public static void testOneColoClusterOneNoColoCluster() throws IOException, InterruptedException, URISyntaxException, Exception
+  {
+    List<String> serviceList = new ArrayList<String>();
+    serviceList.add("service-1_1");
+    serviceList.add("service-1_2");
+    @SuppressWarnings("serial")
+    Map<String,List<String>> clustersData = new HashMap<String,List<String>>();
+    String cluster1Name = "cluster-1";
+    clustersData.put(cluster1Name, serviceList);
+
+    List<String> serviceList2 = new ArrayList<String>();
+    serviceList2.add("service-2_1");
+    serviceList2.add("service-2_2");
+    String cluster2Name = "cluster-2";
+    clustersData.put(cluster2Name, serviceList2);
+
+    List<String> clusterList = new ArrayList<String>();
+    clusterList.add(cluster1Name);
+    clusterList.add(cluster2Name);
+
+    Map<String,Object> clusterProperties = new HashMap<String,Object>();
+    List<String> peerColos = new ArrayList<String>();
+    peerColos.add("WestCoast");
+    peerColos.add("EastCoast");
+    Map<String,List<String>> peerColoList = new HashMap<String,List<String>>();
+    peerColoList.put(cluster1Name, peerColos);
+    clusterProperties.put("coloVariants", peerColos);
+    String masterColo = "WestCoast";
+    clusterProperties.put("masterColo", masterColo);
+    Map<String,String> masterColoList = new HashMap<String,String>();
+    masterColoList.put(cluster1Name, masterColo);
+    Map<String,Map<String,Object>> clustersProperties = new HashMap<String,Map<String,Object>>();
+    clustersProperties.put(cluster1Name, clusterProperties);
+    String defaultColo = "EastCoast";
+    D2ConfigTestUtil d2Conf = new D2ConfigTestUtil( clustersData, defaultColo, clustersProperties);
+
+    assertEquals(d2Conf.runDiscovery(_zkHosts), 0);
+
+    verifyColoClusterAndServices(clustersData, peerColoList, masterColoList, defaultColo);
+  }
+
+  @Test
+  public static void testSingleColoClusterWithClusterVariants()
+    throws IOException, InterruptedException, URISyntaxException, Exception
+  {
+    List<String> serviceList = new ArrayList<String>();
+    serviceList.add("service-1_1");
+    serviceList.add("service-1_2");
+
+    Map<String,List<String>> clustersData = new HashMap<String,List<String>>();
+    final String cluster1Name = "cluster-1";
+    clustersData.put(cluster1Name, serviceList);
+
+    List<String> clusterList = new ArrayList<String>();
+    clusterList.add(cluster1Name);
+
+    Map<String,Object> clusterProperties = new HashMap<String,Object>();
+    List<String> peerColos = new ArrayList<String>();
+    peerColos.add("WestCoast");
+    peerColos.add("EastCoast");
+    Map<String,List<String>> peerColoList = new HashMap<String,List<String>>();
+    peerColoList.put(cluster1Name, peerColos);
+    clusterProperties.put("coloVariants", peerColos);
+    String masterColo = "WestCoast";
+    clusterProperties.put("masterColo", masterColo);
+    Map<String,String> masterColoList = new HashMap<String,String>();
+    masterColoList.put(cluster1Name, masterColo);
+
+    // add in clusterVariants
+    Map<String,Map<String,Object>> clusterVariants = new HashMap<String, Map<String, Object>>();
+    final String cluster1Variant1Name = "cluster1Foo";
+    final String cluster1Variant2Name = "cluster1Bar";
+    clusterVariants.put(cluster1Variant1Name, Collections.<String,Object>emptyMap());
+    clusterVariants.put(cluster1Variant2Name, Collections.<String,Object>emptyMap());
+    List<String> clusterVariantsList = new ArrayList<String>();
+    clusterVariantsList.add(cluster1Variant1Name);
+    clusterVariantsList.add(cluster1Variant2Name);
+    clusterProperties.put("clusterVariants", clusterVariants);
+    Map<String,List<String>> clusterVariantsMapping = new HashMap<String, List<String>>();
+
+    clusterVariantsMapping.put(cluster1Name,clusterVariantsList);
+    Map<String,Map<String,Object>> clustersProperties = new HashMap<String,Map<String,Object>>();
+    clustersProperties.put(cluster1Name, clusterProperties);
+    String defaultColo = "EastCoast";
+
+    @SuppressWarnings("serial")
+    Map<String,List<String>> serviceGroupsData = new HashMap<String,List<String>>()
+    {{
+        put("ServiceGroup1", Collections.singletonList(cluster1Variant1Name));
+        put("ServiceGroup2", Collections.singletonList(cluster1Variant2Name));
+      }};
+
+    D2ConfigTestUtil d2Conf = new D2ConfigTestUtil( clustersData, defaultColo, clustersProperties,
+                                                    serviceGroupsData);
+
+    assertEquals(d2Conf.runDiscovery(_zkHosts), 0);
+
+    verifyColoClusterAndServices(clustersData, peerColoList, masterColoList, defaultColo, clusterVariantsMapping);
+
+    // It's hard to validate the serviceGroups without replicating all the temporary structures
+    // needed inside D2Config. Just doing it manually here.
+    verifyServiceProperties("cluster1Foo-WestCoast", "service-1_1", "/service-1_1", "ServiceGroup1");
+    verifyServiceProperties("cluster1Foo-WestCoast", "service-1_1Master", "/service-1_1", "ServiceGroup1");
+    verifyServiceProperties("cluster1Foo-WestCoast", "service-1_1-WestCoast", "/service-1_1", "ServiceGroup1");
+    verifyServiceProperties("cluster1Foo-EastCoast", "service-1_1-EastCoast", "/service-1_1", "ServiceGroup1");
+
+    verifyServiceProperties("cluster1Foo-WestCoast", "service-1_2", "/service-1_2", "ServiceGroup1");
+    verifyServiceProperties("cluster1Foo-WestCoast", "service-1_2Master", "/service-1_2", "ServiceGroup1");
+    verifyServiceProperties("cluster1Foo-WestCoast", "service-1_2-WestCoast", "/service-1_2", "ServiceGroup1");
+    verifyServiceProperties("cluster1Foo-EastCoast", "service-1_2-EastCoast", "/service-1_2", "ServiceGroup1");
+
+    verifyServiceProperties("cluster1Bar-WestCoast", "service-1_1", "/service-1_1", "ServiceGroup2");
+    verifyServiceProperties("cluster1Bar-WestCoast", "service-1_1Master", "/service-1_1", "ServiceGroup2");
+    verifyServiceProperties("cluster1Bar-WestCoast", "service-1_1-WestCoast", "/service-1_1", "ServiceGroup2");
+    verifyServiceProperties("cluster1Bar-EastCoast", "service-1_1-EastCoast", "/service-1_1", "ServiceGroup2");
+
+    verifyServiceProperties("cluster1Bar-WestCoast", "service-1_2", "/service-1_2", "ServiceGroup2");
+    verifyServiceProperties("cluster1Bar-WestCoast", "service-1_2Master", "/service-1_2", "ServiceGroup2");
+    verifyServiceProperties("cluster1Bar-WestCoast", "service-1_2-WestCoast", "/service-1_2", "ServiceGroup2");
+    verifyServiceProperties("cluster1Bar-EastCoast", "service-1_2-EastCoast", "/service-1_2", "ServiceGroup2");
+  }
+
+  private static void verifyColoClusterAndServices(Map<String,List<String>> clustersData,
+                                                   Map<String,List<String>> peerColoList,
+                                                   Map<String,String> masterColoList, String defaultColo)
+    throws IOException, InterruptedException, URISyntaxException, PropertyStoreException
+  {
+    verifyColoClusterAndServices(clustersData, peerColoList, masterColoList, defaultColo, null);
+  }
+
+  private static void verifyColoClusterAndServices(Map<String,List<String>> clustersData,
+                                            Map<String,List<String>> peerColoList,
+                                            Map<String,String> masterColoList, String defaultColo,
+                                            Map<String,List<String>> clusterVariantsMap)
+    throws IOException, InterruptedException, URISyntaxException, PropertyStoreException
+  {
+    for (Map.Entry<String,List<String>> entry : clustersData.entrySet())
+    {
+      String clusterName = entry.getKey();
+      List<String> serviceList = entry.getValue();
+      List<String> peerColos;
+      peerColos = getOrCreatePeerList(clusterName, peerColoList);
+
+      String masterColo;
+      if( masterColoList != null)
+      {
+        masterColo = masterColoList.get(clusterName);
+      }
+      else
+      {
+        masterColo = null;
+      }
+      for (String colo : peerColos)
+      {
+        String coloClusterName = D2Utils.addSuffixToBaseName(clusterName, colo);
+
+        for (String serviceName : serviceList)
+        {
+          String coloServiceName = D2Utils.addSuffixToBaseName(serviceName, colo);
+          // yes, we don't need to check the masterServiceName for each service, but there's no harm
+          String masterClusterName = D2Utils.addSuffixToBaseName(clusterName, ("".matches(colo) ? null :masterColo));
+          String masterServiceName = D2Utils.addSuffixToBaseName(serviceName, ("".matches(colo) ? null :masterColo));
+          String defaultClusterName = D2Utils.addSuffixToBaseName(clusterName, ("".matches(colo) ? null : defaultColo));
+          verifyClusterProperties(coloClusterName);
+          verifyServiceProperties(coloClusterName, coloServiceName, "/" + serviceName, null);
+          verifyServiceProperties(masterClusterName, masterServiceName, "/" + serviceName, null);
+          verifyServiceProperties(defaultClusterName, serviceName, "/" + serviceName, null);
+        }
+
+        if (clusterVariantsMap != null)
+        {
+          List<String> clusterVariants = clusterVariantsMap.get(clusterName);
+          for(String varName : clusterVariants)
+          {
+            String coloVarName = D2Utils.addSuffixToBaseName(varName, colo);
+            verifyClusterProperties(coloVarName);
+            // eh, modifying input map, this is just unit test, need this below. Alternative is to create
+            // another map, which I don't want to do.
+            peerColoList.put(coloVarName, peerColos);
+          }
+        }
+      } // end for each colo
+    } // end for each cluster
+  }
+
+  private static List<String> getOrCreatePeerList(String clusterName, Map<String,List<String>> peerColoList)
+  {
+    List<String> peerColos;
+    if ( peerColoList !=null)
+    {
+      peerColos = peerColoList.get(clusterName);
+    }
+    else
+    {
+      peerColos = null;
+    }
+    if (peerColos == null || peerColos.isEmpty())
+    {
+      // we add an empty String because we want to iterate the default colo
+      peerColos = new ArrayList<String>();
+      peerColos.add("");
+    }
+    return peerColos;
+  }
 }
