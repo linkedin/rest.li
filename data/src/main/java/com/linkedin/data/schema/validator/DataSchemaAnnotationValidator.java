@@ -259,6 +259,9 @@ public class DataSchemaAnnotationValidator implements Validator
    * This method causes the "validate" properties of the schema and referenced schemas to
    * be parsed and appropriate instances of {@link Validator}'s to be constructed.
    *
+   * This method does not throw an exception if there is an initialization error.
+   * The client should check the return value for initialization errors.
+   *
    * @param schema to be parsed to compute the {@link Validator}'s that have to be created.
    * @param classMap provides the map of the keys to {@link Validator}s that is looked up first
    *                 before looking for classes with names derived from the key.
