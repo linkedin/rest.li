@@ -1,5 +1,9 @@
 1.8.7
 -----
+(RB=146100)
+Performance optimization for construction of query params to avoid 
+needlessly appending the array index as a string for each field in 
+a list only to remove it later.
 
 1.8.6
 -----

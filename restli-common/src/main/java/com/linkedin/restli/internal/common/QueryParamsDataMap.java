@@ -118,8 +118,18 @@ public class QueryParamsDataMap
       DataMap dataMap = (DataMap) dataComplex;
       for (Entry<String, Object> entry : dataMap.entrySet())
       {
-        String escapedKey = PathSegment.CODEC.encode(entry.getKey());
-        handleEntry(keyPrefix + separator + escapedKey, entry.getValue(), result);
+        String escapedKeyPrefix = keyPrefix + separator + PathSegment.CODEC.encode(entry.getKey());
+        Object object = entry.getValue();
+        if (object instanceof DataComplex)
+        {
+          iterate(escapedKeyPrefix, (DataComplex)object, result);
+        }
+        else
+        {
+          // If the current key designates a location in a datamap - the key should be unique - create a new
+          // list containing the value and put it in the map.
+          result.put(escapedKeyPrefix, Collections.singletonList(object.toString()));
+        }
       }
     }
     else if (dataComplex instanceof DataList)
@@ -127,20 +137,16 @@ public class QueryParamsDataMap
       DataList dataList = (DataList) dataComplex;
       for (int i = 0; i < dataList.size(); i++)
       {
-        handleEntry(keyPrefix + "[" + i + "]", dataList.get(i), result);
+        Object object = dataList.get(i);
+        if (object instanceof DataComplex)
+        {
+          iterate(keyPrefix + "[" + i + "]", (DataComplex)object, result);
+        }
+        else
+        {
+          addListValue(keyPrefix, i, object, result);
+        }
       }
-    }
-  }
-
-  private static void handleEntry(String keyPrefix, Object object, Map<String, List<String>> result)
-  {
-    if (object instanceof DataComplex)
-    {
-      iterate(keyPrefix, (DataComplex)object, result);
-    }
-    else
-    {
-      addListValue(keyPrefix, object, result);
     }
   }
 
@@ -153,6 +159,7 @@ public class QueryParamsDataMap
    * add the object to the list at the specified location.
    */
   private static void addListValue(String keyPrefix,
+                               int listIndex,
                                Object value,
                                Map<String, List<String>> result)
   {
@@ -161,14 +168,11 @@ public class QueryParamsDataMap
     // list containing the value and put it in the map.
     if (keyPrefix.contains(PathSegment.PATH_SEPARATOR))
     {
-      result.put(keyPrefix, Collections.singletonList(value.toString()));
+      result.put(keyPrefix + "[" + listIndex + "]", Collections.singletonList(value.toString()));
     }
     else
     {
-      // Otherwise - simple query parameter - strip the index from the prefix and add the value to the list.
-      keyPrefix =
-          keyPrefix.contains("[") ? keyPrefix.substring(0, keyPrefix.indexOf('['))
-              : keyPrefix;
+      // Otherwise - just a simple query parameter, we intentionally leave the listIndex out of the key in this case since the value will go into a list
       if (result.containsKey(keyPrefix))
       {
         result.get(keyPrefix).add(value.toString());
