@@ -18,6 +18,7 @@ package com.linkedin.data.schema;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -39,7 +40,7 @@ public class DataSchemaTraverse
     void callback(List<String> path, DataSchema schema);
   }
 
-  private final Set<Integer> _seen = new HashSet<Integer>();
+  private final IdentityHashMap<DataSchema, Boolean> _seen = new IdentityHashMap<DataSchema, Boolean>();
   private final ArrayList<String> _path = new ArrayList<String>();
   private Callback _callback;
 
@@ -52,8 +53,7 @@ public class DataSchemaTraverse
     _seen.clear();
     _path.clear();
     _callback = callback;
-    int code = System.identityHashCode(schema);
-    _seen.add(code);
+    _seen.put(schema, Boolean.TRUE);
     traverseRecurse(schema);
     assert(_path.isEmpty());
   }
@@ -113,10 +113,9 @@ public class DataSchemaTraverse
 
   private void traverseChild(String childKey, DataSchema childSchema)
   {
-    int code = System.identityHashCode(childSchema);
-    if (! _seen.contains(code))
+    if (! _seen.containsKey(childSchema))
     {
-      _seen.add(code);
+      _seen.put(childSchema, Boolean.TRUE);
       _path.add(childKey);
       traverseRecurse(childSchema);
       _path.remove(_path.size() - 1);
