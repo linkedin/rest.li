@@ -9,6 +9,10 @@ a list only to remove it later.
 Deprecate AbstractValidator default (no-arg) constructor. See class
 comments for context.
 
+(RB=146839)
+Potential fix for Avro Schema Translator transient problem where
+some embedded/contained schemas are not being translated.
+
 1.8.6
 -----
 (RB=139285)
