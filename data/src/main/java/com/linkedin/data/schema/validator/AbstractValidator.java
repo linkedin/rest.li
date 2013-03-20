@@ -22,11 +22,26 @@ import com.linkedin.data.DataMap;
 
 /**
  * Abstract base class for a {@link Validator}.
+ * <p>
+ * Derived classes that can be instantiated by {@link DataSchemaAnnotationValidator}
+ * must provide a constructor that takes a {@link DataMap} as argument. For more
+ * details on this requirement, see {@link DataSchemaAnnotationValidator}.
  */
 abstract public class AbstractValidator implements Validator
 {
   private final DataMap _config;
 
+  /**
+   * Default constructor.
+   * <p>
+   * A {@link Validator} is most commonly instantiated by
+   * {@link DataSchemaAnnotationValidator}. {@link DataSchemaAnnotationValidator}
+   * expects the constructor to take a {@link DataMap} as its only argument.
+   * Deprecating the default no-argument constructor
+   * emphasizes that derived classes should provide a constructor
+   * that takes a {@link DataMap} as an argument.
+   */
+  @Deprecated
   protected AbstractValidator()
   {
     _config = null;

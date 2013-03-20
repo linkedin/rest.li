@@ -32,6 +32,7 @@ public class EmptyRecordValidator extends AbstractValidator
 {
   public EmptyRecordValidator(DataMap config)
   {
+	super(config);
   }
 
   @Override
