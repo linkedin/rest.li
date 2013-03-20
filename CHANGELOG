@@ -5,6 +5,10 @@ Performance optimization for construction of query params to avoid
 needlessly appending the array index as a string for each field in 
 a list only to remove it later.
 
+(RB=146833)
+Deprecate AbstractValidator default (no-arg) constructor. See class
+comments for context.
+
 1.8.6
 -----
 (RB=139285)
