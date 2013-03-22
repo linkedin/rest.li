@@ -1,5 +1,7 @@
 1.8.14
 -------
+(RB=147678)
+Improve client side logging of RestLiServiceException
 
 1.8.13
 -------

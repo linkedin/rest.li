@@ -126,4 +126,30 @@ public class RestLiResponseException extends RestException
     return getResponse().getHeader(RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE);
   }
 
+  @Override
+  public String toString()
+  {
+    StringBuilder builder = new StringBuilder();
+    builder.append(getClass().getName()).append(": Response status ");
+    // This is the HTTP status code of the response
+    builder.append(getResponse().getStatus());
+
+    // The Rest.li error details may contain an error message from the server, an error code
+    // from the server
+    if (hasServiceErrorMessage())
+    {
+      builder.append(", serviceErrorMessage: ").append(getServiceErrorMessage());
+    }
+    if (hasServiceErrorCode())
+    {
+      builder.append(", serviceErrorCode: ").append(getServiceErrorCode());
+    }
+
+    // TODO: decide whether to include serviceErrorDetails and serverStackTrace.
+
+    return builder.toString();
+
+    // E.g.:
+    // RestLiResponseException: Response status 400, serviceErrorMessage: Illegal content type "application/xml", serviceErrorCode: 999
+  }
 }
