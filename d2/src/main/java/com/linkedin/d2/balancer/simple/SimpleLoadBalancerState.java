@@ -85,7 +85,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   private final PropertyEventBus<ServiceProperties>                                      _serviceBus;
 
   private final Map<String, LoadBalancerStateItem<UriProperties>>                        _uriProperties;
-  private final Map<String, ClusterInfoItem>                                                 _clusterInfo;
+  private final Map<String, ClusterInfoItem>                                             _clusterInfo;
   private final Map<String, LoadBalancerStateItem<ServiceProperties>>                    _serviceProperties;
 
   private final AtomicLong                                                               _version;
@@ -96,14 +96,14 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
 
   private volatile long                                                                  _delayedExecution;
   /**
-   * Map from cluster name => uri => tracker client.
+   * Map from service name => uri => tracker client.
    */
   private final Map<String, Map<URI, TrackerClient>>                                     _trackerClients;
 
   /**
-   * Map from clusterName => schemeName.toLowerCase() => TransportClient
+   * Map from serviceName => schemeName.toLowerCase() => TransportClient
    */
-  private final Map<String, Map<String, TransportClient>> _clusterClients;
+  private final Map<String, Map<String, TransportClient>>                                _serviceClients;
 
   /**
    * Map from scheme => client factory. For example, http => HttpClientFactory.
@@ -229,7 +229,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     _serviceStrategiesCache =
         new ConcurrentHashMap<String, List<SchemeStrategyPair>>();
     _trackerClients = new ConcurrentHashMap<String, Map<URI, TrackerClient>>();
-    _clusterClients = new ConcurrentHashMap<String, Map<String, TransportClient>>();
+    _serviceClients = new ConcurrentHashMap<String, Map<String, TransportClient>>();
     _listeners =
         Collections.synchronizedList(new ArrayList<SimpleLoadBalancerStateListener>());
     _delayedExecution = 1000;
@@ -283,7 +283,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
         // put all tracker clients into a single set for convenience
         Set<TransportClient> transportClients = new HashSet<TransportClient>();
 
-        for (Map<String, TransportClient> clientsByScheme : _clusterClients.values())
+        for (Map<String, TransportClient> clientsByScheme : _serviceClients.values())
         {
           transportClients.addAll(clientsByScheme.values());
         }
@@ -416,9 +416,15 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
 
   public int getTrackerClientCount(String clusterName)
   {
-    return LoadBalancerUtil.getOrElse(_trackerClients,
-                                      clusterName,
-                                      new HashMap<URI, TrackerClient>()).size();
+    Set<String> serviceNames = _servicesPerCluster.get(clusterName);
+    int count = 0;
+    for (String serviceName : serviceNames)
+    {
+      count += LoadBalancerUtil.getOrElse(_trackerClients,
+                                            serviceName,
+                                            new HashMap<URI, TrackerClient>()).size();
+    }
+    return count;
   }
 
   public int getUriCount()
@@ -465,9 +471,9 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   }
 
   @Override
-  public TrackerClient getClient(String clusterName, URI uri)
+  public TrackerClient getClient(String serviceName, URI uri)
   {
-    Map<URI, TrackerClient> trackerClients = _trackerClients.get(clusterName);
+    Map<URI, TrackerClient> trackerClients = _trackerClients.get(serviceName);
     TrackerClient trackerClient = null;
 
     if (trackerClients != null)
@@ -476,7 +482,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     }
     else
     {
-      warn(_log, "get client called on unknown cluster ", clusterName, ": ", uri);
+      warn(_log, "get client called on unknown service ", serviceName, ": ", uri);
     }
 
     return trackerClient;
@@ -496,9 +502,9 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   }
 
   @Override
-  public TransportClient getClient(String clusterName, String scheme)
+  public TransportClient getClient(String serviceName, String scheme)
   {
-    Map<String, TransportClient> transportClients = _clusterClients.get(clusterName);
+    Map<String, TransportClient> transportClients = _serviceClients.get(serviceName);
     TransportClient transportClient = null;
 
     if (transportClients != null)
@@ -506,13 +512,13 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
       transportClient = transportClients.get(scheme.toLowerCase());
       if (transportClient == null)
       {
-        warn(_log, "no generic transport client for cluster " + clusterName +
+        warn(_log, "no generic transport client for service " + serviceName +
                 " and scheme: " + scheme);
       }
     }
     else
     {
-      warn(_log, "get client called on unknown cluster ", clusterName);
+      warn(_log, "get client called on unknown service ", serviceName);
     }
     return transportClient;
   }
@@ -687,59 +693,63 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
       if (discoveryProperties != null)
       {
         String clusterName = discoveryProperties.getClusterName();
-        Map<URI, TrackerClient> trackerClients =
-            _trackerClients.get(clusterName);
 
-        if (trackerClients == null)
+        Set<String> serviceNames = _servicesPerCluster.get(clusterName);
+        //updates all the services that these uris provide
+        if (serviceNames != null)
         {
-          trackerClients = new ConcurrentHashMap<URI, TrackerClient>();
-          _trackerClients.put(discoveryProperties.getClusterName(), trackerClients);
-        }
-
-        // gets the cluster information for configuring the parameter for how DegraderImpl should behave for
-        // each tracker clients that we instantiate here. If there's no such information, then we'll instantiate
-        // each tracker clients with default configuration
-        ClusterInfoItem clusterInfoItem = _clusterInfo.get(clusterName);
-
-        DegraderImpl.Config config = null;
-        if (clusterInfoItem == null || clusterInfoItem.getClusterPropertiesItem() == null
-            || clusterInfoItem.getClusterPropertiesItem().getProperty() == null)
-        {
-          debug(_log, "trying to see if there's a special degraderImpl properties but clusterInfo is null " +
-              "for clustername = " + clusterName + " so we'll set config to default");
-        }
-        else
-        {
-          Map<String, String> degraderImplProperties =
-              clusterInfoItem.getClusterPropertiesItem().getProperty().getProperties();
-          config = DegraderConfigFactory.toDegraderConfig(degraderImplProperties);
-        }
-
-        for (URI uri : discoveryProperties.Uris())
-        {
-          if (!trackerClients.containsKey(uri))
+          for (String serviceName : serviceNames)
           {
-            TrackerClient client = getTrackerClient(discoveryProperties.getClusterName(),
-                uri,
-                discoveryProperties.getPartitionDataMap(uri),
-                config);
-
-            if (client != null)
+            Map<URI, TrackerClient> trackerClients =
+                        _trackerClients.get(serviceName);
+            if (trackerClients == null)
             {
-              info(_log,
-                   "adding new tracker client from updated uri properties: ",
-                   client);
+              trackerClients = new ConcurrentHashMap<URI, TrackerClient>();
+              _trackerClients.put(serviceName, trackerClients);
+            }
+            LoadBalancerStateItem<ServiceProperties> serviceProperties = _serviceProperties.get(serviceName);
+            DegraderImpl.Config config = null;
 
-              // notify listeners of the added client
-              for (SimpleLoadBalancerStateListener listener : _listeners)
+            if (serviceProperties == null || serviceProperties.getProperty() == null ||
+                serviceProperties.getProperty().getDegraderProperties() == null)
+            {
+              debug(_log, "trying to see if there's a special degraderImpl properties but serviceInfo is null " +
+                            "for serviceName = " + serviceName + " so we'll set config to default");
+            }
+            else
+            {
+              Map<String, String> degraderImplProperties =
+                  serviceProperties.getProperty().getDegraderProperties();
+              config = DegraderConfigFactory.toDegraderConfig(degraderImplProperties);
+            }
+            for (URI uri : discoveryProperties.Uris())
+            {
+              if (!trackerClients.containsKey(uri))
               {
-                listener.onClientAdded(listenTo, client);
-              }
+                TrackerClient client = getTrackerClient(serviceName,
+                    uri,
+                    discoveryProperties.getPartitionDataMap(uri),
+                    config);
 
-              trackerClients.put(uri, client);
+                if (client != null)
+                {
+                  info(_log,
+                       "adding new tracker client from updated uri properties: ",
+                       client);
+
+                  // notify listeners of the added client
+                  for (SimpleLoadBalancerStateListener listener : _listeners)
+                  {
+                    listener.onClientAdded(serviceName, client);
+                  }
+
+                  trackerClients.put(uri, client);
+                }
+              }
             }
           }
         }
+
       }
 
       // replace the URI properties
@@ -752,29 +762,33 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
       // properties
       if (discoveryProperties != null)
       {
-        Map<URI, TrackerClient> trackerClients =
-            _trackerClients.get(discoveryProperties.getClusterName());
-
-        if (trackerClients != null)
+        Set<String> serviceNames = _servicesPerCluster.get(discoveryProperties.getClusterName());
+        if (serviceNames != null)
         {
-          for (Iterator<URI> it = trackerClients.keySet().iterator(); it.hasNext();)
+          for (String serviceName : serviceNames)
           {
-            URI uri = it.next();
-
-            if (!discoveryProperties.Uris().contains(uri))
+            Map<URI, TrackerClient> trackerClients = _trackerClients.get(serviceName);
+            if (trackerClients != null)
             {
-              TrackerClient client = trackerClients.remove(uri);
-
-              info(_log, "removing dead tracker client: ", client);
-
-              // notify listeners of the removed client
-              for (SimpleLoadBalancerStateListener listener : _listeners)
+              for (Iterator<URI> it = trackerClients.keySet().iterator(); it.hasNext();)
               {
-                listener.onClientRemoved(listenTo, client);
-              }
+                URI uri = it.next();
 
-              // We don't shut down the dead TrackerClient, because TrackerClients hold no
-              // resources and simply point to the common cluster client (from _clusterClients).
+                if (!discoveryProperties.Uris().contains(uri))
+                {
+                  TrackerClient client = trackerClients.remove(uri);
+
+                  info(_log, "removing dead tracker client: ", client);
+
+                  // notify listeners of the removed client
+                  for (SimpleLoadBalancerStateListener listener : _listeners)
+                  {
+                    listener.onClientRemoved(serviceName, client);
+                  }
+                  // We don't shut down the dead TrackerClient, because TrackerClients hold no
+                  // resources and simply point to the common cluster client (from _serviceeClients).
+                }
+              }
             }
           }
         }
@@ -782,9 +796,30 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
       else
       {
         // uri properties was null, so remove all tracker clients
-        warn(_log, "removing all tracker clients for cluster: ", listenTo);
+        warn(_log, "received a null uri properties for cluster: ", listenTo);
+        removeTrackerClients(listenTo);
+      }
+    }
 
-        Map<URI, TrackerClient> clients = _trackerClients.remove(listenTo);
+    @Override
+    protected void handleRemove(final String listenTo)
+    {
+      _uriProperties.remove(listenTo);
+      warn(_log, "received a uri properties event remove() for cluster: ", listenTo);
+      removeTrackerClients(listenTo);
+    }
+  }
+
+  private void removeTrackerClients(String clusterName)
+  {
+    // uri properties was null, so remove all tracker clients
+    warn(_log, "removing all tracker clients for cluster: ", clusterName);
+    Set<String> serviceNames = _servicesPerCluster.get(clusterName);
+    if (serviceNames != null)
+    {
+      for (String serviceName : serviceNames)
+      {
+        Map<URI, TrackerClient> clients = _trackerClients.remove(serviceName);
 
         if (clients != null)
         {
@@ -793,17 +828,11 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
             // notify listeners of the removed client
             for (SimpleLoadBalancerStateListener listener : _listeners)
             {
-              listener.onClientRemoved(listenTo, client);
+              listener.onClientRemoved(serviceName, client);
             }
           }
         }
       }
-    }
-
-    @Override
-    protected void handleRemove(final String listenTo)
-    {
-      _uriProperties.remove(listenTo);
     }
   }
 
@@ -823,158 +852,6 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
       {
         _clusterInfo.put(listenTo, new ClusterInfoItem(discoveryProperties,
             PartitionAccessorFactory.getPartitionAccessor(discoveryProperties.getPartitionProperties())));
-
-        final String clusterName = discoveryProperties.getClusterName();
-        // update all tracker clients to use new cluster configs
-        LoadBalancerStateItem<UriProperties> uriItem =
-            _uriProperties.get(clusterName);
-
-        ClusterInfoItem clusterInfoItem =
-            _clusterInfo.get(clusterName);
-        Map<String, String> clusterProperties = Collections.emptyMap();
-
-        if (clusterInfoItem != null)
-        {
-          // clusterInfoItem.getClusterPropertiesItem can not be null because it's always created in construction
-          ClusterProperties clusterProperty = clusterInfoItem.getClusterPropertiesItem().getProperty();
-
-          if (clusterProperty != null)
-          {
-            Map<String, String> props = clusterProperty.getProperties();
-            if (props != null)
-            {
-              clusterProperties = props;
-            }
-          }
-          else
-          {
-            debug(_log, "got null property item");
-          }
-        }
-        List<String> schemes = discoveryProperties.getPrioritizedSchemes();
-        Map<String,TransportClient> newClusterClients = new HashMap<String, TransportClient>();
-        for (String scheme : schemes)
-        {
-          TransportClientFactory factory = _clientFactories.get(scheme);
-          if (factory != null)
-          {
-            TransportClient client = factory.getClient(clusterProperties);
-            newClusterClients.put(scheme.toLowerCase(), client);
-          }
-          else
-          {
-            _log.warn("Failed to find client factory for scheme {}", scheme);
-          }
-        }
-        // clients-by-scheme map is never edited, only replaced.
-        newClusterClients = Collections.unmodifiableMap(newClusterClients);
-
-        // Replace the cluster clients with the newly instantiated map, before we instantiate the
-        // the tracker clients. getTrackerClient() will use the cluster client from this map.
-        final Map<String,TransportClient> oldClusterClients = _clusterClients.put(clusterName, newClusterClients);
-
-        // gets the cluster information for configuring the parameter for how DegraderImpl should behave for
-        // each tracker clients that we instantiate here. If there's no such information, then we'll instantiate
-        // each tracker clients with default configuration
-        DegraderImpl.Config config = null;
-
-        if (discoveryProperties.getProperties() == null)
-        {
-          debug(_log, "trying to see if there's a special degraderImpl properties but clusterInfo is null " +
-                        "for clustername = " + clusterName + " so we'll set config to default");
-        }
-        else
-        {
-          Map<String,String> degraderImplProperties = discoveryProperties.getProperties();
-          config = DegraderConfigFactory.toDegraderConfig(degraderImplProperties);
-        }
-
-        Map<URI,TrackerClient> newTrackerClients;
-        UriProperties uriProperties = uriItem == null ? null : uriItem.getProperty();
-        if (uriProperties != null)
-        {
-          Set<URI> uris = uriProperties.Uris();
-          // clients-by-uri map may be edited later by UriPropertiesListener.handlePut
-          newTrackerClients = new ConcurrentHashMap<URI, TrackerClient>((int)Math.ceil(uris.size() / 0.75f), 0.75f, 1);
-          for (URI uri : uris)
-          {
-            TrackerClient trackerClient = getTrackerClient(clusterName, uri, uriProperties.getPartitionDataMap(uri),
-                                                           config);
-            if (trackerClient != null)
-            {
-              newTrackerClients.put(uri, trackerClient);
-            }
-          }
-        }
-        else
-        {
-          // clients-by-uri map may be edited later by UriPropertiesListener.handlePut
-          newTrackerClients = new ConcurrentHashMap<URI, TrackerClient>(16, 0.75f, 1);
-        }
-
-        Map<URI,TrackerClient> oldTrackerClients = _trackerClients.put(clusterName, newTrackerClients);
-        // No need to shut down oldTrackerClients, because they all point directly to the TransportClient for the cluster
-
-        // We do need to shut down the old cluster clients
-        // However there is a concurrency edge case that we should handle here by delaying the shutdown.
-        // Let's say there's a request to getClient() at the same time as new event coming to handlePut()
-        // Thread 1                                                   Thread 2
-        // _client = _loadBalancerState.getClient()
-        //                                                            handlePut() is called
-        //                                                            shutdown all transportClients
-        // _client.sendRequest()
-        //
-        // ERROR because thread 1 sendRequest is sending a request to client that's being shutdown by thread 2
-        // So if we introduce a delay before shutting down the old client, thread 1 sendRequest() will happen
-        // after the call to getClient() so we won't have this problem.
-        if (oldClusterClients != null)
-        {
-          _executor.schedule(new Runnable()
-          {
-            @Override
-            public void run()
-            {
-              for (TransportClient client : oldClusterClients.values())
-              {
-                Callback<None> callback = new Callback<None>()
-                {
-                  @Override
-                  public void onError(Throwable e)
-                  {
-                    _log.warn("Failed to shut down old cluster TransportClient", e);
-                  }
-
-                  @Override
-                  public void onSuccess(None result)
-                  {
-                    _log.info("Shut down old cluster TransportClient");
-                  }
-                };
-                client.shutdown(callback);
-              }
-            }
-          }, _delayedExecution, TimeUnit.MILLISECONDS);
-
-        }
-
-        // refresh all services on this cluster in case the prioritized schemes
-        // changed
-        Set<String> servicesOnCluster =
-            _servicesPerCluster.get(discoveryProperties.getClusterName());
-
-        if (servicesOnCluster != null)
-        {
-          for (String serviceName : servicesOnCluster)
-          {
-            LoadBalancerStateItem<ServiceProperties> serviceProperties =
-                _serviceProperties.get(serviceName);
-
-            if (serviceProperties != null && serviceProperties.getProperty() != null)
-            {
-              refreshServiceStrategies(serviceProperties.getProperty());
-            }
-          }
-        }
       }
       else
       {
@@ -1009,10 +886,11 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
                                                                           _version.incrementAndGet(),
                                                                           System.currentTimeMillis()));
 
-      // always refresh strategies when we receive cluster event
+      // always refresh strategies when we receive service event
       if (discoveryProperties != null)
       {
         refreshServiceStrategies(discoveryProperties);
+        refreshTransportClientsPerService(discoveryProperties);
 
         // refresh state for which services are on which clusters
         Set<String> serviceNames =
@@ -1047,13 +925,16 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
 
       if (discoveryProperties == null)
       {
-        _log.info("PROPS WERE NULL FOR {}", listenTo);
+        _log.warn("We receive a null service properties for {}. Theoretically this should not happen because this means"
+                      +" this client is still referencing a service that is being removed.", listenTo);
+        shutdownClients(listenTo);
       }
     }
 
     @Override
     protected void handleRemove(final String listenTo)
     {
+      _log.warn("Received a service properties event to remove() for service = " + listenTo);
       LoadBalancerStateItem<ServiceProperties> serviceItem =
           _serviceProperties.remove(listenTo);
 
@@ -1069,29 +950,189 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
         {
           serviceNames.remove(serviceProperties.getServiceName());
         }
+
+        shutdownClients(listenTo);
+
       }
     }
   }
 
-  private TrackerClient getTrackerClient(String clusterName, URI uri, Map<Integer, PartitionData> partitionDataMap,
+  private TrackerClient getTrackerClient(String serviceName, URI uri, Map<Integer, PartitionData> partitionDataMap,
                                          DegraderImpl.Config config)
   {
-    Map<String,TransportClient> clientsByScheme = _clusterClients.get(clusterName);
+    Map<String,TransportClient> clientsByScheme = _serviceClients.get(serviceName);
     if (clientsByScheme == null)
     {
       _log.error("getTrackerClient: unknown cluster name {} for URI {} and partitionDataMap {}",
-          new Object[]{ clusterName, uri, partitionDataMap });
+          new Object[]{ serviceName, uri, partitionDataMap });
       return null;
     }
     TransportClient client = clientsByScheme.get(uri.getScheme().toLowerCase());
     if (client == null)
     {
-      _log.error("getTrackerClient: invalid scheme for cluster {}, URI {} and partitionDataMap {}",
-          new Object[]{ clusterName, uri, partitionDataMap });
+      _log.error("getTrackerClient: invalid scheme for service {}, URI {} and partitionDataMap {}",
+          new Object[]{ serviceName, uri, partitionDataMap });
       return null;
     }
     TrackerClient trackerClient = new TrackerClient(uri, partitionDataMap, client, SystemClock.instance(), config);
     return trackerClient;
+  }
+
+  private Map<String, TransportClient> createAndInsertTransportClientTo(ServiceProperties serviceProperties)
+  {
+    Map<String, String> transportClientProperties = serviceProperties.getTransportClientProperties();
+    List<String> schemes = serviceProperties.getPrioritizedSchemes();
+    Map<String,TransportClient> newTransportClients = new HashMap<String, TransportClient>();
+    if (schemes != null && !schemes.isEmpty())
+    {
+      for (String scheme : schemes)
+      {
+        TransportClientFactory factory = _clientFactories.get(scheme);
+        if (factory != null)
+        {
+          TransportClient client = factory.getClient(transportClientProperties);
+          newTransportClients.put(scheme.toLowerCase(), client);
+        }
+        else
+        {
+          _log.warn("Failed to find client factory for scheme {}", scheme);
+        }
+      }
+    }
+    else
+    {
+      _log.warn("Prioritized schemes is null for service properties = " + serviceProperties.getServiceName());
+    }
+    return newTransportClients;
+  }
+
+
+  void refreshTransportClientsPerService(ServiceProperties serviceProperties)
+  {
+    String serviceName = serviceProperties.getServiceName();
+    //create new TransportClients
+    Map<String,TransportClient> newTransportClients =  createAndInsertTransportClientTo(serviceProperties);
+
+    // clients-by-scheme map is never edited, only replaced.
+    newTransportClients = Collections.unmodifiableMap(newTransportClients);
+
+    final Map<String, TransportClient> oldTransportClients = _serviceClients.put(serviceName, newTransportClients);
+
+    // gets the information for configuring the parameter for how DegraderImpl should behave for
+    // each tracker clients that we instantiate here. If there's no such information, then we'll instantiate
+    // each tracker clients with default configuration
+    DegraderImpl.Config config = null;
+    if (serviceProperties.getDegraderProperties() != null && !serviceProperties.getDegraderProperties().isEmpty())
+    {
+      config = DegraderConfigFactory.toDegraderConfig(serviceProperties.getDegraderProperties());
+    }
+    else
+    {
+      debug(_log, "trying to see if there's a special degraderImpl properties but serviceInfo.getDegraderImpl() is null"
+          + " for service name = " + serviceName + " so we'll set config to default");
+    }
+
+    Map<URI,TrackerClient> newTrackerClients;
+
+    // update all tracker clients to use new configs
+    LoadBalancerStateItem<UriProperties> uriItem = _uriProperties.get(serviceProperties.getClusterName());
+    UriProperties uriProperties = uriItem == null ? null : uriItem.getProperty();
+    if (uriProperties != null)
+    {
+      Set<URI> uris = uriProperties.Uris();
+      // clients-by-uri map may be edited later by UriPropertiesListener.handlePut
+      newTrackerClients = new ConcurrentHashMap<URI, TrackerClient>((int)Math.ceil(uris.size() / 0.75f), 0.75f, 1);
+      for (URI uri : uris)
+      {
+        TrackerClient trackerClient = getTrackerClient(serviceName, uri, uriProperties.getPartitionDataMap(uri),
+                                                       config);
+        if (trackerClient != null)
+        {
+          newTrackerClients.put(uri, trackerClient);
+        }
+      }
+    }
+    else
+    {
+      // clients-by-uri map may be edited later by UriPropertiesListener.handlePut
+      newTrackerClients = new ConcurrentHashMap<URI, TrackerClient>(16, 0.75f, 1);
+    }
+
+    //override the oldTrackerClients with newTrackerClients
+    _trackerClients.put(serviceName, newTrackerClients);
+    // No need to shut down oldTrackerClients, because they all point directly to the TransportClient for the service
+    // We do need to shut down the old transport clients
+    shutdownTransportClients(oldTransportClients, serviceName);
+  }
+
+  private void shutdownClients(String serviceName)
+  {
+    _log.warn("shutting down all tracker clients and transport clients for service " + serviceName);
+
+    //We need to remove all the tracker clients owned by this service. We don't need to shutdown
+    //because trackerClient is just a wrapper of transport client which we'll shutdown next.
+    Map<URI, TrackerClient> clients = _trackerClients.remove(serviceName);
+
+    if (clients != null)
+    {
+      for (TrackerClient client : clients.values())
+      {
+        // notify listeners of the removed client
+        for (SimpleLoadBalancerStateListener listener : _listeners)
+        {
+          listener.onClientRemoved(serviceName, client);
+        }
+      }
+    }
+
+    //we also need to shutdown the transport client owned by this service
+    Map<String, TransportClient> schemeToTransportClients = _serviceClients.get(serviceName);
+    shutdownTransportClients(schemeToTransportClients, serviceName);
+  }
+
+  private void shutdownTransportClients(final Map<String, TransportClient> schemeToTransportClients,
+                                        final String serviceName)
+  {
+    // There is a concurrency edge case that we should handle here by delaying the shutdown.
+    // Let's say there's a request to getClient() at the same time as new event coming to handlePut()
+    // Thread 1                                                   Thread 2
+    // _client = _loadBalancerState.getClient()
+    //                                                            handlePut() is called
+    //                                                            shutdown all transportClients
+    // _client.sendRequest()
+    //
+    // ERROR because thread 1 sendRequest is sending a request to client that's being shutdown by thread 2
+    // So if we introduce a delay before shutting down the old client, thread 1 sendRequest() will happen
+    // after the call to getClient() so we won't have this problem.
+    if (schemeToTransportClients != null)
+    {
+      _executor.schedule(new Runnable()
+      {
+        @Override
+        public void run()
+        {
+          for (final Map.Entry<String, TransportClient> entry : schemeToTransportClients.entrySet())
+          {
+            Callback<None> callback = new Callback<None>()
+            {
+              @Override
+              public void onError(Throwable e)
+              {
+                _log.warn("Failed to shut down old " + serviceName + " TransportClient with scheme = " + entry.getKey()
+                    , e);
+              }
+
+              @Override
+              public void onSuccess(None result)
+              {
+                _log.info("Shut down old " + serviceName + " TransportClient with scheme = " + entry.getKey());
+              }
+            };
+            entry.getValue().shutdown(callback);
+          }
+        }
+      }, _delayedExecution, TimeUnit.MILLISECONDS);
+    }
   }
 
   void refreshServiceStrategies(ServiceProperties serviceProperties)
@@ -1128,54 +1169,33 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     {
       warn(_log,"No valid strategy found. ", serviceProperties);
     }
-    ClusterInfoItem clusterInfoItem =
-        _clusterInfo.get(serviceProperties.getClusterName());
-    Map<String, LoadBalancerStrategy> strategyMap =
-        new ConcurrentHashMap<String, LoadBalancerStrategy>();
 
-    if (clusterInfoItem != null && factory != null)
+    Map<String, LoadBalancerStrategy> strategyMap = new ConcurrentHashMap<String, LoadBalancerStrategy>();
+
+    if (factory != null && serviceProperties.getPrioritizedSchemes() != null &&
+        !serviceProperties.getPrioritizedSchemes().isEmpty())
     {
-      // clsuterInfoItem.getClusterPropertiesItem can not be null
-      ClusterProperties clusterProperty = clusterInfoItem.getClusterPropertiesItem().getProperty();
-
-      if (clusterProperty != null)
+      List<String> schemes = serviceProperties.getPrioritizedSchemes();
+      for (String scheme : schemes)
       {
-        List<String> schemes = clusterProperty.getPrioritizedSchemes();
-        if (schemes != null)
-        {
-          for (String scheme : schemes)
-          {
-            Map<String, Object> loadBalancerStrategyProperties =
-                new HashMap<String, Object>(serviceProperties.getLoadBalancerStrategyProperties());
+        Map<String, Object> loadBalancerStrategyProperties =
+            new HashMap<String, Object>(serviceProperties.getLoadBalancerStrategyProperties());
 
-            LoadBalancerStrategy strategy = factory.newLoadBalancer(
-                serviceProperties.getServiceName(),
-                loadBalancerStrategyProperties);
+        LoadBalancerStrategy strategy = factory.newLoadBalancer(
+            serviceProperties.getServiceName(),
+            loadBalancerStrategyProperties);
 
-            strategyMap.put(scheme, strategy);
-          }
-        }
-        else
-        {
-          debug(_log,
-                "cluster property had null for prioritized schemes: ",
-                clusterProperty);
-        }
-      }
-      else
-      {
-        debug(_log, "property item had null property for: ", serviceProperties);
+        strategyMap.put(scheme, strategy);
       }
     }
     else
     {
-      warn(_log,
-           "unable to find cluster or factory for ",
-           serviceProperties,
-           ": ",
-           clusterInfoItem,
-           " ",
-           factory);
+        warn(_log,
+             "unable to find cluster or factory for ",
+             serviceProperties,
+             ": ",
+             factory);
+
     }
 
     Map<String, LoadBalancerStrategy> oldStrategies =
@@ -1234,9 +1254,9 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
                            String scheme,
                            LoadBalancerStrategy strategy);
 
-    void onClientAdded(String clusterName, TrackerClient client);
+    void onClientAdded(String serviceName, TrackerClient client);
 
-    void onClientRemoved(String clusterName, TrackerClient client);
+    void onClientRemoved(String serviceName, TrackerClient client);
   }
 
 }

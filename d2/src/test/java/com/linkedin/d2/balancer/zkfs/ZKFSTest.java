@@ -313,10 +313,17 @@ public class ZKFSTest
               new ZooKeeperPermanentStore<ServiceProperties>(conn,
                                                              new ServicePropertiesJsonSerializer(),
                                                              ZKFSUtil.servicePath(BASE_PATH));
-      ServiceProperties props = new ServiceProperties(TEST_SERVICE_NAME, TEST_CLUSTER_NAME, "/test", "degrader");
+
+      ServiceProperties props = new ServiceProperties(TEST_SERVICE_NAME, TEST_CLUSTER_NAME, "/test", "degrader",
+                                                      Collections.<String>emptyList(),
+                                                      Collections.<String, Object> emptyMap(),
+                                                      null,
+                                                      null,
+                                                      Arrays.asList("http"),
+                                                      null);
       serviceStore.put(TEST_SERVICE_NAME, props);
 
-      ClusterProperties clusterProperties = new ClusterProperties(TEST_CLUSTER_NAME, Arrays.asList("http"));
+      ClusterProperties clusterProperties = new ClusterProperties(TEST_CLUSTER_NAME);
       ZooKeeperPermanentStore<ClusterProperties> clusterStore =
               new ZooKeeperPermanentStore<ClusterProperties>(conn, new ClusterPropertiesJsonSerializer(), ZKFSUtil.clusterPath(BASE_PATH));
       clusterStore.put(TEST_CLUSTER_NAME, clusterProperties);
@@ -410,7 +417,14 @@ public class ZKFSTest
       store.start(callback);
       callback.get(30, TimeUnit.SECONDS);
 
-      ServiceProperties props = new ServiceProperties(TEST_SERVICE_NAME, TEST_CLUSTER_NAME, "/somePath", "degrader");
+
+      ServiceProperties props = new ServiceProperties(TEST_SERVICE_NAME, TEST_CLUSTER_NAME, "/somePath", "degrader",
+                                                      Collections.<String>emptyList(),
+                                                      Collections.<String, Object>emptyMap(),
+                                                      null,
+                                                      null,
+                                                      Arrays.asList("http"),
+                                                      null);
       store.put(TEST_SERVICE_NAME, props);
 
       ZooKeeperPermanentStore<ClusterProperties> clusterStore =
@@ -419,7 +433,7 @@ public class ZKFSTest
       clusterStore.start(callback);
       callback.get(30, TimeUnit.SECONDS);
 
-      ClusterProperties clusterProps = new ClusterProperties("someCluster", Collections.singletonList("http"));
+      ClusterProperties clusterProps = new ClusterProperties("someCluster");
       clusterStore.put(TEST_CLUSTER_NAME, clusterProps);
 
       ZKConnection serverConn = new ZKConnection("localhost:" + PORT, 30000);
