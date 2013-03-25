@@ -7,7 +7,7 @@
   "name" : "testAnnotation",
   "namespace" : "com.linkedin.restli.restspec",
   "path" : "/testAnnotation",
-  "schema" : "com.linkedin.restli.common.EmptyRecord",
+  "schema" : "com.linkedin.restli.examples.MockRecord",
   "doc" : "generated from: com.linkedin.restli.restspec.TestAnnotationResource",
   "collection" : {
     "identifier" : {
@@ -110,7 +110,7 @@
         "name" : "testAnnotationSub",
         "namespace" : "com.linkedin.restli.restspec",
         "path" : "/testAnnotation/{testAnnotationId}/testAnnotationSub",
-        "schema" : "com.linkedin.restli.common.EmptyRecord",
+        "schema" : "com.linkedin.restli.examples.MockRecord",
         "doc" : "generated from: com.linkedin.restli.restspec.TestAnnotationSubresource",
         "collection" : {
           "identifier" : {

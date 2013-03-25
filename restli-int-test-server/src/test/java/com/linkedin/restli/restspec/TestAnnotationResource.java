@@ -17,8 +17,8 @@
 package com.linkedin.restli.restspec;
 
 
-import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.examples.MockRecord;
 import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.GetResult;
 import com.linkedin.restli.server.PagingContext;
@@ -41,24 +41,24 @@ import java.util.List;
  */
 @RestLiCollection(name = "testAnnotation", namespace = "com.linkedin.restli.restspec")
 @NamedAnnotation(stringField = "class-level annotation")
-public class TestAnnotationResource extends CollectionResourceTemplate<Long, EmptyRecord>
+public class TestAnnotationResource extends CollectionResourceTemplate<Long, MockRecord>
 {
   @RestMethod.Get
   @NamedAnnotation(stringField = "resource method annotation",
                    byteField = 17,
                    floatField = 4.2F,
                    byteStringField = { 2, 7, 9 })
-  public GetResult<EmptyRecord> getWithResult(Long id,
+  public GetResult<MockRecord> getWithResult(Long id,
                                               @QueryParam("extra") @UnnamedAnnotation(123) String extraParam)
   {
-    return new GetResult<EmptyRecord>(null, HttpStatus.S_500_INTERNAL_SERVER_ERROR);
+    return new GetResult<MockRecord>(null, HttpStatus.S_500_INTERNAL_SERVER_ERROR);
   }
 
   @Override
   @NamedAnnotation(stringField = "resource method annotation 2",
                    longField = 21L,
                    intArrayField = {3, 2, 1})
-  public CreateResponse create(EmptyRecord empty)
+  public CreateResponse create(MockRecord empty)
   {
     return new CreateResponse(HttpStatus.S_200_OK);
   }
@@ -70,7 +70,7 @@ public class TestAnnotationResource extends CollectionResourceTemplate<Long, Emp
                    complexAnnotationArrayField = {@PartialExclusiveAnnotation(used1 = 111, used2 = 222),
                                                   @PartialExclusiveAnnotation(used1 = 333, used2 = 444)})
   @PartialExclusiveAnnotation(used1 = 11, unused = "this value is also ununsed")
-  public List<EmptyRecord> testFinder(@Context PagingContext pagingContext,
+  public List<MockRecord> testFinder(@Context PagingContext pagingContext,
                                       @QueryParam("title") @Optional @NamedAnnotation(stringField = "finder parameter annotation") String criterion)
   {
     return null;
