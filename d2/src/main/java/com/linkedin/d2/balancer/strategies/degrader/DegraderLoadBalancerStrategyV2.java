@@ -533,8 +533,8 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
                                         newCurrentAvgClusterLatency,
                                         true,
                                         newRecoveryMap, oldState.getServiceName());
-      _log.warn("Strategy updated: newState=" + newState + ", config=" + config);
-      if (!_log.isDebugEnabled())
+      _log.info("Strategy updated: newState=" + newState + ", config=" + config);
+      if (_log.isDebugEnabled())
       {
         _log.debug("HashRing coverage=" + newState.getRing() );
       }
@@ -596,8 +596,8 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
                                             oldRecoveryMap,
                                             oldState.getServiceName());
 
-      _log.warn("Strategy updated: newState=" + newState + ", config=" + config);
-      if (!_log.isDebugEnabled())
+      _log.info("Strategy updated: newState=" + newState + ", config=" + config);
+      if (_log.isDebugEnabled())
       {
         _log.debug("HashRing coverage=" + newState.getRing() );
       }

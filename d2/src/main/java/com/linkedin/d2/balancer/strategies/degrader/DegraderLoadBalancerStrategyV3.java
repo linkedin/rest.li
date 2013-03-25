@@ -507,8 +507,8 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                         newRecoveryMap,
                                         oldState.getServiceName());
 
-      _log.warn("Strategy updated: partitionId= " + partitionId + ", newState=" + newState + ", config=" + config);
-      if (!_log.isDebugEnabled())
+      _log.info("Strategy updated: partitionId= " + partitionId + ", newState=" + newState + ", config=" + config);
+      if (_log.isDebugEnabled())
       {
         _log.debug("HashRing coverage=" + newState.getRing());
       }
@@ -568,9 +568,9 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                             oldRecoveryMap,
                                             oldState.getServiceName());
 
-      _log.warn("Strategy updated: partitionId= " + partitionId + ", newState=" + newState + ", config=" + config);
+      _log.info("Strategy updated: partitionId= " + partitionId + ", newState=" + newState + ", config=" + config);
 
-      if (!_log.isDebugEnabled())
+      if (_log.isDebugEnabled())
       {
         _log.debug("HashRing coverage=" + newState.getRing());
       }
