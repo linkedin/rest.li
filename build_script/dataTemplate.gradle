@@ -17,7 +17,9 @@
 final Configuration generatorConfig = project(':generator').configurations.default
 
 project.sourceSets.all { SourceSet sourceSet ->
-  final inputDataSchemaDirPath = "src${File.separatorChar}${sourceSet.name}${File.separatorChar}pegasus"
+  final String inputDataSchemaParentDirPath = "src${File.separatorChar}${sourceSet.name}"
+  final String pegasusDirName = 'pegasus'
+  final String inputDataSchemaDirPath = "${inputDataSchemaParentDirPath}${File.separatorChar}${pegasusDirName}"
   final FileTree inputDataSchemaFiles = project.fileTree(dir: inputDataSchemaDirPath, includes: ["**${File.separatorChar}*.pdsc".toString()])
   if (inputDataSchemaFiles.empty)
   {
@@ -36,6 +38,11 @@ project.sourceSets.all { SourceSet sourceSet ->
     doFirst {
       project.mkdir(outputDirPath)
     }
+  }
+
+  final Task jarTask = project.tasks[sourceSet.getTaskName('', 'jar')]
+  jarTask.from(inputDataSchemaParentDirPath) {
+    include "${pegasusDirName}${File.separatorChar}**${File.separatorChar}*.pdsc".toString()
   }
 
   project.tasks[sourceSet.compileJavaTaskName].dependsOn(rootProject.ext.build.dataTemplateTasks[sourceSet])

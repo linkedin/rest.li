@@ -16,6 +16,10 @@ some embedded/contained schemas are not being translated.
 (RB=144188)
 Added jmx methods to query trackerClient and number of hashpoint.
 
+(RB=149202)
+Add dataModel build script and use in restli-common to publish EmptyRecord
+and other core restli schemas so they can be referenced by other projects.
+
 1.8.6
 -----
 (RB=139285)

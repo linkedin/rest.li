@@ -45,8 +45,7 @@ public class EmptyRecordValidator extends AbstractValidator
                                     "%1$s expects data to be a DataMap, data is %2$s",
                                     getClass().getName(), dataObject));
     }
-
-    if (!((DataMap) dataObject).isEmpty())
+    else if (!((DataMap) dataObject).isEmpty())
     {
       context.addResult(new Message(context.dataElement().path(),
                                     "Data %1$s is expected to be empty",
