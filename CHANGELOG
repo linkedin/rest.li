@@ -1,3 +1,18 @@
+1.8.9
+-----
+
+1.8.8
+-----
+(RB=144188)
+Added jmx methods to query trackerClient and number of hashpoint.
+
+(RB=149202)
+Add dataModel build script and use in restli-common to publish EmptyRecord
+and other core restli schemas so they can be referenced by other projects.
+
+(RB=149393)
+fix for ZKConnection/DefaultWatcher race condition
+
 1.8.7
 -----
 (RB=146100)
@@ -12,13 +27,6 @@ comments for context.
 (RB=146839)
 Potential fix for Avro Schema Translator transient problem where
 some embedded/contained schemas are not being translated.
-
-(RB=144188)
-Added jmx methods to query trackerClient and number of hashpoint.
-
-(RB=149202)
-Add dataModel build script and use in restli-common to publish EmptyRecord
-and other core restli schemas so they can be referenced by other projects.
 
 1.8.6
 -----

@@ -483,11 +483,28 @@ public class ZKConnection
     @Override
     public void process(WatchedEvent watchedEvent)
     {
-      ZooKeeper zk = zk();
+      // we only need ZooKeeper here to get the sessionId. However, there's a race condition when
+      // starting up where zk is not available, and we get an IllegalStateException with the
+      // message "ZKConnection not yet started". To solve this, we'll watch that exception, and
+      // put in a dummy sessionID
+      ZooKeeper zk;
+      long sessionID;
+      try
+      {
+        zk = zk();
+        sessionID = zk.getSessionId();
+      }
+      catch (IllegalStateException e)
+      {
+        // this can happen on start up, ignore and put in a dummy sessionId
+        LOG.warn("zkRef not yet available to retrieve sessionID, this should only happen during start up");
+        sessionID = -1;
+      }
+
       if (watchedEvent.getType() == Event.EventType.None)
       {
         Event.KeeperState state = watchedEvent.getState();
-        LOG.info("Received state notification {} for session 0x{}", state, Long.toHexString(zk.getSessionId()));
+        LOG.info("Received state notification {} for session 0x{}", state, Long.toHexString(sessionID));
         Set<StateListener> listeners = Collections.emptySet();
         synchronized (_mutex)
         {
@@ -506,7 +523,7 @@ public class ZKConnection
       }
       else
       {
-        LOG.warn("Received unexpected event of type {} for session 0x{}", watchedEvent.getType(), Long.toHexString(zk.getSessionId()));
+        LOG.warn("Received unexpected event of type {} for session 0x{}", watchedEvent.getType(), Long.toHexString(sessionID));
       }
     }
   }
