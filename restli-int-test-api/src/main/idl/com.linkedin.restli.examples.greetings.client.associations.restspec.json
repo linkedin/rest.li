@@ -16,6 +16,10 @@
     "methods" : [ {
       "method" : "get"
     } ],
+    "finders" : [ {
+      "name" : "assocKeyFinder",
+      "assocKeys" : [ "message" ]
+    } ],
     "entity" : {
       "path" : "/associations/src={src}&dest={dest}"
     }

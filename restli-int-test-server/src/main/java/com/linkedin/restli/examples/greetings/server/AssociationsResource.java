@@ -20,12 +20,16 @@
 package com.linkedin.restli.examples.greetings.server;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.examples.StringTestKeys;
 import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.examples.greetings.api.Tone;
+import com.linkedin.restli.examples.greetings.api.ToneFacet;
+import com.linkedin.restli.server.annotations.AssocKey;
+import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.Key;
 import com.linkedin.restli.server.annotations.RestLiAssociation;
 import com.linkedin.restli.server.resources.AssociationResourceTemplate;
@@ -66,5 +70,11 @@ public class AssociationsResource extends AssociationResourceTemplate<Message>
   public Message get(CompoundKey id)
   {
     return _db.get(id);
+  }
+
+  @Finder("assocKeyFinder")
+  public List<Message> assocKeyFinder(@AssocKey("src") String src)
+  {
+    return null;
   }
 }

@@ -41,9 +41,11 @@
         <dd><span style="font-family: monospace">$identifier.name: $identifierType</span></dd>
         $identifierParams
       #elseif ($resourceType == "association")
+        #set ($assocKeyMap = {})
         <dt>Keys</dt>
         #foreach ($assocKey in $resource.association.assocKeys)
-        <dd><span style="font-family: monospace">$assocKey.name: $assocKey.type</span></dd>
+          <dd><span style="font-family: monospace">$assocKey.name: $assocKey.type</span></dd>
+          #set ($discard = $assocKeyMap.put($assocKey.name, $assocKey.type))
         #end
       #end
       #if ($resource.hasSchema())
@@ -97,11 +99,27 @@
         #set ($finderSchema = $finder.finderSchema)
         <dt>$finderSchema.name</dt>
         <p>$!finderSchema.doc</p>
+          #if ($finderSchema.assocKeys)
+            <dd style="background: #F0F0F0; border: 1px dashed black; padding: 12px;">
+              <dl>
+                <dt>AssocKeys</dt>
+                <dd style="font-family: monospace;">
+                  <ul class="nobullet">
+                    #foreach ($assocKeyName in $finderSchema.assocKeys)
+                      <li>
+                        $assocKeyName: $assocKeyMap.get($assocKeyName)
+                      </li>
+                    #end
+                  </ul>
+                </dd>
+              </dl>
+            </dd>
+          #end
           #if ($finderSchema.parameters)
             <dd style="background: #F0F0F0; border: 1px dashed black; padding: 12px;">
               <dl>
                 <dt>Parameters</dt>
-                <dd>
+                <dd style="font-family: monospace;">
                   <ul class="nobullet">
                     #foreach ($param in $finderSchema.parameters)
                       <li>
@@ -157,7 +175,7 @@ $finder.prettyPrintResponseEntity
             <dl>
               #if ($actionSchema.parameters)
                 <dt>Parameters</dt>
-                <dd>
+                <dd style="font-family: monospace;">
                   <ul class="nobullet">
                     #foreach ($param in $actionSchema.parameters)
                       <li>
@@ -183,7 +201,7 @@ $finder.prettyPrintResponseEntity
               #end
               #if ($actionSchema.hasReturns())
                 <dt>Returns</dt>
-                <dd>
+                <dd style="font-family: monospace;">
                   #if ($relatedSchemas.containsKey($actionSchema.returns))
                     <a href="$docBaseUri/data/$actionSchema.returns">$actionSchema.returns</a>
                   #else
@@ -193,7 +211,7 @@ $finder.prettyPrintResponseEntity
               #end
               #if ($actionSchema.hasThrows())
                 <dt>Exceptions</dt>
-                <dd>
+                <dd style="font-family: monospace;">
                   #foreach ($error in $actionSchema.throws)
                     <a href="$docBaseUri/data/$error">$error</a>
                   #end

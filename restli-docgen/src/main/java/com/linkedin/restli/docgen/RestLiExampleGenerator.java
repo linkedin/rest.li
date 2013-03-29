@@ -74,6 +74,7 @@ import com.linkedin.restli.server.UpdateResponse;
 import org.codehaus.jackson.impl.DefaultPrettyPrinter;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -289,7 +290,13 @@ public class RestLiExampleGenerator
             addAssocKeyToUri(assocKey, assocKeyBuilder);
           }
         }
-        uriBuilder.path(assocKeyBuilder.build().getQuery());
+        final String assocKeyQuery = assocKeyBuilder.build().getQuery();
+        if (assocKeyQuery == null)
+        {
+          throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST,
+                                           String.format("The assocKey parameters in finder \"%s\" does match any assocKey for the collection.", finderSchema.getName()));
+        }
+        uriBuilder.path(assocKeyQuery);
       }
     }
 
