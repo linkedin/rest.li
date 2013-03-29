@@ -1,9 +1,15 @@
+1.8.10
+------
+
 1.8.9
 -----
 (RB=149304)
 Added ScatterGather support for BatchUpdates and BatchDeletes.
 Made a backwards incompatible change to ScatterGatherBuilder.RequestInfo constructor; it now
 accepts a BatchRequest instead of Request.
+
+(RB=150347)
+bump to 1.8.9
 
 1.8.8
 -----
