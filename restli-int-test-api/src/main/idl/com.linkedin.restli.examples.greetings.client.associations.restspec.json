@@ -18,7 +18,7 @@
     } ],
     "finders" : [ {
       "name" : "assocKeyFinder",
-      "assocKeys" : [ "message" ]
+      "assocKeys" : [ "src" ]
     } ],
     "entity" : {
       "path" : "/associations/src={src}&dest={dest}"

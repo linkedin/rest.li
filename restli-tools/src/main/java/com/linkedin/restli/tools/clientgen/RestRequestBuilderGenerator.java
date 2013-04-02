@@ -737,12 +737,26 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
                                               JDefinedClass finderBuilderClass,
                                               Set<String> finderKeys)
   {
+    StringBuilder errorBuilder = new StringBuilder();
+
     for (String assocKey : finderKeys)
     {
+      JClass assocKeyClass = assocKeys.get(assocKey);
+      if (assocKeyClass == null)
+      {
+        errorBuilder.append(String.format("assocKey %s in finder is not found\n", assocKey));
+        continue;
+      }
+
       JMethod keyMethod = finderBuilderClass.method(JMod.PUBLIC, finderBuilderClass, nameCamelCase(assocKey + "Key"));
-      JVar keyMethodParam = keyMethod.param(assocKeys.get(assocKey), "key");
+      JVar keyMethodParam = keyMethod.param(assocKeyClass, "key");
       keyMethod.body().add(JExpr._super().invoke("assocKey").arg(assocKey).arg(keyMethodParam));
       keyMethod.body()._return(JExpr._this());
+    }
+
+    if (errorBuilder.length() > 0)
+    {
+      throw new IllegalArgumentException(errorBuilder.toString());
     }
   }
 

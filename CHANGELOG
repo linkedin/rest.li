@@ -1,5 +1,7 @@
 1.8.10
 ------
+Add detection of wrong assocKey in RestRequestBuilderGenerator.
+Add display of assocKeys of finder in restli-docgen.
 
 1.8.9
 -----
