@@ -99,6 +99,269 @@ public class DegraderLoadBalancerTest
     return partitionDataMap;
   }
 
+ @Test(groups = { "small", "back-end" })
+  public void testDegraderLoadBalancerStateComparison()
+      throws URISyntaxException
+ {
+
+   long clusterGenerationId = 1;
+   long lastUpdated = 29999;
+   long updateIntervalMs = 5000;
+   DegraderLoadBalancerStrategyV2.DegraderLoadBalancerState.Strategy strategy =
+       DegraderLoadBalancerStrategyV2.DegraderLoadBalancerState.Strategy.LOAD_BALANCE;
+   long currentAverageClusterLatency = 3000;
+   double currentOverrideDropRate = 0.4;
+   boolean initialized = true;
+   String name = "degraderV2";
+   Map<URI, Integer> points = new HashMap<URI, Integer>();
+   Map<TrackerClient,Double> recoveryMap = new HashMap<TrackerClient, Double>();
+   URI uri1 = new URI("http://www.linkedin.com/1");
+   URI uri2 = new URI("http://www.linkedin.com/2");
+   points.put(uri1, 100);
+   points.put(uri2, 50);
+   TestClock clock = new TestClock();
+
+   List<TrackerClient> clients = createTrackerClient(3, clock, null);
+   for (TrackerClient client : clients)
+   {
+     recoveryMap.put(client, 0.0);
+   }
+
+
+   DegraderLoadBalancerStrategyV2.DegraderLoadBalancerState oldStateV2 =
+       new DegraderLoadBalancerStrategyV2.DegraderLoadBalancerState(updateIntervalMs,
+                                                                    clusterGenerationId,
+                                                                    points,
+                                                                    lastUpdated,
+                                                                    strategy,
+                                                                    currentOverrideDropRate,
+                                                                    currentAverageClusterLatency,
+                                                                    initialized,
+                                                                    recoveryMap,
+                                                                    name);
+
+   DegraderLoadBalancerStrategyV2.DegraderLoadBalancerState newStateV2 =
+       new DegraderLoadBalancerStrategyV2.DegraderLoadBalancerState(updateIntervalMs,
+                                                                    clusterGenerationId,
+                                                                    points,
+                                                                    lastUpdated,
+                                                                    strategy,
+                                                                    currentOverrideDropRate,
+                                                                    currentAverageClusterLatency,
+                                                                    initialized,
+                                                                    recoveryMap,
+                                                                    name);
+
+   assertTrue(DegraderLoadBalancerStrategyV2.isOldStateTheSameAsNewState(oldStateV2, newStateV2));
+
+   newStateV2 = new DegraderLoadBalancerStrategyV2.DegraderLoadBalancerState(updateIntervalMs,
+                                                                             clusterGenerationId + 1,
+                                                                             points,
+                                                                             lastUpdated,
+                                                                             strategy,
+                                                                             currentOverrideDropRate,
+                                                                             currentAverageClusterLatency,
+                                                                             initialized,
+                                                                             recoveryMap,
+                                                                             name);
+
+   assertFalse(DegraderLoadBalancerStrategyV2.isOldStateTheSameAsNewState(oldStateV2, newStateV2));
+
+   //we don't care about last updated
+   newStateV2 = new DegraderLoadBalancerStrategyV2.DegraderLoadBalancerState(updateIntervalMs,
+                                                                             clusterGenerationId,
+                                                                             points,
+                                                                             lastUpdated + 30,
+                                                                             strategy,
+                                                                             currentOverrideDropRate,
+                                                                             currentAverageClusterLatency,
+                                                                             initialized,
+                                                                             recoveryMap,
+                                                                             name);
+
+   assertTrue(DegraderLoadBalancerStrategyV2.isOldStateTheSameAsNewState(oldStateV2, newStateV2));
+
+   points.put(uri1, 30);
+   newStateV2 = new DegraderLoadBalancerStrategyV2.DegraderLoadBalancerState(updateIntervalMs,
+                                                                             clusterGenerationId,
+                                                                             points,
+                                                                             lastUpdated,
+                                                                             strategy,
+                                                                             currentOverrideDropRate,
+                                                                             currentAverageClusterLatency,
+                                                                             initialized,
+                                                                             recoveryMap,
+                                                                             name);
+   points.put(uri1, 100);
+   assertFalse(DegraderLoadBalancerStrategyV2.isOldStateTheSameAsNewState(oldStateV2, newStateV2));
+   newStateV2 = new DegraderLoadBalancerStrategyV2.DegraderLoadBalancerState(updateIntervalMs,
+                                                                             clusterGenerationId,
+                                                                             points,
+                                                                             lastUpdated,
+                                                                             DegraderLoadBalancerStrategyV2.DegraderLoadBalancerState.Strategy.CALL_DROPPING,
+                                                                             currentOverrideDropRate,
+                                                                             currentAverageClusterLatency,
+                                                                             initialized,
+                                                                             recoveryMap,
+                                                                             name);
+
+   assertFalse(DegraderLoadBalancerStrategyV2.isOldStateTheSameAsNewState(oldStateV2, newStateV2));
+   newStateV2 = new DegraderLoadBalancerStrategyV2.DegraderLoadBalancerState(updateIntervalMs,
+                                                                             clusterGenerationId,
+                                                                             points,
+                                                                             lastUpdated,
+                                                                             strategy,
+                                                                             currentOverrideDropRate - 0.1,
+                                                                             currentAverageClusterLatency,
+                                                                             initialized,
+                                                                             recoveryMap,
+                                                                             name);
+
+   assertFalse(DegraderLoadBalancerStrategyV2.isOldStateTheSameAsNewState(oldStateV2, newStateV2));
+   //we don't care about averageClusterLatency as far as for printing the state
+   newStateV2 = new DegraderLoadBalancerStrategyV2.DegraderLoadBalancerState(updateIntervalMs,
+                                                                             clusterGenerationId,
+                                                                             points,
+                                                                             lastUpdated,
+                                                                             strategy,
+                                                                             currentOverrideDropRate,
+                                                                             currentAverageClusterLatency + 3,
+                                                                             initialized,
+                                                                             recoveryMap,
+                                                                             name);
+   assertTrue(DegraderLoadBalancerStrategyV2.isOldStateTheSameAsNewState(oldStateV2, newStateV2));
+   for (TrackerClient client : clients)
+   {
+     recoveryMap.put(client, 0.3);
+   }
+
+   newStateV2 = new DegraderLoadBalancerStrategyV2.DegraderLoadBalancerState(updateIntervalMs,
+                                                                             clusterGenerationId,
+                                                                             points,
+                                                                             lastUpdated,
+                                                                             strategy,
+                                                                             currentOverrideDropRate,
+                                                                             currentAverageClusterLatency,
+                                                                             initialized,
+                                                                             recoveryMap,
+                                                                             name);
+   assertFalse(DegraderLoadBalancerStrategyV2.isOldStateTheSameAsNewState(oldStateV2, newStateV2));
+
+   DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState.Strategy strategyV3 =
+       DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState.Strategy.CALL_DROPPING;
+
+   DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState oldStateV3 = new
+       DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(clusterGenerationId,
+                                                                         lastUpdated,
+                                                                         initialized,
+                                                                         points,
+                                                                         strategyV3,
+                                                                         currentOverrideDropRate,
+                                                                         currentAverageClusterLatency,
+                                                                         recoveryMap,
+                                                                         name);
+
+   DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState newStateV3 = new
+       DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(clusterGenerationId,
+                                                                         lastUpdated,
+                                                                         initialized,
+                                                                         points,
+                                                                         strategyV3,
+                                                                         currentOverrideDropRate,
+                                                                         currentAverageClusterLatency,
+                                                                         recoveryMap,
+                                                                         name);
+
+   assertTrue(DegraderLoadBalancerStrategyV3.isOldStateTheSameAsNewState(oldStateV3, newStateV3));
+
+   newStateV3 = new DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(clusterGenerationId + 1,
+                                                                                      lastUpdated,
+                                                                                      initialized,
+                                                                                      points,
+                                                                                      strategyV3,
+                                                                                      currentOverrideDropRate,
+                                                                                      currentAverageClusterLatency,
+                                                                                      recoveryMap,
+                                                                                      name);
+
+   assertFalse(DegraderLoadBalancerStrategyV3.isOldStateTheSameAsNewState(oldStateV3, newStateV3));
+
+   newStateV3 = new DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(clusterGenerationId,
+                                                                                      lastUpdated + 300,
+                                                                                      initialized,
+                                                                                      points,
+                                                                                      strategyV3,
+                                                                                      currentOverrideDropRate,
+                                                                                      currentAverageClusterLatency,
+                                                                                      recoveryMap,
+                                                                                      name);
+
+   assertTrue(DegraderLoadBalancerStrategyV3.isOldStateTheSameAsNewState(oldStateV3, newStateV3));
+
+   points.put(uri2, 77);
+   newStateV3 = new DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(clusterGenerationId,
+                                                                                      lastUpdated,
+                                                                                      initialized,
+                                                                                      points,
+                                                                                      strategyV3,
+                                                                                      currentOverrideDropRate,
+                                                                                      currentAverageClusterLatency,
+                                                                                      recoveryMap,
+                                                                                      name);
+   assertFalse(DegraderLoadBalancerStrategyV3.isOldStateTheSameAsNewState(oldStateV3, newStateV3));
+
+   points.put(uri2, 50);
+   newStateV3 = new DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(clusterGenerationId,
+                                                                                      lastUpdated,
+                                                                                      initialized,
+                                                                                      points,
+                                                                                      DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState.Strategy.LOAD_BALANCE,
+                                                                                      currentOverrideDropRate,
+                                                                                      currentAverageClusterLatency,
+                                                                                      recoveryMap,
+                                                                                      name);
+   assertFalse(DegraderLoadBalancerStrategyV3.isOldStateTheSameAsNewState(oldStateV3, newStateV3));
+
+   newStateV3 = new DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(clusterGenerationId,
+                                                                                      lastUpdated,
+                                                                                      initialized,
+                                                                                      points,
+                                                                                      strategyV3,
+                                                                                      currentOverrideDropRate + 0.4,
+                                                                                      currentAverageClusterLatency,
+                                                                                      recoveryMap,
+                                                                                      name);
+   assertFalse(DegraderLoadBalancerStrategyV3.isOldStateTheSameAsNewState(oldStateV3, newStateV3));
+
+   newStateV3 = new DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(clusterGenerationId,
+                                                                                      lastUpdated,
+                                                                                      initialized,
+                                                                                      points,
+                                                                                      strategyV3,
+                                                                                      currentOverrideDropRate,
+                                                                                      currentAverageClusterLatency + 55,
+                                                                                      recoveryMap,
+                                                                                      name);
+   //we don't care about averageClusterLatency for comparing states
+   assertTrue(DegraderLoadBalancerStrategyV3.isOldStateTheSameAsNewState(oldStateV3, newStateV3));
+
+   for (TrackerClient client : clients)
+   {
+     recoveryMap.put(client, 0.5);
+   }
+
+   newStateV3 = new DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(clusterGenerationId,
+                                                                                      lastUpdated,
+                                                                                      initialized,
+                                                                                      points,
+                                                                                      strategyV3,
+                                                                                      currentOverrideDropRate,
+                                                                                      currentAverageClusterLatency,
+                                                                                      recoveryMap,
+                                                                                      name);
+   assertFalse(DegraderLoadBalancerStrategyV3.isOldStateTheSameAsNewState(oldStateV3, newStateV3));
+ }
+
   @Test(groups = { "small", "back-end" })
   public void testBadTrackerClients() throws URISyntaxException
   {

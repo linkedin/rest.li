@@ -221,6 +221,49 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     }
   }
 
+  static boolean isOldStateTheSameAsNewState(PartitionDegraderLoadBalancerState oldState,
+                                                     PartitionDegraderLoadBalancerState newState)
+  {
+    return oldState.getClusterGenerationId() == newState.getClusterGenerationId() &&
+        oldState.getCurrentOverrideDropRate() == newState.getCurrentOverrideDropRate() &&
+        oldState.getPointsMap().equals(newState.getPointsMap()) &&
+        oldState.getRecoveryMap().equals(newState.getRecoveryMap()) &&
+        oldState.getStrategy().equals(newState.getStrategy());
+  }
+
+  private static void logState(PartitionDegraderLoadBalancerState oldState,
+                        PartitionDegraderLoadBalancerState newState,
+                        int partitionId,
+                        DegraderLoadBalancerStrategyConfig config)
+  {
+    if (_log.isDebugEnabled())
+    {
+      _log.debug("Strategy updated: partitionId= " + partitionId + ", newState=" + newState + ", config=" + config +
+                     ", HashRing coverage=" + newState.getRing());
+    }
+    else
+    {
+      if (!isOldStateTheSameAsNewState(oldState, newState))
+      {
+        _log.info("Strategy updated: partitionId= " + partitionId + ", newState=" + newState + ", oldState =" +
+                      oldState + ", new state's config=" + config);
+      }
+      else
+      {
+        //we print minimum amount of information because we don't want to spam the logs
+        _log.info("Strategy updated: partitionId= " + partitionId +
+                      ". But the old state is the same as the new state. Cluster health: [cluster latency ="
+                      + newState.getCurrentAvgClusterLatency() + ", override drop rate =" +
+                      newState.getCurrentOverrideDropRate() + "]");
+      }
+
+      if (_log.isDebugEnabled())
+      {
+        _log.debug("the new state's hashRing coverage=" + newState.getRing());
+      }
+    }
+  }
+
   /**
    * updatePartitionState
    *
@@ -507,11 +550,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                         newRecoveryMap,
                                         oldState.getServiceName());
 
-      _log.info("Strategy updated: partitionId= " + partitionId + ", newState=" + newState + ", config=" + config);
-      if (_log.isDebugEnabled())
-      {
-        _log.debug("HashRing coverage=" + newState.getRing());
-      }
+      logState(oldState, newState, partitionId, config);
     }
     else
     {
@@ -568,12 +607,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                             oldRecoveryMap,
                                             oldState.getServiceName());
 
-      _log.info("Strategy updated: partitionId= " + partitionId + ", newState=" + newState + ", config=" + config);
-
-      if (_log.isDebugEnabled())
-      {
-        _log.debug("HashRing coverage=" + newState.getRing());
-      }
+      logState(oldState, newState, partitionId, config);
 
       points = oldPointsMap;
     }

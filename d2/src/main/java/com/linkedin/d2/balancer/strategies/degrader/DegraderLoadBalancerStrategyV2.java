@@ -229,6 +229,48 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
     }
   }
 
+  static boolean isOldStateTheSameAsNewState(DegraderLoadBalancerState oldState,
+                                                     DegraderLoadBalancerState newState)
+  {
+    return oldState.getClusterGenerationId() == newState.getClusterGenerationId() &&
+        oldState.getCurrentOverrideDropRate() == newState.getCurrentOverrideDropRate() &&
+        oldState.getPointsMap().equals(newState.getPointsMap()) &&
+        oldState.getRecoveryMap().equals(newState.getRecoveryMap()) &&
+        oldState.getStrategy().equals(newState.getStrategy());
+  }
+
+  private static void logState(DegraderLoadBalancerState oldState,
+                        DegraderLoadBalancerState newState,
+                        DegraderLoadBalancerStrategyConfig config)
+  {
+    if (_log.isDebugEnabled())
+    {
+      _log.debug("Strategy updated: newState=" + newState + ", config=" + config +
+                     ", HashRing coverage=" + newState.getRing());
+    }
+    else
+    {
+      if (!isOldStateTheSameAsNewState(oldState, newState))
+      {
+        _log.info("Strategy updated: newState=" + newState + ", oldState =" +
+                      oldState + ", new state's config=" + config);
+      }
+      else
+      {
+        //we print minimum amount of information because we don't want to spam the logs
+        _log.info("Strategy updated. But the old state is the same as the new state. Cluster health: [cluster latency ="
+                      + newState.getCurrentAvgClusterLatency() + ", override drop rate =" +
+                      newState.getCurrentOverrideDropRate() + "]");
+      }
+
+      if (_log.isDebugEnabled())
+      {
+        _log.debug("the new state's hashRing coverage=" + newState.getRing());
+      }
+    }
+  }
+
+
   /**
    * updateState
    *
@@ -533,11 +575,7 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
                                         newCurrentAvgClusterLatency,
                                         true,
                                         newRecoveryMap, oldState.getServiceName());
-      _log.info("Strategy updated: newState=" + newState + ", config=" + config);
-      if (_log.isDebugEnabled())
-      {
-        _log.debug("HashRing coverage=" + newState.getRing() );
-      }
+      logState(oldState, newState, config);
     }
     else
     {
@@ -596,11 +634,7 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
                                             oldRecoveryMap,
                                             oldState.getServiceName());
 
-      _log.info("Strategy updated: newState=" + newState + ", config=" + config);
-      if (_log.isDebugEnabled())
-      {
-        _log.debug("HashRing coverage=" + newState.getRing() );
-      }
+      logState(oldState, newState, config);
 
       points = oldPointsMap;
     }
