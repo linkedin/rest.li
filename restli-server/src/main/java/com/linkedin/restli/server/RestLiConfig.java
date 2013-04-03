@@ -29,6 +29,7 @@ import java.util.Set;
 public class RestLiConfig
 {
   private final Set<String> _resourcePackageNames = new HashSet<String>();
+  private final Set<String> _resourceClassNames = new HashSet<String>();
   private URI _serverNodeUri = URI.create("");
   private RestLiDocumentationRequestHandler _documentationRequestHandler = null;
 
@@ -52,6 +53,11 @@ public class RestLiConfig
     return Collections.unmodifiableSet(_resourcePackageNames);
   }
 
+  public Set<String> getResourceClassNamesSet()
+  {
+    return Collections.unmodifiableSet(_resourceClassNames);
+  }
+
   /**
    * @param commaDelimitedResourcePackageNames comma-delimited package names list
    */
@@ -66,11 +72,11 @@ public class RestLiConfig
   }
 
   /**
-   * @param packageNames set of package names
+   * @param packageNames set of package names to be scanned
    */
   public void setResourcePackageNamesSet(final Set<String> packageNames)
   {
-    if (packageNames != null && packageNames.size() > 0)
+    if (packageNames != null && !packageNames.isEmpty())
     {
       _resourcePackageNames.clear();
       _resourcePackageNames.addAll(packageNames);
@@ -78,13 +84,36 @@ public class RestLiConfig
   }
 
   /**
-   * @param packageNames array of package names
+   * @param packageNames array of package names to be scanned
    */
   public void addResourcePackageNames(final String... packageNames)
   {
     for (String pkg : packageNames)
     {
       _resourcePackageNames.add(pkg);
+    }
+  }
+
+  /**
+   * @param classNames set of class names to be loaded
+   */
+  public void setResourceClassNamesSet(final Set<String> classNames)
+  {
+    if (classNames != null && !classNames.isEmpty())
+    {
+      _resourceClassNames.clear();
+      _resourceClassNames.addAll(classNames);
+    }
+  }
+
+  /**
+   * @param classNames array of specific resource class names to be loaded
+   */
+  public void addResourceClassNames(final String... classNames)
+  {
+    for (String clazz : classNames)
+    {
+      _resourceClassNames.add(clazz);
     }
   }
 

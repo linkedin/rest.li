@@ -74,8 +74,9 @@ class RestLiClasspathScanner
 
   private final ClassLoader _classLoader;
   private final Set<String> _packagePaths;
+  private final Set<String> _classNames;
 
-  public RestLiClasspathScanner(final String[] packageNames, final ClassLoader classLoader)
+  public RestLiClasspathScanner(final Set<String> packageNames, final Set<String> classNames, final ClassLoader classLoader)
   {
     _classLoader = classLoader;
     _packagePaths = new HashSet<String>();
@@ -84,6 +85,7 @@ class RestLiClasspathScanner
     {
       _packagePaths.add(nameToPath(packageName));
     }
+    _classNames = classNames;
     _matchedClasses = new HashSet<Class<?>>();
   }
 
@@ -108,7 +110,7 @@ class RestLiClasspathScanner
     return _matchedClasses;
   }
 
-  public void scan()
+  public void scanPackages()
   {
     try
     {
@@ -143,6 +145,33 @@ class RestLiClasspathScanner
     {
       throw new ResourceConfigException("Unable to scan resources", e);
     }
+  }
+
+  public String scanClasses()
+  {
+    final StringBuilder errorBuilder = new StringBuilder();
+
+    for (String c : _classNames)
+    {
+      try
+      {
+        final Class<?> candidateClass = classForName(c);
+        for (Annotation a : candidateClass.getAnnotations())
+        {
+          if (_annotations.contains(a.annotationType()))
+          {
+            _matchedClasses.add(candidateClass);
+            break;
+          }
+        }
+      }
+      catch (ClassNotFoundException e)
+      {
+        errorBuilder.append(String.format("Failed to load class %s\n", c));
+      }
+    }
+
+    return errorBuilder.toString();
   }
 
   private void scanJar(final URI u) throws IOException
@@ -228,8 +257,7 @@ class RestLiClasspathScanner
           }
           catch (ClassNotFoundException e)
           {
-            throw new RestLiInternalException("Failed to load class while scanning packages",
-                                              e);
+            throw new RestLiInternalException("Failed to load class while scanning packages", e);
           }
         }
       }

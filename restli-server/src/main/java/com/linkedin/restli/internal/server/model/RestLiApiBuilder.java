@@ -35,26 +35,31 @@ public class RestLiApiBuilder implements RestApiBuilder
 {
   private final static Logger _log = LoggerFactory.getLogger(RestLiApiBuilder.class);
 
-  private final String[] _packageNames;
+  private final Set<String> _packageNames;
+  private final Set<String> _classNames;
 
   public RestLiApiBuilder(final RestLiConfig config)
   {
-    if (config.getResourcePackageNamesSet().isEmpty())
+    if (config.getResourcePackageNamesSet().isEmpty() && config.getResourceClassNamesSet().isEmpty())
     {
-      throw new ResourceConfigException("At least one package containing rest-annotated classes must be specified");
+      throw new ResourceConfigException("At least one package containing rest-annotated classes or one resource class must be specified");
     }
 
-    _packageNames =
-        config.getResourcePackageNamesSet()
-              .toArray(new String[config.getResourcePackageNamesSet().size()]);
+    _packageNames = config.getResourcePackageNamesSet();
+    _classNames = config.getResourceClassNamesSet();
   }
 
   @Override
   public Map<String, ResourceModel> build()
   {
     RestLiClasspathScanner scanner =
-        new RestLiClasspathScanner(_packageNames, Thread.currentThread().getContextClassLoader());
-    scanner.scan();
+        new RestLiClasspathScanner(_packageNames, _classNames, Thread.currentThread().getContextClassLoader());
+    scanner.scanPackages();
+    final String errorMessage = scanner.scanClasses();
+    if (!errorMessage.isEmpty())
+    {
+      _log.error(errorMessage);
+    }
 
     Set<Class<?>> annotatedClasses = scanner.getMatchedClasses();
 

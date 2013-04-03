@@ -1,5 +1,7 @@
 1.8.12
 ------
+(RB=151817)
+Update RestLiConfig to allow RestLiServer to load specific resource classes.
 
 1.8.11
 ------
@@ -12,6 +14,7 @@ bump to 1.8.11
 
 1.8.10
 ------
+(RB=150230)
 Add detection of wrong assocKey in RestRequestBuilderGenerator.
 Add display of assocKeys of finder in restli-docgen.
 
