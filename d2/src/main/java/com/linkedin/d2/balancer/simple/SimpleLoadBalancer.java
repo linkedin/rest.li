@@ -169,10 +169,10 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
 
       List<LoadBalancerState.SchemeStrategyPair> orderedStrategies =
               _state.getStrategiesForService(serviceName,
-                                             service.getPrioritizedSchemes());
+                                             cluster.getPrioritizedSchemes());
 
       TrackerClient trackerClient = chooseTrackerClient(request, requestContext, serviceName, clusterName, cluster,
-                                                        uriItem, uris, orderedStrategies, service);
+                                                        uriItem, uris, orderedStrategies);
 
       String clusterAndServiceUriString = trackerClient.getUri() + service.getPath();
       client = new RewriteClient(serviceName,
@@ -185,17 +185,10 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     {
       _log.debug("service hint found, using generic client for target: " + targetService);
 
-      TransportClient transportClient = _state.getClient(serviceName, targetService.getScheme());
+      TransportClient transportClient = _state.getClient(clusterName, targetService.getScheme());
       client = new RewriteClient(serviceName,targetService,transportClient);
     }
     return client;
-  }
-
-  //TODO remove the getPrioritizedSchemes from clusterProperties after migration is done
-  private static List<String> chooseServiceSchemeOverCluster(ServiceProperties service, ClusterProperties cluster)
-  {
-    return  service.getPrioritizedSchemes() == null ? cluster.getPrioritizedSchemes() :
-            service.getPrioritizedSchemes();
   }
 
   @Override
@@ -210,7 +203,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
 
     List<LoadBalancerState.SchemeStrategyPair> orderedStrategies =
         _state.getStrategiesForService(serviceName,
-                                       chooseServiceSchemeOverCluster(service, cluster));
+            cluster.getPrioritizedSchemes());
 
     if (! orderedStrategies.isEmpty())
     {
@@ -247,7 +240,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       for (Map.Entry<Integer, Set<K>> entry : partitionSet.entrySet())
       {
         int partitionId = entry.getKey();
-        List<TrackerClient> clients = getPotentialClients(serviceName, service, uris, pair.getScheme(), partitionId);
+        List<TrackerClient> clients = getPotentialClients(clusterName, cluster, uris, pair.getScheme(), partitionId);
         Ring<URI> ring = pair.getStrategy().getRing(uriItem.getVersion(), partitionId, clients);
         // make sure the same ring is not used in other partition
         Object oldValue = ringMap.put(ring, entry.getValue());
@@ -281,7 +274,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
 
     List<LoadBalancerState.SchemeStrategyPair> orderedStrategies =
         _state.getStrategiesForService(serviceName,
-                                       chooseServiceSchemeOverCluster(service, cluster));
+            cluster.getPrioritizedSchemes());
 
     if (! orderedStrategies.isEmpty())
     {
@@ -292,7 +285,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       for (int partitionId = 0; partitionId <= maxPartitionId; partitionId++)
       {
         Set<URI> possibleUris = uris.getUriBySchemeAndPartition(pair.getScheme(), partitionId);
-        List<TrackerClient> trackerClients = getPotentialClients(serviceName, service, possibleUris);
+        List<TrackerClient> trackerClients = getPotentialClients(clusterName, cluster, possibleUris);
         Ring<URI> ring = pair.getStrategy().getRing(uriItem.getVersion(), partitionId, trackerClients);
         // ring will never be null; it can be empty
         ringMap.put(partitionId, ring);
@@ -461,24 +454,24 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   }
 
   // supports partitioning
-  private List<TrackerClient> getPotentialClients(String serviceName,
-                                                  ServiceProperties serviceProperties,
+  private List<TrackerClient> getPotentialClients(String clusterName,
+                                                  ClusterProperties cluster,
                                                   UriProperties uris,
                                                   String scheme,
                                                   int partitionId)
   {
     Set<URI> possibleUris = uris.getUriBySchemeAndPartition(scheme, partitionId);
 
-    List<TrackerClient> clientsToBalance = getPotentialClients(serviceName, serviceProperties, possibleUris);
+    List<TrackerClient> clientsToBalance = getPotentialClients(clusterName, cluster, possibleUris);
     if (clientsToBalance.isEmpty())
     {
-      info(_log, "Can not find clients for service: ", serviceName, ", scheme: ", scheme, ", partition: ", partitionId);
+      info(_log, "Can not find clients for cluster: ", clusterName, ", scheme: ", scheme, ", partition: ", partitionId);
     }
     return clientsToBalance;
   }
 
-  private List<TrackerClient> getPotentialClients(String serviceName,
-                                                  ServiceProperties serviceProperties,
+  private List<TrackerClient> getPotentialClients(String clusterName,
+                                                  ClusterProperties cluster,
                                                   Set<URI> possibleUris)
   {
     List<TrackerClient> clientsToLoadBalance = new ArrayList<TrackerClient>();
@@ -488,9 +481,9 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       for (URI possibleUri : possibleUris)
       {
         // don't pay attention to this uri if it's banned
-        if (!serviceProperties.isBanned(possibleUri))
+        if (!cluster.isBanned(possibleUri))
         {
-          TrackerClient possibleTrackerClient = _state.getClient(serviceName, possibleUri);
+          TrackerClient possibleTrackerClient = _state.getClient(clusterName, possibleUri);
 
           if (possibleTrackerClient != null)
           {
@@ -506,7 +499,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
 
     debug(_log,
         "got clients to load balancer for ",
-        serviceName,
+        clusterName,
         ": ",
         clientsToLoadBalance);
     return clientsToLoadBalance;
@@ -517,8 +510,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
                                             ClusterProperties cluster,
                                             LoadBalancerStateItem<UriProperties> uriItem,
                                             UriProperties uris,
-                                            List<LoadBalancerState.SchemeStrategyPair> orderedStrategies,
-                                            ServiceProperties serviceProperties)
+                                            List<LoadBalancerState.SchemeStrategyPair> orderedStrategies)
           throws ServiceUnavailableException
   {
     // now try and find a tracker client for the uri
@@ -542,9 +534,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       LoadBalancerStrategy strategy = pair.getStrategy();
       String scheme = pair.getScheme();
 
-
-      clientsToLoadBalance = getPotentialClients(serviceName, serviceProperties, uris, scheme,
-                                                                     partitionId);
+      clientsToLoadBalance = getPotentialClients(clusterName, cluster, uris, scheme, partitionId);
 
       trackerClient =
           strategy.getTrackerClient(request, requestContext, uriItem.getVersion(), partitionId, clientsToLoadBalance);

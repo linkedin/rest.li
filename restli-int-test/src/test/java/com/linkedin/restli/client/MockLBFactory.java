@@ -37,7 +37,6 @@ import com.linkedin.r2.transport.http.client.HttpClientFactory;
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -81,26 +80,14 @@ public class MockLBFactory
     state.listenToService("groups", new LoadBalancerState.NullStateListenerCallback());
     state.listenToCluster("testcluster", new LoadBalancerState.NullStateListenerCallback());
     state.listenToCluster("badcluster", new LoadBalancerState.NullStateListenerCallback());
+
+    serviceRegistry.put("greetings", new ServiceProperties("greetings", "testcluster", "/greetings", "degrader"));
+    serviceRegistry.put("groups", new ServiceProperties("groups", "badcluster", "/groups", "degrader"));
+
     List<String> schemes = new ArrayList<String>();
     schemes.add("http");
-    serviceRegistry.put("greetings", new ServiceProperties("greetings", "testcluster", "/greetings", "degrader",
-                                                           Collections.<String>emptyList(),
-                                                           Collections.<String, Object>emptyMap(),
-                                                           null,
-                                                           null,
-                                                           schemes,
-                                                           null));
-    serviceRegistry.put("groups", new ServiceProperties("groups", "badcluster", "/groups", "degrader",
-                                                        Collections.<String>emptyList(),
-                                                        Collections.<String, Object>emptyMap(),
-                                                        null,
-                                                        null,
-                                                        schemes,
-                                                        null));
-
-
-    clusterRegistry.put("testcluster", new ClusterProperties("testcluster"));
-    clusterRegistry.put("badcluster", new ClusterProperties("badcluster"));
+    clusterRegistry.put("testcluster", new ClusterProperties("testcluster", schemes));
+    clusterRegistry.put("badcluster", new ClusterProperties("badcluster", schemes));
 
 
     uriRegistry.put("testcluster", new UriProperties("testcluster", createUriData("http://localhost:1338")));

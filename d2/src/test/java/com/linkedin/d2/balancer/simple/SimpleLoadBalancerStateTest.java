@@ -152,20 +152,14 @@ public class SimpleLoadBalancerStateTest
 
     // first add a cluster
     _state.listenToCluster("cluster-1", new NullStateListenerCallback());
-    _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1"));
+    _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", schemes));
 
     // then add a service
     _state.listenToService("service-1", new NullStateListenerCallback());
     _serviceRegistry.put("service-1", new ServiceProperties("service-1",
                                                             "cluster-1",
                                                             "/test",
-                                                            "random",
-                                                            Collections.<String>emptyList(),
-                                                            Collections.<String, Object>emptyMap(),
-                                                            null,
-                                                            null,
-                                                            schemes,
-                                                            null));
+                                                            "random"));
 
     // this should trigger a refresh
     assertEquals(listener.scheme, "http");
@@ -173,7 +167,7 @@ public class SimpleLoadBalancerStateTest
     assertEquals(listener.serviceName, "service-1");
 
     // then update the cluster
-    _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1"));
+    _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", schemes));
 
     // this triggered a second refresh, but also an onStrategyRemoved. The onStrategyRemoved should
     // be done first, and then the onStrategyAdd, so we should still see a valid strategy.
@@ -182,19 +176,13 @@ public class SimpleLoadBalancerStateTest
     assertEquals(listener.serviceName, "service-1");
 
     _state.listenToCluster("partition-cluster-1", new NullStateListenerCallback());
-    _clusterRegistry.put("partition-cluster-1", new ClusterProperties("partition-cluster-1", null,
+    _clusterRegistry.put("partition-cluster-1", new ClusterProperties("partition-cluster-1", schemes,
         new HashMap<String, String>(), new HashSet<URI>(), new RangeBasedPartitionProperties("id=(\\d+)", 0, 100, 2)));
 
     _state.listenToService("partition-service-1", new NullStateListenerCallback());
     _serviceRegistry.put("partition-service-1",
         new ServiceProperties("partition-service-1",
-        "partition-cluster-1", "/partition-test", "degraderV3",
-        Collections.<String>emptyList(),
-        Collections.<String, Object>emptyMap(),
-        null,
-        null,
-        schemes,
-        null));
+        "partition-cluster-1", "/partition-test", "degraderV3"));
 
     assertEquals(listener.scheme, "http");
     assertTrue(listener.strategy instanceof DegraderLoadBalancerStrategyV3);
@@ -220,15 +208,11 @@ public class SimpleLoadBalancerStateTest
 
     // first add a cluster
     _state.listenToCluster("cluster-1", new NullStateListenerCallback());
-    _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1"));
+    _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", schemes));
 
     // then add a service
     _state.listenToService("service-1", new NullStateListenerCallback());
-    _serviceRegistry.put("service-1", new ServiceProperties("service-1", "cluster-1", "/test", "random",
-                                                            Collections.<String>emptyList(),
-                                                            Collections.<String, Object> emptyMap(),
-                                                            null, null,
-                                                            schemes, null));
+    _serviceRegistry.put("service-1", new ServiceProperties("service-1", "cluster-1", "/test", "random"));
 
     // this should trigger a refresh
     assertEquals(listener.scheme, "http");
@@ -238,7 +222,7 @@ public class SimpleLoadBalancerStateTest
     _state.unregister(listener);
 
     // then update the cluster
-    _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1"));
+    _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", schemes));
 
     // there should be no update here, since we unregistered
     assertEquals(listener.scheme, "http");
@@ -390,27 +374,24 @@ public class SimpleLoadBalancerStateTest
 
     schemes.add("http");
 
-    assertNull(_state.getClient("service-1", uri));
+    assertNull(_state.getClient("cluster-1", uri));
 
     // set up state
     _state.listenToCluster("cluster-1", new NullStateListenerCallback());
 
-    assertNull(_state.getClient("service-1", uri));
+    assertNull(_state.getClient("cluster-1", uri));
 
     _state.listenToService("service-1", new NullStateListenerCallback());
 
-    assertNull(_state.getClient("service-1", uri));
+    assertNull(_state.getClient("cluster-1", uri));
 
-    _serviceRegistry.put("service-1", new ServiceProperties("service-1", "cluster-1",
-                                                            "/test", "random", null,
-                                                            Collections.<String, Object>emptyMap(),
-                                                             null, null, schemes, null));
+    _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", schemes));
 
-    assertNull(_state.getClient("service-1", uri));
+    assertNull(_state.getClient("cluster-1", uri));
 
     _uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData));
 
-    TrackerClient client = _state.getClient("service-1", uri);
+    TrackerClient client = _state.getClient("cluster-1", uri);
 
     assertNotNull(client);
     assertEquals(client.getUri(), uri);
@@ -432,19 +413,18 @@ public class SimpleLoadBalancerStateTest
 
     // set up state
     _state.listenToService("service-1", new NullStateListenerCallback());
+    _state.listenToCluster("cluster-1", new NullStateListenerCallback());
 
     assertNull(_state.getStrategy("service-1", "http"));
 
     _serviceRegistry.put("service-1", new ServiceProperties("service-1",
                                                             "cluster-1",
                                                             "/test",
-                                                            "random",
-                                                            Collections.<String>emptyList(),
-                                                            Collections.<String, Object>emptyMap(),
-                                                            null,
-                                                            null,
-                                                            schemes,
-                                                            null));
+                                                            "random"));
+
+    assertNull(_state.getStrategy("service-1", "http"));
+
+    _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", schemes));
 
     LoadBalancerStrategy strategy = _state.getStrategy("service-1", "http");
 
@@ -475,15 +455,11 @@ public class SimpleLoadBalancerStateTest
     _serviceRegistry.put("service-1", new ServiceProperties("service-1",
                                                             "cluster-1",
                                                             "/test",
-                                                            "random",
-                                                            Collections.<String>emptyList(),
-                                                            Collections.<String,Object>emptyMap(),
-                                                            null,
-                                                            null,
-                                                            schemes,
-                                                            null));
+                                                            "random"));
 
-    assertNotNull(_state.getStrategy("service-1", "http"));
+    assertNull(_state.getStrategy("service-1", "http"));
+
+    _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", schemes));
 
     LoadBalancerStrategy strategy = _state.getStrategy("service-1", "http");
 
@@ -494,30 +470,24 @@ public class SimpleLoadBalancerStateTest
     assertTrue(strategy == _state.getStrategy("service-1", "http"));
     assertTrue(strategy == _state.getStrategy("service-1", "http"));
 
-    // now make sure adding a cluster property won't change the strategy
-    _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1"));
+    // now force a refresh by adding cluster
+    _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", schemes));
 
-    // we should still have the same strategy now
+    // we should have a different strategy now
     LoadBalancerStrategy newStrategy = _state.getStrategy("service-1", "http");
     assertNotNull(newStrategy);
-    assertTrue(strategy == newStrategy);
+    assertFalse(strategy == newStrategy);
     assertTrue(newStrategy instanceof RandomLoadBalancerStrategy);
 
     strategy = newStrategy;
 
     // refresh by adding service
     _serviceRegistry.put("service-1", new ServiceProperties("service-1",
-                                                                "cluster-1",
-                                                                "/test",
-                                                                "random",
-                                                                Collections.<String>emptyList(),
-                                                                Collections.<String,Object>emptyMap(),
-                                                                null,
-                                                                null,
-                                                                schemes,
-                                                                null));
+                                                            "cluster-1",
+                                                            "/test",
+                                                            "random"));
 
-    // we should have a different strategy
+    // we should, again, have a different strategy
     newStrategy = _state.getStrategy("service-1", "http");
     assertNotNull(newStrategy);
     assertFalse(strategy == newStrategy);
@@ -556,12 +526,8 @@ public class SimpleLoadBalancerStateTest
                                                             "/test",
                                                             "unusedInThisConstructor",
                                                             strategyList,
-                                                            Collections.<String, Object>emptyMap(),
-                                                            null,
-                                                            null,
-                                                            schemes,
-                                                            null));
-    _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1"));
+                                                            Collections.<String, Object>emptyMap()));
+    _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", schemes));
     assertNull(_state.getStrategy("service-1", "http"));
 
     // put the random strategy into the Strategy list, it is one of the supported strategies in the
@@ -573,13 +539,9 @@ public class SimpleLoadBalancerStateTest
                                                             "/test",
                                                             "unusedInThisConstructor",
                                                             strategyList,
-                                                            Collections.<String, Object>emptyMap(),
-                                                            null,
-                                                            null,
-                                                            schemes,
-                                                            null));
+                                                            Collections.<String, Object>emptyMap()));
 
-    _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1"));
+    _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", schemes));
 
     LoadBalancerStrategy strategy = _state.getStrategy("service-1", "http");
 
@@ -593,13 +555,9 @@ public class SimpleLoadBalancerStateTest
                                                             "/test",
                                                             "unusedInThisConstructor",
                                                             strategyList,
-                                                            Collections.<String, Object>emptyMap(),
-                                                            null,
-                                                            null,
-                                                            schemes,
-                                                            null));
+                                                            Collections.<String, Object>emptyMap()));
 
-    _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1"));
+    _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", schemes));
 
     strategy = _state.getStrategy("service-1", "http");
 
@@ -619,7 +577,7 @@ public class SimpleLoadBalancerStateTest
     reset();
     LinkedList<String> strategyList = new LinkedList<String>();
     URI uri = URI.create("http://cluster-1/test");
-    final List<String> schemes = new ArrayList<String>();
+    List<String> schemes = new ArrayList<String>();
 
     schemes.add("http");
     strategyList.add("degraderV3");
@@ -631,23 +589,19 @@ public class SimpleLoadBalancerStateTest
 
     // Use the _clusterRegistry.put to populate the _state.clusterProperties, used by
     // _state.refreshServiceStrategies
-    _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1"));
-    _serviceRegistry.put("service-1", new ServiceProperties("service-1",
-                                                              "cluster-1",
-                                                              "/test",
-                                                              "unusedInThisConstructor",
-                                                              strategyList,
-                                                              Collections.<String, Object>emptyMap(),
-                                                              Collections.<String, String>emptyMap(),
-                                                              Collections.<String, String>emptyMap(),
-                                                              schemes,
-                                                              Collections.<URI>emptySet()));
+    _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", schemes));
 
+    _state.refreshServiceStrategies(new ServiceProperties("service-1",
+                                                          "cluster-1",
+                                                          "/test",
+                                                          "unusedInThisConstructor",
+                                                          strategyList,
+                                                          Collections.<String, Object>emptyMap()));
     LoadBalancerStrategy strategy = _state.getStrategy("service-1", "http");
     assertNotNull(strategy, "got null strategy in setup");
 
     // test serial to make sure things are working before concurrent test
-    TransportClient resultTC = _state.getClient("service-1", "http");
+    TransportClient resultTC = _state.getClient("cluster-1", "http");
     assertNotNull(resultTC, "got null tracker client in non-concurrent env");
 
     ExecutorService myExecutor = Executors.newCachedThreadPool();
@@ -678,11 +632,7 @@ public class SimpleLoadBalancerStateTest
                                                                 "/test",
                                                                 "unusedInThisConstructor",
                                                                 myStrategyList,
-                                                                Collections.<String, Object>emptyMap(),
-                                                                Collections.<String, String>emptyMap(),
-                                                                Collections.<String, String>emptyMap(),
-                                                                schemes,
-                                                                Collections.<URI>emptySet()));
+                                                                Collections.<String, Object>emptyMap()));
 
           if(Thread.interrupted())
           {
@@ -783,15 +733,9 @@ public class SimpleLoadBalancerStateTest
     _serviceRegistry.put("service-1", new ServiceProperties("service-1",
                                                             "cluster-1",
                                                             "/test",
-                                                            "random",
-                                                            null,
-                                                            Collections.<String, Object>emptyMap(),
-                                                            Collections.<String, String>emptyMap(),
-                                                            Collections.<String, String>emptyMap(),
-                                                            schemes,
-                                                            Collections.<URI>emptySet()));
+                                                            "random"));
 
-    _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1"));
+    _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", schemes));
 
 
     _uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData));
@@ -800,17 +744,13 @@ public class SimpleLoadBalancerStateTest
     URI uri2 = URI.create("http://partition-cluster-1/test2");
 
     _state.listenToCluster("partition-cluster-1", new NullStateListenerCallback());
-    _clusterRegistry.put("partition-cluster-1", new ClusterProperties("partition-cluster-1", null,
+    _clusterRegistry.put("partition-cluster-1", new ClusterProperties("partition-cluster-1", schemes,
         new HashMap<String, String>(), new HashSet<URI>(), new RangeBasedPartitionProperties("id=(\\d+)", 0, 100, 2)));
 
     _state.listenToService("partition-service-1", new NullStateListenerCallback());
     _serviceRegistry.put("partition-service-1",
         new ServiceProperties("partition-service-1",
-            "partition-cluster-1", "/partition-test", "degraderV3", null, Collections.<String, Object>emptyMap(),
-                                                                        Collections.<String, String>emptyMap(),
-                                                                        Collections.<String, String>emptyMap(),
-                                                                        schemes,
-                                                                        Collections.<URI>emptySet()));
+            "partition-cluster-1", "/partition-test", "degraderV3"));
 
     Map<Integer, PartitionData> partitionWeight = new HashMap<Integer, PartitionData>();
     partitionWeight.put(0, new PartitionData(1d));
@@ -826,25 +766,26 @@ public class SimpleLoadBalancerStateTest
 
 
     _uriRegistry.put("partition-cluster-1", new UriProperties("partition-cluster-1", partitionDesc));
-    TrackerClient client1 = _state.getClient("partition-service-1", uri1);
-    TrackerClient client2 = _state.getClient("partition-service-1", uri2);
+
+    TrackerClient client1 = _state.getClient("partition-cluster-1", uri1);
+    TrackerClient client2 = _state.getClient("partition-cluster-1", uri2);
     assertEquals(client2.getPartitionWeight(1), 2d);
     assertEquals(client2.getPartitionWeight(2), 1d);
     assertEquals(client1.getPartitionWeight(1), 2d);
 
 
     // Get client, then refresh cluster
-    TrackerClient client = _state.getClient("service-1", uri);
+    TrackerClient client = _state.getClient("cluster-1", uri);
     client.restRequest(new RestRequestBuilder(URI.create("d2://service-1/foo")).build(),
                        new RequestContext(),
                        Collections.<String, String>emptyMap(),
                        new TransportCallbackAdapter<RestResponse>(Callbacks.<RestResponse>empty()));
 
     // now force a refresh by adding cluster
-    _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1"));
+    _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", schemes));
 
     // Get client, then refresh service
-    client = _state.getClient("service-1", uri);
+    client = _state.getClient("cluster-1", uri);
     client.restRequest(new RestRequestBuilder(URI.create("d2://service-1/foo")).build(),
                        new RequestContext(),
                        Collections.<String, String>emptyMap(),
@@ -854,16 +795,10 @@ public class SimpleLoadBalancerStateTest
     _serviceRegistry.put("service-1", new ServiceProperties("service-1",
                                                             "cluster-1",
                                                             "/test",
-                                                            "random",
-                                                            Collections.<String>emptyList(),
-                                                            Collections.<String, Object>emptyMap(),
-                                                            null,
-                                                            null,
-                                                            schemes,
-                                                            null));
+                                                            "random"));
 
     // Get client, then mark server up/down
-    client = _state.getClient("service-1", uri);
+    client = _state.getClient("cluster-1", uri);
     client.restRequest(new RestRequestBuilder(URI.create("d2://service-1/foo")).build(),
                        new RequestContext(),
                        Collections.<String, String>emptyMap(),
@@ -874,7 +809,7 @@ public class SimpleLoadBalancerStateTest
     _uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData));
 
     // Get the client one last time
-    client = _state.getClient("service-1", uri);
+    client = _state.getClient("cluster-1", uri);
     client.restRequest(new RestRequestBuilder(URI.create("d2://service-1/foo")).build(),
                        new RequestContext(),
                        Collections.<String, String>emptyMap(),
@@ -1000,12 +935,12 @@ public class SimpleLoadBalancerStateTest
     }
 
     @Override
-    public void onClientAdded(String serviceName, TrackerClient client)
+    public void onClientAdded(String clusterName, TrackerClient client)
     {
     }
 
     @Override
-    public void onClientRemoved(String serviceName, TrackerClient client)
+    public void onClientRemoved(String clusterName, TrackerClient client)
     {
     }
   }

@@ -28,7 +28,7 @@ import com.linkedin.r2.transport.http.client.HttpClientFactory;
 public class PropertyKeys
 {
   //old to be deprecated constants. Use new constants instead.
-  //used by transport client creation
+  //used by cluster properties
   public static final String OLD_CLUSTER_GET_TIMEOUT = HttpClientFactory.OLD_GET_TIMEOUT_KEY;
   public static final String OLD_CLUSTER_REQUEST_TIMEOUT = HttpClientFactory.OLD_REQUEST_TIMEOUT_KEY;
   public static final String OLD_CLUSTER_MAX_RESPONSE_SIZE = HttpClientFactory.OLD_MAX_RESPONSE_SIZE;
@@ -40,7 +40,6 @@ public class PropertyKeys
   //==========================================//
   //new constants
   //used by degrader properties
-  public static final String DEGRADER_PROPERTIES = "degraderProperties";
   public static final String DEGRADER_NAME = "degrader.name";
   public static final String DEGRADER_LOG_ENABLED = "degrader.logEnabled";
   public static final String DEGRADER_LATENCY_TO_USE = "degrader.latencyToUse";
@@ -64,9 +63,6 @@ public class PropertyKeys
   public static final String SERVICE_NAME = "serviceName";
   public static final String CLOCK = "clock";
   public static final String SERVICES = "services";
-  public static final String TRANSPORT_CLIENT_PROPERTIES = "transportClientProperties";
-  public static final String PRIORITIZED_SCHEMES = "prioritizedSchemes";
-  public static final String BANNED_URIS = "bannedUri";
 
   //load balancer specific properties
   public static final String LB_STRATEGY_NAME = "loadBalancerStrategyName";
@@ -103,6 +99,7 @@ public class PropertyKeys
 
   //used by cluster properties
   public static final String CLUSTER_NAME = "clusterName";
+  public static final String PRIORITIZED_SCHEMES = "prioritizedSchemes";
   public static final String PARTITION_PROPERTIES = "partitionProperties";
   public static final String PARTITION_TYPE = "partitionType";
   public static final String KEY_RANGE_START = "keyRangeStart";
@@ -115,8 +112,8 @@ public class PropertyKeys
   public static final String CLUSTER_LIST = "clusterList";
   public static final String CLUSTER_VARIANTS_LIST = "clusterVariantsList";
   public static final String FULL_CLUSTER_LIST = "fullClusterList";
+  public static final String BANNED_URIS = "bannedUri";
 
-  //used by transport client creation
   public static final String HTTP_REQUEST_TIMEOUT = HttpClientFactory.HTTP_REQUEST_TIMEOUT;
   public static final String HTTP_MAX_RESPONSE_SIZE = HttpClientFactory.HTTP_MAX_RESPONSE_SIZE;
   public static final String HTTP_POOL_SIZE = HttpClientFactory.HTTP_POOL_SIZE;
@@ -124,11 +121,5 @@ public class PropertyKeys
   public static final String HTTP_SHUTDOWN_TIMEOUT = HttpClientFactory.HTTP_SHUTDOWN_TIMEOUT;
   public static final String HTTP_SSL_CONTEXT = HttpClientFactory.HTTP_SSL_CONTEXT;
   public static final String HTTP_SSL_PARAMS = HttpClientFactory.HTTP_SSL_PARAMS;
-
-  //used for multi colo
-  public static final String DEFAULT_COLO = "defaultColo";
-  public static final String COLO_VARIANTS = "coloVariants";
-  public static final String MASTER_COLO = "masterColo";
-  public static final String MASTER_SUFFIX = "Master";
 
 }

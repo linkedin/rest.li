@@ -18,12 +18,9 @@ package com.linkedin.d2.balancer.properties;
 
 import com.linkedin.util.ArgumentUtil;
 
-import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
 
 public class ServiceProperties
 {
@@ -33,20 +30,13 @@ public class ServiceProperties
   private final String _loadBalancerStrategyName;
   private final List<String> _loadBalancerStrategyList;
   private final Map<String,Object> _loadBalancerStrategyProperties;
-  private final Map<String,String> _transportClientProperties;
-  private final Map<String,String> _degraderProperties;
-  private final List<String> _prioritizedSchemes;
-  private final Set<URI> _banned;
 
   public ServiceProperties(String serviceName,
                            String clusterName,
                            String path,
                            String loadBalancerStrategyName)
   {
-    this(serviceName, clusterName, path, loadBalancerStrategyName, null,
-         Collections.<String, Object>emptyMap(), Collections.<String, String>emptyMap(),
-         Collections.<String, String>emptyMap(),
-         Collections.<String>emptyList(), Collections.<URI>emptySet());
+    this(serviceName, clusterName, path, loadBalancerStrategyName, Collections.<String, Object>emptyMap());
   }
 
   public ServiceProperties(String serviceName,
@@ -55,9 +45,7 @@ public class ServiceProperties
                            String loadBalancerStrategyName,
                            Map<String,Object> loadBalancerStrategyProperties)
   {
-    this(serviceName, clusterName, path, loadBalancerStrategyName, null, loadBalancerStrategyProperties,
-         Collections.<String, String>emptyMap(), Collections.<String, String>emptyMap(),
-                  Collections.<String>emptyList(), Collections.<URI>emptySet());
+    this(serviceName, clusterName, path, loadBalancerStrategyName, null, loadBalancerStrategyProperties);
   }
 
   // The addition of the StrategyList is to allow new strategies to be introduced and be used as they
@@ -69,22 +57,6 @@ public class ServiceProperties
                            String loadBalancerStrategyName,
                            List<String> loadBalancerStrategyList,
                            Map<String,Object> loadBalancerStrategyProperties)
-  {
-    this(serviceName,clusterName,path,loadBalancerStrategyName,loadBalancerStrategyList,loadBalancerStrategyProperties,
-         Collections.<String, String>emptyMap(), Collections.<String, String>emptyMap(),
-         Collections.<String>emptyList(), Collections.<URI>emptySet());
-  }
-
-  public ServiceProperties(String serviceName,
-                           String clusterName,
-                           String path,
-                           String loadBalancerStrategyName,
-                           List<String> loadBalancerStrategyList,
-                           Map<String,Object> loadBalancerStrategyProperties,
-                           Map<String,String> transportClientProperties,
-                           Map<String,String> degraderProperties,
-                           List<String> prioritizedSchemes,
-                           Set<URI> banned)
   {
     ArgumentUtil.notNull(serviceName, PropertyKeys.SERVICE_NAME);
     ArgumentUtil.notNull(clusterName, PropertyKeys.CLUSTER_NAME);
@@ -102,16 +74,8 @@ public class ServiceProperties
     _loadBalancerStrategyList = (loadBalancerStrategyList != null) ?
             Collections.unmodifiableList(loadBalancerStrategyList)
             : Collections.<String>emptyList();
-    _loadBalancerStrategyProperties = Collections.unmodifiableMap(loadBalancerStrategyProperties);
-    _transportClientProperties = (transportClientProperties != null) ?
-        Collections.unmodifiableMap(transportClientProperties) : Collections.<String, String>emptyMap();
-    _degraderProperties = (degraderProperties != null) ? Collections.unmodifiableMap(degraderProperties) :
-      Collections.<String, String>emptyMap();
-    _prioritizedSchemes = (prioritizedSchemes != null) ? Collections.unmodifiableList(prioritizedSchemes) :
-       Collections.<String>emptyList();
-    _banned = (banned != null) ? Collections.unmodifiableSet(banned) : Collections.<URI>emptySet();
+    _loadBalancerStrategyProperties = loadBalancerStrategyProperties;
   }
-
 
   public String getClusterName()
   {
@@ -143,31 +107,6 @@ public class ServiceProperties
     return _loadBalancerStrategyProperties;
   }
 
-  public Map<String, String> getTransportClientProperties()
-  {
-    return _transportClientProperties;
-  }
-
-  public Map<String, String> getDegraderProperties()
-  {
-    return _degraderProperties;
-  }
-
-  public List<String> getPrioritizedSchemes()
-  {
-    return _prioritizedSchemes;
-  }
-
-  public Set<URI> getBanned()
-  {
-    return _banned;
-  }
-
-  public boolean isBanned(URI uri)
-  {
-    return _banned.contains(uri);
-  }
-
   @Override
   public String toString()
   {
@@ -175,16 +114,7 @@ public class ServiceProperties
         + ", _loadBalancerStrategyName=" + _loadBalancerStrategyName + ", _path=" + _path
         + ", _serviceName=" + _serviceName + ", _loadBalancerStrategyList=" + _loadBalancerStrategyList
         + ", _loadBalancerStrategyProperties="
-        + _loadBalancerStrategyProperties
-        + ", _transportClientProperties="
-        + _transportClientProperties
-        + ", _degraderProperties="
-        + _degraderProperties
-        + ", prioritizedSchemes="
-        + _prioritizedSchemes
-        + ", bannedUris="
-        + _banned
-        + "]";
+        + _loadBalancerStrategyProperties + "]";
   }
 
   @Override
@@ -198,8 +128,6 @@ public class ServiceProperties
     result = prime * result + _path.hashCode();
     result = prime * result + _serviceName.hashCode();
     result = prime * result + _loadBalancerStrategyProperties.hashCode();
-    result = prime * result + _degraderProperties.hashCode();
-    result = prime * result + _transportClientProperties.hashCode();
     return result;
   }
 
@@ -225,14 +153,6 @@ public class ServiceProperties
       return false;
     if (!_loadBalancerStrategyProperties.equals(other._loadBalancerStrategyProperties))
       return false;
-    if (!_transportClientProperties.equals(other._transportClientProperties))
-          return false;
-    if (!_degraderProperties.equals(other._degraderProperties))
-          return false;
-    if (!_prioritizedSchemes.equals(other._prioritizedSchemes))
-          return false;
-    if (!_banned.equals(other._banned))
-          return false;
     return true;
   }
 

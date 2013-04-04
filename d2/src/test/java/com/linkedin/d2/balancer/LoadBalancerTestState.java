@@ -33,7 +33,6 @@ import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,8 +68,13 @@ public class LoadBalancerTestState implements LoadBalancerState
   @Override
   public LoadBalancerStateItem<ClusterProperties> getClusterProperties(String clusterName)
   {
+    List<String> prioritizedSchemes = new ArrayList<String>();
+
+    prioritizedSchemes.add("http");
+
     return (getClusterProperties)
-        ? new LoadBalancerStateItem<ClusterProperties>(new ClusterProperties("cluster-1"),
+        ? new LoadBalancerStateItem<ClusterProperties>(new ClusterProperties("cluster-1",
+                                                                             prioritizedSchemes),
                                                        0,
                                                        0) : null;
   }
@@ -85,21 +89,11 @@ public class LoadBalancerTestState implements LoadBalancerState
   @Override
   public LoadBalancerStateItem<ServiceProperties> getServiceProperties(String serviceName)
   {
-    List<String> prioritizedSchemes = new ArrayList<String>();
-
-    prioritizedSchemes.add("http");
-
     return (getServiceProperties)
         ? new LoadBalancerStateItem<ServiceProperties>(new ServiceProperties("service-1",
                                                                              "cluster-1",
                                                                              "/foo",
-                                                                             "rr",
-                                                                             Collections.<String>emptyList(),
-                                                                             Collections.<String, Object>emptyMap(),
-                                                                             null,
-                                                                             null,
-                                                                             prioritizedSchemes,
-                                                                             null),
+                                                                             "rr"),
                                                        0,
                                                        0) : null;
   }

@@ -81,9 +81,9 @@ public interface LoadBalancerState
 
   LoadBalancerStateItem<ServiceProperties> getServiceProperties(String serviceName);
 
-  TrackerClient getClient(String serviceName, URI uri);
+  TrackerClient getClient(String clusterName, URI uri);
 
-  TransportClient getClient(String serviceName, String scheme);
+  TransportClient getClient(String clusterName, String scheme);
 
   LoadBalancerStrategy getStrategy(String serviceName, String scheme);
 

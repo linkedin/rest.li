@@ -17,16 +17,13 @@
 package com.linkedin.d2.balancer.properties;
 
 import java.io.UnsupportedEncodingException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
 import com.linkedin.d2.discovery.PropertyBuilder;
 import com.linkedin.d2.discovery.PropertySerializationException;
-import java.util.Set;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import com.linkedin.d2.discovery.PropertySerializer;
@@ -105,39 +102,13 @@ public class ServicePropertiesJsonSerializer implements
     {
       loadBalancerStrategyList = Collections.emptyList();
     }
-    @SuppressWarnings("unchecked")
-    Map<String, String> transportClientProperties = (Map<String, String>) map.get(PropertyKeys.
-                                                                                      TRANSPORT_CLIENT_PROPERTIES);
-    if (transportClientProperties == null)
-    {
-      transportClientProperties = Collections.emptyMap();
-    }
-    @SuppressWarnings("unchecked")
-    Map<String, String> degraderProperties = (Map<String, String>) map.get(PropertyKeys.DEGRADER_PROPERTIES);
-    if (degraderProperties == null)
-    {
-      degraderProperties = Collections.emptyMap();
-    }
-    @SuppressWarnings("unchecked")
-    List<URI> bannedList = (List<URI>)map.get(PropertyKeys.BANNED_URIS);
-    if (bannedList == null)
-    {
-      bannedList = Collections.emptyList();
-    }
-    Set<URI> banned = new HashSet<URI>(bannedList);
-    @SuppressWarnings("unchecked")
-    List<String> prioritizedSchemes = (List<String>) map.get(PropertyKeys.PRIORITIZED_SCHEMES);
 
     return new ServiceProperties((String) map.get(PropertyKeys.SERVICE_NAME),
                                  (String) map.get(PropertyKeys.CLUSTER_NAME),
                                  (String) map.get(PropertyKeys.PATH),
                                  (String) map.get(PropertyKeys.LB_STRATEGY_NAME),
                                  loadBalancerStrategyList,
-                                 loadBalancerStrategyProperties,
-                                 transportClientProperties,
-                                 degraderProperties,
-                                 prioritizedSchemes,
-                                 banned);
+                                 loadBalancerStrategyProperties);
 
   }
 }
