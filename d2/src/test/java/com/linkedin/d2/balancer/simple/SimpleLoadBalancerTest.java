@@ -29,6 +29,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -116,7 +117,7 @@ public class SimpleLoadBalancerTest
       FileUtils.deleteDirectory(dirToDelete);
     }
   }
-  
+
   @Test(groups = { "small", "back-end" })
   public void testLoadBalancerSmoke() throws URISyntaxException,
           ServiceUnavailableException,
@@ -170,11 +171,18 @@ public class SimpleLoadBalancerTest
 
       prioritizedSchemes.add("http");
 
-      clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", prioritizedSchemes));
+      clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1"));
+
       serviceRegistry.put("foo", new ServiceProperties("foo",
-                                                              "cluster-1",
-                                                              "/foo",
-                                                              "degrader"));
+                                                        "cluster-1",
+                                                        "/foo",
+                                                        "degrader",
+                                                        Collections.<String>emptyList(),
+                                                        Collections.<String,Object>emptyMap(),
+                                                        null,
+                                                        null,
+                                                        prioritizedSchemes,
+                                                        null));
       uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData));
 
       URI expectedUri1 = URI.create("http://test.qa1.com:1234/foo");
@@ -290,20 +298,20 @@ public class SimpleLoadBalancerTest
       switch (partitionMethod)
       {
         case 0:
-          clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", prioritizedSchemes, new HashMap<String, String>(),
+          clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", null, new HashMap<String, String>(),
             new HashSet<URI>(), new RangeBasedPartitionProperties("id=(\\d+)", 0, 50, 2)));
           break;
         case 1:
-          clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", prioritizedSchemes, new HashMap<String, String>(),
+          clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", null, new HashMap<String, String>(),
               new HashSet<URI>(), new HashBasedPartitionProperties("id=(\\d+)", 2, HashBasedPartitionProperties.HashAlgorithm.valueOf("MODULO"))));
           break;
         case 2:
-          clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", prioritizedSchemes, new HashMap<String, String>(),
+          clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", null, new HashMap<String, String>(),
               new HashSet<URI>(), new HashBasedPartitionProperties("id=(\\d+)", 2, HashBasedPartitionProperties.HashAlgorithm.valueOf("MD5"))));
           break;
         case 3:
           // test getRings with gap. here, no server serves partition 2
-          clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", prioritizedSchemes, new HashMap<String, String>(),
+          clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", null, new HashMap<String, String>(),
               new HashSet<URI>(), new RangeBasedPartitionProperties("id=(\\d+)", 0, 50, 4)));
           server3.put(3, new PartitionData(1d));
           partitionDesc.put(uri3, server3);
@@ -313,9 +321,15 @@ public class SimpleLoadBalancerTest
 
 
       serviceRegistry.put("foo", new ServiceProperties("foo",
-          "cluster-1",
-          "/foo",
-          "degrader"));
+                                                        "cluster-1",
+                                                        "/foo",
+                                                        "degrader",
+                                                        Collections.<String>emptyList(),
+                                                        Collections.<String,Object>emptyMap(),
+                                                        null,
+                                                        null,
+                                                        prioritizedSchemes,
+                                                        null));
 
       uriRegistry.put("cluster-1", new UriProperties("cluster-1", partitionDesc));
 
