@@ -321,7 +321,12 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
       _requestContext = requestContext;
     }
 
-    public BatchRequest<BatchResponse<T>> getRequest()
+    public Request<BatchResponse<T>> getRequest()
+    {
+      return _request;
+    }
+
+    public BatchRequest<BatchResponse<T>> getBatchRequest()
     {
       return _request;
     }

@@ -183,7 +183,7 @@ public class TestScatterGather extends RestLiIntegrationTest
     for (ScatterGatherBuilder.RequestInfo<Greeting> requestInfo : requests)
     {
       //URI will be something like "greetings/?ids=21&ids=4&ids=53&ids=60&ids=66&ids=88&ids=93"
-      BatchRequest<BatchResponse<Greeting>> request = requestInfo.getRequest();
+      BatchRequest<BatchResponse<Greeting>> request = requestInfo.getBatchRequest();
       Set<String> expectedParams = new HashSet<String>();
       expectedParams.add("ids");
       expectedParams.add("fields");

@@ -3,6 +3,11 @@
 (RB=151817)
 Update RestLiConfig to allow RestLiServer to load specific resource classes.
 
+(RB=152325)
+Restore binary compatibility by changing return type of ScatterGatherBuilder$RequestInfo.getRequest()
+back to Request (it was changed to BatchRequest in 1.8.9; this change was source compatible
+but not binary compatible).
+
 1.8.11
 ------
 (RB=152040)
