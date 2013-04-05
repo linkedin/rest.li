@@ -26,11 +26,14 @@ import java.util.Set;
 public class ClusterProperties
 {
   private final String                _clusterName;
-  private final List<String>          _prioritizedSchemes;
   private final Map<String, String>   _properties;
-  private final Set<URI>              _banned;
   private final PartitionProperties   _partitionProperties;
 
+  //deprecated because we are moving these properties down to ServiceProperties
+  @Deprecated
+  private final Set<URI>              _banned;
+  @Deprecated
+  private final List<String>          _prioritizedSchemes;
 
   public ClusterProperties(String clusterName)
   {

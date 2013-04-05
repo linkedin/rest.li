@@ -1,5 +1,19 @@
+1.8.14
+-------
+
+1.8.13
+-------
+(RB=152377)
+Reapply "moved transportClient, degrader and many other cluster properties to service properties (part 1)"
+Push the config producing code first then push the config consuming part later.
+
+(RB=151543)
+minimize the amount of logging that D2 makes when there is no state changes
+
 1.8.12
 ------
+Reverted "moved transportClient, degrader and many other cluster properties to service properties (part 1)"
+
 (RB=151817)
 Update RestLiConfig to allow RestLiServer to load specific resource classes.
 
