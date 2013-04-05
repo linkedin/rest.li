@@ -221,20 +221,42 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     }
   }
 
+  static boolean isNewStateHealthy(PartitionDegraderLoadBalancerState newState,
+                                   DegraderLoadBalancerStrategyConfig config,
+                                   List<TrackerClient> trackerClients,
+                                   int partitionId)
+  {
+    if (newState.getCurrentAvgClusterLatency() > config.getLowWaterMark())
+    {
+      return false;
+    }
+    Map<URI, Integer> pointsMap = newState.getPointsMap();
+    for (TrackerClient client : trackerClients)
+    {
+      int perfectHealth = (int) (client.getPartitionWeight(partitionId) * config.getPointsPerWeight());
+      Integer point = pointsMap.get(client.getUri());
+      if (point < perfectHealth)
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+
   static boolean isOldStateTheSameAsNewState(PartitionDegraderLoadBalancerState oldState,
                                                      PartitionDegraderLoadBalancerState newState)
   {
     return oldState.getClusterGenerationId() == newState.getClusterGenerationId() &&
         oldState.getCurrentOverrideDropRate() == newState.getCurrentOverrideDropRate() &&
         oldState.getPointsMap().equals(newState.getPointsMap()) &&
-        oldState.getRecoveryMap().equals(newState.getRecoveryMap()) &&
-        oldState.getStrategy().equals(newState.getStrategy());
+        oldState.getRecoveryMap().equals(newState.getRecoveryMap());
   }
 
   private static void logState(PartitionDegraderLoadBalancerState oldState,
                         PartitionDegraderLoadBalancerState newState,
                         int partitionId,
-                        DegraderLoadBalancerStrategyConfig config)
+                        DegraderLoadBalancerStrategyConfig config,
+                        List<TrackerClient> trackerClients)
   {
     if (_log.isDebugEnabled())
     {
@@ -243,7 +265,8 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     }
     else
     {
-      if (!isOldStateTheSameAsNewState(oldState, newState))
+      if (!isNewStateHealthy(newState, config, trackerClients, partitionId) ||
+          !isOldStateTheSameAsNewState(oldState, newState))
       {
         _log.info("Strategy updated: partitionId= " + partitionId + ", newState=" + newState + ", oldState =" +
                       oldState + ", new state's config=" + config);
@@ -255,11 +278,6 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                       ". But the old state is the same as the new state. Cluster health: [cluster latency ="
                       + newState.getCurrentAvgClusterLatency() + ", override drop rate =" +
                       newState.getCurrentOverrideDropRate() + "]");
-      }
-
-      if (_log.isDebugEnabled())
-      {
-        _log.debug("the new state's hashRing coverage=" + newState.getRing());
       }
     }
   }
@@ -550,7 +568,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                         newRecoveryMap,
                                         oldState.getServiceName());
 
-      logState(oldState, newState, partitionId, config);
+      logState(oldState, newState, partitionId, config, trackerClients);
     }
     else
     {
@@ -607,7 +625,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                             oldRecoveryMap,
                                             oldState.getServiceName());
 
-      logState(oldState, newState, partitionId, config);
+      logState(oldState, newState, partitionId, config, trackerClients);
 
       points = oldPointsMap;
     }

@@ -110,15 +110,23 @@ public class DegraderLoadBalancerTest
    DegraderLoadBalancerStrategyV2.DegraderLoadBalancerState.Strategy strategy =
        DegraderLoadBalancerStrategyV2.DegraderLoadBalancerState.Strategy.LOAD_BALANCE;
    long currentAverageClusterLatency = 3000;
+   Map<String, Object> configMap = new HashMap<String, Object>();
+   configMap.put(PropertyKeys.HTTP_LB_LOW_WATER_MARK, 500d);
+   configMap.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_POINTS_PER_WEIGHT, 120);
+   DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(configMap);
+
+
    double currentOverrideDropRate = 0.4;
    boolean initialized = true;
    String name = "degraderV2";
    Map<URI, Integer> points = new HashMap<URI, Integer>();
    Map<TrackerClient,Double> recoveryMap = new HashMap<TrackerClient, Double>();
-   URI uri1 = new URI("http://www.linkedin.com/1");
-   URI uri2 = new URI("http://www.linkedin.com/2");
+   URI uri1 = new URI("http://test.linkedin.com:10010/abc0");
+   URI uri2 = new URI("http://test.linkedin.com:10010/abc1");
+   URI uri3 = new URI("http://test.linkedin.com:10010/abc2");
    points.put(uri1, 100);
    points.put(uri2, 50);
+   points.put(uri3, 120);
    TestClock clock = new TestClock();
 
    List<TrackerClient> clients = createTrackerClient(3, clock, null);
@@ -192,20 +200,9 @@ public class DegraderLoadBalancerTest
                                                                              initialized,
                                                                              recoveryMap,
                                                                              name);
-   points.put(uri1, 100);
-   assertFalse(DegraderLoadBalancerStrategyV2.isOldStateTheSameAsNewState(oldStateV2, newStateV2));
-   newStateV2 = new DegraderLoadBalancerStrategyV2.DegraderLoadBalancerState(updateIntervalMs,
-                                                                             clusterGenerationId,
-                                                                             points,
-                                                                             lastUpdated,
-                                                                             DegraderLoadBalancerStrategyV2.DegraderLoadBalancerState.Strategy.CALL_DROPPING,
-                                                                             currentOverrideDropRate,
-                                                                             currentAverageClusterLatency,
-                                                                             initialized,
-                                                                             recoveryMap,
-                                                                             name);
 
-   assertFalse(DegraderLoadBalancerStrategyV2.isOldStateTheSameAsNewState(oldStateV2, newStateV2));
+   points.put(uri1, 100);
+
    newStateV2 = new DegraderLoadBalancerStrategyV2.DegraderLoadBalancerState(updateIntervalMs,
                                                                              clusterGenerationId,
                                                                              points,
@@ -246,6 +243,60 @@ public class DegraderLoadBalancerTest
                                                                              recoveryMap,
                                                                              name);
    assertFalse(DegraderLoadBalancerStrategyV2.isOldStateTheSameAsNewState(oldStateV2, newStateV2));
+
+   //test state health comparison
+
+   assertFalse(DegraderLoadBalancerStrategyV2.isNewStateHealthy(newStateV2, config, clients));
+   //make cluster average latency to be 300 to be lower than lowWaterMark but still not healthy because
+   //points map has clients with less than perfect health
+   newStateV2 = new DegraderLoadBalancerStrategyV2.DegraderLoadBalancerState(updateIntervalMs,
+                                                                                clusterGenerationId,
+                                                                                points,
+                                                                                lastUpdated,
+                                                                                strategy,
+                                                                                currentOverrideDropRate,
+                                                                                300,
+                                                                                initialized,
+                                                                                recoveryMap,
+                                                                                name);
+
+   assertFalse(DegraderLoadBalancerStrategyV2.isNewStateHealthy(newStateV2, config, clients));
+   //make all points to have 120 so the cluster becomes "healthy"
+   points.put(uri1, 120);
+   points.put(uri2, 120);
+   points.put(uri3, 120);
+
+   newStateV2 = new DegraderLoadBalancerStrategyV2.DegraderLoadBalancerState(updateIntervalMs,
+                                                                                clusterGenerationId,
+                                                                                points,
+                                                                                lastUpdated,
+                                                                                strategy,
+                                                                                currentOverrideDropRate,
+                                                                                300,
+                                                                                initialized,
+                                                                                recoveryMap,
+                                                                                name);
+   assertTrue(DegraderLoadBalancerStrategyV2.isNewStateHealthy(newStateV2, config, clients));
+
+   //if currentAverageClusterLatency is > low water mark then cluster becomes unhealthy
+   newStateV2 = new DegraderLoadBalancerStrategyV2.DegraderLoadBalancerState(updateIntervalMs,
+                                                                                clusterGenerationId,
+                                                                                points,
+                                                                                lastUpdated,
+                                                                                strategy,
+                                                                                currentOverrideDropRate,
+                                                                                currentAverageClusterLatency,
+                                                                                initialized,
+                                                                                recoveryMap,
+                                                                                name);
+
+   assertFalse(DegraderLoadBalancerStrategyV2.isNewStateHealthy(newStateV2, config, clients));
+
+   //test DegraderLoadBalancerV3
+
+   points.put(uri1, 100);
+   points.put(uri2, 50);
+   points.put(uri3, 120);
 
    DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState.Strategy strategyV3 =
        DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState.Strategy.CALL_DROPPING;
@@ -311,16 +362,6 @@ public class DegraderLoadBalancerTest
    assertFalse(DegraderLoadBalancerStrategyV3.isOldStateTheSameAsNewState(oldStateV3, newStateV3));
 
    points.put(uri2, 50);
-   newStateV3 = new DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(clusterGenerationId,
-                                                                                      lastUpdated,
-                                                                                      initialized,
-                                                                                      points,
-                                                                                      DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState.Strategy.LOAD_BALANCE,
-                                                                                      currentOverrideDropRate,
-                                                                                      currentAverageClusterLatency,
-                                                                                      recoveryMap,
-                                                                                      name);
-   assertFalse(DegraderLoadBalancerStrategyV3.isOldStateTheSameAsNewState(oldStateV3, newStateV3));
 
    newStateV3 = new DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(clusterGenerationId,
                                                                                       lastUpdated,
@@ -360,6 +401,51 @@ public class DegraderLoadBalancerTest
                                                                                       recoveryMap,
                                                                                       name);
    assertFalse(DegraderLoadBalancerStrategyV3.isOldStateTheSameAsNewState(oldStateV3, newStateV3));
+
+   //test state health comparison
+
+   assertFalse(DegraderLoadBalancerStrategyV3.isNewStateHealthy(newStateV3, config, clients, DEFAULT_PARTITION_ID));
+   //make cluster average latency to be 300 to be lower than lowWaterMark but still not healthy because
+   //points map has clients with less than perfect health
+   newStateV3 = new DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(clusterGenerationId,
+                                                                                      lastUpdated,
+                                                                                      initialized,
+                                                                                      points,
+                                                                                      strategyV3,
+                                                                                      currentOverrideDropRate,
+                                                                                      300,
+                                                                                      recoveryMap,
+                                                                                      name);
+
+   assertFalse(DegraderLoadBalancerStrategyV3.isNewStateHealthy(newStateV3, config, clients, DEFAULT_PARTITION_ID));
+   //make all points to have 120 so the cluster becomes "healthy"
+   points.put(uri1, 120);
+   points.put(uri2, 120);
+   points.put(uri3, 120);
+
+   newStateV3 = new DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(clusterGenerationId,
+                                                                                      lastUpdated,
+                                                                                      initialized,
+                                                                                      points,
+                                                                                      strategyV3,
+                                                                                      currentOverrideDropRate,
+                                                                                      300,
+                                                                                      recoveryMap,
+                                                                                      name);
+   assertTrue(DegraderLoadBalancerStrategyV3.isNewStateHealthy(newStateV3, config, clients, DEFAULT_PARTITION_ID));
+
+   //if currentAverageClusterLatency is > low water mark then cluster becomes unhealthy
+   newStateV3 = new DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(clusterGenerationId,
+                                                                                      lastUpdated,
+                                                                                      initialized,
+                                                                                      points,
+                                                                                      strategyV3,
+                                                                                      currentOverrideDropRate,
+                                                                                      currentAverageClusterLatency,
+                                                                                      recoveryMap,
+                                                                                      name);
+
+   assertFalse(DegraderLoadBalancerStrategyV3.isNewStateHealthy(newStateV3, config, clients, DEFAULT_PARTITION_ID));
  }
 
   @Test(groups = { "small", "back-end" })
