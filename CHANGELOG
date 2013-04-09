@@ -1,7 +1,14 @@
+1.8.15
+------
+
 1.8.14
 -------
 (RB=147678)
 Improve client side logging of RestLiServiceException
+
+(RB=152564)
+Fix race condition between ZKConnection.start() and DefaultWatcher.process() by waiting for initialization completion
+This replaces RB 149393
 
 1.8.13
 -------

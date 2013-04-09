@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -67,6 +68,8 @@ public class ZKConnection
   private final ScheduledExecutorService _scheduler;
   private final long _initInterval;
 
+  // _countDownLatch signals when _zkRef is ready to be used
+  private final CountDownLatch _zkRefLatch = new CountDownLatch(1);
   private final AtomicReference<ZooKeeper> _zkRef = new AtomicReference<ZooKeeper>();
 
   // _mutex protects the two fields below: _listeners and _currentState
@@ -134,6 +137,7 @@ public class ZKConnection
         LOG.info("Exponential backoff disabled.");
       }
     }
+    LOG.debug("Going to set zkRef");
     if (!_zkRef.compareAndSet(null, zk))
     {
       try
@@ -146,6 +150,8 @@ public class ZKConnection
       }
       throw new IllegalStateException("Already started");
     }
+    LOG.debug("counting down");
+    _zkRefLatch.countDown();
   }
 
   public void shutdown() throws InterruptedException
@@ -160,10 +166,23 @@ public class ZKConnection
 
   private ZooKeeper zk()
   {
-    ZooKeeper zk = _zkRef.get();
-    if (zk == null)
+    ZooKeeper zk;
+    try
     {
-      throw new IllegalStateException("ZKConnection not yet started");
+      if (!_zkRefLatch.await(_timeout, TimeUnit.MILLISECONDS))
+      {
+        throw new RuntimeException("Wait for zkRef timed out.");
+      }
+      LOG.debug("zkRefLatch complete");
+      zk = _zkRef.get();
+      if (zk == null)
+      {
+        throw new IllegalStateException("Null zkRef after countdownlatch.");
+      }
+    }
+    catch (InterruptedException e)
+    {
+      throw new RuntimeException("Got Interrupt Exception while waiting for zk", e);
     }
     return zk;
   }
@@ -483,23 +502,8 @@ public class ZKConnection
     @Override
     public void process(WatchedEvent watchedEvent)
     {
-      // we only need ZooKeeper here to get the sessionId. However, there's a race condition when
-      // starting up where zk is not available, and we get an IllegalStateException with the
-      // message "ZKConnection not yet started". To solve this, we'll watch that exception, and
-      // put in a dummy sessionID
-      ZooKeeper zk;
-      long sessionID;
-      try
-      {
-        zk = zk();
-        sessionID = zk.getSessionId();
-      }
-      catch (IllegalStateException e)
-      {
-        // this can happen on start up, ignore and put in a dummy sessionId
-        LOG.warn("zkRef not yet available to retrieve sessionID, this should only happen during start up");
-        sessionID = -1;
-      }
+      ZooKeeper zk = zk();
+      long sessionID = zk.getSessionId();
 
       if (watchedEvent.getType() == Event.EventType.None)
       {
@@ -527,5 +531,4 @@ public class ZKConnection
       }
     }
   }
-
 }
