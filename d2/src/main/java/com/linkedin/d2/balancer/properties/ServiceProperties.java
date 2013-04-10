@@ -33,7 +33,7 @@ public class ServiceProperties
   private final String _loadBalancerStrategyName;
   private final List<String> _loadBalancerStrategyList;
   private final Map<String,Object> _loadBalancerStrategyProperties;
-  private final Map<String,String> _transportClientProperties;
+  private final Map<String,Object> _transportClientProperties;
   private final Map<String,String> _degraderProperties;
   private final List<String> _prioritizedSchemes;
   private final Set<URI> _banned;
@@ -44,7 +44,7 @@ public class ServiceProperties
                            String loadBalancerStrategyName)
   {
     this(serviceName, clusterName, path, loadBalancerStrategyName, null,
-         Collections.<String, Object>emptyMap(), Collections.<String, String>emptyMap(),
+         Collections.<String, Object>emptyMap(), Collections.<String, Object>emptyMap(),
          Collections.<String, String>emptyMap(),
          Collections.<String>emptyList(), Collections.<URI>emptySet());
   }
@@ -56,7 +56,7 @@ public class ServiceProperties
                            Map<String,Object> loadBalancerStrategyProperties)
   {
     this(serviceName, clusterName, path, loadBalancerStrategyName, null, loadBalancerStrategyProperties,
-         Collections.<String, String>emptyMap(), Collections.<String, String>emptyMap(),
+         Collections.<String, Object>emptyMap(), Collections.<String, String>emptyMap(),
                   Collections.<String>emptyList(), Collections.<URI>emptySet());
   }
 
@@ -71,7 +71,7 @@ public class ServiceProperties
                            Map<String,Object> loadBalancerStrategyProperties)
   {
     this(serviceName,clusterName,path,loadBalancerStrategyName,loadBalancerStrategyList,loadBalancerStrategyProperties,
-         Collections.<String, String>emptyMap(), Collections.<String, String>emptyMap(),
+         Collections.<String, Object>emptyMap(), Collections.<String, String>emptyMap(),
          Collections.<String>emptyList(), Collections.<URI>emptySet());
   }
 
@@ -81,7 +81,7 @@ public class ServiceProperties
                            String loadBalancerStrategyName,
                            List<String> loadBalancerStrategyList,
                            Map<String,Object> loadBalancerStrategyProperties,
-                           Map<String,String> transportClientProperties,
+                           Map<String,Object> transportClientProperties,
                            Map<String,String> degraderProperties,
                            List<String> prioritizedSchemes,
                            Set<URI> banned)
@@ -104,7 +104,7 @@ public class ServiceProperties
             : Collections.<String>emptyList();
     _loadBalancerStrategyProperties = Collections.unmodifiableMap(loadBalancerStrategyProperties);
     _transportClientProperties = (transportClientProperties != null) ?
-        Collections.unmodifiableMap(transportClientProperties) : Collections.<String, String>emptyMap();
+        Collections.unmodifiableMap(transportClientProperties) : Collections.<String, Object>emptyMap();
     _degraderProperties = (degraderProperties != null) ? Collections.unmodifiableMap(degraderProperties) :
       Collections.<String, String>emptyMap();
     _prioritizedSchemes = (prioritizedSchemes != null) ? Collections.unmodifiableList(prioritizedSchemes) :
@@ -143,7 +143,7 @@ public class ServiceProperties
     return _loadBalancerStrategyProperties;
   }
 
-  public Map<String, String> getTransportClientProperties()
+  public Map<String, Object> getTransportClientProperties()
   {
     return _transportClientProperties;
   }

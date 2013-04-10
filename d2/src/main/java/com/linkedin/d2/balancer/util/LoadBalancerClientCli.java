@@ -753,7 +753,8 @@ public class LoadBalancerClientCli
                                     clusterBus,
                                     serviceBus,
                                     clientFactories,
-                                    loadBalancerStrategyFactories);
+                                    loadBalancerStrategyFactories,
+                                    null, null, false);
 
     SimpleLoadBalancer balancer = new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS);
     FutureCallback<None> callback = new FutureCallback<None>();
@@ -797,7 +798,7 @@ public class LoadBalancerClientCli
                                         d2path, _tmpDir.getAbsolutePath(),
                                         clientFactories,
                                         loadBalancerStrategyFactories,
-                                        d2ServicePath);
+                                        d2ServicePath, null, null, false);
 
 	return new ZKFSLoadBalancer(zkConnectString, SESSION_TIMEOUT, (int) TIMEOUT, factory, null, d2path);
   }

@@ -30,6 +30,8 @@ import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -66,7 +68,10 @@ public class D2ClientBuilder
                   _config.fsBasePath,
                   _config.componentFactory,
                   transportClientFactories,
-                  _config.lbWithFacilitiesFactory);
+                  _config.lbWithFacilitiesFactory,
+                  _config.sslContext,
+                  _config.sslParameters,
+                  _config.isSSLEnabled);
 
     final LoadBalancerWithFacilities loadBalancer = loadBalancerFactory.create(cfg);
 
@@ -129,6 +134,24 @@ public class D2ClientBuilder
   public D2ClientBuilder setComponentFactory(ZKFSTogglingLoadBalancerFactoryImpl.ComponentFactory componentFactory)
   {
     _config.componentFactory = componentFactory;
+    return this;
+  }
+
+  public D2ClientBuilder setSSLContext(SSLContext sslContext)
+  {
+    _config.sslContext = sslContext;
+    return this;
+  }
+
+  public D2ClientBuilder setSSLParameters(SSLParameters sslParameters)
+  {
+    _config.sslParameters = sslParameters;
+    return this;
+  }
+
+  public D2ClientBuilder setIsSSLEnabled(boolean isSSLEnabled)
+  {
+    _config.isSSLEnabled = isSSLEnabled;
     return this;
   }
 

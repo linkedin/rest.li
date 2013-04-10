@@ -68,7 +68,11 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
                                                    config.basePath,
                                                    config.fsBasePath,
                                                    config.clientFactories,
-                                                   loadBalancerStrategyFactories);
+                                                   loadBalancerStrategyFactories,
+                                                   config.d2ServicePath,
+                                                   config.sslContext,
+                                                   config.sslParameters,
+                                                   config.isSSLEnabled);
   }
 
   private Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> createDefaultLoadBalancerStrategyFactories()

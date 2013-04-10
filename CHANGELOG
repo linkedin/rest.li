@@ -1,7 +1,13 @@
+1.8.20
+------
+
 1.8.19
 ------
 (RB=158603)
 Fix bug that context path is missing in docgen "View in JSON format" link.
+
+(RB=154315)
+Add SSL support in D2 client.
 
 1.8.18
 ------

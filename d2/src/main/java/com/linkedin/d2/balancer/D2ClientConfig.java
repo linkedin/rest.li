@@ -17,6 +17,8 @@ package com.linkedin.d2.balancer;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
 
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl.ComponentFactory;
@@ -35,6 +37,10 @@ public class D2ClientConfig
   ZKFSTogglingLoadBalancerFactoryImpl.ComponentFactory componentFactory = null;
   Map<String, TransportClientFactory> clientFactories = null;
   LoadBalancerWithFacilitiesFactory lbWithFacilitiesFactory = null;
+  String d2ServicePath = null;
+  SSLContext sslContext = null;
+  SSLParameters sslParameters = null;
+  boolean isSSLEnabled = false;
 
   public D2ClientConfig()
   {
@@ -52,6 +58,26 @@ public class D2ClientConfig
                 Map<String, TransportClientFactory> clientFactories,
                 LoadBalancerWithFacilitiesFactory lbWithFacilitiesFactory)
   {
+    this(zkHosts, zkSessionTimeoutInMs, zkStartupTimeoutInMs, lbWaitTimeout,
+         lbWaitUnit, flagFile, basePath, fsBasePath, componentFactory,
+         clientFactories, lbWithFacilitiesFactory, null, null, false);
+  }
+
+  public D2ClientConfig(String zkHosts,
+                long zkSessionTimeoutInMs,
+                long zkStartupTimeoutInMs,
+                long lbWaitTimeout,
+                TimeUnit lbWaitUnit,
+                String flagFile,
+                String basePath,
+                String fsBasePath,
+                ComponentFactory componentFactory,
+                Map<String, TransportClientFactory> clientFactories,
+                LoadBalancerWithFacilitiesFactory lbWithFacilitiesFactory,
+                SSLContext sslContext,
+                SSLParameters sslParameters,
+                boolean isSSLEnabled)
+  {
     this.zkHosts = zkHosts;
     this.zkSessionTimeoutInMs = zkSessionTimeoutInMs;
     this.zkStartupTimeoutInMs = zkStartupTimeoutInMs;
@@ -63,6 +89,9 @@ public class D2ClientConfig
     this.componentFactory = componentFactory;
     this.clientFactories = clientFactories;
     this.lbWithFacilitiesFactory = lbWithFacilitiesFactory;
+    this.sslContext = sslContext;
+    this.sslParameters = sslParameters;
+    this.isSSLEnabled = isSSLEnabled;
   }
 
 }

@@ -638,7 +638,7 @@ public class SimpleLoadBalancerStateTest
                                                               "unusedInThisConstructor",
                                                               strategyList,
                                                               Collections.<String, Object>emptyMap(),
-                                                              Collections.<String, String>emptyMap(),
+                                                              Collections.<String, Object>emptyMap(),
                                                               Collections.<String, String>emptyMap(),
                                                               schemes,
                                                               Collections.<URI>emptySet()));
@@ -679,7 +679,7 @@ public class SimpleLoadBalancerStateTest
                                                                 "unusedInThisConstructor",
                                                                 myStrategyList,
                                                                 Collections.<String, Object>emptyMap(),
-                                                                Collections.<String, String>emptyMap(),
+                                                                Collections.<String, Object>emptyMap(),
                                                                 Collections.<String, String>emptyMap(),
                                                                 schemes,
                                                                 Collections.<URI>emptySet()));
@@ -786,7 +786,7 @@ public class SimpleLoadBalancerStateTest
                                                             "random",
                                                             null,
                                                             Collections.<String, Object>emptyMap(),
-                                                            Collections.<String, String>emptyMap(),
+                                                            Collections.<String, Object>emptyMap(),
                                                             Collections.<String, String>emptyMap(),
                                                             schemes,
                                                             Collections.<URI>emptySet()));
@@ -807,7 +807,7 @@ public class SimpleLoadBalancerStateTest
     _serviceRegistry.put("partition-service-1",
         new ServiceProperties("partition-service-1",
             "partition-cluster-1", "/partition-test", "degraderV3", null, Collections.<String, Object>emptyMap(),
-                                                                        Collections.<String, String>emptyMap(),
+                                                                        Collections.<String, Object>emptyMap(),
                                                                         Collections.<String, String>emptyMap(),
                                                                         schemes,
                                                                         Collections.<URI>emptySet()));

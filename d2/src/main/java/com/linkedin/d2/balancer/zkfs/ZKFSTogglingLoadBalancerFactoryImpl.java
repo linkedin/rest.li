@@ -35,7 +35,6 @@ import com.linkedin.d2.balancer.util.TogglingLoadBalancer;
 import com.linkedin.d2.discovery.PropertySerializer;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
 import com.linkedin.d2.discovery.event.PropertyEventBusImpl;
-import com.linkedin.d2.discovery.event.PropertyEventThread;
 import com.linkedin.d2.discovery.stores.file.FileStore;
 import com.linkedin.d2.discovery.stores.toggling.TogglingPublisher;
 import com.linkedin.d2.discovery.stores.zk.ZKConnection;
@@ -49,6 +48,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
 import java.io.File;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -70,6 +71,9 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
   private final Map<String, TransportClientFactory> _clientFactories;
   private final Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> _loadBalancerStrategyFactories;
   private final String _d2ServicePath;
+  private final SSLContext _sslContext;
+  private final SSLParameters _sslParameters;
+  private final boolean _isSSLEnabled;
 
   private static final Logger _log = LoggerFactory.getLogger(ZKFSTogglingLoadBalancerFactoryImpl.class);
 
@@ -91,7 +95,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     this(factory, timeout, timeoutUnit,
          baseZKPath, fsDir,
          clientFactories, loadBalancerStrategyFactories,
-         "");
+         "", null, null, false);
   }
 
   /**
@@ -112,6 +116,34 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
                                              Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories,
                                              String d2ServicePath)
   {
+    this(factory, timeout, timeoutUnit, baseZKPath, fsDir, clientFactories, loadBalancerStrategyFactories,
+         d2ServicePath, null, null, false);
+  }
+
+  /**
+   *
+   * @param timeout Timeout for individual LoadBalancer operations
+   * @param timeoutUnit Unit for the timeout
+   * @param baseZKPath Path to the root ZNode where discovery information is stored
+   * @param fsDir Path to the root filesystem directory where backup file stores will live
+   * @param clientFactories Factory for transport clients
+   * @param loadBalancerStrategyFactories Factory for LoadBalancer strategies
+   * @param d2ServicePath  alternate service discovery znodes path, relative to baseZKPath.
+   *                       d2ServicePath is "services" if it is an empty string or null.
+   * @param sslContext sslContext needed for SSL support
+   * @param sslParameters parameters needed for SSL support
+   * @param isSSLEnabled boolean whether to enable SSL in the https transport client
+   */
+  public ZKFSTogglingLoadBalancerFactoryImpl(ComponentFactory factory,
+                                             long timeout, TimeUnit timeoutUnit,
+                                             String baseZKPath, String fsDir,
+                                             Map<String, TransportClientFactory> clientFactories,
+                                             Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories,
+                                             String d2ServicePath,
+                                             SSLContext sslContext,
+                                             SSLParameters sslParameters,
+                                             boolean isSSLEnabled)
+  {
     _factory = factory;
     _lbTimeout = timeout;
     _lbTimeoutUnit = timeoutUnit;
@@ -127,6 +159,10 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     {
       _d2ServicePath = d2ServicePath;
     }
+
+    _sslContext = sslContext;
+    _sslParameters = sslParameters;
+    _isSSLEnabled = isSSLEnabled;
   }
 
   @Override
@@ -163,7 +199,8 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     TogglingPublisher<UriProperties> uriToggle = _factory.createUriToggle(zkUriRegistry, fsUriStore, uriBus);
 
     SimpleLoadBalancerState state = new SimpleLoadBalancerState(
-            executorService, uriBus, clusterBus, serviceBus, _clientFactories, _loadBalancerStrategyFactories);
+            executorService, uriBus, clusterBus, serviceBus, _clientFactories, _loadBalancerStrategyFactories,
+            _sslContext, _sslParameters, _isSSLEnabled);
     SimpleLoadBalancer balancer = new SimpleLoadBalancer(state, _lbTimeout, _lbTimeoutUnit);
 
     TogglingLoadBalancer togLB = _factory.createBalancer(balancer, state, clusterToggle, serviceToggle, uriToggle);

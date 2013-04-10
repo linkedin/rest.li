@@ -22,6 +22,7 @@ import static com.linkedin.d2.discovery.util.LogUtil.trace;
 import static com.linkedin.d2.discovery.util.LogUtil.warn;
 
 import com.linkedin.d2.balancer.strategies.degrader.DegraderConfigFactory;
+import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.util.clock.SystemClock;
 import com.linkedin.util.degrader.DegraderImpl;
 import java.net.URI;
@@ -70,6 +71,9 @@ import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdown
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.util.ClosableQueue;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
 
 public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactoryProvider
 {
@@ -127,6 +131,10 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
    * This is a lazily-populated cache of the results from getStrategiesForService()
    */
   private final Map<String, List<SchemeStrategyPair>>                                   _serviceStrategiesCache;
+
+  private final SSLContext    _sslContext;
+  private final SSLParameters _sslParameters;
+  private final boolean       _isSSLEnabled;
 
   // we put together the cluster properties and the partition accessor for a cluster so that we don't have to
   // maintain two seperate maps (which have to be in sync all the time)
@@ -187,7 +195,8 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
          new PropertyEventBusImpl<ClusterProperties>(executorService, clusterPublisher),
          new PropertyEventBusImpl<ServiceProperties>(executorService, servicePublisher),
          clientFactories,
-         loadBalancerStrategyFactories);
+         loadBalancerStrategyFactories,
+         null, null, false);
   }
 
   public SimpleLoadBalancerState(ScheduledExecutorService executorService,
@@ -195,7 +204,10 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
                                  PropertyEventBus<ClusterProperties> clusterBus,
                                  PropertyEventBus<ServiceProperties> serviceBus,
                                  Map<String, TransportClientFactory> clientFactories,
-                                 Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories)
+                                 Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories,
+                                 SSLContext sslContext,
+                                 SSLParameters sslParameters,
+                                 boolean isSSLEnabled)
   {
     _executor = executorService;
     _uriProperties =
@@ -233,6 +245,9 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     _listeners =
         Collections.synchronizedList(new ArrayList<SimpleLoadBalancerStateListener>());
     _delayedExecution = 1000;
+    _sslContext = sslContext;
+    _sslParameters = sslParameters;
+    _isSSLEnabled = isSSLEnabled;
   }
 
   public void register(final SimpleLoadBalancerStateListener listener)
@@ -963,7 +978,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     Map<String,TransportClient> clientsByScheme = _serviceClients.get(serviceName);
     if (clientsByScheme == null)
     {
-      _log.error("getTrackerClient: unknown cluster name {} for URI {} and partitionDataMap {}",
+      _log.error("getTrackerClient: unknown service name {} for URI {} and partitionDataMap {}",
           new Object[]{ serviceName, uri, partitionDataMap });
       return null;
     }
@@ -980,7 +995,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
 
   private Map<String, TransportClient> createAndInsertTransportClientTo(ServiceProperties serviceProperties)
   {
-    Map<String, String> transportClientProperties = serviceProperties.getTransportClientProperties();
+    Map<String, Object> transportClientProperties = serviceProperties.getTransportClientProperties();
     List<String> schemes = serviceProperties.getPrioritizedSchemes();
     Map<String,TransportClient> newTransportClients = new HashMap<String, TransportClient>();
     if (schemes != null && !schemes.isEmpty())
@@ -988,6 +1003,34 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
       for (String scheme : schemes)
       {
         TransportClientFactory factory = _clientFactories.get(scheme);
+
+        if ("https".equals(scheme))
+        {
+          if (_isSSLEnabled)
+          {
+            // if https is a prioritized scheme and SSL is enabled, then a SSLContext and SSLParameters
+            // should have been passed in during creation.
+            if (_sslContext != null && _sslParameters != null)
+            {
+              transportClientProperties.put(HttpClientFactory.HTTP_SSL_CONTEXT, _sslContext);
+              transportClientProperties.put(HttpClientFactory.HTTP_SSL_PARAMS, _sslParameters);
+            }
+            else
+            {
+              _log.error("https specified as a prioritized scheme for service: " + serviceProperties.getServiceName() +
+                        " but no SSLContext or SSLParameters have been configured.");
+              throw new IllegalStateException("SSL enabled but required SSLContext and SSLParameters" +
+                                                "were not both present.");
+            }
+          }
+          else
+          {
+            // don't create this transport client if ssl isn't enabled. If the https transport client
+            // is requested later on, getTrackerClient will catch this situation and log an error.
+            continue;
+          }
+        }
+
         if (factory != null)
         {
           TransportClient client = factory.getClient(transportClientProperties);

@@ -106,7 +106,7 @@ public class ServicePropertiesJsonSerializer implements
       loadBalancerStrategyList = Collections.emptyList();
     }
     @SuppressWarnings("unchecked")
-    Map<String, String> transportClientProperties = (Map<String, String>) map.get(PropertyKeys.
+    Map<String, Object> transportClientProperties = (Map<String, Object>) map.get(PropertyKeys.
                                                                                       TRANSPORT_CLIENT_PROPERTIES);
     if (transportClientProperties == null)
     {

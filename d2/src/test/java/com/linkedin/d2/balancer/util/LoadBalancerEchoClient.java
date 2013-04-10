@@ -224,7 +224,8 @@ public class LoadBalancerEchoClient
                                     clusterBus,
                                     serviceBus,
                                     clientFactories,
-                                    loadBalancerStrategyFactories);
+                                    loadBalancerStrategyFactories,
+                                    null, null, false);
 
     SimpleLoadBalancer balancer = new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS);
 
