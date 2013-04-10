@@ -157,28 +157,52 @@ public class ZooKeeperConnectionManager
             Callback<None> callback = _startupCallback.getAndSet(null);
             if (callback != null)
             {
+              int markedDownCounter = 0;
               final Callback<None> multiCallback = Callbacks.countDown(callback, _servers.length);
               for (final ZooKeeperAnnouncer server : _servers)
               {
-                LOG.info("Starting an announcer");
-                server.start(new Callback<None>()
+                if (!server.isServerMarkedDown())
                 {
-                  @Override
-                  public void onSuccess(final None none)
+                  LOG.info("Starting an announcer");
+                  server.start(new Callback<None>()
                   {
-                    server.markUp(multiCallback);
-                  }
+                    @Override
+                    public void onSuccess(final None none)
+                    {
+                      server.markUp(multiCallback);
+                    }
 
-                  @Override
-                  public void onError(Throwable e)
+                    @Override
+                    public void onError(Throwable e)
+                    {
+                      LOG.error("Failed to start server", e);
+                      multiCallback.onError(e);
+                    }
+                  });
+                  LOG.info("Started an announcer");
+                }
+                else
+                {
+                  markedDownCounter++;
+                  LOG.info("Server {} is markedDown so we won't mark it up", server.getUri());
+                  server.start(new Callback<None>()
                   {
-                    LOG.error("Failed to start server", e);
-                    multiCallback.onError(e);
-                  }
-                });
-                LOG.info("Started an announcer");
+                    @Override
+                    public void onSuccess(final None none)
+                    {
+                      server.markDown(multiCallback);
+                    }
+
+                    @Override
+                    public void onError(Throwable e)
+                    {
+                      LOG.error("Failed to start a marked down server", e);
+                      multiCallback.onError(e);
+                    }
+                  });
+                }
               }
-              LOG.info("Started {} announcers", _servers.length);
+              LOG.info("Started and marked up {} announcers", (_servers.length - markedDownCounter));
             }
             else
             {

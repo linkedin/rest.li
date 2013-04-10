@@ -48,6 +48,7 @@ public class ZooKeeperAnnouncer
   private String _cluster;
   private URI _uri;
   private Map<Integer, PartitionData> _partitionDataMap;
+  private volatile boolean _isServerMarkedDown;
 
   public ZooKeeperAnnouncer(ZooKeeperServer server)
   {
@@ -87,14 +88,21 @@ public class ZooKeeperAnnouncer
     });
   }
 
+  public boolean isServerMarkedDown()
+  {
+    return _isServerMarkedDown;
+  }
+
   public void markUp(Callback<None> callback)
   {
     _server.markUp(_cluster, _uri, _partitionDataMap, callback);
+    _isServerMarkedDown = false;
   }
 
   public void markDown(Callback<None> callback)
   {
     _server.markDown(_cluster, _uri, callback);
+    _isServerMarkedDown = true;
   }
 
   public String getCluster()
