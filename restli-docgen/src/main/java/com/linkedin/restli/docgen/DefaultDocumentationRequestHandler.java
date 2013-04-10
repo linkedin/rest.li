@@ -18,6 +18,7 @@ package com.linkedin.restli.docgen;
 
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.resolver.ClassNameDataSchemaResolver;
+import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.jersey.api.uri.UriComponent;
 import com.linkedin.jersey.core.util.MultivaluedMap;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -30,6 +31,7 @@ import com.linkedin.restli.server.RestLiConfig;
 import com.linkedin.restli.server.RestLiDocumentationRequestHandler;
 import com.linkedin.restli.server.RoutingException;
 import java.io.ByteArrayOutputStream;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -121,6 +123,13 @@ public class DefaultDocumentationRequestHandler implements RestLiDocumentationRe
         renderer = (formatList.contains(DOC_JSON_FORMAT) ? _jsonRenderer : _htmlRenderer);
       }
 
+      if (renderer == _htmlRenderer)
+      {
+        _htmlRenderer.setJsonFormatUri(UriBuilder.fromUri(request.getURI())
+                                                 .queryParam("format", DOC_JSON_FORMAT)
+                                                 .build());
+      }
+
       try
       {
         if (typeSegment == null || typeSegment.isEmpty())
@@ -190,6 +199,6 @@ public class DefaultDocumentationRequestHandler implements RestLiDocumentationRe
   private static final String HTTP_CONTENT_TYPE_HEADER = "Content-Type";
   private static final int BAOS_BUFFER_SIZE = 8192;
 
-  private RestLiDocumentationRenderer _htmlRenderer;
-  private RestLiDocumentationRenderer _jsonRenderer;
+  private RestLiHTMLDocumentationRenderer _htmlRenderer;
+  private RestLiJSONDocumentationRenderer _jsonRenderer;
 }

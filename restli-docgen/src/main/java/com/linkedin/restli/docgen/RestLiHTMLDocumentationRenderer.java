@@ -253,6 +253,11 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
     return "text/html";
   }
 
+  public void setJsonFormatUri(URI jsonFormatUri)
+  {
+    _jsonFormatUri = jsonFormatUri;
+  }
+
   private static String getResourceType(ResourceSchema resourceSchema)
   {
     if (resourceSchema.hasCollection())
@@ -275,6 +280,7 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
     final Map<String, Object> pageModel = new HashMap<String, Object>();
     pageModel.put("serverNodeUri", _serverNodeUri);
     pageModel.put("docBaseUri", _docBaseUri);
+    pageModel.put("jsonFormatUri", _jsonFormatUri);
     return pageModel;
   }
 
@@ -283,7 +289,7 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
     String doc = null;
     if (method instanceof RestMethodSchema)
     {
-      RestMethodSchema restMethodSchema = ((RestMethodSchema) method);
+      final RestMethodSchema restMethodSchema = (RestMethodSchema) method;
       doc = restMethodSchema.getDoc();
       if (doc == null || doc.trim().length() == 0) // if no javadoc is supplied, fallback to generic doc string
       {
@@ -353,6 +359,8 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
       new HashMap<Object, Map<String, ResourceSchema>>();
   private final Map<Object, Map<String, NamedDataSchema>> _relatedSchemaCache =
       new HashMap<Object, Map<String, NamedDataSchema>>();
+
+  private URI _jsonFormatUri;
 
   static
   {

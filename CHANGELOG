@@ -1,5 +1,7 @@
 1.8.15
 ------
+(RB=153778)
+Add "View in JSON format" link to all docgen pages in the navigation header.
 
 1.8.14
 -------

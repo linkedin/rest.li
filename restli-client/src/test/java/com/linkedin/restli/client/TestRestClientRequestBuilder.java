@@ -13,9 +13,9 @@ import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
-import junit.framework.Assert;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
+import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
