@@ -1,5 +1,14 @@
+1.8.16
+-------
+
 1.8.15
 ------
+(RB=154062)
+moved transportClient, degrader and many other cluster properties to service properties (part 2)
+
+(RB=153714)
+make sure that a marked down server is not marked up by ZookeeperConnectionManager when the zookeeper connection is expired
+
 (RB=153778)
 Add "View in JSON format" link to all docgen pages in the navigation header.
 
