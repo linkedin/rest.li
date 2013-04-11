@@ -16,17 +16,6 @@
 
 package com.linkedin.data.template;
 
-import com.linkedin.data.ByteString;
-import com.linkedin.data.Data;
-import com.linkedin.data.DataList;
-import com.linkedin.data.DataMap;
-import com.linkedin.data.schema.DataSchema;
-import com.linkedin.data.schema.DataSchemaResolver;
-import com.linkedin.data.schema.DataSchemaUtil;
-import com.linkedin.data.schema.NamedDataSchema;
-import com.linkedin.data.schema.SchemaParser;
-import com.linkedin.data.schema.SchemaParserFactory;
-import java.io.ByteArrayInputStream;
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
@@ -36,6 +25,16 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Map;
+
+import com.linkedin.data.ByteString;
+import com.linkedin.data.DataList;
+import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.DataSchemaResolver;
+import com.linkedin.data.schema.DataSchemaUtil;
+import com.linkedin.data.schema.NamedDataSchema;
+import com.linkedin.data.schema.SchemaParser;
+import com.linkedin.data.schema.SchemaParserFactory;
 
 public class DataTemplateUtil
 {
@@ -585,7 +584,13 @@ public class DataTemplateUtil
     {
       if (_classToCoercerMap.containsKey(targetClass))
       {
-        throw new IllegalArgumentException(targetClass.getName() + " already has a coercer");
+        DirectCoercer<?> existingCoercer = _classToCoercerMap.get(targetClass);
+
+        // allow re-registration of a coercer of the same class name, this can happen if there when there are multiple classloaders
+        if(existingCoercer == null || !existingCoercer.getClass().equals(coercer.getClass())) 
+        {
+          throw new IllegalArgumentException(targetClass.getName() + " already has a coercer");
+        }
       }
       Map<Class<?>, DirectCoercer<?>> newMap = new IdentityHashMap<Class<?>, DirectCoercer<?>>(_classToCoercerMap);
       newMap.put(targetClass, coercer);

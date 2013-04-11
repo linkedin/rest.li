@@ -19,10 +19,15 @@ package com.linkedin.pegasus.generator.test;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
+import com.linkedin.data.template.Custom;
 import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.data.template.DirectCoercer;
 import com.linkedin.data.template.SetMode;
+import com.linkedin.data.template.TemplateOutputCastException;
+import com.linkedin.data.template.TestCustom;
 import com.linkedin.data.template.TestCustom.CustomPoint;
+import com.linkedin.data.template.TestCustom.CustomPoint.CustomPointCoercer;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -37,6 +42,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 public class TestCustomPoint
 {
@@ -253,6 +259,35 @@ public class TestCustomPoint
       assertEquals(u.getInt(), i);
 
       i += 11;
+    }
+  }
+
+  private static class CustomPointCoercer2 extends CustomPointCoercer
+  {
+  }
+
+  @Test
+  public void testCoercerRegistrationOverride()
+  {
+    try
+    {
+      Custom.registerCoercer(new CustomPointCoercer(), CustomPoint.class);
+      Custom.registerCoercer(new CustomPointCoercer(), CustomPoint.class);
+    }
+    catch (IllegalArgumentException e)
+    {
+      fail("coercer registration failed for repeat registration of the same coercer, which is allowed");
+    }
+
+    try
+    {
+      Custom.registerCoercer(new CustomPointCoercer2(), CustomPoint.class);
+      fail("coercer registration failed to throw IllegalArgumentException when a coercer was " +
+        "registered for a class that already had been registered with a different coercer.");
+    }
+    catch (IllegalArgumentException e)
+    {
+      // expected
     }
   }
 }

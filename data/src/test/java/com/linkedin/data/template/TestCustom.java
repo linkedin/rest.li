@@ -86,7 +86,7 @@ public class TestCustom
       return (p._x == _x) && (p._y == _y);
     }
 
-    private static class CustomPointCoercer implements DirectCoercer<CustomPoint>
+    public static class CustomPointCoercer implements DirectCoercer<CustomPoint>
     {
       @Override
       public Object coerceInput(CustomPoint object)
