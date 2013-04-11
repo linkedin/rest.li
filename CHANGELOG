@@ -1,5 +1,7 @@
 1.8.16
 -------
+(RB=154319)
+Allow repeat registration of a coercer *only* if the coercer is the same class as already registered.
 
 1.8.15
 ------
