@@ -28,6 +28,7 @@ import java.net.Socket;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.StringTokenizer;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * @author Steven Ihde
@@ -39,6 +40,7 @@ public class TestServer
   private final Thread _thread;
   private final ServerSocket _serverSocket;
   private volatile String _lastRequest;
+  private volatile CountDownLatch _responseLatch;
 
   public TestServer() throws IOException
   {
@@ -116,6 +118,26 @@ public class TestServer
     return URI.create("http://localhost:" + getPort() + "/?responseSize="+size);
   }
 
+  /**
+   * Resets the latch and returns a URI.  Requests directed to the URI will
+   * not be answered until {@link #releaseResponseLatch()} is called count times.
+   * @return A URI which will delay responses until the latch is released count times
+   */
+  public URI resetResponseLatch(int count)
+  {
+    _responseLatch = new CountDownLatch(count);
+    return URI.create("http://localhost:" + getPort() + "/?latch");
+  }
+
+  public void releaseResponseLatch()
+  {
+    if (_responseLatch == null)
+    {
+      throw new IllegalStateException("Must call resetResponseLatch() first");
+    }
+    _responseLatch.countDown();
+  }
+
   public String getLastRequest()
   {
     return _lastRequest;
@@ -156,6 +178,19 @@ public class TestServer
                 "Content-Length: " + size + "\r\n" +
                 "\r\n" +
                 sb.substring(0,size);
+      }
+      if (q != null && q.equals("latch"))
+      {
+        try
+        {
+          _responseLatch.await();
+        }
+        catch (InterruptedException e)
+        {
+          e.printStackTrace();
+        }
+        return "HTTP/1.0 200 OK\r\n" +
+                "\r\n";
       }
       return "HTTP/1.0 200 OK\r\n" +
              "\r\n";

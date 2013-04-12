@@ -464,29 +464,45 @@ public class HttpClientFactory implements TransportClientFactory
 
   private void finishShutdown()
   {
-    if (_shutdownFactory)
+    // Under some circumstances, this method will be executed on a Netty IO thread.  For example,
+    // as the factory waits for clients to shutdown, if the final client shuts down due an IO
+    // event (receives response, connection refused, etc.).  In that case, the call to
+    // releaseExternalResources() below will throw an exception -- because
+    // releaseExternalResources() blocks until all threads are shut down, it refuses to run
+    // if called from one of its own threads.  Therefore, schedule this task to run on
+    // a different thread pool.  That does mean _executor will be shut down from one of its
+    // own threads, but since this call doesn't await termination it's OK.
+    _executor.execute(new Runnable()
     {
-      _channelFactory.releaseExternalResources();
-      LOG.info("ChannelFactory shutdown complete");
-    }
-    if (_shutdownExecutor)
-    {
-      // Due to a bug in ScheduledThreadPoolExecutor, shutdownNow() returns cancelled
-      // tasks as though they were still pending execution.  If the executor has a large
-      // number of cancelled tasks, shutdownNow() could take a long time to copy the array
-      // of tasks.  Calling shutdown() first will purge the cancelled tasks.  Bug filed with
-      // Oracle; will provide bug number when available.  May be fixed in JDK7 already.
-      _executor.shutdown();
-      _executor.shutdownNow();
-      LOG.info("Scheduler shutdown complete");
-    }
-    final Callback<None> callback;
-    synchronized (_mutex)
-    {
-      callback = _factoryShutdownCallback;
-    }
-    LOG.info("Shutdown complete");
-    callback.onSuccess(None.none());
+      @Override
+      public void run()
+      {
+        if (_shutdownFactory)
+        {
+          _channelFactory.releaseExternalResources();
+          LOG.info("ChannelFactory shutdown complete");
+        }
+        if (_shutdownExecutor)
+        {
+          // Due to a bug in ScheduledThreadPoolExecutor, shutdownNow() returns cancelled
+          // tasks as though they were still pending execution.  If the executor has a large
+          // number of cancelled tasks, shutdownNow() could take a long time to copy the array
+          // of tasks.  Calling shutdown() first will purge the cancelled tasks.  Bug filed with
+          // Oracle; will provide bug number when available.  May be fixed in JDK7 already.
+          _executor.shutdown();
+          _executor.shutdownNow();
+          LOG.info("Scheduler shutdown complete");
+        }
+        final Callback<None> callback;
+        synchronized (_mutex)
+        {
+          callback = _factoryShutdownCallback;
+        }
+        LOG.info("Shutdown complete");
+        callback.onSuccess(None.none());
+
+      }
+    });
   }
 
   private void clientShutdown()

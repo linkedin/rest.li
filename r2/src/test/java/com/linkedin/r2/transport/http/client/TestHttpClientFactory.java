@@ -29,11 +29,12 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import com.linkedin.r2.transport.common.bridge.client.TransportClient;
+import com.linkedin.r2.message.rest.RestResponse;
 import org.jboss.netty.channel.socket.ClientSocketChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.testng.Assert;
@@ -364,6 +365,41 @@ public class TestHttpClientFactory
     Assert.assertFalse(boss.isShutdown(), "Boss should not be shut down");
     Assert.assertFalse(worker.isShutdown(), "Worker should not be shut down");
     Assert.assertFalse(scheduler.isShutdown(), "Scheduler should not be shut down");
+  }
+
+  @Test
+  public void testShutdownIOThread() throws ExecutionException, TimeoutException, InterruptedException
+  {
+    ExecutorService boss = Executors.newCachedThreadPool();
+    ExecutorService worker = Executors.newCachedThreadPool();
+    ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    ClientSocketChannelFactory channelFactory = new NioClientSocketChannelFactory(boss, worker);
+    HttpClientFactory factory = new HttpClientFactory(FilterChains.empty(), channelFactory, true, scheduler, true);
+
+    Client client = new TransportClientAdapter(factory.getClient(
+            Collections.<String, Object>emptyMap()));
+
+    Future<RestResponse> responseFuture = client.restRequest(new RestRequestBuilder(_testServer.resetResponseLatch(1)).build());
+
+
+    FutureCallback<None> factoryShutdown = new FutureCallback<None>();
+    factory.shutdown(factoryShutdown);
+
+    FutureCallback<None> clientShutdown = new FutureCallback<None>();
+    client.shutdown(clientShutdown);
+
+    // Client and factory shutdowns are now pending.  When we release the latch, the response will
+    // be returned, which causes the shutdowns to complete on the Netty IO thread that received the
+    // response.
+    _testServer.releaseResponseLatch();
+
+    responseFuture.get(60, TimeUnit.SECONDS);
+    clientShutdown.get(60, TimeUnit.SECONDS);
+    factoryShutdown.get(60, TimeUnit.SECONDS);
+
+    Assert.assertTrue(boss.awaitTermination(60, TimeUnit.SECONDS));
+    Assert.assertTrue(worker.awaitTermination(60, TimeUnit.SECONDS));
+    Assert.assertTrue(scheduler.awaitTermination(60, TimeUnit.SECONDS));
   }
 
   @Test
