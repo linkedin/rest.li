@@ -1076,6 +1076,57 @@ public class TestD2Config
     verifyServiceProperties("cluster1Bar-EastCoast", "service-1_2-EastCoast", "/service-1_2", "ServiceGroup2");
   }
 
+  @Test
+  public static void testSingleColoClusterWithOneExcludedService() throws IOException, InterruptedException, URISyntaxException, Exception
+  {
+    List<String> serviceList = new ArrayList<String>();
+    serviceList.add("service-1_1");
+    String excludedService = "service-1_22346";
+    serviceList.add(excludedService);
+    @SuppressWarnings("serial")
+    Map<String,List<String>> clustersData = new HashMap<String,List<String>>();
+    String cluster1Name = "cluster-1";
+    clustersData.put(cluster1Name, serviceList);
+
+    List<String> excludeServiceList = Arrays.asList(excludedService);
+
+    List<String> clusterList = new ArrayList<String>();
+    clusterList.add(cluster1Name);
+
+    Map<String,Object> clusterProperties = new HashMap<String,Object>();
+    List<String> peerColos = new ArrayList<String>();
+    peerColos.add("WestCoast");
+    peerColos.add("EastCoast");
+    Map<String,List<String>> peerColoList = new HashMap<String,List<String>>();
+    peerColoList.put(cluster1Name, peerColos);
+    clusterProperties.put("coloVariants", peerColos);
+    String masterColo = "WestCoast";
+    clusterProperties.put("masterColo", masterColo);
+    Map<String,String> masterColoList = new HashMap<String,String>();
+    masterColoList.put(cluster1Name, masterColo);
+    Map<String,Map<String,Object>> clustersProperties = new HashMap<String,Map<String,Object>>();
+    clustersProperties.put(cluster1Name, clusterProperties);
+    String defaultColo = "EastCoast";
+    D2ConfigTestUtil d2Conf = new D2ConfigTestUtil( clustersData, defaultColo, clustersProperties,
+                                                    new HashMap<String,List<String>>(), excludeServiceList);
+
+    assertEquals(d2Conf.runDiscovery(_zkHosts), 0);
+
+    String coloClusterName = D2Utils.addSuffixToBaseName(cluster1Name, defaultColo);
+    verifyClusterProperties(coloClusterName);
+    verifyServiceProperties(coloClusterName, excludedService, "/" + excludedService, null);
+    try
+    {
+      String badService = D2Utils.addSuffixToBaseName(excludedService, defaultColo);
+      verifyServiceProperties(coloClusterName, badService, "/" + excludedService, null);
+      Assert.fail("Shouldn't have see this service created: " + badService);
+    }
+    catch (NullPointerException e)
+    {
+      // this NPE is expected because that coloVariant of this service shouldn't exist
+    }
+  }
+
   private static void verifyColoClusterAndServices(Map<String,List<String>> clustersData,
                                                    Map<String,List<String>> peerColoList,
                                                    Map<String,String> masterColoList, String defaultColo)

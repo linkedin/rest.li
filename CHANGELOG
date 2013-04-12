@@ -1,7 +1,13 @@
+1.8.17
+------
+
 1.8.16
 -------
 (RB=154319)
 Allow repeat registration of a coercer *only* if the coercer is the same class as already registered.
+
+(RB=154979)
+add ability to exclude individual services from colo variants in d2-config-cmdline
 
 1.8.15
 ------

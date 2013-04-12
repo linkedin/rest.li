@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.discovery.util;
 
+import com.linkedin.d2.balancer.properties.PropertyKeys;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,10 +72,18 @@ public class D2ConfigTestUtil
                           Map<String,Map<String,Object>> extraClusterProperties,
                           Map<String,List<String>> serviceGroupsData)
   {
+    this(clustersData, defaultColo, extraClusterProperties, serviceGroupsData, null);
+  }
+
+  public D2ConfigTestUtil(Map<String,List<String>> clustersData, String defaultColo,
+                          Map<String,Map<String,Object>> extraClusterProperties,
+                          Map<String,List<String>> serviceGroupsData,
+                          List<String> excludeServiceList)
+  {
     _loadBalancerStrategyList = Arrays.asList(new String[]{"degrader","degraderV3"});
     setDefaults();
     _clusterDefaults.put("defaultColo", defaultColo);
-    generateClusters(clustersData, extraClusterProperties, serviceGroupsData);
+    generateClusters(clustersData, extraClusterProperties, serviceGroupsData, excludeServiceList);
   }
 
   public D2ConfigTestUtil(Map<String, List<String>> clusterData, Map<String, Object> partitionData)
@@ -291,6 +300,11 @@ public class D2ConfigTestUtil
   public void generateClusters(Map<String,List<String>> clustersData, Map<String,Map<String,Object>> clustersProperties,
                                Map<String,List<String>> serviceGroupsData)
   {
+    generateClusters(clustersData, clustersProperties, serviceGroupsData, null);
+  }
+  public void generateClusters(Map<String,List<String>> clustersData, Map<String,Map<String,Object>> clustersProperties,
+                               Map<String,List<String>> serviceGroupsData, List<String> excludeServiceList )
+  {
 
     //Cluster Service Configurations
     for (String clusterName : clustersData.keySet())
@@ -303,6 +317,10 @@ public class D2ConfigTestUtil
       {
         Map<String,Object> service = new HashMap<String,Object>();
         service.put("path","/"+serviceName);
+        if (excludeServiceList != null && excludeServiceList.contains(serviceName))
+        {
+          service.put(PropertyKeys.HAS_COLO_VARIANTS, "false");
+        }
         tmps.put(serviceName, service);
       }
       services.put("services",tmps);

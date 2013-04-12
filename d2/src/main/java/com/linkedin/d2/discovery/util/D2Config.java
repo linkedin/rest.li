@@ -153,7 +153,7 @@ public class D2Config
     // service -> colo-specific cluster mapping and the colo-agnostic service -> colo-specific cluster
     // mapping (ie for both the original service name as well as the master service name, if any).
     // The downside is that this algorithm would require extra bookkeeping to create a cluster
-    // that also had cluster variants as well as coloVariants. We would have to keep track of
+    // that also had cluster variants as well as coloVariants.
     //
     // 2. foreach cluster ... foreach coloVariant ... foreach service inside that cluster
     // Creating the colo-specific service -> colo-specific cluster mapping is still easy with this
@@ -216,8 +216,20 @@ public class D2Config
 
         for (String serviceName : servicesConfigs.keySet())
         {
-          String coloServiceName = D2Utils.addSuffixToBaseName(serviceName, colo);
           Map<String, Object> serviceConfig = servicesConfigs.get(serviceName);
+          // There are some cases where we may not want to create colo variants of a particular service
+          // We can't remove properties from the serviceConfig here because we might need to loop
+          // over it multiple times.
+          String createColoVariants = (String)serviceConfig.get(PropertyKeys.HAS_COLO_VARIANTS);
+          boolean createColoVariantsForService = shouldCreateColoVariantsForService(colo, createColoVariants);
+          String coloServiceName = serviceName;
+
+          // if the coloServiceName ends up being the same as the serviceName, then we won't create
+          // any colo variants of that serviceName.
+          if (createColoVariantsForService)
+          {
+            coloServiceName = D2Utils.addSuffixToBaseName(serviceName, colo);
+          }
 
           @SuppressWarnings("unchecked")
           Map<String, Object> transportClientConfig = (Map<String, Object>)serviceConfig.get(PropertyKeys.
@@ -228,7 +240,9 @@ public class D2Config
 
           if (firstColoVariant)
           {
-            if (masterColo != null)
+            // we also need to use the createColoVariantsForService flag to control whether to
+            // create the Master version of this service.
+            if (masterColo != null && createColoVariantsForService)
             {
               // we need to create a "Master" version of this service to point to the current Master
               // Cluster. Why not just use the original service name? We will point the original
@@ -629,5 +643,34 @@ public class D2Config
       }
     }
     return NO_ERROR_EXIT_CODE;
+  }
+
+  /**
+   * Given a colo, and an optional flag that might have been specified in the service properties,
+   * determine if we should create colo variants of this service.
+   *
+   * @param colo the environment we are creating this service for
+   * @param createColoVariants flag that was optionally specific in the service properties
+   * @return true if should create colo variants for service, false otherwise.
+   */
+  private boolean shouldCreateColoVariantsForService(String colo, String createColoVariants)
+  {
+    // checking against the colo is not entirely necessary, as we'd never create colo variants
+    // of this service because the existing checks are sufficient. But for clarity and functional
+    // correctness, we should return false for clusters that are not colo aware.
+    if ("".equals(colo))
+    {
+      return false;
+    }
+    if (createColoVariants == null || !("false".equalsIgnoreCase(createColoVariants)))
+    {
+      // by default we will create the colo variants of the service
+      return true;
+    }
+    else
+    {
+      // there was an explicit false value instructing us to not create colo variants of this service.
+      return false;
+    }
   }
 }

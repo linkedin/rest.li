@@ -130,5 +130,6 @@ public class PropertyKeys
   public static final String COLO_VARIANTS = "coloVariants";
   public static final String MASTER_COLO = "masterColo";
   public static final String MASTER_SUFFIX = "Master";
+  public static final String HAS_COLO_VARIANTS = "hasColoVariants";
 
 }
