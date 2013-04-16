@@ -71,8 +71,8 @@ public interface RoutingAwareClient
    * The returned Future can be used to retrieve the RestResponse.
    *
    * @param request original rest request
-   * @param callback used to return the new service name.
    * @param routeKey key used to determine a new service name.
+   * @return a future to wait for the response
    */
   Future<RestResponse> restRequest(RestRequest request, String routeKey);
 
@@ -86,8 +86,8 @@ public interface RoutingAwareClient
    *
    * @param request original rest request
    * @param requestContext request context
-   * @param callback used to return the new service name.
    * @param routeKey key used to determine a new service name.
+   * @return a future to wait for the response
    */
-  Future<RestResponse> restRequest(RestRequest request, RequestContext requestContext, String routekey);
+  Future<RestResponse> restRequest(RestRequest request, RequestContext requestContext, String routeKey);
 }

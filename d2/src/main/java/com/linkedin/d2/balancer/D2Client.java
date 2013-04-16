@@ -31,7 +31,8 @@ import com.linkedin.r2.transport.common.StartableClient;
  * implementation of D2) and few others. In short, Facilities is like an admin tools to D2 internals.
  *
  * It does NOT provide ability to serve rest or rpc request. For that ability we have
- * already had {@see Client} interface.
+ * the Client interface.
+ * @see com.linkedin.r2.transport.common.Client
  *
  * @author David Hoa
  * @version $Revision: $

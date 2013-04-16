@@ -14,9 +14,9 @@ public class D2Utils
   /**
    * addSuffixToBaseName will mutate a base name with a suffix in a known fashion.
    *
-   * @param baseName
-   * @param suffix
-   * @return
+   * @param baseName original string (can be cluster name or service name) to mutate
+   * @param suffix string to append in a known fashion
+   * @return new string that is a combination of baseName and suffix
    */
   public static String addSuffixToBaseName(String baseName, String suffix)
   {
