@@ -92,9 +92,15 @@ public class QueryTunnelUtil
     URI uri = request.getURI();
 
     // Check to see if we should tunnel this request by testing the length of the query
+    // if the query is NULL, we won't bother to encode.
+    // 0 length is a special case that could occur with a url like http://www.foo.com?
+    // which we don't want to encode, because we'll lose the "?" in the process
+    // Otherwise only encode queries whose length is greater than or equal to the
+    // threshold value.
+
     String query = uri.getRawQuery();
 
-    if (query == null || query.length() < threshold)
+    if (query == null || query.length() == 0 || query.length() < threshold)
     {
       return request;
     }
@@ -236,10 +242,25 @@ public class QueryTunnelUtil
       }
     }
 
-    // Based on what we've found, construct the modified request.
+    // Based on what we've found, construct the modified request. It's possible that someone has
+    // modified the request URI, adding extra query params for debugging, tracking, etc, so
+    // we have to check and append the original query correctly.
     if (query != null && query.length() > 0)
     {
-      requestBuilder.setURI(new URI(request.getURI().toString() + "?" + query));
+      String separator = "&";
+      String existingQuery = request.getURI().getRawQuery();
+
+      if (existingQuery == null)
+      {
+        separator = "?";
+      }
+      else if(existingQuery.isEmpty())
+      {
+        // This would mean someone has appended a "?" with no args to the url underneath us
+        separator = "";
+      }
+
+      requestBuilder.setURI(new URI(request.getURI().toString() + separator + query));
     }
     requestBuilder.setEntity(entity);
     requestBuilder.setHeaders(h);

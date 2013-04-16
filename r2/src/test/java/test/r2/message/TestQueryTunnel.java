@@ -249,6 +249,72 @@ public class TestQueryTunnel
     Assert.assertEquals(decoded.getMethod(), "GET");
   }
 
+  @Test
+  public void testModifiedQuestionQuery() throws Exception
+  {
+    // Test case where someone has added a "?" underneath us with no args
+    // This test is motivated by some test frameworks that add params to queries in EI
+
+    String query= "q=queryString&a=1&b=2";
+
+    RestRequest request = new RestRequestBuilder(new URI("http://localhost:7279?" + query))
+        .setMethod("GET").build();
+
+    RestRequest encoded = QueryTunnelUtil.encode(request, query.length()-1);  // Set threshold < query length
+    Assert.assertEquals(encoded.getMethod(), "POST");
+    Assert.assertEquals(encoded.getURI().toString(), "http://localhost:7279");
+    Assert.assertTrue(encoded.getEntity().length() == query.length());
+    Assert.assertEquals(encoded.getHeader("Content-Type"), "application/x-www-form-urlencoded");
+
+    RestRequestBuilder rb = encoded.builder()
+                             .setURI(new URI(encoded.getURI().toString() + "?"));
+    RestRequest modified = rb.build();
+
+    RestRequest decoded = QueryTunnelUtil.decode(modified);
+    Assert.assertEquals(decoded.getURI().toString(), "http://localhost:7279?uh=f&" + query);
+  }
+
+  @Test
+  public void testModifiedQuery() throws Exception
+  {
+    // Test case where someone has added a query param to the request underneath us
+    // This test is motivated by some test frameworks that add params to queries in EI
+
+    String query= "q=queryString&a=1&b=2";
+
+    RestRequest request = new RestRequestBuilder(new URI("http://localhost:7279?" + query))
+        .setMethod("GET").build();
+
+    RestRequest encoded = QueryTunnelUtil.encode(request, query.length()-1);  // Set threshold < query length
+    Assert.assertEquals(encoded.getMethod(), "POST");
+    Assert.assertEquals(encoded.getURI().toString(), "http://localhost:7279");
+    Assert.assertTrue(encoded.getEntity().length() == query.length());
+    Assert.assertEquals(encoded.getHeader("Content-Type"), "application/x-www-form-urlencoded");
+
+    RestRequestBuilder rb = encoded.builder()
+        .setURI(new URI(encoded.getURI().toString() + "?uh=f"));
+    RestRequest modified = rb.build();
+
+    RestRequest decoded = QueryTunnelUtil.decode(modified);
+    Assert.assertEquals(decoded.getURI().toString(), "http://localhost:7279?uh=f&" + query);
+  }
+
+
+  @Test
+  public void testEmptyArgsQuery() throws Exception
+  {
+    // test query with "?" but nothing after it
+
+    RestRequest request = new RestRequestBuilder(new URI("http://localhost:7279/foo?"))
+        .setMethod("GET").build();
+
+    RestRequest encoded = QueryTunnelUtil.encode(request, 0);
+    Assert.assertEquals(encoded.getMethod(), "GET"); // SHould not actually encode this case
+    Assert.assertEquals(encoded.getURI().toString(), "http://localhost:7279/foo?");
+
+    RestRequest decoded = QueryTunnelUtil.decode(encoded);
+    Assert.assertEquals(decoded.getURI().toString(), "http://localhost:7279/foo?");
+  }
 }
 
 
