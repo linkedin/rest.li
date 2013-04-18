@@ -241,11 +241,11 @@ public class RestUtils
 
     try
     {
-      DataMap data = CommonUtil.unsafeClone(dataMap);
+      DataMap data = dataMap.copy();
       new DataMapProcessor(new Filter(), filter.getDataMap(), data).run(false);
       return data;
     }
-    catch (DataProcessingException e)
+    catch (Exception e)
     {
       throw new RestLiInternalException("Error projecting fields", e);
     }
