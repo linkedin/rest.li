@@ -128,8 +128,6 @@ public class D2Config
     _log.info("clusterDefaults: " + _clusterDefaults);
     _log.info("serviceDefaults: " + _serviceDefaults);
 
-    // the defaultColo can either be passed in via the cluster defaults, or through a
-    // constructor argument. any preference?
     String defaultColo = (String)_clusterDefaults.remove(PropertyKeys.DEFAULT_COLO);
 
     // Prior to supporting colos, we had a double for loop: foreach cluster ... foreach service
@@ -203,8 +201,22 @@ public class D2Config
       {
         coloVariants = Collections.singletonList("");
       }
+      else
+      {
+        // some sanity checks to make sure that the default and master colos are listed as
+        // one of the peer colos, if applicable.
+        if (!coloVariants.contains(defaultColo))
+        {
+          throw new IllegalStateException("The default colo: " + defaultColo + "is not one of the peer colos.");
+        }
 
-      boolean firstColoVariant = true;
+        if (masterColo != null && !coloVariants.contains(masterColo))
+        {
+          throw new IllegalStateException("The master colo: " + defaultColo + "is not one of the peer colos.");
+        }
+      }
+
+      boolean defaultServicesCreated = false;
       for (String colo : coloVariants)
       {
         // the coloClusterName will be equal to the original cluster name if colo is the empty string
@@ -213,6 +225,12 @@ public class D2Config
         // for the regular cluster case I could avoid creation of a new HashMap for both coloServicesConfig
         // and coloServiceConfig, as an optimization at the expense of simplicity.
         Map<String,Map<String,Object>> coloServicesConfigs = new HashMap<String, Map<String, Object>>();
+
+        // Only create the default services once, and only when we have an empty colo string or the
+        // colo matches the default colo.
+        boolean createDefaultServices = (defaultServicesCreated == false)
+                                              ? shouldCreateDefaultServices(colo, defaultColo)
+                                              : false;
 
         for (String serviceName : servicesConfigs.keySet())
         {
@@ -238,7 +256,11 @@ public class D2Config
 
           Map<String,Object> coloServiceConfig = new HashMap<String,Object>(serviceConfig);
 
-          if (firstColoVariant)
+          // we will create the default services when this is a non-colo aware cluster or when the colo
+          // matches the default colo. This, along with the defaultServicesCreated flag, ensures we
+          // only create the default services once and simplifies the handleClusterVariants code
+          // so it does not have to know about what are the default services.
+          if (createDefaultServices && !defaultServicesCreated)
           {
             // we also need to use the createColoVariantsForService flag to control whether to
             // create the Master version of this service.
@@ -253,6 +275,7 @@ public class D2Config
               String masterClusterName = D2Utils.addSuffixToBaseName(clusterName, masterColo);
               masterServiceConfig.put(PropertyKeys.CLUSTER_NAME, masterClusterName);
               masterServiceConfig.put(PropertyKeys.SERVICE_NAME, masterServiceName);
+              masterServiceConfig.put(PropertyKeys.IS_MASTER_SERVICE, "true");
               coloServicesConfigs.put(masterServiceName, masterServiceConfig);
             }
 
@@ -268,7 +291,7 @@ public class D2Config
             regularServiceConfig.put(PropertyKeys.CLUSTER_NAME, defaultColoClusterName);
             regularServiceConfig.put(PropertyKeys.SERVICE_NAME, serviceName);
             coloServicesConfigs.put(serviceName, regularServiceConfig);
-          } // end if it's the first colo variant
+          } // end if it's the default colo
 
           if (!serviceName.equals(coloServiceName))
           {
@@ -306,14 +329,20 @@ public class D2Config
           Map<String,Map<String,Object>> coloClusterVariantConfig = new HashMap<String,Map<String,Object>>(clusterVariantConfig);
           status = handleClusterVariants(coloClusterVariantConfig, clusterConfig, clusters,
                                      coloServicesConfigs,  clusterToServiceMapping, colo,
-                                     variantToVariantsMapping);
+                                     variantToVariantsMapping, masterColo);
           if (status != 0)
           {
             return status;
           }
         }
         clusterToServiceMapping.put(clusterName, servicesConfigs);
-        firstColoVariant = false;
+
+        // if we haven't yet marked the default services as created and we created them in this loop,
+        // the set the flag marking the default services for this cluster as created.
+        if (!defaultServicesCreated && createDefaultServices == true )
+        {
+          defaultServicesCreated = true;
+        }
       } // end for each colo variant
     } // end for each cluster
 
@@ -569,12 +598,15 @@ public class D2Config
                                     Map<String,Map<String,Object>> clusters,
                                     Map<String,Map<String,Object>> servicesConfigs,
                                     Map<String,Map<String,Map<String,Object>>> clusterToServiceMapping,
-                                    String coloStr, Map<String,List<String>> variantToVariantsMapping)
+                                    String coloStr,
+                                    Map<String,List<String>> variantToVariantsMapping,
+                                    String masterColo)
   {
     for (String variant : clusterVariantConfig.keySet())
     {
       Map<String,Object> varConfig = clusterVariantConfig.get(variant);
       String variantColoName = D2Utils.addSuffixToBaseName(variant, coloStr);
+      String masterColoName = D2Utils.addSuffixToBaseName(variant, masterColo);
       // clusterConfig is the default cluster's info, and varConfig is this cluster variant's info.
       // We are copying from clusterConfig into varConfig if there is no such property in varConfig.
       varConfig = ConfigWriter.merge(varConfig, clusterConfig);
@@ -596,7 +628,17 @@ public class D2Config
       {
         // Deep copy each of the services into the new map
         Map<String,Object> varServiceConfig = ConfigWriter.merge(entry.getValue(), null);
-        varServiceConfig.put(PropertyKeys.CLUSTER_NAME, variantColoName);
+        String masterServiceString = (String)varServiceConfig.get(PropertyKeys.IS_MASTER_SERVICE);
+        // for all but the master service variants, we want them to point to the colo specific
+        // cluster variant name.
+        if (masterServiceString != null && "true".equalsIgnoreCase(masterServiceString))
+        {
+          varServiceConfig.put(PropertyKeys.CLUSTER_NAME, masterColoName);
+        }
+        else
+        {
+          varServiceConfig.put(PropertyKeys.CLUSTER_NAME, variantColoName);
+        }
         varServicesConfig.put(entry.getKey(), varServiceConfig);
       }
       clusterToServiceMapping.put(variantColoName, varServicesConfig);
@@ -672,5 +714,34 @@ public class D2Config
       // there was an explicit false value instructing us to not create colo variants of this service.
       return false;
     }
+  }
+
+  /**
+   * Given a colo, and the defaultColo, determine if we should create the default service names.
+   * We want to create the service names when:
+   * 1. this is a regular cluster (empty string colo)
+   * 2. the colo string matches the defaultColo.
+   *
+   * The reason for only creating the default service names when we are looping through the
+   * matching colo is so that the code handling the cluster variants don't need to both:
+   * 1. identify default service names, and
+   * 2. pass in the defaultColo to construct a default Colo name.
+   *
+   * @param colo the environment we are creating this service for
+   * @param defaultColo the default non-empty colo string.
+   * @return true if should create the default services, false otherwise.
+   */
+  private boolean shouldCreateDefaultServices(String colo, String defaultColo)
+  {
+    if ("".equals(colo))
+    {
+      return true;
+    }
+    // defaultColo should always be set.
+    if (defaultColo.equalsIgnoreCase(colo))
+    {
+      return true;
+    }
+    return false;
   }
 }

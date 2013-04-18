@@ -131,5 +131,7 @@ public class PropertyKeys
   public static final String MASTER_COLO = "masterColo";
   public static final String MASTER_SUFFIX = "Master";
   public static final String HAS_COLO_VARIANTS = "hasColoVariants";
+  // IS_MASTER_SERVICE is used internally to identify variants of a service that are master services.
+  public static final String IS_MASTER_SERVICE = "isMasterService";
 
 }
