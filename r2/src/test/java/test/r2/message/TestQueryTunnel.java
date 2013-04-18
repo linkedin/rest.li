@@ -252,7 +252,8 @@ public class TestQueryTunnel
   @Test
   public void testModifiedQuestionQuery() throws Exception
   {
-    // Test case where someone has added a "?" underneath us with no args
+    // Test case where someone has added a "?" underneath us with no args - make sure
+    // we re-append the query correctly
     // This test is motivated by some test frameworks that add params to queries in EI
 
     String query= "q=queryString&a=1&b=2";
@@ -271,7 +272,7 @@ public class TestQueryTunnel
     RestRequest modified = rb.build();
 
     RestRequest decoded = QueryTunnelUtil.decode(modified);
-    Assert.assertEquals(decoded.getURI().toString(), "http://localhost:7279?uh=f&" + query);
+    Assert.assertEquals(decoded.getURI().toString(), "http://localhost:7279?" + query);
   }
 
   @Test
