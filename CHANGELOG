@@ -1,5 +1,10 @@
+1.8.18
+------
+
 1.8.17
 ------
+(RB=157735)
+fix default and master service bugs in D2ConfigCmdline
 
 1.8.16
 -------
