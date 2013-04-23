@@ -6,6 +6,9 @@
 (RB=157735)
 fix default and master service bugs in D2ConfigCmdline
 
+(RB=157128)
+Fix queryParamsDataMap not able to convert single element query to StringArray
+
 1.8.16
 -------
 (RB=154319)

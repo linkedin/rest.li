@@ -20,7 +20,10 @@
 
 package com.linkedin.restli.internal.server.methods.arguments;
 
+import com.linkedin.data.DataList;
+import com.linkedin.data.template.AbstractArrayTemplate;
 import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -193,7 +196,27 @@ public class ArgumentBuilder
     {
       @SuppressWarnings("unchecked")
       final Class<? extends RecordTemplate> paramType = (Class<? extends RecordTemplate>) param.getType();
-      paramRecordTemplate = DataTemplateUtil.wrap(paramValue, paramType);
+      /**
+       * It is possible for the paramValue provided by ResourceContext to be coerced to the wrong type.
+       * If a query param is a single value param for example www.domain.com/resource?foo=1.
+       * Then ResourceContext will parse foo as a String with value = 1.
+       * However if a query param contains many values for example www.domain.com/resource?foo=1&foo=2&foo=3
+       * Then ResourceContext will parse foo as an DataList with value [1,2,3]
+       *
+       * So this means if the 'final' type of a query param is an Array and the paramValue we received from
+       * ResourceContext is not a DataList we will have to wrap the paramValue inside a DataList
+       */
+      if (AbstractArrayTemplate.class.isAssignableFrom(paramType) &&
+          paramValue.getClass() != DataList.class)
+      {
+        List wrappedParam = new ArrayList(1);
+        wrappedParam.add(paramValue);
+        paramRecordTemplate = DataTemplateUtil.wrap(new DataList(wrappedParam), paramType);
+      }
+      else
+      {
+        paramRecordTemplate = DataTemplateUtil.wrap(paramValue, paramType);
+      }
     }
     // Validate against the class schema with FixupMode.STRING_TO_PRIMITIVE to parse the
     // strings into the corresponding primitive types.
