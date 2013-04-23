@@ -1481,7 +1481,20 @@ public abstract class DataTemplateGenerator extends CodeGenerator
         }
 
       case UNION:
-        return new ClassInfo(parentClass.fullName(), capitalize(memberName));
+        if (schema.getType() == DataSchema.Type.TYPEREF)
+        {
+          DataSchema referencedDataSchema;
+          TyperefDataSchema typerefDataSchema = (TyperefDataSchema) schema;
+          while ((referencedDataSchema = typerefDataSchema.getDereferencedDataSchema()) != dereferencedDataSchema)
+          {
+            typerefDataSchema = ((TyperefDataSchema) referencedDataSchema);
+          }
+          return new ClassInfo(typerefDataSchema.getNamespace(), capitalize(typerefDataSchema.getName()));
+        }
+        else
+        {
+          return new ClassInfo(parentClass.fullName(), capitalize(memberName));
+        }
 
       case FIXED:
       case RECORD:

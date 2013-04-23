@@ -1,5 +1,7 @@
 1.8.18
 ------
+(RB=157884)
+Fix NPE in Data Template generator when an array item or map value type is a typeref'ed union.
 
 1.8.17
 ------
