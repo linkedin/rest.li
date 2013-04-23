@@ -209,9 +209,7 @@ public class ArgumentBuilder
       if (AbstractArrayTemplate.class.isAssignableFrom(paramType) &&
           paramValue.getClass() != DataList.class)
       {
-        List wrappedParam = new ArrayList(1);
-        wrappedParam.add(paramValue);
-        paramRecordTemplate = DataTemplateUtil.wrap(new DataList(wrappedParam), paramType);
+        paramRecordTemplate = DataTemplateUtil.wrap(new DataList(Arrays.asList(paramValue)), paramType);
       }
       else
       {
