@@ -1,5 +1,7 @@
 1.8.19
 ------
+(RB=158603)
+Fix bug that context path is missing in docgen "View in JSON format" link.
 
 1.8.18
 ------

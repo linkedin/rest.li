@@ -255,7 +255,7 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
 
   public void setJsonFormatUri(URI jsonFormatUri)
   {
-    _jsonFormatUri = jsonFormatUri;
+    _jsonFormatUri = _serverNodeUri.resolve(jsonFormatUri);
   }
 
   private static String getResourceType(ResourceSchema resourceSchema)
