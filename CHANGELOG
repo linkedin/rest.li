@@ -1,15 +1,18 @@
+1.8.19
+------
+
 1.8.18
 ------
 (RB=157884)
 Fix NPE in Data Template generator when an array item or map value type is a typeref'ed union.
 
+(RB=157128)
+Fix queryParamsDataMap not able to convert single element query to StringArray
+
 1.8.17
 ------
 (RB=157735)
 fix default and master service bugs in D2ConfigCmdline
-
-(RB=157128)
-Fix queryParamsDataMap not able to convert single element query to StringArray
 
 1.8.16
 -------
