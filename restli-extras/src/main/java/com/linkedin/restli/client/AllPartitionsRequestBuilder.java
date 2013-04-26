@@ -97,7 +97,7 @@ public class AllPartitionsRequestBuilder <T>
     Collection<RequestContext> contexts = contextCover.getPartitionInfo();
     for (RequestContext context : contexts)
     {
-      client.sendRequest(request, requestContext, callback);
+      client.sendRequest(request, context, callback);
     }
 
     return contextCover;
