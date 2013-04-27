@@ -587,7 +587,7 @@ public class DataTemplateUtil
         DirectCoercer<?> existingCoercer = _classToCoercerMap.get(targetClass);
 
         // allow re-registration of a coercer of the same class name, this can happen if there when there are multiple classloaders
-        if(existingCoercer == null || !existingCoercer.getClass().equals(coercer.getClass())) 
+        if (existingCoercer == null || !existingCoercer.getClass().getName().equals(coercer.getClass().getName()))
         {
           throw new IllegalArgumentException(targetClass.getName() + " already has a coercer");
         }
