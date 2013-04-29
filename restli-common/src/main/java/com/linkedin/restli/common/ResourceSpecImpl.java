@@ -17,6 +17,7 @@
 package com.linkedin.restli.common;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,7 +38,7 @@ public class ResourceSpecImpl implements ResourceSpec
   private final Class<? extends RecordTemplate>    _keyKeyClass;
   private final Class<? extends RecordTemplate>    _keyParamsClass;
   private final Class<? extends RecordTemplate>    _valueClass;
-  private final Map<String, Class<?>>              _keyParts;
+  private final Map<String, CompoundKey.TypeInfo>  _keyParts;
   private final Map<String, DynamicRecordMetadata> _actionRequestMetadata;
   private final Map<String, DynamicRecordMetadata> _actionResponseMetadata;
 
@@ -53,7 +54,7 @@ public class ResourceSpecImpl implements ResourceSpec
          null,
          null,
          null,
-         Collections.<String, Class<?>> emptyMap());
+         Collections.<String, CompoundKey.TypeInfo> emptyMap());
   }
 
   /**
@@ -72,7 +73,7 @@ public class ResourceSpecImpl implements ResourceSpec
          null,
          null,
          null,
-         Collections.<String, Class<?>> emptyMap());
+         Collections.<String, CompoundKey.TypeInfo> emptyMap());
   }
 
 
@@ -94,7 +95,7 @@ public class ResourceSpecImpl implements ResourceSpec
          null,
          null,
          null,
-         Collections.<String, Class<?>> emptyMap());
+         Collections.<String, CompoundKey.TypeInfo> emptyMap());
   }
 
   /**
@@ -103,14 +104,15 @@ public class ResourceSpecImpl implements ResourceSpec
    * @param supportedMethods Set of ResourceMethods supported
    * @param keyClass type of the key of the Resource
    * @param valueClass the type of the RecordTemplate the Resource manages
-   * @param keyParts Map of key names to key types, if the keyClass is a ComplexKey
+   * @param keyParts Map of key names to key types (AssocKeyBindingTypes
+   *         or, for backward compatibility, Class<?>), if the keyClass is a {@link CompoundKey}.
    * @deprecated builder should pass in actionRequestMetadata and actionResponseMetadata
    */
   @Deprecated
   public ResourceSpecImpl(Set<ResourceMethod> supportedMethods,
                           Class<?> keyClass,
                           Class<? extends RecordTemplate> valueClass,
-                          Map<String, Class<?>> keyParts)
+                          Map<String, ?> keyParts)
   {
     this(supportedMethods,
          Collections.<String, DynamicRecordMetadata> emptyMap(),
@@ -130,14 +132,15 @@ public class ResourceSpecImpl implements ResourceSpec
    * @param actionResponseMetadata Map from method name to response RecordDataSchema
    * @param keyClass type of the key of the Resource
    * @param valueClass the type of the RecordTemplate the Resource manages
-   * @param keyParts Map of key names to key types, if the keyClass is a ComplexKey
+   * @param keyParts Map of key names to key types (AssocKeyBindingTypes
+   *         or, for backward compatibility, Class<?>), if the keyClass is a {@link CompoundKey}.
    */
   public ResourceSpecImpl(Set<ResourceMethod> supportedMethods,
                           Map<String, DynamicRecordMetadata> actionRequestMetadata,
                           Map<String, DynamicRecordMetadata> actionResponseMetadata,
                           Class<?> keyClass,
                           Class<? extends RecordTemplate> valueClass,
-                          Map<String, Class<?>> keyParts)
+                          Map<String, ?> keyParts)
   {
     this(supportedMethods,
          actionRequestMetadata,
@@ -157,7 +160,8 @@ public class ResourceSpecImpl implements ResourceSpec
    * @param keyKeyClass RecordTemplate type of the key, if the keyClass is a ComplexResourceKey
    * @param keyParamsClass RecordTemplate type of parameters of the key, if the keyClass is a ComplexResourceKey
    * @param valueClass the type of the RecordTemplate that the Resource manages
-   * @param keyParts Map of the key names to key types, if the keyClass is a ComplexKey
+   * @param keyParts Map of key names to key types (AssocKeyBindingTypes
+   *         or, for backward compatibility, Class<?>), if the keyClass is a {@link CompoundKey}.
    * @deprecated builder should pass in actionRequestMetadata and actionResponseMetadata
    */
   @Deprecated
@@ -166,7 +170,7 @@ public class ResourceSpecImpl implements ResourceSpec
                           Class<? extends RecordTemplate> keyKeyClass,
                           Class<? extends RecordTemplate> keyParamsClass,
                           Class<? extends RecordTemplate> valueClass,
-                          Map<String, Class<?>> keyParts)
+                          Map<String, ?> keyParts)
   {
     this(supportedMethods,
          Collections.<String, DynamicRecordMetadata> emptyMap(),
@@ -188,7 +192,8 @@ public class ResourceSpecImpl implements ResourceSpec
    * @param keyKeyClass RecordTemplate type of the key, if the keyClass is a ComplexResourceKey
    * @param keyParamsClass RecordTemplate type of parameters of the key, if the keyClass is a ComplexResourceKey
    * @param valueClass the type of the RecordTemplate that the Resource manages
-   * @param keyParts Map of the key names to key types, if the keyClass is a ComplexKey
+   * @param keyParts Map of key names to key types (AssocKeyBindingTypes
+   *         or, for backward compatibility, Class<?>), if the keyClass is a {@link CompoundKey}.
    */
   public ResourceSpecImpl(Set<ResourceMethod> supportedMethods,
                           Map<String, DynamicRecordMetadata> actionRequestMetadata,
@@ -197,7 +202,7 @@ public class ResourceSpecImpl implements ResourceSpec
                           Class<? extends RecordTemplate> keyKeyClass,
                           Class<? extends RecordTemplate> keyParamsClass,
                           Class<? extends RecordTemplate> valueClass,
-                          Map<String, Class<?>> keyParts)
+                          Map<String, ?> keyParts)
   {
     _supportedMethods = Collections.unmodifiableSet(supportedMethods);
     _actionRequestMetadata = actionRequestMetadata;
@@ -206,7 +211,24 @@ public class ResourceSpecImpl implements ResourceSpec
     _keyKeyClass = keyKeyClass;
     _keyParamsClass = keyParamsClass;
     _valueClass = valueClass;
-    _keyParts = Collections.unmodifiableMap(keyParts);
+
+    HashMap<String, CompoundKey.TypeInfo> keyPartTypeInfos = new HashMap<String, CompoundKey.TypeInfo>();
+    for(Map.Entry<String, ?> entry : keyParts.entrySet()) {
+      if(entry.getValue() instanceof Class<?>)
+      {
+        Class<?> entryKeyClass = (Class<?>)entry.getValue();
+        keyPartTypeInfos.put(entry.getKey(), new CompoundKey.TypeInfo(entryKeyClass, entryKeyClass));
+      }
+      else if (entry.getValue() instanceof CompoundKey.TypeInfo)
+      {
+        keyPartTypeInfos.put(entry.getKey(), (CompoundKey.TypeInfo)entry.getValue());
+      }
+      else
+      {
+        throw new IllegalArgumentException("keyParts values must be either Class<?> or CompoundKey.TypeInfo, but was: " + entry.getValue().getClass());
+      }
+    }
+    _keyParts = Collections.unmodifiableMap(keyPartTypeInfos);
   }
 
   @Override
@@ -228,7 +250,7 @@ public class ResourceSpecImpl implements ResourceSpec
   }
 
   @Override
-  public Map<String, Class<?>> getKeyParts()
+  public Map<String, CompoundKey.TypeInfo> getKeyParts()
   {
     return _keyParts;
   }

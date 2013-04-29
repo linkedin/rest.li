@@ -26,6 +26,8 @@ import java.util.Map;
 import java.util.Set;
 
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.DataSchemaUtil;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.restli.internal.common.ValueConverter;
 
@@ -44,25 +46,47 @@ public class CompoundKey
     _keys = new HashMap<String, Object>(4);
   }
 
+  public static final class TypeInfo
+  {
+    private final Class<?> _bindingType;
+    private final Class<?> _declaredType;
+
+    public TypeInfo(Class<?> bindingType, Class<?> declaredType)
+    {
+      _bindingType = bindingType;
+      _declaredType = declaredType;
+    }
+  }
+
   /**
    * Initialize and return a CompoundKey.
    *
    * @param fieldValues DataMap representing the CompoundKey
-   * @param fieldTypes Map of key name to class
+   * @param fieldTypes Map of key name to it's {@link TypeInfo} (also accepts Class<?> for backward compatibility).
    * @return a CompoundKey
    */
-  public static CompoundKey fromValues(DataMap fieldValues, Map<String, Class<?>> fieldTypes)
+  public static CompoundKey fromValues(DataMap fieldValues, Map<String, CompoundKey.TypeInfo> fieldTypes)
   {
     CompoundKey result = new CompoundKey();
     for (Map.Entry<String, Object> entry : fieldValues.entrySet())
     {
-      result.append(entry.getKey(),
-                    ValueConverter.coerceString(entry.getValue().toString(), fieldTypes.get(entry.getKey())));
+      Object fieldType = fieldTypes.get(entry.getKey());
+      TypeInfo typeInfo = (TypeInfo)fieldType;
+      DataSchema schema = DataTemplateUtil.getSchema(typeInfo._declaredType);
+      DataSchema.Type dereferencedType = schema.getDereferencedType();
+      if (!schema.getDereferencedDataSchema().isPrimitive())
+      {
+        throw new IllegalArgumentException("Compound key type must dereference to a primitive type.");
+      }
+      Object primitive = ValueConverter.coerceString(entry.getValue().toString(), DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchemaClass(dereferencedType));
+      Object value = DataTemplateUtil.coerceOutput(primitive, typeInfo._bindingType);
+
+      result.append(entry.getKey(), value);
     }
     return result;
   }
 
-  /**
+ /**
    * Add the key with the given name and value to the CompoundKey.
    *
    * @param name name of the key

@@ -19,14 +19,13 @@ package com.linkedin.restli.common;
 import java.util.Map;
 import java.util.Set;
 
-import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.data.template.RecordTemplate;
 
 
 /**
  * Runtime representation of resource spec.
- * 
+ *
  * @author Eran Leshem
  */
 public interface ResourceSpec
@@ -49,7 +48,7 @@ public interface ResourceSpec
   /**
    * @return the map of key names to key classes, if the keyClass is a CompoundKey
    */
-  Map<String, Class<?>> getKeyParts();
+  Map<String, CompoundKey.TypeInfo> getKeyParts();
 
   /**
    * @return the key of the key, if the keyClass is a ComplexResourceKey

@@ -15,9 +15,8 @@
 */
 
 /**
- * $Id: $
+ *
  */
-
 package com.linkedin.restli.examples.greetings.server;
 
 import java.util.Collections;
@@ -29,9 +28,9 @@ import java.util.Set;
 
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.examples.custom.types.CustomLong;
+import com.linkedin.restli.examples.custom.types.CustomNonNegativeLong;
 import com.linkedin.restli.examples.greetings.api.Greeting;
-import com.linkedin.restli.examples.typeref.api.CustomLongRef;
+import com.linkedin.restli.examples.typeref.api.CustomNonNegativeLongRef;
 import com.linkedin.restli.examples.typeref.api.DateRef;
 import com.linkedin.restli.server.BatchUpdateRequest;
 import com.linkedin.restli.server.BatchUpdateResult;
@@ -44,28 +43,30 @@ import com.linkedin.restli.server.annotations.RestLiAssociation;
 import com.linkedin.restli.server.resources.AssociationResourceTemplate;
 
 /**
- * @author Moira Tagle
- * @version $Revision: $
+ * Uses CustomNonNegativeLong which is a typeref to CustomLong, which is a typeref to long
+ *
+ * Note that there are no coercers in this typeref chain.
+ * @author jbetz
+ *
  */
-
 @RestLiAssociation(
-        name = "customTypes3",
+        name = "chainedTyperefs",
         namespace = "com.linkedin.restli.examples.greetings.client",
         assocKeys = {
-                @Key(name = "longId", type = CustomLong.class, typeref = CustomLongRef.class),
-                @Key(name = "dateId", type = Date.class, typeref = DateRef.class)
+                @Key(name = "age", type = CustomNonNegativeLong.class, typeref = CustomNonNegativeLongRef.class),
+                @Key(name = "birthday", type = Date.class, typeref = DateRef.class)
         }
 )
-public class CustomTypesResource3 extends AssociationResourceTemplate<Greeting>
+public class ChainedTyperefResource extends AssociationResourceTemplate<Greeting>
 {
 
   @Override
   public Greeting get(CompoundKey key)
   {
-    CustomLong longId = (CustomLong)key.getPart("longId");
-    Date dateId = (Date)key.getPart("dateId");
+    CustomNonNegativeLong age = (CustomNonNegativeLong)key.getPart("age");
+    Date birthday = (Date)key.getPart("birthday");
 
-    return new Greeting().setId(longId.toLong() + dateId.getTime());
+    return new Greeting().setId(age.toLong() + birthday.getTime());
   }
 
   @Override
@@ -83,7 +84,7 @@ public class CustomTypesResource3 extends AssociationResourceTemplate<Greeting>
   }
 
   @Finder("dateOnly")
-  public List<Greeting> dateOnly(@AssocKey(value="dateId", typeref=DateRef.class) Date dateId)
+  public List<Greeting> dateOnly(@AssocKey(value="birthday", typeref=DateRef.class) Date date)
   {
     return Collections.emptyList();
   }

@@ -4,6 +4,9 @@
 Fix bug where shutdown of HttpClientFactory will fail if the final
 event leading to shutdown occurs on a Netty IO thread.
 
+(RB=159386)
+Support typerefs in association keys for batch responses.
+
 1.8.19
 ------
 (RB=158603)

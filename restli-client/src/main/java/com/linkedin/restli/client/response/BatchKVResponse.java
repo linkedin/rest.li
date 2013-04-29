@@ -31,6 +31,7 @@ import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.jersey.api.uri.UriComponent;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
+import com.linkedin.restli.common.CompoundKey.TypeInfo;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.internal.common.PathSegment.PathSegmentSyntaxException;
 import com.linkedin.restli.internal.common.ValueConverter;
@@ -45,7 +46,7 @@ public class BatchKVResponse<K, V extends RecordTemplate> extends RecordTemplate
   public static final String RESULTS = "results";
   public static final String ERRORS = "errors";
 
-  private final Map<String, Class<?>> _keyParts;
+  private final Map<String, CompoundKey.TypeInfo> _keyParts;
   private final Class<? extends RecordTemplate> _keyKeyClass;
   private final Class<? extends RecordTemplate> _keyParamsClass;
 
@@ -54,10 +55,24 @@ public class BatchKVResponse<K, V extends RecordTemplate> extends RecordTemplate
   private final Map<K, V> _results;
   private final Map<K, ErrorResponse> _errors;
 
+  /**
+   * Constructor for collection and association resource responses.  For complex key resources
+   * use the constructor that accepts keyKeyClass and keyParamsClass.
+   *
+   * @param data provides the batch response data.
+   * @param keyClass provides the class identifying the key type:
+   *   <ul>
+   *     <li>For collection resources must be a primitive or a typeref to a primitive.</li>
+   *     <li>For an association resources must be {@link CompoundKey} and keyParts must contain an entry for each association key field.</li>
+   *     <li>For complex resources do not use this constructor, use the one that accepts keyKeyClass and keyParamsClass.</li>
+   *   </ul>
+   * @param valueClass provides the entity type of the collection.
+   * @param keyParts provides a map for association keys of each key name to {@link TypeInfo}, for non-association resources must be an empty map.
+   */
   public BatchKVResponse(DataMap data,
                          Class<K> keyClass,
                          Class<V> valueClass,
-                         Map<String, Class<?>> keyParts)
+                         Map<String, CompoundKey.TypeInfo> keyParts)
   {
     this(data,
           keyClass,
@@ -66,11 +81,26 @@ public class BatchKVResponse<K, V extends RecordTemplate> extends RecordTemplate
           (Class<? extends RecordTemplate>) null,
           (Class<? extends RecordTemplate>) null);
   }
-  
+
+  /**
+   * Constructor resource responses.
+   *
+   * @param data provides the batch response data.
+   * @param keyClass provides the class identifying the key type.
+   *   <ul>
+   *     <li>For collection resources must be a primitive or a typeref to a primitive.</li>
+   *     <li>For an association resources must be {@link CompoundKey} and keyParts must contain an entry for each association key field.</li>
+   *     <li>For complex resources must be {@link ComplexResourceKey}, keyKeyClass must contain the
+   *           key's record template class and if the resource has a key params their record template type keyParamsClass must be provided.</li>
+   * @param valueClass provides the entity type of the collection.
+   * @param keyParts provides a map for association keys of each key name to {@link TypeInfo}, for non-association resources must be an empty map.
+   * @param keyKeyClass provides the record template class for the key for complex key resources, otherwise null.
+   * @param keyParamsClass provides the record template class for the key params for complex key resources, otherwise null.
+   */
   public BatchKVResponse(DataMap data,
                          Class<K> keyClass,
                          Class<V> valueClass,
-                         Map<String, Class<?>> keyParts,
+                         Map<String, CompoundKey.TypeInfo> keyParts,
                          Class<? extends RecordTemplate> keyKeyClass,
                          Class<? extends RecordTemplate> keyParamsClass)
   {

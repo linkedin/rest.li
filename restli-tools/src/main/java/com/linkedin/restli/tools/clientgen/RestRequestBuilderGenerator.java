@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.linkedin.data.template.DynamicRecordMetadata;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonParseException;
@@ -45,6 +44,7 @@ import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
 import com.linkedin.data.schema.validation.ValidationOptions;
 import com.linkedin.data.schema.validation.ValidationResult;
 import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.data.template.FieldDef;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.StringArray;
@@ -66,6 +66,7 @@ import com.linkedin.restli.client.base.PartialUpdateRequestBuilderBase;
 import com.linkedin.restli.client.base.UpdateRequestBuilderBase;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
+import com.linkedin.restli.common.CompoundKey.TypeInfo;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.ResourceSpecImpl;
@@ -302,7 +303,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     JClass keyKeyClass = null;
     JClass keyParamsClass = null;
     boolean isActionsSet = false;
-    Map<String, JClass> assocKeys = new HashMap<String, JClass>();
+    Map<String, AssocKeyTypeInfo> assocKeyTypeInfos = Collections.emptyMap();
     StringArray supportsList=null;
     RestMethodSchemaArray restMethods = null;
     FinderSchemaArray finders = null;
@@ -346,13 +347,12 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
       resourceActions = association.getActions();
       entityActions = association.getEntity().getActions();
 
-      generateAssociationKey(
-              facadeClass,
-              association,
-              assocKeys
-      );
+      assocKeyTypeInfos = generateAssociationKey(facadeClass, association);
 
-      pathKeyTypes.putAll(assocKeys);
+      for(Map.Entry<String, AssocKeyTypeInfo> entry: assocKeyTypeInfos.entrySet())
+      {
+        pathKeyTypes.put(entry.getKey(), entry.getValue().getBindingType());
+      }
     }
     else if (resource.getActionsSet() != null)
     {
@@ -388,11 +388,17 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
       }
 
       JBlock staticInit = facadeClass.init();
-      JClass hashMapClass = getCodeModel().ref(HashMap.class).narrow(_stringClass, _classClass.narrow(_objectClass.wildcard()));
+
+      JClass assocKeyClass = getCodeModel().ref(TypeInfo.class);
+      JClass hashMapClass = getCodeModel().ref(HashMap.class).narrow(_stringClass, assocKeyClass);
       JVar keyPartsVar = staticInit.decl(hashMapClass, "keyParts").init(JExpr._new(hashMapClass));
-      for (Map.Entry<String, JClass> key : assocKeys.entrySet())
+      for (Map.Entry<String, AssocKeyTypeInfo> typeInfoEntry : assocKeyTypeInfos.entrySet())
       {
-        staticInit.add(keyPartsVar.invoke("put").arg(key.getKey()).arg(key.getValue().dotclass()));
+        AssocKeyTypeInfo typeInfo = typeInfoEntry.getValue();
+        JInvocation typeArg = JExpr._new(assocKeyClass)
+          .arg(typeInfo.getBindingType().dotclass())
+          .arg(typeInfo.getDeclaredType().dotclass());
+        staticInit.add(keyPartsVar.invoke("put").arg(typeInfoEntry.getKey()).arg(typeArg));
       }
 
       JVar methodSchemaMap = methodMetadataMapInit(facadeClass, resourceActions, entityActions,
@@ -428,7 +434,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
                       finders,
                       keyClass,
                       schemaClass,
-                      assocKeys,
+                      assocKeyTypeInfos,
                       resourceSpecField,
                       resourceName,
                       pathKeys,
@@ -619,7 +625,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
                                FinderSchemaArray finderSchemas,
                                JClass keyClass,
                                JClass valueClass,
-                               Map<String, JClass> assocKeys,
+                               Map<String, AssocKeyTypeInfo> assocKeys,
                                JVar resourceSpecField,
                                String resourceName,
                                List<String> pathKeys,
@@ -733,7 +739,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     return derivedBuilderClass;
   }
 
-  private void generateAssocKeyBindingMethods(Map<String, JClass> assocKeys,
+  private void generateAssocKeyBindingMethods(Map<String, AssocKeyTypeInfo> assocKeys,
                                               JDefinedClass finderBuilderClass,
                                               Set<String> finderKeys)
   {
@@ -741,7 +747,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
 
     for (String assocKey : finderKeys)
     {
-      JClass assocKeyClass = assocKeys.get(assocKey);
+      JClass assocKeyClass = assocKeys.get(assocKey).getBindingType();
       if (assocKeyClass == null)
       {
         errorBuilder.append(String.format("assocKey %s in finder is not found\n", assocKey));
@@ -925,17 +931,40 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     }
   }
 
-  private void generateAssociationKey(JDefinedClass facadeClass,
-                                      AssociationSchema associationSchema,
-                                      Map<String, JClass> assocKeys)
+  private static class AssocKeyTypeInfo
+  {
+    private final JClass _bindingType;
+    private final JClass _declaredType;
+
+    public AssocKeyTypeInfo(JClass bindingType, JClass declaredType)
+    {
+      _bindingType = bindingType;
+      _declaredType = declaredType;
+    }
+
+    public JClass getBindingType()
+    {
+      return _bindingType;
+    }
+
+    public JClass getDeclaredType()
+    {
+      return _declaredType;
+    }
+  }
+
+  private Map<String, AssocKeyTypeInfo> generateAssociationKey(JDefinedClass facadeClass,
+                                      AssociationSchema associationSchema)
           throws JClassAlreadyExistsException
   {
     JDefinedClass typesafeKeyClass = facadeClass._class(JMod.PUBLIC | JMod.STATIC, "Key");
     typesafeKeyClass._extends(CompoundKey.class);
+    Map<String, AssocKeyTypeInfo> assocKeyTypeInfos = new HashMap<String, AssocKeyTypeInfo>();
     for (AssocKeySchema assocKey : associationSchema.getAssocKeys())
     {
       String name = assocKey.getName();
       JClass clazz = getJavaBindingType(assocKey.getType(), facadeClass);
+      JClass declaredClass = getClassRefForSchema(getDataSchemaForType(assocKey.getType()), facadeClass);
 
       JMethod typesafeSetter = typesafeKeyClass.method(JMod.PUBLIC, typesafeKeyClass, "set" + nameCapsCase(name));
       JVar setterParam = typesafeSetter.param(clazz, name);
@@ -945,11 +974,12 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
       JMethod typesafeGetter = typesafeKeyClass.method(JMod.PUBLIC, clazz, "get" + nameCapsCase(name));
       typesafeGetter.body()._return(JExpr.cast(clazz,JExpr.invoke("getPart").arg(name)));
 
-      assocKeys.put(name, clazz);
+      assocKeyTypeInfos.put(name, new AssocKeyTypeInfo(clazz, declaredClass));
     }
 
     //default constructor
     typesafeKeyClass.constructor(JMod.PUBLIC);
+    return assocKeyTypeInfos;
   }
 
   private static void generateClassJavadoc(JDefinedClass clazz, RecordTemplate schema)
@@ -1061,7 +1091,14 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     }
   }
 
-    private JClass getJavaBindingType(String typeSchema, JDefinedClass parentClass)
+  private JClass getJavaBindingType(String typeSchema, JDefinedClass parentClass)
+  {
+    DataSchema schema = getDataSchemaForType(typeSchema);
+
+    return getJavaBindingType(schema, parentClass);
+  }
+
+  private DataSchema getDataSchemaForType(String typeSchema)
   {
     typeSchema = typeSchema.trim();
 
@@ -1073,8 +1110,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     }
 
     DataSchema schema = DataTemplateUtil.parseSchema(typeSchema, getSchemaResolver());
-
-    return getJavaBindingType(schema, parentClass);
+    return schema;
   }
 
   private JClass getJavaBindingType(DataSchema schema, JDefinedClass parentClass)
@@ -1111,16 +1147,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
 
   private JClass getSchemaClass(String typeSchema, JDefinedClass parentClass)
   {
-    typeSchema = typeSchema.trim();
-
-    if (!typeSchema.startsWith("{") && !typeSchema.startsWith("\""))
-    {
-      //construct a valid JSON string to hand to the parser
-      typeSchema = "\"" + typeSchema + "\"";
-    }
-
-    DataSchema schema = DataTemplateUtil.parseSchema(typeSchema, getSchemaResolver());
-    JClass type;
+    DataSchema schema = getDataSchemaForType(typeSchema);
 
     if (_generateDataTemplates)
     {

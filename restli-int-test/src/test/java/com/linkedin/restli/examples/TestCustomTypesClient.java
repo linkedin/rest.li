@@ -26,7 +26,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import com.linkedin.restli.common.CollectionResponse;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -41,9 +40,16 @@ import com.linkedin.restli.client.BatchGetRequest;
 import com.linkedin.restli.client.FindRequest;
 import com.linkedin.restli.client.GetRequest;
 import com.linkedin.restli.client.RestClient;
+import com.linkedin.restli.client.response.BatchKVResponse;
+import com.linkedin.restli.common.CompoundKey;
+import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.examples.custom.types.CustomLong;
+import com.linkedin.restli.examples.custom.types.CustomNonNegativeLong;
 import com.linkedin.restli.examples.greetings.api.Greeting;
+import com.linkedin.restli.examples.greetings.client.ChainedTyperefsBatchUpdateBuilder;
+import com.linkedin.restli.examples.greetings.client.ChainedTyperefsBuilders;
 import com.linkedin.restli.examples.greetings.client.CustomTypes2Builders;
+import com.linkedin.restli.examples.greetings.client.CustomTypes3BatchUpdateBuilder;
 import com.linkedin.restli.examples.greetings.client.CustomTypes3Builders;
 import com.linkedin.restli.examples.greetings.client.CustomTypes4Builders;
 import com.linkedin.restli.examples.greetings.client.CustomTypesBuilders;
@@ -63,6 +69,8 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
   private static final CustomTypes2Builders CUSTOM_TYPES_2_BUILDERS = new CustomTypes2Builders();
   private static final CustomTypes3Builders CUSTOM_TYPES_3_BUILDERS = new CustomTypes3Builders();
   private static final CustomTypes4Builders CUSTOM_TYPES_4_BUILDERS = new CustomTypes4Builders();
+
+  private static final ChainedTyperefsBuilders CHAINED_TYPEREF_BUILDERS = new ChainedTyperefsBuilders();
 
   @BeforeClass
   public void initClass() throws Exception
@@ -155,6 +163,41 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
     Greeting result = REST_CLIENT.sendRequest(request).getResponse().getEntity();
 
     Assert.assertEquals( new Long(lo+date), result.getId());
+  }
+
+  @Test
+  public void testBatchUpdate() throws RemoteInvocationException
+  {
+    Long lo = 5L;
+    Long date = 13L;
+    CustomTypes3Builders.Key key = new CustomTypes3Builders.Key().setLongId(new CustomLong(lo)).setDateId(new Date(date));
+
+    CustomTypes3BatchUpdateBuilder batchUpdateRequest = CUSTOM_TYPES_3_BUILDERS.batchUpdate().input(key, new Greeting().setId(1).setMessage("foo"));
+    BatchKVResponse<CompoundKey, UpdateStatus> response = REST_CLIENT.sendRequest(batchUpdateRequest).getResponse().getEntity();
+
+    Assert.assertEquals(response.getResults().keySet().size(), 1);
+    CompoundKey expected = new CompoundKey();
+    expected.append("dateId", new Date(date));
+    expected.append("longId", new CustomLong(lo));
+    Assert.assertEquals(response.getResults().keySet().iterator().next(), expected);
+  }
+
+  @Test
+  public void testBatchUpdateForChainedRefs() throws RemoteInvocationException
+  {
+    Long lo = 29L;
+    Long date = 10L;
+    ChainedTyperefsBuilders.Key key = new ChainedTyperefsBuilders.Key().setAge(new CustomNonNegativeLong(lo)).setBirthday(new Date(date));
+
+    ChainedTyperefsBatchUpdateBuilder batchUpdateRequest = CHAINED_TYPEREF_BUILDERS.batchUpdate().input(key, new Greeting().setId(1).setMessage("foo"));
+    BatchKVResponse<CompoundKey, UpdateStatus> response = REST_CLIENT.sendRequest(batchUpdateRequest).getResponse().getEntity();
+
+    Assert.assertEquals(response.getResults().keySet().size(), 1);
+    CompoundKey expected = new CompoundKey();
+    expected.append("birthday", new Date(date));
+    expected.append("age", new CustomNonNegativeLong(lo));
+    CompoundKey result = response.getResults().keySet().iterator().next();
+    Assert.assertEquals(result, expected);
   }
 
   @Test

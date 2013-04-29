@@ -12,9 +12,11 @@
       "name" : "longId",
       "type" : "com.linkedin.restli.examples.typeref.api.CustomLongRef"
     } ],
-    "supports" : [ "get" ],
+    "supports" : [ "batch_update", "get" ],
     "methods" : [ {
       "method" : "get"
+    }, {
+      "method" : "batch_update"
     } ],
     "finders" : [ {
       "name" : "dateOnly",

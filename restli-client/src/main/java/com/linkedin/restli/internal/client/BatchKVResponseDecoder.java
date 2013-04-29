@@ -25,6 +25,7 @@ import java.util.Map;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.client.response.BatchKVResponse;
+import com.linkedin.restli.common.CompoundKey;
 
 /**
  * Converts a raw RestResponse into a type-bound batch response.
@@ -36,13 +37,13 @@ public class BatchKVResponseDecoder<K, V extends RecordTemplate> extends RestRes
 {
   private final Class<V> _elementClass;
   private final Class<K> _keyClass;
-  private final Map<String, Class<?>> _keyParts;
+  private final Map<String, CompoundKey.TypeInfo> _keyParts;
   private final Class<? extends RecordTemplate> _keyKeyClass;
   private final Class<? extends RecordTemplate> _keyParamsClass;
 
   public BatchKVResponseDecoder(Class<V> elementClass,
                                 Class<K> keyClass,
-                                Map<String, Class<?>> keyParts,
+                                Map<String, CompoundKey.TypeInfo> keyParts,
                                 Class<? extends RecordTemplate> keyKeyClass,
                                 Class<? extends RecordTemplate> keyParamsClass)
   {

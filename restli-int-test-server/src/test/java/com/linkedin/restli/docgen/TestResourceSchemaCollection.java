@@ -17,19 +17,20 @@
 package com.linkedin.restli.docgen;
 
 
-import com.linkedin.restli.internal.server.model.ResourceModel;
-import com.linkedin.restli.internal.server.model.ResourceType;
-import com.linkedin.restli.internal.server.model.RestLiApiBuilder;
-import com.linkedin.restli.restspec.ResourceSchema;
-import com.linkedin.restli.server.RestLiConfig;
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+import com.linkedin.restli.internal.server.model.ResourceModel;
+import com.linkedin.restli.internal.server.model.ResourceType;
+import com.linkedin.restli.internal.server.model.RestLiApiBuilder;
+import com.linkedin.restli.restspec.ResourceSchema;
+import com.linkedin.restli.server.RestLiConfig;
 
 
 /**
@@ -55,6 +56,7 @@ public class TestResourceSchemaCollection
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.customTypes", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.customTypes2", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.customTypes3", ResourceType.ASSOCIATION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.chainedTyperefs", ResourceType.ASSOCIATION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.customTypes2.customTypes4", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.exceptions", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.exceptions2", ResourceType.COLLECTION);
