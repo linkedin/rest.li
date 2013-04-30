@@ -18,14 +18,14 @@ package com.linkedin.data.avro;
 
 
 import com.linkedin.data.Data;
+import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.JsonBuilder;
 import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.SchemaToJsonEncoder;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.util.Arrays;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
@@ -957,79 +957,203 @@ public class TestSchemaTranslator
     {
       Object[] modeInputs = (Object[]) row[i];
       OptionalDefaultMode optionalDefaultModes[] = (OptionalDefaultMode[]) modeInputs[0];
-      for (OptionalDefaultMode optionalDefaultMode : optionalDefaultModes)
+      Object expected = modeInputs[1];
+
+      for (EmbedSchemaMode embedSchemaMode : EmbedSchemaMode.values())
       {
-        Object expected = modeInputs[1];
-        DataSchema schema = TestUtil.dataSchemaFromString(schemaText);
-        String preTranslateSchemaText = schema.toString();
-        Exception exc = null;
-        String avroTextFromSchema = null;
-        try
+        for (OptionalDefaultMode optionalDefaultMode : optionalDefaultModes)
         {
-          avroTextFromSchema = SchemaTranslator.dataToAvroSchemaJson(
-            schema,
-            new DataToAvroSchemaTranslationOptions(optionalDefaultMode, JsonBuilder.Pretty.SPACES)
-          );
-          if (debug) System.out.println(optionalDefaultMode + ", Avro Schema: " + avroTextFromSchema);
-        }
-        catch (Exception e)
-        {
-          exc = e;
-          if (debug) System.out.println(e);
-        }
-        if (expected instanceof String)
-        {
-          assertNull(exc);
-
-          String avroText = (String) expected;
-          assertEquals(avroTextFromSchema, avroText);
-          String postTranslateSchemaText = schema.toString();
-          assertEquals(preTranslateSchemaText, postTranslateSchemaText);
-
-          // make sure Avro accepts it
-          Schema avroSchema = Schema.parse(avroTextFromSchema);
-
-          if (optionalDefaultMode == DataToAvroSchemaTranslationOptions.DEFAULT_OPTIONAL_DEFAULT_MODE)
+          DataSchema schema = TestUtil.dataSchemaFromString(schemaText);
+          String preTranslateSchemaText = schema.toString();
+          Exception exc = null;
+          String avroTextFromSchema = null;
+          try
           {
-            // use other dataToAvroSchemaJson
-            String avroSchema2Json = SchemaTranslator.dataToAvroSchemaJson(
-              TestUtil.dataSchemaFromString(schemaText)
+            avroTextFromSchema = SchemaTranslator.dataToAvroSchemaJson(
+              schema,
+              new DataToAvroSchemaTranslationOptions(optionalDefaultMode, JsonBuilder.Pretty.SPACES, embedSchemaMode)
             );
-            @SuppressWarnings("deprecation")
-            String avroSchema2JsonCompact = SchemaTranslator.dataToAvroSchemaJson(
-              TestUtil.dataSchemaFromString(schemaText),
-              JsonBuilder.Pretty.COMPACT
-            );
-            assertEquals(avroSchema2Json, avroSchema2JsonCompact);
-            Schema avroSchema2 = Schema.parse(avroSchema2Json);
-            assertEquals(avroSchema2, avroSchema);
-
-            // use dataToAvroSchema
-            Schema avroSchema3 = SchemaTranslator.dataToAvroSchema(TestUtil.dataSchemaFromString(schemaText));
-            assertEquals(avroSchema3, avroSchema2);
+            if (debug)
+            {
+              System.out.println("EmbeddedSchema: " + embedSchemaMode +
+                                 ", OptionalDefaultMode: " + optionalDefaultMode +
+                                 ", Avro Schema: " + avroTextFromSchema);
+            }
           }
-
-          if (modeInputs.length >= 4)
+          catch (Exception e)
           {
-            // check if the translated default value is good by using it.
-            // writer schema and Avro JSON value should not include fields with default values.
-            String writerSchemaText = (String) modeInputs[2];
-            String avroValueJson = (String) modeInputs[3];
-            Schema writerSchema = Schema.parse(writerSchemaText);
-            genericRecordFromString(avroValueJson, writerSchema, avroSchema);
+            exc = e;
+            if (debug) { e.printStackTrace(); }
           }
-        }
-        else
-        {
-          Class<?> expectedExceptionClass = (Class<?>) expected;
-          String expectedString = (String) modeInputs[2];
-          assertNotNull(exc);
-          assertNull(avroTextFromSchema);
-          assertTrue(expectedExceptionClass.isInstance(exc));
-          assertTrue(exc.getMessage().contains(expectedString), "\"" + exc.getMessage() + "\" does not contain \"" + expectedString + "\"");
+          if (expected instanceof String)
+          {
+            assertNull(exc);
+
+            String expectedAvroText = (String) expected;
+            if (embedSchemaMode == EmbedSchemaMode.ROOT_ONLY && hasEmbeddedSchema(schema))
+            {
+              // when embeddedSchema is enabled
+              // for map, array, enums. and records, we embed the original Pegasus schema
+              DataMap expectedAvroDataMap = TestUtil.dataMapFromString(expectedAvroText);
+              DataMap resultAvroDataMap = TestUtil.dataMapFromString(avroTextFromSchema);
+              Object dataProperty = resultAvroDataMap.remove(SchemaTranslator.DATA_PROPERTY);
+              assertEquals(resultAvroDataMap, expectedAvroDataMap);
+
+              // look for embedded schema
+              assertNotNull(dataProperty);
+              assertTrue(dataProperty instanceof DataMap);
+              Object schemaProperty = ((DataMap) dataProperty).get(SchemaTranslator.SCHEMA_PROPERTY);
+              assertNotNull(schemaProperty);
+              assertTrue(schemaProperty instanceof DataMap);
+
+              // make sure embedded schema is same as the original schema
+              SchemaParser schemaParser = TestUtil.schemaParserFromObjects(Arrays.asList(schemaProperty));
+              DataSchema embeddedSchema = schemaParser.topLevelDataSchemas().get(0);
+              assertEquals(embeddedSchema, schema.getDereferencedDataSchema());
+
+              // look for optional default mode
+              Object optionalDefaultModeProperty = ((DataMap) dataProperty).get(SchemaTranslator.OPTIONAL_DEFAULT_MODE_PROPERTY);
+              assertNotNull(optionalDefaultMode);
+              assertEquals(optionalDefaultModeProperty, optionalDefaultMode.toString());
+            }
+            else
+            {
+              // embeddedSchema is not enabled or
+              // for unions and primitives, we never embed the pegasus schema
+              if (embedSchemaMode == EmbedSchemaMode.NONE && hasEmbeddedSchema(schema))
+              {
+                // make sure no embedded schema when
+                DataMap resultAvroDataMap = TestUtil.dataMapFromString(avroTextFromSchema);
+                assertFalse(resultAvroDataMap.containsKey(SchemaTranslator.DATA_PROPERTY));
+              }
+              assertEquals(avroTextFromSchema, expectedAvroText);
+            }
+
+            String postTranslateSchemaText = schema.toString();
+            assertEquals(preTranslateSchemaText, postTranslateSchemaText);
+
+            // make sure Avro accepts it
+            Schema avroSchema = Schema.parse(avroTextFromSchema);
+            if (debug) System.out.println("AvroSchema: " + avroSchema);
+
+            if (optionalDefaultMode == DataToAvroSchemaTranslationOptions.DEFAULT_OPTIONAL_DEFAULT_MODE)
+            {
+              // use other dataToAvroSchemaJson
+              String avroSchema2Json = SchemaTranslator.dataToAvroSchemaJson(
+                TestUtil.dataSchemaFromString(schemaText)
+              );
+              @SuppressWarnings("deprecation")
+              String avroSchema2JsonCompact = SchemaTranslator.dataToAvroSchemaJson(
+                TestUtil.dataSchemaFromString(schemaText),
+                JsonBuilder.Pretty.COMPACT
+              );
+              assertEquals(avroSchema2Json, avroSchema2JsonCompact);
+              Schema avroSchema2 = Schema.parse(avroSchema2Json);
+              assertEquals(avroSchema2, avroSchema);
+
+              // use dataToAvroSchema
+              Schema avroSchema3 = SchemaTranslator.dataToAvroSchema(TestUtil.dataSchemaFromString(schemaText));
+              assertEquals(avroSchema3, avroSchema2);
+            }
+
+            if (modeInputs.length >= 4)
+            {
+              // check if the translated default value is good by using it.
+              // writer schema and Avro JSON value should not include fields with default values.
+              String writerSchemaText = (String) modeInputs[2];
+              String avroValueJson = (String) modeInputs[3];
+              Schema writerSchema = Schema.parse(writerSchemaText);
+              genericRecordFromString(avroValueJson, writerSchema, avroSchema);
+            }
+
+            if (embedSchemaMode == EmbedSchemaMode.ROOT_ONLY && hasEmbeddedSchema(schema))
+            {
+              // if embedded schema is enabled, translate Avro back to Pegasus schema.
+              // the output Pegasus schema should be exactly same the input schema
+              // taking into account typeref.
+              AvroToDataSchemaTranslationOptions avroToDataSchemaMode = new AvroToDataSchemaTranslationOptions(AvroToDataSchemaTranslationMode.VERIFY_EMBEDDED_SCHEMA);
+              DataSchema embeddedSchema = SchemaTranslator.avroToDataSchema(avroTextFromSchema, avroToDataSchemaMode);
+              assertEquals(embeddedSchema, schema.getDereferencedDataSchema());
+            }
+          }
+          else
+          {
+            Class<?> expectedExceptionClass = (Class<?>) expected;
+            String expectedString = (String) modeInputs[2];
+            assertNotNull(exc);
+            assertNull(avroTextFromSchema);
+            assertTrue(expectedExceptionClass.isInstance(exc));
+            assertTrue(exc.getMessage().contains(expectedString), "\"" + exc.getMessage() + "\" does not contain \"" + expectedString + "\"");
+          }
         }
       }
     }
+  }
+
+  private static boolean hasEmbeddedSchema(DataSchema schema)
+  {
+    DataSchema.Type type = schema.getDereferencedType();
+    return type == DataSchema.Type.ARRAY ||
+           type == DataSchema.Type.MAP ||
+           type == DataSchema.Type.ENUM ||
+           type == DataSchema.Type.FIXED ||
+           type == DataSchema.Type.RECORD;
+  }
+
+
+  @Test
+  public void testEmbeddingSchemaWithDataProperty() throws IOException
+  {
+    String inputs[][] =
+    {
+      {
+        // already has "com.linkedin.data" property but it is not a DataMap, replace with DataMap.
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ], \"com.linkedin.data\" : 1 }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ], \"com.linkedin.data\" : { \"schema\" : { \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ], \"com.linkedin.data\" : 1 }, \"optionalDefaultMode\" : \"TRANSLATE_DEFAULT\" } }"
+      },
+      {
+        // already has "com.linkedin.data" property
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ], \"com.linkedin.data\" : {} }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ], \"com.linkedin.data\" : { \"schema\" : { \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ], \"com.linkedin.data\" : {  } }, \"optionalDefaultMode\" : \"TRANSLATE_DEFAULT\" } }"
+      },
+      {
+        // already has "com.linkedin.data" property containing "extra" property, "extra" property is reserved in translated schema
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ], \"com.linkedin.data\" : { \"extra\" : 2 } }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ], \"com.linkedin.data\" : { \"schema\" : { \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ], \"com.linkedin.data\" : { \"extra\" : 2 } }, \"optionalDefaultMode\" : \"TRANSLATE_DEFAULT\", \"extra\" : 2 } }"
+      },
+      {
+        // already has "com.linkedin.data" property containing reserved "schema" property, "schema" property is replaced in translated schema
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ], \"com.linkedin.data\" : { \"schema\" : 2 } }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ], \"com.linkedin.data\" : { \"schema\" : { \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ], \"com.linkedin.data\" : { \"schema\" : 2 } }, \"optionalDefaultMode\" : \"TRANSLATE_DEFAULT\" } }"
+      },
+      {
+        // already has "com.linkedin.data" property containing reserved "optionalDefaultMode" property, "optionalDefaultMode" property is replaced in translated schema
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ], \"com.linkedin.data\" : { \"optionalDefaultMode\" : 2 } }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ], \"com.linkedin.data\" : { \"schema\" : { \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ], \"com.linkedin.data\" : { \"optionalDefaultMode\" : 2 } }, \"optionalDefaultMode\" : \"TRANSLATE_DEFAULT\" } }"
+      }
+    };
+
+    DataToAvroSchemaTranslationOptions options = new DataToAvroSchemaTranslationOptions(JsonBuilder.Pretty.SPACES, EmbedSchemaMode.ROOT_ONLY);
+
+    boolean hasEmpty = false;
+    for (String[] row : inputs)
+    {
+      String schemaText = row[0];
+      String expected = row[1];
+      String avroSchemaJson = SchemaTranslator.dataToAvroSchemaJson(TestUtil.dataSchemaFromString(schemaText), options);
+      if (expected.isEmpty())
+      {
+        hasEmpty = true;
+        System.out.println(avroSchemaJson);
+      }
+      else
+      {
+        DataMap avroSchemaDataMap = TestUtil.dataMapFromString(avroSchemaJson);
+        DataMap expectedDataMap = TestUtil.dataMapFromString(expected);
+        assertEquals(avroSchemaDataMap, expectedDataMap);
+      }
+    }
+    assertFalse(hasEmpty);
   }
 
   @Test
@@ -1180,20 +1304,84 @@ public class TestSchemaTranslator
       },
     };
 
+    AvroToDataSchemaTranslationOptions options[] =
+    {
+      new AvroToDataSchemaTranslationOptions(AvroToDataSchemaTranslationMode.TRANSLATE),
+      new AvroToDataSchemaTranslationOptions(AvroToDataSchemaTranslationMode.RETURN_EMBEDDED_SCHEMA),
+      new AvroToDataSchemaTranslationOptions(AvroToDataSchemaTranslationMode.VERIFY_EMBEDDED_SCHEMA)
+    };
+
     // test generating Pegasus schema from Avro schema
     for (String[] pair : inputs)
     {
-      String avroText = pair[0];
-      String schemaText = pair[1];
-      if (debug) System.out.println(avroText);
-      Schema avroSchema = Schema.parse(avroText);
-      String preTranslateAvroSchema = avroSchema.toString();
-      DataSchema schema = SchemaTranslator.avroToDataSchema(avroSchema);
-      String schemaTextFromAvro = SchemaToJsonEncoder.schemaToJson(schema, JsonBuilder.Pretty.SPACES);
-      assertEquals(schemaTextFromAvro, schemaText);
-      String postTranslateAvroSchema = avroSchema.toString();
-      assertEquals(preTranslateAvroSchema, postTranslateAvroSchema);
+      for (AvroToDataSchemaTranslationOptions option : options)
+      {
+        String avroText = pair[0];
+        String schemaText = pair[1];
+        if (debug) System.out.println(avroText);
+
+        DataSchema schema = SchemaTranslator.avroToDataSchema(avroText, option);
+        String schemaTextFromAvro = SchemaToJsonEncoder.schemaToJson(schema, JsonBuilder.Pretty.SPACES);
+        assertEquals(schemaTextFromAvro, schemaText);
+
+        Schema avroSchema = Schema.parse(avroText);
+        String preTranslateAvroSchema = avroSchema.toString();
+        schema = SchemaTranslator.avroToDataSchema(avroSchema, option);
+        schemaTextFromAvro = SchemaToJsonEncoder.schemaToJson(schema, JsonBuilder.Pretty.SPACES);
+        assertEquals(schemaTextFromAvro, schemaText);
+        String postTranslateAvroSchema = avroSchema.toString();
+        assertEquals(preTranslateAvroSchema, postTranslateAvroSchema);
+      }
     }
+  }
+
+  @Test
+  public void testAvroToDataSchemaTranslationMode()
+  {
+    Object inputs[][] =
+    {
+      {
+        AvroToDataSchemaTranslationMode.TRANSLATE,
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ], \"com.linkedin.data\" : { } }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ], \"com.linkedin.data\" : { } }"
+      },
+      {
+        AvroToDataSchemaTranslationMode.RETURN_EMBEDDED_SCHEMA,
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ ], \"com.linkedin.data\" : { \"schema\" : { \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ] }, \"optionalDefaultMode\" : \"TRANSLATE_DEFAULT\" } }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ] }"
+      },
+      {
+        AvroToDataSchemaTranslationMode.VERIFY_EMBEDDED_SCHEMA,
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ ], \"com.linkedin.data\" : { \"schema\" : { \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ] }, \"optionalDefaultMode\" : \"TRANSLATE_DEFAULT\" } }",
+        IllegalArgumentException.class
+      },
+      {
+        AvroToDataSchemaTranslationMode.VERIFY_EMBEDDED_SCHEMA,
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ], \"com.linkedin.data\" : { \"schema\" : { \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ] }, \"optionalDefaultMode\" : \"TRANSLATE_DEFAULT\" } }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ] }"
+      }
+    };
+
+    for (Object[] row : inputs)
+    {
+      AvroToDataSchemaTranslationMode translationMode = (AvroToDataSchemaTranslationMode) row[0];
+      String avroSchemaText = (String) row[1];
+      Object expected = row[2];
+
+      AvroToDataSchemaTranslationOptions options = new AvroToDataSchemaTranslationOptions(translationMode);
+      try
+      {
+        DataSchema translatedDataSchema = SchemaTranslator.avroToDataSchema(avroSchemaText, options);
+        assertTrue(expected instanceof String);
+        assertEquals(TestUtil.dataMapFromString(translatedDataSchema.toString()), TestUtil.dataMapFromString((String) expected));
+      }
+      catch (Exception e)
+      {
+        assertTrue(expected instanceof Class);
+        assertTrue(((Class<?>) expected).isAssignableFrom(e.getClass()));
+      }
+    }
+
   }
 
   @Test

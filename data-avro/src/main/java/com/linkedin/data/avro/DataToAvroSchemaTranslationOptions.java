@@ -25,45 +25,54 @@ public class DataToAvroSchemaTranslationOptions
 {
   public static final OptionalDefaultMode DEFAULT_OPTIONAL_DEFAULT_MODE = OptionalDefaultMode.TRANSLATE_DEFAULT;
   public static final JsonBuilder.Pretty DEFAULT_PRETTY = JsonBuilder.Pretty.COMPACT;
+  public static final EmbedSchemaMode DEFAULT_EMBED_SCHEMA_MODE = EmbedSchemaMode.NONE;
 
   /**
    * Default constructor.
    *
    * Sets optional default mode to {@link #DEFAULT_OPTIONAL_DEFAULT_MODE}.
    * Sets pretty mode to {@link #DEFAULT_PRETTY}.
+   * Sets embed schema mode to {@link #DEFAULT_EMBED_SCHEMA_MODE}.
    */
   public DataToAvroSchemaTranslationOptions()
   {
-    _optionalDefaultMode = DEFAULT_OPTIONAL_DEFAULT_MODE;
-    _pretty = DEFAULT_PRETTY;
+    this(DEFAULT_OPTIONAL_DEFAULT_MODE, DEFAULT_PRETTY, DEFAULT_EMBED_SCHEMA_MODE);
   }
 
   /**
    * Constructor.
    *
    * Sets optional default mode to the specified value.
-   * Sets pretty mode to {@link #DEFAULT_PRETTY}.
    *
    * @param optionalDefaultMode specifies the {@link OptionalDefaultMode}.
    */
   public DataToAvroSchemaTranslationOptions(OptionalDefaultMode optionalDefaultMode)
   {
-    _optionalDefaultMode = optionalDefaultMode;
-    _pretty = DEFAULT_PRETTY;
+    this(optionalDefaultMode, DEFAULT_PRETTY, DEFAULT_EMBED_SCHEMA_MODE);
   }
 
   /**
    * Constructor.
    *
    * Sets pretty mode to the specified value.
-   * Sets optional default mode to {@link #DEFAULT_OPTIONAL_DEFAULT_MODE}.
    *
    * @param pretty specifies the pretty mode.
    */
   public DataToAvroSchemaTranslationOptions(JsonBuilder.Pretty pretty)
   {
-    _optionalDefaultMode = DEFAULT_OPTIONAL_DEFAULT_MODE;
-    _pretty = pretty;
+    this(DEFAULT_OPTIONAL_DEFAULT_MODE, pretty, DEFAULT_EMBED_SCHEMA_MODE);
+  }
+
+  /**
+   * Constructor.
+   *
+   * Sets embedded schema to the specified value.
+   *
+   * @param embedSchemaMode specifies to the specified {@link EmbedSchemaMode}.
+   */
+  public DataToAvroSchemaTranslationOptions(EmbedSchemaMode embedSchemaMode )
+  {
+    this(DEFAULT_OPTIONAL_DEFAULT_MODE, DEFAULT_PRETTY, embedSchemaMode);
   }
 
   /**
@@ -74,10 +83,40 @@ public class DataToAvroSchemaTranslationOptions
    */
   public DataToAvroSchemaTranslationOptions(OptionalDefaultMode optionalDefaultMode, JsonBuilder.Pretty pretty)
   {
-    _optionalDefaultMode = optionalDefaultMode;
-    _pretty = pretty;
+    this(optionalDefaultMode, pretty, DEFAULT_EMBED_SCHEMA_MODE);
   }
 
+  /**
+   * Constructor.
+   *
+   * @param pretty specifies the pretty mode.
+   * @param embedSchemaMode specifies the embed schema mode.
+   */
+  public DataToAvroSchemaTranslationOptions(JsonBuilder.Pretty pretty, EmbedSchemaMode embedSchemaMode)
+  {
+    this(DEFAULT_OPTIONAL_DEFAULT_MODE, pretty, embedSchemaMode);
+  }
+
+  /**
+   * Constructor.
+   *
+   * @param optionalDefaultMode specifies the optional default mode.
+   * @param pretty specifies the pretty mode.
+   * @param embedSchemaMode specifies the embed schema mode.
+   */
+  public DataToAvroSchemaTranslationOptions(OptionalDefaultMode optionalDefaultMode, JsonBuilder.Pretty pretty, EmbedSchemaMode embedSchemaMode)
+  {
+    _optionalDefaultMode = optionalDefaultMode;
+    _pretty = pretty;
+    _embedSchemaMode = embedSchemaMode;
+  }
+
+  /**
+   * Set the {@link OptionalDefaultMode}.
+   *
+   * @param mode provides the new {@link OptionalDefaultMode}.
+   * @return {@code this}.
+   */
   public DataToAvroSchemaTranslationOptions setOptionalDefaultMode(OptionalDefaultMode mode)
   {
     _optionalDefaultMode = mode;
@@ -116,6 +155,24 @@ public class DataToAvroSchemaTranslationOptions
     return _pretty;
   }
 
+  /**
+   * Set the embed schema mode.
+   */
+  public DataToAvroSchemaTranslationOptions setEmbedSchemaMode(EmbedSchemaMode embedSchemaMode)
+  {
+    _embedSchemaMode = embedSchemaMode;
+    return this;
+  }
+
+  /**
+   * Returns the embed schema mode.
+   */
+  public EmbedSchemaMode getEmbeddedSchema()
+  {
+    return _embedSchemaMode;
+  }
+
   private OptionalDefaultMode _optionalDefaultMode;
   private JsonBuilder.Pretty  _pretty;
+  private EmbedSchemaMode _embedSchemaMode;
 }

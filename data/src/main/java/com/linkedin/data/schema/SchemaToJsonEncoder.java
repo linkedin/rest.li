@@ -147,7 +147,7 @@ public class SchemaToJsonEncoder
         _builder.writeStringField(TYPE_KEY, ARRAY_TYPE, true);
         _builder.writeFieldName(ITEMS_KEY);
         encode(((ArrayDataSchema) schema).getItems());
-        _builder.writeProperties(schema.getProperties());
+        encodeProperties(schema);
         _builder.writeEndObject();
         break;
       case MAP:
@@ -155,7 +155,7 @@ public class SchemaToJsonEncoder
         _builder.writeStringField(TYPE_KEY, MAP_TYPE, true);
         _builder.writeFieldName(VALUES_KEY);
         encode(((MapDataSchema) schema).getValues());
-        _builder.writeProperties(schema.getProperties());
+        encodeProperties(schema);
         _builder.writeEndObject();
         break;
       case UNION:
@@ -226,7 +226,7 @@ public class SchemaToJsonEncoder
         throw new IllegalStateException("schema type " + schema.getType() + " is not a known NamedDataSchema type");
     }
 
-    _builder.writeProperties(schema.getProperties());
+    encodeProperties(schema);
     List<String> aliases = new ArrayList<String>();
     for (Name name : schema.getAliases())
     {
@@ -244,13 +244,24 @@ public class SchemaToJsonEncoder
   }
 
   /**
+   * Encode the properties of the {@link DataSchema}
+   *
+   * @param schema the {@link DataSchema} being encoded.
+   * @throws IOException if there is an error while encoding.
+   */
+  protected void encodeProperties(DataSchema schema) throws IOException
+  {
+    _builder.writeProperties(schema.getProperties());
+  }
+
+  /**
    * Encode a the fields of a {@link RecordDataSchema}.
    *
    * This method does not output a key. The key should be emitted before calling this method.
    * If {@link #isEncodeInclude()} returns true, then only fields that are defined in the record being
    * encoded will be encoded, else all fields including those from included records will be encoded.
    *
-   * @param recordDataSchema of the {@link RecordDataSchema} being encoded.
+   * @param recordDataSchema the {@link RecordDataSchema} being encoded.
    * @throws IOException if there is an error while encoding.
    */
   protected void encodeFields(RecordDataSchema recordDataSchema) throws IOException

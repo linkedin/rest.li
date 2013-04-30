@@ -22,16 +22,18 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaConstants;
 import com.linkedin.data.schema.JsonBuilder;
-import com.linkedin.data.schema.Name;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.SchemaToJsonEncoder;
 import com.linkedin.data.schema.UnionDataSchema;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Formatter;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static com.linkedin.data.schema.DataSchemaConstants.DEFAULT_KEY;
 import static com.linkedin.data.schema.DataSchemaConstants.TYPE_KEY;
@@ -58,21 +60,23 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
     try
     {
       JsonBuilder builder = new JsonBuilder(options.getPretty());
-      SchemaToAvroJsonEncoder serializer = new SchemaToAvroJsonEncoder(builder, fieldDefaultValues, options);
+      SchemaToAvroJsonEncoder serializer = new SchemaToAvroJsonEncoder(builder, schema, fieldDefaultValues, options);
       serializer.encode(schema);
       return builder.result();
     }
     catch (IOException exc)
     {
-      return exc.getMessage();
+      throw new IllegalStateException(exc);
     }
   }
 
   protected SchemaToAvroJsonEncoder(JsonBuilder builder,
+                                    DataSchema rootSchema,
                                     IdentityHashMap<RecordDataSchema.Field, Object> fieldDefaultValues,
                                     DataToAvroSchemaTranslationOptions options)
   {
     super(builder);
+    _rootSchema = rootSchema;
     _fieldDefaultValues = fieldDefaultValues;
     _options = options;
   }
@@ -93,6 +97,65 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
     {
       super.encode(schema.getDereferencedDataSchema());
     }
+  }
+
+  @Override
+  protected void encodeProperties(DataSchema schema) throws IOException
+  {
+    if (_options.getEmbeddedSchema() == EmbedSchemaMode.ROOT_ONLY)
+    {
+      DataSchema dereferencedSchema = _rootSchema.getDereferencedDataSchema();
+      if (schema == dereferencedSchema && schema.getType() != DataSchema.Type.UNION)
+      {
+        encodePropertiesWithEmbeddedSchema(schema);
+        return;
+      }
+    }
+    super.encodeProperties(schema);
+  }
+
+  private static final Set<String> RESERVED_DATA_PROPERTIES =
+    new HashSet<String>(Arrays.asList(SchemaTranslator.SCHEMA_PROPERTY, SchemaTranslator.OPTIONAL_DEFAULT_MODE_PROPERTY));
+
+  private void encodePropertiesWithEmbeddedSchema(DataSchema schema) throws IOException
+  {
+    Object dataProperty = null;
+    for (Map.Entry<String, Object> entry : schema.getProperties().entrySet())
+    {
+      String key = entry.getKey();
+      Object value = entry.getValue();
+      if (key.equals(SchemaTranslator.DATA_PROPERTY))
+      {
+        dataProperty = value;
+      }
+      else
+      {
+        _builder.writeFieldName(key);
+        _builder.writeData(value);
+      }
+    }
+
+    _builder.writeFieldName(SchemaTranslator.DATA_PROPERTY);
+    _builder.writeStartObject();
+    _builder.writeFieldName(SchemaTranslator.SCHEMA_PROPERTY);
+    SchemaToJsonEncoder schemaToJsonEncoder = new SchemaToJsonEncoder(_builder);
+    schemaToJsonEncoder.encode(schema);
+    _builder.writeFieldName(SchemaTranslator.OPTIONAL_DEFAULT_MODE_PROPERTY);
+    _builder.writeString(_options.getOptionalDefaultMode().toString());
+
+    if (dataProperty != null && dataProperty.getClass() == DataMap.class)
+    {
+      for (Map.Entry<String, Object> pegasusEntry : ((DataMap) dataProperty).entrySet())
+      {
+        String key = pegasusEntry.getKey();
+        if (RESERVED_DATA_PROPERTIES.contains(key) == false)
+        {
+          _builder.writeFieldName(pegasusEntry.getKey());
+          _builder.writeData(pegasusEntry.getValue());
+        }
+      }
+    }
+    _builder.writeEndObject();
   }
 
   /**
@@ -316,6 +379,7 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
     return encodedCustomAvroSchema;
   }
 
+  private final DataSchema _rootSchema;
   private final IdentityHashMap<RecordDataSchema.Field, Object> _fieldDefaultValues;
   private final DataToAvroSchemaTranslationOptions _options;
 

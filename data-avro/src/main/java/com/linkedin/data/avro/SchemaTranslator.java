@@ -35,12 +35,14 @@ import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.SchemaParserFactory;
 import com.linkedin.data.schema.UnionDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
-import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.avro.Schema;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.linkedin.data.schema.DataSchemaConstants.NULL_DATA_SCHEMA;
 import static com.linkedin.data.schema.UnionDataSchema.avroUnionMemberKey;
@@ -50,13 +52,36 @@ import static com.linkedin.data.schema.UnionDataSchema.avroUnionMemberKey;
  */
 public class SchemaTranslator
 {
+  private static final Logger log = LoggerFactory.getLogger(SchemaTranslator.class);
+
+  public static final String DATA_PROPERTY = "com.linkedin.data";
+  public static final String SCHEMA_PROPERTY = "schema";
+  public static final String OPTIONAL_DEFAULT_MODE_PROPERTY = "optionalDefaultMode";
+
   private SchemaTranslator()
   {
   }
 
   /**
    * Translate an Avro {@link Schema} to a {@link DataSchema}.
-   *
+   * <p>
+   * If the translation mode is {@link AvroToDataSchemaTranslationMode#RETURN_EMBEDDED_SCHEMA}
+   * and a {@link DataSchema} is embedded in the Avro schema, then return the embedded schema.
+   * An embedded schema is present if the Avro {@link Schema} has a "com.linkedin.data" property and the
+   * "com.linkedin.data" property contains both "schema" and "optionalDefaultMode" properties.
+   * The "schema" property provides the embedded {@link DataSchema}.
+   * The "optionalDefaultMode" property provides how optional default values were translated.
+   * <p>
+   * If the translation mode is {@link AvroToDataSchemaTranslationMode#VERIFY_EMBEDDED_SCHEMA}
+   * and a {@link DataSchema} is embedded in the Avro schema, then verify that the embedded schema
+   * translates to the input Avro schema. If the translated and embedded schema is the same,
+   * then return the embedded schema, else throw {@link IllegalArgumentException}.
+   * <p>
+   * If the translation mode is {@link com.linkedin.data.avro.AvroToDataSchemaTranslationMode#TRANSLATE}
+   * or no embedded {@link DataSchema} is present, then this method
+   * translates the provided Avro {@link Schema} to a {@link DataSchema}
+   * as described follows:
+   * <p>
    * This method translates union with null record fields in Avro {@link Schema}
    * to optional fields in {@link DataSchema}. Record fields
    * whose type is a union with null will be translated to a new type, and the field becomes optional.
@@ -64,7 +89,7 @@ public class SchemaTranslator
    * field is the non-null member type of the union. If the Avro union does not have two types
    * (one of them is the null type) then the new type of the field is a union type with the null type
    * removed from the original union.
-   *
+   * <p>
    * This method also translates default values. If the field's type is a union with null
    * and has a default value, then this method also translates the default value of the field
    * to comply with the new type of the field. If the default value is null,
@@ -75,10 +100,120 @@ public class SchemaTranslator
    * non-null member type, then assign the default value to a JSON object
    * containing a single entry with the key being the member type discriminator of
    * the first union member and the value being the actual member value.
-   *
+   * <p>
    * Both the schema and default value translation takes into account that default value
    * representation for Avro unions does not include the member type discriminator and
    * the type of the default value is always the 1st member of the union.
+   *
+   * @param avroSchemaInJson provides the JSON representation of the Avro {@link Schema}.
+   * @param options specifies the {@link AvroToDataSchemaTranslationOptions}.
+   * @return the translated {@link DataSchema}.
+   * @throws IllegalArgumentException if the Avro {@link Schema} cannot be translated.
+   */
+  public static DataSchema avroToDataSchema(String avroSchemaInJson, AvroToDataSchemaTranslationOptions options)
+    throws IllegalArgumentException
+  {
+    SchemaParser parser = SchemaParserFactory.instance().create(null);
+    parser.getValidationOptions().setAvroUnionMode(true);
+    parser.parse(avroSchemaInJson);
+    if (parser.hasError())
+    {
+      throw new IllegalArgumentException(parser.errorMessage());
+    }
+    assert(parser.topLevelDataSchemas().size() == 1);
+    DataSchema dataSchema = parser.topLevelDataSchemas().get(0);
+    DataSchema resultDataSchema = null;
+
+    AvroToDataSchemaTranslationMode translationMode = options.getTranslationMode();
+    if (translationMode == AvroToDataSchemaTranslationMode.RETURN_EMBEDDED_SCHEMA ||
+        translationMode == AvroToDataSchemaTranslationMode.VERIFY_EMBEDDED_SCHEMA)
+    {
+      // check for embedded schema
+
+      Object dataProperty = dataSchema.getProperties().get(SchemaTranslator.DATA_PROPERTY);
+      if (dataProperty != null && dataProperty.getClass() == DataMap.class)
+      {
+        Object schemaProperty = ((DataMap) dataProperty).get(SchemaTranslator.SCHEMA_PROPERTY);
+        if (schemaProperty.getClass() == DataMap.class)
+        {
+          SchemaParser embeddedSchemaParser = SchemaParserFactory.instance().create(null);
+          embeddedSchemaParser.parse(Arrays.asList(schemaProperty));
+          if (embeddedSchemaParser.hasError())
+          {
+            throw new IllegalArgumentException("Embedded schema is invalid\n" + embeddedSchemaParser.errorMessage());
+          }
+          assert(embeddedSchemaParser.topLevelDataSchemas().size() == 1);
+          resultDataSchema = embeddedSchemaParser.topLevelDataSchemas().get(0);
+
+          if (translationMode == AvroToDataSchemaTranslationMode.VERIFY_EMBEDDED_SCHEMA)
+          {
+            // additional verification to make sure that embedded schema translates to Avro schema
+            DataToAvroSchemaTranslationOptions dataToAvdoSchemaOptions = new DataToAvroSchemaTranslationOptions();
+            Object optionalDefaultModeProperty = ((DataMap) dataProperty).get(SchemaTranslator.OPTIONAL_DEFAULT_MODE_PROPERTY);
+            dataToAvdoSchemaOptions.setOptionalDefaultMode(OptionalDefaultMode.valueOf(optionalDefaultModeProperty.toString()));
+            Schema avroSchemaFromEmbedded = dataToAvroSchema(resultDataSchema, dataToAvdoSchemaOptions);
+            Schema avroSchemaFromJson = Schema.parse(avroSchemaInJson);
+            if (avroSchemaFromEmbedded.equals(avroSchemaFromJson) == false)
+            {
+              throw new IllegalArgumentException("Embedded schema does not translate to input Avro schema: " + avroSchemaInJson);
+            }
+          }
+        }
+      }
+    }
+    if (resultDataSchema == null)
+    {
+      // translationMode == TRANSLATE or no embedded schema
+
+      DataSchemaTraverse traverse = new DataSchemaTraverse();
+      traverse.traverse(dataSchema, AvroToDataSchemaConvertCallback.INSTANCE);
+      // convert default values
+      traverse.traverse(dataSchema, DefaultAvroToDataConvertCallback.INSTANCE);
+      // make sure it can round-trip
+      String dataSchemaJson = dataSchema.toString();
+      resultDataSchema = DataTemplateUtil.parseSchema(dataSchemaJson);
+    }
+    return resultDataSchema;
+  }
+
+  /**
+   * See {@link #avroToDataSchema(String, AvroToDataSchemaTranslationOptions)}.
+   *
+   * @param avroSchemaInJson provides the JSON representation of the Avro {@link Schema}.
+   * @return the translated {@link DataSchema}.
+   * @throws IllegalArgumentException if the Avro {@link Schema} cannot be translated.
+   */
+  public static DataSchema avroToDataSchema(String avroSchemaInJson) throws IllegalArgumentException
+  {
+    return avroToDataSchema(avroSchemaInJson, new AvroToDataSchemaTranslationOptions());
+  }
+
+  /**
+   * See {@link #avroToDataSchema(String, AvroToDataSchemaTranslationOptions)}.
+   * <p>
+   * When Avro {@link Schema} is parsed from its JSON representation and the resulting
+   * Avro {@link Schema} is serialized via {@link #toString()} into JSON again, it does not
+   * preserve the custom properties that are in the original JSON representation.
+   * Since this method uses the {@link org.apache.avro.Schema#toString()}, this method
+   * should not be used together with {@link AvroToDataSchemaTranslationMode#RETURN_EMBEDDED_SCHEMA}
+   * or {@link AvroToDataSchemaTranslationMode#VERIFY_EMBEDDED_SCHEMA}. These modes depend
+   * on custom properties to provide the embedded schema. If custom properties are not preserved,
+   * any embedded schema will not be available to
+   * {@link #dataToAvroSchema(com.linkedin.data.schema.DataSchema, DataToAvroSchemaTranslationOptions)}.
+   *
+   * @param avroSchema provides the Avro {@link Schema}.
+   * @param options specifies the {@link AvroToDataSchemaTranslationOptions}.
+   * @return the translated {@link DataSchema}.
+   * @throws IllegalArgumentException if the Avro {@link Schema} cannot be translated.
+   */
+  public static DataSchema avroToDataSchema(Schema avroSchema, AvroToDataSchemaTranslationOptions options) throws IllegalArgumentException
+  {
+    String avroSchemaInJson = avroSchema.toString();
+    return avroToDataSchema(avroSchemaInJson, options);
+  }
+
+  /**
+   * See {@link #avroToDataSchema(Schema, AvroToDataSchemaTranslationOptions)}.
    *
    * @param avroSchema provides the Avro {@link Schema}.
    * @return the translated {@link DataSchema}.
@@ -86,24 +221,8 @@ public class SchemaTranslator
    */
   public static DataSchema avroToDataSchema(Schema avroSchema) throws IllegalArgumentException
   {
-    String avroJson = avroSchema.toString();
-    SchemaParser parser = SchemaParserFactory.instance().create(null);
-    parser.getValidationOptions().setAvroUnionMode(true);
-    parser.parse(avroJson);
-    if (parser.hasError())
-    {
-      throw new IllegalArgumentException(parser.errorMessage());
-    }
-    assert(parser.topLevelDataSchemas().size() == 1);
-    DataSchema dataSchema = parser.topLevelDataSchemas().get(0);
-    DataSchemaTraverse traverse = new DataSchemaTraverse();
-    traverse.traverse(dataSchema, AvroToDataSchemaConvertCallback.INSTANCE);
-    // convert default values
-    traverse.traverse(dataSchema, DefaultAvroToDataConvertCallback.INSTANCE);
-    // make sure it can round-trip
-    String dataSchemaJson = dataSchema.toString();
-    dataSchema = DataTemplateUtil.parseSchema(dataSchemaJson);
-    return dataSchema;
+    String avroSchemaInJson = avroSchema.toString();
+    return avroToDataSchema(avroSchemaInJson, new AvroToDataSchemaTranslationOptions());
   }
 
   /**
@@ -168,24 +287,31 @@ public class SchemaTranslator
 
   /**
    * Translate from a {@link DataSchema} to an Avro {@link Schema}
-   *
+   * <p>
    * This method translates optional fields in the {@link DataSchema} to union with null
    * fields in Avro {@link Schema}. Record fields with optional attribute set to true will
    * be translated to a union type that has null member type. If field's type is not
    * a union, then the new union type will be a union of the field's type and the null type.
    * If the field's type is already a union, the new union type contains all the
    * union's member types and the null type.
-   *
+   * <p>
    * This method also translates or sets the default value for optional fields in
    * the {@link DataSchema}. If the optional field does not have a default value,
    * set the translated default value to null. {@link OptionalDefaultMode}
    * specifies how an optional field with a default value is translated.
-   *
+   * <p>
    * Both the schema and default value translation takes into account that default value
    * representation for Avro unions does not include the member type discriminator and
    * the type of the default value is always the 1st member type of the union. Schema translation
    * fails by throwing an {@link IllegalArgumentException} if the default value's type
    * is not the same as the 1st member type of the union.
+   * <p>
+   * If {@link DataToAvroSchemaTranslationOptions#getEmbeddedSchema()} EmbeddedSchema()} is
+   * set to {@link EmbedSchemaMode#ROOT_ONLY}, then the input {@link DataSchema} will be embedded in the
+   * translated Avro {@link Schema}.
+   * The embedded schema will be the value of the "schema" property within the "com.linkedin.data" property.
+   * If the input {@link DataSchema} is a typeref, then embedded schema will be that of the
+   * actual type referenced.
    *
    * @param dataSchema provides the {@link DataSchema}.
    * @param options specifies the {@link DataToAvroSchemaTranslationOptions}.
