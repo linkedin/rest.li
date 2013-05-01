@@ -50,7 +50,7 @@ public class TestJacksonCodec
     catch (OutOfMemoryError exc)
     {
       // Should run out of heap before perm gen
-      assertTrue(exc.getMessage().contains("Java heap space"));
+      assertFalse(exc.getMessage().contains("PermGen"));
     }
 
     try
@@ -63,7 +63,7 @@ public class TestJacksonCodec
     catch (OutOfMemoryError exc)
     {
       // Should run out of perm gen before heap
-      assertTrue(exc.getMessage().contains("PermGen space"));
+      assertTrue(exc.getMessage().contains("PermGen"));
     }
   }
 
