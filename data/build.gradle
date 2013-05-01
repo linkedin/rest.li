@@ -3,3 +3,11 @@ dependencies {
   compile externalDependency.jacksonCoreAsl
   testCompile externalDependency.testng
 }
+
+test {
+  minHeapSize = '128m'
+  maxHeapSize = '512m'
+  jvmArgs '-XX:MaxPermSize=256m'
+  forkEvery = 1
+  maxParallelForks = 4
+}
