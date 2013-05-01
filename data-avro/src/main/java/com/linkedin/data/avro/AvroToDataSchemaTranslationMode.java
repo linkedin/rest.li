@@ -17,7 +17,7 @@ public enum AvroToDataSchemaTranslationMode
    */
   RETURN_EMBEDDED_SCHEMA,
   /**
-   * If embedded schema is available, return the embedded schema after verifying that it translates the
+   * If embedded schema is available, return the embedded schema after verifying that it translates to the
    * provided Avro schema. If verification fails, then throw {@link IllegalArgumentException}.
    */
   VERIFY_EMBEDDED_SCHEMA
