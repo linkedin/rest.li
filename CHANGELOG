@@ -11,6 +11,10 @@ Support typerefs in association keys for batch responses.
 Disable interning of field names by Jackson parser. 
 This should reduce intended growth in perm gen.
 
+(RB=160184)
+Add embedded schema to Avro schema translated from Pegasus schema
+This allows reverse translation without loss (e.g. loss of typeref, custom translation instructions).
+
 1.8.19
 ------
 (RB=158603)
