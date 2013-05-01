@@ -25,6 +25,7 @@ import java.util.Map;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonGenerator;
+import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.PrettyPrinter;
 
 /**
@@ -232,8 +233,8 @@ public class JsonBuilder
   private final JsonGenerator _jsonGenerator;
   private final JacksonDataCodec _jacksonDataCodec = new JacksonDataCodec();
 
-  static private final JsonFactory _jsonFactory = new JsonFactory();
-  static private final PrettyPrinter _spacesPrettyPrinter = new SpacesPrettyPrinter();
+  private static final JsonFactory _jsonFactory = new JsonFactory().disable(JsonParser.Feature.INTERN_FIELD_NAMES);
+  private static final PrettyPrinter _spacesPrettyPrinter = new SpacesPrettyPrinter();
 
   private static class SpacesPrettyPrinter implements PrettyPrinter
   {

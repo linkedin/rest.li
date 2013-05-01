@@ -61,6 +61,7 @@ public class JacksonDataCodec implements TextDataCodec
   public JacksonDataCodec(JsonFactory jsonFactory)
   {
     _jsonFactory = jsonFactory;
+    _jsonFactory.disable(JsonParser.Feature.INTERN_FIELD_NAMES);
     setAllowComments(true);
   }
 
@@ -421,6 +422,7 @@ public class JacksonDataCodec implements TextDataCodec
     try
     {
       JsonFactory factory = new JsonFactory();
+      factory.disable(JsonParser.Feature.INTERN_FIELD_NAMES);
       JsonParser parser = factory.createJsonParser(json);
       JsonToken token = parser.nextToken();
       assert(token == JsonToken.START_OBJECT);

@@ -7,6 +7,10 @@ event leading to shutdown occurs on a Netty IO thread.
 (RB=159386)
 Support typerefs in association keys for batch responses.
 
+(RB=160441)
+Disable interning of field names by Jackson parser. 
+This should reduce intended growth in perm gen.
+
 1.8.19
 ------
 (RB=158603)
