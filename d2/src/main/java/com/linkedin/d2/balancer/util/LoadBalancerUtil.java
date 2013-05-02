@@ -208,7 +208,7 @@ public class LoadBalancerUtil
 
   public static class TargetHints
   {
-    private static final String TARGET_SERVICE_KEY_NAME = "D2-Hint-TargetService";
+    public static final String TARGET_SERVICE_KEY_NAME = "D2-Hint-TargetService";
 
 
     /**

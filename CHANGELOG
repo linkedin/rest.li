@@ -1,5 +1,11 @@
+1.8.21
+------
+
 1.8.20
 ------
+(RB=161479)
+made TARGET_SERVICE_KEY_NAME a public static variable
+
 (RB=154752)
 Fix bug where shutdown of HttpClientFactory will fail if the final
 event leading to shutdown occurs on a Netty IO thread.
