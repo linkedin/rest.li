@@ -17,16 +17,6 @@
 package com.linkedin.data.schema.validator;
 
 
-import com.linkedin.data.DataMap;
-import com.linkedin.data.element.DataElement;
-import com.linkedin.data.message.Message;
-import com.linkedin.data.message.MessageList;
-import com.linkedin.data.schema.DataSchema;
-import com.linkedin.data.schema.DataSchemaConstants;
-import com.linkedin.data.schema.DataSchemaTraverse;
-import com.linkedin.data.schema.NamedDataSchema;
-import com.linkedin.data.schema.RecordDataSchema;
-import com.linkedin.data.schema.TyperefDataSchema;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -37,6 +27,17 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+
+import com.linkedin.data.DataMap;
+import com.linkedin.data.element.DataElement;
+import com.linkedin.data.message.Message;
+import com.linkedin.data.message.MessageList;
+import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.DataSchemaConstants;
+import com.linkedin.data.schema.DataSchemaTraverse;
+import com.linkedin.data.schema.NamedDataSchema;
+import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.schema.TyperefDataSchema;
 
 
 /**
@@ -466,7 +467,7 @@ public class DataSchemaAnnotationValidator implements Validator
         String className = it.next();
         try
         {
-          Class<?> classFromName = Class.forName(className);
+          Class<?> classFromName = Class.forName(className, true, Thread.currentThread().getContextClassLoader());
           if (Validator.class.isAssignableFrom(classFromName))
           {
             @SuppressWarnings("unchecked")

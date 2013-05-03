@@ -17,10 +17,11 @@
 package com.linkedin.data.avro;
 
 
+import java.util.Map;
+
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.Name;
-import java.util.Map;
 
 
 /**
@@ -141,7 +142,7 @@ abstract class AvroOverrideFactory
             {
               try
               {
-                Class<?> translatorClass = Class.forName(customDataTranslatorClassName);
+                Class<?> translatorClass = Class.forName(customDataTranslatorClassName, true, Thread.currentThread().getContextClassLoader());
                 customDataTranslator = (CustomDataTranslator) translatorClass.newInstance();
               }
               catch (ClassCastException e)

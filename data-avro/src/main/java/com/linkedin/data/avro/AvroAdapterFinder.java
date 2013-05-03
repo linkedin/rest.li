@@ -18,6 +18,7 @@ package com.linkedin.data.avro;
 
 
 import java.lang.reflect.Constructor;
+
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 

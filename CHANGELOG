@@ -3,6 +3,10 @@
 (RB=162206)
 fix logging message for D2
 
+(RB=161556)
+Use thread context classpath instead of pegasus classpath when using Class.forName on names of 
+coercers, validators and avro custom data translators.
+
 1.8.21
 ------
 (RB=162036)
