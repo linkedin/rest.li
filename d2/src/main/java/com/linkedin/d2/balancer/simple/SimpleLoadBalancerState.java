@@ -191,12 +191,33 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
                                  Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories)
   {
     this(executorService,
+         uriPublisher,
+         clusterPublisher,
+         servicePublisher,
+         clientFactories,
+         loadBalancerStrategyFactories,
+         null, null, false);
+  }
+
+  public SimpleLoadBalancerState(ScheduledExecutorService executorService,
+                                 PropertyEventPublisher<UriProperties> uriPublisher,
+                                 PropertyEventPublisher<ClusterProperties> clusterPublisher,
+                                 PropertyEventPublisher<ServiceProperties> servicePublisher,
+                                 Map<String, TransportClientFactory> clientFactories,
+                                 Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories,
+                                 SSLContext sslContext,
+                                 SSLParameters sslParameters,
+                                 boolean isSSLEnabled)
+  {
+    this(executorService,
          new PropertyEventBusImpl<UriProperties>(executorService, uriPublisher),
          new PropertyEventBusImpl<ClusterProperties>(executorService, clusterPublisher),
          new PropertyEventBusImpl<ServiceProperties>(executorService, servicePublisher),
          clientFactories,
          loadBalancerStrategyFactories,
-         null, null, false);
+         sslContext,
+         sslParameters,
+         isSSLEnabled);
   }
 
   public SimpleLoadBalancerState(ScheduledExecutorService executorService,
@@ -995,7 +1016,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
 
   private Map<String, TransportClient> createAndInsertTransportClientTo(ServiceProperties serviceProperties)
   {
-    Map<String, Object> transportClientProperties = serviceProperties.getTransportClientProperties();
+    Map<String, Object> transportClientProperties = new HashMap<String,Object>(serviceProperties.getTransportClientProperties());
     List<String> schemes = serviceProperties.getPrioritizedSchemes();
     Map<String,TransportClient> newTransportClients = new HashMap<String, TransportClient>();
     if (schemes != null && !schemes.isEmpty())

@@ -1,5 +1,10 @@
+1.8.22
+------
+
 1.8.21
 ------
+(RB=162036)
+Fix UnsupportedOperationException from SimpleLoadBalancerSTate while creating transportClientProperties for https
 
 1.8.20
 ------

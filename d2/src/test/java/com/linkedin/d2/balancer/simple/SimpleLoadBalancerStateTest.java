@@ -45,11 +45,16 @@ import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportCallbackAdapter;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
+import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.util.clock.SystemClock;
+
+import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.ScheduledExecutorService;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -83,6 +88,9 @@ public class SimpleLoadBalancerStateTest
   private Map<String, TransportClientFactory>                                      _clientFactories;
   private Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> _loadBalancerStrategyFactories;
   private SimpleLoadBalancerState                                                  _state;
+  private SSLContext                                                               _sslContext;
+  private SSLParameters _sslParameters;
+  private boolean                                                                  isSslEnabled;
 
   public static void main(String[] args) throws Exception
   {
@@ -101,6 +109,11 @@ public class SimpleLoadBalancerStateTest
 
   public void reset()
   {
+    reset(false);
+  }
+
+  public void reset(boolean useSSL)
+  {
     _executorService = new SynchronousExecutorService();
     _uriRegistry = new MockStore<UriProperties>();
     _clusterRegistry = new MockStore<ClusterProperties>();
@@ -108,18 +121,43 @@ public class SimpleLoadBalancerStateTest
     _clientFactories = new HashMap<String, TransportClientFactory>();
     _loadBalancerStrategyFactories =
         new HashMap<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>>();
-
-    _clientFactories.put("http", new SimpleLoadBalancerTest.DoNothingClientFactory());
     _loadBalancerStrategyFactories.put("random", new RandomLoadBalancerStrategyFactory());
     _loadBalancerStrategyFactories.put("degraderV3", new DegraderLoadBalancerStrategyFactoryV3());
+    try {
+      _sslContext = SSLContext.getDefault();
+    }
+    catch (NoSuchAlgorithmException e)
+    {
+      throw new RuntimeException(e);
+    }
 
-    _state =
+    _sslParameters = new SSLParameters();
+
+    if (useSSL)
+    {
+      _clientFactories.put("https", new SimpleLoadBalancerTest.DoNothingClientFactory());
+      _state =
+          new SimpleLoadBalancerState(_executorService,
+                                      _uriRegistry,
+                                      _clusterRegistry,
+                                      _serviceRegistry,
+                                      _clientFactories,
+                                      _loadBalancerStrategyFactories,
+                                      _sslContext,
+                                      _sslParameters,
+                                      true);
+    }
+    else
+    {
+      _clientFactories.put("http", new SimpleLoadBalancerTest.DoNothingClientFactory());
+      _state =
         new SimpleLoadBalancerState(_executorService,
                                     _uriRegistry,
                                     _clusterRegistry,
                                     _serviceRegistry,
                                     _clientFactories,
                                     _loadBalancerStrategyFactories);
+    }
 
     FutureCallback<None> callback = new FutureCallback<None>();
     _state.start(callback);
@@ -956,6 +994,51 @@ public class SimpleLoadBalancerStateTest
     _state.getStrategy("service-1", "http");
 
     assertEquals(_state.getVersion(), expectedVersion);
+  }
+
+  @Test(groups = { "small", "back-end" })
+  public void testGetSSLClient() throws URISyntaxException
+  {
+    reset(true);
+
+    URI uri = URI.create("https://cluster-1/test");
+    List<String> schemes = new ArrayList<String>();
+    Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
+    partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>();
+    uriData.put(uri, partitionData);
+
+    schemes.add("https");
+
+    assertNull(_state.getClient("service-1", uri));
+
+    // set up state
+    _state.listenToCluster("cluster-1", new NullStateListenerCallback());
+
+    assertNull(_state.getClient("service-1", uri));
+
+    _state.listenToService("service-1", new NullStateListenerCallback());
+
+    assertNull(_state.getClient("service-1", uri));
+
+    Map<String,Object> transportClientProperties = new HashMap<String,Object>();
+    transportClientProperties.put(HttpClientFactory.HTTP_SSL_CONTEXT, _sslContext);
+    transportClientProperties.put(HttpClientFactory.HTTP_SSL_PARAMS, _sslParameters);
+    transportClientProperties = Collections.unmodifiableMap(transportClientProperties);
+
+    _serviceRegistry.put("service-1", new ServiceProperties("service-1", "cluster-1",
+                                                            "/test", "random", null,
+                                                            Collections.<String, Object>emptyMap(),
+                                                            transportClientProperties, null, schemes, null));
+
+    assertNull(_state.getClient("service-1", uri));
+
+    _uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData));
+
+    TrackerClient client = _state.getClient("service-1", uri);
+
+    assertNotNull(client);
+    assertEquals(client.getUri(), uri);
   }
 
   private static class TestShutdownCallback implements PropertyEventShutdownCallback
