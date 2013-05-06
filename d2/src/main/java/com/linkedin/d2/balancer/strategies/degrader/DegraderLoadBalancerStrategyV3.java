@@ -277,7 +277,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
         _log.info("Strategy updated: partitionId= " + partitionId +
                       ". But the old state is the same as the new state. Cluster health: [cluster latency ="
                       + newState.getCurrentAvgClusterLatency() + ", override drop rate =" +
-                      newState.getCurrentOverrideDropRate() + "]");
+                      newState.getCurrentOverrideDropRate() + ", service name = " + newState.getServiceName() + "]");
       }
     }
   }

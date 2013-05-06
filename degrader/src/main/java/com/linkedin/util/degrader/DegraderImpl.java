@@ -508,18 +508,18 @@ public class DegraderImpl implements Degrader
   {
     StringBuilder builder = new StringBuilder();
     builder.append("[name = " + _name + ",");
-    builder.append(" maxDropDuration = " + _dropRate + ",");
-    builder.append(" computedDropRate = " + _dropRate + ",");
+    builder.append(" maxDropDuration = " + _maxDropDuration + ",");
+    builder.append(" computedDropRate = " + _computedDropRate + ",");
     builder.append(" dropRate = " + _dropRate + ",");
-    builder.append(" latency = " + _dropRate + ",");
-    builder.append(" outstandingLatency = " + _dropRate + ",");
-    builder.append(" lastIntervalCountTotal = " + _dropRate + ",");
-    builder.append(" lastIntervalDroppedCountTotal = " + _dropRate + ",");
-    builder.append(" lastIntervalDroppedRate = " + _dropRate + ",");
-    builder.append(" lastNotDroppRate = " + _dropRate + ",");
-    builder.append(" countTotal = " + _dropRate + ",");
-    builder.append(" noOverrideDropCountTotal = " + _dropRate + ",");
-    builder.append(" droppedCountTotal = " + _dropRate + "]");
+    builder.append(" latency = " + _latency + ",");
+    builder.append(" outstandingLatency = " + _outstandingLatency + ",");
+    builder.append(" lastIntervalCountTotal = " + _lastIntervalCountTotal + ",");
+    builder.append(" lastIntervalDroppedCountTotal = " + _lastIntervalDroppedCountTotal + ",");
+    builder.append(" lastIntervalDroppedRate = " + _lastIntervalDroppedRate + ",");
+    builder.append(" lastNotDroppedTime = " + _lastNotDroppedTime + ",");
+    builder.append(" countTotal = " + _countTotal + ",");
+    builder.append(" noOverrideDropCountTotal = " + _noOverrideDropCountTotal + ",");
+    builder.append(" droppedCountTotal = " + _droppedCountTotal + "]");
     return builder.toString();
   }
 

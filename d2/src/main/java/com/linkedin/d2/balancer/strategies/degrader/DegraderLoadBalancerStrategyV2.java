@@ -280,7 +280,7 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
         //we print minimum amount of information because we don't want to spam the logs
         _log.info("Strategy updated. But the old state is the same as the new state. Cluster health: [cluster latency ="
                       + newState.getCurrentAvgClusterLatency() + ", override drop rate =" +
-                      newState.getCurrentOverrideDropRate() + "]");
+                      newState.getCurrentOverrideDropRate() + ", service name = " + newState.getServiceName() + "]");
       }
     }
   }
