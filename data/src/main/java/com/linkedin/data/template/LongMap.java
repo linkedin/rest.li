@@ -59,4 +59,10 @@ public final class LongMap extends DirectMapTemplate<Long>
   {
     return (LongMap) super.clone();
   }
+
+  @Override
+  public LongMap copy() throws CloneNotSupportedException
+  {
+    return (LongMap) super.clone();
+  }
 }

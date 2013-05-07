@@ -786,6 +786,8 @@ public abstract class DataTemplateGenerator extends CodeGenerator
 
     generateCustomClassInitialization(arrayClass, customInfo);
 
+    generateCopierMethods(arrayClass);
+
     return arrayClass;
   }
 
@@ -828,6 +830,8 @@ public abstract class DataTemplateGenerator extends CodeGenerator
     generatePathSpecMethodsForCollection(mapClass, schema, "values");
 
     generateCustomClassInitialization(mapClass, customInfo);
+
+    generateCopierMethods(mapClass);
 
     return mapClass;
   }
@@ -901,6 +905,8 @@ public abstract class DataTemplateGenerator extends CodeGenerator
                                    schemaField);
     }
     generatePathSpecMethodsForUnion(unionClass, schema);
+
+    generateCopierMethods(unionClass);
 
     return unionClass;
   }
@@ -1001,6 +1007,8 @@ public abstract class DataTemplateGenerator extends CodeGenerator
 
     generateConstructorWithObjectArg(fixedClass, schemaField);
 
+    generateCopierMethods(fixedClass);
+
     return fixedClass;
   }
 
@@ -1062,19 +1070,24 @@ public abstract class DataTemplateGenerator extends CodeGenerator
       }
     }
 
-    overrideCopier(templateClass, "clone");
-    overrideCopier(templateClass, "copy");
-
     List<NamedDataSchema> includes = schema.getInclude();
     for (NamedDataSchema includedSchema : includes)
     {
       handleSchema(includedSchema);
     }
 
+    generateCopierMethods(templateClass);
+
     return templateClass;
   }
 
-  private static void overrideCopier(JDefinedClass templateClass, String methodName)
+  private static void generateCopierMethods(JDefinedClass templateClass)
+  {
+    overrideCopierMethod(templateClass, "clone");
+    overrideCopierMethod(templateClass, "copy");
+  }
+
+  private static void overrideCopierMethod(JDefinedClass templateClass, String methodName)
   {
     JMethod copierMethod = templateClass.method(JMod.PUBLIC, templateClass, methodName);
     copierMethod.annotate(Override.class);

@@ -59,4 +59,10 @@ public final class BooleanMap extends DirectMapTemplate<Boolean>
   {
     return (BooleanMap) super.clone();
   }
+
+  @Override
+  public BooleanMap copy() throws CloneNotSupportedException
+  {
+    return (BooleanMap) super.copy();
+  }
 }

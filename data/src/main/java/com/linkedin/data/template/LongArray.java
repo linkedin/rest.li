@@ -54,4 +54,10 @@ public final class LongArray extends DirectArrayTemplate<Long>
   {
     return (LongArray) super.clone();
   }
+
+  @Override
+  public LongArray copy() throws CloneNotSupportedException
+  {
+    return (LongArray) super.copy();
+  }
 }

@@ -59,4 +59,10 @@ public final class StringMap extends DirectMapTemplate<String>
   {
     return (StringMap) super.clone();
   }
+
+  @Override
+  public StringMap copy() throws CloneNotSupportedException
+  {
+    return (StringMap) super.copy();
+  }
 }

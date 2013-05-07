@@ -61,7 +61,18 @@ public interface DataTemplate<E> extends Cloneable
    */
   DataTemplate<E> clone() throws CloneNotSupportedException;
 
-  /*
-   * TODO: add deep copy.
+  /**
+   * Returns a deep copy of the {@link DataTemplate}.
+   *
+   * This method copies the underlying {@link com.linkedin.data.DataMap}.
+   * The copied {@link DataTemplate} proxies the new copied Data object.
+   *
+   * Since copying an underlying {@link com.linkedin.data.DataMap} performs a deep copy, this method has the semantics of a deep copy.
+   *
+   * @return a deep copy of the DataTemplate.
+   * @throws CloneNotSupportedException if the {@link DataTemplate} or
+   *                                    its underlying {@link com.linkedin.data.DataMap}
+   *                                    cannot be copied.
    */
+  DataTemplate<E> copy() throws CloneNotSupportedException;
 }

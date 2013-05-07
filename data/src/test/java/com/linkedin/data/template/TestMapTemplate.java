@@ -18,8 +18,10 @@ package com.linkedin.data.template;
 
 
 import com.linkedin.data.ByteString;
+import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.TestUtil;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
@@ -36,6 +38,7 @@ import java.util.Set;
 import org.testng.annotations.Test;
 
 import static com.linkedin.data.TestUtil.asMap;
+import static com.linkedin.data.TestUtil.noCommonDataComplex;
 import static com.linkedin.data.TestUtil.out;
 import static org.testng.Assert.*;
 
@@ -52,7 +55,7 @@ public class TestMapTemplate
     assertTrue(c2.containsAll(c1));
   }
 
-  public <MapTemplate extends AbstractMapTemplate<E>, E>
+  public static <MapTemplate extends AbstractMapTemplate<E>, E>
   void testMap(Class<MapTemplate> templateClass,
                MapDataSchema schema,
                Map<String, E> input,
@@ -271,6 +274,9 @@ public class TestMapTemplate
     assertFalse(map4.containsValue(null));
     assertFalse(map4.containsValue(new StringArray()));
 
+    // clone and copy return types
+    TestDataTemplateUtil.assertCloneAndCopyReturnType(templateClass);
+
     // clone
     exc = null;
     map4 = templateClass.newInstance();
@@ -280,8 +286,16 @@ public class TestMapTemplate
       exc = null;
       @SuppressWarnings("unchecked")
       MapTemplate map4Clone = (MapTemplate) map4.clone();
+      assertTrue(map4Clone.getClass() == templateClass);
       assertEquals(map4Clone, map4);
       assertTrue(map4Clone != map4);
+      for (Map.Entry<String, Object> entry : map4.data().entrySet())
+      {
+        if (entry.getValue() instanceof DataComplex)
+        {
+          assertSame(map4Clone.data().get(entry.getKey()), entry.getValue());
+        }
+      }
       String key = map4Clone.keySet().iterator().next();
       map4Clone.remove(key);
       assertEquals(map4Clone.size(), map4.size() - 1);
@@ -289,6 +303,54 @@ public class TestMapTemplate
       assertTrue(map4.entrySet().containsAll(map4Clone.entrySet()));
       map4.remove(key);
       assertEquals(map4Clone, map4);
+    }
+    catch (CloneNotSupportedException e)
+    {
+      exc = e;
+    }
+    assert(exc == null);
+
+    //copy
+    MapTemplate map4a = templateClass.newInstance();
+    map4a.putAll(input);
+    try
+    {
+      @SuppressWarnings("unchecked")
+      MapTemplate map4aCopy = (MapTemplate) map4a.copy();
+      assertTrue(map4aCopy.getClass() == templateClass);
+      assertEquals(map4a, map4aCopy);
+      boolean hasComplex = false;
+      for (Map.Entry<String, Object> entry : map4a.data().entrySet())
+      {
+        if (entry.getValue() instanceof DataComplex)
+        {
+          assertNotSame(map4aCopy.data().get(entry.getKey()), entry.getValue());
+          hasComplex = true;
+        }
+      }
+      assertTrue(DataTemplate.class.isAssignableFrom(map4a._valueClass) == false || hasComplex);
+      assertTrue(noCommonDataComplex(map4a.data(), map4aCopy.data()));
+      boolean mutated = false;
+      for (Object value : map4aCopy.data().values())
+      {
+        if (value instanceof DataComplex)
+        {
+          mutated |= TestUtil.mutateDataComplex((DataComplex) value);
+        }
+      }
+      assertEquals(mutated, hasComplex);
+      if (mutated)
+      {
+        assertNotEquals(map4aCopy, map4a);
+      }
+      else
+      {
+        assertEquals(map4aCopy, map4a);
+        String key = map4aCopy.keySet().iterator().next();
+        map4aCopy.remove(key);
+        assertFalse(map4aCopy.containsKey(key));
+        assertTrue(map4a.containsKey(key));
+      }
     }
     catch (CloneNotSupportedException e)
     {
@@ -912,6 +974,16 @@ public class TestMapTemplate
     {
       super(map, SCHEMA, Fruits.class, String.class);
     }
+    @Override
+    public EnumMapTemplate clone() throws CloneNotSupportedException
+    {
+      return (EnumMapTemplate) super.clone();
+    }
+    @Override
+    public EnumMapTemplate copy() throws CloneNotSupportedException
+    {
+      return (EnumMapTemplate) super.copy();
+    }
   }
 
   @Test
@@ -957,6 +1029,16 @@ public class TestMapTemplate
     public MapOfStringMapTemplate(DataMap map)
     {
       super(map, SCHEMA, StringMap.class);
+    }
+    @Override
+    public MapOfStringMapTemplate clone() throws CloneNotSupportedException
+    {
+      return (MapOfStringMapTemplate) super.clone();
+    }
+    @Override
+    public MapOfStringMapTemplate copy() throws CloneNotSupportedException
+    {
+      return (MapOfStringMapTemplate) super.copy();
     }
   }
 
@@ -1019,6 +1101,18 @@ public class TestMapTemplate
     {
       putDirect(FIELD_bar, String.class, value);
     }
+
+    @Override
+    public FooRecord clone() throws CloneNotSupportedException
+    {
+      return (FooRecord) super.clone();
+    }
+
+    @Override
+    public FooRecord copy() throws CloneNotSupportedException
+    {
+      return (FooRecord) super.copy();
+    }
   }
 
   public static class FooRecordMap extends WrappingMapTemplate<FooRecord>
@@ -1044,6 +1138,16 @@ public class TestMapTemplate
     public FooRecordMap(DataMap map)
     {
       super(map, SCHEMA, FooRecord.class);
+    }
+    @Override
+    public FooRecordMap clone() throws CloneNotSupportedException
+    {
+      return (FooRecordMap) super.clone();
+    }
+    @Override
+    public FooRecordMap copy() throws CloneNotSupportedException
+    {
+      return (FooRecordMap) super.copy();
     }
   }
 

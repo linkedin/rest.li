@@ -104,6 +104,15 @@ public class WrappingArrayTemplate<E extends DataTemplate<?>> extends AbstractAr
     return clone;
   }
 
+  @Override
+  public WrappingArrayTemplate<E> copy() throws CloneNotSupportedException
+  {
+    @SuppressWarnings("unchecked")
+    WrappingArrayTemplate<E> copy = (WrappingArrayTemplate<E>) super.copy();
+    copy._cache = new IdentityHashMap<Object, E>(copy.data().size());
+    return copy;
+  }
+
   /**
    * Obtain the underlying Data object of the {@link DataTemplate} object.
    *

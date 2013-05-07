@@ -19,6 +19,7 @@ package com.linkedin.data;
 import com.linkedin.data.codec.DataLocation;
 import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.SchemaParser;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -33,8 +34,10 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
@@ -388,18 +391,131 @@ public class TestUtil
     Object result;
     Class<?> lowerClass = lower.getClass();
     if (upperClass == lowerClass)
+    {
       result = lower;
+    }
     else if (upperClass == ByteString.class && lowerClass == String.class)
+    {
       result = ByteString.copyAvroString((String) lower, true);
+    }
     else if (upperClass == Double.class && (lowerClass == Integer.class || lowerClass == Long.class || lowerClass == Float.class))
+    {
       result = ((Number) lower).doubleValue();
+    }
     else if (upperClass == Float.class && (lowerClass == Integer.class || lowerClass == Long.class))
+    {
       result = ((Number) lower).floatValue();
+    }
     else if (upperClass == Long.class && (lowerClass == Integer.class))
+    {
       result = ((Number) lower).longValue();
+    }
     else
+    {
       result = lower;
+    }
     return result;
+  }
+
+  public static boolean mutateChild(Object object)
+  {
+    if (object instanceof DataComplex)
+    {
+      return mutateDataComplex((DataComplex) object);
+    }
+    else
+    {
+      return false;
+    }
+  }
+
+  public static boolean mutateDataComplex(DataComplex dataComplex)
+  {
+    if (dataComplex.getClass() == DataMap.class)
+    {
+      return mutateDataMap((DataMap) dataComplex);
+    }
+    else if (dataComplex.getClass() == DataList.class)
+    {
+      return mutateDataList((DataList) dataComplex);
+    }
+    else
+    {
+      throw new IllegalStateException("unknown DataComplex");
+    }
+  }
+
+  public static boolean mutateDataMap(DataMap dataMap)
+  {
+    if (dataMap.isEmpty())
+    {
+      dataMap.put("inserted", Data.NULL);
+    }
+    else
+    {
+      dataMap.remove(dataMap.entrySet().iterator().next().getKey());
+    }
+    return true;
+  }
+
+  public static boolean mutateDataList(DataList dataList)
+  {
+    if (dataList.isEmpty())
+    {
+      dataList.add(Data.NULL);
+    }
+    else
+    {
+      dataList.remove(dataList.size() - 1);
+    }
+    return true;
+  }
+
+  public static boolean noCommonDataComplex(Object o1, Object o2)
+  {
+    Set<DataComplex> set1 = collectDataComplex(o1);
+    Set<DataComplex> set2 = collectDataComplex(o2);
+    return set1.removeAll(set2) == false && set2.removeAll(set1) == false;
+  }
+
+  /**
+   * Return set is an identity set, uses == instead of equals() for comparison
+   */
+  private static Set<DataComplex> collectDataComplex(final Object object)
+  {
+    IdentityHashMap<DataComplex, Boolean> identityHashMap = new IdentityHashMap<DataComplex, Boolean>();
+    collectDataComplex(object, identityHashMap);
+    return identityHashMap.keySet();
+  }
+
+  private static void collectDataComplex(Object object, IdentityHashMap<DataComplex, Boolean> identityHashMap)
+  {
+    if (object instanceof DataComplex)
+    {
+      DataComplex complex = (DataComplex) object;
+      Boolean previous = identityHashMap.put(complex, Boolean.TRUE);
+      if (previous == null)
+      {
+        if (object.getClass() == DataMap.class)
+        {
+          for (Object child : ((DataMap) object).values())
+          {
+            collectDataComplex(child, identityHashMap);
+          }
+        }
+        else if (object.getClass() == DataList.class)
+        {
+          for (Object child : ((DataList) object))
+          {
+            collectDataComplex(child, identityHashMap);
+          }
+        }
+        else
+        {
+          throw new IllegalStateException("unknown DataComplex");
+        }
+      }
+    }
   }
 
   private static final Pattern LOCATION_REGEX = Pattern.compile("^\\d+,\\d+: .*$");

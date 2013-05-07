@@ -54,4 +54,10 @@ public final class BooleanArray extends DirectArrayTemplate<Boolean>
   {
     return (BooleanArray) super.clone();
   }
+
+  @Override
+  public BooleanArray copy() throws CloneNotSupportedException
+  {
+    return (BooleanArray) super.copy();
+  }
 }

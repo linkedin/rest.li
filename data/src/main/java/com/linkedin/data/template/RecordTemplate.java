@@ -85,6 +85,7 @@ public abstract class RecordTemplate implements DataTemplate<DataMap>
    *                                    its underlying {@link DataMap}
    *                                    cannot be copied.
    */
+  @Override
   public RecordTemplate copy() throws CloneNotSupportedException
   {
     RecordTemplate copy = (RecordTemplate) super.clone();

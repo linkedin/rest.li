@@ -21,6 +21,8 @@
     { "name" : "stringArrayMap", "type" : { "type" : "map", "values" : { "type" : "array", "items" : "string" } } },
     { "name" : "bytesArrayMap", "type" : { "type" : "map", "values" : { "type" : "array", "items" : "bytes" } } },
 
+    { "name" : "stringMapMap", "type" : { "type" : "map", "values" : { "type" : "map", "values" : "string" } } },
+
     { "name" : "enumFruitsMap", "type" : { "type" : "map", "values" : "EnumFruits" } },
 
     { "name" : "enumInlineMap", "type" :

@@ -106,18 +106,18 @@ public class TestPathSpec
     checkPathSpec(ArrayTest.fields().bytesMapArray(), "/bytesMapArray");
     checkPathSpec(ArrayTest.fields().enumFruitsArray(), "/enumFruitsArray");
     checkPathSpec(ArrayTest.fields().enumInlineArray(), "/enumInlineArray");
-    checkPathSpec(ArrayTest.fields().recordMap().items().location(), "/recordMap/*/location");
+    checkPathSpec(ArrayTest.fields().recordArray().items().location(), "/recordArray/*/location");
     checkPathSpec(ArrayTest.fields().recordInlineArray().items().f(), "/recordInlineArray/*/f");
-    checkPathSpec(ArrayTest.fields().fixedMap(), "/fixedMap");
+    checkPathSpec(ArrayTest.fields().fixedArray(), "/fixedArray");
     checkPathSpec(ArrayTest.fields().fixedInlineArray(), "/fixedInlineArray");
-    checkPathSpec(ArrayTest.fields().unionMap().items().Null(), "/unionMap/*/null");
-    checkPathSpec(ArrayTest.fields().unionMap().items().Int(), "/unionMap/*/int");
-    checkPathSpec(ArrayTest.fields().unionMap().items().String(), "/unionMap/*/string");
-    checkPathSpec(ArrayTest.fields().unionMap().items().Array(), "/unionMap/*/array");
-    checkPathSpec(ArrayTest.fields().unionMap().items().Map(), "/unionMap/*/map");
-    checkPathSpec(ArrayTest.fields().unionMap().items().EnumFruits(), "/unionMap/*/com.linkedin.pegasus.generator.test.EnumFruits");
-    checkPathSpec(ArrayTest.fields().unionMap().items().RecordBar().location(), "/unionMap/*/com.linkedin.pegasus.generator.test.RecordBar/location");
-    checkPathSpec(ArrayTest.fields().unionMap().items().FixedMD5(), "/unionMap/*/com.linkedin.pegasus.generator.test.FixedMD5");
+    checkPathSpec(ArrayTest.fields().unionArray().items().Null(), "/unionArray/*/null");
+    checkPathSpec(ArrayTest.fields().unionArray().items().Int(), "/unionArray/*/int");
+    checkPathSpec(ArrayTest.fields().unionArray().items().String(), "/unionArray/*/string");
+    checkPathSpec(ArrayTest.fields().unionArray().items().Array(), "/unionArray/*/array");
+    checkPathSpec(ArrayTest.fields().unionArray().items().Map(), "/unionArray/*/map");
+    checkPathSpec(ArrayTest.fields().unionArray().items().EnumFruits(), "/unionArray/*/com.linkedin.pegasus.generator.test.EnumFruits");
+    checkPathSpec(ArrayTest.fields().unionArray().items().RecordBar().location(), "/unionArray/*/com.linkedin.pegasus.generator.test.RecordBar/location");
+    checkPathSpec(ArrayTest.fields().unionArray().items().FixedMD5(), "/unionArray/*/com.linkedin.pegasus.generator.test.FixedMD5");
 
     checkPathSpec(CircularImport.fields().a().link().CircularImportA().link(), "/a/link/com.linkedin.pegasus.generator.test.CircularImportA/link");
     checkPathSpec(CircularImport.fields().a().link().CircularImportB().link(), "/a/link/com.linkedin.pegasus.generator.test.CircularImportB/link");

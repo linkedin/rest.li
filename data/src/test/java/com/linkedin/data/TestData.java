@@ -56,6 +56,7 @@ import org.testng.annotations.Test;
 import static com.linkedin.data.TestUtil.asMap;
 import static com.linkedin.data.TestUtil.assertEquivalent;
 import static com.linkedin.data.TestUtil.dataMapFromString;
+import static com.linkedin.data.TestUtil.noCommonDataComplex;
 import static org.testng.Assert.*;
 
 public class TestData
@@ -2313,6 +2314,107 @@ public class TestData
         out.println("------------- " + e.getKey() + " -------------");
         perfTest(count, (DataMap) value);
       }
+    }
+  }
+
+  @Test
+  public void testNoCommonDataComplex()
+  {
+    DataMap map1 = new DataMap();
+    map1.put("map1", "1");
+    DataMap map2 = new DataMap();
+    map2.put("map2", "2");
+    DataList list1 = new DataList();
+    list1.add("1");
+    DataList list2 = new DataList();
+    list2.add("2");
+
+    Object inputs[][] =
+    {
+      {
+        map1,
+        map2,
+        true
+      },
+      {
+        map1,
+        list1,
+        true
+      },
+      {
+        map2,
+        list2,
+        true
+      },
+      {
+        map1,
+        list2,
+        true
+      },
+      {
+        list1,
+        list2,
+        true,
+      },
+      {
+        new DataMap(),
+        map1,
+        true
+      },
+      {
+        new DataList(),
+        list1,
+        true
+      },
+      {
+        map1,
+        map1,
+        false
+      },
+      {
+        map2,
+        map2,
+        false
+      },
+      {
+        list1,
+        list1,
+        false
+      },
+      {
+        list2,
+        list2,
+        false
+      },
+      {
+        new DataMap(asMap("m1", map1)),
+        new DataMap(asMap("m1", map1)),
+        false
+      },
+      {
+        new DataMap(asMap("m0", 1, "m1", map1)),
+        new DataMap(asMap("m1", map1, "m2", "2")),
+        false
+      },
+      {
+        new DataList(Arrays.asList(map1)),
+        new DataList(Arrays.asList(map1)),
+        false
+      },
+      {
+        new DataList(Arrays.asList(0, map1)),
+        new DataList(Arrays.asList(map1, "2")),
+        false
+      },
+    };
+
+    for (Object[] row : inputs)
+    {
+      Object o1 = row[0];
+      Object o2 = row[1];
+      boolean expected = (Boolean) row[2];
+      assertEquals(noCommonDataComplex(o1, o2), expected);
+      assertEquals(noCommonDataComplex(o2, o1), expected);
     }
   }
 }

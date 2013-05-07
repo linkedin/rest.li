@@ -88,6 +88,18 @@ public class TestRecordAndUnionTemplate
       putDirect(FIELD_int, Integer.class, Integer.class, value, mode);
       return this;
     }
+
+    @Override
+    public Bar clone() throws CloneNotSupportedException
+    {
+      return (Bar) super.clone();
+    }
+
+    @Override
+    public Bar copy() throws CloneNotSupportedException
+    {
+      return (Bar) super.copy();
+    }
   }
 
   public enum EnumType
@@ -782,21 +794,6 @@ public class TestRecordAndUnionTemplate
       return this;
     }
 
-    @Override
-    public Foo clone()
-        throws CloneNotSupportedException
-    {
-        return (Foo) super.clone();
-    }
-
-    @Override
-    public Foo copy()
-        throws CloneNotSupportedException
-    {
-        return (Foo) super.copy();
-    }
-
-
     public static class Union extends UnionTemplate
     {
       public static final UnionDataSchema SCHEMA = (UnionDataSchema) FIELD_union.getType();
@@ -870,6 +867,17 @@ public class TestRecordAndUnionTemplate
         return memberIs("Bar");
       }
 
+      @Override
+      public Union clone() throws CloneNotSupportedException
+      {
+        return (Union) super.clone();
+      }
+
+      @Override
+      public Union copy() throws CloneNotSupportedException
+      {
+        return (Union) super.copy();
+      }
     }
 
     public boolean hasUnion()
@@ -904,6 +912,17 @@ public class TestRecordAndUnionTemplate
       return this;
     }
 
+    @Override
+    public Foo clone() throws CloneNotSupportedException
+    {
+      return (Foo) super.clone();
+    }
+
+    @Override
+    public Foo copy() throws CloneNotSupportedException
+    {
+      return (Foo) super.copy();
+    }
   }
 
   @Test
@@ -1481,6 +1500,7 @@ public class TestRecordAndUnionTemplate
       Exception exc = null;
       try
       {
+        // clone
         Foo fooClone = foo.clone();
         assertEquals(foo, fooClone);
         fooClone.removeBoolean();
@@ -1488,8 +1508,10 @@ public class TestRecordAndUnionTemplate
         assertEquals(foo.isBoolean(), aBoolean);
         assertFalse(fooClone.hasBoolean());
 
+        // copy
         Foo fooCopy = foo.copy();
         assertEquals(foo, fooCopy);
+        assertTrue(TestUtil.noCommonDataComplex(fooCopy.data(), foo.data()));
         fooCopy.removeBoolean();
         assertTrue(foo.hasBoolean());
         assertEquals(foo.isBoolean(), aBoolean);
@@ -1512,6 +1534,7 @@ public class TestRecordAndUnionTemplate
       exc = null;
       try
       {
+        // clone
         Foo fooClone = foo.clone();
         assertEquals(foo, fooClone);
         fooClone.removeBoolean();
@@ -1519,8 +1542,10 @@ public class TestRecordAndUnionTemplate
         assertEquals(foo.isBoolean(), aBoolean);
         assertFalse(fooClone.hasBoolean());
 
+        // copy
         Foo fooCopy = foo.copy();
         assertEquals(foo, fooCopy);
+        assertTrue(TestUtil.noCommonDataComplex(fooCopy.data(), foo.data()));
         fooCopy.removeBoolean();
         assertTrue(foo.hasBoolean());
         assertEquals(foo.isBoolean(), aBoolean);
@@ -1584,6 +1609,7 @@ public class TestRecordAndUnionTemplate
       Exception exc = null;
       try
       {
+        // clone
         Foo fooClone = foo.clone();
         assertEquals(foo, fooClone);
         fooClone.removeEnum();
@@ -1591,8 +1617,10 @@ public class TestRecordAndUnionTemplate
         assertEquals(foo.getEnum(), type);
         assertFalse(fooClone.hasEnum());
 
+        // copy
         Foo fooCopy = foo.copy();
         assertEquals(foo, fooCopy);
+        assertTrue(TestUtil.noCommonDataComplex(fooCopy.data(), foo.data()));
         fooCopy.removeEnum();
         assertTrue(foo.hasEnum());
         assertEquals(foo.getEnum(), type);
@@ -1667,6 +1695,7 @@ public class TestRecordAndUnionTemplate
       Exception exc = null;
       try
       {
+        // clone
         Foo fooClone = foo.clone();
         assertEquals(foo, fooClone);
         fooClone.removeInt();
@@ -1674,8 +1703,10 @@ public class TestRecordAndUnionTemplate
         assertEquals(foo.getInt(), i);
         assertFalse(fooClone.hasInt());
 
+        // copy
         Foo fooCopy = foo.copy();
         assertEquals(foo, fooCopy);
+        assertTrue(TestUtil.noCommonDataComplex(fooCopy.data(), foo.data()));
         fooCopy.removeInt();
         assertTrue(foo.hasInt());
         assertEquals(foo.getInt(), i);
@@ -1747,6 +1778,7 @@ public class TestRecordAndUnionTemplate
       Exception exc = null;
       try
       {
+        // clone
         Foo fooClone = foo.clone();
         assertEquals(foo, fooClone);
         fooClone.removeLong();
@@ -1754,8 +1786,10 @@ public class TestRecordAndUnionTemplate
         assertEquals(foo.getLong(), aLong);
         assertFalse(fooClone.hasLong());
 
+        // copy
         Foo fooCopy = foo.copy();
         assertEquals(foo, fooCopy);
+        assertTrue(TestUtil.noCommonDataComplex(fooCopy.data(), foo.data()));
         fooCopy.removeLong();
         assertTrue(foo.hasLong());
         assertEquals(foo.getLong(), aLong);
@@ -1827,6 +1861,7 @@ public class TestRecordAndUnionTemplate
       Exception exc = null;
       try
       {
+        // clone
         Foo fooClone = foo.clone();
         assertEquals(foo, fooClone);
         fooClone.removeFloat();
@@ -1834,8 +1869,10 @@ public class TestRecordAndUnionTemplate
         assertEquals(foo.getFloat(), i);
         assertFalse(fooClone.hasFloat());
 
+        // copy
         Foo fooCopy = foo.copy();
         assertEquals(foo, fooCopy);
+        assertTrue(TestUtil.noCommonDataComplex(fooCopy.data(), foo.data()));
         fooCopy.removeFloat();
         assertTrue(foo.hasFloat());
         assertEquals(foo.getFloat(), i);
@@ -1907,6 +1944,7 @@ public class TestRecordAndUnionTemplate
       Exception exc = null;
       try
       {
+        // clone
         Foo fooClone = foo.clone();
         assertEquals(foo, fooClone);
         fooClone.removeDouble();
@@ -1914,8 +1952,10 @@ public class TestRecordAndUnionTemplate
         assertEquals(foo.getDouble(), aDouble);
         assertFalse(fooClone.hasDouble());
 
+        // copy
         Foo fooCopy = foo.copy();
         assertEquals(foo, fooCopy);
+        assertTrue(TestUtil.noCommonDataComplex(fooCopy.data(), foo.data()));
         fooCopy.removeDouble();
         assertTrue(foo.hasDouble());
         assertEquals(foo.getDouble(), aDouble);
@@ -1987,6 +2027,7 @@ public class TestRecordAndUnionTemplate
       Exception exc = null;
       try
       {
+        // clone
         Foo fooClone = foo.clone();
         assertEquals(foo, fooClone);
         fooClone.removeString();
@@ -1994,8 +2035,10 @@ public class TestRecordAndUnionTemplate
         assertEquals(foo.getString(), s);
         assertFalse(fooClone.hasString());
 
+        // copy
         Foo fooCopy = foo.copy();
         assertEquals(foo, fooCopy);
+        assertTrue(TestUtil.noCommonDataComplex(fooCopy.data(), foo.data()));
         fooCopy.removeString();
         assertTrue(foo.hasString());
         assertEquals(foo.getString(), s);
@@ -2058,6 +2101,7 @@ public class TestRecordAndUnionTemplate
       Exception exc = null;
       try
       {
+        // clone
         Foo fooClone = foo.clone();
         assertEquals(foo, fooClone);
         fooClone.removeBytes();
@@ -2065,8 +2109,10 @@ public class TestRecordAndUnionTemplate
         assertEquals(foo.getBytes(), byteString);
         assertFalse(fooClone.hasBytes());
 
+        // copy
         Foo fooCopy = foo.copy();
         assertEquals(foo, fooCopy);
+        assertTrue(TestUtil.noCommonDataComplex(fooCopy.data(), foo.data()));
         fooCopy.removeBytes();
         assertTrue(foo.hasBytes());
         assertEquals(foo.getBytes(), byteString);
@@ -2162,6 +2208,7 @@ public class TestRecordAndUnionTemplate
       Exception exc = null;
       try
       {
+        // clone
         Foo fooClone = foo.clone();
         assertEquals(foo, fooClone);
         assertSame(fooClone.getFixed(), foo.getFixed());
@@ -2170,8 +2217,10 @@ public class TestRecordAndUnionTemplate
         assertEquals(foo.getFixed(), fixedType);
         assertFalse(fooClone.hasFixed());
 
+        // copy
         Foo fooCopy = foo.copy();
         assertEquals(foo, fooCopy);
+        assertTrue(TestUtil.noCommonDataComplex(fooCopy.data(), foo.data()));
         assertNotSame(fooCopy.getFixed(), foo.getFixed());
         fooCopy.removeFixed();
         assertTrue(foo.hasFixed());
@@ -2236,6 +2285,8 @@ public class TestRecordAndUnionTemplate
       Exception exc = null;
       try
       {
+        // clone
+
         Foo fooClone = foo.clone();
         assertEquals(foo, fooClone);
         assertSame(fooClone.getRecord(), foo.getRecord());
@@ -2244,9 +2295,21 @@ public class TestRecordAndUnionTemplate
         assertEquals(foo.getRecord(), bar);
         assertFalse(fooClone.hasRecord());
 
+        // copy
+        // mutate bar within foo
         Foo fooCopy = foo.copy();
         assertEquals(foo, fooCopy);
+        assertTrue(TestUtil.noCommonDataComplex(fooCopy.data(), foo.data()));
         assertNotSame(fooCopy.getRecord(), foo.getRecord());
+        Integer origValue = fooCopy.getRecord().getInt();
+        Integer newValue = origValue + 1;
+        fooCopy.getRecord().setInt(newValue);
+        assertEquals(fooCopy.getRecord().getInt(), newValue);
+        assertEquals(foo.getRecord().getInt(), origValue);
+
+        // copy
+        // remove bar
+        fooCopy = foo.copy();
         fooCopy.removeRecord();
         assertTrue(foo.hasRecord());
         assertEquals(foo.getRecord(), bar);
@@ -2315,6 +2378,7 @@ public class TestRecordAndUnionTemplate
       Exception exc = null;
       try
       {
+        // clone
         Foo fooClone = foo.clone();
         assertEquals(foo, fooClone);
         assertSame(fooClone.getArray(), foo.getArray());
@@ -2323,9 +2387,21 @@ public class TestRecordAndUnionTemplate
         assertEquals(foo.getArray(), integerArray);
         assertFalse(fooClone.hasArray());
 
+        // copy
+        // mutate array within foo
         Foo fooCopy = foo.copy();
         assertEquals(foo, fooCopy);
+        assertTrue(TestUtil.noCommonDataComplex(fooCopy.data(), foo.data()));
         assertNotSame(fooCopy.getArray(), foo.getArray());
+        Integer origValue = foo.getArray().get(0);
+        Integer newValue = origValue + 1;
+        fooCopy.getArray().set(0, newValue);
+        assertEquals(fooCopy.getArray().get(0), newValue);
+        assertEquals(foo.getArray().get(0), origValue);
+
+        // copy
+        // remove array within foo
+        fooCopy = foo.copy();
         fooCopy.removeArray();
         assertTrue(foo.hasArray());
         assertEquals(foo.getArray(), integerArray);
@@ -2420,7 +2496,7 @@ public class TestRecordAndUnionTemplate
     assertSame(union2.memberType(), Foo.Union.MEMBER_int);
     assertNull(union2.getBar());
     int lastHashCode = union2.hashCode();
-    Foo.Union lastUnion = (Foo.Union) union2.clone();
+    Foo.Union lastUnion = union2.clone();
 
     // test union set and get wrapped
     unionMap.clear();
@@ -2440,14 +2516,14 @@ public class TestRecordAndUnionTemplate
     assertFalse(hashCode == lastHashCode);
     lastHashCode = hashCode;
     assertFalse(union2.equals(lastUnion));
-    lastUnion = (Foo.Union) union2.clone();
+    lastUnion = union2.clone();
 
     // test union clone with wrapped member
     Exception exc;
     try
     {
       exc = null;
-      Foo.Union unionClone = (Foo.Union) union2.clone();
+      Foo.Union unionClone = union2.clone();
       assertFalse(unionClone.isNull());
       assertFalse(unionClone.isInt());
       assertTrue(unionClone.isBar());
@@ -2455,6 +2531,34 @@ public class TestRecordAndUnionTemplate
       assertSame(unionClone.getBar(), union2.getBar());
       assertEquals(unionClone.getBar(), union2.getBar());
       assertEquals(unionClone, union2);
+    }
+    catch (CloneNotSupportedException e)
+    {
+      exc = e;
+    }
+    assertTrue(exc == null);
+
+    // test union copy with wrapped member
+    try
+    {
+      Integer origValue = union2.getBar().getInt();
+      Foo.Union unionCopy = union2.copy();
+      assertEquals(union2, unionCopy);
+      Integer newValue = origValue + 1;
+      unionCopy.getBar().setInt(newValue);
+      assertTrue(union2.isBar());
+      assertTrue(unionCopy.isBar());
+      assertEquals(unionCopy.getBar().getInt(), newValue);
+      assertEquals(union2.getBar().getInt(), origValue);
+      assertFalse(union2.equals(unionCopy));
+      assertFalse(union2.getBar().equals(unionCopy.getBar()));
+
+      unionCopy = union2.copy();
+      unionCopy.setEnumType(EnumType.APPLE);
+      assertTrue(union2.isBar());
+      assertEquals(union2.getBar().getInt(), origValue);
+      assertTrue(unionCopy.isEnumType());
+      assertSame(unionCopy.getEnumType(), EnumType.APPLE);
     }
     catch (CloneNotSupportedException e)
     {
@@ -2496,7 +2600,7 @@ public class TestRecordAndUnionTemplate
     try
     {
       exc = null;
-      Foo.Union unionClone = (Foo.Union) union2.clone();
+      Foo.Union unionClone = union2.clone();
       assertFalse(unionClone.isNull());
       assertTrue(unionClone.isInt());
       assertFalse(unionClone.isBar());
@@ -2515,6 +2619,35 @@ public class TestRecordAndUnionTemplate
     }
     assertTrue(exc == null);
 
+    // test union copy with direct member
+    try
+    {
+      exc = null;
+      Foo.Union unionCopy = union2.copy();
+      assertEquals(union2, unionCopy);
+      assertTrue(union2.isInt());
+      Integer origValue = union2.getInt();
+      Integer newValue = origValue + 1;
+      unionCopy.setInt(newValue);
+      assertTrue(unionCopy.isInt());
+      assertEquals(unionCopy.getInt(), newValue);
+      assertEquals(union2.getInt(), origValue);
+      assertFalse(union2.equals(unionCopy));
+
+      // change type
+      unionCopy = union2.copy();
+      unionCopy.setEnumType(EnumType.APPLE);
+      assertTrue(unionCopy.isEnumType());
+      assertSame(unionCopy.getEnumType(), EnumType.APPLE);
+      assertTrue(union2.isInt());
+      assertEquals(union2.getInt(), origValue);
+    }
+    catch (CloneNotSupportedException e)
+    {
+      exc = e;
+    }
+    assertTrue(exc == null);
+
     // test null union
     foo.setUnion(new Foo.Union());
     Foo.Union union = foo.getUnion();
@@ -2525,13 +2658,22 @@ public class TestRecordAndUnionTemplate
     assertSame(union.data(), Data.NULL);
     try
     {
+      // clone
       exc = null;
-      Foo.Union unionClone = (Foo.Union) union.clone();
+      Foo.Union unionClone = union.clone();
       assertTrue(unionClone.isNull());
       assertFalse(unionClone.isInt());
       assertFalse(unionClone.isBar());
       assertEquals(unionClone.toString(), Data.NULL.toString());
       assertSame(unionClone.data(), Data.NULL);
+
+      // copy
+      Foo.Union unionCopy = union.copy();
+      assertTrue(unionCopy.isNull());
+      assertFalse(unionCopy.isInt());
+      assertFalse(unionCopy.isBar());
+      assertEquals(unionCopy.toString(), Data.NULL.toString());
+      assertSame(unionCopy.data(), Data.NULL);
     }
     catch (CloneNotSupportedException e)
     {

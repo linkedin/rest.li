@@ -191,6 +191,23 @@ public class UnionTemplate implements DataTemplate<Object>
   }
 
   @Override
+  public UnionTemplate copy() throws CloneNotSupportedException
+  {
+    UnionTemplate copy = (UnionTemplate) super.clone();
+    if (copy._map != null)
+    {
+      copy._map = copy._map.copy();
+      copy._data = copy._map;
+      copy._cache = null;
+    }
+    else
+    {
+      assert(copy._data == Data.NULL);
+    }
+    return copy;
+  }
+
+  @Override
   public int hashCode()
   {
     return data().hashCode();

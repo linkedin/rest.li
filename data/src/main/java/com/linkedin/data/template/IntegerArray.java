@@ -54,5 +54,11 @@ public final class IntegerArray extends DirectArrayTemplate<Integer>
   {
     return (IntegerArray) super.clone();
   }
+
+  @Override
+  public IntegerArray copy() throws CloneNotSupportedException
+  {
+    return (IntegerArray) super.copy();
+  }
 }
 

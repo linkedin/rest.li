@@ -16,7 +16,8 @@
 
 package com.linkedin.pegasus.generator.test;
 
-import org.testng.Assert;
+import com.linkedin.data.Data;
+import com.linkedin.data.TestUtil;
 import org.testng.annotations.Test;
 
 import com.linkedin.data.template.GetMode;
@@ -154,36 +155,67 @@ public class TestRecord
   }
 
   @Test
-  public void testClone() throws CloneNotSupportedException
+  public void testCloneChangePrimitiveField() throws CloneNotSupportedException
   {
     RecordTest record = new RecordTest();
-    record.setBooleanField(true);
-    record.setDoubleField(5.6);
-    record.setEnumField(EnumFruits.APPLE);
-    record.setRecordField(new RecordBar());
-    RecordTest clone = record.clone();
-    assertEquals(record, clone);
-    Assert.assertNotSame(record, clone);
-    Assert.assertNotSame(record.data(), clone.data());
-    assertSame(record.getRecordField(), clone.getRecordField());
+    record.setIntField(52);
+    RecordTest recordClone = record.clone();
+    assertEquals(recordClone, record);
+    assertNotSame(recordClone.data(), record.data());
+    assertSame(recordClone.getIntField(), record.getIntField());
+
+    recordClone.setIntField(99);
+    assertEquals(record.getIntField().intValue(), 52);
+    assertEquals(recordClone.getIntField().intValue(), 99);
   }
 
   @Test
-  public void testCopy() throws CloneNotSupportedException
+  public void testCloneChangeRecordField() throws CloneNotSupportedException
   {
     RecordTest record = new RecordTest();
-    record.setBooleanField(true);
-    record.setDoubleField(5.6);
-    record.setEnumField(EnumFruits.APPLE);
-    RecordBar recordBar = new RecordBar();
-    recordBar.setLocation("foo");
-    record.setRecordField(recordBar);
-    RecordTest copy = record.copy();
-    assertEquals(record, copy);
-    Assert.assertNotSame(record, copy);
-    Assert.assertNotSame(record.data(), copy.data());
-    Assert.assertNotSame(record.getRecordField(), copy.getRecordField());
-    record.getRecordField().setLocation("bar");
-    assertEquals(copy.getRecordField().getLocation(), "foo");
+    record.setRecordField(new RecordBar());
+    record.getRecordField().setLocation("near");
+    RecordTest recordClone = record.clone();
+    assertEquals(recordClone, record);
+    assertNotSame(recordClone.data(), record.data());
+    assertSame(recordClone.getRecordField(), record.getRecordField());
+
+    recordClone.getRecordField().setLocation("far");
+    assertEquals(record.getRecordField().getLocation(), "far");
+    assertEquals(recordClone.getRecordField().getLocation(), "far");
+  }
+
+  @Test
+  public void testCopyChangePrimitiveField() throws CloneNotSupportedException
+  {
+    RecordTest record = new RecordTest();
+    record.setIntField(52);
+    RecordTest recordCopy = record.copy();
+    assertEquals(recordCopy, record);
+    assertTrue(TestUtil.noCommonDataComplex(recordCopy, record));
+    assertNotSame(recordCopy.data(), record.data());
+    assertSame(recordCopy.getIntField(), record.getIntField());
+
+    recordCopy.setIntField(99);
+    assertEquals(record.getIntField().intValue(), 52);
+    assertEquals(recordCopy.getIntField().intValue(), 99);
+  }
+
+  @Test
+  public void testCopyChangeRecordField() throws CloneNotSupportedException
+  {
+    RecordTest record = new RecordTest();
+    record.setRecordField(new RecordBar());
+    record.getRecordField().setLocation("near");
+    RecordTest recordCopy = record.copy();
+    assertEquals(recordCopy, record);
+    assertTrue(TestUtil.noCommonDataComplex(recordCopy.data(), record.data()));
+    assertNotSame(recordCopy.data(), record.data());
+    assertNotSame(recordCopy.getRecordField(), record.getRecordField());
+    assertNotSame(recordCopy.getRecordField().data(), record.getRecordField().data());
+
+    recordCopy.getRecordField().setLocation("far");
+    assertEquals(record.getRecordField().getLocation(), "near");
+    assertEquals(recordCopy.getRecordField().getLocation(), "far");
   }
 }

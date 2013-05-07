@@ -121,6 +121,21 @@ public abstract class WrappingMapTemplate<V extends DataTemplate<?>> extends Abs
     _entrySet = new EntrySet();
   }
 
+  @Override
+  public WrappingMapTemplate<V> copy() throws CloneNotSupportedException
+  {
+    WrappingMapTemplate<V> copy = (WrappingMapTemplate<V>) super.copy();
+    copy.initializeCopy();
+    return copy;
+  }
+
+  @SuppressWarnings("unchecked")
+  private void initializeCopy()
+  {
+    _cache = new IdentityHashMap<Object, V>(data().size());
+    _entrySet = new EntrySet();
+  }
+
   @SuppressWarnings("unchecked")
   protected Object unwrap(Object value) throws ClassCastException
   {

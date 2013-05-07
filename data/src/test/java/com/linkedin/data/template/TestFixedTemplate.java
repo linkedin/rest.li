@@ -24,6 +24,8 @@ import com.linkedin.data.schema.FixedDataSchema;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+
 
 /**
  * Unit tests for {@link FixedTemplate}.
@@ -45,6 +47,18 @@ public class TestFixedTemplate
     public Fixed5(Object data)
     {
       super(data, SCHEMA);
+    }
+
+    @Override
+    public Fixed5 clone() throws CloneNotSupportedException
+    {
+      return (Fixed5) super.clone();
+    }
+
+    @Override
+    public Fixed5 copy() throws CloneNotSupportedException
+    {
+      return (Fixed5) super.copy();
     }
   }
 
@@ -113,6 +127,9 @@ public class TestFixedTemplate
 
       lastHashCode = newHashCode;
       lastByteString = expectedByteString;
+
+      // clone and copy
+      testCopiers(fixed);
     }
 
     for (ByteString o : goodByteStrings)
@@ -151,6 +168,9 @@ public class TestFixedTemplate
 
       lastHashCode = newHashCode;
       lastByteString = o;
+
+      // clone and copy
+      testCopiers(fixed);
     }
 
     for (Object o : badObjects)
@@ -183,6 +203,7 @@ public class TestFixedTemplate
       assertTrue(exc instanceof TemplateOutputCastException);
     }
   }
+
   @Test
   public void testWrapping()
       throws InstantiationException, IllegalAccessException
@@ -204,4 +225,24 @@ public class TestFixedTemplate
     assertEquals(fixed3, fixed4);
   }
 
+  private void testCopiers(Fixed5 fixed)
+  {
+    // clone and copy
+    Exception exc = null;
+    try
+    {
+      Fixed5 fixedClone = fixed.clone();
+      assertEquals(fixedClone, fixed);
+      assertSame(fixedClone.data(), fixed.data());
+
+      Fixed5 fixedCopy = fixed.copy();
+      assertEquals(fixedCopy, fixed);
+      assertSame(fixedCopy.data(), fixed.data());
+    }
+    catch (Exception e)
+    {
+      exc = e;
+    }
+    assertNull(exc);
+  }
 }

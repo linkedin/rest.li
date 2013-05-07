@@ -55,4 +55,10 @@ public final class BytesArray extends DirectArrayTemplate<ByteString>
   {
     return (BytesArray) super.clone();
   }
+
+  @Override
+  public BytesArray copy() throws CloneNotSupportedException
+  {
+    return (BytesArray) super.copy();
+  }
 }

@@ -153,6 +153,15 @@ public abstract class AbstractMapTemplate<V> extends AbstractMap<String ,V> impl
     return clone;
   }
 
+  @Override
+  public AbstractMapTemplate<V> copy() throws CloneNotSupportedException
+  {
+    @SuppressWarnings("unchecked")
+    AbstractMapTemplate<V> copy = (AbstractMapTemplate<V>) super.clone();
+    copy._map = copy._map.copy();
+    return copy;
+  }
+
   protected Class<V> valueClass()
   {
     return _valueClass;

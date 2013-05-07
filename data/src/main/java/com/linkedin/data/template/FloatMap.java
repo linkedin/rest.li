@@ -59,4 +59,10 @@ public final class FloatMap extends DirectMapTemplate<Float>
   {
     return (FloatMap) super.clone();
   }
+
+  @Override
+  public FloatMap copy() throws CloneNotSupportedException
+  {
+    return (FloatMap) super.copy();
+  }
 }

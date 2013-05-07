@@ -54,4 +54,10 @@ public final class FloatArray extends DirectArrayTemplate<Float>
   {
     return (FloatArray) super.clone();
   }
+
+  @Override
+  public FloatArray copy() throws CloneNotSupportedException
+  {
+    return (FloatArray) super.copy();
+  }
 }

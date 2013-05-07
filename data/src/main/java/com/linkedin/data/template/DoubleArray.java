@@ -54,4 +54,10 @@ public final class DoubleArray extends DirectArrayTemplate<Double>
   {
     return (DoubleArray) super.clone();
   }
+
+  @Override
+  public DoubleArray copy() throws CloneNotSupportedException
+  {
+    return (DoubleArray) super.copy();
+  }
 }

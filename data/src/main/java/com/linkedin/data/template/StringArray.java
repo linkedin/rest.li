@@ -54,4 +54,10 @@ public final class StringArray extends DirectArrayTemplate<String>
   {
     return (StringArray) super.clone();
   }
+
+  @Override
+  public StringArray copy() throws CloneNotSupportedException
+  {
+    return (StringArray) super.copy();
+  }
 }

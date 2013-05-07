@@ -21,8 +21,8 @@
     { "name" : "stringMapArray", "type" : { "type" : "array", "items" : { "type" : "map", "values" : "string" } } },
     { "name" : "bytesMapArray", "type" : { "type" : "array", "items" : { "type" : "map", "values" : "bytes" } } },
 
-    { "name" : "intIntArray", "type" : { "type" : "array", "items" : { "type" : "array", "items" : "int" } } },
-    { "name" : "stringIntArray", "type" : { "type" : "array", "items" : { "type" : "array", "items" : "string" } } },
+    { "name" : "intArrayArray", "type" : { "type" : "array", "items" : { "type" : "array", "items" : "int" } } },
+    { "name" : "stringArrayArray", "type" : { "type" : "array", "items" : { "type" : "array", "items" : "string" } } },
 
     { "name" : "enumFruitsArray", "type" : { "type" : "array", "items" : "EnumFruits" } },
 
@@ -34,7 +34,7 @@
       }
     },
 
-    { "name" : "recordMap", "type" : { "type" : "array", "items" : "RecordBar" } },
+    { "name" : "recordArray", "type" : { "type" : "array", "items" : "RecordBar" } },
 
     { "name" : "recordInlineArray", "type" :
       { "type" : "array",
@@ -46,7 +46,7 @@
       }
     },
 
-    { "name" : "fixedMap", "type" : { "type" : "array", "items" : "FixedMD5" } },
+    { "name" : "fixedArray", "type" : { "type" : "array", "items" : "FixedMD5" } },
 
     { "name" : "fixedInlineArray", "type" :
       { "type" : "array",
@@ -56,7 +56,7 @@
       }
     },
 
-    { "name" : "unionMap", "type" :
+    { "name" : "unionArray", "type" :
       { "type" : "array",
         "items" :
         [

@@ -60,4 +60,10 @@ public final class BytesMap extends DirectMapTemplate<ByteString>
   {
     return (BytesMap) super.clone();
   }
+
+  @Override
+  public BytesMap copy() throws CloneNotSupportedException
+  {
+    return (BytesMap) super.copy();
+  }
 }

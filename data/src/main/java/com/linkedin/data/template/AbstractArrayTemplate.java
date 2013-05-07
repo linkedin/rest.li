@@ -128,6 +128,15 @@ public abstract class AbstractArrayTemplate<E> extends AbstractList<E> implement
     return clone;
   }
 
+  @Override
+  public AbstractArrayTemplate<E> copy() throws CloneNotSupportedException
+  {
+    @SuppressWarnings("unchecked")
+    AbstractArrayTemplate<E> copy = (AbstractArrayTemplate<E>) super.clone();
+    copy._list = copy._list.copy();
+    return copy;
+  }
+
   protected DataList _list;
   protected final ArrayDataSchema _schema;
   /**

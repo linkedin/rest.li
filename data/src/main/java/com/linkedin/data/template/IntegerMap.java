@@ -59,4 +59,10 @@ public final class IntegerMap extends DirectMapTemplate<Integer>
   {
     return (IntegerMap) super.clone();
   }
+
+  @Override
+  public IntegerMap copy() throws CloneNotSupportedException
+  {
+    return (IntegerMap) super.copy();
+  }
 }

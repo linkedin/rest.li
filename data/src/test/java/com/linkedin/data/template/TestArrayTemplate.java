@@ -18,8 +18,10 @@ package com.linkedin.data.template;
 
 
 import com.linkedin.data.ByteString;
+import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.TestUtil;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
@@ -36,10 +38,9 @@ import org.testng.annotations.Test;
 
 import static com.linkedin.data.TestUtil.asList;
 import static com.linkedin.data.TestUtil.asMap;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertSame;
-import static org.testng.Assert.assertTrue;
+import static com.linkedin.data.TestUtil.noCommonDataComplex;
+import static org.testng.Assert.*;
+
 
 /**
  * Unit tests for array {@link DataTemplate}'s.
@@ -48,7 +49,7 @@ import static org.testng.Assert.assertTrue;
  */
 public class TestArrayTemplate
 {
-  public <ArrayTemplate extends AbstractArrayTemplate<E>, E>
+  public static <ArrayTemplate extends AbstractArrayTemplate<E>, E>
   void testArray(Class<ArrayTemplate> templateClass,
                  ArrayDataSchema schema,
                  List<E> input,
@@ -260,23 +261,74 @@ public class TestArrayTemplate
       assertEquals(array9.get(k), reference9.get(k));
     }
 
+    // clone and copy return types
+    TestDataTemplateUtil.assertCloneAndCopyReturnType(templateClass);
+    
     // clone
     Exception exc = null;
     ArrayTemplate array10 = templateClass.newInstance();
     array10.addAll(input);
     try
     {
-      exc = null;
       @SuppressWarnings("unchecked")
       ArrayTemplate array10Clone = (ArrayTemplate) array10.clone();
+      assertTrue(array10Clone.getClass() == templateClass);
       assertEquals(array10Clone, array10);
       assertTrue(array10Clone != array10);
+      for (int i = 0; i < array10.size(); i++)
+      {
+        assertSame(array10Clone.data().get(i), array10.data().get(i));
+      }
       array10Clone.remove(0);
       assertEquals(array10Clone.size(), array10.size() - 1);
       assertFalse(array10Clone.equals(array10));
       assertTrue(array10.containsAll(array10Clone));
       array10.remove(0);
       assertEquals(array10Clone, array10);
+    }
+    catch (CloneNotSupportedException e)
+    {
+      exc = e;
+    }
+    assert(exc == null);
+
+    // copy
+    ArrayTemplate array10a = templateClass.newInstance();
+    array10a.addAll(input);
+
+    try
+    {
+      @SuppressWarnings("unchecked")
+      ArrayTemplate array10aCopy = (ArrayTemplate) array10a.copy();
+      assertTrue(array10aCopy.getClass() == templateClass);
+      assertEquals(array10a, array10aCopy);
+      boolean hasComplex = false;
+      for (int i = 0; i < array10a.size(); i++)
+      {
+        if (array10a.data().get(i) instanceof DataComplex)
+        {
+          assertNotSame(array10aCopy.data().get(i), array10a.data().get(i));
+          hasComplex = true;
+        }
+      }
+      assertTrue(DataTemplate.class.isAssignableFrom(array10a._elementClass) == false || hasComplex);
+      assertTrue(noCommonDataComplex(array10a.data(), array10aCopy.data()));
+      boolean mutated = false;
+      for (Object items : array10aCopy.data())
+      {
+        mutated |= TestUtil.mutateChild(items);
+      }
+      assertEquals(mutated, hasComplex);
+      if (mutated)
+      {
+        assertNotEquals(array10aCopy, array10a);
+      }
+      else
+      {
+        assertEquals(array10aCopy, array10a);
+        array10aCopy.remove(0);
+        assertNotEquals(array10aCopy, array10a);
+      }
     }
     catch (CloneNotSupportedException e)
     {
@@ -839,6 +891,16 @@ public class TestArrayTemplate
     {
       super(list, SCHEMA, Fruits.class, String.class);
     }
+    @Override
+    public EnumArrayTemplate clone() throws CloneNotSupportedException
+    {
+      return (EnumArrayTemplate) super.clone();
+    }
+    @Override
+    public EnumArrayTemplate copy() throws CloneNotSupportedException
+    {
+      return (EnumArrayTemplate) super.copy();
+    }
   }
 
   @Test
@@ -872,6 +934,16 @@ public class TestArrayTemplate
     public ArrayOfStringArrayTemplate(DataList list)
     {
       super(list, SCHEMA, StringArray.class);
+    }
+    @Override
+    public ArrayOfStringArrayTemplate clone() throws CloneNotSupportedException
+    {
+      return (ArrayOfStringArrayTemplate) super.clone();
+    }
+    @Override
+    public ArrayOfStringArrayTemplate copy() throws CloneNotSupportedException
+    {
+      return (ArrayOfStringArrayTemplate) super.copy();
     }
   }
 
@@ -925,6 +997,18 @@ public class TestArrayTemplate
     {
       putDirect(FIELD_bar, String.class, value);
     }
+
+    @Override
+    public FooRecord clone() throws CloneNotSupportedException
+    {
+      return (FooRecord) super.clone();
+    }
+
+    @Override
+    public FooRecord copy() throws CloneNotSupportedException
+    {
+      return (FooRecord) super.copy();
+    }
   }
 
   public static class FooRecordArray extends WrappingArrayTemplate<FooRecord>
@@ -946,6 +1030,16 @@ public class TestArrayTemplate
     public FooRecordArray(DataList list)
     {
       super(list, SCHEMA, FooRecord.class);
+    }
+    @Override
+    public FooRecordArray clone() throws CloneNotSupportedException
+    {
+      return (FooRecordArray) super.clone();
+    }
+    @Override
+    public FooRecordArray copy() throws CloneNotSupportedException
+    {
+      return (FooRecordArray) super.copy();
     }
   }
 

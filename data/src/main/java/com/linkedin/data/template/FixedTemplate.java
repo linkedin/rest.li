@@ -112,6 +112,12 @@ public abstract class FixedTemplate implements DataTemplate<ByteString>
   }
 
   @Override
+  public FixedTemplate copy() throws CloneNotSupportedException
+  {
+    return clone();
+  }
+
+  @Override
   public int hashCode()
   {
     return _data.hashCode();

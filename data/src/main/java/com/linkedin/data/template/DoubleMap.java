@@ -59,4 +59,10 @@ public final class DoubleMap extends DirectMapTemplate<Double>
   {
     return (DoubleMap) super.clone();
   }
+
+  @Override
+  public DoubleMap copy() throws CloneNotSupportedException
+  {
+    return (DoubleMap) super.copy();
+  }
 }
