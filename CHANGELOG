@@ -4,12 +4,16 @@
 fix logging message for D2
 
 (RB=161556)
-Use thread context classpath instead of pegasus classpath when using Class.forName on names of 
+Use thread context classpath instead of pegasus classpath when using Class.forName on names of
 coercers, validators and avro custom data translators.
 
 (RB=161961)
 Add copy() and clone() methods to generated non-record DataTemplates.
 Generated record DataTemplates have had these methods since 1.8.4.
+
+(RB=162841)
+Adding new resource class is a backward compatible change now.
+Add instruction message for idl compatibility check failure.
 
 1.8.21
 ------

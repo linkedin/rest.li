@@ -50,6 +50,16 @@ project.sourceSets.all { SourceSet sourceSet ->
     checkIdlTask.args it
   }
 
+  project.gradle.taskGraph.afterTask { task, TaskState state ->
+    if (task == checkIdlTask && state.failure != null)
+    {
+      println()
+      println('You may add "-Prest.model.compatibility=backwards" to the build command to allow backwards compatible changes in idl.')
+      println('You may use "-Prest.model.compatibility=ignore" to ignore idl compatibility errors.')
+      println('Documentation: https://github.com/linkedin/rest.li/wiki/Gradle-build-integration#compatibility')
+    }
+  }
+
   final Task publishIdlTask = project.task(sourceSet.name + 'PublishIdl',
                                            type: Copy,
                                            dependsOn: checkIdlTask) {

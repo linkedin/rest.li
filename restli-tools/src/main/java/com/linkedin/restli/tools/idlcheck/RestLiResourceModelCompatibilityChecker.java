@@ -161,7 +161,6 @@ public class RestLiResourceModelCompatibilityChecker
       _schemaResolver = new DefaultDataSchemaResolver();
     }
 
-    _info.put(CompatibilityInfo.Level.UNABLE_TO_CHECK, new ArrayList<CompatibilityInfo>());
     _info.put(CompatibilityInfo.Level.INCOMPATIBLE, new ArrayList<CompatibilityInfo>());
     _info.put(CompatibilityInfo.Level.COMPATIBLE, new ArrayList<CompatibilityInfo>());
   }
@@ -192,7 +191,7 @@ public class RestLiResourceModelCompatibilityChecker
     }
     catch (FileNotFoundException e)
     {
-      addInfo(CompatibilityInfo.Type.FILE_NOT_FOUND, prevRestspecPath);
+      addInfo(CompatibilityInfo.Type.RESOURCE_NEW, currRestspecPath);
     }
     catch (IOException e)
     {
@@ -205,7 +204,7 @@ public class RestLiResourceModelCompatibilityChecker
     }
     catch (FileNotFoundException e)
     {
-      addInfo(CompatibilityInfo.Type.FILE_NOT_FOUND, currRestspecPath);
+      addInfo(CompatibilityInfo.Type.RESOURCE_MISSING, prevRestspecPath);
     }
     catch (Exception e)
     {
@@ -247,15 +246,6 @@ public class RestLiResourceModelCompatibilityChecker
   }
 
   /**
-   * @return check results in the unable to check category.
-   *         empty collection if called before checking any files
-   */
-  public Collection<CompatibilityInfo> getUnableToChecks()
-  {
-    return Collections.unmodifiableCollection(_info.get(CompatibilityInfo.Level.UNABLE_TO_CHECK));
-  }
-
-  /**
    * @return check results in the backwards incompatibility category.
    *         empty collection if called before checking any files
    */
@@ -281,7 +271,6 @@ public class RestLiResourceModelCompatibilityChecker
   {
     final StringBuilder summaryMessage = new StringBuilder();
 
-    createSummaryForInfo(getUnableToChecks(), "Unable to checks", summaryMessage);
     createSummaryForInfo(getIncompatibles(), "Incompatible changes", summaryMessage);
     createSummaryForInfo(getCompatibles(), "Compatible changes", summaryMessage);
 
@@ -325,13 +314,11 @@ public class RestLiResourceModelCompatibilityChecker
 
   private boolean isCompatible(CompatibilityLevel compatLevel)
   {
-    final Collection<CompatibilityInfo> unableToChecks = getUnableToChecks();
     final Collection<CompatibilityInfo> incompatibles = getIncompatibles();
     final Collection<CompatibilityInfo> compatibles = getCompatibles();
 
-    return ((unableToChecks.isEmpty() || compatLevel.ordinal() < CompatibilityLevel.BACKWARDS.ordinal()) &&
-        (incompatibles.isEmpty()      || compatLevel.ordinal() < CompatibilityLevel.BACKWARDS.ordinal()) &&
-        (compatibles.isEmpty()        || compatLevel.ordinal() < CompatibilityLevel.EQUIVALENT.ordinal()));
+    return ((incompatibles.isEmpty()      || compatLevel.ordinal() < CompatibilityLevel.BACKWARDS.ordinal()) &&
+            (compatibles.isEmpty()        || compatLevel.ordinal() < CompatibilityLevel.EQUIVALENT.ordinal()));
   }
 
   private boolean validateData(DataMap object, DataSchema schema, ValidationOptions options)

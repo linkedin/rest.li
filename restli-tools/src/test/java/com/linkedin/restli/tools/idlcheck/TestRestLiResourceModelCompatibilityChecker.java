@@ -78,7 +78,6 @@ public class TestRestLiResourceModelCompatibilityChecker
                                     IDLS_DIR + CURR_COLL_PASS_FILE,
                                     CompatibilityLevel.BACKWARDS));
 
-    final Collection<CompatibilityInfo> unableToChecks = checker.getUnableToChecks();
     final Collection<CompatibilityInfo> incompatibles = checker.getIncompatibles();
     final Collection<CompatibilityInfo> compatibles = new HashSet<CompatibilityInfo>(checker.getCompatibles());
 
@@ -88,7 +87,6 @@ public class TestRestLiResourceModelCompatibilityChecker
       compatibles.remove(di);
     }
 
-    Assert.assertTrue(unableToChecks.isEmpty());
     Assert.assertTrue(incompatibles.isEmpty());
     Assert.assertTrue(compatibles.isEmpty());
   }
@@ -106,7 +104,6 @@ public class TestRestLiResourceModelCompatibilityChecker
                                     IDLS_DIR + CURR_ASSOC_PASS_FILE,
                                     CompatibilityLevel.BACKWARDS));
 
-    final Collection<CompatibilityInfo> unableToChecks = checker.getUnableToChecks();
     final Collection<CompatibilityInfo> incompatibles = checker.getIncompatibles();
     final Collection<CompatibilityInfo> compatibles = new HashSet<CompatibilityInfo>(checker.getCompatibles());
 
@@ -116,7 +113,6 @@ public class TestRestLiResourceModelCompatibilityChecker
       compatibles.remove(di);
     }
 
-    Assert.assertTrue(unableToChecks.isEmpty());
     Assert.assertTrue(incompatibles.isEmpty());
     Assert.assertTrue(compatibles.isEmpty());
   }
@@ -181,7 +177,6 @@ public class TestRestLiResourceModelCompatibilityChecker
                                      IDLS_DIR + CURR_COLL_FAIL_FILE,
                                      CompatibilityLevel.BACKWARDS));
 
-    final Collection<CompatibilityInfo> unableToChecks = checker.getUnableToChecks();
     final Collection<CompatibilityInfo> incompatible = new HashSet<CompatibilityInfo>(checker.getIncompatibles());
 
     for (CompatibilityInfo te : testErrors)
@@ -190,7 +185,6 @@ public class TestRestLiResourceModelCompatibilityChecker
       incompatible.remove(te);
     }
 
-    Assert.assertTrue(unableToChecks.isEmpty());
     Assert.assertTrue(incompatible.isEmpty());
   }
 
@@ -223,7 +217,6 @@ public class TestRestLiResourceModelCompatibilityChecker
                                      IDLS_DIR + CURR_ASSOC_FAIL_FILE,
                                      CompatibilityLevel.BACKWARDS));
 
-    final Collection<CompatibilityInfo> unableToChecks = checker.getUnableToChecks();
     final Collection<CompatibilityInfo> incompatibles = new HashSet<CompatibilityInfo>(checker.getIncompatibles());
 
     for (CompatibilityInfo te : testErrors)
@@ -232,7 +225,6 @@ public class TestRestLiResourceModelCompatibilityChecker
       incompatibles.remove(te);
     }
 
-    Assert.assertTrue(unableToChecks.isEmpty());
     Assert.assertTrue(incompatibles.isEmpty());
   }
 
@@ -249,7 +241,6 @@ public class TestRestLiResourceModelCompatibilityChecker
                                      IDLS_DIR + CURR_AS_FAIL_FILE,
                                      CompatibilityLevel.BACKWARDS));
 
-    final Collection<CompatibilityInfo> unableToChecks = checker.getUnableToChecks();
     final Collection<CompatibilityInfo> incompatibles = new HashSet<CompatibilityInfo>(checker.getIncompatibles());
 
     for (CompatibilityInfo te : testErrors)
@@ -258,7 +249,6 @@ public class TestRestLiResourceModelCompatibilityChecker
       incompatibles.remove(te);
     }
 
-    Assert.assertTrue(unableToChecks.isEmpty());
     Assert.assertTrue(incompatibles.isEmpty());
   }
 
@@ -271,10 +261,7 @@ public class TestRestLiResourceModelCompatibilityChecker
                                     IDLS_DIR + CURR_AS_PASS_FILE,
                                     CompatibilityLevel.BACKWARDS));
 
-    final Collection<CompatibilityInfo> unableToChecks = checker.getUnableToChecks();
     final Collection<CompatibilityInfo> incompatibles = checker.getIncompatibles();
-
-    Assert.assertTrue(unableToChecks.isEmpty());
     Assert.assertTrue(incompatibles.isEmpty());
   }
 
@@ -283,13 +270,14 @@ public class TestRestLiResourceModelCompatibilityChecker
   {
     final String nonExistentFilename1 = "NonExistentFile1";
     final String nonExistentFilename2 = "NonExistentFile2";
-    final Collection<CompatibilityInfo> testUnableToChecks = new HashSet<CompatibilityInfo>();
+    final Collection<CompatibilityInfo> testIncompatibles = new HashSet<CompatibilityInfo>();
+    final Collection<CompatibilityInfo> testCompatibles = new HashSet<CompatibilityInfo>();
 
-    testUnableToChecks.add(new CompatibilityInfo(Arrays.<Object>asList(""),
-                                                 CompatibilityInfo.Type.FILE_NOT_FOUND,
+    testIncompatibles.add(new CompatibilityInfo(Arrays.<Object>asList(""),
+                                                 CompatibilityInfo.Type.RESOURCE_MISSING,
                                                  nonExistentFilename1));
-    testUnableToChecks.add(new CompatibilityInfo(Arrays.<Object>asList(""),
-                                                 CompatibilityInfo.Type.FILE_NOT_FOUND,
+    testCompatibles.add(new CompatibilityInfo(Arrays.<Object>asList(""),
+                                                 CompatibilityInfo.Type.RESOURCE_NEW,
                                                  nonExistentFilename2));
 
     final RestLiResourceModelCompatibilityChecker checker = new RestLiResourceModelCompatibilityChecker();
@@ -298,17 +286,20 @@ public class TestRestLiResourceModelCompatibilityChecker
                                      nonExistentFilename2,
                                      CompatibilityLevel.BACKWARDS));
 
-    final Collection<CompatibilityInfo> unableToChecks = new HashSet<CompatibilityInfo>(checker.getUnableToChecks());
     final Collection<CompatibilityInfo> incompatibles = new HashSet<CompatibilityInfo>(checker.getIncompatibles());
+    final Collection<CompatibilityInfo> compatibles = new HashSet<CompatibilityInfo>(checker.getCompatibles());
 
-    for (CompatibilityInfo tutc : testUnableToChecks)
+    for (CompatibilityInfo te : incompatibles)
     {
-      Assert.assertTrue(unableToChecks.contains(tutc), "Reported unable-to-checks should contain: " + tutc.toString());
-      unableToChecks.remove(tutc);
+      Assert.assertTrue(testIncompatibles.contains(te), "Reported incompatibles should contain: " + te.toString());
+      incompatibles.remove(te);
     }
 
-    Assert.assertTrue(unableToChecks.isEmpty());
-    Assert.assertTrue(incompatibles.isEmpty());
+    for (CompatibilityInfo di : compatibles)
+    {
+      Assert.assertTrue(testCompatibles.contains(di), "Reported compatibles should contain: " + di.toString());
+      compatibles.remove(di);
+    }
   }
 
   private static final String IDLS_SUFFIX = "idls" + File.separator;
