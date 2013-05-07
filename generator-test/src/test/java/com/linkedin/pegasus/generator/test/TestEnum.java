@@ -24,38 +24,46 @@ import java.util.HashSet;
 import java.util.Set;
 import org.testng.annotations.Test;
 
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 
 public class TestEnum
 {
-  private static <T extends Enum<T>> void testEnum(Class<T> enumClass) throws InstantiationException, IllegalAccessException
+  private static <T extends Enum<T>> void testEnum(Class<T> enumClass)
   {
-    assertTrue(Enum.class.isAssignableFrom(enumClass));
-
-    // has embedded EnumDataSchema
-    DataSchema schema = DataTemplateUtil.getSchema(enumClass);
-    assertNotNull(schema);
-    assertTrue(schema instanceof EnumDataSchema);
-
-    // get symbols
-    EnumDataSchema enumSchema = (EnumDataSchema) schema;
-    Set<String> schemaSymbols = new HashSet<String>(enumSchema.getSymbols());
-    assertNotNull(schemaSymbols);
-
-    for (String symbol : schemaSymbols)
+    try
     {
-      // IllegalArgumentException thrown if not valid symbol
-      Enum.valueOf(enumClass, symbol);
-    }
+      assertTrue(Enum.class.isAssignableFrom(enumClass));
 
-    // IllegalArgumentException thrown if not valid symbol
-    Enum.valueOf(enumClass, "$UNKNOWN");
+      // has embedded EnumDataSchema
+      DataSchema schema = DataTemplateUtil.getSchema(enumClass);
+      assertNotNull(schema);
+      assertTrue(schema instanceof EnumDataSchema);
+
+      // get symbols
+      EnumDataSchema enumSchema = (EnumDataSchema) schema;
+      Set<String> schemaSymbols = new HashSet<String>(enumSchema.getSymbols());
+      assertNotNull(schemaSymbols);
+
+      for (String symbol : schemaSymbols)
+      {
+        // IllegalArgumentException thrown if not valid symbol
+        Enum.valueOf(enumClass, symbol);
+      }
+
+      // IllegalArgumentException thrown if not valid symbol
+      Enum.valueOf(enumClass, "$UNKNOWN");
+    }
+    catch (Exception exc)
+    {
+      fail("Unexpected exception", exc);
+    }
   }
 
   @Test
-  public void testEnum() throws InstantiationException, IllegalAccessException
+  public void testEnum()
   {
     testEnum(EnumFruits.class);
     testEnum(EnumEmpty.class);

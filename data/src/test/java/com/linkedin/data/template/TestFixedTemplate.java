@@ -123,7 +123,7 @@ public class TestFixedTemplate
       }
 
       // toString
-      assertEquals(expectedByteString.asAvroString(), fixed.toString());
+      assertEquals(expectedByteString.toString(), fixed.toString());
 
       lastHashCode = newHashCode;
       lastByteString = expectedByteString;
@@ -164,7 +164,7 @@ public class TestFixedTemplate
       }
 
       // toString
-      assertEquals(o.asAvroString(), fixed.toString());
+      assertEquals(o.toString(), fixed.toString());
 
       lastHashCode = newHashCode;
       lastByteString = o;

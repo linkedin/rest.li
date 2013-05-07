@@ -60,544 +60,554 @@ public class TestMapTemplate
                MapDataSchema schema,
                Map<String, E> input,
                Map<String, E> adds)
-  throws InstantiationException, IllegalAccessException
   {
-    Exception exc = null;
-
-    // constructor and putall
-    MapTemplate map1 = templateClass.newInstance();
-    map1.putAll(input);
-    assertEquals(map1, input);
-
-    /*
-    Constructor[] constructors = templateClass.getConstructors();
-    for (Constructor c : constructors)
-    {
-      out.println(c);
-    }
-    */
     try
     {
-      int size = input.size();
+      Exception exc = null;
 
-      // constructor(int capacity)
-      Constructor<MapTemplate> capacityConstructor = templateClass.getConstructor(int.class);
-      MapTemplate map = capacityConstructor.newInstance(input.size());
-      assertEquals(map, Collections.emptyMap());
-      map.putAll(input);
-      assertEquals(input, map);
-      map.clear();
-      assertEquals(size, input.size());
+      // constructor and putall
+      MapTemplate map1 = templateClass.newInstance();
+      map1.putAll(input);
+      assertEquals(map1, input);
 
-      // constructor(int capacity, float loadFactor)
-      Constructor<MapTemplate> loadFactorConstructor = templateClass.getConstructor(int.class, float.class);
-      map = loadFactorConstructor.newInstance(input.size(), input.size() * 1.4f);
-      assertEquals(map, Collections.emptyMap());
-      map.putAll(input);
-      assertEquals(input, map);
-      map.clear();
-      assertEquals(size, input.size());
-
-      // constructor(Map<String, E>)
-      Constructor<MapTemplate> mapConstructor = templateClass.getConstructor(Map.class);
-      map = mapConstructor.newInstance(input);
-      assertEquals(input, map);
-      map.clear();
-      assertEquals(size, input.size());
-
-      // constructor(DataMap)
-      Constructor<MapTemplate> dataMapConstructor = templateClass.getConstructor(DataMap.class);
-      map = dataMapConstructor.newInstance(map1.data());
-      assertEquals(map1, map);
-      assertEquals(input, map);
-      map.clear();
-      assertEquals(map1, map);
-    }
-    catch (Exception e)
-    {
-      assertSame(e, null);
-    }
-
-    // test wrapping
-    map1.clear();
-    map1.putAll(input);
-    DataMap dataMap2 = new DataMap();
-    MapTemplate map2 = DataTemplateUtil.wrap(dataMap2, schema, templateClass);
-    for (Map.Entry<String, E> e : input.entrySet())
-    {
-      E v = e.getValue();
-      Object o;
-      if (v instanceof DataTemplate)
+      /*
+      Constructor[] constructors = templateClass.getConstructors();
+      for (Constructor c : constructors)
       {
-        o = ((DataTemplate<?>) v).data();
+        out.println(c);
       }
-      else if (v instanceof Enum)
+      */
+      try
       {
-        o = v.toString();
-      }
-      else
-      {
-        o = v;
-      }
-      dataMap2.put(e.getKey(), o);
-      assertEquals(map2.hashCode(), dataMap2.hashCode());
-    }
-    assertEquals(map1, map2);
-    MapTemplate map2a = DataTemplateUtil.wrap(dataMap2, templateClass);
-    assertEquals(map1, map2a);
-    assertSame(map2a.data(), map2.data());
+        int size = input.size();
 
-    // valueClass()
-    assertSame(map1.valueClass(), input.values().iterator().next().getClass());
+        // constructor(int capacity)
+        Constructor<MapTemplate> capacityConstructor = templateClass.getConstructor(int.class);
+        MapTemplate map = capacityConstructor.newInstance(input.size());
+        assertEquals(map, Collections.emptyMap());
+        map.putAll(input);
+        assertEquals(input, map);
+        map.clear();
+        assertEquals(size, input.size());
 
-    // equals(), hashCode()
-    map1.clear();
-    map1.putAll(input);
-    assertTrue(map1.equals(map1));
-    assertTrue(map1.equals(input));
-    assertFalse(map1.equals(null));
-    assertFalse(map1.equals(adds));
-    assertFalse(map1.equals(new HashMap<String,E>()));
-    map2.clear();
-    Map<String,E> hashMap2 = new HashMap<String,E>();
-    List<Map.Entry<String,E>> inputList = new ArrayList<Map.Entry<String, E>>(input.entrySet());
-    int lastHash = 0;
-    for (int i = 0; i < inputList.size(); ++i)
-    {
-      Map.Entry<String,E> entry = inputList.get(i);
-      map2.put(entry.getKey(), entry.getValue());
-      hashMap2.put(entry.getKey(), entry.getValue());
+        // constructor(int capacity, float loadFactor)
+        Constructor<MapTemplate> loadFactorConstructor = templateClass.getConstructor(int.class, float.class);
+        map = loadFactorConstructor.newInstance(input.size(), input.size() * 1.4f);
+        assertEquals(map, Collections.emptyMap());
+        map.putAll(input);
+        assertEquals(input, map);
+        map.clear();
+        assertEquals(size, input.size());
 
-      if (i == (inputList.size() - 1))
-      {
-        assertTrue(map1.equals(map2));
-        assertTrue(map1.equals(hashMap2));
+        // constructor(Map<String, E>)
+        Constructor<MapTemplate> mapConstructor = templateClass.getConstructor(Map.class);
+        map = mapConstructor.newInstance(input);
+        assertEquals(input, map);
+        map.clear();
+        assertEquals(size, input.size());
+
+        // constructor(DataMap)
+        Constructor<MapTemplate> dataMapConstructor = templateClass.getConstructor(DataMap.class);
+        map = dataMapConstructor.newInstance(map1.data());
+        assertEquals(map1, map);
+        assertEquals(input, map);
+        map.clear();
+        assertEquals(map1, map);
       }
-      else
+      catch (Exception e)
       {
-        assertFalse(map1.equals(map2));
-        assertFalse(map1.equals(hashMap2));
+        assertSame(e, null);
       }
 
-      int newHash = map2.hashCode();
-      if (i > 0)
+      // test wrapping
+      map1.clear();
+      map1.putAll(input);
+      DataMap dataMap2 = new DataMap();
+      MapTemplate map2 = DataTemplateUtil.wrap(dataMap2, schema, templateClass);
+      for (Map.Entry<String, E> e : input.entrySet())
       {
-        assertFalse(lastHash == newHash);
-      }
-
-      lastHash = newHash;
-    }
-
-    // schema()
-    MapDataSchema schema1 = map1.schema();
-    assertTrue(schema1 != null);
-    assertEquals(schema1.getType(), DataSchema.Type.MAP);
-    assertEquals(schema1, schema);
-
-    // get(Object key), put(K key, V value, containsKey(Object key), containsValue(Object value), toString
-    MapTemplate map3 = templateClass.newInstance();
-    for (Map.Entry<String, E> e : input.entrySet())
-    {
-      String key = e.getKey();
-      E value = e.getValue();
-      E replaced = map3.put(key, value);
-      assertTrue(replaced == null);
-      E got = map3.get(key);
-      assertTrue(got != null);
-      assertEquals(value, got);
-      assertSame(value, got);
-      assertTrue(map3.containsKey(key));
-      assertTrue(map3.containsValue(value));
-      assertTrue(map3.toString().contains(key + "=" + value));
-    }
-    assertNull(map3.get(null));
-    assertNull(map3.get(1));
-    assertNull(map3.get(new Object()));
-    assertNull(map3.get("not found"));
-
-    assertEquals(map3, input);
-    Iterator<Map.Entry<String, E>> e2 = adds.entrySet().iterator();
-    for (Map.Entry<String, E> e : input.entrySet())
-    {
-      if (e2.hasNext() == false)
-        break;
-      E newValue = e2.next().getValue();
-      String key = e.getKey();
-      E value = e.getValue();
-      assertTrue(map3.containsKey(key));
-      assertTrue(map3.containsValue(value));
-      E replaced = map3.put(key, newValue);
-      assertTrue(replaced != null);
-      assertEquals(replaced, value);
-      assertSame(replaced, value);
-      assertTrue(map3.containsKey(key));
-      assertTrue(map3.containsValue(newValue));
-      assertTrue(map3.toString().contains(key));
-      assertTrue(map3.toString().contains(newValue.toString()));
-    }
-
-    // put(String key, E value) with replacement of existing value
-    map3.clear();
-    String testKey = "testKey";
-    E lastValue = null;
-    for (Map.Entry<String, E> e : input.entrySet())
-    {
-      E putResult = map3.put(testKey, e.getValue());
-      if (lastValue != null)
-      {
-        assertEquals(putResult, lastValue);
-      }
-      lastValue = e.getValue();
-    }
-
-    // remove(Object key), containsKey(Object key), containsValue(Object value)
-    MapTemplate map4 = templateClass.newInstance();
-    map4.putAll(input);
-    int map4Size = map4.size();
-    for (Map.Entry<String, E> e : input.entrySet())
-    {
-      String key = e.getKey();
-      E value = e.getValue();
-      assertTrue(map4.containsKey(key));
-      assertTrue(map4.containsValue(value));
-      E removed = map4.remove(key);
-      assertTrue(removed != null);
-      assertEquals(value, removed);
-      assertSame(value, removed);
-      assertFalse(map4.containsKey(key));
-      assertFalse(map4.containsValue(value));
-      map4Size--;
-      assertEquals(map4Size, map4.size());
-    }
-    assertTrue(map4.isEmpty());
-    assertTrue(map4.size() == 0);
-    assertFalse(map4.containsValue(null));
-    assertFalse(map4.containsValue(new StringArray()));
-
-    // clone and copy return types
-    TestDataTemplateUtil.assertCloneAndCopyReturnType(templateClass);
-
-    // clone
-    exc = null;
-    map4 = templateClass.newInstance();
-    map4.putAll(input);
-    try
-    {
-      exc = null;
-      @SuppressWarnings("unchecked")
-      MapTemplate map4Clone = (MapTemplate) map4.clone();
-      assertTrue(map4Clone.getClass() == templateClass);
-      assertEquals(map4Clone, map4);
-      assertTrue(map4Clone != map4);
-      for (Map.Entry<String, Object> entry : map4.data().entrySet())
-      {
-        if (entry.getValue() instanceof DataComplex)
+        E v = e.getValue();
+        Object o;
+        if (v instanceof DataTemplate)
         {
-          assertSame(map4Clone.data().get(entry.getKey()), entry.getValue());
+          o = ((DataTemplate<?>) v).data();
+        }
+        else if (v instanceof Enum)
+        {
+          o = v.toString();
+        }
+        else
+        {
+          o = v;
+        }
+        dataMap2.put(e.getKey(), o);
+        assertEquals(map2.hashCode(), dataMap2.hashCode());
+      }
+      assertEquals(map1, map2);
+      MapTemplate map2a = DataTemplateUtil.wrap(dataMap2, templateClass);
+      assertEquals(map1, map2a);
+      assertSame(map2a.data(), map2.data());
+
+      // valueClass()
+      assertSame(map1.valueClass(), input.values().iterator().next().getClass());
+
+      // equals(), hashCode()
+      map1.clear();
+      map1.putAll(input);
+      assertTrue(map1.equals(map1));
+      assertTrue(map1.equals(input));
+      assertFalse(map1.equals(null));
+      assertFalse(map1.equals(adds));
+      assertFalse(map1.equals(new HashMap<String,E>()));
+      map2.clear();
+      Map<String,E> hashMap2 = new HashMap<String,E>();
+      List<Map.Entry<String,E>> inputList = new ArrayList<Map.Entry<String, E>>(input.entrySet());
+      int lastHash = 0;
+      for (int i = 0; i < inputList.size(); ++i)
+      {
+        Map.Entry<String,E> entry = inputList.get(i);
+        map2.put(entry.getKey(), entry.getValue());
+        hashMap2.put(entry.getKey(), entry.getValue());
+
+        if (i == (inputList.size() - 1))
+        {
+          assertTrue(map1.equals(map2));
+          assertTrue(map1.equals(hashMap2));
+        }
+        else
+        {
+          assertFalse(map1.equals(map2));
+          assertFalse(map1.equals(hashMap2));
+        }
+
+        int newHash = map2.hashCode();
+        if (i > 0)
+        {
+          assertFalse(lastHash == newHash);
+        }
+
+        lastHash = newHash;
+      }
+
+      // schema()
+      MapDataSchema schema1 = map1.schema();
+      assertTrue(schema1 != null);
+      assertEquals(schema1.getType(), DataSchema.Type.MAP);
+      assertEquals(schema1, schema);
+
+      // get(Object key), put(K key, V value, containsKey(Object key), containsValue(Object value), toString
+      MapTemplate map3 = templateClass.newInstance();
+      for (Map.Entry<String, E> e : input.entrySet())
+      {
+        String key = e.getKey();
+        E value = e.getValue();
+        E replaced = map3.put(key, value);
+        assertTrue(replaced == null);
+        E got = map3.get(key);
+        assertTrue(got != null);
+        assertEquals(value, got);
+        assertSame(value, got);
+        assertTrue(map3.containsKey(key));
+        assertTrue(map3.containsValue(value));
+        assertTrue(map3.toString().contains(key + "=" + value));
+      }
+      assertNull(map3.get(null));
+      assertNull(map3.get(1));
+      assertNull(map3.get(new Object()));
+      assertNull(map3.get("not found"));
+
+      assertEquals(map3, input);
+      Iterator<Map.Entry<String, E>> e2 = adds.entrySet().iterator();
+      for (Map.Entry<String, E> e : input.entrySet())
+      {
+        if (e2.hasNext() == false)
+          break;
+        E newValue = e2.next().getValue();
+        String key = e.getKey();
+        E value = e.getValue();
+        assertTrue(map3.containsKey(key));
+        assertTrue(map3.containsValue(value));
+        E replaced = map3.put(key, newValue);
+        assertTrue(replaced != null);
+        assertEquals(replaced, value);
+        assertSame(replaced, value);
+        assertTrue(map3.containsKey(key));
+        assertTrue(map3.containsValue(newValue));
+        assertTrue(map3.toString().contains(key));
+        assertTrue(map3.toString().contains(newValue.toString()));
+      }
+
+      // put(String key, E value) with replacement of existing value
+      map3.clear();
+      String testKey = "testKey";
+      E lastValue = null;
+      for (Map.Entry<String, E> e : input.entrySet())
+      {
+        E putResult = map3.put(testKey, e.getValue());
+        if (lastValue != null)
+        {
+          assertEquals(putResult, lastValue);
+        }
+        lastValue = e.getValue();
+      }
+
+      // remove(Object key), containsKey(Object key), containsValue(Object value)
+      MapTemplate map4 = templateClass.newInstance();
+      map4.putAll(input);
+      int map4Size = map4.size();
+      for (Map.Entry<String, E> e : input.entrySet())
+      {
+        String key = e.getKey();
+        E value = e.getValue();
+        assertTrue(map4.containsKey(key));
+        assertTrue(map4.containsValue(value));
+        E removed = map4.remove(key);
+        assertTrue(removed != null);
+        assertEquals(value, removed);
+        assertSame(value, removed);
+        assertFalse(map4.containsKey(key));
+        assertFalse(map4.containsValue(value));
+        map4Size--;
+        assertEquals(map4Size, map4.size());
+      }
+      assertTrue(map4.isEmpty());
+      assertTrue(map4.size() == 0);
+      assertFalse(map4.containsValue(null));
+      assertFalse(map4.containsValue(new StringArray()));
+
+      // clone and copy return types
+      TestDataTemplateUtil.assertCloneAndCopyReturnType(templateClass);
+
+      // clone
+      exc = null;
+      map4 = templateClass.newInstance();
+      map4.putAll(input);
+      try
+      {
+        exc = null;
+        @SuppressWarnings("unchecked")
+        MapTemplate map4Clone = (MapTemplate) map4.clone();
+        assertTrue(map4Clone.getClass() == templateClass);
+        assertEquals(map4Clone, map4);
+        assertTrue(map4Clone != map4);
+        for (Map.Entry<String, Object> entry : map4.data().entrySet())
+        {
+          if (entry.getValue() instanceof DataComplex)
+          {
+            assertSame(map4Clone.data().get(entry.getKey()), entry.getValue());
+          }
+        }
+        String key = map4Clone.keySet().iterator().next();
+        map4Clone.remove(key);
+        assertEquals(map4Clone.size(), map4.size() - 1);
+        assertFalse(map4Clone.equals(map4));
+        assertTrue(map4.entrySet().containsAll(map4Clone.entrySet()));
+        map4.remove(key);
+        assertEquals(map4Clone, map4);
+      }
+      catch (CloneNotSupportedException e)
+      {
+        exc = e;
+      }
+      assert(exc == null);
+
+      //copy
+      MapTemplate map4a = templateClass.newInstance();
+      map4a.putAll(input);
+      try
+      {
+        @SuppressWarnings("unchecked")
+        MapTemplate map4aCopy = (MapTemplate) map4a.copy();
+        assertTrue(map4aCopy.getClass() == templateClass);
+        assertEquals(map4a, map4aCopy);
+        boolean hasComplex = false;
+        for (Map.Entry<String, Object> entry : map4a.data().entrySet())
+        {
+          if (entry.getValue() instanceof DataComplex)
+          {
+            assertNotSame(map4aCopy.data().get(entry.getKey()), entry.getValue());
+            hasComplex = true;
+          }
+        }
+        assertTrue(DataTemplate.class.isAssignableFrom(map4a._valueClass) == false || hasComplex);
+        assertTrue(noCommonDataComplex(map4a.data(), map4aCopy.data()));
+        boolean mutated = false;
+        for (Object value : map4aCopy.data().values())
+        {
+          if (value instanceof DataComplex)
+          {
+            mutated |= TestUtil.mutateDataComplex((DataComplex) value);
+          }
+        }
+        assertEquals(mutated, hasComplex);
+        if (mutated)
+        {
+          assertNotEquals(map4aCopy, map4a);
+        }
+        else
+        {
+          assertEquals(map4aCopy, map4a);
+          String key = map4aCopy.keySet().iterator().next();
+          map4aCopy.remove(key);
+          assertFalse(map4aCopy.containsKey(key));
+          assertTrue(map4a.containsKey(key));
         }
       }
-      String key = map4Clone.keySet().iterator().next();
-      map4Clone.remove(key);
-      assertEquals(map4Clone.size(), map4.size() - 1);
-      assertFalse(map4Clone.equals(map4));
-      assertTrue(map4.entrySet().containsAll(map4Clone.entrySet()));
-      map4.remove(key);
-      assertEquals(map4Clone, map4);
-    }
-    catch (CloneNotSupportedException e)
-    {
-      exc = e;
-    }
-    assert(exc == null);
-
-    //copy
-    MapTemplate map4a = templateClass.newInstance();
-    map4a.putAll(input);
-    try
-    {
-      @SuppressWarnings("unchecked")
-      MapTemplate map4aCopy = (MapTemplate) map4a.copy();
-      assertTrue(map4aCopy.getClass() == templateClass);
-      assertEquals(map4a, map4aCopy);
-      boolean hasComplex = false;
-      for (Map.Entry<String, Object> entry : map4a.data().entrySet())
+      catch (CloneNotSupportedException e)
       {
-        if (entry.getValue() instanceof DataComplex)
-        {
-          assertNotSame(map4aCopy.data().get(entry.getKey()), entry.getValue());
-          hasComplex = true;
-        }
+        exc = e;
       }
-      assertTrue(DataTemplate.class.isAssignableFrom(map4a._valueClass) == false || hasComplex);
-      assertTrue(noCommonDataComplex(map4a.data(), map4aCopy.data()));
-      boolean mutated = false;
-      for (Object value : map4aCopy.data().values())
+      assert(exc == null);
+
+      // entrySet, keySet, values, clear
+      MapTemplate map5 = templateClass.newInstance();
+      map5.putAll(input);
+      assertEquals(map5.entrySet(), input.entrySet());
+      assertCollectionEquals(map5.entrySet(), input.entrySet());
+      assertEquals(map5.keySet(), input.keySet());
+      assertCollectionEquals(map5.keySet(), input.keySet());
+      assertCollectionEquals(map5.values(), input.values());
+
+      assertEquals(map5.size(), input.size());
+      assertFalse(map5.isEmpty());
+      map5.clear();
+      assertEquals(map5.size(), 0);
+      assertTrue(map5.isEmpty());
+
+      map5.putAll(adds);
+      assertEquals(map5.entrySet(), adds.entrySet());
+      assertEquals(map5.keySet(), adds.keySet());
+      assertCollectionEquals(map5.values(), adds.values());
+
+      assertEquals(map5.size(), adds.size());
+      assertFalse(map5.isEmpty());
+      map5.clear();
+      assertEquals(map5.size(), 0);
+      assertTrue(map5.isEmpty());
+
+      // entrySet contains
+      MapTemplate map6 = templateClass.newInstance();
+      Set<Map.Entry<String, E>> entrySet6 = map6.entrySet();
+      for (Map.Entry<String, E> e : input.entrySet())
       {
-        if (value instanceof DataComplex)
-        {
-          mutated |= TestUtil.mutateDataComplex((DataComplex) value);
-        }
+        assertFalse(entrySet6.contains(e));
+        map6.put(e.getKey(), e.getValue());
+        assertTrue(entrySet6.contains(e));
       }
-      assertEquals(mutated, hasComplex);
-      if (mutated)
+      for (Map.Entry<String, E> e : adds.entrySet())
       {
-        assertNotEquals(map4aCopy, map4a);
+        assertFalse(entrySet6.contains(e));
       }
-      else
+      assertFalse(entrySet6.contains(null));
+      assertFalse(entrySet6.contains(1));
+      assertFalse(entrySet6.contains(new Object()));
+      assertFalse(entrySet6.contains(new AbstractMap.SimpleEntry<String, Object>(null, null)));
+      assertFalse(entrySet6.contains(new AbstractMap.SimpleEntry<String, Object>("xxxx", null)));
+      assertFalse(entrySet6.contains(new AbstractMap.SimpleEntry<String, Object>("xxxx", "xxxx")));
+      assertFalse(entrySet6.contains(new AbstractMap.SimpleEntry<String, Object>("xxxx", new Object())));
+
+      // entrySet iterator
+      for (Map.Entry<String, E> e : map6.entrySet())
       {
-        assertEquals(map4aCopy, map4a);
-        String key = map4aCopy.keySet().iterator().next();
-        map4aCopy.remove(key);
-        assertFalse(map4aCopy.containsKey(key));
-        assertTrue(map4a.containsKey(key));
+        assertTrue(map6.containsKey(e.getKey()));
+        assertTrue(map6.containsValue(e.getValue()));
       }
-    }
-    catch (CloneNotSupportedException e)
-    {
-      exc = e;
-    }
-    assert(exc == null);
-
-    // entrySet, keySet, values, clear
-    MapTemplate map5 = templateClass.newInstance();
-    map5.putAll(input);
-    assertEquals(map5.entrySet(), input.entrySet());
-    assertCollectionEquals(map5.entrySet(), input.entrySet());
-    assertEquals(map5.keySet(), input.keySet());
-    assertCollectionEquals(map5.keySet(), input.keySet());
-    assertCollectionEquals(map5.values(), input.values());
-
-    assertEquals(map5.size(), input.size());
-    assertFalse(map5.isEmpty());
-    map5.clear();
-    assertEquals(map5.size(), 0);
-    assertTrue(map5.isEmpty());
-
-    map5.putAll(adds);
-    assertEquals(map5.entrySet(), adds.entrySet());
-    assertEquals(map5.keySet(), adds.keySet());
-    assertCollectionEquals(map5.values(), adds.values());
-
-    assertEquals(map5.size(), adds.size());
-    assertFalse(map5.isEmpty());
-    map5.clear();
-    assertEquals(map5.size(), 0);
-    assertTrue(map5.isEmpty());
-
-    // entrySet contains
-    MapTemplate map6 = templateClass.newInstance();
-    Set<Map.Entry<String, E>> entrySet6 = map6.entrySet();
-    for (Map.Entry<String, E> e : input.entrySet())
-    {
-      assertFalse(entrySet6.contains(e));
-      map6.put(e.getKey(), e.getValue());
-      assertTrue(entrySet6.contains(e));
-    }
-    for (Map.Entry<String, E> e : adds.entrySet())
-    {
-      assertFalse(entrySet6.contains(e));
-    }
-    assertFalse(entrySet6.contains(null));
-    assertFalse(entrySet6.contains(1));
-    assertFalse(entrySet6.contains(new Object()));
-    assertFalse(entrySet6.contains(new AbstractMap.SimpleEntry<String, Object>(null, null)));
-    assertFalse(entrySet6.contains(new AbstractMap.SimpleEntry<String, Object>("xxxx", null)));
-    assertFalse(entrySet6.contains(new AbstractMap.SimpleEntry<String, Object>("xxxx", "xxxx")));
-    assertFalse(entrySet6.contains(new AbstractMap.SimpleEntry<String, Object>("xxxx", new Object())));
-
-    // entrySet iterator
-    for (Map.Entry<String, E> e : map6.entrySet())
-    {
-      assertTrue(map6.containsKey(e.getKey()));
-      assertTrue(map6.containsValue(e.getValue()));
-    }
-    try
-    {
-      exc = null;
-      map6.entrySet().iterator().remove();
-    }
-    catch (Exception e)
-    {
-      exc = e;
-    }
-    assertTrue(exc != null);
-    assertTrue(exc instanceof UnsupportedOperationException);
-
-    // entrySet containsAll
-    assertTrue(map6.entrySet().containsAll(input.entrySet()));
-    assertTrue(input.entrySet().containsAll(map6.entrySet()));
-
-    // entrySet add
-    for (Map.Entry<String, E> e : input.entrySet())
-    {
       try
       {
         exc = null;
-        entrySet6.add(e);
+        map6.entrySet().iterator().remove();
       }
-      catch (Exception ex)
+      catch (Exception e)
       {
-        exc = ex;
-      }
-      assertTrue(exc != null);
-      assertTrue(exc instanceof UnsupportedOperationException);
-    }
-
-    // entrySet remove
-    for (Map.Entry<String, E> e : input.entrySet())
-    {
-      try
-      {
-        exc = null;
-        entrySet6.remove(e);
-      }
-      catch (Exception ex)
-      {
-        exc = ex;
+        exc = e;
       }
       assertTrue(exc != null);
       assertTrue(exc instanceof UnsupportedOperationException);
-    }
 
-    Object invalidEntries[] = { null, 1, new Object() };
-    for (Object e : invalidEntries)
-    {
-      try
+      // entrySet containsAll
+      assertTrue(map6.entrySet().containsAll(input.entrySet()));
+      assertTrue(input.entrySet().containsAll(map6.entrySet()));
+
+      // entrySet add
+      for (Map.Entry<String, E> e : input.entrySet())
       {
-        exc = null;
-        entrySet6.remove(e);
-      }
-      catch (Exception ex)
-      {
-        exc = ex;
-      }
-      assertTrue(exc != null);
-      assertTrue(exc instanceof UnsupportedOperationException);
-    }
-
-    // entrySet addAll
-    try
-    {
-      exc = null;
-      entrySet6.addAll(adds.entrySet());
-    }
-    catch (Exception ex)
-    {
-      exc = ex;
-    }
-    assertTrue(exc != null);
-    assertTrue(exc instanceof UnsupportedOperationException);
-
-    // entrySet clear
-    try
-    {
-      exc = null;
-      entrySet6.clear();
-    }
-    catch (Exception ex)
-    {
-      exc = ex;
-    }
-    assertTrue(exc != null);
-    assertTrue(exc instanceof UnsupportedOperationException);
-
-    // entrySet removeAll
-    Collection<?> collectionsToRemove[] = { adds.entrySet(), Collections.emptySet() };
-    for (Collection<?> c : collectionsToRemove)
-    {
-      try
-      {
-        exc = null;
-        entrySet6.removeAll(c);
-      }
-      catch (Exception ex)
-      {
-        exc = ex;
-      }
-      assertTrue(exc != null);
-      assertTrue(exc instanceof UnsupportedOperationException);
-    }
-
-    // entrySet retainAll
-    try
-    {
-      exc = null;
-      entrySet6.retainAll(adds.entrySet());
-    }
-    catch (Exception ex)
-    {
-      exc = ex;
-    }
-    assertTrue(exc != null);
-    assertTrue(exc instanceof UnsupportedOperationException);
-
-    // entrySet equals, isEmpty
-    MapTemplate map7 = templateClass.newInstance();
-    MapTemplate map8 = templateClass.newInstance();
-    map8.putAll(input);
-    Set<Map.Entry<String, E>> entrySet7 = map7.entrySet();
-    assertTrue(entrySet7.isEmpty());
-    Map<String, E> hashMap7 = new HashMap<String, E>();
-    lastHash = 0;
-    for (int i = 0; i < inputList.size(); ++i)
-    {
-      Map.Entry<String,E> entry = inputList.get(i);
-      map7.put(entry.getKey(), entry.getValue());
-      hashMap7.put(entry.getKey(), entry.getValue());
-
-      if (i == (inputList.size() - 1))
-      {
-        assertTrue(entrySet7.equals(map8.entrySet()));
-      }
-      else
-      {
-        assertFalse(entrySet7.equals(map8.entrySet()));
-        assertTrue(entrySet7.equals(hashMap7.entrySet()));
-      }
-      assertTrue(entrySet7.toString().contains(entry.getKey()));
-      assertTrue(entrySet7.toString().contains(entry.getValue().toString()));
-
-      int newHash = entrySet7.hashCode();
-      if (i > 0)
-      {
-        assertFalse(lastHash == newHash);
-      }
-
-      lastHash = newHash;
-
-      assertFalse(entrySet7.isEmpty());
-    }
-    assertTrue(entrySet7.equals(input.entrySet()));
-    assertFalse(map7.entrySet().equals(null));
-    assertFalse(map7.entrySet().equals(new Object()));
-
-    // test Map.Entry.set()
-    MapTemplate map9 = templateClass.newInstance();
-    map9.putAll(input);
-    lastValue = null;
-    for (Map.Entry<String, E> e : map9.entrySet())
-    {
-      E value = e.getValue();
-      if (lastValue != null)
-      {
-        exc = null;
         try
         {
-          E ret = e.setValue(lastValue);
-          /* CowMap entrySet() returns unmodifiable view.
-             This may change if don't use CowMap to back DataMap.
-          assertEquals(ret, value);
-          assertEquals(e.getValue(), lastValue);
-          assertEquals(map9.get(e.getKey()), lastValue);
-          */
+          exc = null;
+          entrySet6.add(e);
         }
         catch (Exception ex)
         {
           exc = ex;
         }
+        assertTrue(exc != null);
         assertTrue(exc instanceof UnsupportedOperationException);
       }
-      lastValue = value;
+
+      // entrySet remove
+      for (Map.Entry<String, E> e : input.entrySet())
+      {
+        try
+        {
+          exc = null;
+          entrySet6.remove(e);
+        }
+        catch (Exception ex)
+        {
+          exc = ex;
+        }
+        assertTrue(exc != null);
+        assertTrue(exc instanceof UnsupportedOperationException);
+      }
+
+      Object invalidEntries[] = { null, 1, new Object() };
+      for (Object e : invalidEntries)
+      {
+        try
+        {
+          exc = null;
+          entrySet6.remove(e);
+        }
+        catch (Exception ex)
+        {
+          exc = ex;
+        }
+        assertTrue(exc != null);
+        assertTrue(exc instanceof UnsupportedOperationException);
+      }
+
+      // entrySet addAll
+      try
+      {
+        exc = null;
+        entrySet6.addAll(adds.entrySet());
+      }
+      catch (Exception ex)
+      {
+        exc = ex;
+      }
+      assertTrue(exc != null);
+      assertTrue(exc instanceof UnsupportedOperationException);
+
+      // entrySet clear
+      try
+      {
+        exc = null;
+        entrySet6.clear();
+      }
+      catch (Exception ex)
+      {
+        exc = ex;
+      }
+      assertTrue(exc != null);
+      assertTrue(exc instanceof UnsupportedOperationException);
+
+      // entrySet removeAll
+      Collection<?> collectionsToRemove[] = { adds.entrySet(), Collections.emptySet() };
+      for (Collection<?> c : collectionsToRemove)
+      {
+        try
+        {
+          exc = null;
+          entrySet6.removeAll(c);
+        }
+        catch (Exception ex)
+        {
+          exc = ex;
+        }
+        assertTrue(exc != null);
+        assertTrue(exc instanceof UnsupportedOperationException);
+      }
+
+      // entrySet retainAll
+      try
+      {
+        exc = null;
+        entrySet6.retainAll(adds.entrySet());
+      }
+      catch (Exception ex)
+      {
+        exc = ex;
+      }
+      assertTrue(exc != null);
+      assertTrue(exc instanceof UnsupportedOperationException);
+
+      // entrySet equals, isEmpty
+      MapTemplate map7 = templateClass.newInstance();
+      MapTemplate map8 = templateClass.newInstance();
+      map8.putAll(input);
+      Set<Map.Entry<String, E>> entrySet7 = map7.entrySet();
+      assertTrue(entrySet7.isEmpty());
+      Map<String, E> hashMap7 = new HashMap<String, E>();
+      lastHash = 0;
+      for (int i = 0; i < inputList.size(); ++i)
+      {
+        Map.Entry<String,E> entry = inputList.get(i);
+        map7.put(entry.getKey(), entry.getValue());
+        hashMap7.put(entry.getKey(), entry.getValue());
+
+        if (i == (inputList.size() - 1))
+        {
+          assertTrue(entrySet7.equals(map8.entrySet()));
+        }
+        else
+        {
+          assertFalse(entrySet7.equals(map8.entrySet()));
+          assertTrue(entrySet7.equals(hashMap7.entrySet()));
+        }
+        assertTrue(entrySet7.toString().contains(entry.getKey()));
+        assertTrue(entrySet7.toString().contains(entry.getValue().toString()));
+
+        int newHash = entrySet7.hashCode();
+        if (i > 0)
+        {
+          assertFalse(lastHash == newHash);
+        }
+
+        lastHash = newHash;
+
+        assertFalse(entrySet7.isEmpty());
+      }
+      assertTrue(entrySet7.equals(input.entrySet()));
+      assertFalse(map7.entrySet().equals(null));
+      assertFalse(map7.entrySet().equals(new Object()));
+
+      // test Map.Entry.set()
+      MapTemplate map9 = templateClass.newInstance();
+      map9.putAll(input);
+      lastValue = null;
+      for (Map.Entry<String, E> e : map9.entrySet())
+      {
+        E value = e.getValue();
+        if (lastValue != null)
+        {
+          exc = null;
+          try
+          {
+            E ret = e.setValue(lastValue);
+            /* CowMap entrySet() returns unmodifiable view.
+               This may change if don't use CowMap to back DataMap.
+            assertEquals(ret, value);
+            assertEquals(e.getValue(), lastValue);
+            assertEquals(map9.get(e.getKey()), lastValue);
+            */
+          }
+          catch (Exception ex)
+          {
+            exc = ex;
+          }
+          assertTrue(exc instanceof UnsupportedOperationException);
+        }
+        lastValue = value;
+      }
+    }
+    catch (IllegalAccessException exc)
+    {
+      fail("Unexpected exception", exc);
+    }
+    catch (InstantiationException exc)
+    {
+      fail("Unexpected exception", exc);
     }
   }
 
@@ -607,10 +617,23 @@ public class TestMapTemplate
                        Map<String, E> good,
                        Map<String, Object> badInput,
                        Map<String, Object> badOutput)
-  throws InstantiationException, IllegalAccessException
   {
+
+    MapTemplate mapTemplateBad = null;
+    try
+    {
+      mapTemplateBad = templateClass.newInstance();
+    }
+    catch (IllegalAccessException exc)
+    {
+      fail("Unexpected exception", exc);
+    }
+    catch (InstantiationException exc)
+    {
+      fail("Unexpected exception", exc);
+    }
+
     Exception exc = null;
-    MapTemplate mapTemplateBad = templateClass.newInstance();
     DataMap badDataMap = new DataMap();
 
     @SuppressWarnings("unchecked")
@@ -730,57 +753,65 @@ public class TestMapTemplate
                      MapDataSchema schema,
                      Map<String, E> castTo,
                      Map<String, ? extends Number> castFrom)
-  throws InstantiationException, IllegalAccessException
   {
-
-    // test insert non-native, converted to element type on set
-    MapTemplate map1 = templateClass.newInstance();
-    map1.putAll((Map<String, E>) castFrom);
-    for (String i : castFrom.keySet())
+    try
     {
-      assertEquals(castTo.get(i), map1.get(i));
-      assertEquals(map1.data().get(i), castTo.get(i));
-    }
-
-    // test underlying is non-native, convert on get to element type on get.
-    DataMap dataList2 = new DataMap(castFrom);
-    MapTemplate map2 = DataTemplateUtil.wrap(dataList2, schema, templateClass);
-    for (String i : castTo.keySet())
-    {
-      assertSame(dataList2.get(i), castFrom.get(i));
-      assertEquals(castTo.get(i), map2.get(i));
-    }
-
-    // test entrySet, convert on access to element type
-    int lastHash = 0;
-    boolean first = true;
-    for (Map.Entry<String, E> e : map2.entrySet())
-    {
-      String key = e.getKey();
-      E castToValue = castTo.get(key);
-      assertEquals(e.getValue(), castToValue);
-      assertTrue(e.equals(new AbstractMap.SimpleEntry(key, castToValue)));
-      assertFalse(e.equals(null));
-      assertFalse(e.equals(new Object()));
-
-      String eToString = e.toString();
-      assertEquals(eToString, key + "=" + castToValue.toString());
-
-      // hashCode
-      int newHash = e.hashCode();
-      if (!first)
+      // test insert non-native, converted to element type on set
+      MapTemplate map1 = templateClass.newInstance();
+      map1.putAll((Map<String, E>) castFrom);
+      for (String i : castFrom.keySet())
       {
-        assertTrue(lastHash != newHash);
+        assertEquals(castTo.get(i), map1.get(i));
+        assertEquals(map1.data().get(i), castTo.get(i));
       }
 
-      first = false;
-      lastHash = newHash;
-    }
+      // test underlying is non-native, convert on get to element type on get.
+      DataMap dataList2 = new DataMap(castFrom);
+      MapTemplate map2 = DataTemplateUtil.wrap(dataList2, schema, templateClass);
+      for (String i : castTo.keySet())
+      {
+        assertSame(dataList2.get(i), castFrom.get(i));
+        assertEquals(castTo.get(i), map2.get(i));
+      }
 
+      // test entrySet, convert on access to element type
+      int lastHash = 0;
+      boolean first = true;
+      for (Map.Entry<String, E> e : map2.entrySet())
+      {
+        String key = e.getKey();
+        E castToValue = castTo.get(key);
+        assertEquals(e.getValue(), castToValue);
+        assertTrue(e.equals(new AbstractMap.SimpleEntry(key, castToValue)));
+        assertFalse(e.equals(null));
+        assertFalse(e.equals(new Object()));
+
+        String eToString = e.toString();
+        assertEquals(eToString, key + "=" + castToValue.toString());
+
+        // hashCode
+        int newHash = e.hashCode();
+        if (!first)
+        {
+          assertTrue(lastHash != newHash);
+        }
+
+        first = false;
+        lastHash = newHash;
+      }
+    }
+    catch (IllegalAccessException exc)
+    {
+      fail("Unexpected exception", exc);
+    }
+    catch (InstantiationException exc)
+    {
+      fail("Unexpected exception", exc);
+    }
   }
 
   @Test
-  public void testBooleanMap() throws InstantiationException, IllegalAccessException
+  public void testBooleanMap()
   {
     MapDataSchema schema = (MapDataSchema) DataTemplateUtil.parseSchema("{ \"type\" : \"map\", \"values\" : \"boolean\" }");
 
@@ -802,7 +833,7 @@ public class TestMapTemplate
   }
 
   @Test
-  public void testIntegerMap() throws InstantiationException, IllegalAccessException
+  public void testIntegerMap()
   {
     MapDataSchema schema = (MapDataSchema) DataTemplateUtil.parseSchema("{ \"type\" : \"map\", \"values\" : \"int\" }");
 
@@ -827,7 +858,7 @@ public class TestMapTemplate
   }
 
   @Test
-  public void testLongMap() throws InstantiationException, IllegalAccessException
+  public void testLongMap()
   {
     MapDataSchema schema = (MapDataSchema) DataTemplateUtil.parseSchema("{ \"type\" : \"map\", \"values\" : \"long\" }");
 
@@ -852,7 +883,7 @@ public class TestMapTemplate
   }
 
   @Test
-  public void testFloatMap() throws InstantiationException, IllegalAccessException
+  public void testFloatMap()
   {
     MapDataSchema schema = (MapDataSchema) DataTemplateUtil.parseSchema("{ \"type\" : \"map\", \"values\" : \"float\" }");
 
@@ -877,7 +908,7 @@ public class TestMapTemplate
   }
 
   @Test
-  public void testDoubleMap() throws InstantiationException, IllegalAccessException
+  public void testDoubleMap()
   {
     MapDataSchema schema = (MapDataSchema) DataTemplateUtil.parseSchema("{ \"type\" : \"map\", \"values\" : \"double\" }");
 
@@ -902,7 +933,7 @@ public class TestMapTemplate
   }
 
   @Test
-  public void testStringMap() throws InstantiationException, IllegalAccessException
+  public void testStringMap()
   {
     MapDataSchema schema = (MapDataSchema) DataTemplateUtil.parseSchema("{ \"type\" : \"map\", \"values\" : \"string\" }");
 
@@ -924,7 +955,7 @@ public class TestMapTemplate
   }
 
   @Test
-  public void testBytesMap() throws InstantiationException, IllegalAccessException
+  public void testBytesMap()
   {
     MapDataSchema schema = (MapDataSchema) DataTemplateUtil.parseSchema("{ \"type\" : \"map\", \"values\" : \"bytes\" }");
 
@@ -987,7 +1018,7 @@ public class TestMapTemplate
   }
 
   @Test
-  public void testEnumMap() throws InstantiationException, IllegalAccessException
+  public void testEnumMap()
   {
     Map<String, Fruits> input = asMap("apple", Fruits.APPLE, "orange", Fruits.ORANGE, "banana", Fruits.BANANA); // must be unique
     Map<String, Fruits> adds = asMap("grapes", Fruits.GRAPES, "pineapple", Fruits.PINEAPPLE);
@@ -1043,7 +1074,7 @@ public class TestMapTemplate
   }
 
   @Test
-  public void testMapOfStringMap() throws InstantiationException, IllegalAccessException
+  public void testMapOfStringMap()
   {
     Map<String, StringMap> input = new HashMap<String, StringMap>();
     for (int i = 0; i < 5; ++i)
@@ -1152,7 +1183,7 @@ public class TestMapTemplate
   }
 
   @Test
-  public void testFooRecordMap() throws InstantiationException, IllegalAccessException
+  public void testFooRecordMap()
   {
     Map<String, FooRecord> input = new HashMap<String, FooRecord>();
     for (int i = 0; i < 5; ++i)

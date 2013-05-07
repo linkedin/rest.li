@@ -32,7 +32,7 @@ import org.testng.annotations.Test;
 public class TestArray
 {
   @Test
-  public void testIntegerArray() throws InstantiationException, IllegalAccessException
+  public void testIntegerArray()
   {
     TestDataTemplateUtil.FieldInfo fieldInfo = TestDataTemplateUtil.fieldInfo(new ArrayTest(), "intArray");
     @SuppressWarnings("unchecked")
@@ -46,7 +46,7 @@ public class TestArray
   }
 
   @Test
-  public void testStringMapArray() throws InstantiationException, IllegalAccessException
+  public void testStringMapArray()
   {
     TestDataTemplateUtil.FieldInfo fieldInfo = TestDataTemplateUtil.fieldInfo(new ArrayTest(), "stringMapArray");
     @SuppressWarnings("unchecked")
@@ -70,7 +70,7 @@ public class TestArray
   }
 
   @Test
-  public void testStringArrayArray() throws InstantiationException, IllegalAccessException
+  public void testStringArrayArray()
   {
     TestDataTemplateUtil.FieldInfo fieldInfo = TestDataTemplateUtil.fieldInfo(new ArrayTest(), "stringArrayArray");
     @SuppressWarnings("unchecked")
@@ -94,7 +94,7 @@ public class TestArray
   }
 
   @Test
-  public void testEnumFruitsArray() throws InstantiationException, IllegalAccessException
+  public void testEnumFruitsArray()
   {
     TestDataTemplateUtil.FieldInfo fieldInfo = TestDataTemplateUtil.fieldInfo(new ArrayTest(), "enumFruitsArray");
     @SuppressWarnings("unchecked")
@@ -108,7 +108,7 @@ public class TestArray
   }
 
   @Test
-  public void testRecordArray() throws InstantiationException, IllegalAccessException
+  public void testRecordArray()
   {
     TestDataTemplateUtil.FieldInfo fieldInfo = TestDataTemplateUtil.fieldInfo(new ArrayTest(), "recordArray");
     @SuppressWarnings("unchecked")

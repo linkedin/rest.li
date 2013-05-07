@@ -147,7 +147,7 @@ public abstract class FixedTemplate implements DataTemplate<ByteString>
   @Override
   public String toString()
   {
-    return _data.asAvroString();
+    return _data.toString();
   }
 
   protected final FixedDataSchema _schema;

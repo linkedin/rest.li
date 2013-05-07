@@ -34,7 +34,7 @@ import static com.linkedin.data.TestUtil.asMap;
 public class TestMap
 {
   @Test
-  public void testIntegerMap() throws InstantiationException, IllegalAccessException
+  public void testIntegerMap()
   {
     TestDataTemplateUtil.FieldInfo fieldInfo = TestDataTemplateUtil.fieldInfo(new MapTest(), "intMap");
     @SuppressWarnings("unchecked")
@@ -48,7 +48,7 @@ public class TestMap
   }
 
   @Test
-  public void testStringArrayMap() throws InstantiationException, IllegalAccessException
+  public void testStringArrayMap()
   {
     TestDataTemplateUtil.FieldInfo fieldInfo = TestDataTemplateUtil.fieldInfo(new MapTest(), "stringArrayMap");
     @SuppressWarnings("unchecked")
@@ -74,7 +74,7 @@ public class TestMap
   }
 
   @Test
-  public void testStringMapMap() throws InstantiationException, IllegalAccessException
+  public void testStringMapMap()
   {
     TestDataTemplateUtil.FieldInfo fieldInfo = TestDataTemplateUtil.fieldInfo(new MapTest(), "stringMapMap");
     @SuppressWarnings("unchecked")
@@ -100,7 +100,7 @@ public class TestMap
   }
 
   @Test
-  public void testRecordMap() throws InstantiationException, IllegalAccessException
+  public void testRecordMap()
   {
     TestDataTemplateUtil.FieldInfo fieldInfo = TestDataTemplateUtil.fieldInfo(new MapTest(), "recordMap");
     @SuppressWarnings("unchecked")
