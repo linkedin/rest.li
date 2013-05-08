@@ -19,6 +19,9 @@
     "finders" : [ {
       "name" : "assocKeyFinder",
       "assocKeys" : [ "src" ]
+    }, {
+      "name" : "assocKeyFinderOpt",
+      "assocKeys" : [ "src" ]
     } ],
     "entity" : {
       "path" : "/associations/src={src}&dest={dest}"

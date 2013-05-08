@@ -4,6 +4,9 @@
 Change FixedTemplate to output using ByteString.toString() instead of asAvroString
 Add more test cases for generated DataTemplate.
 
+(RB=163290)
+Fix bug where @Optional on finder assocKeys was not respected.
+
 1.8.22
 ------
 (RB=162206)

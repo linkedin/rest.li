@@ -19,6 +19,7 @@
  */
 package com.linkedin.restli.examples.greetings.server;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +32,7 @@ import com.linkedin.restli.examples.greetings.api.ToneFacet;
 import com.linkedin.restli.server.annotations.AssocKey;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.Key;
+import com.linkedin.restli.server.annotations.Optional;
 import com.linkedin.restli.server.annotations.RestLiAssociation;
 import com.linkedin.restli.server.resources.AssociationResourceTemplate;
 
@@ -75,6 +77,12 @@ public class AssociationsResource extends AssociationResourceTemplate<Message>
   @Finder("assocKeyFinder")
   public List<Message> assocKeyFinder(@AssocKey("src") String src)
   {
-    return null;
+    return Collections.emptyList();
+  }
+
+  @Finder("assocKeyFinderOpt")
+  public List<Message> assocKeyFinderOpt(@Optional @AssocKey("src") String src)
+  {
+    return Collections.emptyList();
   }
 }

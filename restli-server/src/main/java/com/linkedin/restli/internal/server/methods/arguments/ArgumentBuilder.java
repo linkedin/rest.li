@@ -75,7 +75,7 @@ public class ArgumentBuilder
       if (param.getParamType() == Parameter.ParamType.KEY)
       {
         Object value = context.getPathKeys().get(param.getName());
-        if (value == null)
+        if (value == null && param.isOptional() == false)
         {
           throw new RoutingException("Association key '" + param.getName()
               + "' is required", HttpStatus.S_400_BAD_REQUEST.getCode());
