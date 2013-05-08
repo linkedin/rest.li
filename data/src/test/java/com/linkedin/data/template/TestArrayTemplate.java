@@ -57,8 +57,6 @@ public class TestArrayTemplate
   {
     try
     {
-      // out.println("Testing " + templateClass.getName() + " " + schema.toString());
-
       // constructors and addAll
       ArrayTemplate array1 = templateClass.newInstance();
       array1.addAll(input);

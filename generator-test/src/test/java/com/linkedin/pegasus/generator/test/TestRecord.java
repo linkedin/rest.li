@@ -16,8 +16,25 @@
 
 package com.linkedin.pegasus.generator.test;
 
+import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
+import com.linkedin.data.DataComplex;
+import com.linkedin.data.DataList;
+import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
+import com.linkedin.data.schema.PathSpec;
+import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.template.DataTemplate;
+import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.data.template.IntegerArray;
+import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.data.template.StringMap;
+import com.linkedin.data.template.TestDataTemplateUtil;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.List;
 import org.testng.annotations.Test;
 
 import com.linkedin.data.template.GetMode;
@@ -29,6 +46,275 @@ import static org.testng.Assert.*;
 
 public class TestRecord
 {
+  private void testField(RecordTemplate record, String fieldName, final Object value)
+  {
+    Class<?> valueClass = value.getClass();
+    TestDataTemplateUtil.FieldInfo fieldInfo = TestDataTemplateUtil.fieldInfo(record, fieldName);
+    String getterPrefix = fieldInfo.getFieldClass() == Boolean.class ? "is" : "get";
+    String getMethodName = TestDataTemplateUtil.methodName(getterPrefix, fieldName);
+    String setMethodName = TestDataTemplateUtil.methodName("set", fieldName);
+    String hasMethodName = TestDataTemplateUtil.methodName("has", fieldName);
+    String removeMethodName = TestDataTemplateUtil.methodName("remove", fieldName);
+    Class<? extends RecordTemplate> recordClass = record.getClass();
+    DataMap dataMap = record.data();
+    boolean isOptional = fieldInfo.getField().getOptional();
+
+    try
+    {
+      Method getMethod = recordClass.getMethod(getMethodName);
+      Method getModeMethod = recordClass.getMethod(getMethodName, GetMode.class);
+      Method setMethod = recordClass.getMethod(setMethodName, valueClass);
+      Method setModeMethod = recordClass.getMethod(setMethodName, valueClass, SetMode.class);
+      Method hasMethod = recordClass.getMethod(hasMethodName);
+      Method removeMethod = recordClass.getMethod(removeMethodName);
+      Object prevValue;
+
+      // fields
+      TestDataTemplateUtil.assertPresentInFields(recordClass, fieldName);
+
+      // has
+      if (dataMap.containsKey(fieldName))
+      {
+        assertTrue((Boolean) hasMethod.invoke(record));
+        prevValue = getMethod.invoke(record);
+      }
+      else
+      {
+        assertFalse((Boolean) hasMethod.invoke(record));
+        prevValue = null;
+      }
+
+      // set
+      Object result = setMethod.invoke(record, value);
+      assertSame(result, record);
+
+      // has with field present
+      assertTrue((Boolean) hasMethod.invoke(record));
+
+      // get with field present
+      result = getMethod.invoke(record);
+      if (value instanceof DataTemplate || value instanceof Enum)
+      {
+        assertSame(result, value);
+      }
+      else
+      {
+        assertEquals(result, value);
+      }
+
+      // GetMode.NULL, GetMode.DEFAULT, GetMode.STRICT with field present
+      assertSame(getModeMethod.invoke(record, GetMode.NULL), result);
+      assertSame(getModeMethod.invoke(record, GetMode.DEFAULT), result);
+      assertSame(getModeMethod.invoke(record, GetMode.STRICT), result);
+
+      // remove
+      removeMethod.invoke(record);
+
+      // has with field absent
+      assertFalse((Boolean) hasMethod.invoke(record));
+      assertNull(getModeMethod.invoke(record, GetMode.NULL));
+
+      // GetMode.NULL with field absent
+      result = getModeMethod.invoke(record, GetMode.NULL);
+      assertNull(result);
+
+      // GetMode.DEFAULT with field absent
+      Object defaultValue = getModeMethod.invoke(record, GetMode.DEFAULT);
+      Object defaultValueFromSchema = fieldInfo.getField().getDefault();
+      assertEquals(defaultValue == null, defaultValueFromSchema == null);
+      if (defaultValue != null)
+      {
+        if (defaultValue instanceof DataTemplate)
+        {
+          assertEquals(((DataTemplate) defaultValue).data(), defaultValueFromSchema);
+        }
+        else if (defaultValue instanceof Enum)
+        {
+          assertEquals(defaultValue.toString(), defaultValueFromSchema);
+        }
+        else
+        {
+          assertSame(defaultValue, defaultValueFromSchema);
+        }
+      }
+
+      // GetMode.STRICT with field absent
+      boolean expectRequiredFieldNotFoundException = (! isOptional && defaultValue == null);
+      try
+      {
+        result = getModeMethod.invoke(record, GetMode.STRICT);
+        assertFalse(expectRequiredFieldNotFoundException);
+        assertSame(result, defaultValue);
+      }
+      catch (InvocationTargetException exc)
+      {
+        assertTrue(expectRequiredFieldNotFoundException);
+        assertTrue(exc.getTargetException() instanceof RequiredFieldNotPresentException);
+      }
+
+      // SetMode.IGNORE_NULL
+      setModeMethod.invoke(record, value, SetMode.IGNORE_NULL);
+      assertSame(getMethod.invoke(record), value);
+      setModeMethod.invoke(record, null, SetMode.IGNORE_NULL);
+      assertSame(getMethod.invoke(record), value);
+
+      // SetMode.REMOVE_IF_NULL
+      removeMethod.invoke(record);
+      setModeMethod.invoke(record, value, SetMode.REMOVE_IF_NULL);
+      assertSame(getMethod.invoke(record), value);
+      setModeMethod.invoke(record, null, SetMode.REMOVE_IF_NULL);
+      assertFalse((Boolean) hasMethod.invoke(record));
+
+      // SetMode.REMOVE_OPTIONAL_IF_NULL
+      removeMethod.invoke(record);
+      setModeMethod.invoke(record, value, SetMode.REMOVE_OPTIONAL_IF_NULL);
+      assertSame(getMethod.invoke(record), value);
+      try
+      {
+        setModeMethod.invoke(record, null, SetMode.REMOVE_OPTIONAL_IF_NULL);
+        assertTrue(isOptional);
+        assertFalse((Boolean) hasMethod.invoke(record));
+      }
+      catch (InvocationTargetException exc)
+      {
+        assertFalse(isOptional);
+        assertTrue(exc.getTargetException() instanceof IllegalArgumentException);
+      }
+
+      // SetMode.DISALLOW_NULL
+      try
+      {
+        setModeMethod.invoke(record, null, SetMode.DISALLOW_NULL);
+      }
+      catch (InvocationTargetException exc)
+      {
+        assertTrue(exc.getTargetException() instanceof NullPointerException);
+      }
+
+      // restore original value
+      if (prevValue != null)
+      {
+        result = setMethod.invoke(record, prevValue);
+        assertSame(result, record);
+        assertTrue((Boolean) hasMethod.invoke(record));
+        assertEquals(getMethod.invoke(record), prevValue);
+      }
+    }
+    catch (IllegalAccessException exc)
+    {
+      fail("Unexpected exception", exc);
+    }
+    catch (InvocationTargetException exc)
+    {
+      fail("Unexpected exception", exc);
+    }
+    catch (NoSuchMethodException exc)
+    {
+      fail("Unexpected exception", exc);
+    }
+  }
+
+  private <T extends RecordTemplate> void testRecord(Class<T> recordClass)
+  {
+    try
+    {
+      T record = recordClass.newInstance();
+      RecordDataSchema schema = (RecordDataSchema) DataTemplateUtil.getSchema(recordClass);
+      RecordDataSchema schema2 = record.schema();
+      assertSame(schema, schema2);
+    }
+    catch (IllegalAccessException exc)
+    {
+      fail("Unexpected exception", exc);
+    }
+    catch (InstantiationException exc)
+    {
+      fail("Unexpected exception", exc);
+    }
+  }
+
+  @Test
+  public void testRecordTest() throws IOException
+  {
+    Object[][] inputs =
+    {
+      {
+        "intField",
+        8
+      },
+      {
+        "intOptionalField",
+        9
+      },
+      {
+        "intDefaultField",
+        10
+      },
+      {
+        "intDefaultOptionalField",
+        11
+      },
+      {
+        "longField",
+        12L
+      },
+      {
+        "floatField",
+        13.0f
+      },
+      {
+        "doubleField",
+        14.0
+      },
+      {
+        "booleanField",
+        true
+      },
+      {
+        "stringField",
+        "abc"
+      },
+      {
+        "bytesField",
+        ByteString.copyAvroString("abcdef", true)
+      },
+      {
+        "enumField",
+        EnumFruits.BANANA
+      },
+      {
+        "fixedField",
+        new FixedMD5("0123456789abcdef")
+      },
+      {
+        "recordField",
+        new RecordBar().setLocation("far")
+      },
+      {
+        "arrayField",
+        new IntegerArray(new DataList(Arrays.asList(1, 2, 3, 4, 5)))
+      },
+      {
+        "mapField",
+        new StringMap(new DataMap(TestUtil.asMap("k1", "v1", "k2", "v2", "k3", "v3")))
+      },
+      {
+        "unionField",
+        new RecordTest.UnionField(TestUtil.dataMapFromString("{ \"int\" : 3 }"))
+      }
+    };
+
+    RecordTest record = new RecordTest();
+
+    testRecord(record.getClass());
+    for (Object[] row : inputs)
+    {
+      String fieldName = (String) row[0];
+      Object value = row[1];
+      testField(record, fieldName, value);
+    }
+  }
+
   @Test
   public void testIntField()
   {

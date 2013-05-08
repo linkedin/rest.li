@@ -18,8 +18,16 @@ package com.linkedin.data.template;
 
 
 import com.linkedin.data.TestUtil;
+import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.schema.RecordDataSchema;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.List;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.fail;
+
 
 public class TestDataTemplateUtil
 {
@@ -49,7 +57,7 @@ public class TestDataTemplateUtil
   {
     RecordDataSchema schema = recordTemplate.schema();
     RecordDataSchema.Field field = schema.getField(fieldName);
-    String getterName = methodName("get", fieldName);
+    String getterName = methodName(field.getType().getDereferencedType() == DataSchema.Type.BOOLEAN ? "is" : "get", fieldName);
     try
     {
       Method method = recordTemplate.getClass().getMethod(getterName);
@@ -93,6 +101,33 @@ public class TestDataTemplateUtil
       {
         throw new IllegalArgumentException("Cannot get " + methodName + " method from " + dataTemplateClass.getSimpleName(), e);
       }
+    }
+  }
+
+  public static <T extends DataTemplate> void assertPresentInFields(Class<T> templateClass, String fieldName)
+  {
+    try
+    {
+      // fields
+      Method fieldsMethod = templateClass.getMethod("fields");
+      PathSpec recordPathSpec = (PathSpec) fieldsMethod.invoke(null);
+      Method fieldPathSpecMethod = recordPathSpec.getClass().getMethod(fieldName);
+      PathSpec fieldPathSpec = (PathSpec) fieldPathSpecMethod.invoke(recordPathSpec);
+      List<String> components = fieldPathSpec.getPathComponents();
+      assertEquals(components.size(), 1);
+      assertEquals(components.get(0), fieldName);
+    }
+    catch (NoSuchMethodException exc)
+    {
+      fail("Unexpected exception", exc);
+    }
+    catch (IllegalAccessException exc)
+    {
+      fail("Unexpected exception", exc);
+    }
+    catch (InvocationTargetException exc)
+    {
+      fail("Unexpected exception", exc);
     }
   }
 }
