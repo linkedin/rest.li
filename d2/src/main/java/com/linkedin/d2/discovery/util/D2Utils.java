@@ -4,6 +4,8 @@
 
 package com.linkedin.d2.discovery.util;
 
+import com.linkedin.d2.balancer.properties.PropertyKeys;
+
 /**
  * @author David Hoa
  * @version $Revision: $
@@ -27,5 +29,16 @@ public class D2Utils
       strBuilder.append("-").append(suffix);
     }
     return strBuilder.toString();
+  }
+
+  /**
+   * addMasterToBaseName will append the Master suffix to a passed in base name.
+   *
+   * @param baseName original string (can be cluster name or service name)
+   * @return baseName + "Master"
+   */
+  public static String addMasterToBaseName(String baseName)
+  {
+    return baseName + PropertyKeys.MASTER_SUFFIX;
   }
 }
