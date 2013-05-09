@@ -98,6 +98,13 @@ project.ext.resourcePackages = [
   ]
 ]
 
+project.idea.module.sourceDirs += project.file('src/mainGeneratedTest/java')
+project.eclipse.classpath.file {
+  beforeMerged { classpath ->
+    classpath.entries.add(new org.gradle.plugins.ide.eclipse.model.SourceFolder('src/mainGeneratedTest/java', null))
+  }
+}
+
 project.ext.apiProject = project(':restli-int-test-api')
 
 apply from: "${buildScriptDirPath}/restModel.gradle"

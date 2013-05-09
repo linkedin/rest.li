@@ -27,6 +27,11 @@ Generated record DataTemplates have had these methods since 1.8.4.
 Adding new resource class is a backward compatible change now.
 Add instruction message for idl compatibility check failure.
 
+(RB=126830)
+Deprecate the "items" field for the query parameters in idl. Array parameters use standard pdsc array format.
+To make it backwards compatibile, request builders can still use Iterable parameters.
+Fix bug that builder methods with Iterable<? extends DataTemplate> parameter are not working.
+
 1.8.21
 ------
 (RB=162036)

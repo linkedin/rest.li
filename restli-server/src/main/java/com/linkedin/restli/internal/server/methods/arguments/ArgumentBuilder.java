@@ -20,20 +20,13 @@
 
 package com.linkedin.restli.internal.server.methods.arguments;
 
-import com.linkedin.data.DataList;
-import com.linkedin.data.template.AbstractArrayTemplate;
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
-import com.linkedin.data.schema.DataSchema;
-import com.linkedin.data.schema.DataSchemaUtil;
-import com.linkedin.data.schema.TyperefDataSchema;
+import com.linkedin.data.DataList;
 import com.linkedin.data.schema.validation.CoercionMode;
 import com.linkedin.data.schema.validation.RequiredMode;
 import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
 import com.linkedin.data.schema.validation.ValidationOptions;
+import com.linkedin.data.template.AbstractArrayTemplate;
 import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
@@ -44,6 +37,10 @@ import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RoutingException;
+
+import java.lang.reflect.Array;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Josh Walker
@@ -109,8 +106,54 @@ public class ArgumentBuilder
   }
 
   /**
+   * Build a method argument from a request parameter that is an array
+   *
+   * @param context {@link ResourceContext}
+   * @param param {@link Parameter}
+   * @return argument value in the correct type
+   */
+  private static Object buildArrayArgument(final ResourceContext context,
+                                           final Parameter<?> param)
+  {
+    final Object convertedValue;
+    if (DataTemplate.class.isAssignableFrom(param.getItemType()))
+    {
+      final DataList itemsList = (DataList) context.getStructuredParameter(param.getName());
+      convertedValue = Array.newInstance(param.getItemType(), itemsList.size());
+      int j = 0;
+      for (Object paramData: itemsList)
+      {
+        final DataTemplate itemsElem = DataTemplateUtil.wrap(paramData, param.getItemType().asSubclass(DataTemplate.class));
+        Array.set(convertedValue, j++, itemsElem);
+      }
+    }
+    else
+    {
+      final List<String> itemStringValues = context.getParameterValues(param.getName());
+      convertedValue = Array.newInstance(param.getItemType(), itemStringValues.size());
+      int j = 0;
+      for (String itemStringValue : itemStringValues)
+      {
+        if (itemStringValue == null)
+        {
+          throw new RoutingException("Parameter '" + param.getName()
+                                         + "' cannot contain null values", HttpStatus.S_400_BAD_REQUEST.getCode());
+        }
+        Array.set(convertedValue,
+                  j++,
+                  ArgumentUtils.convertSimpleValue(itemStringValue,
+                                                   param.getDataSchema(),
+                                                   param.getItemType(),
+                                                   false));
+      }
+    }
+
+    return convertedValue;
+  }
+
+  /**
    * Build a method argument from a request parameter that is NOT backed by a schema, i.e.
-   * a primitive or array of primitives
+   * a primitive or an array
    *
    * @param context {@link ResourceContext}
    * @param param {@link Parameter}
@@ -123,7 +166,7 @@ public class ArgumentBuilder
         ArgumentUtils.argumentAsString(context.getParameter(param.getName()),
                                        param.getName());
 
-    Object convertedValue = null;
+    final Object convertedValue;
     if (value == null)
     {
       if (param.isOptional() && param.hasDefaultValue())
@@ -144,23 +187,7 @@ public class ArgumentBuilder
     {
       if (param.isArray())
       {
-        List<String> itemStringValues = context.getParameterValues(param.getName());
-        convertedValue = Array.newInstance(param.getItemType(), itemStringValues.size());
-        int j = 0;
-        for (String itemStringValue : itemStringValues)
-        {
-          if (itemStringValue == null)
-          {
-            throw new RoutingException("Parameter '" + param.getName()
-                + "' cannot contain null values", HttpStatus.S_400_BAD_REQUEST.getCode());
-          }
-          Array.set(convertedValue,
-                    j++,
-                    ArgumentUtils.convertSimpleValue(itemStringValue,
-                                                     param.getDataSchema(),
-                                                     param.getItemType(),
-                                                     false));
-        }
+        convertedValue = buildArrayArgument(context, param);
       }
       else
       {

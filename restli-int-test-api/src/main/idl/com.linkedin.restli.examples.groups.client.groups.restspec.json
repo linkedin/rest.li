@@ -25,13 +25,11 @@
       "name" : "complexCircuit",
       "parameters" : [ {
         "name" : "nativeArray",
-        "type" : "array",
-        "items" : "double",
+        "type" : "{ \"type\" : \"array\", \"items\" : \"double\" }",
         "default" : "[1.1, 2.2, 3.3]"
       }, {
         "name" : "coercedArray",
-        "type" : "array",
-        "items" : "int",
+        "type" : "{ \"type\" : \"array\", \"items\" : \"int\" }",
         "default" : "[1.1, 2.2, 3.3]"
       }, {
         "name" : "wrappedArray",
@@ -59,8 +57,7 @@
         "default" : "{\"intParameter\": 7, \"stringParameter\": \"success\"}"
       }, {
         "name" : "records",
-        "type" : "array",
-        "items" : "com.linkedin.restli.examples.groups.api.GroupMembershipParam",
+        "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.groups.api.GroupMembershipParam\" }",
         "default" : "[{\"intParameter\": 7, \"stringParameter\": \"success\"}]"
       } ]
     }, {

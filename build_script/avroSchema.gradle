@@ -19,7 +19,7 @@ final Configuration dataConfig = project(':data').configurations.default
 
 project.sourceSets.all { SourceSet sourceSet ->
   final inputDataSchemaDirPath = "src${File.separatorChar}${sourceSet.name}${File.separatorChar}pegasus"
-  final FileTree inputDataSchemaFiles = project.fileTree(dir: inputDataSchemaDirPath, includes: ["**${File.separatorChar}*.pdsc".toString()])
+  final FileTree inputDataSchemaFiles = project.fileTree(dir: inputDataSchemaDirPath, includes: ["**${File.separatorChar}*.pdsc"])
   if (inputDataSchemaFiles.empty)
   {
     return;

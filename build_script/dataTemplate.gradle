@@ -20,7 +20,7 @@ project.sourceSets.all { SourceSet sourceSet ->
   final String inputDataSchemaParentDirPath = "src${File.separatorChar}${sourceSet.name}"
   final String pegasusDirName = 'pegasus'
   final String inputDataSchemaDirPath = "${inputDataSchemaParentDirPath}${File.separatorChar}${pegasusDirName}"
-  final FileTree inputDataSchemaFiles = project.fileTree(dir: inputDataSchemaDirPath, includes: ["**${File.separatorChar}*.pdsc".toString()])
+  final FileTree inputDataSchemaFiles = project.fileTree(dir: inputDataSchemaDirPath, includes: ["**${File.separatorChar}*.pdsc"])
   if (inputDataSchemaFiles.empty)
   {
     return;
@@ -29,7 +29,7 @@ project.sourceSets.all { SourceSet sourceSet ->
   final String outputDirPath = rootProject.ext.build.getDataTemplateOutDirPath(project, sourceSet)
   sourceSet.java.srcDir(outputDirPath)
 
-  rootProject.ext.build.dataTemplateTasks[sourceSet] = project.task(sourceSet.name + 'GenerateDataTemplate', type: JavaExec) {
+  rootProject.ext.build.dataTemplateGenerateTasks[sourceSet] = project.task(sourceSet.name + 'GenerateDataTemplate', type: JavaExec) {
     main = 'com.linkedin.pegasus.generator.PegasusDataTemplateGenerator'
     classpath = generatorConfig + generatorConfig.allArtifacts.files
     args outputDirPath
@@ -42,8 +42,18 @@ project.sourceSets.all { SourceSet sourceSet ->
 
   final Task jarTask = project.tasks[sourceSet.getTaskName('', 'jar')]
   jarTask.from(inputDataSchemaParentDirPath) {
-    include "${pegasusDirName}${File.separatorChar}**${File.separatorChar}*.pdsc".toString()
+    include "${pegasusDirName}${File.separatorChar}**${File.separatorChar}*.pdsc"
   }
 
-  project.tasks[sourceSet.compileJavaTaskName].dependsOn(rootProject.ext.build.dataTemplateTasks[sourceSet])
+  final Task dataTemplateCompileTask = project.task(sourceSet.name + 'CompileDataTemplate',
+                                                    type: JavaCompile,
+                                                    dependsOn: rootProject.ext.build.dataTemplateGenerateTasks[sourceSet]) {
+      classpath = sourceSet.compileClasspath
+      destinationDir = project.file(project.tasks[sourceSet.compileJavaTaskName].destinationDir.path + 'DataTemplate')
+      source outputDirPath
+      source sourceSet.java.srcDirs
+    }
+  rootProject.ext.build.dataTemplateCompileTasks[sourceSet] = dataTemplateCompileTask;
+
+  project.tasks[sourceSet.compileJavaTaskName].dependsOn(dataTemplateCompileTask)
 }

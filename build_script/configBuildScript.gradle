@@ -16,14 +16,16 @@
 
 String getGeneratedSourceDirName(Project project, SourceSet sourceSet, String genType)
 {
-  return "${project.projectDir.path}${File.separatorChar}src${File.separatorChar}${sourceSet.name}Generated${genType}"
+  return "src${File.separatorChar}${sourceSet.name}Generated${genType}"
 }
 
 project.ext.build = [
-  'dataTemplateTasks': [:],
+  'dataTemplateGenerateTasks': [:],
+  'dataTemplateCompileTasks': [:],
   'avroSchemaTasks': [:],
   'restModelTasks': [:],
-  'restClientTasks': [:],
+  'restClientGenerateTasks': [:],
+  'restClientCompileTasks': [:],
 
   'getDataTemplateOutDirPath': { Project project, SourceSet sourceSet ->
     return getGeneratedSourceDirName(project, sourceSet, 'DataTemplate') + "${File.separatorChar}java"
