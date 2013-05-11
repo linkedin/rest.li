@@ -85,7 +85,7 @@
         "parameters" : [ {
           "name" : "a",
           "type" : "int",
-          "optional" : true
+          "optional" : false
         }, {
           "name" : "b",
           "type" : "int",

@@ -16,7 +16,7 @@
         "name" : "tone",
         "type" : "array",
         "items": "com.linkedin.greetings.api.Tone",
-        "optional" : true
+        "optional" : false
       } ],
       "metadata" : {
         "type" : {
@@ -47,8 +47,7 @@
         "type" : "com.linkedin.groups.api.TransferOwnershipRequest"
       }, {
         "name" : "someString",
-        "type" : "string",
-        "default" : "default"
+        "type" : "string"
       }, {
         "name" : "stringMap",
         "type" : {

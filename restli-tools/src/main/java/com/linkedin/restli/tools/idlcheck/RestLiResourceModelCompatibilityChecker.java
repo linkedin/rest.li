@@ -511,21 +511,16 @@ public class RestLiResourceModelCompatibilityChecker
       return true;
     }
 
-    final boolean isCompatible = (prevOptional || !currOptional);
-    if (!isCompatible)
+    if (prevOptional && !currOptional)
     {
       addInfo(field.getName(), CompatibilityInfo.Type.PARAMETER_WRONG_OPTIONALITY);
       return false;
     }
 
-    // previous optional and currently required should be the only case different yet compatible
-    if (prevOptional && !currOptional)
+    if (!prevOptional && currOptional)
     {
+      // previous required and currently optional should be the only difference that retains backwards compatibility
       addInfo(CompatibilityInfo.Type.OPTIONAL_PARAMETER);
-    }
-    else
-    {
-      assert(prevOptional == currOptional);
     }
 
     return true;

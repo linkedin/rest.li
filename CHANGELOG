@@ -7,6 +7,9 @@ Add more test cases for generated DataTemplate.
 (RB=163290)
 Fix bug where @Optional on finder assocKeys was not respected.
 
+(RB=164364)
+Fix a bug in idl compatibility checker that marks previously required and currently optional field as incompatible.
+
 1.8.22
 ------
 (RB=162206)

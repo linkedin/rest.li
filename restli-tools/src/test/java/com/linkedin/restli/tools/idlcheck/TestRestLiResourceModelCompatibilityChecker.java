@@ -154,10 +154,10 @@ public class TestRestLiResourceModelCompatibilityChecker
                                          CompatibilityInfo.Type.ARRAY_NOT_CONTAIN,
                                          new StringArray(Arrays.asList("com.linkedin.groups.api.GroupOwnerException",
                                                                        "java.io.FileNotFoundException"))));
+    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "entity", "actions", "someAction", "parameters", "a", "optional"),
+                                         CompatibilityInfo.Type.PARAMETER_WRONG_OPTIONALITY));
     testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "entity", "actions", "someAction", "parameters", "b", "type"),
                                          CompatibilityInfo.Type.TYPE_INCOMPATIBLE, "string", "int"));
-    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "entity", "actions", "someAction", "parameters", "c", "optional"),
-                                         CompatibilityInfo.Type.PARAMETER_WRONG_OPTIONALITY));
     testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "entity", "actions", "someAction", "parameters"),
                                          CompatibilityInfo.Type.ARRAY_MISSING_ELEMENT, "e"));
     testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("",
