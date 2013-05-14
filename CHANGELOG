@@ -10,6 +10,13 @@ Fix bug where @Optional on finder assocKeys was not respected.
 (RB=164364)
 Fix a bug in idl compatibility checker that marks previously required and currently optional field as incompatible.
 
+(RB=126830)
+Deprecate the "items" field for the query parameters in idl. Array parameters use standard pdsc array format.
+To make it backwards compatibile, request builders can still use Iterable parameters.
+Fix bug that builder methods with Iterable<? extends DataTemplate> parameter are not working.
+Update build scripts.
+Use Gradle 1.5.
+
 1.8.22
 ------
 (RB=162206)
@@ -26,11 +33,6 @@ Generated record DataTemplates have had these methods since 1.8.4.
 (RB=162841)
 Adding new resource class is a backward compatible change now.
 Add instruction message for idl compatibility check failure.
-
-(RB=126830)
-Deprecate the "items" field for the query parameters in idl. Array parameters use standard pdsc array format.
-To make it backwards compatibile, request builders can still use Iterable parameters.
-Fix bug that builder methods with Iterable<? extends DataTemplate> parameter are not working.
 
 1.8.21
 ------
