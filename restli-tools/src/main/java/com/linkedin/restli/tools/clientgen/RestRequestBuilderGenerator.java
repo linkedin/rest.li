@@ -29,8 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.linkedin.data.schema.ArrayDataSchema;
-import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonParseException;
@@ -39,8 +37,10 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.TyperefDataSchema;
+import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
 import com.linkedin.data.schema.validation.RequiredMode;
 import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
 import com.linkedin.data.schema.validation.ValidationOptions;
@@ -73,7 +73,7 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.ResourceSpecImpl;
 import com.linkedin.restli.common.RestConstants;
-import com.linkedin.restli.internal.server.util.ArgumentUtils;
+import com.linkedin.restli.internal.common.TyperefUtils;
 import com.linkedin.restli.restspec.ActionSchema;
 import com.linkedin.restli.restspec.ActionSchemaArray;
 import com.linkedin.restli.restspec.ActionsSetSchema;
@@ -102,26 +102,6 @@ import com.sun.codemodel.JMod;
 import com.sun.codemodel.JPackage;
 import com.sun.codemodel.JVar;
 import com.sun.codemodel.writer.FileCodeWriter;
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.JsonParser;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Generates Java request builders from Rest.li idl.
@@ -361,6 +341,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
 
     List<String> pathKeys = getPathKeys(resourcePath);
 
+    JClass keyTyperefClass = null;
     JClass keyClass;
     JClass keyKeyClass = null;
     JClass keyParamsClass = null;
@@ -383,6 +364,11 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
       if (collection.getIdentifier().getParams() == null)
       {
         keyClass = getJavaBindingType(collection.getIdentifier().getType(), facadeClass).valueClass;
+        JClass declaredClass = getClassRefForSchema(RestSpecCodec.textToSchema(collection.getIdentifier().getType(), getSchemaResolver()), facadeClass);
+        if(!declaredClass.equals(keyClass))
+        {
+          keyTyperefClass = declaredClass;
+        }
       }
       else
       {
@@ -473,7 +459,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
                                 .arg(supportedMethodsExpr)
                                 .arg(methodSchemaMap)
                                 .arg(responseSchemaMap)
-                                .arg(keyClass.dotclass())
+                                .arg(keyTyperefClass == null ? keyClass.dotclass() : keyTyperefClass.dotclass())
                                 .arg(keyKeyClass == null ? JExpr._null() : keyKeyClass.dotclass())
                                 .arg(keyKeyClass == null ? JExpr._null() : keyParamsClass.dotclass())
                                 .arg(schemaClass.dotclass())
@@ -1198,7 +1184,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
       TyperefDataSchema typerefDataSchema = (TyperefDataSchema) schema;
       if (typerefDataSchema.getDereferencedDataSchema().getType() != DataSchema.Type.UNION)
       {
-        String javaClassNameFromSchema = ArgumentUtils.getJavaClassNameFromSchema(typerefDataSchema);
+        String javaClassNameFromSchema = TyperefUtils.getJavaClassNameFromSchema(typerefDataSchema);
         if (javaClassNameFromSchema != null)
         {
           binding.valueClass = getCodeModel().directClass(javaClassNameFromSchema);

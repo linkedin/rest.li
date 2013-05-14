@@ -23,17 +23,22 @@ import java.util.Map;
 
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.DataSchemaUtil;
 import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.schema.Name;
 import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.data.template.TyperefInfo;
 import com.linkedin.jersey.api.uri.UriComponent;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.CompoundKey.TypeInfo;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.internal.common.PathSegment.PathSegmentSyntaxException;
+import com.linkedin.restli.internal.common.TyperefUtils;
 import com.linkedin.restli.internal.common.ValueConverter;
 
 
@@ -143,10 +148,28 @@ public class BatchKVResponse<K, V extends RecordTemplate> extends RecordTemplate
     }
   }
 
+  @SuppressWarnings("unchecked")
   private <T> T convertKey(String rawKey, Class<? extends T> keyClass)
   {
+    Class<? extends T> keyBindingClass = keyClass;
     Object result;
-    if (CompoundKey.class.isAssignableFrom(keyClass))
+
+    if (TyperefInfo.class.isAssignableFrom(keyClass))
+    {
+      TyperefDataSchema schema = (TyperefDataSchema)DataTemplateUtil.getSchema(keyClass);
+      DataSchema.Type dereferencedType = schema.getDereferencedType();
+      if (!schema.getDereferencedDataSchema().isPrimitive())
+      {
+        throw new IllegalArgumentException("Compound key type must dereference to a primitive type.");
+      }
+      keyBindingClass = (Class<? extends T>)TyperefUtils.getJavaClassForSchema(schema);
+      if(keyBindingClass == null)
+      {
+        keyBindingClass = (Class<? extends T>)dereferencedType.getClass();
+      }
+      result = ValueConverter.coerceString(rawKey, DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchemaClass(dereferencedType));
+    }
+    else if (CompoundKey.class.isAssignableFrom(keyClass))
     {
       DataMap key = parseKey(rawKey);
       result = CompoundKey.fromValues(key, _keyParts);
@@ -177,7 +200,7 @@ public class BatchKVResponse<K, V extends RecordTemplate> extends RecordTemplate
       }
     }
 
-    return DataTemplateUtil.coerceOutput(result, keyClass);
+    return DataTemplateUtil.coerceOutput(result, keyBindingClass);
   }
 
   //TODO: replace with generic QueryParam <=> DataMap codec

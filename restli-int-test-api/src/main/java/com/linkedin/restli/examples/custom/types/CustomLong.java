@@ -83,7 +83,12 @@ public class CustomLong
   @Override
   public int hashCode()
   {
-    return super.hashCode();
+    return l.hashCode();
   }
 
+  @Override
+  public String toString()
+  {
+    return l.toString();
+  }
 }

@@ -36,18 +36,26 @@ import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.client.ActionRequest;
+import com.linkedin.restli.client.BatchDeleteRequest;
+import com.linkedin.restli.client.BatchGetKVRequest;
 import com.linkedin.restli.client.BatchGetRequest;
 import com.linkedin.restli.client.FindRequest;
 import com.linkedin.restli.client.GetRequest;
 import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.common.CompoundKey;
+import com.linkedin.restli.common.CreateStatus;
+import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.examples.custom.types.CustomLong;
 import com.linkedin.restli.examples.custom.types.CustomNonNegativeLong;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.client.ChainedTyperefsBatchUpdateBuilder;
 import com.linkedin.restli.examples.greetings.client.ChainedTyperefsBuilders;
+import com.linkedin.restli.examples.greetings.client.CustomTypes2BatchCreateBuilder;
+import com.linkedin.restli.examples.greetings.client.CustomTypes2BatchPartialUpdateBuilder;
+import com.linkedin.restli.examples.greetings.client.CustomTypes2BatchUpdateBuilder;
 import com.linkedin.restli.examples.greetings.client.CustomTypes2Builders;
 import com.linkedin.restli.examples.greetings.client.CustomTypes3BatchUpdateBuilder;
 import com.linkedin.restli.examples.greetings.client.CustomTypes3Builders;
@@ -139,6 +147,69 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
     Map<String,Greeting> greetings = REST_CLIENT.sendRequest(request).getResponse().getEntity().getResults();
 
     Assert.assertEquals(3, greetings.size());
+    Assert.assertEquals(1L, greetings.get("1").getId().longValue());
+    Assert.assertEquals(2L, greetings.get("2").getId().longValue());
+    Assert.assertEquals(3L, greetings.get("3").getId().longValue());
+  }
+
+  @Test
+  public void testCollectionBatchKVGet() throws RemoteInvocationException
+  {
+    BatchGetKVRequest<CustomLong, Greeting> request = CUSTOM_TYPES_2_BUILDERS.batchGet().ids(new CustomLong(1L), new CustomLong(2L), new CustomLong(3L)).buildKV();
+    Map<CustomLong, Greeting> greetings = REST_CLIENT.sendRequest(request).getResponse().getEntity().getResults();
+
+    Assert.assertEquals(3, greetings.size());
+    Assert.assertEquals(1L, greetings.get(new CustomLong(1L)).getId().longValue());
+    Assert.assertEquals(2L, greetings.get(new CustomLong(2L)).getId().longValue());
+    Assert.assertEquals(3L, greetings.get(new CustomLong(3L)).getId().longValue());
+  }
+
+  @Test
+  public void testCollectionBatchDelete() throws RemoteInvocationException
+  {
+    BatchDeleteRequest<CustomLong, Greeting> request = CUSTOM_TYPES_2_BUILDERS.batchDelete().ids(new CustomLong(1L), new CustomLong(2L), new CustomLong(3L)).build();
+    Map<CustomLong, UpdateStatus> statuses = REST_CLIENT.sendRequest(request).getResponse().getEntity().getResults();
+
+    Assert.assertEquals(3, statuses.size());
+    Assert.assertEquals(HttpStatus.S_204_NO_CONTENT.getCode(), statuses.get(new CustomLong(1L)).getStatus().intValue());
+    Assert.assertEquals(HttpStatus.S_204_NO_CONTENT.getCode(), statuses.get(new CustomLong(2L)).getStatus().intValue());
+    Assert.assertEquals(HttpStatus.S_204_NO_CONTENT.getCode(), statuses.get(new CustomLong(3L)).getStatus().intValue());
+  }
+
+  @Test
+  public void testCollectionBatchUpdate() throws RemoteInvocationException
+  {
+    CustomTypes2BatchUpdateBuilder request = CUSTOM_TYPES_2_BUILDERS.batchUpdate().input(new CustomLong(1L), new Greeting().setId(1)).input(new CustomLong(2L), new Greeting().setId(2));
+    Map<CustomLong, UpdateStatus> statuses = REST_CLIENT.sendRequest(request).getResponse().getEntity().getResults();
+
+    Assert.assertEquals(2, statuses.size());
+    Assert.assertEquals(HttpStatus.S_204_NO_CONTENT.getCode(), statuses.get(new CustomLong(1L)).getStatus().intValue());
+    Assert.assertEquals(HttpStatus.S_204_NO_CONTENT.getCode(), statuses.get(new CustomLong(2L)).getStatus().intValue());
+  }
+
+  @Test
+  public void testCollectionBatchPartialUpdate() throws RemoteInvocationException
+  {
+    CustomTypes2BatchPartialUpdateBuilder request = CUSTOM_TYPES_2_BUILDERS.batchPartialUpdate().input(new CustomLong(1L), new PatchRequest<Greeting>()).input(new CustomLong(2L), new PatchRequest<Greeting>());
+    Map<CustomLong, UpdateStatus> statuses = REST_CLIENT.sendRequest(request).getResponse().getEntity().getResults();
+
+    Assert.assertEquals(2, statuses.size());
+    Assert.assertEquals(HttpStatus.S_204_NO_CONTENT.getCode(), statuses.get(new CustomLong(1L)).getStatus().intValue());
+    Assert.assertEquals(HttpStatus.S_204_NO_CONTENT.getCode(), statuses.get(new CustomLong(2L)).getStatus().intValue());
+  }
+
+  @Test
+  public void testCollectionBatchCreate() throws RemoteInvocationException
+  {
+    CustomTypes2BatchCreateBuilder request = CUSTOM_TYPES_2_BUILDERS.batchCreate().input(new Greeting().setId(1)).input(new Greeting().setId(2));
+    List<CreateStatus> results = REST_CLIENT.sendRequest(request).getResponse().getEntity().getElements();
+
+    Assert.assertEquals(2, results.size());
+    Assert.assertEquals(HttpStatus.S_204_NO_CONTENT.getCode(), results.get(0).getStatus().intValue());
+    Assert.assertEquals("1", results.get(0).getId());
+
+    Assert.assertEquals(HttpStatus.S_204_NO_CONTENT.getCode(), results.get(1).getStatus().intValue());
+    Assert.assertEquals("2", results.get(1).getId());
   }
 
   @Test

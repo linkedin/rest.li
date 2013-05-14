@@ -32,14 +32,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import com.linkedin.data.schema.DataSchema;
-import com.linkedin.data.schema.DataSchemaUtil;
-import com.linkedin.restli.server.Key;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.linkedin.data.DataMap;
-import com.linkedin.data.schema.TyperefDataSchema;
+import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.DataSchemaUtil;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.transform.filter.request.MaskTree;
@@ -57,6 +55,7 @@ import com.linkedin.restli.internal.common.ValueConverter;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.model.ResourceModel;
+import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.RoutingException;
 
 /**
@@ -580,44 +579,4 @@ public class ArgumentUtils
     }
     return (String) obj;
   }
-
-  public static String getJavaClassNameFromSchema(final TyperefDataSchema schema)
-  {
-    Object o = schema.getProperties().get("java");
-    if (o == null || !(o instanceof Map))
-    {
-      return null;
-    }
-
-    Map map = (Map)o;
-    Object o2 = map.get("class");
-
-    if (o2 == null || !(o2 instanceof String))
-    {
-      return null;
-    }
-
-    return (String)o2;
-  }
-
-  public static String getCoercerClassFromSchema(final TyperefDataSchema schema)
-  {
-    Object o = schema.getProperties().get("java");
-    if (o == null || !(o instanceof Map))
-    {
-      return null;
-    }
-
-    Map map = (Map) o;
-    Object o2 = map.get("coercerClass");
-
-    if (o2 == null || !(o2 instanceof String))
-    {
-      return null;
-    }
-
-    return (String) o2;
-
-  }
-
 }

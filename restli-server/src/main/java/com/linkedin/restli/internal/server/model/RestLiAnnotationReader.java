@@ -52,9 +52,9 @@ import com.linkedin.restli.common.ActionResponse;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.internal.common.TyperefUtils;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor.InterfaceType;
-import com.linkedin.restli.internal.server.util.ArgumentUtils;
 import com.linkedin.restli.internal.server.util.ReflectionUtils;
 import com.linkedin.restli.server.ActionResult;
 import com.linkedin.restli.server.BatchCreateRequest;
@@ -871,7 +871,7 @@ public final class RestLiAnnotationReader
     if (validTypes != null)
     {
       String javaClassNameFromSchema =
-          ArgumentUtils.getJavaClassNameFromSchema(typerefSchema);
+          TyperefUtils.getJavaClassNameFromSchema(typerefSchema);
 
       if (javaClassNameFromSchema != null)
       {
@@ -912,8 +912,8 @@ public final class RestLiAnnotationReader
 
   private static void registerCoercer(final TyperefDataSchema schema)
   {
-    String coercerClassName = ArgumentUtils.getCoercerClassFromSchema(schema);
-    String javaClassNameFromSchema = ArgumentUtils.getJavaClassNameFromSchema(schema);
+    String coercerClassName = TyperefUtils.getCoercerClassFromSchema(schema);
+    String javaClassNameFromSchema = TyperefUtils.getJavaClassNameFromSchema(schema);
 
     // initialize the custom class
     try

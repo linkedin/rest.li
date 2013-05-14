@@ -188,7 +188,7 @@ public class ResourceSpecImpl implements ResourceSpec
    * @param supportedMethods Set of ResourceMethods supported
    * @param actionRequestMetadata Map from method name to method {@link RecordDataSchema}
    * @param actionResponseMetadata Map from method name to response RecordDataSchema
-   * @param keyClass type of the key of the Resource
+   * @param keyClass type of the key of the Resource, may be either a typeref or a primitive
    * @param keyKeyClass RecordTemplate type of the key, if the keyClass is a ComplexResourceKey
    * @param keyParamsClass RecordTemplate type of parameters of the key, if the keyClass is a ComplexResourceKey
    * @param valueClass the type of the RecordTemplate that the Resource manages

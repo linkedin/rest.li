@@ -1,6 +1,7 @@
 1.8.24
 ------
-
+(RB=164876)
+Fix bug where client builders failed to coerce batch results for resource collections keyed by a typeref.
 
 1.8.23
 ------
