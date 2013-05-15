@@ -4,7 +4,7 @@
   "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
   "path" : "/array",
   "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
-  "doc" : "This idl is for testing array and items fields",
+  "doc" : "This idl is for testing array and items fields. This file is hand-written.",
   "collection" : {
     "identifier" : {
       "name" : "id",

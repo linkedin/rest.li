@@ -14,29 +14,27 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
+package com.linkedin.restli.examples.greetings.server;
 
-package com.linkedin.restli.server;
+
+import com.linkedin.restli.examples.greetings.api.Greeting;
+import com.linkedin.restli.server.CollectionResult;
+import com.linkedin.restli.server.NoMetadata;
 
 import java.util.List;
 
-import com.linkedin.data.template.RecordTemplate;
 
 /**
- * @author Josh Walker
- * @version $Revision: $
+ * @author Keren Jin
  */
-
-public class BasicCollectionResult<T extends RecordTemplate> extends CollectionResult<T, NoMetadata>
+public class GreetingFinderResult extends CollectionResult<Greeting, NoMetadata>
 {
-  public BasicCollectionResult(final List<T> elements)
+  public GreetingFinderResult(List<Greeting> elements)
   {
-    super(elements, null, null);
+    super(elements);
   }
 
-  public BasicCollectionResult(final List<T> elements, final Integer total)
+  public GreetingFinderResult(List<Greeting> elements, final Integer total)
   {
     super(elements, total, null);
   }

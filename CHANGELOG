@@ -3,6 +3,10 @@
 (RB=164876)
 Fix bug where client builders failed to coerce batch results for resource collections keyed by a typeref.
 
+(RB=165359)
+Use com.linkedin.restli.server.NoMetadata to mark a finder's CollectionResult as no metadata.
+Allow non-template return type for finders.
+
 1.8.23
 ------
 (RB=162866)

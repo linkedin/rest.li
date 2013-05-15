@@ -17,24 +17,6 @@
 package com.linkedin.restli.internal.server.model;
 
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Pattern;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
@@ -63,6 +45,7 @@ import com.linkedin.restli.server.BatchPatchRequest;
 import com.linkedin.restli.server.BatchUpdateRequest;
 import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.Key;
+import com.linkedin.restli.server.NoMetadata;
 import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.ResourceConfigException;
 import com.linkedin.restli.server.annotations.Action;
@@ -82,6 +65,23 @@ import com.linkedin.restli.server.annotations.RestLiCollectionCompoundKey;
 import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.resources.ComplexKeyResource;
 import com.linkedin.restli.server.resources.KeyValueResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -1041,10 +1041,25 @@ public final class RestLiAnnotationReader
     if (queryType != null)
     {
       Class<? extends RecordTemplate> metadataType = null;
-      if (getLogicalReturnClass(method).equals(CollectionResult.class))
+      final Class<?> returnClass = getLogicalReturnClass(method);
+      if (CollectionResult.class.isAssignableFrom(returnClass))
       {
-        metadataType =
-            ((Class<?>) ((ParameterizedType) getLogicalReturnType(method)).getActualTypeArguments()[1]).asSubclass(RecordTemplate.class);
+        final List<Class<?>> typeArguments = ReflectionUtils.getTypeArguments(CollectionResult.class, returnClass.asSubclass(CollectionResult.class));
+        final Class<?> metadataClass;
+        if (typeArguments == null || typeArguments.get(1) == null)
+        {
+          // the return type may leave metadata type as parameterized and specify in runtime
+          metadataClass = ((Class<?>) ((ParameterizedType) getLogicalReturnType(method)).getActualTypeArguments()[1]);
+        }
+        else
+        {
+          metadataClass = typeArguments.get(1);
+        }
+
+        if (!metadataClass.equals(NoMetadata.class))
+        {
+          metadataType = metadataClass.asSubclass(RecordTemplate.class);
+        }
       }
 
       ResourceMethodDescriptor finderMethodDescriptor =
@@ -1334,15 +1349,39 @@ public final class RestLiAnnotationReader
     Class<?> returnType, elementType;
     try
     {
-      ParameterizedType collectionType = (ParameterizedType) getLogicalReturnType(method);
-      returnType = (Class<?>) collectionType.getRawType();
-      elementType = (Class<?>) collectionType.getActualTypeArguments()[0];
+      returnType = getLogicalReturnClass(method);
+      final List<Class<?>> typeArguments;
+      if (List.class.isAssignableFrom(returnType))
+      {
+        typeArguments = ReflectionUtils.getTypeArguments(List.class, returnType.asSubclass(List.class));
+      }
+      else if (CollectionResult.class.isAssignableFrom(returnType))
+      {
+        typeArguments = ReflectionUtils.getTypeArguments(CollectionResult.class, returnType.asSubclass(CollectionResult.class));
+      }
+      else
+      {
+        throw new ResourceConfigException("@Finder method '" + method.getName()
+            + "' on class '" + resourceModel.getResourceClass().getName()
+            + "' has an unsupported return type");
+      }
+
+      if (typeArguments == null || typeArguments.get(0) == null)
+      {
+        // the return type may leave value type as parameterized and specify in runtime
+        final ParameterizedType collectionType = (ParameterizedType) getLogicalReturnType(method);
+        elementType = (Class<?>) collectionType.getActualTypeArguments()[0];
+      }
+      else
+      {
+        elementType = typeArguments.get(0);
+      }
     }
     catch (ClassCastException e)
     {
       throw new ResourceConfigException("@Finder method '" + method.getName()
           + "' on class '" + resourceModel.getResourceClass().getName()
-          + "' has an invalid return or a data template type");
+          + "' has an invalid return or a data template type", e);
     }
 
     if (!List.class.isAssignableFrom(returnType)

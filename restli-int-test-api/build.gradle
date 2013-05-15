@@ -7,3 +7,7 @@ dependencies {
 
 apply from: "${buildScriptDirPath}/dataTemplate.gradle"
 apply from: "${buildScriptDirPath}/restClient.gradle"
+
+test {
+  systemProperties['test.projectDir'] = project.projectDir.path
+}
