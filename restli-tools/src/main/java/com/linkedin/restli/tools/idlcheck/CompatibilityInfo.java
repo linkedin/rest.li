@@ -25,13 +25,13 @@ import java.util.List;
 
 public class CompatibilityInfo
 {
-  enum Level
+  public enum Level
   {
     INCOMPATIBLE,
     COMPATIBLE
   }
 
-  enum Type
+  public enum Type
   {
     FINDER_ASSOCKEYS_DOWNGRADE(Level.INCOMPATIBLE, "Finder AssocKeys may not be downgraded to AssocKey"),
     ARRAY_NOT_CONTAIN(Level.INCOMPATIBLE, "Current field must contain these values: %s"),
@@ -46,20 +46,22 @@ public class CompatibilityInfo
     TYPE_UNKNOWN(Level.INCOMPATIBLE, "Type cannot be resolved: %s"),
     VALUE_NOT_EQUAL(Level.INCOMPATIBLE, "Current value \"%2$s\" does not match the previous value \"%1$s\""),
     VALUE_WRONG_OPTIONALITY(Level.INCOMPATIBLE, "\"%s\" may not be removed because it exists in the previous version"),
+    TYPE_ERROR(Level.INCOMPATIBLE, "%s"),
     DEPRECATED(Level.COMPATIBLE, "%s is deprecated"),
     PARAMETER_NEW_OPTIONAL(Level.COMPATIBLE, "New optional parameter \"%s\" is added"),
     OPTIONAL_PARAMETER(Level.COMPATIBLE, "Previous optional parameter is changed to currently required"),
     OPTIONAL_VALUE(Level.COMPATIBLE, "Optional field \"%s\" was previously missing but currently present"),
     RESOURCE_NEW(Level.COMPATIBLE, "Adding new resource defined in \"%s\""),
     SUPERSET(Level.COMPATIBLE, "Current values have these extra values: %s"),
-    VALUE_DIFFERENT(Level.COMPATIBLE, "Previous value \"%s\" is changed to \"%s\"");
+    VALUE_DIFFERENT(Level.COMPATIBLE, "Previous value \"%s\" is changed to \"%s\""),
+    TYPE_INFO(Level.COMPATIBLE, "%s");
 
     public String getDescription(Object[] parameters)
     {
       return String.format(_description, parameters);
     }
 
-    Level getLevel()
+    public Level getLevel()
     {
       return _level;
     }
