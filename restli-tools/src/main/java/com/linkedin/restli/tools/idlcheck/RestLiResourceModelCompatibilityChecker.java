@@ -65,8 +65,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -441,7 +443,7 @@ public class RestLiResourceModelCompatibilityChecker
     {
       if (container.size() > containee.size())
       {
-        final List<Object> diff = new ArrayList<Object>(container);
+        final Set<Object> diff = new HashSet<Object>(container);
         diff.removeAll(containee);
         addInfo(field.getName(), CompatibilityInfo.Type.SUPERSET, diff);
       }
@@ -611,7 +613,12 @@ public class RestLiResourceModelCompatibilityChecker
    * @return whether the basic check passes. also true if there is missing array element
    */
   private <T extends WrappingArrayTemplate<? extends RecordTemplate>>
-  boolean checkComplexArrayField(Field field, String keyName, T prevArray, T currArray, HashMap<String, Integer> currRemainder)
+  boolean checkComplexArrayField(Field field,
+                                 String keyName,
+                                 T prevArray,
+                                 T currArray,
+                                 Map<String, Integer> currRemainder,
+                                 boolean checkRemainder)
   {
     assert (field != null);
     assert (currRemainder != null);
@@ -657,6 +664,11 @@ public class RestLiResourceModelCompatibilityChecker
       }
     }
 
+    if (checkRemainder && !currRemainder.isEmpty())
+    {
+      addInfo(CompatibilityInfo.Type.SUPERSET, currRemainder.keySet());
+    }
+
     _path.remove(_path.size() - 1);
 
     // all missing element errors have been recorded, avoid duplicate errors by returning true
@@ -666,7 +678,7 @@ public class RestLiResourceModelCompatibilityChecker
   private <T extends WrappingArrayTemplate<? extends RecordTemplate>>
   boolean checkComplexArrayField(Field field, String keyName, T prevArray, T currArray)
   {
-    return checkComplexArrayField(field, keyName, prevArray, currArray, new HashMap<String, Integer>());
+    return checkComplexArrayField(field, keyName, prevArray, currArray, new HashMap<String, Integer>(), true);
   }
 
   /**
@@ -679,7 +691,7 @@ public class RestLiResourceModelCompatibilityChecker
 
     // if prev has more than curr, array missing element
     // this should catch it
-    if (!checkComplexArrayField(field, keyName, prevArray, currArray, currRemainder))
+    if (!checkComplexArrayField(field, keyName, prevArray, currArray, currRemainder, false))
     {
       return false;
     }
@@ -701,7 +713,7 @@ public class RestLiResourceModelCompatibilityChecker
   {
     final HashMap<String, Integer> currRemainder = new HashMap<String, Integer>();
 
-    if (!checkComplexArrayField(field, "name", prevArray, currArray, currRemainder))
+    if (!checkComplexArrayField(field, "name", prevArray, currArray, currRemainder, false))
     {
       return false;
     }

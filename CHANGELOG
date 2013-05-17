@@ -7,6 +7,9 @@ Fix bug where client builders failed to coerce batch results for resource collec
 Use com.linkedin.restli.server.NoMetadata to mark a finder's CollectionResult as no metadata.
 Allow non-template return type for finders.
 
+(RB=166235)
+IDL compatibility checks for new methods, finders, actions and subresources.
+
 1.8.23
 ------
 (RB=162866)

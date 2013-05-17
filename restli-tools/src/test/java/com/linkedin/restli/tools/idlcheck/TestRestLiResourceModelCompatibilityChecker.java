@@ -56,7 +56,9 @@ public class TestRestLiResourceModelCompatibilityChecker
     testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList(""),
                                         CompatibilityInfo.Type.OPTIONAL_VALUE, "namespace"));
     testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "supports"),
-                                        CompatibilityInfo.Type.SUPERSET, Arrays.asList("update")));
+                                        CompatibilityInfo.Type.SUPERSET, new HashSet<String>(Arrays.asList("update"))));
+    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "methods"),
+                                        CompatibilityInfo.Type.SUPERSET, new HashSet<String>(Arrays.asList("update"))));
     testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "finders", "search", "parameters", "tone"),
                                         CompatibilityInfo.Type.OPTIONAL_PARAMETER));
     testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "finders", "search", "parameters"),
@@ -70,7 +72,7 @@ public class TestRestLiResourceModelCompatibilityChecker
     testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "oneAction", "parameters", "someString"),
                                         CompatibilityInfo.Type.OPTIONAL_PARAMETER));
     testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "exceptionTest", "throws"),
-                                        CompatibilityInfo.Type.SUPERSET, Arrays.asList("java.lang.NullPointerException")));
+                                        CompatibilityInfo.Type.SUPERSET, new HashSet<String>(Arrays.asList("java.lang.NullPointerException"))));
     testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "entity", "actions", "someAction", "parameters", "b", "default"),
                                         CompatibilityInfo.Type.VALUE_DIFFERENT, "default", "changed"));
 
