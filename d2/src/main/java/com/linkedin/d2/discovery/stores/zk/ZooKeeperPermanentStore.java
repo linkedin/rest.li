@@ -16,9 +16,6 @@
 
 package com.linkedin.d2.discovery.stores.zk;
 
-import static com.linkedin.d2.discovery.util.LogUtil.trace;
-
-import com.linkedin.common.util.None;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
@@ -26,9 +23,12 @@ import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.linkedin.common.callback.Callback;
+import com.linkedin.common.util.None;
 import com.linkedin.d2.discovery.PropertySerializationException;
 import com.linkedin.d2.discovery.PropertySerializer;
-import com.linkedin.common.callback.Callback;
+
+import static com.linkedin.d2.discovery.util.LogUtil.trace;
 
 public class ZooKeeperPermanentStore<T> extends ZooKeeperStore<T>
 {
@@ -168,12 +168,12 @@ public class ZooKeeperPermanentStore<T> extends ZooKeeperStore<T>
           if (init)
           {
             _eventBus.publishInitialize(propertyName, propertyValue);
-            _log.info("{}: published init", path);
+            _log.debug("{}: published init", path);
           }
           else
           {
             _eventBus.publishAdd(propertyName, propertyValue);
-            _log.info("{}: published add", path);
+            _log.debug("{}: published add", path);
           }
           break;
 
@@ -181,12 +181,12 @@ public class ZooKeeperPermanentStore<T> extends ZooKeeperStore<T>
           if (init)
           {
             _eventBus.publishInitialize(propertyName, null);
-            _log.info("{}: published init for NONODE event", path);
+            _log.debug("{}: published init for NONODE event", path);
           }
           else
           {
             _eventBus.publishRemove(propertyName);
-            _log.info("{}: published remove", path);
+            _log.debug("{}: published remove", path);
           }
           // We must call exists to be informed if the node is created
           _log.debug("{}: node not present, calling exists", path);

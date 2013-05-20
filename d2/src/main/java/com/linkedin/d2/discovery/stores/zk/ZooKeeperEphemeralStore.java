@@ -16,8 +16,6 @@
 
 package com.linkedin.d2.discovery.stores.zk;
 
-import static com.linkedin.d2.discovery.util.LogUtil.trace;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -25,8 +23,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.linkedin.common.callback.FutureCallback;
-import com.linkedin.common.util.None;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -36,11 +32,15 @@ import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.linkedin.common.callback.Callback;
+import com.linkedin.common.callback.CallbackAdapter;
+import com.linkedin.common.callback.FutureCallback;
+import com.linkedin.common.util.None;
 import com.linkedin.d2.discovery.PropertySerializationException;
 import com.linkedin.d2.discovery.PropertySerializer;
 import com.linkedin.d2.discovery.stores.PropertyStoreException;
-import com.linkedin.common.callback.Callback;
-import com.linkedin.common.callback.CallbackAdapter;
+
+import static com.linkedin.d2.discovery.util.LogUtil.trace;
 
 public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
 {
@@ -372,12 +372,12 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
               if (init)
               {
                 _eventBus.publishInitialize(property, value);
-                _log.info("{}: published init", path);
+                _log.debug("{}: published init", path);
               }
               else
               {
                 _eventBus.publishAdd(property, value);
-                _log.info("{}: published add", path);
+                _log.debug("{}: published add", path);
               }
             }
 
@@ -388,7 +388,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
               if (init)
               {
                 _eventBus.publishInitialize(property, null);
-                _log.info("{}: published init", path);
+                _log.debug("{}: published init", path);
               }
             }
           });
@@ -402,12 +402,12 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
           if (init)
           {
             _eventBus.publishInitialize(property, null);
-            _log.info("{}: published init", path);
+            _log.debug("{}: published init", path);
           }
           else
           {
             _eventBus.publishRemove(property);
-            _log.info("{}: published remove", path);
+            _log.debug("{}: published remove", path);
           }
           break;
 

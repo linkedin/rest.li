@@ -16,29 +16,29 @@
 
 package com.linkedin.d2.discovery.stores.zk;
 
-import static com.linkedin.d2.discovery.util.LogUtil.debug;
-import static com.linkedin.d2.discovery.util.LogUtil.info;
-
 import java.io.File;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.linkedin.d2.discovery.stores.util.AbstractPropertyStoreAsync;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.linkedin.common.callback.Callback;
+import com.linkedin.common.util.None;
 import com.linkedin.d2.discovery.PropertySerializer;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
 import com.linkedin.d2.discovery.event.PropertyEventPublisher;
 import com.linkedin.d2.discovery.stores.PropertyStore;
 import com.linkedin.d2.discovery.stores.PropertyStoreException;
+import com.linkedin.d2.discovery.stores.util.AbstractPropertyStoreAsync;
 import com.linkedin.d2.discovery.util.Stats;
-import com.linkedin.common.callback.Callback;
-import com.linkedin.common.util.None;
+
+import static com.linkedin.d2.discovery.util.LogUtil.debug;
+import static com.linkedin.d2.discovery.util.LogUtil.info;
 
 public abstract class ZooKeeperStore<T> extends AbstractPropertyStoreAsync<T>
         implements
@@ -240,7 +240,7 @@ public abstract class ZooKeeperStore<T> extends AbstractPropertyStoreAsync<T>
           _log.debug("Ignoring watch for path {}: {}", path, watchedEvent);
           return;
         }
-        _log.info("processing watch for path: {}", path);
+        _log.debug("processing watch for path: {}", path);
         processWatch(getPropertyForPath(path), watchedEvent);
       }
     }
