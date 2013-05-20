@@ -171,7 +171,7 @@ public class TestRestLiResourceModels
   @Test
   public void testInvalidFinders() throws Exception
   {
-    expectConfigException(InvalidResources.FinderNonListReturnType.class, "has an invalid return");
+    expectConfigException(InvalidResources.FinderNonListReturnType.class, "has an unsupported return type");
     expectConfigException(InvalidResources.FinderNonRecordTemplateReturnType.class, "but found List<");
     expectConfigException(InvalidResources.FinderNonMatchingRecordTemplateReturnType.class, "but found List<");
     expectConfigException(InvalidResources.FinderNonMatchingRecordTemplateReturnTypeCollectionResult.class, "but found CollectionResult<");
