@@ -39,7 +39,7 @@ public class EmptyResponseDecoder extends RestResponseDecoder<EmptyRecord>
   }
 
   @Override
-  protected EmptyRecord wrapResponse(DataMap dataMap)
+  public EmptyRecord wrapResponse(DataMap dataMap)
   {
     throw new UnsupportedOperationException("Empty response should have no entity");
   }

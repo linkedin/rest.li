@@ -47,7 +47,7 @@ public class EntityResponseDecoder<T extends RecordTemplate> extends RestRespons
   }
 
   @Override
-  protected T wrapResponse(DataMap dataMap)
+  public T wrapResponse(DataMap dataMap)
                   throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException
   {
     return _entityClass.getConstructor(DataMap.class).newInstance(dataMap);

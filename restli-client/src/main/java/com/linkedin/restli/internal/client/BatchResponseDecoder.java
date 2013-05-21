@@ -47,7 +47,7 @@ public class BatchResponseDecoder<T extends RecordTemplate> extends RestResponse
 
   @Override
   @SuppressWarnings("unchecked")
-  protected BatchResponse<T> wrapResponse(DataMap dataMap)
+  public BatchResponse<T> wrapResponse(DataMap dataMap)
   {
      return new BatchResponse<T>(dataMap, _elementClass);
   }

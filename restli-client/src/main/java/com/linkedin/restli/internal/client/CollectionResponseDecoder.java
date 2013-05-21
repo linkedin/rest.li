@@ -46,7 +46,7 @@ public class CollectionResponseDecoder<T extends RecordTemplate> extends RestRes
   }
 
   @Override
-  protected CollectionResponse<T> wrapResponse(DataMap dataMap)
+  public CollectionResponse<T> wrapResponse(DataMap dataMap)
   {
     return new CollectionResponse<T>(dataMap, _elementClass);
   }

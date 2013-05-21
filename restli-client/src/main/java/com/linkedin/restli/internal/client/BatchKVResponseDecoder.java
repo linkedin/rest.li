@@ -78,7 +78,7 @@ public class BatchKVResponseDecoder<K, V extends RecordTemplate> extends RestRes
 
   @Override
   @SuppressWarnings("unchecked")
-  protected BatchKVResponse<K, V> wrapResponse(DataMap dataMap)
+  public BatchKVResponse<K, V> wrapResponse(DataMap dataMap)
   {
      return new BatchKVResponse<K, V>(dataMap,
                                      _keyClass,

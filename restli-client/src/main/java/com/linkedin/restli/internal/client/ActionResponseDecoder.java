@@ -56,7 +56,7 @@ public class ActionResponseDecoder<T> extends RestResponseDecoder<T>
   }
 
   @Override
-  protected T wrapResponse(DataMap dataMap)
+  public T wrapResponse(DataMap dataMap)
   {
     return new ActionResponse<T>(dataMap, _returnFieldDef, _recordDataSchema).getValue();
   }
