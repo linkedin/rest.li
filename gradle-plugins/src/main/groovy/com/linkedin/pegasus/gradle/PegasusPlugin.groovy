@@ -13,28 +13,31 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
+
 package com.linkedin.pegasus.gradle
 
-import com.linkedin.pegasus.gradle.PegasusOptions.Mode
+
 import org.gradle.BuildResult
 import org.gradle.api.DefaultTask
-import org.gradle.api.Project
 import org.gradle.api.Plugin
+import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileTree
 import org.gradle.api.internal.artifacts.dependencies.DefaultSelfResolvingDependency
-import org.gradle.api.invocation.Gradle
-import org.gradle.api.tasks.bundling.Jar
-import org.gradle.plugins.ide.eclipse.EclipsePlugin
-import org.gradle.api.tasks.SourceSet
-import org.gradle.api.tasks.OutputDirectory
-import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.TaskAction
-import org.gradle.api.tasks.InputDirectory
-import org.gradle.api.tasks.Copy
+import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.tasks.Copy
+import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.SourceSet
+import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.bundling.Jar
+import org.gradle.api.tasks.javadoc.Javadoc
+import org.gradle.plugins.ide.eclipse.EclipsePlugin
+import org.gradle.plugins.ide.idea.IdeaPlugin
 
 /**
  * Pegasus code generation plugin.
@@ -232,7 +235,7 @@ import org.gradle.api.plugins.JavaPlugin
  *
  * <p>
  * Configure the server and client implementation projects to depend on the
- * api project's avroSchema configuration to get access to the generated avro schemas 
+ * api project's avroSchema configuration to get access to the generated avro schemas
  * from within these projects.
  * </p>
  *
@@ -353,7 +356,7 @@ import org.gradle.api.plugins.JavaPlugin
  * the build tasks in the api project later will package the resource classes into jar files.
  * User can change the compatibility requirement between the current and published idl by
  * setting the "rest.model.compatibility" project property, i.e.
- * "ligradle -Prest.model.compatibility=<strategy> ..." The following levels are supported:
+ * "gradle -Prest.model.compatibility=<strategy> ..." The following levels are supported:
  * <ul>
  *   <li><b>off</b>: idl compatibility check will not be performed at all. This is only suggested to be
  *   used in test environments.</li>
@@ -488,111 +491,101 @@ import org.gradle.api.plugins.JavaPlugin
  * </p>
  */
 
-class PegasusGeneratorV2Plugin implements Plugin<Project> {
+class PegasusPlugin implements Plugin<Project> {
 
-  Project project
-
-  void apply(Project project) {
-    this.project = project
-    Clock.measure(project, "${getClass().simpleName}.apply") {
-      applyTo(project)
-    }
-  }
-
-  void afterEvaluate(Closure cl) {
-    project.afterEvaluate(Clock.measuredAction(project, "${getClass().getSimpleName()}.afterEvaluate", cl))
-  }
   public static boolean debug = false
 
   //
   // Constants for generating sourceSet names and corresponding directory names
   // for generated code
   //
-  private final static String DATA_TEMPLATE_GEN_TYPE = 'DataTemplate'
-  private final static String REST_GEN_TYPE = 'Rest'
-  private final static String AVRO_SCHEMA_GEN_TYPE = 'AvroSchema'
+  private static final String DATA_TEMPLATE_GEN_TYPE = 'DataTemplate'
+  private static final String REST_GEN_TYPE = 'Rest'
+  private static final String AVRO_SCHEMA_GEN_TYPE = 'AvroSchema'
 
-  private final static String DATA_TEMPLATE_FILE_SUFFIX = '.pdsc'
-  private final static String IDL_FILE_SUFFIX = '.restspec.json'
-  private final static String TEST_DIR_REGEX = '^(integ)?[Tt]est'
+  private static final String DATA_TEMPLATE_FILE_SUFFIX = '.pdsc'
+  private static final String IDL_FILE_SUFFIX = '.restspec.json'
+  private static final String TEST_DIR_REGEX = '^(integ)?[Tt]est'
 
-  private final static String IDL_COMPAT_REQUIREMENT_NAME = 'rest.model.compatibility'
-  private final static String IDL_NO_PUBLISH = 'rest.model.noPublish'
+  private static final String IDL_COMPAT_REQUIREMENT_NAME = 'rest.model.compatibility'
+  private static final String IDL_NO_PUBLISH = 'rest.model.noPublish'
 
   private static boolean _runOnce = false
 
-  private static StringBuilder _idlCompatMessage = new StringBuilder()
-  private static StringBuilder _idlPublishReminder = new StringBuilder()
+  private static final StringBuffer _idlCompatMessage = new StringBuffer()
+  private static final StringBuffer _idlPublishReminder = new StringBuffer()
 
-  void applyTo(Project project) {
-    project.plugins.apply(JavaPlugin.class)
+  //Pegasus API uses system properties for configuring various operations
+  //Therefore the API is not thread safe and we need to handle it.
+  private static final Object STATIC_PEGASUS_LOCK = new Object()
+  private static final Object STATIC_BUILD_FINISHED_LOCK = new Object()
+
+  private Task _generateSourcesJarTask = null
+  private Task _generateJavadocTask = null
+  private Task _generateJavadocJarTask = null
+
+  void apply(Project project) {
+    applyDependentPlugins(project)
 
     // this HashMap will have a PegasusOptions per sourceSet
     project.ext.set('pegasus', new HashMap<String, PegasusOptions>())
 
-    project.convention.plugins.templateGen = new PegasusGeneratorConvention()
+    project.convention.plugins.templateGen = new PegasusPluginConvention()
 
-    // this apply() function will be called for each project
-    // the code in the block must run only once
-    if (!_runOnce)
-    {
-      project.gradle.projectsEvaluated { Gradle gradle ->
-        runOnceAllProjects(gradle)
-      }
+    if (!_runOnce) {
+      synchronized (PegasusPlugin.STATIC_BUILD_FINISHED_LOCK) {
+        if (!_runOnce) { //double-check pattern for efficiency
+          project.gradle.buildFinished { BuildResult result ->
+            final StringBuilder endOfBuildMessage = new StringBuilder()
 
-      project.gradle.buildFinished { BuildResult result ->
-        final StringBuilder endOfBuildMessage = new StringBuilder()
+            if (_idlCompatMessage.length() > 0) {
+              endOfBuildMessage.append(_idlCompatMessage)
+            }
 
-        if (_idlCompatMessage.length() > 0)
-        {
-          endOfBuildMessage.append(_idlCompatMessage)
-        }
+            if (_idlPublishReminder.length() > 0) {
+              endOfBuildMessage.append(_idlPublishReminder)
+            }
 
-        if (_idlPublishReminder.length() > 0)
-        {
-          endOfBuildMessage.append(_idlPublishReminder)
-        }
-
-        if (endOfBuildMessage.length() > 0)
-        {
-          result.gradle.rootProject.logger.quiet(endOfBuildMessage.toString())
+            if (endOfBuildMessage.length() > 0) {
+              result.gradle.rootProject.logger.quiet(endOfBuildMessage.toString())
+            }
+          }
+          _runOnce = true
         }
       }
-
-      _runOnce = true
     }
 
     //
     // configuration for running data template generator
     //
-    def dataTemplateGeneratorConfig = project.configurations.add('dataTemplateGenerator')
+    def dataTemplateGeneratorConfig = project.configurations.create('dataTemplateGenerator')
 
     //
     // configuration for running rest client generator
     //
-    def restToolsConfig = project.configurations.add('restTools')
+    def restToolsConfig = project.configurations.create('restTools')
 
     //
     // configuration for running Avro schema generator
     //
-    def avroSchemaGeneratorConfig = project.configurations.add('avroSchemaGenerator')
+    def avroSchemaGeneratorConfig = project.configurations.create('avroSchemaGenerator')
 
     //
     // configuration for compiling generated data templates
     //
-    def dataTemplateCompileConfig = project.configurations.add('dataTemplateCompile')
+    def dataTemplateCompileConfig = project.configurations.create('dataTemplateCompile')
 
     //
     // configuration for compiling generated rest clients
     //
-    def restClientCompileConfig = project.configurations.add('restClientCompile')
+    def restClientCompileConfig = project.configurations.create('restClientCompile')
 
     //
     // configuration for depending on data schemas and potentially generated data templates
     // and for publishing jars containing data schemas to the project artifacts for including in the ivy.xml
     //
-    def dataModelConfig = project.configurations.add('dataModel')
-    def testDataModelConfig = project.configurations.add('testDataModel') {
+    def dataModelConfig = project.configurations.create('dataModel')
+    def testDataModelConfig = project.configurations.create('testDataModel') {
       extendsFrom(dataModelConfig)
     }
 
@@ -600,8 +593,8 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
     // configuration for depending on data schemas and potentially generated data templates
     // and for publishing jars containing data schemas to the project artifacts for including in the ivy.xml
     //
-    def avroSchemaConfig = project.configurations.add('avroSchema')
-    def testAvroSchemaConfig = project.configurations.add('testAvroSchema') {
+    def avroSchemaConfig = project.configurations.create('avroSchema')
+    def testAvroSchemaConfig = project.configurations.create('testAvroSchema') {
       extendsFrom(avroSchemaConfig)
     }
 
@@ -609,8 +602,8 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
     // configuration for depending on rest idl and potentially generated client builders
     // and for publishing jars containing rest idl to the project artifacts for including in the ivy.xml
     //
-    def restModelConfig = project.configurations.add('restModel')
-    def testRestModelConfig = project.configurations.add('testRestModel') {
+    def restModelConfig = project.configurations.create('restModel')
+    def testRestModelConfig = project.configurations.create('testRestModel') {
       extendsFrom(restModelConfig)
     }
 
@@ -618,8 +611,8 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
     // configuration for publishing jars containing data schemas and generated data templates
     // to the project artifacts for including in the ivy.xml
     //
-    def dataTemplateConfig = project.configurations.add('dataTemplate')
-    def testDataTemplateConfig = project.configurations.add('testDataTemplate') {
+    def dataTemplateConfig = project.configurations.create('dataTemplate')
+    def testDataTemplateConfig = project.configurations.create('testDataTemplate') {
       extendsFrom(dataTemplateConfig)
     }
 
@@ -627,8 +620,8 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
     // configuration for publishing jars containing rest idl and generated client builders
     // to the project artifacts for including in the ivy.xml
     //
-    def restClientConfig = project.configurations.add('restClient')
-    def testRestClientConfig = project.configurations.add('testRestClient') {
+    def restClientConfig = project.configurations.create('restClient')
+    def testRestClientConfig = project.configurations.create('testRestClient') {
       extendsFrom(restClientConfig)
     }
 
@@ -650,6 +643,14 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
     restClientConfig.extendsFrom(restClientCompileConfig)
     restClientConfig.extendsFrom(dataTemplateConfig)
     testRestClientConfig.extendsFrom(testDataTemplateConfig)
+
+    // this call has to be here because:
+    // 1) artifact cannot be published once projects has been evaluated, so we need to first
+    // create the tasks and artifact handler, then progressively append sources
+    // 2) in order to append sources progressively, the source and documentation tasks and artifacts must be
+    // configured/created before configuring and creating the code generation tasks.
+
+    configureGeneratedSourcesAndJavadoc(project)
 
     project.sourceSets.all { SourceSet sourceSet ->
 
@@ -676,9 +677,9 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
       configureRestClientGeneration(project, sourceSet)
 
       Task cleanGeneratedDirTask = project.task(sourceSet.getTaskName('clean', 'GeneratedDir')) << {
-        project.delete(getGeneratedSourceDirName(project, sourceSet, DATA_TEMPLATE_GEN_TYPE))
-        project.delete(getGeneratedSourceDirName(project, sourceSet, REST_GEN_TYPE))
-        project.delete(getGeneratedSourceDirName(project, sourceSet, AVRO_SCHEMA_GEN_TYPE))
+        project.delete(getGeneratedSourceDirName(project, sourceSet, PegasusPlugin.DATA_TEMPLATE_GEN_TYPE))
+        project.delete(getGeneratedSourceDirName(project, sourceSet, PegasusPlugin.REST_GEN_TYPE))
+        project.delete(getGeneratedSourceDirName(project, sourceSet, PegasusPlugin.AVRO_SCHEMA_GEN_TYPE))
       }
       // make clean depends on deleting the generated directories
       project.tasks.clean.dependsOn(cleanGeneratedDirTask)
@@ -696,72 +697,128 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
     */
   }
 
-  private static void runOnceAllProjects(Gradle gradle)
+  protected void applyDependentPlugins(Project project)
   {
-    for (Project proj: gradle.rootProject.subprojects)
-    {
-      if (!proj.hasProperty('sourceSets'))
-      {
-        continue
-      }
+    project.plugins.apply(JavaPlugin)
+    project.plugins.apply(IdeaPlugin)
+    project.plugins.apply(EclipsePlugin)
+  }
 
+  protected Class<? extends Plugin> getPluginType()
+  {
+    return this.getClass().asSubclass(Plugin.class)
+  }
+
+  protected Task getGenerateSourcesJarTask()
+  {
+    return _generateSourcesJarTask
+  }
+
+  protected Task getGenerateJavadocTask()
+  {
+    return _generateJavadocTask
+  }
+
+  protected void configureGeneratedSourcesAndJavadoc(Project project)
+  {
+    //
+    // configuration for publishing jars containing sources for generated classes
+    // to the project artifacts for including in the ivy.xml
+    //
+    def generatedSourcesConfig = project.configurations.add('generatedSources')
+    def testGeneratedSourcesConfig = project.configurations.add('testGeneratedSources') {
+      extendsFrom(generatedSourcesConfig)
+    }
+
+    //
+    // configuration for publishing jars containing Javadoc for generated classes
+    // to the project artifacts for including in the ivy.xml
+    //
+    def generatedJavadocConfig = project.configurations.add('generatedJavadoc')
+    def testGeneratedJavadocConfig = project.configurations.add('testGeneratedJavadoc') {
+      extendsFrom(generatedJavadocConfig)
+    }
+
+    _generateSourcesJarTask = project.task('generateSourcesJar', type: Jar) {
+      group = JavaBasePlugin.DOCUMENTATION_GROUP
+      description = 'Generates a jar file containing the sources for the generated Java classes.'
+
+      classifier = 'sources'
+    }
+
+    _generateJavadocTask = project.task('generateJavadoc', type: Javadoc)
+
+    _generateJavadocJarTask = project.task('generateJavadocJar', type: Jar, dependsOn: _generateJavadocTask) {
+      group = JavaBasePlugin.DOCUMENTATION_GROUP
+      description = 'Generates a jar file containing the Javadoc for the generated Java classes.'
+
+      classifier = 'javadoc'
+      from _generateJavadocTask.destinationDir
+    }
+
+    project.artifacts {
+      generatedSources _generateSourcesJarTask
+      generatedJavadoc _generateJavadocJarTask
+    }
+  }
+
+  private static void configureRestModelPublication(Project proj, SourceSet sourceSet, Task generateRestModelTask, Class<? extends Plugin> pluginType) {
+    //afterEvaluate needed so that api project can be overridden via ext.apiProject
+    proj.afterEvaluate {
       // find api project here instead of in each project's plugin configuration
       // this allows api project relation options (ext.api*) to be specified anywhere in the build.gradle file
       // alternatively, pass closures to task configuration, and evaluate the closures when task is executed
       final Project apiProject = getApiProject(proj)
-      if (apiProject != null && !apiProject.plugins.hasPlugin(PegasusGeneratorV2Plugin.class))
-      {
-        
+
+      //make sure the api project is evaluated. Important for configure-on-demand mode.
+      if (apiProject) {
+        proj.evaluationDependsOn(apiProject.path)
+      }
+
+      if (apiProject && !apiProject.plugins.hasPlugin(pluginType)) {
         apiProject = null
       }
 
-      proj.sourceSets.all { SourceSet sourceSet ->
-        final Task generateRestModelTask = proj.tasks.findByPath(sourceSet.getTaskName('generate', 'restModel'))
-        if (generateRestModelTask == null)
-        {
-          return
-        }
-
-        if (generateRestModelTask.idlOptions.idlItems.empty)
-        {
-          return
-        }
-        else if (apiProject == null)
-        {
-          throw new Exception("${proj.path}: idl files are generated but no api project is assigned for this project.")
-        }
-
-        // rest model publishing involves cross-project reference
-        // configure after all projects have been evaluated
-
-        // publish the generated rest model to api project
-        // it always does compatibility check before copying files
-        // the file copy can be turned off by "rest.model.noPublish" flag
-        File idlGenerationDir = apiProject.mkdir(getIdlRelativePath(sourceSet))
-        final Task publishRestModelTask = proj.task(sourceSet.getTaskName('publish', 'restModel'),
-                                                    type: PublishIdl,
-                                                    dependsOn: generateRestModelTask) {
-          from getSuffixedFiles(project, generateRestModelTask.destinationDir, IDL_FILE_SUFFIX)
-          // apiIdlDir is annotated as @InputDirectory, whose existence is validated before executing the task
-          into idlGenerationDir
-          resolverPath = apiProject.files(getDataSchemaRelativePath(project, sourceSet)) + getDataModelConfig(apiProject, sourceSet)
-          toolsClasspath = proj.configurations.restTools
-        }
-
-        // tasks which declare no output should always assume outputs UP-TO-DATE
-        publishRestModelTask.outputs.upToDateWhen { true }
-
-        final Task jarTask = proj.tasks[sourceSet.getTaskName('', 'jar')]
-        jarTask.from(idlGenerationDir) // add any .restspec.json files as resources to the jar
-        jarTask.dependsOn(publishRestModelTask)
+      if (generateRestModelTask.idlOptions.idlItems.empty)
+      {
+        return
       }
+      else if (apiProject == null)
+      {
+        throw new Exception("${proj.path}: idl files are generated but no api project is assigned for this project.")
+      }
+
+      // rest model publishing involves cross-project reference
+      // configure after all projects have been evaluated
+
+      // publish the generated rest model to api project
+      // it always does compatibility check before copying files
+      // the file copy can be turned off by "rest.model.noPublish" flag
+      File idlGenerationDir = apiProject.file(getIdlRelativePath(proj, sourceSet))
+      final Task publishRestModelTask = proj.task(sourceSet.getTaskName('publish', 'restModel'),
+                                                  type: PublishIdl,
+                                                  dependsOn: generateRestModelTask) {
+        from getSuffixedFiles(proj, generateRestModelTask.destinationDir, IDL_FILE_SUFFIX)
+        // apiIdlDir is annotated as @InputDirectory, whose existence is validated before executing the task
+        into idlGenerationDir
+        resolverPath = apiProject.files(getDataSchemaRelativePath(proj, sourceSet)) + getDataModelConfig(apiProject, sourceSet)
+        toolsClasspath = proj.configurations.restTools
+      }
+      proj.logger.info("API project selected for $publishRestModelTask.path is $apiProject.path")
+
+      // tasks which declare no output should always assume outputs UP-TO-DATE
+      publishRestModelTask.outputs.upToDateWhen { true }
+
+      final Task jarTask = proj.tasks[sourceSet.getTaskName('', 'jar')]
+      jarTask.from(idlGenerationDir) // add any .restspec.json files as resources to the jar
+      jarTask.dependsOn(publishRestModelTask)
     }
   }
 
   private static addGeneratedDir(Project project, SourceSet sourceSet, Collection<Configuration> configurations)
   {
     // stupid if block needed because of stupid assignment required to update source dirs
-    /*if (isTestSourceSet(sourceSet))
+    if (isTestSourceSet(sourceSet))
     {
       Set<File> sourceDirs = project.ideaModule.module.testSourceDirs
       sourceDirs.addAll(sourceSet.java.srcDirs)
@@ -780,7 +837,6 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
     Collection compilePlus = project.ideaModule.module.scopes.COMPILE.plus
     compilePlus.addAll(configurations)
     project.ideaModule.module.scopes.COMPILE.plus = compilePlus
-    */
   }
 
   private static PegasusOptions.Mode determineMode(Project project, SourceSet sourceSet)
@@ -790,7 +846,7 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
     if (avroSourceDir.exists()) {
       project.logger.lifecycle("${project.name}'s ${sourceDir} has avro directory, pegasus plugin does not process avro directory")
     }
-    return Mode.PEGASUS
+    return PegasusOptions.Mode.PEGASUS
   }
 
   private static String getDataSchemaRelativePath(Project project, SourceSet sourceSet)
@@ -801,8 +857,11 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
     return "src${File.separatorChar}${sourceSet.name}${File.separatorChar}pegasus"
   }
 
-  private static String getIdlRelativePath(SourceSet sourceSet)
+  private static String getIdlRelativePath(Project project, SourceSet sourceSet)
   {
+    if (project.hasProperty('overrideIdlDir') && project.overrideIdlDir) {
+        return project.overrideIdlDir
+    }
     return "src${File.separatorChar}${sourceSet.name}${File.separatorChar}idl"
   }
 
@@ -821,7 +880,7 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
     return (isTestSourceSet(sourceSet) ? project.configurations.testDataModel : project.configurations.dataModel)
   }
 
-  private void configureRestModelGeneration(Project project, SourceSet sourceSet)
+  protected void configureRestModelGeneration(Project project, SourceSet sourceSet)
   {
     if (sourceSet.allJava.empty)
     {
@@ -841,9 +900,11 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
       destinationDir = project.file(getGeneratedSourceDirName(project, sourceSet, REST_GEN_TYPE) + File.separatorChar + 'idl')
       idlOptions = project.pegasus[sourceSet.name].idlOptions
     }
+
+    configureRestModelPublication(project, sourceSet, generateRestModelTask, getPluginType())
   }
 
-  private void configureAvroSchemaGeneration(Project project, SourceSet sourceSet)
+  protected void configureAvroSchemaGeneration(Project project, SourceSet sourceSet)
   {
     final File dataSchemaDir = project.file(getDataSchemaRelativePath(project, sourceSet))
     final FileTree dataSchemaFiles = getSuffixedFiles(project, dataSchemaDir, DATA_TEMPLATE_FILE_SUFFIX)
@@ -893,7 +954,7 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
     }
   }
 
-  private void configureDataTemplateGeneration(Project project, SourceSet sourceSet)
+  protected void configureDataTemplateGeneration(Project project, SourceSet sourceSet)
   {
     final File dataSchemaDir = project.file(getDataSchemaRelativePath(project, sourceSet))
     final FileTree dataSchemaFiles = getSuffixedFiles(project, dataSchemaDir, DATA_TEMPLATE_FILE_SUFFIX)
@@ -910,103 +971,113 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
       }
     }
 
-    if (generateDataTemplatesTask != null) {
-
-      // create new source set for generated java source and class files
-      String targetSourceSetName = getGeneratedSourceSetName(sourceSet, DATA_TEMPLATE_GEN_TYPE)
-      SourceSet targetSourceSet = project.sourceSets.add(targetSourceSetName) {
-        java {
-          srcDir "src${File.separatorChar}${targetSourceSetName}${File.separatorChar}java"
-        }
-        compileClasspath = getDataModelConfig(project, sourceSet) + project.configurations.dataTemplateCompile
-      }
-
-      // idea plugin needs to know about new generated java source directory and its dependencies
-      addGeneratedDir(project, targetSourceSet, [ getDataModelConfig(project, sourceSet), project.configurations.dataTemplateCompile ])
-
-      // make sure that java source files have been generated before compiling them
-      Task[] generateTasks = [ generateDataTemplatesTask ]
-      Task compileTargetSourceSetJava = project.tasks[targetSourceSet.compileJavaTaskName]
-      generateTasks.each { task ->
-        if (task != null) {
-          compileTargetSourceSetJava.dependsOn(task)
-        }
-      }
-
-      // create data model jar file
-      Task dataModelJarTask = project.task(sourceSet.name + 'DataModelJar', type: Jar) {
-        // add path prefix to each file in the data schema directory
-        from (dataSchemaDir) {
-          eachFile {
-            it.path = 'pegasus' + File.separatorChar + it.path.toString()
-          }
-          // TODO: exclude the directories, because they aren't being put under pegasus
-          // there isn't a clean way to do this currently with gradle, its a bug with gradle
-          // because the from iterates through directories and files but the eachFile only
-          // iterates through files. Gradle needs to expose something to iterate through both.
-        }
-        appendix = getAppendix(sourceSet, 'data-model')
-        description = 'Generate a data model jar'
-      }
-
-      // create data template jar file
-      Task dataTemplateJarTask = project.task(sourceSet.name + 'DataTemplateJar',
-                                              type: Jar,
-                                              dependsOn: targetSourceSet.compileJavaTaskName) {
-        from (dataSchemaDir) {
-          eachFile {
-            it.path = 'pegasus' + File.separatorChar + it.path.toString()
-          }
-          // TODO: exclude the directories, because they aren't being put under pegasus
-          // there isn't a clean way to do this currently with gradle, its a bug with gradle
-          // because the from iterates through directories and files but the eachFile only
-          // iterates through files. Gradle needs to expose something to iterate through both.
-        }
-        from (targetSourceSet.output)
-        appendix = getAppendix(sourceSet, 'data-template')
-        description = 'Generate a data template jar'
-      }
-
-      // TODO: output Javadoc for generated classes?
-
-      // add the data model and date template jars to the list of project artifacts.
-      if (!isTestSourceSet(sourceSet))
-      {
-        project.artifacts {
-          dataModel dataModelJarTask
-          dataTemplate dataTemplateJarTask
-        }
-      }
-      else
-      {
-        project.artifacts {
-          testDataModel dataModelJarTask
-          testDataTemplate dataTemplateJarTask
-        }
-      }
-
-      // include additional dependencies into the appropriate configuration used to compile the input source set
-      // must include the generated data template classes and their dependencies the configuration
-      String compileConfigName = (isTestSourceSet(sourceSet)) ? 'testCompile' : 'compile'
-      project.configurations {
-        "${compileConfigName}" {
-          extendsFrom(getDataModelConfig(project, sourceSet))
-          extendsFrom(project.configurations.dataTemplateCompile)
-        }
-      }
-      project.dependencies.add(compileConfigName, new DefaultSelfResolvingDependency(project.files(dataTemplateJarTask.archivePath)))
-
-      if (debug)
-      {
-        System.out.println('configureDataTemplateGeneration sourceSet ' + sourceSet.name)
-        System.out.println('dataTemplateGenerator.allDependencies : ' + project.configurations.dataTemplateGenerator.allDependencies)
-        System.out.println("${compileConfigName}.allDependenices : " + project.configurations[compileConfigName].allDependencies)
-        System.out.println("${compileConfigName}.extendsFrom: " + project.configurations[compileConfigName].extendsFrom)
-        System.out.println("${compileConfigName}.transitive: " + project.configurations[compileConfigName].transitive)
-      }
-
-      project.tasks[sourceSet.compileJavaTaskName].dependsOn(dataTemplateJarTask)
+    if (generateDataTemplatesTask == null)
+    {
+      return
     }
+
+    final Task generateSourcesJarTask = getGenerateSourcesJarTask()
+    final Task generateJavadocTask = getGenerateJavadocTask()
+
+    generateSourcesJarTask.from(generateDataTemplatesTask.destinationDir)
+    generateSourcesJarTask.dependsOn(generateDataTemplatesTask)
+
+    generateJavadocTask.source(generateDataTemplatesTask.destinationDir)
+    generateJavadocTask.classpath += generateDataTemplatesTask.classpath + generateDataTemplatesTask.resolverPath
+    generateJavadocTask.dependsOn(generateDataTemplatesTask)
+
+    // create new source set for generated java source and class files
+    String targetSourceSetName = getGeneratedSourceSetName(sourceSet, DATA_TEMPLATE_GEN_TYPE)
+    SourceSet targetSourceSet = project.sourceSets.create(targetSourceSetName) {
+      java {
+        srcDir "src${File.separatorChar}${targetSourceSetName}${File.separatorChar}java"
+      }
+      compileClasspath = getDataModelConfig(project, sourceSet) + project.configurations.dataTemplateCompile
+    }
+
+    // idea plugin needs to know about new generated java source directory and its dependencies
+    addGeneratedDir(project, targetSourceSet, [ getDataModelConfig(project, sourceSet), project.configurations.dataTemplateCompile ])
+
+    // make sure that java source files have been generated before compiling them
+    Task[] generateTasks = [ generateDataTemplatesTask ]
+    Task compileTargetSourceSetJava = project.tasks[targetSourceSet.compileJavaTaskName]
+    generateTasks.each { task ->
+      if (task != null) {
+        compileTargetSourceSetJava.dependsOn(task)
+      }
+    }
+
+    // create data model jar file
+    Task dataModelJarTask = project.task(sourceSet.name + 'DataModelJar', type: Jar) {
+      // add path prefix to each file in the data schema directory
+      from (dataSchemaDir) {
+        eachFile {
+          it.path = 'pegasus' + File.separatorChar + it.path.toString()
+        }
+        // TODO: exclude the directories, because they aren't being put under pegasus
+        // there isn't a clean way to do this currently with gradle, its a bug with gradle
+        // because the from iterates through directories and files but the eachFile only
+        // iterates through files. Gradle needs to expose something to iterate through both.
+      }
+      appendix = getAppendix(sourceSet, 'data-model')
+      description = 'Generate a data model jar'
+    }
+
+    // create data template jar file
+    Task dataTemplateJarTask = project.task(sourceSet.name + 'DataTemplateJar',
+                                            type: Jar,
+                                            dependsOn: targetSourceSet.compileJavaTaskName) {
+      from (dataSchemaDir) {
+        eachFile {
+          it.path = 'pegasus' + File.separatorChar + it.path.toString()
+        }
+        // TODO: exclude the directories, because they aren't being put under pegasus
+        // there isn't a clean way to do this currently with gradle, its a bug with gradle
+        // because the from iterates through directories and files but the eachFile only
+        // iterates through files. Gradle needs to expose something to iterate through both.
+      }
+      from (targetSourceSet.output)
+      appendix = getAppendix(sourceSet, 'data-template')
+      description = 'Generate a data template jar'
+    }
+
+    // add the data model and date template jars to the list of project artifacts.
+    if (!isTestSourceSet(sourceSet))
+    {
+      project.artifacts {
+        dataModel dataModelJarTask
+        dataTemplate dataTemplateJarTask
+      }
+    }
+    else
+    {
+      project.artifacts {
+        testDataModel dataModelJarTask
+        testDataTemplate dataTemplateJarTask
+      }
+    }
+
+    // include additional dependencies into the appropriate configuration used to compile the input source set
+    // must include the generated data template classes and their dependencies the configuration
+    String compileConfigName = (isTestSourceSet(sourceSet)) ? 'testCompile' : 'compile'
+    project.configurations {
+      "${compileConfigName}" {
+        extendsFrom(getDataModelConfig(project, sourceSet))
+        extendsFrom(project.configurations.dataTemplateCompile)
+      }
+    }
+    project.dependencies.add(compileConfigName, new DefaultSelfResolvingDependency(project.files(dataTemplateJarTask.archivePath)))
+
+    if (debug)
+    {
+      System.out.println('configureDataTemplateGeneration sourceSet ' + sourceSet.name)
+      System.out.println('dataTemplateGenerator.allDependencies : ' + project.configurations.dataTemplateGenerator.allDependencies)
+      System.out.println("${compileConfigName}.allDependenices : " + project.configurations[compileConfigName].allDependencies)
+      System.out.println("${compileConfigName}.extendsFrom: " + project.configurations[compileConfigName].extendsFrom)
+      System.out.println("${compileConfigName}.transitive: " + project.configurations[compileConfigName].transitive)
+    }
+
+    project.tasks[sourceSet.compileJavaTaskName].dependsOn(dataTemplateJarTask)
   }
 
   // Generate rest client from idl files generated from java source files in the specified source set.
@@ -1016,10 +1087,14 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
   // It also compiles the rest client source files into classes, and creates both the
   // rest model and rest client jar files.
   //
-  private void configureRestClientGeneration(Project project, SourceSet sourceSet)
+  protected void configureRestClientGeneration(Project project, SourceSet sourceSet)
   {
     // idl directory for api project
-    def idlDir = project.file(getIdlRelativePath(sourceSet))
+    final File idlDir = project.file(getIdlRelativePath(project, sourceSet))
+    if (getSuffixedFiles(project, idlDir, IDL_FILE_SUFFIX).empty)
+    {
+      return
+    }
 
     // always include imported data template jars in compileClasspath of rest client
     FileCollection dataModels = getDataModelConfig(project, sourceSet)
@@ -1027,16 +1102,17 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
     // if data templates generated from this source set, add the generated data template jar to compileClasspath
     // of rest client.
     String dataTemplateSourceSetName = getGeneratedSourceSetName(sourceSet, DATA_TEMPLATE_GEN_TYPE)
+    Task dataTemplateJarTask = null
     if (project.sourceSets.findByName(dataTemplateSourceSetName) != null)
     {
       if (debug) System.out.println("sourceSet ${sourceSet.name} has generated sourceSet ${dataTemplateSourceSetName}")
-      def dataTemplateJarTask = project.tasks[sourceSet.name + 'DataTemplateJar']
+      dataTemplateJarTask = project.tasks[sourceSet.name + 'DataTemplateJar']
       dataModels += project.files(dataTemplateJarTask.archivePath)
     }
 
     // create source set for generated rest model, rest client source and class files.
     String targetSourceSetName = getGeneratedSourceSetName(sourceSet, REST_GEN_TYPE)
-    SourceSet targetSourceSet = project.sourceSets.add(targetSourceSetName) {
+    SourceSet targetSourceSet = project.sourceSets.create(targetSourceSetName) {
       java {
         srcDir "src${File.separatorChar}${targetSourceSetName}${File.separatorChar}java"
       }
@@ -1050,14 +1126,29 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
     addGeneratedDir(project, targetSourceSet, [ getDataModelConfig(project, sourceSet), project.configurations.restClientCompile ])
 
     // generate the rest client source files
-    def generateRestClientTask = project.task(targetSourceSet.getTaskName('generate', 'restClient'),
+    Task generateRestClientTask = project.task(targetSourceSet.getTaskName('generate', 'restClient'),
                                               type: GenerateRestClient,
                                               dependsOn: dataModels) {
-      clientIdlInput = project.files(idlDir)
+      inputDir = idlDir
       resolverPath = dataModels
       classpath = project.configurations.restTools
       destinationDir = project.file(getGeneratedSourceDirName(project, sourceSet, REST_GEN_TYPE) + File.separatorChar + 'java')
     }
+
+    if (dataTemplateJarTask != null)
+    {
+      generateRestClientTask.dependsOn(dataTemplateJarTask)
+    }
+
+    final Task generateSourcesJarTask = getGenerateSourcesJarTask()
+    final Task generateJavadocTask = getGenerateJavadocTask()
+
+    generateSourcesJarTask.from(generateRestClientTask.destinationDir)
+    generateSourcesJarTask.dependsOn(generateRestClientTask)
+
+    generateJavadocTask.source(generateRestClientTask.destinationDir)
+    generateJavadocTask.classpath += generateRestClientTask.classpath + generateRestClientTask.resolverPath
+    generateJavadocTask.dependsOn(generateRestClientTask)
 
     // make sure rest client source files have been generated before compiling them
     Task compileGeneratedRestClientTask = project.tasks[targetSourceSet.compileJavaTaskName]
@@ -1070,7 +1161,7 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
           project.logger.lifecycle('Add idl file: ' + it.toString() )
           it.path = 'idl' + File.separatorChar + it.path.toString()
         }
-        includes = ['*' + IDL_FILE_SUFFIX]
+        includes = ['*' + PegasusPlugin.IDL_FILE_SUFFIX]
       }
       appendix = getAppendix(sourceSet, 'rest-model')
       description = 'Generate rest model jar'
@@ -1091,7 +1182,7 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
           project.logger.lifecycle('Add idl file: ' + it.toString() )
           it.path = 'idl' + File.separatorChar + it.path.toString()
         }
-        includes = ['*' + IDL_FILE_SUFFIX]
+        includes = ['*' + PegasusPlugin.IDL_FILE_SUFFIX]
       }
       from (targetSourceSet.output)
       appendix = getAppendix(sourceSet, 'rest-client')
@@ -1173,13 +1264,24 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
   }
 
   /**
+   * Return <code>true</code> if the given property exists and its value is <code>true</code>
+   *
+   * @param project the project where to look for the property
+   * @param property the name of the property
+   */
+  public static boolean isPropertyTrue(Project project, String property)
+  {
+    return project.hasProperty(property) && Boolean.valueOf(project.property(property).toString())
+  }
+
+  /**
    * GenerateDataTemplate
    *
    * Generate the data template source files from data schema files.
    *
    * To use this plugin, add these three lines to your build.gradle:
    * <pre>
-   * apply plugin: 'pegasus'
+   * apply plugin: 'li-pegasus2'
    * </pre>
    *
    * The plugin will scan the source set's pegasus directory, e.g. "src/main/pegasus"
@@ -1221,13 +1323,15 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
       destinationDir.mkdirs()
       project.logger.lifecycle("There are ${inputDataSchemaFiles.files.size()} data schema input files. Using input root folder: ${inputDir}")
 
-      URL[] classpathUrls = classpath.collect { it.toURL() } as URL[]
+      URL[] classpathUrls = classpath.collect { it.toURI().toURL() } as URL[]
       URLClassLoader classLoader = new URLClassLoader(classpathUrls, null)
       def dataTemplateGenerator = classLoader.loadClass('com.linkedin.pegasus.generator.PegasusDataTemplateGenerator').newInstance()
 
       final String resolverPathStr = (resolverPath + project.files(inputDir)).collect { it.path }.join(File.pathSeparator)
-      System.setProperty('generator.resolver.path', resolverPathStr)
-      dataTemplateGenerator.run(destinationDir.path, inputDataSchemaFiles.collect { it.path } as String[])
+      synchronized (PegasusPlugin.STATIC_PEGASUS_LOCK) {
+        System.setProperty('generator.resolver.path', resolverPathStr)
+        dataTemplateGenerator.run(destinationDir.path, inputDataSchemaFiles.collect { it.path } as String[])
+      }
     }
   }
 
@@ -1238,7 +1342,7 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
    *
    * To use this plugin, add these three lines to your build.gradle:
    * <pre>
-   * apply plugin: 'pegasus'
+   * apply plugin: 'li-pegasus2'
    * </pre>
    *
    * The plugin will scan the source set's pegasus directory, e.g. "src/main/pegasus"
@@ -1280,13 +1384,15 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
       destinationDir.mkdirs()
       project.logger.lifecycle("There are ${inputDataSchemaFiles.files.size()} data schema input files. Using input root folder: ${inputDir}")
 
-      URL[] classpathUrls = classpath.collect { it.toURL() } as URL[]
+      URL[] classpathUrls = classpath.collect { it.toURI().toURL() } as URL[]
       URLClassLoader classLoader = new URLClassLoader(classpathUrls, null)
       def avroSchemaGenerator = classLoader.loadClass('com.linkedin.data.avro.generator.AvroSchemaGenerator').newInstance()
 
       final String resolverPathStr = (resolverPath + project.files(inputDir)).collect { it.path }.join(File.pathSeparator)
-      System.setProperty('generator.resolver.path', resolverPathStr)
-      avroSchemaGenerator.run(destinationDir.path, inputDataSchemaFiles.collect { it.path } as String[])
+      synchronized (PegasusPlugin.STATIC_PEGASUS_LOCK) {
+        System.setProperty('generator.resolver.path', resolverPathStr)
+        avroSchemaGenerator.run(destinationDir.path, inputDataSchemaFiles.collect { it.path } as String[])
+      }
     }
   }
 
@@ -1299,7 +1405,7 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
    *
    * As prerequisite of this task, add these lines to your build.gradle:
    * <pre>
-   * apply plugin: 'pegasus'
+   * apply plugin: 'li-pegasus2'
    * pegasus.&lt;sourceSet&gt;.idlOptions.addIdlItem(['&lt;packageName&gt;'])
    * </pre>
    */
@@ -1387,18 +1493,18 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
 
       if (check())
       {
-        project.logger.info('idl files are equivalent. No need to publish')
+        project.logger.info('idl files are equivalent. No need to publish.')
         return
       }
 
-      if (project.hasProperty(PegasusGeneratorV2Plugin.IDL_NO_PUBLISH) && Boolean.valueOf(PegasusGeneratorV2Plugin.IDL_NO_PUBLISH.property(property).toString()))
+      if (isPropertyTrue(project, PegasusPlugin.IDL_NO_PUBLISH))
       {
         return
       }
 
       project.logger.lifecycle('Publishing idl to api project ...')
 
-      final FileTree apiIdlFiles = PegasusGeneratorV2Plugin.getSuffixedFiles(project, destinationDir, PegasusGeneratorV2Plugin.IDL_FILE_SUFFIX)
+      final FileTree apiIdlFiles = PegasusPlugin.getSuffixedFiles(project, destinationDir, PegasusPlugin.IDL_FILE_SUFFIX)
       final int apiIdlFileCount = apiIdlFiles.files.size()
 
       super.copy()
@@ -1409,11 +1515,11 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
         project.logger.warn('idl file count changed after publish. You may have duplicate idl with different filenames.')
       }
 
-      if (PegasusGeneratorV2Plugin._idlPublishReminder.length() == 0)
+      if (PegasusPlugin._idlPublishReminder.length() == 0)
       {
-        PegasusGeneratorV2Plugin._idlPublishReminder.append("\n")
+        PegasusPlugin._idlPublishReminder.append("\n")
                                                     .append("idl files have been changed during the build. You must run the following command line at project root to pick up the changes:\n")
-                                                    .append("  ligradle build\n")
+                                                    .append("  gradle build\n")
       }
     }
 
@@ -1427,29 +1533,16 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
         throw new Exception('Missing restTools configuration.')
       }
 
-      final URL[] classpathUrls = toolsClasspath.collect { it.toURL() } as URL[]
+      final URL[] classpathUrls = toolsClasspath.collect { it.toURI().toURL() } as URL[]
       final URLClassLoader classLoader = new URLClassLoader(classpathUrls, null)
-      final Class<? extends Enum> compatLevelClass;
-      final boolean isNewVersion;
-
-      try
-      {
-        compatLevelClass = classLoader.loadClass('com.linkedin.restli.tools.idlcheck.CompatibilityLevel').asSubclass(Enum.class)
-        isNewVersion = true
-      }
-      catch (ClassNotFoundException)
-      {
-        compatLevelClass = IDLCompatLevel.class;
-        isNewVersion = false
-      }
-      assert(compatLevelClass.isEnum())
+      final Class<? extends Enum> compatLevelClass = classLoader.loadClass('com.linkedin.restli.tools.idlcheck.CompatibilityLevel').asSubclass(Enum.class)
 
       final Enum idlCompatLevel
-      if (project.hasProperty(PegasusGeneratorV2Plugin.IDL_COMPAT_REQUIREMENT_NAME))
+      if (project.hasProperty(PegasusPlugin.IDL_COMPAT_REQUIREMENT_NAME))
       {
         try
         {
-          idlCompatLevel = Enum.valueOf(compatLevelClass, project.property(PegasusGeneratorV2Plugin.IDL_COMPAT_REQUIREMENT_NAME).toString().toUpperCase())
+          idlCompatLevel = Enum.valueOf(compatLevelClass, project.property(PegasusPlugin.IDL_COMPAT_REQUIREMENT_NAME).toString().toUpperCase())
         }
         catch (IllegalArgumentException e)
         {
@@ -1471,7 +1564,6 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
 
       final Class<?> compatCheckerClass = classLoader.loadClass('com.linkedin.restli.tools.idlcheck.RestLiResourceModelCompatibilityChecker')
       final String resolverPathStr = resolverPath.collect { it.path }.join(File.pathSeparator)
-      System.setProperty('generator.resolver.path', resolverPathStr)
 
       final StringBuilder allCheckMessage = new StringBuilder()
       boolean isIdlCompatible = true
@@ -1480,40 +1572,15 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
         project.logger.info('Checking idl file: ' + it.path)
 
         final String apiIdlFilePath = "${destinationDir.path}${File.separatorChar}${it.name}"
-        final def idlChecker = compatCheckerClass.newInstance()
+        final def idlChecker
 
-        if (isNewVersion)
-        {
+        synchronized (PegasusPlugin.STATIC_PEGASUS_LOCK) {
+          System.setProperty('generator.resolver.path', resolverPathStr)
+          idlChecker = compatCheckerClass.newInstance()
           isIdlCompatible &= idlChecker.check(apiIdlFilePath, it.path, idlCompatLevel)
-          allCheckMessage.append(idlChecker.summary)
         }
-        else
-        {
-          idlChecker.check(apiIdlFilePath, it.path)
-          final def unableToChecks = idlChecker.unableToChecks
-          final def incompatibles = idlChecker.incompatibles
-          final def compatibles = idlChecker.compatibles
-
-          final StringBuilder fileSummaryBuilder = new StringBuilder()
-          ['Unable to checks': unableToChecks, 'Incompatible changes': incompatibles, 'Compatible changes': compatibles].each { infoName, infoArray ->
-            if (!infoArray.empty)
-            {
-              fileSummaryBuilder.append(infoName + ':\n')
-              infoArray.eachWithIndex { info, i ->
-                fileSummaryBuilder.append("  ${i+1}) ${info}\n")
-              }
-            }
-          }
-
-          if (fileSummaryBuilder.length() > 0)
-          {
-            allCheckMessage.append("\nidl compatibility report between published \"${apiIdlFilePath}\" and current \"${it.path}\":\n")
-                    .append(fileSummaryBuilder)
-            isIdlCompatible &= ((unableToChecks.empty || idlCompatLevel.ordinal() < IDLCompatLevel.BACKWARDS.ordinal()) &&
-                    (incompatibles.empty || idlCompatLevel.ordinal() < IDLCompatLevel.BACKWARDS.ordinal()) &&
-                    (compatibles.empty || idlCompatLevel.ordinal() < IDLCompatLevel.EQUIVALENT.ordinal()))
-          }
-        }
+        project.logger.info("Checked compatibility in mode: $idlCompatLevel; $apiIdlFilePath VS $it.path; result: $isIdlCompatible")
+        allCheckMessage.append(idlChecker.summary)
       }
 
       if (allCheckMessage.length() == 0)
@@ -1522,9 +1589,9 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
       }
 
       allCheckMessage.append("\n")
-                     .append("You may add \"-P${PegasusGeneratorV2Plugin.IDL_COMPAT_REQUIREMENT_NAME}=backwards\" to the build command to allow backwards compatible changes in idl.\n")
-                     .append("You may use \"-P${PegasusGeneratorV2Plugin.IDL_COMPAT_REQUIREMENT_NAME}=ignore\" to ignore idl compatibility errors.\n")
-                     .append("You can ignore the \"Unable to check\" errors if the idl file has never been published.")
+                     .append("You may add \"-P${PegasusPlugin.IDL_COMPAT_REQUIREMENT_NAME}=backwards\" to the build command to allow backwards compatible changes in idl.\n")
+                     .append("You may use \"-P${PegasusPlugin.IDL_COMPAT_REQUIREMENT_NAME}=ignore\" to ignore idl compatibility errors.\n")
+                     .append("Documentation: https://github.com/linkedin/rest.li/wiki/Gradle-build-integration#compatibility")
 
       if (!isIdlCompatible)
       {
@@ -1532,7 +1599,7 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
       }
       else
       {
-        PegasusGeneratorV2Plugin._idlCompatMessage.append(allCheckMessage)
+        PegasusPlugin._idlCompatMessage.append(allCheckMessage)
       }
 
       return false
@@ -1554,7 +1621,7 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
    *
    * As pre-requisite of this task,, add these lines to your build.gradle:
    * <pre>
-   * apply plugin: 'pegasus'
+   * apply plugin: 'li-pegasus2'
    * pegasus.<sourceSet>.clientOptions.addClientItem('<restModelFilePath>', '<defaultPackage>', <keepDataTemplates>)
    * </pre>
    * keepDataTemplates is a boolean that isn't used right now, but might be implemented in the future.
@@ -1571,7 +1638,7 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
    */
   static class GenerateRestClient extends DefaultTask {
 
-    @InputFiles FileCollection clientIdlInput
+    @InputDirectory File inputDir
     @InputFiles FileCollection resolverPath
     @InputFiles FileCollection classpath
     @OutputDirectory File destinationDir
@@ -1582,10 +1649,10 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
       PegasusOptions.ClientOptions pegasusClientOptions = new PegasusOptions.ClientOptions()
 
       // idl input could include rest model jar files
-      clientIdlInput.each { input ->
+      project.files(inputDir).each { input ->
         if (input.isDirectory())
         {
-          for (File f: PegasusGeneratorV2Plugin.getSuffixedFiles(project, input, PegasusGeneratorV2Plugin.IDL_FILE_SUFFIX))
+          for (File f: PegasusPlugin.getSuffixedFiles(project, input, PegasusPlugin.IDL_FILE_SUFFIX))
           {
             if (!pegasusClientOptions.hasRestModelFileName(f.name))
             {
@@ -1608,34 +1675,8 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
 
       project.logger.info('Generating REST client builders ...')
 
-      String tempDirStr = temporaryDir.toString() + File.separatorChar + 'clientInput'
-      File tempDir = new File(tempDirStr)
-
-      // unjar the artifact that contains the idl
-      clientIdlInput.each { input ->
-        if (input.isDirectory())
-        {
-          project.copy {
-            from input
-            into new File(tempDirStr, 'idl')
-          }
-        }
-        else
-        {
-          project.logger.lifecycle("Input idl jar: ${input}")
-          project.copy {
-            from project.zipTree(input)
-            into tempDir
-          }
-        }
-      }
-
-      final String resolverPathStr = (resolverPath + project.files("$tempDirStr${File.separatorChar}pegasus"))
-              .collect { it.path }.join(File.pathSeparator)
-      System.setProperty('generator.resolver.path', resolverPathStr)
-      System.setProperty('generator.rest.generate.datatemplates', 'false')
-
-      final URL[] classpathUrls = classpath.collect { it.toURL() } as URL[]
+      final String resolverPathStr = resolverPath.collect { it.path }.join(File.pathSeparator)
+      final URL[] classpathUrls = classpath.collect { it.toURI().toURL() } as URL[]
       final URLClassLoader classLoader = new URLClassLoader(classpathUrls, null)
       def stubGenerator = classLoader.loadClass('com.linkedin.restli.tools.clientgen.RestRequestBuilderGenerator').newInstance()
 
@@ -1646,9 +1687,16 @@ class PegasusGeneratorV2Plugin implements Plugin<Project> {
         project.logger.lifecycle("Destination directory: ${destinationDir}")
         project.logger.lifecycle("Classpath: ${classpath.files}")
 
-        final String restModelFilePath = "${tempDirStr}${File.separatorChar}idl${File.separatorChar}${clientItem.restModelFileName}";
-        System.setProperty('generator.default.package', clientItem.defaultPackage)
-        stubGenerator.run(destinationDir.path, restModelFilePath)
+        final String restModelFilePath = "${inputDir}${File.separatorChar}${clientItem.restModelFileName}"
+        synchronized (PegasusPlugin.STATIC_PEGASUS_LOCK) {
+          if(clientItem.defaultPackage.equals("") && project.hasProperty('idlDefaultPackage') && project.idlDefaultPackage)
+            System.setProperty('generator.default.package', project.idlDefaultPackage)
+          else
+            System.setProperty('generator.default.package', clientItem.defaultPackage)
+          System.setProperty('generator.resolver.path', resolverPathStr)
+          System.setProperty('generator.rest.generate.datatemplates', 'false')
+          stubGenerator.run(destinationDir.path, restModelFilePath)
+        }
       }
     }
   }
