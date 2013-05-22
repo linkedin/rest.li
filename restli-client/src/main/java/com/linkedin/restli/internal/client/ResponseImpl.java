@@ -66,7 +66,7 @@ public class ResponseImpl<T> implements Response<T>
     return _entity;
   }
 
-  void setEntity(T entity)
+  public void setEntity(T entity)
   {
     _entity = entity;
   }

@@ -36,7 +36,6 @@ import com.linkedin.restli.internal.client.ExceptionUtil;
 import com.linkedin.restli.internal.client.ResponseFutureImpl;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
 
-import javax.mail.internet.ContentType;
 import javax.mail.internet.ParseException;
 import java.io.IOException;
 import java.net.URI;
@@ -174,10 +173,23 @@ public class RestClient
                               RequestContext requestContext,
                               Callback<Response<T>> callback)
   {
+    sendRestRequest(request, requestContext, new RestLiCallbackAdapter<T>(request.getResponseDecoder(), callback));
+  }
+
+  /**
+   * Sends a type-bound REST request using a {@link CallbackAdapter}.
+   *
+   * @param request to send
+   * @param requestContext context for the request
+   * @param callback to call on request completion
+   */
+  public <T> void sendRestRequest(final Request<T> request,
+                                  RequestContext requestContext,
+                                  Callback<RestResponse> callback)
+  {
     RecordTemplate input = request.getInput();
-    RestLiCallbackAdapter<T> adapter = new RestLiCallbackAdapter<T>(request.getResponseDecoder(), callback);
     sendRequestImpl(requestContext, request.getUri(), request.getMethod(),
-                    input != null ? input.data() : null, request.getHeaders(), adapter);
+                    input != null ? input.data() : null, request.getHeaders(), callback);
   }
 
   private void addAcceptHeaders(RestRequestBuilder builder)
@@ -347,12 +359,12 @@ public class RestClient
    *                 error response was received from the remote server, the callback will receive
    *                 a {@link com.linkedin.r2.message.rest.RestException} containing the error details.
    */
-  private <T> void sendRequestImpl(RequestContext requestContext,
-                                   URI uri,
-                                   ResourceMethod method,
-                                   DataMap dataMap,
-                                   Map<String, String> headers,
-                                   RestLiCallbackAdapter<T> callback)
+  private void sendRequestImpl(RequestContext requestContext,
+                               URI uri,
+                               ResourceMethod method,
+                               DataMap dataMap,
+                               Map<String, String> headers,
+                               Callback<RestResponse> callback)
   {
     try
     {
@@ -431,7 +443,7 @@ public class RestClient
     }
   }
 
-  private static class RestLiCallbackAdapter<T> extends CallbackAdapter<Response<T>,RestResponse>
+  private static class RestLiCallbackAdapter<T> extends CallbackAdapter<Response<T>, RestResponse>
   {
     private final RestResponseDecoder<T> _decoder;
 
