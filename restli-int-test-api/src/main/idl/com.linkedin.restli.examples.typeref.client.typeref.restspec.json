@@ -18,6 +18,13 @@
       } ],
       "returns" : "com.linkedin.restli.examples.typeref.api.BytesRef"
     }, {
+      "name" : "CustomNonNegativeLongRef",
+      "parameters" : [ {
+        "name" : "arg1",
+        "type" : "com.linkedin.restli.examples.typeref.api.CustomNonNegativeLongRef"
+      } ],
+      "returns" : "com.linkedin.restli.examples.typeref.api.CustomNonNegativeLongRef"
+    }, {
       "name" : "FruitsRef",
       "parameters" : [ {
         "name" : "arg1",

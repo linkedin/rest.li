@@ -16,30 +16,30 @@
 
 package com.linkedin.restli.examples.typeref.server;
 
+
 import com.linkedin.data.ByteString;
 import com.linkedin.data.template.IntegerArray;
 import com.linkedin.data.template.IntegerMap;
+import com.linkedin.restli.examples.custom.types.CustomNonNegativeLong;
+import com.linkedin.restli.examples.typeref.api.BooleanRef;
+import com.linkedin.restli.examples.typeref.api.BytesRef;
+import com.linkedin.restli.examples.typeref.api.CustomNonNegativeLongRef;
+import com.linkedin.restli.examples.typeref.api.DoubleRef;
+import com.linkedin.restli.examples.typeref.api.FloatRef;
+import com.linkedin.restli.examples.typeref.api.Fruits;
+import com.linkedin.restli.examples.typeref.api.FruitsRef;
+import com.linkedin.restli.examples.typeref.api.IntArrayRef;
+import com.linkedin.restli.examples.typeref.api.IntMapRef;
+import com.linkedin.restli.examples.typeref.api.IntRef;
+import com.linkedin.restli.examples.typeref.api.LongRef;
+import com.linkedin.restli.examples.typeref.api.Point;
+import com.linkedin.restli.examples.typeref.api.PointRef;
+import com.linkedin.restli.examples.typeref.api.StringRef;
 import com.linkedin.restli.examples.typeref.api.TyperefRecord;
 import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.ActionParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
-
-import com.linkedin.restli.examples.typeref.api.BooleanRef;
-import com.linkedin.restli.examples.typeref.api.BytesRef;
-import com.linkedin.restli.examples.typeref.api.DoubleRef;
-import com.linkedin.restli.examples.typeref.api.FloatRef;
-import com.linkedin.restli.examples.typeref.api.IntRef;
-import com.linkedin.restli.examples.typeref.api.LongRef;
-import com.linkedin.restli.examples.typeref.api.StringRef;
-
-import com.linkedin.restli.examples.typeref.api.IntArrayRef;
-import com.linkedin.restli.examples.typeref.api.IntMapRef;
-import com.linkedin.restli.examples.typeref.api.FruitsRef;
-import com.linkedin.restli.examples.typeref.api.PointRef;
-
-import com.linkedin.restli.examples.typeref.api.Fruits;
-import com.linkedin.restli.examples.typeref.api.Point;
 
 /**
  * Test for typeref param and return types in actions.
@@ -148,5 +148,11 @@ public class TyperefTestResource extends CollectionResourceTemplate<Long,Typeref
   public Point PointFunc(@ActionParam(value="arg1", typeref=PointRef.class) Point arg1)
   {
     return new Point();
+  }
+
+  @Action(name = "CustomNonNegativeLongRef", returnTyperef=CustomNonNegativeLongRef.class)
+  public CustomNonNegativeLong CustomNonNegativeLong(@ActionParam(value="arg1", typeref=CustomNonNegativeLongRef.class) CustomNonNegativeLong arg1)
+  {
+    return new CustomNonNegativeLong(0L);
   }
 }

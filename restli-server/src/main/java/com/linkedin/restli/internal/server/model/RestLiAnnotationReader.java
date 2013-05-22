@@ -606,8 +606,7 @@ public final class RestLiAnnotationReader
 
     if (methodType == ResourceMethod.ACTION
         && param.getParamType() == Parameter.ParamType.POST
-            && !(checkParameterType(param.getType(),
-                                    RestModelConstants.VALID_ACTION_PARAMETER_TYPES) || param.getDataSchema() instanceof TyperefDataSchema))
+            && !(checkParameterType(param.getType(), RestModelConstants.VALID_ACTION_PARAMETER_TYPES) || param.getDataSchema() instanceof TyperefDataSchema))
     {
       throw new ResourceConfigException("Parameter '" + paramName + "' on "
           + buildMethodMessage(method) + " is not a valid type (" + param.getType() + ')');
@@ -965,10 +964,10 @@ public final class RestLiAnnotationReader
         continue;
       }
 
-      checkActionResourceMethod(model, method);
-      checkFinderResourceMethod(model, method);
-      checkTemplateResourceMethods(resourceClass, model, method);
-      checkCrudResourceMethods(resourceClass, model, method);
+      addActionResourceMethod(model, method);
+      addFinderResourceMethod(model, method);
+      addTemplateResourceMethod(resourceClass, model, method);
+      addCrudResourceMethod(resourceClass, model, method);
     }
 
     validateResourceModel(model);
@@ -1024,8 +1023,7 @@ public final class RestLiAnnotationReader
     }
   }
 
-  private static void checkFinderResourceMethod(final ResourceModel model,
-                                                final Method method)
+  private static void addFinderResourceMethod(final ResourceModel model, final Method method)
   {
     Finder finderAnno = method.getAnnotation(Finder.class);
     if (finderAnno == null)
@@ -1085,11 +1083,11 @@ public final class RestLiAnnotationReader
   /**
    * Handle method that overrides resource template method. Only meaningful for classes
    * that extend a resource template class and only for methods that are NOT annotated
-   * with RestMethod. Those are handled in checkCrudResourceMethods()
+   * with RestMethod. Those are handled in addCrudResourceMethod()
    */
-  private static void checkTemplateResourceMethods(final Class<?> resourceClass,
-                                                   final ResourceModel model,
-                                                   final Method method)
+  private static void addTemplateResourceMethod(final Class<?> resourceClass,
+                                                final ResourceModel model,
+                                                final Method method)
   {
     // Check if the resource class is derived from one of the resource template classes.
     if (!isResourceTemplateClass(resourceClass))
@@ -1098,7 +1096,7 @@ public final class RestLiAnnotationReader
     }
 
     // If the method is annotated with RestMethod - ignore - will be handled in
-    // checkCrudResourceMethods
+    // addCrudResourceMethod
     if (isRestMethodAnnotated(method))
     {
       return;
@@ -1168,9 +1166,9 @@ public final class RestLiAnnotationReader
    * @param model
    * @param method
    */
-  private static void checkCrudResourceMethods(final Class<?> resourceClass,
-                                               final ResourceModel model,
-                                               final Method method)
+  private static void addCrudResourceMethod(final Class<?> resourceClass,
+                                            final ResourceModel model,
+                                            final Method method)
   {
     boolean restMethodAnnotationFound = false;
     for (Annotation methodAnnotation : method.getAnnotations())
@@ -1203,8 +1201,13 @@ public final class RestLiAnnotationReader
     }
   }
 
-  private static void checkActionResourceMethod(final ResourceModel model,
-                                                final Method method)
+  /**
+   * Add the given action method to the given resource model,  validating the method is a action before adding.
+   * @param model provides the model to add the method to.
+   * @param method provides the method to add to the model.
+   * @throws ResourceConfigException on validation errors.
+   */
+  private static void addActionResourceMethod(final ResourceModel model, final Method method)
   {
     Action actionAnno = method.getAnnotation(Action.class);
     if (actionAnno == null)
@@ -1214,56 +1217,10 @@ public final class RestLiAnnotationReader
 
     String actionName = actionAnno.name();
     List<Parameter<?>> parameters = getParameters(model, method, ResourceMethod.ACTION);
-    validateActionReturnType(method);
-    final Type returnType = getLogicalReturnType(method);
-    ResourceMethodDescriptor existingMethodDescriptor =
-        model.findActionMethod(actionName, actionAnno.resourceLevel());
-    if (existingMethodDescriptor != null)
-    {
-      throw new ResourceConfigException("Found duplicate @Action method named '"
-          + actionName + "' on class '" + model.getResourceClass().getName() + '\'');
 
-    }
-
-    TyperefDataSchema returnTyperefSchema = null;
-    Class<? extends TyperefInfo> typerefInfoClass = actionAnno.returnTyperef();
-    try
-    {
-      returnTyperefSchema = getSchemaFromTyperefInfo(typerefInfoClass);
-    }
-    catch (Exception e)
-    {
-      throw new ResourceConfigException("Typeref @Action method named '" + actionName
-          + "' on class '" + model.getResourceClass().getName()
-          + "' cannot be instantiated, " + e.getMessage());
-    }
-
-    Class<?> returnClass = getBoxedTypeFromPrimitive(getLogicalReturnClass(method));
-    if (ActionResult.class.isAssignableFrom(returnClass))
-    {
-      assert(returnType instanceof ParameterizedType);
-      final ParameterizedType paramReturnType = (ParameterizedType) returnType;
-      final Type[] actualReturnTypes = paramReturnType.getActualTypeArguments();
-      assert(actualReturnTypes.length == 1);
-      if (!(actualReturnTypes[0] instanceof Class<?>))
-      {
-        throw new ResourceConfigException("Unsupported type parameter for ActionResult<?>.");
-      }
-      returnClass = (Class<?>) actualReturnTypes[0];
-
-      if (returnClass == Void.class)
-      {
-        returnClass = Void.TYPE;
-      }
-    }
-
-    final String checkTyperefMessage = checkTyperefSchema(returnClass, returnTyperefSchema);
-    if (checkTyperefMessage != null)
-    {
-      throw new ResourceConfigException("Typeref @Action method named '" + actionName
-          + "' on class '" + model.getResourceClass().getName() + "', "
-          + checkTyperefMessage);
-    }
+    Class<?> returnClass = getActionReturnClass(model, method, actionAnno, actionName);
+    TyperefDataSchema returnTyperefSchema = getActionTyperefDataSchema(model, actionAnno, actionName);
+    validateActionReturnType(model, method, returnClass, returnTyperefSchema);
 
     if (!Modifier.isPublic(method.getModifiers()))
     {
@@ -1290,7 +1247,6 @@ public final class RestLiAnnotationReader
       actionReturnRecordDataSchema = DynamicRecordMetadata.buildSchema(ActionResponse.class.getName(), Collections.<FieldDef<?>>emptyList());
     }
 
-
     model.addResourceMethodDescriptor(ResourceMethodDescriptor.createForAction(method,
                                                                                parameters,
                                                                                actionName,
@@ -1301,6 +1257,56 @@ public final class RestLiAnnotationReader
                                                                                getInterfaceType(method),
                                                                                ResourceModelAnnotation.getAnnotationsMap(method.getAnnotations())));
 
+  }
+
+  private static TyperefDataSchema getActionTyperefDataSchema(ResourceModel model, Action actionAnno, String actionName)
+  {
+    TyperefDataSchema returnTyperefSchema = null;
+    Class<? extends TyperefInfo> typerefInfoClass = actionAnno.returnTyperef();
+    try
+    {
+      returnTyperefSchema = getSchemaFromTyperefInfo(typerefInfoClass);
+    }
+    catch (Exception e)
+    {
+      throw new ResourceConfigException("Typeref @Action method named '" + actionName
+          + "' on class '" + model.getResourceClass().getName()
+          + "' cannot be instantiated, " + e.getMessage());
+    }
+    return returnTyperefSchema;
+  }
+
+  private static Class<?> getActionReturnClass(ResourceModel model, Method method, Action actionAnno, String actionName)
+  {
+    final Type returnType = getLogicalReturnType(method);
+    ResourceMethodDescriptor existingMethodDescriptor =
+        model.findActionMethod(actionName, actionAnno.resourceLevel());
+    if (existingMethodDescriptor != null)
+    {
+      throw new ResourceConfigException("Found duplicate @Action method named '"
+          + actionName + "' on class '" + model.getResourceClass().getName() + '\'');
+
+    }
+
+    Class<?> returnClass = getBoxedTypeFromPrimitive(getLogicalReturnClass(method));
+    if (ActionResult.class.isAssignableFrom(returnClass))
+    {
+      assert(returnType instanceof ParameterizedType);
+      final ParameterizedType paramReturnType = (ParameterizedType) returnType;
+      final Type[] actualReturnTypes = paramReturnType.getActualTypeArguments();
+      assert(actualReturnTypes.length == 1);
+      if (!(actualReturnTypes[0] instanceof Class<?>))
+      {
+        throw new ResourceConfigException("Unsupported type parameter for ActionResult<?>.");
+      }
+      returnClass = (Class<?>) actualReturnTypes[0];
+
+      if (returnClass == Void.class)
+      {
+        returnClass = Void.TYPE;
+      }
+    }
+    return returnClass;
   }
 
   private static Class<?> getBoxedTypeFromPrimitive(Class<?> type)
@@ -1327,16 +1333,38 @@ public final class RestLiAnnotationReader
     return type;
   }
 
-  private static void validateActionReturnType(final Method method)
+  /**
+   * Checks that a action method's return type is allowed.
+   * @param model provides the resource model the method is being validated for, used for context.
+   * @param method provides the action method to validate.
+   * @param returnClass provides the declared return type of the method.
+   * @param returnTyperefSchema provides the schema of the returnTyperef declared on the method's @Action annotation, or null if returnTyperef is absent.
+   * @throws ResourceConfigException on validation errors.
+   */
+  private static void validateActionReturnType(ResourceModel model,
+                                               Method method,
+                                               Class<?> returnClass,
+                                               TyperefDataSchema returnTyperefSchema)
   {
-    Class<?> returnType = getLogicalReturnClass(method);
-
-    if (!checkParameterType(returnType, RestModelConstants.VALID_ACTION_RETURN_TYPES))
+    if (returnTyperefSchema == null)
     {
-      throw new ResourceConfigException("@Action method '" + method.getName()
-          + "' on class '" + method.getDeclaringClass().getName()
-          + "' has an invalid return type '" + returnType.getName()
-          + "'. Expected a DataTemplate or a primitive");
+      Class<?> returnType = getLogicalReturnClass(method);
+
+      if (!checkParameterType(returnType, RestModelConstants.VALID_ACTION_RETURN_TYPES))
+      {
+        throw new ResourceConfigException("@Action method '" + method.getName()
+            + "' on class '" + method.getDeclaringClass().getName()
+            + "' has an invalid return type '" + returnType.getName()
+            + "'. Expected a DataTemplate or a primitive");
+      }
+    }
+
+    final String checkTyperefMessage = checkTyperefSchema(returnClass, returnTyperefSchema);
+    if (checkTyperefMessage != null)
+    {
+      throw new ResourceConfigException("Typeref @Action method named '" + method.getAnnotation(Action.class).name()
+                                            + "' on class '" + model.getResourceClass().getName() + "', "
+                                            + checkTyperefMessage);
     }
   }
 
@@ -1443,7 +1471,7 @@ public final class RestLiAnnotationReader
         continue;
       }
 
-      checkActionResourceMethod(actionResourceModel, method);
+      addActionResourceMethod(actionResourceModel, method);
     }
 
     log.info("Processed actions resource '" + actionResourceClass.getName() + '\'');

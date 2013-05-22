@@ -1,5 +1,8 @@
 1.8.28
 ------
+(RB=167736)
+Fix interface definition generation for typerefs in action return types and refactor RestLiAnnotationReader
+to make action validation easier to understand.
 
 1.8.27
 ------
@@ -27,6 +30,9 @@ Allow non-template return type for finders.
 
 (RB=166235)
 IDL compatibility checks for new methods, finders, actions and subresources.
+
+(RB=167736)
+Fix idl generation to correctly handle typerefs in action responses.
 
 1.8.23
 ------
