@@ -87,6 +87,7 @@ import com.sun.codemodel.JClass;
 import com.sun.codemodel.JClassAlreadyExistsException;
 import com.sun.codemodel.JCodeModel;
 import com.sun.codemodel.JDefinedClass;
+import com.sun.codemodel.JEnumConstant;
 import com.sun.codemodel.JExpr;
 import com.sun.codemodel.JExpression;
 import com.sun.codemodel.JFieldRef;
@@ -983,7 +984,15 @@ public abstract class DataTemplateGenerator extends CodeGenerator
       {
         throw new IllegalArgumentException("Enum contains Java reserved symbol: " + value + " schema: " + schema);
       }
-      enumClass.enumConstant(value);
+
+      JEnumConstant enumConstant = enumClass.enumConstant(value);
+
+      String enumConstantDoc = schema.getSymbolDocs().get(value);
+
+      if (enumConstantDoc != null)
+      {
+        enumConstant.javadoc().append(enumConstantDoc);
+      }
     }
     enumClass.enumConstant(DataTemplateUtil.UNKNOWN_ENUM);
 

@@ -2,5 +2,6 @@
   "name" : "EnumFruits",
   "namespace" : "com.linkedin.pegasus.generator.test",
   "type" : "enum",
-  "symbols" : [ "APPLE", "BANANA", "GRAPES", "ORANGE", "PINEAPPLE" ]
+  "symbols" : [ "APPLE", "BANANA", "GRAPES", "ORANGE", "PINEAPPLE" ],
+  "symbolDocs" : { "APPLE":"A red, yellow or green fruit.", "BANANA":"A yellow fruit.", "GRAPES":"A green or red fruit.", "ORANGE":"An orange fruit.", "PINEAPPLE":"A yellow fruit."}
 }

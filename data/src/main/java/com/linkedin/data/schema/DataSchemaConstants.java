@@ -38,6 +38,7 @@ public class DataSchemaConstants
   public static final String REF_KEY = "ref";
   public static final String SIZE_KEY = "size";
   public static final String SYMBOLS_KEY = "symbols";
+  public static final String SYMBOL_DOCS_KEY = "symbolDocs";
   public static final String TYPE_KEY = "type";
   public static final String VALUES_KEY = "values";
 
@@ -88,7 +89,7 @@ public class DataSchemaConstants
 
     Set<String> schemaKeys = new HashSet<String>(Arrays.asList(ALIASES_KEY, DOC_KEY, FIELDS_KEY, INCLUDE_KEY, ITEMS_KEY, NAME_KEY,
                                                                NAMESPACE_KEY, REF_KEY,
-                                                               SIZE_KEY, SYMBOLS_KEY, TYPE_KEY, VALUES_KEY));
+                                                               SIZE_KEY, SYMBOLS_KEY, SYMBOL_DOCS_KEY, TYPE_KEY, VALUES_KEY));
     SCHEMA_KEYS = Collections.unmodifiableSet(schemaKeys);
 
     Set<String> fieldKeys = new HashSet<String>(Arrays.asList(ALIASES_KEY, DEFAULT_KEY, DOC_KEY, NAME_KEY, OPTIONAL_KEY, ORDER_KEY, TYPE_KEY));

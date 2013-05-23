@@ -160,6 +160,7 @@ public class TestSchemaSampleDataGenerator
   {
     final EnumDataSchema schema = (EnumDataSchema) DataTemplateUtil.getSchema(EnumFruits.class);
     final String value = (String) SchemaSampleDataGenerator.buildData(schema, _spec);
+    Assert.assertSame(schema.getSymbolDocs().size(), EnumFruits.class.getEnumConstants().length - 1/*The $UNKNOWN value*/);
     EnumFruits.valueOf(value);
   }
 

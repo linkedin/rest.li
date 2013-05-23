@@ -467,10 +467,19 @@ public class SchemaParser extends AbstractDataParser
         break;
       case ENUM:
         List<String> symbols = getStringList(map, SYMBOLS_KEY, true);
+        DataMap symbolDocsMap = getDataMap(map, SYMBOL_DOCS_KEY, false);
         EnumDataSchema enumSchema = new EnumDataSchema(name);
         schema = namedSchema = enumSchema;
         bindNameToSchema(name, aliasNames, enumSchema);
-        enumSchema.setSymbols(symbols, startCalleeMessageBuilder());
+        StringBuilder messageBuilder = startCalleeMessageBuilder();
+        enumSchema.setSymbols(symbols, messageBuilder);
+
+        if (symbolDocsMap != null)
+        {
+          Map<String, Object> symbolDocs = extractProperties(symbolDocsMap, Collections.<String>emptySet());
+          enumSchema.setSymbolDocs(symbolDocs, messageBuilder);
+        }
+
         appendCalleeMessage(map);
         break;
       case FIXED:

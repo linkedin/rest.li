@@ -19,6 +19,7 @@ package com.linkedin.data.schema;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -80,6 +81,52 @@ public final class EnumDataSchema extends NamedDataSchema
     return ok;
   }
 
+  public boolean setSymbolDocs(Map<String, Object> symbolDocs, StringBuilder errorMessageBuilder)
+  {
+    boolean ok = true;
+    if (symbolDocs != null)
+    {
+      Map<String, String> symbolDocsMap = new LinkedHashMap<String, String>();
+      for (String symbol : _symbols)
+      {
+        if (symbolDocs.containsKey(symbol))
+        {
+          Object value = symbolDocs.get(symbol);
+          if (value instanceof String)
+          {
+            Object replaced = symbolDocsMap.put(symbol, (String)value);
+            assert(replaced == null);
+          }
+          else
+          {
+            ok = false;
+            errorMessageBuilder.append("\"").append(symbol).append("\" symbol has an invalid documentation value. All symbol documentation values must be strings.\n");
+          }
+        }
+      }
+
+      if (ok)
+      {
+        for (Map.Entry<String, Object> e : symbolDocs.entrySet())
+        {
+          String symbol = e.getKey();
+          if (!symbolDocsMap.containsKey(symbol))
+          {
+            ok = false;
+            errorMessageBuilder.append("\"").append(symbol).append("\" symbol is referenced by the symbol documentation. This symbol does not exist.\n");
+          }
+        }
+      }
+
+      _symbolToDocMap = Collections.unmodifiableMap(symbolDocsMap);
+    }
+    if (ok == false)
+    {
+      setHasError();
+    }
+    return ok;
+  }
+
   /**
    * Symbols in the order declared.
    *
@@ -88,6 +135,16 @@ public final class EnumDataSchema extends NamedDataSchema
   public List<String> getSymbols()
   {
     return _symbols;
+  }
+
+  /**
+   * Documentation for symbols.
+   *
+   * @return documentation for symbols.
+   */
+  public Map<String, String> getSymbolDocs()
+  {
+    return _symbolToDocMap;
   }
 
   /**
@@ -123,7 +180,7 @@ public final class EnumDataSchema extends NamedDataSchema
     if (object != null && object.getClass() == EnumDataSchema.class)
     {
       EnumDataSchema other = (EnumDataSchema) object;
-      return super.equals(other) && _symbols.equals(other._symbols);
+      return super.equals(other) && _symbols.equals(other._symbols) && _symbolToDocMap.equals(other._symbolToDocMap);
     }
     return false;
   }
@@ -131,7 +188,7 @@ public final class EnumDataSchema extends NamedDataSchema
   @Override
   public int hashCode()
   {
-    return super.hashCode() ^ _symbols.hashCode();
+    return super.hashCode() ^ _symbols.hashCode() ^ _symbolToDocMap.hashCode();
   }
 
   static public boolean isValidEnumSymbol(String symbol)
@@ -141,7 +198,9 @@ public final class EnumDataSchema extends NamedDataSchema
 
   private List<String> _symbols = _emptySymbols;
   private Map<String, Integer> _symbolToIndexMap = _emptySymbolToIndexMap;
+  private Map<String, String> _symbolToDocMap = _emptySymbolToDocMap;
 
   static private final List<String> _emptySymbols = Collections.emptyList();
   static private final Map<String, Integer> _emptySymbolToIndexMap = Collections.emptyMap();
+  static private final Map<String, String> _emptySymbolToDocMap = Collections.emptyMap();
 }

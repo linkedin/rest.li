@@ -240,6 +240,11 @@ public class TestDataSchema
           "{ \"type\" : \"enum\", \"name\" : \"fruits\", \"doc\" : \"documentation\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] }",
           "{ \"type\" : \"enum\", \"name\" : \"fruits\", \"doc\" : \"documentation\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] }"
         },
+         // test enum, with symbol docs
+        {
+          "{ \"type\" : \"enum\", \"name\" : \"fruits\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ], \"symbolDocs\" : { \"ORANGE\" : \"DOC_ORANGE\", \"APPLE\" : \"DOC_APPLE\" } }",
+          "{ \"type\" : \"enum\", \"name\" : \"fruits\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ], \"symbolDocs\" : { \"APPLE\" : \"DOC_APPLE\", \"ORANGE\" : \"DOC_ORANGE\" } }"
+        },
         // test enum, with properties
         {
           "{ \"type\" : \"enum\", \"name\" : \"fruits\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ], \"prop1\" : \"xx\", \"prop2\" : \"yy\", \"aliases\" : [ \"abc\" ] }",
@@ -250,10 +255,10 @@ public class TestDataSchema
           "{ \"type\" : \"enum\", \"name\" : \"fruits\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ], \"aliases\" : [ \"abc\" ] }",
           "{ \"type\" : \"enum\", \"name\" : \"fruits\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ], \"aliases\" : [ \"abc\" ] }"
         },
-        // test enum, with doc, properties and aliases
+        // test enum, with doc, symbol docs, properties and aliases
         {
-          "{ \"type\" : \"enum\", \"name\" : \"fruits\", \"doc\" : \"documentation\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ], \"prop1\" : \"xx\", \"prop2\" : \"yy\", \"aliases\" : [ \"abc\" ] }",
-          "{ \"type\" : \"enum\", \"name\" : \"fruits\", \"doc\" : \"documentation\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ], \"prop1\" : \"xx\", \"prop2\" : \"yy\", \"aliases\" : [ \"abc\" ] }"
+          "{ \"type\" : \"enum\", \"name\" : \"fruits\", \"doc\" : \"documentation\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ], \"symbolDocs\" : { \"APPLE\" : \"DOC_APPLE\", \"ORANGE\" : \"DOC_ORANGE\" }, \"prop1\" : \"xx\", \"prop2\" : \"yy\", \"aliases\" : [ \"abc\" ] }",
+          "{ \"type\" : \"enum\", \"name\" : \"fruits\", \"doc\" : \"documentation\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ], \"symbolDocs\" : { \"APPLE\" : \"DOC_APPLE\", \"ORANGE\" : \"DOC_ORANGE\" }, \"prop1\" : \"xx\", \"prop2\" : \"yy\", \"aliases\" : [ \"abc\" ] }"
         },
         // test map, with properties
         {
@@ -1907,6 +1912,11 @@ public class TestDataSchema
         },
         {
           // enum with invalid symbols
+          "{ \"type\" : \"enum\", \"name\" : \"foo\", \"symbols\" : \"apple\" }",
+          "is not an array"
+        },
+        {
+          // enum with invalid symbols
           "{ \"type\" : \"enum\", \"name\" : \"foo\", \"symbols\" : [ 67 ] }",
           "is not a string"
         },
@@ -1919,6 +1929,21 @@ public class TestDataSchema
           // enum with duplicate symbols
           "{ \"type\" : \"enum\", \"name\" : \"foo\", \"symbols\" : [ \"apple\", \"banana\", \"apple\" ] }",
           "defined more than once in enum symbols"
+        },
+        {
+          // enum with invalid symbol docs
+          "{ \"type\" : \"enum\", \"name\" : \"foo\", \"symbols\" : [ \"apple\", \"banana\" ], \"symbolDocs\" : \"docs\" }",
+          "is not a map"
+        },
+        {
+          // enum with invalid symbol docs
+          "{ \"type\" : \"enum\", \"name\" : \"foo\", \"symbols\" : [ \"apple\", \"banana\" ], \"symbolDocs\" : { \"apple\" : \"doc_apple\", \"banana\" : 5 } }",
+          "symbol has an invalid documentation value"
+        },
+        {
+          // enum with invalid symbol docs
+          "{ \"type\" : \"enum\", \"name\" : \"foo\", \"symbols\" : [ \"apple\", \"banana\" ], \"symbolDocs\" : { \"apple\" : \"doc_apple\", \"orange\" : \"doc_orange\" } }",
+          "This symbol does not exist"
         },
         {
           // fixed must have name
@@ -2232,7 +2257,7 @@ public class TestDataSchema
   @Test
   public void testEnumDataSchema() throws Exception
   {
-    final String schemaString = "{ \"type\" : \"enum\", \"name\" : \"numbers\", \"symbols\" : [ \"ONE\", \"TWO\", \"THREE\", \"FOUR\", \"FIVE\"] }";
+    final String schemaString = "{ \"type\" : \"enum\", \"name\" : \"numbers\", \"symbols\" : [ \"ONE\", \"TWO\", \"THREE\", \"FOUR\", \"FIVE\"], \"symbolDocs\" : { \"FIVE\" : \"DOC_FIVE\", \"ONE\" : \"DOC_ONE\" } }";
     SchemaParser parser = schemaParserFromString(schemaString);
     EnumDataSchema schema = (EnumDataSchema)parser.topLevelDataSchemas().get(0);
 
@@ -2252,6 +2277,17 @@ public class TestDataSchema
 
     Assert.assertEquals(schema.getSymbols(), Arrays.asList(orderedSymbols));
 
+    String[] symbolDocKeys = {"ONE", "FIVE"};
+    for (String symbolDocKey : symbolDocKeys)
+    {
+      Assert.assertTrue(schema.getSymbolDocs().containsKey(symbolDocKey) && schema.getSymbolDocs().get(symbolDocKey).equals("DOC_" + symbolDocKey));
+    }
+
+    String[] missingSymbolDocs = {"TWO", "THREE", "FOUR"};
+    for (String missingSymbol : missingSymbols)
+    {
+      Assert.assertFalse(schema.getSymbolDocs().containsKey(missingSymbol));
+    }
   }
 
   @Test

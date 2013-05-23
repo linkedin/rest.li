@@ -15,6 +15,9 @@ Add RestClient.sendRestRequest(..., Callback<RestResponse> callback) method.
 
 1.8.25
 ------
+(RB=168185)
+Add support for enum value documentation for data template generator.
+
 (RB=164876)
 Fix bug where client builders failed to coerce batch results for resource collections keyed by a typeref.
 

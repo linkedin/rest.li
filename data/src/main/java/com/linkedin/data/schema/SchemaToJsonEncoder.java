@@ -203,6 +203,7 @@ public class SchemaToJsonEncoder
         break;
       case ENUM:
         _builder.writeStringArrayField(SYMBOLS_KEY, ((EnumDataSchema) schema).getSymbols(), true);
+        _builder.writeMapField(SYMBOL_DOCS_KEY, ((EnumDataSchema) schema).getSymbolDocs(), false);
         break;
       case FIXED:
         _builder.writeIntField(SIZE_KEY, ((FixedDataSchema) schema).getSize());

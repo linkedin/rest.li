@@ -132,7 +132,7 @@ public class TestAbstractGenerator
   Map<String,String> _testSchemas = asMap
   (
     "/a1/foo.pdsc",       "{ \"name\" : \"foo\", \"type\" : \"fixed\", \"size\" : 3 }",
-    "/a1/x/y/z.pdsc",     "{ \"name\" : \"x.y.z\", \"type\" : \"enum\", \"symbols\" : [ \"X\", \"Y\", \"Z\" ] }",
+    "/a1/x/y/z.pdsc",     "{ \"name\" : \"x.y.z\", \"type\" : \"enum\", \"symbols\" : [ \"X\", \"Y\", \"Z\" ], \"symbolDocs\" : { \"X\" : \"doc X\", \"Z\" : \"doc Z\" } }",
     "/a2/b/bar.pdsc",     "{ \"name\" : \"bar\", \"type\" : \"record\", \"fields\" : [] }",
     "/a3/b/c/baz.pdsc",   "{ \"name\" : \"baz\", \"type\" : \"record\", \"fields\" : [] }",
     "/a3/b/c/referrer.pdsc", "{ \"name\" : \"referrer\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"referree\", \"type\" : \"referree\" } ] }",
@@ -141,7 +141,8 @@ public class TestAbstractGenerator
     "/a3/b/c/circular2.pdsc", "{ \"name\" : \"circular2\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"member\", \"type\" : \"circular1\" } ] }",
     "/a3/b/c/redefine2.pdsc", "{ \"name\" : \"redefine2\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"member\", \"type\" : { \"type\" : \"fixed\", \"name\" : \"redefine1\", \"size\" : 8 } } ] }",
     "/error/b/c/error.pdsc", "{ \"name\" : \"error\", \"type\" : \"fixed\", \"size\" : -1 }",
-    "/error/b/c/redefine1.pdsc", "{ \"name\" : \"redefine1\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"member\", \"type\" : \"redefine2\" } ] }"
+    "/error/b/c/redefine1.pdsc", "{ \"name\" : \"redefine1\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"member\", \"type\" : \"redefine2\" } ] }",
+    "/error/b/c/enumValueDocError.pdsc", "{ \"name\" : \"enumValueDocError\", \"type\" : \"enum\", \"symbols\" : [ \"X\", \"Y\", \"Z\" ], \"symbolDocs\" : { \"X\" : \"doc X\", \"Y\" : 1 } }"
   );
 
   List<String> _testPaths = Arrays.asList(
@@ -163,7 +164,8 @@ public class TestAbstractGenerator
 
   Map<String, String> _badPegasusSchemas = asMap(
     "/error/b/c/error.pdsc", "size must not be negative",
-    "/error/b/c/redefine1.pdsc", "already defined as"
+    "/error/b/c/redefine1.pdsc", "already defined as",
+    "/error/b/c/enumValueDocError.pdsc", "symbol has an invalid documentation value"
   );
 
   private final static String _sourceDirName = "testAbstractGenerator/pegasus";

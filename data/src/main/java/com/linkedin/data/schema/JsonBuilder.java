@@ -142,6 +142,18 @@ public class JsonBuilder
   }
 
   /**
+   * Write a map with string keys and values.
+   *
+   * @param value provides the map to write.
+   */
+  public void writeMap(Map<String, ?> value) throws IOException
+  {
+    writeStartObject();
+    writeProperties(value);
+    writeEndObject();
+  }
+
+  /**
    * Write a field whose value is a boolean.
    *
    * @param fieldName is the name of the field.
@@ -202,6 +214,25 @@ public class JsonBuilder
   }
 
   /**
+   * Write a field whose value is a map with string keys and values.
+   *
+   * The field will be written if required is true or the map value is non-empty.
+   *
+   * @param fieldName is the name of the field.
+   * @param value of the field.
+   * @param required indicates whether this field will always be written
+   * @throws IOException if there is an error writing.
+   */
+  public void writeMapField(String fieldName, Map<String, ?> value, boolean required) throws IOException
+  {
+    if (required || value.isEmpty() == false)
+    {
+      writeFieldName(fieldName);
+      writeMap(value);
+    }
+  }
+
+  /**
    * Write Data object.
    *
    * @param object is the Data object to write.
@@ -217,11 +248,11 @@ public class JsonBuilder
    * @param value provides the properties to be written.
    * @throws IOException if there is an error writing.
    */
-  public void writeProperties(Map<String, Object> value) throws IOException
+  public void writeProperties(Map<String, ?> value) throws IOException
   {
     if (value.isEmpty() == false)
     {
-      for (Map.Entry<String, Object> entry : value.entrySet())
+      for (Map.Entry<String, ?> entry : value.entrySet())
       {
         _jsonGenerator.writeFieldName(entry.getKey());
         writeData(entry.getValue());
