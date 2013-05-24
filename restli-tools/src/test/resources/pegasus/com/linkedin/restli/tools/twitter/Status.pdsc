@@ -1,0 +1,6 @@
+{
+  "type" : "record",
+  "name" : "Status",
+  "namespace" : "com.linkedin.restli.tools.twitter",
+  "fields" : [ ]
+}

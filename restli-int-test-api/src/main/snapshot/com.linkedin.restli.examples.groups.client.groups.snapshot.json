@@ -1,0 +1,564 @@
+{
+  "models" : [ {
+    "type" : "enum",
+    "name" : "Badge",
+    "namespace" : "com.linkedin.restli.examples.groups.api",
+    "symbols" : [ "OFFICIAL", "SPONSORED", "FEATURED", "FOR_GOOD", "NONE" ]
+  }, {
+    "type" : "record",
+    "name" : "Location",
+    "namespace" : "com.linkedin.restli.examples.groups.api",
+    "doc" : "A Location record. TODO HIGH This should be in common.linkedin",
+    "fields" : [ {
+      "name" : "countryCode",
+      "type" : "string"
+    }, {
+      "name" : "postalCode",
+      "type" : "string"
+    }, {
+      "name" : "geoPostalCode",
+      "type" : "string"
+    }, {
+      "name" : "regionCode",
+      "type" : "int"
+    }, {
+      "name" : "latitude",
+      "type" : "float"
+    }, {
+      "name" : "longitude",
+      "type" : "float"
+    }, {
+      "name" : "geoPlaceCodes",
+      "type" : {
+        "type" : "array",
+        "items" : "string"
+      }
+    }, {
+      "name" : "gmtOffset",
+      "type" : "float"
+    }, {
+      "name" : "usesDaylightSavings",
+      "type" : "boolean"
+    } ]
+  }, {
+    "type" : "enum",
+    "name" : "Visibility",
+    "namespace" : "com.linkedin.restli.examples.groups.api",
+    "symbols" : [ "PUBLIC", "PRIVATE", "HIDDEN" ]
+  }, {
+    "type" : "enum",
+    "name" : "State",
+    "namespace" : "com.linkedin.restli.examples.groups.api",
+    "symbols" : [ "ACTIVE", "LOCKED", "INACTIVE", "PROPOSED" ]
+  }, {
+    "type" : "enum",
+    "name" : "Contactability",
+    "namespace" : "com.linkedin.restli.examples.groups.api",
+    "symbols" : [ "CONTACTABLE", "NON_CONTACTABLE" ]
+  }, {
+    "type" : "enum",
+    "name" : "DirectoryPresence",
+    "namespace" : "com.linkedin.restli.examples.groups.api",
+    "symbols" : [ "NONE", "LINKEDIN", "PUBLIC" ]
+  }, {
+    "type" : "enum",
+    "name" : "PostCategory",
+    "namespace" : "com.linkedin.restli.examples.groups.api",
+    "symbols" : [ "DISCUSSION", "JOB", "PROMOTION" ]
+  }, {
+    "type" : "enum",
+    "name" : "NewsFormat",
+    "namespace" : "com.linkedin.restli.examples.groups.api",
+    "symbols" : [ "RECENT", "CLUSTERED" ]
+  }, {
+    "type" : "enum",
+    "name" : "PreModerationType",
+    "namespace" : "com.linkedin.restli.examples.groups.api",
+    "symbols" : [ "NONE", "COMMENTS", "ALL" ]
+  }, {
+    "type" : "enum",
+    "name" : "NonMemberPermissions",
+    "namespace" : "com.linkedin.restli.examples.groups.api",
+    "symbols" : [ "NONE", "READ_ONLY", "COMMENT_WITH_MODERATION", "COMMENT_AND_POST_WITH_MODERATION", "COMMENT_NO_MODERATION_POST_MODERATION" ]
+  }, {
+    "type" : "enum",
+    "name" : "MembershipLevel",
+    "namespace" : "com.linkedin.restli.examples.groups.api",
+    "symbols" : [ "BLOCKED", "NON_MEMBER", "REQUESTING_TO_JOIN", "MEMBER", "MODERATOR", "MANAGER", "OWNER" ]
+  }, {
+    "type" : "enum",
+    "name" : "EmailDigestFrequency",
+    "namespace" : "com.linkedin.restli.examples.groups.api",
+    "symbols" : [ "NONE", "DAILY", "WEEKLY" ]
+  }, {
+    "type" : "enum",
+    "name" : "WriteLevel",
+    "namespace" : "com.linkedin.restli.examples.groups.api",
+    "symbols" : [ "NONE", "PREMODERATED", "DEFAULT", "FULL" ]
+  }, {
+    "type" : "record",
+    "name" : "GroupMembership",
+    "namespace" : "com.linkedin.restli.examples.groups.api",
+    "doc" : "A GroupMembership entity",
+    "fields" : [ {
+      "name" : "id",
+      "type" : "string",
+      "doc" : "Compound key of groupID and memberID"
+    }, {
+      "name" : "memberID",
+      "type" : "int",
+      "doc" : "This field is read-only."
+    }, {
+      "name" : "groupID",
+      "type" : "int",
+      "doc" : "This field is read-only."
+    }, {
+      "name" : "membershipLevel",
+      "type" : "MembershipLevel"
+    }, {
+      "name" : "contactEmail",
+      "type" : "string"
+    }, {
+      "name" : "isPublicized",
+      "type" : "boolean"
+    }, {
+      "name" : "allowMessagesFromMembers",
+      "type" : "boolean"
+    }, {
+      "name" : "joinedTime",
+      "type" : "long",
+      "doc" : "This field is read-only."
+    }, {
+      "name" : "resignedTime",
+      "type" : "long",
+      "doc" : "This field is read-only."
+    }, {
+      "name" : "lastModifiedStateTime",
+      "type" : "long",
+      "doc" : "This field is read-only."
+    }, {
+      "name" : "emailDigestFrequency",
+      "type" : "EmailDigestFrequency"
+    }, {
+      "name" : "creationTime",
+      "type" : "long",
+      "doc" : "This field is read-only."
+    }, {
+      "name" : "lastModifiedTime",
+      "type" : "long",
+      "doc" : "This field is read-only."
+    }, {
+      "name" : "emailAnnouncementsFromManagers",
+      "type" : "boolean"
+    }, {
+      "name" : "emailForEveryNewPost",
+      "type" : "boolean"
+    }, {
+      "name" : "writeLevel",
+      "type" : "WriteLevel",
+      "doc" : "This field can only be accessed by moderators of the group"
+    }, {
+      "name" : "firstName",
+      "type" : "string",
+      "doc" : "Denormalized from members"
+    }, {
+      "name" : "lastName",
+      "type" : "string",
+      "doc" : "Denormalized from members"
+    } ]
+  }, {
+    "type" : "record",
+    "name" : "Group",
+    "namespace" : "com.linkedin.restli.examples.groups.api",
+    "doc" : "A Group record",
+    "fields" : [ {
+      "name" : "id",
+      "type" : "int",
+      "doc" : "This field is read-only, and will be automatically assigned when the group is POSTed."
+    }, {
+      "name" : "vanityUrl",
+      "type" : "string"
+    }, {
+      "name" : "parentGroupId",
+      "type" : "int",
+      "doc" : "Parent group references"
+    }, {
+      "name" : "name",
+      "type" : "string",
+      "doc" : "Cannot be changed by owner/managers once set (only CS can change it)"
+    }, {
+      "name" : "shortDescription",
+      "type" : "string"
+    }, {
+      "name" : "description",
+      "type" : "string"
+    }, {
+      "name" : "rules",
+      "type" : "string"
+    }, {
+      "name" : "contactEmail",
+      "type" : "string"
+    }, {
+      "name" : "category",
+      "type" : "int"
+    }, {
+      "name" : "otherCategory",
+      "type" : "int"
+    }, {
+      "name" : "badge",
+      "type" : "Badge"
+    }, {
+      "name" : "homeSiteUrl",
+      "type" : "string"
+    }, {
+      "name" : "smallLogoMediaUrl",
+      "type" : "string"
+    }, {
+      "name" : "largeLogoMediaUrl",
+      "type" : "string"
+    }, {
+      "name" : "location",
+      "type" : "Location",
+      "doc" : "An inlined Location struct"
+    }, {
+      "name" : "locale",
+      "type" : "string"
+    }, {
+      "name" : "sharingKey",
+      "type" : "string",
+      "doc" : "System-generated, read-only"
+    }, {
+      "name" : "visibility",
+      "type" : "Visibility"
+    }, {
+      "name" : "state",
+      "type" : "State",
+      "default" : "ACTIVE"
+    }, {
+      "name" : "createdTimestamp",
+      "type" : "long",
+      "doc" : "This field is read-only. TODO Timestamp representation"
+    }, {
+      "name" : "lastModifiedTimestamp",
+      "type" : "long",
+      "doc" : "This field is read-only."
+    }, {
+      "name" : "isOpenToNonMembers",
+      "type" : "boolean"
+    }, {
+      "name" : "approvalModes",
+      "type" : "int",
+      "doc" : "TODO This is really a bitset with each bit mapped to a setting enum. See ANetApprovalMode"
+    }, {
+      "name" : "contactability",
+      "type" : "Contactability"
+    }, {
+      "name" : "directoryPresence",
+      "type" : "DirectoryPresence"
+    }, {
+      "name" : "hasMemberInvites",
+      "type" : "boolean"
+    }, {
+      "name" : "numIdentityChanges",
+      "type" : "int",
+      "doc" : "System-maintained, read-only"
+    }, {
+      "name" : "maxIdentityChanges",
+      "type" : "int",
+      "doc" : "CS-editable only"
+    }, {
+      "name" : "maxMembers",
+      "type" : "int",
+      "doc" : "CS-editable only"
+    }, {
+      "name" : "maxModerators",
+      "type" : "int",
+      "doc" : "CS-editable only"
+    }, {
+      "name" : "maxSubgroups",
+      "type" : "int",
+      "doc" : "CS-editable only"
+    }, {
+      "name" : "maxFeeds",
+      "type" : "int",
+      "doc" : "CS-editable only"
+    }, {
+      "name" : "hasEmailExport",
+      "type" : "boolean"
+    }, {
+      "name" : "categoriesEnabled",
+      "type" : "PostCategory"
+    }, {
+      "name" : "hasNetworkUpdates",
+      "type" : "boolean"
+    }, {
+      "name" : "hasMemberRoster",
+      "type" : "boolean"
+    }, {
+      "name" : "hasSettings",
+      "type" : "boolean"
+    }, {
+      "name" : "hideSubgroups",
+      "type" : "boolean"
+    }, {
+      "name" : "categoriesForModeratorsOnly",
+      "type" : "PostCategory"
+    }, {
+      "name" : "numMemberFlagsToDelete",
+      "type" : "int"
+    }, {
+      "name" : "newsFormat",
+      "type" : "NewsFormat"
+    }, {
+      "name" : "preModeration",
+      "type" : "PreModerationType"
+    }, {
+      "name" : "preModerationCategories",
+      "type" : "PostCategory"
+    }, {
+      "name" : "nonMemberPermissions",
+      "type" : "NonMemberPermissions"
+    }, {
+      "name" : "openedToNonMembersTimestamp",
+      "type" : "long"
+    }, {
+      "name" : "preModerateNewMembersPeriodInDays",
+      "type" : "int"
+    }, {
+      "name" : "preModerateMembersWithLowConnections",
+      "type" : "boolean"
+    }, {
+      "name" : "preApprovedEmailDomains",
+      "type" : {
+        "type" : "array",
+        "items" : "string"
+      }
+    }, {
+      "name" : "owner",
+      "type" : "GroupMembership",
+      "doc" : "Required when creating a group, not returned as part of the default representation (must be explicitly requested via 'fields'"
+    } ]
+  }, {
+    "type" : "fixed",
+    "name" : "Fixed16",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "size" : 16
+  }, {
+    "type" : "typeref",
+    "name" : "Union",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : [ "int", "string" ]
+  }, {
+    "type" : "record",
+    "name" : "GroupMembershipParam",
+    "namespace" : "com.linkedin.restli.examples.groups.api",
+    "doc" : "A GroupMembership entity parameters",
+    "fields" : [ {
+      "name" : "intParameter",
+      "type" : "int"
+    }, {
+      "name" : "stringParameter",
+      "type" : "string"
+    } ]
+  }, {
+    "type" : "record",
+    "name" : "TransferOwnershipRequest",
+    "namespace" : "com.linkedin.restli.examples.groups.api",
+    "doc" : "Request for transferOwnership RPC method",
+    "fields" : [ {
+      "name" : "newOwnerMemberID",
+      "type" : "int",
+      "doc" : "The new owner"
+    }, {
+      "name" : "newOwnerContactEmail",
+      "type" : "string",
+      "doc" : "The new owner's email"
+    } ]
+  }, {
+    "type" : "record",
+    "name" : "GroupContact",
+    "namespace" : "com.linkedin.restli.examples.groups.api",
+    "doc" : "A contact associated with this group. Managers upload contact to manage pre-approval/blacklists + invite members",
+    "fields" : [ {
+      "name" : "contactID",
+      "type" : "int",
+      "doc" : "Surrogate ID for this contact. This field is read-only."
+    }, {
+      "name" : "groupID",
+      "type" : "int",
+      "doc" : "The group that owns this contact"
+    }, {
+      "name" : "memberID",
+      "type" : "int",
+      "doc" : "The member associated with this contact record (null if this is a contact is not a LinkedIn member)",
+      "optional" : true
+    }, {
+      "name" : "firstName",
+      "type" : "string",
+      "doc" : "Contact's first name"
+    }, {
+      "name" : "lastName",
+      "type" : "string",
+      "doc" : "Contact's last name"
+    }, {
+      "name" : "isPreapproved",
+      "type" : "boolean",
+      "doc" : "True if this contact is pre-approved to join the group"
+    }, {
+      "name" : "isInvited",
+      "type" : "boolean",
+      "doc" : "True if this contact has been invited"
+    }, {
+      "name" : "createdAt",
+      "type" : "long"
+    }, {
+      "name" : "updatedAt",
+      "type" : "long"
+    } ]
+  } ],
+  "schema" : {
+    "schema" : "com.linkedin.restli.examples.groups.api.Group",
+    "name" : "groups",
+    "doc" : "TODO Derive path, resourceClass and keyName from class names (GroupsResource => /groups, GroupResource.class, \"groupId\")\n\ngenerated from: com.linkedin.restli.examples.groups.server.rest.impl.GroupsResource2",
+    "path" : "/groups",
+    "collection" : {
+      "methods" : [ {
+        "method" : "create"
+      }, {
+        "method" : "get"
+      }, {
+        "method" : "partial_update"
+      }, {
+        "method" : "delete"
+      }, {
+        "method" : "batch_get"
+      } ],
+      "entity" : {
+        "subresources" : [ {
+          "schema" : "com.linkedin.restli.examples.groups.api.GroupContact",
+          "name" : "contacts",
+          "doc" : "TODO Not implemented in MongoDB yet\n\ngenerated from: com.linkedin.restli.examples.groups.server.rest.impl.GroupContactsResource2",
+          "path" : "/groups/{groupID}/contacts",
+          "collection" : {
+            "methods" : [ {
+              "method" : "create"
+            }, {
+              "method" : "get"
+            }, {
+              "method" : "partial_update"
+            }, {
+              "method" : "delete"
+            }, {
+              "method" : "batch_get"
+            } ],
+            "entity" : {
+              "path" : "/groups/{groupID}/contacts/{contactID}"
+            },
+            "supports" : [ "batch_get", "create", "delete", "get", "partial_update" ],
+            "identifier" : {
+              "name" : "contactID",
+              "type" : "int"
+            },
+            "actions" : [ {
+              "name" : "spamContacts"
+            } ]
+          },
+          "namespace" : "com.linkedin.restli.examples.groups.client"
+        } ],
+        "path" : "/groups/{groupID}",
+        "actions" : [ {
+          "name" : "sendTestAnnouncement",
+          "parameters" : [ {
+            "name" : "subject",
+            "type" : "string"
+          }, {
+            "name" : "message",
+            "type" : "string"
+          }, {
+            "name" : "emailAddress",
+            "type" : "string"
+          } ]
+        }, {
+          "name" : "transferOwnership",
+          "parameters" : [ {
+            "name" : "request",
+            "type" : "com.linkedin.restli.examples.groups.api.TransferOwnershipRequest"
+          } ]
+        } ]
+      },
+      "finders" : [ {
+        "name" : "complexCircuit",
+        "parameters" : [ {
+          "default" : "[1.1, 2.2, 3.3]",
+          "name" : "nativeArray",
+          "type" : "{ \"type\" : \"array\", \"items\" : \"double\" }"
+        }, {
+          "default" : "[1.1, 2.2, 3.3]",
+          "name" : "coercedArray",
+          "type" : "{ \"type\" : \"array\", \"items\" : \"int\" }"
+        }, {
+          "default" : "[2, 3, 4]",
+          "name" : "wrappedArray",
+          "type" : "{ \"type\" : \"array\", \"items\" : \"int\" }"
+        }, {
+          "default" : "{\"A\": 1, \"B\": 2}",
+          "name" : "wrappedMap",
+          "type" : "{ \"type\" : \"map\", \"values\" : \"int\" }"
+        }, {
+          "default" : "\u0007",
+          "name" : "bytes",
+          "type" : "bytes"
+        }, {
+          "default" : "\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000B\f\r\u000E\u000F\u0010",
+          "name" : "fixed",
+          "type" : "com.linkedin.restli.examples.typeref.api.Fixed16"
+        }, {
+          "default" : "{\"string\": \"I'm String\"}",
+          "name" : "union",
+          "type" : "\"com.linkedin.restli.examples.typeref.api.Union\""
+        }, {
+          "default" : "{\"intParameter\": 7, \"stringParameter\": \"success\"}",
+          "name" : "record",
+          "type" : "com.linkedin.restli.examples.groups.api.GroupMembershipParam"
+        }, {
+          "default" : "[{\"intParameter\": 7, \"stringParameter\": \"success\"}]",
+          "name" : "records",
+          "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.groups.api.GroupMembershipParam\" }"
+        } ]
+      }, {
+        "name" : "emailDomain",
+        "parameters" : [ {
+          "name" : "emailDomain",
+          "type" : "string"
+        } ]
+      }, {
+        "name" : "manager",
+        "parameters" : [ {
+          "name" : "managerMemberID",
+          "type" : "int"
+        } ]
+      }, {
+        "name" : "search",
+        "parameters" : [ {
+          "optional" : true,
+          "name" : "keywords",
+          "type" : "string"
+        }, {
+          "optional" : true,
+          "name" : "nameKeywords",
+          "type" : "string"
+        }, {
+          "optional" : true,
+          "name" : "groupID",
+          "type" : "int"
+        } ]
+      } ],
+      "supports" : [ "batch_get", "create", "delete", "get", "partial_update" ],
+      "identifier" : {
+        "name" : "groupID",
+        "type" : "int"
+      }
+    },
+    "namespace" : "com.linkedin.restli.examples.groups.client"
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "models" : [ {
+    "type" : "enum",
+    "name" : "Tone",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "symbols" : [ "FRIENDLY", "SINCERE", "INSULTING" ]
+  }, {
+    "type" : "record",
+    "name" : "Greeting",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "doc" : "A greeting",
+    "fields" : [ {
+      "name" : "id",
+      "type" : "long"
+    }, {
+      "name" : "message",
+      "type" : "string"
+    }, {
+      "name" : "tone",
+      "type" : "Tone",
+      "doc" : "tone"
+    } ]
+  } ],
+  "schema" : {
+    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+    "name" : "exceptions2",
+    "doc" : "generated from: com.linkedin.restli.examples.greetings.server.ExceptionsResource2",
+    "path" : "/exceptions2",
+    "collection" : {
+      "methods" : [ {
+        "method" : "get"
+      } ],
+      "entity" : {
+        "path" : "/exceptions2/{exceptions2Id}"
+      },
+      "supports" : [ "get" ],
+      "identifier" : {
+        "name" : "exceptions2Id",
+        "type" : "long"
+      },
+      "actions" : [ {
+        "name" : "exceptionWithValue",
+        "doc" : "Action that responds HTTP 500 with integer value",
+        "returns" : "int"
+      }, {
+        "name" : "exceptionWithoutValue",
+        "doc" : "Action that responds HTTP 500 without value"
+      } ]
+    },
+    "namespace" : "com.linkedin.restli.examples.greetings.client"
+  }
+}

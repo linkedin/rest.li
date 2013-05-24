@@ -1,0 +1,198 @@
+{
+  "models" : [ {
+    "type" : "enum",
+    "name" : "Tone",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "symbols" : [ "FRIENDLY", "SINCERE", "INSULTING" ]
+  }, {
+    "type" : "record",
+    "name" : "Greeting",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "doc" : "A greeting",
+    "fields" : [ {
+      "name" : "id",
+      "type" : "long"
+    }, {
+      "name" : "message",
+      "type" : "string"
+    }, {
+      "name" : "tone",
+      "type" : "Tone",
+      "doc" : "tone"
+    } ]
+  }, {
+    "type" : "record",
+    "name" : "ToneFacet",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "doc" : "metadata for greetings search results",
+    "fields" : [ {
+      "name" : "tone",
+      "type" : "Tone"
+    }, {
+      "name" : "count",
+      "type" : "int"
+    } ]
+  }, {
+    "type" : "record",
+    "name" : "SearchMetadata",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "doc" : "metadata for greetings search results",
+    "fields" : [ {
+      "name" : "facets",
+      "type" : {
+        "type" : "array",
+        "items" : "ToneFacet"
+      }
+    } ]
+  }, {
+    "type" : "record",
+    "name" : "Empty",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "fields" : [ ]
+  }, {
+    "type" : "record",
+    "name" : "TransferOwnershipRequest",
+    "namespace" : "com.linkedin.restli.examples.groups.api",
+    "doc" : "Request for transferOwnership RPC method",
+    "fields" : [ {
+      "name" : "newOwnerMemberID",
+      "type" : "int",
+      "doc" : "The new owner"
+    }, {
+      "name" : "newOwnerContactEmail",
+      "type" : "string",
+      "doc" : "The new owner's email"
+    } ]
+  } ],
+  "schema" : {
+    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+    "name" : "greetingsPromise",
+    "doc" : "generated from: com.linkedin.restli.examples.greetings.server.GreetingsResourcePromise",
+    "path" : "/greetingsPromise",
+    "collection" : {
+      "methods" : [ {
+        "method" : "create"
+      }, {
+        "method" : "get"
+      }, {
+        "method" : "update"
+      }, {
+        "method" : "partial_update"
+      }, {
+        "method" : "delete"
+      }, {
+        "method" : "batch_create"
+      }, {
+        "method" : "batch_get"
+      }, {
+        "method" : "batch_update"
+      }, {
+        "method" : "batch_partial_update"
+      }, {
+        "method" : "batch_delete"
+      } ],
+      "entity" : {
+        "path" : "/greetingsPromise/{greetingsPromiseId}",
+        "actions" : [ {
+          "name" : "someAction",
+          "returns" : "com.linkedin.restli.examples.greetings.api.Greeting",
+          "parameters" : [ {
+            "default" : "1",
+            "name" : "a",
+            "type" : "int"
+          }, {
+            "default" : "default",
+            "name" : "b",
+            "type" : "string"
+          }, {
+            "optional" : true,
+            "name" : "c",
+            "type" : "com.linkedin.restli.examples.groups.api.TransferOwnershipRequest"
+          }, {
+            "name" : "d",
+            "type" : "com.linkedin.restli.examples.groups.api.TransferOwnershipRequest"
+          }, {
+            "name" : "e",
+            "type" : "int"
+          } ]
+        }, {
+          "name" : "updateTone",
+          "returns" : "com.linkedin.restli.examples.greetings.api.Greeting",
+          "parameters" : [ {
+            "optional" : true,
+            "name" : "newTone",
+            "type" : "com.linkedin.restli.examples.greetings.api.Tone"
+          }, {
+            "default" : "false",
+            "name" : "delOld",
+            "type" : "boolean"
+          } ]
+        } ]
+      },
+      "finders" : [ {
+        "name" : "search",
+        "parameters" : [ {
+          "optional" : true,
+          "name" : "tone",
+          "type" : "com.linkedin.restli.examples.greetings.api.Tone"
+        } ]
+      }, {
+        "name" : "searchWithDefault",
+        "parameters" : [ {
+          "default" : "FRIENDLY",
+          "name" : "tone",
+          "type" : "com.linkedin.restli.examples.greetings.api.Tone"
+        } ]
+      }, {
+        "name" : "searchWithFacets",
+        "parameters" : [ {
+          "optional" : true,
+          "name" : "tone",
+          "type" : "com.linkedin.restli.examples.greetings.api.Tone"
+        } ],
+        "metadata" : {
+          "type" : "com.linkedin.restli.examples.greetings.api.SearchMetadata"
+        }
+      }, {
+        "name" : "searchWithPostFilter",
+        "metadata" : {
+          "type" : "com.linkedin.restli.examples.greetings.api.Empty"
+        }
+      }, {
+        "name" : "searchWithTones",
+        "parameters" : [ {
+          "optional" : true,
+          "name" : "tones",
+          "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.Tone\" }"
+        } ]
+      } ],
+      "supports" : [ "batch_create", "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "delete", "get", "partial_update", "update" ],
+      "identifier" : {
+        "name" : "greetingsPromiseId",
+        "type" : "long"
+      },
+      "actions" : [ {
+        "name" : "anotherAction",
+        "parameters" : [ {
+          "name" : "bitfield",
+          "type" : "{ \"type\" : \"array\", \"items\" : \"boolean\" }"
+        }, {
+          "name" : "request",
+          "type" : "com.linkedin.restli.examples.groups.api.TransferOwnershipRequest"
+        }, {
+          "name" : "someString",
+          "type" : "string"
+        }, {
+          "name" : "stringMap",
+          "type" : "{ \"type\" : \"map\", \"values\" : \"string\" }"
+        } ]
+      }, {
+        "name" : "exceptionTest"
+      }, {
+        "name" : "purge",
+        "returns" : "int"
+      } ]
+    },
+    "namespace" : "com.linkedin.restli.examples.greetings.client"
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "models" : [ {
+    "type" : "enum",
+    "name" : "Tone",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "symbols" : [ "FRIENDLY", "SINCERE", "INSULTING" ]
+  }, {
+    "type" : "record",
+    "name" : "Greeting",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "doc" : "A greeting",
+    "fields" : [ {
+      "name" : "id",
+      "type" : "long"
+    }, {
+      "name" : "message",
+      "type" : "string"
+    }, {
+      "name" : "tone",
+      "type" : "Tone",
+      "doc" : "tone"
+    } ]
+  }, {
+    "type" : "record",
+    "name" : "ToneFacet",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "doc" : "metadata for greetings search results",
+    "fields" : [ {
+      "name" : "tone",
+      "type" : "Tone"
+    }, {
+      "name" : "count",
+      "type" : "int"
+    } ]
+  }, {
+    "type" : "record",
+    "name" : "SearchMetadata",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "doc" : "metadata for greetings search results",
+    "fields" : [ {
+      "name" : "facets",
+      "type" : {
+        "type" : "array",
+        "items" : "ToneFacet"
+      }
+    } ]
+  } ],
+  "schema" : {
+    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+    "name" : "finders",
+    "doc" : "generated from: com.linkedin.restli.examples.greetings.server.FindersResource",
+    "path" : "/finders",
+    "collection" : {
+      "entity" : {
+        "path" : "/finders/{findersId}"
+      },
+      "finders" : [ {
+        "name" : "basicSearch"
+      }, {
+        "name" : "predefinedSearch"
+      }, {
+        "name" : "searchWithMetadata",
+        "metadata" : {
+          "type" : "com.linkedin.restli.examples.greetings.api.SearchMetadata"
+        }
+      }, {
+        "name" : "searchWithoutMetadata"
+      } ],
+      "supports" : [ ],
+      "identifier" : {
+        "name" : "findersId",
+        "type" : "long"
+      }
+    },
+    "namespace" : "com.linkedin.restli.examples.greetings.client"
+  }
+}

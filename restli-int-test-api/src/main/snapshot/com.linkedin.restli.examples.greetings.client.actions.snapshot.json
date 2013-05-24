@@ -1,0 +1,118 @@
+{
+  "models" : [ {
+    "type" : "enum",
+    "name" : "Tone",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "symbols" : [ "FRIENDLY", "SINCERE", "INSULTING" ]
+  }, {
+    "type" : "record",
+    "name" : "Message",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "doc" : "A message",
+    "fields" : [ {
+      "name" : "id",
+      "type" : "string"
+    }, {
+      "name" : "message",
+      "type" : "string"
+    }, {
+      "name" : "tone",
+      "type" : "Tone",
+      "doc" : "tone"
+    } ]
+  } ],
+  "schema" : {
+    "actionsSet" : {
+      "actions" : [ {
+        "name" : "echo",
+        "returns" : "string",
+        "parameters" : [ {
+          "name" : "input",
+          "type" : "string"
+        } ]
+      }, {
+        "name" : "echoMessage",
+        "returns" : "com.linkedin.restli.examples.greetings.api.Message",
+        "parameters" : [ {
+          "name" : "message",
+          "type" : "com.linkedin.restli.examples.greetings.api.Message"
+        } ]
+      }, {
+        "name" : "failCallbackCall",
+        "doc" : "Action that fails by calling the callback"
+      }, {
+        "name" : "failCallbackThrow",
+        "doc" : "Action that fails by throwing an exception"
+      }, {
+        "name" : "failPromiseCall",
+        "doc" : "Action that fails by calling SettablePromise.fail"
+      }, {
+        "name" : "failPromiseThrow",
+        "doc" : "Action that fails by throwing an exception, returning a promise"
+      }, {
+        "name" : "failTaskCall",
+        "doc" : "Action that fails by calling SettablePromise.fail promise in a task"
+      }, {
+        "name" : "failTaskThrow",
+        "doc" : "Action that fails by throwing an exception, returning a task"
+      }, {
+        "name" : "failThrowInTask",
+        "doc" : "Action that fails by throwing an exception in the task"
+      }, {
+        "name" : "get",
+        "returns" : "string"
+      }, {
+        "name" : "nullPromise",
+        "returns" : "string"
+      }, {
+        "name" : "nullTask",
+        "returns" : "string"
+      }, {
+        "name" : "parseq",
+        "doc" : "Performs three \"slow\" tasks and collects the results. This uses the passed context\n parameter to execute tasks. The position of the context argument is arbitrary.",
+        "returns" : "string",
+        "parameters" : [ {
+          "name" : "a",
+          "type" : "int"
+        }, {
+          "name" : "b",
+          "type" : "string"
+        }, {
+          "name" : "c",
+          "type" : "boolean"
+        } ]
+      }, {
+        "name" : "parseq2",
+        "doc" : "Performs three \"slow\" tasks and collects the results. This returns a task and lets\n the RestLi server invoke it.",
+        "returns" : "string",
+        "parameters" : [ {
+          "name" : "a",
+          "type" : "int"
+        }, {
+          "name" : "b",
+          "type" : "string"
+        }, {
+          "name" : "c",
+          "type" : "boolean"
+        } ]
+      }, {
+        "name" : "returnBool",
+        "returns" : "boolean"
+      }, {
+        "name" : "returnInt",
+        "returns" : "int"
+      }, {
+        "name" : "timeout"
+      }, {
+        "name" : "timeoutCallback"
+      }, {
+        "name" : "ultimateAnswer",
+        "returns" : "int"
+      } ]
+    },
+    "name" : "actions",
+    "doc" : "Various action tasks that demonstrate usual behavior, timeout, and exceptions.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.ActionsResource",
+    "path" : "/actions",
+    "namespace" : "com.linkedin.restli.examples.greetings.client"
+  }
+}

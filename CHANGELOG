@@ -1,6 +1,10 @@
 1.8.36
 ------
-
+(RB=173757)
+Snapshots implemented locally in pegasus.  PegasusPlugin was not changed, so others using pegasus won't be able to use Snapshots yet.
+Within the project, Snapshots are now used instead of IDLs for backwards compatibility checking.  (IDLs are still used to create builders
+and are the source of truth for client-server interaction, however)  Snapshots have the advantage that they contain the models that they
+reference, so backwards incompatibile changes between models can now be noticed.
 
 1.8.35
 ------

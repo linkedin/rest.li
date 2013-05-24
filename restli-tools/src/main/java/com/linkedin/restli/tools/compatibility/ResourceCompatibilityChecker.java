@@ -13,6 +13,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
+
 package com.linkedin.restli.tools.compatibility;
 
 import com.linkedin.data.DataMap;
@@ -77,7 +78,7 @@ public class ResourceCompatibilityChecker
   private Set<String> _namedSchemasChecked = new HashSet<String>();
 
   private static final CompatibilityOptions defaultOptions =
-    new CompatibilityOptions().setMode(CompatibilityOptions.Mode.SCHEMA).setAllowPromotions(true);
+    new CompatibilityOptions().setMode(CompatibilityOptions.Mode.SCHEMA).setAllowPromotions(false);
 
   public ResourceCompatibilityChecker(ResourceSchema prevSchema,
                                       DataSchemaResolver prevSchemaResolver,

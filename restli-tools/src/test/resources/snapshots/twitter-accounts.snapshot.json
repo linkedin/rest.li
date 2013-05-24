@@ -1,0 +1,56 @@
+{
+  "models" : [ ],
+  "schema" : {
+    "actionsSet" : {
+      "actions" : [ {
+        "name" : "closeAccounts",
+        "returns" : "{ \"type\" : \"map\", \"values\" : \"string\" }",
+        "parameters" : [ {
+          "name" : "emailAddresses",
+          "type" : "{ \"type\" : \"array\", \"items\" : \"string\" }"
+        }, {
+          "name" : "someFlag",
+          "type" : "boolean"
+        }, {
+          "optional" : true,
+          "name" : "options",
+          "type" : "{ \"type\" : \"map\", \"values\" : \"string\" }"
+        } ]
+      }, {
+        "name" : "noArgMethod"
+      }, {
+        "name" : "primitiveResponse",
+        "returns" : "int"
+      }, {
+        "name" : "register",
+        "parameters" : [ {
+          "name" : "first",
+          "type" : "string"
+        }, {
+          "name" : "last",
+          "type" : "string"
+        }, {
+          "name" : "email",
+          "type" : "string"
+        }, {
+          "optional" : true,
+          "name" : "company",
+          "type" : "string"
+        }, {
+          "default" : "true",
+          "name" : "openToMarketingEmails",
+          "type" : "boolean"
+        } ]
+      }, {
+        "name" : "spamTweets",
+        "parameters" : [ {
+          "name" : "statuses",
+          "type" : "{ \"type\" : \"array\", \"items\" : \"string\" }"
+        } ]
+      } ]
+    },
+    "name" : "accounts",
+    "doc" : "generated from: com.linkedin.restli.tools.twitter.TwitterAccountsResource",
+    "path" : "/accounts"
+  }
+}

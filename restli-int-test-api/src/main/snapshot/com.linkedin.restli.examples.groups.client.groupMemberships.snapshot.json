@@ -1,0 +1,159 @@
+{
+  "models" : [ {
+    "type" : "enum",
+    "name" : "MembershipLevel",
+    "namespace" : "com.linkedin.restli.examples.groups.api",
+    "symbols" : [ "BLOCKED", "NON_MEMBER", "REQUESTING_TO_JOIN", "MEMBER", "MODERATOR", "MANAGER", "OWNER" ]
+  }, {
+    "type" : "enum",
+    "name" : "EmailDigestFrequency",
+    "namespace" : "com.linkedin.restli.examples.groups.api",
+    "symbols" : [ "NONE", "DAILY", "WEEKLY" ]
+  }, {
+    "type" : "enum",
+    "name" : "WriteLevel",
+    "namespace" : "com.linkedin.restli.examples.groups.api",
+    "symbols" : [ "NONE", "PREMODERATED", "DEFAULT", "FULL" ]
+  }, {
+    "type" : "record",
+    "name" : "GroupMembership",
+    "namespace" : "com.linkedin.restli.examples.groups.api",
+    "doc" : "A GroupMembership entity",
+    "fields" : [ {
+      "name" : "id",
+      "type" : "string",
+      "doc" : "Compound key of groupID and memberID"
+    }, {
+      "name" : "memberID",
+      "type" : "int",
+      "doc" : "This field is read-only."
+    }, {
+      "name" : "groupID",
+      "type" : "int",
+      "doc" : "This field is read-only."
+    }, {
+      "name" : "membershipLevel",
+      "type" : "MembershipLevel"
+    }, {
+      "name" : "contactEmail",
+      "type" : "string"
+    }, {
+      "name" : "isPublicized",
+      "type" : "boolean"
+    }, {
+      "name" : "allowMessagesFromMembers",
+      "type" : "boolean"
+    }, {
+      "name" : "joinedTime",
+      "type" : "long",
+      "doc" : "This field is read-only."
+    }, {
+      "name" : "resignedTime",
+      "type" : "long",
+      "doc" : "This field is read-only."
+    }, {
+      "name" : "lastModifiedStateTime",
+      "type" : "long",
+      "doc" : "This field is read-only."
+    }, {
+      "name" : "emailDigestFrequency",
+      "type" : "EmailDigestFrequency"
+    }, {
+      "name" : "creationTime",
+      "type" : "long",
+      "doc" : "This field is read-only."
+    }, {
+      "name" : "lastModifiedTime",
+      "type" : "long",
+      "doc" : "This field is read-only."
+    }, {
+      "name" : "emailAnnouncementsFromManagers",
+      "type" : "boolean"
+    }, {
+      "name" : "emailForEveryNewPost",
+      "type" : "boolean"
+    }, {
+      "name" : "writeLevel",
+      "type" : "WriteLevel",
+      "doc" : "This field can only be accessed by moderators of the group"
+    }, {
+      "name" : "firstName",
+      "type" : "string",
+      "doc" : "Denormalized from members"
+    }, {
+      "name" : "lastName",
+      "type" : "string",
+      "doc" : "Denormalized from members"
+    } ]
+  }, {
+    "type" : "enum",
+    "name" : "MembershipSortOrder",
+    "namespace" : "com.linkedin.restli.examples.groups.api",
+    "symbols" : [ "LAST_NAME_ASC", "LAST_TRANSITION_ON_DESC" ]
+  } ],
+  "schema" : {
+    "schema" : "com.linkedin.restli.examples.groups.api.GroupMembership",
+    "association" : {
+      "methods" : [ {
+        "method" : "get"
+      }, {
+        "method" : "update"
+      }, {
+        "method" : "partial_update"
+      }, {
+        "method" : "delete"
+      }, {
+        "method" : "batch_get"
+      }, {
+        "method" : "batch_update"
+      }, {
+        "method" : "batch_delete"
+      }, {
+        "method" : "get_all"
+      } ],
+      "entity" : {
+        "path" : "/groupMemberships/memberID={memberID}&groupID={groupID}"
+      },
+      "finders" : [ {
+        "name" : "group",
+        "parameters" : [ {
+          "optional" : true,
+          "name" : "level",
+          "type" : "string"
+        }, {
+          "optional" : true,
+          "name" : "firstName",
+          "type" : "string"
+        }, {
+          "optional" : true,
+          "name" : "lastName",
+          "type" : "string"
+        }, {
+          "optional" : true,
+          "name" : "email",
+          "type" : "string"
+        }, {
+          "optional" : true,
+          "name" : "sort",
+          "type" : "com.linkedin.restli.examples.groups.api.MembershipSortOrder"
+        } ],
+        "assocKeys" : [ "groupID" ]
+      }, {
+        "name" : "member",
+        "assocKeys" : [ "memberID" ]
+      } ],
+      "supports" : [ "batch_delete", "batch_get", "batch_update", "delete", "get", "get_all", "partial_update", "update" ],
+      "assocKeys" : [ {
+        "name" : "groupID",
+        "type" : "int"
+      }, {
+        "name" : "memberID",
+        "type" : "int"
+      } ]
+    },
+    "name" : "groupMemberships",
+    "doc" : "Association between members and groups\n\ngenerated from: com.linkedin.restli.examples.groups.server.rest.impl.GroupMembershipsResource2",
+    "path" : "/groupMemberships",
+    "namespace" : "com.linkedin.restli.examples.groups.client"
+  }
+}

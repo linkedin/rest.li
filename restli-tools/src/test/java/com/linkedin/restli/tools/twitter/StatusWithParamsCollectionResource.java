@@ -16,27 +16,18 @@
 
 package com.linkedin.restli.tools.twitter;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.server.CreateResponse;
-import com.linkedin.restli.server.PagingContext;
-import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.UpdateResponse;
-import com.linkedin.restli.server.annotations.Action;
-import com.linkedin.restli.server.annotations.ActionParam;
-import com.linkedin.restli.server.annotations.Context;
-import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.Optional;
 import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestMethod;
-import com.linkedin.restli.server.resources.CollectionResourceTemplate;
 import com.linkedin.restli.server.resources.KeyValueResource;
 import com.linkedin.restli.tools.twitter.TwitterTestDataModels.Status;
-import com.linkedin.restli.tools.twitter.TwitterTestDataModels.StatusType;
 
 /**
  * CollectionResource containing all statuses

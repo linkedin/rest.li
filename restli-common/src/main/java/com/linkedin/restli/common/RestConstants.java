@@ -57,5 +57,6 @@ public interface RestConstants
   Charset DEFAULT_CHARSET = Charset.forName(DEFAULT_CHARSET_NAME);
 
   String RESOURCE_MODEL_FILENAME_EXTENSION = ".restspec.json";
+  String SNAPSHOT_FILENAME_EXTENTION = ".snapshot.json";
 
 }

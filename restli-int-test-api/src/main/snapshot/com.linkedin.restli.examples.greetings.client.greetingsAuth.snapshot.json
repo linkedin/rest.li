@@ -1,0 +1,93 @@
+{
+  "models" : [ {
+    "type" : "enum",
+    "name" : "Tone",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "symbols" : [ "FRIENDLY", "SINCERE", "INSULTING" ]
+  }, {
+    "type" : "record",
+    "name" : "Greeting",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "doc" : "A greeting",
+    "fields" : [ {
+      "name" : "id",
+      "type" : "long"
+    }, {
+      "name" : "message",
+      "type" : "string"
+    }, {
+      "name" : "tone",
+      "type" : "Tone",
+      "doc" : "tone"
+    } ]
+  }, {
+    "type" : "record",
+    "name" : "GroupMembershipParam",
+    "namespace" : "com.linkedin.restli.examples.groups.api",
+    "doc" : "A GroupMembership entity parameters",
+    "fields" : [ {
+      "name" : "intParameter",
+      "type" : "int"
+    }, {
+      "name" : "stringParameter",
+      "type" : "string"
+    } ]
+  } ],
+  "schema" : {
+    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+    "name" : "greetingsAuth",
+    "doc" : "generated from: com.linkedin.restli.examples.greetings.server.CustomCrudParamsResource",
+    "path" : "/greetingsAuth",
+    "collection" : {
+      "methods" : [ {
+        "method" : "create",
+        "parameters" : [ {
+          "optional" : true,
+          "name" : "auth",
+          "type" : "string"
+        } ]
+      }, {
+        "method" : "get",
+        "parameters" : [ {
+          "optional" : true,
+          "name" : "auth",
+          "type" : "string"
+        }, {
+          "optional" : true,
+          "name" : "testComplex",
+          "type" : "com.linkedin.restli.examples.groups.api.GroupMembershipParam"
+        } ]
+      }, {
+        "method" : "update",
+        "parameters" : [ {
+          "optional" : true,
+          "name" : "auth",
+          "type" : "string"
+        } ]
+      }, {
+        "method" : "partial_update",
+        "parameters" : [ {
+          "optional" : true,
+          "name" : "auth",
+          "type" : "string"
+        } ]
+      }, {
+        "method" : "delete",
+        "parameters" : [ {
+          "optional" : true,
+          "name" : "auth",
+          "type" : "string"
+        } ]
+      } ],
+      "entity" : {
+        "path" : "/greetingsAuth/{greetingsAuthId}"
+      },
+      "supports" : [ "create", "delete", "get", "partial_update", "update" ],
+      "identifier" : {
+        "name" : "greetingsAuthId",
+        "type" : "long"
+      }
+    },
+    "namespace" : "com.linkedin.restli.examples.greetings.client"
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "models" : [ {
+    "type" : "enum",
+    "name" : "Tone",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "symbols" : [ "FRIENDLY", "SINCERE", "INSULTING" ]
+  }, {
+    "type" : "record",
+    "name" : "Greeting",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "doc" : "A greeting",
+    "fields" : [ {
+      "name" : "id",
+      "type" : "long"
+    }, {
+      "name" : "message",
+      "type" : "string"
+    }, {
+      "name" : "tone",
+      "type" : "Tone",
+      "doc" : "tone"
+    } ]
+  } ],
+  "schema" : {
+    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+    "name" : "mixed",
+    "doc" : "This resource demonstrates mixing of various method signatures: synchronous, callback,\n promise\n\ngenerated from: com.linkedin.restli.examples.greetings.server.MixedResource",
+    "path" : "/mixed",
+    "collection" : {
+      "methods" : [ {
+        "method" : "create"
+      }, {
+        "method" : "get"
+      }, {
+        "method" : "update"
+      }, {
+        "method" : "delete"
+      } ],
+      "entity" : {
+        "path" : "/mixed/{mixedId}"
+      },
+      "finders" : [ {
+        "name" : "search",
+        "parameters" : [ {
+          "name" : "what",
+          "type" : "string"
+        } ]
+      } ],
+      "supports" : [ "create", "delete", "get", "update" ],
+      "identifier" : {
+        "name" : "mixedId",
+        "type" : "long"
+      },
+      "actions" : [ {
+        "name" : "theAction",
+        "returns" : "string"
+      } ]
+    },
+    "namespace" : "com.linkedin.restli.examples.greetings.client"
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "models" : [ {
+    "type" : "record",
+    "name" : "Followed",
+    "namespace" : "com.linkedin.restli.tools.twitter",
+    "fields" : [ ]
+  } ],
+  "schema" : {
+    "schema" : "com.linkedin.restli.tools.twitter.Followed",
+    "association" : {
+      "methods" : [ {
+        "doc" : "Gets a single Followed resource",
+        "method" : "get"
+      }, {
+        "doc" : "Updates the given Followed relationship",
+        "method" : "partial_update"
+      }, {
+        "doc" : "Gets a batch of Followed resources",
+        "method" : "batch_get"
+      } ],
+      "entity" : {
+        "path" : "/follows/followerID={followerID}&followeeID={followeeID}"
+      },
+      "finders" : [ {
+        "name" : "followers",
+        "doc" : "Gets the followers of the given user",
+        "parameters" : [ {
+          "name" : "userID",
+          "doc" : "the user who's followers we want to fetch",
+          "type" : "long"
+        } ]
+      }, {
+        "name" : "friends",
+        "doc" : "Gets the friends of the given user",
+        "parameters" : [ {
+          "name" : "userID",
+          "doc" : "the user who's friends we want to fetch",
+          "type" : "long"
+        } ]
+      }, {
+        "name" : "other",
+        "doc" : "Test finder",
+        "parameters" : [ {
+          "name" : "someParam",
+          "doc" : "some parameter",
+          "type" : "string"
+        } ],
+        "assocKeys" : [ "followerID" ]
+      } ],
+      "supports" : [ "batch_get", "get", "partial_update" ],
+      "assocKeys" : [ {
+        "name" : "followeeID",
+        "type" : "long"
+      }, {
+        "name" : "followerID",
+        "type" : "long"
+      } ]
+    },
+    "name" : "follows",
+    "doc" : "Association resource for the 'following' relationship\n\ngenerated from: com.linkedin.restli.tools.twitter.FollowsAssociativeResource",
+    "path" : "/follows"
+  }
+}

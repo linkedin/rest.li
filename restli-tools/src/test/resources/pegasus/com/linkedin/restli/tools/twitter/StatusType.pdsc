@@ -1,0 +1,6 @@
+{
+  "type" : "enum",
+  "name" : "StatusType",
+  "namespace" : "com.linkedin.restli.tools.twitter",
+  "symbols" : [ "RETWEET", "REPLY", "STATUS" ]
+}

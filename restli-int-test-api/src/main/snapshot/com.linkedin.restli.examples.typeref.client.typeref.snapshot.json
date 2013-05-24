@@ -1,0 +1,311 @@
+{
+  "models" : [ {
+    "type" : "typeref",
+    "name" : "IntRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : "int"
+  }, {
+    "type" : "typeref",
+    "name" : "LongRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : "long"
+  }, {
+    "type" : "typeref",
+    "name" : "FloatRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : "float"
+  }, {
+    "type" : "typeref",
+    "name" : "DoubleRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : "double"
+  }, {
+    "type" : "typeref",
+    "name" : "BooleanRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : "boolean"
+  }, {
+    "type" : "typeref",
+    "name" : "StringRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : "string"
+  }, {
+    "type" : "typeref",
+    "name" : "BytesRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : "bytes"
+  }, {
+    "type" : "typeref",
+    "name" : "IntArrayRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : {
+      "type" : "array",
+      "items" : "int"
+    }
+  }, {
+    "type" : "typeref",
+    "name" : "IntMapRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : {
+      "type" : "map",
+      "values" : "int"
+    }
+  }, {
+    "type" : "typeref",
+    "name" : "Fixed16Ref",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : {
+      "type" : "fixed",
+      "name" : "Fixed16",
+      "size" : 16
+    }
+  }, {
+    "type" : "typeref",
+    "name" : "FruitsRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : {
+      "type" : "enum",
+      "name" : "Fruits",
+      "symbols" : [ "APPLE", "ORANGE" ]
+    }
+  }, {
+    "type" : "typeref",
+    "name" : "Union",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : [ "int", "string" ]
+  }, {
+    "type" : "typeref",
+    "name" : "UnionRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : "Union"
+  }, {
+    "type" : "typeref",
+    "name" : "PointRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : {
+      "type" : "record",
+      "name" : "Point",
+      "fields" : [ {
+        "name" : "x",
+        "type" : "double"
+      }, {
+        "name" : "y",
+        "type" : "double"
+      } ]
+    }
+  }, {
+    "type" : "record",
+    "name" : "TyperefRecord",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "fields" : [ {
+      "name" : "int",
+      "type" : "IntRef",
+      "optional" : true
+    }, {
+      "name" : "long",
+      "type" : "LongRef",
+      "optional" : true
+    }, {
+      "name" : "float",
+      "type" : "FloatRef",
+      "optional" : true
+    }, {
+      "name" : "double",
+      "type" : "DoubleRef",
+      "optional" : true
+    }, {
+      "name" : "boolean",
+      "type" : "BooleanRef",
+      "optional" : true
+    }, {
+      "name" : "string",
+      "type" : "StringRef",
+      "optional" : true
+    }, {
+      "name" : "bytes",
+      "type" : "BytesRef",
+      "optional" : true
+    }, {
+      "name" : "intArray",
+      "type" : "IntArrayRef",
+      "optional" : true
+    }, {
+      "name" : "intMap",
+      "type" : "IntMapRef",
+      "optional" : true
+    }, {
+      "name" : "fixed16",
+      "type" : "Fixed16Ref",
+      "optional" : true
+    }, {
+      "name" : "fruits",
+      "type" : "FruitsRef",
+      "optional" : true
+    }, {
+      "name" : "union",
+      "type" : "Union",
+      "optional" : true
+    }, {
+      "name" : "union2",
+      "type" : "UnionRef",
+      "optional" : true
+    }, {
+      "name" : "point",
+      "type" : "PointRef",
+      "optional" : true
+    } ]
+  }, {
+    "type" : "typeref",
+    "name" : "CustomNonNegativeLongRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : {
+      "type" : "typeref",
+      "name" : "CustomLongRef",
+      "ref" : "long",
+      "java" : {
+        "class" : "com.linkedin.restli.examples.custom.types.CustomLong"
+      }
+    },
+    "java" : {
+      "coercerClass" : "com.linkedin.restli.examples.custom.types.CustomNonNegativeLongCoercer",
+      "class" : "com.linkedin.restli.examples.custom.types.CustomNonNegativeLong"
+    }
+  } ],
+  "schema" : {
+    "schema" : "com.linkedin.restli.examples.typeref.api.TyperefRecord",
+    "name" : "typeref",
+    "doc" : "Test for typeref param and return types in actions.\n\ngenerated from: com.linkedin.restli.examples.typeref.server.TyperefTestResource",
+    "path" : "/typeref",
+    "collection" : {
+      "entity" : {
+        "path" : "/typeref/{typerefId}"
+      },
+      "supports" : [ ],
+      "identifier" : {
+        "name" : "typerefId",
+        "type" : "long"
+      },
+      "actions" : [ {
+        "name" : "BytesFunc",
+        "returns" : "com.linkedin.restli.examples.typeref.api.BytesRef",
+        "parameters" : [ {
+          "name" : "arg1",
+          "type" : "com.linkedin.restli.examples.typeref.api.BytesRef"
+        } ]
+      }, {
+        "name" : "CustomNonNegativeLongRef",
+        "returns" : "com.linkedin.restli.examples.typeref.api.CustomNonNegativeLongRef",
+        "parameters" : [ {
+          "name" : "arg1",
+          "type" : "com.linkedin.restli.examples.typeref.api.CustomNonNegativeLongRef"
+        } ]
+      }, {
+        "name" : "FruitsRef",
+        "returns" : "com.linkedin.restli.examples.typeref.api.FruitsRef",
+        "parameters" : [ {
+          "name" : "arg1",
+          "type" : "com.linkedin.restli.examples.typeref.api.FruitsRef"
+        } ]
+      }, {
+        "name" : "IntArrayFunc",
+        "returns" : "com.linkedin.restli.examples.typeref.api.IntArrayRef",
+        "parameters" : [ {
+          "name" : "arg1",
+          "type" : "com.linkedin.restli.examples.typeref.api.IntArrayRef"
+        } ]
+      }, {
+        "name" : "IntMapFunc",
+        "returns" : "com.linkedin.restli.examples.typeref.api.IntMapRef",
+        "parameters" : [ {
+          "name" : "arg1",
+          "type" : "com.linkedin.restli.examples.typeref.api.IntMapRef"
+        } ]
+      }, {
+        "name" : "PointRef",
+        "returns" : "com.linkedin.restli.examples.typeref.api.PointRef",
+        "parameters" : [ {
+          "name" : "arg1",
+          "type" : "com.linkedin.restli.examples.typeref.api.PointRef"
+        } ]
+      }, {
+        "name" : "StringFunc",
+        "returns" : "com.linkedin.restli.examples.typeref.api.StringRef",
+        "parameters" : [ {
+          "name" : "arg1",
+          "type" : "com.linkedin.restli.examples.typeref.api.StringRef"
+        } ]
+      }, {
+        "name" : "booleanFunc",
+        "returns" : "com.linkedin.restli.examples.typeref.api.BooleanRef",
+        "parameters" : [ {
+          "name" : "arg1",
+          "type" : "com.linkedin.restli.examples.typeref.api.BooleanRef"
+        } ]
+      }, {
+        "name" : "booleanFunc2",
+        "returns" : "com.linkedin.restli.examples.typeref.api.BooleanRef",
+        "parameters" : [ {
+          "name" : "arg1",
+          "type" : "com.linkedin.restli.examples.typeref.api.BooleanRef"
+        } ]
+      }, {
+        "name" : "doubleFunc",
+        "returns" : "com.linkedin.restli.examples.typeref.api.DoubleRef",
+        "parameters" : [ {
+          "name" : "arg1",
+          "type" : "com.linkedin.restli.examples.typeref.api.DoubleRef"
+        } ]
+      }, {
+        "name" : "doubleFunc2",
+        "returns" : "com.linkedin.restli.examples.typeref.api.DoubleRef",
+        "parameters" : [ {
+          "name" : "arg1",
+          "type" : "com.linkedin.restli.examples.typeref.api.DoubleRef"
+        } ]
+      }, {
+        "name" : "floatFunc",
+        "returns" : "com.linkedin.restli.examples.typeref.api.FloatRef",
+        "parameters" : [ {
+          "name" : "arg1",
+          "type" : "com.linkedin.restli.examples.typeref.api.FloatRef"
+        } ]
+      }, {
+        "name" : "floatFunc2",
+        "returns" : "com.linkedin.restli.examples.typeref.api.FloatRef",
+        "parameters" : [ {
+          "name" : "arg1",
+          "type" : "com.linkedin.restli.examples.typeref.api.FloatRef"
+        } ]
+      }, {
+        "name" : "intFunc",
+        "returns" : "com.linkedin.restli.examples.typeref.api.IntRef",
+        "parameters" : [ {
+          "name" : "arg1",
+          "type" : "com.linkedin.restli.examples.typeref.api.IntRef"
+        } ]
+      }, {
+        "name" : "intFunc2",
+        "returns" : "com.linkedin.restli.examples.typeref.api.IntRef",
+        "parameters" : [ {
+          "name" : "arg1",
+          "type" : "com.linkedin.restli.examples.typeref.api.IntRef"
+        } ]
+      }, {
+        "name" : "longFunc",
+        "returns" : "com.linkedin.restli.examples.typeref.api.LongRef",
+        "parameters" : [ {
+          "name" : "arg1",
+          "type" : "com.linkedin.restli.examples.typeref.api.LongRef"
+        } ]
+      }, {
+        "name" : "longFunc2",
+        "returns" : "com.linkedin.restli.examples.typeref.api.LongRef",
+        "parameters" : [ {
+          "name" : "arg1",
+          "type" : "com.linkedin.restli.examples.typeref.api.LongRef"
+        } ]
+      } ]
+    },
+    "namespace" : "com.linkedin.restli.examples.typeref.client"
+  }
+}

@@ -1,0 +1,167 @@
+{
+  "models" : [ {
+    "type" : "record",
+    "name" : "GroupMembershipKey",
+    "namespace" : "com.linkedin.restli.examples.groups.api",
+    "doc" : "A GroupMembership entity key",
+    "fields" : [ {
+      "name" : "memberID",
+      "type" : "int",
+      "doc" : "This field is read-only."
+    }, {
+      "name" : "groupID",
+      "type" : "int",
+      "doc" : "This field is read-only."
+    } ]
+  }, {
+    "type" : "enum",
+    "name" : "MembershipLevel",
+    "namespace" : "com.linkedin.restli.examples.groups.api",
+    "symbols" : [ "BLOCKED", "NON_MEMBER", "REQUESTING_TO_JOIN", "MEMBER", "MODERATOR", "MANAGER", "OWNER" ]
+  }, {
+    "type" : "enum",
+    "name" : "EmailDigestFrequency",
+    "namespace" : "com.linkedin.restli.examples.groups.api",
+    "symbols" : [ "NONE", "DAILY", "WEEKLY" ]
+  }, {
+    "type" : "enum",
+    "name" : "WriteLevel",
+    "namespace" : "com.linkedin.restli.examples.groups.api",
+    "symbols" : [ "NONE", "PREMODERATED", "DEFAULT", "FULL" ]
+  }, {
+    "type" : "record",
+    "name" : "ComplexKeyGroupMembership",
+    "namespace" : "com.linkedin.restli.examples.groups.api",
+    "doc" : "A GroupMembership entity",
+    "fields" : [ {
+      "name" : "id",
+      "type" : "GroupMembershipKey",
+      "doc" : "Complex key consisting of groupID and memberID"
+    }, {
+      "name" : "membershipLevel",
+      "type" : "MembershipLevel"
+    }, {
+      "name" : "contactEmail",
+      "type" : "string"
+    }, {
+      "name" : "isPublicized",
+      "type" : "boolean"
+    }, {
+      "name" : "allowMessagesFromMembers",
+      "type" : "boolean"
+    }, {
+      "name" : "joinedTime",
+      "type" : "long",
+      "doc" : "This field is read-only."
+    }, {
+      "name" : "resignedTime",
+      "type" : "long",
+      "doc" : "This field is read-only."
+    }, {
+      "name" : "lastModifiedStateTime",
+      "type" : "long",
+      "doc" : "This field is read-only."
+    }, {
+      "name" : "emailDigestFrequency",
+      "type" : "EmailDigestFrequency"
+    }, {
+      "name" : "creationTime",
+      "type" : "long",
+      "doc" : "This field is read-only."
+    }, {
+      "name" : "lastModifiedTime",
+      "type" : "long",
+      "doc" : "This field is read-only."
+    }, {
+      "name" : "emailAnnouncementsFromManagers",
+      "type" : "boolean"
+    }, {
+      "name" : "emailForEveryNewPost",
+      "type" : "boolean"
+    }, {
+      "name" : "writeLevel",
+      "type" : "WriteLevel",
+      "doc" : "This field can only be accessed by moderators of the group"
+    }, {
+      "name" : "firstName",
+      "type" : "string",
+      "doc" : "Denormalized from members"
+    }, {
+      "name" : "lastName",
+      "type" : "string",
+      "doc" : "Denormalized from members"
+    } ]
+  }, {
+    "type" : "record",
+    "name" : "GroupMembershipParam",
+    "namespace" : "com.linkedin.restli.examples.groups.api",
+    "doc" : "A GroupMembership entity parameters",
+    "fields" : [ {
+      "name" : "intParameter",
+      "type" : "int"
+    }, {
+      "name" : "stringParameter",
+      "type" : "string"
+    } ]
+  }, {
+    "type" : "record",
+    "name" : "GroupMembershipQueryParam",
+    "namespace" : "com.linkedin.restli.examples.groups.api",
+    "doc" : "A GroupMembership resource query parameters",
+    "fields" : [ {
+      "name" : "intParameter",
+      "type" : "int"
+    }, {
+      "name" : "stringParameter",
+      "type" : "string"
+    } ]
+  } ],
+  "schema" : {
+    "schema" : "com.linkedin.restli.examples.groups.api.ComplexKeyGroupMembership",
+    "name" : "groupMembershipsComplex",
+    "doc" : "generated from: com.linkedin.restli.examples.groups.server.rest.impl.GroupMembershipsResource3",
+    "path" : "/groupMembershipsComplex",
+    "collection" : {
+      "methods" : [ {
+        "method" : "create"
+      }, {
+        "method" : "get",
+        "parameters" : [ {
+          "optional" : true,
+          "name" : "testParam",
+          "type" : "com.linkedin.restli.examples.groups.api.GroupMembershipParam"
+        }, {
+          "optional" : true,
+          "name" : "testParamArray",
+          "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.groups.api.GroupMembershipQueryParam\" }"
+        } ]
+      }, {
+        "method" : "update"
+      }, {
+        "method" : "partial_update"
+      }, {
+        "method" : "delete"
+      }, {
+        "method" : "batch_create"
+      }, {
+        "method" : "batch_get"
+      }, {
+        "method" : "batch_update"
+      }, {
+        "method" : "batch_partial_update"
+      }, {
+        "method" : "batch_delete"
+      } ],
+      "entity" : {
+        "path" : "/groupMembershipsComplex/{groupMembershipsComplexId}"
+      },
+      "supports" : [ "batch_create", "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "delete", "get", "partial_update", "update" ],
+      "identifier" : {
+        "name" : "groupMembershipsComplexId",
+        "params" : "com.linkedin.restli.examples.groups.api.GroupMembershipParam",
+        "type" : "com.linkedin.restli.examples.groups.api.GroupMembershipKey"
+      }
+    },
+    "namespace" : "com.linkedin.restli.examples.groups.client"
+  }
+}

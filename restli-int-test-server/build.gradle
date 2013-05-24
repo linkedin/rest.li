@@ -1,5 +1,6 @@
 dependencies {
   compile project(':restli-int-test-api')
+  compile project(':restli-int-test-api').sourceSets.test.output
   compile project(':restli-server-standalone') // for task startServerStandaloneLauncher
   compile project(':data')
   compile project(':pegasus-common')

@@ -83,17 +83,34 @@ public class CompatibilityInfoMap
   public void addInfo(CompatibilityMessage message)
   {
     final CompatibilityInfo.Type infoType;
+    CompatibilityInfo info;
+    String infoMessage = String.format(message.getFormat(), message.getArgs());
+
     if (message.isError())
     {
-      infoType = CompatibilityInfo.Type.TYPE_ERROR;
+      switch (message.getImpact())
+      {
+        case BREAKS_NEW_READER:
+          infoType = CompatibilityInfo.Type.TYPE_BREAKS_NEW_READER;
+          break;
+        case BREAKS_OLD_READER:
+          infoType = CompatibilityInfo.Type.TYPE_BREAKS_OLD_READER;
+          break;
+        case BREAKS_NEW_AND_OLD_READERS:
+          infoType = CompatibilityInfo.Type.TYPE_BREAKS_NEW_AND_OLD_READERS;
+          break;
+        default:
+          infoType = CompatibilityInfo.Type.OTHER_ERROR;
+          break;
+      }
     }
     else
     {
       infoType = CompatibilityInfo.Type.TYPE_INFO;
     }
-    String info = String.format(message.getFormat(), message.getArgs());
-    _map.get(infoType.getLevel()).add(
-      new CompatibilityInfo(Arrays.asList(message.getPath()), infoType, info));
+    info = new CompatibilityInfo(Arrays.asList(message.getPath()), infoType, infoMessage);
+    _map.get(infoType.getLevel()).add(info);
+
   }
 
   public void addInfo(Message message)

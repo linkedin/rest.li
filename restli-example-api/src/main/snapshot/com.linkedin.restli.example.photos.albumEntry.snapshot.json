@@ -1,0 +1,80 @@
+{
+  "models" : [ {
+    "type" : "record",
+    "name" : "AlbumEntry",
+    "namespace" : "com.linkedin.restli.example",
+    "doc" : "An album for rest.li",
+    "fields" : [ {
+      "name" : "albumId",
+      "type" : "long"
+    }, {
+      "name" : "photoId",
+      "type" : "long"
+    }, {
+      "name" : "addTime",
+      "type" : "long",
+      "doc" : "When the photo was added to the album"
+    } ]
+  } ],
+  "schema" : {
+    "schema" : "com.linkedin.restli.example.AlbumEntry",
+    "association" : {
+      "methods" : [ {
+        "doc" : "Retrieve the photo's album entry",
+        "method" : "get"
+      }, {
+        "doc" : "Add the specified photo to the specified album.\n If a matching pair of IDs already exists, this changes the add date.",
+        "method" : "update"
+      }, {
+        "doc" : "Remove the specified photo from the specified album",
+        "method" : "delete"
+      }, {
+        "method" : "batch_get"
+      } ],
+      "entity" : {
+        "path" : "/albumEntry/photoId={photoId}&albumId={albumId}"
+      },
+      "finders" : [ {
+        "name" : "search",
+        "doc" : "Find all entries matching the given album and photo IDs. <code>null</code> is treated\n as a wildcard.",
+        "parameters" : [ {
+          "optional" : true,
+          "name" : "albumId",
+          "doc" : "provides the id to match for albums to match,  if not provided, it is treated as a wildcard",
+          "type" : "long"
+        }, {
+          "optional" : true,
+          "name" : "photoId",
+          "doc" : "provides the id to match for photos to match,  if not provided, it is treated as a wildcard",
+          "type" : "long"
+        } ]
+      } ],
+      "supports" : [ "batch_get", "delete", "get", "update" ],
+      "assocKeys" : [ {
+        "name" : "albumId",
+        "type" : "long"
+      }, {
+        "name" : "photoId",
+        "type" : "long"
+      } ],
+      "actions" : [ {
+        "name" : "purge",
+        "doc" : "Delete all entries in the db with matching album/photo IDs. If either albumId or photoId\n params are not supplied they are treated as a wildcard.",
+        "returns" : "int",
+        "parameters" : [ {
+          "optional" : true,
+          "name" : "albumId",
+          "type" : "long"
+        }, {
+          "optional" : true,
+          "name" : "photoId",
+          "type" : "long"
+        } ]
+      } ]
+    },
+    "name" : "albumEntry",
+    "doc" : "Many-many association between photos and albums.\n\n <pre>\n   new AlbumEntryBuilders().findBySearch()\n     .albumIdParam(5)\n     .photoIdParam(100)\n     .build();\n </pre>\n\ngenerated from: com.linkedin.restli.example.impl.AlbumEntryResource",
+    "path" : "/albumEntry",
+    "namespace" : "com.linkedin.restli.example.photos"
+  }
+}

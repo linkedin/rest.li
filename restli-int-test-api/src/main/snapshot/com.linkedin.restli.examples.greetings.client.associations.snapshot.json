@@ -1,0 +1,54 @@
+{
+  "models" : [ {
+    "type" : "enum",
+    "name" : "Tone",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "symbols" : [ "FRIENDLY", "SINCERE", "INSULTING" ]
+  }, {
+    "type" : "record",
+    "name" : "Message",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "doc" : "A message",
+    "fields" : [ {
+      "name" : "id",
+      "type" : "string"
+    }, {
+      "name" : "message",
+      "type" : "string"
+    }, {
+      "name" : "tone",
+      "type" : "Tone",
+      "doc" : "tone"
+    } ]
+  } ],
+  "schema" : {
+    "schema" : "com.linkedin.restli.examples.greetings.api.Message",
+    "association" : {
+      "methods" : [ {
+        "method" : "get"
+      } ],
+      "entity" : {
+        "path" : "/associations/src={src}&dest={dest}"
+      },
+      "finders" : [ {
+        "name" : "assocKeyFinder",
+        "assocKeys" : [ "src" ]
+      }, {
+        "name" : "assocKeyFinderOpt",
+        "assocKeys" : [ "src" ]
+      } ],
+      "supports" : [ "get" ],
+      "assocKeys" : [ {
+        "name" : "dest",
+        "type" : "string"
+      }, {
+        "name" : "src",
+        "type" : "string"
+      } ]
+    },
+    "name" : "associations",
+    "doc" : "Demonstrates an assocation resource keyed by string.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.AssociationsResource",
+    "path" : "/associations",
+    "namespace" : "com.linkedin.restli.examples.greetings.client"
+  }
+}

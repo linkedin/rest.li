@@ -1,0 +1,70 @@
+{
+  "models" : [ {
+    "type" : "enum",
+    "name" : "Tone",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "symbols" : [ "FRIENDLY", "SINCERE", "INSULTING" ]
+  }, {
+    "type" : "record",
+    "name" : "Greeting",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "doc" : "A greeting",
+    "fields" : [ {
+      "name" : "id",
+      "type" : "long"
+    }, {
+      "name" : "message",
+      "type" : "string"
+    }, {
+      "name" : "tone",
+      "type" : "Tone",
+      "doc" : "tone"
+    } ]
+  }, {
+    "type" : "typeref",
+    "name" : "DateRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : "long",
+    "java" : {
+      "coercerClass" : "com.linkedin.restli.examples.custom.types.DateCoercer",
+      "class" : "java.util.Date"
+    }
+  }, {
+    "type" : "typeref",
+    "name" : "CustomLongRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : "long",
+    "java" : {
+      "class" : "com.linkedin.restli.examples.custom.types.CustomLong"
+    }
+  } ],
+  "schema" : {
+    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+    "association" : {
+      "methods" : [ {
+        "method" : "get"
+      }, {
+        "method" : "batch_update"
+      } ],
+      "entity" : {
+        "path" : "/customTypes3/longId={longId}&dateId={dateId}"
+      },
+      "finders" : [ {
+        "name" : "dateOnly",
+        "assocKeys" : [ "dateId" ]
+      } ],
+      "supports" : [ "batch_update", "get" ],
+      "assocKeys" : [ {
+        "name" : "dateId",
+        "type" : "com.linkedin.restli.examples.typeref.api.DateRef"
+      }, {
+        "name" : "longId",
+        "type" : "com.linkedin.restli.examples.typeref.api.CustomLongRef"
+      } ]
+    },
+    "name" : "customTypes3",
+    "doc" : "generated from: com.linkedin.restli.examples.greetings.server.CustomTypesResource3",
+    "path" : "/customTypes3",
+    "namespace" : "com.linkedin.restli.examples.greetings.client"
+  }
+}

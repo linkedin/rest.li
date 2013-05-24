@@ -22,24 +22,43 @@ project.sourceSets.all { SourceSet sourceSet ->
     return;
   }
 
-  final String outputDirPath = rootProject.ext.build.getRestModelOutDirPath(project, sourceSet)
+  final String idlOutputDirPath = rootProject.ext.build.getRestModelOutDirPath(project, sourceSet)
   rootProject.ext.build.restModelTasks[sourceSet] = project.task(sourceSet.name + 'GenerateRestModel',
                                                              type: JavaExec,
                                                              dependsOn: tasks[sourceSet.classesTaskName]) {
     main = 'com.linkedin.restli.tools.idlgen.RestLiResourceModelExporterCmdLineApp'
     classpath restliToolsConfig + restliToolsConfig.allArtifacts.files + sourceSet.compileClasspath + project.files(sourceSet.output.classesDir)
     args '-outdir'
-    args outputDirPath
+    args idlOutputDirPath
     args '-sourcepath'
     args sourceSet.java.srcDirs
     args '-resourcepackages'
     args resourcePackages[sourceSet.name]
     doFirst {
-      project.mkdir(outputDirPath)
+      project.mkdir(idlOutputDirPath)
     }
   }
 
-  // .restspec.json file generation requires class files be generated first
+  final String dataSchemaRelativePath = "src${File.separatorChar}${sourceSet.name}${File.separatorChar}pegasus"
+  final String snapshotOutputDirPath = rootProject.ext.build.getRestSnapshotOutDirPath(project, sourceSet)
+  rootProject.ext.build.restSnapshotTasks[sourceSet] = project.task(sourceSet.name + 'GenerateSnapshot',
+                                                                 type: JavaExec,
+                                                                 dependsOn: tasks[sourceSet.classesTaskName]) {
+    main = 'com.linkedin.restli.tools.snapshot.gen.RestLiSnapshotExporterCmdLineApp'
+    classpath = restliToolsConfig + restliToolsConfig.allArtifacts.files + sourceSet.compileClasspath + project.files(sourceSet.output.classesDir)
+    systemProperties(['generator.resolver.path': apiProject.file(dataSchemaRelativePath).path + ':' + project.findProject(':restli-common').file(dataSchemaRelativePath).path])
+    args '-outdir'
+    args snapshotOutputDirPath
+    args '-sourcepath'
+    args sourceSet.java.srcDirs
+    args '-resourcepackages'
+    args resourcePackages[sourceSet.name]
+    doFirst {
+      project.mkdir(snapshotOutputDirPath)
+    }
+  }
+
+  // .restspec.json and .snapshot.json file generation requires class files be generated first
   // make jar task, which always runs after class generation, depend on this task
-  project.tasks[sourceSet.getTaskName('', 'jar')].dependsOn(rootProject.ext.build.restModelTasks[sourceSet])
+  project.tasks[sourceSet.getTaskName('', 'jar')].dependsOn(rootProject.ext.build.restModelTasks[sourceSet], rootProject.ext.build.restSnapshotTasks[sourceSet])
 }

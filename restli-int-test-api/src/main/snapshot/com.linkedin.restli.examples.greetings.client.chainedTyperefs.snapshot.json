@@ -1,0 +1,78 @@
+{
+  "models" : [ {
+    "type" : "enum",
+    "name" : "Tone",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "symbols" : [ "FRIENDLY", "SINCERE", "INSULTING" ]
+  }, {
+    "type" : "record",
+    "name" : "Greeting",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "doc" : "A greeting",
+    "fields" : [ {
+      "name" : "id",
+      "type" : "long"
+    }, {
+      "name" : "message",
+      "type" : "string"
+    }, {
+      "name" : "tone",
+      "type" : "Tone",
+      "doc" : "tone"
+    } ]
+  }, {
+    "type" : "typeref",
+    "name" : "CustomNonNegativeLongRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : {
+      "type" : "typeref",
+      "name" : "CustomLongRef",
+      "ref" : "long",
+      "java" : {
+        "class" : "com.linkedin.restli.examples.custom.types.CustomLong"
+      }
+    },
+    "java" : {
+      "coercerClass" : "com.linkedin.restli.examples.custom.types.CustomNonNegativeLongCoercer",
+      "class" : "com.linkedin.restli.examples.custom.types.CustomNonNegativeLong"
+    }
+  }, {
+    "type" : "typeref",
+    "name" : "DateRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : "long",
+    "java" : {
+      "coercerClass" : "com.linkedin.restli.examples.custom.types.DateCoercer",
+      "class" : "java.util.Date"
+    }
+  } ],
+  "schema" : {
+    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+    "association" : {
+      "methods" : [ {
+        "method" : "get"
+      }, {
+        "method" : "batch_update"
+      } ],
+      "entity" : {
+        "path" : "/chainedTyperefs/birthday={birthday}&age={age}"
+      },
+      "finders" : [ {
+        "name" : "dateOnly",
+        "assocKeys" : [ "birthday" ]
+      } ],
+      "supports" : [ "batch_update", "get" ],
+      "assocKeys" : [ {
+        "name" : "age",
+        "type" : "com.linkedin.restli.examples.typeref.api.CustomNonNegativeLongRef"
+      }, {
+        "name" : "birthday",
+        "type" : "com.linkedin.restli.examples.typeref.api.DateRef"
+      } ]
+    },
+    "name" : "chainedTyperefs",
+    "doc" : "Uses CustomNonNegativeLong which is a typeref to CustomLong, which is a typeref to long\n\n Note that there are no coercers in this typeref chain.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.ChainedTyperefResource",
+    "path" : "/chainedTyperefs",
+    "namespace" : "com.linkedin.restli.examples.greetings.client"
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "models" : [ {
+    "type" : "record",
+    "name" : "Album",
+    "namespace" : "com.linkedin.restli.example",
+    "doc" : "An album for rest.li",
+    "fields" : [ {
+      "name" : "id",
+      "type" : "long"
+    }, {
+      "name" : "urn",
+      "type" : "string"
+    }, {
+      "name" : "title",
+      "type" : "string"
+    }, {
+      "name" : "creationTime",
+      "type" : "long",
+      "doc" : "When this album was created"
+    } ]
+  } ],
+  "schema" : {
+    "schema" : "com.linkedin.restli.example.Album",
+    "name" : "albums",
+    "doc" : "generated from: com.linkedin.restli.example.impl.AlbumResource",
+    "path" : "/albums",
+    "collection" : {
+      "methods" : [ {
+        "method" : "create"
+      }, {
+        "method" : "get"
+      }, {
+        "method" : "update"
+      }, {
+        "method" : "delete"
+      } ],
+      "entity" : {
+        "path" : "/albums/{albumsId}"
+      },
+      "supports" : [ "create", "delete", "get", "update" ],
+      "identifier" : {
+        "name" : "albumsId",
+        "type" : "long"
+      },
+      "actions" : [ {
+        "name" : "purge",
+        "returns" : "int"
+      } ]
+    },
+    "namespace" : "com.linkedin.restli.example.photos"
+  }
+}

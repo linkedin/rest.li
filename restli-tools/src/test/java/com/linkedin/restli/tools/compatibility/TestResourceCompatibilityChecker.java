@@ -209,11 +209,11 @@ public class TestResourceCompatibilityChecker
     testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "entity", "actions", "someAction", "returns"),
                                          CompatibilityInfo.Type.TYPE_MISSING));
     testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting"),
-                                         CompatibilityInfo.Type.TYPE_ERROR, "new record added required fields newField"));
+                                         CompatibilityInfo.Type.TYPE_BREAKS_NEW_READER, "new record added required fields newField"));
     testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting"),
-                                         CompatibilityInfo.Type.TYPE_ERROR, "new record removed required fields message"));
+                                         CompatibilityInfo.Type.TYPE_BREAKS_OLD_READER, "new record removed required fields message"));
     testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting", "id", "string"),
-                                         CompatibilityInfo.Type.TYPE_ERROR, "schema type changed from long to string"));
+                                         CompatibilityInfo.Type.TYPE_BREAKS_NEW_AND_OLD_READERS, "schema type changed from long to string"));
 
     ResourceSchema prevResource = idlToResource(idlsDir + PREV_COLL_FILE);
     ResourceSchema currResource = idlToResource(idlsDir + CURR_COLL_FAIL_FILE);
