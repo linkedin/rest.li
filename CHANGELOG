@@ -3,6 +3,7 @@
 
 1.8.27
 ------
+(RB=168797)
 Revert eec968ddab745286a8c9e05e35f0ddeab011a947 "Refactoring changes for testing resource compatibility."
 as it breaks rum publishRestModel with this message:
 "No such property: summary for class: com.linkedin.restli.tools.idlcheck.RestLiResourceModelCompatibilityChecker"
