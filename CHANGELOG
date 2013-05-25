@@ -4,9 +4,7 @@
 
 1.8.26
 ------
-(RB=167705)
-Refactor IDL compatibility checking. Allow compatibility checking of referenced named Schemas.
-Slightly alter some compatibility messages.
+
 
 (RB=167737)
 Add RestClient.sendRestRequest(..., Callback<RestResponse> callback) method.
