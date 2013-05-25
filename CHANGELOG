@@ -1,11 +1,14 @@
-1.8.27
+1.8.28
 ------
 
+1.8.27
+------
+Revert eec968ddab745286a8c9e05e35f0ddeab011a947 "Refactoring changes for testing resource compatibility."
+as it breaks rum publishRestModel with this message:
+"No such property: summary for class: com.linkedin.restli.tools.idlcheck.RestLiResourceModelCompatibilityChecker"
 
 1.8.26
 ------
-
-
 (RB=167737)
 Add RestClient.sendRestRequest(..., Callback<RestResponse> callback) method.
 
