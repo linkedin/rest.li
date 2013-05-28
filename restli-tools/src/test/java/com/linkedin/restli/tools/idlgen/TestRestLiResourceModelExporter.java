@@ -81,7 +81,7 @@ public class TestRestLiResourceModelExporter
     GeneratorResult result = exporter.export("twitter",
                                              null,
                                              new String[] {"src/test/java"},
-                                             new String[] {"com.linkedin.restli.server.twitter"},
+                                             new String[] {"com.linkedin.restli.tools.twitter"},
                                              outdir.getAbsolutePath());
 
     String[] expectedFiles = {STATUSES_FILE, FOLLOWS_FILE, ACCOUNTS_FILE, STATUSES_PARAMS_FILE};

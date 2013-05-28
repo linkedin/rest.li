@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-package com.linkedin.restli.server.twitter;
+package com.linkedin.restli.tools.twitter;
 
 import java.util.List;
 import java.util.Map;
@@ -35,8 +35,8 @@ import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
 import com.linkedin.restli.server.resources.KeyValueResource;
-import com.linkedin.restli.server.twitter.TwitterTestDataModels.Status;
-import com.linkedin.restli.server.twitter.TwitterTestDataModels.StatusType;
+import com.linkedin.restli.tools.twitter.TwitterTestDataModels.Status;
+import com.linkedin.restli.tools.twitter.TwitterTestDataModels.StatusType;
 
 /**
  * CollectionResource containing all statuses

@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-package com.linkedin.restli.server.twitter;
+package com.linkedin.restli.tools.twitter;
 
 import com.linkedin.data.template.StringArray;
 import com.linkedin.data.template.StringMap;

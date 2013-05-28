@@ -14,13 +14,14 @@
    limitations under the License.
 */
 
-package com.linkedin.restli.server.twitter;
+package com.linkedin.restli.tools.twitter;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.EnumDataSchema;
 import com.linkedin.data.schema.Name;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.RecordTemplate;
+
 
 /**
  * Empty/marker RecordTemplates for Twitter domain
@@ -32,7 +33,7 @@ public class TwitterTestDataModels
   public static class Status extends RecordTemplate
   {
     private static final RecordDataSchema SCHEMA =
-                    new RecordDataSchema(new Name("Status", new StringBuilder(10)), RecordDataSchema.RecordType.RECORD);
+        new RecordDataSchema(new Name("Status", new StringBuilder(10)), RecordDataSchema.RecordType.RECORD);
 
     public Status()
     {
@@ -47,17 +48,23 @@ public class TwitterTestDataModels
 
   public static class User extends RecordTemplate
   {
+    private static final RecordDataSchema SCHEMA =
+        new RecordDataSchema(new Name("User", new StringBuilder(10)), RecordDataSchema.RecordType.RECORD);
+
     public User(DataMap map)
     {
-      super(map, null);
+      super(map, SCHEMA);
     }
   }
 
   public static class Followed extends RecordTemplate
   {
+    private static final RecordDataSchema SCHEMA =
+        new RecordDataSchema(new Name("Followed", new StringBuilder(10)), RecordDataSchema.RecordType.RECORD);
+
     public Followed(DataMap map)
     {
-      super(map, null);
+      super(map, SCHEMA);
     }
   }
 

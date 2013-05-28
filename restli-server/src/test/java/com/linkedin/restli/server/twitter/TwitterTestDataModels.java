@@ -32,7 +32,7 @@ public class TwitterTestDataModels
   public static class Status extends RecordTemplate
   {
     private static final RecordDataSchema SCHEMA =
-                    new RecordDataSchema(new Name("Status", new StringBuilder(10)), RecordDataSchema.RecordType.RECORD);
+        new RecordDataSchema(new Name("Status", new StringBuilder(10)), RecordDataSchema.RecordType.RECORD);
 
     public Status()
     {
@@ -52,7 +52,7 @@ public class TwitterTestDataModels
 
     public User(DataMap map)
     {
-      super(map, null);
+      super(map, SCHEMA);
     }
   }
 
@@ -63,7 +63,7 @@ public class TwitterTestDataModels
 
     public Followed(DataMap map)
     {
-      super(map, null);
+      super(map, SCHEMA);
     }
   }
 

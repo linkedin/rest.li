@@ -1,8 +1,8 @@
 {
   "name" : "statuses",
   "path" : "/statuses",
-  "schema" : "com.linkedin.restli.server.twitter.TwitterTestDataModels$Status",
-  "doc" : "CollectionResource containing all statuses\n\ngenerated from: com.linkedin.restli.server.twitter.StatusCollectionResource",
+  "schema" : "com.linkedin.restli.tools.twitter.TwitterTestDataModels$Status",
+  "doc" : "CollectionResource containing all statuses\n\ngenerated from: com.linkedin.restli.tools.twitter.StatusCollectionResource",
   "collection" : {
     "identifier" : {
       "name" : "statusID",
@@ -62,8 +62,8 @@
       "subresources" : [ {
         "name" : "replies",
         "path" : "/statuses/{statusID}/replies",
-        "schema" : "com.linkedin.restli.server.twitter.TwitterTestDataModels$Status",
-        "doc" : "Nested CollectionResource of all replies to a given status\n\ngenerated from: com.linkedin.restli.server.twitter.RepliesCollectionResource",
+        "schema" : "com.linkedin.restli.tools.twitter.TwitterTestDataModels$Status",
+        "doc" : "Nested CollectionResource of all replies to a given status\n\ngenerated from: com.linkedin.restli.tools.twitter.RepliesCollectionResource",
         "collection" : {
           "identifier" : {
             "name" : "statusID",
