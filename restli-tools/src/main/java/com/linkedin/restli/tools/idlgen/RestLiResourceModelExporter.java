@@ -57,6 +57,7 @@ public class RestLiResourceModelExporter
    * @param classpath classpath to to load the resources. this is purely for Javadoc Doclet {@link RestLiDoclet}
    * @param sourcePaths paths to scan for resource Java source files. this is purely for Javadoc Doclet {@link RestLiDoclet}
    * @param resourcePackages packages to scan for resources
+   * @param resourceClasses specific classes as resources
    * @param outdir directory in which to output the IDL files
    * @return a result that includes collection of files generated and modified. Note: getSourceFiles() on the result
    * will always return an empty List as the code generation operates on classpaths and the ClassLoader and not files.
@@ -67,11 +68,19 @@ public class RestLiResourceModelExporter
                                 String[] classpath,
                                 String[] sourcePaths,
                                 String[] resourcePackages,
+                                String[] resourceClasses,
                                 String outdir)
       throws IOException
   {
     final RestLiConfig config = new RestLiConfig();
-    config.addResourcePackageNames(resourcePackages);
+    if (resourcePackages != null)
+    {
+      config.addResourcePackageNames(resourcePackages);
+    }
+    if (resourceClasses != null)
+    {
+      config.addResourceClassNames(resourceClasses);
+    }
 
     log.info("Executing rest.li annotation processor...");
     final RestLiApiBuilder apiBuilder = new RestLiApiBuilder(config);
@@ -111,6 +120,7 @@ public class RestLiResourceModelExporter
    * @param apiName the name of the API
    * @param sourcePaths paths to scan for resource Java source files
    * @param resourcePackages packages to scan for resources
+   * @param resourceClasses specific classes as resources
    * @param outdir directory in which to output the IDL files
    * @param split if true, IDL will be split into multiple files, one per root resource
    * @return a result that includes collection of files generated and modified. Note: getSourceFiles() on the result
@@ -122,6 +132,7 @@ public class RestLiResourceModelExporter
   public GeneratorResult export(String apiName,
                                 String[] sourcePaths,
                                 String[] resourcePackages,
+                                String[] resourceClasses,
                                 String outdir,
                                 boolean split)
       throws IOException
@@ -131,7 +142,7 @@ public class RestLiResourceModelExporter
       throw new IllegalStateException("Resource models should always be exported in split mode");
     }
 
-    return export(apiName, null, sourcePaths, resourcePackages, outdir);
+    return export(apiName, null, sourcePaths, resourcePackages, resourceClasses, outdir);
   }
 
   private GeneratorResult generateIDLFiles(String apiName,

@@ -51,9 +51,10 @@ project.sourceSets.all { SourceSet sourceSet ->
                                            type: JavaExec,
                                            dependsOn: generateRestModelTask) {
       main = 'com.linkedin.restli.tools.idlcheck.RestLiResourceModelCompatibilityChecker'
-      classpath = restliToolsConfig + restliToolsConfig.allArtifacts.files
+      classpath restliToolsConfig + restliToolsConfig.allArtifacts.files
       systemProperties(['generator.resolver.path': apiProject.file(dataSchemaRelativePath).path])
-      args(['--compat', compatLevel])
+      args '--compat'
+      args compatLevel
     }
     currIdlFiles.each {
       final String apiIdlFilePath = "${apiIdlDir.path}${File.separatorChar}${it.name}"

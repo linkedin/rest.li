@@ -30,7 +30,7 @@ project.sourceSets.all { SourceSet sourceSet ->
   final Task dataTemplateCompileTask = rootProject.ext.build.dataTemplateCompileTasks[sourceSet];
   rootProject.ext.build.restClientGenerateTasks[sourceSet] = project.task(sourceSet.name + 'GenerateRestClient', type: JavaExec) {
     main = 'com.linkedin.restli.tools.clientgen.RestRequestBuilderGenerator'
-    classpath = restliToolsConfig + restliToolsConfig.allArtifacts.files
+    classpath restliToolsConfig + restliToolsConfig.allArtifacts.files
     args outputDirPath
     args inputIdlFiles
     systemProperties(['generator.resolver.path': "src${File.separatorChar}${sourceSet.name}${File.separatorChar}pegasus:" + dataTemplateCompileTask.destinationDir.path,

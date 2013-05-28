@@ -61,13 +61,12 @@ public class RestLiResourceModelExporterCmdLineApp
       OptionBuilder.withArgName("resourcepackages").hasArgs()
                    .withDescription("Space-delimited list of packages to scan for resource classes")
                    .create("resourcepackages");
-    // not supported yet
-//    Option sourceClasses =
-//      OptionBuilder.withArgName("resourceclasses").hasArgs()
-//                   .withDescription("space-delimited list of resource classes to scan")
-//                   .create("resourceclasses");
+    Option sourceClasses =
+      OptionBuilder.withArgName("resourceclasses").hasArgs()
+                   .withDescription("space-delimited list of resource classes to scan")
+                   .create("resourceclasses");
     sourceGroup.addOption(sourcePkgs);
-//    sourceGroup.addOption(sourceClasses);
+    sourceGroup.addOption(sourceClasses);
     OPTIONS.addOptionGroup(sourceGroup);
   }
 
@@ -79,7 +78,8 @@ public class RestLiResourceModelExporterCmdLineApp
     BasicConfigurator.configure();
 
 //    args = new String[] {"-name", "groups",
-//                         "-resourcepackages", "com.linkedin.groups.server.rest2.impl",
+//                         "-resourcepackages", "com.linkedin.groups.server.rest1.impl com.linkedin.groups.server.rest2.impl ",
+//                         "-resourceclasses", "com.linkedin.groups.server.restX.impl.FooResource",
 //                         "-sourcepath", "src/main/java",
 //                         "-outdir", "src/codegen/idl",
 //                         "-split"};
@@ -94,7 +94,7 @@ public class RestLiResourceModelExporterCmdLineApp
     {
       System.err.println("Invalid arguments: " + e.getMessage());
       final HelpFormatter formatter = new HelpFormatter();
-      formatter.printHelp("restliexporter -sourcepath sourcepath -resourcepackages packagenames" +
+      formatter.printHelp("restliexporter -sourcepath sourcepath [-resourcepackages packagenames] [-resourceclasses classnames]" +
                           "[-name api_name] [-outdir outdir]", OPTIONS);
       System.exit(0);
     }
@@ -105,6 +105,7 @@ public class RestLiResourceModelExporterCmdLineApp
                                                null,
                                                cl.getOptionValues("sourcepath"),
                                                cl.getOptionValues("resourcepackages"),
+                                               cl.getOptionValues("resourceclasses"),
                                                cl.getOptionValue("outdir", "."));
     }
     catch (Throwable e)

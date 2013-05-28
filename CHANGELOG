@@ -4,6 +4,9 @@
 Refactor IDL compatibility checking. Allow compatibility checking of referenced named Schemas.
 Slightly alter some compatibility messages.
 
+(RB=169203)
+Add -resourceclasses option to idl generator command line application.
+
 1.8.28
 ------
 (RB=167736)

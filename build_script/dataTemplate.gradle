@@ -31,7 +31,7 @@ project.sourceSets.all { SourceSet sourceSet ->
 
   rootProject.ext.build.dataTemplateGenerateTasks[sourceSet] = project.task(sourceSet.name + 'GenerateDataTemplate', type: JavaExec) {
     main = 'com.linkedin.pegasus.generator.PegasusDataTemplateGenerator'
-    classpath = generatorConfig + generatorConfig.allArtifacts.files
+    classpath generatorConfig + generatorConfig.allArtifacts.files
     args outputDirPath
     args inputDataSchemaFiles
     systemProperties(['generator.resolver.path': inputDataSchemaDirPath])

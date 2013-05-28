@@ -27,7 +27,7 @@ project.sourceSets.all { SourceSet sourceSet ->
                                                              type: JavaExec,
                                                              dependsOn: tasks[sourceSet.classesTaskName]) {
     main = 'com.linkedin.restli.tools.idlgen.RestLiResourceModelExporterCmdLineApp'
-    classpath = restliToolsConfig + restliToolsConfig.allArtifacts.files + sourceSet.compileClasspath + project.files(sourceSet.output.classesDir)
+    classpath restliToolsConfig + restliToolsConfig.allArtifacts.files + sourceSet.compileClasspath + project.files(sourceSet.output.classesDir)
     args '-outdir'
     args outputDirPath
     args '-sourcepath'
