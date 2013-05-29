@@ -16,37 +16,14 @@
 
 package com.linkedin.restli.tools.idlcheck;
 
-
-import com.linkedin.data.DataMap;
-import com.linkedin.data.message.Message;
-import com.linkedin.data.schema.ArrayDataSchema;
-import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaResolver;
-import com.linkedin.data.schema.RecordDataSchema.Field;
 import com.linkedin.data.schema.SchemaParserFactory;
 import com.linkedin.data.schema.resolver.DefaultDataSchemaResolver;
 import com.linkedin.data.schema.resolver.FileDataSchemaResolver;
-import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
-import com.linkedin.data.schema.validation.ValidationOptions;
-import com.linkedin.data.schema.validation.ValidationResult;
-import com.linkedin.data.template.GetMode;
-import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.data.template.StringArray;
-import com.linkedin.data.template.WrappingArrayTemplate;
-import com.linkedin.restli.restspec.ActionSchema;
-import com.linkedin.restli.restspec.ActionsSetSchema;
-import com.linkedin.restli.restspec.AssocKeySchema;
-import com.linkedin.restli.restspec.AssociationSchema;
-import com.linkedin.restli.restspec.CollectionSchema;
-import com.linkedin.restli.restspec.EntitySchema;
-import com.linkedin.restli.restspec.FinderSchema;
-import com.linkedin.restli.restspec.IdentifierSchema;
-import com.linkedin.restli.restspec.MetadataSchema;
-import com.linkedin.restli.restspec.ParameterSchema;
-import com.linkedin.restli.restspec.ParameterSchemaArray;
 import com.linkedin.restli.restspec.ResourceSchema;
-import com.linkedin.restli.restspec.RestMethodSchema;
 import com.linkedin.restli.restspec.RestSpecCodec;
+import com.linkedin.restli.tools.compatibility.CompatibilityInfoMap;
+import com.linkedin.restli.tools.compatibility.ResourceCompatibilityChecker;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -60,15 +37,8 @@ import org.slf4j.LoggerFactory;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.Stack;
 
 
 /**
@@ -137,8 +107,10 @@ public class RestLiResourceModelCompatibilityChecker
     for (int i = 1; i < targets.length; i += 2)
     {
       final RestLiResourceModelCompatibilityChecker checker = new RestLiResourceModelCompatibilityChecker();
-      result &= checker.check(targets[i - 1], targets[i], compat);
-      allSummaries.append(checker.getSummary());
+      String prevTarget = targets[i - 1];
+      String currTarget = targets[i];
+      result &= checker.check(prevTarget, currTarget, compat);
+      allSummaries.append(checker.getMap().createSummary(prevTarget, currTarget));
     }
 
     if (compat != CompatibilityLevel.OFF && allSummaries.length() > 0)
@@ -147,25 +119,6 @@ public class RestLiResourceModelCompatibilityChecker
     }
 
     System.exit(result ? 0 : 1);
-  }
-
-  /**
-   * Create new {@link RestLiResourceModelCompatibilityChecker}.
-   */
-  public RestLiResourceModelCompatibilityChecker()
-  {
-    final String resolverPath = System.getProperty(GENERATOR_RESOLVER_PATH);
-    if (resolverPath != null)
-    {
-      _schemaResolver = new FileDataSchemaResolver(SchemaParserFactory.instance(), resolverPath);
-    }
-    else
-    {
-      _schemaResolver = new DefaultDataSchemaResolver();
-    }
-
-    _info.put(CompatibilityInfo.Level.INCOMPATIBLE, new ArrayList<CompatibilityInfo>());
-    _info.put(CompatibilityInfo.Level.COMPATIBLE, new ArrayList<CompatibilityInfo>());
   }
 
   /**
@@ -181,9 +134,9 @@ public class RestLiResourceModelCompatibilityChecker
   {
     _prevRestspecPath = prevRestspecPath;
     _currRestspecPath = currRestspecPath;
-
-    _path = new ArrayList<Object>();
-    _path.add("");
+    
+    Stack<Object> path = new Stack<Object>();
+    path.push("");
 
     ResourceSchema prevRec = null;
     ResourceSchema currRec = null;
@@ -194,11 +147,11 @@ public class RestLiResourceModelCompatibilityChecker
     }
     catch (FileNotFoundException e)
     {
-      addInfo(CompatibilityInfo.Type.RESOURCE_NEW, currRestspecPath);
+      _map.addInfo(CompatibilityInfo.Type.RESOURCE_NEW, path, currRestspecPath);
     }
     catch (IOException e)
     {
-      addInfo(CompatibilityInfo.Type.OTHER_ERROR, e.getMessage());
+      _map.addInfo(CompatibilityInfo.Type.OTHER_ERROR, path, e.getMessage());
     }
 
     try
@@ -207,33 +160,33 @@ public class RestLiResourceModelCompatibilityChecker
     }
     catch (FileNotFoundException e)
     {
-      addInfo(CompatibilityInfo.Type.RESOURCE_MISSING, prevRestspecPath);
+      _map.addInfo(CompatibilityInfo.Type.RESOURCE_MISSING, path, prevRestspecPath);
     }
     catch (Exception e)
     {
-      addInfo(CompatibilityInfo.Type.OTHER_ERROR, e.getMessage());
+      _map.addInfo(CompatibilityInfo.Type.OTHER_ERROR, path, e.getMessage());
     }
 
     if (prevRec == null || currRec == null)
     {
-      return isCompatible(compatLevel);
+      return _map.isCompatible(compatLevel);
     }
 
-    // validate RecordTemplate against schema before checking compatibility
-    final ValidationOptions valOptions = new ValidationOptions();
-    // use two lines to ensure both get called
-    boolean valResult = validateData(prevRec.data(), prevRec.schema(), valOptions);
-    valResult &= validateData(currRec.data(), currRec.schema(), valOptions);
-    if (!valResult)
+    final String resolverPath = System.getProperty(GENERATOR_RESOLVER_PATH);
+    final DataSchemaResolver resolver;
+    if (resolverPath != null)
     {
-      return isCompatible(compatLevel);
+      resolver = new FileDataSchemaResolver(SchemaParserFactory.instance(), resolverPath);
+    }
+    else
+    {
+      resolver = new DefaultDataSchemaResolver();
     }
 
-    checkRecordTemplate(prevRec, currRec);
-
-    _path.remove(_path.size() - 1);
-
-    return isCompatible(compatLevel);
+    ResourceCompatibilityChecker checker = new ResourceCompatibilityChecker(prevRec, resolver, currRec, resolver);
+    boolean check = checker.check(compatLevel);
+    _map.addAll(checker.getMap());
+    return check;
   }
 
   /**
@@ -254,35 +207,27 @@ public class RestLiResourceModelCompatibilityChecker
    */
   public Collection<CompatibilityInfo> getIncompatibles()
   {
-    return Collections.unmodifiableCollection(_info.get(CompatibilityInfo.Level.INCOMPATIBLE));
+    return _map.getIncompatibles();
   }
 
   /**
    * @return check results in the backwards compatibility category.
    *         empty collection if called before checking any files
    */
+  @Deprecated
   public Collection<CompatibilityInfo> getCompatibles()
   {
-    return Collections.unmodifiableCollection(_info.get(CompatibilityInfo.Level.COMPATIBLE));
+    return _map.getCompatibles();
   }
 
   /**
    * @return summary message about the check result, including all categories
    *         empty string if called before checking any files
    */
+  @Deprecated
   public String getSummary()
   {
-    final StringBuilder summaryMessage = new StringBuilder();
-
-    createSummaryForInfo(getIncompatibles(), "Incompatible changes", summaryMessage);
-    createSummaryForInfo(getCompatibles(), "Compatible changes", summaryMessage);
-
-    if (summaryMessage.length() != 0)
-    {
-      summaryMessage.insert(0, "\nidl compatibility report between published \"" + _prevRestspecPath + "\" and current \"" + _currRestspecPath + "\":\n");
-    }
-
-    return summaryMessage.toString();
+    return _map.createSummary(_prevRestspecPath, _currRestspecPath);
   }
 
   private static String listCompatLevelOptions()
@@ -297,754 +242,16 @@ public class RestLiResourceModelCompatibilityChecker
     return options.toString();
   }
 
-  private static void createSummaryForInfo(Collection<CompatibilityInfo> info,
-                                           String description,
-                                           StringBuilder summaryMessage)
+  public CompatibilityInfoMap getMap()
   {
-    if (info.isEmpty())
-    {
-      return;
-    }
-
-    summaryMessage.append(description).append(":\n");
-    int issueIndex = 1;
-    for (CompatibilityInfo i: info)
-    {
-      summaryMessage.append("  ").append(issueIndex).append(") ").append(i.toString()).append("\n");
-      ++issueIndex;
-    }
+    return _map;
   }
 
-  private boolean isCompatible(CompatibilityLevel compatLevel)
-  {
-    final Collection<CompatibilityInfo> incompatibles = getIncompatibles();
-    final Collection<CompatibilityInfo> compatibles = getCompatibles();
-
-    return ((incompatibles.isEmpty()      || compatLevel.ordinal() < CompatibilityLevel.BACKWARDS.ordinal()) &&
-            (compatibles.isEmpty()        || compatLevel.ordinal() < CompatibilityLevel.EQUIVALENT.ordinal()));
-  }
-
-  private boolean validateData(DataMap object, DataSchema schema, ValidationOptions options)
-  {
-    final ValidationResult valResult = ValidateDataAgainstSchema.validate(object, schema, options);
-    if (valResult.isValid())
-    {
-      return true;
-    }
-
-    final Collection<Message> valErrorMessages = valResult.getMessages();
-    for (final Message message : valErrorMessages)
-    {
-      addInfo(message);
-    }
-
-    return false;
-  }
-
-  private void addInfo(CompatibilityInfo.Type infoType, Object... parameters)
-  {
-    _info.get(infoType.getLevel()).add(new CompatibilityInfo(_path, infoType, parameters));
-  }
-
-  private void addInfo(Object pathTail, CompatibilityInfo.Type infoType, Object... parameters)
-  {
-    _path.add(pathTail);
-    _info.get(infoType.getLevel()).add(new CompatibilityInfo(_path, infoType, parameters));
-    _path.remove(_path.size() - 1);
-  }
-
-  private void addInfo(Message message)
-  {
-    final CompatibilityInfo.Type infoType = CompatibilityInfo.Type.OTHER_ERROR;
-    _info.get(infoType.getLevel()).add(new CompatibilityInfo(Arrays.asList(message.getPath()),
-                                                             infoType,
-                                                             message.toString()));
-  }
-
-  private boolean isOptionalityCompatible(Field field, Object leader, Object follower)
-  {
-    /*
-    compatible:
-    leader   : follower : is optional
-    null     : null     : true
-    null     : not null : true
-    not null : not null : true
-    not null : not null : false
-
-    incompatible:
-    leader   : follower : is optional
-    not null : null     : true
-    null     : null     : false (caught by validator)
-    null     : not null : false (caught by validator)
-    not null : null     : false (caught by validator)
-    */
-
-    final boolean isLeaderNull = (leader == null);
-    final boolean isFollowerNull = (follower == null);
-    final boolean isCompatible = !(!isLeaderNull && isFollowerNull && field.getOptional());
-
-    if (isCompatible && isLeaderNull != isFollowerNull)
-    {
-      addInfo(CompatibilityInfo.Type.OPTIONAL_VALUE, field.getName());
-    }
-
-    return isCompatible;
-  }
-
-  /**
-   * @return true if the check passes, even with compatible changes.
-   *         false if the check fails, i.e. incompatible changes are detected
-   */
-  private boolean checkEqualSingleValue(Field field, Object prevData, Object currData)
-  {
-    assert (field != null);
-
-    if (!isOptionalityCompatible(field, prevData, currData))
-    {
-      addInfo(CompatibilityInfo.Type.VALUE_WRONG_OPTIONALITY, field.getName());
-      return false;
-    }
-
-    // if both prev and curr are null, they are considered equal
-    // if prev is null and curr is not null, it has to be a optional field, which is compatible
-    // if both prev and curr are not null, they are compatible iff they are equal
-
-    if (prevData != null && !prevData.equals(currData))
-    {
-      addInfo(field.getName(), CompatibilityInfo.Type.VALUE_NOT_EQUAL, prevData, currData);
-      return false;
-    }
-
-    return true;
-  }
-
-  /**
-   * @return whether the optionality check passes
-   */
-  private boolean checkArrayContainment(Field field,
-                                        List<? extends Object> container,
-                                        List<? extends Object> containee)
-  {
-    assert (field != null);
-
-    if (!isOptionalityCompatible(field, containee, container))
-    {
-      addInfo(CompatibilityInfo.Type.VALUE_WRONG_OPTIONALITY, field.getName());
-      return false;
-    }
-
-    if (containee == null)
-    {
-      return true;
-    }
-
-    final boolean isContained = container.containsAll(containee);
-    if (isContained)
-    {
-      if (container.size() > containee.size())
-      {
-        final Set<Object> diff = new HashSet<Object>(container);
-        diff.removeAll(containee);
-        addInfo(field.getName(), CompatibilityInfo.Type.SUPERSET, diff);
-      }
-
-      return true;
-    }
-    else
-    {
-      addInfo(field.getName(), CompatibilityInfo.Type.ARRAY_NOT_CONTAIN, containee);
-      return false;
-    }
-  }
-
-  /**
-   * @return whether the optionality check passes
-   */
-  private boolean checkType(Object pathTail, String prevType, String currType, boolean allowNull)
-  {
-    if (prevType == null && currType == null && allowNull)
-    {
-      return true;
-    }
-
-    if (prevType == null || currType == null)
-    {
-      addInfo(pathTail, CompatibilityInfo.Type.TYPE_MISSING);
-      return false;
-    }
-
-    try
-    {
-      final DataSchema prevSchema = RestSpecCodec.textToSchema(prevType, _schemaResolver);
-      final DataSchema currSchema = RestSpecCodec.textToSchema(currType, _schemaResolver);
-
-      // TODO: check compatible but different type pairs, e.g. Long (64-bit) vs Integer (32-bit)
-      if (!prevSchema.equals(currSchema))
-      {
-        addInfo(pathTail, CompatibilityInfo.Type.TYPE_INCOMPATIBLE, prevType, currType);
-        return false;
-      }
-
-      return true;
-    }
-    catch (IllegalArgumentException e)
-    {
-      addInfo(pathTail, CompatibilityInfo.Type.TYPE_UNKNOWN, e.getMessage());
-      return false;
-    }
-  }
-
-  /**
-   * @return whether the optionality check passes
-   */
-  private boolean checkParameterOptionality(Field field, Boolean prevOptional, Boolean currOptional)
-  {
-    assert (field != null);
-
-    // optional parameter is compatible in the opposite way of other fields
-    // here curr is the leader, prev is the follower
-    if (!isOptionalityCompatible(field, currOptional, prevOptional))
-    {
-      addInfo(CompatibilityInfo.Type.VALUE_WRONG_OPTIONALITY, field.getName());
-      return false;
-    }
-
-    if (currOptional == null)
-    {
-      return true;
-    }
-
-    if (prevOptional && !currOptional)
-    {
-      addInfo(field.getName(), CompatibilityInfo.Type.PARAMETER_WRONG_OPTIONALITY);
-      return false;
-    }
-
-    if (!prevOptional && currOptional)
-    {
-      // previous required and currently optional should be the only difference that retains backwards compatibility
-      addInfo(CompatibilityInfo.Type.OPTIONAL_PARAMETER);
-    }
-
-    return true;
-  }
-
-  private <T extends RecordTemplate> void checkRecordTemplate(T prevRec, T currRec)
-  {
-    final Class<?> prevClass = prevRec.getClass();
-    if (prevClass == ResourceSchema.class)
-    {
-      checkResourceSchema((ResourceSchema) prevRec, (ResourceSchema) currRec);
-    }
-    else if (prevClass == CollectionSchema.class)
-    {
-      checkCollectionSchema((CollectionSchema) prevRec, (CollectionSchema) currRec);
-    }
-    else if (prevClass == IdentifierSchema.class)
-    {
-      checkIdentifierSchema((IdentifierSchema) prevRec, (IdentifierSchema) currRec);
-    }
-    else if (prevClass == FinderSchema.class)
-    {
-      checkFinderSchema((FinderSchema) prevRec, (FinderSchema) currRec);
-    }
-    else if (prevClass == ParameterSchema.class)
-    {
-      checkParameterSchema((ParameterSchema) prevRec, (ParameterSchema) currRec);
-    }
-    else if (prevClass == MetadataSchema.class)
-    {
-      checkMetadataSchema((MetadataSchema) prevRec, (MetadataSchema) currRec);
-    }
-    else if (prevClass == ActionSchema.class)
-    {
-      checkActionSchema((ActionSchema) prevRec, (ActionSchema) currRec);
-    }
-    else if (prevClass == EntitySchema.class)
-    {
-      checkEntitySchema((EntitySchema) prevRec, (EntitySchema) currRec);
-    }
-    else if (prevClass == AssociationSchema.class)
-    {
-      checkAssociationSchema((AssociationSchema) prevRec, (AssociationSchema) currRec);
-    }
-    else if (prevClass == AssocKeySchema.class)
-    {
-      checkAssocKeySchema((AssocKeySchema) prevRec, (AssocKeySchema) currRec);
-    }
-    else if (prevClass == ActionsSetSchema.class)
-    {
-      checkActionsSetSchema((ActionsSetSchema) prevRec, (ActionsSetSchema) currRec);
-    }
-    else if (prevClass == RestMethodSchema.class)
-    {
-      checkRestMethodSchema((RestMethodSchema) prevRec, (RestMethodSchema) currRec);
-    }
-    else
-    {
-      addInfo(CompatibilityInfo.Type.OTHER_ERROR, "Unknown schema type: \"" + prevRec.getClass() + "\"");
-    }
-  }
-
-  /**
-   * @return whether the optionality check passes. it does not cover the result of RecordTemplate check
-   */
-  private <T extends RecordTemplate> boolean checkComplexField(Field field, T prevRec, T currRec)
-  {
-    assert (field != null);
-
-    if (!isOptionalityCompatible(field, prevRec, currRec))
-    {
-      addInfo(CompatibilityInfo.Type.VALUE_WRONG_OPTIONALITY, field.getName());
-      return false;
-    }
-
-    if (prevRec != null)
-    {
-      _path.add(field.getName());
-      checkRecordTemplate(prevRec, currRec);
-      _path.remove(_path.size() - 1);
-    }
-
-    return true;
-  }
-
-  /**
-   * @return whether the basic check passes. also true if there is missing array element
-   */
-  private <T extends WrappingArrayTemplate<? extends RecordTemplate>>
-  boolean checkComplexArrayField(Field field,
-                                 String keyName,
-                                 T prevArray,
-                                 T currArray,
-                                 Map<String, Integer> currRemainder,
-                                 boolean checkRemainder)
-  {
-    assert (field != null);
-    assert (currRemainder != null);
-
-    if (!isOptionalityCompatible(field, prevArray, currArray))
-    {
-      addInfo(CompatibilityInfo.Type.VALUE_WRONG_OPTIONALITY, field.getName());
-      return false;
-    }
-
-    if (prevArray == null)
-    {
-      return true;
-    }
-
-    assert (prevArray.getClass() == currArray.getClass());
-
-    _path.add(field.getName());
-
-    for (int i = 0; i < currArray.size(); ++i)
-    {
-      currRemainder.put(currArray.get(i).data().getString(keyName), i);
-    }
-
-    for (RecordTemplate prevElement: prevArray)
-    {
-      // find prev and curr element with same key name
-      final String prevKey = prevElement.data().getString(keyName);
-      final Integer currIndex = currRemainder.get(prevKey);
-
-      if (currIndex == null)
-      {
-        addInfo(CompatibilityInfo.Type.ARRAY_MISSING_ELEMENT, prevKey);
-      }
-      else
-      {
-        final RecordTemplate currElement = currArray.get(currIndex);
-        currRemainder.remove(prevKey);
-
-        _path.add(prevKey);
-        checkRecordTemplate(prevElement, currElement);
-        _path.remove(_path.size() - 1);
-      }
-    }
-
-    if (checkRemainder && !currRemainder.isEmpty())
-    {
-      addInfo(CompatibilityInfo.Type.SUPERSET, currRemainder.keySet());
-    }
-
-    _path.remove(_path.size() - 1);
-
-    // all missing element errors have been recorded, avoid duplicate errors by returning true
-    return true;
-  }
-
-  private <T extends WrappingArrayTemplate<? extends RecordTemplate>>
-  boolean checkComplexArrayField(Field field, String keyName, T prevArray, T currArray)
-  {
-    return checkComplexArrayField(field, keyName, prevArray, currArray, new HashMap<String, Integer>(), true);
-  }
-
-  /**
-   * @return whether the check passes
-   */
-  private <T extends WrappingArrayTemplate<? extends RecordTemplate>>
-  boolean checkEqualComplexArrayField(Field field, String keyName, T prevArray, T currArray)
-  {
-    final HashMap<String, Integer> currRemainder = new HashMap<String, Integer>();
-
-    // if prev has more than curr, array missing element
-    // this should catch it
-    if (!checkComplexArrayField(field, keyName, prevArray, currArray, currRemainder, false))
-    {
-      return false;
-    }
-
-    // if prev has less than curr, the remainder will contain the extra current elements
-    if (!currRemainder.isEmpty())
-    {
-      addInfo(field.getName(), CompatibilityInfo.Type.ARRAY_NOT_EQUAL, prevArray);
-      return false;
-    }
-
-    return true;
-  }
-
-  /**
-   * @return whether the check passes
-   */
-  private boolean checkParameterArrayField(Field field, ParameterSchemaArray prevArray, ParameterSchemaArray currArray)
-  {
-    final HashMap<String, Integer> currRemainder = new HashMap<String, Integer>();
-
-    if (!checkComplexArrayField(field, "name", prevArray, currArray, currRemainder, false))
-    {
-      return false;
-    }
-
-    _path.add(field.getName());
-
-    boolean result = true;
-    for (int paramIndex : currRemainder.values())
-    {
-      // all parameters only appear in curr must not be required
-      final ParameterSchema param = currArray.get(paramIndex);
-      if (isQueryParameterOptional(param.isOptional(), param.getDefault(GetMode.DEFAULT)))
-      {
-        addInfo(CompatibilityInfo.Type.PARAMETER_NEW_OPTIONAL, param.getName());
-      }
-      else
-      {
-        addInfo(CompatibilityInfo.Type.PARAMETER_NEW_REQUIRED, param.getName());
-        result = false;
-      }
-    }
-
-    _path.remove(_path.size() - 1);
-
-    // all parameter errors have been recorded, avoid duplicate errors by returning true
-    return result;
-  }
-
-  private String getParameterItems(ParameterSchema param)
-  {
-    if (param.hasItems())
-    {
-      addInfo(CompatibilityInfo.Type.DEPRECATED, "The \"items\" field");
-      return param.getItems(GetMode.DEFAULT);
-    }
-
-    final DataSchema paramDataSchema = RestSpecCodec.textToSchema(param.getType(GetMode.DEFAULT), _schemaResolver);
-    if (paramDataSchema instanceof ArrayDataSchema)
-    {
-      // Union member key works because previously only primitive types are allowed for items field
-      return ((ArrayDataSchema) paramDataSchema).getItems().getUnionMemberKey();
-    }
-    else
-    {
-      addInfo("type", CompatibilityInfo.Type.TYPE_INCOMPATIBLE, "items", paramDataSchema.getType());
-      return null;
-    }
-  }
-
-  private void checkResourceSchema(ResourceSchema prevRec, ResourceSchema currRec)
-  {
-    checkEqualSingleValue(prevRec.schema().getField("name"),
-                          prevRec.getName(GetMode.DEFAULT),
-                          currRec.getName(GetMode.DEFAULT));
-
-    checkEqualSingleValue(prevRec.schema().getField("namespace"),
-                          prevRec.getNamespace(GetMode.DEFAULT),
-                          currRec.getNamespace(GetMode.DEFAULT));
-
-    checkEqualSingleValue(prevRec.schema().getField("path"),
-                          prevRec.getPath(GetMode.DEFAULT),
-                          currRec.getPath(GetMode.DEFAULT));
-
-    checkEqualSingleValue(prevRec.schema().getField("schema"),
-                          prevRec.getSchema(GetMode.DEFAULT),
-                          currRec.getSchema(GetMode.DEFAULT));
-
-    checkComplexField(prevRec.schema().getField("collection"), prevRec.getCollection(), currRec.getCollection());
-
-    checkComplexField(prevRec.schema().getField("association"), prevRec.getAssociation(), currRec.getAssociation());
-
-    checkComplexField(prevRec.schema().getField("actionsSet"), prevRec.getActionsSet(), currRec.getActionsSet());
-  }
-
-  private void checkCollectionSchema(CollectionSchema prevRec, CollectionSchema currRec)
-  {
-    checkComplexField(prevRec.schema().getField("identifier"),
-                      prevRec.getIdentifier(GetMode.DEFAULT),
-                      currRec.getIdentifier(GetMode.DEFAULT));
-
-    checkArrayContainment(prevRec.schema().getField("supports"),
-                          currRec.getSupports(GetMode.DEFAULT),
-                          prevRec.getSupports(GetMode.DEFAULT));
-
-    checkComplexArrayField(prevRec.schema().getField("methods"),
-                           "method",
-                           prevRec.getMethods(GetMode.DEFAULT),
-                           currRec.getMethods(GetMode.DEFAULT));
-
-    checkComplexArrayField(prevRec.schema().getField("finders"),
-                           "name",
-                           prevRec.getFinders(GetMode.DEFAULT),
-                           currRec.getFinders(GetMode.DEFAULT));
-
-    checkComplexArrayField(prevRec.schema().getField("actions"),
-                           "name",
-                           prevRec.getActions(GetMode.DEFAULT),
-                           currRec.getActions(GetMode.DEFAULT));
-
-    checkComplexField(prevRec.schema().getField("entity"),
-                      prevRec.getEntity(GetMode.DEFAULT),
-                      currRec.getEntity(GetMode.DEFAULT));
-  }
-
-  private void checkIdentifierSchema(IdentifierSchema prevRec, IdentifierSchema currRec)
-  {
-    checkEqualSingleValue(prevRec.schema().getField("name"),
-                          prevRec.getName(GetMode.DEFAULT),
-                          currRec.getName(GetMode.DEFAULT));
-
-    // type in IdentifierSchema currently can only be named type, thus guaranteed to be string
-    checkType("type", prevRec.getType(GetMode.DEFAULT), currRec.getType(GetMode.DEFAULT), false);
-
-    checkType("params", prevRec.getParams(GetMode.DEFAULT), currRec.getParams(GetMode.DEFAULT), true);
-  }
-
-  private void checkFinderSchema(FinderSchema prevRec, FinderSchema currRec)
-  {
-    checkEqualSingleValue(prevRec.schema().getField("name"),
-                          prevRec.getName(GetMode.DEFAULT),
-                          currRec.getName(GetMode.DEFAULT));
-
-    checkParameterArrayField(prevRec.schema().getField("parameters"),
-                             prevRec.getParameters(GetMode.DEFAULT),
-                             currRec.getParameters(GetMode.DEFAULT));
-
-    checkComplexField(prevRec.schema().getField("metadata"),
-                      prevRec.getMetadata(GetMode.DEFAULT),
-                      currRec.getMetadata(GetMode.DEFAULT));
-
-    final String prevAssocKey = prevRec.getAssocKey(GetMode.DEFAULT);
-    final String currAssocKey = currRec.getAssocKey(GetMode.DEFAULT);
-    final StringArray prevAssocKeys = prevRec.getAssocKeys(GetMode.DEFAULT);
-    final StringArray currAssocKeys = currRec.getAssocKeys(GetMode.DEFAULT);
-
-    // assocKey and assocKeys are mutually exclusive
-    assert((prevAssocKey == null || prevAssocKeys == null) && (currAssocKey == null || currAssocKeys == null));
-
-    // assocKey is deprecated
-    // assocKey upgrading to single-element assocKeys is compatible
-    // the opposite direction is deprecated thus incompatible
-
-    if (prevAssocKeys == null && currAssocKeys == null)
-    {
-      checkEqualSingleValue(prevRec.schema().getField("assocKey"), prevAssocKey, currAssocKey);
-    }
-    else if (prevAssocKey == null && currAssocKey == null)
-    {
-      checkEqualSingleValue(prevRec.schema().getField("assocKeys"), prevAssocKeys, currAssocKeys);
-    }
-    else if (prevAssocKeys == null)
-    {
-      // upgrade case
-
-      final StringArray upgradedPrevAssocKeys = new StringArray();
-      upgradedPrevAssocKeys.add(prevAssocKey);
-      checkEqualSingleValue(prevRec.schema().getField("assocKey"), upgradedPrevAssocKeys, currAssocKeys);
-    }
-    else
-    {
-      // downgrade case
-
-      addInfo("assocKeys", CompatibilityInfo.Type.FINDER_ASSOCKEYS_DOWNGRADE);
-    }
-  }
-
-  private void checkParameterSchema(ParameterSchema prevRec, ParameterSchema currRec)
-  {
-    checkEqualSingleValue(prevRec.schema().getField("name"),
-                          prevRec.getName(GetMode.DEFAULT),
-                          currRec.getName(GetMode.DEFAULT));
-
-    /*
-    Compatibility of the deprecated "items" field:
-    O: Has items   X: Has Not items
-    prev  curr  Result
-     O     O    Check type compatibility of "items" field
-     O     X    If curr type is ArrayDataSchema, extract curr's "items" and check compatibility of "items"
-                Otherwise, incompatible
-     X     O    Same as above
-     X     X    Check type compatibility of "type" field
-
-    In any case, emit "deprecated" compatible message if non-array "items" field is found.
-     */
-    if (prevRec.hasItems() || currRec.hasItems())
-    {
-      final String prevItems = getParameterItems(prevRec);
-      final String currItems = getParameterItems(currRec);
-      if (prevItems != null && currItems != null)
-      {
-        checkType("items", prevItems, currItems, false);
-      }
-    }
-    else
-    {
-      checkType("type", prevRec.getType(GetMode.DEFAULT), currRec.getType(GetMode.DEFAULT), false);
-    }
-
-    final Boolean prevOptional = prevRec.isOptional(GetMode.DEFAULT);
-    final Boolean currOptional = currRec.isOptional(GetMode.DEFAULT);
-    final String prevDefault = prevRec.getDefault(GetMode.DEFAULT);
-    final String currDefault = currRec.getDefault(GetMode.DEFAULT);
-
-    // {@link com.linkedin.restli.internal.server.model.ResourceModelEncoder} assures that "optional" and "default" are mutually exclusive.
-    assert((prevOptional == null || prevDefault == null) && (currOptional == null || currDefault == null));
-
-    checkParameterOptionality(prevRec.schema().getField("optional"),
-                              isQueryParameterOptional(prevOptional, prevDefault),
-                              isQueryParameterOptional(currOptional, currDefault));
-
-    if (prevDefault != null && currDefault != null && !prevDefault.equals(currDefault))
-    {
-      addInfo("default", CompatibilityInfo.Type.VALUE_DIFFERENT, prevDefault, currDefault);
-    }
-  }
-
-  private void checkMetadataSchema(MetadataSchema prevRec, MetadataSchema currRec)
-  {
-    checkType("type", prevRec.getType(GetMode.DEFAULT), currRec.getType(GetMode.DEFAULT), false);
-  }
-
-  private void checkActionSchema(ActionSchema prevRec, ActionSchema currRec)
-  {
-    checkEqualSingleValue(prevRec.schema().getField("name"),
-                          prevRec.getName(GetMode.DEFAULT),
-                          currRec.getName(GetMode.DEFAULT));
-
-    checkParameterArrayField(prevRec.schema().getField("parameters"),
-                             prevRec.getParameters(GetMode.DEFAULT),
-                             currRec.getParameters(GetMode.DEFAULT));
-
-    checkType("returns", prevRec.getReturns(), currRec.getReturns(), true);
-
-    checkArrayContainment(prevRec.schema().getField("throws"),
-                          prevRec.getThrows(GetMode.DEFAULT),
-                          currRec.getThrows(GetMode.DEFAULT));
-  }
-
-  private void checkEntitySchema(EntitySchema prevRec, EntitySchema currRec)
-  {
-    checkEqualSingleValue(prevRec.schema().getField("path"),
-                          prevRec.getPath(GetMode.DEFAULT),
-                          currRec.getPath(GetMode.DEFAULT));
-
-    checkComplexArrayField(prevRec.schema().getField("actions"),
-                           "name",
-                           prevRec.getActions(GetMode.DEFAULT),
-                           currRec.getActions(GetMode.DEFAULT));
-
-    checkComplexArrayField(prevRec.schema().getField("subresources"),
-                           "name",
-                           prevRec.getSubresources(GetMode.DEFAULT),
-                           currRec.getSubresources(GetMode.DEFAULT));
-  }
-
-  private void checkAssociationSchema(AssociationSchema prevRec, AssociationSchema currRec)
-  {
-    checkEqualComplexArrayField(prevRec.schema().getField("assocKeys"),
-                                "name",
-                                prevRec.getAssocKeys(GetMode.DEFAULT),
-                                currRec.getAssocKeys(GetMode.DEFAULT));
-
-    checkArrayContainment(prevRec.schema().getField("supports"),
-                          currRec.getSupports(GetMode.DEFAULT),
-                          prevRec.getSupports(GetMode.DEFAULT));
-
-    checkComplexArrayField(prevRec.schema().getField("methods"),
-                           "method",
-                           prevRec.getMethods(GetMode.DEFAULT),
-                           currRec.getMethods(GetMode.DEFAULT));
-
-    checkComplexArrayField(prevRec.schema().getField("finders"),
-                           "name",
-                           prevRec.getFinders(GetMode.DEFAULT),
-                           currRec.getFinders(GetMode.DEFAULT));
-
-    checkComplexArrayField(prevRec.schema().getField("actions"),
-                           "name",
-                           prevRec.getActions(GetMode.DEFAULT),
-                           currRec.getActions(GetMode.DEFAULT));
-
-    checkComplexField(prevRec.schema().getField("entity"),
-                      prevRec.getEntity(GetMode.DEFAULT),
-                      currRec.getEntity(GetMode.DEFAULT));
-  }
-
-  private void checkAssocKeySchema(AssocKeySchema prevRec, AssocKeySchema currRec)
-  {
-    checkEqualSingleValue(prevRec.schema().getField("name"),
-                          prevRec.getName(GetMode.DEFAULT),
-                          currRec.getName(GetMode.DEFAULT));
-
-    checkType("type", prevRec.getType(GetMode.DEFAULT), currRec.getType(GetMode.DEFAULT), false);
-  }
-
-  private void checkActionsSetSchema(ActionsSetSchema prevRec, ActionsSetSchema currRec)
-  {
-    checkComplexArrayField(prevRec.schema().getField("actions"),
-                           "name",
-                           prevRec.getActions(GetMode.DEFAULT),
-                           currRec.getActions(GetMode.DEFAULT));
-  }
-
-  private void checkRestMethodSchema(RestMethodSchema prevRec, RestMethodSchema currRec)
-  {
-    checkEqualSingleValue(prevRec.schema().getField("method"),
-                          prevRec.getMethod(GetMode.DEFAULT),
-                          currRec.getMethod(GetMode.DEFAULT));
-
-    checkParameterArrayField(prevRec.schema().getField("parameters"),
-                             prevRec.getParameters(GetMode.DEFAULT),
-                             currRec.getParameters(GetMode.DEFAULT));
-  }
-
-  /**
-   * Query parameter is considered compatible if both the old and new are optional or has non-null default value.
-   */
-  private boolean isQueryParameterOptional(Boolean isOptional, String defaultValue)
-  {
-    return (isOptional == null ? defaultValue != null : isOptional);
-  }
-
+  private String _prevRestspecPath;
+  private String _currRestspecPath;
   private static final String GENERATOR_RESOLVER_PATH = "generator.resolver.path";
   private static final RestSpecCodec _codec = new RestSpecCodec();
   private static final Logger log = LoggerFactory.getLogger(RestLiResourceModelCompatibilityChecker.class);
 
-  private final DataSchemaResolver _schemaResolver;
-  private final Map<CompatibilityInfo.Level, Collection<CompatibilityInfo>> _info =
-      new HashMap<CompatibilityInfo.Level, Collection<CompatibilityInfo>>();
-  private String _prevRestspecPath;
-  private String _currRestspecPath;
-
-  private List<Object> _path;
+  private final CompatibilityInfoMap _map = new CompatibilityInfoMap();
 }

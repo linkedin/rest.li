@@ -1,6 +1,8 @@
 1.8.29
 ------
-
+(RB=169640)
+Refactor IDL compatibility checking. Allow compatibility checking of referenced named Schemas.
+Slightly alter some compatibility messages.
 
 1.8.28
 ------
