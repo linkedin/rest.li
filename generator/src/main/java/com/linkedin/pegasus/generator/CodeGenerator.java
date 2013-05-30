@@ -16,6 +16,17 @@
 
 package com.linkedin.pegasus.generator;
 
+
+import com.linkedin.data.schema.generator.AbstractGenerator;
+import com.sun.codemodel.JAnnotationUse;
+import com.sun.codemodel.JCodeModel;
+import com.sun.codemodel.JDefinedClass;
+import com.sun.codemodel.JPackage;
+import com.sun.codemodel.JType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Generated;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -31,18 +42,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
 
-import javax.annotation.Generated;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.linkedin.data.schema.generator.AbstractGenerator;
-import com.sun.codemodel.JAnnotationUse;
-import com.sun.codemodel.JCodeModel;
-import com.sun.codemodel.JDefinedClass;
-import com.sun.codemodel.JPackage;
-import com.sun.codemodel.JType;
-
 
 /**
  * Generic abstract code generator.
@@ -51,6 +50,8 @@ import com.sun.codemodel.JType;
  */
 public abstract class CodeGenerator extends AbstractGenerator
 {
+  public static final String GENERATOR_DEFAULT_PACKAGE = "generator.default.package";
+
   private static final Logger _log = LoggerFactory.getLogger(CodeGenerator.class);
 
   /**
@@ -71,6 +72,25 @@ public abstract class CodeGenerator extends AbstractGenerator
    * Package for generated classes
    */
   private JPackage _package;
+
+  protected static class Config extends AbstractGenerator.Config
+  {
+    public Config(String resolverPath, String defaultPackage)
+    {
+      super(resolverPath);
+      _defaultPackage = defaultPackage;
+    }
+
+    public String getDefaultPackage()
+    {
+      return _defaultPackage;
+    }
+
+    private final String _defaultPackage;
+  }
+
+  @Override
+  protected abstract Config getConfig();
 
   protected void annotate(JDefinedClass cls, String classType, String location)
   {
@@ -94,12 +114,8 @@ public abstract class CodeGenerator extends AbstractGenerator
 
   protected void initializeDefaultPackage()
   {
-    String defaultPackage = System.getProperty("generator.default.package");
-    if (defaultPackage == null)
-    {
-      defaultPackage = "";
-    }
-    setPackage(getCodeModel()._package(defaultPackage));
+    final String defaultPackage = getConfig().getDefaultPackage();
+    setPackage(getCodeModel()._package(defaultPackage == null ? "" : defaultPackage));
   }
 
   protected void setPackage(JPackage aPackage)
@@ -149,7 +165,7 @@ public abstract class CodeGenerator extends AbstractGenerator
 
   protected ClassLoader getClassLoader()
   {
-    String path = getResolverPath();
+    String path = getConfig().getResolverPath();
     ClassLoader classLoader;
     if (path == null)
     {

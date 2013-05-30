@@ -17,24 +17,6 @@
 package com.linkedin.pegasus.generator;
 
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Deque;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
@@ -97,6 +79,23 @@ import com.sun.codemodel.JMethod;
 import com.sun.codemodel.JMod;
 import com.sun.codemodel.JPackage;
 import com.sun.codemodel.JVar;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayDeque;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Generates Java data templates.
@@ -150,7 +149,6 @@ public abstract class DataTemplateGenerator extends CodeGenerator
 
   private final Deque<DataSchemaLocation> _locationStack = new ArrayDeque<DataSchemaLocation>();
   private final Set<File> _sourceFiles = new HashSet<File>();
-  private boolean _generateImported = true;
 
   private static final Class<?> _nativeJavaClasses[] =
     {
@@ -251,6 +249,26 @@ public abstract class DataTemplateGenerator extends CodeGenerator
     }
   }
 
+  protected static class Config extends CodeGenerator.Config
+  {
+    public Config(String resolverPath, String defaultPackage, Boolean generateImported)
+    {
+      super(resolverPath, defaultPackage);
+      _generateImported = generateImported;
+    }
+
+    /**
+     * @return true if imported data templates will be regenerated, false otherwise.
+     *         If null is assigned to this property, by default returns true.
+     */
+    public boolean getGenerateImported()
+    {
+      return _generateImported == null || _generateImported;
+    }
+
+    private final Boolean _generateImported;
+  }
+
   protected DataTemplateGenerator()
   {
     for (Class<?> nativeClass : _nativeJavaClasses)
@@ -259,13 +277,10 @@ public abstract class DataTemplateGenerator extends CodeGenerator
       _schemaToClassMap.put(schema, getCodeModel().ref(nativeClass));
       _classNameToSchemaMap.put(nativeClass.getName(), schema);
     }
-
-    String property = System.getProperty(GENERATOR_GENERATE_IMPORTED);
-    if (property != null)
-    {
-      _generateImported = Boolean.parseBoolean(property);
-    }
   }
+
+  @Override
+  protected abstract Config getConfig();
 
   @Override
   protected void parseFile(File schemaSourceFile) throws IOException
@@ -288,7 +303,7 @@ public abstract class DataTemplateGenerator extends CodeGenerator
   @Override
   protected boolean hideClass(JDefinedClass clazz)
   {
-    if (_generateImported == false && isImported(clazz))
+    if (!getConfig().getGenerateImported() && isImported(clazz))
     {
       return true;
     }

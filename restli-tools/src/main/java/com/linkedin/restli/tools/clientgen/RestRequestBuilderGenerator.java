@@ -16,26 +16,6 @@
 
 package com.linkedin.restli.tools.clientgen;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.JsonParser;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
@@ -102,6 +82,26 @@ import com.sun.codemodel.JMod;
 import com.sun.codemodel.JPackage;
 import com.sun.codemodel.JVar;
 import com.sun.codemodel.writer.FileCodeWriter;
+import org.codehaus.jackson.JsonFactory;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.JsonParser;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Generates Java request builders from Rest.li idl.
@@ -137,11 +137,31 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
   private final JClass _resourceMethodClass = getCodeModel().ref(ResourceMethod.class);
   private final JClass _classClass = getCodeModel().ref(Class.class);
   private final JClass _objectClass = getCodeModel().ref(Object.class);
-  private boolean _generateDataTemplates = true;
   private final HashSet<JClass> _generatedArrayClasses = new HashSet<JClass>();
   private final ClassLoader _classLoader;
+  private final Config _config;
 
   private static final RestSpecCodec _codec = new RestSpecCodec();
+
+  protected static class Config extends DataTemplateGenerator.Config
+  {
+    public Config(String resolverPath, String defaultPackage, Boolean generateImported, Boolean generateDataTemplates)
+    {
+      super(resolverPath, defaultPackage, generateImported);
+      _generateDataTemplates = generateDataTemplates;
+    }
+
+    /**
+     * @return true if the related data template source files will be generated as well, false otherwise.
+     *         if null is assigned to this value, by default it returns true.
+     */
+    public boolean getGenerateDataTemplates()
+    {
+      return _generateDataTemplates == null || _generateDataTemplates;
+    }
+
+    private final Boolean _generateDataTemplates;
+  }
 
   /**
    * @param args Usage: RestRequestBuilderGenerator targetDirectoryPath sourceFilePaths
@@ -155,26 +175,52 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
       System.exit(1);
     }
 
-    RestRequestBuilderGenerator generator = new RestRequestBuilderGenerator();
-    generator.run(args[0], Arrays.copyOfRange(args, 1, args.length));
+    final String generateImported = System.getProperty(GENERATOR_GENERATE_IMPORTED);
+    final String generateDataTemplates = System.getProperty(GENERATOR_REST_GENERATE_DATATEMPLATES);
+    run(System.getProperty(GENERATOR_RESOLVER_PATH),
+        System.getProperty(GENERATOR_DEFAULT_PACKAGE),
+        generateImported == null ? null : Boolean.parseBoolean(generateImported),
+        generateDataTemplates == null ? null : Boolean.parseBoolean(generateDataTemplates),
+        args[0],
+        Arrays.copyOfRange(args, 1, args.length));
   }
 
-  public RestRequestBuilderGenerator()
+  public static GeneratorResult run(String resolverPath,
+                                    String defaultPackage,
+                                    Boolean generateImported,
+                                    Boolean generateDataTemplates,
+                                    String targetDirectoryPath,
+                                    String[] sources) throws IOException
+  {
+    final Config config = new Config(resolverPath, defaultPackage, generateImported, generateDataTemplates);
+    final RestRequestBuilderGenerator generator = new RestRequestBuilderGenerator(config);
+
+    return generator.generate(targetDirectoryPath, sources);
+  }
+
+  public RestRequestBuilderGenerator(Config config)
   {
     super();
+    _config = config;
     _classLoader = getClassLoader();
+  }
+
+  @Override
+  protected Config getConfig()
+  {
+    return _config;
   }
 
   /**
    * Parses REST IDL files and generates Request builders from them.
-   * @param sourcePaths path to IDL files or directories
+   * @param sources path to IDL files or directories
    * @param targetDirectoryPath path to target root java source directory
    * @return a result that includes collection of files accessed, would have generated and actually modified.
    * @throws IOException if there are problems opening or deleting files.
    */
-  public GeneratorResult run(String targetDirectoryPath, String... sourcePaths) throws IOException
+  private GeneratorResult generate(String targetDirectoryPath, String[] sources) throws IOException
   {
-    List<File> sourceFiles = parseSources(sourcePaths);
+    List<File> sourceFiles = parseSources(sources);
 
     if(getMessage().length() > 0)
     {
@@ -199,19 +245,10 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     return new Result(sourceFiles, targetFiles, modifiedFiles);
   }
 
-  private void initDataTemplateGen()
-  {
-    String property = System.getProperty(GENERATOR_REST_GENERATE_DATATEMPLATES);
-    if (property != null)
-    {
-      _generateDataTemplates = Boolean.parseBoolean(property);
-    }
-  }
-
   @Override
   protected boolean hideClass(JDefinedClass clazz)
   {
-    if (_generateDataTemplates || _generatedArrayClasses.contains(clazz))
+    if (getConfig().getGenerateDataTemplates() || _generatedArrayClasses.contains(clazz))
     {
       try
       {
@@ -228,7 +265,6 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
   @Override
   protected List<File> parseSources(String[] sourcePaths)
   {
-    initDataTemplateGen();
     initializeDefaultPackage();
     initSchemaResolver();
 
@@ -1167,7 +1203,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
   {
     final JavaBinding binding = new JavaBinding();
 
-    if (_generateDataTemplates || schema instanceof ArrayDataSchema)
+    if (getConfig().getGenerateDataTemplates() || schema instanceof ArrayDataSchema)
     {
       binding.schemaClass = processSchema(schema, parentClass, null);
       if (schema instanceof ArrayDataSchema)

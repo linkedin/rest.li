@@ -16,10 +16,10 @@
 
 package com.linkedin.restli.tools.idlcheck;
 
+import com.linkedin.data.schema.generator.AbstractGenerator;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -43,6 +43,7 @@ public class TestRestLiResourceModelCompatibilityChecker
                                                  nonExistentFilename2));
 
     final RestLiResourceModelCompatibilityChecker checker = new RestLiResourceModelCompatibilityChecker();
+    checker.setResolverPath(System.getProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH));
 
     Assert.assertFalse(checker.check(nonExistentFilename1,
                                      nonExistentFilename2,

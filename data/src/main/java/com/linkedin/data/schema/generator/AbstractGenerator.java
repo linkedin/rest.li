@@ -25,6 +25,7 @@ import com.linkedin.data.schema.SchemaParserFactory;
 import com.linkedin.data.schema.resolver.DefaultDataSchemaResolver;
 import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
 import com.linkedin.data.schema.resolver.FileDataSchemaResolver;
+
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
@@ -47,8 +48,25 @@ public abstract class AbstractGenerator
   public static final String GENERATOR_RESOLVER_PATH = "generator.resolver.path";
 
   private final StringBuilder _message = new StringBuilder();
-
   private DataSchemaResolver _schemaResolver = new DefaultDataSchemaResolver();
+
+  protected static class Config
+  {
+    public Config(String resolverPath)
+    {
+      _resolverPath = resolverPath;
+    }
+
+    /**
+     * @return the resolver path for the schema resolver.
+     */
+    public String getResolverPath()
+    {
+      return _resolverPath;
+    }
+
+    private final String _resolverPath;
+  }
 
   /**
    * Handle a data schema belonging to a source.
@@ -56,6 +74,8 @@ public abstract class AbstractGenerator
    * @param schema belonging to a source.
    */
   protected abstract void handleSchema(DataSchema schema);
+
+  protected abstract Config getConfig();
 
   protected StringBuilder getMessage()
   {
@@ -68,22 +88,11 @@ public abstract class AbstractGenerator
   }
 
   /**
-   * Return the resolver path by looking up the system property with {@link #GENERATOR_RESOLVER_PATH} as key.
-   *
-   * @return the resolver path.
-   */
-  protected String getResolverPath()
-  {
-    return System.getProperty(GENERATOR_RESOLVER_PATH);
-  }
-
-  /**
-   * Initialize my {@link DataSchemaResolver} with the resolver path returned
-   * by {@link #getResolverPath()}.
+   * Initialize my {@link DataSchemaResolver} with the resolver path.
    */
   protected void initSchemaResolver()
   {
-    String resolverPath = getResolverPath();
+    final String resolverPath = getConfig().getResolverPath();
     if (resolverPath != null)
     {
       _schemaResolver = new FileDataSchemaResolver(SchemaParserFactory.instance(), resolverPath);

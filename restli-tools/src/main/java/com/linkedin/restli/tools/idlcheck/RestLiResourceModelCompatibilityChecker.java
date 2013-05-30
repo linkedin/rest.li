@@ -18,6 +18,7 @@ package com.linkedin.restli.tools.idlcheck;
 
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.SchemaParserFactory;
+import com.linkedin.data.schema.generator.AbstractGenerator;
 import com.linkedin.data.schema.resolver.DefaultDataSchemaResolver;
 import com.linkedin.data.schema.resolver.FileDataSchemaResolver;
 import com.linkedin.restli.restspec.ResourceSchema;
@@ -107,6 +108,8 @@ public class RestLiResourceModelCompatibilityChecker
     for (int i = 1; i < targets.length; i += 2)
     {
       final RestLiResourceModelCompatibilityChecker checker = new RestLiResourceModelCompatibilityChecker();
+      checker.setResolverPath(System.getProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH));
+
       String prevTarget = targets[i - 1];
       String currTarget = targets[i];
       result &= checker.check(prevTarget, currTarget, compat);
@@ -119,6 +122,11 @@ public class RestLiResourceModelCompatibilityChecker
     }
 
     System.exit(result ? 0 : 1);
+  }
+
+  public void setResolverPath(String resolverPath)
+  {
+    _resolverPath = resolverPath;
   }
 
   /**
@@ -172,15 +180,14 @@ public class RestLiResourceModelCompatibilityChecker
       return _map.isCompatible(compatLevel);
     }
 
-    final String resolverPath = System.getProperty(GENERATOR_RESOLVER_PATH);
     final DataSchemaResolver resolver;
-    if (resolverPath != null)
+    if (_resolverPath == null)
     {
-      resolver = new FileDataSchemaResolver(SchemaParserFactory.instance(), resolverPath);
+      resolver = new DefaultDataSchemaResolver();
     }
     else
     {
-      resolver = new DefaultDataSchemaResolver();
+      resolver = new FileDataSchemaResolver(SchemaParserFactory.instance(), _resolverPath);
     }
 
     ResourceCompatibilityChecker checker = new ResourceCompatibilityChecker(prevRec, resolver, currRec, resolver);
@@ -249,7 +256,7 @@ public class RestLiResourceModelCompatibilityChecker
 
   private String _prevRestspecPath;
   private String _currRestspecPath;
-  private static final String GENERATOR_RESOLVER_PATH = "generator.resolver.path";
+  private String _resolverPath;
   private static final RestSpecCodec _codec = new RestSpecCodec();
   private static final Logger log = LoggerFactory.getLogger(RestLiResourceModelCompatibilityChecker.class);
 

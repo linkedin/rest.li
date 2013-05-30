@@ -16,12 +16,15 @@
 
 package com.linkedin.data.schema.generator;
 
+
 import com.linkedin.data.Data;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
+import org.testng.annotations.Test;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -34,7 +37,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.testng.annotations.Test;
 
 import static com.linkedin.data.TestUtil.*;
 import static org.testng.Assert.assertEquals;
@@ -45,6 +47,7 @@ public class TestAbstractGenerator
   public static class TestGenerator extends AbstractGenerator
   {
     private boolean _debug = false;
+    private final Config _config;
 
     public static void main(String[] args, boolean debug) throws IOException
     {
@@ -53,9 +56,26 @@ public class TestAbstractGenerator
         throw new IllegalArgumentException();
       }
 
-      TestGenerator generator = new TestGenerator();
-      generator._debug = debug;
-      generator.run(args[0], Arrays.copyOfRange(args, 1, args.length));
+      run(System.getProperty(GENERATOR_RESOLVER_PATH), args[0], Arrays.copyOfRange(args, 1, args.length));
+    }
+
+    public static void run(String resolverPath, String targetDirectoryPath, String[] sources) throws IOException
+    {
+      final TestGenerator generator = new TestGenerator(new Config(resolverPath));
+
+      generator.generate(targetDirectoryPath, sources);
+    }
+
+    public TestGenerator(Config config)
+    {
+      super();
+      _config = config;
+    }
+
+    @Override
+    protected Config getConfig()
+    {
+      return _config;
     }
 
     @Override
@@ -63,7 +83,7 @@ public class TestAbstractGenerator
     {
     }
 
-    public void run(String targetDirectoryPath, String sources[]) throws IOException
+    private void generate(String targetDirectoryPath, String sources[]) throws IOException
     {
       initSchemaResolver();
 

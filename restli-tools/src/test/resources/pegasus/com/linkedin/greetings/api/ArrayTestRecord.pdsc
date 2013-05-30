@@ -1,0 +1,11 @@
+{
+  "type" : "record",
+  "name" : "ArrayTestRecord",
+  "namespace" : "com.linkedin.greetings.api",
+  "fields" : [
+    {
+      "name" : "r",
+      "type" : "Tone"
+    }
+  ]
+}

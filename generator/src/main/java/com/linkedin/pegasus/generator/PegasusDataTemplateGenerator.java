@@ -17,21 +17,16 @@
 package com.linkedin.pegasus.generator;
 
 
+import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
+import com.sun.codemodel.writer.FileCodeWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.linkedin.data.schema.ArrayDataSchema;
-import com.linkedin.data.schema.DataSchema;
-import com.linkedin.data.schema.MapDataSchema;
-import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
-import com.sun.codemodel.JClass;
-import com.sun.codemodel.writer.FileCodeWriter;
 
 
 /**
@@ -43,6 +38,8 @@ public class PegasusDataTemplateGenerator extends DataTemplateGenerator
 {
   private static final Logger log = LoggerFactory.getLogger(PegasusDataTemplateGenerator.class);
 
+  private final Config _config;
+
   public static void main(String[] args) throws IOException
   {
     if (args.length < 2)
@@ -51,8 +48,30 @@ public class PegasusDataTemplateGenerator extends DataTemplateGenerator
       System.exit(1);
     }
 
-    PegasusDataTemplateGenerator generator = new PegasusDataTemplateGenerator();
-    generator.run(args[0], Arrays.copyOfRange(args, 1, args.length));
+    final String generateImported = System.getProperty(GENERATOR_GENERATE_IMPORTED);
+    run(System.getProperty(GENERATOR_RESOLVER_PATH),
+        System.getProperty(GENERATOR_DEFAULT_PACKAGE),
+        generateImported == null ? null : Boolean.parseBoolean(generateImported),
+        args[0],
+        Arrays.copyOfRange(args, 1, args.length));
+  }
+
+  public static GeneratorResult run(String resolverPath,
+                                    String defaultPackage,
+                                    Boolean generateImported,
+                                    String targetDirectoryPath,
+                                    String[] sources) throws IOException
+  {
+    final Config config = new Config(resolverPath, defaultPackage, generateImported);
+    final PegasusDataTemplateGenerator generator = new PegasusDataTemplateGenerator(config);
+
+    return generator.generate(targetDirectoryPath, sources);
+  }
+
+  public PegasusDataTemplateGenerator(Config config)
+  {
+    super();
+    _config = config;
   }
 
   /**
@@ -62,7 +81,7 @@ public class PegasusDataTemplateGenerator extends DataTemplateGenerator
    * @return a result that includes collection of files accessed, would have generated and actually modified.
    * @throws IOException if there are problems opening or deleting files.
    */
-  public GeneratorResult run(String targetDirectoryPath, String sources[]) throws IOException
+  private GeneratorResult generate(String targetDirectoryPath, String[] sources) throws IOException
   {
     initializeDefaultPackage();
     initSchemaResolver();
@@ -86,6 +105,12 @@ public class PegasusDataTemplateGenerator extends DataTemplateGenerator
       getCodeModel().build(new FileCodeWriter(targetDirectory, true));
     }
     return new Result(sourceFiles, targetFiles, modifiedFiles);
+  }
+
+  @Override
+  protected Config getConfig()
+  {
+    return _config;
   }
 
   @Override

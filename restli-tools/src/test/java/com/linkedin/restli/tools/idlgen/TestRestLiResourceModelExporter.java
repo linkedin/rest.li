@@ -152,11 +152,11 @@ public class TestRestLiResourceModelExporter
     return sb.toString();
   }
 
-  private void rmdir(File dir)
+  public static void rmdir(File dir)
   {
     if (dir.listFiles() != null)
     {
-      for (File f : outdir.listFiles())
+      for (File f : dir.listFiles())
       {
         f.delete();
       }
@@ -164,7 +164,7 @@ public class TestRestLiResourceModelExporter
     dir.delete();
   }
 
-  private static File createTmpDir() throws IOException
+  public static File createTmpDir() throws IOException
   {
     File temp = File.createTempFile("temp", Long.toString(System.nanoTime()));
     if(! temp.delete())

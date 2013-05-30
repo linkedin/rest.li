@@ -1,8 +1,17 @@
-1.8.32
+1.8.33
 ------
 
+
+1.8.32
+------
 (RB=170403)
 Added PatchHelper class with method which allows applying projection on patch.
+
+(RB=171436)
+Instead of getting properties from system properties, create config class for the data and Rest.li generators.
+Hide the existing "run()" functions in the concrete generators to private generate() and provide static run() to pass required properties. Command-line main() will still use system properties.
+Update the gradle plugin to use the new generator pattern. There is no need for synchronization block and support parallel build.
+Remove dataModelJar and restModelJar artifacts from the plugin.
 
 1.8.31
 ------

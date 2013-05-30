@@ -25,6 +25,7 @@ import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.SchemaParserFactory;
 import com.linkedin.data.schema.StringDataSchema;
 import com.linkedin.data.schema.compatibility.CompatibilityOptions;
+import com.linkedin.data.schema.generator.AbstractGenerator;
 import com.linkedin.data.schema.resolver.FileDataSchemaResolver;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.restli.restspec.AssocKeySchema;
@@ -69,7 +70,7 @@ public class TestResourceCompatibilityChecker
     final String RESOURCES_DIR = projectDir + File.separator + RESOURCES_SUFFIX;
     IDLS_DIR = RESOURCES_DIR + IDLS_SUFFIX;
 
-    String resolverPath = System.getProperty("generator.resolver.path");
+    String resolverPath = System.getProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH);
     if (resolverPath == null)
     {
       resolverPath = RESOURCES_DIR + PEGASUS_SUFFIX;

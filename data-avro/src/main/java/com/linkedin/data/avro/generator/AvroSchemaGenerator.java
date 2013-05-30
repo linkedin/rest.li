@@ -79,6 +79,8 @@ public class AvroSchemaGenerator extends AbstractGenerator
    */
   private final DataToAvroSchemaTranslationOptions _options = new DataToAvroSchemaTranslationOptions();
 
+  private final Config _config;
+
   /**
    * Generate Avro avsc files from {@link RecordDataSchema}s.
    * <p>
@@ -102,17 +104,29 @@ public class AvroSchemaGenerator extends AbstractGenerator
       System.exit(1);
     }
 
-    AvroSchemaGenerator generator = new AvroSchemaGenerator();
+    run(System.getProperty(GENERATOR_RESOLVER_PATH),
+        System.getProperty(GENERATOR_AVRO_TRANSLATE_OPTIONAL_DEFAULT),
+        args[0],
+        Arrays.copyOfRange(args, 1, args.length));
+  }
 
-    String translateOptionalDefaultProperty = System.getProperty(GENERATOR_AVRO_TRANSLATE_OPTIONAL_DEFAULT);
-    if (translateOptionalDefaultProperty != null)
+  public AvroSchemaGenerator(Config config)
+  {
+    super();
+    _config = config;
+  }
+
+  public static void run(String resolverPath, String optionalDefault, String targetDirectoryPath, String[] sources) throws IOException
+  {
+    final AvroSchemaGenerator generator = new AvroSchemaGenerator(new Config(resolverPath));
+
+    if (optionalDefault != null)
     {
-      translateOptionalDefaultProperty = translateOptionalDefaultProperty.toUpperCase();
-      OptionalDefaultMode optionalDefaultMode = OptionalDefaultMode.valueOf(translateOptionalDefaultProperty);
+      final OptionalDefaultMode optionalDefaultMode = OptionalDefaultMode.valueOf(optionalDefault.toUpperCase());
       generator.getDataToAvroSchemaTranslationOptions().setOptionalDefaultMode(optionalDefaultMode);
     }
 
-    generator.run(args[0], Arrays.copyOfRange(args, 1, args.length));
+    generator.generate(targetDirectoryPath, sources);
   }
 
   /**
@@ -130,7 +144,7 @@ public class AvroSchemaGenerator extends AbstractGenerator
    * @param targetDirectoryPath path to target root java source directory
    * @throws IOException if there are problems opening or deleting files.
    */
-  public void run(String targetDirectoryPath, String sources[]) throws IOException
+  private void generate(String targetDirectoryPath, String[] sources) throws IOException
   {
     initSchemaResolver();
 
@@ -156,6 +170,12 @@ public class AvroSchemaGenerator extends AbstractGenerator
 
     _log.info("Generating " + targetFiles.size() + " files: " + targetFiles);
     outputAvroSchemas(targetDirectory);
+  }
+
+  @Override
+  protected Config getConfig()
+  {
+    return _config;
   }
 
   @Override
