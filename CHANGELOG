@@ -7,6 +7,9 @@ Slightly alter some compatibility messages.
 (RB=169203)
 Add -resourceclasses option to idl generator command line application.
 
+(RB=170283)
+Update Gradle plugin. Use this version as source of truth in LinkedIn toolset.
+
 1.8.28
 ------
 (RB=167736)
