@@ -57,6 +57,27 @@ public class RestLiResourceModelExporter
    * @param classpath classpath to to load the resources. this is purely for Javadoc Doclet {@link RestLiDoclet}
    * @param sourcePaths paths to scan for resource Java source files. this is purely for Javadoc Doclet {@link RestLiDoclet}
    * @param resourcePackages packages to scan for resources
+   * @param outdir directory in which to output the IDL files
+   * @return a result that includes collection of files generated and modified. Note: getSourceFiles() on the result
+   * will always return an empty List as the code generation operates on classpaths and the ClassLoader and not files.
+   * @throws IOException could be {@link java.io.FileNotFoundException} if unable to write the output file,
+   *                     otherwise, {@link IOException} if failure happened when writing the output file
+   */
+  public GeneratorResult export(String apiName,
+                                String[] classpath,
+                                String[] sourcePaths,
+                                String[] resourcePackages,
+                                String outdir)
+    throws IOException
+  {
+    return export(apiName, classpath, sourcePaths, resourcePackages, null, outdir);
+  }
+
+  /**
+   * @param apiName the name of the API
+   * @param classpath classpath to to load the resources. this is purely for Javadoc Doclet {@link RestLiDoclet}
+   * @param sourcePaths paths to scan for resource Java source files. this is purely for Javadoc Doclet {@link RestLiDoclet}
+   * @param resourcePackages packages to scan for resources
    * @param resourceClasses specific classes as resources
    * @param outdir directory in which to output the IDL files
    * @return a result that includes collection of files generated and modified. Note: getSourceFiles() on the result

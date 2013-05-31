@@ -1,6 +1,7 @@
 1.8.30
 ------
-
+(RB=170652)
+Fix backward incompatible param change to RestLiResourceModelExporter.export()
 
 1.8.29
 ------
