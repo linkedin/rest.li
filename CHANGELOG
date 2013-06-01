@@ -1,6 +1,7 @@
 1.8.31
 ------
-
+(RB=170494)
+Interfacing the gradle plugin for LinkedIn specific version. 3rd party plugin could dynamically load the plugin and customize its properties.
 
 1.8.30
 ------

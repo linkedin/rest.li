@@ -26,6 +26,7 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileTree
 import org.gradle.api.internal.artifacts.dependencies.DefaultSelfResolvingDependency
+import org.gradle.api.internal.project.DefaultProject
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.Copy
@@ -520,12 +521,31 @@ class PegasusPlugin implements Plugin<Project> {
   private static final Object STATIC_PEGASUS_LOCK = new Object()
   private static final Object STATIC_BUILD_FINISHED_LOCK = new Object()
 
+  private Class<? extends Plugin> _thisPluginType = getClass().asSubclass(Plugin)
   private Task _generateSourcesJarTask = null
   private Task _generateJavadocTask = null
   private Task _generateJavadocJarTask = null
 
+  void setPluginType(Class<? extends Plugin> pluginType)
+  {
+    _thisPluginType = pluginType
+  }
+
+  void setSourcesJarTask(Task sourcesJarTask)
+  {
+    _generateSourcesJarTask = sourcesJarTask
+  }
+
+  void setJavadocJarTask(Task javadocJarTask)
+  {
+    _generateJavadocJarTask = javadocJarTask
+  }
+
+  @Override
   void apply(Project project) {
-    applyDependentPlugins(project)
+    project.plugins.apply(JavaPlugin)
+    project.plugins.apply(IdeaPlugin)
+    project.plugins.apply(EclipsePlugin)
 
     // this HashMap will have a PegasusOptions per sourceSet
     project.ext.set('pegasus', new HashMap<String, PegasusOptions>())
@@ -697,68 +717,60 @@ class PegasusPlugin implements Plugin<Project> {
     */
   }
 
-  protected void applyDependentPlugins(Project project)
-  {
-    project.plugins.apply(JavaPlugin)
-    project.plugins.apply(IdeaPlugin)
-    project.plugins.apply(EclipsePlugin)
-  }
-
-  protected Class<? extends Plugin> getPluginType()
-  {
-    return this.getClass().asSubclass(Plugin.class)
-  }
-
-  protected Task getGenerateSourcesJarTask()
-  {
-    return _generateSourcesJarTask
-  }
-
-  protected Task getGenerateJavadocTask()
-  {
-    return _generateJavadocTask
-  }
-
   protected void configureGeneratedSourcesAndJavadoc(Project project)
   {
-    //
-    // configuration for publishing jars containing sources for generated classes
-    // to the project artifacts for including in the ivy.xml
-    //
-    def generatedSourcesConfig = project.configurations.add('generatedSources')
-    def testGeneratedSourcesConfig = project.configurations.add('testGeneratedSources') {
-      extendsFrom(generatedSourcesConfig)
-    }
-
-    //
-    // configuration for publishing jars containing Javadoc for generated classes
-    // to the project artifacts for including in the ivy.xml
-    //
-    def generatedJavadocConfig = project.configurations.add('generatedJavadoc')
-    def testGeneratedJavadocConfig = project.configurations.add('testGeneratedJavadoc') {
-      extendsFrom(generatedJavadocConfig)
-    }
-
-    _generateSourcesJarTask = project.task('generateSourcesJar', type: Jar) {
-      group = JavaBasePlugin.DOCUMENTATION_GROUP
-      description = 'Generates a jar file containing the sources for the generated Java classes.'
-
-      classifier = 'sources'
-    }
-
     _generateJavadocTask = project.task('generateJavadoc', type: Javadoc)
 
-    _generateJavadocJarTask = project.task('generateJavadocJar', type: Jar, dependsOn: _generateJavadocTask) {
-      group = JavaBasePlugin.DOCUMENTATION_GROUP
-      description = 'Generates a jar file containing the Javadoc for the generated Java classes.'
+    if (_generateSourcesJarTask == null)
+    {
+      //
+      // configuration for publishing jars containing sources for generated classes
+      // to the project artifacts for including in the ivy.xml
+      //
+      def generatedSourcesConfig = project.configurations.add('generatedSources')
+      def testGeneratedSourcesConfig = project.configurations.add('testGeneratedSources') {
+        extendsFrom(generatedSourcesConfig)
+      }
 
-      classifier = 'javadoc'
-      from _generateJavadocTask.destinationDir
+      _generateSourcesJarTask = project.task('generateSourcesJar', type: Jar) {
+        group = JavaBasePlugin.DOCUMENTATION_GROUP
+        description = 'Generates a jar file containing the sources for the generated Java classes.'
+
+        classifier = 'sources'
+      }
+
+      project.artifacts {
+        generatedSources _generateSourcesJarTask
+      }
     }
 
-    project.artifacts {
-      generatedSources _generateSourcesJarTask
-      generatedJavadoc _generateJavadocJarTask
+    if (_generateJavadocJarTask == null)
+    {
+      //
+      // configuration for publishing jars containing Javadoc for generated classes
+      // to the project artifacts for including in the ivy.xml
+      //
+      def generatedJavadocConfig = project.configurations.add('generatedJavadoc')
+      def testGeneratedJavadocConfig = project.configurations.add('testGeneratedJavadoc') {
+        extendsFrom(generatedJavadocConfig)
+      }
+
+      _generateJavadocJarTask = project.task('generateJavadocJar', type: Jar, dependsOn: _generateJavadocTask) {
+        group = JavaBasePlugin.DOCUMENTATION_GROUP
+        description = 'Generates a jar file containing the Javadoc for the generated Java classes.'
+
+        classifier = 'javadoc'
+        from _generateJavadocTask.destinationDir
+      }
+
+      project.artifacts {
+        generatedJavadoc _generateJavadocJarTask
+      }
+    }
+    else
+    {
+      _generateJavadocJarTask.from(_generateJavadocTask.destinationDir)
+      _generateJavadocJarTask.dependsOn(_generateJavadocTask)
     }
   }
 
@@ -901,7 +913,7 @@ class PegasusPlugin implements Plugin<Project> {
       idlOptions = project.pegasus[sourceSet.name].idlOptions
     }
 
-    configureRestModelPublication(project, sourceSet, generateRestModelTask, getPluginType())
+    configureRestModelPublication(project, sourceSet, generateRestModelTask, _thisPluginType)
   }
 
   protected void configureAvroSchemaGeneration(Project project, SourceSet sourceSet)
@@ -976,15 +988,12 @@ class PegasusPlugin implements Plugin<Project> {
       return
     }
 
-    final Task generateSourcesJarTask = getGenerateSourcesJarTask()
-    final Task generateJavadocTask = getGenerateJavadocTask()
+    _generateSourcesJarTask.from(generateDataTemplatesTask.destinationDir)
+    _generateSourcesJarTask.dependsOn(generateDataTemplatesTask)
 
-    generateSourcesJarTask.from(generateDataTemplatesTask.destinationDir)
-    generateSourcesJarTask.dependsOn(generateDataTemplatesTask)
-
-    generateJavadocTask.source(generateDataTemplatesTask.destinationDir)
-    generateJavadocTask.classpath += generateDataTemplatesTask.classpath + generateDataTemplatesTask.resolverPath
-    generateJavadocTask.dependsOn(generateDataTemplatesTask)
+    _generateJavadocTask.source(generateDataTemplatesTask.destinationDir)
+    _generateJavadocTask.classpath += generateDataTemplatesTask.classpath + generateDataTemplatesTask.resolverPath
+    _generateJavadocTask.dependsOn(generateDataTemplatesTask)
 
     // create new source set for generated java source and class files
     String targetSourceSetName = getGeneratedSourceSetName(sourceSet, DATA_TEMPLATE_GEN_TYPE)
@@ -1140,15 +1149,12 @@ class PegasusPlugin implements Plugin<Project> {
       generateRestClientTask.dependsOn(dataTemplateJarTask)
     }
 
-    final Task generateSourcesJarTask = getGenerateSourcesJarTask()
-    final Task generateJavadocTask = getGenerateJavadocTask()
+    _generateSourcesJarTask.from(generateRestClientTask.destinationDir)
+    _generateSourcesJarTask.dependsOn(generateRestClientTask)
 
-    generateSourcesJarTask.from(generateRestClientTask.destinationDir)
-    generateSourcesJarTask.dependsOn(generateRestClientTask)
-
-    generateJavadocTask.source(generateRestClientTask.destinationDir)
-    generateJavadocTask.classpath += generateRestClientTask.classpath + generateRestClientTask.resolverPath
-    generateJavadocTask.dependsOn(generateRestClientTask)
+    _generateJavadocTask.source(generateRestClientTask.destinationDir)
+    _generateJavadocTask.classpath += generateRestClientTask.classpath + generateRestClientTask.resolverPath
+    _generateJavadocTask.dependsOn(generateRestClientTask)
 
     // make sure rest client source files have been generated before compiling them
     Task compileGeneratedRestClientTask = project.tasks[targetSourceSet.compileJavaTaskName]
