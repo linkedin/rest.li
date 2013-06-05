@@ -130,8 +130,7 @@ import org.gradle.plugins.ide.idea.IdeaPlugin
  * for all data schema (.pdsc) files present in the input source set's pegasus
  * directory, e.g. "src/main/pegasus". The generated data template source (.java) files
  * will be in the new target source set's java source directory, e.g.
- * "src/mainGeneratedDataTemplate/java". The dataTemplateGenerator configuration
- * specifies the classpath for loading PegasusDataTemplateGenerator. In addition to
+ * "src/mainGeneratedDataTemplate/java". In addition to
  * the data schema (.pdsc) files in the pegasus directory, the dataModel configuration
  * specifies resolver path for the PegasusDataTemplateGenerator. The resolver path
  * provides the data schemas and previously generated data template classes that
@@ -179,10 +178,6 @@ import org.gradle.plugins.ide.idea.IdeaPlugin
  * are as follow:
  * <ul>
  *   <li>
- *     The dataTemplateGenerator configuration specifies the classpath for
- *     PegasusDataTemplateGenerator. In most cases, it should be the Pegasus generator jar.
- *   </li>
- *   <li>
  *     The dataTemplateCompile configuration specifies the classpath for compiling
  *     the generated data template source (.java) files. In most cases,
  *     it should be the Pegasus data jar.
@@ -228,7 +223,7 @@ import org.gradle.plugins.ide.idea.IdeaPlugin
  * <p><i>Overview:</i></p>
  *
  * <p>
- * In the api project, the task 'avroSchemaGenerator' generates the avro schema (.avsc)
+ * In the api project, the task 'generateAvroSchema' generates the avro schema (.avsc)
  * files from pegasus schema (.pdsc) files. In general, data schema files should exist
  * only in api projects.
  * </p>
@@ -276,8 +271,7 @@ import org.gradle.plugins.ide.idea.IdeaPlugin
  * In this phase, the rest client source (.java) files are generated from the
  * api project idl (.restspec.json) files using RestRequestBuilderGenerator.
  * The generated rest client source files will be in the new target source set's
- * java source directory, e.g. "src/mainGeneratedRest/java". The restTools
- * configuration specifies the classpath for loading RestRequestBuilderGenerator.
+ * java source directory, e.g. "src/mainGeneratedRest/java".
  * </p>
  *
  * <p>
@@ -431,12 +425,6 @@ import org.gradle.plugins.ide.idea.IdeaPlugin
  * are as follow:
  * <ul>
  *   <li>
- *     The restTools configuration specifies the classpath for
- *     RestRequestBuilderGenerator, RestLiResourceModelExporter and
- *     RestLiResourceModelCompatibilityChecker.
- *     In most cases, it should be the Pegasus restli-tools jar.
- *   </li>
- *   <li>
  *     The restClientCompile configuration specifies the classpath for compiling
  *     the generated rest client source (.java) files. In most cases,
  *     it should be the Pegasus restli-client jar.
@@ -546,8 +534,6 @@ class PegasusPlugin implements Plugin<Project> {
     // this HashMap will have a PegasusOptions per sourceSet
     project.ext.set('pegasus', new HashMap<String, PegasusOptions>())
 
-    project.convention.plugins.templateGen = new PegasusPluginConvention()
-
     if (!_runOnce) {
       synchronized (STATIC_BUILD_FINISHED_LOCK) {
         if (!_runOnce) { //double-check pattern for efficiency
@@ -571,29 +557,43 @@ class PegasusPlugin implements Plugin<Project> {
       }
     }
 
+    final Configuration externalDataTemplateCompileConfig = project.configurations.findByName('dataTemplateCompile')
+    final Configuration externalRestClientCompileConfig = project.configurations.findByName('restClientCompile')
+    if (externalDataTemplateCompileConfig != null)
+    {
+      project.configurations {
+        // configuration for compiling generated data templates
+        dataTemplateCompile {
+          visible = false
+        }
+      }
+    }
+    if (externalRestClientCompileConfig != null)
+    {
+      project.configurations {
+        // configuration for running rest client generator
+        restClientCompile {
+          visible = false
+        }
+      }
+    }
+
     project.configurations {
       // configuration for running data template generator
+      // DEPRCATED!
       dataTemplateGenerator {
         visible = false
       }
 
       // configuration for running rest client generator
+      // DEPRCATED!
       restTools {
         visible = false
       }
 
       // configuration for running Avro schema generator
+      // DEPRCATED!
       avroSchemaGenerator {
-        visible = false
-      }
-
-      // configuration for compiling generated data templates
-      dataTemplateCompile {
-        visible = false
-      }
-
-      // configuration for running rest client generator
-      restClientCompile {
         visible = false
       }
 
@@ -856,7 +856,6 @@ class PegasusPlugin implements Plugin<Project> {
         inputDirs = sourceSet.java.srcDirs
         // we need all the artifacts from runtime for any private implementation classes the server code might need.
         runtimeClasspath = project.configurations.runtime + sourceSet.runtimeClasspath
-        toolsClasspath = project.configurations.restTools
         destinationDir = project.file(getGeneratedSourceDirName(project, sourceSet, REST_GEN_TYPE) + File.separatorChar + 'idl')
         idlOptions = project.pegasus[sourceSet.name].idlOptions
       }
@@ -875,7 +874,6 @@ class PegasusPlugin implements Plugin<Project> {
         // apiIdlDir is annotated as @InputDirectory, whose existence is validated before executing the task
         into idlGenerationDir
         resolverPath = apiProject.files(getDataSchemaRelativePath(project, sourceSet)) + getDataModelConfig(apiProject, sourceSet)
-        toolsClasspath = project.configurations.restTools
       }
       project.logger.info("API project selected for $publishRestModelTask.path is $apiProject.path")
 
@@ -903,7 +901,6 @@ class PegasusPlugin implements Plugin<Project> {
     File avroDir = project.file(getGeneratedSourceDirName(project, sourceSet, AVRO_SCHEMA_GEN_TYPE) + File.separatorChar + 'avro')
     final Task generateAvroSchemaTask = project.task(sourceSet.getTaskName('generate', 'avroSchema'), type: GenerateAvroSchema) {
       inputDir = dataSchemaDir
-      generatorClasspath = project.configurations.avroSchemaGenerator
       destinationDir = avroDir
       inputDataSchemaFiles = dataSchemaFiles
       resolverPath = getDataModelConfig(project, sourceSet)
@@ -950,7 +947,6 @@ class PegasusPlugin implements Plugin<Project> {
     // generate data template source files from data schema
     final Task generateDataTemplatesTask = project.task(sourceSet.getTaskName('generate', 'dataTemplate'), type: GenerateDataTemplate) {
       inputDir = dataSchemaDir
-      generatorClasspath = project.configurations.dataTemplateGenerator
       destinationDir = project.file(getGeneratedSourceDirName(project, sourceSet, DATA_TEMPLATE_GEN_TYPE) + File.separatorChar + 'java')
       inputDataSchemaFiles = dataSchemaFiles
       resolverPath = getDataModelConfig(project, sourceSet)
@@ -960,7 +956,7 @@ class PegasusPlugin implements Plugin<Project> {
     _generateSourcesJarTask.dependsOn(generateDataTemplatesTask)
 
     _generateJavadocTask.source(generateDataTemplatesTask.destinationDir)
-    _generateJavadocTask.classpath += generateDataTemplatesTask.generatorClasspath + generateDataTemplatesTask.resolverPath
+    _generateJavadocTask.classpath += generateDataTemplatesTask.resolverPath
     _generateJavadocTask.dependsOn(generateDataTemplatesTask)
 
     // create new source set for generated java source and class files
@@ -1024,7 +1020,6 @@ class PegasusPlugin implements Plugin<Project> {
     if (debug)
     {
       System.out.println('configureDataTemplateGeneration sourceSet ' + sourceSet.name)
-      System.out.println('dataTemplateGenerator.allDependencies : ' + project.configurations.dataTemplateGenerator.allDependencies)
       System.out.println("${compileConfigName}.allDependenices : " + project.configurations[compileConfigName].allDependencies)
       System.out.println("${compileConfigName}.extendsFrom: " + project.configurations[compileConfigName].extendsFrom)
       System.out.println("${compileConfigName}.transitive: " + project.configurations[compileConfigName].transitive)
@@ -1082,7 +1077,6 @@ class PegasusPlugin implements Plugin<Project> {
     Task generateRestClientTask = project.task(targetSourceSet.getTaskName('generate', 'restClient'), type: GenerateRestClient) {
       inputDir = idlDir
       resolverPath = dataModels
-      toolsClasspath = project.configurations.restTools
       destinationDir = project.file(getGeneratedSourceDirName(project, sourceSet, REST_GEN_TYPE) + File.separatorChar + 'java')
     }
 
@@ -1095,7 +1089,7 @@ class PegasusPlugin implements Plugin<Project> {
     _generateSourcesJarTask.dependsOn(generateRestClientTask)
 
     _generateJavadocTask.source(generateRestClientTask.destinationDir)
-    _generateJavadocTask.classpath += generateRestClientTask.toolsClasspath + generateRestClientTask.resolverPath
+    _generateJavadocTask.classpath += generateRestClientTask.resolverPath
     _generateJavadocTask.dependsOn(generateRestClientTask)
 
     // make sure rest client source files have been generated before compiling them
@@ -1225,10 +1219,6 @@ class PegasusPlugin implements Plugin<Project> {
      */
     @InputDirectory File inputDir
     /**
-     * Classpath for loading the PegasusDataTemplateGenerator class.
-     */
-    @InputFiles FileCollection generatorClasspath
-    /**
      * The input arguments to PegasusDataTemplateGenerator class (excludes the destination directory).
      */
     @InputFiles FileTree inputDataSchemaFiles
@@ -1240,21 +1230,12 @@ class PegasusPlugin implements Plugin<Project> {
     @TaskAction
     protected void generate()
     {
-      if (generatorClasspath.empty)
-      {
-        project.logger.error('There are Pegasus schema files. If you need corresponding data template files, define "dataTemplateGenerator" configuration.')
-        return
-      }
-
       project.logger.info('Generating data templates ...')
       destinationDir.mkdirs()
       project.logger.lifecycle("There are ${inputDataSchemaFiles.files.size()} data schema input files. Using input root folder: ${inputDir}")
 
-      URL[] generatorClasspathUrls = generatorClasspath.collect { it.toURI().toURL() } as URL[]
-      URLClassLoader classLoader = new URLClassLoader(generatorClasspathUrls, null)
-      def dataTemplateGenerator = classLoader.loadClass('com.linkedin.pegasus.generator.PegasusDataTemplateGenerator')
-
       final String resolverPathStr = (resolverPath + project.files(inputDir)).collect { it.path }.join(File.pathSeparator)
+      final Class<?> dataTemplateGenerator = this.class.classLoader.loadClass('com.linkedin.pegasus.generator.PegasusDataTemplateGenerator')
       dataTemplateGenerator.run(resolverPathStr, null, null, destinationDir.path, inputDataSchemaFiles.collect { it.path } as String[])
     }
   }
@@ -1283,10 +1264,6 @@ class PegasusPlugin implements Plugin<Project> {
      */
     @InputDirectory File inputDir
     /**
-     * Classpath for loading the AvroSchemaGenerator class.
-     */
-    @InputFiles FileCollection generatorClasspath
-    /**
      * The input arguments to AvroSchemaGenerator class (excludes the destination directory).
      */
     @InputFiles FileTree inputDataSchemaFiles
@@ -1298,21 +1275,12 @@ class PegasusPlugin implements Plugin<Project> {
     @TaskAction
     protected void generate()
     {
-      if (generatorClasspath.empty)
-      {
-        project.logger.error('There are Pegasus schema files. If you need corresponding Avro schema files, define "avroSchemaGenerator" configuration.')
-        return
-      }
-
       project.logger.info('Generating Avro schemas ...')
       destinationDir.mkdirs()
       project.logger.lifecycle("There are ${inputDataSchemaFiles.files.size()} data schema input files. Using input root folder: ${inputDir}")
 
-      URL[] generatorClasspathUrls = generatorClasspath.collect { it.toURI().toURL() } as URL[]
-      URLClassLoader classLoader = new URLClassLoader(generatorClasspathUrls, null)
-      def avroSchemaGenerator = classLoader.loadClass('com.linkedin.data.avro.generator.AvroSchemaGenerator')
-
       final String resolverPathStr = (resolverPath + project.files(inputDir)).collect { it.path }.join(File.pathSeparator)
+      final Class<?> avroSchemaGenerator = this.class.classLoader.loadClass('com.linkedin.data.avro.generator.AvroSchemaGenerator')
       avroSchemaGenerator.run(resolverPathStr, null, destinationDir.path, inputDataSchemaFiles.collect { it.path } as String[])
     }
   }
@@ -1334,7 +1302,6 @@ class PegasusPlugin implements Plugin<Project> {
 
     @InputFiles Set<File> inputDirs
     @InputFiles FileCollection runtimeClasspath
-    @InputFiles FileCollection toolsClasspath
     @OutputDirectory File destinationDir
     PegasusOptions.IdlOptions idlOptions
 
@@ -1355,11 +1322,11 @@ class PegasusPlugin implements Plugin<Project> {
       // They will still be placed in the same jar, though
 
       final ClassLoader prevContextClassLoader = Thread.currentThread().contextClassLoader
-      final URL[] classpathUrls = (runtimeClasspath + toolsClasspath).collect { it.toURI().toURL() } as URL[]
-      final URLClassLoader classLoader = new URLClassLoader(classpathUrls, null)
+      final URL[] classpathUrls = runtimeClasspath.collect { it.toURI().toURL() } as URL[]
+      final URLClassLoader classLoader = new URLClassLoader(classpathUrls, this.class.classLoader)
       Thread.currentThread().contextClassLoader = classLoader
 
-      final def idlGenerator = classLoader.loadClass('com.linkedin.restli.tools.idlgen.RestLiResourceModelExporter').newInstance()
+      final def idlGenerator = this.class.classLoader.loadClass('com.linkedin.restli.tools.idlgen.RestLiResourceModelExporter').newInstance()
       if (idlOptions.idlItems.empty)
       {
         idlGenerator.export(null, classpathUrls as String[], inputDirPaths, null, null, destinationDir.path)
@@ -1401,7 +1368,6 @@ class PegasusPlugin implements Plugin<Project> {
   static class PublishIdl extends Copy
   {
     @InputFiles FileCollection resolverPath
-    @InputFiles FileCollection toolsClasspath
 
     @Override
     protected void copy()
@@ -1439,8 +1405,8 @@ class PegasusPlugin implements Plugin<Project> {
       if (_idlPublishReminder.length() == 0)
       {
         _idlPublishReminder.append("\n")
-                                                    .append("idl files have been changed during the build. You must run the following command line at project root to pick up the changes:\n")
-                                                    .append("  gradle build\n")
+                           .append("idl files have been changed during the build. You must run the following command line at project root to pick up the changes:\n")
+                           .append("  gradle build\n")
       }
     }
 
@@ -1449,14 +1415,7 @@ class PegasusPlugin implements Plugin<Project> {
      */
     private boolean check()
     {
-      if (toolsClasspath.empty)
-      {
-        throw new Exception('Unable to check idl files due to missing "restTools" configuration.')
-      }
-
-      final URL[] classpathUrls = toolsClasspath.collect { it.toURI().toURL() } as URL[]
-      final URLClassLoader classLoader = new URLClassLoader(classpathUrls, null)
-      final Class<? extends Enum> compatLevelClass = classLoader.loadClass('com.linkedin.restli.tools.idlcheck.CompatibilityLevel').asSubclass(Enum.class)
+      final Class<? extends Enum> compatLevelClass = this.class.classLoader.loadClass('com.linkedin.restli.tools.idlcheck.CompatibilityLevel').asSubclass(Enum.class)
 
       final Enum idlCompatLevel
       if (project.hasProperty(IDL_COMPAT_REQUIREMENT_NAME))
@@ -1483,7 +1442,7 @@ class PegasusPlugin implements Plugin<Project> {
 
       project.logger.info('Checking idl compatibility with API ...')
 
-      final def idlChecker = classLoader.loadClass('com.linkedin.restli.tools.idlcheck.RestLiResourceModelCompatibilityChecker').newInstance()
+      final def idlChecker = this.class.classLoader.loadClass('com.linkedin.restli.tools.idlcheck.RestLiResourceModelCompatibilityChecker').newInstance()
       final String resolverPathStr = resolverPath.collect { it.path }.join(File.pathSeparator)
       idlChecker.setResolverPath(resolverPathStr)
 
@@ -1548,7 +1507,6 @@ class PegasusPlugin implements Plugin<Project> {
    * dependencies {
    *   dataModel project(path: ':janus:janus-impl', configuration: 'dataTemplate')
    *   restModel project(path: ':janus:janus-impl', configuration: 'restModel')
-   *   restTools spec.product.pegasus.restliTools
    * }
    * </pre>
    * (may need other deps)
@@ -1557,7 +1515,6 @@ class PegasusPlugin implements Plugin<Project> {
 
     @InputDirectory File inputDir
     @InputFiles FileCollection resolverPath
-    @InputFiles FileCollection toolsClasspath
     @OutputDirectory File destinationDir
 
     @TaskAction
@@ -1584,20 +1541,12 @@ class PegasusPlugin implements Plugin<Project> {
         return
       }
 
-      if (toolsClasspath.empty)
-      {
-        project.logger.error('There are idl files. If you need REST client builders, define "restTools" configuration.')
-        return
-      }
-
       project.logger.info('Generating REST client builders ...')
 
       final String resolverPathStr = resolverPath.collect { it.path }.join(File.pathSeparator)
-      final URL[] toolsClasspathUrls = toolsClasspath.collect { it.toURI().toURL() } as URL[]
-      final URLClassLoader classLoader = new URLClassLoader(toolsClasspathUrls, null)
-      def stubGenerator = classLoader.loadClass('com.linkedin.restli.tools.clientgen.RestRequestBuilderGenerator')
-
+      final Class<?> stubGenerator = this.class.classLoader.loadClass('com.linkedin.restli.tools.clientgen.RestRequestBuilderGenerator')
       destinationDir.mkdirs()
+
       for (PegasusOptions.ClientItem clientItem: pegasusClientOptions.clientItems)
       {
         project.logger.lifecycle("Generating rest client source files for: ${clientItem.restModelFileName}")

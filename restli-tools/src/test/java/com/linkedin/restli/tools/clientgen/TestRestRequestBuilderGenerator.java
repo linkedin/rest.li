@@ -2,6 +2,7 @@ package com.linkedin.restli.tools.clientgen;
 
 
 import com.linkedin.restli.tools.idlgen.TestRestLiResourceModelExporter;
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -32,18 +33,24 @@ public class TestRestRequestBuilderGenerator
   public void test() throws Exception
   {
     final String pegasus_dir = moduleDir + FS + RESOURCES_DIR + FS + "pegasus";
+    final String outPath = outdir.getPath();
     RestRequestBuilderGenerator.run(pegasus_dir,
                                     null,
                                     null,
                                     false,
-                                    outdir.getPath(),
-                                    new String[]{moduleDir + FS + RESOURCES_DIR + FS + "idls" + FS + "arrayDuplicateA.restspec.json"});
+                                    outPath,
+                                    new String[] { moduleDir + FS + RESOURCES_DIR + FS + "idls" + FS + "arrayDuplicateA.restspec.json" });
     RestRequestBuilderGenerator.run(pegasus_dir,
                                     null,
                                     null,
                                     false,
-                                    outdir.getPath(),
-                                    new String[]{moduleDir + FS + RESOURCES_DIR + FS + "idls" + FS + "arrayDuplicateB.restspec.json"});
+                                    outPath,
+                                    new String[] { moduleDir + FS + RESOURCES_DIR + FS + "idls" + FS + "arrayDuplicateB.restspec.json" });
+
+    final File aBuilderFile = new File(outPath + FS + "ArrayDuplicateABuilders.java");
+    final File bBuilderFile = new File(outPath + FS + "ArrayDuplicateBBuilders.java");
+    Assert.assertTrue(aBuilderFile.exists());
+    Assert.assertTrue(bBuilderFile.exists());
   }
 
   private static final String FS = File.separator;

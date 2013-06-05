@@ -2,5 +2,10 @@ apply plugin: 'groovy'
 
 dependencies {
   compile gradleApi()
-  groovy localGroovy()
+  compile localGroovy()
+
+  runtime project(':data')
+  runtime project(':data-avro')
+  runtime project(':generator')
+  runtime project(':restli-tools')
 }

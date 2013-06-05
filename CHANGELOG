@@ -10,7 +10,12 @@ Remove dependency of system properties from build.gradle in restli-tools.
 Fix incorrect schema field for idl files.
 
 (RB=173686)
-Update gradle plugin to allow server module skip specifying idlItems. In such case, all source files will be scanned.
+Update Gradle plugin to allow server module skip specifying idlItems. In such case, all source files will be scanned.
+
+(RB=172449)
+The generators and tools the Gradle plugin depends on become runtime dependency so that user no longer needs to specify
+  in the module dependency.
+Allow dataTemplateCompile and restClientCompile configurations to be overridden.
 
 1.8.32
 ------
