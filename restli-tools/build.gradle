@@ -21,11 +21,3 @@ dependencies {
   testCompile externalDependency.commonsHttpClient
   testRuntime externalDependency.cglib
 }
-
-test {
-  systemProperties['test.projectDir'] = project.projectDir.path
-}
-
-allTests {
-  systemProperties['test.projectDir'] = project.projectDir.path
-}

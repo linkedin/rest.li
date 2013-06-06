@@ -1,6 +1,7 @@
 1.8.33
 ------
-
+(RB=172922)
+Remove dependency of system properties from build.gradle in restli-tools.
 
 1.8.32
 ------

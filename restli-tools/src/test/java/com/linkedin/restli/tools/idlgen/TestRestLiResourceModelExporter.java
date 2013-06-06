@@ -26,8 +26,8 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 
 import com.linkedin.pegasus.generator.GeneratorResult;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
@@ -39,34 +39,29 @@ import static org.testng.Assert.fail;
  */
 public class TestRestLiResourceModelExporter
 {
-  // TODO These should be passed in as test config
-  private static String FS = File.separator;
-  private static String RESOURCES_DIR = "src" + FS + "test" + FS + "resources" + FS + "idls";
+  private static final String FS = File.separator;
+  private static final String TEST_DIR = "src" + FS + "test" + FS + "java";
+  private static final String IDLS_DIR = "src" + FS + "test" + FS + "resources" + FS + "idls";
 
   private static final String STATUSES_FILE = "twitter-statuses.restspec.json";
   private static final String STATUSES_PARAMS_FILE = "twitter-statusesParams.restspec.json";
   private static final String FOLLOWS_FILE = "twitter-follows.restspec.json";
   private static final String ACCOUNTS_FILE = "twitter-accounts.restspec.json";
 
-
   private File outdir;
-  private static final String PROJECT_DIR_PROP = "test.projectDir";
+  // Gradle by default will use the module directory as the working directory
+  // IDE such as IntelliJ IDEA may use the project directory instead
+  // If you create test in IDE, make sure the working directory is always the module directory
+  private String moduleDir;
 
-  @BeforeTest
+  @BeforeClass
   public void setUp() throws IOException
   {
     outdir = createTmpDir();
-
-    // we use relative path when running the test from IDE, absolute path from gradle
-    String projectDir = System.getProperty(PROJECT_DIR_PROP);
-    if (projectDir != null)
-    {
-      RESOURCES_DIR = projectDir + FS + RESOURCES_DIR;
-    }
+    moduleDir = System.getProperty("user.dir");
   }
 
-
-  @AfterTest
+  @AfterClass
   public void tearDown() throws IOException
   {
     rmdir(outdir);
@@ -80,7 +75,7 @@ public class TestRestLiResourceModelExporter
     assertEquals(outdir.list().length, 0);
     GeneratorResult result = exporter.export("twitter",
                                              null,
-                                             new String[] {"src/test/java"},
+                                             new String[] {moduleDir + FS + TEST_DIR},
                                              new String[] {"com.linkedin.restli.tools.twitter"},
                                              null,
                                              outdir.getAbsolutePath());
@@ -94,7 +89,7 @@ public class TestRestLiResourceModelExporter
     for (String file : expectedFiles)
     {
       String actualFile = outdir + FS + file;
-      String expectedFile = RESOURCES_DIR + FS + file;
+      String expectedFile = moduleDir + FS + IDLS_DIR + FS + file;
 
       compareFiles(actualFile, expectedFile);
       assertTrue(result.getModifiedFiles().contains(new File(actualFile)));

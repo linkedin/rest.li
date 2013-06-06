@@ -24,7 +24,6 @@ import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.SchemaParserFactory;
 import com.linkedin.data.schema.StringDataSchema;
-import com.linkedin.data.schema.compatibility.CompatibilityOptions;
 import com.linkedin.data.schema.generator.AbstractGenerator;
 import com.linkedin.data.schema.resolver.FileDataSchemaResolver;
 import com.linkedin.data.template.StringArray;
@@ -35,6 +34,7 @@ import com.linkedin.restli.restspec.RestSpecCodec;
 import com.linkedin.restli.tools.idlcheck.CompatibilityInfo;
 import com.linkedin.restli.tools.idlcheck.CompatibilityLevel;
 import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.io.File;
@@ -53,27 +53,16 @@ import java.util.List;
 
 public class TestResourceCompatibilityChecker
 {
-  private static final RestSpecCodec _codec = new RestSpecCodec();
-
-  private DataSchemaResolver prevSchemaResolver;
-  private DataSchemaResolver compatSchemaResolver;
-  private DataSchemaResolver incompatSchemaResolver;
-
-  public TestResourceCompatibilityChecker()
+  @BeforeClass
+  public void setUp()
   {
-    String projectDir = System.getProperty(PROJECT_DIR_PROP);
-    if (projectDir == null)
-    {
-      projectDir = "restli-tools";
-    }
-
-    final String RESOURCES_DIR = projectDir + File.separator + RESOURCES_SUFFIX;
-    IDLS_DIR = RESOURCES_DIR + IDLS_SUFFIX;
+    final String resourcesDir = System.getProperty("user.dir") + File.separator + RESOURCES_SUFFIX;
+    idlsDir = resourcesDir + IDLS_SUFFIX;
 
     String resolverPath = System.getProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH);
     if (resolverPath == null)
     {
-      resolverPath = RESOURCES_DIR + PEGASUS_SUFFIX;
+      resolverPath = resourcesDir + PEGASUS_SUFFIX;
     }
 
     prevSchemaResolver = new FileDataSchemaResolver(SchemaParserFactory.instance(), resolverPath);
@@ -114,8 +103,8 @@ public class TestResourceCompatibilityChecker
     testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting"),
                                         CompatibilityInfo.Type.TYPE_INFO, "new record added optional fields newField"));
 
-    ResourceSchema prevResource = idlToResource(IDLS_DIR + PREV_COLL_FILE);
-    ResourceSchema currResource = idlToResource(IDLS_DIR + CURR_COLL_PASS_FILE);
+    ResourceSchema prevResource = idlToResource(idlsDir + PREV_COLL_FILE);
+    ResourceSchema currResource = idlToResource(idlsDir + CURR_COLL_PASS_FILE);
 
     ResourceCompatibilityChecker checker = new ResourceCompatibilityChecker(prevResource, prevSchemaResolver,
                                                                             currResource, compatSchemaResolver);
@@ -143,8 +132,8 @@ public class TestResourceCompatibilityChecker
     testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "association", "methods", "create", "parameters"),
                                         CompatibilityInfo.Type.PARAMETER_NEW_OPTIONAL, "type"));
 
-    ResourceSchema prevResource = idlToResource(IDLS_DIR + PREV_ASSOC_FILE);
-    ResourceSchema currResource = idlToResource(IDLS_DIR + CURR_ASSOC_PASS_FILE);
+    ResourceSchema prevResource = idlToResource(idlsDir + PREV_ASSOC_FILE);
+    ResourceSchema currResource = idlToResource(idlsDir + CURR_ASSOC_PASS_FILE);
 
     ResourceCompatibilityChecker checker = new ResourceCompatibilityChecker(prevResource, prevSchemaResolver,
                                                                             currResource, prevSchemaResolver);
@@ -226,8 +215,8 @@ public class TestResourceCompatibilityChecker
     testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting", "id", "string"),
                                          CompatibilityInfo.Type.TYPE_ERROR, "schema type changed from long to string"));
 
-    ResourceSchema prevResource = idlToResource(IDLS_DIR + PREV_COLL_FILE);
-    ResourceSchema currResource = idlToResource(IDLS_DIR + CURR_COLL_FAIL_FILE);
+    ResourceSchema prevResource = idlToResource(idlsDir + PREV_COLL_FILE);
+    ResourceSchema currResource = idlToResource(idlsDir + CURR_COLL_FAIL_FILE);
 
     ResourceCompatibilityChecker checker = new ResourceCompatibilityChecker(prevResource, prevSchemaResolver,
                                                                             currResource, incompatSchemaResolver);
@@ -270,8 +259,8 @@ public class TestResourceCompatibilityChecker
                                          "/greetings/assoc/{id}",
                                          "/greetings/association/{id}"));
 
-    ResourceSchema prevResource = idlToResource(IDLS_DIR + PREV_ASSOC_FILE);
-    ResourceSchema currResource = idlToResource(IDLS_DIR + CURR_ASSOC_FAIL_FILE);
+    ResourceSchema prevResource = idlToResource(idlsDir + PREV_ASSOC_FILE);
+    ResourceSchema currResource = idlToResource(idlsDir + CURR_ASSOC_FAIL_FILE);
 
     ResourceCompatibilityChecker checker = new ResourceCompatibilityChecker(prevResource, prevSchemaResolver,
                                                                             currResource, prevSchemaResolver);
@@ -296,8 +285,8 @@ public class TestResourceCompatibilityChecker
     testErrors.add(new CompatibilityInfo(Arrays.<Object>asList(""),
                                          CompatibilityInfo.Type.VALUE_WRONG_OPTIONALITY, "actionsSet"));
 
-    ResourceSchema prevResource = idlToResource(IDLS_DIR + PREV_AS_FILE);
-    ResourceSchema currResource = idlToResource(IDLS_DIR + CURR_AS_FAIL_FILE);
+    ResourceSchema prevResource = idlToResource(idlsDir + PREV_AS_FILE);
+    ResourceSchema currResource = idlToResource(idlsDir + CURR_AS_FAIL_FILE);
 
     ResourceCompatibilityChecker checker = new ResourceCompatibilityChecker(prevResource, prevSchemaResolver,
                                                                             currResource, prevSchemaResolver);
@@ -318,8 +307,8 @@ public class TestResourceCompatibilityChecker
   @Test
   public void testPassActionsSetFile() throws IOException
   {
-    ResourceSchema prevResource = idlToResource(IDLS_DIR + PREV_AS_FILE);
-    ResourceSchema currResource = idlToResource(IDLS_DIR + CURR_AS_PASS_FILE);
+    ResourceSchema prevResource = idlToResource(idlsDir + PREV_AS_FILE);
+    ResourceSchema currResource = idlToResource(idlsDir + CURR_AS_PASS_FILE);
 
     ResourceCompatibilityChecker checker = new ResourceCompatibilityChecker(prevResource, prevSchemaResolver,
                                                                             currResource, prevSchemaResolver);
@@ -401,7 +390,7 @@ public class TestResourceCompatibilityChecker
   private static final String IDLS_SUFFIX = "idls" + File.separator;
   private static final String PEGASUS_SUFFIX = "pegasus" + File.separator;
   private static final String RESOURCES_SUFFIX = "src" + File.separator + "test" + File.separator + "resources" + File.separator;
-  private static final String PROJECT_DIR_PROP = "test.projectDir";
+
   private static final String PREV_COLL_FILE = "prev-greetings-coll.restspec.json";
   private static final String PREV_ASSOC_FILE = "prev-greetings-assoc.restspec.json";
   private static final String PREV_AS_FILE = "prev-greetings-as.restspec.json";
@@ -412,6 +401,11 @@ public class TestResourceCompatibilityChecker
   private static final String CURR_AS_FAIL_FILE = "curr-greetings-as-fail.restspec.json";
   private static final String CURR_AS_PASS_FILE = "curr-greetings-as-pass.restspec.json";
 
-  private final String IDLS_DIR;
+  private static final RestSpecCodec _codec = new RestSpecCodec();
 
+  private String idlsDir;
+
+  private DataSchemaResolver prevSchemaResolver;
+  private DataSchemaResolver compatSchemaResolver;
+  private DataSchemaResolver incompatSchemaResolver;
 }
