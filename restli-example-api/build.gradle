@@ -1,8 +1,7 @@
+apply plugin: 'pegasus'
+
 dependencies {
   compile project(':data')
   compile project(':restli-common')
   compile project(':restli-client')
 }
-
-apply from: "${buildScriptDirPath}/dataTemplate.gradle"
-apply from: "${buildScriptDirPath}/restClient.gradle"

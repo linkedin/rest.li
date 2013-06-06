@@ -23,5 +23,5 @@ dependencies {
 apply from: "${buildScriptDirPath}/dataTemplate.gradle"
 
 test {
-   systemProperties['test.projectDir'] = projectDir.toString()
+  systemProperties['test.projectDir'] = projectDir.toString()
 }

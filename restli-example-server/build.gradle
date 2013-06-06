@@ -1,5 +1,7 @@
+apply plugin: 'pegasus'
+
 dependencies {
-  compile project(':restli-example-api')
+  compile project(path: ':restli-example-api', configuration: 'dataTemplate')
   compile project(':data')
   compile project(':r2')
   compile project(':r2-jetty')
@@ -13,21 +15,15 @@ dependencies {
   compile externalDependency.javaxInject
   compile externalDependency.parseq
   compile externalDependency.zookeeper
+  testCompile project(':restli-client')
   testCompile externalDependency.testng
   testCompile externalDependency.easymock
 }
 
 // Generate IDLs
-ext.resourcePackages = [
-  'main': [
-    'com.linkedin.restli.example.impl'
-  ]
-]
+pegasus.main.idlOptions.addIdlItem(['com.linkedin.restli.example.impl'])
 
 ext.apiProject = project(':restli-example-api')
-
-apply from: "${buildScriptDirPath}/restModel.gradle"
-apply from: "${buildScriptDirPath}/publishIdl.gradle"
 
 task startExampleD2Server(type: JavaExec, dependsOn: 'build') {
   main = 'com.linkedin.restli.example.RestLiExampleD2Server'

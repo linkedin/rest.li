@@ -19,6 +19,7 @@ package com.linkedin.restli.test;
 import java.io.IOException;
 
 import com.linkedin.r2.message.RequestContext;
+import com.linkedin.restli.common.EmptyRecord;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -52,10 +53,10 @@ public class TestCharacterEncoding
     for (char c = 0; c < 256; ++c)
     {
       final String testValue = String.valueOf(c);
-      GetRequest<QueryParamMockCollection.DummyRecord> req =
-              new GetRequestBuilder<String, QueryParamMockCollection.DummyRecord>(
+      GetRequest<EmptyRecord> req =
+              new GetRequestBuilder<String, EmptyRecord>(
                       QueryParamMockCollection.RESOURCE_NAME,
-                      QueryParamMockCollection.DummyRecord.class,
+                      EmptyRecord.class,
                       null)
                       .id("dummy")
                       .param(QueryParamMockCollection.VALUE_KEY, testValue).build();

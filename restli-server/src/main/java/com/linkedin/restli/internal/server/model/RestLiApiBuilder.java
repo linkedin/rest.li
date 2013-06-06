@@ -19,10 +19,11 @@ package com.linkedin.restli.internal.server.model;
 
 import com.linkedin.restli.server.ResourceConfigException;
 import com.linkedin.restli.server.RestLiConfig;
+
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,10 +63,10 @@ public class RestLiApiBuilder implements RestApiBuilder
     }
 
     Set<Class<?>> annotatedClasses = scanner.getMatchedClasses();
-
     if (annotatedClasses.isEmpty())
     {
-      throw new ResourceConfigException("Could not find any Rest.li annotated class in the configuration");
+      _log.info("Could not find any Rest.li annotated class in the configuration");
+      return Collections.emptyMap();
     }
 
     return buildResourceModels(annotatedClasses);

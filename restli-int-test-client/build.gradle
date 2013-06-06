@@ -1,7 +1,7 @@
 dependencies {
   compile project(':d2')
-  compile project(':restli-int-test-api')
   compile externalDependency.log4j
+  testCompile project(path: ':restli-int-test-api', configuration: 'restClient')
   testCompile externalDependency.testng
   testCompile externalDependency.commonsHttpClient
 }

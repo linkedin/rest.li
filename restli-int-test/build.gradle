@@ -1,5 +1,6 @@
+apply plugin: 'pegasus'
+
 dependencies {
-  compile project(':restli-int-test-api')
   compile project(':restli-int-test-server')
   compile project(':data')
   compile project(':pegasus-common')
@@ -15,5 +16,6 @@ dependencies {
   compile externalDependency.javaxInject
   compile externalDependency.parseq
   testCompile externalDependency.testng
+  testCompile project(path: ':restli-int-test-api', configuration: 'restClient')
   testCompile project(path: ':d2', configuration: 'testArtifacts')
 }

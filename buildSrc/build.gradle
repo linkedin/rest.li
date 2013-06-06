@@ -1,0 +1,3 @@
+// add gradle-plugins to the source of buildSrc
+// this allows buildSrc to use the up-to-date pegasus plugin code without duplication
+project.tasks[project.sourceSets.main.getCompileTaskName('groovy')].source('../gradle-plugins/src')

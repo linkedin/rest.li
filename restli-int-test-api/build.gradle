@@ -1,12 +1,13 @@
+apply plugin: 'pegasus'
+
 dependencies {
   compile project(':data')
   compile project(':restli-common')
   compile project(':restli-client')
+  restClientCompile project(project.path)
   testCompile externalDependency.testng
+  testCompile project(path: project.path, configuration: 'restClient')
 }
-
-apply from: "${buildScriptDirPath}/dataTemplate.gradle"
-apply from: "${buildScriptDirPath}/restClient.gradle"
 
 test {
   systemProperties['test.projectDir'] = project.projectDir.path

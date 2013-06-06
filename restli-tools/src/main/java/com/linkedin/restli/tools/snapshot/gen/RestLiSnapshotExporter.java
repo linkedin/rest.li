@@ -111,6 +111,10 @@ public class RestLiSnapshotExporter
     log.info("Executing Rest.li annotation processor...");
     final RestLiApiBuilder apiBuilder = new RestLiApiBuilder(config);
     final Map<String, ResourceModel> rootResourceMap = apiBuilder.build();
+    if (rootResourceMap.isEmpty())
+    {
+      return new SnapshotResult();
+    }
 
     log.info("Executing Javadoc tool...");
 

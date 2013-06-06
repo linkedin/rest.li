@@ -498,6 +498,8 @@ class PegasusPlugin implements Plugin<Project> {
   private static final String IDL_COMPAT_REQUIREMENT_NAME = 'rest.model.compatibility'
   private static final String IDL_NO_PUBLISH = 'rest.model.noPublish'
 
+  private static final String GENERATOR_CLASSLOADER_NAME = 'pegasusGeneratorClassLoader'
+
   private static boolean _runOnce = false
 
   private static final StringBuffer _idlCompatMessage = new StringBuffer()
@@ -672,6 +674,8 @@ class PegasusPlugin implements Plugin<Project> {
       // make clean depends on deleting the generated directories
       project.tasks.clean.dependsOn(cleanGeneratedDirTask)
     }
+
+    project.ext.set(GENERATOR_CLASSLOADER_NAME, this.class.classLoader)
   }
 
   protected void configureGeneratedSourcesAndJavadoc(Project project)
@@ -853,8 +857,8 @@ class PegasusPlugin implements Plugin<Project> {
       // the file copy can be turned off by "rest.model.noPublish" flag
       File idlGenerationDir = apiProject.file(getIdlRelativePath(project, sourceSet))
       final Task publishRestModelTask = project.task(sourceSet.getTaskName('publish', 'restModel'),
-                                                  type: PublishIdl,
-                                                  dependsOn: generateRestModelTask) {
+                                                     type: PublishIdl,
+                                                     dependsOn: generateRestModelTask) {
         from getSuffixedFiles(project, generateRestModelTask.destinationDir, IDL_FILE_SUFFIX)
         // apiIdlDir is annotated as @InputDirectory, whose existence is validated before executing the task
         into idlGenerationDir
@@ -1218,7 +1222,7 @@ class PegasusPlugin implements Plugin<Project> {
       project.logger.lifecycle("There are ${inputDataSchemaFiles.files.size()} data schema input files. Using input root folder: ${inputDir}")
 
       final String resolverPathStr = (resolverPath + project.files(inputDir)).collect { it.path }.join(File.pathSeparator)
-      final Class<?> dataTemplateGenerator = this.class.classLoader.loadClass('com.linkedin.pegasus.generator.PegasusDataTemplateGenerator')
+      final Class<?> dataTemplateGenerator = project.property(GENERATOR_CLASSLOADER_NAME).loadClass('com.linkedin.pegasus.generator.PegasusDataTemplateGenerator')
       dataTemplateGenerator.run(resolverPathStr, null, null, destinationDir.path, inputDataSchemaFiles.collect { it.path } as String[])
     }
   }
@@ -1263,7 +1267,7 @@ class PegasusPlugin implements Plugin<Project> {
       project.logger.lifecycle("There are ${inputDataSchemaFiles.files.size()} data schema input files. Using input root folder: ${inputDir}")
 
       final String resolverPathStr = (resolverPath + project.files(inputDir)).collect { it.path }.join(File.pathSeparator)
-      final Class<?> avroSchemaGenerator = this.class.classLoader.loadClass('com.linkedin.data.avro.generator.AvroSchemaGenerator')
+      final Class<?> avroSchemaGenerator = project.property(GENERATOR_CLASSLOADER_NAME).loadClass('com.linkedin.data.avro.generator.AvroSchemaGenerator')
       avroSchemaGenerator.run(resolverPathStr, null, destinationDir.path, inputDataSchemaFiles.collect { it.path } as String[])
     }
   }
@@ -1311,10 +1315,9 @@ class PegasusPlugin implements Plugin<Project> {
 
       final ClassLoader prevContextClassLoader = Thread.currentThread().contextClassLoader
       final URL[] classpathUrls = runtimeClasspath.collect { it.toURI().toURL() } as URL[]
-      final URLClassLoader classLoader = new URLClassLoader(classpathUrls, this.class.classLoader)
-      Thread.currentThread().contextClassLoader = classLoader
+      Thread.currentThread().contextClassLoader = new URLClassLoader(classpathUrls, (ClassLoader) project.property(GENERATOR_CLASSLOADER_NAME))
 
-      final def idlGenerator = this.class.classLoader.loadClass('com.linkedin.restli.tools.idlgen.RestLiResourceModelExporter').newInstance()
+      final def idlGenerator = project.property(GENERATOR_CLASSLOADER_NAME).loadClass('com.linkedin.restli.tools.idlgen.RestLiResourceModelExporter').newInstance()
       if (idlOptions.idlItems.empty)
       {
         idlGenerator.export(null, classpathUrls as String[], inputDirPaths, null, null, destinationDir.path)
@@ -1403,7 +1406,7 @@ class PegasusPlugin implements Plugin<Project> {
      */
     private boolean check()
     {
-      final Class<? extends Enum> compatLevelClass = this.class.classLoader.loadClass('com.linkedin.restli.tools.idlcheck.CompatibilityLevel').asSubclass(Enum.class)
+      final Class<? extends Enum> compatLevelClass = project.property(GENERATOR_CLASSLOADER_NAME).loadClass('com.linkedin.restli.tools.idlcheck.CompatibilityLevel').asSubclass(Enum.class)
 
       final Enum idlCompatLevel
       if (project.hasProperty(IDL_COMPAT_REQUIREMENT_NAME))
@@ -1430,7 +1433,7 @@ class PegasusPlugin implements Plugin<Project> {
 
       project.logger.info('Checking idl compatibility with API ...')
 
-      final def idlChecker = this.class.classLoader.loadClass('com.linkedin.restli.tools.idlcheck.RestLiResourceModelCompatibilityChecker').newInstance()
+      final def idlChecker = project.property(GENERATOR_CLASSLOADER_NAME).loadClass('com.linkedin.restli.tools.idlcheck.RestLiResourceModelCompatibilityChecker').newInstance()
       final String resolverPathStr = resolverPath.collect { it.path }.join(File.pathSeparator)
       idlChecker.setResolverPath(resolverPathStr)
 
@@ -1527,7 +1530,7 @@ class PegasusPlugin implements Plugin<Project> {
       project.logger.info('Generating REST client builders ...')
 
       final String resolverPathStr = resolverPath.collect { it.path }.join(File.pathSeparator)
-      final Class<?> stubGenerator = this.class.classLoader.loadClass('com.linkedin.restli.tools.clientgen.RestRequestBuilderGenerator')
+      final Class<?> stubGenerator = project.property(GENERATOR_CLASSLOADER_NAME).loadClass('com.linkedin.restli.tools.clientgen.RestRequestBuilderGenerator')
       destinationDir.mkdirs()
 
       for (PegasusOptions.ClientItem clientItem: pegasusClientOptions.clientItems)
