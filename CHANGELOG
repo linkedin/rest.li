@@ -1,3 +1,6 @@
+1.8.34
+------
+
 1.8.33
 ------
 (RB=173024)
@@ -16,6 +19,10 @@ Update Gradle plugin to allow server module skip specifying idlItems. In such ca
 The generators and tools the Gradle plugin depends on become runtime dependency so that user no longer needs to specify
   in the module dependency.
 Allow dataTemplateCompile and restClientCompile configurations to be overridden.
+
+(RB=173378)
+Add RestliBuilderUtils, modify RestrequestbuilderGenerator to have static ORIGINAL_RESOURCE_NAME and getter
+moved the log4j.xml files in the d2 and restli-server src dirs to the test dirs.
 
 1.8.32
 ------

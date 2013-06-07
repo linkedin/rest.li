@@ -360,6 +360,12 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
 
     String resourcePath = getResourcePath(resource.getPath());
 
+    // make the original resource name available via a private final static variable.
+    JFieldVar originalResourceField = facadeClass.field(JMod.PRIVATE | JMod.STATIC |JMod.FINAL, String.class,
+                                                        "ORIGINAL_RESOURCE_NAME");
+
+    originalResourceField.init(JExpr.lit(resourcePath));
+
     JMethod constructor = facadeClass.constructor(JMod.PUBLIC);
     constructor.body().assign(baseUriField, JExpr.lit(resourcePath));
 
@@ -374,6 +380,9 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     {
       overrideConstructor.body().assign(baseUriField, resourceNameParam);
     }
+
+    JMethod primaryResourceGetter = facadeClass.method(JMod.PUBLIC | JMod.STATIC, String.class, "getPrimaryResource");
+    primaryResourceGetter.body()._return(originalResourceField);
 
     List<String> pathKeys = getPathKeys(resourcePath);
 
