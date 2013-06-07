@@ -1,7 +1,7 @@
 {
   "name" : "follows",
   "path" : "/follows",
-  "schema" : "com.linkedin.restli.tools.twitter.TwitterTestDataModels$Followed",
+  "schema" : "com.linkedin.restli.tools.twitter.Followed",
   "doc" : "Association resource for the 'following' relationship\n\ngenerated from: com.linkedin.restli.tools.twitter.FollowsAssociativeResource",
   "association" : {
     "assocKeys" : [ {

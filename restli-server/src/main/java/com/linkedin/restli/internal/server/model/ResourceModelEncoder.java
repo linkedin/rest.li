@@ -23,8 +23,10 @@ import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.JsonBuilder;
+import com.linkedin.data.schema.Name;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.PrimitiveDataSchema;
+import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.SchemaToJsonEncoder;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
@@ -344,9 +346,11 @@ public class ResourceModelEncoder
       resourceSchema.setNamespace(resourceModel.getNamespace());
     }
     resourceSchema.setPath(buildPath(resourceModel));
-    if (resourceModel.getValueClass() != null)
+
+    final Class<?> valueClass = resourceModel.getValueClass();
+    if (valueClass != null)
     {
-      resourceSchema.setSchema(resourceModel.getValueClass().getName());
+      resourceSchema.setSchema(DataTemplateUtil.getSchema(valueClass).getUnionMemberKey());
     }
 
     final Class<?> resourceClass = resourceModel.getResourceClass();

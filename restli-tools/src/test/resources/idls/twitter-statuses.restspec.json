@@ -1,7 +1,7 @@
 {
   "name" : "statuses",
   "path" : "/statuses",
-  "schema" : "com.linkedin.restli.tools.twitter.TwitterTestDataModels$Status",
+  "schema" : "com.linkedin.restli.tools.twitter.Status",
   "doc" : "CollectionResource containing all statuses\n\ngenerated from: com.linkedin.restli.tools.twitter.StatusCollectionResource",
   "collection" : {
     "identifier" : {
@@ -42,7 +42,7 @@
         "doc" : "a unix timestamp. If present, only statuses created after this time are returned"
       }, {
         "name" : "type",
-        "type" : "StatusType",
+        "type" : "com.linkedin.restli.tools.twitter.StatusType",
         "optional" : true
       } ]
     }, {
@@ -62,7 +62,7 @@
       "subresources" : [ {
         "name" : "replies",
         "path" : "/statuses/{statusID}/replies",
-        "schema" : "com.linkedin.restli.tools.twitter.TwitterTestDataModels$Status",
+        "schema" : "com.linkedin.restli.tools.twitter.Status",
         "doc" : "Nested CollectionResource of all replies to a given status\n\ngenerated from: com.linkedin.restli.tools.twitter.RepliesCollectionResource",
         "collection" : {
           "identifier" : {

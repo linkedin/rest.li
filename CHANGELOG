@@ -6,6 +6,9 @@ Add functionality to generated idl files for all source files under a source dir
 (RB=172922)
 Remove dependency of system properties from build.gradle in restli-tools.
 
+(RB=173360)
+Fix incorrect schema field for idl files.
+
 1.8.32
 ------
 (RB=170403)

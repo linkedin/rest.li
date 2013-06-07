@@ -33,7 +33,7 @@ public class TwitterTestDataModels
   public static class Status extends RecordTemplate
   {
     private static final RecordDataSchema SCHEMA =
-        new RecordDataSchema(new Name("Status", new StringBuilder(10)), RecordDataSchema.RecordType.RECORD);
+        new RecordDataSchema(new Name("com.linkedin.restli.tools.twitter.Status", new StringBuilder(10)), RecordDataSchema.RecordType.RECORD);
 
     public Status()
     {
@@ -49,7 +49,7 @@ public class TwitterTestDataModels
   public static class User extends RecordTemplate
   {
     private static final RecordDataSchema SCHEMA =
-        new RecordDataSchema(new Name("User", new StringBuilder(10)), RecordDataSchema.RecordType.RECORD);
+        new RecordDataSchema(new Name("com.linkedin.restli.tools.twitter.User", new StringBuilder(10)), RecordDataSchema.RecordType.RECORD);
 
     public User(DataMap map)
     {
@@ -60,7 +60,7 @@ public class TwitterTestDataModels
   public static class Followed extends RecordTemplate
   {
     private static final RecordDataSchema SCHEMA =
-        new RecordDataSchema(new Name("Followed", new StringBuilder(10)), RecordDataSchema.RecordType.RECORD);
+        new RecordDataSchema(new Name("com.linkedin.restli.tools.twitter.Followed", new StringBuilder(10)), RecordDataSchema.RecordType.RECORD);
 
     public Followed(DataMap map)
     {
@@ -74,6 +74,6 @@ public class TwitterTestDataModels
     REPLY,
     RETWEET;
 
-    private static final EnumDataSchema SCHEMA = new EnumDataSchema(new Name("StatusType", new StringBuilder(10)));
+    private static final EnumDataSchema SCHEMA = new EnumDataSchema(new Name("com.linkedin.restli.tools.twitter.StatusType", new StringBuilder(10)));
   }
 }
