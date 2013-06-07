@@ -1351,9 +1351,6 @@ class PegasusPlugin implements Plugin<Project> {
     @TaskAction
     protected void generate()
     {
-      // runOnceAllProjects() should exclude projects with empty IdlItems
-      assert(!idlOptions.idlItems.empty)
-
       if (toolsClasspath.empty)
       {
         project.logger.error('Unable to generate idl files because missing restTools configuration.')
@@ -1379,21 +1376,28 @@ class PegasusPlugin implements Plugin<Project> {
       Thread.currentThread().contextClassLoader = classLoader
 
       final def idlGenerator = classLoader.loadClass('com.linkedin.restli.tools.idlgen.RestLiResourceModelExporter').newInstance()
-      for (PegasusOptions.IdlItem idlItem: idlOptions.idlItems)
+      if (idlOptions.idlItems.empty)
       {
-        final String apiName = idlItem.apiName
-        if (apiName.length() == 0)
+        idlGenerator.export(null, classpathUrls as String[], inputDirPaths, null, null, destinationDir.path)
+      }
+      else
+      {
+        for (PegasusOptions.IdlItem idlItem: idlOptions.idlItems)
         {
-          project.logger.info('Generating idl for unnamed api ...')
-        }
-        else
-        {
-          project.logger.info("Generating idl for api: ${apiName} ...")
-        }
+          final String apiName = idlItem.apiName
+          if (apiName.length() == 0)
+          {
+            project.logger.info('Generating idl for unnamed api ...')
+          }
+          else
+          {
+            project.logger.info("Generating idl for api: ${apiName} ...")
+          }
 
-        // RestLiResourceModelExporter will load classes from the passed packages
-        // we need to add the classpath to the thread's context class loader
-        idlGenerator.export(apiName, classpathUrls as String[], inputDirPaths, idlItem.packageNames, destinationDir.path)
+          // RestLiResourceModelExporter will load classes from the passed packages
+          // we need to add the classpath to the thread's context class loader
+          idlGenerator.export(apiName, classpathUrls as String[], inputDirPaths, idlItem.packageNames, null, destinationDir.path)
+        }
       }
 
       Thread.currentThread().contextClassLoader = prevContextClassLoader

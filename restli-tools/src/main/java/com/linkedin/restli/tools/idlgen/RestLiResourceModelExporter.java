@@ -31,6 +31,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -77,6 +78,7 @@ public class RestLiResourceModelExporter
    * @param apiName the name of the API
    * @param classpath classpath to to load the resources. this is purely for Javadoc Doclet {@link RestLiDoclet}
    * @param sourcePaths paths to scan for resource Java source files. this is purely for Javadoc Doclet {@link RestLiDoclet}
+   *                    if both resourcePackages and resourceClasses is null, all classes defined in the directories will be scanned
    * @param resourcePackages packages to scan for resources
    * @param resourceClasses specific classes as resources
    * @param outdir directory in which to output the IDL files
@@ -102,8 +104,12 @@ public class RestLiResourceModelExporter
     {
       config.addResourceClassNames(resourceClasses);
     }
+    if (resourcePackages == null && resourceClasses == null)
+    {
+      config.addResourceDir(sourcePaths);
+    }
 
-    log.info("Executing rest.li annotation processor...");
+    log.info("Executing Rest.li annotation processor...");
     final RestLiApiBuilder apiBuilder = new RestLiApiBuilder(config);
     final Map<String, ResourceModel> rootResourceMap = apiBuilder.build();
 
@@ -121,12 +127,20 @@ public class RestLiResourceModelExporter
 
     final PrintWriter sysoutWriter = new PrintWriter(System.out, true);
     final PrintWriter nullWriter = new PrintWriter(new NullWriter());
-    final String[] javadocArgs = new String[] {
+    final List<String> javadocArgs = new ArrayList<String>(Arrays.asList(
         "-classpath", flatClasspath,
-        "-sourcepath", StringUtils.join(sourcePaths, ":"),
-        "-subpackages", StringUtils.join(resourcePackages, ":")
-    };
-    Main.execute(apiName, sysoutWriter, nullWriter, nullWriter, "com.linkedin.restli.tools.idlgen.RestLiDoclet", javadocArgs);
+        "-sourcepath", StringUtils.join(sourcePaths, ":")
+    ));
+    if (resourcePackages != null)
+    {
+      javadocArgs.add("-subpackages");
+      javadocArgs.add(StringUtils.join(resourcePackages, ":"));
+    }
+    else
+    {
+      javadocArgs.addAll(config.getResourceClassNamesSet());
+    }
+    Main.execute(apiName, sysoutWriter, nullWriter, nullWriter, "com.linkedin.restli.tools.idlgen.RestLiDoclet", javadocArgs.toArray(new String[0]));
 
     log.info("Exporting IDL files...");
 

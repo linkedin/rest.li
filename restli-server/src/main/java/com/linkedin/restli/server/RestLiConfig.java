@@ -17,6 +17,8 @@
 package com.linkedin.restli.server;
 
 
+import com.linkedin.restli.server.util.FileClassNameScanner;
+
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashSet;
@@ -114,6 +116,20 @@ public class RestLiConfig
     for (String clazz : classNames)
     {
       _resourceClassNames.add(clazz);
+    }
+  }
+
+  /**
+   * @param paths
+   */
+  public void addResourceDir(final String... paths)
+  {
+    for (String path : paths)
+    {
+      for (String clazz : FileClassNameScanner.scan(path))
+      {
+        _resourceClassNames.add(clazz);
+      }
     }
   }
 

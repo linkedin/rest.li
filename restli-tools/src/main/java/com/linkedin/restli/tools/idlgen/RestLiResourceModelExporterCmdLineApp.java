@@ -47,7 +47,7 @@ public class RestLiResourceModelExporterCmdLineApp
   static
   {
     OPTIONS.addOption(OptionBuilder.isRequired().withArgName("sourcepath").hasArgs()
-                      .withDescription("Space-delimited list of directories in which to find resource Java source files").create("sourcepath"));
+                      .withDescription("Space-delimited list of directories in which to find resource Java source files\nIf neither -resourcepackages nor -resourcepackages is provided, all classes defined in the directories will be scanned").create("sourcepath"));
     OPTIONS.addOption(OptionBuilder.withArgName("name").hasArg()
                       .withDescription("Name of the API").create("name"));
     OPTIONS.addOption(OptionBuilder.withArgName("outdir").hasArg()
@@ -56,12 +56,11 @@ public class RestLiResourceModelExporterCmdLineApp
     OPTIONS.addOption(new Option("split", false, "DEPRECATED! Splits IDL across multiple files, one per root resource (always true)"));
 
     final OptionGroup sourceGroup = new OptionGroup();
-    sourceGroup.setRequired(true);
     final Option sourcePkgs =
       OptionBuilder.withArgName("resourcepackages").hasArgs()
                    .withDescription("Space-delimited list of packages to scan for resource classes")
                    .create("resourcepackages");
-    Option sourceClasses =
+    final Option sourceClasses =
       OptionBuilder.withArgName("resourceclasses").hasArgs()
                    .withDescription("space-delimited list of resource classes to scan")
                    .create("resourceclasses");

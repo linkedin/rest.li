@@ -1,5 +1,8 @@
 1.8.33
 ------
+(RB=173024)
+Add functionality to generated idl files for all source files under a source directory.
+
 (RB=172922)
 Remove dependency of system properties from build.gradle in restli-tools.
 
