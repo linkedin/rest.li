@@ -9,6 +9,9 @@ Remove dependency of system properties from build.gradle in restli-tools.
 (RB=173360)
 Fix incorrect schema field for idl files.
 
+(RB=173686)
+Update gradle plugin to allow server module skip specifying idlItems. In such case, all source files will be scanned.
+
 1.8.32
 ------
 (RB=170403)

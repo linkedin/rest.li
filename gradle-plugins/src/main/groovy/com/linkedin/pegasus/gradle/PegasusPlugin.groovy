@@ -26,7 +26,6 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileTree
 import org.gradle.api.internal.artifacts.dependencies.DefaultSelfResolvingDependency
-import org.gradle.api.internal.project.DefaultProject
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.Copy
@@ -754,62 +753,6 @@ class PegasusPlugin implements Plugin<Project> {
     }
   }
 
-  private static void configureRestModelPublication(Project proj,
-                                                    SourceSet sourceSet,
-                                                    Task generateRestModelTask,
-                                                    Class<? extends Plugin> pluginType) {
-    //afterEvaluate needed so that api project can be overridden via ext.apiProject
-    proj.afterEvaluate {
-      // find api project here instead of in each project's plugin configuration
-      // this allows api project relation options (ext.api*) to be specified anywhere in the build.gradle file
-      // alternatively, pass closures to task configuration, and evaluate the closures when task is executed
-      final Project apiProject = getApiProject(proj)
-
-      //make sure the api project is evaluated. Important for configure-on-demand mode.
-      if (apiProject) {
-        proj.evaluationDependsOn(apiProject.path)
-      }
-
-      if (apiProject && !apiProject.plugins.hasPlugin(pluginType)) {
-        apiProject = null
-      }
-
-      if (generateRestModelTask.idlOptions.idlItems.empty)
-      {
-        return
-      }
-      else if (apiProject == null)
-      {
-        throw new Exception("${proj.path}: idl files are generated but no API project is assigned for this project.")
-      }
-
-      // rest model publishing involves cross-project reference
-      // configure after all projects have been evaluated
-
-      // publish the generated rest model to api project
-      // it always does compatibility check before copying files
-      // the file copy can be turned off by "rest.model.noPublish" flag
-      File idlGenerationDir = apiProject.file(getIdlRelativePath(proj, sourceSet))
-      final Task publishRestModelTask = proj.task(sourceSet.getTaskName('publish', 'restModel'),
-                                                  type: PublishIdl,
-                                                  dependsOn: generateRestModelTask) {
-        from getSuffixedFiles(proj, generateRestModelTask.destinationDir, IDL_FILE_SUFFIX)
-        // apiIdlDir is annotated as @InputDirectory, whose existence is validated before executing the task
-        into idlGenerationDir
-        resolverPath = apiProject.files(getDataSchemaRelativePath(proj, sourceSet)) + getDataModelConfig(apiProject, sourceSet)
-        toolsClasspath = proj.configurations.restTools
-      }
-      proj.logger.info("API project selected for $publishRestModelTask.path is $apiProject.path")
-
-      // tasks which declare no output should always assume outputs UP-TO-DATE
-      publishRestModelTask.outputs.upToDateWhen { true }
-
-      final Task jarTask = proj.tasks[sourceSet.getTaskName('', 'jar')]
-      jarTask.from(idlGenerationDir) // add any .restspec.json files as resources to the jar
-      jarTask.dependsOn(publishRestModelTask)
-    }
-  }
-
   private static addGeneratedDir(Project project, SourceSet sourceSet, Collection<Configuration> configurations)
   {
     // stupid if block needed because of stupid assignment required to update source dirs
@@ -883,19 +826,66 @@ class PegasusPlugin implements Plugin<Project> {
       return
     }
 
-    // generate the rest model
-    final Task generateRestModelTask = project.task(sourceSet.getTaskName('generate', 'restModel'),
-                                                    type: GenerateIdl,
-                                                    dependsOn: project.tasks[sourceSet.getCompileJavaTaskName()]) {
-      inputDirs = sourceSet.java.srcDirs
-      // we need all the artifacts from runtime for any private implementation classes the server code might need.
-      runtimeClasspath = project.configurations.runtime + sourceSet.runtimeClasspath
-      toolsClasspath = project.configurations.restTools
-      destinationDir = project.file(getGeneratedSourceDirName(project, sourceSet, REST_GEN_TYPE) + File.separatorChar + 'idl')
-      idlOptions = project.pegasus[sourceSet.name].idlOptions
-    }
+    // afterEvaluate needed so that api project can be overridden via ext.apiProject
+    project.afterEvaluate {
+      // find api project here instead of in each project's plugin configuration
+      // this allows api project relation options (ext.api*) to be specified anywhere in the build.gradle file
+      // alternatively, pass closures to task configuration, and evaluate the closures when task is executed
+      final Project apiProject = getApiProject(project)
 
-    configureRestModelPublication(project, sourceSet, generateRestModelTask, _thisPluginType)
+      // make sure the api project is evaluated. Important for configure-on-demand mode.
+      if (apiProject)
+      {
+        project.evaluationDependsOn(apiProject.path)
+      }
+
+      if (apiProject && !apiProject.plugins.hasPlugin(_thisPluginType))
+      {
+        apiProject = null
+      }
+
+      if (apiProject == null)
+      {
+        return
+      }
+
+      // generate the rest model
+      final Task generateRestModelTask = project.task(sourceSet.getTaskName('generate', 'restModel'),
+                                                      type: GenerateIdl,
+                                                      dependsOn: project.tasks[sourceSet.getCompileJavaTaskName()]) {
+        inputDirs = sourceSet.java.srcDirs
+        // we need all the artifacts from runtime for any private implementation classes the server code might need.
+        runtimeClasspath = project.configurations.runtime + sourceSet.runtimeClasspath
+        toolsClasspath = project.configurations.restTools
+        destinationDir = project.file(getGeneratedSourceDirName(project, sourceSet, REST_GEN_TYPE) + File.separatorChar + 'idl')
+        idlOptions = project.pegasus[sourceSet.name].idlOptions
+      }
+
+      // rest model publishing involves cross-project reference
+      // configure after all projects have been evaluated
+
+      // publish the generated rest model to api project
+      // it always does compatibility check before copying files
+      // the file copy can be turned off by "rest.model.noPublish" flag
+      File idlGenerationDir = apiProject.file(getIdlRelativePath(project, sourceSet))
+      final Task publishRestModelTask = project.task(sourceSet.getTaskName('publish', 'restModel'),
+                                                  type: PublishIdl,
+                                                  dependsOn: generateRestModelTask) {
+        from getSuffixedFiles(project, generateRestModelTask.destinationDir, IDL_FILE_SUFFIX)
+        // apiIdlDir is annotated as @InputDirectory, whose existence is validated before executing the task
+        into idlGenerationDir
+        resolverPath = apiProject.files(getDataSchemaRelativePath(project, sourceSet)) + getDataModelConfig(apiProject, sourceSet)
+        toolsClasspath = project.configurations.restTools
+      }
+      project.logger.info("API project selected for $publishRestModelTask.path is $apiProject.path")
+
+      // tasks which declare no output should always assume outputs UP-TO-DATE
+      publishRestModelTask.outputs.upToDateWhen { true }
+
+      final Task jarTask = project.tasks[sourceSet.getTaskName('', 'jar')]
+      jarTask.from(idlGenerationDir) // add any .restspec.json files as resources to the jar
+      jarTask.dependsOn(publishRestModelTask)
+    }
   }
 
   protected void configureAvroSchemaGeneration(Project project, SourceSet sourceSet)
@@ -1351,12 +1341,6 @@ class PegasusPlugin implements Plugin<Project> {
     @TaskAction
     protected void generate()
     {
-      if (toolsClasspath.empty)
-      {
-        project.logger.error('Unable to generate idl files because missing restTools configuration.')
-        return
-      }
-
       final String[] inputDirPaths = inputDirs.collect { it.path }
       project.logger.debug("GenerateIdl using directories ${inputDirPaths}")
       project.logger.debug("IdlGeneratorCompile using destination dir ${destinationDir.path}")

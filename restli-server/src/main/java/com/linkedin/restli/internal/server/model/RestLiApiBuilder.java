@@ -42,7 +42,7 @@ public class RestLiApiBuilder implements RestApiBuilder
   {
     if (config.getResourcePackageNamesSet().isEmpty() && config.getResourceClassNamesSet().isEmpty())
     {
-      throw new ResourceConfigException("At least one package containing rest-annotated classes or one resource class must be specified");
+      throw new ResourceConfigException("At least one package containing Rest.li annotated classes or one resource class must be specified");
     }
 
     _packageNames = config.getResourcePackageNamesSet();
@@ -65,10 +65,7 @@ public class RestLiApiBuilder implements RestApiBuilder
 
     if (annotatedClasses.isEmpty())
     {
-      StringBuilder sb =
-          new StringBuilder("Could not find any rest-li classes in the following packages: "
-              + StringUtils.join(_packageNames, ','));
-      throw new ResourceConfigException(sb.toString());
+      throw new ResourceConfigException("Could not find any Rest.li annotated class in the configuration");
     }
 
     return buildResourceModels(annotatedClasses);
