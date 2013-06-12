@@ -136,9 +136,10 @@ public class RestLiMethodInvoker
         // run through the engine to get the context
         Task<Object> restliTask =
             new RestLiParSeqTask(arguments, contextIndex, method, resource);
-        _engine.run(restliTask);
+
         // propagate the result to the callback
         restliTask.addListener(new CallbackPromiseAdapter<Object>(callback));
+        _engine.run(restliTask);
         break;
 
       case TASK:
