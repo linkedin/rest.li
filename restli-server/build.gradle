@@ -7,9 +7,6 @@ dependencies {
   compile project(':pegasus-common')
   compile externalDependency.javaxInject
   compile externalDependency.mail
-  compile externalDependency.slf4jApi
-  compile externalDependency.slf4jLog4j12
-  compile externalDependency.log4j
   compile externalDependency.commonsLang
   compile externalDependency.commonsIo
   compile externalDependency.jacksonCoreAsl

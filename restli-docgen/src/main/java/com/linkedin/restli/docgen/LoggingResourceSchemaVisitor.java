@@ -29,7 +29,8 @@ import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.restspec.RestMethodSchema;
 import com.linkedin.restli.restspec.SimpleSchema;
 import com.linkedin.restli.server.ResourceLevel;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author dellamag
@@ -116,5 +117,5 @@ public class LoggingResourceSchemaVisitor implements ResourceSchemaVisitior
     _logger.info("Visiting resource: " + visitContext.getResourcePath());
   }
 
-  private final Logger _logger = Logger.getLogger(getClass());
+  private final Logger _logger = LoggerFactory.getLogger(getClass());
 }

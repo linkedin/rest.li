@@ -5,7 +5,6 @@ dependencies {
   compile project(':d2')
   compile project(':r2')
   compile project(':pegasus-common')
-  compile externalDependency.log4j
   testCompile project(':restli-int-test-api')
   testCompile externalDependency.testng
   testCompile externalDependency.commonsHttpClient

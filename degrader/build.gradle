@@ -1,5 +1,4 @@
 dependencies {
   compile project(':pegasus-common')
-  testCompile externalDependency.log4j
   testCompile externalDependency.testng
 }

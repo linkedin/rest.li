@@ -6,9 +6,6 @@ dependencies {
   compile project(':restli-common')
   compile project(':li-jersey-uri')
   compile externalDependency.mail
-  compile externalDependency.slf4jApi
-  compile externalDependency.slf4jLog4j12
-  compile externalDependency.log4j
   compile externalDependency.commonsLang
   compile externalDependency.jacksonCoreAsl
   compile externalDependency.jacksonMapperAsl

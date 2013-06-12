@@ -6,4 +6,6 @@ dependencies {
   compile externalDependency.codemodel
   compile externalDependency.jacksonCoreAsl
   compile externalDependency.jacksonMapperAsl
+  runtime externalDependency.slf4jLog4j12
+  runtime externalDependency.log4j
 }

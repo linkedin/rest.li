@@ -127,8 +127,8 @@ subprojects {
   // Default dependencies for all subprojects
   dependencies {
     compile externalDependency.slf4jApi
-    runtime externalDependency.slf4jLog4j12
-    runtime externalDependency.log4j
+    testRuntime externalDependency.slf4jLog4j12
+    testRuntime externalDependency.log4j
   }
 
   if (isDefaultEnvironment)

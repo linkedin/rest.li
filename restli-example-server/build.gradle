@@ -11,10 +11,11 @@ dependencies {
   compile project(':restli-server')
   compile project(':restli-common')
   compile project(':pegasus-common')
-  compile externalDependency.log4j
   compile externalDependency.javaxInject
   compile externalDependency.parseq
   compile externalDependency.zookeeper
+  runtime externalDependency.slf4jLog4j12
+  runtime externalDependency.log4j
   testCompile project(':restli-client')
   testCompile externalDependency.testng
   testCompile externalDependency.easymock

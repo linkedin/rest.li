@@ -2,7 +2,6 @@ dependencies {
   testCompile project(':data')
   testCompile project(path: ':data', configuration: 'testArtifacts')
   testCompile project(":generator")
-  testCompile externalDependency.log4j
   testCompile externalDependency.testng
 }
 
