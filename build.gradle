@@ -127,8 +127,11 @@ subprojects {
   // Default dependencies for all subprojects
   dependencies {
     compile externalDependency.slf4jApi
-    testRuntime externalDependency.slf4jLog4j12
-    testRuntime externalDependency.log4j
+    // Note this adds a default log4j.xml configuration to all projects testRuntime configuration.
+    // However, projects can still override simply by creating their own
+    // src/test/resources/log4j.xml, since that will always appear in the testRuntime classpath
+    // before this one.
+    testRuntime project(':log-test-config')
   }
 
   if (isDefaultEnvironment)

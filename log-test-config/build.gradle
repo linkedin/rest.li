@@ -1,0 +1,4 @@
+dependencies {
+  runtime externalDependency.slf4jLog4j12
+  runtime externalDependency.log4j
+}
