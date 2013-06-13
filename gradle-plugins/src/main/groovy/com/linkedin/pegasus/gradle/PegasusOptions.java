@@ -18,7 +18,11 @@ package com.linkedin.pegasus.gradle;
 
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
 
 /**
  * @author David Hoa
@@ -27,14 +31,36 @@ import java.util.List;
 
 public class PegasusOptions
 {
-  public Mode mode;
+  public Set<GenerationMode> generationModes = new HashSet<GenerationMode>(Arrays.asList(GenerationMode.PEGASUS));
   public IdlOptions idlOptions = new IdlOptions();
   public ClientOptions clientOptions = new ClientOptions();
 
-  public static enum Mode
+  /**
+   * control whether or not some generation tasks will be executed
+   * AVRO: generate equivalent avro schema from pdsc schema
+   * PEGASUS: generate data template from pdsc schema
+   */
+  public static enum GenerationMode
   {
     AVRO,
     PEGASUS
+  }
+
+  /**
+   * Test if a specific generation mode is turned on
+   *
+   * @param mode the {@link GenerationMode} to test against
+   * @return If generationModes is null, return true if mode is PEGASUS.
+   *         Otherwise, return true if generationModes contains the queried mode.
+   */
+  public boolean hasGenerationMode(GenerationMode mode)
+  {
+    if (generationModes == null)
+    {
+      throw new NullPointerException("PegasusOptions.generationModes is null. Please check your build.gradle.");
+    }
+
+    return generationModes.contains(mode);
   }
 
   public static class IdlItem

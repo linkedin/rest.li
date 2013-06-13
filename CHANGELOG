@@ -1,6 +1,13 @@
-1.8.35
+1.8.36
 ------
 
+
+1.8.35
+------
+(RB=174898)
+In pegasus plugin, fix bug that avro schema generation is run unconditionally. Now avroSchemaGenerator configuration will be respected again.
+  Note that there is a new preferred appraoch to do this. Please refer to plugin comments.
+In pegasus plugin, if a source set does not have jar task, skip publishing idl.
 
 1.8.34
 ------

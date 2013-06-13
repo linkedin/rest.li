@@ -533,6 +533,8 @@ class PegasusPlugin implements Plugin<Project> {
 
     // this HashMap will have a PegasusOptions per sourceSet
     project.ext.set('pegasus', new HashMap<String, PegasusOptions>())
+    // this map will extract PegasusOptions.GenerationMode to project property
+    project.ext.set('PegasusGenerationMode', PegasusOptions.GenerationMode.values().collectEntries {[it.name(), it]})
 
     if (!_runOnce) {
       synchronized (STATIC_BUILD_FINISHED_LOCK) {
@@ -557,42 +559,31 @@ class PegasusPlugin implements Plugin<Project> {
       }
     }
 
-    final Configuration externalDataTemplateCompileConfig = project.configurations.findByName('dataTemplateCompile')
-    final Configuration externalRestClientCompileConfig = project.configurations.findByName('restClientCompile')
-    if (externalDataTemplateCompileConfig != null)
-    {
-      project.configurations {
-        // configuration for compiling generated data templates
-        dataTemplateCompile {
-          visible = false
-        }
-      }
-    }
-    if (externalRestClientCompileConfig != null)
-    {
-      project.configurations {
-        // configuration for running rest client generator
-        restClientCompile {
-          visible = false
-        }
-      }
-    }
-
     project.configurations {
+      // configuration for compiling generated data templates
+      dataTemplateCompile {
+        visible = false
+      }
+
+      // configuration for running rest client generator
+      restClientCompile {
+        visible = false
+      }
+
       // configuration for running data template generator
-      // DEPRCATED!
+      // DEPRECATED! This configuration is no longer used. Please stop using it.
       dataTemplateGenerator {
         visible = false
       }
 
       // configuration for running rest client generator
-      // DEPRCATED!
+      // DEPRECATED! This configuration is no longer used. Please stop using it.
       restTools {
         visible = false
       }
 
       // configuration for running Avro schema generator
-      // DEPRCATED!
+      // DEPRECATED! To skip avro schema generation, use PegasusOptions.generationModes
       avroSchemaGenerator {
         visible = false
       }
@@ -657,13 +648,11 @@ class PegasusPlugin implements Plugin<Project> {
         return
       }
 
-      // determine whether running in avro or pegasus model
-      def mode = determineMode(project, sourceSet)
+      checkAvroSchemaExist(project, sourceSet)
 
       // the idl Generator input options will be inside the PegasusOptions class. Users of the
       // plugin can set the inputOptions in their build.gradle
       project.pegasus[sourceSet.name] = new PegasusOptions()
-      project.pegasus[sourceSet.name].mode = mode
 
       // rest model generation could fail on incompatibility
       // if it can fail, fail it early
@@ -777,14 +766,14 @@ class PegasusPlugin implements Plugin<Project> {
     project.ideaModule.module.scopes.COMPILE.plus = compilePlus
   }
 
-  private static PegasusOptions.Mode determineMode(Project project, SourceSet sourceSet)
+  private static void checkAvroSchemaExist(Project project, SourceSet sourceSet)
   {
-    def sourceDir = "src${File.separatorChar}${sourceSet.name}"
-    def avroSourceDir = project.file("$sourceDir${File.separatorChar}avro")
-    if (avroSourceDir.exists()) {
-      project.logger.lifecycle("${project.name}'s ${sourceDir} has avro directory, pegasus plugin does not process avro directory")
+    final String sourceDir = "src${File.separatorChar}${sourceSet.name}"
+    final File avroSourceDir = project.file("${sourceDir}${File.separatorChar}avro")
+    if (avroSourceDir.exists())
+    {
+      project.logger.lifecycle("${project.name}'s ${sourceDir} has non-empty avro directory. pegasus plugin does not process avro directory")
     }
-    return PegasusOptions.Mode.PEGASUS
   }
 
   private static String getDataSchemaRelativePath(Project project, SourceSet sourceSet)
@@ -849,10 +838,16 @@ class PegasusPlugin implements Plugin<Project> {
         return
       }
 
+      final Task jarTask = project.tasks.findByName(sourceSet.getJarTaskName())
+      if (jarTask == null || !(jarTask instanceof Jar))
+      {
+        return
+      }
+
       // generate the rest model
       final Task generateRestModelTask = project.task(sourceSet.getTaskName('generate', 'restModel'),
                                                       type: GenerateIdl,
-                                                      dependsOn: project.tasks[sourceSet.getCompileJavaTaskName()]) {
+                                                      dependsOn: project.tasks[sourceSet.compileJavaTaskName]) {
         inputDirs = sourceSet.java.srcDirs
         // we need all the artifacts from runtime for any private implementation classes the server code might need.
         runtimeClasspath = project.configurations.runtime + sourceSet.runtimeClasspath
@@ -880,7 +875,6 @@ class PegasusPlugin implements Plugin<Project> {
       // tasks which declare no output should always assume outputs UP-TO-DATE
       publishRestModelTask.outputs.upToDateWhen { true }
 
-      final Task jarTask = project.tasks[sourceSet.getTaskName('', 'jar')]
       jarTask.from(idlGenerationDir) // add any .restspec.json files as resources to the jar
       jarTask.dependsOn(publishRestModelTask)
     }
@@ -904,6 +898,11 @@ class PegasusPlugin implements Plugin<Project> {
       destinationDir = avroDir
       inputDataSchemaFiles = dataSchemaFiles
       resolverPath = getDataModelConfig(project, sourceSet)
+
+      onlyIf {
+        project.pegasus[sourceSet.name].hasGenerationMode(PegasusOptions.GenerationMode.AVRO) ||
+        !project.configurations.avroSchemaGenerator.empty
+      }
     }
 
     project.tasks[sourceSet.compileJavaTaskName].dependsOn(generateAvroSchemaTask)
@@ -950,6 +949,10 @@ class PegasusPlugin implements Plugin<Project> {
       destinationDir = project.file(getGeneratedSourceDirName(project, sourceSet, DATA_TEMPLATE_GEN_TYPE) + File.separatorChar + 'java')
       inputDataSchemaFiles = dataSchemaFiles
       resolverPath = getDataModelConfig(project, sourceSet)
+
+      onlyIf {
+        project.pegasus[sourceSet.name].hasGenerationMode(PegasusOptions.GenerationMode.PEGASUS)
+      }
     }
 
     _generateSourcesJarTask.from(generateDataTemplatesTask.destinationDir)
