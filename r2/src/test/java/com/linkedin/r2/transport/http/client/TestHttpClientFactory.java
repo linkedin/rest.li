@@ -402,6 +402,33 @@ public class TestHttpClientFactory
     Assert.assertTrue(scheduler.awaitTermination(60, TimeUnit.SECONDS));
   }
 
+  /**
+   * Tests that even when the factory is shutdown with a long timeout, it does not occupy
+   * any executors with tasks that might prevent them shutting down properly.
+   * @throws InterruptedException
+   * @throws ExecutionException
+   * @throws TimeoutException
+   */
+  @Test
+  public void testShutdownTimeoutDoesNotOccupyExecutors()
+          throws InterruptedException, ExecutionException, TimeoutException
+  {
+    ExecutorService boss = Executors.newCachedThreadPool();
+    ExecutorService worker = Executors.newCachedThreadPool();
+    ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    ClientSocketChannelFactory channelFactory = new NioClientSocketChannelFactory(boss, worker);
+    HttpClientFactory factory = new HttpClientFactory(FilterChains.empty(), channelFactory, false, scheduler, false);
+
+    FutureCallback<None> callback = new FutureCallback<None>();
+    factory.shutdown(callback, 60, TimeUnit.MINUTES);
+    callback.get(60, TimeUnit.SECONDS);
+    scheduler.shutdown();
+    channelFactory.releaseExternalResources();
+    Assert.assertTrue(scheduler.awaitTermination(60, TimeUnit.SECONDS));
+    Assert.assertTrue(boss.awaitTermination(60, TimeUnit.SECONDS));
+    Assert.assertTrue(worker.awaitTermination(60, TimeUnit.SECONDS));
+  }
+
   @Test
   public void testRequestTimeoutConfig()
   {

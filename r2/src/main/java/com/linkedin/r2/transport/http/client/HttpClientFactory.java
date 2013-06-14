@@ -21,7 +21,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
@@ -106,6 +108,10 @@ public class HttpClientFactory implements TransportClientFactory
   private final boolean                    _shutdownExecutor;
   private final FilterChain                _filters;
 
+  private final AtomicBoolean              _finishingShutdown = new AtomicBoolean(false);
+  private volatile ScheduledFuture<?>      _shutdownTimeoutTask;
+
+  // All fields below protected by _mutex
   private final Object                     _mutex               = new Object();
   private boolean                          _running             = true;
   private int                              _clientsOutstanding  = 0;
@@ -448,7 +454,7 @@ public class HttpClientFactory implements TransportClientFactory
   public void shutdown(Callback<None> callback, long timeout, TimeUnit timeoutUnit)
   {
     // Schedule a timeout in case shutdown does not happen normally
-    _executor.schedule(new Runnable()
+    _shutdownTimeoutTask = _executor.schedule(new Runnable()
     {
       @Override
       public void run()
@@ -464,6 +470,15 @@ public class HttpClientFactory implements TransportClientFactory
 
   private void finishShutdown()
   {
+    if (!_finishingShutdown.compareAndSet(false, true))
+    {
+      return;
+    }
+    if (_shutdownTimeoutTask != null)
+    {
+      _shutdownTimeoutTask.cancel(false);
+    }
+
     // Under some circumstances, this method will be executed on a Netty IO thread.  For example,
     // as the factory waits for clients to shutdown, if the final client shuts down due an IO
     // event (receives response, connection refused, etc.).  In that case, the call to

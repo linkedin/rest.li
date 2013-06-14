@@ -1,5 +1,9 @@
 1.8.36
 ------
+(RB=175637)
+Fix HttpClientFactory.shutdown() with timeout so it does not tie up
+the executor for the length of the timeout.
+
 (RB=173757)
 Snapshots implemented locally in pegasus.  PegasusPlugin was not changed, so others using pegasus won't be able to use Snapshots yet.
 Within the project, Snapshots are now used instead of IDLs for backwards compatibility checking.  (IDLs are still used to create builders
