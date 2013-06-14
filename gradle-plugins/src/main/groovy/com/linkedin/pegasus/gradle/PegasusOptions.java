@@ -57,7 +57,7 @@ public class PegasusOptions
   {
     if (generationModes == null)
     {
-      throw new NullPointerException("PegasusOptions.generationModes is null. Please check your build.gradle.");
+      throw new IllegalArgumentException("PegasusOptions.generationModes is null. Please check your build.gradle.");
     }
 
     return generationModes.contains(mode);
@@ -88,7 +88,7 @@ public class PegasusOptions
 
     public void addIdlItem(List<String> inPackageNames)
     {
-      IdlItem newItem = new IdlItem("", inPackageNames);
+      IdlItem newItem = new IdlItem(null, inPackageNames);
       _idlOptionsList.add(newItem);
     }
 

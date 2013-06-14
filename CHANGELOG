@@ -10,6 +10,9 @@ Within the project, Snapshots are now used instead of IDLs for backwards compati
 and are the source of truth for client-server interaction, however)  Snapshots have the advantage that they contain the models that they
 reference, so backwards incompatibile changes between models can now be noticed.
 
+(RB=175771)
+Gradle plugin: Add missing data and restli-client dependencies to javadoc task classpath. Add test and clean up source code.
+
 1.8.35
 ------
 (RB=174898)

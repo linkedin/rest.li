@@ -672,17 +672,6 @@ class PegasusPlugin implements Plugin<Project> {
       // make clean depends on deleting the generated directories
       project.tasks.clean.dependsOn(cleanGeneratedDirTask)
     }
-
-    /*
-    project.tasks.withType(GenerateDataTemplate) {
-      project.tasks.idea.dependsOn(it)
-      project.tasks.eclipse.dependsOn(it)
-    }
-    project.tasks.withType(GenerateRestClient) {
-      project.tasks.idea.dependsOn(it)
-      project.tasks.eclipse.dependsOn(it)
-    }
-    */
   }
 
   protected void configureGeneratedSourcesAndJavadoc(Project project)
@@ -959,7 +948,7 @@ class PegasusPlugin implements Plugin<Project> {
     _generateSourcesJarTask.dependsOn(generateDataTemplatesTask)
 
     _generateJavadocTask.source(generateDataTemplatesTask.destinationDir)
-    _generateJavadocTask.classpath += generateDataTemplatesTask.resolverPath
+    _generateJavadocTask.classpath += project.configurations.dataTemplateCompile + generateDataTemplatesTask.resolverPath
     _generateJavadocTask.dependsOn(generateDataTemplatesTask)
 
     // create new source set for generated java source and class files
@@ -985,10 +974,6 @@ class PegasusPlugin implements Plugin<Project> {
         eachFile {
           it.path = 'pegasus' + File.separatorChar + it.path.toString()
         }
-        // TODO: exclude the directories, because they aren't being put under pegasus
-        // there isn't a clean way to do this currently with gradle, its a bug with gradle
-        // because the from iterates through directories and files but the eachFile only
-        // iterates through files. Gradle needs to expose something to iterate through both.
       }
       from (targetSourceSet.output)
       appendix = getAppendix(sourceSet, 'data-template')
@@ -1092,7 +1077,7 @@ class PegasusPlugin implements Plugin<Project> {
     _generateSourcesJarTask.dependsOn(generateRestClientTask)
 
     _generateJavadocTask.source(generateRestClientTask.destinationDir)
-    _generateJavadocTask.classpath += generateRestClientTask.resolverPath
+    _generateJavadocTask.classpath += project.configurations.restClientCompile + generateRestClientTask.resolverPath
     _generateJavadocTask.dependsOn(generateRestClientTask)
 
     // make sure rest client source files have been generated before compiling them
@@ -1113,12 +1098,6 @@ class PegasusPlugin implements Plugin<Project> {
       from (targetSourceSet.output)
       appendix = getAppendix(sourceSet, 'rest-client')
       description = 'Generate rest client jar'
-      // unfortunately, even though this code does what I intended (does not generate the idl jar
-      // if the destination dir is empty, that causes a problem in the hudson job (not reproducible
-      // in my local env) while trying to compute the checksum for these non-existent jars
-      //onlyIf {
-      //  project.fileTree(compileGeneratedRestClientTask.destinationDir).getFiles().size() > 0
-      //}
     }
 
     // add the rest model jar and the rest client jar to the list of project artifacts.
@@ -1188,7 +1167,7 @@ class PegasusPlugin implements Plugin<Project> {
   }
 
   /**
-   * Return <code>true</code> if the given property exists and its value is <code>true</code>
+   * Return true if the given property exists and its value is true
    *
    * @param project the project where to look for the property
    * @param property the name of the property
@@ -1298,6 +1277,10 @@ class PegasusPlugin implements Plugin<Project> {
    * As prerequisite of this task, add these lines to your build.gradle:
    * <pre>
    * apply plugin: 'li-pegasus2'
+   * </pre>
+   *
+   * Optionally, to generate idl for specific packages, add
+   * <pre>
    * pegasus.&lt;sourceSet&gt;.idlOptions.addIdlItem(['&lt;packageName&gt;'])
    * </pre>
    */
@@ -1317,12 +1300,13 @@ class PegasusPlugin implements Plugin<Project> {
 
       // handle multiple idl generations in the same project, see pegasus rest-framework-server-examples
       // for example.
-      // [<packageName>] is the array of packages that should be searched for annotated java classes.
-      //
-      // pegasus.<sourceSet>.idlOptions.addIdlItem(['<packageName>'])
+      // by default, scan in all source files for annotated java classes.
+      // specifically, to scan in certain packages, use
+      //   pegasus.<sourceSet>.idlOptions.addIdlItem(['<packageName>'])
+      // where [<packageName>] is the array of packages that should be searched for annotated java classes.
       // for example:
       // pegasus.main.idlOptions.addIdlItem(['com.linkedin.groups.server.rest.impl', 'com.linkedin.greetings.server.rest.impl'])
-      // They will still be placed in the same jar, though
+      // they will still be placed in the same jar, though
 
       final ClassLoader prevContextClassLoader = Thread.currentThread().contextClassLoader
       final URL[] classpathUrls = runtimeClasspath.collect { it.toURI().toURL() } as URL[]
@@ -1501,18 +1485,13 @@ class PegasusPlugin implements Plugin<Project> {
    * As pre-requisite of this task,, add these lines to your build.gradle:
    * <pre>
    * apply plugin: 'li-pegasus2'
+   * </pre>
+   *
+   * Optionally, you can specify certain resource classes to be generated idl
+   * <pre>
    * pegasus.<sourceSet>.clientOptions.addClientItem('<restModelFilePath>', '<defaultPackage>', <keepDataTemplates>)
    * </pre>
    * keepDataTemplates is a boolean that isn't used right now, but might be implemented in the future.
-   *
-   * dependencies (for other projects in the same multi-product):
-   * <pre>
-   * dependencies {
-   *   dataModel project(path: ':janus:janus-impl', configuration: 'dataTemplate')
-   *   restModel project(path: ':janus:janus-impl', configuration: 'restModel')
-   * }
-   * </pre>
-   * (may need other deps)
    */
   static class GenerateRestClient extends DefaultTask {
 

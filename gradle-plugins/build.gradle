@@ -8,4 +8,6 @@ dependencies {
   runtime project(':data-avro')
   runtime project(':generator')
   runtime project(':restli-tools')
+
+  testCompile externalDependency.testng
 }
