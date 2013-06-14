@@ -8,10 +8,11 @@
       "name" : "handshake",
       "parameters" : [ {
         "name" : "me",
-        "type" : "string"
+        "type" : "string",
+        "doc" : "New parameter doc"
       }, {
         "name" : "others",
-        "type" : "{ \"type\" : \"array\", \"items\" : \"string\"}"
+        "type" : "{ \"type\" : \"array\", \"items\" : \"string\" }"
       }, {
         "name" : "param",
         "type" : "string",

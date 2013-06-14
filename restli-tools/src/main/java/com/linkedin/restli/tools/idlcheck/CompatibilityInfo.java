@@ -49,6 +49,7 @@ public class CompatibilityInfo
     TYPE_BREAKS_OLD_READER(Level.INCOMPATIBLE, "%s, breaks old readers"),
     TYPE_BREAKS_NEW_READER(Level.INCOMPATIBLE, "%s, breaks new readers"),
     TYPE_BREAKS_NEW_AND_OLD_READERS(Level.INCOMPATIBLE, "%s, breaks new and old readers"),
+    DOC_NOT_EQUAL(Level.COMPATIBLE, "Documentation is updated"),
     DEPRECATED(Level.COMPATIBLE, "%s is deprecated"),
     PARAMETER_NEW_OPTIONAL(Level.COMPATIBLE, "New optional parameter \"%s\" is added"),
     OPTIONAL_PARAMETER(Level.COMPATIBLE, "Previous optional parameter is changed to currently required"),

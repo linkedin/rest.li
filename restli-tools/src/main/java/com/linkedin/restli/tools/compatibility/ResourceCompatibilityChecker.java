@@ -198,6 +198,25 @@ public class ResourceCompatibilityChecker
     return true;
   }
 
+  private boolean checkDoc(RecordDataSchema.Field field, Object prevData, Object currData)
+  {
+    assert (field != null);
+
+    if ((prevData == null) != (currData == null))
+    {
+      _map.addInfo(field.getName(), CompatibilityInfo.Type.DOC_NOT_EQUAL, _path);
+      return false;
+    }
+
+    if (prevData != null && !prevData.equals(currData))
+    {
+      _map.addInfo(field.getName(), CompatibilityInfo.Type.DOC_NOT_EQUAL, _path);
+      return false;
+    }
+
+    return true;
+  }
+
   /**
    * @return whether the optionality check passes
    */
@@ -578,6 +597,10 @@ public class ResourceCompatibilityChecker
                           prevRec.getName(GetMode.DEFAULT),
                           currRec.getName(GetMode.DEFAULT));
 
+    checkDoc(prevRec.schema().getField("doc"),
+             prevRec.getDoc(GetMode.DEFAULT),
+             currRec.getDoc(GetMode.DEFAULT));
+
     checkEqualSingleValue(prevRec.schema().getField("namespace"),
                           prevRec.getNamespace(GetMode.DEFAULT),
                           currRec.getNamespace(GetMode.DEFAULT));
@@ -646,6 +669,10 @@ public class ResourceCompatibilityChecker
                           prevRec.getName(GetMode.DEFAULT),
                           currRec.getName(GetMode.DEFAULT));
 
+    checkDoc(prevRec.schema().getField("doc"),
+             prevRec.getDoc(GetMode.DEFAULT),
+             currRec.getDoc(GetMode.DEFAULT));
+
     checkParameterArrayField(prevRec.schema().getField("parameters"),
                              prevRec.getParameters(GetMode.DEFAULT),
                              currRec.getParameters(GetMode.DEFAULT));
@@ -695,6 +722,10 @@ public class ResourceCompatibilityChecker
     checkEqualSingleValue(prevRec.schema().getField("name"),
                           prevRec.getName(GetMode.DEFAULT),
                           currRec.getName(GetMode.DEFAULT));
+
+    checkDoc(prevRec.schema().getField("doc"),
+             prevRec.getDoc(GetMode.DEFAULT),
+             currRec.getDoc(GetMode.DEFAULT));
 
     /*
     Compatibility of the deprecated "items" field:
@@ -750,6 +781,10 @@ public class ResourceCompatibilityChecker
     checkEqualSingleValue(prevRec.schema().getField("name"),
                           prevRec.getName(GetMode.DEFAULT),
                           currRec.getName(GetMode.DEFAULT));
+
+    checkDoc(prevRec.schema().getField("doc"),
+             prevRec.getDoc(GetMode.DEFAULT),
+             currRec.getDoc(GetMode.DEFAULT));
 
     checkParameterArrayField(prevRec.schema().getField("parameters"),
                              prevRec.getParameters(GetMode.DEFAULT),
@@ -832,6 +867,10 @@ public class ResourceCompatibilityChecker
     checkEqualSingleValue(prevRec.schema().getField("method"),
                           prevRec.getMethod(GetMode.DEFAULT),
                           currRec.getMethod(GetMode.DEFAULT));
+
+    checkDoc(prevRec.schema().getField("doc"),
+             prevRec.getDoc(GetMode.DEFAULT),
+             currRec.getDoc(GetMode.DEFAULT));
 
     checkParameterArrayField(prevRec.schema().getField("parameters"),
                              prevRec.getParameters(GetMode.DEFAULT),

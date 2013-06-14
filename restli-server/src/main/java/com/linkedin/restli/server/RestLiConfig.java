@@ -16,10 +16,9 @@
 
 package com.linkedin.restli.server;
 
-
-import com.linkedin.restli.server.util.FileClassNameScanner;
-
 import java.net.URI;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -86,14 +85,19 @@ public class RestLiConfig
   }
 
   /**
+   * @param packageNames collection of package names to be scanned
+   */
+  public void addResourcePackageNames(final Collection<String> packageNames)
+  {
+    _resourcePackageNames.addAll(packageNames);
+  }
+
+  /**
    * @param packageNames array of package names to be scanned
    */
   public void addResourcePackageNames(final String... packageNames)
   {
-    for (String pkg : packageNames)
-    {
-      _resourcePackageNames.add(pkg);
-    }
+    _resourcePackageNames.addAll(Arrays.asList(packageNames));
   }
 
   /**
@@ -109,28 +113,19 @@ public class RestLiConfig
   }
 
   /**
+   * @param classNames collection of specific resource class names to be loaded
+   */
+  public void addResourceClassNames(final Collection<String> classNames)
+  {
+    _resourceClassNames.addAll(classNames);
+  }
+
+  /**
    * @param classNames array of specific resource class names to be loaded
    */
   public void addResourceClassNames(final String... classNames)
   {
-    for (String clazz : classNames)
-    {
-      _resourceClassNames.add(clazz);
-    }
-  }
-
-  /**
-   * @param paths
-   */
-  public void addResourceDir(final String... paths)
-  {
-    for (String path : paths)
-    {
-      for (String clazz : FileClassNameScanner.scan(path))
-      {
-        _resourceClassNames.add(clazz);
-      }
-    }
+    _resourceClassNames.addAll(Arrays.asList(classNames));
   }
 
   public URI getServerNodeUri()

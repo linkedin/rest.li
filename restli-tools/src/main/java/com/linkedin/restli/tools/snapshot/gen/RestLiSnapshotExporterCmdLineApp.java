@@ -43,14 +43,13 @@ public class RestLiSnapshotExporterCmdLineApp
   static
   {
     OPTIONS.addOption(OptionBuilder.isRequired().withArgName("sourcepath").hasArgs()
-                        .withDescription("Space-delimited list of directories in which to find resource Java source files").create("sourcepath"));
+                        .withDescription("Space-delimited list of directories in which to find resource Java source files\nIf neither -resourcepackages nor -resourcepackages is provided, all classes defined in the directories will be scanned").create("sourcepath"));
     OPTIONS.addOption(OptionBuilder.withArgName("name").hasArg()
                         .withDescription("Name of the API").create("name"));
     OPTIONS.addOption(OptionBuilder.withArgName("outdir").hasArg()
                         .withDescription("Directory in which to output the generated Snapshot files (default=current working dir)").create("outdir"));
 
     final OptionGroup sourceGroup = new OptionGroup();
-    sourceGroup.setRequired(true);
     final Option sourcePkgs =
       OptionBuilder.withArgName("resourcepackages").hasArgs()
         .withDescription("Space-delimited list of packages to scan for resource classes")
@@ -92,7 +91,7 @@ public class RestLiSnapshotExporterCmdLineApp
                                           null,
                                           cl.getOptionValues("sourcepath"),
                                           cl.getOptionValues("resourcepackages"),
-                                          cl.getOptionValues("resourceClasses"),
+                                          cl.getOptionValues("resourceclasses"),
                                           cl.getOptionValue("outdir", "."));
     }
     catch (Throwable e)

@@ -1,6 +1,8 @@
 1.8.38
 ------
-
+(RB=175711)
+When generating idl, pass the source files of the resource classes to Javadoc.
+When checking idl compatibility, doc field change is now a backwards compatible change instead of equivalent.
 
 1.8.37
 ------

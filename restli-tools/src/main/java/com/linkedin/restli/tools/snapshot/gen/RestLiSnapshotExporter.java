@@ -16,17 +16,15 @@
 
 package com.linkedin.restli.tools.snapshot.gen;
 
+
 import com.linkedin.data.schema.DataSchemaResolver;
-import com.linkedin.data.schema.SchemaParserFactory;
-import com.linkedin.data.schema.generator.AbstractGenerator;
-import com.linkedin.data.schema.resolver.DefaultDataSchemaResolver;
-import com.linkedin.data.schema.resolver.FileDataSchemaResolver;
 import com.linkedin.pegasus.generator.GeneratorResult;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.model.ResourceModelEncoder;
 import com.linkedin.restli.internal.server.model.RestLiApiBuilder;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.server.RestLiConfig;
+import com.linkedin.restli.server.util.FileClassNameScanner;
 import com.linkedin.restli.tools.compatibility.CompatibilityUtil;
 import com.linkedin.restli.tools.idlgen.DocletDocsProvider;
 import com.sun.tools.javadoc.Main;
@@ -41,6 +39,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -74,16 +73,42 @@ public class RestLiSnapshotExporter
     {
       config.addResourcePackageNames(resourcePackages);
     }
-    if (resourceClasses != null)
+
+    Collection<String> sourceFileNames = null;
+    if (resourceClasses != null || resourcePackages == null)
     {
-      config.addResourceClassNames(resourceClasses);
-    }
-    if (resourcePackages == null && resourceClasses == null)
-    {
-      config.addResourceDir(sourcePaths);
+      final Map<String, String> classFileNames = new HashMap<String, String>();
+      for (String path : sourcePaths)
+      {
+        classFileNames.putAll(FileClassNameScanner.scan(path));
+      }
+
+      if (resourceClasses != null)
+      {
+        config.addResourceClassNames(resourceClasses);
+
+        sourceFileNames = new ArrayList<String>(resourceClasses.length);
+        for (String resourceClass : resourceClasses)
+        {
+          final String resourceFileName = classFileNames.get(resourceClass);
+          if (resourceFileName == null)
+          {
+            log.warn("Unable to find source file for class " + resourceClass + " .  No Javadoc will be generated for it.");
+          }
+          else
+          {
+            sourceFileNames.add(resourceFileName);
+          }
+        }
+      }
+      else
+      {
+        config.addResourceClassNames(classFileNames.keySet());
+        sourceFileNames = classFileNames.values();
+      }
     }
 
-    log.info("Executing rest.li annotation processor...");
+    log.info("Executing Rest.li annotation processor...");
     final RestLiApiBuilder apiBuilder = new RestLiApiBuilder(config);
     final Map<String, ResourceModel> rootResourceMap = apiBuilder.build();
 
@@ -112,11 +137,9 @@ public class RestLiSnapshotExporter
     }
     else
     {
-      javadocArgs.addAll(config.getResourceClassNamesSet());
+      javadocArgs.addAll(sourceFileNames);
     }
-    Main.execute(apiName, sysoutWriter, nullWriter, nullWriter,
-                 "com.linkedin.restli.tools.idlgen.RestLiDoclet",
-                 javadocArgs.toArray(new String[0]));
+    Main.execute(apiName, sysoutWriter, nullWriter, nullWriter, "com.linkedin.restli.tools.idlgen.RestLiDoclet", javadocArgs.toArray(new String[0]));
 
 
     log.info("Exporting snapshot files...");

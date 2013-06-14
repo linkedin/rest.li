@@ -223,15 +223,15 @@ public class TestResourceCompatibilityChecker
 
     Assert.assertFalse(checker.check(CompatibilityLevel.BACKWARDS));
 
-    final Collection<CompatibilityInfo> incompatible = new HashSet<CompatibilityInfo>(checker.getMap().getIncompatibles());
+    final Collection<CompatibilityInfo> incompatibles = new HashSet<CompatibilityInfo>(checker.getMap().getIncompatibles());
 
     for (CompatibilityInfo te : testErrors)
     {
-      Assert.assertTrue(incompatible.contains(te), "Reported incompatibles should contain: " + te.toString());
-      incompatible.remove(te);
+      Assert.assertTrue(incompatibles.contains(te), "Reported incompatibles should contain: " + te.toString());
+      incompatibles.remove(te);
     }
 
-    Assert.assertTrue(incompatible.isEmpty());
+    Assert.assertTrue(incompatibles.isEmpty());
 
     // ignore compatibles
   }
@@ -294,6 +294,7 @@ public class TestResourceCompatibilityChecker
     Assert.assertFalse(checker.check(CompatibilityLevel.BACKWARDS));
 
     final Collection<CompatibilityInfo> incompatibles = new HashSet<CompatibilityInfo>(checker.getMap().getIncompatibles());
+    final Collection<CompatibilityInfo> compatibles = new HashSet<CompatibilityInfo>(checker.getMap().getCompatibles());
 
     for (CompatibilityInfo te : testErrors)
     {
@@ -302,11 +303,20 @@ public class TestResourceCompatibilityChecker
     }
 
     Assert.assertTrue(incompatibles.isEmpty());
+    Assert.assertTrue(compatibles.isEmpty());
   }
 
   @Test
   public void testPassActionsSetFile() throws IOException
   {
+    final Collection<CompatibilityInfo> testDiffs = new HashSet<CompatibilityInfo>();
+    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "doc"),
+                                        CompatibilityInfo.Type.DOC_NOT_EQUAL));
+    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "actionsSet", "actions", "handshake", "parameters"),
+                                        CompatibilityInfo.Type.PARAMETER_NEW_OPTIONAL, "param"));
+    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "actionsSet", "actions", "handshake", "parameters", "me", "doc"),
+                                        CompatibilityInfo.Type.DOC_NOT_EQUAL));
+
     ResourceSchema prevResource = idlToResource(idlsDir + PREV_AS_FILE);
     ResourceSchema currResource = idlToResource(idlsDir + CURR_AS_PASS_FILE);
 
@@ -317,6 +327,16 @@ public class TestResourceCompatibilityChecker
 
     final Collection<CompatibilityInfo> incompatibles = checker.getMap().getIncompatibles();
     Assert.assertTrue(incompatibles.isEmpty());
+
+    final Collection<CompatibilityInfo> compatibles = new HashSet<CompatibilityInfo>(checker.getMap().getCompatibles());
+
+    for (CompatibilityInfo td : testDiffs)
+    {
+      Assert.assertTrue(compatibles.contains(td), "Reported compatibles should contain: " + td.toString());
+      compatibles.remove(td);
+    }
+
+    Assert.assertTrue(compatibles.isEmpty());
   }
 
   private ResourceSchema idlToResource(String path) throws IOException

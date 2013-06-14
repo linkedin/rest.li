@@ -20,10 +20,10 @@ package com.linkedin.restli.server.util;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 
 /**
@@ -32,24 +32,24 @@ import java.util.List;
 public class FileClassNameScanner
 {
   /**
-   * Construct list of fully qualified class names whose sources are found under a given source directory.
+   * Construct map from fully qualified class name to filename whose sources are found under a given source directory.
    *
    * @param sourceDir the source directory to scan
-   * @return list of fully qualified class names for scanned source files.
+   * @return map from fully qualified class name to filename for scanned source files.
    */
-  public static List<String> scan(String sourceDir)
+  public static Map<String, String> scan(String sourceDir)
   {
     final String sourceDirWithSeparator = sourceDir.endsWith(File.separator) ? sourceDir : sourceDir + File.separator;
     final File dir = new File(sourceDirWithSeparator);
     if (!dir.exists() || !dir.isDirectory())
     {
-      return Collections.emptyList();
+      return Collections.emptyMap();
     }
 
     // suppress the warning because of inconsistent FileUtils interface
     @SuppressWarnings("unchecked")
     final Collection<File> files = (Collection<File>) FileUtils.listFiles(dir, null, true);
-    final List<String> classNames = new ArrayList<String>(files.size());
+    final Map<String, String> classFileNames = new HashMap<String, String>();
     final int prefixLength = sourceDirWithSeparator.length();
     for (File f : files)
     {
@@ -63,9 +63,10 @@ public class FileClassNameScanner
       }
 
       final int reverseExtensionIndex = f.getName().length() - extensionIndex;
-      classNames.add(filePath.substring(prefixLength, filePath.length() - reverseExtensionIndex).replace(File.separator, "."));
+      classFileNames.put(filePath.substring(prefixLength, filePath.length() - reverseExtensionIndex).replace(File.separator, "."),
+                         filePath);
     }
 
-    return classNames;
+    return classFileNames;
   }
 }
