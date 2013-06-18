@@ -94,6 +94,7 @@ public class BatchDeleteRequestBuilder<K, V extends RecordTemplate> extends
                                         _headers,
                                         baseUri,
                                         _queryParams,
-                                        _resourceSpec);
+                                        _resourceSpec,
+                                        getResourcePath());
   }
 }

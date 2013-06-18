@@ -70,16 +70,20 @@ import com.linkedin.restli.server.custom.types.CustomString;
 import com.linkedin.restli.server.resources.BaseResource;
 import com.linkedin.restli.server.test.EasyMockUtils.Matchers;
 import com.linkedin.restli.server.twitter.AsyncFollowsAssociativeResource;
+import com.linkedin.restli.server.twitter.AsyncLocationResource;
 import com.linkedin.restli.server.twitter.AsyncRepliesCollectionResource;
 import com.linkedin.restli.server.twitter.AsyncStatusCollectionResource;
 import com.linkedin.restli.server.twitter.FollowsAssociativeResource;
+import com.linkedin.restli.server.twitter.LocationResource;
 import com.linkedin.restli.server.twitter.PromiseFollowsAssociativeResource;
+import com.linkedin.restli.server.twitter.PromiseLocationResource;
 import com.linkedin.restli.server.twitter.PromiseRepliesCollectionResource;
 import com.linkedin.restli.server.twitter.PromiseStatusCollectionResource;
 import com.linkedin.restli.server.twitter.RepliesCollectionResource;
 import com.linkedin.restli.server.twitter.StatusCollectionResource;
 import com.linkedin.restli.server.twitter.TwitterAccountsResource;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Followed;
+import com.linkedin.restli.server.twitter.TwitterTestDataModels.Location;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Status;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.StatusType;
 import org.apache.log4j.Level;
@@ -94,7 +98,6 @@ import org.testng.annotations.Test;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -149,7 +152,12 @@ public class TestRestLiMethodInvocation
   public void testAsyncGet() throws Exception
   {
     AsyncStatusCollectionResource statusResource;
-    ResourceModel statusResourceModel = buildResourceModel(AsyncStatusCollectionResource.class);
+    AsyncLocationResource locationResource;
+    Map<String, ResourceModel> resourceModelMap = buildResourceModels(AsyncStatusCollectionResource.class,
+                                                                      AsyncLocationResource.class);
+    ResourceModel statusResourceModel = resourceModelMap.get("/asyncstatuses");
+    ResourceModel locationResourceModel = statusResourceModel.getSubResource("asynclocation");
+
     ResourceMethodDescriptor methodDescriptor;
     RestLiCallback callback = getCallBack();
 
@@ -240,6 +248,23 @@ public class TestRestLiMethodInvocation
     checkAsyncInvocation(statusResource, callback, methodDescriptor, "GET", "/asyncstatuses/1",
                          buildPathKeys(
                                  "statusID", 1L));
+
+    // #4: get on simple resource
+    methodDescriptor = locationResourceModel.findMethod(ResourceMethod.GET);
+    locationResource = getMockResource(AsyncLocationResource.class);
+    locationResource.get(EasyMock.<Callback<Location>> anyObject());
+    EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
+      @Override
+      public Object answer() throws Throwable {
+        @SuppressWarnings("unchecked")
+        Callback<List<Location>> callback = (Callback<List<Location>>) EasyMock.getCurrentArguments()[0];
+        callback.onSuccess(null);
+        return null;
+      }
+    });
+    EasyMock.replay(locationResource);
+    checkAsyncInvocation(locationResource, callback, methodDescriptor, "GET", "/asyncstatuses/1/asynclocation",
+                         buildPathKeys("statusID", 1L));
   }
 
   @Test
@@ -411,7 +436,10 @@ public class TestRestLiMethodInvocation
   @Test
   public void testAsyncPut() throws Exception
   {
-    ResourceModel statusResourceModel = buildResourceModel(AsyncStatusCollectionResource.class);
+    Map<String, ResourceModel> resourceModelMap = buildResourceModels(AsyncStatusCollectionResource.class,
+                                                                      AsyncLocationResource.class);
+    ResourceModel statusResourceModel = resourceModelMap.get("/asyncstatuses");
+    ResourceModel locationResourceModel = statusResourceModel.getSubResource("asynclocation");
     ResourceModel followsAssociationResourceModel = buildResourceModel(
             AsyncFollowsAssociativeResource.class);
     RestLiCallback callback = getCallBack();
@@ -420,6 +448,7 @@ public class TestRestLiMethodInvocation
     ResourceMethodDescriptor methodDescriptor;
     AsyncStatusCollectionResource statusResource;
     AsyncFollowsAssociativeResource followsResource;
+    AsyncLocationResource locationResource;
 
     // #1
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.UPDATE);
@@ -466,16 +495,39 @@ public class TestRestLiMethodInvocation
                          "/asyncfollows/followerID:1;followeeID:2", "{}",
                          buildPathKeys("followerID", 1L, "followeeID", 2L,
                                        followsAssociationResourceModel.getKeyName(), rawKey));
+
+    // #3
+    methodDescriptor = locationResourceModel.findMethod(ResourceMethod.UPDATE);
+    locationResource = getMockResource(AsyncLocationResource.class);
+    Location location  =(Location)EasyMock.anyObject();
+    locationResource.update(location, EasyMock.<Callback<UpdateResponse>> anyObject());
+    EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
+      @Override
+      public Object answer() throws Throwable {
+        @SuppressWarnings("unchecked")
+        Callback<UpdateResponse> callback = (Callback<UpdateResponse>) EasyMock.getCurrentArguments()[1];
+        callback.onSuccess(null);
+        return null;
+      }
+    });
+    EasyMock.replay(locationResource);
+    checkAsyncInvocation(locationResource, callback, methodDescriptor, "PUT", "/asyncstatuses/1/asynclocation",
+                         "{}", buildPathKeys("statusID", 1L));
   }
 
   @Test
   public void testAsyncDelete() throws Exception
   {
-    ResourceModel statusResourceModel = buildResourceModel(AsyncStatusCollectionResource.class);
+    Map<String, ResourceModel> resourceModelMap = buildResourceModels(AsyncStatusCollectionResource.class,
+                                                                      AsyncLocationResource.class);
+    ResourceModel statusResourceModel = resourceModelMap.get("/asyncstatuses");
+    ResourceModel locationResourceModel = statusResourceModel.getSubResource("asynclocation");
+
     RestLiCallback callback = getCallBack();
 
     ResourceMethodDescriptor methodDescriptor;
     AsyncStatusCollectionResource statusResource;
+    AsyncLocationResource locationResource;
 
     // #1
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.DELETE);
@@ -493,6 +545,23 @@ public class TestRestLiMethodInvocation
     EasyMock.replay(statusResource);
     checkAsyncInvocation(statusResource, callback,methodDescriptor, "DELETE", "/asyncstatuses/1", buildPathKeys(
                                                                                              "statusID", 1L));
+
+    // #2
+    methodDescriptor = locationResourceModel.findMethod(ResourceMethod.DELETE);
+    locationResource = getMockResource(AsyncLocationResource.class);
+    locationResource.delete(EasyMock.<Callback<UpdateResponse>> anyObject());
+    EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
+      @Override
+      public Object answer() throws Throwable {
+        @SuppressWarnings("unchecked")
+        Callback<UpdateResponse> callback = (Callback<UpdateResponse>) EasyMock.getCurrentArguments()[0];
+        callback.onSuccess(null);
+        return null;
+      }
+    });
+    EasyMock.replay(locationResource);
+    checkAsyncInvocation(locationResource, callback,methodDescriptor, "DELETE", "/asyncstatuses/1/asynclocation",
+                         buildPathKeys("statusID", 1L));
   }
 
   /*
@@ -529,12 +598,16 @@ public class TestRestLiMethodInvocation
   @Test
   public void testPromiseGet() throws Exception
   {
-    ResourceModel statusResourceModel = buildResourceModel(PromiseStatusCollectionResource.class);
+    Map<String, ResourceModel> resourceModelMap = buildResourceModels(PromiseStatusCollectionResource.class,
+                                                                      PromiseLocationResource.class);
+    ResourceModel statusResourceModel = resourceModelMap.get("/promisestatuses");
+    ResourceModel locationResourceModel = statusResourceModel.getSubResource("promiselocation");
     ResourceModel repliesResourceModel = statusResourceModel.getSubResource(
             "replies");
     ResourceMethodDescriptor methodDescriptor;
     PromiseStatusCollectionResource statusResource;
     RepliesCollectionResource repliesResource;
+    PromiseLocationResource locationResource;
 
     // #1: simple filter
     methodDescriptor = statusResourceModel.findNamedMethod("public_timeline");
@@ -581,6 +654,13 @@ public class TestRestLiMethodInvocation
     statusResource = getMockResource(PromiseStatusCollectionResource.class);
     expectRoutingException(methodDescriptor, statusResource, "GET",
                            "/promisestatuses?q=search&fields=foo))");
+
+    // #7: get on simple resource
+    methodDescriptor = locationResourceModel.findMethod(ResourceMethod.GET);
+    locationResource = getMockResource(PromiseLocationResource.class);
+    EasyMock.expect(locationResource.get()).andReturn(Promises.<Location> value(null)).once();
+    checkInvocation(locationResource, methodDescriptor, "GET", "/promisestatuses/1/promiselocation",
+                    buildPathKeys("statusID", 1L));
   }
 
 
@@ -763,7 +843,10 @@ public class TestRestLiMethodInvocation
   @Test
   public void testPromisePut() throws Exception
   {
-    ResourceModel statusResourceModel = buildResourceModel(PromiseStatusCollectionResource.class);
+    Map<String, ResourceModel> resourceModelMap = buildResourceModels(PromiseStatusCollectionResource.class,
+                                                                      PromiseLocationResource.class);
+    ResourceModel statusResourceModel = resourceModelMap.get("/promisestatuses");
+    ResourceModel locationResourceModel = statusResourceModel.getSubResource("promiselocation");
     ResourceModel followsAssociationResourceModel = buildResourceModel(
                                                                        PromiseFollowsAssociativeResource.class);
 
@@ -771,6 +854,7 @@ public class TestRestLiMethodInvocation
     ResourceMethodDescriptor methodDescriptor;
     PromiseStatusCollectionResource statusResource;
     PromiseFollowsAssociativeResource followsResource;
+    PromiseLocationResource locationResource;
 
     // #1
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.UPDATE);
@@ -796,16 +880,28 @@ public class TestRestLiMethodInvocation
                     buildPathKeys("followerID", 1L, "followeeID", 2L,
                                   followsAssociationResourceModel.getKeyName(), rawKey));
 
+    // #3
+    methodDescriptor = locationResourceModel.findMethod(ResourceMethod.UPDATE);
+    locationResource = getMockResource(PromiseLocationResource.class);
+    Location location  =(Location)EasyMock.anyObject();
+    EasyMock.expect(locationResource.update(location)).andReturn(Promises.<UpdateResponse>value(null)).once();
+    checkInvocation(locationResource, methodDescriptor, "PUT", "/promisestatuses/1/promiselocation", "{}",
+                    buildPathKeys("statusID", 1L));
+
     // TODO would be nice to verify that posting an invalid record type fails
   }
 
   @Test
   public void testPromiseDelete() throws Exception
   {
-    ResourceModel statusResourceModel = buildResourceModel(PromiseStatusCollectionResource.class);
+    Map<String, ResourceModel> resourceModelMap = buildResourceModels(PromiseStatusCollectionResource.class,
+                                                                      PromiseLocationResource.class);
+    ResourceModel statusResourceModel = resourceModelMap.get("/promisestatuses");
+    ResourceModel locationResourceModel = statusResourceModel.getSubResource("promiselocation");
 
     ResourceMethodDescriptor methodDescriptor;
     PromiseStatusCollectionResource statusResource;
+    PromiseLocationResource locationResource;
 
     // #1
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.DELETE);
@@ -813,14 +909,25 @@ public class TestRestLiMethodInvocation
     EasyMock.expect(statusResource.delete(eq(1L))).andReturn(Promises.<UpdateResponse>value(null)).once();
     checkInvocation(statusResource, methodDescriptor, "DELETE", "/promisestatuses/1", buildPathKeys(
                                                                                              "statusID", 1L));
+
+    // #2
+    methodDescriptor = locationResourceModel.findMethod(ResourceMethod.DELETE);
+    locationResource = getMockResource(PromiseLocationResource.class);
+    EasyMock.expect(locationResource.delete()).andReturn(Promises.<UpdateResponse>value(null)).once();
+    checkInvocation(locationResource, methodDescriptor, "DELETE", "/promisestatuses/1/promiselocation",
+                    buildPathKeys("statusID", 1L));
+
   }
 
   @Test
   public void testGet() throws Exception
   {
-    ResourceModel statusResourceModel = buildResourceModel(StatusCollectionResource.class);
-    ResourceModel repliesResourceModel = statusResourceModel.getSubResource(
-            "replies");
+    Map<String, ResourceModel> resourceModelMap = buildResourceModels(
+        StatusCollectionResource.class,
+        LocationResource.class);
+    ResourceModel statusResourceModel = resourceModelMap.get("/statuses");
+    ResourceModel repliesResourceModel = statusResourceModel.getSubResource("replies");
+
     ResourceMethodDescriptor methodDescriptor;
     StatusCollectionResource statusResource;
     RepliesCollectionResource repliesResource;
@@ -868,6 +975,17 @@ public class TestRestLiMethodInvocation
     statusResource = getMockResource(StatusCollectionResource.class);
     expectRoutingException(methodDescriptor, statusResource, "GET",
                            "/statuses?q=search&fields=foo))");
+
+    // #7: get simple sub-resource
+    ResourceModel locationResourceModel = statusResourceModel.getSubResource(
+        "location");
+
+    LocationResource locationResource;
+
+    methodDescriptor = locationResourceModel.findMethod(ResourceMethod.GET);
+    locationResource = getMockResource(LocationResource.class);
+    EasyMock.expect(locationResource.get()).andReturn(null).once();
+    checkInvocation(locationResource, methodDescriptor, "GET", "/statuses/1/location", buildPathKeys("statusID", 1L));
   }
 
   @Test
@@ -1049,14 +1167,18 @@ public class TestRestLiMethodInvocation
   @Test
   public void testPut() throws Exception
   {
-    ResourceModel statusResourceModel = buildResourceModel(StatusCollectionResource.class);
+    Map<String, ResourceModel> resourceModelMap = buildResourceModels(
+        StatusCollectionResource.class,
+        LocationResource.class);
+    ResourceModel statusResourceModel = resourceModelMap.get("/statuses");
     ResourceModel followsAssociationResourceModel = buildResourceModel(
                                                                        FollowsAssociativeResource.class);
-
+    ResourceModel locationResourceModel = statusResourceModel.getSubResource("location");
 
     ResourceMethodDescriptor methodDescriptor;
     StatusCollectionResource statusResource;
     FollowsAssociativeResource followsResource;
+    LocationResource locationResource;
 
     // #1
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.UPDATE);
@@ -1082,16 +1204,28 @@ public class TestRestLiMethodInvocation
                     buildPathKeys("followerID", 1L, "followeeID", 2L,
                                   followsAssociationResourceModel.getKeyName(), rawKey));
 
+    // #3
+    methodDescriptor = locationResourceModel.findMethod(ResourceMethod.UPDATE);
+    locationResource = getMockResource(LocationResource.class);
+    Location location  =(Location)EasyMock.anyObject();
+    EasyMock.expect(locationResource.update(location)).andReturn(null).once();
+    checkInvocation(locationResource, methodDescriptor, "PUT", "/statuses/1/location", "{}", buildPathKeys(
+        "statusID", 1L));
+
     // TODO would be nice to verify that posting an invalid record type fails
   }
 
   @Test
   public void testDelete() throws Exception
   {
-    ResourceModel statusResourceModel = buildResourceModel(StatusCollectionResource.class);
+    Map<String, ResourceModel> resourceModelMap = buildResourceModels(StatusCollectionResource.class,
+                                                                      LocationResource.class);
+    ResourceModel statusResourceModel = resourceModelMap.get("/statuses");
+    ResourceModel locationResourceModel = statusResourceModel.getSubResource("location");
 
     ResourceMethodDescriptor methodDescriptor;
     StatusCollectionResource statusResource;
+    LocationResource locationResource;
 
     // #1
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.DELETE);
@@ -1099,6 +1233,12 @@ public class TestRestLiMethodInvocation
     EasyMock.expect(statusResource.delete(eq(1L))).andReturn(null).once();
     checkInvocation(statusResource, methodDescriptor, "DELETE", "/statuses/1", buildPathKeys(
                                                                                              "statusID", 1L));
+
+    // #2
+    methodDescriptor = locationResourceModel.findMethod(ResourceMethod.DELETE);
+    locationResource = getMockResource(LocationResource.class);
+    EasyMock.expect(locationResource.delete()).andReturn(null).once();
+    checkInvocation(locationResource, methodDescriptor, "DELETE", "/statuses/1/location", buildPathKeys("statusID", 1L));
   }
 
   @Test
@@ -1325,8 +1465,11 @@ public class TestRestLiMethodInvocation
   public void testActionsOnResource() throws Exception
   {
     ResourceModel repliesResourceModel = buildResourceModel(RepliesCollectionResource.class);
+    ResourceModel locationResourceModel = buildResourceModel(LocationResource.class);
+
     ResourceMethodDescriptor methodDescriptor;
     RepliesCollectionResource repliesResource;
+    LocationResource locationResource;
 
     // #1 no defaults provided
     methodDescriptor = repliesResourceModel.findActionMethod("replyToAll", ResourceLevel.COLLECTION);
@@ -1338,6 +1481,18 @@ public class TestRestLiMethodInvocation
     MutablePathKeys pathKeys = new PathKeysImpl();
     pathKeys.append("statusID", 1L);
     checkInvocation(repliesResource, methodDescriptor, "POST", "/statuses/1/replies?action=replyToAll", jsonEntityBody, pathKeys);
+
+    // #2 no defaults provided - Simple resource
+    methodDescriptor = locationResourceModel.findActionMethod("new_status_from_location", ResourceLevel.ENTITY);
+    locationResource = getMockResource(LocationResource.class);
+    locationResource.newStatusFromLocation(eq("hello"));
+    EasyMock.expectLastCall().once();
+
+    jsonEntityBody = RestLiTestHelper.doubleQuote("{'status': 'hello'}");
+    pathKeys = new PathKeysImpl();
+    pathKeys.append("statusID", 1L);
+    checkInvocation(locationResource, methodDescriptor, "POST", "/statuses/1/location?action=new_status_from_location",
+                    jsonEntityBody, pathKeys);
   }
 
   @Test
@@ -1520,6 +1675,7 @@ public class TestRestLiMethodInvocation
   @SuppressWarnings("unchecked")
   public void testCustomCrudParams() throws Exception
   {
+    // #1 Verify collection with custom CRUD parameters
     ResourceModel model = buildResourceModel(CombinedResources.CollectionWithCustomCrudParams.class);
     ResourceMethodDescriptor methodDescriptor;
     CombinedResources.CollectionWithCustomCrudParams resource;
@@ -1589,6 +1745,24 @@ public class TestRestLiMethodInvocation
     EasyMock.expect(resource.myBatchDelete(batchDeleteRequest, eq(1), eq("baz"))).andReturn(null).once();
     checkInvocation(resource, methodDescriptor, "DELETE", "/statuses?ids=foo&ids=bar&intParam=1&stringParam=baz", "", buildBatchPathKeys("foo", "bar"));
 
+    // #2 Verify simple resource with custom CRUD parameters
+    model = buildResourceModel(CombinedResources.SimpleResourceWithCustomCrudParams.class);
+    CombinedResources.SimpleResourceWithCustomCrudParams resource2;
+
+    methodDescriptor = model.findMethod(ResourceMethod.GET);
+    resource2 = getMockResource(CombinedResources.SimpleResourceWithCustomCrudParams.class);
+    EasyMock.expect(resource2.myGet(eq(1), eq("bar"))).andReturn(null).once();
+    checkInvocation(resource2, methodDescriptor, "GET", "/test?intParam=1&stringParam=bar", buildBatchPathKeys());
+
+    methodDescriptor = model.findMethod(ResourceMethod.UPDATE);
+    resource2 = getMockResource(CombinedResources.SimpleResourceWithCustomCrudParams.class);
+    EasyMock.expect(resource2.myUpdate((CombinedTestDataModels.Foo)EasyMock.anyObject(), eq(1), eq("bar"))).andReturn(null).once();
+    checkInvocation(resource2, methodDescriptor, "PUT", "/test?intParam=1&stringParam=bar", "{}", buildBatchPathKeys());
+
+    methodDescriptor = model.findMethod(ResourceMethod.DELETE);
+    resource2 = getMockResource(CombinedResources.SimpleResourceWithCustomCrudParams.class);
+    EasyMock.expect(resource2.myDelete(eq(1), eq("bar"))).andReturn(null).once();
+    checkInvocation(resource2, methodDescriptor, "DELETE", "/test?intParam=1&stringParam=bar", buildBatchPathKeys());
   }
 
   // *****************

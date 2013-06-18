@@ -55,6 +55,7 @@ import org.testng.annotations.Test;
 import static com.linkedin.restli.server.test.RestLiTestHelper.buildResourceModel;
 import static com.linkedin.restli.server.test.RestLiTestHelper.buildResourceModels;
 import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
 
 
 /**
@@ -195,6 +196,33 @@ public class TestRestLiResourceModels
   }
 
   @Test
+  public void testInvalidMethodsOnSimpleResource() throws Exception
+  {
+    expectConfigException(InvalidResources.SimpleResourceWithInvalidMethodTypes.class,
+                          "is a simple resource but it contains a method of type");
+  }
+
+  @Test
+  public void testSimpleResourceWithInvalidAction() throws Exception
+  {
+    expectConfigException(InvalidResources.SimpleResourceWithInvalidAction.class,
+                          "is a simple resource, it cannot contain actions at resource level \"COLLECTION\"");
+  }
+
+  @Test
+  public void testSimpleResourceTemplateWithAllMethods() throws Exception
+  {
+    ResourceModel model = buildResourceModel(CombinedResources.SimpleResourceAllMethods.class);
+    checkSimpleResourceModel(model, "test", Foo.class, false, CombinedResources.SimpleResourceAllMethods.class);
+    checkEntityModel(model, null, null, Foo.class, Collections.<String, Class<?>>emptyMap());
+    assertHasMethods(model,
+                     ResourceMethod.GET,
+                     ResourceMethod.UPDATE,
+                     ResourceMethod.DELETE,
+                     ResourceMethod.ACTION);
+  }
+
+  @Test
   public void testActionsResource() throws Exception
   {
     ResourceModel resourceModel = buildResourceModel(TwitterAccountsResource.class);
@@ -248,24 +276,74 @@ public class TestRestLiResourceModels
 
     checkEntityModel(collectionModel, String.class, "testId", Foo.class, Collections.<String, Class<?>>emptyMap());
 
-    // #2 collection with sub-collection
+    // #2 simple resource
+    ResourceModel simpleResourceModel = buildResourceModel(CombinedResources.CombinedSimpleResource.class);
+    checkSimpleResourceModel(simpleResourceModel,
+                             "test",
+                             Foo.class,
+                             false,
+                             CombinedResources.CombinedSimpleResource.class);
+
+    checkEntityModel(simpleResourceModel, null, null, Foo.class, Collections.<String, Class<?>>emptyMap());
+
+    // #3 collection with sub-collection and sub simple resource
     Map<String, ResourceModel> modelMap = buildResourceModels(CombinedResources.CombinedCollectionWithSubresources.class,
-                                                                  CombinedResources.SubCollectionResource.class);
+                                                                  CombinedResources.SubCollectionResource.class,
+                                                                  CombinedResources.SubsimpleResource.class);
     collectionModel = modelMap.get("/test");
     checkCollectionModel(collectionModel, "test", String.class, "testId", Foo.class, false, CombinedCollectionWithSubresources.class);
 
-    checkEntityModel(collectionModel, String.class, "testId", Foo.class,
-                     Collections.<String, Class<?>>emptyMap());
+    checkEntityModel(collectionModel, String.class, "testId", Foo.class, Collections.<String, Class<?>>emptyMap());
 
     ResourceModel subCollectionModel = collectionModel.getSubResource("sub");
     assertNotNull(subCollectionModel);
     checkCollectionModel(subCollectionModel, "sub", String.class, "subId", Foo.class, true, SubCollectionResource.class);
 
-    checkEntityModel(subCollectionModel, String.class, "subId", Foo.class,
-                     Collections.<String, Class<?>>emptyMap());
+    checkEntityModel(subCollectionModel, String.class, "subId", Foo.class, Collections.<String, Class<?>>emptyMap());
 
+    ResourceModel subCollectionModel2 = collectionModel.getSubResource("sub2");
+    assertNotNull(subCollectionModel2);
+    checkSimpleResourceModel(subCollectionModel2, "sub2", Foo.class, true, CombinedResources.SubsimpleResource.class);
 
-    // #3 association
+    checkEntityModel(subCollectionModel2, null, null, Foo.class, Collections.<String, Class<?>>emptyMap());
+
+    // #4 simple resource with sub collection and sub simple resource
+    Map<String, ResourceModel> modelMap2 =
+        buildResourceModels(CombinedResources.CombinedSimpleResourceWithSubresources.class,
+                            CombinedResources.SubCollectionOfSimpleResource.class,
+                            CombinedResources.SubsimpleResourceOfSimpleResource.class);
+    simpleResourceModel = modelMap2.get("/test");
+    checkSimpleResourceModel(simpleResourceModel,
+                             "test",
+                             Foo.class,
+                             false,
+                             CombinedResources.CombinedSimpleResourceWithSubresources.class);
+
+    checkEntityModel(simpleResourceModel, null, null, Foo.class, Collections.<String, Class<?>>emptyMap());
+
+    subCollectionModel = simpleResourceModel.getSubResource("sub");
+    assertNotNull(subCollectionModel);
+    checkCollectionModel(subCollectionModel,
+                         "sub",
+                         String.class,
+                         "subId",
+                         Foo.class,
+                         true,
+                         CombinedResources.SubCollectionOfSimpleResource.class);
+
+    checkEntityModel(subCollectionModel, String.class, "subId", Foo.class, Collections.<String, Class<?>>emptyMap());
+
+    subCollectionModel2 = simpleResourceModel.getSubResource("sub2");
+    assertNotNull(subCollectionModel2);
+    checkSimpleResourceModel(subCollectionModel2,
+                             "sub2",
+                             Foo.class,
+                             true,
+                             CombinedResources.SubsimpleResourceOfSimpleResource.class);
+
+    checkEntityModel(subCollectionModel2, null, null, Foo.class, Collections.<String, Class<?>>emptyMap());
+
+    // #5 association
     ResourceModel assocModel = buildResourceModel(CombinedResources.CombinedAssociationResource.class);
     checkAssociationModel(assocModel, "test", Sets.newHashSet("foo", "bar"), Foo.class, false,
                           CombinedAssociationResource.class, CombinedAssociationResource.class);
@@ -278,6 +356,7 @@ public class TestRestLiResourceModels
   @Test
   public void testAnnotatedCrudMethods() throws Exception
   {
+    // #1 Verify collection with annotated CRUD methods.
     ResourceModel collectionModelAnnotatedCrud = buildResourceModel(CombinedResources.CollectionWithAnnotatedCrudMethods.class);
     checkCollectionModel(collectionModelAnnotatedCrud, "test", String.class, "testId", Foo.class, false,
                          CombinedResources.CollectionWithAnnotatedCrudMethods.class);
@@ -294,7 +373,19 @@ public class TestRestLiResourceModels
                      ResourceMethod.BATCH_UPDATE,
                      ResourceMethod.BATCH_PARTIAL_UPDATE);
 
-
+    // #2 Verify simple resource with annotated CRUD methods.
+    ResourceModel simpleResourceModelAnnotatedCrud = buildResourceModel(CombinedResources.SimpleResourceWithAnnotatedCrudMethods.class);
+    checkSimpleResourceModel(simpleResourceModelAnnotatedCrud,
+                             "test",
+                             Foo.class,
+                             false,
+                             CombinedResources.SimpleResourceWithAnnotatedCrudMethods.class);
+    checkEntityModel(simpleResourceModelAnnotatedCrud, null, null, Foo.class, Collections.<String, Class<?>>emptyMap());
+    assertHasMethods(simpleResourceModelAnnotatedCrud,
+                     ResourceMethod.GET,
+                     ResourceMethod.UPDATE,
+                     ResourceMethod.DELETE,
+                     ResourceMethod.ACTION);
   }
 
   @Test
@@ -500,6 +591,17 @@ public class TestRestLiResourceModels
       assertTrue(model.isRoot());
     }
     assertEquals(model.getResourceClass(), resourceClass);
+  }
+
+  private void checkSimpleResourceModel(ResourceModel model,
+                                        String name,
+                                        Class<? extends RecordTemplate> valueClass,
+                                        boolean hasParentResource,
+                                        Class<?> resourceClass)
+  {
+    assertNotNull(model);
+    assertEquals(model.getResourceType(), ResourceType.SIMPLE);
+    checkBaseModel(model, name, null/*keyClass*/, valueClass, hasParentResource, resourceClass);
   }
 
   private void assertHasMethods(ResourceModel model,

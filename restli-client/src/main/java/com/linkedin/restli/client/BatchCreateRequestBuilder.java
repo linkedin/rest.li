@@ -96,7 +96,8 @@ public class BatchCreateRequestBuilder<K, V extends RecordTemplate> extends
                                   _headers,
                                   baseUri,
                                   _input,
-                                  _resourceSpec);
+                                  _resourceSpec,
+                                  getResourcePath());
   }
 
 }

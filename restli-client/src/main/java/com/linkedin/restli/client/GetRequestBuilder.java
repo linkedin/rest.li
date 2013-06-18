@@ -82,12 +82,8 @@ public class GetRequestBuilder<K, V extends RecordTemplate> extends
   @Override
   public GetRequest<V> build()
   {
-    if (_id == null)
-    {
-      throw new IllegalArgumentException("id required to build get request");
-    }
     URI baseUri = bindPathKeys();
-    UriBuilder b = UriBuilder.fromUri(baseUri);
+    UriBuilder b = UriBuilder.fromUri(bindPathKeys());
     appendKeyToPath(b, _id);
     appendQueryParams(b);
 
@@ -97,7 +93,8 @@ public class GetRequestBuilder<K, V extends RecordTemplate> extends
                              baseUri,
                              _id,
                              _queryParams,
-                             _resourceSpec);
+                             _resourceSpec,
+                             getResourcePath());
   }
 
   public GetRequestBuilder<K, V> fields(PathSpec... fieldPaths)
@@ -105,5 +102,4 @@ public class GetRequestBuilder<K, V extends RecordTemplate> extends
     addFields(fieldPaths);
     return this;
   }
-
 }

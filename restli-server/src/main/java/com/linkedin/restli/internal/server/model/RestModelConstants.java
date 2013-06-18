@@ -37,6 +37,8 @@ import com.linkedin.restli.server.resources.CollectionResource;
 import com.linkedin.restli.server.resources.CollectionResourceAsync;
 import com.linkedin.restli.server.resources.ComplexKeyResource;
 import com.linkedin.restli.server.resources.ComplexKeyResourceAsync;
+import com.linkedin.restli.server.resources.SimpleResource;
+import com.linkedin.restli.server.resources.SimpleResourceAsync;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -155,7 +157,9 @@ public interface RestModelConstants
       AssociationResource.class,
       AssociationResourceAsync.class,
       ComplexKeyResource.class,
-      ComplexKeyResourceAsync.class
+      ComplexKeyResourceAsync.class,
+      SimpleResource.class,
+      SimpleResourceAsync.class
   };
 
   Set<Class<?>> CLASSES_WITHOUT_SCHEMAS = new HashSet<Class<?>>(

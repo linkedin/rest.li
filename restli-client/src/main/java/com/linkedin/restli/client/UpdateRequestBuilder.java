@@ -84,15 +84,11 @@ public class UpdateRequestBuilder<K, V extends RecordTemplate> extends
   @Override
   public UpdateRequest<V> build()
   {
-    if (_id == null)
-    {
-      throw new IllegalArgumentException("id required to build update request");
-    }
     UriBuilder b = UriBuilder.fromUri(bindPathKeys());
     appendKeyToPath(b, _id);
     appendQueryParams(b);
 
-    return new UpdateRequest<V>(b.build(), _input, _headers, _resourceSpec);
+    return new UpdateRequest<V>(b.build(), _input, _headers, _resourceSpec, getResourcePath());
   }
 
 }

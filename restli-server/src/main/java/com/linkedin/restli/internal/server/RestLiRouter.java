@@ -137,10 +137,10 @@ public class RestLiRouter
     ResourceModel currentResource = resource;
 
     // iterate through all path segments, simultaneously descending the resource hierarchy
-    // and parsing path keys
+    // and parsing path keys where applicable;
     // the goal of this loop is to locate the leaf resource, which will be set in
     // currentResource, and to parse the necessary information into the context
-    ResourceLevel currentLevel = ResourceLevel.COLLECTION;
+    ResourceLevel currentLevel = currentResource.getResourceLevel();
 
     while (remainingPath.peek() != null)
     {
@@ -150,7 +150,8 @@ public class RestLiRouter
       {
         currentResource =
             currentResource.getSubResource(parseSubresourceName(currentPathSegment));
-        currentLevel = ResourceLevel.COLLECTION;
+        currentLevel = currentResource == null ?
+            ResourceLevel.ANY : currentResource.getResourceLevel();
       }
       else
       {

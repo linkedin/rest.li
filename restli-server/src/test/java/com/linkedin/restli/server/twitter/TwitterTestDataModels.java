@@ -67,6 +67,28 @@ public class TwitterTestDataModels
     }
   }
 
+  public static class Location extends RecordTemplate
+  {
+    private static final RecordDataSchema SCHEMA =
+        new RecordDataSchema(new Name("Location", new StringBuilder(10)), RecordDataSchema.RecordType.RECORD);
+
+    public Location(DataMap map)
+    {
+      super(map, SCHEMA);
+    }
+  }
+
+  public static class Trending extends RecordTemplate
+  {
+    private static final RecordDataSchema SCHEMA =
+        new RecordDataSchema(new Name("Trend", new StringBuilder(10)), RecordDataSchema.RecordType.RECORD);
+
+    public Trending(DataMap map)
+    {
+      super(map, SCHEMA);
+    }
+  }
+
   public enum StatusType
   {
     STATUS,

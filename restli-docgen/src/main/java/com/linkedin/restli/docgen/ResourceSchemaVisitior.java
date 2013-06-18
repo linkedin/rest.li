@@ -26,6 +26,7 @@ import com.linkedin.restli.restspec.FinderSchema;
 import com.linkedin.restli.restspec.ParameterSchema;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.restspec.RestMethodSchema;
+import com.linkedin.restli.restspec.SimpleSchema;
 import com.linkedin.restli.server.ResourceLevel;
 import java.util.List;
 
@@ -64,6 +65,14 @@ public interface ResourceSchemaVisitior
    */
   void visitAssociationResource(VisitContext visitContext,
                                 AssociationSchema associationSchema);
+
+  /**
+   * Callback function when the visitor visits a {@link SimpleSchema}.
+   *
+   * @param visitContext hierarchy of all parent resource schemas (root is the first element)
+   * @param simpleSchema simple being visited
+   */
+  void visitSimpleResource(VisitContext visitContext, SimpleSchema simpleSchema);
 
   /**
    * Callback function when the visitor visits a {@link ActionsSetSchema}.

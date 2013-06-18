@@ -21,6 +21,7 @@
 package com.linkedin.restli.client;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 
 import com.linkedin.data.DataMap;
@@ -46,7 +47,8 @@ public class BatchDeleteRequest<K, V extends RecordTemplate> extends BatchReques
                   Map<String, String> headers,
                   URI baseURI,
                   DataMap queryParams,
-                  ResourceSpec resourceSpec)
+                  ResourceSpec resourceSpec,
+                  List<String> resourcePath)
   {
     super(uri,
           ResourceMethod.BATCH_DELETE,
@@ -58,7 +60,8 @@ public class BatchDeleteRequest<K, V extends RecordTemplate> extends BatchReques
                                                       resourceSpec.getKeyKeyClass(),
                                                       resourceSpec.getKeyParamsClass()),
           resourceSpec,
-          queryParams);
+          queryParams,
+          resourcePath);
     _baseURI = baseURI;
   }
 

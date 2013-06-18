@@ -156,6 +156,29 @@ public class ResourceSpecImpl implements ResourceSpec
    * Initialize a ResourceSpecImpl with the given data.
    *
    * @param supportedMethods Set of ResourceMethods supported
+   * @param actionRequestMetadata Map from method name to method {@link RecordDataSchema}
+   * @param actionResponseMetadata Map from method name to response RecordDataSchema
+   * @param valueClass the type of the RecordTemplate the Resource manages
+   */
+  public ResourceSpecImpl(Set<ResourceMethod> supportedMethods,
+                          Map<String, DynamicRecordMetadata> actionRequestMetadata,
+                          Map<String, DynamicRecordMetadata> actionResponseMetadata,
+                          Class<? extends RecordTemplate> valueClass)
+  {
+    this(supportedMethods,
+         actionRequestMetadata,
+         actionResponseMetadata,
+         null,
+         null,
+         null,
+         valueClass,
+         Collections.<String, CompoundKey.TypeInfo> emptyMap());
+  }
+
+  /**
+   * Initialize a ResourceSpecImpl with the given data.
+   *
+   * @param supportedMethods Set of ResourceMethods supported
    * @param keyClass type of the key of the Resource
    * @param keyKeyClass RecordTemplate type of the key, if the keyClass is a ComplexResourceKey
    * @param keyParamsClass RecordTemplate type of parameters of the key, if the keyClass is a ComplexResourceKey

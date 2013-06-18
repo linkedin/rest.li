@@ -137,7 +137,8 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
                                 new DynamicRecordTemplate(requestDataSchema, _actionParams),
                                 _headers,
                                 actionResponseDecoder,
-                                _resourceSpec);
+                                _resourceSpec,
+                                getResourcePath());
 
   }
 }

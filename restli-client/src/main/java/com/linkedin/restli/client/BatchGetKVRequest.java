@@ -17,6 +17,7 @@
 package com.linkedin.restli.client;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -47,9 +48,10 @@ public class BatchGetKVRequest<K, V extends RecordTemplate> extends BatchRequest
                     RestResponseDecoder<BatchKVResponse<K, V>> decoder,
                     URI baseURI,
                     DataMap queryParams,
-                    ResourceSpec resourceSpec)
+                    ResourceSpec resourceSpec,
+                    List<String> resourcePath)
   {
-    super(uri, method, null, headers, decoder, resourceSpec, queryParams);
+    super(uri, method, null, headers, decoder, resourceSpec, queryParams, resourcePath);
     _baseURI = baseURI;
   }
 

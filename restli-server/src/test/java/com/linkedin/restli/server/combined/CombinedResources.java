@@ -48,6 +48,7 @@ import com.linkedin.restli.server.annotations.RestLiActions;
 import com.linkedin.restli.server.annotations.RestLiAssociation;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestLiCollectionCompoundKey;
+import com.linkedin.restli.server.annotations.RestLiSimpleResource;
 import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.combined.CombinedTestDataModels.DummyKeyPart;
 import com.linkedin.restli.server.combined.CombinedTestDataModels.DummyParamsPart;
@@ -56,6 +57,8 @@ import com.linkedin.restli.server.resources.AssociationResourceTemplate;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
 import com.linkedin.restli.server.resources.ComplexKeyResourceTemplate;
 import com.linkedin.restli.server.resources.KeyValueResource;
+import com.linkedin.restli.server.resources.SimpleResourceTemplate;
+import com.linkedin.restli.server.resources.SingleObjectResource;
 
 /**
  * @author dellamag
@@ -139,6 +142,16 @@ public class CombinedResources
     }
   }
 
+  @RestLiSimpleResource(name="test")
+  public static class CombinedSimpleResource extends SimpleResourceTemplate<Foo>
+  {
+    @Override
+    public Foo get()
+    {
+      return null;
+    }
+  }
+
   @RestLiCollection(name="test")
   public static class CombinedCollectionWithSubresources extends CollectionResourceTemplate<String,Foo>
   {
@@ -154,6 +167,46 @@ public class CombinedResources
   {
     @Override
     public Foo get(String key)
+    {
+      return null;
+    }
+  }
+
+  @RestLiSimpleResource(parent=CombinedCollectionWithSubresources.class, name="sub2")
+  public static class SubsimpleResource extends SimpleResourceTemplate<Foo>
+  {
+    @Override
+    public Foo get()
+    {
+      return null;
+    }
+  }
+
+  @RestLiSimpleResource(name="test")
+  public static class CombinedSimpleResourceWithSubresources extends SimpleResourceTemplate<Foo>
+  {
+    @Override
+    public Foo get()
+    {
+      return null;
+    }
+  }
+
+  @RestLiCollection(parent=CombinedSimpleResourceWithSubresources.class, name="sub")
+  public static class SubCollectionOfSimpleResource extends CollectionResourceTemplate<String,Foo>
+  {
+    @Override
+    public Foo get(String key)
+    {
+      return null;
+    }
+  }
+
+  @RestLiSimpleResource(parent=CombinedSimpleResourceWithSubresources.class, name="sub2")
+  public static class SubsimpleResourceOfSimpleResource extends SimpleResourceTemplate<Foo>
+  {
+    @Override
+    public Foo get()
     {
       return null;
     }
@@ -175,7 +228,35 @@ public class CombinedResources
       return super.create(entity);
     }
   }
-  
+
+  @RestLiSimpleResource(name="test")
+  public static class SimpleResourceAllMethods extends SimpleResourceTemplate<Foo>
+  {
+    @Override
+    public Foo get()
+    {
+      return null;
+    }
+
+    @Override
+    public UpdateResponse update(Foo foo)
+    {
+      return null;
+    }
+
+    @Override
+    public UpdateResponse delete()
+    {
+      return null;
+    }
+
+    @Action(name="myAction")
+    public void myAction(@ActionParam("intParam") int a)
+    {
+
+    }
+  }
+
   @RestLiActions(name = "test")
   public static class TestActionsResource
   {
@@ -344,6 +425,56 @@ public class CombinedResources
       return null;
     }
 
+  }
+
+  @RestLiSimpleResource(name="test")
+  public static class SimpleResourceWithAnnotatedCrudMethods implements SingleObjectResource<Foo>
+  {
+    @RestMethod.Get
+    public Foo myGet()
+    {
+      return null;
+    }
+
+    @RestMethod.Update
+    public UpdateResponse myUpdate(Foo entity)
+    {
+      return null;
+    }
+
+    @RestMethod.Delete
+    public UpdateResponse myDelete()
+    {
+      return null;
+    }
+
+    @Action(name="myAction")
+    public void myAction(@ActionParam("intParam") int a)
+    {
+
+    }
+  }
+
+  @RestLiSimpleResource(name="test")
+  public static class SimpleResourceWithCustomCrudParams implements SingleObjectResource<Foo>
+  {
+    @RestMethod.Get
+    public Foo myGet(@QueryParam("intParam") @Optional("42") int intParam, @QueryParam("stringParam") String stringParam)
+    {
+      return null;
+    }
+
+    @RestMethod.Update
+    public UpdateResponse myUpdate(Foo entity, @QueryParam("intParam") @Optional("42") int intParam, @QueryParam("stringParam") String stringParam)
+    {
+      return null;
+    }
+
+    @RestMethod.Delete
+    public UpdateResponse myDelete(@QueryParam("intParam") @Optional("42") int intParam, @QueryParam("stringParam") String stringParam)
+    {
+      return null;
+    }
   }
 
 }

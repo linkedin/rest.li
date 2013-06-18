@@ -1,0 +1,61 @@
+{
+  "name" : "greeting",
+  "namespace": "com.linkedin.restli.greetings",
+  "path" : "/greeting",
+  "schema" : "com.linkedin.greetings.api.Greeting",
+  "doc" : "A simple greeting resource",
+  "simple" : {
+    "supports" : [ "delete", "get", "update" ],
+    "methods" : [ {
+      "method" : "get",
+      "doc" : "Gets the greeting.",
+      "parameters" : [ {
+        "name" : "param1",
+        "type" : "string",
+        "default" : "abc"
+      } ]
+    }, {
+      "method" : "delete",
+      "doc" : "Deletes the greeting."
+    }, {
+      "method" : "update",
+      "doc" : "Updates the greeting."
+    } ],
+    "actions" : [ {
+      "name" : "oneAction",
+      "doc" : "An imaginary action",
+      "parameters" : [ {
+        "name" : "bitfield",
+        "type" : { "type" : "array", "items" : "boolean" },
+        "default" : "[]"
+      }, {
+        "name" : "request",
+        "type" : "com.linkedin.groups.api.TransferOwnershipRequest"
+      }, {
+        "name" : "someString",
+        "type" : "string",
+        "optional" : true
+      }, {
+        "name" : "someString2",
+        "type" : "string",
+        "default" : "changed"
+      }, {
+        "name" : "stringMap",
+        "type" : {
+          "type" : "map",
+          "values" : "string"
+         }
+      }, {
+        "name" : "newParam",
+        "type" : "int",
+        "optional" : true
+      } ]
+    }, {
+      "name" : "exceptionTest",
+      "throws" : [ "com.linkedin.groups.api.GroupOwnerException", "java.lang.NullPointerException" ]
+    } ],
+    "entity" : {
+      "path" : "/greetings/{id}"
+    }
+  }
+}

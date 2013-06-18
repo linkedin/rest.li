@@ -27,6 +27,10 @@ package com.linkedin.restli.server;
 
 public enum ResourceLevel
 {
+  /**
+   * It indicates that the resource level is not set and will be determined according to the context.
+   */
+  ANY,
   COLLECTION,
   ENTITY
 }

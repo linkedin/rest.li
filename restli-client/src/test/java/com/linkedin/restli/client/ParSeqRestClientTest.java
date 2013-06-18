@@ -179,7 +179,8 @@ public class ParSeqRestClientTest
                              URI.create(""),
                              "foo",
                              new DataMap(),
-                             null);
+                             null,
+                             Collections.<String>emptyList());
   }
 
   /**

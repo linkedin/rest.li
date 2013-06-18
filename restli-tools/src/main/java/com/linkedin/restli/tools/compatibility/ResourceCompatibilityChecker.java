@@ -47,6 +47,7 @@ import com.linkedin.restli.restspec.ParameterSchema;
 import com.linkedin.restli.restspec.ParameterSchemaArray;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.restspec.RestMethodSchema;
+import com.linkedin.restli.restspec.SimpleSchema;
 import com.linkedin.restli.restspec.RestSpecCodec;
 import com.linkedin.restli.tools.idlcheck.CompatibilityInfo;
 import com.linkedin.restli.tools.idlcheck.CompatibilityLevel;
@@ -396,6 +397,10 @@ public class ResourceCompatibilityChecker
     {
       checkAssociationSchema((AssociationSchema) prevRec, (AssociationSchema) currRec);
     }
+    else if (prevClass == SimpleSchema.class)
+    {
+      checkSimpleSchema((SimpleSchema) prevRec, (SimpleSchema) currRec);
+    }
     else if (prevClass == AssocKeySchema.class)
     {
       checkAssocKeySchema((AssocKeySchema) prevRec, (AssocKeySchema) currRec);
@@ -618,6 +623,8 @@ public class ResourceCompatibilityChecker
 
     checkComplexField(prevRec.schema().getField("association"), prevRec.getAssociation(), currRec.getAssociation());
 
+    checkComplexField(prevRec.schema().getField("simple"), prevRec.getSimple(), currRec.getSimple());
+
     checkComplexField(prevRec.schema().getField("actionsSet"), prevRec.getActionsSet(), currRec.getActionsSet());
   }
 
@@ -715,6 +722,27 @@ public class ResourceCompatibilityChecker
 
       _map.addInfo("assocKeys", CompatibilityInfo.Type.FINDER_ASSOCKEYS_DOWNGRADE, _path);
     }
+  }
+
+  private void checkSimpleSchema(SimpleSchema prevRec, SimpleSchema currRec)
+  {
+    checkArrayContainment(prevRec.schema().getField("supports"),
+                          currRec.getSupports(GetMode.DEFAULT),
+                          prevRec.getSupports(GetMode.DEFAULT));
+
+    checkComplexArrayField(prevRec.schema().getField("methods"),
+                           "method",
+                           prevRec.getMethods(GetMode.DEFAULT),
+                           currRec.getMethods(GetMode.DEFAULT));
+
+    checkComplexArrayField(prevRec.schema().getField("actions"),
+                           "name",
+                           prevRec.getActions(GetMode.DEFAULT),
+                           currRec.getActions(GetMode.DEFAULT));
+
+    checkComplexField(prevRec.schema().getField("entity"),
+                      prevRec.getEntity(GetMode.DEFAULT),
+                      currRec.getEntity(GetMode.DEFAULT));
   }
 
   private void checkParameterSchema(ParameterSchema prevRec, ParameterSchema currRec)

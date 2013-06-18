@@ -57,6 +57,7 @@ public class Request<T>
   private final Map<String, String>    _headers;
   private final ResourceSpec           _resourceSpec;
   private final DataMap                _queryParams;
+  private final List<String>           _resourcePath;
 
   public Request(URI uri,
                  ResourceMethod method,
@@ -65,7 +66,7 @@ public class Request<T>
                  RestResponseDecoder<T> decoder,
                  ResourceSpec resourceSpec)
   {
-    this(uri, method, input, headers, decoder, resourceSpec, null);
+    this(uri, method, input, headers, decoder, resourceSpec, Collections.<String>emptyList());
   }
 
   public Request(URI uri,
@@ -75,6 +76,29 @@ public class Request<T>
                  RestResponseDecoder<T> decoder,
                  ResourceSpec resourceSpec,
                  DataMap queryParams)
+  {
+    this(uri, method, input, headers, decoder, resourceSpec, queryParams, Collections.<String>emptyList());
+  }
+
+  public Request(URI uri,
+                 ResourceMethod method,
+                 RecordTemplate input,
+                 Map<String, String> headers,
+                 RestResponseDecoder<T> decoder,
+                 ResourceSpec resourceSpec,
+                 List<String> resourcePath)
+  {
+    this(uri, method, input, headers, decoder, resourceSpec, null, resourcePath);
+  }
+
+  public Request(URI uri,
+                 ResourceMethod method,
+                 RecordTemplate input,
+                 Map<String, String> headers,
+                 RestResponseDecoder<T> decoder,
+                 ResourceSpec resourceSpec,
+                 DataMap queryParams,
+                 List<String> resourcePath)
   {
     _uri = uri;
     _method = method;
@@ -92,6 +116,8 @@ public class Request<T>
       _queryParams = new DataMap(queryParams);
       _queryParams.makeReadOnly();
     }
+
+    _resourcePath = resourcePath;
   }
 
   public URI getUri()
@@ -106,17 +132,14 @@ public class Request<T>
    *
    * The resource path of a sub-resource with a URI of "x/key1/y/key2" is a list with two parts: ["x", "y"].
    *
+   * The resource path of a simple sub-resource with a URI of "x/key1/y/z/key2/t" is a list with
+   * four parts: ["x", "y", "z", "t"].
+   *
    * @return the resource path parts as a list.
    */
   public List<String> getResourcePath()
   {
-    List<String> resourcePath = new ArrayList<String>(1);
-    String[] pathParts = SLASH_PATTERN.split(_uri.getRawPath());
-    for(int i = 0; i < pathParts.length; i += 2)
-    {
-      resourcePath.add(URLEscaper.unescape(pathParts[i], Escaping.URL_ESCAPING));
-    }
-    return resourcePath;
+    return _resourcePath;
   }
 
   public ResourceMethod getMethod()
@@ -213,6 +236,10 @@ public class Request<T>
     {
       return false;
     }
+    if (_resourcePath != null? !_resourcePath.equals(request._resourcePath) : request._resourcePath != null)
+    {
+      return false;
+    }
     if (_method != request._method)
     {
       return false;
@@ -228,6 +255,7 @@ public class Request<T>
     result = 31 * result + _method.hashCode();
     result = 31 * result + (_input != null? _input.hashCode() : 0);
     result = 31 * result + (_headers != null? _headers.hashCode() : 0);
+    result = 31 * result + (_resourcePath != null? _resourcePath.hashCode() : 0);
     return result;
   }
 

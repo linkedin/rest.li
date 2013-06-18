@@ -34,6 +34,7 @@ import com.linkedin.restli.common.ActionResponse;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.TyperefUtils;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor.InterfaceType;
@@ -48,6 +49,7 @@ import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.NoMetadata;
 import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.ResourceConfigException;
+import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.ActionParam;
 import com.linkedin.restli.server.annotations.AssocKey;
@@ -62,9 +64,11 @@ import com.linkedin.restli.server.annotations.RestLiActions;
 import com.linkedin.restli.server.annotations.RestLiAssociation;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestLiCollectionCompoundKey;
+import com.linkedin.restli.server.annotations.RestLiSimpleResource;
 import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.resources.ComplexKeyResource;
 import com.linkedin.restli.server.resources.KeyValueResource;
+import com.linkedin.restli.server.resources.SingleObjectResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -107,7 +111,6 @@ public final class RestLiAnnotationReader
   public static ResourceModel processResource(final Class<?> resourceClass)
   {
     final ResourceModel model;
-    Set<ResourceModel> existingResourceModels = new HashSet<ResourceModel>();
 
     if ((resourceClass.isAnnotationPresent(RestLiCollection.class) ||
          resourceClass.isAnnotationPresent(RestLiAssociation.class) ||
@@ -124,11 +127,18 @@ public final class RestLiAnnotationReader
       @SuppressWarnings("unchecked")
       Class<? extends KeyValueResource<?, ?>> clazz =
           (Class<? extends KeyValueResource<?, ?>>) resourceClass;
-      model = processCollection(clazz, existingResourceModels);
+      model = processCollection(clazz);
     }
     else if (resourceClass.isAnnotationPresent(RestLiActions.class))
     {
       model = processActions(resourceClass);
+    }
+    else if (resourceClass.isAnnotationPresent(RestLiSimpleResource.class))
+    {
+      @SuppressWarnings("unchecked")
+      Class<? extends SingleObjectResource<?>> clazz =
+          (Class<? extends SingleObjectResource<?>>) resourceClass;
+      model = processSingleObjectResource(clazz);
     }
     else
     {
@@ -140,8 +150,7 @@ public final class RestLiAnnotationReader
     return model;
   }
 
-  private static ResourceModel processCollection(final Class<? extends KeyValueResource<?, ?>> collectionResourceClass,
-                                                 final Set<ResourceModel> knownResourceModels)
+  private static ResourceModel processCollection(final Class<? extends KeyValueResource<?, ?>> collectionResourceClass)
   {
     Class<?> keyClass;
     Class<? extends RecordTemplate> keyKeyClass = null;
@@ -234,12 +243,58 @@ public final class RestLiAnnotationReader
                           name,
                           resourceType,
                           namespace);
-    addCollectionResourceMethods(collectionResourceClass, collectionModel);
-    knownResourceModels.add(collectionModel);
+    addResourceMethods(collectionResourceClass, collectionModel);
 
     log.info("Processed collection resource '" + collectionResourceClass.getName() + "'");
 
     return collectionModel;
+  }
+
+  private static ResourceModel processSingleObjectResource(
+      final Class<? extends SingleObjectResource> singleObjectResourceClass)
+  {
+    Class<? extends RecordTemplate> valueClass;
+
+    List<Class<?>> kvParams =
+        ReflectionUtils.getTypeArguments(SingleObjectResource.class,
+                                         singleObjectResourceClass);
+
+    valueClass = kvParams.get(0).asSubclass(RecordTemplate.class);
+
+    ResourceType resourceType = getResourceType(singleObjectResourceClass);
+
+    RestLiAnnotationData annotationData;
+    if (singleObjectResourceClass.isAnnotationPresent(RestLiSimpleResource.class))
+    {
+      annotationData =
+          new RestLiAnnotationData(singleObjectResourceClass.getAnnotation(RestLiSimpleResource.class));
+    }
+    else
+    {
+      throw new ResourceConfigException("No valid annotation on resource class '"
+                                            + singleObjectResourceClass.getName() + "'");
+    }
+
+    String name = annotationData.name();
+    String namespace = annotationData.namespace();
+
+    Class<?> parentResourceClass =
+        annotationData.parent().equals(RestAnnotations.ROOT.class) ? null
+            : annotationData.parent();
+
+    ResourceModel singleObjectResourceModel =
+        new ResourceModel(valueClass,
+                          singleObjectResourceClass,
+                          parentResourceClass,
+                          name,
+                          resourceType,
+                          namespace);
+
+    addResourceMethods(singleObjectResourceClass, singleObjectResourceModel);
+
+    log.info("Processed single object resource '" + singleObjectResourceClass.getName() + "'");
+
+    return singleObjectResourceModel;
   }
 
   private static ResourceType getResourceType(final Class<?> resourceClass)
@@ -248,6 +303,7 @@ public final class RestLiAnnotationReader
     RestLiCollectionCompoundKey collCKAnno =
         resourceClass.getAnnotation(RestLiCollectionCompoundKey.class);
     RestLiAssociation assocAnno = resourceClass.getAnnotation(RestLiAssociation.class);
+    RestLiSimpleResource simpleResourceAnno = resourceClass.getAnnotation(RestLiSimpleResource.class);
 
     if (resourceClass.isAnnotationPresent(RestLiActions.class))
     {
@@ -259,6 +315,7 @@ public final class RestLiAnnotationReader
     annoCount += collAnno != null ? 1 : 0;
     annoCount += collCKAnno != null ? 1 : 0;
     annoCount += assocAnno != null ? 1 : 0;
+    annoCount += simpleResourceAnno != null ? 1 : 0;
 
     if (annoCount > 1)
     {
@@ -273,13 +330,17 @@ public final class RestLiAnnotationReader
     {
       return ResourceType.ASSOCIATION;
     }
+    else if (simpleResourceAnno != null)
+    {
+      return ResourceType.SIMPLE;
+    }
     else
     {
       throw new ResourceConfigException("Class '" + resourceClass.getName()
           + "' should be annotated " + "with '" + RestLiAssociation.class.getName() + "'"
           + " or '" + RestLiCollection.class.getName() + "'" + " or '"
-          + RestLiCollectionCompoundKey.class.getName() + "'");
-
+          + RestLiCollectionCompoundKey.class.getName() + "'"+ " or '"
+          + RestLiSimpleResource.class.getName() + "'");
     }
   }
 
@@ -290,6 +351,27 @@ public final class RestLiAnnotationReader
                                                   final ResourceMethod methodType,
                                                   final int idx,
                                                   final AnnotationSet annotations)
+  {
+    boolean isSingleObjectResource = model.getResourceType() == ResourceType.SIMPLE;
+
+    Parameter parameter = null;
+
+    if (isSingleObjectResource)
+    {
+      parameter = getPositionalParameterForSingleObject(model, methodType, idx, annotations);
+    }
+    else
+    {
+      parameter = getPositionalParameterForCollection(model, methodType, idx, annotations);
+    }
+
+    return parameter;
+  }
+
+  private static Parameter getPositionalParameterForCollection(final ResourceModel model,
+                                                               final ResourceMethod methodType,
+                                                               final int idx,
+                                                               final AnnotationSet annotations)
   {
     switch (methodType)
     {
@@ -424,7 +506,23 @@ public final class RestLiAnnotationReader
       default:
         break;
     }
+
     return null;
+  }
+
+  private static Parameter getPositionalParameterForSingleObject(final ResourceModel model,
+                                                               final ResourceMethod methodType,
+                                                               final int idx,
+                                                               final AnnotationSet annotations)
+  {
+    Parameter parameter = null;
+
+    if (methodType == ResourceMethod.UPDATE && idx == 0)
+    {
+      parameter = makeValueParam(model);
+    }
+
+    return parameter;
   }
 
   @SuppressWarnings("unchecked")
@@ -952,7 +1050,7 @@ public final class RestLiAnnotationReader
     return false;
   }
 
-  private static void addCollectionResourceMethods(final Class<?> resourceClass,
+  private static void addResourceMethods(final Class<?> resourceClass,
                                                    final ResourceModel model)
   {
     // this ignores methods declared in superclasses (e.g. template methods)
@@ -977,6 +1075,30 @@ public final class RestLiAnnotationReader
   {
     validateAssociation(model);
     validateCrudMethods(model);
+    validateSimpleResource(model);
+  }
+
+  private static void validateSimpleResource(ResourceModel model)
+  {
+    if (model.getResourceType() != ResourceType.SIMPLE)
+    {
+      return;
+    }
+
+    for (ResourceMethodDescriptor descriptor : model.getResourceMethodDescriptors())
+    {
+      ResourceMethod type = descriptor.getType();
+
+      if (!RestConstants.SIMPLE_RESOURCE_METHODS.contains(type))
+      {
+        throw new ResourceConfigException(
+            String.format(
+                "Resource '%s' is a simple resource but it contains a method of type %s" +
+                " which is not supported on simple resources.",
+                                                        model.getName(),
+                                                        type.toString()));
+      }
+    }
   }
 
   private static void validateAssociation(final ResourceModel model)
@@ -1247,15 +1369,23 @@ public final class RestLiAnnotationReader
       actionReturnRecordDataSchema = DynamicRecordMetadata.buildSchema(ActionResponse.class.getName(), Collections.<FieldDef<?>>emptyList());
     }
 
+    if (model.getResourceLevel() == ResourceLevel.ENTITY && actionAnno.resourceLevel() == ResourceLevel.COLLECTION)
+    {
+      throw new ResourceConfigException(
+          String.format("Resource '%s' is a simple resource, it cannot contain actions at resource level \"COLLECTION\".",
+            model.getName()));
+    }
+
     model.addResourceMethodDescriptor(ResourceMethodDescriptor.createForAction(method,
                                                                                parameters,
                                                                                actionName,
-                                                                               actionAnno.resourceLevel(),
+                                                                               getActionResourceLevel(actionAnno, model),
                                                                                returnFieldDef,
                                                                                actionReturnRecordDataSchema,
                                                                                recordDataSchema,
                                                                                getInterfaceType(method),
-                                                                               ResourceModelAnnotation.getAnnotationsMap(method.getAnnotations())));
+                                                                               ResourceModelAnnotation.getAnnotationsMap(
+                                                                                   method.getAnnotations())));
 
   }
 
@@ -1280,7 +1410,7 @@ public final class RestLiAnnotationReader
   {
     final Type returnType = getLogicalReturnType(method);
     ResourceMethodDescriptor existingMethodDescriptor =
-        model.findActionMethod(actionName, actionAnno.resourceLevel());
+        model.findActionMethod(actionName, getActionResourceLevel(actionAnno, model));
     if (existingMethodDescriptor != null)
     {
       throw new ResourceConfigException("Found duplicate @Action method named '"
@@ -1307,6 +1437,12 @@ public final class RestLiAnnotationReader
       }
     }
     return returnClass;
+  }
+
+  private static ResourceLevel getActionResourceLevel(Action annotation, ResourceModel definingModel)
+  {
+    return annotation.resourceLevel() == ResourceLevel.ANY ?
+        definingModel.getResourceLevel() : annotation.resourceLevel();
   }
 
   private static Class<?> getBoxedTypeFromPrimitive(Class<?> type)

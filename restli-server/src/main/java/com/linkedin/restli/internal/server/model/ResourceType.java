@@ -24,5 +24,6 @@ public enum ResourceType
 {
   COLLECTION,
   ASSOCIATION,
-  ACTIONS;
+  ACTIONS,
+  SIMPLE
 }

@@ -17,9 +17,11 @@
 package com.linkedin.restli.common;
 
 import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public interface RestConstants
 {
@@ -59,4 +61,12 @@ public interface RestConstants
   String RESOURCE_MODEL_FILENAME_EXTENSION = ".restspec.json";
   String SNAPSHOT_FILENAME_EXTENTION = ".snapshot.json";
 
+
+  Set<ResourceMethod> SIMPLE_RESOURCE_METHODS = Collections.unmodifiableSet(
+      new HashSet<ResourceMethod>(
+        Arrays.asList(
+            ResourceMethod.ACTION,
+            ResourceMethod.DELETE,
+            ResourceMethod.GET,
+            ResourceMethod.UPDATE)));
 }

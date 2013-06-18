@@ -90,6 +90,6 @@ public class GetAllRequestBuilder<K, V extends RecordTemplate> extends
     appendAssocKeys(b);
     appendQueryParams(b);
 
-    return new GetAllRequest<V>(b.build(), _headers, _elementClass, _resourceSpec);
+    return new GetAllRequest<V>(b.build(), _headers, _elementClass, _resourceSpec, getResourcePath());
   }
 }

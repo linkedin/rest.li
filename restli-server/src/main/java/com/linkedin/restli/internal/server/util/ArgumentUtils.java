@@ -84,6 +84,15 @@ public class ArgumentUtils
   }
 
   /**
+   * @param routingResult {@link RoutingResult}
+   * @return whether the resource addressed by this method has a key
+   */
+  public static boolean hasResourceKey(final RoutingResult routingResult)
+  {
+    return routingResult.getResourceMethod().getResourceModel().getPrimaryKey() != null;
+  }
+
+  /**
    * @param request {@link RestRequest}
    * @param recordClass resource value class
    * @param <V> resource value type which is a subclass of {@link RecordTemplate}

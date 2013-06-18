@@ -178,7 +178,7 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
 
       final ResourceMethodDocView docView = new ResourceMethodDocView(methodSchema,
                                                                       capture,
-                                                                      getDoc(methodSchema),
+                                                                      getDoc(methodSchema, resourceSchema.hasSimple()),
                                                                       requestEntity,
                                                                       responseEntity);
       if (methodSchema instanceof RestMethodSchema)
@@ -268,6 +268,10 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
     {
       return "association";
     }
+    else if (resourceSchema.hasSimple())
+    {
+      return "simple";
+    }
     else if (resourceSchema.hasActionsSet())
     {
       return "actionSet";
@@ -284,7 +288,7 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
     return pageModel;
   }
 
-  private String getDoc(Object method)
+  private String getDoc(Object method, boolean isSimpleResourceMethod)
   {
     String doc = null;
     if (method instanceof RestMethodSchema)
@@ -293,7 +297,15 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
       doc = restMethodSchema.getDoc();
       if (doc == null || doc.trim().length() == 0) // if no javadoc is supplied, fallback to generic doc string
       {
-        doc = _restMethodDocsMap.get(restMethodSchema.getMethod());
+        if (isSimpleResourceMethod)
+        {
+          doc = _restMethodDocsMapForSimpleResource.get(restMethodSchema.getMethod());
+        }
+        else
+        {
+          doc = _restMethodDocsMapForCollection.get(restMethodSchema.getMethod());
+        }
+
         if (doc == null)
         {
           log.warn(String.format("No doc string for REST method %s", doc));
@@ -344,7 +356,8 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
   }
 
   private static final Logger log = LoggerFactory.getLogger(RestLiServer.class);
-  private static final Map<String, String> _restMethodDocsMap = new HashMap<String, String>();
+  private static final Map<String, String> _restMethodDocsMapForCollection = new HashMap<String, String>();
+  private static final Map<String, String> _restMethodDocsMapForSimpleResource = new HashMap<String, String>();
   private static final JacksonDataCodec _codec = new JacksonDataCodec();
 
   private final URI _serverNodeUri;
@@ -364,16 +377,22 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
 
   static
   {
-    _restMethodDocsMap.put(ResourceMethod.BATCH_CREATE.toString(), "Creates multiple entities");
-    _restMethodDocsMap.put(ResourceMethod.BATCH_DELETE.toString(), "Deletes multiple entities");
-    _restMethodDocsMap.put(ResourceMethod.BATCH_GET.toString(), "Retrievies multiple entity representations given their keys");
-    _restMethodDocsMap.put(ResourceMethod.BATCH_PARTIAL_UPDATE.toString(), "Partial update applied to multiple entities");
-    _restMethodDocsMap.put(ResourceMethod.BATCH_UPDATE.toString(), "Replaces multiple entities");
-    _restMethodDocsMap.put(ResourceMethod.CREATE.toString(), "Creates an entity");
-    _restMethodDocsMap.put(ResourceMethod.DELETE.toString(), "Deletes an entity");
-    _restMethodDocsMap.put(ResourceMethod.GET.toString(), "Gets a single entity given a key");
-    _restMethodDocsMap.put(ResourceMethod.PARTIAL_UPDATE.toString(), "Updates parts of an entity given a key");
-    _restMethodDocsMap.put(ResourceMethod.UPDATE.toString(), "Replaces an entity given a key");
+    _restMethodDocsMapForCollection.put(ResourceMethod.BATCH_CREATE.toString(), "Creates multiple entities");
+    _restMethodDocsMapForCollection.put(ResourceMethod.BATCH_DELETE.toString(), "Deletes multiple entities");
+    _restMethodDocsMapForCollection.put(ResourceMethod.BATCH_GET.toString(),
+                           "Retrievies multiple entity representations given their keys");
+    _restMethodDocsMapForCollection.put(ResourceMethod.BATCH_PARTIAL_UPDATE.toString(),
+                           "Partial update applied to multiple entities");
+    _restMethodDocsMapForCollection.put(ResourceMethod.BATCH_UPDATE.toString(), "Replaces multiple entities");
+    _restMethodDocsMapForCollection.put(ResourceMethod.CREATE.toString(), "Creates an entity");
+    _restMethodDocsMapForCollection.put(ResourceMethod.DELETE.toString(), "Deletes an entity");
+    _restMethodDocsMapForCollection.put(ResourceMethod.GET.toString(), "Gets a single entity given a key");
+    _restMethodDocsMapForCollection.put(ResourceMethod.PARTIAL_UPDATE.toString(), "Updates parts of an entity given a key");
+    _restMethodDocsMapForCollection.put(ResourceMethod.UPDATE.toString(), "Replaces an entity given a key");
+
+    _restMethodDocsMapForSimpleResource.put(ResourceMethod.DELETE.toString(), "Deletes the entity");
+    _restMethodDocsMapForSimpleResource.put(ResourceMethod.GET.toString(), "Gets the entity");
+    _restMethodDocsMapForSimpleResource.put(ResourceMethod.UPDATE.toString(), "Replaces the entity");
 
     _codec.setPrettyPrinter(new DefaultPrettyPrinter());
   }

@@ -17,6 +17,7 @@
 package com.linkedin.restli.client;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 
 import com.linkedin.data.template.RecordTemplate;
@@ -31,13 +32,15 @@ public class GetAllRequest<T extends RecordTemplate> extends
   GetAllRequest(URI uri,
                 Map<String, String> headers,
                 Class<T> templateClass,
-                ResourceSpec resourceSpec)
+                ResourceSpec resourceSpec,
+                List<String> resourcePath)
   {
     super(uri,
           ResourceMethod.GET_ALL,
           null,
           headers,
           new CollectionResponseDecoder<T>(templateClass),
-          resourceSpec);
+          resourceSpec,
+          resourcePath);
   }
 }

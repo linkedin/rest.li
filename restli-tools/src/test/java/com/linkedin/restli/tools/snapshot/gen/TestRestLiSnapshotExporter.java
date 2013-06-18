@@ -51,6 +51,7 @@ public class TestRestLiSnapshotExporter
   private static final String STATUSES_PARAMS_FILE = "twitter-statusesParams.snapshot.json";
   private static final String FOLLOWS_FILE = "twitter-follows.snapshot.json";
   private static final String ACCOUNTS_FILE = "twitter-accounts.snapshot.json";
+  private static final String TRENDING_FILE = "twitter-trending.snapshot.json";
 
 
   private File outdir;
@@ -98,7 +99,7 @@ public class TestRestLiSnapshotExporter
                                              null,
                                              outdir.getAbsolutePath());
 
-    String[] expectedFiles = {STATUSES_FILE, FOLLOWS_FILE, ACCOUNTS_FILE, STATUSES_PARAMS_FILE};
+    String[] expectedFiles = {STATUSES_FILE, FOLLOWS_FILE, ACCOUNTS_FILE, STATUSES_PARAMS_FILE, TRENDING_FILE};
 
     assertEquals(outdir.list().length, expectedFiles.length);
     assertEquals(result.getModifiedFiles().size(), expectedFiles.length);

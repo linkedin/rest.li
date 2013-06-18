@@ -23,10 +23,8 @@ import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.JsonBuilder;
-import com.linkedin.data.schema.Name;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.PrimitiveDataSchema;
-import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.SchemaToJsonEncoder;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
@@ -58,6 +56,7 @@ import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.restspec.ResourceSchemaArray;
 import com.linkedin.restli.restspec.RestMethodSchema;
 import com.linkedin.restli.restspec.RestMethodSchemaArray;
+import com.linkedin.restli.restspec.SimpleSchema;
 import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.resources.ComplexKeyResource;
@@ -144,13 +143,17 @@ public class ResourceModelEncoder
   {
     ResourceSchema rootNode = new ResourceSchema();
 
-    if (resourceModel.isActions())
+    switch (resourceModel.getResourceType())
     {
-      appendActionsModel(rootNode, resourceModel);
-    }
-    else
-    {
-      appendCollection(rootNode, resourceModel);
+      case ACTIONS:
+        appendActionsModel(rootNode, resourceModel);
+        break;
+      case SIMPLE:
+        appendSimple(rootNode, resourceModel);
+        break;
+      default:
+        appendCollection(rootNode, resourceModel);
+        break;
     }
 
     final DataMap customAnnotation = resourceModel.getCustomAnnotationData();
@@ -312,7 +315,7 @@ public class ResourceModelEncoder
         {
           sb.insert(0, "/{" + resourceModel.getKeyName() + "}");
         }
-        else
+        else if(resourceModel.getKeys().size() > 1)
         {
           List<Key> sortedKeys = new ArrayList<Key>(resourceModel.getKeys());
           Collections.sort(sortedKeys, new Comparator<Key>()
@@ -385,7 +388,8 @@ public class ResourceModelEncoder
       appendKeys(associationSchema, collectionModel);
     }
 
-    appendSupportsNode(collectionSchema, collectionModel);
+    appendSupportsNodeToCollectionSchema(collectionSchema, collectionModel);
+    appendMethodsToCollectionSchema(collectionSchema, collectionModel);
     FinderSchemaArray finders = createFinders(collectionModel);
     if (finders.size() > 0)
     {
@@ -396,7 +400,7 @@ public class ResourceModelEncoder
     {
       collectionSchema.setActions(actions);
     }
-    appendEntity(collectionSchema, collectionModel);
+    appendEntityToCollectionSchema(collectionSchema, collectionModel);
 
     switch(collectionModel.getResourceType())
     {
@@ -424,15 +428,54 @@ public class ResourceModelEncoder
     resourceSchema.setActionsSet(actionsNode);
   }
 
-  private void appendEntity(final CollectionSchema collectionSchema,
-                            final ResourceModel resourceModel)
+  private void appendSimple(ResourceSchema resourceSchema, ResourceModel resourceModel)
   {
-    EntitySchema entityNode = new EntitySchema();
-    entityNode.setPath(buildPathForEntity(resourceModel));
+    appendCommon(resourceModel, resourceSchema);
+
+    SimpleSchema simpleSchema = new SimpleSchema();
+
+    appendSupportsNodeToSimpleSchema(simpleSchema, resourceModel);
+    appendMethodsToSimpleSchema(simpleSchema, resourceModel);
+
     ActionSchemaArray actions = createActions(resourceModel, ResourceLevel.ENTITY);
     if (actions.size() > 0)
     {
-      entityNode.setActions(actions);
+      simpleSchema.setActions(actions);
+    }
+
+    appendEntityToSimpleSchema(simpleSchema, resourceModel);
+
+    resourceSchema.setSimple(simpleSchema);
+  }
+
+  private void appendEntityToCollectionSchema(final CollectionSchema collectionSchema,
+                                              final ResourceModel resourceModel)
+  {
+    EntitySchema entityNode = buildEntitySchema(resourceModel);
+
+    collectionSchema.setEntity(entityNode);
+  }
+
+  private void appendEntityToSimpleSchema(final SimpleSchema simpleSchema,
+                                          final ResourceModel resourceModel)
+  {
+    EntitySchema entityNode = buildEntitySchema(resourceModel);
+
+    simpleSchema.setEntity(entityNode);
+  }
+
+  private EntitySchema buildEntitySchema(ResourceModel resourceModel)
+  {
+    EntitySchema entityNode = new EntitySchema();
+    entityNode.setPath(buildPathForEntity(resourceModel));
+
+    if (resourceModel.getResourceLevel() == ResourceLevel.COLLECTION)
+    {
+      ActionSchemaArray actions = createActions(resourceModel, ResourceLevel.ENTITY);
+      if (actions.size() > 0)
+      {
+        entityNode.setActions(actions);
+      }
     }
 
     // subresources
@@ -440,9 +483,18 @@ public class ResourceModelEncoder
     for (ResourceModel subResourceModel : resourceModel.getSubResources())
     {
       ResourceSchema subresource = new ResourceSchema();
-      if (!subResourceModel.isActions())
+
+      switch (subResourceModel.getResourceType())
       {
-        appendCollection(subresource, subResourceModel);
+        case COLLECTION:
+        case ASSOCIATION:
+          appendCollection(subresource, subResourceModel);
+          break;
+        case SIMPLE:
+          appendSimple(subresource, subResourceModel);
+          break;
+        default:
+          break;
       }
 
       final DataMap customAnnotation = subResourceModel.getCustomAnnotationData();
@@ -466,8 +518,7 @@ public class ResourceModelEncoder
       });
       entityNode.setSubresources(subresources);
     }
-
-    collectionSchema.setEntity(entityNode);
+    return entityNode;
   }
 
   private void appendKeys(final AssociationSchema associationSchema,
@@ -753,20 +804,44 @@ public class ResourceModelEncoder
     return restMethods;
   }
 
-  private void appendSupportsNode(final CollectionSchema collectionSchema,
-                                  final ResourceModel resourceModel)
+  private void appendSupportsNodeToCollectionSchema(final CollectionSchema collectionSchema,
+                                                    final ResourceModel resourceModel)
   {
-    StringArray supportsArray = new StringArray();
-
-    buildSupportsArray(resourceModel, supportsArray);
-
+    StringArray supportsArray = buildSupportsNode(resourceModel);
     collectionSchema.setSupports(supportsArray);
+  }
 
+  private void appendMethodsToCollectionSchema(CollectionSchema collectionSchema, ResourceModel resourceModel)
+  {
     RestMethodSchemaArray restMethods = createRestMethods(resourceModel);
     if (restMethods.size() > 0)
     {
       collectionSchema.setMethods(restMethods);
     }
+  }
+
+  private void appendSupportsNodeToSimpleSchema(final SimpleSchema simpleSchema,
+                                                      final ResourceModel resourceModel)
+  {
+    StringArray supportsArray = buildSupportsNode(resourceModel);
+    simpleSchema.setSupports(supportsArray);
+  }
+
+  private void appendMethodsToSimpleSchema(SimpleSchema simpleSchema, ResourceModel resourceModel)
+  {
+    RestMethodSchemaArray restMethods = createRestMethods(resourceModel);
+    if (restMethods.size() > 0)
+    {
+      simpleSchema.setMethods(restMethods);
+    }
+  }
+
+  private StringArray buildSupportsNode(ResourceModel resourceModel)
+  {
+    StringArray supportsArray = new StringArray();
+
+    buildSupportsArray(resourceModel, supportsArray);
+    return supportsArray;
   }
 
   private void buildSupportsArray(final ResourceModel resourceModel, final StringArray supportsArray)

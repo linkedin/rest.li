@@ -60,6 +60,35 @@
         } ]
       } ],
       "subresources" : [ {
+        "name" : "location",
+        "path" : "/statuses/{statusID}/location",
+        "schema" : "com.linkedin.restli.tools.twitter.Location",
+        "doc" : "Simple resource that contains the location of a status.\n\ngenerated from: com.linkedin.restli.tools.twitter.LocationResource",
+        "simple" : {
+          "supports" : [ "delete", "get", "update" ],
+          "methods" : [ {
+            "method" : "get",
+            "doc" : "Gets the location of the parent status."
+          }, {
+            "method" : "update",
+            "doc" : "Updates the location of the parent status."
+          }, {
+            "method" : "delete",
+            "doc" : "Deletes the location of the parent status."
+          } ],
+          "actions" : [ {
+            "name" : "new_status_from_location",
+            "doc" : "Replies to all followers nearby.",
+            "parameters" : [ {
+              "name" : "status",
+              "type" : "string"
+            } ]
+          } ],
+          "entity" : {
+            "path" : "/statuses/{statusID}/location"
+          }
+        }
+      }, {
         "name" : "replies",
         "path" : "/statuses/{statusID}/replies",
         "schema" : "com.linkedin.restli.tools.twitter.Status",

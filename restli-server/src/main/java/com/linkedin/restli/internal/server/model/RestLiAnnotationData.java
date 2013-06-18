@@ -20,14 +20,13 @@
 
 package com.linkedin.restli.internal.server.model;
 
-import com.linkedin.data.schema.TyperefDataSchema;
-import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.TyperefInfo;
 import com.linkedin.restli.server.annotations.Key;
 import com.linkedin.restli.server.annotations.RestAnnotations;
 import com.linkedin.restli.server.annotations.RestLiAssociation;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestLiCollectionCompoundKey;
+import com.linkedin.restli.server.annotations.RestLiSimpleResource;
 
 /**
  * @author Josh Walker
@@ -78,6 +77,19 @@ public class RestLiAnnotationData
     _name = associationAnno.name();
     _namespace = associationAnno.namespace();
     _keys = associationAnno.assocKeys();
+    _keyName = null;
+    _typerefInfoClass = null;
+  }
+
+  /**
+   * @param simpleResourceAnno {@link com.linkedin.restli.server.annotations.RestLiSimpleResource} annotation
+   */
+  public RestLiAnnotationData(RestLiSimpleResource simpleResourceAnno)
+  {
+    _parent = simpleResourceAnno.parent();
+    _name = simpleResourceAnno.name();
+    _namespace = simpleResourceAnno.namespace();
+    _keys = null;
     _keyName = null;
     _typerefInfoClass = null;
   }

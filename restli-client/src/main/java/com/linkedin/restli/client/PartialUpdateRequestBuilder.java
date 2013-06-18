@@ -85,15 +85,11 @@ public class PartialUpdateRequestBuilder<K, V extends RecordTemplate> extends
   @Override
   public PartialUpdateRequest<V> build()
   {
-    if (_id == null)
-    {
-      throw new IllegalArgumentException("id required to build partial update request");
-    }
     UriBuilder b = UriBuilder.fromUri(bindPathKeys());
     appendKeyToPath(b, _id);
     appendQueryParams(b);
 
-    return new PartialUpdateRequest<V>(b.build(), _input, _headers, _resourceSpec);
+    return new PartialUpdateRequest<V>(b.build(), _input, _headers, _resourceSpec, getResourcePath());
   }
 
 }

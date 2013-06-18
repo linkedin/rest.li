@@ -65,7 +65,12 @@ public class BatchGetRequestBuilderTest
     GetRequestBuilder<Integer, TestRecord> requestBuilder =
         new GetRequestBuilder<Integer, TestRecord>("/",
                                                    TestRecord.class,
-                                                   new ResourceSpecImpl());
+                                                   new ResourceSpecImpl(Collections.<ResourceMethod>emptySet(),
+                                                                        null,
+                                                                        null,
+                                                                        int.class,
+                                                                        TestRecord.class,
+                                                                        Collections.<String, Object>emptyMap()));
     requestBuilder.id(1)
                   .fields(FIELDS.id(), FIELDS.message())
                   .param("param", "paramValue");

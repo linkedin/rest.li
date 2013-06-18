@@ -103,6 +103,6 @@ public class FindRequestBuilder<K, V extends RecordTemplate> extends
     appendAssocKeys(b);
     appendQueryParams(b);
 
-    return new FindRequest<V>(b.build(), _headers, _elementClass, _resourceSpec);
+    return new FindRequest<V>(b.build(), _headers, _elementClass, _resourceSpec, getResourcePath());
   }
 }

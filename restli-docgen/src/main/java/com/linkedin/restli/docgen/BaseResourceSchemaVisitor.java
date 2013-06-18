@@ -26,6 +26,7 @@ import com.linkedin.restli.restspec.FinderSchema;
 import com.linkedin.restli.restspec.ParameterSchema;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.restspec.RestMethodSchema;
+import com.linkedin.restli.restspec.SimpleSchema;
 import com.linkedin.restli.server.ResourceLevel;
 
 /**
@@ -49,6 +50,11 @@ public class BaseResourceSchemaVisitor implements ResourceSchemaVisitior
   @Override
   public void visitAssociationResource(VisitContext visitContext,
                                        AssociationSchema associationSchema)
+  {
+  }
+
+  @Override
+  public void visitSimpleResource(VisitContext visitContext, SimpleSchema simpleSchema)
   {
   }
 

@@ -21,6 +21,7 @@
 package com.linkedin.restli.client;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 
 import com.linkedin.data.template.RecordTemplate;
@@ -41,8 +42,9 @@ public class ActionRequest<T> extends Request<T>
                 RecordTemplate input,
                 Map<String, String> headers,
                 ActionResponseDecoder<T> decoder,
-                ResourceSpec resourceSpec)
+                ResourceSpec resourceSpec,
+                List<String> resourcePath)
   {
-    super(uri, ResourceMethod.ACTION, input, headers, decoder, resourceSpec);
+    super(uri, ResourceMethod.ACTION, input, headers, decoder, resourceSpec, resourcePath);
   }
 }

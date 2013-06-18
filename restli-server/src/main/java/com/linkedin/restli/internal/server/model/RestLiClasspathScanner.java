@@ -39,6 +39,7 @@ import com.linkedin.restli.server.ResourceConfigException;
 import com.linkedin.restli.server.annotations.RestLiActions;
 import com.linkedin.restli.server.annotations.RestLiAssociation;
 import com.linkedin.restli.server.annotations.RestLiCollection;
+import com.linkedin.restli.server.annotations.RestLiSimpleResource;
 
 /**
  * @author Josh Walker
@@ -67,6 +68,7 @@ class RestLiClasspathScanner
     annotations.add(RestLiCollection.class);
     annotations.add(RestLiAssociation.class);
     annotations.add(RestLiActions.class);
+    annotations.add(RestLiSimpleResource.class);
     return Collections.unmodifiableSet(annotations);
   }
 

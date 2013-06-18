@@ -104,7 +104,8 @@ public class BatchUpdateRequestBuilder<K, V extends RecordTemplate> extends
                                         baseUri,
                                         _input,
                                         _queryParams,
-                                        _resourceSpec);
+                                        _resourceSpec,
+                                        getResourcePath());
   }
 
 }

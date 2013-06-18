@@ -41,6 +41,7 @@ import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.ResourceSpecImpl;
+import com.linkedin.restli.common.RestConstants;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -64,6 +65,8 @@ public class TestClientBuilders
 {
   public static final String TEST_URI = "test";
   public static final String SUBRESOURCE_URI = "foo/{key1}/bar/{key2}/baz";
+  public static final String SUBRESOURCE_SIMPLE_ROOT_URI = "foo/bar/{key1}/baz";
+  public static final String SUBRESOURCE_SIMPLE_SUB_URI = "foo/{key1}/bar";
   private static final ResourceSpec _COLL_SPEC      =
                                                         new ResourceSpecImpl(EnumSet.allOf(ResourceMethod.class),
                                                                              Collections.<String, DynamicRecordMetadata> emptyMap(),
@@ -91,6 +94,16 @@ public class TestClientBuilders
                                                                                TestRecord.class,
                                                                                TestRecord.class,
                                                                                Collections.<String, Class<?>> emptyMap());
+
+  private static final ResourceSpec _SIMPLE_RESOURCE_SPEC =
+                                                          new ResourceSpecImpl(RestConstants.SIMPLE_RESOURCE_METHODS,
+                                                                             Collections.<String, DynamicRecordMetadata> emptyMap(),
+                                                                             Collections.<String, DynamicRecordMetadata> emptyMap(),
+                                                                             null,
+                                                                             null,
+                                                                             null,
+                                                                             TestRecord.class,
+                                                                             Collections.<String, Class<?>> emptyMap());
 
   @Test
   public void testActionRequestBuilder()
@@ -288,6 +301,18 @@ public class TestClientBuilders
   }
 
   @Test
+  public void testDeleteRequestBuilderWithKeylessResource()
+  {
+    DeleteRequestBuilder<Long, TestRecord> builder = new DeleteRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class,
+                                                                                                _SIMPLE_RESOURCE_SPEC);
+    DeleteRequest<TestRecord> request = builder.build();
+    Assert.assertEquals(request.isSafe(), false);
+    Assert.assertEquals(request.isIdempotent(), true);
+
+    checkBasicRequest(request, "test", ResourceMethod.DELETE, null, Collections.<String, String>emptyMap());
+  }
+
+  @Test
   public void testFindRequestBuilder()
   {
     FindRequestBuilder<Long, TestRecord> builder = new FindRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class,
@@ -340,6 +365,22 @@ public class TestClientBuilders
     Assert.assertEquals(request.isIdempotent(), true);
 
     checkBasicRequest(request, "test/1?fields=message,id", ResourceMethod.GET, null, Collections.<String, String>emptyMap());
+  }
+
+  @Test
+  public void testGetRequestBuilderWithKeylessResource()
+  {
+    GetRequestBuilder<Void, TestRecord> builder = new GetRequestBuilder<Void, TestRecord>(TEST_URI, TestRecord.class,
+                                                                                          _SIMPLE_RESOURCE_SPEC);
+    GetRequest<TestRecord> request = builder.fields(TestRecord.fields().id(), TestRecord.fields().message()).build();
+    Assert.assertEquals(request.getBaseURI(), URI.create(TEST_URI));
+    Assert.assertEquals(request.getIdObject(), null);
+    Assert.assertEquals(request.getFields(), new HashSet<PathSpec>(Arrays.asList(
+        TestRecord.fields().id(), TestRecord.fields().message())));
+    Assert.assertEquals(request.isSafe(), true);
+    Assert.assertEquals(request.isIdempotent(), true);
+
+    checkBasicRequest(request, "test?fields=message,id", ResourceMethod.GET, null, Collections.<String, String>emptyMap());
   }
 
   @Test
@@ -412,6 +453,18 @@ public class TestClientBuilders
     Assert.assertEquals(request.isIdempotent(), true);
 
     checkBasicRequest(request, "test/1", ResourceMethod.UPDATE, new TestRecord(), Collections.<String, String>emptyMap());
+  }
+
+  @Test
+  public void testUpdateRequestBuilderWithKeylessResource()
+  {
+    UpdateRequestBuilder<Void, TestRecord> builder = new UpdateRequestBuilder<Void, TestRecord>(TEST_URI, TestRecord.class,
+                                                                                                _SIMPLE_RESOURCE_SPEC);
+    UpdateRequest<TestRecord> request = builder.input(new TestRecord()).build();
+    Assert.assertEquals(request.isSafe(), false);
+    Assert.assertEquals(request.isIdempotent(), true);
+
+    checkBasicRequest(request, "test", ResourceMethod.UPDATE, new TestRecord(), Collections.<String, String>emptyMap());
   }
 
   @Test
@@ -552,35 +605,96 @@ public class TestClientBuilders
 
     URI uri;
     ActionRequest<TestRecord> request;
-    request = new ActionRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, resourceSpec).name("action").pathKey("key1", 1).pathKey("key2", 2).build();
+    request = new ActionRequestBuilder<Void, TestRecord>(SUBRESOURCE_URI, TestRecord.class, resourceSpec).name("action").pathKey("key1", 1).pathKey("key2", 2).build();
     Assert.assertEquals(request.getUri(), URI.create("foo/1/bar/2/baz?action=action"));
     Assert.assertEquals(request.getResourcePath().toArray(), new String[] {"foo", "bar", "baz"});
 
     // test with keys containing URL escaped chars
-    request = new ActionRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, resourceSpec).name("action").pathKey("key1", "http://example.com/images/1.png").pathKey("key2", "http://example.com/images/2.png").build();
+    request = new ActionRequestBuilder<Void, TestRecord>(SUBRESOURCE_URI, TestRecord.class, resourceSpec).name("action").pathKey("key1", "http://example.com/images/1.png").pathKey("key2", "http://example.com/images/2.png").build();
     Assert.assertEquals(request.getUri(), URI.create("foo/http%3A%2F%2Fexample.com%2Fimages%2F1.png/bar/http%3A%2F%2Fexample.com%2Fimages%2F2.png/baz?action=action"));
     Assert.assertEquals(request.getResourcePath().toArray(), new String[] {"foo", "bar", "baz"});
 
     uri = new BatchGetRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, _COLL_SPEC).ids(1L,2L).pathKey("key1", 1).pathKey("key2", 2).build().getUri();
     Assert.assertEquals(uri, URI.create("foo/1/bar/2/baz?ids=1&ids=2"));
 
-    uri = new CreateRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, null).pathKey("key1", 1).pathKey("key2", 2).build().getUri();
+    uri = new CreateRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, _COLL_SPEC).pathKey("key1", 1).pathKey("key2", 2).build().getUri();
     Assert.assertEquals(uri, URI.create("foo/1/bar/2/baz"));
 
-    uri = new DeleteRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, null).id(3L).pathKey("key1", 1).pathKey("key2", 2).build().getUri();
+    uri = new DeleteRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, _COLL_SPEC).id(3L).pathKey("key1", 1).pathKey("key2", 2).build().getUri();
     Assert.assertEquals(uri, URI.create("foo/1/bar/2/baz/3"));
 
-    uri = new FindRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, null).pathKey("key1", 1).pathKey("key2", 2).build().getUri();
+    uri = new FindRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, _COLL_SPEC).pathKey("key1", 1).pathKey("key2", 2).build().getUri();
     Assert.assertEquals(uri, URI.create("foo/1/bar/2/baz"));
 
-    uri = new GetRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, null).id(3L).pathKey("key1", 1).pathKey("key2", 2).build().getUri();
+    uri = new GetRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, _COLL_SPEC).id(3L).pathKey("key1", 1).pathKey("key2", 2).build().getUri();
     Assert.assertEquals(uri, URI.create("foo/1/bar/2/baz/3"));
 
-    uri = new PartialUpdateRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, null).id(3L).pathKey("key1", 1).pathKey("key2", 2).build().getUri();
+    uri = new PartialUpdateRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, _COLL_SPEC).id(3L).pathKey("key1", 1).pathKey("key2", 2).build().getUri();
     Assert.assertEquals(uri, URI.create("foo/1/bar/2/baz/3"));
 
-    uri = new UpdateRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, null).id(3L).pathKey("key1", 1).pathKey("key2", 2).build().getUri();
+    uri = new UpdateRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, _COLL_SPEC).id(3L).pathKey("key1", 1).pathKey("key2", 2).build().getUri();
     Assert.assertEquals(uri, URI.create("foo/1/bar/2/baz/3"));
+
+    // simple resource & sub resources tests
+    request = new ActionRequestBuilder<Void, TestRecord>(SUBRESOURCE_SIMPLE_ROOT_URI, TestRecord.class, resourceSpec).name("action").pathKey("key1", 1).build();
+    Assert.assertEquals(request.getUri(), URI.create("foo/bar/1/baz?action=action"));
+    Assert.assertEquals(request.getResourcePath().toArray(), new String[] {"foo", "bar", "baz"});
+
+    request = new ActionRequestBuilder<Void, TestRecord>(
+        SUBRESOURCE_SIMPLE_ROOT_URI, TestRecord.class, resourceSpec).name("action")
+                                                                    .pathKey("key1", "http://example.com/images/1.png")
+                                                                    .build();
+    Assert.assertEquals(request.getUri(), URI.create("foo/bar/http%3A%2F%2Fexample.com%2Fimages%2F1.png/baz?action=action"));
+    Assert.assertEquals(request.getResourcePath().toArray(), new String[] {"foo", "bar", "baz"});
+
+    uri = new BatchGetRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_ROOT_URI, TestRecord.class, _COLL_SPEC).ids(1L,2L).pathKey("key1", 1).build().getUri();
+    Assert.assertEquals(uri, URI.create("foo/bar/1/baz?ids=1&ids=2"));
+
+    uri = new CreateRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_ROOT_URI, TestRecord.class, _COLL_SPEC).pathKey("key1", 1).build().getUri();
+    Assert.assertEquals(uri, URI.create("foo/bar/1/baz"));
+
+    uri = new DeleteRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_ROOT_URI, TestRecord.class, _COLL_SPEC).id(2L).pathKey("key1", 1).build().getUri();
+    Assert.assertEquals(uri, URI.create("foo/bar/1/baz/2"));
+
+    uri = new FindRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_ROOT_URI, TestRecord.class, _COLL_SPEC).pathKey("key1", 1).build().getUri();
+    Assert.assertEquals(uri, URI.create("foo/bar/1/baz"));
+
+    uri = new GetRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_ROOT_URI, TestRecord.class, _COLL_SPEC).id(2L).pathKey("key1", 1).build().getUri();
+    Assert.assertEquals(uri, URI.create("foo/bar/1/baz/2"));
+
+    uri = new PartialUpdateRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_ROOT_URI, TestRecord.class, _COLL_SPEC).id(2L).pathKey("key1", 1).build().getUri();
+    Assert.assertEquals(uri, URI.create("foo/bar/1/baz/2"));
+
+    uri = new UpdateRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_ROOT_URI, TestRecord.class, _COLL_SPEC).id(2L).pathKey("key1", 1).build().getUri();
+    Assert.assertEquals(uri, URI.create("foo/bar/1/baz/2"));
+
+    request = new ActionRequestBuilder<Void, TestRecord>(SUBRESOURCE_SIMPLE_SUB_URI, TestRecord.class, resourceSpec).name("action").pathKey("key1", 1).build();
+    Assert.assertEquals(request.getUri(), URI.create("foo/1/bar?action=action"));
+    Assert.assertEquals(request.getResourcePath().toArray(), new String[] {"foo", "bar"});
+
+    request = new ActionRequestBuilder<Void, TestRecord>(
+        SUBRESOURCE_SIMPLE_SUB_URI, TestRecord.class, resourceSpec).name("action")
+                                                                   .pathKey("key1", "http://example.com/images/1.png")
+                                                                   .build();
+    Assert.assertEquals(request.getUri(), URI.create("foo/http%3A%2F%2Fexample.com%2Fimages%2F1.png/bar?action=action"));
+    Assert.assertEquals(request.getResourcePath().toArray(), new String[] {"foo", "bar"});
+
+    uri = new DeleteRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_SUB_URI, TestRecord.class,
+                                                     _SIMPLE_RESOURCE_SPEC).pathKey(
+        "key1",
+        1).build().getUri();
+    Assert.assertEquals(uri, URI.create("foo/1/bar"));
+
+    uri = new GetRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_SUB_URI, TestRecord.class, _SIMPLE_RESOURCE_SPEC).pathKey(
+        "key1",
+        1).build().getUri();
+    Assert.assertEquals(uri, URI.create("foo/1/bar"));
+
+    uri = new UpdateRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_SUB_URI, TestRecord.class,
+                                                     _SIMPLE_RESOURCE_SPEC).pathKey(
+        "key1",
+        1).build().getUri();
+    Assert.assertEquals(uri, URI.create("foo/1/bar"));
   }
 
   @Test
@@ -588,22 +702,22 @@ public class TestClientBuilders
   {
 
     URI uri;
-    uri = new CreateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, null).param("foo", "bar").build().getUri();
+    uri = new CreateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).param("foo", "bar").build().getUri();
     Assert.assertEquals(uri, URI.create("test?foo=bar"));
 
-    uri = new DeleteRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, null).id(3L).param("foo", "bar").build().getUri();
+    uri = new DeleteRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).id(3L).param("foo", "bar").build().getUri();
     Assert.assertEquals(uri, URI.create("test/3?foo=bar"));
 
-    uri = new FindRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, null).param("foo", "bar").build().getUri();
+    uri = new FindRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).param("foo", "bar").build().getUri();
     Assert.assertEquals(uri, URI.create("test?foo=bar"));
 
-    uri = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, null).id(3L).param("foo", "bar").build().getUri();
+    uri = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).id(3L).param("foo", "bar").build().getUri();
     Assert.assertEquals(uri, URI.create("test/3?foo=bar"));
 
-    uri = new PartialUpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, null).id(3L).param("foo", "bar").build().getUri();
+    uri = new PartialUpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).id(3L).param("foo", "bar").build().getUri();
     Assert.assertEquals(uri, URI.create("test/3?foo=bar"));
 
-    uri = new UpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, null).id(3L).param("foo", "bar").build().getUri();
+    uri = new UpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).id(3L).param("foo", "bar").build().getUri();
     Assert.assertEquals(uri, URI.create("test/3?foo=bar"));
 
     uri = new BatchGetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).ids(1L,2L).param("foo", "bar").build().getUri();
@@ -624,6 +738,17 @@ public class TestClientBuilders
             1L, new PatchRequest<TestRecord>()).param("foo", "bar").build().getUri();
     Assert.assertEquals(uri, URI.create("test?foo=bar&ids=1"));
 
+    //Simple resource tests
+    uri = new DeleteRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _SIMPLE_RESOURCE_SPEC).param("foo", "bar").build().getUri();
+    Assert.assertEquals(uri, URI.create("test?foo=bar"));
+
+    uri = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _SIMPLE_RESOURCE_SPEC).param("foo", "bar").build().getUri();
+    Assert.assertEquals(uri, URI.create("test?foo=bar"));
+
+    uri = new UpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _SIMPLE_RESOURCE_SPEC).param("foo",
+                                                                                                            "bar").build().getUri();
+    Assert.assertEquals(uri, URI.create("test?foo=bar"));
+
   }
 
   @Test
@@ -631,22 +756,97 @@ public class TestClientBuilders
   {
     URI uri;
 
-    uri = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, null).id(3L).param("foo", "bar&baz=qux").build().getUri();
+    uri = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).id(3L).param("foo", "bar&baz=qux").build().getUri();
     Assert.assertEquals(uri, URI.create("test/3?foo=bar%26baz%3Dqux"));
 
-    uri = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, null).id(3L).param("foo&bar=baz", "qux").build().getUri();
+    uri = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).id(3L).param("foo&bar=baz", "qux").build().getUri();
     Assert.assertEquals(uri, URI.create("test/3?foo%26bar%3Dbaz=qux"));
 
-    uri = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, null).id(3L).param("foo/bar", "baz/qux").build().getUri();
+    uri = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).id(3L).param("foo/bar", "baz/qux").build().getUri();
     Assert.assertEquals(uri, URI.create("test/3?foo/bar=baz/qux"));
 
-    uri = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, null).id(3L).param("foo:bar", "baz:qux").build().getUri();
+    uri = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).id(3L).param("foo:bar", "baz:qux").build().getUri();
     Assert.assertEquals(uri, URI.create("test/3?foo:bar=baz:qux"));
 
-    uri = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, null).id(3L).param("foo?bar", "baz?qux").build().getUri();
+    uri = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).id(3L).param("foo?bar", "baz?qux").build().getUri();
     Assert.assertEquals(uri, URI.create("test/3?foo?bar=baz?qux"));
   }
 
+  @Test
+  public void testBuilderExceptions()
+  {
+    try
+    {
+      DeleteRequestBuilder<Long, TestRecord> builder =
+          new DeleteRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC);
+      builder.build();
+      Assert.fail("Building a delete request w/o an id on a collection should fail.");
+    }
+    catch(IllegalArgumentException e)
+    {
+      Assert.assertTrue(e.getMessage().contains("id required"));
+    }
+
+    try
+    {
+      GetRequestBuilder<Long, TestRecord> builder =
+          new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC);
+      builder.build();
+      Assert.fail("Building a get request w/o an id on a collection should fail.");
+    }
+    catch(IllegalArgumentException e)
+    {
+      Assert.assertTrue(e.getMessage().contains("id required"));
+    }
+
+    try
+    {
+      UpdateRequestBuilder<Long, TestRecord> builder =
+          new UpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC);
+      builder.input(new TestRecord()).build();
+      Assert.fail("Building an update request w/o an id on a collection should fail.");
+    }
+    catch(IllegalArgumentException e)
+    {
+      Assert.assertTrue(e.getMessage().contains("id required"));
+    }
+
+    try
+    {
+      DeleteRequestBuilder<Long, TestRecord> builder =
+          new DeleteRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _SIMPLE_RESOURCE_SPEC);
+      builder.id(1L).build();
+      Assert.fail("Building a delete request with an id on a simple resource should fail.");
+    }
+    catch(IllegalArgumentException e)
+    {
+      Assert.assertTrue(e.getMessage().contains("id is not allowed"));
+    }
+
+    try
+    {
+      GetRequestBuilder<Long, TestRecord> builder =
+          new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _SIMPLE_RESOURCE_SPEC);
+      builder.id(1L).build();
+      Assert.fail("Building a get request with an id on a simple resource should fail.");
+    }
+    catch(IllegalArgumentException e)
+    {
+      Assert.assertTrue(e.getMessage().contains("id is not allowed"));
+    }
+
+    try
+    {
+      UpdateRequestBuilder<Long, TestRecord> builder =
+          new UpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _SIMPLE_RESOURCE_SPEC);
+      builder.id(1L).input(new TestRecord()).build();
+      Assert.fail("Building an update request with an id on a simple resource should fail.");
+    }
+    catch(IllegalArgumentException e)
+    {
+      Assert.assertTrue(e.getMessage().contains("id is not allowed"));
+    }
+  }
 
   private void checkBasicRequest(Request<?> request,
                                  String expectedUri,

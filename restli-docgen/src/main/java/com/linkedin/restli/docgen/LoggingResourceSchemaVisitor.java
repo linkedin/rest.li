@@ -27,6 +27,7 @@ import com.linkedin.restli.restspec.FinderSchema;
 import com.linkedin.restli.restspec.ParameterSchema;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.restspec.RestMethodSchema;
+import com.linkedin.restli.restspec.SimpleSchema;
 import com.linkedin.restli.server.ResourceLevel;
 import org.apache.log4j.Logger;
 
@@ -93,6 +94,13 @@ public class LoggingResourceSchemaVisitor implements ResourceSchemaVisitior
                                       CollectionSchema collectionSchema)
   {
     _logger.info("Visiting collection for resource: " + visitContext.getResourcePath());
+  }
+
+  @Override
+  public void visitSimpleResource(VisitContext visitContext,
+                                      SimpleSchema collectionSchema)
+  {
+    _logger.info("Visiting simple for resource: " + visitContext.getResourcePath());
   }
 
   @Override

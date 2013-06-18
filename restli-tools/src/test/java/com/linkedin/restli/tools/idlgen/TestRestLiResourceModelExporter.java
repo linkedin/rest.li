@@ -47,6 +47,7 @@ public class TestRestLiResourceModelExporter
   private static final String STATUSES_PARAMS_FILE = "twitter-statusesParams.restspec.json";
   private static final String FOLLOWS_FILE = "twitter-follows.restspec.json";
   private static final String ACCOUNTS_FILE = "twitter-accounts.restspec.json";
+  private static final String TRENDING_FILE = "twitter-trending.restspec.json";
 
   private File outdir;
   // Gradle by default will use the module directory as the working directory
@@ -80,7 +81,7 @@ public class TestRestLiResourceModelExporter
                                              null,
                                              outdir.getAbsolutePath());
 
-    String[] expectedFiles = {STATUSES_FILE, FOLLOWS_FILE, ACCOUNTS_FILE, STATUSES_PARAMS_FILE};
+    String[] expectedFiles = {STATUSES_FILE, FOLLOWS_FILE, ACCOUNTS_FILE, STATUSES_PARAMS_FILE, TRENDING_FILE};
 
     assertEquals(outdir.list().length, expectedFiles.length);
     assertEquals(result.getModifiedFiles().size(), expectedFiles.length);

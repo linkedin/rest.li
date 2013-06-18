@@ -39,6 +39,7 @@ import com.linkedin.restli.restspec.ParameterSchema;
 import com.linkedin.restli.restspec.ParameterSchemaArray;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.restspec.RestMethodSchema;
+import com.linkedin.restli.restspec.SimpleSchema;
 import com.linkedin.restli.restspec.RestSpecCodec;
 import com.linkedin.restli.tools.snapshot.check.Snapshot;
 
@@ -213,6 +214,39 @@ public class SnapshotGenerator
         for (ActionSchema actionSchema : association.getActions())
         {
           findModelsAction(actionSchema, foundTypes, typeOrder);
+        }
+      }
+    }
+  }
+
+  private void findModelsSimple(ResourceSchema resourceSchema, Map<String, NamedDataSchema> foundTypes, List<NamedDataSchema> typeOrder)
+  {
+    SimpleSchema simple = resourceSchema.getSimple();
+    if (simple != null)
+    {
+      if (simple.hasMethods())
+      {
+        for (RestMethodSchema restMethodSchema : simple.getMethods())
+        {
+          findModelsMethod(restMethodSchema, foundTypes, typeOrder);
+        }
+      }
+      if (simple.hasActions())
+      {
+        for (ActionSchema actionSchema : simple.getActions())
+        {
+          findModelsAction(actionSchema, foundTypes, typeOrder);
+        }
+      }
+      if (simple.hasEntity())
+      {
+        EntitySchema entity = simple.getEntity();
+        if (entity.hasSubresources())
+        {
+          for (ResourceSchema subresourceSchema : entity.getSubresources())
+          {
+            findModelsResource(subresourceSchema, foundTypes, typeOrder);
+          }
         }
       }
     }

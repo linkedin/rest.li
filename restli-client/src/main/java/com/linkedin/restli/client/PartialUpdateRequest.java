@@ -21,6 +21,7 @@
 package com.linkedin.restli.client;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 
 import com.linkedin.restli.common.EmptyRecord;
@@ -37,8 +38,9 @@ import com.linkedin.restli.internal.client.EmptyResponseDecoder;
 public class PartialUpdateRequest<T>
         extends Request<EmptyRecord>
 {
-  PartialUpdateRequest(URI uri, PatchRequest<T> input, Map<String, String> headers, ResourceSpec resourceSpec)
+  PartialUpdateRequest(URI uri, PatchRequest<T> input, Map<String, String> headers,
+                       ResourceSpec resourceSpec, List<String> resourcePath)
   {
-    super(uri, ResourceMethod.PARTIAL_UPDATE, input, headers, new EmptyResponseDecoder(), resourceSpec);
+    super(uri, ResourceMethod.PARTIAL_UPDATE, input, headers, new EmptyResponseDecoder(), resourceSpec, resourcePath);
   }
 }

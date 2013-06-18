@@ -21,6 +21,7 @@
 package com.linkedin.restli.client;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 
 import com.linkedin.data.template.RecordTemplate;
@@ -37,8 +38,8 @@ import com.linkedin.restli.internal.client.EmptyResponseDecoder;
 public class DeleteRequest<T extends RecordTemplate>
         extends Request<EmptyRecord>
 {
-  DeleteRequest(URI uri, Map<String, String> headers, ResourceSpec resourceSpec)
+  DeleteRequest(URI uri, Map<String, String> headers, ResourceSpec resourceSpec, List<String> resourcePath)
   {
-    super(uri, ResourceMethod.DELETE, null, headers, new EmptyResponseDecoder(), resourceSpec);
+    super(uri, ResourceMethod.DELETE, null, headers, new EmptyResponseDecoder(), resourceSpec, resourcePath);
   }
 }

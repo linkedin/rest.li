@@ -52,6 +52,7 @@ public class RestSpecCodec
 
   private static final String COLLECTION_KEY = "collection";
   private static final String ASSOCIATION_KEY = "association";
+  private static final String SIMPLE_KEY = "simple";
   private static final String METHODS_KEY = "methods";
   private static final String SUPPORTS_KEY = "supports";
 
@@ -131,6 +132,10 @@ public class RestSpecCodec
     else if (data.containsKey(ASSOCIATION_KEY))
     {
       methodsContainer = data.getDataMap(ASSOCIATION_KEY);
+    }
+    else if (data.containsKey(SIMPLE_KEY))
+    {
+      methodsContainer = data.getDataMap(SIMPLE_KEY);
     }
     else
     {

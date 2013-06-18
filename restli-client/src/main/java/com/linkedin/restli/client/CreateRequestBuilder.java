@@ -87,7 +87,7 @@ public class CreateRequestBuilder<K, V extends RecordTemplate>
     UriBuilder b = UriBuilder.fromUri(baseUri);
     appendQueryParams(b);
 
-    return new CreateRequest<V>(b.build(), _input, _headers, _resourceSpec);
+    return new CreateRequest<V>(b.build(), _input, _headers, _resourceSpec, getResourcePath());
   }
 
 }

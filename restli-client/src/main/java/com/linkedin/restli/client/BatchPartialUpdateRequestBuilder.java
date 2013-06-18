@@ -106,7 +106,8 @@ public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> exten
                                                baseUri,
                                                _input,
                                                _queryParams,
-                                               _resourceSpec);
+                                               _resourceSpec,
+                                               getResourcePath());
   }
 
 }

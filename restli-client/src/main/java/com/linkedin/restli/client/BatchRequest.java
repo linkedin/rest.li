@@ -19,6 +19,7 @@ package com.linkedin.restli.client;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -48,6 +49,7 @@ public class BatchRequest<T> extends Request<T>
    * @param decoder
    * @param resourceSpec
    * @param queryParams
+   * @param resourcePath
    */
   public BatchRequest(URI uri,
                       ResourceMethod method,
@@ -55,9 +57,10 @@ public class BatchRequest<T> extends Request<T>
                       Map<String, String> headers,
                       RestResponseDecoder<T> decoder,
                       ResourceSpec resourceSpec,
-                      DataMap queryParams)
+                      DataMap queryParams,
+                      List<String> resourcePath)
   {
-    super(uri, method, input, headers, decoder, resourceSpec, queryParams);
+    super(uri, method, input, headers, decoder, resourceSpec, queryParams, resourcePath);
   }
 
   /**

@@ -69,6 +69,7 @@ import com.linkedin.restli.restspec.ResourceSchemaArray;
 import com.linkedin.restli.restspec.RestMethodSchema;
 import com.linkedin.restli.restspec.RestMethodSchemaArray;
 import com.linkedin.restli.restspec.RestSpecCodec;
+import com.linkedin.restli.restspec.SimpleSchema;
 import com.sun.codemodel.JBlock;
 import com.sun.codemodel.JClass;
 import com.sun.codemodel.JClassAlreadyExistsException;
@@ -390,7 +391,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     JClass keyClass;
     JClass keyKeyClass = null;
     JClass keyParamsClass = null;
-    boolean isActionsSet = false;
+    Class<?> resourceSchemaClass;
     Map<String, AssocKeyTypeInfo> assocKeyTypeInfos = Collections.emptyMap();
     StringArray supportsList=null;
     RestMethodSchemaArray restMethods = null;
@@ -401,6 +402,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
 
     if (resource.getCollection() != null)
     {
+      resourceSchemaClass = CollectionSchema.class;
       CollectionSchema collection = resource.getCollection();
       String keyName = collection.getIdentifier().getName();
       // In case of collection with a simple key, return the one specified by "type" in
@@ -431,6 +433,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     }
     else if (resource.getAssociation() != null)
     {
+      resourceSchemaClass = AssociationSchema.class;
       AssociationSchema association = resource.getAssociation();
       keyClass = getCodeModel().ref(CompoundKey.class);
       supportsList = association.getSupports();
@@ -447,13 +450,23 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
         pathKeyTypes.put(entry.getKey(), entry.getValue().getBindingType());
       }
     }
+    else if (resource.getSimple() != null)
+    {
+      resourceSchemaClass = SimpleSchema.class;
+      SimpleSchema simpleSchema = resource.getSimple();
+      keyClass = _voidClass;
+      supportsList = simpleSchema.getSupports();
+      restMethods = simpleSchema.getMethods();
+      subresources = simpleSchema.getEntity().getSubresources();
+      resourceActions = simpleSchema.getActions();
+    }
     else if (resource.getActionsSet() != null)
     {
+      resourceSchemaClass = ActionsSetSchema.class;
       ActionsSetSchema actionsSet = resource.getActionsSet();
       resourceActions = actionsSet.getActions();
 
       keyClass = _voidClass;
-      isActionsSet = true;
     }
     else
     {
@@ -461,7 +474,9 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     }
 
     JFieldVar resourceSpecField = facadeClass.field(JMod.PRIVATE | JMod.STATIC | JMod.FINAL, _resourceSpecClass, "_resourceSpec");
-    if (!isActionsSet)
+    if (resourceSchemaClass == CollectionSchema.class ||
+        resourceSchemaClass == AssociationSchema.class ||
+        resourceSchemaClass == SimpleSchema.class)
     {
       JClass schemaClass = getJavaBindingType(resource.getSchema(), null).schemaClass;
 
@@ -476,40 +491,53 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
         supportedMethodsExpr = _enumSetClass.staticInvoke("of");
         for (ResourceMethod resourceMethod: supportedMethods)
         {
+          validateResourceMethod(resourceSchemaClass, resourceName, resourceMethod);
           supportedMethodsExpr.arg(_resourceMethodClass.staticRef(resourceMethod.name()));
         }
       }
 
       JBlock staticInit = facadeClass.init();
 
-      JClass assocKeyClass = getCodeModel().ref(TypeInfo.class);
-      JClass hashMapClass = getCodeModel().ref(HashMap.class).narrow(_stringClass, assocKeyClass);
-      JVar keyPartsVar = staticInit.decl(hashMapClass, "keyParts").init(JExpr._new(hashMapClass));
-      for (Map.Entry<String, AssocKeyTypeInfo> typeInfoEntry : assocKeyTypeInfos.entrySet())
-      {
-        AssocKeyTypeInfo typeInfo = typeInfoEntry.getValue();
-        JInvocation typeArg = JExpr._new(assocKeyClass)
-          .arg(typeInfo.getBindingType().dotclass())
-          .arg(typeInfo.getDeclaredType().dotclass());
-        staticInit.add(keyPartsVar.invoke("put").arg(typeInfoEntry.getKey()).arg(typeArg));
-      }
-
       JVar methodSchemaMap = methodMetadataMapInit(facadeClass, resourceActions, entityActions,
                                                    staticInit);
       JVar responseSchemaMap = responseMetadataMapInit(facadeClass, resourceActions, entityActions,
                                                        staticInit);
 
-      staticInit.assign(resourceSpecField,
-                        JExpr._new(_resourceSpecImplClass)
-                                .arg(supportedMethodsExpr)
-                                .arg(methodSchemaMap)
-                                .arg(responseSchemaMap)
-                                .arg(keyTyperefClass == null ? keyClass.dotclass() : keyTyperefClass.dotclass())
-                                .arg(keyKeyClass == null ? JExpr._null() : keyKeyClass.dotclass())
-                                .arg(keyKeyClass == null ? JExpr._null() : keyParamsClass.dotclass())
-                                .arg(schemaClass.dotclass())
-                                .arg(keyPartsVar));
+      if (resourceSchemaClass == CollectionSchema.class ||
+          resourceSchemaClass == AssociationSchema.class)
+      {
+        JClass assocKeyClass = getCodeModel().ref(TypeInfo.class);
+        JClass hashMapClass = getCodeModel().ref(HashMap.class).narrow(_stringClass, assocKeyClass);
+        JVar keyPartsVar = staticInit.decl(hashMapClass, "keyParts").init(JExpr._new(hashMapClass));
+        for (Map.Entry<String, AssocKeyTypeInfo> typeInfoEntry : assocKeyTypeInfos.entrySet())
+        {
+          AssocKeyTypeInfo typeInfo = typeInfoEntry.getValue();
+          JInvocation typeArg = JExpr._new(assocKeyClass)
+            .arg(typeInfo.getBindingType().dotclass())
+            .arg(typeInfo.getDeclaredType().dotclass());
+          staticInit.add(keyPartsVar.invoke("put").arg(typeInfoEntry.getKey()).arg(typeArg));
+        }
 
+        staticInit.assign(resourceSpecField,
+                          JExpr._new(_resourceSpecImplClass)
+                                  .arg(supportedMethodsExpr)
+                                  .arg(methodSchemaMap)
+                                  .arg(responseSchemaMap)
+                                  .arg(keyTyperefClass == null ? keyClass.dotclass() : keyTyperefClass.dotclass())
+                                  .arg(keyKeyClass == null ? JExpr._null() : keyKeyClass.dotclass())
+                                  .arg(keyKeyClass == null ? JExpr._null() : keyParamsClass.dotclass())
+                                  .arg(schemaClass.dotclass())
+                                  .arg(keyPartsVar));
+      }
+      else //simple schema
+      {
+        staticInit.assign(resourceSpecField,
+                          JExpr._new(_resourceSpecImplClass)
+                              .arg(supportedMethodsExpr)
+                              .arg(methodSchemaMap)
+                              .arg(responseSchemaMap)
+                              .arg(schemaClass.dotclass()));
+      }
 
       generateBasicMethods(facadeClass,
                           baseUriField,
@@ -522,20 +550,22 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
                           pathKeys,
                           pathKeyTypes);
 
-      generateFinders(facadeClass,
-                      baseUriField,
-                      finders,
-                      keyClass,
-                      schemaClass,
-                      assocKeyTypeInfos,
-                      resourceSpecField,
-                      resourceName,
-                      pathKeys,
-                      pathKeyTypes);
+      if (resourceSchemaClass == CollectionSchema.class ||
+          resourceSchemaClass == AssociationSchema.class)
+      {
+        generateFinders(facadeClass,
+                        baseUriField,
+                        finders,
+                        keyClass,
+                        schemaClass,
+                        assocKeyTypeInfos,
+                        resourceSpecField,
+                        resourceName,
+                        pathKeys,
+                        pathKeyTypes);
+      }
 
-      generateSubResources(sourceFile,
-                           subresources,
-                           pathKeyTypes);
+      generateSubResources(sourceFile, subresources, pathKeyTypes);
     }
     else //action set
     {
@@ -572,6 +602,16 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     generateClassJavadoc(facadeClass, resource);
 
     return facadeClass;
+  }
+
+  private void validateResourceMethod(Class<?> resourceSchemaClass, String resourceName, ResourceMethod resourceMethod)
+  {
+    if (resourceSchemaClass == SimpleSchema.class && !RestConstants.SIMPLE_RESOURCE_METHODS.contains(resourceMethod))
+    {
+      throw new IllegalArgumentException(
+          String.format(
+              "'%s' is not a supported method on resource: '%s'", resourceMethod.toString(), resourceName));
+    }
   }
 
   private JVar responseMetadataMapInit(JDefinedClass facadeClass,
@@ -908,7 +948,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     {
       for (ActionSchema action : resourceActions)
       {
-        generateActionMethod(facadeClass, baseUriField, keyClass, action, resourceSpecField, resourceName, pathKeys,
+        generateActionMethod(facadeClass, baseUriField, _voidClass, action, resourceSpecField, resourceName, pathKeys,
                              pathKeyTypes);
       }
     }

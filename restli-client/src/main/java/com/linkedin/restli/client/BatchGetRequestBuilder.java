@@ -207,7 +207,8 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
                                    firstRequest.getResponseDecoder(),
                                    baseURI,
                                    firstQueryParams,
-                                   firstResourceSpec);
+                                   firstResourceSpec,
+                                   firstRequest.getResourcePath());
   }
 
   /**
@@ -220,6 +221,13 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
   {
     URI baseURI = request.getBaseURI();
     Object id = request.getIdObject();
+
+    if (id == null)
+    {
+      throw new IllegalArgumentException(
+          "It is not possible to create a batch get request from a get request without an id.");
+    }
+
     DataMap queryParams = new DataMap(request.getQueryParams());
     Object idsParam =
         id instanceof ComplexResourceKey ? ((ComplexResourceKey<?, ?>) id).toDataMap()
@@ -235,7 +243,8 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
                                    new BatchResponseDecoder<RT>(request.getEntityClass()),
                                    baseURI,
                                    queryParams,
-                                   request.getResourceSpec());
+                                   request.getResourceSpec(),
+                                   request.getResourcePath());
   }
 
   public BatchGetRequestBuilder(String baseUriTemplate, Class<V> modelClass, ResourceSpec resourceSpec)
@@ -307,7 +316,8 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
                                   _decoder,
                                   baseUri,
                                   _queryParams,
-                                  _resourceSpec);
+                                  _resourceSpec,
+                                  getResourcePath());
   }
 
   public BatchGetKVRequest<K, V> buildKV()
@@ -331,7 +341,8 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
                                   decoder,
                                   baseUri,
                                   _queryParams,
-                                  _resourceSpec);
+                                  _resourceSpec,
+                                  getResourcePath());
   }
 
   public BatchGetRequestBuilder<K, V> fields(PathSpec... fieldPaths)

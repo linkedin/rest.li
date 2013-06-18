@@ -40,9 +40,10 @@ public @interface Action
 
   /**
    * Optional attribute used to indicate whether action should be exposed at the
-   * collection level or the entity level. Default is collection level.
+   * collection level or the entity level. Default is ANY which indicates that the
+   * action is defined on the containing resource.
    */
-  ResourceLevel resourceLevel() default ResourceLevel.COLLECTION;
+  ResourceLevel resourceLevel() default ResourceLevel.ANY;
 
   /**
    * Optional attribute used to indicate the desired typeref to use for primitive types.

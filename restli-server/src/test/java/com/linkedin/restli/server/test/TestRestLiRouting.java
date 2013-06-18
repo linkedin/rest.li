@@ -49,9 +49,14 @@ import com.linkedin.restli.server.PathKeys;
 import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.combined.CombinedResources;
 import com.linkedin.restli.server.twitter.FollowsAssociativeResource;
+import com.linkedin.restli.server.twitter.LocationResource;
 import com.linkedin.restli.server.twitter.RepliesCollectionResource;
 import com.linkedin.restli.server.twitter.StatusCollectionResource;
+import com.linkedin.restli.server.twitter.TrendingResource;
+import com.linkedin.restli.server.twitter.TrendRegionsCollectionResource;
 import com.linkedin.restli.server.twitter.TwitterAccountsResource;
+import com.linkedin.restli.server.twitter.TwitterTestDataModels.Status;
+import com.linkedin.restli.server.twitter.TwitterTestDataModels.Trending;
 
 /**
  * @author dellamag
@@ -68,7 +73,9 @@ public class TestRestLiRouting
   {
     Map<String, ResourceModel> pathRootResourceMap =
       buildResourceModels(StatusCollectionResource.class,
-                          FollowsAssociativeResource.class);
+                          FollowsAssociativeResource.class,
+                          TrendingResource.class);
+
     _router = new RestLiRouter(pathRootResourceMap);
 
     RestRequest request;
@@ -119,10 +126,52 @@ public class TestRestLiRouting
     assertEquals(keys.getAsLong("followerID"), new Long(1L));
     assertEquals(keys.getAsLong("followeeID"), new Long(2L));
 
-    // #3 GET association
+    // #3 simple UPDATE
+    request = new RestRequestBuilder(new URI("/statuses/1")).setMethod("PUT").build();
+
+    result = _router.process(request, new RequestContext());
+    assertNotNull(result);
+
+    resourceMethodDescriptor = result.getResourceMethod();
+    assertNotNull(resourceMethodDescriptor);
+    assertEquals(resourceMethodDescriptor.getType(), ResourceMethod.UPDATE);
+    assertNull(resourceMethodDescriptor.getActionName());
+    assertNull(resourceMethodDescriptor.getFinderName());
+    assertEquals(resourceMethodDescriptor.getMethod().getDeclaringClass(), StatusCollectionResource.class);
+    assertEquals(resourceMethodDescriptor.getMethod().getName(), "update");
+    assertEquals(resourceMethodDescriptor.getMethod().getParameterTypes(), new Class<?>[] { Long.class, Status.class });
+    assertEquals(resourceMethodDescriptor.getResourceModel().getName(), "statuses");
+
+    assertNotNull(result.getContext());
+    keys = result.getContext().getPathKeys();
+    assertEquals(keys.getAsLong("statusID"), new Long(1));
+    assertNull(keys.getAsString("foo"));
+
+    // #4 simple DELETE
+    request = new RestRequestBuilder(new URI("/statuses/1")).setMethod("DELETE").build();
+
+    result = _router.process(request, new RequestContext());
+    assertNotNull(result);
+
+    resourceMethodDescriptor = result.getResourceMethod();
+    assertNotNull(resourceMethodDescriptor);
+    assertEquals(resourceMethodDescriptor.getType(), ResourceMethod.DELETE);
+    assertNull(resourceMethodDescriptor.getActionName());
+    assertNull(resourceMethodDescriptor.getFinderName());
+    assertEquals(resourceMethodDescriptor.getMethod().getDeclaringClass(), StatusCollectionResource.class);
+    assertEquals(resourceMethodDescriptor.getMethod().getName(), "delete");
+    assertEquals(resourceMethodDescriptor.getMethod().getParameterTypes(), new Class<?>[] { Long.class });
+    assertEquals(resourceMethodDescriptor.getResourceModel().getName(), "statuses");
+
+    assertNotNull(result.getContext());
+    keys = result.getContext().getPathKeys();
+    assertEquals(keys.getAsLong("statusID"), new Long(1));
+    assertNull(keys.getAsString("foo"));
+
+    // #5 GET association
     // TODO Need a real associative resource
 
-    // #4 Batch GET association
+    // #6 Batch GET association
     request = new RestRequestBuilder(new URI("/follows?ids=followerID:1;followeeID:2&ids=followerID:3;followeeID:4"))
               .setMethod("GET").build();
 
@@ -161,6 +210,66 @@ public class TestRestLiRouting
       expectedBatchKeys.remove(batchKey);
     }
     assertEquals(expectedBatchKeys.size(), 0);
+
+    // #7 simple GET on simple resource
+    request = new RestRequestBuilder(new URI("/trending")).setMethod("GET").build();
+
+    result = _router.process(request, new RequestContext());
+    assertNotNull(result);
+
+    resourceMethodDescriptor = result.getResourceMethod();
+    assertNotNull(resourceMethodDescriptor);
+    assertEquals(resourceMethodDescriptor.getType(), ResourceMethod.GET);
+    assertNull(resourceMethodDescriptor.getActionName());
+    assertNull(resourceMethodDescriptor.getFinderName());
+    assertEquals(resourceMethodDescriptor.getMethod().getDeclaringClass(), TrendingResource.class);
+    assertEquals(resourceMethodDescriptor.getMethod().getName(), "get");
+    assertEquals(resourceMethodDescriptor.getMethod().getParameterTypes(), new Class<?>[] {});
+    assertEquals(resourceMethodDescriptor.getResourceModel().getName(), "trending");
+
+    assertNotNull(result.getContext());
+    keys = result.getContext().getPathKeys();
+    assertEquals(keys.getBatchKeys().size(), 0);
+
+    // #8 simple UPDATE on simple resource
+    request = new RestRequestBuilder(new URI("/trending")).setMethod("PUT").build();
+
+    result = _router.process(request, new RequestContext());
+    assertNotNull(result);
+
+    resourceMethodDescriptor = result.getResourceMethod();
+    assertNotNull(resourceMethodDescriptor);
+    assertEquals(resourceMethodDescriptor.getType(), ResourceMethod.UPDATE);
+    assertNull(resourceMethodDescriptor.getActionName());
+    assertNull(resourceMethodDescriptor.getFinderName());
+    assertEquals(resourceMethodDescriptor.getMethod().getDeclaringClass(), TrendingResource.class);
+    assertEquals(resourceMethodDescriptor.getMethod().getName(), "update");
+    assertEquals(resourceMethodDescriptor.getMethod().getParameterTypes(), new Class<?>[] { Trending.class });
+    assertEquals(resourceMethodDescriptor.getResourceModel().getName(), "trending");
+
+    assertNotNull(result.getContext());
+    keys = result.getContext().getPathKeys();
+    assertEquals(keys.getBatchKeys().size(), 0);
+
+    // #9 simple DELETE on simple resource
+    request = new RestRequestBuilder(new URI("/trending")).setMethod("DELETE").build();
+
+    result = _router.process(request, new RequestContext());
+    assertNotNull(result);
+
+    resourceMethodDescriptor = result.getResourceMethod();
+    assertNotNull(resourceMethodDescriptor);
+    assertEquals(resourceMethodDescriptor.getType(), ResourceMethod.DELETE);
+    assertNull(resourceMethodDescriptor.getActionName());
+    assertNull(resourceMethodDescriptor.getFinderName());
+    assertEquals(resourceMethodDescriptor.getMethod().getDeclaringClass(), TrendingResource.class);
+    assertEquals(resourceMethodDescriptor.getMethod().getName(), "delete");
+    assertEquals(resourceMethodDescriptor.getMethod().getParameterTypes(), new Class<?>[] {});
+    assertEquals(resourceMethodDescriptor.getResourceModel().getName(), "trending");
+
+    assertNotNull(result.getContext());
+    keys = result.getContext().getPathKeys();
+    assertEquals(keys.getBatchKeys().size(), 0);
   }
 
   /**
@@ -172,7 +281,10 @@ public class TestRestLiRouting
     Map<String, ResourceModel> pathRootResourceMap =
       buildResourceModels(StatusCollectionResource.class,
                           FollowsAssociativeResource.class,
-                          RepliesCollectionResource.class);
+                          RepliesCollectionResource.class,
+                          LocationResource.class,
+                          TrendingResource.class,
+                          TrendRegionsCollectionResource.class);
 
     _router = new RestLiRouter(pathRootResourceMap);
 
@@ -197,6 +309,9 @@ public class TestRestLiRouting
     checkResult("/statuses/1/replies", "POST", ResourceMethod.CREATE, RepliesCollectionResource.class, "create", false, "statusID");
     checkResult("/statuses/1/replies?ids=1&ids=2&ids=3", "GET",
                 ResourceMethod.BATCH_GET, RepliesCollectionResource.class, "batchGet", true, "statusID");
+    checkResult("/statuses/1/location", "GET", ResourceMethod.GET, LocationResource.class, "get", false, "statusID");
+    checkResult("/statuses/1/location", "PUT", ResourceMethod.UPDATE, LocationResource.class, "update", false, "statusID");
+    checkResult("/statuses/1/location", "DELETE", ResourceMethod.DELETE, LocationResource.class, "delete", false, "statusID");
     checkResult("/statuses/1", "PUT", ResourceMethod.UPDATE, StatusCollectionResource.class, "update", false);
     checkResult("/statuses/1", "PUT", "UPDATE", ResourceMethod.UPDATE, StatusCollectionResource.class, "update", false);
     checkResult("/statuses/1", "POST", ResourceMethod.PARTIAL_UPDATE, StatusCollectionResource.class, "update", false);
@@ -241,6 +356,22 @@ public class TestRestLiRouting
     checkResult("/statuses?ids=1&ids=2", "POST", "BATCH_PARTIAL_UPDATE", ResourceMethod.BATCH_PARTIAL_UPDATE, StatusCollectionResource.class, "batchUpdate", true);
     checkResult("/statuses?ids=1&ids=2", "DELETE", ResourceMethod.BATCH_DELETE, StatusCollectionResource.class, "batchDelete", true);
     checkResult("/statuses?ids=1&ids=2", "DELETE", "BATCH_DELETE", ResourceMethod.BATCH_DELETE, StatusCollectionResource.class, "batchDelete", true);
+
+    checkResult("/trending", "GET", ResourceMethod.GET, TrendingResource.class, "get", false);
+    checkResult("/trending", "PUT", ResourceMethod.UPDATE, TrendingResource.class, "update", false);
+    checkResult("/trending", "DELETE", ResourceMethod.DELETE, TrendingResource.class, "delete", false);
+
+    checkResult("/trending/trendRegions/1", "GET", ResourceMethod.GET, TrendRegionsCollectionResource.class, "get", false, "trendRegionId");
+    checkResult("/trending/trendRegions/1", "PUT", ResourceMethod.UPDATE, TrendRegionsCollectionResource.class, "update", false);
+    checkResult("/trending/trendRegions/1", "POST", ResourceMethod.PARTIAL_UPDATE, TrendRegionsCollectionResource.class, "update", false);
+    checkResult("/trending/trendRegions", "POST", ResourceMethod.CREATE, TrendRegionsCollectionResource.class, "create", false);
+    checkResult("/trending/trendRegions/1", "DELETE", ResourceMethod.DELETE, TrendRegionsCollectionResource.class, "delete", false);
+    checkResult("/trending/trendRegions?ids=1&ids=2&ids=3", "GET",
+                ResourceMethod.BATCH_GET, TrendRegionsCollectionResource.class, "batchGet", true);
+    checkResult("/trending/trendRegions?ids=1&ids=2", "PUT", "BATCH_UPDATE", ResourceMethod.BATCH_UPDATE, TrendRegionsCollectionResource.class, "batchUpdate", true);
+    checkResult("/trending/trendRegions?ids=1&ids=2", "POST", "BATCH_PARTIAL_UPDATE", ResourceMethod.BATCH_PARTIAL_UPDATE, TrendRegionsCollectionResource.class, "batchUpdate", true);
+    checkResult("/trending/trendRegions?q=get_trending_by_popularity", "GET",
+                ResourceMethod.FINDER, TrendRegionsCollectionResource.class, "getTrendingByPopularity", false);
 
     Level level = disableWarningLogging(RestLiRouter.class);
     try {
@@ -357,7 +488,10 @@ public class TestRestLiRouting
     Map<String, ResourceModel> pathRootResourceMap =
       buildResourceModels(StatusCollectionResource.class,
                           FollowsAssociativeResource.class,
-                          RepliesCollectionResource.class);
+                          RepliesCollectionResource.class,
+                          LocationResource.class,
+                          TrendingResource.class,
+                          TrendRegionsCollectionResource.class);
 
     _router = new RestLiRouter(pathRootResourceMap);
 
@@ -368,6 +502,8 @@ public class TestRestLiRouting
     expectRoutingException("/", "DELETE");
 
     expectRoutingException("/replies", "GET");
+    expectRoutingException("/location", "GET");
+    expectRoutingException("/trendRegions", "GET");
     expectRoutingException("/asdfasf", "GET");
     expectRoutingException("/1", "GET");
 
@@ -388,6 +524,12 @@ public class TestRestLiRouting
     expectRoutingException("/statuses?q=wrong&keywords=linkedin", "DELETE");
     expectRoutingException("/statuses?q=wrong&keywords=linkedin", "POST");
     expectRoutingException("/statuses/1/replies?q=wrong", "GET");
+    expectRoutingException("/statuses/1/location/1", "GET");
+    expectRoutingException("/statuses/1/location/1", "PUT");
+    expectRoutingException("/statuses/1/location/1", "POST");
+    expectRoutingException("/statuses/1/location/1", "DELETE");
+    expectRoutingException("/statuses/1/location?q=wrong", "GET");
+    expectRoutingException("/statuses/1/location?q=wrong&keywords=linkedin", "POST");
 
     expectRoutingException("/follows", "POST");
     expectRoutingException("/follows", "PUT");
@@ -397,8 +539,27 @@ public class TestRestLiRouting
     expectRoutingException("/follows/followerID=1/bad_path", "GET");
     expectRoutingException("/follows/followerID:1;followerID:2/bad_path", "GET");
     expectRoutingException("/follows/followerID=1;wrongID=2", "GET");
+
     // delete not supported
     expectRoutingException("/follows/followerID:1;followeeID:1", "DELETE");
+
+    expectRoutingException("/trending/1", "GET");
+    expectRoutingException("/trending/1", "PUT");
+    expectRoutingException("/trending/1", "POST");
+    expectRoutingException("/trending/1", "DELETE");
+    expectRoutingException("/trending?q=abc", "GET");
+    expectRoutingException("/trending?q=def&param1=1", "POST");
+
+    expectRoutingException("/trending/1/trendRegions/1", "GET");
+    expectRoutingException("/trending/1/trendRegions/1", "PUT");
+    expectRoutingException("/trending/1/trendRegions/1", "POST");
+    expectRoutingException("/trending/1/trendRegions/1", "DELETE");
+
+    expectRoutingException("/trending/trendRegions", "GET");
+    expectRoutingException("/trending/trendRegions", "PUT");
+    expectRoutingException("/trending/trendRegions", "DELETE");
+    expectRoutingException("/trending/trendRegions?q=abc", "GET");
+    expectRoutingException("/trending/trendRegions?q=def&param1=1", "POST");
   }
 
   @Test
@@ -407,6 +568,7 @@ public class TestRestLiRouting
     Map<String, ResourceModel> pathRootResourceMap =
       buildResourceModels(StatusCollectionResource.class,
                           RepliesCollectionResource.class,
+                          LocationResource.class,
                           TwitterAccountsResource.class);
     _router = new RestLiRouter(pathRootResourceMap);
 
@@ -429,6 +591,16 @@ public class TestRestLiRouting
     assertEquals(result.getResourceMethod().getActionName(), "replyToAll");
     assertEquals(result.getResourceMethod().getType(), ResourceMethod.ACTION);
     assertEquals(result.getContext().getPathKeys().get("statusID"), 1L);
+
+    // #3 route to action on a nested simple resource
+    request = new RestRequestBuilder(new URI("/statuses/1/location?action=new_status_from_location")).setMethod("POST").build();
+
+    result = _router.process(request, new RequestContext());
+    assertNotNull(result);
+    assertEquals(result.getResourceMethod().getActionName(), "new_status_from_location");
+    assertEquals(result.getResourceMethod().getType(), ResourceMethod.ACTION);
+    assertEquals(result.getResourceMethod().getMethod().getParameterTypes(), new Class<?>[] { String.class });
+    assertEquals(result.getContext().getPathKeys().get("statusID"), 1L);
   }
 
   @Test
@@ -437,6 +609,7 @@ public class TestRestLiRouting
     Map<String, ResourceModel> pathRootResourceMap =
       buildResourceModels(StatusCollectionResource.class,
                           RepliesCollectionResource.class,
+                          LocationResource.class,
                           TwitterAccountsResource.class);
     _router = new RestLiRouter(pathRootResourceMap);
 
@@ -455,6 +628,9 @@ public class TestRestLiRouting
     expectRoutingException("/statuses/1/replies?action=replyToAll", "DELETE");
     expectRoutingException("/statuses/1/replies?action=bogusAction", "POST");
     expectRoutingException("/statuses/1?action=search", "POST");
+
+    expectRoutingException("/statuses/1/location?action=new_status_from_location", "GET");
+    expectRoutingException("/statuses/1/location?action=bogusAction", "POST");
   }
 
   private void checkResult(String uri,

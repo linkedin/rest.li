@@ -76,15 +76,11 @@ public class DeleteRequestBuilder<K, V extends RecordTemplate>
   @Override
   public DeleteRequest<V> build()
   {
-    if (_id == null)
-    {
-      throw new IllegalArgumentException("id required to build delete request");
-    }
     UriBuilder b = UriBuilder.fromUri(bindPathKeys());
     appendKeyToPath(b, _id);
     appendQueryParams(b);
 
-    return new DeleteRequest<V>(b.build(), _headers, _resourceSpec);
+    return new DeleteRequest<V>(b.build(), _headers, _resourceSpec, getResourcePath());
   }
 
 }

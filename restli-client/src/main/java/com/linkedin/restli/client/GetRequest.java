@@ -17,6 +17,7 @@
 package com.linkedin.restli.client;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -47,7 +48,8 @@ public class GetRequest<T extends RecordTemplate> extends Request<T>
              URI baseURI,
              Object id,
              DataMap queryParams,
-             ResourceSpec resourceSpec)
+             ResourceSpec resourceSpec,
+             List<String> resourcePath)
   {
     super(fullURI,
           ResourceMethod.GET,
@@ -55,7 +57,8 @@ public class GetRequest<T extends RecordTemplate> extends Request<T>
           headers,
           new EntityResponseDecoder<T>(templateClass),
           resourceSpec,
-          queryParams);
+          queryParams,
+          resourcePath);
 
     _baseURI = baseURI;
     _templateClass = templateClass;
@@ -74,7 +77,11 @@ public class GetRequest<T extends RecordTemplate> extends Request<T>
 
   public Object getIdObject()
   {
-    if (_id instanceof ComplexResourceKey)
+    if (_id == null)
+    {
+      return null;
+    }
+    else if (_id instanceof ComplexResourceKey)
     {
       return _id;
     }

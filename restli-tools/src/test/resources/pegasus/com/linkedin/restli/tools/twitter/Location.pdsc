@@ -1,0 +1,6 @@
+{
+  "type" : "record",
+  "name" : "Location",
+  "namespace" : "com.linkedin.restli.tools.twitter",
+  "fields" : [ ]
+}

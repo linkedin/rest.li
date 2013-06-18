@@ -21,6 +21,7 @@
 package com.linkedin.restli.client;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 
 import com.linkedin.data.template.RecordTemplate;
@@ -44,10 +45,11 @@ public class BatchCreateRequest<T extends RecordTemplate> extends Request<Collec
                   Map<String, String> headers,
                   URI baseURI,
                   CollectionRequest<T> input,
-                  ResourceSpec resourceSpec)
+                  ResourceSpec resourceSpec,
+                  List<String> resourcePath)
   {
     super(uri, ResourceMethod.BATCH_CREATE, input, headers,
-          new CollectionResponseDecoder<CreateStatus>(CreateStatus.class), resourceSpec);
+          new CollectionResponseDecoder<CreateStatus>(CreateStatus.class), resourceSpec, resourcePath);
     _baseURI = baseURI;
   }
 

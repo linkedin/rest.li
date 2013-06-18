@@ -447,7 +447,8 @@ public class RestClientTest
                              URI.create(""),
                              "foo",
                              new DataMap(),
-                             null);
+                             null,
+                             Collections.<String>emptyList());
   }
 
   private static class MyMockClient extends MockClient

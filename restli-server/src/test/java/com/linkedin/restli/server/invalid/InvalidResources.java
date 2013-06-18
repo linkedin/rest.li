@@ -21,7 +21,10 @@ import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.CustomLongRef;
 import com.linkedin.restli.server.CustomStringRef;
+import com.linkedin.restli.server.ResourceLevel;
+import com.linkedin.restli.server.annotations.RestLiSimpleResource;
 import com.linkedin.restli.server.custom.types.CustomString;
+import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.Key;
 import com.linkedin.restli.server.annotations.QueryParam;
@@ -31,6 +34,8 @@ import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.resources.AssociationResourceTemplate;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
 import com.linkedin.restli.server.resources.KeyValueResource;
+import com.linkedin.restli.server.resources.SimpleResourceTemplate;
+import com.linkedin.restli.server.resources.SingleObjectResource;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Followed;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Status;
 
@@ -155,5 +160,19 @@ public class InvalidResources
   public class SingleAssociation extends AssociationResourceTemplate<Record>
   {
     //nothing to do as the validation will fail.
+  }
+
+  @RestLiSimpleResource(name="foo")
+  public class SimpleResourceWithInvalidMethodTypes implements SingleObjectResource<Record>
+  {
+    @Finder(value="myFinder")
+    public List<Record> myFinder() {return null;}
+  }
+
+  @RestLiSimpleResource(name="foo")
+  public class SimpleResourceWithInvalidAction extends SimpleResourceTemplate<Record>
+  {
+    @Action(name="myAction", resourceLevel = ResourceLevel.COLLECTION)
+    public void myAction() {}
   }
 }

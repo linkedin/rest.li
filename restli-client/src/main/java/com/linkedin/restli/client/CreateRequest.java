@@ -17,6 +17,7 @@
 package com.linkedin.restli.client;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 
 import com.linkedin.data.template.RecordTemplate;
@@ -34,8 +35,8 @@ import com.linkedin.restli.internal.client.EmptyResponseDecoder;
 public class CreateRequest<T extends RecordTemplate>
         extends Request<EmptyRecord>
 {
-  CreateRequest(URI uri, T input, Map<String, String> headers, ResourceSpec resourceSpec)
+  CreateRequest(URI uri, T input, Map<String, String> headers, ResourceSpec resourceSpec, List<String> resourcePath)
   {
-    super(uri, ResourceMethod.CREATE, input, headers, new EmptyResponseDecoder(), resourceSpec);
+    super(uri, ResourceMethod.CREATE, input, headers, new EmptyResponseDecoder(), resourceSpec, resourcePath);
   }
 }

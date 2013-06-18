@@ -73,6 +73,10 @@ public class TestResourceSchemaCollection
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.complexKeys", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.associations", ResourceType.ASSOCIATION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.finders", ResourceType.COLLECTION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.greeting", ResourceType.SIMPLE);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.greeting.subgreetings", ResourceType.COLLECTION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.greeting.subgreetings.subsubgreeting",
+                      ResourceType.SIMPLE);
     expectedTypes.put("com.linkedin.restli.examples.groups.client.groupMemberships", ResourceType.ASSOCIATION);
     expectedTypes.put("com.linkedin.restli.examples.groups.client.groupMembershipsComplex", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.groups.client.groups", ResourceType.COLLECTION);
@@ -94,6 +98,10 @@ public class TestResourceSchemaCollection
       else if (schema.hasAssociation())
       {
         actualType = ResourceType.ASSOCIATION;
+      }
+      else if (schema.hasSimple())
+      {
+        actualType = ResourceType.SIMPLE;
       }
       else
       {
@@ -131,6 +139,19 @@ public class TestResourceSchemaCollection
       final String schemaFullName = getResourceSchemaFullName(sub, sub.getName());
       Assert.assertTrue(expectedNoNamespaceSubresources.contains(schemaFullName));
     }
+
+    final ResourceSchema greetingResource = _schemas.getResource("greeting");
+    final List<ResourceSchema> greetingSubResources = _schemas.getSubResources(greetingResource);
+    Assert.assertEquals(greetingSubResources.size(), 1);
+    final ResourceSchema subgreetingsResource = greetingSubResources.get(0);
+    Assert.assertEquals(subgreetingsResource.getName(), "subgreetings");
+    Assert.assertEquals(subgreetingsResource.getNamespace(), greetingResource.getNamespace());
+
+    final List<ResourceSchema> subgreetingsSubResources = _schemas.getSubResources(subgreetingsResource);
+    Assert.assertEquals(subgreetingsSubResources.size(), 1);
+    final ResourceSchema subsubgreetingResource = subgreetingsSubResources.get(0);
+    Assert.assertEquals(subsubgreetingResource.getName(), "subsubgreeting");
+    Assert.assertEquals(subsubgreetingResource.getNamespace(), greetingResource.getNamespace());
   }
 
   // TODO ResourceSchemaCollection.createFromIdls()

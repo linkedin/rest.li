@@ -9,6 +9,11 @@
     "name" : "StatusType",
     "namespace" : "com.linkedin.restli.tools.twitter",
     "symbols" : [ "RETWEET", "REPLY", "STATUS" ]
+  }, {
+    "type" : "record",
+    "name" : "Location",
+    "namespace" : "com.linkedin.restli.tools.twitter",
+    "fields" : [ ]
   } ],
   "schema" : {
     "schema" : "com.linkedin.restli.tools.twitter.Status",
@@ -34,6 +39,35 @@
       } ],
       "entity" : {
         "subresources" : [ {
+          "schema" : "com.linkedin.restli.tools.twitter.Location",
+          "simple" : {
+            "methods" : [ {
+              "doc" : "Gets the location of the parent status.",
+              "method" : "get"
+            }, {
+              "doc" : "Updates the location of the parent status.",
+              "method" : "update"
+            }, {
+              "doc" : "Deletes the location of the parent status.",
+              "method" : "delete"
+            } ],
+            "entity" : {
+              "path" : "/statuses/{statusID}/location"
+            },
+            "supports" : [ "delete", "get", "update" ],
+            "actions" : [ {
+              "name" : "new_status_from_location",
+              "doc" : "Replies to all followers nearby.",
+              "parameters" : [ {
+                "name" : "status",
+                "type" : "string"
+              } ]
+            } ]
+          },
+          "name" : "location",
+          "doc" : "Simple resource that contains the location of a status.\n\ngenerated from: com.linkedin.restli.tools.twitter.LocationResource",
+          "path" : "/statuses/{statusID}/location"
+        }, {
           "schema" : "com.linkedin.restli.tools.twitter.Status",
           "name" : "replies",
           "doc" : "Nested CollectionResource of all replies to a given status\n\ngenerated from: com.linkedin.restli.tools.twitter.RepliesCollectionResource",

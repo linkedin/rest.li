@@ -35,6 +35,7 @@ import com.linkedin.restli.restspec.ParameterSchema;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.restspec.RestMethodSchema;
 import com.linkedin.restli.restspec.RestMethodSchemaArray;
+import com.linkedin.restli.restspec.SimpleSchema;
 import com.linkedin.restli.restspec.RestSpecCodec;
 import com.linkedin.restli.server.ResourceLevel;
 
@@ -260,6 +261,16 @@ public class ResourceSchemaCollection
 
       processEntitySchema(visitor, context, associationSchema.getEntity());
     }
+    else if (resourceSchema.hasSimple())
+    {
+      final SimpleSchema simpleSchema = resourceSchema.getSimple();
+      visitor.visitSimpleResource(context, simpleSchema);
+
+      processRestMethods(visitor, context, simpleSchema, simpleSchema.getMethods());
+      processActions(visitor, context, simpleSchema, simpleSchema.getActions());
+
+      processEntitySchema(visitor, context, simpleSchema.getEntity());
+    }
     else if (resourceSchema.hasActionsSet())
     {
       final ActionsSetSchema actionsSet = resourceSchema.getActionsSet();
@@ -347,7 +358,8 @@ public class ResourceSchemaCollection
   {
     if (actions != null)
     {
-      final ResourceLevel resourceLevel = (EntitySchema.class.equals(containingResourceType.getClass()) ?
+      final ResourceLevel resourceLevel = ((EntitySchema.class.equals(containingResourceType.getClass()) ||
+                                           SimpleSchema.class.equals(containingResourceType.getClass())) ?
                                            ResourceLevel.ENTITY :
                                            ResourceLevel.COLLECTION);
 

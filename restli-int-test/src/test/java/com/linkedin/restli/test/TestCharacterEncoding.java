@@ -16,23 +16,30 @@
 
 package com.linkedin.restli.test;
 
-import java.io.IOException;
 
-import com.linkedin.r2.message.RequestContext;
+import java.io.IOException;
+import java.util.Collections;
+
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.JacksonDataCodec;
+import com.linkedin.data.template.DynamicRecordMetadata;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.restli.client.GetRequest;
 import com.linkedin.restli.client.GetRequestBuilder;
+import com.linkedin.restli.common.CompoundKey;
+import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.common.ResourceSpecImpl;
 import com.linkedin.restli.server.RestLiConfig;
 import com.linkedin.restli.server.RestLiServer;
 import com.linkedin.restli.server.resources.PrototypeResourceFactory;
+
 
 /**
  * @author Josh Walker
@@ -56,7 +63,14 @@ public class TestCharacterEncoding
               new GetRequestBuilder<String, QueryParamMockCollection.DummyRecord>(
                       QueryParamMockCollection.RESOURCE_NAME,
                       QueryParamMockCollection.DummyRecord.class,
-                      null)
+                      new ResourceSpecImpl(Collections.<ResourceMethod> emptySet(),
+                                           Collections.<String, DynamicRecordMetadata> emptyMap(),
+                                           Collections.<String, DynamicRecordMetadata> emptyMap(),
+                                           String.class,
+                                           null,
+                                           null,
+                                           QueryParamMockCollection.DummyRecord.class,
+                                           Collections.<String, CompoundKey.TypeInfo> emptyMap()))
                       .id("dummy")
                       .param(QueryParamMockCollection.VALUE_KEY, testValue).build();
       RestRequest restRequest = new RestRequestBuilder(req.getUri())

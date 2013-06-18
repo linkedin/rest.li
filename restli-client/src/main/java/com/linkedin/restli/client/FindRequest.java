@@ -17,6 +17,7 @@
 package com.linkedin.restli.client;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 
 import com.linkedin.data.template.RecordTemplate;
@@ -36,8 +37,10 @@ import com.linkedin.restli.internal.client.CollectionResponseDecoder;
 public class FindRequest<T extends RecordTemplate>
                 extends Request<CollectionResponse<T>>
 {
-  FindRequest(URI uri, Map<String, String> headers, Class<T> templateClass, ResourceSpec resourceSpec)
+  FindRequest(URI uri, Map<String, String> headers, Class<T> templateClass,
+              ResourceSpec resourceSpec, List<String> resourcePath)
   {
-    super(uri, ResourceMethod.FINDER, null, headers, new CollectionResponseDecoder<T>(templateClass), resourceSpec);
+    super(uri, ResourceMethod.FINDER, null, headers, new CollectionResponseDecoder<T>(templateClass),
+          resourceSpec, resourcePath);
   }
 }

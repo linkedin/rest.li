@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.docgen;
 
+import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.schema.DataSchema;
@@ -30,12 +31,16 @@ import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.data.template.FieldDef;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.restli.common.ActionResponse;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.examples.greetings.api.Greeting;
+import com.linkedin.restli.examples.greetings.server.CollectionUnderSimpleResource;
 import com.linkedin.restli.examples.greetings.server.GreetingsResource;
+import com.linkedin.restli.examples.greetings.server.RootSimpleResource;
+import com.linkedin.restli.examples.greetings.server.SimpleResourceUnderCollectionResource;
 import com.linkedin.restli.examples.groups.api.Group;
 import com.linkedin.restli.examples.groups.api.GroupContact;
 import com.linkedin.restli.examples.groups.server.rest.impl.GroupContactsResource2;
@@ -54,11 +59,14 @@ import com.linkedin.restli.restspec.FinderSchemaArray;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.restspec.RestMethodSchema;
 import com.linkedin.restli.restspec.RestMethodSchemaArray;
+import com.linkedin.restli.restspec.SimpleSchema;
 import com.linkedin.restli.server.ResourceLevel;
 import java.io.IOException;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.testng.Assert;
@@ -77,7 +85,10 @@ public class TestExamplesGenerator
     final Map<String, ResourceModel> resources = buildResourceModels(GreetingsResource.class,
                                                                      GroupsResource2.class,
                                                                      GroupContactsResource2.class,
-                                                                     GroupMembershipsResource2.class);
+                                                                     GroupMembershipsResource2.class,
+                                                                     RootSimpleResource.class,
+                                                                     CollectionUnderSimpleResource.class,
+                                                                     SimpleResourceUnderCollectionResource.class);
     final ResourceSchemaCollection resourceSchemas = ResourceSchemaCollection.loadOrCreateResourceSchema(resources);
     final RestLiExampleGenerator.RequestGenerationSpec spec = new RestLiExampleGenerator.RequestGenerationSpec();
     final DataSchemaResolver schemaResolver = new ClassNameDataSchemaResolver();
@@ -91,6 +102,12 @@ public class TestExamplesGenerator
     final ResourceSchema greetings = resourceSchemas.getResource("greetings");
     final ResourceSchema groups = resourceSchemas.getResource("groups");
     final ResourceSchema groupsContacts = resourceSchemas.getResource("groups.contacts");
+    final ResourceSchema greeting = resourceSchemas.getResource("greeting");
+
+    List<ResourceSchema> subResources = resourceSchemas.getSubResources(greeting);
+    final ResourceSchema subgreetings = subResources.get(0);
+    subResources = resourceSchemas.getSubResources(subgreetings);
+    final ResourceSchema subsubgreeting = subResources.get(0);
 
     final RestMethodSchema greetingsGet = findRestMethod(greetings, ResourceMethod.GET);
     capture = generator.generateRestMethodExample(greetings, greetingsGet, spec);
@@ -129,6 +146,75 @@ public class TestExamplesGenerator
     final ActionSchema groupsSendTestAnnouncement = findEntityAction(groups, "sendTestAnnouncement");
     capture = generator.generateActionExample(groups, groupsSendTestAnnouncement, ResourceLevel.ENTITY, spec);
     Assert.assertSame(capture.getResponse().getEntity().length(), 0);
+
+    final RestMethodSchema greetingGet = findRestMethod(greeting, ResourceMethod.GET);
+    capture = generator.generateRestMethodExample(greeting, greetingGet, spec);
+    valRet = validateSingleResponse(capture.getResponse(), Greeting.class, valOptions);
+    Assert.assertTrue(valRet.isValid(), valRet.getMessages().toString());
+    RestRequest request = capture.getRequest();
+    Assert.assertEquals(request.getURI(), URI.create("/greeting"));
+
+    final RestMethodSchema greetingUpdate = findRestMethod(greeting, ResourceMethod.UPDATE);
+    capture = generator.generateRestMethodExample(greeting, greetingUpdate, spec);
+    Assert.assertSame(capture.getResponse().getEntity().length(), 0);
+    request = capture.getRequest();
+    Assert.assertEquals(request.getURI(), URI.create("/greeting"));
+    valRet = validateSingleRequest(capture.getRequest(), Greeting.class, valOptions);
+    Assert.assertTrue(valRet.isValid(), valRet.getMessages().toString());
+
+    final RestMethodSchema greetingDelete = findRestMethod(greeting, ResourceMethod.DELETE);
+    capture = generator.generateRestMethodExample(greeting, greetingUpdate, spec);
+    Assert.assertSame(capture.getResponse().getEntity().length(), 0);
+    request = capture.getRequest();
+    Assert.assertEquals(request.getURI(), URI.create("/greeting"));
+
+    final ActionSchema greetingExampleAction = findSimpleResourceAction(greeting, "exampleAction");
+    capture = generator.generateActionExample(greeting, greetingExampleAction, ResourceLevel.ENTITY, spec);
+    DataMap exampleActionResponse = DataMapUtils.readMap(capture.getResponse());
+    Assert.assertTrue(exampleActionResponse.containsKey("value"));
+    request = capture.getRequest();
+    Assert.assertTrue(validateUrlPath(request.getURI(), new String[]{ "greeting" }));
+
+    final RestMethodSchema subgreetingsCreate = findRestMethod(subgreetings, ResourceMethod.CREATE);
+    capture = generator.generateRestMethodExample(subgreetings, subgreetingsCreate, spec);
+    Assert.assertSame(capture.getResponse().getEntity().length(), 0);
+    request = capture.getRequest();
+    Assert.assertEquals(request.getURI(), URI.create("/greeting/subgreetings"));
+    valRet = validateSingleRequest(capture.getRequest(), Greeting.class, valOptions);
+    Assert.assertTrue(valRet.isValid(), valRet.getMessages().toString());
+
+    final RestMethodSchema subsubgreetingGet = findRestMethod(subsubgreeting, ResourceMethod.GET);
+    capture = generator.generateRestMethodExample(subsubgreeting, subsubgreetingGet, spec);
+    valRet = validateSingleResponse(capture.getResponse(), Greeting.class, valOptions);
+    Assert.assertTrue(valRet.isValid(), valRet.getMessages().toString());
+    request = capture.getRequest();
+    Assert.assertTrue(validateUrlPath(request.getURI(),
+                                      new String[]{"greeting", "subgreetings", null, "subsubgreeting"}));
+
+    final RestMethodSchema subsubgreetingUpdate = findRestMethod(subsubgreeting, ResourceMethod.UPDATE);
+    capture = generator.generateRestMethodExample(subsubgreeting, subsubgreetingUpdate, spec);
+    Assert.assertSame(capture.getResponse().getEntity().length(), 0);
+    request = capture.getRequest();
+    Assert.assertTrue(validateUrlPath(request.getURI(),
+                                      new String[]{"greeting", "subgreetings", null, "subsubgreeting"}));
+    valRet = validateSingleRequest(capture.getRequest(), Greeting.class, valOptions);
+    Assert.assertTrue(valRet.isValid(), valRet.getMessages().toString());
+
+    final RestMethodSchema subsubgreetingDelete = findRestMethod(subsubgreeting, ResourceMethod.DELETE);
+    capture = generator.generateRestMethodExample(subsubgreeting, subsubgreetingDelete, spec);
+    Assert.assertSame(capture.getResponse().getEntity().length(), 0);
+    request = capture.getRequest();
+    Assert.assertTrue(validateUrlPath(request.getURI(),
+                                      new String[]{"greeting", "subgreetings", null, "subsubgreeting"}));
+
+    final ActionSchema subsubgreetingExampleAction = findSimpleResourceAction(subsubgreeting, "exampleAction");
+    capture = generator.generateActionExample(subsubgreeting, subsubgreetingExampleAction, ResourceLevel.ENTITY, spec);
+    exampleActionResponse = DataMapUtils.readMap(capture.getResponse());
+    Assert.assertTrue(exampleActionResponse.containsKey("value"));
+    request = capture.getRequest();
+    Assert.assertTrue(validateUrlPath(request.getURI(),
+                                      new String[]{"greeting", "subgreetings", null, "subsubgreeting"}));
+
   }
 
   private static Map<String, ResourceModel> buildResourceModels(Class<?>... resourceClasses)
@@ -139,39 +225,40 @@ public class TestExamplesGenerator
 
   private static RestMethodSchema findRestMethod(ResourceSchema resourceSchema, ResourceMethod method)
   {
+    RestMethodSchemaArray methods = null;
+    RestMethodSchema methodResult = null;
+
     final CollectionSchema collectionSchema = resourceSchema.getCollection();
     if (collectionSchema != null)
     {
-      final RestMethodSchemaArray methods = collectionSchema.getMethods();
-      if (methods != null)
-      {
-        for (RestMethodSchema restMethodSchema: methods)
-        {
-          if (restMethodSchema.getMethod().equalsIgnoreCase(method.name()))
-          {
-            return restMethodSchema;
-          }
-        }
-      }
+      methods = collectionSchema.getMethods();
     }
 
     final AssociationSchema associationSchema = resourceSchema.getAssociation();
     if (associationSchema != null)
     {
-      final RestMethodSchemaArray methods = associationSchema.getMethods();
-      if (methods != null)
+      methods = associationSchema.getMethods();
+    }
+
+    final SimpleSchema simpleSchema = resourceSchema.getSimple();
+    if (simpleSchema != null)
+    {
+      methods = simpleSchema.getMethods();
+    }
+
+    if (methods != null)
+    {
+      for (RestMethodSchema restMethodSchema: methods)
       {
-        for (RestMethodSchema restMethodSchema: methods)
+        if (restMethodSchema.getMethod().equalsIgnoreCase(method.name()))
         {
-          if (restMethodSchema.getMethod().equalsIgnoreCase(method.name()))
-          {
-            return restMethodSchema;
-          }
+          methodResult = restMethodSchema;
+          break;
         }
       }
     }
 
-    return null;
+    return methodResult;
   }
 
   private static FinderSchema findFinder(ResourceSchema resourceSchema, String finderName)
@@ -248,6 +335,27 @@ public class TestExamplesGenerator
     return null;
   }
 
+  private static ActionSchema findSimpleResourceAction(ResourceSchema resourceSchema, String actionName)
+  {
+    final SimpleSchema simpleSchema = resourceSchema.getSimple();
+    if (simpleSchema != null)
+    {
+      final ActionSchemaArray actions = simpleSchema.getActions();
+      if (actions != null)
+      {
+        for (ActionSchema actionSchema: actions)
+        {
+          if (actionSchema.getName().equals(actionName))
+          {
+            return actionSchema;
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
   private static ActionSchema findActionInEntity(EntitySchema entitySchema, String actionName)
   {
     final ActionSchemaArray actions = entitySchema.getActions();
@@ -300,11 +408,56 @@ public class TestExamplesGenerator
     return null;
   }
 
+  private boolean validateUrlPath(URI uri, String[] expected)
+  {
+    boolean result = true;
+    String path = uri.getPath();
+
+    if (path.startsWith("/"))
+    {
+      path = path.substring(1);
+    }
+
+    String[] segments = path.split("/");
+    if (segments.length != expected.length)
+    {
+      result = false;
+    }
+    else
+    {
+      for (int i = 0; i < segments.length; ++i)
+      {
+        //null is considered as a wildcard segment in the expected
+        if (expected[i] != null && !expected[i].equals(segments[i]))
+        {
+          result = false;
+          break;
+        }
+      }
+    }
+
+    return result;
+  }
+
   private ValidationResult validateSingleResponse(RestResponse response,
                                                   Class<? extends RecordTemplate> recordClass,
                                                   ValidationOptions options) throws IOException
   {
-    final DataMap respData = _codec.bytesToMap(response.getEntity().copyBytes());
+    return validateEntity(response.getEntity(), recordClass, options);
+  }
+
+  private ValidationResult validateSingleRequest(RestRequest request,
+                                                 Class<? extends RecordTemplate> recordClass,
+                                                 ValidationOptions options) throws IOException
+  {
+    return validateEntity(request.getEntity(), recordClass, options);
+  }
+
+  private ValidationResult validateEntity(ByteString entity,
+                                          Class<? extends RecordTemplate> recordClass,
+                                          ValidationOptions options) throws IOException
+  {
+    final DataMap respData = _codec.bytesToMap(entity.copyBytes());
     final DataSchema recordSchema = DataTemplateUtil.getSchema(recordClass);
     return ValidateDataAgainstSchema.validate(respData, recordSchema, options);
   }

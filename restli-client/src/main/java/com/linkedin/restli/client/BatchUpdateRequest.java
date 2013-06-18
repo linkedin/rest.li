@@ -21,6 +21,7 @@
 package com.linkedin.restli.client;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 
 import com.linkedin.data.DataMap;
@@ -49,7 +50,8 @@ public class BatchUpdateRequest<K, V extends RecordTemplate>
                   URI baseURI,
                   BatchRequest<V> input,
                   DataMap queryParams,
-                  ResourceSpec resourceSpec)
+                  ResourceSpec resourceSpec,
+                  List<String> resourcePath)
   {
     super(uri,
           ResourceMethod.BATCH_UPDATE,
@@ -61,7 +63,8 @@ public class BatchUpdateRequest<K, V extends RecordTemplate>
                                                       resourceSpec.getKeyKeyClass(),
                                                       resourceSpec.getKeyParamsClass()),
           resourceSpec,
-          queryParams);
+          queryParams,
+          resourcePath);
     _baseURI = baseURI;
   }
 

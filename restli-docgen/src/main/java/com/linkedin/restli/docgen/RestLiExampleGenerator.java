@@ -132,7 +132,10 @@ public class RestLiExampleGenerator
   {
     final ResourceMethod restMethod = ResourceMethod.valueOf(restMethodSchema.getMethod().toUpperCase());
     final String templatePath;
-    if (METHODS_WITHOUT_PARAMS.contains(restMethod) || BATCH_METHODS_WITH_PARAMS.contains(restMethod))
+
+    if (resourceSchema.hasSimple() ||
+        METHODS_WITHOUT_PARAMS.contains(restMethod) ||
+        BATCH_METHODS_WITH_PARAMS.contains(restMethod))
     {
       templatePath = resourceSchema.getPath();
     }
@@ -326,10 +329,22 @@ public class RestLiExampleGenerator
     {
       templatePath = resourceSchema.getPath();
     }
+    else if (resourceLevel == ResourceLevel.ENTITY)
+    {
+      if (resourceSchema.hasSimple())
+      {
+        templatePath = resourceSchema.getPath();
+      }
+      else
+      {
+        templatePath = getEntityMethodPath(resourceSchema);
+      }
+    }
     else
     {
-      templatePath = getEntityMethodPath(resourceSchema);
+      templatePath = resourceSchema.getPath();
     }
+
     if (templatePath == null)
     {
       return null;

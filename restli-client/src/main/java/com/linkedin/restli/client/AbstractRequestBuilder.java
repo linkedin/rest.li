@@ -49,6 +49,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
+
 
 /**
  * @author Josh Walker
@@ -57,6 +59,8 @@ import java.util.Set;
 
 public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> implements RequestBuilder<R>
 {
+  private static final Pattern SLASH_PATTERN = Pattern.compile("/");
+
   private final String                _baseURITemplate;
   protected final Map<String, String> _headers     = new HashMap<String, String>();
   protected final CompoundKey         _assocKey    = new CompoundKey();
@@ -194,7 +198,22 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
 
   protected void appendKeyToPath(UriBuilder uriBuilder, Object key)
   {
-    uriBuilder.path(keyToString(key, Escaping.URL_ESCAPING));
+    if (isKeylessResource())
+    {
+      if (key != null)
+      {
+        throw new IllegalArgumentException("id is not allowed in this key-less resource request");
+      }
+    }
+    else
+    {
+      if (key == null)
+      {
+        throw new IllegalArgumentException("id required to build this request");
+      }
+
+      uriBuilder.path(keyToString(key, Escaping.URL_ESCAPING));
+    }
   }
 
   private String keyToString(Object key, Escaping escaping)
@@ -325,6 +344,23 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
     return URI.create(template.createURI(escapedKeys));
   }
 
+  protected List<String> getResourcePath()
+  {
+    UriTemplate template = new UriTemplate(_baseURITemplate);
+    List<String> resourcePath = new ArrayList<String>(1);
+    String[] pathParts = SLASH_PATTERN.split(template.createURI(Collections.<String, String>emptyMap()));
+
+    for (String pathPart : pathParts)
+    {
+      if (!pathPart.equals(""))
+      {
+        resourcePath.add(pathPart);
+      }
+    }
+
+    return resourcePath;
+  }
+
   protected void addFields(PathSpec... fieldPaths)
   {
     if (_queryParams.containsKey(RestConstants.FIELDS_PARAM))
@@ -339,6 +375,11 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
   protected boolean isComplexKeyResource()
   {
     return _resourceSpec.getKeyClass() == ComplexResourceKey.class;
+  }
+
+  protected boolean isKeylessResource()
+  {
+    return _resourceSpec.getKeyClass() == null;
   }
 
   @Override

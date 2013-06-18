@@ -26,6 +26,7 @@ import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.resources.ComplexKeyResource;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -154,14 +155,59 @@ public class ResourceModel
          namespace);
   }
 
+  /**
+   * Constructor.
+   *
+   * @param valueClass resource value class
+   * @param resourceClass resource class
+   * @param parentResourceClass parent resource class
+   * @param name resource name
+   * @param resourceType {@link ResourceType}
+   * @param namespace namespace
+   *
+   */
+  public ResourceModel(final Class<? extends RecordTemplate> valueClass,
+                       final Class<?> resourceClass,
+                       final Class<?> parentResourceClass,
+                       final String name,
+                       final ResourceType resourceType,
+                       final String namespace)
+  {
+    this(null,
+         null,
+         null,
+         Collections.<Key>emptySet(),
+         valueClass,
+         resourceClass,
+         parentResourceClass,
+         name,
+         resourceType,
+         namespace);
+  }
+
   public ResourceType getResourceType()
   {
     return _resourceType;
   }
 
+  public ResourceLevel getResourceLevel()
+  {
+    switch (_resourceType)
+    {
+      case COLLECTION:
+      case ASSOCIATION:
+      case ACTIONS:
+        return ResourceLevel.COLLECTION;
+      case SIMPLE:
+        return ResourceLevel.ENTITY;
+      default:
+        return ResourceLevel.ANY;
+    }
+  }
+
   public Class<?> getKeyClass()
   {
-    return _primaryKey.getType();
+    return _primaryKey == null ? null : _primaryKey.getType();
   }
 
   public Set<Key> getKeys()
@@ -448,7 +494,7 @@ public class ResourceModel
 
   public String getKeyName()
   {
-    return _primaryKey.getName();
+    return _primaryKey == null ? null : _primaryKey.getName();
   }
 
   public Key getPrimaryKey()

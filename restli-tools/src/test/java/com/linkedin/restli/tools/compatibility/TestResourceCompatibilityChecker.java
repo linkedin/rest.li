@@ -154,6 +154,53 @@ public class TestResourceCompatibilityChecker
   }
 
   @Test
+  public void testPassSimpleFile() throws IOException
+  {
+    final Collection<CompatibilityInfo> testDiffs = new HashSet<CompatibilityInfo>();
+    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList(""),
+                                        CompatibilityInfo.Type.OPTIONAL_VALUE, "namespace"));
+    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "supports"),
+                                        CompatibilityInfo.Type.SUPERSET, new HashSet<String>(Arrays.asList("update"))));
+    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "methods"),
+                                        CompatibilityInfo.Type.SUPERSET, new HashSet<String>(Arrays.asList("update"))));
+    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "methods", "get", "parameters", "param1", "default"),
+                                        CompatibilityInfo.Type.VALUE_DIFFERENT, "abcd", "abc"));
+    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "actions", "oneAction", "parameters", "bitfield"),
+                                        CompatibilityInfo.Type.DEPRECATED, "The \"items\" field"));
+    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "actions", "oneAction", "parameters", "someString"),
+                                        CompatibilityInfo.Type.OPTIONAL_PARAMETER));
+    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "actions", "oneAction", "parameters"),
+                                        CompatibilityInfo.Type.PARAMETER_NEW_OPTIONAL, "newParam"));
+    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "actions", "oneAction", "parameters", "someString2", "default"),
+                                        CompatibilityInfo.Type.VALUE_DIFFERENT, "default", "changed"));
+    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting"),
+                                        CompatibilityInfo.Type.TYPE_INFO, "new record removed optional fields tone"));
+    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting"),
+                                        CompatibilityInfo.Type.TYPE_INFO, "new record added optional fields newField"));
+
+    ResourceSchema prevResource = idlToResource(idlsDir + PREV_SIMPLE_FILE);
+    ResourceSchema currResource = idlToResource(idlsDir + CURR_SIMPLE_PASS_FILE);
+
+    ResourceCompatibilityChecker checker = new ResourceCompatibilityChecker(prevResource, prevSchemaResolver,
+                                                                            currResource, compatSchemaResolver);
+
+    boolean check = checker.check(CompatibilityLevel.BACKWARDS);
+    Assert.assertTrue(check);
+
+    final Collection<CompatibilityInfo> incompatibles = checker.getMap().getIncompatibles();
+    final Collection<CompatibilityInfo> compatibles = new HashSet<CompatibilityInfo>(checker.getMap().getCompatibles());
+
+    for (CompatibilityInfo di : testDiffs)
+    {
+      Assert.assertTrue(compatibles.contains(di), "Reported compatibles should contain: " + di.toString());
+      compatibles.remove(di);
+    }
+
+    Assert.assertTrue(incompatibles.isEmpty());
+    Assert.assertTrue(compatibles.isEmpty());
+  }
+
+  @Test
   public void testFailCollectionFile() throws IOException
   {
     final SchemaParser sp = new SchemaParser();
@@ -276,6 +323,53 @@ public class TestResourceCompatibilityChecker
     }
 
     Assert.assertTrue(incompatibles.isEmpty());
+  }
+
+  @Test
+  public void testFailSimpleFile() throws IOException
+  {
+    final Collection<CompatibilityInfo> testErrors = new HashSet<CompatibilityInfo>();
+    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "supports"),
+                                         CompatibilityInfo.Type.ARRAY_NOT_CONTAIN,
+                                         new StringArray(Arrays.asList("delete", "get"))));
+    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "methods"),
+                                         CompatibilityInfo.Type.ARRAY_MISSING_ELEMENT, "delete"));
+    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "methods", "get", "parameters", "param1", "type"),
+                                         CompatibilityInfo.Type.TYPE_INCOMPATIBLE,
+                                         "string",
+                                         "int"));
+    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "actions", "oneAction", "parameters", "bitfield", "items"),
+                                         CompatibilityInfo.Type.TYPE_INCOMPATIBLE, "boolean", "int"));
+    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "actions", "oneAction", "parameters"),
+                                         CompatibilityInfo.Type.ARRAY_MISSING_ELEMENT, "someString"));
+    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "actions", "oneAction", "parameters"),
+                                         CompatibilityInfo.Type.PARAMETER_NEW_REQUIRED, "someStringNew"));
+    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting"),
+                                         CompatibilityInfo.Type.TYPE_BREAKS_NEW_READER, "new record added required fields newField"));
+    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting"),
+                                         CompatibilityInfo.Type.TYPE_BREAKS_OLD_READER, "new record removed required fields message"));
+    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting", "id", "string"),
+                                         CompatibilityInfo.Type.TYPE_BREAKS_NEW_AND_OLD_READERS, "schema type changed from long to string"));
+
+    ResourceSchema prevResource = idlToResource(idlsDir + PREV_SIMPLE_FILE);
+    ResourceSchema currResource = idlToResource(idlsDir + CURR_SIMPLE_FAIL_FILE);
+
+    ResourceCompatibilityChecker checker = new ResourceCompatibilityChecker(prevResource, prevSchemaResolver,
+                                                                            currResource, incompatSchemaResolver);
+
+    Assert.assertFalse(checker.check(CompatibilityLevel.BACKWARDS));
+
+    final Collection<CompatibilityInfo> incompatible = new HashSet<CompatibilityInfo>(checker.getMap().getIncompatibles());
+
+    for (CompatibilityInfo te : testErrors)
+    {
+      Assert.assertTrue(incompatible.contains(te), "Reported incompatibles should contain: " + te.toString());
+      incompatible.remove(te);
+    }
+
+    Assert.assertTrue(incompatible.isEmpty());
+
+    // ignore compatibles
   }
 
   @Test
@@ -414,10 +508,13 @@ public class TestResourceCompatibilityChecker
   private static final String PREV_COLL_FILE = "prev-greetings-coll.restspec.json";
   private static final String PREV_ASSOC_FILE = "prev-greetings-assoc.restspec.json";
   private static final String PREV_AS_FILE = "prev-greetings-as.restspec.json";
+  private static final String PREV_SIMPLE_FILE = "prev-greeting-simple.restspec.json";
   private static final String CURR_COLL_PASS_FILE = "curr-greetings-coll-pass.restspec.json";
   private static final String CURR_ASSOC_PASS_FILE = "curr-greetings-assoc-pass.restspec.json";
+  private static final String CURR_SIMPLE_PASS_FILE = "curr-greeting-simple-pass.restspec.json";
   private static final String CURR_COLL_FAIL_FILE = "curr-greetings-coll-fail.restspec.json";
   private static final String CURR_ASSOC_FAIL_FILE = "curr-greetings-assoc-fail.restspec.json";
+  private static final String CURR_SIMPLE_FAIL_FILE = "curr-greeting-simple-fail.restspec.json";
   private static final String CURR_AS_FAIL_FILE = "curr-greetings-as-fail.restspec.json";
   private static final String CURR_AS_PASS_FILE = "curr-greetings-as-pass.restspec.json";
 

@@ -35,10 +35,20 @@ public class UpdateArgumentBuilder implements RestLiArgumentBuilder
   public Object[] buildArguments(final RoutingResult routingResult,
                                  final RestRequest request)
   {
-    Object keyValue = ArgumentUtils.getResourceKey(routingResult);
+    Object[] positionalArgs;
     RecordTemplate record = ArgumentUtils.extractEntity(request,
                                                         ArgumentUtils.getValueClass(routingResult));
-    Object[] positionalArgs = { keyValue, record };
+
+    if (ArgumentUtils.hasResourceKey(routingResult))
+    {
+      Object keyValue = ArgumentUtils.getResourceKey(routingResult);
+      positionalArgs = new Object[] { keyValue, record };
+    }
+    else
+    {
+      positionalArgs = new Object[] { record };
+    }
+
     return ArgumentBuilder.buildArgs(positionalArgs,
                                      routingResult.getResourceMethod().getParameters(),
                                      routingResult.getContext());

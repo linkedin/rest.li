@@ -1,0 +1,29 @@
+{
+  "type" : "record",
+  "name" : "SimpleSchema",
+  "namespace" : "com.linkedin.restli.restspec",
+  "fields" : [
+    {
+      "name" : "supports",
+      "doc" : "basic rest.li methods supported by this resource, e.g. get, update, delete",
+      "type" : { "type" : "array", "items" : "string" }
+    },
+    {
+      "name" : "methods",
+      "doc" : "details on rest methods supported by this simple resource",
+      "type" : { "type" : "array", "items" : "RestMethodSchema" },
+      "optional" : true
+    },
+    {
+      "name" : "actions",
+      "doc" : "list of actions supported by this simple resource",
+      "type" : { "type" : "array", "items" : "ActionSchema" },
+      "optional" : true
+    },
+    {
+      "name" : "entity",
+      "doc" : "details of the entity provided by this simple resource",
+      "type" : "EntitySchema"
+    }
+  ]
+}
