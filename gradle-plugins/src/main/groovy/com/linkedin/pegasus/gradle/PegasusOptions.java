@@ -88,7 +88,7 @@ public class PegasusOptions
 
     public void addIdlItem(List<String> inPackageNames)
     {
-      IdlItem newItem = new IdlItem(null, inPackageNames);
+      IdlItem newItem = new IdlItem("", inPackageNames);
       _idlOptionsList.add(newItem);
     }
 

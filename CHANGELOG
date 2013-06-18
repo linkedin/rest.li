@@ -1,6 +1,11 @@
-1.8.37
+1.8.38
 ------
 
+
+1.8.37
+------
+(RB=176630)
+Fix a pegasus plugin regression about null pointer.
 
 1.8.36
 ------
