@@ -53,11 +53,11 @@ import java.util.Map;
 public class RestLiSnapshotExporter
 {
   private static final Logger log = LoggerFactory.getLogger(RestLiSnapshotExporter.class);
-  private static final DataSchemaResolver _schemaResolver;
+  private DataSchemaResolver _schemaResolver;
 
-  static
+  public void setResolverPath(String resolverPath)
   {
-    _schemaResolver = CompatibilityUtil.getDataSchemaResolver();
+    _schemaResolver = CompatibilityUtil.getDataSchemaResolver(resolverPath);
   }
 
   public GeneratorResult export(String apiName,

@@ -18,7 +18,6 @@ package com.linkedin.restli.tools.compatibility;
 
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.SchemaParserFactory;
-import com.linkedin.data.schema.generator.AbstractGenerator;
 import com.linkedin.data.schema.resolver.DefaultDataSchemaResolver;
 import com.linkedin.data.schema.resolver.FileDataSchemaResolver;
 
@@ -30,13 +29,14 @@ import com.linkedin.data.schema.resolver.FileDataSchemaResolver;
 public class CompatibilityUtil
 {
   /**
-   * Creates a {@link DataSchemaResolver} based on what {@link AbstractGenerator#GENERATOR_RESOLVER_PATH} is set to.
-   * @return A {@link FileDataSchemaResolver} referencing what {@link AbstractGenerator#GENERATOR_RESOLVER_PATH} is set to,
-   * if it is set; or {@link DefaultDataSchemaResolver} if it is not set.
+   * Creates a {@link DataSchemaResolver} based on what resolver path is set to.
+   *
+   * @param resolverPath resolver path for the created {@link DataSchemaResolver}.
+   * @return a {@link FileDataSchemaResolver} referencing what resolverPath is set to if it is not null
+   *         otherwise, return {@link DefaultDataSchemaResolver}.
    */
-  public static DataSchemaResolver getDataSchemaResolver()
+  public static DataSchemaResolver getDataSchemaResolver(String resolverPath)
   {
-    final String resolverPath = System.getProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH);
     if (resolverPath != null)
     {
       return new FileDataSchemaResolver(SchemaParserFactory.instance(), resolverPath);

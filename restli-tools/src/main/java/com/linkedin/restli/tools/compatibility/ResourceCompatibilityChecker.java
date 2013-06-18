@@ -73,8 +73,8 @@ public class ResourceCompatibilityChecker
   private final DataSchemaResolver _currSchemaResolver;
 
   private boolean _checked;
-  private CompatibilityInfoMap _map = new CompatibilityInfoMap();
-  private Stack<Object> _path = new Stack<Object>();
+  private CompatibilityInfoMap _infoMap = new CompatibilityInfoMap();
+  private Stack<Object> _infoPath = new Stack<Object>();
 
   private Set<String> _namedSchemasChecked = new HashSet<String>();
 
@@ -92,13 +92,13 @@ public class ResourceCompatibilityChecker
     _currSchemaResolver = currSchemaResolver;
 
     _checked = false;
-    _path.push("");
+    _infoPath.push("");
   }
 
   public boolean check(CompatibilityLevel level)
   {
     if (!_checked) runCheck();
-    return _map.isCompatible(level);
+    return _infoMap.isCompatible(level);
 
   }
 
@@ -107,9 +107,9 @@ public class ResourceCompatibilityChecker
     if (!_checked) runCheck();
   }
 
-  public CompatibilityInfoMap getMap()
+  public CompatibilityInfoMap getInfoMap()
   {
-    return _map;
+    return _infoMap;
   }
 
   private void runCheck()
@@ -135,7 +135,7 @@ public class ResourceCompatibilityChecker
     final Collection<Message> valErrorMessages = valResult.getMessages();
     for (final Message message : valErrorMessages)
     {
-      _map.addInfo(message);
+      _infoMap.addInfo(message);
     }
 
     return false;
@@ -166,7 +166,7 @@ public class ResourceCompatibilityChecker
 
     if (isCompatible && isLeaderNull != isFollowerNull)
     {
-      _map.addInfo(CompatibilityInfo.Type.OPTIONAL_VALUE, _path, field.getName());
+      _infoMap.addInfo(CompatibilityInfo.Type.OPTIONAL_VALUE, _infoPath, field.getName());
     }
 
     return isCompatible;
@@ -182,7 +182,7 @@ public class ResourceCompatibilityChecker
 
     if (!isOptionalityCompatible(field, prevData, currData))
     {
-      _map.addInfo(CompatibilityInfo.Type.VALUE_WRONG_OPTIONALITY, _path, field.getName());
+      _infoMap.addInfo(CompatibilityInfo.Type.VALUE_WRONG_OPTIONALITY, _infoPath, field.getName());
       return false;
     }
 
@@ -192,7 +192,7 @@ public class ResourceCompatibilityChecker
 
     if (prevData != null && !prevData.equals(currData))
     {
-      _map.addInfo(field.getName(), CompatibilityInfo.Type.VALUE_NOT_EQUAL, _path, prevData, currData);
+      _infoMap.addInfo(field.getName(), CompatibilityInfo.Type.VALUE_NOT_EQUAL, _infoPath, prevData, currData);
       return false;
     }
 
@@ -205,13 +205,13 @@ public class ResourceCompatibilityChecker
 
     if ((prevData == null) != (currData == null))
     {
-      _map.addInfo(field.getName(), CompatibilityInfo.Type.DOC_NOT_EQUAL, _path);
+      _infoMap.addInfo(field.getName(), CompatibilityInfo.Type.DOC_NOT_EQUAL, _infoPath);
       return false;
     }
 
     if (prevData != null && !prevData.equals(currData))
     {
-      _map.addInfo(field.getName(), CompatibilityInfo.Type.DOC_NOT_EQUAL, _path);
+      _infoMap.addInfo(field.getName(), CompatibilityInfo.Type.DOC_NOT_EQUAL, _infoPath);
       return false;
     }
 
@@ -229,7 +229,7 @@ public class ResourceCompatibilityChecker
 
     if (!isOptionalityCompatible(field, containee, container))
     {
-      _map.addInfo(CompatibilityInfo.Type.VALUE_WRONG_OPTIONALITY, _path, field.getName());
+      _infoMap.addInfo(CompatibilityInfo.Type.VALUE_WRONG_OPTIONALITY, _infoPath, field.getName());
       return false;
     }
 
@@ -245,14 +245,14 @@ public class ResourceCompatibilityChecker
       {
         final Set<Object> diff = new HashSet<Object>(container);
         diff.removeAll(containee);
-        _map.addInfo(field.getName(), CompatibilityInfo.Type.SUPERSET, _path, diff);
+        _infoMap.addInfo(field.getName(), CompatibilityInfo.Type.SUPERSET, _infoPath, diff);
       }
 
       return true;
     }
     else
     {
-      _map.addInfo(field.getName(), CompatibilityInfo.Type.ARRAY_NOT_CONTAIN, _path, containee);
+      _infoMap.addInfo(field.getName(), CompatibilityInfo.Type.ARRAY_NOT_CONTAIN, _infoPath, containee);
       return false;
     }
   }
@@ -269,7 +269,7 @@ public class ResourceCompatibilityChecker
 
     if (prevType == null || currType == null)
     {
-      _map.addInfo(pathTail, CompatibilityInfo.Type.TYPE_MISSING, _path);
+      _infoMap.addInfo(pathTail, CompatibilityInfo.Type.TYPE_MISSING, _infoPath);
       return false;
     }
 
@@ -302,7 +302,7 @@ public class ResourceCompatibilityChecker
     }
     catch (IllegalArgumentException e)
     {
-      _map.addInfo(pathTail, CompatibilityInfo.Type.TYPE_UNKNOWN, _path, e.getMessage());
+      _infoMap.addInfo(pathTail, CompatibilityInfo.Type.TYPE_UNKNOWN, _infoPath, e.getMessage());
       return false;
     }
   }
@@ -311,7 +311,7 @@ public class ResourceCompatibilityChecker
   {
     for(CompatibilityMessage message : messages)
     {
-      _map.addInfo(message);
+      _infoMap.addInfo(message);
     }
   }
 
@@ -319,7 +319,7 @@ public class ResourceCompatibilityChecker
   {
     for(CompatibilityMessage message : messages)
     {
-      _map.addInfo(pathTail, message, _path);
+      _infoMap.addInfo(pathTail, message, _infoPath);
     }
   }
 
@@ -334,7 +334,7 @@ public class ResourceCompatibilityChecker
     // here curr is the leader, prev is the follower
     if (!isOptionalityCompatible(field, currOptional, prevOptional))
     {
-      _map.addInfo(CompatibilityInfo.Type.VALUE_WRONG_OPTIONALITY, _path, field.getName());
+      _infoMap.addInfo(CompatibilityInfo.Type.VALUE_WRONG_OPTIONALITY, _infoPath, field.getName());
       return false;
     }
 
@@ -345,14 +345,14 @@ public class ResourceCompatibilityChecker
 
     if (prevOptional && !currOptional)
     {
-      _map.addInfo(field.getName(), CompatibilityInfo.Type.PARAMETER_WRONG_OPTIONALITY, _path);
+      _infoMap.addInfo(field.getName(), CompatibilityInfo.Type.PARAMETER_WRONG_OPTIONALITY, _infoPath);
       return false;
     }
 
     if (!prevOptional && currOptional)
     {
       // previous required and currently optional should be the only difference that retains backwards compatibility
-     _map.addInfo(CompatibilityInfo.Type.OPTIONAL_PARAMETER, _path);
+     _infoMap.addInfo(CompatibilityInfo.Type.OPTIONAL_PARAMETER, _infoPath);
     }
 
     return true;
@@ -415,7 +415,8 @@ public class ResourceCompatibilityChecker
     }
     else
     {
-      _map.addInfo(CompatibilityInfo.Type.OTHER_ERROR, _path, "Unknown schema type: \"" + prevRec.getClass() + "\"");
+      _infoMap.addInfo(CompatibilityInfo.Type.OTHER_ERROR,
+                       _infoPath, "Unknown schema type: \"" + prevRec.getClass() + "\"");
     }
   }
 
@@ -428,15 +429,15 @@ public class ResourceCompatibilityChecker
 
     if (!isOptionalityCompatible(field, prevRec, currRec))
     {
-      _map.addInfo(CompatibilityInfo.Type.VALUE_WRONG_OPTIONALITY, _path, field.getName());
+      _infoMap.addInfo(CompatibilityInfo.Type.VALUE_WRONG_OPTIONALITY, _infoPath, field.getName());
       return false;
     }
 
     if (prevRec != null)
     {
-      _path.push(field.getName());
+      _infoPath.push(field.getName());
       checkRecordTemplate(prevRec, currRec);
-      _path.pop();
+      _infoPath.pop();
     }
 
     return true;
@@ -458,7 +459,7 @@ public class ResourceCompatibilityChecker
 
     if (!isOptionalityCompatible(field, prevArray, currArray))
     {
-      _map.addInfo(CompatibilityInfo.Type.VALUE_WRONG_OPTIONALITY, _path, field.getName());
+      _infoMap.addInfo(CompatibilityInfo.Type.VALUE_WRONG_OPTIONALITY, _infoPath, field.getName());
       return false;
     }
 
@@ -469,7 +470,7 @@ public class ResourceCompatibilityChecker
 
     assert (prevArray.getClass() == currArray.getClass());
 
-    _path.push(field.getName());
+    _infoPath.push(field.getName());
 
     for (int i = 0; i < currArray.size(); ++i)
     {
@@ -484,25 +485,25 @@ public class ResourceCompatibilityChecker
 
       if (currIndex == null)
       {
-        _map.addInfo(CompatibilityInfo.Type.ARRAY_MISSING_ELEMENT, _path, prevKey);
+        _infoMap.addInfo(CompatibilityInfo.Type.ARRAY_MISSING_ELEMENT, _infoPath, prevKey);
       }
       else
       {
         final RecordTemplate currElement = currArray.get(currIndex);
         currRemainder.remove(prevKey);
 
-        _path.push(prevKey);
+        _infoPath.push(prevKey);
         checkRecordTemplate(prevElement, currElement);
-        _path.pop();
+        _infoPath.pop();
       }
     }
 
     if (checkRemainder && !currRemainder.isEmpty())
     {
-      _map.addInfo(CompatibilityInfo.Type.SUPERSET, _path, currRemainder.keySet());
+      _infoMap.addInfo(CompatibilityInfo.Type.SUPERSET, _infoPath, currRemainder.keySet());
     }
 
-    _path.pop();
+    _infoPath.pop();
 
     // all missing element errors have been recorded, avoid duplicate errors by returning true
     return true;
@@ -532,7 +533,7 @@ public class ResourceCompatibilityChecker
     // if prev has less than curr, the remainder will contain the extra current elements
     if (!currRemainder.isEmpty())
     {
-      _map.addInfo(field.getName(), CompatibilityInfo.Type.ARRAY_NOT_EQUAL, _path, prevArray);
+      _infoMap.addInfo(field.getName(), CompatibilityInfo.Type.ARRAY_NOT_EQUAL, _infoPath, prevArray);
       return false;
     }
 
@@ -551,7 +552,7 @@ public class ResourceCompatibilityChecker
       return false;
     }
 
-    _path.push(field.getName());
+    _infoPath.push(field.getName());
 
     boolean result = true;
     for (int paramIndex : currRemainder.values())
@@ -560,16 +561,16 @@ public class ResourceCompatibilityChecker
       final ParameterSchema param = currArray.get(paramIndex);
       if (isQueryParameterOptional(param.isOptional(), param.getDefault(GetMode.DEFAULT)))
       {
-        _map.addInfo(CompatibilityInfo.Type.PARAMETER_NEW_OPTIONAL, _path, param.getName());
+        _infoMap.addInfo(CompatibilityInfo.Type.PARAMETER_NEW_OPTIONAL, _infoPath, param.getName());
       }
       else
       {
-        _map.addInfo(CompatibilityInfo.Type.PARAMETER_NEW_REQUIRED, _path, param.getName());
+        _infoMap.addInfo(CompatibilityInfo.Type.PARAMETER_NEW_REQUIRED, _infoPath, param.getName());
         result = false;
       }
     }
 
-    _path.pop();
+    _infoPath.pop();
 
     // all parameter errors have been recorded, avoid duplicate errors by returning true
     return result;
@@ -579,7 +580,7 @@ public class ResourceCompatibilityChecker
   {
     if (param.hasItems())
     {
-      _map.addInfo(CompatibilityInfo.Type.DEPRECATED, _path, "The \"items\" field");
+      _infoMap.addInfo(CompatibilityInfo.Type.DEPRECATED, _infoPath, "The \"items\" field");
       return param.getItems(GetMode.DEFAULT);
     }
 
@@ -591,7 +592,7 @@ public class ResourceCompatibilityChecker
     }
     else
     {
-      _map.addInfo("type", CompatibilityInfo.Type.TYPE_INCOMPATIBLE, _path, "items", paramDataSchema.getType());
+      _infoMap.addInfo("type", CompatibilityInfo.Type.TYPE_INCOMPATIBLE, _infoPath, "items", paramDataSchema.getType());
       return null;
     }
   }
@@ -602,9 +603,7 @@ public class ResourceCompatibilityChecker
                           prevRec.getName(GetMode.DEFAULT),
                           currRec.getName(GetMode.DEFAULT));
 
-    checkDoc(prevRec.schema().getField("doc"),
-             prevRec.getDoc(GetMode.DEFAULT),
-             currRec.getDoc(GetMode.DEFAULT));
+    checkDoc(prevRec.schema().getField("doc"), prevRec.getDoc(GetMode.DEFAULT), currRec.getDoc(GetMode.DEFAULT));
 
     checkEqualSingleValue(prevRec.schema().getField("namespace"),
                           prevRec.getNamespace(GetMode.DEFAULT),
@@ -676,9 +675,7 @@ public class ResourceCompatibilityChecker
                           prevRec.getName(GetMode.DEFAULT),
                           currRec.getName(GetMode.DEFAULT));
 
-    checkDoc(prevRec.schema().getField("doc"),
-             prevRec.getDoc(GetMode.DEFAULT),
-             currRec.getDoc(GetMode.DEFAULT));
+    checkDoc(prevRec.schema().getField("doc"), prevRec.getDoc(GetMode.DEFAULT), currRec.getDoc(GetMode.DEFAULT));
 
     checkParameterArrayField(prevRec.schema().getField("parameters"),
                              prevRec.getParameters(GetMode.DEFAULT),
@@ -720,7 +717,7 @@ public class ResourceCompatibilityChecker
     {
       // downgrade case
 
-      _map.addInfo("assocKeys", CompatibilityInfo.Type.FINDER_ASSOCKEYS_DOWNGRADE, _path);
+      _infoMap.addInfo("assocKeys", CompatibilityInfo.Type.FINDER_ASSOCKEYS_DOWNGRADE, _infoPath);
     }
   }
 
@@ -751,9 +748,7 @@ public class ResourceCompatibilityChecker
                           prevRec.getName(GetMode.DEFAULT),
                           currRec.getName(GetMode.DEFAULT));
 
-    checkDoc(prevRec.schema().getField("doc"),
-             prevRec.getDoc(GetMode.DEFAULT),
-             currRec.getDoc(GetMode.DEFAULT));
+    checkDoc(prevRec.schema().getField("doc"), prevRec.getDoc(GetMode.DEFAULT), currRec.getDoc(GetMode.DEFAULT));
 
     /*
     Compatibility of the deprecated "items" field:
@@ -795,7 +790,7 @@ public class ResourceCompatibilityChecker
 
     if (prevDefault != null && currDefault != null && !prevDefault.equals(currDefault))
     {
-      _map.addInfo("default", CompatibilityInfo.Type.VALUE_DIFFERENT, _path, prevDefault, currDefault);
+      _infoMap.addInfo("default", CompatibilityInfo.Type.VALUE_DIFFERENT, _infoPath, prevDefault, currDefault);
     }
   }
 
@@ -810,9 +805,7 @@ public class ResourceCompatibilityChecker
                           prevRec.getName(GetMode.DEFAULT),
                           currRec.getName(GetMode.DEFAULT));
 
-    checkDoc(prevRec.schema().getField("doc"),
-             prevRec.getDoc(GetMode.DEFAULT),
-             currRec.getDoc(GetMode.DEFAULT));
+    checkDoc(prevRec.schema().getField("doc"), prevRec.getDoc(GetMode.DEFAULT), currRec.getDoc(GetMode.DEFAULT));
 
     checkParameterArrayField(prevRec.schema().getField("parameters"),
                              prevRec.getParameters(GetMode.DEFAULT),
@@ -896,9 +889,7 @@ public class ResourceCompatibilityChecker
                           prevRec.getMethod(GetMode.DEFAULT),
                           currRec.getMethod(GetMode.DEFAULT));
 
-    checkDoc(prevRec.schema().getField("doc"),
-             prevRec.getDoc(GetMode.DEFAULT),
-             currRec.getDoc(GetMode.DEFAULT));
+    checkDoc(prevRec.schema().getField("doc"), prevRec.getDoc(GetMode.DEFAULT), currRec.getDoc(GetMode.DEFAULT));
 
     checkParameterArrayField(prevRec.schema().getField("parameters"),
                              prevRec.getParameters(GetMode.DEFAULT),

@@ -57,7 +57,7 @@ public class PegasusOptions
   {
     if (generationModes == null)
     {
-      throw new IllegalArgumentException("PegasusOptions.generationModes is null. Please check your build.gradle.");
+      throw new NullPointerException("PegasusOptions.generationModes is null. Please check your build.gradle.");
     }
 
     return generationModes.contains(mode);

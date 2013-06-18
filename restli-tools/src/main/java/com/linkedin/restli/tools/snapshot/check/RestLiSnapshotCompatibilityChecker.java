@@ -16,13 +16,12 @@
 
 package com.linkedin.restli.tools.snapshot.check;
 
+
 import com.linkedin.data.schema.DataSchemaLocation;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.Name;
 import com.linkedin.data.schema.NamedDataSchema;
-import com.linkedin.data.schema.SchemaParserFactory;
-import com.linkedin.data.schema.resolver.DefaultDataSchemaResolver;
-import com.linkedin.data.schema.resolver.FileDataSchemaResolver;
+import com.linkedin.data.schema.generator.AbstractGenerator;
 import com.linkedin.restli.tools.compatibility.CompatibilityInfoMap;
 import com.linkedin.restli.tools.compatibility.CompatibilityUtil;
 import com.linkedin.restli.tools.compatibility.ResourceCompatibilityChecker;
@@ -106,14 +105,16 @@ public class RestLiSnapshotCompatibilityChecker
 
     final StringBuilder allSummaries = new StringBuilder();
     boolean result = true;
-    RestLiSnapshotCompatibilityChecker checker = new RestLiSnapshotCompatibilityChecker();
+    final String resolverPath = System.getProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH);
+    final RestLiSnapshotCompatibilityChecker checker = new RestLiSnapshotCompatibilityChecker();
+    checker.setResolverPath(resolverPath);
 
     for (int i = 1; i < targets.length; i += 2)
     {
       String prevTarget = targets[i - 1];
       String currTarget = targets[i];
       result &= checker.check(prevTarget, currTarget, compat);
-      allSummaries.append(checker.getMap().createSummary(prevTarget, currTarget));
+      allSummaries.append(checker.getInfoMap().createSummary(prevTarget, currTarget));
 
     }
 
@@ -123,6 +124,11 @@ public class RestLiSnapshotCompatibilityChecker
     }
 
     System.exit(result ? 0 : 1);
+  }
+
+  public void setResolverPath(String resolverPath)
+  {
+    _resolverPath = resolverPath;
   }
 
   /**
@@ -136,7 +142,6 @@ public class RestLiSnapshotCompatibilityChecker
    */
   public boolean check(String prevRestspecPath, String currRestspecPath, CompatibilityLevel compatLevel)
   {
-
     if (compatLevel == CompatibilityLevel.OFF)
     {
       // skip check entirely.
@@ -146,47 +151,56 @@ public class RestLiSnapshotCompatibilityChecker
     Stack<Object> path = new Stack<Object>();
     path.push("");
 
-    Snapshot prevSnapshot = null;
-    Snapshot currSnapshot = null;
+    FileInputStream prevSnapshotFile = null;
+    FileInputStream currSnapshotFile = null;
 
     try
     {
-      prevSnapshot = readSnapshot(prevRestspecPath);
+      prevSnapshotFile = new FileInputStream(prevRestspecPath);
     }
     catch (FileNotFoundException e)
     {
-      _map.addInfo(CompatibilityInfo.Type.RESOURCE_NEW, path, currRestspecPath);
+      _infoMap.addInfo(CompatibilityInfo.Type.RESOURCE_NEW, path, currRestspecPath);
+    }
+
+    try
+    {
+      currSnapshotFile = new FileInputStream(currRestspecPath);
+    }
+    catch (FileNotFoundException e)
+    {
+      _infoMap.addInfo(CompatibilityInfo.Type.RESOURCE_MISSING, path, prevRestspecPath);
+    }
+
+    if (prevSnapshotFile == null || currSnapshotFile == null)
+    {
+      return _infoMap.isCompatible(compatLevel);
+    }
+
+    Snapshot prevSnapshot = null;
+    Snapshot currSnapshot = null;
+    try
+    {
+      prevSnapshot = new Snapshot(prevSnapshotFile);
+      currSnapshot = new Snapshot(currSnapshotFile);
     }
     catch (IOException e)
     {
-      _map.addInfo(CompatibilityInfo.Type.OTHER_ERROR, path, e.getMessage());
-    }
-
-    try
-    {
-      currSnapshot = readSnapshot(currRestspecPath);
-    }
-    catch (FileNotFoundException e)
-    {
-      _map.addInfo(CompatibilityInfo.Type.RESOURCE_MISSING, path, prevRestspecPath);
-    }
-    catch (Exception e)
-    {
-      _map.addInfo(CompatibilityInfo.Type.OTHER_ERROR, path, e.getMessage());
+      _infoMap.addInfo(CompatibilityInfo.Type.OTHER_ERROR, path, e.getMessage());
     }
 
     if (prevSnapshot == null || currSnapshot == null)
     {
-      return _map.isCompatible(compatLevel);
+      return _infoMap.isCompatible(compatLevel);
     }
 
-    DataSchemaResolver prevResolver = createResolverFromSnapshot(prevSnapshot);
-    DataSchemaResolver currResolver = createResolverFromSnapshot(currSnapshot);
+    DataSchemaResolver prevResolver = createResolverFromSnapshot(prevSnapshot, _resolverPath);
+    DataSchemaResolver currResolver = createResolverFromSnapshot(currSnapshot, _resolverPath);
 
     ResourceCompatibilityChecker checker = new ResourceCompatibilityChecker(prevSnapshot.getResourceSchema(), prevResolver,
                                                                             currSnapshot.getResourceSchema(), currResolver);
     boolean check = checker.check(compatLevel);
-    _map.addAll(checker.getMap());
+    _infoMap.addAll(checker.getInfoMap());
     return check;
   }
 
@@ -202,14 +216,9 @@ public class RestLiSnapshotCompatibilityChecker
     return options.toString();
   }
 
-  private static Snapshot readSnapshot(String fileTarget) throws FileNotFoundException, IOException
+  private static DataSchemaResolver createResolverFromSnapshot(Snapshot snapshot, String resolverPath)
   {
-    return new Snapshot(new FileInputStream(fileTarget));
-  }
-
-  private static DataSchemaResolver createResolverFromSnapshot(Snapshot snapshot)
-  {
-    final DataSchemaResolver resolver = CompatibilityUtil.getDataSchemaResolver();
+    final DataSchemaResolver resolver = CompatibilityUtil.getDataSchemaResolver(resolverPath);
 
     for(Map.Entry<String, NamedDataSchema> entry: snapshot.getModels().entrySet())
     {
@@ -221,13 +230,13 @@ public class RestLiSnapshotCompatibilityChecker
     return resolver;
   }
 
-  public CompatibilityInfoMap getMap()
+  public CompatibilityInfoMap getInfoMap()
   {
-    return _map;
+    return _infoMap;
   }
 
-  private static final String GENERATOR_RESOLVER_PATH = "generator.resolver.path";
+  private String _resolverPath;
 
-  private final CompatibilityInfoMap _map = new CompatibilityInfoMap();
+  private final CompatibilityInfoMap _infoMap = new CompatibilityInfoMap();
 
 }

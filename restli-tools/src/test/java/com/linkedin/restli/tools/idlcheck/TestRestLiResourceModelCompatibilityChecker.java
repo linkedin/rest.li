@@ -49,8 +49,8 @@ public class TestRestLiResourceModelCompatibilityChecker
                                      nonExistentFilename2,
                                      CompatibilityLevel.BACKWARDS));
 
-    final Collection<CompatibilityInfo> incompatibles = new HashSet<CompatibilityInfo>(checker.getMap().getIncompatibles());
-    final Collection<CompatibilityInfo> compatibles = new HashSet<CompatibilityInfo>(checker.getMap().getCompatibles());
+    final Collection<CompatibilityInfo> incompatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getIncompatibles());
+    final Collection<CompatibilityInfo> compatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getCompatibles());
 
     for (CompatibilityInfo te : incompatibles)
     {

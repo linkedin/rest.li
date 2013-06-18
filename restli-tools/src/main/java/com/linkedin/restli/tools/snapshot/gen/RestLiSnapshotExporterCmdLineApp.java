@@ -16,6 +16,9 @@
 
 package com.linkedin.restli.tools.snapshot.gen;
 
+import com.linkedin.data.schema.DataSchemaResolver;
+import com.linkedin.data.schema.generator.AbstractGenerator;
+import com.linkedin.restli.tools.compatibility.CompatibilityUtil;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
@@ -85,14 +88,18 @@ public class RestLiSnapshotExporterCmdLineApp
       System.exit(0);
     }
 
+    final String resolverPath = System.getProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH);
+
     try
     {
-      new RestLiSnapshotExporter().export(cl.getOptionValue("name"),
-                                          null,
-                                          cl.getOptionValues("sourcepath"),
-                                          cl.getOptionValues("resourcepackages"),
-                                          cl.getOptionValues("resourceclasses"),
-                                          cl.getOptionValue("outdir", "."));
+      final RestLiSnapshotExporter exporter = new RestLiSnapshotExporter();
+      exporter.setResolverPath(resolverPath);
+      exporter.export(cl.getOptionValue("name"),
+                      null,
+                      cl.getOptionValues("sourcepath"),
+                      cl.getOptionValues("resourcepackages"),
+                      cl.getOptionValues("resourceClasses"),
+                      cl.getOptionValue("outdir", "."));
     }
     catch (Throwable e)
     {

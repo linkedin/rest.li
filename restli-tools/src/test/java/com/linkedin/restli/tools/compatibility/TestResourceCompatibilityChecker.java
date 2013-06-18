@@ -112,8 +112,8 @@ public class TestResourceCompatibilityChecker
     boolean check = checker.check(CompatibilityLevel.BACKWARDS);
     Assert.assertTrue(check);
 
-    final Collection<CompatibilityInfo> incompatibles = checker.getMap().getIncompatibles();
-    final Collection<CompatibilityInfo> compatibles = new HashSet<CompatibilityInfo>(checker.getMap().getCompatibles());
+    final Collection<CompatibilityInfo> incompatibles = checker.getInfoMap().getIncompatibles();
+    final Collection<CompatibilityInfo> compatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getCompatibles());
 
     for (CompatibilityInfo di : testDiffs)
     {
@@ -140,8 +140,8 @@ public class TestResourceCompatibilityChecker
 
     Assert.assertTrue(checker.check(CompatibilityLevel.BACKWARDS));
 
-    final Collection<CompatibilityInfo> incompatibles = checker.getMap().getIncompatibles();
-    final Collection<CompatibilityInfo> compatibles = new HashSet<CompatibilityInfo>(checker.getMap().getCompatibles());
+    final Collection<CompatibilityInfo> incompatibles = checker.getInfoMap().getIncompatibles();
+    final Collection<CompatibilityInfo> compatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getCompatibles());
 
     for (CompatibilityInfo di : testDiffs)
     {
@@ -187,8 +187,8 @@ public class TestResourceCompatibilityChecker
     boolean check = checker.check(CompatibilityLevel.BACKWARDS);
     Assert.assertTrue(check);
 
-    final Collection<CompatibilityInfo> incompatibles = checker.getMap().getIncompatibles();
-    final Collection<CompatibilityInfo> compatibles = new HashSet<CompatibilityInfo>(checker.getMap().getCompatibles());
+    final Collection<CompatibilityInfo> incompatibles = checker.getInfoMap().getIncompatibles();
+    final Collection<CompatibilityInfo> compatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getCompatibles());
 
     for (CompatibilityInfo di : testDiffs)
     {
@@ -270,7 +270,7 @@ public class TestResourceCompatibilityChecker
 
     Assert.assertFalse(checker.check(CompatibilityLevel.BACKWARDS));
 
-    final Collection<CompatibilityInfo> incompatibles = new HashSet<CompatibilityInfo>(checker.getMap().getIncompatibles());
+    final Collection<CompatibilityInfo> incompatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getIncompatibles());
 
     for (CompatibilityInfo te : testErrors)
     {
@@ -314,7 +314,7 @@ public class TestResourceCompatibilityChecker
 
     Assert.assertFalse(checker.check(CompatibilityLevel.BACKWARDS));
 
-    final Collection<CompatibilityInfo> incompatibles = new HashSet<CompatibilityInfo>(checker.getMap().getIncompatibles());
+    final Collection<CompatibilityInfo> incompatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getIncompatibles());
 
     for (CompatibilityInfo te : testErrors)
     {
@@ -359,7 +359,7 @@ public class TestResourceCompatibilityChecker
 
     Assert.assertFalse(checker.check(CompatibilityLevel.BACKWARDS));
 
-    final Collection<CompatibilityInfo> incompatible = new HashSet<CompatibilityInfo>(checker.getMap().getIncompatibles());
+    final Collection<CompatibilityInfo> incompatible = new HashSet<CompatibilityInfo>(checker.getInfoMap().getIncompatibles());
 
     for (CompatibilityInfo te : testErrors)
     {
@@ -387,8 +387,8 @@ public class TestResourceCompatibilityChecker
 
     Assert.assertFalse(checker.check(CompatibilityLevel.BACKWARDS));
 
-    final Collection<CompatibilityInfo> incompatibles = new HashSet<CompatibilityInfo>(checker.getMap().getIncompatibles());
-    final Collection<CompatibilityInfo> compatibles = new HashSet<CompatibilityInfo>(checker.getMap().getCompatibles());
+    final Collection<CompatibilityInfo> incompatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getIncompatibles());
+    final Collection<CompatibilityInfo> compatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getCompatibles());
 
     for (CompatibilityInfo te : testErrors)
     {
@@ -419,10 +419,10 @@ public class TestResourceCompatibilityChecker
 
     Assert.assertTrue(checker.check(CompatibilityLevel.BACKWARDS));
 
-    final Collection<CompatibilityInfo> incompatibles = checker.getMap().getIncompatibles();
+    final Collection<CompatibilityInfo> incompatibles = checker.getInfoMap().getIncompatibles();
     Assert.assertTrue(incompatibles.isEmpty());
 
-    final Collection<CompatibilityInfo> compatibles = new HashSet<CompatibilityInfo>(checker.getMap().getCompatibles());
+    final Collection<CompatibilityInfo> compatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getCompatibles());
 
     for (CompatibilityInfo td : testDiffs)
     {

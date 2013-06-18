@@ -113,7 +113,7 @@ public class RestLiResourceModelCompatibilityChecker
       String prevTarget = targets[i - 1];
       String currTarget = targets[i];
       result &= checker.check(prevTarget, currTarget, compat);
-      allSummaries.append(checker.getMap().createSummary(prevTarget, currTarget));
+      allSummaries.append(checker.getInfoMap().createSummary(prevTarget, currTarget));
     }
 
     if (compat != CompatibilityLevel.OFF && allSummaries.length() > 0)
@@ -155,11 +155,11 @@ public class RestLiResourceModelCompatibilityChecker
     }
     catch (FileNotFoundException e)
     {
-      _map.addInfo(CompatibilityInfo.Type.RESOURCE_NEW, path, currRestspecPath);
+      _infoMap.addInfo(CompatibilityInfo.Type.RESOURCE_NEW, path, currRestspecPath);
     }
     catch (IOException e)
     {
-      _map.addInfo(CompatibilityInfo.Type.OTHER_ERROR, path, e.getMessage());
+      _infoMap.addInfo(CompatibilityInfo.Type.OTHER_ERROR, path, e.getMessage());
     }
 
     try
@@ -168,16 +168,16 @@ public class RestLiResourceModelCompatibilityChecker
     }
     catch (FileNotFoundException e)
     {
-      _map.addInfo(CompatibilityInfo.Type.RESOURCE_MISSING, path, prevRestspecPath);
+      _infoMap.addInfo(CompatibilityInfo.Type.RESOURCE_MISSING, path, prevRestspecPath);
     }
     catch (Exception e)
     {
-      _map.addInfo(CompatibilityInfo.Type.OTHER_ERROR, path, e.getMessage());
+      _infoMap.addInfo(CompatibilityInfo.Type.OTHER_ERROR, path, e.getMessage());
     }
 
     if (prevRec == null || currRec == null)
     {
-      return _map.isCompatible(compatLevel);
+      return _infoMap.isCompatible(compatLevel);
     }
 
     final DataSchemaResolver resolver;
@@ -192,7 +192,7 @@ public class RestLiResourceModelCompatibilityChecker
 
     ResourceCompatibilityChecker checker = new ResourceCompatibilityChecker(prevRec, resolver, currRec, resolver);
     boolean check = checker.check(compatLevel);
-    _map.addAll(checker.getMap());
+    _infoMap.addAll(checker.getInfoMap());
     return check;
   }
 
@@ -212,9 +212,10 @@ public class RestLiResourceModelCompatibilityChecker
    * @return check results in the backwards incompatibility category.
    *         empty collection if called before checking any files
    */
+  @Deprecated
   public Collection<CompatibilityInfo> getIncompatibles()
   {
-    return _map.getIncompatibles();
+    return _infoMap.getIncompatibles();
   }
 
   /**
@@ -224,7 +225,7 @@ public class RestLiResourceModelCompatibilityChecker
   @Deprecated
   public Collection<CompatibilityInfo> getCompatibles()
   {
-    return _map.getCompatibles();
+    return _infoMap.getCompatibles();
   }
 
   /**
@@ -234,7 +235,7 @@ public class RestLiResourceModelCompatibilityChecker
   @Deprecated
   public String getSummary()
   {
-    return _map.createSummary(_prevRestspecPath, _currRestspecPath);
+    return _infoMap.createSummary(_prevRestspecPath, _currRestspecPath);
   }
 
   private static String listCompatLevelOptions()
@@ -249,9 +250,9 @@ public class RestLiResourceModelCompatibilityChecker
     return options.toString();
   }
 
-  public CompatibilityInfoMap getMap()
+  public CompatibilityInfoMap getInfoMap()
   {
-    return _map;
+    return _infoMap;
   }
 
   private String _prevRestspecPath;
@@ -260,5 +261,5 @@ public class RestLiResourceModelCompatibilityChecker
   private static final RestSpecCodec _codec = new RestSpecCodec();
   private static final Logger log = LoggerFactory.getLogger(RestLiResourceModelCompatibilityChecker.class);
 
-  private final CompatibilityInfoMap _map = new CompatibilityInfoMap();
+  private final CompatibilityInfoMap _infoMap = new CompatibilityInfoMap();
 }

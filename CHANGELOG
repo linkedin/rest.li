@@ -1,7 +1,7 @@
-1.8.40
+1.9.0
 ------
 (RB=176567)
-Introduce simple resources concept which serves a single entity from a particular path. 
+Introduce simple resources concept which serves a single entity from a particular path.
 
 (RB=174576)
 Clean up SLF4J/Log4j mess by removing all dependencies on Log4j and
@@ -10,6 +10,9 @@ the SLF4J/Log4j adapter from production jars.
 If your executable (war file, etc.) does not already depend on an SLF4J
 adapter, you may need to introduce such a dependency, for example on
 slf4jlog4j12.
+
+(RB=176574)
+Incorporate snapshot into pegasus plugin. All existing projects will automatically generate and publish the snapshot files.
 
 1.8.39
 ------

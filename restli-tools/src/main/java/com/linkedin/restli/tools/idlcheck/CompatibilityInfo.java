@@ -40,7 +40,7 @@ public class CompatibilityInfo
     OTHER_ERROR(Level.INCOMPATIBLE, "%s"),
     PARAMETER_NEW_REQUIRED(Level.INCOMPATIBLE, "Unable to add the new required parameter \"%s\""),
     PARAMETER_WRONG_OPTIONALITY(Level.INCOMPATIBLE, "Unable to change the previous optional parameter to currently required"),
-    RESOURCE_MISSING(Level.INCOMPATIBLE, "Resource for idl \"%s\" is not found. This idl will not be released. Please remove the idl and build again"),
+    RESOURCE_MISSING(Level.INCOMPATIBLE, "Resource for \"%s\" is not found. This endpoint will not be released. Please remove this file and build again"),
     TYPE_INCOMPATIBLE(Level.INCOMPATIBLE, "Previous type \"%s\" and current type \"%s\" are incompatible"),
     TYPE_MISSING(Level.INCOMPATIBLE, "Type is required but missing"),
     TYPE_UNKNOWN(Level.INCOMPATIBLE, "Type cannot be resolved: %s"),

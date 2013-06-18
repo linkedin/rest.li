@@ -59,6 +59,7 @@ public class TestRestLiSnapshotExporter
   // IDE such as IntelliJ IDEA may use the project directory instead
   // If you create test in IDE, make sure the working directory is always the module directory
   private String moduleDir;
+  private String resolverPath;
   private static final String PROJECT_DIR_PROP = "test.projectDir";
 
   @BeforeTest
@@ -71,11 +72,10 @@ public class TestRestLiSnapshotExporter
 
     final String resourcesDir = moduleDir + File.separator + RESOURCES_SUFFIX;
 
-    String resolverPath = System.getProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH);
+    resolverPath = System.getProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH);
     if (resolverPath == null)
     {
       resolverPath = resourcesDir + PEGASUS_SUFFIX;
-      System.setProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH, resolverPath);
     }
   }
 
@@ -90,6 +90,7 @@ public class TestRestLiSnapshotExporter
   public void testSimpleModel() throws Exception
   {
     RestLiSnapshotExporter exporter = new RestLiSnapshotExporter();
+    exporter.setResolverPath(resolverPath);
 
     assertEquals(outdir.list().length, 0);
     GeneratorResult result = exporter.export("twitter",
