@@ -20,22 +20,21 @@ package com.linkedin.restli.test;
 import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.api.ToneFacet;
-import com.linkedin.restli.examples.greetings.client.ArrayTestBuilders;
-import com.linkedin.restli.examples.greetings.client.ArrayTestFindByTestBuilder;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
 
 
 /**
- * TODO: This test should be removed once the "items" field is fully deprecated
+ * Test if the generated request builder will still have Iterable parameters.
+ * TODO: When Iterable parameters are deprecated, this test should be removed
  *
  * @author Keren Jin
  */
 public class ArrayTest
 {
   @Test
-  public void test()
+  public void testIterable()
   {
     final ArrayTestFindByTestBuilder builders = new ArrayTestBuilders().findByTest();
     builders.primitiveParam(Arrays.asList(1, 2, 3));

@@ -1,3 +1,8 @@
+1.8.39
+------
+(RB=177700)
+pegasus plugin and idl compatibility checker will check for missing and extra published idl files.
+
 1.8.38
 ------
 (RB=175711)

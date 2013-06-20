@@ -859,7 +859,7 @@ class PegasusPlugin implements Plugin<Project> {
       final Task publishRestModelTask = project.task(sourceSet.getTaskName('publish', 'restModel'),
                                                      type: PublishIdl,
                                                      dependsOn: generateRestModelTask) {
-        from getSuffixedFiles(project, generateRestModelTask.destinationDir, IDL_FILE_SUFFIX)
+        from generateRestModelTask.generatedFiles
         // apiIdlDir is annotated as @InputDirectory, whose existence is validated before executing the task
         into idlGenerationDir
         resolverPath = apiProject.files(getDataSchemaRelativePath(project, sourceSet)) + getDataModelConfig(apiProject, sourceSet)
@@ -869,7 +869,7 @@ class PegasusPlugin implements Plugin<Project> {
       // tasks which declare no output should always assume outputs UP-TO-DATE
       publishRestModelTask.outputs.upToDateWhen { true }
 
-      jarTask.from(idlGenerationDir) // add any .restspec.json files as resources to the jar
+      jarTask.from(generateRestModelTask.generatedFiles) // add generated .restspec.json files as resources to the jar
       jarTask.dependsOn(publishRestModelTask)
     }
   }
@@ -969,12 +969,13 @@ class PegasusPlugin implements Plugin<Project> {
     addGeneratedDir(project, targetSourceSet, [ getDataModelConfig(project, sourceSet), project.configurations.dataTemplateCompile ])
 
     // make sure that java source files have been generated before compiling them
-    project.tasks[targetSourceSet.compileJavaTaskName].dependsOn(generateDataTemplatesTask)
+    final Task compileTask = project.tasks[targetSourceSet.compileJavaTaskName]
+    compileTask.dependsOn(generateDataTemplatesTask)
 
     // create data template jar file
     Task dataTemplateJarTask = project.task(sourceSet.name + 'DataTemplateJar',
                                             type: Jar,
-                                            dependsOn: targetSourceSet.compileJavaTaskName) {
+                                            dependsOn: compileTask) {
       from (dataSchemaDir) {
         eachFile {
           it.path = 'pegasus' + File.separatorChar + it.path.toString()
@@ -1295,6 +1296,7 @@ class PegasusPlugin implements Plugin<Project> {
     @InputFiles FileCollection runtimeClasspath
     @OutputDirectory File destinationDir
     PegasusOptions.IdlOptions idlOptions
+    Collection<File> generatedFiles = []
 
     @TaskAction
     protected void generate()
@@ -1320,7 +1322,8 @@ class PegasusPlugin implements Plugin<Project> {
       final def idlGenerator = project.property(GENERATOR_CLASSLOADER_NAME).loadClass('com.linkedin.restli.tools.idlgen.RestLiResourceModelExporter').newInstance()
       if (idlOptions.idlItems.empty)
       {
-        idlGenerator.export(null, classpathUrls as String[], inputDirPaths, null, null, destinationDir.path)
+        final def result = idlGenerator.export(null, classpathUrls as String[], inputDirPaths, null, null, destinationDir.path)
+        generatedFiles.addAll(result.targetFiles)
       }
       else
       {
@@ -1338,7 +1341,8 @@ class PegasusPlugin implements Plugin<Project> {
 
           // RestLiResourceModelExporter will load classes from the passed packages
           // we need to add the classpath to the thread's context class loader
-          idlGenerator.export(apiName, classpathUrls as String[], inputDirPaths, idlItem.packageNames, null, destinationDir.path)
+          final def result = idlGenerator.export(apiName, classpathUrls as String[], inputDirPaths, idlItem.packageNames, null, destinationDir.path)
+          generatedFiles.addAll(result.targetFiles)
         }
       }
 
@@ -1395,7 +1399,7 @@ class PegasusPlugin implements Plugin<Project> {
 
       if (_idlPublishReminder.length() == 0)
       {
-        _idlPublishReminder.append("\n")
+        _idlPublishReminder.append("\n\n")
                            .append("idl files have been changed during the build. You must run the following command line at project root to pick up the changes:\n")
                            .append("  gradle build\n")
       }
@@ -1440,13 +1444,28 @@ class PegasusPlugin implements Plugin<Project> {
       final StringBuilder allCheckMessage = new StringBuilder()
       boolean isIdlCompatible = true
 
+      final Set<String> apiExistingIdlFilePaths = destinationDir.listFiles(new IdlExtensionFilter()).collect { it.absolutePath }
       source.each {
         project.logger.info('Checking idl file: ' + it.path)
 
-        final String apiIdlFilePath = "${destinationDir.path}${File.separatorChar}${it.name}"
+        String apiIdlFilePath = "${destinationDir.path}${File.separatorChar}${it.name}"
+        final File apiIdlFile = project.file(apiIdlFilePath)
+        if (apiIdlFile.exists())
+        {
+          apiExistingIdlFilePaths.remove(apiIdlFilePath)
+        }
+        else
+        {
+          apiIdlFilePath = ""
+        }
         isIdlCompatible &= idlChecker.check(apiIdlFilePath, it.path, idlCompatLevel)
 
         project.logger.info("Checked compatibility in mode: $idlCompatLevel; $apiIdlFilePath VS $it.path; result: $isIdlCompatible")
+        allCheckMessage.append(idlChecker.summary)
+      }
+
+      apiExistingIdlFilePaths.each {
+        isIdlCompatible &= idlChecker.check(it, "", idlCompatLevel)
         allCheckMessage.append(idlChecker.summary)
       }
 
@@ -1472,12 +1491,20 @@ class PegasusPlugin implements Plugin<Project> {
       return false
     }
 
-    private enum IDLCompatLevel
+    private static enum IDLCompatLevel
     {
       OFF,
       IGNORE,
       BACKWARDS,
       EQUIVALENT
+    }
+
+    private static class IdlExtensionFilter implements FileFilter
+    {
+      public boolean accept(File f)
+      {
+        return f.isFile() && f.name.toLowerCase().endsWith(PegasusPlugin.IDL_FILE_SUFFIX);
+      }
     }
   }
 

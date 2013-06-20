@@ -134,7 +134,22 @@ public class CompatibilityInfoMap
 
     if (summaryMessage.length() != 0)
     {
-      summaryMessage.insert(0, "\nidl compatibility report between published \"" + prevRestspecPath + "\" and current \"" + currRestspecPath + "\":\n");
+      StringBuilder titleMessage = new StringBuilder("\nidl compatibility report regarding to");
+      if (!prevRestspecPath.isEmpty())
+      {
+        titleMessage.append(" published \"").append(prevRestspecPath).append("\"");
+      }
+      if (!prevRestspecPath.isEmpty() && !currRestspecPath.isEmpty())
+      {
+        titleMessage.append(" and");
+      }
+      if (!currRestspecPath.isEmpty())
+      {
+        titleMessage.append(" current \"").append(currRestspecPath).append("\"");
+      }
+      titleMessage.append(":\n");
+
+      summaryMessage.insert(0, titleMessage);
     }
 
     return summaryMessage.toString();

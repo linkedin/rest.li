@@ -18,6 +18,8 @@ dependencies {
   compile externalDependency.javaxInject
   compile externalDependency.parseq
   testCompile externalDependency.testng
+  testDataModel project(path: ':restli-int-test-api', configuration: 'dataTemplate')
   testCompile project(path: ':restli-int-test-api', configuration: 'restClient')
+  testCompile project(path: project.path, configuration: 'testRestClient')
   testCompile project(path: ':d2', configuration: 'testArtifacts')
 }
