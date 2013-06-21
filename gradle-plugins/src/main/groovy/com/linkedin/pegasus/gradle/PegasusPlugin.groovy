@@ -798,9 +798,10 @@ class PegasusPlugin implements Plugin<Project> {
 
   protected void configureRestModelGeneration(Project project, SourceSet sourceSet)
   {
-    if (sourceSet.allJava.empty)
+
+    if (sourceSet.allSource.empty)
     {
-      project.logger.info("No Java file is found for sourceSet " + sourceSet.name)
+      project.logger.info("No source files found for sourceSet " + sourceSet.name + ".  Skipping idl generation.")
       return
     }
 

@@ -4,6 +4,10 @@
 When generating idl, pass the source files of the resource classes to Javadoc.
 When checking idl compatibility, doc field change is now a backwards compatible change instead of equivalent.
 
+(RB=178168)
+Update gradle plugin to check source of all languages when deciding if idl generation should be skipped.  This fixes a bug where scala
+*Resource.scala files were ignored.
+
 1.8.37
 ------
 (RB=176630)
