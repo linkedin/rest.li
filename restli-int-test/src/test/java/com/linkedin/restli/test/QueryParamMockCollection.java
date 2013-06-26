@@ -16,7 +16,8 @@
 
 package com.linkedin.restli.test;
 
-import com.linkedin.restli.common.EmptyRecord;
+import com.linkedin.data.DataMap;
+import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestMethod;
@@ -27,17 +28,25 @@ import com.linkedin.restli.server.resources.KeyValueResource;
 * @version $Revision: $
 */
 @RestLiCollection(name = QueryParamMockCollection.RESOURCE_NAME)
-public class QueryParamMockCollection implements KeyValueResource<String, EmptyRecord>
+public class QueryParamMockCollection implements KeyValueResource<String, QueryParamMockCollection.DummyRecord>
 {
   public static volatile String _lastQueryParamValue = null;
   public static final String VALUE_KEY = "v";
   public static final String RESOURCE_NAME = "testQueryParam";
 
+  public static class DummyRecord extends RecordTemplate
+  {
+    public DummyRecord()
+    {
+      super(new DataMap(), null);
+    }
+  }
+
   @RestMethod.Get
-  public EmptyRecord get(String key, @QueryParam("v") String value)
+  public DummyRecord get(String key, @QueryParam("v") String value)
   {
     _lastQueryParamValue = value;
-    EmptyRecord result = new EmptyRecord();
+    DummyRecord result = new DummyRecord();
     result.data().put(VALUE_KEY, value);
     return result;
   }

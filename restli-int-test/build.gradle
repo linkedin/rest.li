@@ -1,5 +1,7 @@
 apply plugin: 'pegasus'
 
+ext.apiProject = null
+
 dependencies {
   compile project(':restli-int-test-server')
   compile project(':data')
