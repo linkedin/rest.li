@@ -10,13 +10,7 @@ dependencies {
   compile externalDependency.commonsCli
   compile externalDependency.commonsHttpClient
   compile externalDependency.json
-  compile (externalDependency.zookeeper) {
-    // ZooKeeper depends on log4j 1.2.15 which breaks open source
-    // build due to an unresolved dependency on javax.jms
-    exclude group: 'javax.jms'
-    exclude group: 'com.sun.jdmk'
-    exclude group: 'com.sun.jmx'
-  }
+  compile externalDependency.zookeeper
   compile externalDependency.jacksonCoreAsl
   compile externalDependency.jacksonMapperAsl
   compile externalDependency.jdkTools

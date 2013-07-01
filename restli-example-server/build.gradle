@@ -13,13 +13,7 @@ dependencies {
   compile project(':pegasus-common')
   compile externalDependency.javaxInject
   compile externalDependency.parseq
-  compile (externalDependency.zookeeper) {
-    // ZooKeeper depends on log4j 1.2.15 which breaks open source
-    // build due to an unresolved dependency on javax.jms
-    exclude group: 'javax.jms'
-    exclude group: 'com.sun.jdmk'
-    exclude group: 'com.sun.jmx'
-  }
+  compile externalDependency.zookeeper
   runtime externalDependency.slf4jLog4j12
   runtime externalDependency.log4j
   testCompile project(':restli-client')

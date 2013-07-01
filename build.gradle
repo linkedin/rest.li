@@ -122,6 +122,12 @@ subprojects {
     testArtifacts {
       visible = false
     }
+    // Exclude a bunch of undesirable, unused dependencies
+    // that Log4j 1.2.15 drags in; these break the open source
+    // build since they are not available in maven central.
+    all*.exclude group: 'javax.jms', module: 'jms'
+    all*.exclude group: 'com.sun.jdmk', module: 'jmxtools'
+    all*.exclude group: 'com.sun.jmx', module: 'jmxri'
   }
 
   // Default dependencies for all subprojects
