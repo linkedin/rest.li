@@ -1,3 +1,8 @@
+1.8.40
+------
+(RB=176567)
+Introduce simple resources concept which serves a single entity from a particular path. 
+
 1.8.39
 ------
 (RB=177700)
