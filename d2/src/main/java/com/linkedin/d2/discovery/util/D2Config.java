@@ -21,7 +21,6 @@
 package com.linkedin.d2.discovery.util;
 
 
-import com.linkedin.common.util.MapUtil;
 import com.linkedin.d2.balancer.config.ConfigWriter;
 import com.linkedin.d2.balancer.properties.ClusterPropertiesJsonSerializer;
 import com.linkedin.d2.balancer.properties.HashBasedPartitionProperties;
@@ -128,7 +127,7 @@ public class D2Config
     _log.info("clusterDefaults: " + _clusterDefaults);
     _log.info("serviceDefaults: " + _serviceDefaults);
 
-    String defaultColo = (String)_clusterDefaults.remove(PropertyKeys.DEFAULT_COLO);
+    final String defaultColo = (String)_clusterDefaults.remove(PropertyKeys.DEFAULT_COLO);
 
     // Prior to supporting colos, we had a double for loop: foreach cluster ... foreach service
     // inside that cluster. This was so users could easily associate a group of services with a
@@ -178,7 +177,7 @@ public class D2Config
       Map<String,Map<String,Object>> clusterVariantConfig = (Map<String,Map<String,Object>>)clusterConfig.remove(PropertyKeys.CLUSTER_VARIANTS);
       @SuppressWarnings("unchecked")
       List<String> coloVariants = (List<String>)clusterConfig.remove(PropertyKeys.COLO_VARIANTS);
-      String masterColo = (String)clusterConfig.remove(PropertyKeys.MASTER_COLO);
+      final String masterColo = (String)clusterConfig.remove(PropertyKeys.MASTER_COLO);
 
       // do some sanity check for partitions if any
       // Moving handling of partitionProperties before any coloVariant manipulations
@@ -207,12 +206,12 @@ public class D2Config
         // one of the peer colos, if applicable.
         if (!coloVariants.contains(defaultColo))
         {
-          throw new IllegalStateException("The default colo: " + defaultColo + "is not one of the peer colos.");
+          throw new IllegalStateException("The default colo: " + defaultColo + " is not one of the peer colos.");
         }
 
         if (masterColo != null && !coloVariants.contains(masterColo))
         {
-          throw new IllegalStateException("The master colo: " + defaultColo + "is not one of the peer colos.");
+          throw new IllegalStateException("The master colo: " + masterColo + " is not one of the peer colos.");
         }
       }
 
@@ -234,13 +233,19 @@ public class D2Config
 
         for (String serviceName : servicesConfigs.keySet())
         {
+          // "resource" level config
           Map<String, Object> serviceConfig = servicesConfigs.get(serviceName);
+
           // There are some cases where we may not want to create colo variants of a particular service
           // We can't remove properties from the serviceConfig here because we might need to loop
           // over it multiple times.
           String createColoVariants = (String)serviceConfig.get(PropertyKeys.HAS_COLO_VARIANTS);
           boolean createColoVariantsForService = shouldCreateColoVariantsForService(colo, createColoVariants);
           String coloServiceName = serviceName;
+
+          final boolean defaultRoutingToMasterColo =
+              serviceConfig.containsKey(PropertyKeys.DEFAULT_ROUTING) &&
+              PropertyKeys.MASTER_SUFFIX.equals(serviceConfig.get(PropertyKeys.DEFAULT_ROUTING));
 
           // if the coloServiceName ends up being the same as the serviceName, then we won't create
           // any colo variants of that serviceName.
@@ -285,9 +290,13 @@ public class D2Config
             // the latter only being done for regular clusters, the former only being done for clusters
             // that have coloVariants specified.
             Map<String,Object> regularServiceConfig = new HashMap<String,Object>(serviceConfig);
-            // if we didn't have an coloVariants for this cluster, make sure to use the original
-            // cluster name
-            String defaultColoClusterName = D2Utils.addSuffixToBaseName(clusterName, ("".matches(colo) ? null :defaultColo));
+
+            final String defaultColoClusterName = clusterNameWithRouting(clusterName,
+                                                                         colo,
+                                                                         defaultColo,
+                                                                         masterColo,
+                                                                         defaultRoutingToMasterColo);
+
             regularServiceConfig.put(PropertyKeys.CLUSTER_NAME, defaultColoClusterName);
             regularServiceConfig.put(PropertyKeys.SERVICE_NAME, serviceName);
             coloServicesConfigs.put(serviceName, regularServiceConfig);
@@ -475,6 +484,33 @@ public class D2Config
         _log.warn("ZooKeeper shutdown interrupted", e);
       }
     }
+  }
+
+  protected static String clusterNameWithRouting(final String clusterName,
+                                                 final String destinationColo,
+                                                 final String defaultColo,
+                                                 final String masterColo,
+                                                 final boolean defaultRoutingToMasterColo)
+  {
+    final String clusterSuffix;
+    if ("".matches(destinationColo))
+    {
+      // If we didn't have an coloVariants for this cluster, make sure to use the original
+      // cluster name.
+      clusterSuffix = null;
+    }
+    else if (defaultRoutingToMasterColo)
+    {
+      // If this service is configured to route all requests to the master colo by default
+      // then we need to configure the service to use the master colo.
+      clusterSuffix = masterColo;
+    }
+    else
+    {
+      clusterSuffix = defaultColo;
+    }
+    final String defaultColoClusterName = D2Utils.addSuffixToBaseName(clusterName, clusterSuffix);
+    return defaultColoClusterName;
   }
 
   private <T> void writeConfig(String path, PropertySerializer<T> serializer,

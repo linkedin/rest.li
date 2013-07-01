@@ -389,6 +389,40 @@ public class TestD2Config
   }
 
   @Test
+  public static void testClusterNameWithRouting() throws Exception
+  {
+    String clusterNameWithRouting;
+
+    clusterNameWithRouting = D2Config.clusterNameWithRouting("clusterName",
+                                                             "destinationColo",
+                                                             "defaultColo",
+                                                             "masterColo",
+                                                             false);
+    assertEquals("clusterName-defaultColo", clusterNameWithRouting);
+
+    clusterNameWithRouting = D2Config.clusterNameWithRouting("clusterName",
+                                                             "destinationColo",
+                                                             "defaultColo",
+                                                             "masterColo",
+                                                             true);
+    assertEquals("clusterName-masterColo", clusterNameWithRouting);
+
+    clusterNameWithRouting = D2Config.clusterNameWithRouting("clusterName",
+                                                             "",
+                                                             "defaultColo",
+                                                             "masterColo",
+                                                             false);
+    assertEquals("clusterName", clusterNameWithRouting);
+
+    clusterNameWithRouting = D2Config.clusterNameWithRouting("clusterName",
+                                                             "",
+                                                             "defaultColo",
+                                                             "masterColo",
+                                                             true);
+    assertEquals("clusterName", clusterNameWithRouting);
+  }
+
+  @Test
   public static void testClustersWithDuplicateServices() throws IOException, InterruptedException, URISyntaxException, Exception
   {
     // D2Config error message - "Identical service name found in multiple clusters!"
@@ -1371,6 +1405,61 @@ public class TestD2Config
     {
       // expected because the masterColo isn't one of the peerColos
     }
+  }
+
+  /**
+   * In the colo EastCoast for a service available in colos {EastCoast, WestCoast} and where the
+   * master colo is WestCoast verify that by default services use EastCoast and when configured for
+   * default routing to master that they use WestCoast.
+   */
+  @Test
+  public static void testDefaultRoutingToMaster() throws IOException, InterruptedException, URISyntaxException, Exception
+  {
+    final String masterColo = "WestCoast";
+    final String defaultColo = "EastCoast";
+
+    List<String> serviceList = new ArrayList<String>();
+    serviceList.add("service1");
+    serviceList.add("service2");
+
+    @SuppressWarnings("serial")
+    Map<String,List<String>> clustersData = new HashMap<String,List<String>>();
+    String cluster1Name = "cluster1";
+    clustersData.put(cluster1Name, serviceList);
+
+    List<String> clusterList = new ArrayList<String>();
+    clusterList.add(cluster1Name);
+
+    Map<String,Object> clusterProperties = new HashMap<String,Object>();
+
+    List<String> peerColos = new ArrayList<String>();
+    peerColos.add("WestCoast");
+    peerColos.add("EastCoast");
+    Map<String,List<String>> peerColoList = new HashMap<String,List<String>>();
+    peerColoList.put(cluster1Name, peerColos);
+    clusterProperties.put("coloVariants", peerColos);
+    clusterProperties.put("masterColo", masterColo);
+    Map<String,String> masterColoList = new HashMap<String,String>();
+    masterColoList.put(cluster1Name, masterColo);
+    Map<String,Map<String,Object>> clustersProperties = new HashMap<String,Map<String,Object>>();
+    clustersProperties.put(cluster1Name, clusterProperties);
+
+    Set<String> servicesWithDefaultRoutingToMaster = Collections.singleton("service2");
+    D2ConfigTestUtil d2Conf = new D2ConfigTestUtil(clustersData, defaultColo, clustersProperties,
+                                                   servicesWithDefaultRoutingToMaster);
+    d2Conf.runDiscovery(_zkHosts);
+
+    // Verify default routing
+    verifyServiceProperties("cluster1-EastCoast", "service1", "/service1", null);
+    verifyServiceProperties("cluster1-WestCoast", "service2", "/service2", null);
+
+    // Verify explicit routing
+    verifyServiceProperties("cluster1-EastCoast", "service1-EastCoast", "/service1", null);
+    verifyServiceProperties("cluster1-WestCoast", "service1-WestCoast", "/service1", null);
+    verifyServiceProperties("cluster1-WestCoast", "service1Master", "/service1", null);
+    verifyServiceProperties("cluster1-EastCoast", "service2-EastCoast", "/service2", null);
+    verifyServiceProperties("cluster1-WestCoast", "service2-WestCoast", "/service2", null);
+    verifyServiceProperties("cluster1-WestCoast", "service2Master", "/service2", null);
   }
 
   private static void verifyColoClusterAndServices(Map<String,List<String>> clustersData,

@@ -16,17 +16,20 @@
 
 package com.linkedin.d2.discovery.util;
 
-import com.linkedin.d2.balancer.properties.PropertyKeys;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.linkedin.d2.balancer.properties.PropertyKeys;
 
 public class D2ConfigTestUtil
 {
@@ -65,14 +68,32 @@ public class D2ConfigTestUtil
   public D2ConfigTestUtil(Map<String,List<String>> clustersData, String defaultColo,
                           Map<String,Map<String,Object>> extraClusterProperties)
   {
-    this(clustersData, defaultColo, extraClusterProperties, new HashMap<String,List<String>>());
+    this(clustersData, defaultColo, extraClusterProperties, Collections.<String>emptySet());
+  }
+
+  public D2ConfigTestUtil(Map<String,List<String>> clustersData, String defaultColo,
+                          Map<String,Map<String,Object>> extraClusterProperties,
+                          Set<String> servicesWithDefaultRoutingToMaster)
+  {
+    this(clustersData, defaultColo, extraClusterProperties, new HashMap<String,List<String>>(),
+         servicesWithDefaultRoutingToMaster);
   }
 
   public D2ConfigTestUtil(Map<String,List<String>> clustersData, String defaultColo,
                           Map<String,Map<String,Object>> extraClusterProperties,
                           Map<String,List<String>> serviceGroupsData)
   {
-    this(clustersData, defaultColo, extraClusterProperties, serviceGroupsData, null);
+    this(clustersData, defaultColo, extraClusterProperties, serviceGroupsData,
+         Collections.<String>emptySet());
+  }
+
+  public D2ConfigTestUtil(Map<String,List<String>> clustersData, String defaultColo,
+                          Map<String,Map<String,Object>> extraClusterProperties,
+                          Map<String,List<String>> serviceGroupsData,
+                          Set<String> servicesWithDefaultRoutingToMaster)
+  {
+    this(clustersData, defaultColo, extraClusterProperties, serviceGroupsData, null,
+         servicesWithDefaultRoutingToMaster);
   }
 
   public D2ConfigTestUtil(Map<String,List<String>> clustersData, String defaultColo,
@@ -80,10 +101,21 @@ public class D2ConfigTestUtil
                           Map<String,List<String>> serviceGroupsData,
                           List<String> excludeServiceList)
   {
+    this(clustersData, defaultColo, extraClusterProperties, serviceGroupsData, excludeServiceList,
+         Collections.<String>emptySet());
+  }
+
+  public D2ConfigTestUtil(Map<String,List<String>> clustersData, String defaultColo,
+                          Map<String,Map<String,Object>> extraClusterProperties,
+                          Map<String,List<String>> serviceGroupsData,
+                          List<String> excludeServiceList,
+                          Set<String> servicesWithDefaultRoutingToMaster)
+  {
     _loadBalancerStrategyList = Arrays.asList(new String[]{"degrader","degraderV3"});
     setDefaults();
     _clusterDefaults.put("defaultColo", defaultColo);
-    generateClusters(clustersData, extraClusterProperties, serviceGroupsData, excludeServiceList);
+    generateClusters(clustersData, extraClusterProperties, serviceGroupsData, excludeServiceList,
+                     servicesWithDefaultRoutingToMaster);
   }
 
   public D2ConfigTestUtil(Map<String, List<String>> clusterData, Map<String, Object> partitionData)
@@ -93,10 +125,21 @@ public class D2ConfigTestUtil
     generateClusters(clusterData, partitionData);
   }
 
-  public D2ConfigTestUtil(String mainClusterName, Map<String,String> servicesData, Map<String,String> serviceGroupsData)
+  public D2ConfigTestUtil(String mainClusterName,
+                          Map<String,String> servicesData,
+                          Map<String,String> serviceGroupsData)
+  {
+    this(mainClusterName, servicesData, serviceGroupsData, Collections.<String>emptySet());
+  }
+
+  public D2ConfigTestUtil(String mainClusterName,
+                          Map<String,String> servicesData,
+                          Map<String,String> serviceGroupsData,
+                          Set<String> servicesWithDefaultRoutingToMaster)
   {
     setDefaults();
-    generateClusters(mainClusterName, servicesData, serviceGroupsData);
+    generateClusters(mainClusterName, servicesData, serviceGroupsData,
+                     servicesWithDefaultRoutingToMaster);
   }
 
   public void setDefaults()
@@ -300,10 +343,12 @@ public class D2ConfigTestUtil
   public void generateClusters(Map<String,List<String>> clustersData, Map<String,Map<String,Object>> clustersProperties,
                                Map<String,List<String>> serviceGroupsData)
   {
-    generateClusters(clustersData, clustersProperties, serviceGroupsData, null);
+    generateClusters(clustersData, clustersProperties, serviceGroupsData, null,
+                     Collections.<String>emptySet());
   }
   public void generateClusters(Map<String,List<String>> clustersData, Map<String,Map<String,Object>> clustersProperties,
-                               Map<String,List<String>> serviceGroupsData, List<String> excludeServiceList )
+                               Map<String,List<String>> serviceGroupsData, List<String> excludeServiceList,
+                               Set<String> servicesWithDefaultRoutingToMaster)
   {
 
     //Cluster Service Configurations
@@ -320,6 +365,10 @@ public class D2ConfigTestUtil
         if (excludeServiceList != null && excludeServiceList.contains(serviceName))
         {
           service.put(PropertyKeys.HAS_COLO_VARIANTS, "false");
+        }
+        if (servicesWithDefaultRoutingToMaster.contains(serviceName))
+        {
+          service.put(PropertyKeys.DEFAULT_ROUTING, PropertyKeys.MASTER_SUFFIX);
         }
         tmps.put(serviceName, service);
       }
@@ -371,7 +420,10 @@ public class D2ConfigTestUtil
     }
   }
 
-  public void generateClusters(String mainClusterName, Map<String,String> servicesData, Map<String,String> serviceGroupsData)
+  public void generateClusters(String mainClusterName,
+                               Map<String,String> servicesData,
+                               Map<String,String> serviceGroupsData,
+                               Set<String> servicesWithDefaultRoutingToMaster)
   {
     //Cluster Service Configurations
     // Services
@@ -382,6 +434,10 @@ public class D2ConfigTestUtil
     {
       Map<String,Object> service = new HashMap<String,Object>();
       service.put("path","/"+servicesData.get(serviceName));
+      if (servicesWithDefaultRoutingToMaster.contains(serviceName))
+      {
+        service.put(PropertyKeys.DEFAULT_ROUTING, PropertyKeys.MASTER_SUFFIX);
+      }
       sp.put(serviceName, service);
     }
     services.put("services",sp);

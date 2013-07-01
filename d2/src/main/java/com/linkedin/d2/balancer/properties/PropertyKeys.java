@@ -67,6 +67,7 @@ public class PropertyKeys
   public static final String TRANSPORT_CLIENT_PROPERTIES = "transportClientProperties";
   public static final String PRIORITIZED_SCHEMES = "prioritizedSchemes";
   public static final String BANNED_URIS = "bannedUri";
+  public static final String DEFAULT_ROUTING = "defaultRouting";
 
   //load balancer specific properties
   public static final String LB_STRATEGY_NAME = "loadBalancerStrategyName";
