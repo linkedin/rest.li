@@ -12,7 +12,13 @@ dependencies {
   compile externalDependency.commonsIo
   compile externalDependency.commonsHttpClient
   compile externalDependency.json
-  compile externalDependency.zookeeper
+  compile (externalDependency.zookeeper) {
+    // ZooKeeper depends on log4j 1.2.15 which drags in
+    // a bunch of unneeded dependencies
+    exclude group: 'javax.jms'
+    exclude group: 'com.sun.jdmk'
+    exclude group: 'com.sun.jmx'
+  }
   compile externalDependency.jacksonCoreAsl
   compile externalDependency.jacksonMapperAsl
   compile externalDependency.jdkTools
