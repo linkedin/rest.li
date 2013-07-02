@@ -130,7 +130,13 @@ public class GreetingsResourceCodeGenerator
     out.printf("package %s;%n", PACKAGE);
     out.println();
     for (final String c : _importedFull)
-      out.printf("import %s;%n", c);
+    {
+      // don't make import statements for arrays, the base class will be imported separately
+      if (!(c.endsWith("[]")))
+      {
+        out.printf("import %s;%n", c);
+      }
+    }
     out.println();
 
     // main code body

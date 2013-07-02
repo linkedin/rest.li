@@ -54,7 +54,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
   private final int _maxSize;
   private final long _idleTimeout;
   private final ScheduledExecutorService _timeoutExecutor;
-  private volatile ScheduledFuture _objectTimeoutFuture;
+  private volatile ScheduledFuture<?> _objectTimeoutFuture;
 
   private enum State { NOT_YET_STARTED, RUNNING, SHUTTING_DOWN, STOPPED }
 

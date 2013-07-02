@@ -115,7 +115,8 @@ public class FieldDef<T>
   {
     if (object instanceof FieldDef)
     {
-      FieldDef other = (FieldDef) object;
+      @SuppressWarnings("unchecked")
+      FieldDef<T> other = (FieldDef<T>) object;
 
       boolean dataSchemaEquals;
       if (this._dataSchema == null)

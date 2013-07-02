@@ -38,7 +38,7 @@ public class BatchDeleteArgumentBuilder implements RestLiArgumentBuilder
                                  final RestRequest request)
   {
     Set<?> ids = routingResult.getContext().getPathKeys().getBatchKeys();
-    @SuppressWarnings({ "unchecked" })
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     BatchDeleteRequest batchRequest = new BatchDeleteRequest(ids);
     Object[] positionalArgs =  { batchRequest };
     return ArgumentBuilder.buildArgs(positionalArgs,

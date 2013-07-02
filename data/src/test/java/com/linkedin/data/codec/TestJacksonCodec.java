@@ -64,7 +64,8 @@ public class TestJacksonCodec
     catch (OutOfMemoryError exc)
     {
       // Should run out of heap before perm gen
-      assertFalse(exc.getMessage().contains("PermGen"));
+      assertFalse(exc.getMessage().contains("PermGen") ||
+                  !exc.getMessage().contains("GC overhead limit exceeded"));
     }
 
     try
@@ -77,7 +78,8 @@ public class TestJacksonCodec
     catch (OutOfMemoryError exc)
     {
       // Should run out of perm gen before heap
-      assertTrue(exc.getMessage().contains("PermGen"));
+      assertTrue(exc.getMessage().contains("PermGen") ||
+                 !exc.getMessage().contains("GC overhead limit exceeded"));
     }
   }
 

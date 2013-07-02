@@ -71,7 +71,7 @@ public class TestRouteLookupClient
     d2Client.start(new FutureCallback<None>());
     RouteLookupClient routeLookupClient = new RouteLookupClient(d2Client, routeLookup, "WestCoast");
     RestRequest dummyRestRequest = new RestRequestBuilder(URI.create("d2://simple_uri")).build();
-    Future future = routeLookupClient.restRequest(dummyRestRequest, "5436");
+    Future<RestResponse> future = routeLookupClient.restRequest(dummyRestRequest, "5436");
     try
     {
       future.get();
@@ -129,7 +129,7 @@ public class TestRouteLookupClient
     RestRequest dummyRestRequest = new RestRequestBuilder(URI.create("http://simple_uri")).build();
     try
     {
-      Future future = routeLookupClient.restRequest(dummyRestRequest, "5436");
+      Future<RestResponse> future = routeLookupClient.restRequest(dummyRestRequest, "5436");
       future.get();
       Assert.fail("Unexpected success, request should have thrown an Exception");
     }

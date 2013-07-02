@@ -83,7 +83,7 @@ public class TestSchemaSampleDataGenerator
     _dataSchemaTypeToPrimitiveJavaTypeMap.put(DataSchema.Type.STRING, String.class);
     _dataSchemaTypeToPrimitiveJavaTypeMap.put(DataSchema.Type.BYTES, ByteString.class);
 
-    _dataSchemaTypeToprimitiveArrayMap = new IdentityHashMap<DataSchema.Type, Class<? extends DirectArrayTemplate>>();
+    _dataSchemaTypeToprimitiveArrayMap = new IdentityHashMap<DataSchema.Type, Class<? extends DirectArrayTemplate<?>>>();
     _dataSchemaTypeToprimitiveArrayMap.put(DataSchema.Type.BOOLEAN, BooleanArray.class);
     _dataSchemaTypeToprimitiveArrayMap.put(DataSchema.Type.INT, IntegerArray.class);
     _dataSchemaTypeToprimitiveArrayMap.put(DataSchema.Type.LONG, LongArray.class);
@@ -92,7 +92,7 @@ public class TestSchemaSampleDataGenerator
     _dataSchemaTypeToprimitiveArrayMap.put(DataSchema.Type.STRING, StringArray.class);
     _dataSchemaTypeToprimitiveArrayMap.put(DataSchema.Type.BYTES, BytesArray.class);
 
-    _dataSchemaTypeToprimitiveMapMap = new IdentityHashMap<DataSchema.Type, Class<? extends DirectMapTemplate>>();
+    _dataSchemaTypeToprimitiveMapMap = new IdentityHashMap<DataSchema.Type, Class<? extends DirectMapTemplate<?>>>();
     _dataSchemaTypeToprimitiveMapMap.put(DataSchema.Type.BOOLEAN, BooleanMap.class);
     _dataSchemaTypeToprimitiveMapMap.put(DataSchema.Type.INT, IntegerMap.class);
     _dataSchemaTypeToprimitiveMapMap.put(DataSchema.Type.LONG, LongMap.class);
@@ -122,7 +122,7 @@ public class TestSchemaSampleDataGenerator
   @Test
   public void testArraySchema()
   {
-    for (Map.Entry<DataSchema.Type, Class<? extends DirectArrayTemplate>> entry: _dataSchemaTypeToprimitiveArrayMap.entrySet())
+    for (Map.Entry<DataSchema.Type, Class<? extends DirectArrayTemplate<?>>> entry: _dataSchemaTypeToprimitiveArrayMap.entrySet())
     {
       final PrimitiveDataSchema itemsSchema = DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchema(entry.getKey());
       final ArrayDataSchema arraySchema = new ArrayDataSchema(itemsSchema);
@@ -136,7 +136,7 @@ public class TestSchemaSampleDataGenerator
   @Test
   public void testMapSchema()
   {
-    for (Map.Entry<DataSchema.Type, Class<? extends DirectMapTemplate>> entry: _dataSchemaTypeToprimitiveMapMap.entrySet())
+    for (Map.Entry<DataSchema.Type, Class<? extends DirectMapTemplate<?>>> entry: _dataSchemaTypeToprimitiveMapMap.entrySet())
     {
       final PrimitiveDataSchema valueSchema = DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchema(entry.getKey());
       final MapDataSchema mapSchema = new MapDataSchema(valueSchema);
@@ -254,7 +254,7 @@ public class TestSchemaSampleDataGenerator
   }
 
   private Map<DataSchema.Type, Class<?>> _dataSchemaTypeToPrimitiveJavaTypeMap;
-  private Map<DataSchema.Type, Class<? extends DirectArrayTemplate>> _dataSchemaTypeToprimitiveArrayMap;
-  private Map<DataSchema.Type, Class<? extends DirectMapTemplate>> _dataSchemaTypeToprimitiveMapMap;
+  private Map<DataSchema.Type, Class<? extends DirectArrayTemplate<?>>> _dataSchemaTypeToprimitiveArrayMap;
+  private Map<DataSchema.Type, Class<? extends DirectMapTemplate<?>>> _dataSchemaTypeToprimitiveMapMap;
   private SchemaSampleDataGenerator.DataGenerationOptions _spec;
 }

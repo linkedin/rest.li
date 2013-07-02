@@ -134,6 +134,8 @@ public class TestCompatibilityChecker
   private static final List<String> _nonTyperefSchemaText = union(_complexSchemaText, _primitiveSchemaText);
   private static final List<String> _allSchemaText = add(_nonTyperefSchemaText, _typerefSchemaText);
 
+  // warning says "Possible heap pollution from parameterized vararg type T"
+  @SuppressWarnings("unchecked")
   private static final <T> List<T> list(T...args)
   {
     return new ArrayList<T>(Arrays.asList(args));
@@ -146,6 +148,8 @@ public class TestCompatibilityChecker
     return result;
   }
 
+  // warning says "Possible heap pollution from parameterized vararg type T"
+  @SuppressWarnings("unchecked")
   private static final <T> List<T> add(List<T> arg, T... args)
   {
     ArrayList<T> result = new ArrayList<T>(arg);
@@ -153,6 +157,8 @@ public class TestCompatibilityChecker
     return result;
   }
 
+  // warning says "Possible heap pollution from parameterized vararg type T"
+  @SuppressWarnings("unchecked")
   private static final <T> List<T> subtract(List<T> arg, T... args)
   {
     ArrayList<T> result = new ArrayList<T>(arg);

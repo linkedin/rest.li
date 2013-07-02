@@ -135,7 +135,7 @@ public class ZooKeeperPermanentStore<T> extends ZooKeeperStore<T>
     return _zkStoreWatcher.getWatchCount();
   }
 
-  private class ZKStoreWatcher extends ZooKeeperStore.ZKStoreWatcher
+  private class ZKStoreWatcher extends ZooKeeperStore<T>.ZKStoreWatcher
           implements AsyncCallback.DataCallback, AsyncCallback.StatCallback
   {
     @Override

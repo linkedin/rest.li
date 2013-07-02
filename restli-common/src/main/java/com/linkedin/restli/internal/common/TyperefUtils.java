@@ -30,7 +30,8 @@ public class TyperefUtils
       return null;
     }
 
-    Map map = (Map)o;
+    @SuppressWarnings("unchecked")
+    Map<String,Object> map = (Map<String,Object>)o;
     Object o2 = map.get("class");
 
     if (o2 == null || !(o2 instanceof String))
@@ -73,7 +74,8 @@ public class TyperefUtils
       return null;
     }
 
-    Map map = (Map) o;
+    @SuppressWarnings("unchecked")
+    Map<String,Object> map = (Map<String,Object>) o;
     Object o2 = map.get("coercerClass");
 
     if (o2 == null || !(o2 instanceof String))

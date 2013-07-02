@@ -167,7 +167,7 @@ public class TestCustomTypesRequestBuilders
 
   }
 
-
+  @SuppressWarnings({"rawtypes"})
   private static void checkRequestBuilder(Request<?> request, ResourceMethod resourceMethod,
                                           Class<? extends RestResponseDecoder> responseDecoderClass, Class<?> templateClass,
                                           String expectedUri, RecordTemplate requestInput)

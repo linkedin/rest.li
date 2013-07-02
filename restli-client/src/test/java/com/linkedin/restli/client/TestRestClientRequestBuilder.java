@@ -335,8 +335,10 @@ public class TestRestClientRequestBuilder
   {
     // massive setup...
     Client mockClient = EasyMock.createMock(Client.class);
-    Request mockRequest = EasyMock.createMock(Request.class);
+    @SuppressWarnings({"rawtypes"})
+    Request<?> mockRequest = EasyMock.createMock(Request.class);
     RecordTemplate mockRecordTemplate = EasyMock.createMock(RecordTemplate.class);
+    @SuppressWarnings({"rawtypes"})
     RestResponseDecoder restResponseDecoder = EasyMock.createMock(RestResponseDecoder.class);
 
     // sendRequest

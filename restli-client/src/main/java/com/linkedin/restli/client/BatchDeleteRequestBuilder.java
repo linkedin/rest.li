@@ -44,6 +44,7 @@ public class BatchDeleteRequestBuilder<K, V extends RecordTemplate> extends
     super(baseUriTemplate, resourceSpec);
   }
 
+  @SuppressWarnings("unchecked")
   public BatchDeleteRequestBuilder<K, V> ids(K... ids)
   {
     return ids(Arrays.asList(ids));

@@ -46,7 +46,7 @@ import com.linkedin.data.transform.patch.request.PatchTree;
  *
  * @author jflorencio
  */
-public class PatchTreeRecorder<T extends DataTemplate>
+public class PatchTreeRecorder<T extends DataTemplate<?>>
 {
   private final T _templateProxy;
   private final PatchTree _patchTree;

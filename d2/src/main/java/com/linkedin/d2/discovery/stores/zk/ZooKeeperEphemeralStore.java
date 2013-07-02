@@ -296,7 +296,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
 
   // Note ChildrenCallback is compatible with a ZK 3.2 server; Children2Callback is
   // compatible only with ZK 3.3+ server.
-  private class ZKStoreWatcher extends ZooKeeperStore.ZKStoreWatcher
+  private class ZKStoreWatcher extends ZooKeeperStore<T>.ZKStoreWatcher
     implements AsyncCallback.ChildrenCallback, AsyncCallback.StatCallback
   {
 

@@ -110,7 +110,7 @@ public class TestLoadBalancerClientCli
   public void testCliWithD2ConfigString() throws Exception
   {
     _cli = new LoadBalancerClientCli(_zkHosts, "/d2");
-    _cli.runDiscovery(_zkHosts, "/d2", configData);
+    LoadBalancerClientCli.runDiscovery(_zkHosts, "/d2", configData);
 
     validate(LoadBalancerClientCli.printStores(_cli.getZKClient(), "zk://"+_zkHosts, "/d2"));
   }
@@ -130,7 +130,7 @@ public class TestLoadBalancerClientCli
     }
 
     _cli = new LoadBalancerClientCli(_zkHosts, "/d2");
-    _cli.runDiscovery(_zkHosts, "/d2", _d2ConfigFileName);
+    LoadBalancerClientCli.runDiscovery(_zkHosts, "/d2", _d2ConfigFileName);
 
     validate(LoadBalancerClientCli.printStores(_cli.getZKClient(), "zk://"+_zkHosts, "/d2"));
   }

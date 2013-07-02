@@ -176,7 +176,7 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
    * @param <K> the key type.
    * @return a map from U to request input, where request input is a map from keys to {@link RecordTemplate}s.
    */
-  private <U, K> Map<U, Map<K, T>> keyMapToInput(MapKeyResult<U, K> mapKeyResult, BatchRequest batchRequest, Class<T> tClass)
+  private <U, K> Map<U, Map<K, T>> keyMapToInput(MapKeyResult<U, K> mapKeyResult, BatchRequest<?> batchRequest, Class<T> tClass)
   {
     DataMap dataMap = batchRequest.getInput().data().getDataMap(com.linkedin.restli.common.BatchRequest.ENTITIES);
     if (dataMap == null)

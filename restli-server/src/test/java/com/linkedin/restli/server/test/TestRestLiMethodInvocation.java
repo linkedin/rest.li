@@ -159,14 +159,14 @@ public class TestRestLiMethodInvocation
     ResourceModel locationResourceModel = statusResourceModel.getSubResource("asynclocation");
 
     ResourceMethodDescriptor methodDescriptor;
-    RestLiCallback callback = getCallBack();
+    RestLiCallback<?> callback = getCallBack();
 
     methodDescriptor = statusResourceModel.findNamedMethod("public_timeline");
     statusResource = getMockResource(AsyncStatusCollectionResource.class);
     statusResource.getPublicTimeline((PagingContext)EasyMock.anyObject(), EasyMock.<Callback<List<Status>>> anyObject());
     // the goal of below lines is that to make sure that we are getting callback in the resource
     //an callback is called without any problem
-    EasyMock.expectLastCall().andAnswer(new IAnswer()
+    EasyMock.expectLastCall().andAnswer(new IAnswer<Object>()
     {
       @Override
       public Object answer() throws Throwable
@@ -183,7 +183,7 @@ public class TestRestLiMethodInvocation
     statusResource = getMockResource(AsyncStatusCollectionResource.class);
     statusResource.search((PagingContext) EasyMock.anyObject(), eq("linkedin"), eq(1L),
                           eq(StatusType.REPLY), (Callback<List<Status>>) EasyMock.anyObject());
-    EasyMock.expectLastCall().andAnswer(new IAnswer() {
+    EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
         @SuppressWarnings("unchecked")
@@ -218,7 +218,7 @@ public class TestRestLiMethodInvocation
     statusResource = getMockResource(AsyncStatusCollectionResource.class);
     statusResource.getUserTimeline((PagingContext) EasyMock.anyObject(), eq(false),
                                    (Callback<List<Status>>) EasyMock.anyObject());
-    EasyMock.expectLastCall().andAnswer(new IAnswer()
+    EasyMock.expectLastCall().andAnswer(new IAnswer<Object>()
     {
       @Override
       public Object answer() throws Throwable
@@ -272,7 +272,7 @@ public class TestRestLiMethodInvocation
   {
     ResourceModel followsResourceModel = buildResourceModel(AsyncFollowsAssociativeResource.class);
 
-    RestLiCallback callback = getCallBack();
+    RestLiCallback<?> callback = getCallBack();
     ResourceMethodDescriptor methodDescriptor;
     AsyncFollowsAssociativeResource resource;
 
@@ -308,7 +308,7 @@ public class TestRestLiMethodInvocation
   {
     ResourceModel statusResourceModel = buildResourceModel(AsyncStatusCollectionResource.class);
     ResourceModel followsAssociationResourceModel = buildResourceModel(AsyncFollowsAssociativeResource.class);
-    RestLiCallback callback = getCallBack();
+    RestLiCallback<?> callback = getCallBack();
     ResourceMethodDescriptor methodDescriptor;
     AsyncStatusCollectionResource statusResource;
     AsyncFollowsAssociativeResource followsResource;
@@ -348,7 +348,7 @@ public class TestRestLiMethodInvocation
 
     followsResource.batchGet((Set<CompoundKey>) Matchers.eqCollectionUnordered(expectedKeys),
                              (Callback<Map<CompoundKey, Followed>>) EasyMock.anyObject());
-    EasyMock.expectLastCall().andAnswer(new IAnswer() {
+    EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
         @SuppressWarnings("unchecked")
@@ -372,7 +372,7 @@ public class TestRestLiMethodInvocation
             AsyncStatusCollectionResource.class, AsyncRepliesCollectionResource.class);
     ResourceModel statusResourceModel = resourceModelMap.get("/asyncstatuses");
     ResourceModel repliesResourceModel = statusResourceModel.getSubResource("asyncreplies");
-    RestLiCallback callback = getCallBack();
+    RestLiCallback<?> callback = getCallBack();
 
     ResourceMethodDescriptor methodDescriptor;
     AsyncStatusCollectionResource statusResource;
@@ -398,7 +398,7 @@ public class TestRestLiMethodInvocation
     methodDescriptor = repliesResourceModel.findMethod(ResourceMethod.CREATE);
     repliesResource = getMockResource(AsyncRepliesCollectionResource.class);
     repliesResource.create((Status)EasyMock.anyObject(), (Callback<CreateResponse>)EasyMock.anyObject());
-    EasyMock.expectLastCall().andAnswer(new IAnswer()
+    EasyMock.expectLastCall().andAnswer(new IAnswer<Object>()
     {
       @Override
       public Object answer() throws Throwable
@@ -442,7 +442,7 @@ public class TestRestLiMethodInvocation
     ResourceModel locationResourceModel = statusResourceModel.getSubResource("asynclocation");
     ResourceModel followsAssociationResourceModel = buildResourceModel(
             AsyncFollowsAssociativeResource.class);
-    RestLiCallback callback = getCallBack();
+    RestLiCallback<?> callback = getCallBack();
 
 
     ResourceMethodDescriptor methodDescriptor;
@@ -480,7 +480,7 @@ public class TestRestLiMethodInvocation
 
     Followed followed = (Followed)EasyMock.anyObject();
     followsResource.update(key, followed, (Callback<UpdateResponse>) EasyMock.anyObject());
-    EasyMock.expectLastCall().andAnswer(new IAnswer()
+    EasyMock.expectLastCall().andAnswer(new IAnswer<Object>()
     {
       @Override
       public Object answer() throws Throwable
@@ -523,7 +523,7 @@ public class TestRestLiMethodInvocation
     ResourceModel statusResourceModel = resourceModelMap.get("/asyncstatuses");
     ResourceModel locationResourceModel = statusResourceModel.getSubResource("asynclocation");
 
-    RestLiCallback callback = getCallBack();
+    RestLiCallback<?> callback = getCallBack();
 
     ResourceMethodDescriptor methodDescriptor;
     AsyncStatusCollectionResource statusResource;
@@ -1612,6 +1612,7 @@ public class TestRestLiMethodInvocation
     // #1
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.BATCH_UPDATE);
     statusResource = getMockResource(StatusCollectionResource.class);
+    @SuppressWarnings("rawtypes")
     BatchUpdateRequest batchUpdateRequest =(BatchUpdateRequest)EasyMock.anyObject();
     EasyMock.expect(statusResource.batchUpdate(batchUpdateRequest)).andReturn(null).once();
     String body = RestLiTestHelper.doubleQuote("{'entities':{'1':{},'2':{}}}");
@@ -1630,6 +1631,7 @@ public class TestRestLiMethodInvocation
     // #1
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.BATCH_PARTIAL_UPDATE);
     statusResource = getMockResource(StatusCollectionResource.class);
+    @SuppressWarnings("rawtypes")
     BatchPatchRequest batchPatchRequest =(BatchPatchRequest)EasyMock.anyObject();
     EasyMock.expect(statusResource.batchUpdate(batchPatchRequest)).andReturn(null).once();
     String body = RestLiTestHelper.doubleQuote("{'entities':{'1':{},'2':{}}}");
@@ -1648,6 +1650,7 @@ public class TestRestLiMethodInvocation
     // #1
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.BATCH_CREATE);
     statusResource = getMockResource(StatusCollectionResource.class);
+    @SuppressWarnings("rawtypes")
     BatchCreateRequest batchCreateRequest =(BatchCreateRequest)EasyMock.anyObject();
     EasyMock.expect(statusResource.batchCreate(batchCreateRequest)).andReturn(null).once();
     String body = RestLiTestHelper.doubleQuote("{'elements':[{},{}]}");
@@ -1666,6 +1669,7 @@ public class TestRestLiMethodInvocation
     // #1
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.BATCH_DELETE);
     statusResource = getMockResource(StatusCollectionResource.class);
+    @SuppressWarnings("rawtypes")
     BatchDeleteRequest batchDeleteRequest =(BatchDeleteRequest)EasyMock.anyObject();
     EasyMock.expect(statusResource.batchDelete(batchDeleteRequest)).andReturn(null).once();
     checkInvocation(statusResource, methodDescriptor, "DELETE", "/statuses?ids=1L&ids=2L", "", buildBatchPathKeys(1L, 2L));
@@ -1700,6 +1704,7 @@ public class TestRestLiMethodInvocation
 
     methodDescriptor = model.findMethod(ResourceMethod.BATCH_CREATE);
     resource = getMockResource(CombinedResources.CollectionWithCustomCrudParams.class);
+    @SuppressWarnings("rawtypes")
     BatchCreateRequest batchCreateRequest =(BatchCreateRequest)EasyMock.anyObject();
     EasyMock.expect(resource.myBatchCreate(batchCreateRequest, eq(1), eq("bar"))).andReturn(null).once();
     body = RestLiTestHelper.doubleQuote("{'elements':[{},{}]}");
@@ -1712,6 +1717,7 @@ public class TestRestLiMethodInvocation
 
     methodDescriptor = model.findMethod(ResourceMethod.BATCH_UPDATE);
     resource = getMockResource(CombinedResources.CollectionWithCustomCrudParams.class);
+    @SuppressWarnings("rawtypes")
     BatchUpdateRequest batchUpdateRequest =(BatchUpdateRequest)EasyMock.anyObject();
     EasyMock.expect(resource.myBatchUpdate(batchUpdateRequest, eq(1), eq("baz"))).andReturn(null).once();
     body = RestLiTestHelper.doubleQuote("{'entities':{'foo':{},'bar':{}}}");
@@ -1728,6 +1734,7 @@ public class TestRestLiMethodInvocation
 
     methodDescriptor = model.findMethod(ResourceMethod.BATCH_PARTIAL_UPDATE);
     resource = getMockResource(CombinedResources.CollectionWithCustomCrudParams.class);
+    @SuppressWarnings("rawtypes")
     BatchPatchRequest batchPatchRequest =(BatchPatchRequest)EasyMock.anyObject();
     EasyMock.expect(resource.myBatchUpdate(batchPatchRequest, eq(1), eq("baz"))).andReturn(null).once();
     body = RestLiTestHelper.doubleQuote("{'entities':{'foo':{},'bar':{}}}");
@@ -1741,6 +1748,7 @@ public class TestRestLiMethodInvocation
 
     methodDescriptor = model.findMethod(ResourceMethod.BATCH_DELETE);
     resource = getMockResource(CombinedResources.CollectionWithCustomCrudParams.class);
+    @SuppressWarnings("rawtypes")
     BatchDeleteRequest batchDeleteRequest =(BatchDeleteRequest)EasyMock.anyObject();
     EasyMock.expect(resource.myBatchDelete(batchDeleteRequest, eq(1), eq("baz"))).andReturn(null).once();
     checkInvocation(resource, methodDescriptor, "DELETE", "/statuses?ids=foo&ids=bar&intParam=1&stringParam=baz", "", buildBatchPathKeys("foo", "bar"));
@@ -1937,6 +1945,7 @@ public class TestRestLiMethodInvocation
     return callback;
   }
 
+  @SuppressWarnings({"rawtypes"})
   private void checkAsyncInvocation(BaseResource resource,
                                     RestLiCallback callback,
                                     ResourceMethodDescriptor methodDescriptor,
@@ -1954,7 +1963,7 @@ public class TestRestLiMethodInvocation
 
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked","rawtypes"})
   private void checkAsyncInvocation(BaseResource resource,
                                     RestLiCallback callback,
                                     ResourceMethodDescriptor methodDescriptor,

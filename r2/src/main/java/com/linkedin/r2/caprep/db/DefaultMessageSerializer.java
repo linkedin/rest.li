@@ -161,7 +161,7 @@ public class DefaultMessageSerializer implements MessageSerializer
     return builder.build();
   }
 
-  private void readReqLine(RequestBuilder builder, InputStream in) throws IOException
+  private void readReqLine(RequestBuilder<?> builder, InputStream in) throws IOException
   {
     if (builder instanceof RestRequestBuilder)
     {
@@ -178,7 +178,7 @@ public class DefaultMessageSerializer implements MessageSerializer
     readIgnoreNewLine(in);
   }
 
-  private void readResLine(ResponseBuilder builder, InputStream in) throws IOException
+  private void readResLine(ResponseBuilder<?> builder, InputStream in) throws IOException
   {
     readIgnore(HTTP_1_1, in);
     readIgnore(SP, in);
@@ -202,7 +202,7 @@ public class DefaultMessageSerializer implements MessageSerializer
     readIgnoreLine(in);
   }
 
-  private void readHeaders(RestMessageBuilder builder, InputStream in) throws IOException
+  private void readHeaders(RestMessageBuilder<?> builder, InputStream in) throws IOException
   {
     String line = readLine(in);
     while (!line.isEmpty())
@@ -224,7 +224,7 @@ public class DefaultMessageSerializer implements MessageSerializer
     }
   }
 
-  private void readEntity(MessageBuilder builder, InputStream in) throws IOException
+  private void readEntity(MessageBuilder<?> builder, InputStream in) throws IOException
   {
     final ByteArrayOutputStream out = new ByteArrayOutputStream();
     final byte[] buf = new byte[1024];

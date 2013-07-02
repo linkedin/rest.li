@@ -47,7 +47,7 @@ public class ValidateWithValidator
   }
 
   @Deprecated
-  public static ValidationResult validate(DataTemplate value, Validator validator)
+  public static ValidationResult validate(DataTemplate<?> value, Validator validator)
   {
     return validate(value.data(), value.schema(), validator);
   }

@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer.properties.util;
 
+import com.linkedin.data.template.TemplateOutputCastException;
 import com.linkedin.util.ArgumentUtil;
 
 import java.util.Map;
@@ -33,10 +34,8 @@ public class PropertyUtil
       ArgumentUtil.notNull(obj, key);
       if (clazz.isEnum())
       {
-        @SuppressWarnings("unchecked")
-        Class<? extends Enum> enumClass = (Class<? extends  Enum>)clazz;
-        @SuppressWarnings("unchecked")
-        T result = (T)Enum.valueOf(enumClass, ((String)obj).toUpperCase());
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        T result = (T) Enum.valueOf((Class) clazz, ((String)obj).toUpperCase());
         return result;
       }
       else

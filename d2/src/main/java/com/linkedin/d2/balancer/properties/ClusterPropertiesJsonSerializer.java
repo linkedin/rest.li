@@ -75,11 +75,17 @@ public class ClusterPropertiesJsonSerializer implements
     }
   }
 
+  // working around a javac bug that doesn't recognize the unchecked warning suppression
+  @SuppressWarnings("unchecked")
+  private static <T> T mapGet(Map<String, Object> map, String key)
+  {
+    return (T) map.get(key);
+  }
+
   @Override
   public ClusterProperties fromMap(Map<String, Object> map)
   {
-    @SuppressWarnings("unchecked")
-    List<URI> bannedList = (List<URI>)map.get(PropertyKeys.BANNED_URIS);
+    List<URI> bannedList = mapGet(map, PropertyKeys.BANNED_URIS);
     if (bannedList == null)
     {
       bannedList = Collections.emptyList();
@@ -87,12 +93,9 @@ public class ClusterPropertiesJsonSerializer implements
     Set<URI> banned = new HashSet<URI>(bannedList);
 
     String clusterName = PropertyUtil.checkAndGetValue(map, PropertyKeys.CLUSTER_NAME, String.class, "ClusterProperties");
-    @SuppressWarnings("unchecked")
-    List<String> prioritizedSchemes = (List<String>) map.get(PropertyKeys.PRIORITIZED_SCHEMES);
-    @SuppressWarnings("unchecked")
-    Map<String, String> properties = (Map<String, String>) map.get("properties");
-    @SuppressWarnings("unchecked")
-    Map<String, Object> partitionPropertiesMap = (Map<String, Object>)map.get(PropertyKeys.PARTITION_PROPERTIES);
+    List<String> prioritizedSchemes = mapGet(map, PropertyKeys.PRIORITIZED_SCHEMES);
+    Map<String, String> properties = mapGet(map, "properties");
+    Map<String, Object> partitionPropertiesMap = mapGet(map, PropertyKeys.PARTITION_PROPERTIES);
     PartitionProperties partitionProperties;
     String scope = "cluster: " + clusterName;
     if (partitionPropertiesMap != null)

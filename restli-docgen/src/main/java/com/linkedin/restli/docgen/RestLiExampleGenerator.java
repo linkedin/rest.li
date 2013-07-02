@@ -174,14 +174,14 @@ public class RestLiExampleGenerator
     final UpdateResponse ur = new UpdateResponse(HttpStatus.S_200_OK);
 
     final RecordTemplate diffRecord = buildRecordTemplate(valueClass);
-    final PatchRequest patch = new PatchRequest(PatchCreator.diff(record, diffRecord).getDataMap());
+    final PatchRequest<?> patch = new PatchRequest<RecordTemplate>(PatchCreator.diff(record, diffRecord).getDataMap());
 
     final DataMap batchData = new DataMap();
     batchData.put(randomId.toString(), record.data());
 
     final Map<Double, UpdateResponse> buResponseData = new HashMap<Double, UpdateResponse>();
     buResponseData.put(randomId, ur);
-    final BatchUpdateResult bur = new BatchUpdateResult<Double, RecordTemplate>(buResponseData);
+    final BatchUpdateResult<Double,RecordTemplate> bur = new BatchUpdateResult<Double, RecordTemplate>(buResponseData);
 
     RecordTemplate requestEntity = null;
     Object responseEntity = null;
@@ -211,13 +211,13 @@ public class RestLiExampleGenerator
         responseEntity = new BatchResult<Double, RecordTemplate>(bgResponseData, new HashMap<Double, RestLiServiceException>());
         break;
       case BATCH_CREATE:
-        @SuppressWarnings({"unchecked"})
+        @SuppressWarnings({"unchecked","rawtypes"})
         final CollectionRequest bcRequest = new CollectionRequest(batchData, valueClass);
         requestEntity = bcRequest;
         responseEntity = new BatchCreateResult<Long, RecordTemplate>(Arrays.asList(cr));
         break;
       case BATCH_UPDATE:
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings({"unchecked", "rawtypes"})
         final BatchRequest buRequest = new BatchRequest(batchData, valueClass);
         requestEntity = buRequest;
         responseEntity = bur;
@@ -230,7 +230,9 @@ public class RestLiExampleGenerator
       case BATCH_PARTIAL_UPDATE:
         final DataMap batchPartialData = new DataMap();
         batchData.put(randomId.toString(), patch.data());
-        requestEntity = new BatchRequest<PatchRequest>(batchPartialData, PatchRequest.class);
+        @SuppressWarnings("rawtypes")
+        final BatchRequest bpuRequest = new BatchRequest<PatchRequest>(batchPartialData, PatchRequest.class);
+        requestEntity = bpuRequest;
         responseEntity = bur;
         break;
     }

@@ -3,6 +3,9 @@
 (RB=182338)
 Fix bug in pegasus plugin that publish snapshot task may not run.
 
+(RB=181765)
+Fix up jdk7 warnings. 
+
 1.9.0
 ------
 (RB=176567)
@@ -18,6 +21,9 @@ slf4jlog4j12.
 
 (RB=176574)
 Incorporate snapshot into pegasus plugin. All existing projects will automatically generate and publish the snapshot files.
+
+(RB=179212)
+add defaultRouting option to d2Config.
 
 1.8.39
 ------

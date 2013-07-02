@@ -123,7 +123,7 @@ public class ArgumentBuilder
       int j = 0;
       for (Object paramData: itemsList)
       {
-        final DataTemplate itemsElem = DataTemplateUtil.wrap(paramData, param.getItemType().asSubclass(DataTemplate.class));
+        final DataTemplate<?> itemsElem = DataTemplateUtil.wrap(paramData, param.getItemType().asSubclass(DataTemplate.class));
         Array.set(convertedValue, j++, itemsElem);
       }
     }
@@ -198,11 +198,11 @@ public class ArgumentBuilder
     return convertedValue;
   }
 
-  private static DataTemplate buildDataTemplateArgument(final ResourceContext context,
+  private static DataTemplate<?> buildDataTemplateArgument(final ResourceContext context,
                                                         final Parameter<?> param)
   {
     Object paramValue = context.getStructuredParameter(param.getName());
-    DataTemplate paramRecordTemplate;
+    DataTemplate<?> paramRecordTemplate;
 
     if (paramValue == null)
     {

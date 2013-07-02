@@ -134,11 +134,11 @@ public class ArgumentUtils
    * @return a map using appropriate key and value classes
    */
   @SuppressWarnings({ "unchecked" })
-  public static Map buildBatchRequestMap(final DataMap data,
-                                         final Class<? extends RecordTemplate> valueClass,
+  public static <R extends RecordTemplate> Map<Object, R> buildBatchRequestMap(final DataMap data,
+                                         final Class<R> valueClass,
                                          final Set<?> ids)
   {
-    BatchRequest<RecordTemplate> batchRequest = new BatchRequest(data, valueClass);
+    BatchRequest<R> batchRequest = new BatchRequest<R>(data, valueClass);
 
     Map<String, Object> parsedKeyMap = new HashMap<String, Object>();
     for (Object o : ids)
@@ -148,9 +148,9 @@ public class ArgumentUtils
                        o);
     }
 
-    Map<Object, RecordTemplate> result =
-        new HashMap<Object, RecordTemplate>(batchRequest.getEntities().size());
-    for (Map.Entry<String, RecordTemplate> entry : batchRequest.getEntities().entrySet())
+    Map<Object, R> result =
+        new HashMap<Object, R>(batchRequest.getEntities().size());
+    for (Map.Entry<String, R> entry : batchRequest.getEntities().entrySet())
     {
       Object key = parsedKeyMap.get(entry.getKey());
       if (key == null)
@@ -161,7 +161,7 @@ public class ArgumentUtils
                               result.keySet().toString()),
                 HttpStatus.S_400_BAD_REQUEST.getCode());
       }
-      RecordTemplate value = DataTemplateUtil.wrap(entry.getValue().data(), valueClass);
+      R value = DataTemplateUtil.wrap(entry.getValue().data(), valueClass);
       result.put(key, value);
     }
     if (!ids.equals(result.keySet()))

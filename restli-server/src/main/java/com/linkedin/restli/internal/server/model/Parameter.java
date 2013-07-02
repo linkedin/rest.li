@@ -120,6 +120,7 @@ public class Parameter<T> extends FieldDef<T>
     return _defaultValueData != null;
   }
 
+  @SuppressWarnings({"unchecked", "rawtypes"})
   public Object getDefaultValue()
   {
     if (_defaultValueData == null)
@@ -251,7 +252,7 @@ public class Parameter<T> extends FieldDef<T>
     return sb.toString();
   }
 
-  private static void validate(DataTemplate data, Class<?> clazz)
+  private static void validate(DataTemplate<?> data, Class<?> clazz)
   {
     final ValidationResult valResult = ValidateDataAgainstSchema.validate(data.data(),
                                                                           data.schema(),
@@ -262,10 +263,10 @@ public class Parameter<T> extends FieldDef<T>
     }
   }
 
-  private static class DynamicWrappedArray extends WrappingArrayTemplate
+  private static class  DynamicWrappedArray<T extends DataTemplate<?>> extends WrappingArrayTemplate<T>
   {
     @SuppressWarnings("unchecked")
-    private DynamicWrappedArray(DataList list, ArrayDataSchema schema, Class<?> elementClass)
+    private DynamicWrappedArray(DataList list, ArrayDataSchema schema, Class<T> elementClass)
     {
       super(list, schema, elementClass);
     }

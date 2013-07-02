@@ -91,42 +91,42 @@ public class ServicePropertiesJsonSerializer implements
     }
   }
 
+  // Need to work around a compiler bug that doesn't obey the SuppressWarnings("unchecked")
+  @SuppressWarnings("unchecked")
+  private static <T> T mapGet(Map<String, Object> map, String key)
+  {
+    return (T) map.get(key);
+  }
+
   public ServiceProperties fromMap(Map<String,Object> map)
   {
-    @SuppressWarnings("unchecked")
-    Map<String,Object> loadBalancerStrategyProperties = (Map<String,Object>)map.get(PropertyKeys.LB_STRATEGY_PROPERTIES);
+    Map<String,Object> loadBalancerStrategyProperties = mapGet(map,PropertyKeys.LB_STRATEGY_PROPERTIES);
     if (loadBalancerStrategyProperties == null)
     {
       loadBalancerStrategyProperties = Collections.emptyMap();
     }
-    @SuppressWarnings("unchecked")
-    List<String> loadBalancerStrategyList = (List<String>) map.get(PropertyKeys.LB_STRATEGY_LIST);
+    List<String> loadBalancerStrategyList = mapGet(map, PropertyKeys.LB_STRATEGY_LIST);
     if (loadBalancerStrategyList == null)
     {
       loadBalancerStrategyList = Collections.emptyList();
     }
-    @SuppressWarnings("unchecked")
-    Map<String, Object> transportClientProperties = (Map<String, Object>) map.get(PropertyKeys.
-                                                                                      TRANSPORT_CLIENT_PROPERTIES);
+    Map<String, Object> transportClientProperties = mapGet(map, PropertyKeys.TRANSPORT_CLIENT_PROPERTIES);
     if (transportClientProperties == null)
     {
       transportClientProperties = Collections.emptyMap();
     }
-    @SuppressWarnings("unchecked")
-    Map<String, String> degraderProperties = (Map<String, String>) map.get(PropertyKeys.DEGRADER_PROPERTIES);
+    Map<String, String> degraderProperties = mapGet(map, PropertyKeys.DEGRADER_PROPERTIES);
     if (degraderProperties == null)
     {
       degraderProperties = Collections.emptyMap();
     }
-    @SuppressWarnings("unchecked")
-    List<URI> bannedList = (List<URI>)map.get(PropertyKeys.BANNED_URIS);
+    List<URI> bannedList = mapGet(map, PropertyKeys.BANNED_URIS);
     if (bannedList == null)
     {
       bannedList = Collections.emptyList();
     }
     Set<URI> banned = new HashSet<URI>(bannedList);
-    @SuppressWarnings("unchecked")
-    List<String> prioritizedSchemes = (List<String>) map.get(PropertyKeys.PRIORITIZED_SCHEMES);
+    List<String> prioritizedSchemes = mapGet(map,PropertyKeys.PRIORITIZED_SCHEMES);
 
     return new ServiceProperties((String) map.get(PropertyKeys.SERVICE_NAME),
                                  (String) map.get(PropertyKeys.CLUSTER_NAME),

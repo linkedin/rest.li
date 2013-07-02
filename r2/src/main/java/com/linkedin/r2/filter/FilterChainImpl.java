@@ -197,9 +197,9 @@ import com.linkedin.r2.message.rpc.RpcResponse;
   }
 
   @SuppressWarnings("unchecked")
-  private static NextFilter<RpcRequest, RpcResponse> adaptRpcNextFilter(NextFilter nextFilter)
+  private static NextFilter<RpcRequest, RpcResponse> adaptRpcNextFilter(NextFilter<?, ?> nextFilter)
   {
-    return nextFilter;
+    return (NextFilter<RpcRequest, RpcResponse>)nextFilter;
   }
 
   private static MessageFilter adaptRestFilter(Filter filter)
@@ -246,9 +246,9 @@ import com.linkedin.r2.message.rpc.RpcResponse;
   }
 
   @SuppressWarnings("unchecked")
-  private static NextFilter<RestRequest, RestResponse> adaptRestNextFilter(NextFilter nextFilter)
+  private static NextFilter<RestRequest, RestResponse> adaptRestNextFilter(NextFilter<?, ?> nextFilter)
   {
-    return nextFilter;
+    return (NextFilter<RestRequest, RestResponse>)nextFilter;
   }
 
   private static final class RpcRequestFilterAdapter implements RequestFilter

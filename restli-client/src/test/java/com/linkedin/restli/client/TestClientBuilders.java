@@ -219,6 +219,8 @@ public class TestClientBuilders
                       Collections.<String, String>emptyMap());
   }
 
+  // need suppress on the method because the more specific suppress isn't being obeyed.
+  @SuppressWarnings({"unchecked","rawtypes"})
   @Test
   public void testBatchPartialUpdateRequestBuilder()
   {
@@ -234,7 +236,7 @@ public class TestClientBuilders
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), false);
 
-    @SuppressWarnings({"unchecked"})
+    @SuppressWarnings({"unchecked","rawtypes"})
     BatchRequest<PatchRequest<TestRecord>> expectedRequest = new BatchRequest(new DataMap(), PatchRequest.class);
     expectedRequest.getEntities().put("1", new PatchRequest<TestRecord>());
     expectedRequest.getEntities().put("2", new PatchRequest<TestRecord>());

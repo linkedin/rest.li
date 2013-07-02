@@ -771,7 +771,7 @@ public class SimpleLoadBalancerStateTest
     Assert.assertTrue(badResults == 0, "getTrackerClients returned null");
   }
 
-  private class TcCallable implements Callable
+  private class TcCallable implements Callable<Integer>
   {
     private final List<TrackerClient> _tcList;
     private final SimpleLoadBalancerState _myState;

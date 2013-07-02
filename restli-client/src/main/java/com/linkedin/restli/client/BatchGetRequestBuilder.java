@@ -260,6 +260,7 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
     _decoder = decoder;
   }
 
+  @SuppressWarnings("unchecked")
   public BatchGetRequestBuilder<K, V> ids(K... ids)
   {
     return ids(Arrays.asList(ids));

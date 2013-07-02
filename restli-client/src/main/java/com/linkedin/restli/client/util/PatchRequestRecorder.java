@@ -36,7 +36,7 @@ import com.linkedin.restli.common.PatchRequest;
  * @author jflorencio
  * @see PatchTreeRecorder
  */
-public class PatchRequestRecorder<T extends DataTemplate> extends PatchTreeRecorder<T>
+public class PatchRequestRecorder<T extends DataTemplate<?>> extends PatchTreeRecorder<T>
 {
   public PatchRequestRecorder(Class<T> clazz)
   {

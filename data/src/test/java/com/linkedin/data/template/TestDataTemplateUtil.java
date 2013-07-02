@@ -88,7 +88,7 @@ public class TestDataTemplateUtil
   }
 
 
-  public static void assertCloneAndCopyReturnType(Class<? extends DataTemplate> dataTemplateClass)
+  public static void assertCloneAndCopyReturnType(Class<? extends DataTemplate<?>> dataTemplateClass)
   {
     String methodNames[] = { "clone", "copy" };
     for (String methodName : methodNames)
@@ -104,7 +104,7 @@ public class TestDataTemplateUtil
     }
   }
 
-  public static <T extends DataTemplate> void assertPresentInFields(Class<T> templateClass, String fieldName)
+  public static <T extends DataTemplate<?>> void assertPresentInFields(Class<T> templateClass, String fieldName)
   {
     try
     {

@@ -313,6 +313,7 @@ public class DataTemplateUtil
    * @return null if the generated data template does not have a {@link TyperefInfo}
    *         else return the {@link TyperefInfo} of the data template.
    */
+  @SuppressWarnings({"rawtypes"})
   public static TyperefInfo getTyperefInfo(Class<? extends DataTemplate> type)
   {
     TyperefInfo typerefInfo;

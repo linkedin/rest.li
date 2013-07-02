@@ -24,19 +24,14 @@ package com.linkedin.data.collections;
  */
 public class CowUtil
 {
-  private static final CowMap EMPTY_MAP;
-  private static final CowSet EMPTY_SET;
-  private static final CowList EMPTY_LIST;
+  private static final CowMap<?,?> EMPTY_MAP = new CowMap<Object, Object>();
+  private static final CowSet<?> EMPTY_SET = new CowSet<Object>();
+  private static final CowList<?> EMPTY_LIST = new CowList<Object>();
 
   static
   {
-    EMPTY_MAP = new CowMap();
     EMPTY_MAP.setReadOnly();
-
-    EMPTY_SET = new CowSet();
     EMPTY_SET.setReadOnly();
-
-    EMPTY_LIST = new CowList();
     EMPTY_LIST.setReadOnly();
   }
 
@@ -51,7 +46,7 @@ public class CowUtil
   @SuppressWarnings("unchecked")
   public static <K, V> CowMap<K, V> emptyMap()
   {
-    return EMPTY_MAP;
+    return (CowMap<K,V>) EMPTY_MAP;
   }
 
   /**
@@ -60,7 +55,7 @@ public class CowUtil
   @SuppressWarnings("unchecked")
   public static <K> CowSet<K> emptySet()
   {
-    return EMPTY_SET;
+    return (CowSet<K>) EMPTY_SET;
   }
 
   /**
@@ -69,6 +64,6 @@ public class CowUtil
   @SuppressWarnings("unchecked")
   public static <V> CowList<V> emptyList()
   {
-    return EMPTY_LIST;
+    return (CowList<V>) EMPTY_LIST;
   }
 }

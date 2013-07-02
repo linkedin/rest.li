@@ -42,7 +42,7 @@ public class RateLimiter
   private final long _maxPeriod;
   private final Queue<Runnable> _pending = new LinkedList<Runnable>();
   private long _period;
-  private ScheduledFuture _task;
+  private ScheduledFuture<?> _task;
 
   private final Runnable _doit = new Runnable()
   {

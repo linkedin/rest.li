@@ -42,8 +42,8 @@ public class TestMapUtil
     _subjectMap.put("float", 3F);
     _subjectMap.put("double", 4D);
     _subjectMap.put("string", "Foo");
-    _subjectMap.put("subMap", new LinkedHashMap());
-    _subjectMap.put("siblingMap", new Hashtable());
+    _subjectMap.put("subMap", new LinkedHashMap<String,Object>());
+    _subjectMap.put("siblingMap", new Hashtable<String,Object>());
   }
 
   @Test

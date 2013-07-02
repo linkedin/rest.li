@@ -44,9 +44,9 @@ public class BatchCreateArgumentBuilder
     Class<? extends RecordTemplate> valueClass =
         ArgumentUtils.getValueClass(routingResult);
     DataMap dataMap = DataMapUtils.readMap(request);
-    @SuppressWarnings({ "unchecked" })
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     CollectionRequest collectionRequest = new CollectionRequest(dataMap, valueClass);
-    @SuppressWarnings({ "unchecked" })
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     BatchCreateRequest batchRequest =
         new BatchCreateRequest(collectionRequest.getElements());
 

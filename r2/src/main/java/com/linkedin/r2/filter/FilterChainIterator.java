@@ -88,8 +88,8 @@ import java.util.Map;
   }
 
   @SuppressWarnings("unchecked")
-  private NextFilter<Request, Response> adaptNextFilter(FilterChainIterator nextFilter)
+  private NextFilter<Request, Response> adaptNextFilter(FilterChainIterator<?, ?> nextFilter)
   {
-    return nextFilter;
+    return (NextFilter<Request, Response>)nextFilter;
   }
 }

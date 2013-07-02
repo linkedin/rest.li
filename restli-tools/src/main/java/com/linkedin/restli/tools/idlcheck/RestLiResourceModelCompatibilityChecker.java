@@ -49,6 +49,7 @@ import java.util.Stack;
  */
 public class RestLiResourceModelCompatibilityChecker
 {
+  @SuppressWarnings({"static"})
   public static void main(String[] args)
   {
     final Options options = new Options();

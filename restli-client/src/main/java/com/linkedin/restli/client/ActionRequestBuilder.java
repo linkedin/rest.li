@@ -87,6 +87,7 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
     return this;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public ActionRequest<V> build()
   {
@@ -104,7 +105,7 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
 
     RecordDataSchema requestDataSchema;
     RecordDataSchema actionResponseDataSchema;
-    FieldDef<?> responseFieldDef;
+    FieldDef<V> responseFieldDef;
 
     if (_resourceSpec.getRequestMetadata(_name) == null) // old builder code in use
     {
@@ -127,11 +128,11 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
     {
       requestDataSchema =  _resourceSpec.getRequestMetadata(_name).getRecordDataSchema();
       actionResponseDataSchema = _resourceSpec.getActionResponseMetadata(_name).getRecordDataSchema();
-      responseFieldDef = _resourceSpec.getActionResponseMetadata(_name).getFieldDef(ActionResponse.VALUE_NAME);
+      responseFieldDef = (FieldDef<V>)_resourceSpec.getActionResponseMetadata(_name).getFieldDef(ActionResponse.VALUE_NAME);
     }
 
     @SuppressWarnings("unchecked")
-    ActionResponseDecoder<V> actionResponseDecoder = new ActionResponseDecoder(responseFieldDef, actionResponseDataSchema);
+    ActionResponseDecoder<V> actionResponseDecoder = new ActionResponseDecoder<V>(responseFieldDef, actionResponseDataSchema);
 
     return new ActionRequest<V>(b.build(),
                                 new DynamicRecordTemplate(requestDataSchema, _actionParams),

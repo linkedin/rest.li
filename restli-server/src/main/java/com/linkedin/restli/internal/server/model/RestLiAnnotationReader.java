@@ -251,7 +251,7 @@ public final class RestLiAnnotationReader
   }
 
   private static ResourceModel processSingleObjectResource(
-      final Class<? extends SingleObjectResource> singleObjectResourceClass)
+      final Class<? extends SingleObjectResource<?>> singleObjectResourceClass)
   {
     Class<? extends RecordTemplate> valueClass;
 
@@ -347,14 +347,14 @@ public final class RestLiAnnotationReader
   /**
    * Keys, values, patch requests, and batch requests have fixed positions.
    */
-  private static Parameter getPositionalParameter(final ResourceModel model,
+  private static Parameter<?> getPositionalParameter(final ResourceModel model,
                                                   final ResourceMethod methodType,
                                                   final int idx,
                                                   final AnnotationSet annotations)
   {
     boolean isSingleObjectResource = model.getResourceType() == ResourceType.SIMPLE;
 
-    Parameter parameter = null;
+    Parameter<?> parameter = null;
 
     if (isSingleObjectResource)
     {
@@ -368,7 +368,7 @@ public final class RestLiAnnotationReader
     return parameter;
   }
 
-  private static Parameter getPositionalParameterForCollection(final ResourceModel model,
+  private static Parameter<?> getPositionalParameterForCollection(final ResourceModel model,
                                                                final ResourceMethod methodType,
                                                                final int idx,
                                                                final AnnotationSet annotations)
@@ -410,7 +410,7 @@ public final class RestLiAnnotationReader
         }
         else if (idx == 1)
         {
-          @SuppressWarnings("unchecked")
+          @SuppressWarnings({"unchecked", "rawtypes"})
           Parameter p =
               new Parameter("",
                             PatchRequest.class,
@@ -426,7 +426,7 @@ public final class RestLiAnnotationReader
       case BATCH_GET:
         if (idx == 0)
         {
-          @SuppressWarnings("unchecked")
+          @SuppressWarnings({"unchecked", "rawtypes"})
           Parameter p =
               new Parameter("",
                             Set.class,
@@ -442,7 +442,7 @@ public final class RestLiAnnotationReader
       case BATCH_CREATE:
         if (idx == 0)
         {
-          @SuppressWarnings("unchecked")
+          @SuppressWarnings({"unchecked", "rawtypes"})
           Parameter p =
               new Parameter("",
                             BatchCreateRequest.class,
@@ -458,7 +458,7 @@ public final class RestLiAnnotationReader
       case BATCH_UPDATE:
         if (idx == 0)
         {
-          @SuppressWarnings("unchecked")
+          @SuppressWarnings({"unchecked", "rawtypes"})
           Parameter p =
               new Parameter("",
                             BatchUpdateRequest.class,
@@ -474,7 +474,7 @@ public final class RestLiAnnotationReader
       case BATCH_DELETE:
         if (idx == 0)
         {
-          @SuppressWarnings("unchecked")
+          @SuppressWarnings({"unchecked", "rawtypes"})
           Parameter p =
               new Parameter("",
                             BatchDeleteRequest.class,
@@ -490,7 +490,7 @@ public final class RestLiAnnotationReader
       case BATCH_PARTIAL_UPDATE:
         if (idx == 0)
         {
-          @SuppressWarnings("unchecked")
+          @SuppressWarnings({"unchecked", "rawtypes"})
           Parameter p =
               new Parameter("",
                             BatchPatchRequest.class,
@@ -510,12 +510,12 @@ public final class RestLiAnnotationReader
     return null;
   }
 
-  private static Parameter getPositionalParameterForSingleObject(final ResourceModel model,
+  private static Parameter<?> getPositionalParameterForSingleObject(final ResourceModel model,
                                                                final ResourceMethod methodType,
                                                                final int idx,
                                                                final AnnotationSet annotations)
   {
-    Parameter parameter = null;
+    Parameter<?> parameter = null;
 
     if (methodType == ResourceMethod.UPDATE && idx == 0)
     {
@@ -525,8 +525,8 @@ public final class RestLiAnnotationReader
     return parameter;
   }
 
-  @SuppressWarnings("unchecked")
-  private static Parameter makeValueParam(final ResourceModel model)
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  private static Parameter<?> makeValueParam(final ResourceModel model)
   {
     return new Parameter("",
                          model.getValueClass(),
@@ -538,7 +538,7 @@ public final class RestLiAnnotationReader
                          AnnotationSet.EMPTY);
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   private static Parameter makeKeyParam(final ResourceModel model)
   {
     return new Parameter(model.getKeyName(),
@@ -628,7 +628,7 @@ public final class RestLiAnnotationReader
     return queryParameters;
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   private static Parameter buildCallbackParam(final Method method,
                                               final ResourceMethod methodType,
                                               final int idx,
@@ -679,12 +679,24 @@ public final class RestLiAnnotationReader
                                                       annotations);
   }
 
-  @SuppressWarnings("unchecked")
+  // bug in javac 7 that doesn't obey the unchecked suppression, had to abstract to method to workaround.
+  @SuppressWarnings({"unchecked"})
+  private static Integer annotationCount(final AnnotationSet annotations)
+  {
+    return annotations.count(QueryParam.class,
+                             ActionParam.class,
+                             AssocKey.class,
+                             Context.class,
+                             CallbackParam.class,
+                             ParSeqContext.class);
+  }
+
+  @SuppressWarnings({"unchecked", "rawtypes"})
   private static void validateParameter(final Method method,
                                         final ResourceMethod methodType,
                                         final Set<String> paramNames,
                                         final AnnotationSet annotations,
-                                        final Parameter param,
+                                        final Parameter<?> param,
                                         final Class<?> actualParamType)
   {
     String paramName = param.getName();
@@ -735,12 +747,7 @@ public final class RestLiAnnotationReader
           + buildMethodMessage(method) + ", " + checkTyperefMessage);
     }
 
-    if (annotations.count(QueryParam.class,
-                          ActionParam.class,
-                          AssocKey.class,
-                          Context.class,
-                          CallbackParam.class,
-                          ParSeqContext.class) > 1)
+    if (annotationCount(annotations) > 1)
     {
       throw new ResourceConfigException(buildMethodMessage(method)
           + "' must declare only one of @QueryParam, @ActionParam, @AssocKey, @Context, or @CallbackParam");
@@ -778,15 +785,15 @@ public final class RestLiAnnotationReader
 
   }
 
-  @SuppressWarnings("unchecked")
-  private static Parameter buildContextParam(final AnnotationSet annotations,
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  private static Parameter<?> buildContextParam(final AnnotationSet annotations,
                                              final Class<?> paramType)
   {
     if (!paramType.equals(PagingContext.class))
     {
       throw new ResourceConfigException("Context must be PagingContext");
     }
-    Parameter param;
+    Parameter<?> param;
     Context context = annotations.get(Context.class);
     Optional optional = annotations.get(Optional.class);
     PagingContext defaultContext =
@@ -803,12 +810,12 @@ public final class RestLiAnnotationReader
     return param;
   }
 
-  @SuppressWarnings("unchecked")
-  private static Parameter buildAssocKeyParam(final Method method,
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  private static Parameter<?> buildAssocKeyParam(final Method method,
                                               final AnnotationSet annotations,
                                               final Class<?> paramType)
   {
-    Parameter param;
+    Parameter<?> param;
     AssocKey assocKey = annotations.get(AssocKey.class);
     Optional optional = annotations.get(Optional.class);
     Class<? extends TyperefInfo> typerefInfoClass = assocKey.typeref();
@@ -838,7 +845,7 @@ public final class RestLiAnnotationReader
     return param;
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   private static Parameter buildActionParam(final Method method,
                                             final AnnotationSet annotations,
                                             final Class<?> paramType)
@@ -907,7 +914,7 @@ public final class RestLiAnnotationReader
     return DataTemplateUtil.getSchema(type);
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   private static Parameter<?> buildQueryParam(final Method method,
                                               final AnnotationSet annotations,
                                               final Class<?> paramType)
@@ -1358,7 +1365,7 @@ public final class RestLiAnnotationReader
     FieldDef<?> returnFieldDef;
     if(returnClass != Void.TYPE)
     {
-      @SuppressWarnings("unchecked")
+      @SuppressWarnings({"unchecked", "rawtypes"})
       FieldDef<?> nonVoidFieldDef = new FieldDef(ActionResponse.VALUE_NAME, returnClass, getDataSchema(returnClass, returnTyperefSchema));
       returnFieldDef = nonVoidFieldDef;
       actionReturnRecordDataSchema = DynamicRecordMetadata.buildSchema(ActionResponse.class.getName(), Collections.singleton((returnFieldDef)));

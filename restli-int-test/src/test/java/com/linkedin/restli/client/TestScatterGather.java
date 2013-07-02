@@ -195,7 +195,7 @@ public class TestScatterGather extends RestLiIntegrationTest
     Assert.assertEquals(requestIds.size(), ids.length);
   }
 
-  private static void testRequest(BatchRequest request,
+  private static void testRequest(BatchRequest<?> request,
                                   Set<String> expectedParams,
                                   Set<String> expectedFields,
                                   Map<Long, Greeting> expectedInput,

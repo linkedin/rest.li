@@ -92,7 +92,7 @@ public class TestUnion
       DataMap dataMap = new DataMap();
       if (typeValue instanceof DataTemplate)
       {
-        DataTemplate dataTemplate = (DataTemplate) typeValue;
+        DataTemplate<?> dataTemplate = (DataTemplate<?>) typeValue;
         dataMap.put(dataTemplate.schema().getUnionMemberKey(), dataTemplate.data());
       }
       else if (typeValue instanceof Enum)

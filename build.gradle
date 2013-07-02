@@ -75,7 +75,7 @@ allprojects {
   apply plugin: 'idea'
 
   tasks.withType(Compile).all { Compile compile ->
-    compile.options.compilerArgs = ['-Xlint', '-Xlint:-path', '-Werror']
+    compile.options.compilerArgs = ['-Xlint', '-Xlint:-path', '-Xlint:-static', '-Werror' ]
   }
 }
 
@@ -359,4 +359,9 @@ subprojects {
       workingDir = file(rootDir.toString())
     }
   }
+
+  plugins.withType(JavaPlugin) {
+    project.sourceCompatibility = 1.6
+  }
+
 }

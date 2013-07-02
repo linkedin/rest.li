@@ -880,7 +880,7 @@ public class SimpleLoadBalancerSimulation
     return _random.nextInt(numThreads);
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked","rawtypes"})
   public void initQueues(int queues)
   {
     // TODO make this typed properly

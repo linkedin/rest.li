@@ -1130,7 +1130,7 @@ public class TestArrayTemplate
     {
       ArrayDataSchema schema = (ArrayDataSchema) DataTemplateUtil.parseSchema("{ \"type\" : \"array\", \"items\" : \"" + e.getKey() + "\" }");
       @SuppressWarnings("unchecked")
-      PrimitiveLegacyArray<?> array = new PrimitiveLegacyArray(new DataList(), schema, e.getValue());
+      PrimitiveLegacyArray<?> array = new PrimitiveLegacyArray<Object>(new DataList(), schema, (Class)e.getValue());
     }
     EnumLegacyArray enumArray = new EnumLegacyArray(new DataList());
   }

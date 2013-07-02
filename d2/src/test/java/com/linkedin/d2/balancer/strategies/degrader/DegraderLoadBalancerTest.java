@@ -1230,7 +1230,7 @@ public class DegraderLoadBalancerTest
     clients.add(getClient(URI.create("http://test.linkedin.com:3242/fdsaf")));
     clients.add(getClient(URI.create("http://test.linkedin.com:3243/fdsaf")));
 
-    strategy.overrideClusterDropRate(DEFAULT_PARTITION_ID, 1d, clients);
+    DegraderLoadBalancerStrategyV3.overrideClusterDropRate(DEFAULT_PARTITION_ID, 1d, clients);
 
     for (TrackerClient client : clients)
     {
@@ -1238,7 +1238,7 @@ public class DegraderLoadBalancerTest
       assertTrue(client.getDegrader(DEFAULT_PARTITION_ID).checkDrop());
     }
 
-    strategy.overrideClusterDropRate(DEFAULT_PARTITION_ID, -1d, clients);
+    DegraderLoadBalancerStrategyV3.overrideClusterDropRate(DEFAULT_PARTITION_ID, -1d, clients);
 
     // if we don't override, the degrader isn't degraded, so should not drop
     for (TrackerClient client : clients)
@@ -1247,7 +1247,7 @@ public class DegraderLoadBalancerTest
       assertFalse(client.getDegrader(DEFAULT_PARTITION_ID).checkDrop());
     }
 
-    strategy.overrideClusterDropRate(DEFAULT_PARTITION_ID, 0d, clients);
+    DegraderLoadBalancerStrategyV3.overrideClusterDropRate(DEFAULT_PARTITION_ID, 0d, clients);
 
     for (TrackerClient client : clients)
     {

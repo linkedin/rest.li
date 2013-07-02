@@ -782,7 +782,7 @@ public class TestMapTemplate
         String key = e.getKey();
         E castToValue = castTo.get(key);
         assertEquals(e.getValue(), castToValue);
-        assertTrue(e.equals(new AbstractMap.SimpleEntry(key, castToValue)));
+        assertTrue(e.equals(new AbstractMap.SimpleEntry<String,E>(key, castToValue)));
         assertFalse(e.equals(null));
         assertFalse(e.equals(new Object()));
 
@@ -1255,7 +1255,7 @@ public class TestMapTemplate
     {
       MapDataSchema schema = (MapDataSchema) DataTemplateUtil.parseSchema("{ \"type\" : \"map\", \"values\" : \"" + e.getKey() + "\" }");
       @SuppressWarnings("unchecked")
-      PrimitiveLegacyMap<?> map = new PrimitiveLegacyMap(new DataMap(), schema, e.getValue());
+      PrimitiveLegacyMap<?> map = new PrimitiveLegacyMap<Object>(new DataMap(), schema, (Class)e.getValue());
     }
     EnumLegacyMap enumMap = new EnumLegacyMap(new DataMap());
   }

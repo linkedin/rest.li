@@ -47,10 +47,11 @@ public class BatchUpdateArgumentBuilder implements RestLiArgumentBuilder
 
     DataMap dataMap = DataMapUtils.readMap(request);
     Set<?> ids = routingResult.getContext().getPathKeys().getBatchKeys();
+    @SuppressWarnings({"rawtypes"})
     Map inputMap = ArgumentUtils.buildBatchRequestMap(dataMap,
                                                       valueClass,
                                                       ids);
-    @SuppressWarnings({"unchecked"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     BatchUpdateRequest batchRequest = new BatchUpdateRequest(inputMap);
     Object[] positionalArgs = { batchRequest };
     return ArgumentBuilder.buildArgs(positionalArgs,

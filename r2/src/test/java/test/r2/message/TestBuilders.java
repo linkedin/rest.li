@@ -91,7 +91,7 @@ public class TestBuilders
   @Test
   public void testChainBuildRpcRequestFromMessageBuilder()
   {
-    final MessageBuilder builder = new RpcRequestBuilder(URI.create("test"))
+    final MessageBuilder<?> builder = new RpcRequestBuilder(URI.create("test"))
             .setEntity(new byte[] {1,2,3,4})
             .build()
             .builder();
@@ -146,7 +146,7 @@ public class TestBuilders
   @Test
   public void testChainBuildRpcResponseFromMessageBuilder()
   {
-    final MessageBuilder builder = new RpcResponseBuilder()
+    final MessageBuilder<?> builder = new RpcResponseBuilder()
               .setEntity(new byte[] {1,2,3,4})
               .build()
               .builder();
@@ -228,7 +228,7 @@ public class TestBuilders
   @Test
   public void testChainBuildRestRequestFromMessageBuilder()
   {
-    final MessageBuilder builder = new RestRequestBuilder(URI.create("test"))
+    final MessageBuilder<?> builder = new RestRequestBuilder(URI.create("test"))
             .setEntity(new byte[] {1,2,3,4})
             .setHeader("k1", "v1")
             .setMethod(RestMethod.PUT)
@@ -313,7 +313,7 @@ public class TestBuilders
   @Test
   public void testChainBuildRestResponseFromMessageBuilder()
   {
-    final MessageBuilder builder = new RestResponseBuilder()
+    final MessageBuilder<?> builder = new RestResponseBuilder()
             .setEntity(new byte[] {1,2,3,4})
             .setHeader("k1", "v1")
             .setStatus(300)

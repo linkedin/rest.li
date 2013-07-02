@@ -268,7 +268,7 @@ public abstract class AbstractMapTemplate<V> extends AbstractMap<String ,V> impl
       {
         return false;
       }
-      Map.Entry other = (Map.Entry) o;
+      Map.Entry<?,?> other = (Map.Entry<?,?>) o;
       return getKey().equals(other.getKey()) && getValue().equals(other.getValue());
     }
 

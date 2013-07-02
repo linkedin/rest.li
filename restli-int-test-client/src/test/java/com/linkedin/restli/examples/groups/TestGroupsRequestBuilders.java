@@ -604,7 +604,7 @@ public class TestGroupsRequestBuilders
     checkRequestBuilder(request, ResourceMethod.ACTION, ActionResponseDecoder.class, null, expectedUri, requestInput);
   }
 
-
+  @SuppressWarnings({"rawtypes"})
   private static void checkRequestBuilder(Request<?> request, ResourceMethod resourceMethod,
                                    Class<? extends RestResponseDecoder> responseDecoderClass, Class<?> templateClass,
                                    String expectedUri, RecordTemplate requestInput)

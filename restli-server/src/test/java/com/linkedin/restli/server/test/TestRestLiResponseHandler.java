@@ -744,7 +744,7 @@ public class TestRestLiResponseHandler
    * @param actionReturnType the return type of the action.
    * @return a RoutingResult
    */
-  private final RoutingResult buildRoutingResultAction(Class actionReturnType)
+  private final RoutingResult buildRoutingResultAction(Class<?> actionReturnType)
           throws NoSuchMethodException, RestLiSyntaxException
   {
 
@@ -765,7 +765,7 @@ public class TestRestLiResponseHandler
     FieldDef<?> returnFieldDef;
     if (actionReturnType != Void.TYPE)
     {
-      @SuppressWarnings("unchecked")
+      @SuppressWarnings({"unchecked","rawtypes"})
       FieldDef<?> nonVoidFieldDef = new FieldDef(ActionResponse.VALUE_NAME,
                                  actionReturnType,
                                  DataTemplateUtil.getSchema(actionReturnType));

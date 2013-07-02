@@ -30,21 +30,21 @@ public class TestArgumentBuilder
     //test normal key integer
     String param1Key = "param1";
     @SuppressWarnings("unchecked")
-    Parameter param1 = new Parameter(param1Key, Integer.class, DataTemplateUtil.getSchema(Integer.class),
+    Parameter<Integer> param1 = new Parameter<Integer>(param1Key, Integer.class, DataTemplateUtil.getSchema(Integer.class),
                                           false, null, Parameter.ParamType.KEY, false, AnnotationSet.EMPTY);
     Integer param1Value = 123;
 
     //test regular string argument
     String param2Key = "param2";
     @SuppressWarnings("unchecked")
-    Parameter param2 = new Parameter(param2Key, String.class, DataTemplateUtil.getSchema(String.class),
+    Parameter<String> param2 = new Parameter<String>(param2Key, String.class, DataTemplateUtil.getSchema(String.class),
                                           true, null, Parameter.ParamType.POST, true, AnnotationSet.EMPTY);
     String param2Value = "param2Value";
 
     //test data template argument array with more than element
     String param3Key = "param3";
     @SuppressWarnings("unchecked")
-    Parameter param3 = new Parameter(param3Key, StringArray.class, DataTemplateUtil.getSchema(StringArray.class),
+    Parameter<StringArray> param3 = new Parameter<StringArray>(param3Key, StringArray.class, DataTemplateUtil.getSchema(StringArray.class),
                                       true, null, Parameter.ParamType.QUERY, true, AnnotationSet.EMPTY);
 
     DataList param3Value = new DataList(Arrays.asList("param3a", "param3b"));
@@ -52,7 +52,7 @@ public class TestArgumentBuilder
     //test data template argument array with only one element
     String param4Key = "param4";
     @SuppressWarnings("unchecked")
-    Parameter param4 = new Parameter(param4Key, StringArray.class, DataTemplateUtil.getSchema(StringArray.class),
+    Parameter<StringArray> param4 = new Parameter<StringArray>(param4Key, StringArray.class, DataTemplateUtil.getSchema(StringArray.class),
                                           true, null, Parameter.ParamType.QUERY, true, AnnotationSet.EMPTY);
     String param4Value = "param4Value";
 
