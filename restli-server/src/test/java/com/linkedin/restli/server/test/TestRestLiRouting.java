@@ -30,9 +30,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.spi.LoggerRepository;
 import org.testng.annotations.Test;
 
 import com.linkedin.jersey.api.uri.UriComponent;
@@ -373,29 +370,9 @@ public class TestRestLiRouting
     checkResult("/trending/trendRegions?q=get_trending_by_popularity", "GET",
                 ResourceMethod.FINDER, TrendRegionsCollectionResource.class, "getTrendingByPopularity", false);
 
-    Level level = disableWarningLogging(RestLiRouter.class);
-    try {
-      //the following two cases would log warnings
-      checkBatchKeys("/statuses?ids=1&ids=&ids=3", "GET", new HashSet<Object>(Arrays.asList(1L, 3L)));
-      checkBatchKeys("/statuses?ids=1&ids=abc&ids=3", "GET", new HashSet<Object>(Arrays.asList(1L, 3L)));
-    }
-    finally
-    {
-      enableLogging(RestLiRouter.class, level);
-    }
-  }
-
-  private Level disableWarningLogging(Class<?> clazz)
-  {
-    LoggerRepository repo = Logger.getLogger(clazz).getLoggerRepository();
-    Level level = repo.getThreshold();
-    repo.setThreshold(Level.ERROR);
-    return level;
-  }
-  private void enableLogging(Class<?> clazz, Level level)
-  {
-    LoggerRepository repo = Logger.getLogger(clazz).getLoggerRepository();
-    repo.setThreshold(level);
+    //the following two cases would log warnings
+    checkBatchKeys("/statuses?ids=1&ids=&ids=3", "GET", new HashSet<Object>(Arrays.asList(1L, 3L)));
+    checkBatchKeys("/statuses?ids=1&ids=abc&ids=3", "GET", new HashSet<Object>(Arrays.asList(1L, 3L)));
   }
 
   @Test

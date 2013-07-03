@@ -21,6 +21,9 @@ Fix up jdk7 warnings.
 (RB=171893)
 Added server/client compression filters and associated test cases.
 
+(RB=182463)
+Adjust log4j related dependencies and log4j.xml. Remove all compile-time dependency of log4j.
+
 1.9.0
 ------
 (RB=176567)

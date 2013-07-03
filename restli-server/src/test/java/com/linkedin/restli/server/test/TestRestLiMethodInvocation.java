@@ -86,8 +86,6 @@ import com.linkedin.restli.server.twitter.TwitterTestDataModels.Followed;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Location;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Status;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.StatusType;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 import org.easymock.IAnswer;
 import org.easymock.EasyMock;
 import org.testng.Assert;
@@ -1571,33 +1569,20 @@ public class TestRestLiMethodInvocation
   @Test
   public void testHeuristicKeySyntaxDetection()
   {
-    //This test generates server warnings which are logged within rest.li.
-    //Suppress logging for this test case, to avoid noise in build log
-    Level originalLevel = Logger.getRootLogger().getLevel();
-    Logger.getRootLogger().setLevel(Level.OFF);
+    Set<Key> keys = new HashSet<Key>(2);
+    keys.add(new Key("foo", Integer.class));
+    keys.add(new Key("bar", String.class));
 
-    try
-    {
-      Set<Key> keys = new HashSet<Key>(2);
-      keys.add(new Key("foo", Integer.class));
-      keys.add(new Key("bar", String.class));
+    Set<String> expectedKeys = new HashSet<String>(Arrays.asList("foo", "bar"));
+    Assert.assertEquals(expectedKeys, ArgumentUtils.parseCompoundKey("foo:42;bar:abcd", keys).getPartKeys());
+    Assert.assertEquals(expectedKeys, ArgumentUtils.parseCompoundKey("foo:42;bar:abcd=1&efg=2", keys).getPartKeys());
+    Assert.assertEquals(expectedKeys, ArgumentUtils.parseCompoundKey("foo=42&bar=abcd", keys).getPartKeys());
+    Assert.assertEquals(expectedKeys, ArgumentUtils.parseCompoundKey("foo=42&bar=abcd:1;2", keys).getPartKeys());
 
-      Set<String> expectedKeys = new HashSet<String>(Arrays.asList("foo", "bar"));
-      Assert.assertEquals(expectedKeys, ArgumentUtils.parseCompoundKey("foo:42;bar:abcd", keys).getPartKeys());
-      Assert.assertEquals(expectedKeys, ArgumentUtils.parseCompoundKey("foo:42;bar:abcd=1&efg=2", keys).getPartKeys());
-      Assert.assertEquals(expectedKeys, ArgumentUtils.parseCompoundKey("foo=42&bar=abcd", keys).getPartKeys());
-      Assert.assertEquals(expectedKeys, ArgumentUtils.parseCompoundKey("foo=42&bar=abcd:1;2", keys).getPartKeys());
-
-      Assert.assertEquals(expectedKeys, ArgumentUtils.parseCompoundKey("foo=42&bar=foo:42", keys).getPartKeys());
-      Assert.assertEquals(expectedKeys, ArgumentUtils.parseCompoundKey("foo=42&bar=foo:42;bar:abcd", keys).getPartKeys());
-      Assert.assertEquals(expectedKeys, ArgumentUtils.parseCompoundKey("foo:42;bar:foo=42&bar=abcd", keys).getPartKeys());
-      Assert.assertEquals(expectedKeys, ArgumentUtils.parseCompoundKey("foo:42;bar:foo=42", keys).getPartKeys());
-    }
-    finally
-    {
-      Logger.getRootLogger().setLevel(originalLevel);
-    }
-
+    Assert.assertEquals(expectedKeys, ArgumentUtils.parseCompoundKey("foo=42&bar=foo:42", keys).getPartKeys());
+    Assert.assertEquals(expectedKeys, ArgumentUtils.parseCompoundKey("foo=42&bar=foo:42;bar:abcd", keys).getPartKeys());
+    Assert.assertEquals(expectedKeys, ArgumentUtils.parseCompoundKey("foo:42;bar:foo=42&bar=abcd", keys).getPartKeys());
+    Assert.assertEquals(expectedKeys, ArgumentUtils.parseCompoundKey("foo:42;bar:foo=42", keys).getPartKeys());
   }
 
   @Test

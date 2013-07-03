@@ -25,7 +25,6 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.log4j.BasicConfigurator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,8 +73,6 @@ public class RestLiResourceModelExporterCmdLineApp
    */
   public static void main(String[] args)
   {
-    BasicConfigurator.configure();
-
 //    args = new String[] {"-name", "groups",
 //                         "-resourcepackages", "com.linkedin.groups.server.rest1.impl com.linkedin.groups.server.rest2.impl ",
 //                         "-resourceclasses", "com.linkedin.groups.server.restX.impl.FooResource",

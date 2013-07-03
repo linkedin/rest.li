@@ -27,7 +27,6 @@ import java.util.Map;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.log4j.BasicConfigurator;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -378,8 +377,6 @@ public class TestCompressionServer extends RestLiIntegrationTest
   //test cookbook example from quickstart wiki
   public void testCookbook(RestClient restClient) throws Exception
   {
-    BasicConfigurator.configure();
-
     // GET
     Request<Greeting> request = GREETINGS_BUILDERS.get().id(1L).build();
     ResponseFuture<Greeting> future = restClient.sendRequest(request);

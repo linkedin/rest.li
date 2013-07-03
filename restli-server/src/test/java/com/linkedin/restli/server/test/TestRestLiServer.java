@@ -29,8 +29,6 @@ import java.util.Set;
 import com.linkedin.parseq.Engine;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestException;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
 import org.testng.annotations.AfterTest;
@@ -306,19 +304,7 @@ public class TestRestLiServer
       }
     };
 
-    //This test generates a server exception which is logged within rest.li.
-    //Suppress logging for this test case, to avoid noise in build log
-    Level originalLevel = Logger.getRootLogger().getLevel();
-    Logger.getRootLogger().setLevel(Level.OFF);
-
-    try
-    {
-      _server.handleRequest(request, new RequestContext(), callback);
-    }
-    finally
-    {
-      Logger.getRootLogger().setLevel(originalLevel);
-    }
+    _server.handleRequest(request, new RequestContext(), callback);
   }
 
   @Test

@@ -8,12 +8,12 @@ dependencies {
   compile project(':restli-server')
   compile externalDependency.commonsIo
   compile externalDependency.codemodel
-  compile externalDependency.log4j
   compile externalDependency.commonsCli
   compile externalDependency.commonsLang
   compile externalDependency.jacksonCoreAsl
   compile externalDependency.jacksonMapperAsl
   compile externalDependency.jdkTools
+  runtime externalDependency.log4j
   runtime externalDependency.slf4jLog4j12
   testCompile externalDependency.googleCollections
   testCompile externalDependency.testng

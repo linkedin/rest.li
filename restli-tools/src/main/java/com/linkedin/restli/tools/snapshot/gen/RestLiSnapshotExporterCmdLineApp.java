@@ -16,9 +16,7 @@
 
 package com.linkedin.restli.tools.snapshot.gen;
 
-import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.generator.AbstractGenerator;
-import com.linkedin.restli.tools.compatibility.CompatibilityUtil;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
@@ -28,7 +26,6 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.log4j.BasicConfigurator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,8 +68,6 @@ public class RestLiSnapshotExporterCmdLineApp
    */
   public static void main(String[] args)
   {
-    BasicConfigurator.configure();
-
     CommandLine cl = null;
     try
     {

@@ -15,6 +15,7 @@
 */
 
 final Configuration generatorConfig = project(':generator').configurations.default
+final Set<File> pluginResourcesDirs = project(':generator').sourceSets.main.resources.srcDirs
 
 project.sourceSets.all { SourceSet sourceSet ->
   final String inputDataSchemaParentDirPath = "src${File.separatorChar}${sourceSet.name}"
@@ -32,6 +33,7 @@ project.sourceSets.all { SourceSet sourceSet ->
   rootProject.ext.build.dataTemplateGenerateTasks[sourceSet] = project.task(sourceSet.name + 'GenerateDataTemplate', type: JavaExec) {
     main = 'com.linkedin.pegasus.generator.PegasusDataTemplateGenerator'
     classpath generatorConfig + generatorConfig.allArtifacts.files
+    classpath pluginResourcesDirs
     args outputDirPath
     args inputDataSchemaFiles
     systemProperties(['generator.resolver.path': inputDataSchemaDirPath])
@@ -48,11 +50,11 @@ project.sourceSets.all { SourceSet sourceSet ->
   final Task dataTemplateCompileTask = project.task(sourceSet.name + 'CompileDataTemplate',
                                                     type: JavaCompile,
                                                     dependsOn: rootProject.ext.build.dataTemplateGenerateTasks[sourceSet]) {
-      classpath = sourceSet.compileClasspath
-      destinationDir = project.file(project.tasks[sourceSet.compileJavaTaskName].destinationDir.path + 'DataTemplate')
-      source outputDirPath
-      source sourceSet.java.srcDirs
-    }
+    classpath = sourceSet.compileClasspath
+    destinationDir = project.file(project.tasks[sourceSet.compileJavaTaskName].destinationDir.path + 'DataTemplate')
+    source outputDirPath
+    source sourceSet.java.srcDirs
+  }
   rootProject.ext.build.dataTemplateCompileTasks[sourceSet] = dataTemplateCompileTask;
 
   project.tasks[sourceSet.compileJavaTaskName].dependsOn(dataTemplateCompileTask)

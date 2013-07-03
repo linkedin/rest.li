@@ -16,6 +16,7 @@
 
 final Configuration dataAvroConfig = project(':data-avro').configurations.default
 final Configuration dataConfig = project(':data').configurations.default
+final Set<File> pluginResourcesDirs = project(':generator').sourceSets.main.resources.srcDirs
 
 project.sourceSets.all { SourceSet sourceSet ->
   final inputDataSchemaDirPath = "src${File.separatorChar}${sourceSet.name}${File.separatorChar}pegasus"
@@ -29,6 +30,7 @@ project.sourceSets.all { SourceSet sourceSet ->
   rootProject.ext.build.avroSchemaTasks[sourceSet] = project.task(sourceSet.name + 'GenerateAvroSchema', type: JavaExec) {
     main = 'com.linkedin.data.avro.generator.AvroSchemaGenerator'
     classpath dataAvroConfig + dataAvroConfig.allArtifacts.files + dataConfig + dataConfig.allArtifacts.files
+    classpath pluginResourcesDirs
     args outputDirPath
     args inputDataSchemaFiles
     systemProperties(['generator.resolver.path': inputDataSchemaDirPath])

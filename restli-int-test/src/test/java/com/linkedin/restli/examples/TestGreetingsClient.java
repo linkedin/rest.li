@@ -22,7 +22,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.BasicConfigurator;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -193,7 +192,6 @@ public class TestGreetingsClient extends RestLiIntegrationTest
   //test cookbook example from quickstart wiki
   public void testCookbook() throws Exception
   {
-    BasicConfigurator.configure();
     Client r2Client = new TransportClientAdapter(new HttpClientFactory().getClient(Collections.<String, String>emptyMap()));
     RestClient restClient = new RestClient(r2Client, "http://localhost:1338/");
 
