@@ -6,6 +6,9 @@ Fix bug in pegasus plugin that publish snapshot task may not run.
 (RB=181765)
 Fix up jdk7 warnings. 
 
+(RB=171893)
+Added server/client compression filters and associated test cases.
+
 1.9.0
 ------
 (RB=176567)

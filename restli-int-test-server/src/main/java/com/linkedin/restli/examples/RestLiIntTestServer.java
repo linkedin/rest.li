@@ -16,10 +16,20 @@
 
 package com.linkedin.restli.examples;
 
+import java.io.IOException;
+import java.net.URI;
+import java.util.Properties;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.PropertyConfigurator;
 
 import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.EngineBuilder;
+import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.filter.FilterChains;
+import com.linkedin.r2.filter.compression.ServerCompressionFilter;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.http.server.HttpServer;
 import com.linkedin.r2.transport.http.server.HttpServerFactory;
@@ -35,13 +45,6 @@ import com.linkedin.restli.server.RestLiServer;
 import com.linkedin.restli.server.mock.InjectMockResourceFactory;
 import com.linkedin.restli.server.mock.SimpleBeanProvider;
 import com.linkedin.restli.server.resources.ResourceFactory;
-import java.io.IOException;
-import java.net.URI;
-import java.util.Properties;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.PropertyConfigurator;
 
 /**
  * @author dellamag
@@ -94,6 +97,8 @@ public class RestLiIntTestServer
     ResourceFactory factory = new InjectMockResourceFactory(beanProvider);
 
     TransportDispatcher dispatcher = new DelegatingTransportDispatcher(new RestLiServer(config, factory, engine));
-    return new HttpServerFactory(FilterChains.empty()).createServer(PORT, dispatcher);
+
+    FilterChain fc = FilterChains.empty().addLast(new ServerCompressionFilter());
+    return new HttpServerFactory(fc).createServer(PORT, dispatcher);
   }
 }

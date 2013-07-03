@@ -108,10 +108,10 @@
               "type" : "long"
             },
             "actions" : [ {
-              "name" : "exceptionTest"
-            }, {
               "name" : "purge",
               "returns" : "int"
+            }, {
+              "name" : "exceptionTest"
             } ]
           },
           "namespace" : "com.linkedin.restli.examples.greetings.client"

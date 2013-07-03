@@ -6,5 +6,8 @@ dependencies {
   compile externalDependency.mina
   compile externalDependency.mail
   compile externalDependency.commonsIo
+  compile externalDependency.commonsCompress
+  compile externalDependency.snappy
+  compile externalDependency.commonsLang
   testCompile externalDependency.testng
 }
