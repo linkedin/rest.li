@@ -21,6 +21,7 @@ import com.linkedin.pegasus.generator.GeneratorResult;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.model.ResourceModelEncoder;
+import com.linkedin.restli.internal.server.model.ResourceModelEncoder.DocsProvider;
 import com.linkedin.restli.internal.server.model.RestLiApiBuilder;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.restspec.RestSpecCodec;
@@ -34,6 +35,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -97,21 +99,54 @@ public class RestLiResourceModelExporter
                                 String outdir)
       throws IOException
   {
+    return export(apiName,
+                  classpath,
+                  sourcePaths,
+                  resourcePackages,
+                  resourceClasses,
+                  outdir,
+                  Collections.<DocsProvider>emptyList());
+  }
+
+  /**
+   * @param apiName the name of the API
+   * @param classpath classpath to to load the resources. this is purely for Javadoc Doclet {@link RestLiDoclet}
+   * @param sourcePaths paths to scan for resource Java source files. this is purely for Javadoc Doclet {@link RestLiDoclet}
+   *                    if both resourcePackages and resourceClasses is null, all classes defined in the directories will be scanned
+   * @param resourcePackages packages to scan for resources
+   * @param resourceClasses specific classes as resources
+   * @param outdir directory in which to output the IDL files
+   * @param additionalDocProviders names of additional classes in the classpath that implement DocsProvider, if empty,
+   *                      only javadoc will be supported.
+   * @return a result that includes collection of files generated and modified. Note: getSourceFiles() on the result
+   * will always return an empty List as the code generation operates on classpaths and the ClassLoader and not files.
+   * @throws IOException could be {@link java.io.FileNotFoundException} if unable to write the output file,
+   *                     otherwise, {@link IOException} if failure happened when writing the output file
+   */
+  public GeneratorResult export(String apiName,
+                                String[] classpath,
+                                String[] sourcePaths,
+                                String[] resourcePackages,
+                                String[] resourceClasses,
+                                String outdir,
+                                List<DocsProvider> additionalDocProviders)
+      throws IOException
+  {
     final RestLiConfig config = new RestLiConfig();
     if (resourcePackages != null)
     {
       config.addResourcePackageNames(resourcePackages);
     }
 
+    final Map<String, String> classFileNames = new HashMap<String, String>();
+    for (String path : sourcePaths)
+    {
+      classFileNames.putAll(FileClassNameScanner.scan(path));
+    }
+
     Collection<String> sourceFileNames = null;
     if (resourceClasses != null || resourcePackages == null)
     {
-      final Map<String, String> classFileNames = new HashMap<String, String>();
-      for (String path : sourcePaths)
-      {
-        classFileNames.putAll(FileClassNameScanner.scan(path, "java"));
-      }
-
       if (resourceClasses != null)
       {
         config.addResourceClassNames(resourceClasses);
@@ -122,7 +157,7 @@ public class RestLiResourceModelExporter
           final String resourceFileName = classFileNames.get(resourceClass);
           if (resourceFileName == null)
           {
-            log.warn("Unable to find source file for class " + resourceClass + " .  No Javadoc will be generated for it.");
+            log.warn("Unable to find source file for class " + resourceClass + " .  No documentation will be generated for it.");
           }
           else
           {
@@ -145,39 +180,30 @@ public class RestLiResourceModelExporter
       return new Result();
     }
 
-    log.info("Executing Javadoc tool...");
+    // We always include the doc provider for javadoc
+    DocsProvider javadocProvider = new DocletDocsProvider(apiName, classpath, sourcePaths, resourcePackages);
 
-    final String flatClasspath;
-    if (classpath == null)
+    DocsProvider docsProvider;
+    if(additionalDocProviders == null || additionalDocProviders.isEmpty())
     {
-      flatClasspath = System.getProperty("java.class.path");
+      docsProvider = javadocProvider;
     }
     else
     {
-      flatClasspath = StringUtils.join(classpath, ":");
+      // dynamically load doc providers for additional language, if available
+      List<DocsProvider> languageSpecificDocsProviders = new ArrayList<DocsProvider>();
+      languageSpecificDocsProviders.add(javadocProvider);
+      languageSpecificDocsProviders.addAll(MultiLanguageDocsProvider.loadExternalProviders(additionalDocProviders));
+      docsProvider = new MultiLanguageDocsProvider(languageSpecificDocsProviders);
     }
 
-    final PrintWriter sysoutWriter = new PrintWriter(System.out, true);
-    final PrintWriter nullWriter = new PrintWriter(new NullWriter());
-    final List<String> javadocArgs = new ArrayList<String>(Arrays.asList(
-        "-classpath", flatClasspath,
-        "-sourcepath", StringUtils.join(sourcePaths, ":")
-    ));
-    if (resourcePackages != null)
-    {
-      javadocArgs.add("-subpackages");
-      javadocArgs.add(StringUtils.join(resourcePackages, ":"));
-    }
-    else
-    {
-      javadocArgs.addAll(sourceFileNames);
-    }
+    log.info("Registering source files with doc providers...");
 
-    final long docletId = RestLiDoclet.generateJavadoc(apiName, sysoutWriter, nullWriter, nullWriter, javadocArgs.toArray(new String[0]));
+    docsProvider.registerSourceFiles(classFileNames.values());
 
     log.info("Exporting IDL files...");
 
-    final GeneratorResult result = generateIDLFiles(apiName, outdir, rootResourceMap, docletId);
+    final GeneratorResult result = generateIDLFiles(apiName, outdir, rootResourceMap, docsProvider);
 
     log.info("Done!");
 
@@ -216,7 +242,7 @@ public class RestLiResourceModelExporter
   private GeneratorResult generateIDLFiles(String apiName,
                                            String outdir,
                                            Map<String, ResourceModel> rootResourceMap,
-                                           long docletId)
+                                           DocsProvider docsProvider)
       throws IOException
   {
     Result result = new Result();
@@ -238,7 +264,7 @@ public class RestLiResourceModelExporter
       throw new RuntimeException("Output directory '" + outdir + "' must be writeable");
     }
 
-    final ResourceModelEncoder encoder = new ResourceModelEncoder(new DocletDocsProvider(docletId));
+    final ResourceModelEncoder encoder = new ResourceModelEncoder(docsProvider);
 
     final List<ResourceSchema> rootResourceNodes = new ArrayList<ResourceSchema>();
     for (Entry<String, ResourceModel> entry: rootResourceMap.entrySet())

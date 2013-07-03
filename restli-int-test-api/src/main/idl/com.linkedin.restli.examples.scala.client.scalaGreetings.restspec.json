@@ -1,0 +1,35 @@
+{
+  "name" : "scalaGreetings",
+  "namespace" : "com.linkedin.restli.examples.scala.client",
+  "path" : "/scalaGreetings",
+  "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+  "doc" : "<p>A scala rest.li service.</p><p>Let's test some scaladoc.  First the wiki formats.</p><p>Styles: <b>bold</b>, <i>italic</i>, <code>monospace</code>, <em>underline</em>, <sup>superscript</sup>, <sub>subscript</sub></p><h1>Header</h1><h3>sub-heading</h3><p><a href=\"http://scala-lang.org\">Scala</a></p><pre>x match {\ncase Some(v) => println(v)\ncase None => ()\n}</pre><ul><li><p>unordered bullet 1</p></li><li><p>unordered bullet 2</p></li></ul><ol><li><p>ordered bullet 1</p></li><li><p>ordered bullet 2\n</p></li></ol>\n\ngenerated from: com.linkedin.restli.examples.greetings.server.ScalaGreetingsResource",
+  "collection" : {
+    "identifier" : {
+      "name" : "scalaGreetingsId",
+      "type" : "long"
+    },
+    "supports" : [ "get" ],
+    "methods" : [ {
+      "method" : "get",
+      "doc" : "<p>Now let's test some html formatted scaladoc.</p><p><b>Some html</b> with a <a href=\"http://rest.li\">link</a>. x<sup>a</sup><sub>b</sub>.</p><ul><li><p>unordered bullet 1</p></li><li><p>unordered bullet 2</p></li></ul>"
+    } ],
+    "actions" : [ {
+      "name" : "action",
+      "doc" : "<p>An action.\n</p>",
+      "parameters" : [ {
+        "name" : "param1",
+        "type" : "string",
+        "doc" : "<p>provides a String</p>"
+      }, {
+        "name" : "param2",
+        "type" : "boolean",
+        "doc" : "<p>provides a Boolean</p>"
+      } ],
+      "returns" : "string"
+    } ],
+    "entity" : {
+      "path" : "/scalaGreetings/{scalaGreetingsId}"
+    }
+  }
+}

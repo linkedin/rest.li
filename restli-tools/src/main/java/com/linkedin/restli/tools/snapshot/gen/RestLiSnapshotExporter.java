@@ -21,27 +21,29 @@ import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.pegasus.generator.GeneratorResult;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.model.ResourceModelEncoder;
+import com.linkedin.restli.internal.server.model.ResourceModelEncoder.DocsProvider;
 import com.linkedin.restli.internal.server.model.RestLiApiBuilder;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.server.RestLiConfig;
 import com.linkedin.restli.server.util.FileClassNameScanner;
 import com.linkedin.restli.tools.compatibility.CompatibilityUtil;
 import com.linkedin.restli.tools.idlgen.DocletDocsProvider;
+import com.linkedin.restli.tools.idlgen.MultiLanguageDocsProvider;
 import com.linkedin.restli.tools.idlgen.RestLiDoclet;
-import org.apache.commons.io.output.NullWriter;
-import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.io.output.NullWriter;
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Given a set of package names, scans all Rest.li resource classes in the packages and generate corresponding
@@ -66,6 +68,24 @@ public class RestLiSnapshotExporter
                                 String[] resourcePackages,
                                 String[] resourceClasses,
                                 String outdir)
+      throws IOException
+  {
+    return export(apiName,
+                  classpath,
+                  sourcePaths,
+                  resourcePackages,
+                  resourceClasses,
+                  outdir,
+                  Collections.<DocsProvider>emptyList());
+  }
+
+  public GeneratorResult export(String apiName,
+                                String[] classpath,
+                                String[] sourcePaths,
+                                String[] resourcePackages,
+                                String[] resourceClasses,
+                                String outdir,
+                                List<DocsProvider> additionalDocProviders)
     throws IOException
   {
     final RestLiConfig config = new RestLiConfig();
@@ -74,15 +94,15 @@ public class RestLiSnapshotExporter
       config.addResourcePackageNames(resourcePackages);
     }
 
+    final Map<String, String> classFileNames = new HashMap<String, String>();
+    for (String path : sourcePaths)
+    {
+      classFileNames.putAll(FileClassNameScanner.scan(path));
+    }
+
     Collection<String> sourceFileNames = null;
     if (resourceClasses != null || resourcePackages == null)
     {
-      final Map<String, String> classFileNames = new HashMap<String, String>();
-      for (String path : sourcePaths)
-      {
-        classFileNames.putAll(FileClassNameScanner.scan(path));
-      }
-
       if (resourceClasses != null)
       {
         config.addResourceClassNames(resourceClasses);
@@ -116,39 +136,30 @@ public class RestLiSnapshotExporter
       return new SnapshotResult();
     }
 
-    log.info("Executing Javadoc tool...");
+    // We always include the doc provider for javadoc
+    DocsProvider javadocProvider = new DocletDocsProvider(apiName, classpath, sourcePaths, resourcePackages);
 
-    final String flatClasspath;
-    if (classpath == null)
+    DocsProvider docsProvider;
+    if(additionalDocProviders == null || additionalDocProviders.isEmpty())
     {
-      flatClasspath = System.getProperty("java.class.path");
+      docsProvider = javadocProvider;
     }
     else
     {
-      flatClasspath = StringUtils.join(classpath, ":");
+      // dynamically load doc providers for additional language, if available
+      List<DocsProvider> languageSpecificDocsProviders = new ArrayList<DocsProvider>();
+      languageSpecificDocsProviders.add(javadocProvider);
+      languageSpecificDocsProviders.addAll(MultiLanguageDocsProvider.loadExternalProviders(additionalDocProviders));
+      docsProvider = new MultiLanguageDocsProvider(languageSpecificDocsProviders);
     }
 
-    final PrintWriter sysoutWriter = new PrintWriter(System.out, true);
-    final PrintWriter nullWriter = new PrintWriter(new NullWriter());
-    final List<String> javadocArgs = new ArrayList<String>(Arrays.asList(
-      "-classpath", flatClasspath,
-      "-sourcepath", StringUtils.join(sourcePaths, ":")
-    ));
-    if (resourcePackages != null)
-    {
-      javadocArgs.add("-subpackages");
-      javadocArgs.add(StringUtils.join(resourcePackages, ":"));
-    }
-    else
-    {
-      javadocArgs.addAll(sourceFileNames);
-    }
+    log.info("Registering source files with doc providers...");
 
-    final Long docletId = RestLiDoclet.generateJavadoc(apiName, sysoutWriter, nullWriter, nullWriter, javadocArgs.toArray(new String[0]));
+    docsProvider.registerSourceFiles(classFileNames.values());
 
     log.info("Exporting snapshot files...");
 
-    final GeneratorResult result = generateSnapshotFiles(apiName, outdir, rootResourceMap, docletId);
+    final GeneratorResult result = generateSnapshotFiles(apiName, outdir, rootResourceMap, docsProvider);
 
     log.info("Done!");
 
@@ -158,7 +169,7 @@ public class RestLiSnapshotExporter
   private GeneratorResult generateSnapshotFiles(String apiName,
                                                 String outdir,
                                                 Map<String, ResourceModel> rootResourceMap,
-                                                Long docletId)
+                                                DocsProvider docsProvider)
     throws IOException
   {
     SnapshotResult result = new SnapshotResult();
@@ -180,7 +191,7 @@ public class RestLiSnapshotExporter
       throw new RuntimeException("Output directory '" + outdir + "' must be writeable");
     }
 
-    final ResourceModelEncoder encoder = new ResourceModelEncoder(new DocletDocsProvider(docletId));
+    final ResourceModelEncoder encoder = new ResourceModelEncoder(docsProvider);
 
     final List<ResourceSchema> rootResourceNodes = new ArrayList<ResourceSchema>();
     for (Map.Entry<String, ResourceModel> entry: rootResourceMap.entrySet())

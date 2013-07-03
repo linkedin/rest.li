@@ -59,21 +59,23 @@ import com.linkedin.restli.restspec.RestMethodSchemaArray;
 import com.linkedin.restli.restspec.SimpleSchema;
 import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.ResourceLevel;
-import org.apache.commons.io.IOUtils;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
+import org.apache.commons.io.IOUtils;
 
 
 /**
  * Encodes a ResourceModel (runtime-reflection oriented class) into the JSON-serializable
- * {@link ResourceSchema}. Accepts a {@link DocsProvider} plugin to incorporate JavaDocs.
+ * {@link ResourceSchema}. Accepts a {@link DocsProvider} plugin to incorporate documentation
+ * from a JVM language such as JavaDoc and Scaladoc.
  *
  * @author jwalker, dellamag
  */
@@ -84,11 +86,30 @@ public class ResourceModelEncoder
 
   private final DataCodec codec = new JacksonDataCodec();
 
+  /**
+   * Provides documentation strings from a JVM language to be incorporated into ResourceModels.
+   */
   public interface DocsProvider
   {
     /**
+     * Gets the file extensions this doc provider supports.  It must ignore any source files registered with it that
+     * are not in this set.
+     *
+     * @return the supported files extensions
+     */
+    Set<String> supportedFileExtensions();
+
+    /**
+     * Registers the source files with the doc provider.  The doc provider should perform any initialization required
+     * handle subsequent requests for classe, method and param docs from these source files.
+     *
+     * @param filenames provides the source file names to register.
+     */
+    void registerSourceFiles(Collection<String> filenames);
+
+    /**
      * @param resourceClass resource class
-     * @return class JavaDoc
+     * @return class documentation, or null if no documentation is available
      */
     String getClassDoc(Class<?> resourceClass);
 
@@ -96,7 +117,7 @@ public class ResourceModelEncoder
 
     /**
      * @param method resource {@link Method}
-     * @return method JavaDoc
+     * @return method documentation, or null if no documentation is available
      */
     String getMethodDoc(Method method);
 
@@ -105,13 +126,25 @@ public class ResourceModelEncoder
     /**
      * @param method resource {@link Method}
      * @param name method param name
-     * @return method param JavaDoc
+     * @return method param documentation, or null if no documentation is available
      */
     String getParamDoc(Method method, String name);
   }
 
   public static class NullDocsProvider implements DocsProvider
   {
+    @Override
+    public void registerSourceFiles(Collection<String> filenames)
+    {
+
+    }
+
+    @Override
+    public Set<String> supportedFileExtensions()
+    {
+      return Collections.emptySet();
+    }
+
     @Override
     public String getClassDoc(final Class<?> resourceClass)
     {

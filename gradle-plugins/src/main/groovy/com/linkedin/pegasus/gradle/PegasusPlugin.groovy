@@ -952,7 +952,7 @@ class PegasusPlugin implements Plugin<Project>
       final Task generateRestModelTask = project.task(sourceSet.getTaskName('generate', 'restModel'),
                                                       type: GenerateRestModel,
                                                       dependsOn: project.tasks[sourceSet.compileJavaTaskName]) {
-        inputDirs = sourceSet.java.srcDirs
+        inputDirs = sourceSet.allSource.srcDirs
         // we need all the artifacts from runtime for any private implementation classes the server code might need.
         runtimeClasspath = project.configurations.runtime + sourceSet.runtimeClasspath
         snapshotDestinationDir = project.file(destinationDirPrefix + 'snapshot')
@@ -1758,7 +1758,9 @@ class PegasusPlugin implements Plugin<Project>
       final ClassLoader generatorClassLoader = (ClassLoader) project.property(GENERATOR_CLASSLOADER_NAME)
       final ClassLoader prevContextClassLoader = Thread.currentThread().contextClassLoader
       final URL[] classpathUrls = runtimeClasspath.collect { it.toURI().toURL() } as URL[]
-      Thread.currentThread().contextClassLoader = new URLClassLoader(classpathUrls, generatorClassLoader)
+
+      final ClassLoader runtimeClassloader = new URLClassLoader(classpathUrls, generatorClassLoader)
+      Thread.currentThread().contextClassLoader = runtimeClassloader
 
       final snapshotGenerator = generatorClassLoader.loadClass('com.linkedin.restli.tools.snapshot.gen.RestLiSnapshotExporter').newInstance()
       final idlGenerator = generatorClassLoader.loadClass('com.linkedin.restli.tools.idlgen.RestLiResourceModelExporter').newInstance()
@@ -1766,10 +1768,12 @@ class PegasusPlugin implements Plugin<Project>
       final String resolverPathStr = resolverPath.collect { it.path }.join(File.pathSeparator)
       snapshotGenerator.setResolverPath(resolverPathStr)
 
+      final docProviders = loadAdditionalDocProviders(project, runtimeClassloader)
+
       if (idlOptions.idlItems.empty)
       {
-        final snapshotResult = snapshotGenerator.export(null, classpathUrls as String[], inputDirPaths, null, null, snapshotDestinationDir.path)
-        final idlResult = idlGenerator.export(null, classpathUrls as String[], inputDirPaths, null, null, idlDestinationDir.path)
+        final snapshotResult = snapshotGenerator.export(null, classpathUrls as String[], inputDirPaths, null, null, snapshotDestinationDir.path, docProviders)
+        final idlResult = idlGenerator.export(null, classpathUrls as String[], inputDirPaths, null, null, idlDestinationDir.path, docProviders)
 
         generatedSnapshotFiles.addAll(snapshotResult.targetFiles)
         generatedIdlFiles.addAll(idlResult.targetFiles)
@@ -1790,8 +1794,8 @@ class PegasusPlugin implements Plugin<Project>
 
           // RestLiResourceModelExporter will load classes from the passed packages
           // we need to add the classpath to the thread's context class loader
-          final snapshotResult = snapshotGenerator.export(apiName, classpathUrls as String[], inputDirPaths, idlItem.packageNames, null, snapshotDestinationDir.path)
-          final idlResult = idlGenerator.export(apiName, classpathUrls as String[], inputDirPaths, idlItem.packageNames, null, idlDestinationDir.path)
+          final snapshotResult = snapshotGenerator.export(apiName, classpathUrls as String[], inputDirPaths, idlItem.packageNames, null, snapshotDestinationDir.path, docProviders)
+          final idlResult = idlGenerator.export(apiName, classpathUrls as String[], inputDirPaths, idlItem.packageNames, null, idlDestinationDir.path, docProviders)
 
           generatedSnapshotFiles.addAll(snapshotResult.targetFiles)
           generatedIdlFiles.addAll(idlResult.targetFiles)
@@ -1800,6 +1804,42 @@ class PegasusPlugin implements Plugin<Project>
 
       Thread.currentThread().contextClassLoader = prevContextClassLoader
     }
+  }
+
+  private static List<Object> loadAdditionalDocProviders(Project project,
+                                                         ClassLoader runtimeClassloader)
+  {
+    final docProviders = []
+
+    // Scala:
+    final scaladocTask = project.tasks.findByName("scaladoc")
+    if(scaladocTask != null) // if exists, the scala plugin is enabled and we can use the scaladoc tasks to get the classpath we need to run scaladoc programmatically
+    {
+      final String[] scaladocClasspath = (scaladocTask.classpath + scaladocTask.scalaClasspath).collect { it.getAbsolutePath() } as String[]
+      try
+      {
+        // The developer must provide the restli-tools-scala library explicitly because they must pick which
+        // scala major version they are using and because restli-tools-scala has different implementations for different
+        // scala major versions (due to nsc).  Otherwise we could have had this plugin depend directly on the library.
+        final scalaDocProvider = runtimeClassloader.loadClass('com.linkedin.restli.tools.scala.ScalaDocsProvider').newInstance(scaladocClasspath)
+        docProviders = docProviders + scalaDocProvider
+      }
+      catch (ClassNotFoundException e)
+      {
+        project.logger.warn("Rest.li/Scaladoc: Failed to load ScalaDocsProvider class.  Please add " +
+                                    "\"compile 'com.linkedin.pegasus:restli-tools-scala_<scala-version>:<pegasus-version>'\"" +
+                                    " to your project's 'dependencies {...}' section to enable.  Skipping document export " +
+                                    "from rest.li resources written in scala.")
+      }
+      catch (Throwable t)
+      {
+        project.logger.warn("Rest.li/Scaladoc: Failed to initialize ScalaDocsProvider class.  Skipping document export from rest.li " +
+                                    "resources written in scala.   Run gradle with --info for full stack trace. message=" + t.getMessage())
+        project.logger.info("Failed to initialize ScalaDocsProvider class", t)
+      }
+    }
+
+    return docProviders
   }
 
   // this calls the IDL compatibility checker. The IDL checker is not symetric to the Snapshot checker

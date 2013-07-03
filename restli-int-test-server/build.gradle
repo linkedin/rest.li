@@ -1,4 +1,5 @@
 apply plugin: 'pegasus'
+apply plugin: 'scala'
 
 dependencies {
   compile project(':restli-int-test-api')
@@ -20,6 +21,9 @@ dependencies {
   runtime externalDependency.slf4jLog4j12
   testCompile project(path: ':restli-int-test-api', configuration: 'testDataTemplate')
   testCompile externalDependency.testng
+
+  compile externalDependency.scalaLibrary_2_10
+  compile project(':restli-tools-scala_2.10')
 }
 
 // run the generator for each configuration

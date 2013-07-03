@@ -1,6 +1,7 @@
 1.13.3
 ------
-
+(RB=251559)
+Add scaladoc support to Rest.li IDL generation.
 
 1.13.2
 ------
@@ -12,6 +13,9 @@ Include schemas referenced inline when generating OPTIONS responses.
 
 (RB=255203)
 Disallow typeref as key type in annotation reader. This fixes the inconsistency between annotation reader and resource model.
+
+(RB=251559)
+Add scaladoc support to Rest.li IDL generation.
 
 1.13.1
 ------

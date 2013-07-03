@@ -70,7 +70,12 @@ project.ext.externalDependency = [
 
   // for restli-guice-bridge ONLY, we should keep these dependencies isolated
   'guice': 'com.google.inject:guice:3.0',
-  'guiceServlet': 'com.google.inject.extensions:guice-servlet:3.0'
+  'guiceServlet': 'com.google.inject.extensions:guice-servlet:3.0',
+
+  // for restli-scala-tools only, we must not add dependencies on scala from any other pegasus modules
+  'scalaLibrary_2_10': 'org.scala-lang:scala-library:2.10.3',
+  'scalaCompiler_2_10': 'org.scala-lang:scala-compiler:2.10.3',
+  'scalaReflect_2_10': 'org.scala-lang:scala-reflect:2.10.3'
 ];
 
 if (!project.ext.isDefaultEnvironment)

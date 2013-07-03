@@ -1,0 +1,59 @@
+{
+  "models" : [ {
+    "type" : "enum",
+    "name" : "Tone",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "symbols" : [ "FRIENDLY", "SINCERE", "INSULTING" ]
+  }, {
+    "type" : "record",
+    "name" : "Greeting",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "doc" : "A greeting",
+    "fields" : [ {
+      "name" : "id",
+      "type" : "long"
+    }, {
+      "name" : "message",
+      "type" : "string"
+    }, {
+      "name" : "tone",
+      "type" : "Tone",
+      "doc" : "tone"
+    } ]
+  } ],
+  "schema" : {
+    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+    "name" : "scalaGreetings",
+    "doc" : "<p>A scala rest.li service.</p><p>Let's test some scaladoc.  First the wiki formats.</p><p>Styles: <b>bold</b>, <i>italic</i>, <code>monospace</code>, <em>underline</em>, <sup>superscript</sup>, <sub>subscript</sub></p><h1>Header</h1><h3>sub-heading</h3><p><a href=\"http://scala-lang.org\">Scala</a></p><pre>x match {\ncase Some(v) => println(v)\ncase None => ()\n}</pre><ul><li><p>unordered bullet 1</p></li><li><p>unordered bullet 2</p></li></ul><ol><li><p>ordered bullet 1</p></li><li><p>ordered bullet 2\n</p></li></ol>\n\ngenerated from: com.linkedin.restli.examples.greetings.server.ScalaGreetingsResource",
+    "path" : "/scalaGreetings",
+    "collection" : {
+      "methods" : [ {
+        "doc" : "<p>Now let's test some html formatted scaladoc.</p><p><b>Some html</b> with a <a href=\"http://rest.li\">link</a>. x<sup>a</sup><sub>b</sub>.</p><ul><li><p>unordered bullet 1</p></li><li><p>unordered bullet 2</p></li></ul>",
+        "method" : "get"
+      } ],
+      "entity" : {
+        "path" : "/scalaGreetings/{scalaGreetingsId}"
+      },
+      "supports" : [ "get" ],
+      "identifier" : {
+        "name" : "scalaGreetingsId",
+        "type" : "long"
+      },
+      "actions" : [ {
+        "name" : "action",
+        "doc" : "<p>An action.\n</p>",
+        "returns" : "string",
+        "parameters" : [ {
+          "name" : "param1",
+          "doc" : "<p>provides a String</p>",
+          "type" : "string"
+        }, {
+          "name" : "param2",
+          "doc" : "<p>provides a Boolean</p>",
+          "type" : "boolean"
+        } ]
+      } ]
+    },
+    "namespace" : "com.linkedin.restli.examples.scala.client"
+  }
+}

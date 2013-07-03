@@ -1,0 +1,42 @@
+// This project is renamed to restli-tools-scala_2.10 in settings.gradle.
+//
+// This is a stop gap fix to allow us to publish artifacts that conform to the scala artifact naming convention while
+// we wait for gradle to add support for gradle cross build support.  The scala published artifact convention is to
+// name artifacts like so:
+//
+// "com.linkedin.pegasus:restli-tools-scala_<scalaVersion>:<pegasusVersion>"
+//
+// For example, if we were to cross build this module to scala 2.10 and 2.11, we should publish:
+//
+// "com.linkedin.pegasus:restli-tools-scala_2.10:<pegasusVersion>"
+// "com.linkedin.pegasus:restli-tools-scala_2.11:<pegasusVersion>"
+//
+// Using the rename works for us now because we currently only need to support scala 2.10.  We could have even renamed
+// the project directory to restli-tools-scala_2.10, but we do expect in the future to need to cross build, so by
+// doing a gradle project rename allows us to avoid having to rename the directory later when we start cross building.
+//
+// If gradle adds cross build support before we need to add support for 2.11, we will use the cross build support and
+// remove this rename. If gradle does not add cross build support before we need it, then we may have to add our own
+// temporary cross build support.  If we need to go this route, we can use these references as a starting point:
+//
+// https://skillsmatter.com/skillscasts/4449-polyglot-gradle-java-groovy-scala-and-beyond (starting at 48:30)
+// http://stackoverflow.com/questions/21450500/cross-build-scala-using-gradle
+
+apply plugin: 'scala'
+
+dependencies {
+  compile project(':restli-server')
+  compile project(':restli-common')
+  compile project(':data')
+  compile externalDependency.scalaLibrary_2_10
+  compile externalDependency.scalaCompiler_2_10
+  compile externalDependency.scalaReflect_2_10
+
+  testCompile externalDependency.testng
+  testCompile project(':restli-int-test-server') // for ScalaGreetingsResource
+}
+
+test {
+  useTestNG()
+  systemProperties['test.projectDir'] = project.projectDir.path
+}
