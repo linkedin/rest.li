@@ -61,6 +61,7 @@ import com.linkedin.restli.examples.greetings.client.CustomTypes3BatchUpdateBuil
 import com.linkedin.restli.examples.greetings.client.CustomTypes3Builders;
 import com.linkedin.restli.examples.greetings.client.CustomTypes4Builders;
 import com.linkedin.restli.examples.greetings.client.CustomTypesBuilders;
+import com.linkedin.restli.examples.typeref.api.CustomLongRefArray;
 
 /**
  * @author Moira Tagle
@@ -128,6 +129,20 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
     Long result = REST_CLIENT.sendRequest(request).getResponse().getEntity();
 
     Assert.assertEquals(lo, result);
+  }
+
+  @Test
+  public void testCustomLongArrayOnAction() throws RemoteInvocationException
+  {
+    CustomLongRefArray ls = new CustomLongRefArray();
+    ls.add(new CustomLong(1L));
+    ls.add(new CustomLong(2L));
+
+    ActionRequest<CustomLongRefArray> request = CUSTOM_TYPES_BUILDERS.actionArrayAction().paramLs(ls).build();
+    CustomLongRefArray elements = REST_CLIENT.sendRequest(request).getResponse().getEntity();
+    Assert.assertEquals(2, elements.size());
+    Assert.assertEquals(1L, elements.get(0).toLong().longValue());
+    Assert.assertEquals(2L, elements.get(1).toLong().longValue());
   }
 
   @Test

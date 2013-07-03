@@ -61,11 +61,11 @@ public class CustomLong
     public CustomLong coerceOutput(Object object)
             throws TemplateOutputCastException
     {
-      if (! (object instanceof Long))
+      if (!(object instanceof Long) && !(object instanceof Integer))
       {
-        throw new TemplateOutputCastException("Output " + object + " is not a long, and cannot be coerced to " + CustomLong.class.getName());
+        throw new TemplateOutputCastException("Output " + object + " is not a long or integer, and cannot be coerced to " + CustomLong.class.getName());
       }
-      return new CustomLong((Long) object);
+      return new CustomLong(((Number)object).longValue());
     }
   }
 

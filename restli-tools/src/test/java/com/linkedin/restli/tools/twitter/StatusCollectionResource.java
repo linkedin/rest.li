@@ -132,4 +132,24 @@ public class StatusCollectionResource extends CollectionResourceTemplate<Long,St
   public void forward(@ActionParam("to") long userID)
   {
   }
+
+  /**
+   * Action data template array return type and input type test case
+   */
+  @Action(name="statusArrayAction",
+          resourceLevel= ResourceLevel.COLLECTION)
+  public Status[] statusArrayAction(@ActionParam("statuses") Status[] statuses)
+  {
+    return statuses;
+  }
+
+  /**
+   * Action array return type test case
+   */
+  @Action(name="intArrayAction",
+          resourceLevel= ResourceLevel.COLLECTION)
+  public int[] intArrayAction(@ActionParam("ints") int[] ints)
+  {
+    return ints;
+  }
 }

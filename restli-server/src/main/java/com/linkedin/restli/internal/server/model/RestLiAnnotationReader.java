@@ -18,6 +18,7 @@ package com.linkedin.restli.internal.server.model;
 
 
 import com.linkedin.common.callback.Callback;
+import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.TyperefDataSchema;
@@ -716,7 +717,9 @@ public final class RestLiAnnotationReader
 
     if (methodType == ResourceMethod.ACTION
         && param.getParamType() == Parameter.ParamType.POST
-            && !(checkParameterType(param.getType(), RestModelConstants.VALID_ACTION_PARAMETER_TYPES) || param.getDataSchema() instanceof TyperefDataSchema))
+        && !(checkParameterType(param.getType(), RestModelConstants.VALID_ACTION_PARAMETER_TYPES) ||
+          checkParameterHasTyperefSchema(
+            param)))
     {
       throw new ResourceConfigException("Parameter '" + paramName + "' on "
           + buildMethodMessage(method) + " is not a valid type (" + param.getType() + ')');
@@ -725,7 +728,8 @@ public final class RestLiAnnotationReader
     if (methodType != ResourceMethod.ACTION
         && param.getParamType() == Parameter.ParamType.QUERY
         && !(checkParameterType(param.getType(),
-                                RestModelConstants.VALID_QUERY_PARAMETER_TYPES) || param.getDataSchema() instanceof TyperefDataSchema))
+                                RestModelConstants.VALID_QUERY_PARAMETER_TYPES) ||
+          checkParameterHasTyperefSchema(param)))
     {
       throw new ResourceConfigException("Parameter '" + paramName + "' on "
           + buildMethodMessage(method) + " is not a valid type (" + param.getType() + ')');
@@ -752,6 +756,33 @@ public final class RestLiAnnotationReader
       throw new ResourceConfigException(buildMethodMessage(method)
           + "' must declare only one of @QueryParam, @ActionParam, @AssocKey, @Context, or @CallbackParam");
     }
+  }
+
+  private static boolean checkParameterHasTyperefSchema(Parameter parameter)
+  {
+    boolean result = false;
+    DataSchema dataSchema = parameter.getDataSchema();
+    Class<?> dataType = parameter.getType();
+
+    if (dataType.isArray())
+    {
+      if (dataSchema instanceof ArrayDataSchema)
+      {
+        dataSchema = ((ArrayDataSchema) dataSchema).getItems();
+      }
+      else
+      {
+        throw new ResourceConfigException(
+            "Array typed parameter " + parameter.getName() + " must have an array schema.");
+      }
+    }
+
+    if (dataSchema instanceof TyperefDataSchema)
+    {
+      result = true;
+    }
+
+    return result;
   }
 
   private static Set<Key> buildKeys(String resourceName,
@@ -901,7 +932,14 @@ public final class RestLiAnnotationReader
     }
     if (typerefDataSchema != null)
     {
-      return typerefDataSchema;
+      if (type.isArray())
+      {
+        return new ArrayDataSchema(typerefDataSchema);
+      }
+      else
+      {
+        return typerefDataSchema;
+      }
     }
     else if (RestModelConstants.CLASSES_WITHOUT_SCHEMAS.contains(type))
     {
@@ -909,7 +947,8 @@ public final class RestLiAnnotationReader
     }
     else if (type.isArray())
     {
-      return DataTemplateUtil.getSchema(type.getComponentType());
+      DataSchema itemSchema = DataTemplateUtil.getSchema(type.getComponentType());
+      return new ArrayDataSchema(itemSchema);
     }
     return DataTemplateUtil.getSchema(type);
   }

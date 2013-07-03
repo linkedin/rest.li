@@ -68,4 +68,10 @@ public class CustomTypesResource extends CollectionResourceTemplate<Long, Greeti
   {
     return l.toLong();
   }
+
+  @Action(name="arrayAction", returnTyperef=CustomLongRef.class)
+  public CustomLong[] arrayAction(@ActionParam(value="ls", typeref=CustomLongRef.class) CustomLong[] ls)
+  {
+    return ls;
+  }
 }

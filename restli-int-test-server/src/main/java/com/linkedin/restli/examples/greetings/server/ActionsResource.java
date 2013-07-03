@@ -34,6 +34,7 @@ import com.linkedin.parseq.promise.Promise;
 import com.linkedin.parseq.promise.Promises;
 import com.linkedin.parseq.promise.SettablePromise;
 import com.linkedin.restli.examples.greetings.api.Message;
+import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.ActionParam;
 import com.linkedin.restli.server.annotations.CallbackParam;
@@ -83,10 +84,28 @@ public class ActionsResource
     return input;
   }
 
+  @Action(name="echoStringArray")
+  public String[] echoStringArray(@ActionParam("strings") final String[] inputs)
+  {
+    return inputs;
+  }
+
   @Action(name="echoMessage")
   public Message echoMessage(@ActionParam("message") final Message message)
   {
     return message;
+  }
+
+  @Action(name="echoMessageArray")
+  public Message[] echoMessage(@ActionParam("messages") final Message[] messages)
+  {
+    return messages;
+  }
+
+  @Action(name="echoToneArray")
+  public Tone[] echoToneArray(@ActionParam("tones") final Tone[] tones)
+  {
+    return tones;
   }
 
   @Action(name = "timeout")

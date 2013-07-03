@@ -112,7 +112,24 @@ public interface RestModelConstants
       RecordTemplate.class,
       FixedTemplate.class,
       AbstractArrayTemplate.class,
-      AbstractMapTemplate.class
+      AbstractMapTemplate.class,
+
+      boolean[].class,
+      Boolean[].class,
+      int[].class,
+      Integer[].class,
+      long[].class,
+      Long[].class,
+      float[].class,
+      Float[].class,
+      double[].class,
+      Double[].class,
+      String[].class,
+      Enum[].class,
+      RecordTemplate[].class,
+      FixedTemplate[].class,
+      AbstractArrayTemplate[].class,
+      AbstractMapTemplate[].class
   };
 
   Class<?>[] VALID_ACTION_RETURN_TYPES = new Class<?>[] {
@@ -134,7 +151,24 @@ public interface RestModelConstants
       FixedTemplate.class,
       AbstractArrayTemplate.class,
       AbstractMapTemplate.class,
-      ActionResult.class
+      ActionResult.class,
+
+      boolean[].class,
+      Boolean[].class,
+      int[].class,
+      Integer[].class,
+      long[].class,
+      Long[].class,
+      float[].class,
+      Float[].class,
+      double[].class,
+      Double[].class,
+      String[].class,
+      Enum[].class,
+      RecordTemplate[].class,
+      FixedTemplate[].class,
+      AbstractArrayTemplate[].class,
+      AbstractMapTemplate[].class
   };
 
   @SuppressWarnings("serial")

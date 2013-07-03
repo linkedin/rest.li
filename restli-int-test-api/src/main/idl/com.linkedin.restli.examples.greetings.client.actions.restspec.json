@@ -19,6 +19,27 @@
       } ],
       "returns" : "com.linkedin.restli.examples.greetings.api.Message"
     }, {
+      "name" : "echoMessageArray",
+      "parameters" : [ {
+        "name" : "messages",
+        "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.Message\" }"
+      } ],
+      "returns" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.Message\" }"
+    }, {
+      "name" : "echoStringArray",
+      "parameters" : [ {
+        "name" : "strings",
+        "type" : "{ \"type\" : \"array\", \"items\" : \"string\" }"
+      } ],
+      "returns" : "{ \"type\" : \"array\", \"items\" : \"string\" }"
+    }, {
+      "name" : "echoToneArray",
+      "parameters" : [ {
+        "name" : "tones",
+        "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.Tone\" }"
+      } ],
+      "returns" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.Tone\" }"
+    }, {
       "name" : "failCallbackCall",
       "doc" : "Action that fails by calling the callback"
     }, {

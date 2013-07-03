@@ -17,11 +17,16 @@
 package com.linkedin.data.template;
 
 
+import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.DataSchemaUtil;
 import com.linkedin.data.schema.Name;
 import com.linkedin.data.schema.RecordDataSchema;
 
+import com.linkedin.data.schema.TyperefDataSchema;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -121,7 +126,6 @@ public class DynamicRecordTemplate extends RecordTemplate
     {
       setValue((FieldDef<Object>) entry.getKey(), entry.getValue());
     }
-
   }
 
   /**
@@ -142,13 +146,18 @@ public class DynamicRecordTemplate extends RecordTemplate
       throw new IllegalArgumentException("Field " + fieldDef.getName() + " is not a field belonging to the schema of this DynamicRecordTemplate.");
     }
 
-    if (DataTemplate.class.isAssignableFrom(fieldDef.getType()))
+    if (fieldDef.getType().isArray())
     {
-      Class<? extends DataTemplate<?>> dataTemplateClass = (Class<DataTemplate<?>>) fieldDef.getType();
-      return (T) obtainWrapped(field, dataTemplateClass, GetMode.STRICT);
+      return obtainArray(field, fieldDef);
     }
-
-    return (T) obtainDirect(field, fieldDef.getType(), GetMode.STRICT);
+    else if (DataTemplate.class.isAssignableFrom(fieldDef.getType()))
+    {
+      return (T) obtainWrapped(field, (Class<DataTemplate<?>>) fieldDef.getType(), GetMode.STRICT);
+    }
+    else
+    {
+      return (T) obtainDirect(field, fieldDef.getType(), GetMode.STRICT);
+    }
   }
 
   /**
@@ -166,18 +175,22 @@ public class DynamicRecordTemplate extends RecordTemplate
 
     if (!fieldDefInRecord(fieldDef))
     {
-      throw new IllegalArgumentException("Field " + fieldDef.getName() + " is not a field belonging to the schema of this DynamicRecordTemplate.");
+      throw new IllegalArgumentException("Field " +
+                                             fieldDef.getName() +
+                                             " is not a field belonging to the schema of this DynamicRecordTemplate.");
     }
 
-
-    if (DataTemplate.class.isAssignableFrom(fieldDef.getType()))
+    if (fieldDef.getType().isArray())
     {
-      putWrapped(field, (Class<DataTemplate<?>>) fieldDef.getType(), (DataTemplate<?>) value);
+      putArray(field, fieldDef, value);
+    }
+    else if (DataTemplate.class.isAssignableFrom(fieldDef.getType()))
+    {
+      putWrapped(field, (Class<DataTemplate<?>>) fieldDef.getType(), (DataTemplate)value);
     }
     else
     {
-      Class<?> dataClass = fieldDef.getDataClass();
-      putDirect(field, (Class<Object>) fieldDef.getType(), dataClass, value, SetMode.DISALLOW_NULL);
+      putDirect(field, (Class<Object>) fieldDef.getType(), fieldDef.getDataClass(), value, SetMode.DISALLOW_NULL);
     }
   }
 
@@ -194,5 +207,93 @@ public class DynamicRecordTemplate extends RecordTemplate
   private boolean fieldDefInRecord(FieldDef<?> fieldDef)
   {
     return fieldDef.getField().getRecord() == this.schema();
+  }
+
+  /**
+   * Obtains an array value with items wrapped appropriately.
+   * @param field specifies the field to get the value of.
+   * @param fieldDef specifies the field definition to get the value of.
+   * @param <T> provides the type of the value.
+   * @return the value of the field, or null if the field is not present.
+   */
+  @SuppressWarnings({"unchecked"})
+  private <T> T obtainArray(RecordDataSchema.Field field, FieldDef<T> fieldDef)
+  {
+    final Class<?> itemType = fieldDef.getType().getComponentType();
+    final DataList itemsList = obtainDirect(field, DataList.class, GetMode.STRICT);
+    final Object convertedValue = Array.newInstance(itemType, itemsList.size());
+    boolean isDataTemplate = DataTemplate.class.isAssignableFrom(itemType);
+    int j = 0;
+
+    for (Object item: itemsList)
+    {
+      Object itemsElem = null;
+      if (isDataTemplate)
+      {
+        itemsElem = DataTemplateUtil.wrap(item, itemType.asSubclass(DataTemplate.class));
+      }
+      else
+      {
+        itemsElem = DataTemplateUtil.coerceOutput(item, itemType);
+      }
+
+      Array.set(convertedValue, j++, itemsElem);
+    }
+
+    return (T) convertedValue;
+  }
+
+  /**
+   * Puts an array field value by doing the necessary unwrapping at the items level.
+   * @param field specifies the field to put the value for.
+   * @param fieldDef specifies the field definition to put the value for.
+   * @param value provides the value to put for the specified field.
+   * @param <T> provides the type of the value.
+   */
+  @SuppressWarnings({"unchecked"})
+  private <T> void putArray(RecordDataSchema.Field field, FieldDef<T> fieldDef, T value)
+  {
+    DataList data = new DataList();
+    Class<?> itemType = null;
+    ArrayDataSchema arrayDataSchema = null;
+    if (fieldDef.getDataSchema() instanceof ArrayDataSchema)
+    {
+      arrayDataSchema = (ArrayDataSchema)fieldDef.getDataSchema();
+      DataSchema itemSchema = arrayDataSchema.getItems();
+
+      if (itemSchema instanceof TyperefDataSchema)
+      {
+        itemType = DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchemaClass(
+            itemSchema.getDereferencedType());
+      }
+      else
+      {
+        itemType = fieldDef.getType().getComponentType();
+      }
+    }
+    else
+    {
+      throw new IllegalArgumentException(
+          "Field " + fieldDef.getName() +
+            " does not have an array schema; although the data is an array.");
+    }
+
+    boolean isDataTemplate = DataTemplate.class.isAssignableFrom(itemType);
+    for(Object item: (Object[])value)
+    {
+      if (isDataTemplate)
+      {
+        data.add(((DataTemplate)item).data());
+      }
+      else
+      {
+        data.add(
+            DataTemplateUtil.coerceInput(item,
+                                         (Class<Object>)item.getClass(),
+                                         itemType.isEnum() ? String.class : itemType));
+      }
+    }
+
+    putDirect(field, DataList.class, data, SetMode.DISALLOW_NULL);
   }
 }

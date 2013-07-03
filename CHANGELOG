@@ -3,6 +3,9 @@
 (RB=183317)
 Simplify and speed up string intern tests in TestJacksonCodec. This only affects tests.
 
+(RB=182331)
+Adding support for java array return and input parameters for actions.
+
 1.9.1
 ------
 (RB=182338)

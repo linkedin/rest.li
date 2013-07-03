@@ -24,6 +24,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import com.linkedin.data.template.StringArray;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
@@ -35,6 +36,10 @@ import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.examples.greetings.client.ActionsBuilders;
+import com.linkedin.restli.examples.greetings.api.Message;
+import com.linkedin.restli.examples.greetings.api.MessageArray;
+import com.linkedin.restli.examples.greetings.api.Tone;
+import com.linkedin.restli.examples.greetings.api.ToneArray;
 
 public class TestActionsResource extends RestLiIntegrationTest
 {
@@ -81,6 +86,47 @@ public class TestActionsResource extends RestLiIntegrationTest
     ActionRequest<String> request = ACTIONS_BUILDERS.actionGet().build();
     String value = REST_CLIENT.sendRequest(request).getResponse().getEntity();
     Assert.assertEquals(value, "Hello, World");
+  }
+
+  @Test
+  public void testArrayTypesOnActions() throws RemoteInvocationException
+  {
+    //Record template array
+    MessageArray inputMessageArray = new MessageArray();
+    inputMessageArray.add(new Message().setId("My Message Id").setMessage("My Message"));
+    inputMessageArray.add(new Message().setId("My Message Id 2").setMessage("My Message 2"));
+    ActionRequest<MessageArray> messageArrayActionRequest =
+        ACTIONS_BUILDERS.actionEchoMessageArray().paramMessages(inputMessageArray).build();
+    MessageArray messageArray = REST_CLIENT.sendRequest(messageArrayActionRequest).getResponse().getEntity();
+
+    Assert.assertEquals(messageArray.get(0).getId(), "My Message Id");
+    Assert.assertEquals(messageArray.get(0).getMessage(), "My Message");
+
+    Assert.assertEquals(messageArray.get(1).getId(), "My Message Id 2");
+    Assert.assertEquals(messageArray.get(1).getMessage(), "My Message 2");
+
+    //Primitive type array
+    StringArray inputStringArray = new StringArray();
+    inputStringArray.add("message1");
+    inputStringArray.add("message2");
+    ActionRequest<StringArray> stringArrayActionRequest =
+        ACTIONS_BUILDERS.actionEchoStringArray().paramStrings(inputStringArray).build();
+    StringArray stringArray = REST_CLIENT.sendRequest(stringArrayActionRequest).getResponse().getEntity();
+
+    Assert.assertEquals(stringArray.get(0), "message1");
+    Assert.assertEquals(stringArray.get(1), "message2");
+
+    //Enum array
+    ToneArray inputTonesArray = new ToneArray();
+    inputTonesArray.add(Tone.SINCERE);
+    inputTonesArray.add(Tone.FRIENDLY);
+
+    ActionRequest<ToneArray> toneArrayActionRequest =
+        ACTIONS_BUILDERS.actionEchoToneArray().paramTones(inputTonesArray).build();
+    ToneArray tones = REST_CLIENT.sendRequest(toneArrayActionRequest).getResponse().getEntity();
+
+    Assert.assertEquals(tones.get(0), Tone.SINCERE);
+    Assert.assertEquals(tones.get(1), Tone.FRIENDLY);
   }
 
   // Not implemented until we switch back to using the "useContinuation" path by default

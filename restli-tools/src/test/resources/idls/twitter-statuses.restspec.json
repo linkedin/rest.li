@@ -49,6 +49,21 @@
       "name" : "user_timeline",
       "doc" : "Gets the status timeline for a given user"
     } ],
+    "actions" : [ {
+      "name" : "intArrayAction",
+      "parameters" : [ {
+        "name" : "ints",
+        "type" : "{ \"type\" : \"array\", \"items\" : \"int\" }"
+      } ],
+      "returns" : "{ \"type\" : \"array\", \"items\" : \"int\" }"
+    }, {
+      "name" : "statusArrayAction",
+      "parameters" : [ {
+        "name" : "statuses",
+        "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.tools.twitter.Status\" }"
+      } ],
+      "returns" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.tools.twitter.Status\" }"
+    } ],
     "entity" : {
       "path" : "/statuses/{statusID}",
       "actions" : [ {

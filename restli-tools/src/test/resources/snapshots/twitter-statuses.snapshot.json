@@ -139,7 +139,22 @@
       "identifier" : {
         "name" : "statusID",
         "type" : "long"
-      }
+      },
+      "actions" : [ {
+        "name" : "intArrayAction",
+        "returns" : "{ \"type\" : \"array\", \"items\" : \"int\" }",
+        "parameters" : [ {
+          "name" : "ints",
+          "type" : "{ \"type\" : \"array\", \"items\" : \"int\" }"
+        } ]
+      }, {
+        "name" : "statusArrayAction",
+        "returns" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.tools.twitter.Status\" }",
+        "parameters" : [ {
+          "name" : "statuses",
+          "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.tools.twitter.Status\" }"
+        } ]
+      } ]
     }
   }
 }

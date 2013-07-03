@@ -38,6 +38,27 @@
           "type" : "com.linkedin.restli.examples.greetings.api.Message"
         } ]
       }, {
+        "name" : "echoMessageArray",
+        "returns" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.Message\" }",
+        "parameters" : [ {
+          "name" : "messages",
+          "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.Message\" }"
+        } ]
+      }, {
+        "name" : "echoStringArray",
+        "returns" : "{ \"type\" : \"array\", \"items\" : \"string\" }",
+        "parameters" : [ {
+          "name" : "strings",
+          "type" : "{ \"type\" : \"array\", \"items\" : \"string\" }"
+        } ]
+      }, {
+        "name" : "echoToneArray",
+        "returns" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.Tone\" }",
+        "parameters" : [ {
+          "name" : "tones",
+          "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.Tone\" }"
+        } ]
+      }, {
         "name" : "failCallbackCall",
         "doc" : "Action that fails by calling the callback"
       }, {

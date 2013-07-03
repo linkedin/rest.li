@@ -36,6 +36,13 @@
         "type" : "com.linkedin.restli.examples.typeref.api.CustomLongRef"
       } ],
       "returns" : "long"
+    }, {
+      "name" : "arrayAction",
+      "parameters" : [ {
+        "name" : "ls",
+        "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.typeref.api.CustomLongRef\" }"
+      } ],
+      "returns" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.typeref.api.CustomLongRef\" }"
     } ],
     "entity" : {
       "path" : "/customTypes/{customTypesId}"

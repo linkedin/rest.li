@@ -78,6 +78,13 @@
           "name" : "l",
           "type" : "com.linkedin.restli.examples.typeref.api.CustomLongRef"
         } ]
+      }, {
+        "name" : "arrayAction",
+        "returns" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.typeref.api.CustomLongRef\" }",
+        "parameters" : [ {
+          "name" : "ls",
+          "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.typeref.api.CustomLongRef\" }"
+        } ]
       } ]
     },
     "namespace" : "com.linkedin.restli.examples.greetings.client"

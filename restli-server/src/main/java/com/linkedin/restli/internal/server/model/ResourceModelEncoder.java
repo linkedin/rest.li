@@ -254,11 +254,7 @@ public class ResourceModelEncoder
   private static String buildDataSchemaType(final Class<?> type, final DataSchema dataSchema)
   {
     final DataSchema schemaToEncode;
-    if (type.isArray())
-    {
-      schemaToEncode = new ArrayDataSchema(dataSchema);
-    }
-    else if (dataSchema instanceof TyperefDataSchema)
+    if (dataSchema instanceof TyperefDataSchema)
     {
       return ((TyperefDataSchema)dataSchema).getFullName();
     }
@@ -560,9 +556,20 @@ public class ResourceModelEncoder
       @Override
       public int compare(final ResourceMethodDescriptor o1, final ResourceMethodDescriptor o2)
       {
-        if (o1.getType().equals(ResourceMethod.ACTION) && o2.getType().equals(ResourceMethod.ACTION))
+        if (o1.getType().equals(ResourceMethod.ACTION))
         {
-          return o1.getActionName().compareTo(o2.getActionName());
+          if (o2.getType().equals(ResourceMethod.ACTION))
+          {
+            return o1.getActionName().compareTo(o2.getActionName());
+          }
+          else
+          {
+            return 1;
+          }
+        }
+        else if (o2.getType().equals(ResourceMethod.ACTION))
+        {
+          return -1;
         }
         else
         {

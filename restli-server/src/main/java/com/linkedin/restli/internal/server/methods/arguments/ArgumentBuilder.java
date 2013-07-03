@@ -22,6 +22,7 @@ package com.linkedin.restli.internal.server.methods.arguments;
 
 
 import com.linkedin.data.DataList;
+import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.validation.CoercionMode;
 import com.linkedin.data.schema.validation.RequiredMode;
 import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
@@ -130,6 +131,17 @@ public class ArgumentBuilder
     else
     {
       final List<String> itemStringValues = context.getParameterValues(param.getName());
+      ArrayDataSchema parameterSchema = null;
+      if (param.getDataSchema() instanceof ArrayDataSchema)
+      {
+        parameterSchema = (ArrayDataSchema)param.getDataSchema();
+      }
+      else
+      {
+        throw new RoutingException("An array schema is expected.",
+                                   HttpStatus.S_400_BAD_REQUEST.getCode());
+      }
+
       convertedValue = Array.newInstance(param.getItemType(), itemStringValues.size());
       int j = 0;
       for (String itemStringValue : itemStringValues)
@@ -141,10 +153,8 @@ public class ArgumentBuilder
         }
         Array.set(convertedValue,
                   j++,
-                  ArgumentUtils.convertSimpleValue(itemStringValue,
-                                                   param.getDataSchema(),
-                                                   param.getItemType(),
-                                                   false));
+                  ArgumentUtils.convertSimpleValue(
+                      itemStringValue, parameterSchema.getItems(), param.getItemType(), false));
       }
     }
 
