@@ -1,6 +1,7 @@
 1.9.1
 ------
-
+(RB=182338)
+Fix bug in pegasus plugin that publish snapshot task may not run.
 
 1.9.0
 ------

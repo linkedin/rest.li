@@ -899,7 +899,7 @@ class PegasusPlugin implements Plugin<Project>
       }
       final Task publishRestliIdlTask = project.task(sourceSet.getTaskName('publish', 'RestliIdl'),
                                                      type: PublishRestModel,
-                                                     dependsOn: checkRestModel) {
+                                                     dependsOn: publishRestliSnapshotTask) {
         from generateRestModelTask.generatedIdlFiles
         into apiIdlDir
         suffix = IDL_FILE_SUFFIX
