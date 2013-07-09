@@ -497,8 +497,10 @@ class PegasusPlugin implements Plugin<Project>
   private static final String SNAPSHOT_FILE_SUFFIX = '.snapshot.json'
   private static final String TEST_DIR_REGEX = '^(integ)?[Tt]est'
 
-  private static final String IDL_COMPAT_REQUIREMENT = 'rest.model.compatibility'
-  private static final String IDL_NO_PUBLISH = 'rest.model.noPublish'
+  private static final String SNAPSHOT_COMPAT_REQUIREMENT = 'rest.model.compatibility'
+  private static final String SNAPSHOT_NO_PUBLISH = 'rest.model.noPublish'
+  private static final String IDL_COMPAT_REQUIREMENT = 'rest.idl.compatibility'
+  private static final String IDL_NO_PUBLISH = 'rest.idl.noPublish'
 
   private static final String GENERATOR_CLASSLOADER_NAME = 'pegasusGeneratorClassLoader'
 
@@ -864,7 +866,6 @@ class PegasusPlugin implements Plugin<Project>
         resolverPath = restModelResolverPath
         generatedSnapshotFiles = getSuffixedFiles(project, snapshotDestinationDir, SNAPSHOT_FILE_SUFFIX).files
         generatedIdlFiles = getSuffixedFiles(project, idlDestinationDir, IDL_FILE_SUFFIX).files
-
       }
 
       final File apiSnapshotDir = apiProject.file(getSnapshotRelativePath(apiProject, sourceSet))
@@ -872,7 +873,7 @@ class PegasusPlugin implements Plugin<Project>
       apiSnapshotDir.mkdirs()
       apiIdlDir.mkdirs()
 
-      final Task checkRestModel = project.task(sourceSet.getTaskName('check', 'RestModel'),
+      final Task checkRestModelTask = project.task(sourceSet.getTaskName('check', 'RestModel'),
                                                type: CheckRestModel,
                                                dependsOn: generateRestModelTask) {
         currentSnapShotFiles = generateRestModelTask.generatedSnapshotFiles
@@ -882,19 +883,29 @@ class PegasusPlugin implements Plugin<Project>
         resolverPath = restModelResolverPath
       }
 
+      final Task checkIdlTask = project.task(sourceSet.getTaskName('check', 'Idl'),
+                                               type: CheckIdl,
+                                               dependsOn: generateRestModelTask) {
+        currentIdlFiles = generateRestModelTask.generatedIdlFiles
+        previousIdlDirectory = apiIdlDir
+        resolverPath = restModelResolverPath
+      }
+
       // rest model publishing involves cross-project reference
       // configure after all projects have been evaluated
       // the file copy can be turned off by "rest.model.noPublish" flag
       final Task publishRestliSnapshotTask = project.task(sourceSet.getTaskName('publish', 'RestliSnapshot'),
                                                           type: PublishRestModel,
-                                                          dependsOn: checkRestModel) {
+                                                          dependsOn: [checkRestModelTask, checkIdlTask]) {
         from generateRestModelTask.generatedSnapshotFiles
         into apiSnapshotDir
         suffix = SNAPSHOT_FILE_SUFFIX
 
         onlyIf {
-          final TaskState checkTaskState = checkRestModel.state
-          checkTaskState.executed && checkTaskState.failure == null && !checkRestModel.isEquivalent
+          !isPropertyTrue(project, SNAPSHOT_NO_PUBLISH) &&
+            checkRestModelTask.state.executed &&
+            checkRestModelTask.state.failure == null &&
+            !checkRestModelTask.isEquivalent
         }
       }
       final Task publishRestliIdlTask = project.task(sourceSet.getTaskName('publish', 'RestliIdl'),
@@ -905,8 +916,13 @@ class PegasusPlugin implements Plugin<Project>
         suffix = IDL_FILE_SUFFIX
 
         onlyIf {
-          final TaskState checkTaskState = checkRestModel.state
-          checkTaskState.executed && checkTaskState.failure == null && !checkRestModel.isEquivalent
+          !isPropertyTrue(project, IDL_NO_PUBLISH) &&
+            checkRestModelTask.state.executed &&
+            checkRestModelTask.state.failure == null &&
+            !checkRestModelTask.isEquivalent &&
+            checkIdlTask.state.executed &&
+            checkIdlTask.state.failure == null &&
+            !checkIdlTask.isEquivalent
         }
       }
       project.logger.info("API project selected for $publishRestliIdlTask.path is $apiProject.path")
@@ -1142,7 +1158,7 @@ class PegasusPlugin implements Plugin<Project>
                                          dependsOn: compileGeneratedRestClientTask) {
       from (idlDir) {
         eachFile {
-          project.logger.lifecycle('Add idl file: ' + it.toString() )
+          project.logger.lifecycle('Add interface file: ' + it.toString() )
           it.path = 'idl' + File.separatorChar + it.path.toString()
         }
         includes = ['*' + IDL_FILE_SUFFIX]
@@ -1386,11 +1402,11 @@ class PegasusPlugin implements Plugin<Project>
           final String apiName = idlItem.apiName
           if (apiName.length() == 0)
           {
-            project.logger.info('Generating idl for unnamed api ...')
+            project.logger.info('Generating interface for unnamed api ...')
           }
           else
           {
-            project.logger.info("Generating idl for api: ${apiName} ...")
+            project.logger.info("Generating interface for api: ${apiName} ...")
           }
 
           // RestLiResourceModelExporter will load classes from the passed packages
@@ -1415,8 +1431,8 @@ class PegasusPlugin implements Plugin<Project>
     @InputDirectory File previousIdlDirectory
     @InputFiles FileCollection resolverPath
     boolean isEquivalent = false
-    private static _snapshotFilter = new SnapshotExtensionFilter(SNAPSHOT_FILE_SUFFIX)
-    private static _idlFilter = new SnapshotExtensionFilter(IDL_FILE_SUFFIX)
+    private static _snapshotFilter = new FileExtensionFilter(SNAPSHOT_FILE_SUFFIX)
+    private static _idlFilter = new FileExtensionFilter(IDL_FILE_SUFFIX)
 
     @TaskAction
     protected void check()
@@ -1425,15 +1441,15 @@ class PegasusPlugin implements Plugin<Project>
       final Class<? extends Enum> compatLevelClass = generatorClassLoader.loadClass('com.linkedin.restli.tools.idlcheck.CompatibilityLevel').asSubclass(Enum.class)
 
       final Enum idlCompatLevel
-      if (project.hasProperty(IDL_COMPAT_REQUIREMENT))
+      if (project.hasProperty(SNAPSHOT_COMPAT_REQUIREMENT))
       {
         try
         {
-          idlCompatLevel = Enum.valueOf(compatLevelClass, project.property(IDL_COMPAT_REQUIREMENT).toString().toUpperCase())
+          idlCompatLevel = Enum.valueOf(compatLevelClass, project.property(SNAPSHOT_COMPAT_REQUIREMENT).toString().toUpperCase())
         }
         catch (IllegalArgumentException e)
         {
-          throw new Exception("Unrecognized idl compatibility level property.", e)
+          throw new Exception("Unrecognized compatibility level property.", e)
         }
       }
       else
@@ -1443,11 +1459,11 @@ class PegasusPlugin implements Plugin<Project>
 
       if (idlCompatLevel.ordinal() == 0)
       {
-        project.logger.info('snapshot compatibility checking is turned off.')
+        project.logger.info('Interface compatibility checking is turned off.')
         return
       }
 
-      project.logger.info('Checking snapshot compatibility with API ...')
+      project.logger.info('Checking interface compatibility with API ...')
 
       final Class<?> snapshotCheckerClass = generatorClassLoader.loadClass('com.linkedin.restli.tools.snapshot.check.RestLiSnapshotCompatibilityChecker')
       final snapshotCompatibilityChecker = snapshotCheckerClass.newInstance()
@@ -1460,7 +1476,7 @@ class PegasusPlugin implements Plugin<Project>
 
       final Set<String> apiExistingSnapshotFilePaths = previousSnapshotDirectory.listFiles(_snapshotFilter).collect { it.absolutePath }
       currentSnapShotFiles.each {
-        project.logger.info('Checking snapshot file: ' + it.path)
+        project.logger.info('Checking interface file: ' + it.path)
 
         String apiSnapshotFilePath = "${previousSnapshotDirectory.path}${File.separatorChar}${it.name}"
         final File apiSnapshotFile = project.file(apiSnapshotFilePath)
@@ -1512,8 +1528,8 @@ class PegasusPlugin implements Plugin<Project>
       }
 
       allCheckMessage.append("\n")
-                     .append("You may add \"-P${IDL_COMPAT_REQUIREMENT}=backwards\" to the build command to allow backwards compatible changes in idl.\n")
-                     .append("You may use \"-P${IDL_COMPAT_REQUIREMENT}=ignore\" to ignore idl compatibility errors.\n")
+                     .append("You may add \"-P${SNAPSHOT_COMPAT_REQUIREMENT}=backwards\" to the build command to allow backwards compatible changes in interface.\n")
+                     .append("You may use \"-P${SNAPSHOT_COMPAT_REQUIREMENT}=ignore\" to ignore compatibility errors.\n")
                      .append("Documentation: https://github.com/linkedin/rest.li/wiki/Gradle-build-integration#compatibility")
 
       if (isCompatible)
@@ -1526,17 +1542,9 @@ class PegasusPlugin implements Plugin<Project>
       }
     }
 
-    private static enum IDLCompatLevel
+    private static class FileExtensionFilter implements FileFilter
     {
-      OFF,
-      IGNORE,
-      BACKWARDS,
-      EQUIVALENT
-    }
-
-    private static class SnapshotExtensionFilter implements FileFilter
-    {
-      SnapshotExtensionFilter(String suffix)
+      FileExtensionFilter(String suffix)
       {
         _suffix = suffix
       }
@@ -1547,6 +1555,109 @@ class PegasusPlugin implements Plugin<Project>
       }
 
       private String _suffix
+    }
+  }
+
+  static class CheckIdl extends DefaultTask
+  {
+    @InputFiles Collection<File> currentIdlFiles
+    @InputDirectory File previousIdlDirectory
+    @InputFiles FileCollection resolverPath
+    boolean isEquivalent = false
+    private static _idlFilter = new CheckRestModel.FileExtensionFilter(IDL_FILE_SUFFIX)
+
+    @TaskAction
+    protected void check()
+    {
+      final ClassLoader generatorClassLoader = (ClassLoader) project.property(GENERATOR_CLASSLOADER_NAME)
+      final Class<? extends Enum> compatLevelClass = generatorClassLoader.loadClass('com.linkedin.restli.tools.idlcheck.CompatibilityLevel').asSubclass(Enum.class)
+
+      final Enum idlCompatLevel
+      if (project.hasProperty(IDL_COMPAT_REQUIREMENT))
+      {
+        try
+        {
+          idlCompatLevel = Enum.valueOf(compatLevelClass, project.property(IDL_COMPAT_REQUIREMENT).toString().toUpperCase())
+        }
+        catch (IllegalArgumentException e)
+        {
+          throw new Exception("Unrecognized compatibility level property.", e)
+        }
+      }
+      else
+      {
+        idlCompatLevel = compatLevelClass.getEnumConstants().first()
+      }
+
+      if (idlCompatLevel.ordinal() == 0)
+      {
+        project.logger.info('Interface compatibility checking is turned off.')
+        return
+      }
+
+      project.logger.info('Checking interface compatibility with API ...')
+
+      final Class<?> idlCheckerClass = generatorClassLoader.loadClass('com.linkedin.restli.tools.idlcheck.RestLiResourceModelCompatibilityChecker')
+      final idlCompatibilityChecker = idlCheckerClass.newInstance()
+      final String resolverPathStr = resolverPath.collect { it.path }.join(File.pathSeparator)
+      idlCompatibilityChecker.setResolverPath(resolverPathStr)
+
+      final StringBuilder allCheckMessage = new StringBuilder()
+      boolean isCompatible = true
+      final errorFilePairs = []
+
+      final Set<String> apiExistingIdlFilePaths = previousIdlDirectory.listFiles(_idlFilter).collect { it.absolutePath }
+      currentIdlFiles.each {
+        project.logger.info('Checking interface file: ' + it.path)
+
+        String apiSnapshotFilePath = "${previousIdlDirectory.path}${File.separatorChar}${it.name}"
+        final File apiSnapshotFile = project.file(apiSnapshotFilePath)
+        if (apiSnapshotFile.exists())
+        {
+          apiExistingIdlFilePaths.remove(apiSnapshotFilePath)
+
+          final boolean isCurrentSnapshotCompatible = idlCompatibilityChecker.check(apiSnapshotFilePath, it.path, idlCompatLevel)
+          isCompatible &= isCurrentSnapshotCompatible
+
+          project.logger.info("Checked compatibility in mode: $idlCompatLevel; $apiSnapshotFilePath VS $it.path; result: $isCurrentSnapshotCompatible")
+          allCheckMessage.append(idlCompatibilityChecker.infoMap.createSummary(apiSnapshotFilePath, it.path))
+        }
+        else
+        {
+          errorFilePairs.add(["", it.path])
+        }
+      }
+
+      (apiExistingIdlFilePaths + apiExistingIdlFilePaths).each {
+        errorFilePairs.add([it, ""])
+      }
+
+      final restModelFileChecker = idlCheckerClass.newInstance()
+      errorFilePairs.each {
+        isCompatible &= restModelFileChecker.check(it[0], it[1], idlCompatLevel)
+      }
+      allCheckMessage.append(restModelFileChecker.infoMap.createSummary())
+
+      if (allCheckMessage.length() == 0)
+      {
+        assert(isCompatible)
+        isEquivalent = true
+        return
+      }
+
+      allCheckMessage.append("\n")
+              .append("You may add \"-P${IDL_COMPAT_REQUIREMENT}=backwards\" to the build command to allow backwards compatible changes in interface.\n")
+              .append("You may use \"-P${IDL_COMPAT_REQUIREMENT}=ignore\" to ignore compatibility errors.\n")
+              .append("Documentation: https://github.com/linkedin/rest.li/wiki/Gradle-build-integration#compatibility")
+
+      if (isCompatible)
+      {
+        _restModelCompatMessage.append(allCheckMessage)
+      }
+      else
+      {
+        throw new Exception(allCheckMessage.toString())
+      }
     }
   }
 
@@ -1567,12 +1678,7 @@ class PegasusPlugin implements Plugin<Project>
     {
       if (source.empty)
       {
-        project.logger.error('No idl file is found. Skip publishing idl.')
-        return
-      }
-
-      if (isPropertyTrue(project, IDL_NO_PUBLISH))
-      {
+        project.logger.error('No interface file is found. Skip publishing interface.')
         return
       }
 
@@ -1632,7 +1738,7 @@ class PegasusPlugin implements Plugin<Project>
             if (!pegasusClientOptions.hasRestModelFileName(f.name))
             {
               pegasusClientOptions.addClientItem(f.name, '', false)
-              project.logger.lifecycle("Add idl file: ${f.path}")
+              project.logger.lifecycle("Add interface file: ${f.path}")
             }
           }
         }
@@ -1664,7 +1770,7 @@ class PegasusPlugin implements Plugin<Project>
         }
 
         final String restModelFilePath = "${inputDir}${File.separatorChar}${clientItem.restModelFileName}"
-        stubGenerator.run(resolverPathStr, defaultPackage, null, false, destinationDir.path, [restModelFilePath] as String[])
+        stubGenerator.run(resolverPathStr, defaultPackage, false, false, destinationDir.path, [restModelFilePath] as String[])
       }
     }
   }

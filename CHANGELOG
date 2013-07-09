@@ -6,6 +6,10 @@ Simplify and speed up string intern tests in TestJacksonCodec. This only affects
 (RB=182331)
 Adding support for java array return and input parameters for actions.
 
+(RB=183215)
+Add separate compatibility check for idl.
+Add flag to turn off snapshot and idl compatibility check respectively.
+
 1.9.1
 ------
 (RB=182338)
