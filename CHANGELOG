@@ -1,5 +1,7 @@
 1.9.2
 -----
+(RB=183317)
+Simplify and speed up string intern tests in TestJacksonCodec. This only affects tests.
 
 1.9.1
 ------
