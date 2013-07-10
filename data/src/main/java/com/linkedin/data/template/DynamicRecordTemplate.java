@@ -186,7 +186,7 @@ public class DynamicRecordTemplate extends RecordTemplate
     }
     else if (DataTemplate.class.isAssignableFrom(fieldDef.getType()))
     {
-      putWrapped(field, (Class<DataTemplate<?>>) fieldDef.getType(), (DataTemplate)value);
+      putWrapped(field, (Class<DataTemplate<?>>) fieldDef.getType(), (DataTemplate<?>)value);
     }
     else
     {
