@@ -245,6 +245,12 @@ public class CombinedResources
     }
 
     @Override
+    public UpdateResponse update(PatchRequest<Foo> patch)
+    {
+      return null;
+    }
+
+    @Override
     public UpdateResponse delete()
     {
       return null;
@@ -442,6 +448,12 @@ public class CombinedResources
       return null;
     }
 
+    @RestMethod.PartialUpdate
+    public UpdateResponse myUpdate(PatchRequest<Foo> patch)
+    {
+      return null;
+    }
+
     @RestMethod.Delete
     public UpdateResponse myDelete()
     {
@@ -466,6 +478,12 @@ public class CombinedResources
 
     @RestMethod.Update
     public UpdateResponse myUpdate(Foo entity, @QueryParam("intParam") @Optional("42") int intParam, @QueryParam("stringParam") String stringParam)
+    {
+      return null;
+    }
+
+    @RestMethod.PartialUpdate
+    public UpdateResponse myPartialUpdate(PatchRequest<Foo> patch, @QueryParam("intParam") @Optional("42") int intParam, @QueryParam("stringParam") String stringParam)
     {
       return null;
     }

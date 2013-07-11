@@ -15,6 +15,9 @@
         "doc" : "Updates the global trending topics information.",
         "method" : "update"
       }, {
+        "doc" : "Updates the global trending topics information.",
+        "method" : "partial_update"
+      }, {
         "doc" : "Deletes the global trending topics information.",
         "method" : "delete"
       } ],
@@ -72,7 +75,7 @@
         } ],
         "path" : "/trending"
       },
-      "supports" : [ "delete", "get", "update" ]
+      "supports" : [ "delete", "get", "partial_update", "update" ]
     },
     "name" : "trending",
     "doc" : "Simple resource that contains the location of a status.\n\ngenerated from: com.linkedin.restli.tools.twitter.TrendingResource",

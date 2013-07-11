@@ -37,6 +37,7 @@ import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.restli.common.CompoundKey;
+import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.internal.server.RestLiRouter;
 import com.linkedin.restli.internal.server.RoutingResult;
@@ -248,7 +249,27 @@ public class TestRestLiRouting
     keys = result.getContext().getPathKeys();
     assertEquals(keys.getBatchKeys().size(), 0);
 
-    // #9 simple DELETE on simple resource
+    // #9 partial UPDATE on simple resource
+    request = new RestRequestBuilder(new URI("/trending")).setMethod("POST").build();
+
+    result = _router.process(request, new RequestContext());
+    assertNotNull(result);
+
+    resourceMethodDescriptor = result.getResourceMethod();
+    assertNotNull(resourceMethodDescriptor);
+    assertEquals(resourceMethodDescriptor.getType(), ResourceMethod.PARTIAL_UPDATE);
+    assertNull(resourceMethodDescriptor.getActionName());
+    assertNull(resourceMethodDescriptor.getFinderName());
+    assertEquals(resourceMethodDescriptor.getMethod().getDeclaringClass(), TrendingResource.class);
+    assertEquals(resourceMethodDescriptor.getMethod().getName(), "update");
+    assertEquals(resourceMethodDescriptor.getMethod().getParameterTypes(), new Class<?>[] { PatchRequest.class });
+    assertEquals(resourceMethodDescriptor.getResourceModel().getName(), "trending");
+
+    assertNotNull(result.getContext());
+    keys = result.getContext().getPathKeys();
+    assertEquals(keys.getBatchKeys().size(), 0);
+
+    // #10 simple DELETE on simple resource
     request = new RestRequestBuilder(new URI("/trending")).setMethod("DELETE").build();
 
     result = _router.process(request, new RequestContext());
@@ -357,6 +378,7 @@ public class TestRestLiRouting
     checkResult("/trending", "GET", ResourceMethod.GET, TrendingResource.class, "get", false);
     checkResult("/trending", "PUT", ResourceMethod.UPDATE, TrendingResource.class, "update", false);
     checkResult("/trending", "DELETE", ResourceMethod.DELETE, TrendingResource.class, "delete", false);
+    checkResult("/trending", "POST", "PARTIAL_UPDATE", ResourceMethod.PARTIAL_UPDATE, TrendingResource.class, "update", false);
 
     checkResult("/trending/trendRegions/1", "GET", ResourceMethod.GET, TrendRegionsCollectionResource.class, "get", false, "trendRegionId");
     checkResult("/trending/trendRegions/1", "PUT", ResourceMethod.UPDATE, TrendRegionsCollectionResource.class, "update", false);

@@ -107,7 +107,6 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
     greeting.setId(12345L);
 
     // PUT
-    greeting.setTone(Tone.INSULTING);
     Request<EmptyRecord> writeRequest = _greetingBuilders.update().input(greeting).build();
     REST_CLIENT.sendRequest(writeRequest).getResponse();
 
@@ -117,6 +116,27 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
     greeting = response.getEntity();
 
     Assert.assertEquals(greeting.getTone(), Tone.INSULTING);
+  }
+
+  @Test()
+  public void testRootSimpleResourcePartialUpdate() throws RemoteInvocationException
+  {
+    Greeting greeting = new Greeting();
+    greeting.setMessage("Message1");
+    greeting.setTone(Tone.SINCERE);
+    greeting.setId(12345L);
+    PatchRequest<Greeting> patch = PatchGenerator.diffEmpty(greeting);
+
+    // PUT
+    Request<EmptyRecord> writeRequest = _greetingBuilders.partialUpdate().input(patch).build();
+    REST_CLIENT.sendRequest(writeRequest).getResponse();
+
+    // GET again, to verify that our PUT worked.
+    GetRequest<Greeting> request = _greetingBuilders.get().build();
+    Response<Greeting> response = REST_CLIENT.sendRequest(request).getResponse();
+    greeting = response.getEntity();
+
+    Assert.assertEquals(greeting.getTone(), Tone.SINCERE);
   }
 
   @Test()
@@ -357,7 +377,6 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
     greeting.setId(1L);
 
     // PUT
-    greeting.setTone(Tone.INSULTING);
     Request<EmptyRecord> writeRequest = _subsubgreetingBuilders.update().subgreetingsIdKey(1L).input(greeting).build();
     REST_CLIENT.sendRequest(writeRequest).getResponse();
 
@@ -367,6 +386,28 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
     greeting = response.getEntity();
 
     Assert.assertEquals(greeting.getTone(), Tone.INSULTING);
+  }
+
+  @Test()
+  public void testSubsubsimpleResourcePartialUpdate() throws RemoteInvocationException
+  {
+    Greeting greeting = new Greeting();
+    greeting.setMessage("Message1");
+    greeting.setTone(Tone.SINCERE);
+    greeting.setId(1L);
+    PatchRequest<Greeting> patch = PatchGenerator.diffEmpty(greeting);
+
+    // PUT
+    Request<EmptyRecord> writeRequest =
+        _subsubgreetingBuilders.partialUpdate().subgreetingsIdKey(1L).input(patch).build();
+    REST_CLIENT.sendRequest(writeRequest).getResponse();
+
+    // GET again, to verify that our POST worked.
+    GetRequest<Greeting> request = _subsubgreetingBuilders.get().subgreetingsIdKey(1L).build();
+    Response<Greeting> response = REST_CLIENT.sendRequest(request).getResponse();
+    greeting = response.getEntity();
+
+    Assert.assertEquals(greeting.getTone(), Tone.SINCERE);
   }
 
   @Test()

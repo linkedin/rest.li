@@ -37,10 +37,19 @@ public class PatchArgumentBuilder implements RestLiArgumentBuilder
   public Object[] buildArguments(final RoutingResult routingResult,
                                  final RestRequest request)
   {
-    Object keyValue = ArgumentUtils.getResourceKey(routingResult);
+    Object[] positionalArgs;
     RecordTemplate patch = ArgumentUtils.extractEntity(request, PatchRequest.class);
 
-    Object[] positionalArgs = { keyValue, patch };
+    if (ArgumentUtils.hasResourceKey(routingResult))
+    {
+      Object keyValue = ArgumentUtils.getResourceKey(routingResult);
+      positionalArgs = new Object[]{ keyValue, patch };
+    }
+    else
+    {
+      positionalArgs = new Object[] { patch };
+    }
+
     return ArgumentBuilder.buildArgs(positionalArgs,
                                      routingResult.getResourceMethod().getParameters(),
                                      routingResult.getContext());

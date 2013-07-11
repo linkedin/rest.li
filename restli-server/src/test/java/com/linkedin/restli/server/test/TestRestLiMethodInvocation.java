@@ -367,14 +367,18 @@ public class TestRestLiMethodInvocation
   public void testAsyncPost() throws Exception
   {
     Map<String, ResourceModel> resourceModelMap = buildResourceModels(
-            AsyncStatusCollectionResource.class, AsyncRepliesCollectionResource.class);
+            AsyncStatusCollectionResource.class,
+            AsyncRepliesCollectionResource.class,
+            AsyncLocationResource.class);
     ResourceModel statusResourceModel = resourceModelMap.get("/asyncstatuses");
     ResourceModel repliesResourceModel = statusResourceModel.getSubResource("asyncreplies");
+    ResourceModel locationResourceModel = statusResourceModel.getSubResource("asynclocation");
     RestLiCallback<?> callback = getCallBack();
 
     ResourceMethodDescriptor methodDescriptor;
     AsyncStatusCollectionResource statusResource;
     AsyncRepliesCollectionResource repliesResource;
+    AsyncLocationResource locationResource;
 
     // #1
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.CREATE);
@@ -410,6 +414,8 @@ public class TestRestLiMethodInvocation
     checkAsyncInvocation(repliesResource, callback, methodDescriptor, "POST",
                          "/asyncstatuses/1/replies", "{}", buildPathKeys(
             "statusID", 1L));
+
+    // #2: Collection Partial Update
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.PARTIAL_UPDATE);
     statusResource = getMockResource(AsyncStatusCollectionResource.class);
     PatchTree p = new PatchTree();
@@ -428,6 +434,26 @@ public class TestRestLiMethodInvocation
     EasyMock.replay(statusResource);
     checkAsyncInvocation(statusResource, callback, methodDescriptor, "POST", "/asyncstatuses/1",
                          "{\"patch\":{\"$set\":{\"foo\":42}}}", buildPathKeys("statusID", 1L));
+
+    // #3: Simple Resource Partial Update
+    methodDescriptor = locationResourceModel.findMethod(ResourceMethod.PARTIAL_UPDATE);
+    locationResource = getMockResource(AsyncLocationResource.class);
+    p = new PatchTree();
+    p.addOperation(new PathSpec("foo"), PatchOpFactory.setFieldOp(Integer.valueOf(51)));
+    PatchRequest<Location> expectedLocation = PatchRequest.createFromPatchDocument(p.getDataMap());
+    locationResource.update(eq(expectedLocation), EasyMock.<Callback<UpdateResponse>> anyObject());
+    EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
+      @Override
+      public Object answer() throws Throwable {
+        @SuppressWarnings("unchecked")
+        Callback<UpdateResponse> callback = (Callback<UpdateResponse>) EasyMock.getCurrentArguments()[1];
+        callback.onSuccess(null);
+        return null;
+      }
+    });
+    EasyMock.replay(locationResource);
+    checkAsyncInvocation(locationResource, callback, methodDescriptor, "POST", "/asyncstatuses/1/asynclocation",
+                         "{\"patch\":{\"$set\":{\"foo\":51}}}", buildPathKeys("statusID", 1L));
   }
 
   @SuppressWarnings("unchecked")
@@ -790,13 +816,18 @@ public class TestRestLiMethodInvocation
   public void testPromisePost() throws Exception
   {
     Map<String, ResourceModel> resourceModelMap = buildResourceModels(
-            PromiseStatusCollectionResource.class, PromiseRepliesCollectionResource.class);
+            PromiseStatusCollectionResource.class,
+            PromiseRepliesCollectionResource.class,
+            PromiseLocationResource.class);
+
     ResourceModel statusResourceModel = resourceModelMap.get("/promisestatuses");
     ResourceModel repliesResourceModel = statusResourceModel.getSubResource("promisereplies");
+    ResourceModel locationResourceModel = statusResourceModel.getSubResource("promiselocation");
 
     ResourceMethodDescriptor methodDescriptor;
     PromiseStatusCollectionResource statusResource;
     PromiseRepliesCollectionResource repliesResource;
+    PromiseLocationResource locationResource;
 
     // #1
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.CREATE);
@@ -826,6 +857,7 @@ public class TestRestLiMethodInvocation
       EasyMock.reset(statusResource);
     }
 
+    // #2: Collection Partial Update
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.PARTIAL_UPDATE);
     statusResource = getMockResource(PromiseStatusCollectionResource.class);
     PatchTree p = new PatchTree();
@@ -834,6 +866,17 @@ public class TestRestLiMethodInvocation
     EasyMock.expect(statusResource.update(eq(1L), eq(expected))).andReturn(Promises.<UpdateResponse>value(null)).once();
     checkInvocation(statusResource, methodDescriptor, "POST", "/promisestatuses/1",
                     "{\"patch\":{\"$set\":{\"foo\":42}}}", buildPathKeys("statusID", 1L));
+
+    //#3: Simple Resource Partial Update
+
+    methodDescriptor = locationResourceModel.findMethod(ResourceMethod.PARTIAL_UPDATE);
+    locationResource = getMockResource(PromiseLocationResource.class);
+    p = new PatchTree();
+    p.addOperation(new PathSpec("foo"), PatchOpFactory.setFieldOp(Integer.valueOf(51)));
+    PatchRequest<Location> expectedLocation = PatchRequest.createFromPatchDocument(p.getDataMap());
+    EasyMock.expect(locationResource.update(eq(expectedLocation))).andReturn(Promises.<UpdateResponse>value(null)).once();
+    checkInvocation(locationResource, methodDescriptor, "POST", "/promisestatuses/1/promiselocation",
+                    "{\"patch\":{\"$set\":{\"foo\":51}}}", buildPathKeys("statusID", 1L));
 
     // TODO would be nice to verify that posting an invalid record type fails
   }
@@ -1114,13 +1157,17 @@ public class TestRestLiMethodInvocation
   public void testPost() throws Exception
   {
     Map<String, ResourceModel> resourceModelMap = buildResourceModels(
-            StatusCollectionResource.class, RepliesCollectionResource.class);
+            StatusCollectionResource.class,
+            RepliesCollectionResource.class,
+            LocationResource.class);
     ResourceModel statusResourceModel = resourceModelMap.get("/statuses");
     ResourceModel repliesResourceModel = statusResourceModel.getSubResource("replies");
+    ResourceModel locationResourceModel = statusResourceModel.getSubResource("location");
 
     ResourceMethodDescriptor methodDescriptor;
     StatusCollectionResource statusResource;
     RepliesCollectionResource repliesResource;
+    LocationResource locationResource;
 
     // #1
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.CREATE);
@@ -1150,6 +1197,7 @@ public class TestRestLiMethodInvocation
       EasyMock.reset(statusResource);
     }
 
+    // #2 Collection Partial Update
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.PARTIAL_UPDATE);
     statusResource = getMockResource(StatusCollectionResource.class);
     PatchTree p = new PatchTree();
@@ -1158,6 +1206,17 @@ public class TestRestLiMethodInvocation
     EasyMock.expect(statusResource.update(eq(1L), eq(expected))).andReturn(null).once();
     checkInvocation(statusResource, methodDescriptor, "POST", "/statuses/1",
                     "{\"patch\":{\"$set\":{\"foo\":42}}}", buildPathKeys("statusID", 1L));
+
+    // #3 Simple Resource Partial Update
+
+    methodDescriptor = locationResourceModel.findMethod(ResourceMethod.PARTIAL_UPDATE);
+    locationResource = getMockResource(LocationResource.class);
+    p = new PatchTree();
+    p.addOperation(new PathSpec("foo"), PatchOpFactory.setFieldOp(Integer.valueOf(51)));
+    PatchRequest<Location> expectedLocation = PatchRequest.createFromPatchDocument(p.getDataMap());
+    EasyMock.expect(locationResource.update(eq(expectedLocation))).andReturn(null).once();
+    checkInvocation(locationResource, methodDescriptor, "POST", "/statuses/1/location",
+                    "{\"patch\":{\"$set\":{\"foo\":51}}}", buildPathKeys("statusID", 1L));
 
     // TODO would be nice to verify that posting an invalid record type fails
   }
@@ -1751,6 +1810,15 @@ public class TestRestLiMethodInvocation
     resource2 = getMockResource(CombinedResources.SimpleResourceWithCustomCrudParams.class);
     EasyMock.expect(resource2.myUpdate((CombinedTestDataModels.Foo)EasyMock.anyObject(), eq(1), eq("bar"))).andReturn(null).once();
     checkInvocation(resource2, methodDescriptor, "PUT", "/test?intParam=1&stringParam=bar", "{}", buildBatchPathKeys());
+
+    methodDescriptor = model.findMethod(ResourceMethod.PARTIAL_UPDATE);
+    resource2 = getMockResource(CombinedResources.SimpleResourceWithCustomCrudParams.class);
+    p = new PatchTree();
+    p.addOperation(new PathSpec("foo"), PatchOpFactory.setFieldOp(Integer.valueOf(51)));
+    expected = PatchRequest.createFromPatchDocument(p.getDataMap());
+    EasyMock.expect(resource2.myPartialUpdate(eq(expected), eq(1), eq("bar"))).andReturn(null).once();
+    checkInvocation(resource2, methodDescriptor, "POST", "/test?intParam=1&stringParam=bar",
+                    "{\"patch\":{\"$set\":{\"foo\":51}}}", buildBatchPathKeys());
 
     methodDescriptor = model.findMethod(ResourceMethod.DELETE);
     resource2 = getMockResource(CombinedResources.SimpleResourceWithCustomCrudParams.class);

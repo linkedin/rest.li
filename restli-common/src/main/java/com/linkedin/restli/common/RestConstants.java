@@ -69,5 +69,6 @@ public interface RestConstants
             ResourceMethod.ACTION,
             ResourceMethod.DELETE,
             ResourceMethod.GET,
+            ResourceMethod.PARTIAL_UPDATE,
             ResourceMethod.UPDATE)));
 }

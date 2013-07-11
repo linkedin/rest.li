@@ -19,6 +19,7 @@ package com.linkedin.restli.server.resources;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.UpdateResponse;
 
@@ -30,7 +31,7 @@ public class SimpleResourceAsyncTemplate<V extends RecordTemplate>
     extends ResourceContextHolder implements SimpleResourceAsync<V>
 {
   /**
-   * SimpleResourceAsync#get
+   * @see SimpleResourceAsync#get
    */
   @Override
   public void get(final Callback<V> callback)
@@ -39,10 +40,19 @@ public class SimpleResourceAsyncTemplate<V extends RecordTemplate>
   }
 
   /**
-   * SimpleResourceAsync#update
+   * @see SimpleResourceAsync#update
    */
   @Override
   public void update(final V entity, final Callback<UpdateResponse> callback)
+  {
+    throw new RoutingException("'update' not implemented", 400);
+  }
+
+  /**
+   * @see SimpleResourceAsync#update
+   */
+  @Override
+  public void update(final PatchRequest<V> patch, final Callback<UpdateResponse> callback)
   {
     throw new RoutingException("'update' not implemented", 400);
   }

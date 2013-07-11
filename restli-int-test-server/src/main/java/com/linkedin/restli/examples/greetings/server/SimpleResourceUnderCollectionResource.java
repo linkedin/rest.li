@@ -17,7 +17,10 @@
 package com.linkedin.restli.examples.greetings.server;
 
 
+import com.linkedin.data.DataMap;
+import com.linkedin.data.transform.DataProcessingException;
 import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.server.RestLiServiceException;
@@ -26,6 +29,7 @@ import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.ActionParam;
 import com.linkedin.restli.server.annotations.RestLiSimpleResource;
 import com.linkedin.restli.server.resources.SimpleResourceTemplate;
+import com.linkedin.restli.server.util.PatchApplier;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -69,6 +73,33 @@ public class SimpleResourceUnderCollectionResource extends SimpleResourceTemplat
     Long key = this.getContext().getPathKeys().get("subgreetingsId");
     TONES.put(key, greeting.getTone());
     return new UpdateResponse(HttpStatus.S_204_NO_CONTENT);
+  }
+
+  /**
+   * Updates the greeting.
+   */
+  @Override
+  public UpdateResponse update(PatchRequest<Greeting> patchRequest)
+  {
+    Long key = this.getContext().getPathKeys().get("subgreetingsId");
+    if (TONES.containsKey(key))
+    {
+      try
+      {
+        Greeting patched = new Greeting();
+        PatchApplier.applyPatch(patched, patchRequest);
+        TONES.put(key, patched.getTone());
+        return new UpdateResponse(HttpStatus.S_204_NO_CONTENT);
+      }
+      catch(DataProcessingException e)
+      {
+        return new UpdateResponse((HttpStatus.S_400_BAD_REQUEST));
+      }
+    }
+    else
+    {
+      return new UpdateResponse(HttpStatus.S_404_NOT_FOUND);
+    }
   }
 
   /**

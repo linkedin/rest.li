@@ -17,6 +17,7 @@
 package com.linkedin.restli.tools.twitter;
 
 
+import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.RestLiSimpleResource;
 import com.linkedin.restli.server.resources.SimpleResourceTemplate;
@@ -43,6 +44,15 @@ public class TrendingResource extends SimpleResourceTemplate<Trending>
    */
   @Override
   public UpdateResponse update(Trending trending)
+  {
+    return null;
+  }
+
+  /**
+   * Updates the global trending topics information.
+   */
+  @Override
+  public UpdateResponse update(PatchRequest<Trending> patch)
   {
     return null;
   }

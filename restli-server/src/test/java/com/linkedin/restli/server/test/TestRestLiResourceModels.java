@@ -218,6 +218,7 @@ public class TestRestLiResourceModels
     assertHasMethods(model,
                      ResourceMethod.GET,
                      ResourceMethod.UPDATE,
+                     ResourceMethod.PARTIAL_UPDATE,
                      ResourceMethod.DELETE,
                      ResourceMethod.ACTION);
   }
@@ -384,6 +385,7 @@ public class TestRestLiResourceModels
     assertHasMethods(simpleResourceModelAnnotatedCrud,
                      ResourceMethod.GET,
                      ResourceMethod.UPDATE,
+                     ResourceMethod.PARTIAL_UPDATE,
                      ResourceMethod.DELETE,
                      ResourceMethod.ACTION);
   }

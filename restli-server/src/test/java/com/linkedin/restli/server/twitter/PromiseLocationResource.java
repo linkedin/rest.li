@@ -18,6 +18,7 @@ package com.linkedin.restli.server.twitter;
 
 
 import com.linkedin.parseq.promise.Promise;
+import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.RestLiSimpleResource;
 import com.linkedin.restli.server.annotations.RestMethod;
@@ -46,6 +47,15 @@ public class PromiseLocationResource extends ResourceContextHolder implements Si
    */
   @RestMethod.Update
   public Promise<UpdateResponse> update(final Location entity)
+  {
+    throw new AssertionError("should be mocked");
+  }
+
+  /**
+   * Updates the location of the parent status.
+   */
+  @RestMethod.PartialUpdate
+  public Promise<UpdateResponse> update(final PatchRequest<Location> patch)
   {
     throw new AssertionError("should be mocked");
   }

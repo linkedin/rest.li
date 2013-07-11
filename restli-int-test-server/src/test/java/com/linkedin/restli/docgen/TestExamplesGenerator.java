@@ -162,6 +162,14 @@ public class TestExamplesGenerator
     valRet = validateSingleRequest(capture.getRequest(), Greeting.class, valOptions);
     Assert.assertTrue(valRet.isValid(), valRet.getMessages().toString());
 
+    final RestMethodSchema greetingPartialUpdate = findRestMethod(greeting, ResourceMethod.PARTIAL_UPDATE);
+    capture = generator.generateRestMethodExample(greeting, greetingPartialUpdate, spec);
+    Assert.assertSame(capture.getResponse().getEntity().length(), 0);
+    request = capture.getRequest();
+    Assert.assertEquals(request.getURI(), URI.create("/greeting"));
+    DataMap patchMap = _codec.bytesToMap(capture.getRequest().getEntity().copyBytes());
+    Assert.assertTrue(patchMap.containsKey("$set"));
+
     final RestMethodSchema greetingDelete = findRestMethod(greeting, ResourceMethod.DELETE);
     capture = generator.generateRestMethodExample(greeting, greetingUpdate, spec);
     Assert.assertSame(capture.getResponse().getEntity().length(), 0);
@@ -199,6 +207,16 @@ public class TestExamplesGenerator
                                       new String[]{"greeting", "subgreetings", null, "subsubgreeting"}));
     valRet = validateSingleRequest(capture.getRequest(), Greeting.class, valOptions);
     Assert.assertTrue(valRet.isValid(), valRet.getMessages().toString());
+
+    final RestMethodSchema subsubgreetingPartialUpdate = findRestMethod(subsubgreeting, ResourceMethod.PARTIAL_UPDATE);
+    capture = generator.generateRestMethodExample(subsubgreeting, subsubgreetingPartialUpdate, spec);
+    Assert.assertSame(capture.getResponse().getEntity().length(), 0);
+    request = capture.getRequest();
+    Assert.assertTrue(validateUrlPath(request.getURI(),
+                                      new String[]{"greeting", "subgreetings", null, "subsubgreeting"}));
+
+    patchMap = _codec.bytesToMap(capture.getRequest().getEntity().copyBytes());
+    Assert.assertTrue(patchMap.containsKey("$set"));
 
     final RestMethodSchema subsubgreetingDelete = findRestMethod(subsubgreeting, ResourceMethod.DELETE);
     capture = generator.generateRestMethodExample(subsubgreeting, subsubgreetingDelete, spec);

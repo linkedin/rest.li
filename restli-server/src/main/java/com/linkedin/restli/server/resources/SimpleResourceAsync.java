@@ -19,6 +19,7 @@ package com.linkedin.restli.server.resources;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.server.UpdateResponse;
 
 
@@ -43,6 +44,14 @@ public interface SimpleResourceAsync<V extends RecordTemplate> extends BaseResou
    * @param callback the callback for the asynchronous update call.
    */
   void update(V entity, Callback<UpdateResponse> callback);
+
+  /**
+   * Updates this resource
+   *
+   * @param patch value to update the resource with
+   * @param callback the callback for the asynchronous update call.
+   */
+  void update(PatchRequest<V> patch, Callback<UpdateResponse> callback);
 
   /**
    * Deletes this resource.

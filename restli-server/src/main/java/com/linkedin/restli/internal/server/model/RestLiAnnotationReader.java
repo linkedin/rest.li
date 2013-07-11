@@ -411,17 +411,7 @@ public final class RestLiAnnotationReader
         }
         else if (idx == 1)
         {
-          @SuppressWarnings({"unchecked", "rawtypes"})
-          Parameter p =
-              new Parameter("",
-                            PatchRequest.class,
-                            null,
-                            false,
-                            null,
-                            Parameter.ParamType.POST,
-                            false,
-                            annotations);
-          return p;
+          return makePatchParam(annotations);
         }
         break;
       case BATCH_GET:
@@ -518,9 +508,22 @@ public final class RestLiAnnotationReader
   {
     Parameter<?> parameter = null;
 
-    if (methodType == ResourceMethod.UPDATE && idx == 0)
+    switch(methodType)
     {
-      parameter = makeValueParam(model);
+      case UPDATE:
+        if (idx == 0)
+        {
+          return makeValueParam(model);
+        }
+
+        break;
+      case PARTIAL_UPDATE:
+        if (idx == 0)
+        {
+          return makePatchParam(annotations);
+        }
+
+        break;
     }
 
     return parameter;
@@ -550,6 +553,19 @@ public final class RestLiAnnotationReader
                          Parameter.ParamType.KEY,
                          false,
                          AnnotationSet.EMPTY);
+  }
+
+  @SuppressWarnings({ "unchecked", "rawtypes" })
+  private static Parameter makePatchParam(AnnotationSet annotations)
+  {
+    return new Parameter("",
+                         PatchRequest.class,
+                         null,
+                         false,
+                         null,
+                         Parameter.ParamType.POST,
+                         false,
+                         annotations);
   }
 
   private static String getDefaultValueData(final Optional optional)

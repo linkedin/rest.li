@@ -18,6 +18,7 @@ package com.linkedin.restli.server.resources;
 
 
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.server.UpdateResponse;
 
 
@@ -42,6 +43,14 @@ public interface SimpleResource<V extends RecordTemplate> extends BaseResource, 
    * @return the status or null if for a default, 204 No Content response
    */
   UpdateResponse update(V entity);
+
+  /**
+   * Partially update this resource given a Patch Request.
+   *
+   * @param patch value to update the resource with
+   * @return the status or null if for a default, 204 No Content response
+   */
+  UpdateResponse update(PatchRequest<V> patch);
 
   /**
    * Deletes this resource.

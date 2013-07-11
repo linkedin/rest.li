@@ -4,12 +4,15 @@
   "schema" : "com.linkedin.restli.tools.twitter.Trend",
   "doc" : "Simple resource that contains the location of a status.\n\ngenerated from: com.linkedin.restli.tools.twitter.TrendingResource",
   "simple" : {
-    "supports" : [ "delete", "get", "update" ],
+    "supports" : [ "delete", "get", "partial_update", "update" ],
     "methods" : [ {
       "method" : "get",
       "doc" : "Gets the global trending topics information."
     }, {
       "method" : "update",
+      "doc" : "Updates the global trending topics information."
+    }, {
+      "method" : "partial_update",
       "doc" : "Updates the global trending topics information."
     }, {
       "method" : "delete",

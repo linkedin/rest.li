@@ -5,12 +5,15 @@
   "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
   "doc" : "This resource represents a simple root resource.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.RootSimpleResource",
   "simple" : {
-    "supports" : [ "delete", "get", "update" ],
+    "supports" : [ "delete", "get", "partial_update", "update" ],
     "methods" : [ {
       "method" : "get",
       "doc" : "Gets the greeting."
     }, {
       "method" : "update",
+      "doc" : "Updates the greeting."
+    }, {
+      "method" : "partial_update",
       "doc" : "Updates the greeting."
     }, {
       "method" : "delete",
@@ -80,12 +83,15 @@
               "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
               "doc" : "This resource represents a simple sub-resource.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.SimpleResourceUnderCollectionResource",
               "simple" : {
-                "supports" : [ "delete", "get", "update" ],
+                "supports" : [ "delete", "get", "partial_update", "update" ],
                 "methods" : [ {
                   "method" : "get",
                   "doc" : "Gets the greeting."
                 }, {
                   "method" : "update",
+                  "doc" : "Updates the greeting."
+                }, {
+                  "method" : "partial_update",
                   "doc" : "Updates the greeting."
                 }, {
                   "method" : "delete",

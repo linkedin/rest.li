@@ -429,6 +429,23 @@ public class TestClientBuilders
   }
 
   @Test
+  public void testPartialUpdateRequestBuilderWithKeylessResource() throws Exception
+  {
+    PartialUpdateRequestBuilder<Long, TestRecord> builder = new PartialUpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class,
+                                                                                                              _SIMPLE_RESOURCE_SPEC);
+    TestRecord t1 = new TestRecord();
+    TestRecord t2 = new TestRecord(t1.data().copy());
+    t2.setId(1L);
+    t2.setMessage("Foo Bar Baz");
+    PatchRequest<TestRecord> patch = PatchGenerator.diff(t1, t2);
+    PartialUpdateRequest<TestRecord> request = builder.input(patch).build();
+    Assert.assertEquals(request.isSafe(), false);
+    Assert.assertEquals(request.isIdempotent(), false);
+
+    checkBasicRequest(request, "test", ResourceMethod.PARTIAL_UPDATE, patch, Collections.<String, String>emptyMap());
+  }
+
+  @Test
   public void testPatchGenerateAndPatchRequestRecorderGenerateIdenticalPatches()
       throws CloneNotSupportedException
   {

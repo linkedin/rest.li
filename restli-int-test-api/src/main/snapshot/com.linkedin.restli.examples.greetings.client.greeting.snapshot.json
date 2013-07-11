@@ -31,6 +31,9 @@
         "doc" : "Updates the greeting.",
         "method" : "update"
       }, {
+        "doc" : "Updates the greeting.",
+        "method" : "partial_update"
+      }, {
         "doc" : "Deletes the greeting.",
         "method" : "delete"
       } ],
@@ -67,13 +70,16 @@
                     "doc" : "Updates the greeting.",
                     "method" : "update"
                   }, {
+                    "doc" : "Updates the greeting.",
+                    "method" : "partial_update"
+                  }, {
                     "doc" : "Deletes the greeting.",
                     "method" : "delete"
                   } ],
                   "entity" : {
                     "path" : "/greeting/subgreetings/{subgreetingsId}/subsubgreeting"
                   },
-                  "supports" : [ "delete", "get", "update" ],
+                  "supports" : [ "delete", "get", "partial_update", "update" ],
                   "actions" : [ {
                     "name" : "exampleAction",
                     "doc" : "An example action on the greeting.",
@@ -108,17 +114,17 @@
               "type" : "long"
             },
             "actions" : [ {
+              "name" : "exceptionTest"
+            }, {
               "name" : "purge",
               "returns" : "int"
-            }, {
-              "name" : "exceptionTest"
             } ]
           },
           "namespace" : "com.linkedin.restli.examples.greetings.client"
         } ],
         "path" : "/greeting"
       },
-      "supports" : [ "delete", "get", "update" ],
+      "supports" : [ "delete", "get", "partial_update", "update" ],
       "actions" : [ {
         "name" : "exampleAction",
         "doc" : "An example action on the greeting.",

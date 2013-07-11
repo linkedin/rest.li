@@ -17,7 +17,9 @@
 package com.linkedin.restli.examples.greetings.server;
 
 
+import com.linkedin.data.transform.DataProcessingException;
 import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.server.RestLiServiceException;
@@ -26,6 +28,7 @@ import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.ActionParam;
 import com.linkedin.restli.server.annotations.RestLiSimpleResource;
 import com.linkedin.restli.server.resources.SimpleResourceTemplate;
+import com.linkedin.restli.server.util.PatchApplier;
 
 
 /**
@@ -53,6 +56,24 @@ public class RootSimpleResource extends SimpleResourceTemplate<Greeting>
   public UpdateResponse update(Greeting greeting)
   {
     GREETING = greeting;
+    return new UpdateResponse(HttpStatus.S_204_NO_CONTENT);
+  }
+
+  /**
+   * Updates the greeting.
+   */
+  @Override
+  public UpdateResponse update(PatchRequest<Greeting> patchRequest)
+  {
+    try
+    {
+      PatchApplier.applyPatch(GREETING, patchRequest);
+    }
+    catch(DataProcessingException e)
+    {
+      return new UpdateResponse(HttpStatus.S_400_BAD_REQUEST);
+    }
+
     return new UpdateResponse(HttpStatus.S_204_NO_CONTENT);
   }
 

@@ -17,6 +17,7 @@
 package com.linkedin.restli.tools.twitter;
 
 
+import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.ActionParam;
@@ -45,6 +46,15 @@ public class LocationResource extends SimpleResourceTemplate<Location>
    */
   @Override
   public UpdateResponse update(Location location)
+  {
+    return null;
+  }
+
+  /**
+   * Updates the location of the parent status.
+   */
+  @Override
+  public UpdateResponse update(PatchRequest<Location> patch)
   {
     return null;
   }

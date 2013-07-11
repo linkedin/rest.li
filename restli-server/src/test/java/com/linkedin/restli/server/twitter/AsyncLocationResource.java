@@ -18,6 +18,7 @@ package com.linkedin.restli.server.twitter;
 
 
 import com.linkedin.common.callback.Callback;
+import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.CallbackParam;
 import com.linkedin.restli.server.annotations.RestLiSimpleResource;
@@ -45,6 +46,15 @@ public class AsyncLocationResource extends SimpleResourceAsyncTemplate<Location>
    */
   @Override
   public void update(final Location entity, @CallbackParam final Callback<UpdateResponse> callback)
+  {
+    callback.onSuccess(null);
+  }
+
+  /**
+   * Updates the location of the parent status.
+   */
+  @Override
+  public void update(final PatchRequest<Location> patch, @CallbackParam final Callback<UpdateResponse> callback)
   {
     callback.onSuccess(null);
   }

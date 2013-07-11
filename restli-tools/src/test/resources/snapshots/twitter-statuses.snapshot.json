@@ -48,13 +48,16 @@
               "doc" : "Updates the location of the parent status.",
               "method" : "update"
             }, {
+              "doc" : "Updates the location of the parent status.",
+              "method" : "partial_update"
+            }, {
               "doc" : "Deletes the location of the parent status.",
               "method" : "delete"
             } ],
             "entity" : {
               "path" : "/statuses/{statusID}/location"
             },
-            "supports" : [ "delete", "get", "update" ],
+            "supports" : [ "delete", "get", "partial_update", "update" ],
             "actions" : [ {
               "name" : "new_status_from_location",
               "doc" : "Replies to all followers nearby.",

@@ -18,6 +18,7 @@ package com.linkedin.restli.server.resources;
 
 
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.UpdateResponse;
 
@@ -42,6 +43,15 @@ public class SimpleResourceTemplate<V extends RecordTemplate>
    */
   @Override
   public UpdateResponse update(final V entity)
+  {
+    throw new RoutingException("'update' not implemented", 400);
+  }
+
+  /**
+   * @see SimpleResource#update
+   */
+  @Override
+  public UpdateResponse update(PatchRequest<V> patch)
   {
     throw new RoutingException("'update' not implemented", 400);
   }
