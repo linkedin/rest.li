@@ -26,6 +26,7 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileTree
 import org.gradle.api.internal.artifacts.dependencies.DefaultSelfResolvingDependency
+import org.gradle.api.invocation.Gradle
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.Copy
@@ -508,6 +509,7 @@ class PegasusPlugin implements Plugin<Project>
   private static final StringBuffer _restModelCompatMessage = new StringBuffer()
   private static final StringBuffer _restModelPublishReminder = new StringBuffer()
 
+  private static final Object STATIC_PROJECT_EVALUATED_LOCK = new Object()
   private static final Object STATIC_BUILD_FINISHED_LOCK = new Object()
 
   private Class<? extends Plugin> _thisPluginType = getClass().asSubclass(Plugin)
@@ -541,9 +543,30 @@ class PegasusPlugin implements Plugin<Project>
     // this map will extract PegasusOptions.GenerationMode to project property
     project.ext.set('PegasusGenerationMode', PegasusOptions.GenerationMode.values().collectEntries {[it.name(), it]})
 
-    if (!_runOnce) {
-      synchronized (STATIC_BUILD_FINISHED_LOCK) {
-        if (!_runOnce) { //double-check pattern for efficiency
+    if (!_runOnce)
+    {
+      synchronized(STATIC_PROJECT_EVALUATED_LOCK)
+      {
+        if (!_runOnce) //double-check pattern for efficiency
+        {
+          project.gradle.projectsEvaluated { Gradle gradle ->
+            gradle.rootProject.subprojects { Project subproject ->
+              ['dataTemplateGenerator', 'restTools', 'avroSchemaGenerator'].each { String configurationName ->
+                final Configuration conf = subproject.configurations.findByName(configurationName)
+                if (conf != null && !conf.isEmpty())
+                {
+                  subproject.getLogger().warn('*** Project ' + subproject.path + ' declares dependency to unused configuration "' + configurationName + '". This configuration is deprecated and you can safely remove the dependency. ***')
+                }
+              }
+            }
+          }
+        }
+      }
+
+      synchronized(STATIC_BUILD_FINISHED_LOCK)
+      {
+        if (!_runOnce) //double-check pattern for efficiency
+        {
           project.gradle.buildFinished { BuildResult result ->
             final StringBuilder endOfBuildMessage = new StringBuilder()
 

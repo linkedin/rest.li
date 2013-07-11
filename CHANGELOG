@@ -1,15 +1,18 @@
 1.9.14
 ------
+(RB=196208)
+Print warning for the deprecated configuration from the pegasus plugin.
+Correct variable names in the pegasus plugin.
 
 1.9.13
 ------
 (RB=196626)
-Added batch operations to the async complex key template. 
+Added batch operations to the async complex key template.
 
 (RB=196751)
 Fixing the schema resolution ordering problem.
 
-(RB=196208)
+(RB=196211)
 Disallow @QueryParam in action methods, disallow @ActionParam in non-action methods.
 
 (RB=197277)
