@@ -17,10 +17,10 @@
 package com.linkedin.data.avro.generator;
 
 
+import com.linkedin.data.Data;
 import com.linkedin.data.avro.DataToAvroSchemaTranslationOptions;
 import com.linkedin.data.avro.OptionalDefaultMode;
 import com.linkedin.data.avro.SchemaTranslator;
-import com.linkedin.data.Data;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaLocation;
 import com.linkedin.data.schema.DataSchemaResolver;
@@ -28,6 +28,10 @@ import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.generator.AbstractGenerator;
 import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
+import org.apache.avro.Schema;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -38,9 +42,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.apache.avro.Schema;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 /**

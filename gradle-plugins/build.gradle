@@ -5,7 +5,7 @@ dependencies {
   compile localGroovy()
 
   runtime project(':data')
-  runtime project(':data-avro')
+  runtime project(':data-avro-generator')
   runtime project(':generator')
   runtime project(':restli-tools')
 

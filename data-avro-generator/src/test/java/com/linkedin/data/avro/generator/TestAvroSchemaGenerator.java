@@ -19,16 +19,17 @@ package com.linkedin.data.avro.generator;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
+import org.apache.avro.Schema;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import org.apache.avro.Schema;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
 
 import static com.linkedin.data.TestUtil.*;
 import static org.testng.Assert.assertEquals;

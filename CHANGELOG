@@ -1,3 +1,8 @@
+1.9.3
+-----
+(RB=184310)
+Move AvroSchemaGenerator out of data-avro due to logging dependency requirement.
+
 1.9.2
 -----
 (RB=183317)
@@ -11,12 +16,12 @@ Add separate compatibility check for idl.
 Add flag to turn off snapshot and idl compatibility check respectively.
 
 1.9.1
-------
+-----
 (RB=182338)
 Fix bug in pegasus plugin that publish snapshot task may not run.
 
 (RB=181765)
-Fix up jdk7 warnings. 
+Fix up jdk7 warnings.
 
 (RB=171893)
 Added server/client compression filters and associated test cases.
@@ -25,7 +30,7 @@ Added server/client compression filters and associated test cases.
 Adjust log4j related dependencies and log4j.xml. Remove all compile-time dependency of log4j.
 
 1.9.0
-------
+-----
 (RB=176567)
 Introduce simple resources concept which serves a single entity from a particular path.
 

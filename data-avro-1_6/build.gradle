@@ -10,5 +10,7 @@ dependencies {
   compile externalDependency.avro_1_6
   testCompile externalDependency.testng
   testCompile project(path: ':data-avro', configuration: 'testArtifacts')
+  testCompile project(path: ':data-avro-generator', configuration: 'testArtifacts')
   testCompile project(path: ':data', configuration: 'testArtifacts')
+  testRuntime project(path: ':data-avro-generator')
 }

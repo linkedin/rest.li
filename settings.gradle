@@ -1,5 +1,6 @@
 include 'data'
 include 'data-avro'
+include 'data-avro-generator'
 include 'data-avro-1_6'
 include 'data-transform'
 include 'd2'
