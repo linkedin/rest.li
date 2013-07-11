@@ -27,16 +27,6 @@ import com.linkedin.r2.transport.http.client.HttpClientFactory;
  */
 public class PropertyKeys
 {
-  //old to be deprecated constants. Use new constants instead.
-  //used by transport client creation
-  public static final String OLD_CLUSTER_GET_TIMEOUT = HttpClientFactory.OLD_GET_TIMEOUT_KEY;
-  public static final String OLD_CLUSTER_REQUEST_TIMEOUT = HttpClientFactory.OLD_REQUEST_TIMEOUT_KEY;
-  public static final String OLD_CLUSTER_MAX_RESPONSE_SIZE = HttpClientFactory.OLD_MAX_RESPONSE_SIZE;
-  public static final String OLD_CLUSTER_POOL_SIZE = HttpClientFactory.OLD_POOL_SIZE_KEY;
-  public static final String OLD_CLUSTER_IDLE_TIMEOUT = HttpClientFactory.OLD_IDLE_TIMEOUT_KEY;
-  public static final String OLD_CLUSTER_SHUTDOWN_TIMEOUT = HttpClientFactory.OLD_SHUTDOWN_TIMEOUT_KEY;
-  public static final String OLD_CLUSTER_SSL_CONTEXT = HttpClientFactory.OLD_SSL_CONTEXT;
-  public static final String OLD_CLUSTER_SSL_PARAMS = HttpClientFactory.OLD_SSL_PARAMS;
   //==========================================//
   //new constants
   //used by degrader properties
@@ -73,20 +63,6 @@ public class PropertyKeys
   public static final String LB_STRATEGY_NAME = "loadBalancerStrategyName";
   public static final String LB_STRATEGY_LIST = "loadBalancerStrategyList";
   public static final String LB_STRATEGY_PROPERTIES = "loadBalancerStrategyProperties";
-
-  //to be deprecated load balancer specific properties
-  public static final String LB_HASH_METHOD = "hashMethod";
-  public static final String LB_HASH_CONFIG = "hashConfig";
-  public static final String LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS = "updateIntervalMs";
-  public static final String LB_STRATEGY_PROPERTIES_MAX_CLUSTER_LATENCY_WITHOUT_DEGRADING = "maxClusterLatencyWithoutDegrading";
-  public static final String LB_STRATEGY_PROPERTIES_DEFAULT_SUCCESSFUL_TRANSMISSION_WEIGHT = "defaultSuccessfulTransmissionWeight";
-  public static final String LB_STRATEGY_PROPERTIES_POINTS_PER_WEIGHT = "pointsPerWeight";
-  public static final String LB_LOW_WATER_MARK = "lowWaterMark";
-  public static final String LB_HIGH_WATER_MARK = "highWaterMark";
-  public static final String LB_INITIAL_RECOVERY_LEVEL = "initialRecoveryLevel";
-  public static final String LB_RING_RAMP_FACTOR = "ringRampFactor";
-  public static final String LB_GLOBAL_STEP_UP = "globalStepUp";
-  public static final String LB_GLOBAL_STEP_DOWN = "globalStepDown";
 
   //load balancer specific properties to replace the old ones
   public static final String HTTP_LB_HASH_METHOD = "http.loadBalancer.hashMethod";

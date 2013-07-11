@@ -90,18 +90,6 @@ public class HttpClientFactory implements TransportClientFactory
   public static final int DEFAULT_SHUTDOWN_TIMEOUT = 5000;
   public static final int DEFAULT_MAX_RESPONSE_SIZE = 1024 * 1024 * 2;
 
-  /**
-   * The string below this is deprecated so use the equivalent above.
-   */
-  public static final String OLD_GET_TIMEOUT_KEY = "getTimeout";
-  public static final String OLD_POOL_SIZE_KEY = "poolSize";
-  public static final String OLD_REQUEST_TIMEOUT_KEY = "requestTimeout";
-  public static final String OLD_IDLE_TIMEOUT_KEY = "idleTimeout";
-  public static final String OLD_SHUTDOWN_TIMEOUT_KEY = "shutdownTimeout";
-  public static final String OLD_MAX_RESPONSE_SIZE = "maxResponseSize";
-  public static final String OLD_SSL_CONTEXT = "sslContext";
-  public static final String OLD_SSL_PARAMS = "sslParams";
-
   private final ClientSocketChannelFactory _channelFactory;
   private final ScheduledExecutorService   _executor;
   private final boolean                    _shutdownFactory;
@@ -180,10 +168,8 @@ public class HttpClientFactory implements TransportClientFactory
 
     // Copy the properties map since we don't want to mutate the passed-in map by removing keys
     properties = new HashMap<String,Object>(properties);
-    // TODO once references to old keys are eliminated, these should become calls to coerceAndRemoveFromMap().
-    sslContext = coerceOldAndNew(OLD_SSL_CONTEXT, HTTP_SSL_CONTEXT, properties, SSLContext.class);
-    sslParameters = coerceOldAndNew(OLD_SSL_PARAMS, HTTP_SSL_PARAMS, properties,
-                                    SSLParameters.class);
+    sslContext = coerceAndRemoveFromMap(HTTP_SSL_CONTEXT, properties, SSLContext.class);
+    sslParameters = coerceAndRemoveFromMap(HTTP_SSL_PARAMS, properties, SSLParameters.class);
 
     for (Map.Entry<String, ?> entry : properties.entrySet())
     {
@@ -196,27 +182,6 @@ public class HttpClientFactory implements TransportClientFactory
   HttpNettyClient getRawClient(Map<String, String> properties)
   {
     return getRawClient(properties, null, null);
-  }
-
-  private static <T> T coerceOldAndNew(String oldKey, String newKey, Map<String, ?> props,
-                                       Class<T> valueClass)
-  {
-    T oldValue = coerceAndRemoveFromMap(oldKey, props, valueClass);
-    T value = coerceAndRemoveFromMap(newKey, props, valueClass);
-
-    if (oldValue != null)
-    {
-      if (value != null)
-      {
-        LOG.warn("Ignoring obsolete key " + oldKey + " in favor of " + newKey);
-      }
-      else
-      {
-        LOG.warn("Using deprecated key " + oldKey + "; please switch to " + newKey);
-        value = oldValue;
-      }
-    }
-    return value;
   }
 
   private static <T> T coerceAndRemoveFromMap(String key, Map<String, ?> props, Class<T> valueClass)
@@ -275,10 +240,9 @@ public class HttpClientFactory implements TransportClientFactory
    * helper method to get value from properties as well as to print log warning if the key is old
    * @param properties
    * @param propertyKey
-   * @param newPropertyKey optional, if specified will be used to print log warning
    * @return null if property key can't be found, integer otherwise
    */
-  private Integer getIntValue(Map<String, String> properties, String propertyKey, String newPropertyKey)
+  private Integer getIntValue(Map<String, String> properties, String propertyKey)
   {
     if (properties == null)
     {
@@ -287,10 +251,6 @@ public class HttpClientFactory implements TransportClientFactory
     }
     if (properties.containsKey(propertyKey))
     {
-      if (newPropertyKey != null)
-      {
-        LOG.warn("Obsolete key " + propertyKey + " is specified. Please use " + newPropertyKey + " instead");
-      }
       return Integer.parseInt(properties.get(propertyKey));
     }
     else
@@ -306,61 +266,12 @@ public class HttpClientFactory implements TransportClientFactory
                                SSLContext sslContext,
                                SSLParameters sslParameters)
   {
-    Integer queryPostThreshold = getIntValue(properties, HTTP_QUERY_POST_THRESHOLD, null);
-    Integer poolSize = getIntValue(properties, HTTP_POOL_SIZE, null);
-    Integer requestTimeout = getIntValue(properties, HTTP_REQUEST_TIMEOUT, null);
-    Integer idleTimeout = getIntValue(properties, HTTP_IDLE_TIMEOUT, null);
-    Integer shutdownTimeout = getIntValue(properties, HTTP_SHUTDOWN_TIMEOUT, null);
-    Integer maxResponseSize = getIntValue(properties, HTTP_MAX_RESPONSE_SIZE, null);
-
-    //TODO these can go away when we migrate all obsolete config to new ones
-    Integer oldGetTimeout = getIntValue(properties, OLD_GET_TIMEOUT_KEY, HTTP_REQUEST_TIMEOUT);
-    Integer oldPoolSize = getIntValue(properties, OLD_POOL_SIZE_KEY, HTTP_POOL_SIZE);
-    Integer oldRequestTimeout = getIntValue(properties, OLD_REQUEST_TIMEOUT_KEY, HTTP_REQUEST_TIMEOUT);
-    Integer oldIdleTimeout = getIntValue(properties, OLD_IDLE_TIMEOUT_KEY, HTTP_IDLE_TIMEOUT);
-    Integer oldShutdownTimeout = getIntValue(properties, OLD_SHUTDOWN_TIMEOUT_KEY, HTTP_SHUTDOWN_TIMEOUT);
-    Integer oldMaxResponseSize = getIntValue(properties, OLD_MAX_RESPONSE_SIZE, HTTP_MAX_RESPONSE_SIZE);
-
-    poolSize = chooseNewOverOldWithDefault(oldPoolSize, poolSize, DEFAULT_POOL_SIZE, OLD_POOL_SIZE_KEY,
-                                           HTTP_POOL_SIZE);
-    idleTimeout = chooseNewOverOldWithDefault(oldIdleTimeout, idleTimeout, DEFAULT_IDLE_TIMEOUT,
-                                              OLD_IDLE_TIMEOUT_KEY, HTTP_IDLE_TIMEOUT);
-    shutdownTimeout = chooseNewOverOldWithDefault(oldShutdownTimeout, shutdownTimeout, DEFAULT_SHUTDOWN_TIMEOUT,
-                                                  OLD_SHUTDOWN_TIMEOUT_KEY, HTTP_SHUTDOWN_TIMEOUT);
-    maxResponseSize = chooseNewOverOldWithDefault(oldMaxResponseSize, maxResponseSize, DEFAULT_MAX_RESPONSE_SIZE,
-                                                  OLD_MAX_RESPONSE_SIZE, HTTP_MAX_RESPONSE_SIZE);
-    queryPostThreshold = chooseNewOverOldWithDefault(queryPostThreshold, null, Integer.MAX_VALUE,
-                                                     HTTP_QUERY_POST_THRESHOLD, null);
-    //we have the getTimeout, oldRequestTimeOut and requestTimeOut. RequestTimeout has the highest priority and
-    //getTimeout has the lowest priority.
-    if (requestTimeout != null && (oldRequestTimeout != null || oldGetTimeout != null))
-    {
-      LOG.warn(HTTP_REQUEST_TIMEOUT + " was specified as well as " + OLD_GET_TIMEOUT_KEY + " or " +
-      OLD_REQUEST_TIMEOUT_KEY + " so we will choose to use the value specified in " + HTTP_REQUEST_TIMEOUT );
-    }
-    else if (oldRequestTimeout != null && oldGetTimeout != null)
-    {
-      LOG.warn("Both " + OLD_REQUEST_TIMEOUT_KEY + " and " + OLD_GET_TIMEOUT_KEY +
-                   " were specified so we will use the value specified in " + OLD_REQUEST_TIMEOUT_KEY);
-    }
-    if (requestTimeout == null)
-    {
-      if (oldRequestTimeout == null)
-      {
-        if (oldGetTimeout == null)
-        {
-          requestTimeout = DEFAULT_REQUEST_TIMEOUT;
-        }
-        else
-        {
-          requestTimeout = oldGetTimeout;
-        }
-      }
-      else
-      {
-        requestTimeout = oldRequestTimeout;
-      }
-    }
+    Integer poolSize = chooseNewOverDefault(getIntValue(properties, HTTP_POOL_SIZE), DEFAULT_POOL_SIZE);
+    Integer idleTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_IDLE_TIMEOUT), DEFAULT_IDLE_TIMEOUT);
+    Integer shutdownTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_SHUTDOWN_TIMEOUT), DEFAULT_SHUTDOWN_TIMEOUT);
+    Integer maxResponseSize = chooseNewOverDefault(getIntValue(properties, HTTP_MAX_RESPONSE_SIZE), DEFAULT_MAX_RESPONSE_SIZE);
+    Integer queryPostThreshold = chooseNewOverDefault(getIntValue(properties, HTTP_QUERY_POST_THRESHOLD), Integer.MAX_VALUE);
+    Integer requestTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_REQUEST_TIMEOUT), DEFAULT_REQUEST_TIMEOUT);
 
     return new HttpNettyClient(_channelFactory,
                                _executor,
@@ -375,35 +286,21 @@ public class HttpClientFactory implements TransportClientFactory
   }
 
   /**
-   * choose the new value over the old value. If both new and old are not specified, we'll use default value
+   * choose new value. If new value doesn't exist, choose default value.
    *
-   * @param oldValue
    * @param newValue
    * @param defaultValue
-   * @param oldName
-   * @param newName
    * @return
    */
-  private Integer chooseNewOverOldWithDefault(Integer oldValue, Integer newValue, Integer defaultValue,
-                                              String oldName, String newName)
+  private Integer chooseNewOverDefault(Integer newValue, Integer defaultValue)
   {
-    if (oldValue == null&& newValue == null)
+    if (newValue == null)
     {
       return defaultValue;
     }
-    else if (newValue != null && oldValue != null)
-    {
-      LOG.warn("Both " + oldName + " of "+
-                   oldValue + " and "+ newName +" of "+ newValue +" were specified, ignoring obsolete " + oldName);
-      return newValue;
-    }
-    else if (newValue != null && oldValue == null)
-    {
-      return  newValue;
-    }
     else
     {
-      return oldValue;
+      return newValue;
     }
   }
 
@@ -515,7 +412,6 @@ public class HttpClientFactory implements TransportClientFactory
         }
         LOG.info("Shutdown complete");
         callback.onSuccess(None.none());
-
       }
     });
   }

@@ -161,16 +161,10 @@ public class TestHttpClientFactory
 
     Map<String, String> properties = new HashMap<String, String>();
 
-    String oldGetTimeout = "5000";
-    String oldRequestTimeout = "6000";
     String requestTimeout = "7000";
-    String oldPoolSize = "5";
     String poolSize = "10";
-    String oldMaxResponse = "2000";
     String maxResponse = "3000";
     String idleTimeout = "8000";
-    String oldIdleTimeout = "12000";
-    String oldShutdownTimeout = "13000";
     String shutdownTimeout = "14000";
     HttpNettyClient client;
 
@@ -180,23 +174,7 @@ public class TestHttpClientFactory
     Assert.assertEquals(client.getRequestTimeout(), HttpClientFactory.DEFAULT_REQUEST_TIMEOUT);
     Assert.assertEquals(client.getShutdownTimeout(), HttpClientFactory.DEFAULT_SHUTDOWN_TIMEOUT);
 
-    //test creation using old config keys TODO remove this once we delete all the old config keys
-    properties.put(HttpClientFactory.OLD_GET_TIMEOUT_KEY, oldGetTimeout);
-    properties.put(HttpClientFactory.OLD_POOL_SIZE_KEY, oldPoolSize);
-    properties.put(HttpClientFactory.OLD_IDLE_TIMEOUT_KEY, oldIdleTimeout);
-    properties.put(HttpClientFactory.OLD_SHUTDOWN_TIMEOUT_KEY, oldShutdownTimeout);
-    properties.put(HttpClientFactory.OLD_MAX_RESPONSE_SIZE, oldMaxResponse);
-
-    client = factory.getRawClient(properties);
-    Assert.assertEquals(client.getMaxResponseSize(), Integer.parseInt(oldMaxResponse));
-    Assert.assertEquals(client.getRequestTimeout(), Integer.parseInt(oldGetTimeout));
-    Assert.assertEquals(client.getShutdownTimeout(), Integer.parseInt(oldShutdownTimeout));
-
-    properties.put(HttpClientFactory.OLD_REQUEST_TIMEOUT_KEY, oldRequestTimeout);
-    client = factory.getRawClient(properties);
-    Assert.assertEquals(client.getRequestTimeout(), Integer.parseInt(oldRequestTimeout));
-
-    //test if both old and new config keys are there
+    //test using only new config keys
     properties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, requestTimeout);
     properties.put(HttpClientFactory.HTTP_POOL_SIZE, poolSize);
     properties.put(HttpClientFactory.HTTP_IDLE_TIMEOUT, idleTimeout);
@@ -206,46 +184,6 @@ public class TestHttpClientFactory
     Assert.assertEquals(client.getMaxResponseSize(), Integer.parseInt(maxResponse));
     Assert.assertEquals(client.getRequestTimeout(), Integer.parseInt(requestTimeout));
     Assert.assertEquals(client.getShutdownTimeout(), Integer.parseInt(shutdownTimeout));
-
-    //test using only new config keys
-    properties.remove(HttpClientFactory.OLD_GET_TIMEOUT_KEY);
-    properties.remove(HttpClientFactory.OLD_POOL_SIZE_KEY);
-    properties.remove(HttpClientFactory.OLD_IDLE_TIMEOUT_KEY);
-    properties.remove(HttpClientFactory.OLD_SHUTDOWN_TIMEOUT_KEY);
-    properties.remove(HttpClientFactory.OLD_MAX_RESPONSE_SIZE);
-
-    client = factory.getRawClient(properties);
-    Assert.assertEquals(client.getMaxResponseSize(), Integer.parseInt(maxResponse));
-    Assert.assertEquals(client.getRequestTimeout(), Integer.parseInt(requestTimeout));
-    Assert.assertEquals(client.getShutdownTimeout(), Integer.parseInt(shutdownTimeout));
-
-    properties.remove(HttpClientFactory.OLD_REQUEST_TIMEOUT_KEY);
-    client = factory.getRawClient(properties);
-    Assert.assertEquals(client.getMaxResponseSize(), Integer.parseInt(maxResponse));
-    Assert.assertEquals(client.getRequestTimeout(), Integer.parseInt(requestTimeout));
-    Assert.assertEquals(client.getShutdownTimeout(), Integer.parseInt(shutdownTimeout));
-  }
-
-  @Test
-  public void testOldSSLProperties() throws Exception
-  {
-    HttpClientFactory factory = new HttpClientFactory();
-    Map<String,Object> params = new HashMap<String, Object>();
-    SSLParameters sslParameters = new SSLParameters();
-    sslParameters.setProtocols(new String[]{ "Unsupported" });
-    params.put(HttpClientFactory.OLD_SSL_CONTEXT, SSLContext.getDefault());
-    params.put(HttpClientFactory.OLD_SSL_PARAMS, sslParameters);
-
-    try
-    {
-      factory.getClient(Collections.unmodifiableMap(params));
-      Assert.fail("Should have failed");
-    }
-    catch (IllegalArgumentException e)
-    {
-      Assert.assertTrue(e.getMessage().contains("None of the requested protocols: [Unsupported] are found in SSLContext"),
-                        "Unexpected error message " + e.getMessage());
-    }
   }
 
   @Test
@@ -271,19 +209,15 @@ public class TestHttpClientFactory
   }
 
   @Test
-  public void testOldAndNewSSLParams() throws Exception
+  public void testSSLParams() throws Exception
   {
     HttpClientFactory factory = new HttpClientFactory();
     Map<String,Object> params = new HashMap<String, Object>();
     SSLParameters sslParameters = new SSLParameters();
     sslParameters.setProtocols(new String[]{ "Unsupported" });
 
-    SSLParameters oldSslParameters = new SSLParameters();
-    oldSslParameters.setProtocols(new String[]{ "OLDSSLPARAMETERS" });
-
     params.put(HttpClientFactory.HTTP_SSL_CONTEXT, SSLContext.getDefault());
     params.put(HttpClientFactory.HTTP_SSL_PARAMS, sslParameters);
-    params.put(HttpClientFactory.OLD_SSL_PARAMS, oldSslParameters);
 
     try
     {
@@ -438,22 +372,15 @@ public class TestHttpClientFactory
     {
       Map<String,String> config = new HashMap<String, String>();
 
-      config.put("getTimeout", "999");
+      config.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "999");
       HttpNettyClient client = factory.getRawClient(config);
       Assert.assertEquals(client.getRequestTimeout(), 999);
 
-      config.put("requestTimeout", "999");
 
-      client = factory.getRawClient(config);
-      Assert.assertEquals(client.getRequestTimeout(), 999);
-
-      config.put("requestTimeout", "888");
+      config.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "888");
       client = factory.getRawClient(config);
       Assert.assertEquals(client.getRequestTimeout(), 888);
 
-      config.remove("getTimeout");
-      client = factory.getRawClient(config);
-      Assert.assertEquals(client.getRequestTimeout(), 888);
     }
     finally
     {

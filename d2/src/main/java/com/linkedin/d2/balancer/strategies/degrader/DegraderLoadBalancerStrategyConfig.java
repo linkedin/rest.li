@@ -131,15 +131,6 @@ public class DegraderLoadBalancerStrategyConfig
     _globalStepDown = globalStepDown;
   }
 
-  private static <V> V getWithDefault(Map<String,Object> map, String oldKey, String httpKey, V defaultValue,
-                                      Class<V> valueClass)
-  {
-
-    V oldValue = MapUtil.getWithDefault(map, oldKey, null, valueClass);
-    V httpValue = MapUtil.getWithDefault(map, httpKey, null, valueClass);
-    return chooseNewValueOverOldValueGivenDefaultValue(oldValue, httpValue, defaultValue, oldKey, httpKey);
-  }
-
   /**
    * Creates a DegraderLoadBalancerStrategyConfig that prefers to use HTTP specific properties key.
    * If the properties cannot be found we will attempt to use the default properties key. If
@@ -163,58 +154,43 @@ public class DegraderLoadBalancerStrategyConfig
     Clock clock = MapUtil.getWithDefault(map, PropertyKeys.CLOCK,
                                          DEFAULT_CLOCK, Clock.class);
 
-    Long updateIntervalMs =
-        getWithDefault(map, PropertyKeys.LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS,
+    Long updateIntervalMs = MapUtil.getWithDefault(map,
                        PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS,
                        DEFAULT_UPDATE_INTERVAL_MS, Long.class);
 
-    Double maxClusterLatencyWithoutDegrading =
-        getWithDefault(map,
-                       PropertyKeys.LB_STRATEGY_PROPERTIES_MAX_CLUSTER_LATENCY_WITHOUT_DEGRADING,
+    Double maxClusterLatencyWithoutDegrading = MapUtil.getWithDefault(map,
                        PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_MAX_CLUSTER_LATENCY_WITHOUT_DEGRADING,
                        DEFAULT_MAX_CLUSTER_LATENCY_WITHOUT_DEGRADING, Double.class);
 
-    Double defaultSuccessfulTransmissionWeight =
-        getWithDefault(map,
-                       PropertyKeys.LB_STRATEGY_PROPERTIES_DEFAULT_SUCCESSFUL_TRANSMISSION_WEIGHT,
+    Double defaultSuccessfulTransmissionWeight = MapUtil.getWithDefault(map,
                        PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_DEFAULT_SUCCESSFUL_TRANSMISSION_WEIGHT,
                        DEFAULT_SUCCESSFUL_TRANSMISSION_WEIGHT, Double.class);
 
-    Integer pointsPerWeight =
-        getWithDefault(map, PropertyKeys.LB_STRATEGY_PROPERTIES_POINTS_PER_WEIGHT,
-                       PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_POINTS_PER_WEIGHT,
+    Integer pointsPerWeight = MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_POINTS_PER_WEIGHT,
                        DEFAULT_POINTS_PER_WEIGHT, Integer.class);
 
-    String hashMethod =
-        getWithDefault(map, PropertyKeys.LB_HASH_METHOD,
-                       PropertyKeys.HTTP_LB_HASH_METHOD, null, String.class);
+    String hashMethod = MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_HASH_METHOD, null, String.class);
 
-    Double initialRecoveryLevel =
-        getWithDefault(map, PropertyKeys.LB_INITIAL_RECOVERY_LEVEL,
-                       PropertyKeys.HTTP_LB_INITIAL_RECOVERY_LEVEL,
+    Double initialRecoveryLevel = MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_INITIAL_RECOVERY_LEVEL,
                        DEFAULT_INITIAL_RECOVERY_LEVEL, Double.class);
 
-    Double ringRampFactor =
-        getWithDefault(map, PropertyKeys.LB_RING_RAMP_FACTOR,
-                       PropertyKeys.HTTP_LB_RING_RAMP_FACTOR, DEFAULT_RAMP_FACTOR,
+    Double ringRampFactor = MapUtil.getWithDefault(map,PropertyKeys.HTTP_LB_RING_RAMP_FACTOR, DEFAULT_RAMP_FACTOR,
                        Double.class);
 
-    Double highWaterMark =
-        getWithDefault(map, PropertyKeys.LB_HIGH_WATER_MARK, PropertyKeys.HTTP_LB_HIGH_WATER_MARK,
+    Double highWaterMark = MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_HIGH_WATER_MARK,
                        DEFAULT_HIGH_WATER_MARK, Double.class);
 
-    Double lowWaterMark =
-        getWithDefault(map, PropertyKeys.LB_LOW_WATER_MARK, PropertyKeys.HTTP_LB_LOW_WATER_MARK,
+    Double lowWaterMark = MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_LOW_WATER_MARK,
                        DEFAULT_LOW_WATER_MARK, Double.class);
 
-    Double globalStepUp = getWithDefault(map, PropertyKeys.LB_GLOBAL_STEP_UP, PropertyKeys.HTTP_LB_GLOBAL_STEP_UP,
+    Double globalStepUp = MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_GLOBAL_STEP_UP,
                                          DEFAULT_GLOBAL_STEP_UP, Double.class);
 
-    Double globalStepDown = getWithDefault(map, PropertyKeys.LB_GLOBAL_STEP_DOWN, PropertyKeys.HTTP_LB_GLOBAL_STEP_DOWN,
+    Double globalStepDown = MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_GLOBAL_STEP_DOWN,
                                            DEFAULT_GLOBAL_STEP_DOWN, Double.class);
 
     @SuppressWarnings("unchecked")
-    Map<String,Object> hashConfig = getWithDefault(map, PropertyKeys.LB_HASH_CONFIG,
+    Map<String,Object> hashConfig = MapUtil.getWithDefault(map,
                                                    PropertyKeys.HTTP_LB_HASH_CONFIG,
                                                    Collections.emptyMap(),
                                                    Map.class);
@@ -224,91 +200,6 @@ public class DegraderLoadBalancerStrategyConfig
         defaultSuccessfulTransmissionWeight, pointsPerWeight, hashMethod, hashConfig,
         clock, initialRecoveryLevel, ringRampFactor, highWaterMark, lowWaterMark,
         globalStepUp, globalStepDown);
-  }
-
-  /**
-   * constructs a  DegraderLoadBalancerStrategyConfig from the given map.
-   */
-  public static DegraderLoadBalancerStrategyConfig configFromMap(Map<String,Object> map)
-  {
-    Long updateIntervalMs = MapUtil.getWithDefault(map,
-                                         PropertyKeys.LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS,
-                                         DEFAULT_UPDATE_INTERVAL_MS);
-    Double maxClusterLatencyWithoutDegrading = MapUtil.getWithDefault(map,
-            PropertyKeys.LB_STRATEGY_PROPERTIES_MAX_CLUSTER_LATENCY_WITHOUT_DEGRADING,
-            DEFAULT_MAX_CLUSTER_LATENCY_WITHOUT_DEGRADING);
-    Double defaultSuccessfulTransmissionWeight = MapUtil.getWithDefault(map,
-            PropertyKeys.LB_STRATEGY_PROPERTIES_DEFAULT_SUCCESSFUL_TRANSMISSION_WEIGHT,
-            DEFAULT_SUCCESSFUL_TRANSMISSION_WEIGHT);
-    Integer pointsPerWeight = MapUtil.getWithDefault(map,
-                                            PropertyKeys.LB_STRATEGY_PROPERTIES_POINTS_PER_WEIGHT,
-                                            DEFAULT_POINTS_PER_WEIGHT);
-    String hashMethod = MapUtil.getWithDefault(map,
-        PropertyKeys.LB_HASH_METHOD, null, String.class);
-
-    Clock clock = MapUtil.getWithDefault(map, PropertyKeys.CLOCK,
-                                         DEFAULT_CLOCK, Clock.class);
-
-    Double initialRecoveryLevel = MapUtil.getWithDefault(map,
-                                                         PropertyKeys.LB_INITIAL_RECOVERY_LEVEL,
-                                                         DEFAULT_INITIAL_RECOVERY_LEVEL);
-
-    Double ringRampFactor = MapUtil.getWithDefault(map,
-                                                   PropertyKeys.LB_RING_RAMP_FACTOR,
-                                                   DEFAULT_RAMP_FACTOR);
-
-    Double highWaterMark = MapUtil.getWithDefault(map,
-                                                  PropertyKeys.LB_HIGH_WATER_MARK,
-                                                  DEFAULT_HIGH_WATER_MARK);
-    Double lowWaterMark = MapUtil.getWithDefault(map,
-                                                 PropertyKeys.LB_LOW_WATER_MARK,
-                                                 DEFAULT_LOW_WATER_MARK);
-
-    Double globalStepUp = MapUtil.getWithDefault(map,
-                                                 PropertyKeys.LB_GLOBAL_STEP_UP,
-                                                 DEFAULT_GLOBAL_STEP_UP);
-    Double globalStepDown = MapUtil.getWithDefault(map,
-                                                   PropertyKeys.LB_GLOBAL_STEP_DOWN,
-                                                   DEFAULT_GLOBAL_STEP_DOWN);
-
-    @SuppressWarnings("unchecked")
-    Map<String,Object> hashConfig = (Map<String,Object>)map.get(PropertyKeys.LB_HASH_CONFIG);
-    if (hashConfig == null)
-    {
-      hashConfig = Collections.emptyMap();
-    }
-
-    return new DegraderLoadBalancerStrategyConfig(
-            updateIntervalMs, maxClusterLatencyWithoutDegrading,
-            defaultSuccessfulTransmissionWeight, pointsPerWeight, hashMethod, hashConfig,
-            clock, initialRecoveryLevel, ringRampFactor, highWaterMark, lowWaterMark,
-            globalStepUp, globalStepDown);
-  }
-
-  // helper method to choose new value over old value and print log debug if both new value and old
-  // value are defined. If both are not defined, will choose the default value
-  private static <T> T chooseNewValueOverOldValueGivenDefaultValue(T oldValue, T newValue, T defaultValue,
-                                                                   String oldName, String newName)
-  {
-    if (newValue != null && oldValue != null)
-    {
-      _log.debug("Both property key:" + oldName + " and " + newName + " are defined in config 2.0. we are using " +
-      newName + " with value " + newValue + " to construct DegraderLoadBalancerStrategyConfig");
-      return newValue;
-    }
-    if (newValue != null)
-    {
-      _log.debug("Property key: " + newName + " is found with value " + newValue);
-      return newValue;
-    }
-    if (oldValue != null)
-    {
-      _log.debug("Property key : " + newName + " cannot be found so we are using " + oldName);
-      return oldValue;
-    }
-    _log.debug("Cannot find both property key: " + oldName + " and " + newName + " we are using default value " +
-      defaultValue);
-    return defaultValue;
   }
 
   /**

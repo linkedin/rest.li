@@ -113,7 +113,7 @@ public class TestHttpClient
   {
     final Integer REQUEST_TIMEOUT = 1000;
     final TransportClient transportClient =
-        _clientFactory.getClient(Collections.singletonMap(HttpClientFactory.OLD_REQUEST_TIMEOUT_KEY,
+        _clientFactory.getClient(Collections.singletonMap(HttpClientFactory.HTTP_REQUEST_TIMEOUT,
                                                           Integer.toString(REQUEST_TIMEOUT)));
     final Client client = new TransportClientAdapter(transportClient);
 
@@ -176,7 +176,7 @@ public class TestHttpClient
 
     // Specify the get timeout; we know the max rate will be half the get timeout
     final TransportClient transportClient =
-        new HttpClientFactory().getClient(Collections.singletonMap(HttpClientFactory.OLD_REQUEST_TIMEOUT_KEY,
+        new HttpClientFactory().getClient(Collections.singletonMap(HttpClientFactory.HTTP_REQUEST_TIMEOUT,
                                                                    Integer.toString(REQUEST_TIMEOUT)));
     final Client client = new TransportClientAdapter(transportClient);
 

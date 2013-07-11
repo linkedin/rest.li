@@ -693,13 +693,13 @@ public class DegraderLoadBalancerTest
   public void testWeightedBalancingWithDeadClient() throws URISyntaxException
   {
     Map<String,Object> myMap = new HashMap<String, Object>();
-    myMap.put(PropertyKeys.LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS, 5000L);
-    myMap.put(PropertyKeys.LB_STRATEGY_PROPERTIES_MAX_CLUSTER_LATENCY_WITHOUT_DEGRADING, 100.0);
+    myMap.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS, 5000L);
+    myMap.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_MAX_CLUSTER_LATENCY_WITHOUT_DEGRADING, 100.0);
     // this test expected the dead tracker client to not recover through the
     // getTrackerClient mechanism. It only recovered through explicit calls to client1/client2.
     // While we have fixed this problem, keeping this testcase to show how we can completely disable
     // a tracker client through the getTrackerClient method.
-    myMap.put(PropertyKeys.LB_INITIAL_RECOVERY_LEVEL, 0.0);
+    myMap.put(PropertyKeys.HTTP_LB_INITIAL_RECOVERY_LEVEL, 0.0);
     DegraderLoadBalancerStrategyV3 strategy = getStrategy(myMap);
     List<TrackerClient> clients = new ArrayList<TrackerClient>();
     URI uri1 = URI.create("http://test.linkedin.com:3242/fdsaf");
@@ -1174,8 +1174,8 @@ public class DegraderLoadBalancerTest
     Map<String,Object> myConfig = new HashMap<String,Object>();
     TestClock testClock = new TestClock();
     myConfig.put(PropertyKeys.CLOCK, testClock);
-    myConfig.put(PropertyKeys.LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS, 5000L);
-    myConfig.put(PropertyKeys.LB_STRATEGY_PROPERTIES_MAX_CLUSTER_LATENCY_WITHOUT_DEGRADING, 100d);
+    myConfig.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS, 5000L);
+    myConfig.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_MAX_CLUSTER_LATENCY_WITHOUT_DEGRADING, 100d);
     DegraderLoadBalancerStrategyV3 strategy = getStrategy(myConfig);
     List<TrackerClient> clients = new ArrayList<TrackerClient>();
 
@@ -1396,8 +1396,8 @@ public class DegraderLoadBalancerTest
     // This recovery level will put one point into the hash ring, which is good enough to
     // send traffic to it because it is the only member of the cluster.
     myMap.put("initialRecoverLevel", 0.01);
-    myMap.put(PropertyKeys.LB_RING_RAMP_FACTOR, 2.0);
-    myMap.put(PropertyKeys.LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS, timeInterval);
+    myMap.put(PropertyKeys.HTTP_LB_RING_RAMP_FACTOR, 2.0);
+    myMap.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS, timeInterval);
     int stepsToFullRecovery = 0;
 
     //test Strategy V3
@@ -1424,9 +1424,9 @@ public class DegraderLoadBalancerTest
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
     // We want the degrader to have one cooling off period, and then re-enter the ring. This
-    myMap.put(PropertyKeys.LB_INITIAL_RECOVERY_LEVEL, 0.005);
-    myMap.put(PropertyKeys.LB_RING_RAMP_FACTOR, 2.0);
-    myMap.put(PropertyKeys.LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS, timeInterval);
+    myMap.put(PropertyKeys.HTTP_LB_INITIAL_RECOVERY_LEVEL, 0.005);
+    myMap.put(PropertyKeys.HTTP_LB_RING_RAMP_FACTOR, 2.0);
+    myMap.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS, timeInterval);
     // it will take two intervals for the TC to be reintroduced into the hash ring.
     int stepsToFullRecovery = 1;
 
@@ -1570,11 +1570,11 @@ public class DegraderLoadBalancerTest
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
     // We want the degrader to have one cooling off period, and then re-enter the ring. This
-    myMap.put(PropertyKeys.LB_INITIAL_RECOVERY_LEVEL, 0.005);
-    myMap.put(PropertyKeys.LB_RING_RAMP_FACTOR, 2.0);
-    myMap.put(PropertyKeys.LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS, timeInterval);
-    myMap.put(PropertyKeys.LB_GLOBAL_STEP_UP, 1.0);
-    myMap.put(PropertyKeys.LB_GLOBAL_STEP_DOWN, 0.8);
+    myMap.put(PropertyKeys.HTTP_LB_INITIAL_RECOVERY_LEVEL, 0.005);
+    myMap.put(PropertyKeys.HTTP_LB_RING_RAMP_FACTOR, 2.0);
+    myMap.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS, timeInterval);
+    myMap.put(PropertyKeys.HTTP_LB_GLOBAL_STEP_UP, 1.0);
+    myMap.put(PropertyKeys.HTTP_LB_GLOBAL_STEP_DOWN, 0.8);
 
 
     //test Strategy V3
@@ -1964,7 +1964,7 @@ public class DegraderLoadBalancerTest
     Long timeInterval = 5000L;
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
-    myMap.put(PropertyKeys.LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
+    myMap.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
     //we need to override the min call count to 0 because we're testing a service with low traffic.
     //if we don't do this, the computedDropRate will not change and we will never be able to recover
     //after we degraded the cluster.
@@ -1997,7 +1997,7 @@ public class DegraderLoadBalancerTest
     Long timeInterval = 5000L;
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
-    myMap.put(PropertyKeys.LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
+    myMap.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
     //we need to override the min call count to 0 because we're testing a service with low traffic.
     //if we don't do this, the computedDropRate will not change and we will never be able to recover
     //after we degraded the cluster.
@@ -2031,7 +2031,7 @@ public class DegraderLoadBalancerTest
     Long timeInterval = 5000L;
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
-    myMap.put(PropertyKeys.LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
+    myMap.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
     //we need to override the min call count to 0 because we're testing a service with low traffic.
     //if we don't do this, the computedDropRate will not change and we will never be able to recover
     //after we degraded the cluster.
@@ -2065,7 +2065,7 @@ public class DegraderLoadBalancerTest
     Long timeInterval = 5000L;
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
-    myMap.put(PropertyKeys.LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
+    myMap.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
     Map<String, String> degraderProperties = new HashMap<String,String>();
     degraderProperties.put(PropertyKeys.DEGRADER_HIGH_ERROR_RATE, "0.5");
     degraderProperties.put(PropertyKeys.DEGRADER_LOW_ERROR_RATE, "0.2");
@@ -2094,7 +2094,7 @@ public class DegraderLoadBalancerTest
     Long timeInterval = 5000L;
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
-    myMap.put(PropertyKeys.LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
+    myMap.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
     Map<String, String> degraderProperties = new HashMap<String,String>();
     degraderProperties.put(PropertyKeys.DEGRADER_HIGH_ERROR_RATE, "0.5");
     degraderProperties.put(PropertyKeys.DEGRADER_LOW_ERROR_RATE, "0.2");
@@ -2124,8 +2124,8 @@ public class DegraderLoadBalancerTest
     Long timeInterval = 5000L;
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
-    myMap.put(PropertyKeys.LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
-    myMap.put(PropertyKeys.LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
+    myMap.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
+    myMap.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
     Map<String, String> degraderProperties = new HashMap<String,String>();
     degraderProperties.put(PropertyKeys.DEGRADER_HIGH_ERROR_RATE, "0.5");
     degraderProperties.put(PropertyKeys.DEGRADER_LOW_ERROR_RATE, "0.2");
@@ -2155,7 +2155,7 @@ public class DegraderLoadBalancerTest
     Long timeInterval = 5000L;
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
-    myMap.put(PropertyKeys.LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
+    myMap.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
     Map<String, String> degraderProperties = new HashMap<String,String>();
     degraderProperties.put(PropertyKeys.DEGRADER_HIGH_ERROR_RATE, "0.5");
     degraderProperties.put(PropertyKeys.DEGRADER_LOW_ERROR_RATE, "0.2");
@@ -2184,7 +2184,7 @@ public class DegraderLoadBalancerTest
     Long timeInterval = 5000L;
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
-    myMap.put(PropertyKeys.LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
+    myMap.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
     Map<String, String> degraderProperties = new HashMap<String,String>();
     degraderProperties.put(PropertyKeys.DEGRADER_HIGH_ERROR_RATE, "0.5");
     degraderProperties.put(PropertyKeys.DEGRADER_LOW_ERROR_RATE, "0.2");
@@ -2214,7 +2214,7 @@ public class DegraderLoadBalancerTest
     Long timeInterval = 5000L;
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
-    myMap.put(PropertyKeys.LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
+    myMap.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
     Map<String, String> degraderProperties = new HashMap<String,String>();
     degraderProperties.put(PropertyKeys.DEGRADER_HIGH_ERROR_RATE, "0.5");
     degraderProperties.put(PropertyKeys.DEGRADER_LOW_ERROR_RATE, "0.2");
@@ -2463,11 +2463,11 @@ public class DegraderLoadBalancerTest
     double lowWaterMark = 50;
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
-    myMap.put(PropertyKeys.LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS, timeInterval);
-    myMap.put(PropertyKeys.LB_GLOBAL_STEP_UP, globalStepUp);
-    myMap.put(PropertyKeys.LB_GLOBAL_STEP_DOWN, globalStepDown);
-    myMap.put(PropertyKeys.LB_HIGH_WATER_MARK, highWaterMark);
-    myMap.put(PropertyKeys.LB_LOW_WATER_MARK, lowWaterMark);
+    myMap.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS, timeInterval);
+    myMap.put(PropertyKeys.HTTP_LB_GLOBAL_STEP_UP, globalStepUp);
+    myMap.put(PropertyKeys.HTTP_LB_GLOBAL_STEP_DOWN, globalStepDown);
+    myMap.put(PropertyKeys.HTTP_LB_HIGH_WATER_MARK, highWaterMark);
+    myMap.put(PropertyKeys.HTTP_LB_LOW_WATER_MARK, lowWaterMark);
 
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
     DegraderLoadBalancerStrategyV3 strategy = new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest");
@@ -2581,9 +2581,9 @@ public class DegraderLoadBalancerTest
     Map<String, Object> myMap = new HashMap<String, Object>();
     // 1,2,4,8,16,32,64,100% steps, given a 2x recovery step coefficient
     int localStepsToFullRecovery = 8;
-    myMap.put(PropertyKeys.LB_INITIAL_RECOVERY_LEVEL, 0.005);
-    myMap.put(PropertyKeys.LB_RING_RAMP_FACTOR, 2d);
-    myMap.put(PropertyKeys.LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS, TIME_INTERVAL);
+    myMap.put(PropertyKeys.HTTP_LB_INITIAL_RECOVERY_LEVEL, 0.005);
+    myMap.put(PropertyKeys.HTTP_LB_RING_RAMP_FACTOR, 2d);
+    myMap.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS, TIME_INTERVAL);
 
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
@@ -2718,7 +2718,7 @@ public class DegraderLoadBalancerTest
     Map<String, Object> myMap = new HashMap<String, Object>();
     //myMap.put(PropertyKeys.LB_INITIAL_RECOVERY_LEVEL, 0.01);
     //myMap.put("rampFactor", 2d);
-    myMap.put(PropertyKeys.LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS, TIME_INTERVAL);
+    myMap.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS, TIME_INTERVAL);
 
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);

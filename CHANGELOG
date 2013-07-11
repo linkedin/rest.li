@@ -1,5 +1,8 @@
 1.9.3
 -----
+(RB=184701)
+removes unused property keys and removes the non http-namespaced properties referenced in D2 code
+
 (RB=184310)
 Move AvroSchemaGenerator out of data-avro due to logging dependency requirement.
 
