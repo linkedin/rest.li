@@ -9,6 +9,9 @@ Move AvroSchemaGenerator out of data-avro due to logging dependency requirement.
 (RB=184337)
 Adding support for partial update methods on simple resources.
 
+(RB=184874)
+Bug fix with compression client filter Accept-Encoding generation
+
 1.9.2
 -----
 (RB=183317)

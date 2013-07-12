@@ -86,7 +86,7 @@ public class ClientCompressionFilter implements Filter, RestFilter
    * Builds the accept encoding header as a string
    * @return string representation of the Accept-Encoding value for this client
    */
-  private String buildAcceptEncodingHeader()
+  public String buildAcceptEncodingHeader()
   {
     //Essentially, we want to assign nonzero quality values to all those specified;
     float delta = 1.0f/(_acceptCompression.length+1);
@@ -94,19 +94,16 @@ public class ClientCompressionFilter implements Filter, RestFilter
 
     //Special case so we don't end with an unnecessary delimiter
     StringBuilder acceptEncodingValue = new StringBuilder();
-    if (_acceptCompression.length > 0)
-    {
-      acceptEncodingValue.append(_acceptCompression[0].getHttpName());
-      acceptEncodingValue.append(CompressionConstants.QUALITY_PREFIX);
-      acceptEncodingValue.append(String.format("%.2f", currentQuality));
-      currentQuality = currentQuality - delta;
-    }
-
-    for(int i=1; i < _acceptCompression.length; i++)
+    for(int i=0; i < _acceptCompression.length; i++)
     {
       EncodingType t = _acceptCompression[i];
-      acceptEncodingValue.append(CompressionConstants.QUALITY_DELIMITER);
+
+      if(i > 0)
+      {
+        acceptEncodingValue.append(CompressionConstants.ENCODING_DELIMITER);
+      }
       acceptEncodingValue.append(t.getHttpName());
+      acceptEncodingValue.append(CompressionConstants.QUALITY_DELIMITER);
       acceptEncodingValue.append(CompressionConstants.QUALITY_PREFIX);
       acceptEncodingValue.append(String.format("%.2f", currentQuality));
       currentQuality = currentQuality - delta;
