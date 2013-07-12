@@ -3,6 +3,9 @@
 (RB=184310)
 Move AvroSchemaGenerator out of data-avro due to logging dependency requirement.
 
+(RB=184337)
+Adding support for partial update methods on simple resources.
+
 1.9.2
 -----
 (RB=183317)
