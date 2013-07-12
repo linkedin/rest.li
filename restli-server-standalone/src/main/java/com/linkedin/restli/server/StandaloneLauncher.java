@@ -21,8 +21,6 @@ import java.net.URI;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-import org.apache.log4j.BasicConfigurator;
-
 import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.EngineBuilder;
 import com.linkedin.r2.filter.FilterChains;
@@ -119,8 +117,6 @@ public class StandaloneLauncher
    */
   public static void main(final String[] args) throws IOException
   {
-    BasicConfigurator.configure();
-
     final StandaloneLauncher launcher = configureLauncher(args);
     launcher.start();
 

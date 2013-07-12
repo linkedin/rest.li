@@ -12,6 +12,10 @@ Adding support for partial update methods on simple resources.
 (RB=184874)
 Bug fix with compression client filter Accept-Encoding generation
 
+(RB=185181)
+Use ParSeq 1.3.3, which depends on log4j 1.6.2 and converges to the same dependent version as Rest.li uses.
+Add missing log4j.xml to restli-example-client.
+
 1.9.2
 -----
 (RB=183317)
