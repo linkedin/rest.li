@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.tools.snapshot.check;
 
+import com.linkedin.restli.tools.compatibility.CompatibilityInfoMap;
 import com.linkedin.restli.tools.idlcheck.CompatibilityInfo;
 import com.linkedin.restli.tools.idlcheck.CompatibilityLevel;
 import org.testng.Assert;
@@ -50,12 +51,13 @@ public class TestRestliSnapshotCompatibilityChecker
 
     final RestLiSnapshotCompatibilityChecker checker = new RestLiSnapshotCompatibilityChecker();
 
-    Assert.assertFalse(checker.check(nonExistentFilename1,
-                                     nonExistentFilename2,
-                                     CompatibilityLevel.BACKWARDS));
+    CompatibilityInfoMap infoMap = checker.check(nonExistentFilename1,
+                                               nonExistentFilename2,
+                                               CompatibilityLevel.BACKWARDS);
+    Assert.assertFalse(infoMap.isCompatible(CompatibilityLevel.BACKWARDS));
 
-    final Collection<CompatibilityInfo> incompatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getIncompatibles());
-    final Collection<CompatibilityInfo> compatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getCompatibles());
+    final Collection<CompatibilityInfo> incompatibles = new HashSet<CompatibilityInfo>(infoMap.getIncompatibles());
+    final Collection<CompatibilityInfo> compatibles = new HashSet<CompatibilityInfo>(infoMap.getCompatibles());
 
     for (CompatibilityInfo te : incompatibles)
     {

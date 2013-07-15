@@ -1,5 +1,8 @@
 1.9.3
 -----
+(RB=186736)
+fixes snapshot incompatibility message printouts.
+
 (RB=184701)
 removes unused property keys and removes the non http-namespaced properties referenced in D2 code
 

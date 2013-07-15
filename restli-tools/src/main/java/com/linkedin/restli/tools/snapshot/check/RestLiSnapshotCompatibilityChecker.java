@@ -113,8 +113,9 @@ public class RestLiSnapshotCompatibilityChecker
     {
       String prevTarget = targets[i - 1];
       String currTarget = targets[i];
-      result &= checker.check(prevTarget, currTarget, compat);
-      allSummaries.append(checker.getInfoMap().createSummary(prevTarget, currTarget));
+      CompatibilityInfoMap infoMap = checker.check(prevTarget, currTarget, compat);
+      result &= infoMap.isCompatible(compat);
+      allSummaries.append(infoMap.createSummary(prevTarget, currTarget));
 
     }
 
@@ -140,12 +141,13 @@ public class RestLiSnapshotCompatibilityChecker
    * @return true if the check result conforms the compatibility level requirement
    *         e.g. false if backwards compatible changes are found but the level is equivalent
    */
-  public boolean check(String prevRestspecPath, String currRestspecPath, CompatibilityLevel compatLevel)
+  public CompatibilityInfoMap check(String prevRestspecPath, String currRestspecPath, CompatibilityLevel compatLevel)
   {
+    CompatibilityInfoMap infoMap = new CompatibilityInfoMap();
     if (compatLevel == CompatibilityLevel.OFF)
     {
       // skip check entirely.
-      return true;
+      return infoMap;
     }
 
     Stack<Object> path = new Stack<Object>();
@@ -160,7 +162,7 @@ public class RestLiSnapshotCompatibilityChecker
     }
     catch (FileNotFoundException e)
     {
-      _infoMap.addInfo(CompatibilityInfo.Type.RESOURCE_NEW, path, currRestspecPath);
+      infoMap.addInfo(CompatibilityInfo.Type.RESOURCE_NEW, path, currRestspecPath);
     }
 
     try
@@ -169,12 +171,12 @@ public class RestLiSnapshotCompatibilityChecker
     }
     catch (FileNotFoundException e)
     {
-      _infoMap.addInfo(CompatibilityInfo.Type.RESOURCE_MISSING, path, prevRestspecPath);
+      infoMap.addInfo(CompatibilityInfo.Type.RESOURCE_MISSING, path, prevRestspecPath);
     }
 
     if (prevSnapshotFile == null || currSnapshotFile == null)
     {
-      return _infoMap.isCompatible(compatLevel);
+      return infoMap;
     }
 
     Snapshot prevSnapshot = null;
@@ -186,12 +188,12 @@ public class RestLiSnapshotCompatibilityChecker
     }
     catch (IOException e)
     {
-      _infoMap.addInfo(CompatibilityInfo.Type.OTHER_ERROR, path, e.getMessage());
+      infoMap.addInfo(CompatibilityInfo.Type.OTHER_ERROR, path, e.getMessage());
     }
 
     if (prevSnapshot == null || currSnapshot == null)
     {
-      return _infoMap.isCompatible(compatLevel);
+      return infoMap;
     }
 
     DataSchemaResolver prevResolver = createResolverFromSnapshot(prevSnapshot, _resolverPath);
@@ -199,9 +201,10 @@ public class RestLiSnapshotCompatibilityChecker
 
     ResourceCompatibilityChecker checker = new ResourceCompatibilityChecker(prevSnapshot.getResourceSchema(), prevResolver,
                                                                             currSnapshot.getResourceSchema(), currResolver);
-    boolean check = checker.check(compatLevel);
-    _infoMap.addAll(checker.getInfoMap());
-    return check;
+    checker.check(compatLevel);
+    infoMap.addAll(checker.getInfoMap());
+
+    return infoMap;
   }
 
   private static String listCompatLevelOptions()
@@ -230,13 +233,6 @@ public class RestLiSnapshotCompatibilityChecker
     return resolver;
   }
 
-  public CompatibilityInfoMap getInfoMap()
-  {
-    return _infoMap;
-  }
-
   private String _resolverPath;
-
-  private final CompatibilityInfoMap _infoMap = new CompatibilityInfoMap();
 
 }

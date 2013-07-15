@@ -1484,11 +1484,12 @@ class PegasusPlugin implements Plugin<Project>
         {
           apiExistingSnapshotFilePaths.remove(apiSnapshotFilePath)
 
-          final boolean isCurrentSnapshotCompatible = snapshotCompatibilityChecker.check(apiSnapshotFilePath, it.path, idlCompatLevel)
+          final infoMap = snapshotCompatibilityChecker.check(apiSnapshotFilePath, it.path, idlCompatLevel)
+          final boolean isCurrentSnapshotCompatible = infoMap.isCompatible(idlCompatLevel)
           isCompatible &= isCurrentSnapshotCompatible
 
           project.logger.info("Checked compatibility in mode: $idlCompatLevel; $apiSnapshotFilePath VS $it.path; result: $isCurrentSnapshotCompatible")
-          allCheckMessage.append(snapshotCompatibilityChecker.infoMap.createSummary(apiSnapshotFilePath, it.path))
+          allCheckMessage.append(infoMap.createSummary(apiSnapshotFilePath, it.path))
         }
         else
         {
@@ -1516,9 +1517,10 @@ class PegasusPlugin implements Plugin<Project>
 
       final restModelFileChecker = snapshotCheckerClass.newInstance()
       errorFilePairs.each {
-        isCompatible &= restModelFileChecker.check(it[0], it[1], idlCompatLevel)
+        final infoMap = restModelFileChecker.check(it[0], it[1], idlCompatLevel)
+        isCompatible &= infoMap.isCompatible(idlCompatLevel)
+        allCheckMessage.append(infoMap.createSummary())
       }
-      allCheckMessage.append(restModelFileChecker.infoMap.createSummary())
 
       if (allCheckMessage.length() == 0)
       {
