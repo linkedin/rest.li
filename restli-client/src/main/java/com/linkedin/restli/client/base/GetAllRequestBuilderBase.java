@@ -51,6 +51,20 @@ public abstract class GetAllRequestBuilderBase<
 
   @SuppressWarnings({"unchecked"})
   @Override
+  public RB paginateStart(int start)
+  {
+    return (RB) super.paginateStart(start);
+  }
+
+  @SuppressWarnings({"unchecked"})
+  @Override
+  public RB paginateCount(int count)
+  {
+    return (RB) super.paginateCount(count);
+  }
+
+  @SuppressWarnings({"unchecked"})
+  @Override
   public RB fields(PathSpec... fieldPaths)
   {
     return (RB) super.fields(fieldPaths);

@@ -285,6 +285,24 @@ public class TestGreetingsClient extends RestLiIntegrationTest
   }
 
   @Test
+  public void TestPagination() throws RemoteInvocationException
+  {
+    Request<CollectionResponse<Greeting>> findRequest = GREETINGS_BUILDERS.findBySearchWithPostFilter().paginateStart(1).build();
+    CollectionResponse<Greeting> entity = REST_CLIENT.sendRequest(findRequest).getResponse().getEntity();
+    CollectionMetadata paging = entity.getPaging();
+    Assert.assertEquals(paging.getStart(), 1);
+    Assert.assertEquals(paging.getCount(), 10);
+    Assert.assertEquals(entity.getElements().size(), 9); // expected to be 9 instead of 10 because of post filter
+
+    findRequest = GREETINGS_BUILDERS.findBySearchWithPostFilter().paginateCount(5).build();
+    entity = REST_CLIENT.sendRequest(findRequest).getResponse().getEntity();
+    paging = entity.getPaging();
+    Assert.assertEquals(paging.getStart(), 0);
+    Assert.assertEquals(paging.getCount(), 5);
+    Assert.assertEquals(entity.getElements().size(), 4); // expected to be 4 instead of 5 because of post filter
+  }
+
+  @Test
   public void testSearchWithTones() throws RemoteInvocationException
   {
     Request<CollectionResponse<Greeting>> req =

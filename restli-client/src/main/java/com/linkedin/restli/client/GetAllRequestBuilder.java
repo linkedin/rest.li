@@ -44,7 +44,19 @@ public class GetAllRequestBuilder<K, V extends RecordTemplate> extends
 
   public GetAllRequestBuilder<K, V> paginate(int start, int count)
   {
+    paginateStart(start);
+    paginateCount(count);
+    return this;
+  }
+
+  public GetAllRequestBuilder<K, V> paginateStart(int start)
+  {
     addParam(RestConstants.START_PARAM, String.valueOf(start));
+    return this;
+  }
+
+  public GetAllRequestBuilder<K, V> paginateCount(int count)
+  {
     addParam(RestConstants.COUNT_PARAM, String.valueOf(count));
     return this;
   }
