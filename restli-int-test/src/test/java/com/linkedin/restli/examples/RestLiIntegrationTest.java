@@ -20,18 +20,18 @@
 
 package com.linkedin.restli.examples;
 
-import com.linkedin.parseq.Engine;
-import com.linkedin.parseq.EngineBuilder;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.spi.LoggerRepository;
-
-import com.linkedin.r2.transport.http.server.HttpServer;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.spi.LoggerRepository;
+
+import com.linkedin.parseq.Engine;
+import com.linkedin.parseq.EngineBuilder;
+import com.linkedin.r2.transport.http.server.HttpServer;
 
 /**
  * @author Josh Walker
@@ -47,7 +47,8 @@ public class RestLiIntegrationTest
   private ScheduledExecutorService _scheduler;
   private Engine _engine;
   private HttpServer _server;
-  private Map<String, Level> _originalLevels = new HashMap<String, Level>();
+  private HttpServer _serverWithoutCompression;
+  private final Map<String, Level> _originalLevels = new HashMap<String, Level>();
 
   public void init() throws Exception
   {
@@ -61,7 +62,9 @@ public class RestLiIntegrationTest
     reduceLogging(ASYNC_POOL_LOGGER, Level.FATAL);
 
     _server = RestLiIntTestServer.createServer(_engine);
+    _serverWithoutCompression = RestLiIntTestServer.createServer(_engine, RestLiIntTestServer.PORT + 1, "");
     _server.start();
+    _serverWithoutCompression.start();
   }
 
   private void reduceLogging(String logName, Level newLevel)
@@ -81,6 +84,7 @@ public class RestLiIntegrationTest
   public void shutdown() throws Exception
   {
     _server.stop();
+    _serverWithoutCompression.stop();
     _engine.shutdown();
     _scheduler.shutdownNow();
 

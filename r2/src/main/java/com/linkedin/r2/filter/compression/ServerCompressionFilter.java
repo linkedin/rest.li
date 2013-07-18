@@ -16,8 +16,11 @@
 
 package com.linkedin.r2.filter.compression;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,8 +45,36 @@ public class ServerCompressionFilter implements Filter, RestFilter
 {
   private static final Logger LOG = LoggerFactory.getLogger(ServerCompressionFilter.class);
 
-  private static final String UNKNOWN_ENCODING = "Unknown client encoding. ";
-  private static final String UNSUPPORTED_ENCODING = "Client uses unsupported encoding: ";
+  private final Set<EncodingType> _supportedEncoding;
+
+  /**
+   * Instantiates an empty compression filter that does no compression.
+   */
+  public ServerCompressionFilter()
+  {
+    this(new EncodingType[0]);
+  }
+
+  /** Takes a comma delimited string containing standard
+   * HTTP encoding headers and instantiates server compression
+   * support for the said encoding types.
+   * @param acceptedFilters
+   */
+  public ServerCompressionFilter(String acceptedFilters)
+  {
+    this(AcceptEncoding.parseAcceptEncoding(acceptedFilters));
+  }
+
+  /** Instantiates a compression filter
+   * that supports the compression methods in the given set in argument.
+   * @param supportedEncoding
+   */
+  public ServerCompressionFilter(EncodingType[] supportedEncoding)
+  {
+    _supportedEncoding = new HashSet<EncodingType>(Arrays.asList(supportedEncoding));
+    _supportedEncoding.add(EncodingType.IDENTITY);
+    _supportedEncoding.add(EncodingType.ANY);
+  }
 
   /**
    * Handles compression tasks for incoming requests
@@ -66,8 +97,8 @@ public class ServerCompressionFilter implements Filter, RestFilter
         {
           //NOTE: this is going to be thrown up, but this isn't quite the right type of exception
           //Will change to proper type when rest.li supports centralized filter exception handling
-          throw new RuntimeException(UNSUPPORTED_ENCODING
-                                          + requestCompression);
+          throw new RuntimeException(CompressionConstants.UNSUPPORTED_ENCODING
+                                     + requestCompression);
         }
 
         //Process the correct compression types only
@@ -95,7 +126,6 @@ public class ServerCompressionFilter implements Filter, RestFilter
     nextFilter.onRequest(req, requestContext, wireAttrs);
   }
 
-
   /**
    * Optionally compresses outgoing response
    * */
@@ -111,10 +141,10 @@ public class ServerCompressionFilter implements Filter, RestFilter
         String responseCompression = (String) requestContext.getLocalAttr(HttpConstants.ACCEPT_ENCODING);
         if (responseCompression == null)
         {
-          throw new CompressionException(UNKNOWN_ENCODING);
+          throw new CompressionException(CompressionConstants.UNKNOWN_ENCODING);
         }
 
-        List<AcceptEncoding> parsedEncodings = AcceptEncoding.parseAcceptEncodingHeader(responseCompression);
+        List<AcceptEncoding> parsedEncodings = AcceptEncoding.parseAcceptEncodingHeader(responseCompression, _supportedEncoding);
         EncodingType selectedEncoding = AcceptEncoding.chooseBest(parsedEncodings);
 
         //Check if there exists an acceptable encoding
@@ -151,6 +181,7 @@ public class ServerCompressionFilter implements Filter, RestFilter
 
     nextFilter.onResponse(res, requestContext, wireAttrs);
   }
+
 
   @Override
   public void onRestError(Throwable ex, RequestContext requestContext,

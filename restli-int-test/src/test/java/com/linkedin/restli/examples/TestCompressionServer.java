@@ -83,6 +83,7 @@ import com.linkedin.restli.examples.groups.api.TransferOwnershipRequest;
 public class TestCompressionServer extends RestLiIntegrationTest
 {
   private static final String URI_PREFIX = "http://localhost:1338/";
+  private static final String URI_PREFIX_WITHOUT_COMPRESSION = "http://localhost:1339/"; //This server does no compression
   private final GreetingsBuilders GREETINGS_BUILDERS;
 
   public TestCompressionServer()
@@ -220,7 +221,6 @@ public class TestCompressionServer extends RestLiIntegrationTest
     return encoding;
   }
 
-
   @BeforeClass
   public void initClass() throws Exception
   {
@@ -231,6 +231,21 @@ public class TestCompressionServer extends RestLiIntegrationTest
   public void shutDown() throws Exception
   {
     super.shutdown();
+  }
+
+  @Test(dataProvider = "ContentNegotiation")
+  //This is meant to test for when server is NOT configured to compress anything.
+  public void testCompatibleDefault(String acceptEncoding, String contentEncoding) throws HttpException, IOException
+  {
+    String path = CompressionResource.getPath();
+    HttpClient client = new HttpClient();
+    GetMethod method = new GetMethod(URI_PREFIX_WITHOUT_COMPRESSION + path + CompressionResource.getRedundantQueryExample());
+    method.setPath(path);
+    method.addRequestHeader(HttpConstants.ACCEPT_ENCODING, acceptEncoding);
+
+    client.executeMethod(method);
+
+    Assert.assertNull(method.getResponseHeader(HttpConstants.CONTENT_ENCODING));
   }
 
   @Test(dataProvider = "ContentEncodingGenerator")

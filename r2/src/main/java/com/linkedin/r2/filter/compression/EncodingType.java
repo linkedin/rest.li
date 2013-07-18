@@ -40,7 +40,7 @@ public enum EncodingType
   //Initialize the reverse map for lookups
   static
   {
-    _reverseMap = new HashMap<String,EncodingType>();
+    _reverseMap = new HashMap<String, EncodingType>();
     for(EncodingType t : EncodingType.values())
     {
       _reverseMap.put(t.getHttpName(), t);

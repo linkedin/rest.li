@@ -39,9 +39,7 @@ public class ClientCompressionFilter implements Filter, RestFilter
   private final EncodingType _requestCompression;
   private final EncodingType[] _acceptCompression;
 
-  private static final String NULL_COMPRESSOR_ERROR = "requestCompression must be non-null, use EncodingType.IDENTITY for no encoding.";
-  private static final String SERVER_ENCODING_ERROR = "Server returned unrecognized content encoding: ";
-  private static final String REQUEST_ANY_ERROR = "ANY may not be used as request encoding type: ";
+  private final String _acceptEncodingHeader;
 
   /**
    * Instantiates a client compression filter
@@ -55,7 +53,7 @@ public class ClientCompressionFilter implements Filter, RestFilter
   {
     if (requestCompression == null)
     {
-      throw new IllegalArgumentException(NULL_COMPRESSOR_ERROR);
+      throw new IllegalArgumentException(CompressionConstants.NULL_COMPRESSOR_ERROR);
     }
 
     if (acceptCompression == null)
@@ -68,18 +66,31 @@ public class ClientCompressionFilter implements Filter, RestFilter
     {
       if (type == null)
       {
-        throw new IllegalArgumentException(NULL_COMPRESSOR_ERROR);
+        throw new IllegalArgumentException(CompressionConstants.NULL_COMPRESSOR_ERROR);
       }
     }
 
     if (requestCompression.equals(EncodingType.ANY))
     {
-      throw new IllegalArgumentException(REQUEST_ANY_ERROR
+      throw new IllegalArgumentException(CompressionConstants.REQUEST_ANY_ERROR
                                          + requestCompression.getHttpName());
     }
 
     _requestCompression = requestCompression;
     _acceptCompression = acceptCompression;
+
+    _acceptEncodingHeader = buildAcceptEncodingHeader();
+  }
+
+  /**
+   * Same as previous constructor, but with comma delimited strings as args.
+   * @param requestCompression
+   * @param acceptCompression
+   */
+  public ClientCompressionFilter(String requestCompression, String acceptCompression)
+  {
+    this(requestCompression.trim().isEmpty() ? EncodingType.IDENTITY : EncodingType.get(requestCompression.trim().toLowerCase()),
+        AcceptEncoding.parseAcceptEncoding(acceptCompression));
   }
 
   /**
@@ -139,7 +150,7 @@ public class ClientCompressionFilter implements Filter, RestFilter
       if (_acceptCompression.length > 0)
       {
         req = req.builder().addHeaderValue(HttpConstants.ACCEPT_ENCODING,
-                                           buildAcceptEncodingHeader()).build();
+                                           _acceptEncodingHeader).build();
       }
     }
     catch (CompressionException e)
@@ -170,7 +181,7 @@ public class ClientCompressionFilter implements Filter, RestFilter
         EncodingType encoding = EncodingType.get(compressionHeader.trim().toLowerCase());
         if (encoding == null || !encoding.hasCompressor())
         {
-          throw new CompressionException(SERVER_ENCODING_ERROR + compressionHeader);
+          throw new CompressionException(CompressionConstants.SERVER_ENCODING_ERROR + compressionHeader);
         }
 
         if (encoding.hasCompressor())
@@ -184,7 +195,7 @@ public class ClientCompressionFilter implements Filter, RestFilter
     {
       //NOTE: this is going to be thrown up, but this isn't quite the right type of exception
       //Will change to proper type when rest.li supports centralized filter exception handling
-      throw new RuntimeException(SERVER_ENCODING_ERROR, e);
+      throw new RuntimeException(CompressionConstants.SERVER_ENCODING_ERROR, e);
     }
 
     nextFilter.onResponse(res, requestContext, wireAttrs);

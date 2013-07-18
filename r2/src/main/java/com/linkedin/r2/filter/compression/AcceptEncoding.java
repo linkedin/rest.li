@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * This class implements the parser and information about accept-encoding entries for an
@@ -29,8 +30,6 @@ public class AcceptEncoding implements Comparable<AcceptEncoding>
 {
   private final EncodingType _type;
   private final float _quality;
-
-  private static final String ILLEGAL_FORMAT = "Illegal format in Accept-Encoding: ";
 
   /**
    * Instantiates a particular Accept-Encoding entry.
@@ -60,13 +59,45 @@ public class AcceptEncoding implements Comparable<AcceptEncoding>
   }
 
   /**
+   * Takes a comma delimited string of content-encoding values and parses them,
+   * returning an array of parsed EncodingType in the order of
+   * the parsed string. Throws IllegalArgumentException
+   * if something not supported or not recognized shows up.
+   * @param acceptCompression
+   * @return
+   */
+  public static EncodingType[] parseAcceptEncoding(String acceptCompression)
+  {
+    if(acceptCompression.trim().isEmpty())
+    {
+      return new EncodingType[0];
+    }
+
+    String[] entries = acceptCompression.toLowerCase().split(CompressionConstants.ENCODING_DELIMITER);
+    EncodingType[] types = new EncodingType[entries.length];
+    for(int i = 0; i < entries.length; i++)
+    {
+      EncodingType type = EncodingType.get(entries[i].trim());
+
+      if(type == null)
+      {
+        throw new IllegalArgumentException(CompressionConstants.UNSUPPORTED_ENCODING + entries[i]);
+      }
+
+      types[i] = type;
+    }
+
+    return types;
+  }
+
+  /**
    * Takes the value of Accept-Encoding HTTP header field and returns a list of supported types in
    * their order of appearance in the HTTP header value (unsupported types are filtered out).
    * @param headerValue Http header value of Accept-Encoding field
    * @return ArrayList of accepted-encoding entries
    * @throws CompressionException
    */
-  public static List<AcceptEncoding> parseAcceptEncodingHeader(String headerValue) throws CompressionException
+  public static List<AcceptEncoding> parseAcceptEncodingHeader(String headerValue, Set<EncodingType> supportedEncodings) throws CompressionException
   {
     headerValue = headerValue.toLowerCase();
     String[] entries = headerValue.split(CompressionConstants.ENCODING_DELIMITER);
@@ -78,13 +109,13 @@ public class AcceptEncoding implements Comparable<AcceptEncoding>
 
       if(content.length < 1 || content.length > 2)
       {
-        throw new IllegalArgumentException(ILLEGAL_FORMAT + entry);
+        throw new IllegalArgumentException(CompressionConstants.ILLEGAL_FORMAT + entry);
       }
 
       EncodingType type = EncodingType.get(content[0].trim());
       Float quality = 1.0f;
 
-      if (type != null)
+      if (type != null && supportedEncodings.contains(type))
       {
         if (content.length > 1)
         {
@@ -97,12 +128,12 @@ public class AcceptEncoding implements Comparable<AcceptEncoding>
             }
             catch (NumberFormatException e)
             {
-              throw new CompressionException(ILLEGAL_FORMAT + entry, e);
+              throw new CompressionException(CompressionConstants.ILLEGAL_FORMAT + entry, e);
             }
           }
           else
           {
-            throw new CompressionException(ILLEGAL_FORMAT + entry);
+            throw new CompressionException(CompressionConstants.ILLEGAL_FORMAT + entry);
           }
         }
 
@@ -112,6 +143,7 @@ public class AcceptEncoding implements Comparable<AcceptEncoding>
 
     return parsedEncodings;
   }
+
 
   /** Chooses the best acceptable encoding based on
    * <a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html">RFC2616</a>.

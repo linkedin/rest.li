@@ -52,6 +52,7 @@ import com.linkedin.restli.server.resources.ResourceFactory;
 public class RestLiIntTestServer
 {
   public static final int PORT = 1338;
+  public static final String supportedCompression = "gzip,snappy,bzip2,deflate";
 
   public static void main(String[] args) throws IOException
   {
@@ -62,8 +63,7 @@ public class RestLiIntTestServer
         .setTimerScheduler(scheduler)
         .build();
 
-    HttpServer server = createServer(engine);
-
+    HttpServer server = createServer(engine, PORT, supportedCompression);
     server.start();
 
     System.out.println("HttpServer running on port " + PORT + ". Press any key to stop server");
@@ -73,7 +73,7 @@ public class RestLiIntTestServer
     engine.shutdown();
   }
 
-  public static HttpServer createServer(final Engine engine)
+  public static HttpServer createServer(final Engine engine, int port, String supportedCompression)
   {
     Properties properties = new Properties();
     properties.put("log4j.rootLogger", "INFO");
@@ -85,7 +85,7 @@ public class RestLiIntTestServer
                                    "com.linkedin.restli.examples.greetings.server",
                                    "com.linkedin.restli.examples.typeref.server"
                                    );
-    config.setServerNodeUri(URI.create("http://localhost:1338"));
+    config.setServerNodeUri(URI.create("http://localhost:" + port));
     config.setDocumentationRequestHandler(new DefaultDocumentationRequestHandler());
 
     GroupMembershipMgr membershipMgr = new HashGroupMembershipMgr();
@@ -98,7 +98,12 @@ public class RestLiIntTestServer
 
     TransportDispatcher dispatcher = new DelegatingTransportDispatcher(new RestLiServer(config, factory, engine));
 
-    FilterChain fc = FilterChains.empty().addLast(new ServerCompressionFilter());
-    return new HttpServerFactory(fc).createServer(PORT, dispatcher);
+    FilterChain fc = FilterChains.empty().addLast(new ServerCompressionFilter(supportedCompression));
+    return new HttpServerFactory(fc).createServer(port, dispatcher);
+  }
+
+  public static HttpServer createServer(Engine engine)
+  {
+    return createServer(engine, PORT, supportedCompression);
   }
 }
