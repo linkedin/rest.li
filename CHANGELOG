@@ -1,7 +1,7 @@
 1.9.4
 -----
-(RB=184337)
-Adding support for partial update methods on simple resources.
+(RB=187506)
+Added granular set methods for pagination start and count for getall and finder client builders.
 
 1.9.3
 -----
