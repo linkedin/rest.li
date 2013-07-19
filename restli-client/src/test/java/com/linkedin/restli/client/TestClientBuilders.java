@@ -322,6 +322,7 @@ public class TestClientBuilders
     FindRequest<TestRecord> request =
         builder.name("search")
                .assocKey("key", "a:b")
+               .paginate(1, 4)
                .fields(TestRecord.fields().id(), TestRecord.fields().message())
                .param("p", 42)
                .build();
@@ -329,7 +330,39 @@ public class TestClientBuilders
     Assert.assertEquals(request.isIdempotent(), true);
 
     checkBasicRequest(request,
-                      "test/key=a%3Ab?fields=message,id&p=42&q=search",
+                      "test/key=a%3Ab?count=4&fields=message,id&p=42&q=search&start=1",
+                      ResourceMethod.FINDER,
+                      null,
+                      Collections.<String, String>emptyMap());
+
+    builder = new FindRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class,
+                                                       _COLL_SPEC);
+    request = builder.name("search")
+            .assocKey("key", "a:b")
+            .paginateStart(1)
+            .param("p", 42)
+            .build();
+    Assert.assertEquals(request.isSafe(), true);
+    Assert.assertEquals(request.isIdempotent(), true);
+
+    checkBasicRequest(request,
+                      "test/key=a%3Ab?p=42&q=search&start=1",
+                      ResourceMethod.FINDER,
+                      null,
+                      Collections.<String, String>emptyMap());
+
+    builder = new FindRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class,
+                                                       _COLL_SPEC);
+    request = builder.name("search")
+        .assocKey("key", "a:b")
+        .paginateCount(4)
+        .param("p", 42)
+        .build();
+    Assert.assertEquals(request.isSafe(), true);
+    Assert.assertEquals(request.isIdempotent(), true);
+
+    checkBasicRequest(request,
+                      "test/key=a%3Ab?count=4&p=42&q=search",
                       ResourceMethod.FINDER,
                       null,
                       Collections.<String, String>emptyMap());
@@ -349,6 +382,28 @@ public class TestClientBuilders
     Assert.assertEquals(request.isIdempotent(), true);
     checkBasicRequest(request,
                       "test?count=4&fields=message,id&start=1",
+                      ResourceMethod.GET_ALL,
+                      null,
+                      Collections.<String, String>emptyMap());
+
+    builder = new GetAllRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC);
+
+    request = builder.paginateStart(1).build();
+    Assert.assertEquals(request.isSafe(), true);
+    Assert.assertEquals(request.isIdempotent(), true);
+    checkBasicRequest(request,
+                      "test?start=1",
+                      ResourceMethod.GET_ALL,
+                      null,
+                      Collections.<String, String>emptyMap());
+
+    builder = new GetAllRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC);
+
+    request = builder.paginateCount(4).build();
+    Assert.assertEquals(request.isSafe(), true);
+    Assert.assertEquals(request.isIdempotent(), true);
+    checkBasicRequest(request,
+                      "test?count=4",
                       ResourceMethod.GET_ALL,
                       null,
                       Collections.<String, String>emptyMap());

@@ -57,7 +57,19 @@ public class FindRequestBuilder<K, V extends RecordTemplate> extends
 
   public FindRequestBuilder<K, V> paginate(int start, int count)
   {
+    paginateStart(start);
+    paginateCount(count);
+    return this;
+  }
+
+  public FindRequestBuilder<K, V> paginateStart(int start)
+  {
     addParam(RestConstants.START_PARAM, String.valueOf(start));
+    return this;
+  }
+
+  public FindRequestBuilder<K, V> paginateCount(int count)
+  {
     addParam(RestConstants.COUNT_PARAM, String.valueOf(count));
     return this;
   }
