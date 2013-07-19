@@ -1,6 +1,7 @@
 1.9.4
 -----
-
+(RB=184337)
+Adding support for partial update methods on simple resources.
 
 1.9.3
 -----
