@@ -195,7 +195,7 @@ public class ComplexResourceKey<K extends RecordTemplate, P extends RecordTempla
       return false;
     ComplexResourceKey<?, ?> other = (ComplexResourceKey<?, ?>) obj;
     // Key cannot be null
-    return key.equals(other.key) && params == null ? other.params == null
-        : (params.equals(other.params));
+    return key.equals(other.key)
+        && (params == null ? other.params == null : (params.equals(other.params)));
   }
 }
