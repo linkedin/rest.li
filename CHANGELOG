@@ -1,5 +1,11 @@
+1.9.10
+-----
+
+
 1.9.9
 -----
+(RB=188507)
+fix the bug where threads that are waiting for state initialization, never stop waiting because the init step throws an exception
 
 1.9.8
 -----

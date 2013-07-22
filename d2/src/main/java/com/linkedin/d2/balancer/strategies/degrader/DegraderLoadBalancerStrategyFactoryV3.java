@@ -35,11 +35,12 @@ public class DegraderLoadBalancerStrategyFactoryV3 implements
 
   @Override
   public DegraderLoadBalancerStrategyV3 newLoadBalancer(String serviceName,
-                                                      Map<String, Object> strategyProperties)
+                                                      Map<String, Object> strategyProperties,
+                                                      Map<String, String> degraderProperties)
   {
     debug(_log, "created a degrader load balancer strategyV3");
 
     return new DegraderLoadBalancerStrategyV3(DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(strategyProperties),
-                                              serviceName);
+                                              serviceName, degraderProperties);
   }
 }

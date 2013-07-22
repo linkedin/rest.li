@@ -33,7 +33,8 @@ public class RandomLoadBalancerStrategyFactory implements
 
   @Override
   public RandomLoadBalancerStrategy newLoadBalancer(String serviceName,
-                                                    Map<String, Object> strategyProperties)
+                                                    Map<String, Object> strategyProperties,
+                                                    Map<String, String> degraderProperties)
   {
     debug(_log, "created a random load balancer strategy");
 
