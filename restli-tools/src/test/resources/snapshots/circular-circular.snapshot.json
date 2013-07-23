@@ -1,0 +1,57 @@
+{
+  "models" : [ {
+    "type" : "record",
+    "name" : "B",
+    "namespace" : "com.linkedin.restli.tools.snapshot.circular",
+    "fields" : [ {
+      "name" : "a",
+      "type" : {
+        "type" : "record",
+        "name" : "A",
+        "fields" : [ {
+          "name" : "b",
+          "type" : "B"
+        } ]
+      }
+    } ]
+  }, "com.linkedin.restli.tools.snapshot.circular.A", {
+    "type" : "record",
+    "name" : "C",
+    "namespace" : "com.linkedin.restli.tools.snapshot.circular",
+    "fields" : [ {
+      "name" : "a",
+      "type" : "A"
+    } ]
+  }, {
+    "type" : "record",
+    "name" : "D",
+    "namespace" : "com.linkedin.restli.tools.snapshot.circular",
+    "fields" : [ {
+      "name" : "b",
+      "type" : "B"
+    } ]
+  } ],
+  "schema" : {
+    "actionsSet" : {
+      "actions" : [ {
+        "name" : "test",
+        "parameters" : [ {
+          "name" : "a",
+          "type" : "com.linkedin.restli.tools.snapshot.circular.A"
+        }, {
+          "name" : "b",
+          "type" : "com.linkedin.restli.tools.snapshot.circular.B"
+        }, {
+          "name" : "c",
+          "type" : "com.linkedin.restli.tools.snapshot.circular.C"
+        }, {
+          "name" : "d",
+          "type" : "com.linkedin.restli.tools.snapshot.circular.D"
+        } ]
+      } ]
+    },
+    "name" : "circular",
+    "doc" : "generated from: com.linkedin.restli.tools.snapshot.circular.CircularResource",
+    "path" : "/circular"
+  }
+}

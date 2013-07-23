@@ -18,7 +18,9 @@ package com.linkedin.restli.tools.snapshot.gen;
 
 import com.linkedin.data.schema.generator.AbstractGenerator;
 import com.linkedin.pegasus.generator.GeneratorResult;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -45,7 +47,7 @@ public class TestRestLiSnapshotExporter
   // TODO These should be passed in as test config
   private static final String FS = File.separator;
   private static final String TEST_DIR = "src" + FS + "test" + FS + "java";
-  private static final String RESOURCES_DIR = "src" + FS + "test" + FS + "resources" + FS + "snapshots";
+  private static final String SNAPSHOTS_DIR = "src" + FS + "test" + FS + "resources" + FS + "snapshots";
 
   private static final String STATUSES_FILE = "twitter-statuses.snapshot.json";
   private static final String STATUSES_PARAMS_FILE = "twitter-statusesParams.snapshot.json";
@@ -53,6 +55,7 @@ public class TestRestLiSnapshotExporter
   private static final String ACCOUNTS_FILE = "twitter-accounts.snapshot.json";
   private static final String TRENDING_FILE = "twitter-trending.snapshot.json";
 
+  private static final String CIRCULAR_FILE = "circular-circular.snapshot.json";
 
   private File outdir;
   // Gradle by default will use the module directory as the working directory
@@ -60,12 +63,10 @@ public class TestRestLiSnapshotExporter
   // If you create test in IDE, make sure the working directory is always the module directory
   private String moduleDir;
   private String resolverPath;
-  private static final String PROJECT_DIR_PROP = "test.projectDir";
 
   @BeforeTest
-  public void setUp() throws IOException
+  public void setUpTest()
   {
-    outdir = createTmpDir();
     moduleDir = System.getProperty("user.dir");
 
     // set generator.resolver.path...
@@ -79,15 +80,26 @@ public class TestRestLiSnapshotExporter
     }
   }
 
-  @AfterTest
-  public void tearDown() throws IOException
+  @BeforeMethod
+  public void setUpMethod() throws IOException
+  {
+    outdir = createTmpDir();
+  }
+
+  @AfterMethod
+  public void tearDownMethod()
   {
     rmdir(outdir);
+  }
+
+  @AfterTest
+  public void tearDownTest() throws IOException
+  {
     System.clearProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH);
   }
 
   @Test
-  public void testSimpleModel() throws Exception
+  public void testSimpleSnapshot() throws Exception
   {
     RestLiSnapshotExporter exporter = new RestLiSnapshotExporter();
     exporter.setResolverPath(resolverPath);
@@ -109,12 +121,44 @@ public class TestRestLiSnapshotExporter
     for (String file : expectedFiles)
     {
       String actualFile = outdir + FS + file;
-      String expectedFile = RESOURCES_DIR + FS + file;
+      String expectedFile = SNAPSHOTS_DIR + FS + file;
 
       compareFiles(actualFile, expectedFile);
       assertTrue(result.getModifiedFiles().contains(new File(actualFile)));
       assertTrue(result.getTargetFiles().contains(new File(actualFile)));
     }
+  }
+
+  @Test
+  public void testCircularSnapshot() throws Exception
+  {
+    RestLiSnapshotExporter exporter = new RestLiSnapshotExporter();
+    exporter.setResolverPath(resolverPath);
+
+    assertEquals(outdir.list().length, 0);
+    GeneratorResult result = exporter.export("circular",
+                                             null,
+                                             new String[] {moduleDir + FS + TEST_DIR + FS + "snapshot"},
+                                             new String[] {"com.linkedin.restli.tools.snapshot.circular"},
+                                             null,
+                                             outdir.getAbsolutePath());
+
+    String[] expectedFiles = {CIRCULAR_FILE};
+
+    assertEquals(outdir.list().length, expectedFiles.length);
+    assertEquals(result.getModifiedFiles().size(), expectedFiles.length);
+    assertEquals(result.getTargetFiles().size(), expectedFiles.length);
+
+    for (String file : expectedFiles)
+    {
+      String actualFile = outdir + FS + file;
+      String expectedFile = SNAPSHOTS_DIR + FS + file;
+
+      compareFiles(actualFile, expectedFile);
+      assertTrue(result.getModifiedFiles().contains(new File(actualFile)));
+      assertTrue(result.getTargetFiles().contains(new File(actualFile)));
+    }
+
   }
 
   private void compareFiles(String actualFileName, String expectedFileName)

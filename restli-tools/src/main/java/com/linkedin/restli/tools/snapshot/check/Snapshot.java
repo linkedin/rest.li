@@ -49,7 +49,7 @@ public class Snapshot
   /**
    * Create a Snapshot based on the given {@link InputStream}
    * @param inputStream an input stream that represents a {@link DataMap} with two fields: "models", which
-   * @throws IOException if the inputStream cannot be parsed as a {@link DataMap}.
+   * @throws IOException if the inputStream cannot be parsed as a {@link DataMap} or {@link String}.
    */
   public Snapshot(InputStream inputStream) throws IOException
   {
@@ -57,8 +57,21 @@ public class Snapshot
     DataList models = dataMap.getDataList(MODELS_KEY);
     for(Object modelObj : models)
     {
-      DataMap model = (DataMap)modelObj;
-      NamedDataSchema dataSchema = (NamedDataSchema) RestSpecCodec.textToSchema(_dataCodec.mapToString(model), _dataSchemaResolver);
+      NamedDataSchema dataSchema;
+      if (modelObj instanceof DataMap)
+      {
+        DataMap model = (DataMap)modelObj;
+        dataSchema = (NamedDataSchema) RestSpecCodec.textToSchema(_dataCodec.mapToString(model), _dataSchemaResolver);
+      }
+      else if (modelObj instanceof String)
+      {
+        String str = (String)modelObj;
+        dataSchema = (NamedDataSchema) RestSpecCodec.textToSchema(str, _dataSchemaResolver);
+      }
+      else
+      {
+        throw new IOException("Found " + modelObj.getClass() + " in models list; Models must be strings or DataMaps.");
+      }
       _models.put(dataSchema.getFullName(), dataSchema);
     }
     _resourceSchema =  new ResourceSchema(dataMap.getDataMap(SCHEMA_KEY));

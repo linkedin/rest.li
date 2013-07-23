@@ -1,5 +1,10 @@
 1.9.4
 -----
+(RB=189079)
+Fixed issue with snapshots generation failing when referenced pdscs were circularly dependent.
+Added tests to make sure that Snapshot generation and reading would work correctly with
+circularly dependent models.
+
 (RB=187506)
 Added granular set methods for pagination start and count for getall and finder client builders.
 

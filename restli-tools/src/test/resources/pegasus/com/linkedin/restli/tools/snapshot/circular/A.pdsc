@@ -1,0 +1,11 @@
+{
+  "type" : "record",
+  "name" : "A",
+  "namespace" : "com.linkedin.restli.tools.snapshot.circular",
+  "fields" : [
+    {
+      "name" : "b",
+      "type" : "B"
+    }
+  ]
+}

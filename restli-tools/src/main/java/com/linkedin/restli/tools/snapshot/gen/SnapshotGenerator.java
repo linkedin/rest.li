@@ -344,6 +344,8 @@ public class SnapshotGenerator
 
       if (!foundTypes.containsKey(namedDataSchema.getFullName()))
       {
+        foundTypes.put(namedDataSchema.getFullName(), namedDataSchema);
+
         if (schema instanceof RecordDataSchema) // recurse into record, record any contained types.
         {
           RecordDataSchema recordDataSchema = (RecordDataSchema)schema;
@@ -353,7 +355,6 @@ public class SnapshotGenerator
           }
         }
 
-        foundTypes.put(namedDataSchema.getFullName(), namedDataSchema);
         typeOrder.add(namedDataSchema);
       }
     }
