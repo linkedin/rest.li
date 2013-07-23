@@ -2,17 +2,9 @@ apply plugin: 'jetty'
 apply plugin: 'pegasus'
 
 ext.apiProject = project(':api')
-pegasus.main.idlOptions.addIdlItem(['com.example.fortune.impl'])
 
 dependencies {
   compile project(path: ':api', configuration: 'dataTemplate')
-  compile spec.product.pegasus.r2
   compile spec.product.pegasus.r2Jetty
   compile spec.product.pegasus.restliServer
-  compile spec.product.pegasus.restliCommon
-  compile spec.product.pegasus.pegasusCommon
-  restTools spec.product.pegasus.restliTools
-
-  // need to figure out why this is not already in the classpath..
- compile files("${System.properties['java.home']}/../lib/tools.jar")
 }

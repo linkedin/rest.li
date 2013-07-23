@@ -2,12 +2,6 @@ apply plugin: 'java'
 
 dependencies {
   compile project(path: ':api', configuration: 'restClient')
-  compile spec.product.pegasus.pegasusCommon
-  compile spec.product.pegasus.r2
-  compile spec.product.pegasus.restliClient
-  compile spec.product.pegasus.data
-  compile spec.product.pegasus.restliCommon
-  testCompile "commons-httpclient:commons-httpclient:3.1"
 }
 
 task startFortunesClient(type: JavaExec) {

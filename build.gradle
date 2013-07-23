@@ -82,7 +82,7 @@ allprojects {
 }
 
 task wrapper(type: Wrapper) {
-  gradleVersion = '1.0'
+  gradleVersion = '1.6'
 }
 
 subprojects {
