@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -42,7 +44,7 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
   private final Map<String,T> _properties = new HashMap<String,T>();
   private final Map<String,List<PropertyEventSubscriber<T>>> _subscribers = new HashMap<String,List<PropertyEventSubscriber<T>>>();
   private final List<PropertyEventSubscriber<T>> _allPropertySubscribers = new ArrayList<PropertyEventSubscriber<T>>();
-
+  private static final Logger _log = LoggerFactory.getLogger(PropertyEventBusImpl.class);
   /*
    * Concurrency considerations:
    *
@@ -191,6 +193,12 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
   @Override
   public void publishInitialize(final String prop, final T value)
   {
+    if (value == null)
+    {
+      _log.warn("Received a null event during publishInitialize for String prop = " + prop +
+                    ". Nevertheless, we will still publish the null event. Here is the stack trace: ",
+                new Throwable());
+    }
     _thread.send(new PropertyEvent("PropertyEventBus.publishInitialize " + prop)
     {
       public void innerRun()
@@ -219,6 +227,12 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
   @Override
   public void publishAdd(final String prop, final T value)
   {
+    if (value == null)
+    {
+      _log.warn("Received a null event during publishAdd for String prop = " + prop +
+                    ". Nevertheless, we will still publish the null event. Here is the stack trace: ",
+                new Throwable());
+    }
     _thread.send(new PropertyEvent("PropertyEventBus.publishAdd " + prop)
     {
       public void innerRun()

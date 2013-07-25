@@ -133,9 +133,7 @@ public class FileStore<T> implements PropertyStore<T>, PropertyEventSubscriber<T
   {
     if (discoveryProperties == null)
     {
-      debug(_log, "removing on put since ", listenTo, " received a null property");
-
-      remove(listenTo);
+      warn(_log, "received a null property for resource ", listenTo, " received a null property");
     }
     else
     {

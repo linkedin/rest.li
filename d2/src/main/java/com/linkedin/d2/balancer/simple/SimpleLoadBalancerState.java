@@ -831,9 +831,10 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
       }
       else
       {
-        // uri properties was null, so remove all tracker clients
+        // uri properties was null, we'll just log the event and continues.
+        // The reasoning is we might receive a null event when there's a problem
+        // writing/reading cache file.
         warn(_log, "received a null uri properties for cluster: ", listenTo);
-        removeTrackerClients(listenTo);
       }
     }
 
@@ -961,9 +962,10 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
 
       if (discoveryProperties == null)
       {
-        _log.warn("We receive a null service properties for {}. Theoretically this should not happen because this means"
-                      +" this client is still referencing a service that is being removed.", listenTo);
-        shutdownClients(listenTo);
+        // we'll just ignore the event and move on.
+        // we could receive a null if the file store properties cannot read/write a file.
+        // in this case it's better to leave the state intact and not do anything
+        _log.warn("We receive a null service properties for {}. ", listenTo);
       }
     }
 

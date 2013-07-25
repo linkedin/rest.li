@@ -1,5 +1,7 @@
 1.9.7
 -----
+(RB=190153)
+Protect D2 from intermittent zookeeper problem
 
 1.9.6
 -----
