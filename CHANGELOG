@@ -1,6 +1,7 @@
 1.9.5
 -----
-
+(RB=189900)
+Add HttpNettyServerFactory and standalone launcher.
 
 1.9.4
 -----
