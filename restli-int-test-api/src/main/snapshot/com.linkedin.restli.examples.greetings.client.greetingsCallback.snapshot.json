@@ -172,9 +172,6 @@
         "type" : "long"
       },
       "actions" : [ {
-        "name" : "purge",
-        "returns" : "int"
-      }, {
         "name" : "anotherAction",
         "parameters" : [ {
           "name" : "bitfield",
@@ -191,6 +188,9 @@
         } ]
       }, {
         "name" : "exceptionTest"
+      }, {
+        "name" : "purge",
+        "returns" : "int"
       } ]
     },
     "namespace" : "com.linkedin.restli.examples.greetings.client"

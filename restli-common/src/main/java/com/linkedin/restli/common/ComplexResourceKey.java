@@ -34,7 +34,8 @@ import com.linkedin.restli.internal.common.URLEscaper.Escaping;
 
 /**
  * The class represents a resource key consisting of a RecordTemplate-derived
- * key part and a RecordTemplate-derived parameters part
+ * key part and a RecordTemplate-derived parameters part. Creating derived complex key
+ * classes from this class is not supported by the Rest.li infrastructure.
  *
  * @author adubman
  *
@@ -42,7 +43,7 @@ import com.linkedin.restli.internal.common.URLEscaper.Escaping;
  * @param <P>
  */
 
-public class ComplexResourceKey<K extends RecordTemplate, P extends RecordTemplate>
+public final class ComplexResourceKey<K extends RecordTemplate, P extends RecordTemplate>
 {
   /**
    * Initialize a ComplexResourceKey with the given key and parameters.

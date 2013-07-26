@@ -388,6 +388,31 @@ public class TestRestLiResourceModels
                      ResourceMethod.PARTIAL_UPDATE,
                      ResourceMethod.DELETE,
                      ResourceMethod.ACTION);
+
+    // #3 Verify complex key collection with annotated CRUD methods.
+    ResourceModel complexKeyCollectionModelAnnotatedCrud = buildResourceModel(
+        CombinedResources.ComplexKeyResourceWithAnnotatedCrudMethods.class);
+    checkCollectionModel(complexKeyCollectionModelAnnotatedCrud, "test",
+                         ComplexResourceKey.class,
+                         "testId", Foo.class, false,
+                         CombinedResources.ComplexKeyResourceWithAnnotatedCrudMethods.class);
+    checkEntityModel(complexKeyCollectionModelAnnotatedCrud,
+                     ComplexResourceKey.class,
+                     "testId",
+                     Foo.class,
+                     Collections.<String, Class<?>>emptyMap());
+
+    assertHasMethods(complexKeyCollectionModelAnnotatedCrud,
+                     ResourceMethod.GET,
+                     ResourceMethod.CREATE,
+                     ResourceMethod.UPDATE,
+                     ResourceMethod.PARTIAL_UPDATE,
+                     ResourceMethod.DELETE,
+                     ResourceMethod.BATCH_GET,
+                     ResourceMethod.BATCH_CREATE,
+                     ResourceMethod.BATCH_DELETE,
+                     ResourceMethod.BATCH_UPDATE,
+                     ResourceMethod.BATCH_PARTIAL_UPDATE);
   }
 
   @Test

@@ -19,16 +19,25 @@
  */
 package com.linkedin.restli.examples.greetings.server;
 
-import java.util.HashMap;
-import java.util.Map;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import com.linkedin.data.transform.DataProcessingException;
 import com.linkedin.restli.common.ComplexResourceKey;
-import com.linkedin.restli.examples.StringTestKeys;
+import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.api.TwoPartKey;
+import com.linkedin.restli.server.CreateResponse;
+import com.linkedin.restli.server.UpdateResponse;
+import com.linkedin.restli.server.annotations.Finder;
+import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.resources.ComplexKeyResourceTemplate;
+
 
 /**
  * Demonstrates a resource with a complex key.
@@ -42,35 +51,48 @@ import com.linkedin.restli.server.resources.ComplexKeyResourceTemplate;
   )
 public class ComplexKeysResource extends ComplexKeyResourceTemplate<TwoPartKey, TwoPartKey, Message>
 {
-  private Map<String, Message> _db = new HashMap<String, Message>();
+  private static ComplexKeysDataProvider _dataProvider = new ComplexKeysDataProvider();
 
-  public ComplexKeysResource()
+  @Override
+  public Message get(final ComplexResourceKey<TwoPartKey, TwoPartKey> complexKey)
   {
-    addExample(StringTestKeys.URL, StringTestKeys.URL2, StringTestKeys.URL + " " + StringTestKeys.URL2);
-    addExample(StringTestKeys.SIMPLEKEY, StringTestKeys.SIMPLEKEY2, StringTestKeys.SIMPLEKEY + " " + StringTestKeys.SIMPLEKEY2);
-  }
-
-  private void addExample(String majorKey, String minorKey, String text)
-  {
-    TwoPartKey key = new TwoPartKey();
-    key.setMajor(majorKey);
-    key.setMinor(minorKey);
-    Message message = new Message();
-    message.setId(keyToString(key));
-    message.setMessage(text);
-    message.setTone(Tone.SINCERE);
-    _db.put(keyToString(key), message);
+    TwoPartKey key = complexKey.getKey();
+    return _dataProvider.get(complexKey);
   }
 
   @Override
-  public Message get(ComplexResourceKey<TwoPartKey, TwoPartKey> complexKey)
+  public CreateResponse create(final Message message)
   {
-    TwoPartKey key = complexKey.getKey();
-    return _db.get(keyToString(key));
+    ComplexResourceKey<TwoPartKey, TwoPartKey> key = _dataProvider.create(message);
+    return new CreateResponse(key);
   }
 
-  private String keyToString(TwoPartKey key)
+  @Override
+  public UpdateResponse update(final ComplexResourceKey<TwoPartKey, TwoPartKey> key,
+                               final PatchRequest<Message> patch)
   {
-    return key.getMajor() + " " + key.getMinor();
+    try
+    {
+      _dataProvider.partialUpdate(key, patch);
+    }
+    catch(DataProcessingException e)
+    {
+      return new UpdateResponse(HttpStatus.S_400_BAD_REQUEST);
+    }
+
+    return new UpdateResponse(HttpStatus.S_204_NO_CONTENT);
+  }
+
+  @Finder("prefix")
+  public List<Message> prefix(@QueryParam("prefix") String prefix)
+  {
+    return _dataProvider.findByPrefix(prefix);
+  }
+
+  @Override
+  public Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> batchGet(
+      final Set<ComplexResourceKey<TwoPartKey, TwoPartKey>> ids)
+  {
+    return _dataProvider.batchGet(ids);
   }
 }
