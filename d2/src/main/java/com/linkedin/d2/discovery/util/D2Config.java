@@ -196,7 +196,7 @@ public class D2Config
       // treat regular clusters as having an empty-string coloVariant list. This allows us to have a
       // single codepath that creates all the structures we need, rather than duplicating code with
       // lots of if/else.
-      if (coloVariants == null)
+      if (coloVariants == null || (coloVariants.size() == 1 && coloVariants.contains("")))
       {
         coloVariants = Collections.singletonList("");
       }

@@ -1,6 +1,10 @@
-1.9.11
+1.9.12
 ------
 
+1.9.11
+------
+(RB=190812)
+allow specifying an empty string for coloVariants, useful in testing.
 
 1.9.10
 ------

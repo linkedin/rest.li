@@ -1031,6 +1031,37 @@ public class TestD2Config
   }
 
   @Test
+  public static void testClusterWithEmptyColoVariants() throws IOException, InterruptedException, URISyntaxException, Exception
+  {
+    List<String> serviceList = new ArrayList<String>();
+    serviceList.add("service-1_1");
+    serviceList.add("service-1_2");
+    @SuppressWarnings("serial")
+    Map<String,List<String>> clustersData = new HashMap<String,List<String>>();
+    String cluster1Name = "cluster-1";
+    clustersData.put(cluster1Name, serviceList);
+
+    List<String> clusterList = new ArrayList<String>();
+    clusterList.add(cluster1Name);
+
+    Map<String,Object> clusterProperties = new HashMap<String,Object>();
+    List<String> peerColos = new ArrayList<String>();
+    peerColos.add("");
+    Map<String,List<String>> peerColoList = new HashMap<String,List<String>>();
+    peerColoList.put(cluster1Name, peerColos);
+    clusterProperties.put("coloVariants", peerColos);
+    Map<String,String> masterColoList = new HashMap<String,String>();
+    Map<String,Map<String,Object>> clustersProperties = new HashMap<String,Map<String,Object>>();
+    clustersProperties.put(cluster1Name, clusterProperties);
+    String defaultColo = "EastCoast";
+    D2ConfigTestUtil d2Conf = new D2ConfigTestUtil( clustersData, defaultColo, clustersProperties);
+
+    assertEquals(d2Conf.runDiscovery(_zkHosts), 0);
+
+    verifyColoClusterAndServices(clustersData, peerColoList, masterColoList, defaultColo);
+  }
+
+  @Test
   public static void testSingleColoClusterWithClusterVariants()
     throws IOException, InterruptedException, URISyntaxException, Exception
   {
