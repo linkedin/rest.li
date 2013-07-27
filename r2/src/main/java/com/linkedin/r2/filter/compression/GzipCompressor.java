@@ -36,7 +36,6 @@ public class GzipCompressor implements Compressor
   public byte[] inflate(InputStream data) throws CompressionException
   {
     ByteArrayOutputStream out;
-    byte[] temp = new byte[CompressionConstants.BUFFER_SIZE];
     GZIPInputStream gzip = null;
 
     try
@@ -44,12 +43,7 @@ public class GzipCompressor implements Compressor
       out = new ByteArrayOutputStream();
       gzip = new GZIPInputStream(data);
 
-      int bytesRead = gzip.read(temp);
-      while(bytesRead >= 0)
-      {
-        out.write(temp, 0, bytesRead);
-        bytesRead = gzip.read(temp);
-      }
+      IOUtils.copy(gzip, out);
     }
     catch (IOException e)
     {
@@ -70,7 +64,6 @@ public class GzipCompressor implements Compressor
   public byte[] deflate(InputStream data) throws CompressionException
   {
     ByteArrayOutputStream out;
-    byte[] temp = new byte[CompressionConstants.BUFFER_SIZE];
     GZIPOutputStream gzip = null;
 
     try
@@ -78,12 +71,7 @@ public class GzipCompressor implements Compressor
       out = new ByteArrayOutputStream();
       gzip = new GZIPOutputStream(out);
 
-      int bytesRead = data.read(temp);
-      while(bytesRead >= 0)
-      {
-        gzip.write(temp, 0, bytesRead);
-        bytesRead = data.read(temp);
-      }
+     IOUtils.copy(data, gzip);
     }
     catch (IOException e)
     {

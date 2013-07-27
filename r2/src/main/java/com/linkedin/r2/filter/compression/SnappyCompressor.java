@@ -20,10 +20,10 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.apache.commons.io.IOUtils;
-import org.xerial.snappy.Snappy;
+import org.iq80.snappy.Snappy;
 
 /**
- * Wrapper for snappy compression algorithm
+ * Wrapper for snappy compression algorithm.
  * @author erli
  */
 public class SnappyCompressor implements Compressor
@@ -42,7 +42,7 @@ public class SnappyCompressor implements Compressor
     try
     {
       byte[] temp = IOUtils.toByteArray(data);
-      return Snappy.uncompress(temp);
+      return Snappy.uncompress(temp, 0, temp.length);
     }
     catch (IOException e)
     {

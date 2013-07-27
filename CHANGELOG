@@ -1,6 +1,7 @@
 1.9.6
 -----
-
+(RB=188125)
+Changed Snappy dependency to pure Java dependency to avoid JNI issues on Jetty.
 
 1.9.5
 -----

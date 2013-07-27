@@ -40,19 +40,12 @@ public class Bzip2Compressor implements Compressor {
   public byte[] inflate(InputStream data) throws CompressionException
   {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    byte[] temp = new byte[CompressionConstants.BUFFER_SIZE];
     BZip2CompressorInputStream bzip2 = null;
 
     try
     {
       bzip2 = new BZip2CompressorInputStream(data);
-
-      int bytesRead = bzip2.read(temp);
-      while(bytesRead >= 0)
-      {
-        out.write(temp, 0, bytesRead);
-        bytesRead = bzip2.read(temp);
-      }
+      IOUtils.copy(bzip2, out);
     }
     catch (IOException e)
     {
@@ -73,7 +66,6 @@ public class Bzip2Compressor implements Compressor {
   public byte[] deflate(InputStream data) throws CompressionException
   {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    byte[] temp = new byte[CompressionConstants.BUFFER_SIZE];
     BZip2CompressorOutputStream compressor = null;
 
     try
@@ -81,12 +73,7 @@ public class Bzip2Compressor implements Compressor {
       out = new ByteArrayOutputStream();
       compressor = new BZip2CompressorOutputStream(out);
 
-      int bytesRead = data.read(temp);
-      while(bytesRead >= 0)
-      {
-        compressor.write(temp, 0, bytesRead);
-        bytesRead = data.read(temp);
-      }
+      IOUtils.copy(data, compressor);
       compressor.finish();
     }
     catch (IOException e)
