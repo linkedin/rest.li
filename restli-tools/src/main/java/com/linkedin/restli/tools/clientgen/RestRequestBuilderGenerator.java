@@ -70,6 +70,7 @@ import com.linkedin.restli.restspec.RestMethodSchema;
 import com.linkedin.restli.restspec.RestMethodSchemaArray;
 import com.linkedin.restli.restspec.RestSpecCodec;
 import com.linkedin.restli.restspec.SimpleSchema;
+import com.linkedin.util.FileUtil;
 import com.sun.codemodel.JBlock;
 import com.sun.codemodel.JClass;
 import com.sun.codemodel.JClassAlreadyExistsException;
@@ -287,7 +288,8 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
 
         if (source.isDirectory())
         {
-          List<File> sourceFilesInDirectory = sourceFilesInDirectory(source, new NameEndsWithFilter(RestConstants.RESOURCE_MODEL_FILENAME_EXTENSION));
+          FileUtil.FileExtensionFilter filter = new FileUtil.FileExtensionFilter(RestConstants.RESOURCE_MODEL_FILENAME_EXTENSION);
+          List<File> sourceFilesInDirectory = FileUtil.listFiles(source, filter);
           sources = sourceFilesInDirectory.toArray(new File[0]);
         }
         else

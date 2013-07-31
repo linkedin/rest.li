@@ -25,12 +25,11 @@ import com.linkedin.data.schema.SchemaParserFactory;
 import com.linkedin.data.schema.resolver.DefaultDataSchemaResolver;
 import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
 import com.linkedin.data.schema.resolver.FileDataSchemaResolver;
+import com.linkedin.util.FileUtil;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -119,7 +118,8 @@ public abstract class AbstractGenerator
         {
           if (sourceFile.isDirectory())
           {
-            List<File> sourceFilesInDirectory = sourceFilesInDirectory(sourceFile, new NameEndsWithFilter(FileDataSchemaResolver.DEFAULT_EXTENSION));
+            FileUtil.FileExtensionFilter filter = new FileUtil.FileExtensionFilter(FileDataSchemaResolver.DEFAULT_EXTENSION);
+            List<File> sourceFilesInDirectory = FileUtil.listFiles(sourceFile, filter);
             for (File f : sourceFilesInDirectory)
             {
               parseFile(f);
@@ -170,58 +170,6 @@ public abstract class AbstractGenerator
                                  e);
       }
       throw e;
-    }
-  }
-
-  /**
-   * Scan a directory for source files.
-   *
-   * Recursively scans a directory for source files.
-   * Recursive into each directory.
-   * Invoke the provided filter on each non-directory file, if the
-   * filter accepts the file, then add this file to the list of
-   * files to return.
-   *
-   * @param directory provides the directory to scan for source files.
-   * @param fileFilter to apply to each non-directory file.
-   * @return list of source files found in the directory.
-   */
-  protected static List<File> sourceFilesInDirectory(File directory, FileFilter fileFilter)
-  {
-    List<File> result = new ArrayList<File>();
-    ArrayDeque<File> deque = new ArrayDeque<File>();
-    deque.addFirst(directory);
-    while (deque.isEmpty() == false)
-    {
-      File file = deque.removeFirst();
-      if (file.isDirectory())
-      {
-        File[] filesInDirectory = file.listFiles();
-        for (File f : filesInDirectory)
-        {
-          deque.addLast(f);
-        }
-      }
-      else if (fileFilter.accept(file))
-      {
-        result.add(file);
-      }
-    }
-    return result;
-  }
-
-  protected static class NameEndsWithFilter implements FileFilter
-  {
-    private final String _extension;
-
-    public NameEndsWithFilter(String extension)
-    {
-      _extension = extension;
-    }
-
-    public boolean accept(File file)
-    {
-      return file.getName().endsWith(_extension);
     }
   }
 

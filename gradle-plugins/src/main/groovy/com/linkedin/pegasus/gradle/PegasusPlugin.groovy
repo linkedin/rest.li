@@ -34,7 +34,6 @@ import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.TaskAction
-import org.gradle.api.tasks.TaskState
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.javadoc.Javadoc
 import org.gradle.plugins.ide.eclipse.EclipsePlugin
@@ -874,8 +873,8 @@ class PegasusPlugin implements Plugin<Project>
       apiIdlDir.mkdirs()
 
       final Task checkRestModelTask = project.task(sourceSet.getTaskName('check', 'RestModel'),
-                                               type: CheckRestModel,
-                                               dependsOn: generateRestModelTask) {
+                                                   type: CheckRestModel,
+                                                   dependsOn: generateRestModelTask) {
         currentSnapShotFiles = generateRestModelTask.generatedSnapshotFiles
         currentIdlFiles = generateRestModelTask.generatedIdlFiles
         previousSnapshotDirectory = apiSnapshotDir
@@ -884,8 +883,8 @@ class PegasusPlugin implements Plugin<Project>
       }
 
       final Task checkIdlTask = project.task(sourceSet.getTaskName('check', 'Idl'),
-                                               type: CheckIdl,
-                                               dependsOn: generateRestModelTask) {
+                                             type: CheckIdl,
+                                             dependsOn: generateRestModelTask) {
         currentIdlFiles = generateRestModelTask.generatedIdlFiles
         previousIdlDirectory = apiIdlDir
         resolverPath = restModelResolverPath
@@ -903,9 +902,9 @@ class PegasusPlugin implements Plugin<Project>
 
         onlyIf {
           !isPropertyTrue(project, SNAPSHOT_NO_PUBLISH) &&
-            checkRestModelTask.state.executed &&
-            checkRestModelTask.state.failure == null &&
-            !checkRestModelTask.isEquivalent
+                  checkRestModelTask.state.executed &&
+                  checkRestModelTask.state.failure == null &&
+                  !checkRestModelTask.isEquivalent
         }
       }
       final Task publishRestliIdlTask = project.task(sourceSet.getTaskName('publish', 'RestliIdl'),
@@ -917,12 +916,12 @@ class PegasusPlugin implements Plugin<Project>
 
         onlyIf {
           !isPropertyTrue(project, IDL_NO_PUBLISH) &&
-            checkRestModelTask.state.executed &&
-            checkRestModelTask.state.failure == null &&
-            !checkRestModelTask.isEquivalent &&
-            checkIdlTask.state.executed &&
-            checkIdlTask.state.failure == null &&
-            !checkIdlTask.isEquivalent
+                  checkRestModelTask.state.executed &&
+                  checkRestModelTask.state.failure == null &&
+                  !checkRestModelTask.isEquivalent &&
+                  checkIdlTask.state.executed &&
+                  checkIdlTask.state.failure == null &&
+                  !checkIdlTask.isEquivalent
         }
       }
       project.logger.info("API project selected for $publishRestliIdlTask.path is $apiProject.path")

@@ -228,8 +228,7 @@ public class AvroSchemaGenerator extends AbstractGenerator
           generatedFiles.add(generatedFile);
 
           String preTranslateSchemaText = recordDataSchema.toString();
-          Schema avroSchema = SchemaTranslator.dataToAvroSchema(recordDataSchema);
-          String avroSchemaText = avroSchema.toString();
+          String avroSchemaText = SchemaTranslator.dataToAvroSchemaJson(recordDataSchema);
           _fileToAvroSchemaMap.put(generatedFile, avroSchemaText);
           String postTranslateSchemaText = recordDataSchema.toString();
           assert(preTranslateSchemaText.equals(postTranslateSchemaText));
