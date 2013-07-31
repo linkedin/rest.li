@@ -90,6 +90,8 @@
         "method" : "batch_partial_update"
       }, {
         "method" : "batch_delete"
+      }, {
+        "method" : "get_all"
       } ],
       "entity" : {
         "path" : "/greetingsCallback/{greetingsCallbackId}",
@@ -166,7 +168,7 @@
           "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.Tone\" }"
         } ]
       } ],
-      "supports" : [ "batch_create", "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "delete", "get", "partial_update", "update" ],
+      "supports" : [ "batch_create", "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "delete", "get", "get_all", "partial_update", "update" ],
       "identifier" : {
         "name" : "greetingsCallbackId",
         "type" : "long"

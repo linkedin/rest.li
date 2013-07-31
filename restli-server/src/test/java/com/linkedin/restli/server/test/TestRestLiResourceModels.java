@@ -130,7 +130,8 @@ public class TestRestLiResourceModels
 
     assertNotNull(statusResourceModel.findMethod(ResourceMethod.BATCH_GET));
     assertNotNull(statusResourceModel.findMethod(ResourceMethod.CREATE));
-    assertNull(statusResourceModel.findMethod(ResourceMethod.BATCH_CREATE));
+    assertNotNull(statusResourceModel.findMethod(ResourceMethod.BATCH_CREATE));
+    assertNotNull(statusResourceModel.findMethod(ResourceMethod.BATCH_DELETE));
 
 
     checkEntityModel(statusResourceModel,
@@ -140,7 +141,9 @@ public class TestRestLiResourceModels
     assertNotNull(statusResourceModel.findMethod(ResourceMethod.GET));
     assertNotNull(statusResourceModel.findMethod(ResourceMethod.PARTIAL_UPDATE));
     assertNotNull(statusResourceModel.findMethod(ResourceMethod.FINDER));
-    assertNull(statusResourceModel.findMethod(ResourceMethod.BATCH_UPDATE));
+    assertNotNull(statusResourceModel.findMethod(ResourceMethod.BATCH_UPDATE));
+    assertNotNull(statusResourceModel.findMethod(ResourceMethod.BATCH_PARTIAL_UPDATE));
+    assertNotNull(statusResourceModel.findMethod(ResourceMethod.GET_ALL));
   }
 
 

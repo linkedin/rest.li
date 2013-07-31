@@ -16,6 +16,14 @@
 
 package com.linkedin.restli.server.resources;
 
+import com.linkedin.restli.server.BatchCreateRequest;
+import com.linkedin.restli.server.BatchCreateResult;
+import com.linkedin.restli.server.BatchDeleteRequest;
+import com.linkedin.restli.server.BatchPatchRequest;
+import com.linkedin.restli.server.BatchUpdateRequest;
+import com.linkedin.restli.server.BatchUpdateResult;
+import com.linkedin.restli.server.PagingContext;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -49,6 +57,30 @@ public class CollectionResourceAsyncTemplate<K, V extends RecordTemplate> extend
   }
 
   @Override
+  public void batchUpdate(BatchUpdateRequest<K, V> entities, Callback<BatchUpdateResult<K, V>> callback)
+  {
+    throw new RoutingException("'batch_update' not implemented", 400);
+  }
+
+  @Override
+  public void batchUpdate(BatchPatchRequest<K, V> patches, Callback<BatchUpdateResult<K, V>> callback)
+  {
+    throw new RoutingException("'batch_patch' not implemented", 400);
+  }
+
+  @Override
+  public void batchCreate(BatchCreateRequest<K, V> entities, Callback<BatchCreateResult<K, V>> callback)
+  {
+    throw new RoutingException("'batch_create' not implemented", 400);
+  }
+
+  @Override
+  public void batchDelete(BatchDeleteRequest<K, V> ids, Callback<BatchUpdateResult<K, V>> callback)
+  {
+    throw new RoutingException("'batch_delete' not implemented", 400);
+  }
+
+  @Override
   public void update(final K key, final V entity, final Callback<UpdateResponse> callback)
   {
     throw new RoutingException("'update' not implemented", 400);
@@ -66,5 +98,11 @@ public class CollectionResourceAsyncTemplate<K, V extends RecordTemplate> extend
   public void delete(final K key, final Callback<UpdateResponse> callback)
   {
     throw new RoutingException("'delete' not implemented", 400);
+  }
+
+  @Override
+  public void getAll(PagingContext ctx, Callback<List<V>> callback)
+  {
+    throw new RoutingException("'get_all' not implemented", 400);
   }
 }

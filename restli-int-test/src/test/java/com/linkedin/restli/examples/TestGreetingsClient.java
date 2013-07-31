@@ -16,9 +16,19 @@
 
 package com.linkedin.restli.examples;
 
+import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
+import com.linkedin.data.schema.validation.ValidationOptions;
+import com.linkedin.restli.client.BatchPartialUpdateRequest;
+import com.linkedin.restli.client.CreateRequest;
+import com.linkedin.restli.client.DeleteRequest;
+import com.linkedin.restli.client.GetAllRequest;
+import com.linkedin.restli.common.UpdateStatus;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -360,6 +370,341 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     {
       Assert.assertEquals(entry.getKey(), entry.getValue().getId());
     }
+  }
+
+  /**
+   * Generates a test Greeting
+   *
+   * @param message the message for the Greeting
+   * @param tone the tone for the Greeting
+   *
+   * @return the newly generated Greeting
+   */
+  private Greeting generateTestGreeting(String message, Tone tone)
+  {
+    return new Greeting().setMessage(message).setTone(tone);
+  }
+
+  /*
+   HELPER METHODS FOR TESTING BATCH OPERATIONS
+
+   These helper methods do all operations serially. This is because we want to restrict out batch operation only to the
+   method we are current testing. E.g. testBatchCreate only uses the batchCreate method and uses non batch operations
+   to fetch and delete data.
+   */
+
+  /**
+   * Deletes data on the server and verifies that the HTTP response is correct
+   *
+   * @param ids the ids for the Greetings to delete
+   * @throws RemoteInvocationException
+   */
+  private void deleteAndVerifyBatchTestDataSerially(List<Long> ids)
+      throws RemoteInvocationException
+  {
+    for (Long id: ids)
+    {
+      DeleteRequest<Greeting> request = GREETINGS_BUILDERS.delete().id(id).build();
+      ResponseFuture<EmptyRecord> future = REST_CLIENT.sendRequest(request);
+      Response<EmptyRecord> response = future.getResponse();
+
+      Assert.assertEquals(response.getStatus(), HttpStatus.S_204_NO_CONTENT.getCode());
+    }
+  }
+
+  /**
+   * Fetches Greetings from the server serially.
+   *
+   * @param idsToGet the ids for the Greetings to fetch
+   *
+   * @return the fetched Greetings
+   * @throws RemoteInvocationException
+   */
+  private List<Greeting> getBatchTestDataSerially(List<Long> idsToGet)
+      throws RemoteInvocationException
+  {
+    List<Greeting> fetchedGreetings = new ArrayList<Greeting>();
+    for (int i = 0; i < idsToGet.size(); i++)
+    {
+      try
+      {
+        Long id = idsToGet.get(i);
+        Request<Greeting> request = GREETINGS_BUILDERS.get().id(id).build();
+        ResponseFuture<Greeting> future = REST_CLIENT.sendRequest(request);
+        Response<Greeting> greetingResponse = future.getResponse();
+
+        Greeting fetchedGreeting = greetingResponse.getEntity();
+
+        fetchedGreetings.add(fetchedGreeting);
+      }
+      catch (RestLiResponseException ex)
+      {
+        if (ex.getStatus() == HttpStatus.S_404_NOT_FOUND.getCode())
+        {
+          fetchedGreetings.add(null);
+        }
+        else
+        {
+          throw ex;
+        }
+      }
+    }
+    return fetchedGreetings;
+  }
+
+  /**
+   * Fetches Greetings from the server and verifies that the fetched Greetings are as expected
+   *
+   * @param idsToGet the ids for the Greetings to get
+   * @param expectedGreetings the Greetings we expect the server to return
+   * @param fieldsToIgnore a list of fields to ignore while verifying the fetched Greetings. If the list is null or
+   *                       empty then the Greeting.equals method will be used. Otherwise, the datamaps will be checked
+   *                       for equality on a per field basis, ignoring the fields in fieldsToIgnore
+   *
+   * @throws RemoteInvocationException
+   */
+  private void getAndVerifyBatchTestDataSerially(List<Long> idsToGet,
+                                                 List<Greeting> expectedGreetings,
+                                                 List<String> fieldsToIgnore)
+      throws RemoteInvocationException
+  {
+    List<Greeting> fetchedGreetings = getBatchTestDataSerially(idsToGet);
+    Assert.assertEquals(fetchedGreetings.size(), expectedGreetings.size());
+    for (int i = 0; i < fetchedGreetings.size(); i++)
+    {
+      Greeting fetchedGreeting = fetchedGreetings.get(i);
+      Greeting expectedGreeting = expectedGreetings.get(i);
+
+      // Make sure the types of the fetched Greeting match the types in the schema. This happens as a side effect of the
+      // validate method
+      ValidateDataAgainstSchema.validate(fetchedGreeting.data(), fetchedGreeting.schema(), new ValidationOptions());
+
+      if (fieldsToIgnore == null || fieldsToIgnore.isEmpty())
+      {
+        Assert.assertEquals(fetchedGreeting, expectedGreeting);
+      }
+      else
+      {
+        DataMap fetchedDataMap = fetchedGreeting.data();
+        DataMap expectedDataMap = expectedGreeting.data();
+        for (String field: fetchedDataMap.keySet())
+        {
+          if (!fieldsToIgnore.contains(field))
+          {
+            Assert.assertEquals(fetchedDataMap.get(field), expectedDataMap.get(field));
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Generates batch test data.
+   *
+   * @param numItems the number of items in the batch
+   * @param baseMessage the base message of the Greeting. Each Greeting will have a message baseMessage + item #
+   * @param tone the tone for the Greeting to create
+   *
+   * @return the batch data to send to the server
+   */
+  private List<Greeting> generateBatchTestData(int numItems, String baseMessage, Tone tone)
+  {
+    List<Greeting> greetings = new ArrayList<Greeting>();
+    for (int i = 0; i < numItems; i++)
+    {
+      greetings.add(generateTestGreeting(baseMessage + " " + i, tone));
+    }
+    return greetings;
+  }
+
+  /**
+   * Creates batch data.
+   *
+   * @param greetings the greetings that we want to create
+   *
+   * @return the ids of the created Greetings
+   * @throws RemoteInvocationException
+   */
+  private List<Long> createBatchTestDataSerially(List<Greeting> greetings)
+      throws RemoteInvocationException
+  {
+    List<Long> createdIds = new ArrayList<Long>();
+
+    for (Greeting greeting: greetings)
+    {
+      CreateRequest<Greeting> request = GREETINGS_BUILDERS.create().input(greeting).build();
+      String createdId = REST_CLIENT.sendRequest(request).getResponse().getId();
+      createdIds.add(Long.parseLong(createdId));
+    }
+
+    return createdIds;
+  }
+
+  /**
+   * Adds ids (returned from the server) to the locally generated Greetings.
+   * It modifies the greetings parameter in place to add the id
+   *
+   * @param ids the ids returned from the server
+   * @param greetings the Greetings we generated locally.
+   */
+  private void addIdsToGeneratedGreetings(List<Long> ids, List<Greeting> greetings)
+  {
+    Assert.assertEquals(ids.size(), greetings.size());
+    for (int i = 0; i < greetings.size(); i++)
+    {
+      greetings.get(i).setId(ids.get(i));
+    }
+  }
+
+  @Test
+  public void testBatchCreate() throws RemoteInvocationException
+  {
+    List<Greeting> greetings = generateBatchTestData(3, "BatchCreate", Tone.FRIENDLY);
+
+    BatchCreateRequest<Greeting> batchRequest = GREETINGS_BUILDERS.batchCreate().inputs(greetings).build();
+    CollectionResponse<CreateStatus> results = REST_CLIENT.sendRequest(batchRequest).getResponse().getEntity();
+    List<Long> createdIds = new ArrayList<Long>();
+
+    Assert.assertEquals(results.getElements().size(), greetings.size());
+    for (CreateStatus status: results.getElements())
+    {
+      Assert.assertEquals(status.getStatus().intValue(), HttpStatus.S_201_CREATED.getCode());
+      createdIds.add(Long.parseLong(status.getId()));
+    }
+
+    getAndVerifyBatchTestDataSerially(createdIds, greetings, Arrays.asList(new String[]{"id"}));
+    deleteAndVerifyBatchTestDataSerially(createdIds);
+  }
+
+  @Test
+  public void testBatchDelete()
+      throws RemoteInvocationException
+  {
+    List<Greeting> greetings = generateBatchTestData(3, "BatchDelete", Tone.FRIENDLY);
+    List<Long> createdIds = createBatchTestDataSerially(greetings);
+
+    // Batch delete the created Greetings
+    com.linkedin.restli.client.BatchDeleteRequest<Long, Greeting> deleteRequest =
+        GREETINGS_BUILDERS.batchDelete().ids(createdIds).build();
+    BatchKVResponse<Long, UpdateStatus> responses = REST_CLIENT.sendRequest(deleteRequest).getResponse().getEntity();
+
+    Assert.assertEquals(responses.getResults().size(), createdIds.size()); // we deleted the Messages we created
+    for (UpdateStatus status: responses.getResults().values())
+    {
+      Assert.assertEquals(status.getStatus().intValue(), HttpStatus.S_204_NO_CONTENT.getCode());
+    }
+
+    List<Greeting> deletedGreetings = getBatchTestDataSerially(createdIds);
+    Assert.assertEquals(deletedGreetings.size(), createdIds.size());
+    for (Greeting greeting: deletedGreetings)
+    {
+      Assert.assertNull(greeting);
+    }
+  }
+
+  @Test
+  public void testBatchUpdate()
+      throws RemoteInvocationException, CloneNotSupportedException
+  {
+    List<Greeting> greetings = generateBatchTestData(3, "BatchUpdate", Tone.FRIENDLY);
+    List<Long> createdIds = createBatchTestDataSerially(greetings);
+    addIdsToGeneratedGreetings(createdIds, greetings);
+
+    // Update the created greetings
+    List<Greeting> updatedGreetings = new ArrayList<Greeting>();
+    Map<Long, Greeting> updateGreetingsRequestMap = new HashMap<Long, Greeting>();
+
+    for (Greeting greeting: greetings)
+    {
+      Greeting updatedGreeting = new Greeting(greeting.data().copy());
+      updatedGreeting.setMessage(updatedGreeting.getMessage().toUpperCase());
+      updatedGreeting.setTone(Tone.SINCERE);
+      updatedGreetings.add(updatedGreeting);
+      updateGreetingsRequestMap.put(updatedGreeting.getId(), updatedGreeting);
+    }
+
+    // Batch update
+    BatchUpdateRequest<Long, Greeting> batchUpdateRequest =
+        GREETINGS_BUILDERS.batchUpdate().inputs(updateGreetingsRequestMap).build();
+    Map<Long, UpdateStatus> results =
+        REST_CLIENT.sendRequest(batchUpdateRequest).getResponse().getEntity().getResults();
+
+    Assert.assertEquals(results.size(), updatedGreetings.size());
+    for (UpdateStatus status: results.values())
+    {
+      Assert.assertEquals(status.getStatus().intValue(), HttpStatus.S_204_NO_CONTENT.getCode());
+    }
+
+    getAndVerifyBatchTestDataSerially(createdIds, updatedGreetings, null);
+    deleteAndVerifyBatchTestDataSerially(createdIds);
+  }
+
+  @Test
+  public void testBatchPartialUpdate() throws RemoteInvocationException, CloneNotSupportedException
+  {
+    List<Greeting> greetings = generateBatchTestData(3, "BatchPatch", Tone.FRIENDLY);
+    List<Long> createdIds = createBatchTestDataSerially(greetings);
+    addIdsToGeneratedGreetings(createdIds, greetings);
+
+    // Patch the created Greetings
+    Map<Long, PatchRequest<Greeting>> patchedGreetingsDiffs = new HashMap<Long, PatchRequest<Greeting>>();
+    List<Greeting> patchedGreetings = new ArrayList<Greeting>();
+
+    for (Greeting greeting: greetings)
+    {
+      Greeting patchedGreeting = new Greeting(greeting.data().copy());
+      patchedGreeting.setMessage(patchedGreeting.getMessage().toUpperCase());
+
+      PatchRequest<Greeting> patchRequest = PatchGenerator.diff(greeting, patchedGreeting);
+      patchedGreetingsDiffs.put(patchedGreeting.getId(), patchRequest);
+      patchedGreetings.add(patchedGreeting);
+    }
+
+    // Batch patch
+    BatchPartialUpdateRequest<Long, Greeting> batchUpdateRequest =
+        GREETINGS_BUILDERS.batchPartialUpdate().inputs(patchedGreetingsDiffs).build();
+    Map<Long, UpdateStatus> results =
+        REST_CLIENT.sendRequest(batchUpdateRequest).getResponse().getEntity().getResults();
+
+    Assert.assertEquals(results.size(), patchedGreetingsDiffs.size());
+    for (UpdateStatus status: results.values())
+    {
+      Assert.assertEquals(status.getStatus().intValue(), HttpStatus.S_204_NO_CONTENT.getCode());
+    }
+
+    getAndVerifyBatchTestDataSerially(createdIds, patchedGreetings, null);
+    deleteAndVerifyBatchTestDataSerially(createdIds);
+  }
+
+  @Test
+  public void testGetAll()
+      throws RemoteInvocationException
+  {
+    List<Greeting> greetings = generateBatchTestData(3, "GetAll", Tone.FRIENDLY);
+    List<Long> createdIds = createBatchTestDataSerially(greetings);
+    addIdsToGeneratedGreetings(createdIds, greetings);
+
+    GetAllRequest<Greeting> getAllRequest = GREETINGS_BUILDERS.getAll().build();
+    List<Greeting> getAllReturnedGreetings = REST_CLIENT.
+        sendRequest(getAllRequest).getResponse().getEntity().getElements();
+
+    // the current implementation of getAll should return all those Greetings with the String "GetAll"
+    // in them. Thus, fetchedGreetings and getAllGreetings should be the same
+    Assert.assertEquals(getAllReturnedGreetings.size(), greetings.size());
+    for (int i = 0; i < greetings.size(); i++)
+    {
+      Greeting getAllReturnedGreeting = getAllReturnedGreetings.get(i);
+      Greeting greeting = greetings.get(i);
+      // Make sure the types of the fetched Greeting match the types in the schema. This happens as a side effect of the
+      // validate method
+      // This is why we can't do Assert.assertEquals(getAllReturnedGreetings, greetings) directly
+      ValidateDataAgainstSchema.validate(getAllReturnedGreeting.data(),
+                                         getAllReturnedGreeting.schema(),
+                                         new ValidationOptions());
+      Assert.assertEquals(getAllReturnedGreeting, greeting);
+    }
+
+    deleteAndVerifyBatchTestDataSerially(createdIds);
   }
 
   @Test

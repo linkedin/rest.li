@@ -173,7 +173,7 @@ public class TestRestLiMethodInvocation
     ResourceModel discoveredItemsResourceModel = resourceModelMap.get("/asyncdiscovereditems");
 
     ResourceMethodDescriptor methodDescriptor;
-    RestLiCallback<?> callback = getCallBack();
+    RestLiCallback<?> callback = getCallback();
 
     methodDescriptor = statusResourceModel.findNamedMethod("public_timeline");
     statusResource = getMockResource(AsyncStatusCollectionResource.class);
@@ -336,7 +336,7 @@ public class TestRestLiMethodInvocation
   {
     ResourceModel followsResourceModel = buildResourceModel(AsyncFollowsAssociativeResource.class);
 
-    RestLiCallback<?> callback = getCallBack();
+    RestLiCallback<?> callback = getCallback();
     ResourceMethodDescriptor methodDescriptor;
     AsyncFollowsAssociativeResource resource;
 
@@ -374,7 +374,7 @@ public class TestRestLiMethodInvocation
     ResourceModel followsAssociationResourceModel = buildResourceModel(AsyncFollowsAssociativeResource.class);
     ResourceModel discoveredItemsResourceModel = buildResourceModel(AsyncDiscoveredItemsResource.class);
 
-    RestLiCallback<?> callback = getCallBack();
+    RestLiCallback<?> callback = getCallback();
     ResourceMethodDescriptor methodDescriptor;
     AsyncStatusCollectionResource statusResource;
     AsyncFollowsAssociativeResource followsResource;
@@ -482,7 +482,7 @@ public class TestRestLiMethodInvocation
     ResourceModel repliesResourceModel = statusResourceModel.getSubResource("asyncreplies");
     ResourceModel locationResourceModel = statusResourceModel.getSubResource("asynclocation");
     ResourceModel discoveredItemsResourceModel = resourceModelMap.get("/asyncdiscovereditems");
-    RestLiCallback<?> callback = getCallBack();
+    RestLiCallback<?> callback = getCallback();
 
     ResourceMethodDescriptor methodDescriptor;
     AsyncStatusCollectionResource statusResource;
@@ -621,6 +621,181 @@ public class TestRestLiMethodInvocation
         buildPathKeys("asyncDiscoveredItemId", key));
   }
 
+  @Test
+  public void testAsyncBatchCreate() throws Exception
+  {
+    ResourceModel statusResourceModel = buildResourceModel(AsyncStatusCollectionResource.class);
+    RestLiCallback<?> callback = getCallback();
+
+    ResourceMethodDescriptor methodDescriptor;
+    AsyncStatusCollectionResource statusResource;
+
+    methodDescriptor = statusResourceModel.findMethod(ResourceMethod.BATCH_CREATE);
+    statusResource = getMockResource(AsyncStatusCollectionResource.class);
+
+    @SuppressWarnings("unchecked")
+    BatchCreateRequest<Long, Status> mockBatchCreateReq = (BatchCreateRequest<Long, Status>)EasyMock.anyObject();
+    statusResource.batchCreate(mockBatchCreateReq, EasyMock.<Callback<BatchCreateResult<Long, Status>>> anyObject());
+    EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
+      @Override
+      public Object answer() throws Throwable {
+        @SuppressWarnings("unchecked")
+        Callback<BatchCreateResult<Long, Status>> callback =
+            (Callback<BatchCreateResult<Long, Status>>) EasyMock.getCurrentArguments()[1];
+        callback.onSuccess(null);
+        return null;
+      }
+    });
+    EasyMock.replay(statusResource);
+
+    checkAsyncInvocation(statusResource, callback, methodDescriptor, "POST", "/asyncstatuses", "{}", null);
+  }
+
+  @Test
+  public void testAsyncBatchDelete() throws Exception
+  {
+    ResourceModel statusResourceModel = buildResourceModel(AsyncStatusCollectionResource.class);
+    RestLiCallback<?> callback = getCallback();
+
+    ResourceMethodDescriptor methodDescriptor;
+    AsyncStatusCollectionResource statusResource;
+
+    methodDescriptor = statusResourceModel.findMethod(ResourceMethod.BATCH_DELETE);
+    statusResource = getMockResource(AsyncStatusCollectionResource.class);
+
+    @SuppressWarnings("unchecked")
+    BatchDeleteRequest<Long, Status> mockBatchDeleteReq = (BatchDeleteRequest<Long, Status>)EasyMock.anyObject();
+    statusResource.batchDelete(mockBatchDeleteReq, EasyMock.<Callback<BatchUpdateResult<Long, Status>>> anyObject());
+    EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
+      @Override
+      public Object answer() throws Throwable {
+        @SuppressWarnings("unchecked")
+        Callback<BatchCreateResult<Long, Status>> callback =
+            (Callback<BatchCreateResult<Long, Status>>) EasyMock.getCurrentArguments()[1];
+        callback.onSuccess(null);
+        return null;
+      }
+    });
+    EasyMock.replay(statusResource);
+
+    checkAsyncInvocation(statusResource,
+                         callback,
+                         methodDescriptor,
+                         "DELETE",
+                         "/asyncstatuses?ids=1,2,3",
+                         buildBatchPathKeys(1L, 2L, 3L));
+  }
+
+  @Test
+  public void testAsyncBatchUpdate() throws Exception
+  {
+
+    ResourceModel statusResourceModel = buildResourceModel(AsyncStatusCollectionResource.class);
+    RestLiCallback<?> callback = getCallback();
+
+    ResourceMethodDescriptor methodDescriptor;
+    AsyncStatusCollectionResource statusResource;
+
+    methodDescriptor = statusResourceModel.findMethod(ResourceMethod.BATCH_UPDATE);
+    statusResource = getMockResource(AsyncStatusCollectionResource.class);
+
+    @SuppressWarnings("unchecked")
+    BatchUpdateRequest<Long, Status> mockBatchUpdateReq = (BatchUpdateRequest<Long, Status>)EasyMock.anyObject();
+    statusResource.batchUpdate(mockBatchUpdateReq, EasyMock.<Callback<BatchUpdateResult<Long, Status>>> anyObject());
+    EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
+      @Override
+      public Object answer() throws Throwable {
+        @SuppressWarnings("unchecked")
+        Callback<BatchCreateResult<Long, Status>> callback =
+            (Callback<BatchCreateResult<Long, Status>>) EasyMock.getCurrentArguments()[1];
+        callback.onSuccess(null);
+        return null;
+      }
+    });
+    EasyMock.replay(statusResource);
+
+    checkAsyncInvocation(statusResource,
+                         callback,
+                         methodDescriptor,
+                         "PUT",
+                         "/asyncstatuses?ids=1,2,3",
+                         "{\"entities\": {\"1\": {}, \"2\": {}, \"3\": {}}}",
+                         buildBatchPathKeys(1L, 2L, 3L));
+  }
+
+  @Test
+  public void testAsyncBatchPatch() throws Exception
+  {
+    ResourceModel statusResourceModel = buildResourceModel(AsyncStatusCollectionResource.class);
+    RestLiCallback<?> callback = getCallback();
+
+    ResourceMethodDescriptor methodDescriptor;
+    AsyncStatusCollectionResource statusResource;
+
+    methodDescriptor = statusResourceModel.findMethod(ResourceMethod.BATCH_PARTIAL_UPDATE);
+    statusResource = getMockResource(AsyncStatusCollectionResource.class);
+
+    @SuppressWarnings("unchecked")
+    BatchPatchRequest<Long, Status> mockBatchPatchReq = (BatchPatchRequest<Long, Status>)EasyMock.anyObject();
+    statusResource.batchUpdate(mockBatchPatchReq, EasyMock.<Callback<BatchUpdateResult<Long, Status>>> anyObject());
+    EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
+      @Override
+      public Object answer() throws Throwable {
+        @SuppressWarnings("unchecked")
+        Callback<BatchCreateResult<Long, Status>> callback =
+            (Callback<BatchCreateResult<Long, Status>>) EasyMock.getCurrentArguments()[1];
+        callback.onSuccess(null);
+        return null;
+      }
+    });
+    EasyMock.replay(statusResource);
+
+    checkAsyncInvocation(statusResource,
+                         callback,
+                         methodDescriptor,
+                         "POST",
+                         "/asyncstatuses?ids=1,2,3",
+                         "{\"entities\": {\"1\": {}, \"2\": {}, \"3\": {}}}",
+                         buildBatchPathKeys(1L, 2L, 3L));
+  }
+
+  @Test
+  public void testAsyncGetAll() throws Exception
+  {
+    ResourceModel statusResourceModel = buildResourceModel(AsyncStatusCollectionResource.class);
+    RestLiCallback<?> callback = getCallback();
+
+    ResourceMethodDescriptor methodDescriptor;
+    AsyncStatusCollectionResource statusResource;
+
+    methodDescriptor = statusResourceModel.findMethod(ResourceMethod.GET_ALL);
+    statusResource = getMockResource(AsyncStatusCollectionResource.class);
+
+    @SuppressWarnings("unchecked")
+    PagingContext mockCtx = (PagingContext)EasyMock.anyObject();
+    statusResource.getAll(mockCtx, EasyMock.<Callback<List<Status>>> anyObject());
+    EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
+      @Override
+      public Object answer() throws Throwable {
+        @SuppressWarnings("unchecked")
+        Callback<List<Status>> callback =
+            (Callback<List<Status>>) EasyMock.getCurrentArguments()[1];
+        callback.onSuccess(null);
+        return null;
+      }
+    });
+    EasyMock.replay(statusResource);
+
+    checkAsyncInvocation(statusResource,
+                         callback,
+                         methodDescriptor,
+                         "GET",
+                         "/asyncstatuses",
+                         "{}",
+                         null);
+  }
+
+
   @SuppressWarnings("unchecked")
   @Test
   public void testAsyncPut() throws Exception
@@ -634,7 +809,7 @@ public class TestRestLiMethodInvocation
             AsyncFollowsAssociativeResource.class);
     ResourceModel discoveredItemsResourceModel = resourceModelMap.get("/asyncdiscovereditems");
 
-    RestLiCallback<?> callback = getCallBack();
+    RestLiCallback<?> callback = getCallback();
 
     ResourceMethodDescriptor methodDescriptor;
     AsyncStatusCollectionResource statusResource;
@@ -746,7 +921,7 @@ public class TestRestLiMethodInvocation
     ResourceModel locationResourceModel = statusResourceModel.getSubResource("asynclocation");
     ResourceModel discoveredItemsResourceModel = resourceModelMap.get("/asyncdiscovereditems");
 
-    RestLiCallback<?> callback = getCallBack();
+    RestLiCallback<?> callback = getCallback();
 
     ResourceMethodDescriptor methodDescriptor;
     AsyncStatusCollectionResource statusResource;
@@ -819,7 +994,7 @@ public class TestRestLiMethodInvocation
   public void testAsyncActions() throws Exception
   {
     ResourceModel accountsResourceModel = buildResourceModel(AsyncTwitterAccountsResource.class);
-    RestLiCallback callback = getCallBack();
+    RestLiCallback callback = getCallback();
     ResourceMethodDescriptor methodDescriptor;
     AsyncTwitterAccountsResource accountsResource;
 
@@ -2673,7 +2848,7 @@ public class TestRestLiMethodInvocation
     }
 }
 
-  private RestLiCallback<Object> getCallBack()
+  private RestLiCallback<Object> getCallback()
   {
     @SuppressWarnings("unchecked")
     RestLiCallback<Object> callback = (RestLiCallback<Object>)EasyMock.createMock(RestLiCallback.class);
