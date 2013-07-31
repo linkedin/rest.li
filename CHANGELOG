@@ -1,5 +1,10 @@
+1.9.9
+-----
+
 1.9.8
 -----
+(RB=192299)
+Added fix to prevent a complex key when a CollectionResource is being used.
 
 1.9.7
 -----

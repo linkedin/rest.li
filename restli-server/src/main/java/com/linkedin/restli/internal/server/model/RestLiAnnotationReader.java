@@ -178,6 +178,14 @@ public final class RestLiAnnotationReader
           ReflectionUtils.getTypeArguments(KeyValueResource.class,
                                            collectionResourceClass);
       keyClass = kvParams.get(0);
+      if (RecordTemplate.class.isAssignableFrom(keyClass))
+      {
+        // a complex key is being used and thus ComplexKeyResource should be implemented so that we can wrap it in a
+        // ComplexResourceKey
+        throw new ResourceConfigException("Class '" + collectionResourceClass.getName() +
+                                              "' should implement 'ComplexKeyResource' as a complex key '" +
+                                              keyClass.getName() + "' is being used.");
+      }
       valueClass = kvParams.get(1).asSubclass(RecordTemplate.class);
     }
 

@@ -486,6 +486,13 @@ public class TestRestLiResourceModels
     assertSame(returnClass, Integer.class);
   }
 
+  @Test
+  public void testInvalidComplexKeyInCollectionResourceTemplate() throws Exception
+  {
+    expectConfigException(InvalidResources.ComplexKeyInCollectionResourceTemplate.class,
+                          "' should implement 'ComplexKeyResource' as a complex key '");
+  }
+
   // ************************
   // Helper methods
   // ************************
