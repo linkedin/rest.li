@@ -1,6 +1,7 @@
 1.9.10
 -----
-
+(RB=190386)
+Fixing couple of issues in annotated complex-key resources and async complex-key resource template. Adding extensive test covarage for both scenarios.
 
 1.9.9
 -----
