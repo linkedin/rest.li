@@ -16,6 +16,12 @@
 
 package com.linkedin.restli.server.resources;
 
+import com.linkedin.restli.server.BatchDeleteRequest;
+import com.linkedin.restli.server.BatchPatchRequest;
+import com.linkedin.restli.server.BatchUpdateRequest;
+import com.linkedin.restli.server.BatchUpdateResult;
+import com.linkedin.restli.server.PagingContext;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -46,10 +52,36 @@ public class AssociationResourceAsyncTemplate<V extends RecordTemplate> extends
   }
 
   @Override
+  public void batchDelete(BatchDeleteRequest<CompoundKey, V> ids, Callback<BatchUpdateResult<CompoundKey, V>> callback)
+  {
+    throw new RoutingException("'batch_delete' not implemented", 400);
+  }
+
+  @Override
+  public void batchUpdate(BatchUpdateRequest<CompoundKey, V> entities,
+                          Callback<BatchUpdateResult<CompoundKey, V>> callback)
+  {
+    throw new RoutingException("'batch_update' not implemented", 400);
+  }
+
+  @Override
+  public void batchUpdate(BatchPatchRequest<CompoundKey, V> patches,
+                          Callback<BatchUpdateResult<CompoundKey, V>> callback)
+  {
+    throw new RoutingException("'batch_patch' not implemented", 400);
+  }
+
+  @Override
+  public void getAll(PagingContext ctx, Callback<List<V>> callback)
+  {
+    throw new RoutingException("'get_all' not implemented", 400);
+  }
+
+  @Override
   public void get(final CompoundKey key,
                   final Callback<V> callback)
   {
-    throw new RoutingException("'batch_get' not implemented", 400);
+    throw new RoutingException("'get' not implemented", 400);
   }
 
   @Override
@@ -57,7 +89,7 @@ public class AssociationResourceAsyncTemplate<V extends RecordTemplate> extends
                      final V entity,
                      final Callback<UpdateResponse> callback)
   {
-    throw new RoutingException("'batch_get' not implemented", 400);
+    throw new RoutingException("'update' not implemented", 400);
   }
 
   @Override
@@ -65,13 +97,13 @@ public class AssociationResourceAsyncTemplate<V extends RecordTemplate> extends
                      final PatchRequest<V> patch,
                      final Callback<UpdateResponse> callback)
   {
-    throw new RoutingException("'batch_get' not implemented", 400);
+    throw new RoutingException("'patch' not implemented", 400);
   }
 
   @Override
   public void delete(final CompoundKey key,
                      final Callback<UpdateResponse> callback)
   {
-    throw new RoutingException("'batch_get' not implemented", 400);
+    throw new RoutingException("'delete' not implemented", 400);
   }
 }

@@ -99,6 +99,9 @@ public interface AssociationResource<V extends RecordTemplate> extends
   BatchUpdateResult<CompoundKey, V> batchUpdate(BatchPatchRequest<CompoundKey, V> patches);
 
   /**
+   * DEPRECATED, DO NOT USE THIS!
+   * Reason: https://github.com/linkedin/rest.li/wiki/Modeling-Resources-with-Rest.li#association
+   *
    * Creates a batch of entities in this collection.
    *
    * @param entities - a list of entities to be created

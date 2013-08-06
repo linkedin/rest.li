@@ -37,6 +37,7 @@ import com.linkedin.restli.server.combined.CombinedTestDataModels.Foo;
 import com.linkedin.restli.server.invalid.InvalidActions;
 import com.linkedin.restli.server.invalid.InvalidResources;
 import com.linkedin.restli.server.resources.AssociationResource;
+import com.linkedin.restli.server.twitter.AsyncFollowsAssociativeResource;
 import com.linkedin.restli.server.twitter.AsyncStatusCollectionResource;
 import com.linkedin.restli.server.twitter.ExceptionsResource;
 import com.linkedin.restli.server.twitter.FollowsAssociativeResource;
@@ -164,6 +165,32 @@ public class TestRestLiResourceModels
     assertNotNull(followsModel.findMethod(ResourceMethod.BATCH_GET));
     assertNotNull(followsModel.findMethod(ResourceMethod.PARTIAL_UPDATE));
     assertNull(followsModel.findMethod(ResourceMethod.DELETE));
+  }
+
+  @Test
+  public void testTwitterFollowsAsyncModel() throws Exception
+  {
+    ResourceModel followsModel = buildResourceModel(AsyncFollowsAssociativeResource.class);
+
+    checkAssociationModel(followsModel,
+                          "asyncfollows",
+                          Sets.<String>newHashSet("followerID", "followeeID"),
+                          Followed.class,
+                          false,
+                          AsyncFollowsAssociativeResource.class,
+                          AsyncFollowsAssociativeResource.class);
+
+    assertNotNull(followsModel.findMethod(ResourceMethod.PARTIAL_UPDATE));
+    assertNotNull(followsModel.findMethod(ResourceMethod.UPDATE));
+    assertNotNull(followsModel.findMethod(ResourceMethod.GET));
+    assertNotNull(followsModel.findMethod(ResourceMethod.BATCH_DELETE));
+    assertNotNull(followsModel.findMethod(ResourceMethod.BATCH_GET));
+    assertNotNull(followsModel.findMethod(ResourceMethod.BATCH_UPDATE));
+    assertNotNull(followsModel.findMethod(ResourceMethod.BATCH_PARTIAL_UPDATE));
+
+    assertNull(followsModel.findMethod(ResourceMethod.DELETE));
+    assertNull(followsModel.findMethod(ResourceMethod.CREATE));
+    assertNull(followsModel.findMethod(ResourceMethod.BATCH_CREATE));
   }
 
   @Test
@@ -559,7 +586,7 @@ public class TestRestLiResourceModels
                                      Set<String> assocKeyNames,
                                      Class<? extends RecordTemplate> valueClass,
                                      boolean hasParentResource,
-                                     Class<? extends AssociationResource<?>> associationResourceClass,
+                                     Class<?> associationResourceClass,
                                      Class<?> entityResourceClass)
   {
     assertNotNull(model);

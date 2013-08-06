@@ -46,4 +46,15 @@ public class RestLiTestHelper
   {
     return s.replace("'", "\"");
   }
+
+  /**
+   * URL encodes a string with "=" and/or "&" present in it.
+   * @param stringToEncode the string to encode
+   * @return the encoded string
+   */
+  public static String simpleURLEncode(String stringToEncode)
+  {
+    return stringToEncode.replace("=", "%3D").replace("&", "%26");
+  }
+
 }

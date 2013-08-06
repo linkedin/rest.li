@@ -16,22 +16,28 @@
 
 package com.linkedin.restli.server.twitter;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.PatchRequest;
+import com.linkedin.restli.server.BatchDeleteRequest;
+import com.linkedin.restli.server.BatchPatchRequest;
+import com.linkedin.restli.server.BatchUpdateRequest;
+import com.linkedin.restli.server.BatchUpdateResult;
+import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.AssocKey;
 import com.linkedin.restli.server.annotations.CallbackParam;
+import com.linkedin.restli.server.annotations.Context;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.Key;
 import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiAssociation;
 import com.linkedin.restli.server.resources.AssociationResourceAsyncTemplate;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Followed;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Association resource for the 'following' relationship.
@@ -118,6 +124,33 @@ public class AsyncFollowsAssociativeResource extends
   public void update(final CompoundKey key,
                      final Followed entity,
                      @CallbackParam final Callback<UpdateResponse> callback)
+  {
+    callback.onSuccess(null);
+  }
+
+  @Override
+  public void batchDelete(BatchDeleteRequest<CompoundKey, Followed> ids,
+                          @CallbackParam Callback<BatchUpdateResult<CompoundKey, Followed>> callback)
+  {
+    callback.onSuccess(null);
+  }
+
+  @Override
+  public void batchUpdate(BatchUpdateRequest<CompoundKey, Followed> entities,
+                          @CallbackParam Callback<BatchUpdateResult<CompoundKey, Followed>> callback)
+  {
+    callback.onSuccess(null);
+  }
+
+  @Override
+  public void batchUpdate(BatchPatchRequest<CompoundKey, Followed> patches,
+                          @CallbackParam Callback<BatchUpdateResult<CompoundKey, Followed>> callback)
+  {
+    callback.onSuccess(null);
+  }
+
+  @Override
+  public void getAll(@Context PagingContext ctx, @CallbackParam Callback<List<Followed>> callback)
   {
     callback.onSuccess(null);
   }

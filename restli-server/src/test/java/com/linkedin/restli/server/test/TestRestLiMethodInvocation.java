@@ -2686,6 +2686,194 @@ public class TestRestLiMethodInvocation
     checkInvocation(resource2, methodDescriptor, "DELETE", "/test?intParam=1&stringParam=bar", buildBatchPathKeys());
   }
 
+ @Test
+  public void testAsyncBatchUpdateAssociativeResource() throws Exception
+  {
+    ResourceModel followsResourceModel = buildResourceModel(AsyncFollowsAssociativeResource.class);
+
+    RestLiCallback<?> callback = getCallback();
+    ResourceMethodDescriptor methodDescriptor;
+    AsyncFollowsAssociativeResource resource;
+
+    methodDescriptor = followsResourceModel.findMethod(ResourceMethod.BATCH_UPDATE);
+    resource = getMockResource(AsyncFollowsAssociativeResource.class);
+
+    @SuppressWarnings("unchecked")
+    BatchUpdateRequest<CompoundKey, Followed> mockBatchUpdateReq =
+        (BatchUpdateRequest<CompoundKey, Followed>)EasyMock.anyObject();
+    resource.batchUpdate(mockBatchUpdateReq, EasyMock.<Callback<BatchUpdateResult<CompoundKey, Followed>>> anyObject());
+    EasyMock.expectLastCall().andAnswer(new IAnswer<Object>()
+    {
+      @Override
+      public Object answer()
+          throws Throwable
+      {
+        @SuppressWarnings("unchecked")
+        Callback<BatchUpdateResult<CompoundKey, Followed>> callback =
+            (Callback<BatchUpdateResult<CompoundKey, Followed>>) EasyMock.getCurrentArguments()[1];
+        callback.onSuccess(null);
+        return null;
+      }
+    });
+    EasyMock.replay(resource);
+
+    String uri = "/asyncfollows?" +
+                                 "ids=" + RestLiTestHelper.simpleURLEncode(buildURLEncodedFollowsKey(1L, 2L)) +
+                                 "&ids=" + RestLiTestHelper.simpleURLEncode(buildURLEncodedFollowsKey(3L, 4L)) +
+                                 "&ids=" + RestLiTestHelper.simpleURLEncode(buildURLEncodedFollowsKey(5L, 6L));
+
+    String entityBody = RestLiTestHelper.doubleQuote("{'entities':{" +
+                                                                   "'followeeID=2&followerID=1': {}, " +
+                                                                   "'followeeID=4&followerID=3': {}, " +
+                                                                   "'followeeID=6&followerID=5': {}" +
+                                                                   "}}");
+
+    checkAsyncInvocation(resource,
+                         callback,
+                         methodDescriptor,
+                         "PUT",
+                         uri,
+                         entityBody,
+                         buildBatchPathKeys(buildFollowsCompoundKey(1L, 2L),
+                                            buildFollowsCompoundKey(3L, 4L),
+                                            buildFollowsCompoundKey(5L, 6L)));
+  }
+
+  @Test
+  public void testAsyncBatchPatchAssociativeResource() throws Exception
+  {
+    ResourceModel followsResourceModel = buildResourceModel(AsyncFollowsAssociativeResource.class);
+
+    RestLiCallback<?> callback = getCallback();
+    ResourceMethodDescriptor methodDescriptor;
+    AsyncFollowsAssociativeResource resource;
+
+    methodDescriptor = followsResourceModel.findMethod(ResourceMethod.BATCH_PARTIAL_UPDATE);
+    resource = getMockResource(AsyncFollowsAssociativeResource.class);
+
+    @SuppressWarnings("unchecked")
+    BatchPatchRequest<CompoundKey, Followed> mockBatchPatchReq =
+        (BatchPatchRequest<CompoundKey, Followed>)EasyMock.anyObject();
+    resource.batchUpdate(mockBatchPatchReq, EasyMock.<Callback<BatchUpdateResult<CompoundKey, Followed>>>anyObject());
+    EasyMock.expectLastCall().andAnswer(new IAnswer<Object>()
+    {
+      @Override
+      public Object answer()
+          throws Throwable
+      {
+        @SuppressWarnings("unchecked")
+        Callback<BatchUpdateResult<CompoundKey, Followed>> callback =
+            (Callback<BatchUpdateResult<CompoundKey, Followed>>) EasyMock.getCurrentArguments()[1];
+        callback.onSuccess(null);
+        return null;
+      }
+    });
+    EasyMock.replay(resource);
+
+    String uri = "/asyncfollows?" +
+                                 "ids=" + RestLiTestHelper.simpleURLEncode(buildURLEncodedFollowsKey(1L, 2L)) +
+                                 "&ids=" + RestLiTestHelper.simpleURLEncode(buildURLEncodedFollowsKey(3L, 4L)) +
+                                 "&ids=" + RestLiTestHelper.simpleURLEncode(buildURLEncodedFollowsKey(5L, 6L));
+
+    String entityBody = RestLiTestHelper.doubleQuote("{'entities':{" +
+                                                         "'followeeID=2&followerID=1': {}, " +
+                                                         "'followeeID=4&followerID=3': {}, " +
+                                                         "'followeeID=6&followerID=5': {}" +
+                                                         "}}");
+
+    checkAsyncInvocation(resource,
+                         callback,
+                         methodDescriptor,
+                         "POST",
+                         uri,
+                         entityBody,
+                         buildBatchPathKeys(buildFollowsCompoundKey(1L, 2L),
+                                            buildFollowsCompoundKey(3L, 4L),
+                                            buildFollowsCompoundKey(5L, 6L)));
+  }
+
+  @Test
+  public void testAsyncBatchDeleteAssociativeResource() throws Exception
+  {
+    ResourceModel followsResourceModel = buildResourceModel(AsyncFollowsAssociativeResource.class);
+
+    RestLiCallback<?> callback = getCallback();
+    ResourceMethodDescriptor methodDescriptor;
+    AsyncFollowsAssociativeResource resource;
+
+    methodDescriptor = followsResourceModel.findMethod(ResourceMethod.BATCH_DELETE);
+    resource = getMockResource(AsyncFollowsAssociativeResource.class);
+
+    @SuppressWarnings("unchecked")
+    BatchDeleteRequest<CompoundKey, Followed> mockBatchDeleteReq =
+        (BatchDeleteRequest<CompoundKey, Followed>)EasyMock.anyObject();
+    resource.batchDelete(mockBatchDeleteReq, EasyMock.<Callback<BatchUpdateResult<CompoundKey, Followed>>> anyObject());
+    EasyMock.expectLastCall().andAnswer(new IAnswer<Object>()
+    {
+      @Override
+      public Object answer()
+          throws Throwable
+      {
+        @SuppressWarnings("unchecked")
+        Callback<BatchUpdateResult<CompoundKey, Followed>> callback =
+            (Callback<BatchUpdateResult<CompoundKey, Followed>>) EasyMock.getCurrentArguments()[1];
+        callback.onSuccess(null);
+        return null;
+      }
+    });
+    EasyMock.replay(resource);
+
+    String uri = "/asyncfollows?" +
+                                 "ids=" + RestLiTestHelper.simpleURLEncode(buildURLEncodedFollowsKey(1L, 2L)) +
+                                 "&ids=" + RestLiTestHelper.simpleURLEncode(buildURLEncodedFollowsKey(3L, 4L)) +
+                                 "&ids=" + RestLiTestHelper.simpleURLEncode(buildURLEncodedFollowsKey(5L, 6L));
+
+    checkAsyncInvocation(resource,
+                         callback,
+                         methodDescriptor,
+                         "DELETE",
+                         uri,
+                         buildBatchPathKeys(buildFollowsCompoundKey(1L, 2L),
+                                            buildFollowsCompoundKey(3L, 4L),
+                                            buildFollowsCompoundKey(5L, 6L)));
+  }
+
+  @Test
+  public void testAsyncGetAllAssociativeResource() throws Exception
+  {
+    ResourceModel followsResourceModel = buildResourceModel(AsyncFollowsAssociativeResource.class);
+
+    RestLiCallback<?> callback = getCallback();
+    ResourceMethodDescriptor methodDescriptor;
+    AsyncFollowsAssociativeResource resource;
+
+    methodDescriptor = followsResourceModel.findMethod(ResourceMethod.GET_ALL);
+    resource = getMockResource(AsyncFollowsAssociativeResource.class);
+
+    resource.getAll((PagingContext)EasyMock.anyObject(), EasyMock.<Callback<List<Followed>>> anyObject());
+    EasyMock.expectLastCall().andAnswer(new IAnswer<Object>()
+    {
+      @Override
+      public Object answer()
+          throws Throwable
+      {
+        @SuppressWarnings("unchecked")
+        Callback<List<Followed>> callback =
+            (Callback<List<Followed>>) EasyMock.getCurrentArguments()[1];
+        callback.onSuccess(null);
+        return null;
+      }
+    });
+    EasyMock.replay(resource);
+
+    checkAsyncInvocation(resource,
+                         callback,
+                         methodDescriptor,
+                         "GET",
+                         "/asyncfollows",
+                         buildBatchPathKeys());
+  }
+
   // *****************
   // Helper methods
   // *****************
@@ -2916,6 +3104,35 @@ public class TestRestLiMethodInvocation
     }
   }
 
+  /**
+   * Helper method to return a Compound Key for the FollowsAssociativeResource and AsyncFollowsAssociativeResource
+   * Sets the "followerID" to id1
+   * Sets the "followeeID" to id2
+   *
+   * @param id1 the "followerID".
+   * @param id2 the "followeeID"
+   *
+   * @return
+   */
+  private CompoundKey buildFollowsCompoundKey(Long id1, Long id2)
+  {
+    CompoundKey key = new CompoundKey();
+    key.append("followerID", id1);
+    key.append("followeeID", id2);
+    return key;
+  }
+
+  /**
+   * Builds a URL encoded association key for the FollowsAssociativeResource and AsyncFollowsAssociativeResource
+   * @param id1 the "followerID"
+   * @param id2 the "followeeID"
+   * @return URL encoded association key
+   */
+  private String buildURLEncodedFollowsKey(Long id1, Long id2)
+  {
+    return RestLiTestHelper.simpleURLEncode("followerID=" + id1 + "&followeeID=" + id2);
+  }
+
   private ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams> getDiscoveredItemComplexKey(
       long itemId, int type, long userId)
   {
@@ -2923,4 +3140,5 @@ public class TestRestLiMethodInvocation
         new DiscoveredItemKey().setItemId(itemId).setType(type).setUserId(userId),
         new DiscoveredItemKeyParams());
   }
+
 }

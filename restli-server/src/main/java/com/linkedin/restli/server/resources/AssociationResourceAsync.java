@@ -16,6 +16,12 @@
 
 package com.linkedin.restli.server.resources;
 
+import com.linkedin.restli.server.BatchDeleteRequest;
+import com.linkedin.restli.server.BatchPatchRequest;
+import com.linkedin.restli.server.BatchUpdateRequest;
+import com.linkedin.restli.server.BatchUpdateResult;
+import com.linkedin.restli.server.PagingContext;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -35,6 +41,14 @@ public interface AssociationResourceAsync<V extends RecordTemplate>
         extends BaseResource, KeyValueResource<CompoundKey, V>
 {
   void batchGet(Set<CompoundKey> ids, Callback<Map<CompoundKey, V>> callback);
+
+  void batchDelete(BatchDeleteRequest<CompoundKey, V> ids, Callback<BatchUpdateResult<CompoundKey, V>> callback);
+
+  void batchUpdate(BatchUpdateRequest<CompoundKey, V> entities, Callback<BatchUpdateResult<CompoundKey, V>> callback);
+
+  void batchUpdate(BatchPatchRequest<CompoundKey, V> patches, Callback<BatchUpdateResult<CompoundKey, V>> callback);
+
+  void getAll(PagingContext ctx, Callback<List<V>> callback);
 
   void get(CompoundKey key, Callback<V> callback);
 
