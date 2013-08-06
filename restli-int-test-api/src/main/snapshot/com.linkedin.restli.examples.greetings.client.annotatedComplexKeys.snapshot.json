@@ -34,9 +34,9 @@
   } ],
   "schema" : {
     "schema" : "com.linkedin.restli.examples.greetings.api.Message",
-    "name" : "complexKeys",
-    "doc" : "Demonstrates a resource with a complex key.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.ComplexKeysResource",
-    "path" : "/complexKeys",
+    "name" : "annotatedComplexKeys",
+    "doc" : "generated from: com.linkedin.restli.examples.greetings.server.AnnotatedComplexKeysResource",
+    "path" : "/annotatedComplexKeys",
     "collection" : {
       "methods" : [ {
         "method" : "create"
@@ -48,7 +48,7 @@
         "method" : "batch_get"
       } ],
       "entity" : {
-        "path" : "/complexKeys/{keys}"
+        "path" : "/annotatedComplexKeys/{annotatedComplexKeyId}"
       },
       "finders" : [ {
         "name" : "prefix",
@@ -59,7 +59,7 @@
       } ],
       "supports" : [ "batch_get", "create", "get", "partial_update" ],
       "identifier" : {
-        "name" : "keys",
+        "name" : "annotatedComplexKeyId",
         "params" : "com.linkedin.restli.examples.greetings.api.TwoPartKey",
         "type" : "com.linkedin.restli.examples.greetings.api.TwoPartKey"
       }

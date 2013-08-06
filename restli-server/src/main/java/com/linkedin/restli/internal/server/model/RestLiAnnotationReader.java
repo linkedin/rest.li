@@ -68,6 +68,7 @@ import com.linkedin.restli.server.annotations.RestLiCollectionCompoundKey;
 import com.linkedin.restli.server.annotations.RestLiSimpleResource;
 import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.resources.ComplexKeyResource;
+import com.linkedin.restli.server.resources.ComplexKeyResourceAsync;
 import com.linkedin.restli.server.resources.KeyValueResource;
 import com.linkedin.restli.server.resources.SingleObjectResource;
 import org.slf4j.Logger;
@@ -157,14 +158,27 @@ public final class RestLiAnnotationReader
     Class<? extends RecordTemplate> keyKeyClass = null;
     Class<? extends RecordTemplate> keyParamsClass = null;
     Class<? extends RecordTemplate> valueClass;
-    // If ComplexKeyResource, the parameters are Key type K, Params type P and Resource
+    Class<?> complexKeyResourceBase = null;
+    // If ComplexKeyResource or ComplexKeyResourceAsync, the parameters are Key type K, Params type P and Resource
     // type V and the resource key type is ComplexResourceKey<K,P>
     if (ComplexKeyResource.class.isAssignableFrom(collectionResourceClass))
     {
+      complexKeyResourceBase = ComplexKeyResource.class;
+    }
+    else if (ComplexKeyResourceAsync.class.isAssignableFrom(collectionResourceClass))
+    {
+      complexKeyResourceBase = ComplexKeyResourceAsync.class;
+    }
+
+    if (complexKeyResourceBase != null)
+    {
       @SuppressWarnings("unchecked")
-      List<Class<?>> kvParams =
+      List<Class<?>> kvParams = complexKeyResourceBase.equals(ComplexKeyResource.class) ?
           ReflectionUtils.getTypeArguments(ComplexKeyResource.class,
-                                           (Class<? extends ComplexKeyResource<?, ?, ?>>) collectionResourceClass);
+                                           (Class<? extends ComplexKeyResource<?, ?, ?>>) collectionResourceClass) :
+          ReflectionUtils.getTypeArguments(ComplexKeyResourceAsync.class,
+                                           (Class<? extends ComplexKeyResourceAsync<?, ?, ?>>) collectionResourceClass);
+
       keyClass = ComplexResourceKey.class;
       keyKeyClass = kvParams.get(0).asSubclass(RecordTemplate.class);
       keyParamsClass = kvParams.get(1).asSubclass(RecordTemplate.class);
@@ -174,11 +188,29 @@ public final class RestLiAnnotationReader
     // value
     else
     {
-      List<Class<?>> kvParams =
-          ReflectionUtils.getTypeArguments(KeyValueResource.class,
-                                           collectionResourceClass);
-      keyClass = kvParams.get(0);
-      valueClass = kvParams.get(1).asSubclass(RecordTemplate.class);
+      List<Type> actualTypeArguments =
+          ReflectionUtils.getTypeArgumentsParametrized(KeyValueResource.class,
+                                                       collectionResourceClass);
+      keyClass = ReflectionUtils.getClass(actualTypeArguments.get(0));
+
+      if (RecordTemplate.class.isAssignableFrom(keyClass))
+      {
+        // a complex key is being used and thus ComplexKeyResource should be implemented so that we can wrap it in a
+        // ComplexResourceKey
+        throw new ResourceConfigException("Class '" + collectionResourceClass.getName() +
+                                              "' should implement 'ComplexKeyResource' as a complex key '" +
+                                              keyClass.getName() + "' is being used.");
+      }
+
+      if (keyClass.equals(ComplexResourceKey.class))
+      {
+        @SuppressWarnings("unchecked")
+        Type[] typeArguments = ((ParameterizedType)actualTypeArguments.get(0)).getActualTypeArguments();
+        keyKeyClass = ReflectionUtils.getClass(typeArguments[0]).asSubclass(RecordTemplate.class);
+        keyParamsClass = ReflectionUtils.getClass(typeArguments[1]).asSubclass(RecordTemplate.class);
+      }
+
+      valueClass = ReflectionUtils.getClass(actualTypeArguments.get(1)).asSubclass(RecordTemplate.class);
     }
 
     ResourceType resourceType = getResourceType(collectionResourceClass);

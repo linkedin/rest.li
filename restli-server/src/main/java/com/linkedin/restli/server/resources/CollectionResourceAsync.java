@@ -16,6 +16,14 @@
 
 package com.linkedin.restli.server.resources;
 
+import com.linkedin.restli.server.BatchCreateRequest;
+import com.linkedin.restli.server.BatchCreateResult;
+import com.linkedin.restli.server.BatchDeleteRequest;
+import com.linkedin.restli.server.BatchPatchRequest;
+import com.linkedin.restli.server.BatchUpdateRequest;
+import com.linkedin.restli.server.BatchUpdateResult;
+import com.linkedin.restli.server.PagingContext;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -36,10 +44,20 @@ public interface CollectionResourceAsync<K, V extends RecordTemplate> extends
 
   void batchGet(Set<K> ids, Callback<Map<K, V>> callback);
 
+  void batchUpdate(BatchUpdateRequest<K, V> entities, Callback<BatchUpdateResult<K, V>> callback);
+
+  void batchUpdate(BatchPatchRequest<K, V> patches, Callback<BatchUpdateResult<K, V>> callback);
+
+  void batchCreate(BatchCreateRequest<K, V> entities, Callback<BatchCreateResult<K, V>> callback);
+
+  void batchDelete(BatchDeleteRequest<K, V> ids, Callback<BatchUpdateResult<K, V>> callback);
+
   void update(K key, V entity, Callback<UpdateResponse> callback);
 
   void update(K key, PatchRequest<V> patch, Callback<UpdateResponse> callback);
 
   void delete(K key, Callback<UpdateResponse> callback);
+
+  void getAll(PagingContext ctx, Callback<List<V>> callback);
 
 }

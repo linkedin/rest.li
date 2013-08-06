@@ -253,6 +253,10 @@ subprojects {
                  id 'jpbetz'
                  name 'Joe Betz'
                }
+               developer {
+                 id 'karanparikh'
+                 name 'Karan Parikh'
+               }
             }
           }
         }

@@ -495,4 +495,73 @@ public class CombinedResources
     }
   }
 
+  @RestLiCollection(name="test")
+  public static class ComplexKeyResourceWithAnnotatedCrudMethods
+      implements KeyValueResource<ComplexResourceKey<DummyKeyPart, DummyParamsPart>, Foo>
+  {
+    @RestMethod.Create
+    public CreateResponse myCreate(Foo entity)
+    {
+      return null;
+    }
+
+    @RestMethod.BatchGet
+    public Map<ComplexResourceKey<DummyKeyPart, DummyParamsPart>, Foo> myBatchGet(
+        Set<ComplexResourceKey<DummyKeyPart, DummyParamsPart>> ids)
+    {
+      return null;
+    }
+
+    @RestMethod.Get
+    public Foo myGet(ComplexResourceKey<DummyKeyPart, DummyParamsPart> key)
+    {
+      return null;
+    }
+
+    @RestMethod.Update
+    public UpdateResponse myUpdate(ComplexResourceKey<DummyKeyPart, DummyParamsPart> key, Foo entity)
+    {
+      return null;
+    }
+
+    @RestMethod.PartialUpdate
+    public UpdateResponse myUpdate(ComplexResourceKey<DummyKeyPart, DummyParamsPart> key, PatchRequest<Foo> patch)
+    {
+      return null;
+    }
+
+    @RestMethod.Delete
+    public UpdateResponse myDelete(ComplexResourceKey<DummyKeyPart, DummyParamsPart> key)
+    {
+      return null;
+    }
+
+    @RestMethod.BatchUpdate
+    public BatchUpdateResult<String, Foo> myBatchUpdate(
+        BatchUpdateRequest<ComplexResourceKey<DummyKeyPart, DummyParamsPart>, Foo> entities)
+    {
+      return null;
+    }
+
+    @RestMethod.BatchPartialUpdate
+    public BatchUpdateResult<String, Foo> myBatchUpdate(
+        BatchPatchRequest<ComplexResourceKey<DummyKeyPart, DummyParamsPart>, Foo> patches)
+    {
+      return null;
+    }
+
+    @RestMethod.BatchCreate
+    public BatchCreateResult<String, Foo> myBatchCreate(
+        BatchCreateRequest<ComplexResourceKey<DummyKeyPart, DummyParamsPart>, Foo> entities)
+    {
+      return null;
+    }
+
+    @RestMethod.BatchDelete
+    public BatchUpdateResult<String, Foo> myBatchDelete(
+        BatchDeleteRequest<ComplexResourceKey<DummyKeyPart, DummyParamsPart>, Foo> ids)
+    {
+      return null;
+    }
+  }
 }

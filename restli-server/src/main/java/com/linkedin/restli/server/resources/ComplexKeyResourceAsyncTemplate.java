@@ -16,21 +16,24 @@
 
 package com.linkedin.restli.server.resources;
 
+
 import java.util.Map;
 import java.util.Set;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.UpdateResponse;
 
+
 public class ComplexKeyResourceAsyncTemplate<K extends RecordTemplate, P extends RecordTemplate, V extends RecordTemplate> extends
     ResourceContextHolder implements ComplexKeyResourceAsync<K, P, V>
 {
   @Override
-  public void get(final K key, final Callback<V> callback)
+  public void get(final ComplexResourceKey<K, P> key, final Callback<V> callback)
   {
     throw new RoutingException("'get' not implemented", 400);
 
@@ -43,19 +46,19 @@ public class ComplexKeyResourceAsyncTemplate<K extends RecordTemplate, P extends
   }
 
   @Override
-  public void batchGet(final Set<K> ids, final Callback<Map<K, V>> callback)
+  public void batchGet(final Set<ComplexResourceKey<K, P>> ids, final Callback<Map<ComplexResourceKey<K, P>, V>> callback)
   {
     throw new RoutingException("'batch_get' not implemented", 400);
   }
 
   @Override
-  public void update(final K key, final V entity, final Callback<UpdateResponse> callback)
+  public void update(final ComplexResourceKey<K, P> key, final V entity, final Callback<UpdateResponse> callback)
   {
     throw new RoutingException("'update' not implemented", 400);
   }
 
   @Override
-  public void update(final K key,
+  public void update(final ComplexResourceKey<K, P> key,
                      final PatchRequest<V> patch,
                      final Callback<UpdateResponse> callback)
   {
@@ -63,7 +66,7 @@ public class ComplexKeyResourceAsyncTemplate<K extends RecordTemplate, P extends
   }
 
   @Override
-  public void delete(final K key, final Callback<UpdateResponse> callback)
+  public void delete(final ComplexResourceKey<K, P> key, final Callback<UpdateResponse> callback)
   {
     throw new RoutingException("'delete' not implemented", 400);
   }

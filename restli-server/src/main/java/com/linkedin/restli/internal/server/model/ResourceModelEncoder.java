@@ -34,6 +34,7 @@ import com.linkedin.data.template.HasTyperefInfo;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.data.template.TyperefInfo;
 import com.linkedin.restli.common.ActionResponse;
+import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.server.RestLiInternalException;
@@ -877,10 +878,10 @@ public class ResourceModelEncoder
   {
     IdentifierSchema identifierSchema = new IdentifierSchema();
     identifierSchema.setName(collectionResource.getKeyName());
-    // If a complex key resource, set type to the schema type of the key part of the
+    // If the key is a complex key, set type to the schema type of the key part of the
     // complex key and params to that of the params part of the complex key.
     // Otherwise, just set the type to the key class schema type
-    if (ComplexKeyResource.class.isAssignableFrom(collectionResource.getResourceClass()))
+    if (collectionResource.getKeyClass().equals(ComplexResourceKey.class))
     {
       identifierSchema.setType(buildDataSchemaType(collectionResource.getKeyKeyClass()));
       identifierSchema.setParams(buildDataSchemaType(collectionResource.getKeyParamsClass()));

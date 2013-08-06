@@ -16,6 +16,12 @@
 
 package com.linkedin.restli.server.twitter;
 
+import com.linkedin.restli.server.BatchCreateRequest;
+import com.linkedin.restli.server.BatchCreateResult;
+import com.linkedin.restli.server.BatchDeleteRequest;
+import com.linkedin.restli.server.BatchPatchRequest;
+import com.linkedin.restli.server.BatchUpdateRequest;
+import com.linkedin.restli.server.BatchUpdateResult;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -95,6 +101,58 @@ public class AsyncStatusCollectionResource extends
   }
 
   /**
+   * Creates new Statuses.
+   *
+   * @param entities
+   * @param callback
+   */
+  @Override
+  public void batchCreate(BatchCreateRequest<Long, Status> entities,
+                          @CallbackParam final Callback<BatchCreateResult<Long, Status>> callback)
+  {
+    callback.onSuccess(null);
+  }
+
+  /**
+   * Deletes Statuses.
+   *
+   * @param ids
+   * @param callback
+   */
+  @Override
+  public void batchDelete(BatchDeleteRequest<Long, Status> ids,
+                          @CallbackParam final Callback<BatchUpdateResult<Long, Status>> callback)
+  {
+    callback.onSuccess(null);
+  }
+
+  /**
+   * Updates Statuses.
+   *
+   * @param entities
+   * @param callback
+   */
+  @Override
+  public void batchUpdate(BatchUpdateRequest<Long, Status> entities,
+                          @CallbackParam final Callback<BatchUpdateResult<Long, Status>> callback)
+  {
+    callback.onSuccess(null);
+  }
+
+  /**
+   * Patches Statuses.
+   *
+   * @param patches
+   * @param callback
+   */
+  @Override
+  public void batchUpdate(BatchPatchRequest<Long, Status> patches,
+                          @CallbackParam final Callback<BatchUpdateResult<Long, Status>> callback)
+  {
+    callback.onSuccess(null);
+  }
+
+  /**
    * Gets a batch of statuses.
    */
   @Override
@@ -141,6 +199,13 @@ public class AsyncStatusCollectionResource extends
   public void update(final Long key,
                      final Status entity,
                      @CallbackParam final Callback<UpdateResponse> callback)
+  {
+    callback.onSuccess(null);
+  }
+
+  @Override
+  public void getAll(@Context PagingContext ctx,
+                     @CallbackParam Callback<List<Status>> callback)
   {
     callback.onSuccess(null);
   }

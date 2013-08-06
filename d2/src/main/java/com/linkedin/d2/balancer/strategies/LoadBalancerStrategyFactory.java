@@ -31,7 +31,9 @@ public interface LoadBalancerStrategyFactory<T extends LoadBalancerStrategy>
    * configuration; may be empty.  The semantics of the properties are defined by the particular
    * load balancer strategy receiving the map.  The values of the map are either Strings or nested
    * structures (Lists or Maps); any nested structures will obey the same restriction.
+   * @param degraderProperties the degrader properties that is used by tracker clients
    * @return The LoadBalancer
    */
-  T newLoadBalancer(String serviceName, Map<String, Object> strategyProperties);
+  T newLoadBalancer(String serviceName, Map<String, Object> strategyProperties,
+                    Map<String, String> degraderProperties);
 }

@@ -130,7 +130,8 @@ public class TestRestLiResourceModels
 
     assertNotNull(statusResourceModel.findMethod(ResourceMethod.BATCH_GET));
     assertNotNull(statusResourceModel.findMethod(ResourceMethod.CREATE));
-    assertNull(statusResourceModel.findMethod(ResourceMethod.BATCH_CREATE));
+    assertNotNull(statusResourceModel.findMethod(ResourceMethod.BATCH_CREATE));
+    assertNotNull(statusResourceModel.findMethod(ResourceMethod.BATCH_DELETE));
 
 
     checkEntityModel(statusResourceModel,
@@ -140,7 +141,9 @@ public class TestRestLiResourceModels
     assertNotNull(statusResourceModel.findMethod(ResourceMethod.GET));
     assertNotNull(statusResourceModel.findMethod(ResourceMethod.PARTIAL_UPDATE));
     assertNotNull(statusResourceModel.findMethod(ResourceMethod.FINDER));
-    assertNull(statusResourceModel.findMethod(ResourceMethod.BATCH_UPDATE));
+    assertNotNull(statusResourceModel.findMethod(ResourceMethod.BATCH_UPDATE));
+    assertNotNull(statusResourceModel.findMethod(ResourceMethod.BATCH_PARTIAL_UPDATE));
+    assertNotNull(statusResourceModel.findMethod(ResourceMethod.GET_ALL));
   }
 
 
@@ -388,6 +391,31 @@ public class TestRestLiResourceModels
                      ResourceMethod.PARTIAL_UPDATE,
                      ResourceMethod.DELETE,
                      ResourceMethod.ACTION);
+
+    // #3 Verify complex key collection with annotated CRUD methods.
+    ResourceModel complexKeyCollectionModelAnnotatedCrud = buildResourceModel(
+        CombinedResources.ComplexKeyResourceWithAnnotatedCrudMethods.class);
+    checkCollectionModel(complexKeyCollectionModelAnnotatedCrud, "test",
+                         ComplexResourceKey.class,
+                         "testId", Foo.class, false,
+                         CombinedResources.ComplexKeyResourceWithAnnotatedCrudMethods.class);
+    checkEntityModel(complexKeyCollectionModelAnnotatedCrud,
+                     ComplexResourceKey.class,
+                     "testId",
+                     Foo.class,
+                     Collections.<String, Class<?>>emptyMap());
+
+    assertHasMethods(complexKeyCollectionModelAnnotatedCrud,
+                     ResourceMethod.GET,
+                     ResourceMethod.CREATE,
+                     ResourceMethod.UPDATE,
+                     ResourceMethod.PARTIAL_UPDATE,
+                     ResourceMethod.DELETE,
+                     ResourceMethod.BATCH_GET,
+                     ResourceMethod.BATCH_CREATE,
+                     ResourceMethod.BATCH_DELETE,
+                     ResourceMethod.BATCH_UPDATE,
+                     ResourceMethod.BATCH_PARTIAL_UPDATE);
   }
 
   @Test
@@ -484,6 +512,13 @@ public class TestRestLiResourceModels
     assertNotNull(actionMethod);
     final Class<?> returnClass = actionMethod.getActionReturnType();
     assertSame(returnClass, Integer.class);
+  }
+
+  @Test
+  public void testInvalidComplexKeyInCollectionResourceTemplate() throws Exception
+  {
+    expectConfigException(InvalidResources.ComplexKeyInCollectionResourceTemplate.class,
+                          "' should implement 'ComplexKeyResource' as a complex key '");
   }
 
   // ************************

@@ -47,7 +47,6 @@ import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.RoutingException;
-import com.linkedin.restli.server.resources.ComplexKeyResource;
 
 /**
  * Navigates the resource hierarchy to find a Resource handler for the a given URI.
@@ -402,7 +401,7 @@ public class RestLiRouter
                                        final ServerResourceContext context)
   {
     // Complex key batch get
-    if (ComplexKeyResource.class.isAssignableFrom(resource.getResourceClass()))
+    if (ComplexResourceKey.class.equals(resource.getKeyClass()))
     {
       // Parse all query parameters into a data map.
       DataMap allParametersDataMap = context.getParameters();

@@ -29,15 +29,15 @@ import com.linkedin.restli.server.UpdateResponse;
 public interface ComplexKeyResourceAsync<K extends RecordTemplate, P extends RecordTemplate, V extends RecordTemplate> extends
     BaseResource, KeyValueResource<ComplexResourceKey<K,P>, V>
 {
-  void get(K key, Callback<V> callback);
+  void get(ComplexResourceKey<K, P> key, Callback<V> callback);
 
   void create(V entity, Callback<CreateResponse> callback);
 
-  void batchGet(Set<K> ids, Callback<Map<K, V>> callback);
+  void batchGet(Set<ComplexResourceKey<K, P>> ids, Callback<Map<ComplexResourceKey<K, P>, V>> callback);
 
-  void update(K key, V entity, Callback<UpdateResponse> callback);
+  void update(ComplexResourceKey<K, P> key, V entity, Callback<UpdateResponse> callback);
 
-  void update(K key, PatchRequest<V> patch, Callback<UpdateResponse> callback);
+  void update(ComplexResourceKey<K, P> key, PatchRequest<V> patch, Callback<UpdateResponse> callback);
 
-  void delete(K key, Callback<UpdateResponse> callback);
+  void delete(ComplexResourceKey<K, P> key, Callback<UpdateResponse> callback);
 }

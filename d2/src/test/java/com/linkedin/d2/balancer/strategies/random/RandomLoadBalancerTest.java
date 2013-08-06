@@ -47,7 +47,8 @@ public class RandomLoadBalancerTest
   {
     RandomLoadBalancerStrategyFactory lbFactory = new RandomLoadBalancerStrategyFactory();
     RandomLoadBalancerStrategy rrLoadBalancer = lbFactory.newLoadBalancer("unused",
-                                                                          Collections.<String, Object>emptyMap());
+                                                                          Collections.<String, Object>emptyMap(),
+                                                                          null);
     Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>(2);
     partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
     TrackerClient trackerClient1 =

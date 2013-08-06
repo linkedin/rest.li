@@ -1249,7 +1249,8 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
 
         LoadBalancerStrategy strategy = factory.newLoadBalancer(
             serviceProperties.getServiceName(),
-            loadBalancerStrategyProperties);
+            loadBalancerStrategyProperties,
+            serviceProperties.getDegraderProperties());
 
         strategyMap.put(scheme, strategy);
       }

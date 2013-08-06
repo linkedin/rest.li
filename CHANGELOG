@@ -1,5 +1,25 @@
+1.9.12
+------
+
+1.9.11
+------
+(RB=193189)
+Added batch methods to the async interface and template for simple (non complex key, non association) collections.
+
+1.9.10
+-----
+(RB=190386)
+Fixing couple of issues in annotated complex-key resources and async complex-key resource template. Adding extensive test covarage for both scenarios.
+
+1.9.9
+-----
+(RB=188507)
+fix the bug where threads that are waiting for state initialization, never stop waiting because the init step throws an exception
+
 1.9.8
 -----
+(RB=192299)
+Added fix to prevent a complex key when a CollectionResource is being used.
 
 1.9.7
 -----

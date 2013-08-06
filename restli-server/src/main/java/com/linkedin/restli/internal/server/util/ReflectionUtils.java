@@ -151,6 +151,32 @@ public class ReflectionUtils
   public static <T> List<Class<?>> getTypeArguments(final Class<T> baseClass,
                                                     final Class<? extends T> childClass)
   {
+    List<Type> typeArguments = getTypeArgumentsParametrized(baseClass, childClass);
+    List<Class<?>> rawTypeArguments = null;
+
+    if (typeArguments != null)
+    {
+      rawTypeArguments = new ArrayList<Class<?>>();
+
+      for (Type type : typeArguments)
+      {
+        rawTypeArguments.add(getClass(type));
+      }
+    }
+
+    return rawTypeArguments;
+  }
+
+  /**
+   * Get the actual type arguments a child class has used to extend a generic base class.
+   *
+   * @param baseClass the base class
+   * @param childClass the child class
+   * @return a list of the raw classes for the actual type arguments.
+   */
+  public static <T> List<Type> getTypeArgumentsParametrized(final Class<T> baseClass,
+                                                    final Class<? extends T> childClass)
+  {
     Map<Type, Type> resolvedTypes = new HashMap<Type, Type>();
     Type type = walkTypeChain(baseClass, childClass, resolvedTypes);
     if (type == null)
@@ -161,24 +187,24 @@ public class ReflectionUtils
     // finally, for each actual type argument provided to baseClass, determine (if
     // possible)
     // the raw class for that type argument.
-    Type[] actualTypeArguments;
+    Type[] typeArguments;
     if (type instanceof Class)
     {
-      actualTypeArguments = ((Class) type).getTypeParameters();
+      typeArguments = ((Class) type).getTypeParameters();
     }
     else
     {
-      actualTypeArguments = ((ParameterizedType) type).getActualTypeArguments();
+      typeArguments = ((ParameterizedType) type).getActualTypeArguments();
     }
-    List<Class<?>> typeArgumentsAsClasses = new ArrayList<Class<?>>();
+    List<Type> typeArgumentsAsClasses = new ArrayList<Type>();
     // resolve types by chasing down type variables.
-    for (Type baseType : actualTypeArguments)
+    for (Type baseType : typeArguments)
     {
       while (resolvedTypes.containsKey(baseType))
       {
         baseType = resolvedTypes.get(baseType);
       }
-      typeArgumentsAsClasses.add(getClass(baseType));
+      typeArgumentsAsClasses.add(baseType);
     }
     return typeArgumentsAsClasses;
   }

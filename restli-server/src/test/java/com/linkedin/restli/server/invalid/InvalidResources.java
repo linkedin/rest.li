@@ -46,6 +46,13 @@ import java.util.List;
  */
 public class InvalidResources
 {
+
+  @RestLiCollection(name="foo")
+  public static class ComplexKeyInCollectionResourceTemplate extends CollectionResourceTemplate<Status, Status>
+  {
+    // empty
+  }
+
   @RestLiCollection(name="foo", keyName="foo")
   public static class FinderNonListReturnType extends CollectionResourceTemplate<Long, Status>
   {

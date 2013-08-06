@@ -235,6 +235,22 @@ class GreetingsResourceImpl implements KeyValueResource<Long,Greeting>
     return new UpdateResponse(HttpStatus.S_204_NO_CONTENT);
   }
 
+  @RestMethod.GetAll
+  public List<Greeting> getAll(@Context PagingContext ctx)
+  {
+    // Deterministic behaviour of getAll to make it easier to test as part of the integration test suite
+    // Just return those greetings that have "GetAll" present in their message
+    List<Greeting> greetings = new ArrayList<Greeting>();
+    for (Greeting greeting: _db.values())
+    {
+      if (greeting.getMessage().contains("GetAll"))
+      {
+        greetings.add(greeting);
+      }
+    }
+    return greetings;
+  }
+
   @Finder("searchWithDefault")
   public List<Greeting> searchWithDefault(@Context PagingContext ctx,
                                           @QueryParam("tone") @Optional("FRIENDLY") Tone tone)
