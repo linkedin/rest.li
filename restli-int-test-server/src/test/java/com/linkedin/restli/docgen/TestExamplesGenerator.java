@@ -168,7 +168,7 @@ public class TestExamplesGenerator
     request = capture.getRequest();
     Assert.assertEquals(request.getURI(), URI.create("/greeting"));
     DataMap patchMap = _codec.bytesToMap(capture.getRequest().getEntity().copyBytes());
-    Assert.assertTrue(patchMap.containsKey("$set"));
+    checkPatchMap(patchMap);
 
     final RestMethodSchema greetingDelete = findRestMethod(greeting, ResourceMethod.DELETE);
     capture = generator.generateRestMethodExample(greeting, greetingUpdate, spec);
@@ -216,7 +216,7 @@ public class TestExamplesGenerator
                                       new String[]{"greeting", "subgreetings", null, "subsubgreeting"}));
 
     patchMap = _codec.bytesToMap(capture.getRequest().getEntity().copyBytes());
-    Assert.assertTrue(patchMap.containsKey("$set"));
+    checkPatchMap(patchMap);
 
     final RestMethodSchema subsubgreetingDelete = findRestMethod(subsubgreeting, ResourceMethod.DELETE);
     capture = generator.generateRestMethodExample(subsubgreeting, subsubgreetingDelete, spec);
@@ -233,6 +233,13 @@ public class TestExamplesGenerator
     Assert.assertTrue(validateUrlPath(request.getURI(),
                                       new String[]{"greeting", "subgreetings", null, "subsubgreeting"}));
 
+  }
+
+  private static void checkPatchMap(DataMap patchMap)
+  {
+    DataMap patch = patchMap.getDataMap("patch");
+    Assert.assertNotNull(patch);
+    Assert.assertTrue(patch.containsKey("$set"));
   }
 
   private static Map<String, ResourceModel> buildResourceModels(Class<?>... resourceClasses)

@@ -174,7 +174,8 @@ public class RestLiExampleGenerator
     final UpdateResponse ur = new UpdateResponse(HttpStatus.S_200_OK);
 
     final RecordTemplate diffRecord = buildRecordTemplate(valueClass);
-    final PatchRequest<?> patch = new PatchRequest<RecordTemplate>(PatchCreator.diff(record, diffRecord).getDataMap());
+    final PatchRequest<?> patch = PatchRequest.createFromPatchDocument(
+        PatchCreator.diff(record, diffRecord).getDataMap());
 
     final DataMap batchData = new DataMap();
     batchData.put(randomId.toString(), record.data());

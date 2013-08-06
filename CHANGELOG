@@ -1,5 +1,7 @@
 1.9.12
 ------
+(RB=194339)
+Fixing Example Generator to create correct request body for partial updates.
 
 1.9.11
 ------
