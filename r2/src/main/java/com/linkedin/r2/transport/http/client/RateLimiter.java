@@ -116,9 +116,9 @@ public class RateLimiter
         _period = ms;
         if (!_pending.isEmpty() && (_task == null || _task.cancel(false)))
         {
-          Long adjustedPeriod = _period;
+          long adjustedPeriod = _period;
           if (_task != null) {
-            Long elapsedTime = previous - _task.getDelay(TimeUnit.MILLISECONDS);
+            long elapsedTime = previous - _task.getDelay(TimeUnit.MILLISECONDS);
             adjustedPeriod = Math.max(_period - elapsedTime, 0);
           }
           _task = _executor.schedule(_doit, adjustedPeriod, TimeUnit.MILLISECONDS);
