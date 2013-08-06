@@ -72,12 +72,20 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
   private State _state = State.NOT_YET_STARTED;
   private Callback<None> _shutdownCallback = null;
 
-  // Statistics only
-  private int _totalCreated;
-  private int _totalDestroyed;
-  private int _createErrors;
-  private int _destroyErrors;
-
+  // Statistics for each pool, retrieved with getStats()
+  // See AsyncPoolStats for details
+  // These are total counts over the entire lifetime of the pool
+  private int _totalCreated = 0;
+  private int _totalDestroyed = 0;
+  private int _totalCreateErrors = 0;
+  private int _totalDestroyErrors = 0;
+  private int _totalBadDestroyed = 0;
+  private int _totalTimedOut = 0;
+  // These counters reset on each call to getStats()
+  private int _sampleMaxCheckedOut = 0;
+  private int _sampleMaxPoolSize = 0;
+  // These are instantaneous values
+  private int _checkedOut = 0;
 
   public AsyncPoolImpl(String name,
                        Lifecycle<T> lifecycle,
@@ -90,6 +98,12 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
     _maxSize = maxSize;
     _idleTimeout = idleTimeout;
     _timeoutExecutor = timeoutExecutor;
+  }
+
+  @Override
+  public String getName()
+  {
+    return _poolName;
   }
 
   @Override
@@ -191,6 +205,11 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
       {
         trc("dequeued an idle object");
         // Valid object; done
+        synchronized (_lock)
+        {
+          _checkedOut++;
+          _sampleMaxCheckedOut = Math.max(_checkedOut, _sampleMaxCheckedOut);
+        }
         callback.onSuccess(rawObj);
         return null;
       }
@@ -219,6 +238,10 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
   @Override
   public void put(T obj)
   {
+    synchronized (_lock)
+    {
+      _checkedOut--;
+    }
     if (!_lifecycle.validatePut(obj))
     {
       destroy(obj, true);
@@ -237,6 +260,11 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
       if (waiter == null)
       {
         _idle.offerLast(new TimedObject<T>(obj));
+      }
+      else
+      {
+        _checkedOut++;
+        _sampleMaxCheckedOut = Math.max(_checkedOut, _sampleMaxCheckedOut);
       }
       shutdown = checkShutdownComplete();
     }
@@ -263,17 +291,51 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
   @Override
   public void dispose(T obj)
   {
+    synchronized (_lock)
+    {
+      _checkedOut--;
+    }
     destroy(obj, true);
+  }
+
+  @Override
+  public AsyncPoolStats getStats()
+  {
+    // get a copy of the stats
+    synchronized (_lock)
+    {
+      AsyncPoolStats stats = new AsyncPoolStats(
+        _totalCreated,
+        _totalDestroyed,
+        _totalCreateErrors,
+        _totalDestroyErrors,
+        _totalBadDestroyed,
+        _totalTimedOut,
+        _checkedOut,
+        _maxSize,
+        _poolSize,
+        _sampleMaxCheckedOut,
+        _sampleMaxPoolSize
+      );
+      _sampleMaxCheckedOut = _checkedOut;
+      _sampleMaxPoolSize = _poolSize;
+      return stats;
+    }
   }
 
   private void destroy(T obj, boolean bad)
   {
-    trc("disposing a pooled object");
-    _lifecycle.destroy(obj, bad, new Callback<T>()
+    if(bad)
     {
-      @Override
-      public void onSuccess(T t)
+      synchronized(_lock)
       {
+        _totalBadDestroyed++;
+      }
+    }
+    trc("disposing a pooled object");
+    _lifecycle.destroy(obj, bad, new Callback<T>() {
+      @Override
+      public void onSuccess(T t) {
         boolean create;
         synchronized (_lock)
         {
@@ -287,16 +349,13 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
       }
 
       @Override
-      public void onError(Throwable e)
-      {
+      public void onError(Throwable e) {
         boolean create;
-        synchronized (_lock)
-        {
-          _destroyErrors++;
+        synchronized (_lock) {
+          _totalDestroyErrors++;
           create = objectDestroyed();
         }
-        if (create)
-        {
+        if (create) {
           create();
         }
         // TODO log this error!
@@ -343,6 +402,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
         else if (_waiters.size() > 0)
         {
           _poolSize++;
+          _sampleMaxPoolSize = Math.max(_poolSize, _sampleMaxPoolSize);
           result = true;
         }
       }
@@ -375,7 +435,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
         final Collection<Callback<T>> waitersDenied;
         synchronized (_lock)
         {
-          _createErrors++;
+          _totalCreateErrors++;
           _lastCreateError = e;
           create = objectDestroyed();
           if (!_waiters.isEmpty())
@@ -436,6 +496,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
       for (TimedObject<U> p; (p = queue.peek()) != null && p.getTime() < target; )
       {
         toReap.add(queue.poll().get());
+        _totalTimedOut++;
       }
     }
     return toReap;
