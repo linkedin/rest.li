@@ -1,3 +1,11 @@
+1.9.12
+------
+
+1.9.11
+------
+(RB=193189)
+Added batch methods to the async interface and template for simple (non complex key, non association) collections.
+
 1.9.10
 -----
 (RB=190386)
