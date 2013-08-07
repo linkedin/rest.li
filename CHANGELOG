@@ -1,5 +1,8 @@
 1.9.12
 ------
+(RB=195243)
+Fixed issue with Complex Keys with fields arrays containing a single element in get requests.
+
 (RB=194339)
 Fixing Example Generator to create correct request body for partial updates.
 
