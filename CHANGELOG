@@ -1,4 +1,4 @@
-1.9.12
+1.9.10
 ------
 (RB=195243)
 Fixed issue with Complex Keys with fields arrays containing a single element in get requests.
@@ -6,13 +6,9 @@ Fixed issue with Complex Keys with fields arrays containing a single element in 
 (RB=194339)
 Fixing Example Generator to create correct request body for partial updates.
 
-1.9.11
-------
 (RB=193189)
 Added batch methods to the async interface and template for simple (non complex key, non association) collections.
 
-1.9.10
------
 (RB=190386)
 Fixing couple of issues in annotated complex-key resources and async complex-key resource template. Adding extensive test covarage for both scenarios.
 
