@@ -17,42 +17,40 @@
 package com.linkedin.pegasus.generator.test;
 
 
+import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+
+import org.testng.annotations.Test;
+
 import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
-import com.linkedin.data.schema.UnionDataSchema;
 import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.LongMap;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.data.template.TestDataTemplateUtil;
 import com.linkedin.data.template.UnionTemplate;
-import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.Arrays;
-import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotSame;
-import static org.testng.Assert.assertSame;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.*;
 
 
 public class TestUnion
 {
-  private <T extends UnionTemplate> void testTypeValue(T union, String type, Object typeValue)
+  private static <T extends UnionTemplate> void testTypeValue(T union, String type, Object typeValue)
   {
     String isTypeMethodName = TestDataTemplateUtil.methodName("is", type);
     String getTypeMethodName = TestDataTemplateUtil.methodName("get", type);
     Class<? extends UnionTemplate> unionClass = union.getClass();
-    boolean foundIsMethod = false;
-    boolean foundGetMethod = false;
     try
     {
       Method[] methods = unionClass.getMethods();
+      boolean foundIsMethod = false;
+      boolean foundGetMethod = false;
       for (Method method : methods)
       {
         String methodName = method.getName();
@@ -80,10 +78,11 @@ public class TestUnion
     }
     catch (InvocationTargetException ex)
     {
+      throw new IllegalStateException(ex);
     }
   }
 
-  private <T extends UnionTemplate> void testTypeValue(Class<T> unionClass, String type, Object typeValue)
+  private static <T extends UnionTemplate> void testTypeValue(Class<T> unionClass, String type, Object typeValue)
   {
     try
     {
@@ -104,15 +103,22 @@ public class TestUnion
       {
         dataMap.put(type, typeValue);
       }
-      System.out.println(dataMap);
+
       T unionFromCtor = ctor.newInstance(dataMap);
       testTypeValue(unionFromCtor, type, typeValue);
 
       // constructor with no argument followed by set
       String setTypeMethodName = TestDataTemplateUtil.methodName("set", type);
       Method setMethod = unionClass.getMethod(setTypeMethodName, typeValue.getClass());
-      T unionToSet = unionClass.newInstance();
+      T unionToSet = unionClass.getConstructor().newInstance();
       setMethod.invoke(unionToSet, typeValue);
+      testTypeValue(unionToSet, type, typeValue);
+
+      // create method
+      Method createMethod = unionClass.getMethod("create", typeValue.getClass());
+      @SuppressWarnings("unchecked")
+      T unionFromCreate = (T) createMethod.invoke(null, typeValue);
+      testTypeValue(unionFromCreate, type, typeValue);
     }
     catch (IllegalAccessException ex)
     {

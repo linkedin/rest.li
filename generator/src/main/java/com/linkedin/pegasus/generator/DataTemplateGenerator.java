@@ -17,6 +17,24 @@
 package com.linkedin.pegasus.generator;
 
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayDeque;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
@@ -79,23 +97,6 @@ import com.sun.codemodel.JMethod;
 import com.sun.codemodel.JMod;
 import com.sun.codemodel.JPackage;
 import com.sun.codemodel.JVar;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Deque;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Generates Java data templates.
@@ -263,7 +264,7 @@ public abstract class DataTemplateGenerator extends CodeGenerator
      */
     public boolean getGenerateImported()
     {
-      return _generateImported == null || _generateImported;
+      return _generateImported == null || _generateImported.booleanValue();
     }
 
     private final Boolean _generateImported;
@@ -933,15 +934,24 @@ public abstract class DataTemplateGenerator extends CodeGenerator
                                             JVar schemaField)
   {
     boolean isDirect = isDirectType(memberType);
-    String wrappedOrDirect = isDirect ? "Direct" : "Wrapped";
+    String wrappedOrDirect = isDirect? "Direct" : "Wrapped";
     String memberKey = memberType.getUnionMemberKey();
     String capitalizedName = memberName(memberType);
 
     String memberFieldName = "MEMBER_" + capitalizedName;
     JFieldVar memberField = unionClass.field(JMod.PRIVATE | JMod.STATIC | JMod.FINAL, DataSchema.class, memberFieldName);
     memberField.init(schemaField.invoke("getType").arg(memberKey));
+    String setterName = "set" + capitalizedName;
 
-    // Generate is method.
+    // Generate builder.
+
+    JMethod createMethod = unionClass.method(JMod.PUBLIC | JMod.STATIC, unionClass, "create");
+    JVar param = createMethod.param(memberClass, "value");
+    JVar newUnionVar = createMethod.body().decl(unionClass, "newUnion", JExpr._new(unionClass));
+    createMethod.body().invoke(newUnionVar, setterName).arg(param);
+    createMethod.body()._return(newUnionVar);
+
+    // Is method.
 
     JMethod is = unionClass.method(JMod.PUBLIC, getCodeModel().BOOLEAN, "is" + capitalizedName);
     JBlock isBody = is.body();
@@ -958,9 +968,8 @@ public abstract class DataTemplateGenerator extends CodeGenerator
 
     // Setter method.
 
-    String setterName = "set" + capitalizedName;
-    JMethod setter =  unionClass.method(JMod.PUBLIC, Void.TYPE, setterName);
-    JVar param = setter.param(memberClass, "value");
+    JMethod setter = unionClass.method(JMod.PUBLIC, Void.TYPE, setterName);
+    param = setter.param(memberClass, "value");
     JClass dataClass = determineDataClass(memberType, unionClass, memberType.getUnionMemberKey());
     JInvocation inv = setter.body().invoke("select" + wrappedOrDirect).arg(memberField).arg(JExpr.dotclass(memberClass));
     dataClassArg(inv, dataClass).arg(memberKey).arg(param);
@@ -1524,7 +1533,7 @@ public abstract class DataTemplateGenerator extends CodeGenerator
           TyperefDataSchema typerefDataSchema = (TyperefDataSchema) schema;
           while ((referencedDataSchema = typerefDataSchema.getDereferencedDataSchema()) != dereferencedDataSchema)
           {
-            typerefDataSchema = ((TyperefDataSchema) referencedDataSchema);
+            typerefDataSchema = (TyperefDataSchema) referencedDataSchema;
           }
           return new ClassInfo(typerefDataSchema.getNamespace(), capitalize(typerefDataSchema.getName()));
         }
