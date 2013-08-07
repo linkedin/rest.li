@@ -22,7 +22,10 @@ package com.linkedin.restli.internal.server.methods.arguments;
 
 
 import com.linkedin.data.DataList;
+import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.ArrayDataSchema;
+import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.validation.CoercionMode;
 import com.linkedin.data.schema.validation.RequiredMode;
 import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
@@ -31,6 +34,7 @@ import com.linkedin.data.template.AbstractArrayTemplate;
 import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
@@ -42,6 +46,7 @@ import com.linkedin.restli.server.RoutingException;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.List;
+
 
 /**
  * @author Josh Walker
@@ -66,6 +71,8 @@ public class ArgumentBuilder
                                    final ResourceContext context)
   {
     Object[] arguments = Arrays.copyOf(positionalArguments, parameters.size());
+
+    fixUpComplexKeySingletonArray(arguments);
 
     for (int i = positionalArguments.length; i < parameters.size(); ++i)
     {
@@ -104,6 +111,53 @@ public class ArgumentBuilder
       }
     }
     return arguments;
+  }
+
+  /**
+   * Because of backwards compatibility concerns, array fields of the key component of a
+   * {@link ComplexResourceKey}s in a get request will be represented in the request url in the old
+   * style.  That is, if an array field has the name "a", and contains [1,2] the part of the url
+   * representing the serialized array will look like  "a=1&a=2".  However, if the array is a
+   * singleton it will just be represented by "a=1". Therefore it is not possible to distinguish
+   * between a single value itself and an array containing a single value.
+   *
+   * The purpose of this function is to fixup the singleton array problem by checking to see if the
+   * request is a ComplexKey, whether that ComplesKey's key part has an array component, and, if so
+   * and the data for that field is NOT a dataList, placing the data into a dataList.
+   *
+   * @param arguments the final list of all the arguments.
+   */
+  private static void fixUpComplexKeySingletonArray(Object[] arguments)
+  {
+    for(int i=0; i < arguments.length; i++)
+    {
+      Object k = arguments[i];
+      if (k instanceof ComplexResourceKey)
+      {
+        ComplexResourceKey complexResourceKey = (ComplexResourceKey)k;
+        RecordTemplate key = complexResourceKey.getKey();
+        DataMap dataMap = key.data();
+        for(RecordDataSchema.Field f : key.schema().getFields())
+        {
+          DataSchema.Type type = f.getType().getType();
+          String fieldName = f.getName();
+          if (type == DataSchema.Type.ARRAY && dataMap.containsKey(fieldName))
+          {
+            Object arrayFieldValue = dataMap.get(fieldName);
+            if (!(arrayFieldValue instanceof DataList))
+            {
+              DataList list = new DataList();
+              list.add(arrayFieldValue);
+              dataMap.put(fieldName, list);
+            }
+          }
+        }
+        RecordTemplate wrappedKey = DataTemplateUtil.wrap(dataMap, key.getClass());
+        @SuppressWarnings("unchecked")
+        ComplexResourceKey newKey = new ComplexResourceKey(wrappedKey, complexResourceKey.getParams());
+        arguments[i] = newKey;
+      }
+    }
   }
 
   /**
@@ -209,7 +263,7 @@ public class ArgumentBuilder
   }
 
   private static DataTemplate<?> buildDataTemplateArgument(final ResourceContext context,
-                                                        final Parameter<?> param)
+                                                           final Parameter<?> param)
   {
     Object paramValue = context.getStructuredParameter(param.getName());
     DataTemplate<?> paramRecordTemplate;

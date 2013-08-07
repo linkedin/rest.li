@@ -1,0 +1,38 @@
+{
+  "name" : "complexArray",
+  "namespace" : "com.linkedin.restli.examples.greetings.client",
+  "path" : "/complexArray",
+  "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+  "doc" : "generated from: com.linkedin.restli.examples.greetings.server.ComplexArrayResource",
+  "collection" : {
+    "identifier" : {
+      "name" : "complexArrayId",
+      "type" : "com.linkedin.restli.examples.greetings.api.ComplexArray",
+      "params" : "com.linkedin.restli.examples.greetings.api.ComplexArray"
+    },
+    "supports" : [ "batch_get", "get" ],
+    "methods" : [ {
+      "method" : "get"
+    }, {
+      "method" : "batch_get"
+    } ],
+    "finders" : [ {
+      "name" : "finder",
+      "parameters" : [ {
+        "name" : "array",
+        "type" : "com.linkedin.restli.examples.greetings.api.ComplexArray"
+      } ]
+    } ],
+    "actions" : [ {
+      "name" : "action",
+      "parameters" : [ {
+        "name" : "array",
+        "type" : "com.linkedin.restli.examples.greetings.api.ComplexArray"
+      } ],
+      "returns" : "int"
+    } ],
+    "entity" : {
+      "path" : "/complexArray/{complexArrayId}"
+    }
+  }
+}

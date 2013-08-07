@@ -1,0 +1,77 @@
+{
+  "models" : [ {
+    "type" : "enum",
+    "name" : "Tone",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "symbols" : [ "FRIENDLY", "SINCERE", "INSULTING" ]
+  }, {
+    "type" : "record",
+    "name" : "Greeting",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "doc" : "A greeting",
+    "fields" : [ {
+      "name" : "id",
+      "type" : "long"
+    }, {
+      "name" : "message",
+      "type" : "string"
+    }, {
+      "name" : "tone",
+      "type" : "Tone",
+      "doc" : "tone"
+    } ]
+  }, {
+    "type" : "record",
+    "name" : "ComplexArray",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "fields" : [ {
+      "name" : "next",
+      "type" : "ComplexArray",
+      "optional" : true
+    }, {
+      "name" : "array",
+      "type" : {
+        "type" : "array",
+        "items" : "long"
+      }
+    } ]
+  } ],
+  "schema" : {
+    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+    "name" : "complexArray",
+    "doc" : "generated from: com.linkedin.restli.examples.greetings.server.ComplexArrayResource",
+    "path" : "/complexArray",
+    "collection" : {
+      "methods" : [ {
+        "method" : "get"
+      }, {
+        "method" : "batch_get"
+      } ],
+      "entity" : {
+        "path" : "/complexArray/{complexArrayId}"
+      },
+      "finders" : [ {
+        "name" : "finder",
+        "parameters" : [ {
+          "name" : "array",
+          "type" : "com.linkedin.restli.examples.greetings.api.ComplexArray"
+        } ]
+      } ],
+      "supports" : [ "batch_get", "get" ],
+      "identifier" : {
+        "name" : "complexArrayId",
+        "params" : "com.linkedin.restli.examples.greetings.api.ComplexArray",
+        "type" : "com.linkedin.restli.examples.greetings.api.ComplexArray"
+      },
+      "actions" : [ {
+        "name" : "action",
+        "returns" : "int",
+        "parameters" : [ {
+          "name" : "array",
+          "type" : "com.linkedin.restli.examples.greetings.api.ComplexArray"
+        } ]
+      } ]
+    },
+    "namespace" : "com.linkedin.restli.examples.greetings.client"
+  }
+}
