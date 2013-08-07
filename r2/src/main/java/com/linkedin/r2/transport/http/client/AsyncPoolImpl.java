@@ -369,10 +369,10 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
       }
 
       @Override
-      public void onError(Throwable e)
+      public void onError(final Throwable e)
       {
         boolean create;
-        Collection<Callback<T>> waitersDenied = Collections.emptyList();
+        final Collection<Callback<T>> waitersDenied;
         synchronized (_lock)
         {
           _createErrors++;
@@ -382,16 +382,27 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
           {
             waitersDenied = cancelWaiters();
           }
+          else
+          {
+            waitersDenied = Collections.emptyList();
+          }
         }
-        // Note we drain all waiters if a create fails.  When a create fails, rate-limiting
-        // logic may be applied.  In this case, we may be initiating creations at a lower rate
-        // than incoming requests.  While creations are suppressed, it is better to deny all
-        // waiters and let them see the real reason (this exception) rather than keep them around
-        // to eventually get an unhelpful timeout error
-        for (Callback<T> denied : waitersDenied)
-        {
-          denied.onError(e);
-        }
+        // Note this callback is invoked by Netty boss thread. We hand the actual callback
+        // task to a separate thread since we don't want to block the boss thread
+        _timeoutExecutor.submit(new Runnable() {
+          @Override
+          public void run() {
+            // Note we drain all waiters if a create fails.  When a create fails, rate-limiting
+            // logic may be applied.  In this case, we may be initiating creations at a lower rate
+            // than incoming requests.  While creations are suppressed, it is better to deny all
+            // waiters and let them see the real reason (this exception) rather than keep them around
+            // to eventually get an unhelpful timeout error
+            for (Callback<T> denied : waitersDenied)
+            {
+              denied.onError(e);
+            }
+          }
+        });
         if (create)
         {
           create();
