@@ -16,6 +16,14 @@
 
 package com.linkedin.restli.server.resources;
 
+import com.linkedin.restli.server.BatchCreateRequest;
+import com.linkedin.restli.server.BatchCreateResult;
+import com.linkedin.restli.server.BatchDeleteRequest;
+import com.linkedin.restli.server.BatchPatchRequest;
+import com.linkedin.restli.server.BatchUpdateRequest;
+import com.linkedin.restli.server.BatchUpdateResult;
+import com.linkedin.restli.server.PagingContext;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -34,6 +42,20 @@ public interface ComplexKeyResourceAsync<K extends RecordTemplate, P extends Rec
   void create(V entity, Callback<CreateResponse> callback);
 
   void batchGet(Set<ComplexResourceKey<K, P>> ids, Callback<Map<ComplexResourceKey<K, P>, V>> callback);
+
+  void batchCreate(BatchCreateRequest<ComplexResourceKey<K, P>, V> entities,
+                   Callback<BatchCreateResult<ComplexResourceKey<K, P>, V>> callback);
+
+  void batchUpdate(BatchUpdateRequest<ComplexResourceKey<K, P>, V> entities,
+                   Callback<BatchUpdateResult<ComplexResourceKey<K, P>, V>> callback);
+
+  void batchUpdate(BatchPatchRequest<ComplexResourceKey<K, P>, V> entities,
+                   Callback<BatchUpdateResult<ComplexResourceKey<K, P>, V>> callback);
+
+  void batchDelete(BatchDeleteRequest<ComplexResourceKey<K, P>, V> ids,
+                   Callback<BatchUpdateResult<ComplexResourceKey<K, P>, V>> callback);
+
+  void getAll(PagingContext ctx, Callback<List<V>> callback);
 
   void update(ComplexResourceKey<K, P> key, V entity, Callback<UpdateResponse> callback);
 

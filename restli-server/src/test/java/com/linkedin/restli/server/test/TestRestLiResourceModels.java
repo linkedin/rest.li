@@ -36,16 +36,17 @@ import com.linkedin.restli.server.combined.CombinedResources.SubCollectionResour
 import com.linkedin.restli.server.combined.CombinedTestDataModels.Foo;
 import com.linkedin.restli.server.invalid.InvalidActions;
 import com.linkedin.restli.server.invalid.InvalidResources;
-import com.linkedin.restli.server.resources.AssociationResource;
+import com.linkedin.restli.server.twitter.AsyncDiscoveredItemsResource;
 import com.linkedin.restli.server.twitter.AsyncFollowsAssociativeResource;
 import com.linkedin.restli.server.twitter.AsyncStatusCollectionResource;
 import com.linkedin.restli.server.twitter.ExceptionsResource;
 import com.linkedin.restli.server.twitter.FollowsAssociativeResource;
 import com.linkedin.restli.server.twitter.StatusCollectionResource;
 import com.linkedin.restli.server.twitter.TwitterAccountsResource;
-import com.linkedin.restli.server.twitter.TwitterTestDataModels;
+import com.linkedin.restli.server.twitter.TwitterTestDataModels.DiscoveredItem;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Followed;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Status;
+import com.linkedin.restli.server.twitter.TwitterTestDataModels.StatusType;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -84,7 +85,7 @@ public class TestRestLiResourceModels
     methodDescriptor = checkFinderMethod(statusResourceModel, "search", 3);
     checkParam(methodDescriptor, "keywords", String.class, null);
     checkParam(methodDescriptor, "since", long.class, -1L);
-    checkParam(methodDescriptor, "type", TwitterTestDataModels.StatusType.class, null);
+    checkParam(methodDescriptor, "type", StatusType.class, null);
     assertNull(methodDescriptor.getParameter("foo"));
 
     assertNull(statusResourceModel.findActionMethod("foo", ResourceLevel.COLLECTION));
@@ -124,7 +125,7 @@ public class TestRestLiResourceModels
     methodDescriptor = checkFinderMethod(statusResourceModel, "search", 5);
     checkParam(methodDescriptor, "keywords", String.class, null);
     checkParam(methodDescriptor, "since", long.class, -1L);
-    checkParam(methodDescriptor, "type", TwitterTestDataModels.StatusType.class, null);
+    checkParam(methodDescriptor, "type", StatusType.class, null);
     assertNull(methodDescriptor.getParameter("foo"));
 
     assertNull(statusResourceModel.findActionMethod("foo", ResourceLevel.COLLECTION));
@@ -546,6 +547,33 @@ public class TestRestLiResourceModels
   {
     expectConfigException(InvalidResources.ComplexKeyInCollectionResourceTemplate.class,
                           "' should implement 'ComplexKeyResource' as a complex key '");
+  }
+
+  @Test
+  public void testAsyncDiscoveredItemsResource()
+  {
+    ResourceModel asyncDiscoveredModel = buildResourceModel(AsyncDiscoveredItemsResource.class);
+
+    // TODO more extensive check on the key rather than just checking if it is an instance of ComplexResourceKey
+    checkCollectionModel(asyncDiscoveredModel,
+                         "asyncdiscovereditems",
+                         ComplexResourceKey.class,
+                         "asyncDiscoveredItemId",
+                         DiscoveredItem.class,
+                         false,
+                         AsyncDiscoveredItemsResource.class);
+
+    assertNotNull(asyncDiscoveredModel.findMethod(ResourceMethod.GET));
+    assertNotNull(asyncDiscoveredModel.findMethod(ResourceMethod.CREATE));
+    assertNotNull(asyncDiscoveredModel.findMethod(ResourceMethod.DELETE));
+    assertNotNull(asyncDiscoveredModel.findMethod(ResourceMethod.UPDATE));
+    assertNotNull(asyncDiscoveredModel.findMethod(ResourceMethod.PARTIAL_UPDATE));
+
+    assertNotNull(asyncDiscoveredModel.findMethod(ResourceMethod.BATCH_GET));
+    assertNotNull(asyncDiscoveredModel.findMethod(ResourceMethod.BATCH_CREATE));
+    assertNotNull(asyncDiscoveredModel.findMethod(ResourceMethod.BATCH_UPDATE));
+    assertNotNull(asyncDiscoveredModel.findMethod(ResourceMethod.BATCH_PARTIAL_UPDATE));
+    assertNotNull(asyncDiscoveredModel.findMethod(ResourceMethod.GET_ALL));
   }
 
   // ************************

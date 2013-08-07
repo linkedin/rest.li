@@ -16,6 +16,12 @@
 
 package com.linkedin.restli.server.twitter;
 
+import com.linkedin.restli.server.BatchCreateRequest;
+import com.linkedin.restli.server.BatchCreateResult;
+import com.linkedin.restli.server.BatchDeleteRequest;
+import com.linkedin.restli.server.BatchPatchRequest;
+import com.linkedin.restli.server.BatchUpdateRequest;
+import com.linkedin.restli.server.BatchUpdateResult;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -90,6 +96,40 @@ public class AsyncDiscoveredItemsResource
   public void update(final ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams> key,
                      final DiscoveredItem entity,
                      @CallbackParam final Callback<UpdateResponse> callback)
+  {
+    callback.onSuccess(null);
+  }
+
+  @Override
+  public void batchCreate(BatchCreateRequest<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem> entities,
+                          @CallbackParam Callback<BatchCreateResult<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem>> callback)
+  {
+    callback.onSuccess(null);
+  }
+
+  @Override
+  public void batchUpdate(BatchUpdateRequest<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem> entities,
+                          @CallbackParam Callback<BatchUpdateResult<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem>> callback)
+  {
+    callback.onSuccess(null);
+  }
+
+  @Override
+  public void batchUpdate(BatchPatchRequest<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem> entities,
+                          @CallbackParam Callback<BatchUpdateResult<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem>> callback)
+  {
+    callback.onSuccess(null);
+  }
+
+  @Override
+  public void batchDelete(BatchDeleteRequest<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem> ids,
+                          @CallbackParam Callback<BatchUpdateResult<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem>> callback)
+  {
+    callback.onSuccess(null);
+  }
+
+  @Override
+  public void getAll(@Context PagingContext ctx, @CallbackParam Callback<List<DiscoveredItem>> callback)
   {
     callback.onSuccess(null);
   }

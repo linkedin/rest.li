@@ -17,6 +17,14 @@
 package com.linkedin.restli.server.resources;
 
 
+import com.linkedin.restli.server.BatchCreateRequest;
+import com.linkedin.restli.server.BatchCreateResult;
+import com.linkedin.restli.server.BatchDeleteRequest;
+import com.linkedin.restli.server.BatchPatchRequest;
+import com.linkedin.restli.server.BatchUpdateRequest;
+import com.linkedin.restli.server.BatchUpdateResult;
+import com.linkedin.restli.server.PagingContext;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -49,6 +57,40 @@ public class ComplexKeyResourceAsyncTemplate<K extends RecordTemplate, P extends
   public void batchGet(final Set<ComplexResourceKey<K, P>> ids, final Callback<Map<ComplexResourceKey<K, P>, V>> callback)
   {
     throw new RoutingException("'batch_get' not implemented", 400);
+  }
+
+  @Override
+  public void batchCreate(BatchCreateRequest<ComplexResourceKey<K, P>, V> entities,
+                          Callback<BatchCreateResult<ComplexResourceKey<K, P>, V>> callback)
+  {
+    throw new RoutingException("'batch_create' not implemented", 400);
+  }
+
+  @Override
+  public void batchUpdate(BatchUpdateRequest<ComplexResourceKey<K, P>, V> entities,
+                          Callback<BatchUpdateResult<ComplexResourceKey<K, P>, V>> callback)
+  {
+    throw new RoutingException("'batch_update' not implemented", 400);
+  }
+
+  @Override
+  public void batchUpdate(BatchPatchRequest<ComplexResourceKey<K, P>, V> entities,
+                          Callback<BatchUpdateResult<ComplexResourceKey<K, P>, V>> callback)
+  {
+    throw new RoutingException("'batch_patch' not implemented", 400);
+  }
+
+  @Override
+  public void batchDelete(BatchDeleteRequest<ComplexResourceKey<K, P>, V> ids,
+                          Callback<BatchUpdateResult<ComplexResourceKey<K, P>, V>> callback)
+  {
+    throw new RoutingException("'batch_delete' not implemented", 400);
+  }
+
+  @Override
+  public void getAll(PagingContext ctx, Callback<List<V>> callback)
+  {
+    throw new RoutingException("'get_all' not implemented", 400);
   }
 
   @Override
