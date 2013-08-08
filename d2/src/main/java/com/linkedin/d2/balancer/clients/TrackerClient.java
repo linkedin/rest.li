@@ -264,7 +264,7 @@ public class TrackerClient implements LoadBalancerClient
       StringBuilder sb = new StringBuilder();
       sb.append("{_partitionData = ");
       sb.append(_partitionData);
-      sb.append("\n _degrader = " + _degrader);
+      sb.append("_degrader = " + _degrader);
       sb.append("}");
       return sb.toString();
     }

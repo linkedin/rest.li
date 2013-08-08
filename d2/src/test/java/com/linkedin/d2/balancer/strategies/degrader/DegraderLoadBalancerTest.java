@@ -699,7 +699,7 @@ public class DegraderLoadBalancerTest
           try
           {
             //make sure all threads are not stuck on WAIT_THREAD
-            if (!exitLatch.await(1, TimeUnit.SECONDS))
+            if (!exitLatch.await(5, TimeUnit.SECONDS))
             {
               throw new RuntimeException("Failed the test because we waited longer than 1 second");
             }
