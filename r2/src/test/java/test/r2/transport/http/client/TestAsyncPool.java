@@ -210,8 +210,80 @@ public class TestAsyncPool
     {
       Assert.fail("unexpected error", e);
     }
+  }
 
+  @Test
+  public void testLRU() throws Exception
+  {
+    final int POOL_SIZE = 25;
+    final int GET = 15;
+    SynchronousLifecycle lifecycle = new SynchronousLifecycle();
+    final AsyncPool<Object> pool = new AsyncPoolImpl<Object>("object pool",
+        lifecycle, POOL_SIZE, 1000, _executor, AsyncPoolImpl.Strategy.LRU, 0);
 
+    pool.start();
+
+    ArrayList<Object> objects = new ArrayList<Object>();
+
+    for(int i = 0; i < GET; i++)
+    {
+      FutureCallback<Object>cb = new FutureCallback<Object>();
+      pool.get(cb);
+      objects.add(cb.get());
+    }
+
+    // put the objects back
+    for(int i = 0; i < GET; i++)
+    {
+      pool.put(objects.get(i));
+    }
+
+    // we should get the same objects back in FIFO order
+    for(int i = 0; i < GET; i++)
+    {
+      FutureCallback<Object> cb = new FutureCallback<Object>();
+      pool.get(cb);
+      Assert.assertEquals(cb.get(), objects.get(i));
+    }
+  }
+
+  @Test
+  public void testMinSize() throws Exception
+  {
+    final int POOL_SIZE = 25;
+    final int MIN_SIZE = 15;
+    final int GET = 20;
+    final int DELAY = 1200;
+
+    // Test every strategy
+    for(AsyncPoolImpl.Strategy strategy : AsyncPoolImpl.Strategy.values()) {
+
+      SynchronousLifecycle lifecycle = new SynchronousLifecycle();
+      final AsyncPool<Object> pool = new AsyncPoolImpl<Object>("object pool",
+          lifecycle, POOL_SIZE, 100, _executor, strategy, MIN_SIZE);
+
+      pool.start();
+
+      Assert.assertEquals(lifecycle.getLive(), MIN_SIZE);
+
+      ArrayList<Object> objects = new ArrayList<Object>();
+
+      for(int i = 0; i < GET; i++)
+      {
+        FutureCallback<Object>cb = new FutureCallback<Object>();
+        pool.get(cb);
+        objects.add(cb.get());
+      }
+      Assert.assertEquals(lifecycle.getLive(), GET);
+      for(int i = 0; i < GET; i++)
+      {
+        pool.put(objects.remove(objects.size()-1));
+      }
+
+      Thread.sleep(DELAY);
+
+      Assert.assertEquals(lifecycle.getLive(), MIN_SIZE);
+    }
   }
 
   @Test
@@ -244,6 +316,7 @@ public class TestAsyncPool
     Assert.assertEquals(stats.getTotalTimedOut(), 0);
     Assert.assertEquals(stats.getTotalBadDestroyed(), 0);
     Assert.assertEquals(stats.getMaxPoolSize(), POOL_SIZE);
+    Assert.assertEquals(stats.getMinPoolSize(), 0);
     Assert.assertEquals(stats.getPoolSize(), 0);
     Assert.assertEquals(stats.getSampleMaxCheckedOut(), 0);
     Assert.assertEquals(stats.getSampleMaxPoolSize(), 0);
@@ -265,6 +338,7 @@ public class TestAsyncPool
     Assert.assertEquals(stats.getTotalTimedOut(), 0);
     Assert.assertEquals(stats.getTotalBadDestroyed(), 0);
     Assert.assertEquals(stats.getMaxPoolSize(), POOL_SIZE);
+    Assert.assertEquals(stats.getMinPoolSize(), 0);
     Assert.assertEquals(stats.getPoolSize(), GET);
     Assert.assertEquals(stats.getSampleMaxCheckedOut(), GET);
     Assert.assertEquals(stats.getSampleMaxPoolSize(), GET);
@@ -285,6 +359,7 @@ public class TestAsyncPool
     Assert.assertEquals(stats.getTotalTimedOut(), 0);
     Assert.assertEquals(stats.getTotalBadDestroyed(), 0);
     Assert.assertEquals(stats.getMaxPoolSize(), POOL_SIZE);
+    Assert.assertEquals(stats.getMinPoolSize(), 0);
     Assert.assertEquals(stats.getPoolSize(), GET);
     Assert.assertEquals(stats.getSampleMaxCheckedOut(), GET);
     Assert.assertEquals(stats.getSampleMaxPoolSize(), GET);
@@ -306,6 +381,7 @@ public class TestAsyncPool
     Assert.assertEquals(stats.getTotalTimedOut(), 0);
     Assert.assertEquals(stats.getTotalBadDestroyed(), PUT_BAD);
     Assert.assertEquals(stats.getMaxPoolSize(), POOL_SIZE);
+    Assert.assertEquals(stats.getMinPoolSize(), 0);
     Assert.assertEquals(stats.getPoolSize(), GET - PUT_BAD);
     Assert.assertEquals(stats.getSampleMaxCheckedOut(), GET - PUT_GOOD);
     Assert.assertEquals(stats.getSampleMaxPoolSize(), GET);
@@ -326,6 +402,7 @@ public class TestAsyncPool
     Assert.assertEquals(stats.getTotalTimedOut(), 0);
     Assert.assertEquals(stats.getTotalBadDestroyed(), PUT_BAD + DISPOSE);
     Assert.assertEquals(stats.getMaxPoolSize(), POOL_SIZE);
+    Assert.assertEquals(stats.getMinPoolSize(), 0);
     Assert.assertEquals(stats.getPoolSize(), GET - PUT_BAD - DISPOSE);
     Assert.assertEquals(stats.getSampleMaxCheckedOut(), GET - PUT_GOOD - PUT_BAD);
     Assert.assertEquals(stats.getSampleMaxPoolSize(), GET - PUT_BAD);
@@ -342,6 +419,7 @@ public class TestAsyncPool
     Assert.assertEquals(stats.getTotalTimedOut(), PUT_GOOD);
     Assert.assertEquals(stats.getTotalBadDestroyed(), PUT_BAD + DISPOSE);
     Assert.assertEquals(stats.getMaxPoolSize(), POOL_SIZE);
+    Assert.assertEquals(stats.getMinPoolSize(), 0);
     Assert.assertEquals(stats.getPoolSize(), GET - PUT_GOOD - PUT_BAD - DISPOSE);
     Assert.assertEquals(stats.getSampleMaxCheckedOut(), GET - PUT_GOOD - PUT_BAD - DISPOSE);
     Assert.assertEquals(stats.getSampleMaxPoolSize(), GET - PUT_BAD - DISPOSE);
