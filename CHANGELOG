@@ -1,5 +1,8 @@
 1.9.10
 ------
+(RB=195487)
+Fix a problem that can block Netty boss thread for a long time.
+
 (RB=195243)
 Fixed issue with Complex Keys with fields arrays containing a single element in get requests.
 
