@@ -770,9 +770,20 @@ public abstract class DataTemplateGenerator extends CodeGenerator
   {
     DataSchema itemSchema = schema.getItems();
     CustomInfo customInfo = firstCustomInfo(itemSchema);
+
     ClassInfo classInfo = classInfoForUnnamed(parentClass, memberName, schema);
     if (classInfo.existingClass != null)
     {
+      /* When type refs are used as item types inside some unnamed complex schemas like map and array,
+      * the type refs are de-referenced and the underlying real type is used in the generated class.
+      * In those cases the type refs are not processed by the class generation logic, an explicit
+      * schema processing is necessary in order to generate the data template classes for those type
+      * refs.*/
+      if (itemSchema instanceof TyperefDataSchema)
+      {
+        processSchema(itemSchema, parentClass, memberName);
+      }
+
       return classInfo.existingClass;
     }
 
@@ -813,9 +824,20 @@ public abstract class DataTemplateGenerator extends CodeGenerator
   {
     DataSchema valueSchema = schema.getValues();
     CustomInfo customInfo = firstCustomInfo(valueSchema);
+
     ClassInfo classInfo = classInfoForUnnamed(parentClass, memberName, schema);
     if (classInfo.existingClass != null)
     {
+      /* When type refs are used as item types inside some unnamed complex schemas like map and array,
+      * the type refs are de-referenced and the underlying real type is used in the generated class.
+      * In those cases the type refs are not processed by the class generation logic, an explicit
+      * schema processing is necessary in order to generate the data template classes for those type
+      * refs.*/
+      if (valueSchema instanceof TyperefDataSchema)
+      {
+        processSchema(valueSchema, parentClass, memberName);
+      }
+
       return classInfo.existingClass;
     }
 

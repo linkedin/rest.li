@@ -1,0 +1,77 @@
+{
+  "name" : "TypeRefReferences",
+  "namespace": "com.linkedin.pegasus.generator.test",
+  "type" : "record",
+  "fields" : [
+    {
+      "name" : "items",
+      "type" : {
+        "type" : "array",
+        "items": {
+          "name" : "TypeRefInArray",
+          "namespace": "com.linkedin.pegasus.generator.test",
+          "type" : "typeref",
+          "ref"  : {
+            "name" : "TypeRefInArray2",
+            "namespace": "com.linkedin.pegasus.generator.test",
+            "type" : "typeref",
+            "ref"  : "int"
+          }
+        }
+      }
+    },
+    {
+      "name" : "items2",
+      "type" : {
+        "type" : "map",
+        "values": {
+          "name" : "TypeRefInMap",
+          "namespace": "com.linkedin.pegasus.generator.test",
+          "type" : "typeref",
+          "ref"  : {
+            "name" : "TypeRefInMap2",
+            "namespace": "com.linkedin.pegasus.generator.test",
+            "type" : "typeref",
+            "ref"  : "int"
+          }
+        }
+      }
+    },
+    {
+      "name" : "union",
+      "type" : [
+        {
+          "name" : "TypeRefInUnion",
+          "namespace": "com.linkedin.pegasus.generator.test",
+          "type" : "typeref",
+          "ref"  : {
+            "name" : "TypeRefInUnion2",
+            "namespace": "com.linkedin.pegasus.generator.test",
+            "type" : "typeref",
+            "ref"  : "int"
+          }
+        },
+        "long",
+        "string"
+      ]
+    },
+    {
+      "name" : "items3",
+      "type" : {
+        "type" : "map",
+        "values": {
+          "type" : "array",
+          "items" : {
+            "type" : "map",
+            "values" : {
+              "name" : "TypeRefInNestedCollections",
+              "namespace": "com.linkedin.pegasus.generator.test",
+              "type" : "typeref",
+              "ref"  : "int"
+            }
+          }
+        }
+      }
+    }
+  ]
+}
