@@ -58,16 +58,21 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
   private final long _idleTimeout;
   private final ScheduledExecutorService _timeoutExecutor;
   private final ExecutorService _callbackExecutor;
+  private final int _minSize;
   private volatile ScheduledFuture<?> _objectTimeoutFuture;
 
   private enum State { NOT_YET_STARTED, RUNNING, SHUTTING_DOWN, STOPPED }
+
+  public enum Strategy { MRU, LRU };
+  private final Strategy _strategy;
 
   // All members below are protected by this lock
   // Never call user code (callbacks) while holding this lock
   private final Object _lock = new Object();
   // Including idle, checked out, and creations/destructions in progress
   private int _poolSize = 0;
-  // Unused objects live here
+  // Unused objects live here, sorted by age.
+  // The first object is the least recently added object.
   private final Deque<TimedObject<T>> _idle = new LinkedList<TimedObject<T>>();
   // When no unused objects are available, callbacks live here while they wait
   // for a new object (either returned by another user, or newly created)
@@ -91,6 +96,19 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
   // These are instantaneous values
   private int _checkedOut = 0;
 
+  /**
+   * Creates an AsyncPoolImpl using a MRU (most recently used) strategy
+   * of reusing pool objects. The minimum number of pool objects is set
+   * to zero. This is a sensible configuration for talking to a single host.
+   *
+   * @param name Pool name, used in logs and statistics.
+   * @param lifecycle The lifecycle used to create and destroy pool objects.
+   * @param maxSize The maximum number of objects in the pool.
+   * @param idleTimeout The number of milliseconds before an idle pool
+   *                    object may be destroyed.
+   * @param timeoutExecutor A ScheduledExecutorService that will be used to
+   *                        periodically timeout objects.
+   */
   public AsyncPoolImpl(String name,
                        Lifecycle<T> lifecycle,
                        int maxSize,
@@ -145,6 +163,55 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
     _timeoutExecutor = timeoutExecutor;
     _callbackExecutor = callbackExecutor;
     _maxWaiters = maxWaiters;
+    _strategy = Strategy.MRU;
+    _minSize = 0;
+  }
+
+  /**
+   * Creates an AsyncPoolImpl with a specified strategy of
+   * returning pool objects and a minimum pool size.
+   *
+   * Supported strategies are MRU (most recently used) and LRU
+   * (least recently used).
+   *
+   * MRU is sensible for communicating with a single host in order
+   * to minimize the number of idle pool objects.
+   *
+   * LRU, in combination with a minimum pool size, is sensible for
+   * communicating with a hardware load balancer that directly maps
+   * persistent connections to hosts. In this case, the AsyncPoolImpl
+   * balances requests evenly across the pool.
+   *
+   * @param name Pool name, used in logs and statistics.
+   * @param lifecycle The lifecycle used to create and destroy pool objects.
+   * @param maxSize The maximum number of objects in the pool.
+   * @param idleTimeout The number of milliseconds before an idle pool object
+   *                    may be destroyed.
+   * @param timeoutExecutor A ScheduledExecutorService that will be used to
+   *                        periodically timeout objects.
+   * @param strategy The strategy used to return pool objects.
+   * @param minSize Minimum number of objects in the pool. Set to zero for
+   *                no minimum.
+   */
+  public AsyncPoolImpl(String name,
+                       Lifecycle<T> lifecycle,
+                       int maxSize,
+                       long idleTimeout,
+                       ScheduledExecutorService timeoutExecutor,
+                       ExecutorService callbackExecutor,
+                       int maxWaiters,
+                       Strategy strategy,
+                       int minSize)
+  {
+    _poolName = name;
+    _lifecycle = lifecycle;
+    _maxSize = maxSize;
+    _idleTimeout = idleTimeout;
+    _timeoutExecutor = timeoutExecutor;
+    _callbackExecutor = callbackExecutor;
+    _maxWaiters = maxWaiters;
+    _strategy = strategy;
+    _minSize = minSize;
   }
 
   @Override
@@ -175,6 +242,15 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
         }, freq, freq, TimeUnit.MILLISECONDS);
       }
     }
+
+    // Make the minimum required number of connections now
+    for(int i = 0; i < _minSize; i++)
+    {
+      if(shouldCreate())
+      {
+        create();
+      }
+    }
   }
 
   @Override
@@ -192,7 +268,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
     }
     if (state != State.RUNNING)
     {
-      // Retest state outside the sychronized block, since we don't want to invoke this
+      // Retest state outside the synchronized block, since we don't want to invoke this
       // callback inside a synchronized block
       callback.onError(new IllegalStateException(_poolName + " is " + _state));
       return;
@@ -232,7 +308,14 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
         state = _state;
         if (state == State.RUNNING)
         {
-          obj = _idle.pollLast();
+          if(_strategy == Strategy.LRU)
+          {
+            obj = _idle.pollFirst();
+          }
+          else
+          {
+            obj = _idle.pollLast();
+          }
           if (obj == null)
           {
             if (_waiters.size() < _maxWaiters)
@@ -318,6 +401,9 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
     Callback<T> waiter;
     synchronized (_lock)
     {
+      // If we have waiters, the idle list must already be empty.
+      // Therefore, immediately reusing the object is valid with
+      // both MRU and LRU strategies.
       waiter = _waiters.poll();
       if (waiter == null)
       {
@@ -375,6 +461,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
         _totalTimedOut,
         _checkedOut,
         _maxSize,
+        _minSize,
         _poolSize,
         _sampleMaxCheckedOut,
         _sampleMaxPoolSize
@@ -434,7 +521,10 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
     boolean create;
     synchronized (_lock)
     {
-      _poolSize--;
+      if (_poolSize > 0)
+      {
+        _poolSize--;
+      }
       create = shouldCreate();
       shutdownIfNeeded();
     }
@@ -461,7 +551,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
           // that eventually fail?
           _lastCreateError = null;
         }
-        else if (_waiters.size() > 0)
+        else if (_waiters.size() > 0 || _poolSize < _minSize)
         {
           _poolSize++;
           _sampleMaxPoolSize = Math.max(_poolSize, _sampleMaxPoolSize);
@@ -555,7 +645,8 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
 
     synchronized (_lock)
     {
-      for (TimedObject<U> p; (p = queue.peek()) != null && p.getTime() < target; )
+      int excess = _poolSize - _minSize;
+      for (TimedObject<U> p; (p = queue.peek()) != null && p.getTime() < target && excess > 0; excess--)
       {
         toReap.add(queue.poll().get());
         _totalTimedOut++;

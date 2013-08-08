@@ -39,6 +39,7 @@ public class AsyncPoolStats implements PoolStats
 
   private final int _checkedOut;
   private final int _maxPoolSize;
+  private final int _minPoolSize;
   private final int _poolSize;
 
   private final int _sampleMaxCheckedOut;
@@ -58,6 +59,7 @@ public class AsyncPoolStats implements PoolStats
 
       int checkedOut,
       int maxPoolSize,
+      int minPoolSize,
       int poolSize,
 
       int sampleMaxCheckedOut,
@@ -73,6 +75,7 @@ public class AsyncPoolStats implements PoolStats
 
     _checkedOut = checkedOut;
     _maxPoolSize = maxPoolSize;
+    _minPoolSize = minPoolSize;
     _poolSize = poolSize;
 
     _sampleMaxCheckedOut = sampleMaxCheckedOut;
@@ -169,6 +172,16 @@ public class AsyncPoolStats implements PoolStats
   public int getMaxPoolSize()
   {
     return _maxPoolSize;
+  }
+
+  /**
+   * Get the configured minimum pool size.
+   * @return The minimum pool size
+   */
+  @Override
+  public int getMinPoolSize()
+  {
+    return _minPoolSize;
   }
 
   /**

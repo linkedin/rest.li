@@ -87,6 +87,12 @@ public interface PoolStats
   int getMaxPoolSize();
 
   /**
+   * Get the configured minimum pool size.
+   * @return The minimum pool size
+   */
+  int getMinPoolSize();
+
+  /**
    * Get the pool size at the time of the call to getStats().
    * @return The pool size
    */
