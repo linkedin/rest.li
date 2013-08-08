@@ -109,7 +109,7 @@ public class RestLiResourceModelExporter
       final Map<String, String> classFileNames = new HashMap<String, String>();
       for (String path : sourcePaths)
       {
-        classFileNames.putAll(FileClassNameScanner.scan(path));
+        classFileNames.putAll(FileClassNameScanner.scan(path, "java"));
       }
 
       if (resourceClasses != null)

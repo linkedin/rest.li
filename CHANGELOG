@@ -3,6 +3,9 @@
 (RB=192500)
 Add class to filter DataSchemas in a directory by removing unwanted fields or custom properties of the schema according to given Predicate.
 
+(RB=196098)
+Improve FileClassNameScanner to 1) require a specific extension; 2) exclude whose guessed class name contains dots.
+
 1.9.11
 ------
 (RB=194990)
