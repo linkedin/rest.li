@@ -1,3 +1,7 @@
+1.9.11
+------
+
+
 1.9.10
 ------
 (RB=195487)
@@ -14,6 +18,9 @@ Added batch methods to the async interface and template for simple (non complex 
 
 (RB=190386)
 Fixing couple of issues in annotated complex-key resources and async complex-key resource template. Adding extensive test covarage for both scenarios.
+
+(RB=193265)
+Add Union template builder method per member.
 
 1.9.9
 -----
