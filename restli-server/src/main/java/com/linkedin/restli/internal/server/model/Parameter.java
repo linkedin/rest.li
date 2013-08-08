@@ -42,7 +42,6 @@ import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.data.template.UnionTemplate;
 import com.linkedin.data.template.WrappingArrayTemplate;
-import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.ValueConverter;
 import com.linkedin.restli.server.ResourceConfigException;
 import com.linkedin.restli.server.annotations.ActionParam;
@@ -64,12 +63,12 @@ public class Parameter<T> extends FieldDef<T>
 {
   public enum ParamType
   {
-    QUERY,
-    KEY,
-    POST,
-    CONTEXT,
-    CALLBACK,
-    PARSEQ_CONTEXT,
+    QUERY,          // @QueryParam
+    KEY,            // @AssocKey
+    POST,           // POST-based parameters such as @ActionParam or CREATE
+    CONTEXT,        // @Context
+    CALLBACK,       // @CallbackParam
+    PARSEQ_CONTEXT, // @ParSeqContext
     BATCH
   }
 

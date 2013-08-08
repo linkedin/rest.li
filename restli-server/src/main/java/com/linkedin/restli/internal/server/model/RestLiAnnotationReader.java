@@ -657,7 +657,7 @@ public final class RestLiAnnotationReader
         else
         {
           throw new ResourceConfigException(buildMethodMessage(method)
-              + "' must annotate each parameter with @QueryParam, @ActionParam, @AssocKey, @Context, @CallbackParam or @ParSeqContext");
+              + " must annotate each parameter with @QueryParam, @ActionParam, @AssocKey, @Context, @CallbackParam or @ParSeqContext");
         }
       }
 
@@ -763,24 +763,37 @@ public final class RestLiAnnotationReader
           + "'.  Must be assignable from '" + param.getType() + "'.");
     }
 
-    if (methodType == ResourceMethod.ACTION
-        && param.getParamType() == Parameter.ParamType.POST
-        && !(checkParameterType(param.getType(), RestModelConstants.VALID_ACTION_PARAMETER_TYPES) ||
-          checkParameterHasTyperefSchema(
-            param)))
+    if (methodType == ResourceMethod.ACTION)
     {
-      throw new ResourceConfigException("Parameter '" + paramName + "' on "
-          + buildMethodMessage(method) + " is not a valid type (" + param.getType() + ')');
-    }
+      if (annotations.contains(QueryParam.class))
+      {
+        throw new ResourceConfigException("Parameter '" + paramName + "' on "
+                                              + buildMethodMessage(method) + " is a @QueryParam but action method cannot have @QueryParam");
+      }
 
-    if (methodType != ResourceMethod.ACTION
-        && param.getParamType() == Parameter.ParamType.QUERY
-        && !(checkParameterType(param.getType(),
-                                RestModelConstants.VALID_QUERY_PARAMETER_TYPES) ||
-          checkParameterHasTyperefSchema(param)))
+      if (param.getParamType() == Parameter.ParamType.POST
+          && !(checkParameterType(param.getType(), RestModelConstants.VALID_ACTION_PARAMETER_TYPES) ||
+               checkParameterHasTyperefSchema(param)))
+      {
+        throw new ResourceConfigException("Parameter '" + paramName + "' on "
+                                              + buildMethodMessage(method) + " is not a valid type (" + param.getType() + ')');
+      }
+    }
+    else
     {
-      throw new ResourceConfigException("Parameter '" + paramName + "' on "
-          + buildMethodMessage(method) + " is not a valid type (" + param.getType() + ')');
+      if (annotations.contains(ActionParam.class))
+      {
+        throw new ResourceConfigException("Parameter '" + paramName + "' on "
+                                              + buildMethodMessage(method) + " is an @ActionParam but non-action method cannot have @ActionParam");
+      }
+
+      if (param.getParamType() == Parameter.ParamType.QUERY
+          && !(checkParameterType(param.getType(), RestModelConstants.VALID_QUERY_PARAMETER_TYPES) ||
+               checkParameterHasTyperefSchema(param)))
+      {
+        throw new ResourceConfigException("Parameter '" + paramName + "' on "
+                                              + buildMethodMessage(method) + " is not a valid type (" + param.getType() + ')');
+      }
     }
 
     if (param.getType().isPrimitive() && param.isOptional() && !param.hasDefaultValue())

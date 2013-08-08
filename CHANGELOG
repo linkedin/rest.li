@@ -1,6 +1,7 @@
 1.9.13
 ------
-
+(RB=196208)
+Disallow @QueryParam in action methods, disallow @ActionParam in non-action methods.
 
 1.9.12
 ------
