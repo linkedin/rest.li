@@ -3,6 +3,9 @@
 
 1.9.11
 ------
+(RB=194990)
+Added batch operations to the async association template.
+
 (RB=190812)
 allow specifying an empty string for coloVariants, useful in testing.
 
