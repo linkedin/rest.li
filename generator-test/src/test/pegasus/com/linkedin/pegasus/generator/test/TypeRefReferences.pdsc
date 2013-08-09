@@ -4,6 +4,61 @@
   "type" : "record",
   "fields" : [
     {
+      "name" : "a1",
+      "type" : {
+        "type" : "array",
+        "items" : {
+          "name" : "someEnum1",
+          "namespace" : "com.linkedin.pegasus.generator.test",
+          "type" : "enum",
+          "symbols" : [ "A", "B" ]
+        }
+      }
+    },
+    {
+      "name" : "a2",
+      "type" : {
+        "type" : "map",
+        "values" : {
+          "name" : "someEnum2",
+          "namespace" : "com.linkedin.pegasus.generator.test",
+          "type" : "enum",
+          "symbols" : [ "A", "B" ]
+        }
+      }
+    },
+    {
+      "name" : "a3",
+      "type" : [
+        {
+          "name" : "someEnum3",
+          "namespace" : "com.linkedin.pegasus.generator.test",
+          "type" : "enum",
+          "symbols" : [ "A", "B" ]
+        },
+        "long",
+        "string"
+      ]
+    },
+    {
+      "name" : "a4",
+      "type" : {
+        "type" : "map",
+        "values": {
+          "type" : "array",
+          "items" : {
+            "type" : "map",
+            "values" : {
+                "name" : "someEnum4",
+                "namespace" : "com.linkedin.pegasus.generator.test",
+                "type" : "enum",
+                "symbols" : [ "A", "B" ]
+            }
+          }
+        }
+      }
+    },
+    {
       "name" : "items",
       "type" : {
         "type" : "array",
@@ -15,7 +70,7 @@
             "name" : "TypeRefInArray2",
             "namespace": "com.linkedin.pegasus.generator.test",
             "type" : "typeref",
-            "ref"  : "int"
+            "ref"  : "someEnum1"
           }
         }
       }
@@ -32,7 +87,7 @@
             "name" : "TypeRefInMap2",
             "namespace": "com.linkedin.pegasus.generator.test",
             "type" : "typeref",
-            "ref"  : "int"
+            "ref"  : "someEnum2"
           }
         }
       }
@@ -48,7 +103,7 @@
             "name" : "TypeRefInUnion2",
             "namespace": "com.linkedin.pegasus.generator.test",
             "type" : "typeref",
-            "ref"  : "int"
+            "ref"  : "someEnum3"
           }
         },
         "long",
@@ -67,7 +122,7 @@
               "name" : "TypeRefInNestedCollections",
               "namespace": "com.linkedin.pegasus.generator.test",
               "type" : "typeref",
-              "ref"  : "int"
+              "ref"  : "someEnum4"
             }
           }
         }

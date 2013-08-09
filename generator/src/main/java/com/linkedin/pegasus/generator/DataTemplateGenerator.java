@@ -779,10 +779,7 @@ public abstract class DataTemplateGenerator extends CodeGenerator
       * In those cases the type refs are not processed by the class generation logic, an explicit
       * schema processing is necessary in order to generate the data template classes for those type
       * refs.*/
-      if (itemSchema instanceof TyperefDataSchema)
-      {
-        processSchema(itemSchema, parentClass, memberName);
-      }
+      processSchema(itemSchema, parentClass, memberName);
 
       return classInfo.existingClass;
     }
@@ -833,10 +830,7 @@ public abstract class DataTemplateGenerator extends CodeGenerator
       * In those cases the type refs are not processed by the class generation logic, an explicit
       * schema processing is necessary in order to generate the data template classes for those type
       * refs.*/
-      if (valueSchema instanceof TyperefDataSchema)
-      {
-        processSchema(valueSchema, parentClass, memberName);
-      }
+      processSchema(valueSchema, parentClass, memberName);
 
       return classInfo.existingClass;
     }
