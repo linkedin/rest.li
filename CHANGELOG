@@ -1,5 +1,8 @@
 1.9.13
 ------
+(RB=196626)
+Added batch operations to the async complex key template. 
+
 (RB=196751)
 Fixing the schema resolution ordering problem.
 
