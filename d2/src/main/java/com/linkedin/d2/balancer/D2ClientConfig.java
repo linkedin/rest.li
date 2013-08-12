@@ -41,6 +41,7 @@ public class D2ClientConfig
   SSLContext sslContext = null;
   SSLParameters sslParameters = null;
   boolean isSSLEnabled = false;
+  boolean shutdownAsynchronously = false;
 
   public D2ClientConfig()
   {
@@ -78,6 +79,25 @@ public class D2ClientConfig
                 SSLParameters sslParameters,
                 boolean isSSLEnabled)
   {
+    this(zkHosts, zkSessionTimeoutInMs, zkStartupTimeoutInMs, lbWaitTimeout, lbWaitUnit, flagFile, basePath, fsBasePath, componentFactory, clientFactories, lbWithFacilitiesFactory, sslContext, sslParameters, isSSLEnabled, false);
+  }
+
+  public D2ClientConfig(String zkHosts,
+                long zkSessionTimeoutInMs,
+                long zkStartupTimeoutInMs,
+                long lbWaitTimeout,
+                TimeUnit lbWaitUnit,
+                String flagFile,
+                String basePath,
+                String fsBasePath,
+                ComponentFactory componentFactory,
+                Map<String, TransportClientFactory> clientFactories,
+                LoadBalancerWithFacilitiesFactory lbWithFacilitiesFactory,
+                SSLContext sslContext,
+                SSLParameters sslParameters,
+                boolean isSSLEnabled,
+                boolean shutdownAsynchronously)
+  {
     this.zkHosts = zkHosts;
     this.zkSessionTimeoutInMs = zkSessionTimeoutInMs;
     this.zkStartupTimeoutInMs = zkStartupTimeoutInMs;
@@ -92,6 +112,7 @@ public class D2ClientConfig
     this.sslContext = sslContext;
     this.sslParameters = sslParameters;
     this.isSSLEnabled = isSSLEnabled;
+    this.shutdownAsynchronously = shutdownAsynchronously;
   }
 
 }

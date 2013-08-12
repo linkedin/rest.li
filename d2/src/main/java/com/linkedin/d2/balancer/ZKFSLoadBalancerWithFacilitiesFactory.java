@@ -43,7 +43,8 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
                                     (int) config.zkStartupTimeoutInMs,
                                     createLoadBalancerFactory(config),
                                     config.flagFile,
-                                    config.basePath);
+                                    config.basePath,
+                                    config.shutdownAsynchronously);
   }
 
 

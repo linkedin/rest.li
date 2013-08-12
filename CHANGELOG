@@ -9,6 +9,9 @@ Fixing the schema resolution ordering problem.
 (RB=196208)
 Disallow @QueryParam in action methods, disallow @ActionParam in non-action methods.
 
+(RB=197277)
+Added support for shutting down the ZK connection asynchronously in the d2 client and ZKFSLoadBalancer.
+
 1.9.12
 ------
 (RB=196204)

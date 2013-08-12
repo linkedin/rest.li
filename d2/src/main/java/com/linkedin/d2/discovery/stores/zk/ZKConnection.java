@@ -67,6 +67,7 @@ public class ZKConnection
   private final boolean _exponentialBackoff;
   private final ScheduledExecutorService _scheduler;
   private final long _initInterval;
+  private final boolean _shutdownAsynchronously;
 
   // _countDownLatch signals when _zkRef is ready to be used
   private final CountDownLatch _zkRefLatch = new CountDownLatch(1);
@@ -84,16 +85,32 @@ public class ZKConnection
 
   public ZKConnection(String connectString, int timeout)
   {
-    this(connectString, timeout, 0);
+    this(connectString, timeout, false);
+  }
+
+  public ZKConnection(String connectString, int timeout, boolean shutdownAsynchronously)
+  {
+    this(connectString, timeout, 0, shutdownAsynchronously);
   }
 
   public ZKConnection(String connectString, int timeout, int retryLimit)
   {
-    this(connectString, timeout, retryLimit, false, null, 0);
+    this(connectString, timeout, retryLimit, false);
+  }
+
+  public ZKConnection(String connectString, int timeout, int retryLimit, boolean shutdownAsynchronously)
+  {
+    this(connectString, timeout, retryLimit, false, null, 0, shutdownAsynchronously);
   }
 
   public ZKConnection(String connectString, int timeout, int retryLimit, boolean exponentialBackoff,
                       ScheduledExecutorService scheduler, long initInterval)
+  {
+    this(connectString, timeout, retryLimit, exponentialBackoff, scheduler, initInterval, false);
+  }
+
+  public ZKConnection(String connectString, int timeout, int retryLimit, boolean exponentialBackoff,
+                      ScheduledExecutorService scheduler, long initInterval, boolean shutdownAsynchronously)
   {
     _connectString = connectString;
     _timeout = timeout;
@@ -101,6 +118,7 @@ public class ZKConnection
     _exponentialBackoff = exponentialBackoff;
     _scheduler = scheduler;
     _initInterval = initInterval;
+    _shutdownAsynchronously = shutdownAsynchronously;
   }
 
   public void start() throws IOException
@@ -142,7 +160,7 @@ public class ZKConnection
     {
       try
       {
-        zk.close();
+        doShutdown(zk);
       }
       catch (InterruptedException e)
       {
@@ -161,7 +179,38 @@ public class ZKConnection
     {
       throw new IllegalStateException("Already shutdown");
     }
-    zk.close();
+    doShutdown(zk);
+  }
+
+  private void doShutdown(final ZooKeeper zk) throws InterruptedException
+  {
+    if (_shutdownAsynchronously)
+    {
+      Runnable asyncShutdownRunnable = new Runnable()
+      {
+        @Override
+        public void run()
+        {
+          try
+          {
+            zk.close();
+          }
+          catch (InterruptedException e)
+          {
+            LOG.warn("Failed to shutdown ZooKeeperConnection", e);
+          }
+        }
+      };
+
+      LOG.info("Shutting down ZKConnection asynchronously");
+      Thread shutdownThread = new Thread(asyncShutdownRunnable, "Asynchronous ZooKeeperConnection shutdown thread");
+      shutdownThread.start();
+    }
+    else
+    {
+      LOG.info("Shutting down ZKConnection now");
+      zk.close();
+    }
   }
 
   private ZooKeeper zk()

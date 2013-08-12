@@ -74,6 +74,7 @@ public class ZKFSLoadBalancer
   private final String _connectString;
   private final int _sessionTimeout;
   private final int _initialZKTimeout;
+  private final boolean _shutdownAsynchronously;
   private final AtomicReference<Callback<None>> _startupCallback = new AtomicReference<Callback<None>>();
   private final TogglingLoadBalancerFactory _loadBalancerFactory;
   private final File _zkFlagFile;
@@ -118,6 +119,31 @@ public class ZKFSLoadBalancer
                           String zkFlagFile,
                           String basePath)
   {
+    this(zkConnectString, sessionTimeout, initialZKTimeout, factory, zkFlagFile, basePath, false);
+  }
+
+  /**
+   *
+   * @param zkConnectString Connect string listing ZK ensemble hosts in ZK format
+   * @param sessionTimeout timeout (in milliseconds) of ZK session.  This controls how long
+   * the session will last while connectivity between client and server is interrupted; if an
+   * interruption lasts longer, the session must be recreated and state may have been lost
+   * @param initialZKTimeout initial timeout for connecting to ZK; if no connection is established
+   * within this time, falls back to backup stores
+   * @param factory Factory configured to create appropriate ZooKeeper session-specific
+   * @param zkFlagFile if non-null, the path to a File whose existence is used as a flag
+   * to suppress the use of ZooKeeper stores.
+   * @param shutdownAsynchronously if true, shutdown the zookeeper connection asynchronously.
+   * LoadBalancer instances
+   */
+  public ZKFSLoadBalancer(String zkConnectString,
+                          int sessionTimeout,
+                          int initialZKTimeout,
+                          TogglingLoadBalancerFactory factory,
+                          String zkFlagFile,
+                          String basePath,
+                          boolean shutdownAsynchronously)
+  {
     _connectString = zkConnectString;
     _sessionTimeout = sessionTimeout;
     _initialZKTimeout = initialZKTimeout;
@@ -131,6 +157,8 @@ public class ZKFSLoadBalancer
       _zkFlagFile = new File(zkFlagFile);
     }
     _directory = new ZKFSDirectory(basePath);
+
+    _shutdownAsynchronously = shutdownAsynchronously;
 
     _executor = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("D2 PropertyEventExecutor"));
     _keyMapper = new ConsistentHashKeyMapper(this);
@@ -199,7 +227,7 @@ public class ZKFSLoadBalancer
       LOG.info("ZK currently suppressed by flag file: {}", suppressZK());
     }
 
-    _zkConnection = new ZKConnection(_connectString, _sessionTimeout);
+    _zkConnection = new ZKConnection(_connectString, _sessionTimeout, _shutdownAsynchronously);
     final TogglingLoadBalancer balancer = _loadBalancerFactory.createLoadBalancer(_zkConnection, _executor);
 
     // _currentLoadBalancer will never be null except the first time this method is called.
