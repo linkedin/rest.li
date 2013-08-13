@@ -1,8 +1,15 @@
+1.9.15
+------
+
+
 1.9.14
 ------
 (RB=196208)
 Print warning for the deprecated configuration from the pegasus plugin.
 Correct variable names in the pegasus plugin.
+
+(RB=197690)
+Relaxing the action parameter check to allow them on all method types as before.
 
 1.9.13
 ------

@@ -779,21 +779,12 @@ public final class RestLiAnnotationReader
                                               + buildMethodMessage(method) + " is not a valid type (" + param.getType() + ')');
       }
     }
-    else
-    {
-      if (annotations.contains(ActionParam.class))
-      {
-        throw new ResourceConfigException("Parameter '" + paramName + "' on "
-                                              + buildMethodMessage(method) + " is an @ActionParam but non-action method cannot have @ActionParam");
-      }
-
-      if (param.getParamType() == Parameter.ParamType.QUERY
+    else if (param.getParamType() == Parameter.ParamType.QUERY
           && !(checkParameterType(param.getType(), RestModelConstants.VALID_QUERY_PARAMETER_TYPES) ||
                checkParameterHasTyperefSchema(param)))
-      {
+    {
         throw new ResourceConfigException("Parameter '" + paramName + "' on "
                                               + buildMethodMessage(method) + " is not a valid type (" + param.getType() + ')');
-      }
     }
 
     if (param.getType().isPrimitive() && param.isOptional() && !param.hasDefaultValue())
