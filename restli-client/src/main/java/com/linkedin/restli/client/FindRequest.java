@@ -37,10 +37,25 @@ import com.linkedin.restli.internal.client.CollectionResponseDecoder;
 public class FindRequest<T extends RecordTemplate>
                 extends Request<CollectionResponse<T>>
 {
+  @Deprecated
   FindRequest(URI uri, Map<String, String> headers, Class<T> templateClass,
               ResourceSpec resourceSpec, List<String> resourcePath)
   {
     super(uri, ResourceMethod.FINDER, null, headers, new CollectionResponseDecoder<T>(templateClass),
           resourceSpec, resourcePath);
+  }
+
+  FindRequest(URI uri, Map<String, String> headers, Class<T> templateClass,
+              ResourceSpec resourceSpec, List<String> resourcePath, String name)
+  {
+    super(uri,
+          ResourceMethod.FINDER,
+          null,
+          headers,
+          new CollectionResponseDecoder<T>(templateClass),
+          resourceSpec,
+          null,
+          resourcePath,
+          name);
   }
 }

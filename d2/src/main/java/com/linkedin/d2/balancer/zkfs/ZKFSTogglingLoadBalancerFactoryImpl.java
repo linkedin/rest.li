@@ -44,6 +44,7 @@ import com.linkedin.d2.discovery.stores.zk.ZooKeeperPropertyMerger;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.common.util.None;
+import java.util.Collections;
 import java.util.concurrent.ScheduledExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,6 +75,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
   private final SSLContext _sslContext;
   private final SSLParameters _sslParameters;
   private final boolean _isSSLEnabled;
+  private final Map<String, Map<String, Object>> _clientServicesConfig;
 
   private static final Logger _log = LoggerFactory.getLogger(ZKFSTogglingLoadBalancerFactoryImpl.class);
 
@@ -95,7 +97,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     this(factory, timeout, timeoutUnit,
          baseZKPath, fsDir,
          clientFactories, loadBalancerStrategyFactories,
-         "", null, null, false);
+         "", null, null, false, Collections.<String, Map<String, Object>>emptyMap());
   }
 
   /**
@@ -117,7 +119,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
                                              String d2ServicePath)
   {
     this(factory, timeout, timeoutUnit, baseZKPath, fsDir, clientFactories, loadBalancerStrategyFactories,
-         d2ServicePath, null, null, false);
+         d2ServicePath, null, null, false, Collections.<String, Map<String, Object>>emptyMap());
   }
 
   /**
@@ -144,6 +146,33 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
                                              SSLParameters sslParameters,
                                              boolean isSSLEnabled)
   {
+    this(factory,
+         timeout,
+         timeoutUnit,
+         baseZKPath,
+         fsDir,
+         clientFactories,
+         loadBalancerStrategyFactories,
+         d2ServicePath,
+         sslContext,
+         sslParameters,
+         isSSLEnabled,
+         Collections.<String, Map<String, Object>>emptyMap());
+  }
+
+  public ZKFSTogglingLoadBalancerFactoryImpl(ComponentFactory factory,
+                                             long timeout,
+                                             TimeUnit timeoutUnit,
+                                             String baseZKPath,
+                                             String fsDir,
+                                             Map<String, TransportClientFactory> clientFactories,
+                                             Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories,
+                                             String d2ServicePath,
+                                             SSLContext sslContext,
+                                             SSLParameters sslParameters,
+                                             boolean isSSLEnabled,
+                                             Map<String, Map<String, Object>> clientServicesConfig)
+  {
     _factory = factory;
     _lbTimeout = timeout;
     _lbTimeoutUnit = timeoutUnit;
@@ -163,6 +192,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     _sslContext = sslContext;
     _sslParameters = sslParameters;
     _isSSLEnabled = isSSLEnabled;
+    _clientServicesConfig = clientServicesConfig;
   }
 
   @Override
@@ -200,7 +230,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
 
     SimpleLoadBalancerState state = new SimpleLoadBalancerState(
             executorService, uriBus, clusterBus, serviceBus, _clientFactories, _loadBalancerStrategyFactories,
-            _sslContext, _sslParameters, _isSSLEnabled);
+            _sslContext, _sslParameters, _isSSLEnabled, _clientServicesConfig);
     SimpleLoadBalancer balancer = new SimpleLoadBalancer(state, _lbTimeout, _lbTimeoutUnit);
 
     TogglingLoadBalancer togLB = _factory.createBalancer(balancer, state, clusterToggle, serviceToggle, uriToggle);

@@ -24,6 +24,7 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.codec.PsonDataCodec;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.r2.filter.compression.CompressionConstants;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
@@ -188,8 +189,13 @@ public class RestClient
                                   Callback<RestResponse> callback)
   {
     RecordTemplate input = request.getInput();
-    sendRequestImpl(requestContext, request.getUri(), request.getMethod(),
-                    input != null ? input.data() : null, request.getHeaders(), callback);
+    sendRequestImpl(requestContext,
+                    request.getUri(),
+                    request.getMethod(),
+                    input != null ? input.data() : null,
+                    request.getHeaders(),
+                    request.getMethodName(),
+                    callback);
   }
 
   private void addAcceptHeaders(RestRequestBuilder builder)
@@ -364,11 +370,14 @@ public class RestClient
                                ResourceMethod method,
                                DataMap dataMap,
                                Map<String, String> headers,
+                               String methodName,
                                Callback<RestResponse> callback)
   {
     try
     {
       RestRequest request = buildRequest(uri, method, dataMap, headers);
+      String operation = buildOperation(method, methodName);
+      requestContext.putLocalAttr(CompressionConstants.OPERATION, operation);
       _client.restRequest(request, requestContext, callback);
     }
     catch (Exception e)
@@ -376,6 +385,31 @@ public class RestClient
       // No need to wrap the exception; RestLiCallbackAdapter.onError() will take care of that
       callback.onError(e);
     }
+  }
+
+  /**
+   * Builds the operation String for the method. This operation String is used to determine if responses should be
+   * compressed or not
+   * @param method
+   * @param methodName
+   * @return
+   */
+  private String buildOperation(ResourceMethod method, String methodName)
+  {
+    String operation = method.toString();
+    final String ACTION_AND_FINDER_SEPARATOR = ":";
+
+    switch (method)
+    {
+      case ACTION:
+        operation += (ACTION_AND_FINDER_SEPARATOR + methodName);
+        break;
+      case FINDER:
+        operation += (ACTION_AND_FINDER_SEPARATOR + methodName);
+        break;
+    }
+
+    return operation;
   }
 
   // This throws Exception to remind the caller to deal with arbitrary exceptions including RuntimeException

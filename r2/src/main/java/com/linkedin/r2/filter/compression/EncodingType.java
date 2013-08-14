@@ -48,7 +48,7 @@ public enum EncodingType
   }
 
   /**
-   * @param HttpName Http value for this encoding
+   * @param httpName Http value for this encoding
    */
   EncodingType(String httpName)
   {

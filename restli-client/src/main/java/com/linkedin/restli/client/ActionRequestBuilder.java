@@ -139,7 +139,8 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
                                 _headers,
                                 actionResponseDecoder,
                                 _resourceSpec,
-                                getResourcePath());
+                                getResourcePath(),
+                                _name);
 
   }
 }

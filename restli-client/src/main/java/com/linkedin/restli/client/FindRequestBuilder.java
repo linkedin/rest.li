@@ -35,6 +35,7 @@ public class FindRequestBuilder<K, V extends RecordTemplate> extends
 {
 
   private final Class<V> _elementClass;
+  private String _name;
 
   public FindRequestBuilder(String baseUriTemplate, Class<V> elementClass, ResourceSpec resourceSpec)
   {
@@ -46,6 +47,7 @@ public class FindRequestBuilder<K, V extends RecordTemplate> extends
   public FindRequestBuilder<K, V> name(String name)
   {
     addParam(RestConstants.QUERY_TYPE_PARAM, name);
+    _name = name;
     return this;
   }
 
@@ -115,6 +117,6 @@ public class FindRequestBuilder<K, V extends RecordTemplate> extends
     appendAssocKeys(b);
     appendQueryParams(b);
 
-    return new FindRequest<V>(b.build(), _headers, _elementClass, _resourceSpec, getResourcePath());
+    return new FindRequest<V>(b.build(), _headers, _elementClass, _resourceSpec, getResourcePath(), _name);
   }
 }

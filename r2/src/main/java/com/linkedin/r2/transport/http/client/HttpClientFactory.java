@@ -17,7 +17,9 @@
 /* $Id$ */
 package com.linkedin.r2.transport.http.client;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -28,6 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 
+import org.apache.commons.lang.StringUtils;
 import org.jboss.netty.channel.socket.ClientSocketChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.slf4j.Logger;
@@ -37,6 +40,8 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.filter.FilterChains;
+import com.linkedin.r2.filter.compression.ClientCompressionFilter;
+import com.linkedin.r2.filter.compression.EncodingType;
 import com.linkedin.r2.filter.transport.FilterChainClient;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -83,12 +88,14 @@ public class HttpClientFactory implements TransportClientFactory
   public static final String HTTP_SHUTDOWN_TIMEOUT = "http.shutdownTimeout";
   public static final String HTTP_SSL_CONTEXT = "http.sslContext";
   public static final String HTTP_SSL_PARAMS = "http.sslParams";
+  public static final String HTTP_RESPONSE_COMPRESSION_OPERATIONS = "http.responseCompressionOperations";
 
   public static final int DEFAULT_POOL_SIZE = 200;
   public static final int DEFAULT_REQUEST_TIMEOUT = 10000;
   public static final int DEFAULT_IDLE_TIMEOUT = 30000;
   public static final int DEFAULT_SHUTDOWN_TIMEOUT = 5000;
   public static final int DEFAULT_MAX_RESPONSE_SIZE = 1024 * 1024 * 2;
+  public static final String DEFAULT_HTTP_RESPONSE_COMPRESSION_OPERATIONS = "";
 
   private final ClientSocketChannelFactory _channelFactory;
   private final ScheduledExecutorService   _executor;
@@ -223,7 +230,25 @@ public class HttpClientFactory implements TransportClientFactory
              sslContext);
     TransportClient client = getRawClient(properties, sslContext, sslParameters);
 
-    client = new FilterChainClient(client, _filters);
+
+    String httpResponseCompressionOperations = chooseNewOverDefault(properties.get(HTTP_RESPONSE_COMPRESSION_OPERATIONS),
+                                                                    DEFAULT_HTTP_RESPONSE_COMPRESSION_OPERATIONS);
+
+    FilterChain filters;
+    if (!httpResponseCompressionOperations.isEmpty())
+    {
+      String requestCompressionSchemaName = buildRequestEncodingSchemaName();
+      String responseCompressionSchemaName = buildAcceptEncodingSchemaNames();
+      filters = _filters.addLast(new ClientCompressionFilter(requestCompressionSchemaName,
+                                                             responseCompressionSchemaName,
+                                                             httpResponseCompressionOperations));
+    }
+    else
+    {
+      filters = _filters;
+    }
+
+    client = new FilterChainClient(client, filters);
     client = new FactoryClient(client);
     synchronized (_mutex)
     {
@@ -234,6 +259,32 @@ public class HttpClientFactory implements TransportClientFactory
       _clientsOutstanding++;
       return client;
     }
+  }
+
+  /**
+   * @return the compression schema name used to compress the request to the server
+   */
+  private String buildRequestEncodingSchemaName()
+  {
+    return ""; // no request encoding for now
+  }
+
+  /**
+   * @return the compression schemas that the client will support for response compression
+   */
+  private String buildAcceptEncodingSchemaNames()
+  {
+    List<String> schemaNames = new ArrayList<String>();
+    for (EncodingType type: EncodingType.values())
+    {
+      // For now clients will accept all supported encodings (which is why we don't add EncodingType.ANY as an accepted
+      // type)
+      if (!type.equals(EncodingType.IDENTITY) && !type.equals(EncodingType.ANY))
+      {
+        schemaNames.add(type.getHttpName());
+      }
+    }
+    return StringUtils.join(schemaNames, ",");
   }
 
   /**
@@ -292,7 +343,7 @@ public class HttpClientFactory implements TransportClientFactory
    * @param defaultValue
    * @return
    */
-  private Integer chooseNewOverDefault(Integer newValue, Integer defaultValue)
+  private <T> T chooseNewOverDefault(T newValue, T defaultValue)
   {
     if (newValue == null)
     {

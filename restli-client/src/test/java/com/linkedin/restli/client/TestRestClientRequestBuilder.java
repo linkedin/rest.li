@@ -345,6 +345,18 @@ public class TestRestClientRequestBuilder
     EasyMock.expect(mockRequest.getInput()).andReturn(mockRecordTemplate).once();
     EasyMock.expect(mockRequest.getResponseDecoder()).andReturn(restResponseDecoder).once();
     EasyMock.expect(mockRequest.getUri()).andReturn(new URI("test"));
+    if (method == ResourceMethod.ACTION)
+    {
+      EasyMock.expect(mockRequest.getMethodName()).andReturn("testAction");
+    }
+    else if (method == ResourceMethod.FINDER)
+    {
+      EasyMock.expect(mockRequest.getMethodName()).andReturn("testFinder");
+    }
+    else
+    {
+      EasyMock.expect(mockRequest.getMethodName()).andReturn(null);
+    }
     EasyMock.expect(mockRequest.getMethod()).andReturn(method).once();
     EasyMock.expect(mockRecordTemplate.data()).andReturn(entityBody).once();
     EasyMock.expect(mockRequest.getHeaders()).andReturn(Collections.<String, String>emptyMap()).once();

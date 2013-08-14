@@ -38,6 +38,7 @@ import com.linkedin.restli.internal.client.ActionResponseDecoder;
 
 public class ActionRequest<T> extends Request<T>
 {
+  @Deprecated
   ActionRequest(URI uri,
                 RecordTemplate input,
                 Map<String, String> headers,
@@ -46,5 +47,16 @@ public class ActionRequest<T> extends Request<T>
                 List<String> resourcePath)
   {
     super(uri, ResourceMethod.ACTION, input, headers, decoder, resourceSpec, resourcePath);
+  }
+
+  ActionRequest(URI uri,
+                RecordTemplate input,
+                Map<String, String> headers,
+                ActionResponseDecoder<T> decoder,
+                ResourceSpec resourceSpec,
+                List<String> resourcePath,
+                String name)
+  {
+    super(uri, ResourceMethod.ACTION, input, headers, decoder, resourceSpec, null, resourcePath, name);
   }
 }

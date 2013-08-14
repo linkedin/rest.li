@@ -20,6 +20,7 @@
 
 package com.linkedin.restli.client;
 
+import com.linkedin.r2.filter.compression.CompressionConstants;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import java.io.IOException;
@@ -63,7 +64,7 @@ public class RestClientTest
   private static final RequestContext DEFAULT_REQUEST_CONTEXT = new RequestContext();
   static
   {
-    DEFAULT_REQUEST_CONTEXT.putLocalAttr("attr1", "1");
+    DEFAULT_REQUEST_CONTEXT.putLocalAttr("__attr1", "1");
   }
 
   @Test
@@ -240,6 +241,7 @@ public class RestClientTest
     Assert.assertEquals(ERR_VALUE, e.getErrorDetails().get(ERR_KEY));
     Assert.assertEquals(APP_CODE, e.getServiceErrorCode());
     Assert.assertEquals(ERR_MSG, e.getServiceErrorMessage());
+
     verifyResponseHeader(sendRequestOption, e.getResponse().getHeaders());
   }
 
@@ -423,6 +425,10 @@ public class RestClientTest
   {
     for (Map.Entry<String, Object> attr : DEFAULT_REQUEST_CONTEXT.getLocalAttrs().entrySet())
     {
+      if (attr.getKey().equals(CompressionConstants.OPERATION))
+      {
+        continue;
+      }
       Assert.assertEquals(headers.get(attr.getKey()), option._context ? attr.getValue().toString() : null);
     }
   }
@@ -475,6 +481,10 @@ public class RestClientTest
       Map<String, String> headers = new HashMap<String, String>(super.headers());
       for (Map.Entry<String, Object> attr : _requestContext.getLocalAttrs().entrySet())
       {
+        if (!attr.getKey().startsWith("__attr"))
+        {
+          continue;
+        }
         headers.put(attr.getKey(), attr.getValue().toString());
       }
       return headers;

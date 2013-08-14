@@ -16,10 +16,6 @@
 
 package com.linkedin.r2.filter.compression;
 
-import java.util.Map;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.linkedin.r2.filter.Filter;
 import com.linkedin.r2.filter.NextFilter;
@@ -28,6 +24,11 @@ import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.http.common.HttpConstants;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Client filter for compression
@@ -38,8 +39,29 @@ public class ClientCompressionFilter implements Filter, RestFilter
 
   private final EncodingType _requestCompression;
   private final EncodingType[] _acceptCompression;
-
   private final String _acceptEncodingHeader;
+
+  /**
+   * The set of operations for which response compression will be turned on
+   */
+  private Set<String> _responseCompressionMethods;
+
+  private boolean _compressAllResponses;
+
+  /**
+   * The set of families for which response compression will be turned on.
+   */
+  private Set<String> _responseCompressionFamilies;
+
+  /**
+   * Turns on response compression for all operations
+   */
+  private static final String COMPRESS_ALL_RESPONSES_INDICATOR = "*";
+
+  private static final String OPERATION_SEPARATOR = ",";
+  private static final String FAMILIY_SEPARATOR = ":";
+  private static final String COMPRESS_ALL_IN_FAMILY = FAMILIY_SEPARATOR + COMPRESS_ALL_RESPONSES_INDICATOR;
+
 
   /**
    * Instantiates a client compression filter
@@ -49,7 +71,8 @@ public class ClientCompressionFilter implements Filter, RestFilter
    * are accepted by the client
    */
   public ClientCompressionFilter(EncodingType requestCompression,
-                                 EncodingType[] acceptCompression)
+                                 EncodingType[] acceptCompression,
+                                 String responseCompressionOperations)
   {
     if (requestCompression == null)
     {
@@ -80,6 +103,11 @@ public class ClientCompressionFilter implements Filter, RestFilter
     _acceptCompression = acceptCompression;
 
     _acceptEncodingHeader = buildAcceptEncodingHeader();
+    _responseCompressionMethods = new HashSet<String>();
+    _responseCompressionFamilies = new HashSet<String>();
+    buildResponseCompressionMethodsAndFamiliesSet(responseCompressionOperations);
+    // Prevent Set lookup if we are compressing responses for all operations
+    _compressAllResponses = _responseCompressionMethods.contains(COMPRESS_ALL_RESPONSES_INDICATOR);
   }
 
   /**
@@ -87,10 +115,39 @@ public class ClientCompressionFilter implements Filter, RestFilter
    * @param requestCompression
    * @param acceptCompression
    */
-  public ClientCompressionFilter(String requestCompression, String acceptCompression)
+  public ClientCompressionFilter(String requestCompression, String acceptCompression, String responseCompressionMethods)
   {
     this(requestCompression.trim().isEmpty() ? EncodingType.IDENTITY : EncodingType.get(requestCompression.trim().toLowerCase()),
-        AcceptEncoding.parseAcceptEncoding(acceptCompression));
+        AcceptEncoding.parseAcceptEncoding(acceptCompression), responseCompressionMethods);
+  }
+
+  /**
+   * Converts a comma separated list of operations into a set of Strings representing the operations for which we want
+   * response compression to be turned on
+   * @param responseCompressionOperations
+   * @return
+   */
+  private void buildResponseCompressionMethodsAndFamiliesSet(String responseCompressionOperations)
+  {
+    for (String operation: responseCompressionOperations.split(OPERATION_SEPARATOR))
+    {
+      operation = operation.trim();
+      // family operations are represented in the config as "familyName:*"
+      if (operation.endsWith(COMPRESS_ALL_IN_FAMILY))
+      {
+        String[] parts = operation.split(FAMILIY_SEPARATOR);
+        if (parts == null || parts.length != 2)
+        {
+          LOG.warn("Illegal compression operation family " + operation + " specified");
+          return;
+        }
+        _responseCompressionFamilies.add(parts[0].trim());
+      }
+      else
+      {
+        _responseCompressionMethods.add(operation);
+      }
+    }
   }
 
   /**
@@ -147,10 +204,10 @@ public class ClientCompressionFilter implements Filter, RestFilter
       }
 
       //Set accepted encoding for compressed response
-      if (_acceptCompression.length > 0)
+      String operation = (String)requestContext.getLocalAttr(CompressionConstants.OPERATION);
+      if (_acceptCompression.length > 0 && shouldCompress(operation))
       {
-        req = req.builder().addHeaderValue(HttpConstants.ACCEPT_ENCODING,
-                                           _acceptEncodingHeader).build();
+        req = req.builder().addHeaderValue(HttpConstants.ACCEPT_ENCODING, _acceptEncodingHeader).build();
       }
     }
     catch (CompressionException e)
@@ -160,6 +217,38 @@ public class ClientCompressionFilter implements Filter, RestFilter
 
     //Specify the actual compression algorithm used
     nextFilter.onRequest(req, requestContext, wireAttrs);
+  }
+
+  /**
+   * Check if the operation should be compressed
+   * @param operation
+   * @return
+   */
+  private boolean shouldCompress(String operation)
+  {
+    return _compressAllResponses ||
+           _responseCompressionMethods.contains(operation) ||
+           isMemberOfCompressionFamily(operation);
+  }
+
+  /**
+   * Checks if the operation is a member of a family for which we have turned response compression on.
+   * @param operation
+   * @return
+   */
+  private boolean isMemberOfCompressionFamily(String operation)
+  {
+    if (operation.contains(FAMILIY_SEPARATOR))
+    {
+      String[] parts = operation.split(FAMILIY_SEPARATOR);
+      if (parts == null || parts.length != 2)
+      {
+        return false;
+      }
+      String family = parts[0];
+      return _responseCompressionFamilies.contains(family);
+    }
+    return false;
   }
 
   /**

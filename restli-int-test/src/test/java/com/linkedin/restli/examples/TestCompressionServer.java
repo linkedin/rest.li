@@ -20,10 +20,13 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import java.util.Set;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -36,7 +39,6 @@ import org.testng.annotations.Test;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.RemoteInvocationException;
-import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.filter.FilterChains;
 import com.linkedin.r2.filter.compression.Bzip2Compressor;
 import com.linkedin.r2.filter.compression.ClientCompressionFilter;
@@ -103,30 +105,42 @@ public class TestCompressionServer extends RestLiIntegrationTest
   }
 
   //Returns a combination of all possible request/response compression combinations
-  @DataProvider(name="Clients")
-  public Object[][] provideClients()
+  @DataProvider(name="ClientsCompressedResponses")
+  public Object[][] provideClientsWithExpectedCompressedResponses()
   {
-    int entries = EncodingType.values().length;
-    entries = entries*(entries-1); //# of tests = all possible client request * server support (no ANY)
-
+    // sample compression operation config
+    String[] compressionOperations = {"*",
+                                      "action:*",
+                                      "finder:*",
+                                      "finder:search",
+                                      "get, batch_get, get_all",
+                                      "get, batch_get, get_all, batch_create, batch_update, batch_partial_update"};
+    int entries = compressionOperations.length;
     Object[][] result = new Object[entries][];
 
-    for(EncodingType requestCompression : EncodingType.values())
+    for (String operation: compressionOperations)
     {
-      if(requestCompression != EncodingType.ANY)
-      {
-        for(EncodingType responseCompression : EncodingType.values())
-        {
-          FilterChain fc = FilterChains.empty().addFirst(new ClientCompressionFilter(requestCompression, new EncodingType[]{responseCompression}));
-          TransportClientAdapter clientAdapter = new TransportClientAdapter(new HttpClientFactory(fc).getClient(new HashMap<String, String>()));
-          RestClient[] client = {new RestClient(clientAdapter, URI_PREFIX)};
-
-          result[--entries] = client;
-        }
-      }
+      Map<String, String> clientProperties = new HashMap<String, String>();
+      clientProperties.put(HttpClientFactory.HTTP_RESPONSE_COMPRESSION_OPERATIONS, operation);
+      TransportClientAdapter clientAdapter = new TransportClientAdapter(new HttpClientFactory(FilterChains.empty()).getClient(clientProperties));
+      RestClient client = new RestClient(clientAdapter, URI_PREFIX);
+      result[--entries] = new Object[]{client, operation};
     }
 
     return result;
+  }
+
+  /**
+   * Provides clients with no response compression
+   */
+  @DataProvider(name="ClientsNoCompressedResponses")
+  public Object[][] provideClientsWithoutCompressedResponses()
+  {
+    TransportClientAdapter clientAdapter = new TransportClientAdapter(new HttpClientFactory(FilterChains.empty()).
+        getClient(Collections.<String, String>emptyMap()));
+    return new Object[][] {
+        {new RestClient(clientAdapter, URI_PREFIX)}
+    };
   }
 
   @DataProvider(name="ContentNegotiation")
@@ -251,7 +265,9 @@ public class TestCompressionServer extends RestLiIntegrationTest
   @Test(dataProvider = "ContentEncodingGenerator")
   public void testEncodingGeneration(EncodingType[] encoding, String acceptEncoding)
   {
-    ClientCompressionFilter cf = new ClientCompressionFilter(EncodingType.IDENTITY, encoding);
+    ClientCompressionFilter cf = new ClientCompressionFilter(EncodingType.IDENTITY,
+                                                             encoding,
+                                                             "*");
     Assert.assertEquals(cf.buildAcceptEncodingHeader(), acceptEncoding);
   }
 
@@ -345,8 +361,13 @@ public class TestCompressionServer extends RestLiIntegrationTest
     Assert.assertEquals(method.getResponseBody().length, 0);
   }
 
+  private <T> void checkContentEncodingHeaderIsAbsent(Response<T> response)
+  {
+    Assert.assertFalse(response.getHeaders().containsKey(HttpConstants.CONTENT_ENCODING));
+  }
+
   //Existing tests to ensure compatibility
-  @Test(dataProvider = "Clients")
+  @Test(dataProvider = "ClientsNoCompressedResponses")
   public void testIntAction(RestClient client) throws RemoteInvocationException
   {
     ActionRequest<Integer> request = GREETINGS_BUILDERS.actionPurge().build();
@@ -354,9 +375,10 @@ public class TestCompressionServer extends RestLiIntegrationTest
 
     Assert.assertEquals(responseFuture.getResponse().getStatus(), 200);
     Assert.assertEquals(responseFuture.getResponse().getEntity().intValue(), 100);
+    checkContentEncodingHeaderIsAbsent(responseFuture.getResponse());
   }
 
-  @Test(dataProvider = "Clients")
+  @Test(dataProvider = "ClientsNoCompressedResponses")
   public void testRecordAction(RestClient client) throws RemoteInvocationException
   {
     ActionRequest<Greeting> request = GREETINGS_BUILDERS.actionSomeAction()
@@ -370,9 +392,10 @@ public class TestCompressionServer extends RestLiIntegrationTest
     ResponseFuture<Greeting> responseFuture = client.sendRequest(request);
     Assert.assertEquals(responseFuture.getResponse().getStatus(), 200);
     Assert.assertNotNull(responseFuture.getResponse().getEntity());
+    checkContentEncodingHeaderIsAbsent(responseFuture.getResponse());
   }
 
-  @Test(dataProvider = "Clients")
+  @Test(dataProvider = "ClientsNoCompressedResponses")
   public void testUpdateToneAction(RestClient client) throws RemoteInvocationException
   {
     ActionRequest<Greeting> request = GREETINGS_BUILDERS.actionUpdateTone()
@@ -386,9 +409,10 @@ public class TestCompressionServer extends RestLiIntegrationTest
     Assert.assertNotNull(newGreeting);
     Assert.assertEquals(newGreeting.getId().longValue(), 1L);
     Assert.assertEquals(newGreeting.getTone(), Tone.SINCERE);
+    checkContentEncodingHeaderIsAbsent(responseFuture.getResponse());
   }
 
-  @Test(dataProvider = "Clients")
+  @Test(dataProvider = "ClientsNoCompressedResponses")
   //test update on retrieved entity
   public void testUpdate(RestClient client) throws RemoteInvocationException, CloneNotSupportedException,
   URISyntaxException
@@ -400,6 +424,7 @@ public class TestCompressionServer extends RestLiIntegrationTest
 
     String response1 = greetingResponse.getEntity().getMessage();
     Assert.assertNotNull(response1);
+    checkContentEncodingHeaderIsAbsent(future.getResponse());
 
     // POST
     Greeting greeting = new Greeting(greetingResponse.getEntity().data().copy());
@@ -414,9 +439,25 @@ public class TestCompressionServer extends RestLiIntegrationTest
     String response2 = future2.getResponse().getEntity().getMessage();
 
     Assert.assertEquals(response2, response1 + "Again");
+    checkContentEncodingHeaderIsAbsent(future2.getResponse());
   }
 
-  @Test(dataProvider = "Clients")
+  @Test(dataProvider = "ClientsNoCompressedResponses")
+  //test update on retrieved entity
+  public void testBatchGet(RestClient client) throws RemoteInvocationException, CloneNotSupportedException,
+                                                                                    URISyntaxException
+  {
+    // GET
+    Request<Greeting> request = GREETINGS_BUILDERS.get().id(1L).build();
+    ResponseFuture<Greeting> future = client.sendRequest(request);
+    Response<Greeting> greetingResponse = future.getResponse();
+
+    String response1 = greetingResponse.getEntity().getMessage();
+    Assert.assertNotNull(response1);
+    checkContentEncodingHeaderIsAbsent(greetingResponse);
+  }
+
+  @Test(dataProvider = "ClientsNoCompressedResponses")
   public void testPartialUpdate(RestClient client) throws RemoteInvocationException, CloneNotSupportedException, URISyntaxException
   {
     // GET
@@ -425,6 +466,7 @@ public class TestCompressionServer extends RestLiIntegrationTest
     Response<Greeting> greetingResponse = future.getResponse();
 
     Greeting original = greetingResponse.getEntity();
+    checkContentEncodingHeaderIsAbsent(greetingResponse);
 
     // POST
     Greeting greeting = new Greeting(original.data().copy());
@@ -442,9 +484,10 @@ public class TestCompressionServer extends RestLiIntegrationTest
     String response2 = future2.getResponse().getEntity().getMessage();
 
     Assert.assertEquals(response2, greeting.getMessage());
+    checkContentEncodingHeaderIsAbsent(future2.getResponse());
   }
 
-  @Test(dataProvider = "Clients")
+  @Test(dataProvider = "ClientsNoCompressedResponses")
   //test cookbook example from quickstart wiki
   public void testCookbook(RestClient restClient) throws Exception
   {
@@ -454,6 +497,7 @@ public class TestCompressionServer extends RestLiIntegrationTest
     Response<Greeting> greetingResponse = future.getResponse();
 
     Assert.assertNotNull(greetingResponse.getEntity().getMessage());
+    checkContentEncodingHeaderIsAbsent(greetingResponse);
 
     // POST
     Greeting greeting = new Greeting(greetingResponse.getEntity().data().copy());
@@ -469,6 +513,7 @@ public class TestCompressionServer extends RestLiIntegrationTest
     greetingResponse = future2.get();
 
     Assert.assertEquals(greetingResponse.getEntity().getMessage(), NEW_MESSAGE);
+    checkContentEncodingHeaderIsAbsent(greetingResponse);
 
     // shut down client
     FutureCallback<None> futureCallback = new FutureCallback<None>();
@@ -476,13 +521,14 @@ public class TestCompressionServer extends RestLiIntegrationTest
     futureCallback.get();
   }
 
-  @Test(dataProvider = "Clients")
+  @Test(dataProvider = "ClientsNoCompressedResponses")
   public void testCookbookInBatch(RestClient client) throws Exception
   {
     // GET
     BatchGetRequest<Greeting> request = GREETINGS_BUILDERS.batchGet().ids(1L).build();
     ResponseFuture<BatchResponse<Greeting>> future = client.sendRequest(request);
     Response<BatchResponse<Greeting>> greetingResponse = future.getResponse();
+    checkContentEncodingHeaderIsAbsent(greetingResponse);
 
     // POST
     Greeting greeting = new Greeting(greetingResponse.getEntity().getResults().get("1").data().copy());
@@ -495,6 +541,7 @@ public class TestCompressionServer extends RestLiIntegrationTest
     BatchGetRequest<Greeting> request2 = GREETINGS_BUILDERS.batchGet().ids(1L).build();
     ResponseFuture<BatchResponse<Greeting>> future2 = client.sendRequest(request2);
     greetingResponse = future2.get();
+    checkContentEncodingHeaderIsAbsent(greetingResponse);
 
     Greeting repeatedGreeting = new Greeting();
     repeatedGreeting.setMessage("Hello Hello");
@@ -508,11 +555,15 @@ public class TestCompressionServer extends RestLiIntegrationTest
     }
   }
 
-  @Test(dataProvider = "Clients")
-  public void testSearch(RestClient client) throws RemoteInvocationException
+  @Test(dataProvider = "ClientsCompressedResponses")
+  public void testSearch(RestClient client, String operationsForCompression) throws RemoteInvocationException
   {
     Request<CollectionResponse<Greeting>> findRequest = GREETINGS_BUILDERS.findBySearch().toneParam(
                                                                                                     Tone.FRIENDLY).build();
+    Response<CollectionResponse<Greeting>> response = client.sendRequest(findRequest).getResponse();
+
+    checkHeaderForCompression(response, operationsForCompression, "finder:search");
+
     List<Greeting> greetings = client.sendRequest(findRequest).getResponse().getEntity().getElements();
     for (Greeting g : greetings)
     {
@@ -521,11 +572,13 @@ public class TestCompressionServer extends RestLiIntegrationTest
     }
   }
 
-  @Test(dataProvider = "Clients")
-  public void testSearchWithPostFilter(RestClient client) throws RemoteInvocationException
+  @Test(dataProvider = "ClientsCompressedResponses")
+  public void testSearchWithPostFilter(RestClient client, String operationsForCompression) throws RemoteInvocationException
   {
     Request<CollectionResponse<Greeting>> findRequest = GREETINGS_BUILDERS.findBySearchWithPostFilter().paginate(0, 5).build();
-    CollectionResponse<Greeting> entity = client.sendRequest(findRequest).getResponse().getEntity();
+    Response<CollectionResponse<Greeting>> response = client.sendRequest(findRequest).getResponse();
+    checkHeaderForCompression(response, operationsForCompression, "finder:" + findRequest.getMethodName());
+    CollectionResponse<Greeting> entity = response.getEntity();
     CollectionMetadata paging = entity.getPaging();
     Assert.assertEquals(paging.getStart(), 0);
     Assert.assertEquals(paging.getCount(), 5);
@@ -537,14 +590,15 @@ public class TestCompressionServer extends RestLiIntegrationTest
     Assert.assertEquals(next.getHref(), "/greetings?count=5&start=5&q=searchWithPostFilter");
   }
 
-  @Test(dataProvider = "Clients")
-  public void testSearchWithTones(RestClient client) throws RemoteInvocationException
+  @Test(dataProvider = "ClientsCompressedResponses")
+  public void testSearchWithTones(RestClient client, String operationsForCompression) throws RemoteInvocationException
   {
     Request<CollectionResponse<Greeting>> req =
         GREETINGS_BUILDERS.findBySearchWithTones().tonesParam(
                                                               Arrays.asList(Tone.SINCERE, Tone.INSULTING)).build();
     ResponseFuture<CollectionResponse<Greeting>> future = client.sendRequest(req);
     Response<CollectionResponse<Greeting>> response = future.getResponse();
+    checkHeaderForCompression(response, operationsForCompression, "finder:" + req.getMethodName());
     List<Greeting> greetings = response.getEntity().getElements();
     for (Greeting greeting : greetings)
     {
@@ -554,50 +608,129 @@ public class TestCompressionServer extends RestLiIntegrationTest
     }
   }
 
-  @Test(dataProvider = "Clients")
-  public void testSearchFacets(RestClient client) throws RemoteInvocationException
+  @Test(dataProvider = "ClientsCompressedResponses")
+  public void testSearchFacets(RestClient client, String operationsForCompression) throws RemoteInvocationException
   {
     Request<CollectionResponse<Greeting>> req = GREETINGS_BUILDERS.findBySearchWithFacets().toneParam(
                                                                                                       Tone.SINCERE).build();
     ResponseFuture<CollectionResponse<Greeting>> future = client.sendRequest(req);
     Response<CollectionResponse<Greeting>> response = future.getResponse();
+    checkHeaderForCompression(response, operationsForCompression, "finder:" + req.getMethodName());
     SearchMetadata metadata = new SearchMetadata(response.getEntity().getMetadataRaw());
     Assert.assertTrue(metadata.getFacets().size() > 0);
     // "randomly" generated data is guaranteed to have positive number of each tone
   }
 
-  @Test(dataProvider = "Clients")
-  public void testEmptyBatchGetWithProjection(RestClient client) throws RemoteInvocationException
+  @Test(dataProvider = "ClientsCompressedResponses")
+  public void testEmptyBatchGetWithProjection(RestClient client, String operationsForCompression) throws RemoteInvocationException
   {
     Request<BatchResponse<Greeting>> request = GREETINGS_BUILDERS.batchGet().ids(1000L,
                                                                                  2000L).fields(Greeting.fields().message()).build();
-    BatchResponse<Greeting> response = client.sendRequest(request).getResponse().getEntity();
-    Assert.assertEquals(response.getResults().size(), 0);
+    Response<BatchResponse<Greeting>> response = client.sendRequest(request).getResponse();
+    checkHeaderForCompression(response, operationsForCompression, "batch_get");
+    BatchResponse<Greeting> entity = response.getEntity();
+    Assert.assertEquals(entity.getResults().size(), 0);
   }
 
-  @Test(dataProvider = "Clients")
-  public void testBatchGetUsingCollection(RestClient client) throws RemoteInvocationException
+  @Test(dataProvider = "ClientsCompressedResponses")
+  public void testBatchGetUsingCollection(RestClient client, String operationsForCompression) throws RemoteInvocationException
   {
     List<Long> ids = Arrays.asList(1L, 2L, 3L, 4L);
     Request<BatchResponse<Greeting>> request = GREETINGS_BUILDERS.batchGet().ids(ids).fields(Greeting.fields().id(), Greeting.fields().message()).build();
-    BatchResponse<Greeting> response = client.sendRequest(request).getResponse().getEntity();
-    Assert.assertEquals(response.getResults().size(), ids.size());
+    Response<BatchResponse<Greeting>> response = client.sendRequest(request).getResponse();
+
+    checkHeaderForCompression(response, operationsForCompression, "batch_get");
+
+    BatchResponse<Greeting> entity = response.getEntity();
+    Assert.assertEquals(entity.getResults().size(), ids.size());
   }
 
-  @Test(dataProvider = "Clients")
-  public void testBatchGetUsingCollectionKV(RestClient client) throws RemoteInvocationException
+  @Test(dataProvider = "ClientsCompressedResponses")
+  public void testBatchGetUsingCollectionKV(RestClient client, String operationsForCompression) throws RemoteInvocationException
   {
     List<Long> ids = Arrays.asList(1L, 2L, 3L, 4L);
     Request<BatchKVResponse<Long, Greeting>> request = GREETINGS_BUILDERS.batchGet().ids(ids).fields(Greeting.fields().id(), Greeting.fields().message()).buildKV();
-    BatchKVResponse<Long, Greeting> response = client.sendRequest(request).getResponse().getEntity();
-    Assert.assertEquals(response.getResults().size(), ids.size());
-    for(Map.Entry<Long, Greeting> entry : response.getResults().entrySet())
+    Response<BatchKVResponse<Long, Greeting>> response = client.sendRequest(request).getResponse();
+
+    checkHeaderForCompression(response, operationsForCompression, "batch_get");
+
+    BatchKVResponse<Long, Greeting> entity = response.getEntity();
+    Assert.assertEquals(entity.getResults().size(), ids.size());
+    for(Map.Entry<Long, Greeting> entry : entity.getResults().entrySet())
     {
       Assert.assertEquals(entry.getKey(), entry.getValue().getId());
     }
   }
 
-  @Test(dataProvider = "Clients")
+  /**
+   * Ensures that the Content-Encoding header is present, if it should be
+   */
+  private <T> void checkHeaderForCompression(Response<T> response, String operationsConfig, String methodName)
+  {
+    String contentEncodingHeader = response.getHeader(HttpConstants.CONTENT_ENCODING);
+    String allPossibleAcceptEncodings = "gzip, deflate, bzip2, snappy";
+
+    Map<String, Set<String>> methodsAndFamilies = getCompressionMethods(operationsConfig);
+    Set<String> methods = methodsAndFamilies.get("methods");
+    Set<String> families = methodsAndFamilies.get("families");
+
+    if (shouldCompress(families, methods, methodName))
+    {
+      if (contentEncodingHeader == null)
+      {
+        Assert.fail("Content-Encoding header absent");
+      }
+      Assert.assertTrue(allPossibleAcceptEncodings.contains(contentEncodingHeader));
+    }
+    else
+    {
+      Assert.assertNull(contentEncodingHeader);
+    }
+  }
+
+  private boolean shouldCompress(Set<String> families, Set<String> methods, String methodName)
+  {
+    return families.contains("*") ||
+           methods.contains(methodName) ||
+           (methodName.contains(":") && families.contains(methodName.split(":")[0]));
+  }
+
+  /**
+   * Converts compression config into a set of methods and families that are supposed to have compression.
+   * The returned map has two keys, "methods" and "families".
+   * "methods" maps to a Set of all methods for compression
+   * "families" maps to a Set of all families for compression. Includes "*" if it is present
+   * @param operationsConfig
+   * @return
+   */
+  private Map<String, Set<String>> getCompressionMethods(String operationsConfig)
+  {
+    Map<String, Set<String>> methodsAndFamilies = new HashMap<String, Set<String>>();
+    methodsAndFamilies.put("methods", new HashSet<String>());
+    methodsAndFamilies.put("families", new HashSet<String>());
+    for (String operation: operationsConfig.split(","))
+    {
+      operation = operation.trim();
+      if (operation.equals("*"))
+      {
+        // treat "*" as a family for testing
+        methodsAndFamilies.get("families").add(operation);
+      }
+      else if (operation.endsWith(":*"))
+      {
+        // this is a family
+        methodsAndFamilies.get("families").add(operation.split(":")[0]);
+      }
+      else
+      {
+        // this is a method
+        methodsAndFamilies.get("methods").add(operation);
+      }
+    }
+    return methodsAndFamilies;
+  }
+
+  @Test(dataProvider = "ClientsNoCompressedResponses")
   public void testMalformedPagination(RestClient client) throws RemoteInvocationException
   {
     expectPaginationError("-1", client);
@@ -618,7 +751,7 @@ public class TestCompressionServer extends RestLiIntegrationTest
     }
   }
 
-  @Test(dataProvider = "Clients")
+  @Test(dataProvider = "ClientsNoCompressedResponses")
   public void testException(RestClient client) throws RemoteInvocationException
   {
     try
@@ -634,7 +767,7 @@ public class TestCompressionServer extends RestLiIntegrationTest
     }
   }
 
-  @Test(dataProvider = "Clients")
+  @Test(dataProvider = "ClientsNoCompressedResponses")
   public void test404(RestClient client) throws RemoteInvocationException
   {
     Request<Greeting> request = GREETINGS_BUILDERS.get().id(999L).build();

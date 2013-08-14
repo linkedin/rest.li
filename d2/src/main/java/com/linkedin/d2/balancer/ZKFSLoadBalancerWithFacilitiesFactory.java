@@ -73,7 +73,8 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
                                                    config.d2ServicePath,
                                                    config.sslContext,
                                                    config.sslParameters,
-                                                   config.isSSLEnabled);
+                                                   config.isSSLEnabled,
+                                                   config.clientServicesConfig);
   }
 
   private Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> createDefaultLoadBalancerStrategyFactories()

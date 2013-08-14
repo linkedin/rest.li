@@ -72,7 +72,8 @@ public class D2ClientBuilder
                   _config.sslContext,
                   _config.sslParameters,
                   _config.isSSLEnabled,
-                  _config.shutdownAsynchronously);
+                  _config.shutdownAsynchronously,
+                  _config.clientServicesConfig);
 
     final LoadBalancerWithFacilities loadBalancer = loadBalancerFactory.create(cfg);
 
@@ -159,6 +160,12 @@ public class D2ClientBuilder
   public D2ClientBuilder setShutdownAsynchronously(boolean shutdownAsynchronously)
   {
     _config.shutdownAsynchronously = shutdownAsynchronously;
+    return this;
+  }
+
+  public D2ClientBuilder setClientServicesConfig(Map<String, Map<String, Object>> clientServicesConfig)
+  {
+    _config.clientServicesConfig = clientServicesConfig;
     return this;
   }
 

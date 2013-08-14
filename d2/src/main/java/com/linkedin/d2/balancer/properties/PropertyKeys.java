@@ -58,6 +58,7 @@ public class PropertyKeys
   public static final String PRIORITIZED_SCHEMES = "prioritizedSchemes";
   public static final String BANNED_URIS = "bannedUri";
   public static final String DEFAULT_ROUTING = "defaultRouting";
+  public static final String ALLOWED_CLIENT_OVERRIDE_KEYS = "allowedClientOverrideKeys";
 
   //load balancer specific properties
   public static final String LB_STRATEGY_NAME = "loadBalancerStrategyName";
@@ -101,6 +102,7 @@ public class PropertyKeys
   public static final String HTTP_SHUTDOWN_TIMEOUT = HttpClientFactory.HTTP_SHUTDOWN_TIMEOUT;
   public static final String HTTP_SSL_CONTEXT = HttpClientFactory.HTTP_SSL_CONTEXT;
   public static final String HTTP_SSL_PARAMS = HttpClientFactory.HTTP_SSL_PARAMS;
+  public static final String HTTP_RESPONSE_COMPRESSION_OPERATIONS = HttpClientFactory.HTTP_RESPONSE_COMPRESSION_OPERATIONS;
 
   //used for multi colo
   public static final String DEFAULT_COLO = "defaultColo";

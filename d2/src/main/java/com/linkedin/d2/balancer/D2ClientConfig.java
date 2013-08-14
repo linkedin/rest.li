@@ -15,6 +15,7 @@
 */
 package com.linkedin.d2.balancer;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLContext;
@@ -42,6 +43,7 @@ public class D2ClientConfig
   SSLParameters sslParameters = null;
   boolean isSSLEnabled = false;
   boolean shutdownAsynchronously = false;
+  Map<String, Map<String, Object>> clientServicesConfig = Collections.<String, Map<String, Object>>emptyMap();
 
   public D2ClientConfig()
   {
@@ -98,6 +100,41 @@ public class D2ClientConfig
                 boolean isSSLEnabled,
                 boolean shutdownAsynchronously)
   {
+    this(zkHosts,
+         zkSessionTimeoutInMs,
+         zkStartupTimeoutInMs,
+         lbWaitTimeout,
+         lbWaitUnit,
+         flagFile,
+         basePath,
+         fsBasePath,
+         componentFactory,
+         clientFactories,
+         lbWithFacilitiesFactory,
+         sslContext,
+         sslParameters,
+         isSSLEnabled,
+         shutdownAsynchronously,
+         Collections.<String, Map<String, Object>>emptyMap());
+  }
+
+  public D2ClientConfig(String zkHosts,
+                        long zkSessionTimeoutInMs,
+                        long zkStartupTimeoutInMs,
+                        long lbWaitTimeout,
+                        TimeUnit lbWaitUnit,
+                        String flagFile,
+                        String basePath,
+                        String fsBasePath,
+                        ComponentFactory componentFactory,
+                        Map<String, TransportClientFactory> clientFactories,
+                        LoadBalancerWithFacilitiesFactory lbWithFacilitiesFactory,
+                        SSLContext sslContext,
+                        SSLParameters sslParameters,
+                        boolean isSSLEnabled,
+                        boolean shutdownAsynchronously,
+                        Map<String, Map<String, Object>> clientServicesConfig)
+  {
     this.zkHosts = zkHosts;
     this.zkSessionTimeoutInMs = zkSessionTimeoutInMs;
     this.zkStartupTimeoutInMs = zkStartupTimeoutInMs;
@@ -113,6 +150,7 @@ public class D2ClientConfig
     this.sslParameters = sslParameters;
     this.isSSLEnabled = isSSLEnabled;
     this.shutdownAsynchronously = shutdownAsynchronously;
+    this.clientServicesConfig = clientServicesConfig;
   }
 
 }

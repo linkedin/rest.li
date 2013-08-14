@@ -19,4 +19,6 @@ public class CompressionConstants
   protected static final String ENCODING_DELIMITER = ",";
   protected static final String QUALITY_DELIMITER = ";";
   protected static final String QUALITY_PREFIX = "q=";
+
+  public static final String OPERATION = "OPERATION";
 }

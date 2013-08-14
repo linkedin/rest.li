@@ -17,7 +17,6 @@
 package com.linkedin.restli.client;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -36,8 +35,7 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
 import com.linkedin.restli.internal.common.IllegalMaskException;
 import com.linkedin.restli.internal.common.URIMaskUtil;
-import com.linkedin.restli.internal.common.URLEscaper;
-import com.linkedin.restli.internal.common.URLEscaper.Escaping;
+
 
 /**
  * A type-bound Request for a resource.
@@ -58,6 +56,7 @@ public class Request<T>
   private final ResourceSpec           _resourceSpec;
   private final DataMap                _queryParams;
   private final List<String>           _resourcePath;
+  private final String                 _methodName; // needed to identify finders and actions. null for everything else
 
   public Request(URI uri,
                  ResourceMethod method,
@@ -100,6 +99,19 @@ public class Request<T>
                  DataMap queryParams,
                  List<String> resourcePath)
   {
+    this(uri, method, input, headers, decoder, resourceSpec, queryParams, resourcePath, null);
+  }
+
+  public Request(URI uri,
+                 ResourceMethod method,
+                 RecordTemplate input,
+                 Map<String, String> headers,
+                 RestResponseDecoder<T> decoder,
+                 ResourceSpec resourceSpec,
+                 DataMap queryParams,
+                 List<String> resourcePath,
+                 String methodName)
+  {
     _uri = uri;
     _method = method;
     _input = input;
@@ -118,11 +130,17 @@ public class Request<T>
     }
 
     _resourcePath = resourcePath;
+    _methodName = methodName;
   }
 
   public URI getUri()
   {
     return _uri;
+  }
+
+  public String getMethodName()
+  {
+    return _methodName;
   }
 
   /**
