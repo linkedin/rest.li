@@ -1,7 +1,6 @@
 dependencies {
   compile project(':degrader')
   compile project(':r2')
-  compile project(':r2-jetty')
   compile project(':data')
   compile project(':pegasus-common')
   compile project(':li-jersey-uri')
