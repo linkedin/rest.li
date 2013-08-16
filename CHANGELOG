@@ -1,6 +1,10 @@
-1.9.15
+1.9.16
 ------
 
+1.9.15
+------
+(RB=199182)
+Remove unneeded dependencies on r2-jetty to avoid dragging jetty dependency downstream
 
 1.9.14
 ------
