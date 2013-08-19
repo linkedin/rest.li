@@ -1476,7 +1476,7 @@ class PegasusPlugin implements Plugin<Project>
       }
       else
       {
-        idlCompatLevel = compatLevelClass.getEnumConstants().last()
+        idlCompatLevel = compatLevelClass.DEFAULT;
       }
 
       if (idlCompatLevel.ordinal() == 0)

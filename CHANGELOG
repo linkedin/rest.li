@@ -1,5 +1,7 @@
 1.9.16
 ------
+(RB=200079)
+Changing the dev default of the compat checker to BACKWARDS.
 
 1.9.15
 ------

@@ -89,7 +89,7 @@ public class RestLiResourceModelCompatibilityChecker
     }
     else
     {
-      compatValue = CompatibilityLevel.EQUIVALENT.name();
+      compatValue = CompatibilityLevel.DEFAULT.name();
     }
 
     final CompatibilityLevel compat;

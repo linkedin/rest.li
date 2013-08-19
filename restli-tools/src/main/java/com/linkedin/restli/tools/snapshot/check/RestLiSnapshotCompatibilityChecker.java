@@ -88,7 +88,7 @@ public class RestLiSnapshotCompatibilityChecker
     }
     else
     {
-      compatValue = CompatibilityLevel.EQUIVALENT.name();
+      compatValue = CompatibilityLevel.DEFAULT.name();
     }
 
     final CompatibilityLevel compat;

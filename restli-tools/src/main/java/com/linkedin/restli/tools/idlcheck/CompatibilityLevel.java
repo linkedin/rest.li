@@ -29,5 +29,7 @@ public enum CompatibilityLevel
   OFF,
   IGNORE,
   BACKWARDS,
-  EQUIVALENT
+  EQUIVALENT;
+
+  public static final CompatibilityLevel DEFAULT = CompatibilityLevel.BACKWARDS;
 }
