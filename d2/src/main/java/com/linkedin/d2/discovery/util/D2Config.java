@@ -206,12 +206,12 @@ public class D2Config
         // one of the peer colos, if applicable.
         if (!coloVariants.contains(defaultColo))
         {
-          throw new IllegalStateException("The default colo: " + defaultColo + " is not one of the peer colos.");
+          throw new IllegalStateException("The default colo: " + defaultColo + " is not one of the peer colos = " + coloVariants);
         }
 
         if (masterColo != null && !coloVariants.contains(masterColo))
         {
-          throw new IllegalStateException("The master colo: " + masterColo + " is not one of the peer colos.");
+          throw new IllegalStateException("The master colo: " + masterColo + " is not one of the peer colos = " + coloVariants);
         }
       }
 

@@ -246,4 +246,19 @@ public class JmxManager
       _log.warn("Failed to register MBean with name " + oName, e);
     }
   }
+
+  public boolean isRegistered(String name)
+  {
+    ObjectName oName;
+    try
+    {
+      oName = getName(name);
+      return _registeredNames.contains(oName);
+    }
+    catch (Exception e)
+    {
+      _log.warn("Failed to get object name for {}", name);
+      return false;
+    }
+  }
 }

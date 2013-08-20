@@ -1,5 +1,11 @@
+1.9.17
+------
+
 1.9.16
 ------
+(RB=200567)
+add isRegistered to JmxManager to find out whether a bean has been registered to jmx
+
 (RB=200079)
 Changing the dev default of the compat checker to BACKWARDS.
 
