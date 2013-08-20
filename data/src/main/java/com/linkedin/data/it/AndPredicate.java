@@ -18,14 +18,18 @@ package com.linkedin.data.it;
 
 
 import com.linkedin.data.element.DataElement;
+
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 
 /**
  * Evaluate if all the {@link Predicate}'s are true.
  * <p>
  *
- * There are no {@link Predicate}'s to evaluate, then
+ * If there are no {@link Predicate}'s to evaluate, then
  * this predicate returns true. Furthermore, the
  * predicates are evaluated in the order they are provided,
  * once a predicate evaluates to false, the remaining
@@ -67,6 +71,11 @@ public class AndPredicate implements Predicate
       }
     }
     return true;
+  }
+
+  public List<Predicate> getChildPredicates()
+  {
+    return Collections.unmodifiableList(Arrays.asList(_predicates));
   }
 
   Predicate[] _predicates;

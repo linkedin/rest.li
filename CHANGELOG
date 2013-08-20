@@ -6,6 +6,10 @@ Added ability for clients to provide service level configs. Added support for cl
 (RB=202201)
 Add thread pool size configuration parameters to RestliServlet, NettyStandaloneLauncher and StandaloneLauncher (jetty).
 
+(RB=200469)
+Allow an boolean expression of predicate names to be passed to FilterSchemaGenerator.
+Add NOT predicate.
+
 1.9.16
 ------
 (RB=200567)

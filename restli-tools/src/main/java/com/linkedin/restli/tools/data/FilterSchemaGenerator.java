@@ -1,16 +1,37 @@
+/*
+   Copyright (c) 2012 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package com.linkedin.restli.tools.data;
 
 
-import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.it.Predicate;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.SchemaParser;
-import com.linkedin.data.schema.SchemaParserFactory;
 import com.linkedin.data.schema.util.Filters;
 import com.linkedin.data.schema.validation.ValidationOptions;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.util.FileUtil;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,14 +53,25 @@ public class FilterSchemaGenerator
 {
   public static void main(String[] args)
   {
-    if (args.length < 3)
+    final CommandLineParser parser = new GnuParser();
+    CommandLine cl = null;
+    try
     {
-      _log.error("Usage: FilterSchemaGenerator predicateClassName sourceDirectoryPath outputDirectoryPath [-a|--avroMode]");
-      System.exit(1);
+      cl = parser.parse(_options, args);
+    }
+    catch (ParseException e)
+    {
+      _log.error("Invalid arguments: " + e.getMessage());
+      reportInvalidArguments();
     }
 
-    final File sourceDirectory = new File(args[1]);
+    final String[] directoryArgs = cl.getArgs();
+    if (directoryArgs.length != 2)
+    {
+      reportInvalidArguments();
+    }
 
+    final File sourceDirectory = new File(directoryArgs[0]);
     if (!sourceDirectory.exists())
     {
       _log.error(sourceDirectory.getPath() + " does not exist");
@@ -50,59 +82,18 @@ public class FilterSchemaGenerator
       _log.error(sourceDirectory.getPath() + " is not a directory");
       System.exit(1);
     }
+    final URI sourceDirectoryURI = sourceDirectory.toURI();
 
-    final File outputDirectory = new File(args[2]);
+    final File outputDirectory = new File(directoryArgs[1]);
     if (outputDirectory.exists() && !sourceDirectory.isDirectory())
     {
       _log.error(outputDirectory.getPath() + " is not a directory");
       System.exit(1);
     }
 
-    final URI sourceDirectoryURI = sourceDirectory.toURI();
-
-    final boolean isAvroMode;
-    if (args.length == 4)
-    {
-      isAvroMode = "-a".equals(args[3]) || "--avroMode".equals(args[3]);
-    }
-    else
-    {
-      isAvroMode = false;
-    }
-
-    final String predicateClassName = args[0];
-    final Class<?> predicateClass;
-    try
-    {
-      predicateClass = Class.forName(predicateClassName);
-    }
-    catch (ClassNotFoundException e)
-    {
-      reportException(e);
-      return;
-    }
-
-    if (!Predicate.class.isAssignableFrom(predicateClass))
-    {
-      _log.error(predicateClassName + " must be the name of a subclass of com.linkedin.data.it.Predicate");
-      System.exit(1);
-    }
-
-    final Predicate predicate;
-    try
-    {
-      predicate = predicateClass.asSubclass(Predicate.class).newInstance();
-    }
-    catch (InstantiationException e)
-    {
-      reportException(e);
-      return;
-    }
-    catch (IllegalAccessException e)
-    {
-      reportException(e);
-      return;
-    }
+    final boolean isAvroMode = cl.hasOption('a');
+    final String predicateExpression = cl.getOptionValue('e');
+    final Predicate predicate = PredicateExpressionParser.parse(predicateExpression);
 
     final Collection<File> sourceFiles = FileUtil.listFiles(sourceDirectory, null);
     int exitCode = 0;
@@ -135,7 +126,8 @@ public class FilterSchemaGenerator
         final SchemaParser filterParser = new SchemaParser();
         filterParser.setValidationOptions(val);
 
-        final NamedDataSchema filteredSchema = Filters.removeByPredicate((NamedDataSchema) originalSchema, predicate, filterParser);
+        final NamedDataSchema filteredSchema = Filters.removeByPredicate((NamedDataSchema) originalSchema,
+                                                                         predicate, filterParser);
         if (filterParser.hasError())
         {
           _log.error("Error applying predicate: " + filterParser.errorMessageBuilder().toString());
@@ -167,11 +159,21 @@ public class FilterSchemaGenerator
     System.exit(exitCode);
   }
 
-  private static void reportException(Exception e)
+  private static void reportInvalidArguments()
   {
-    _log.error(e.getClass().getName() + ": " + e.getMessage());
+    final HelpFormatter formatter = new HelpFormatter();
+    formatter.printHelp(FilterSchemaGenerator.class.getName() + " sourceDirectoryPath outputDirectoryPath", _options, true);
     System.exit(1);
   }
 
   private static final Logger _log = LoggerFactory.getLogger(FilterSchemaGenerator.class);
+  private static final Options _options = new Options();
+  static
+  {
+    _options.addOption(OptionBuilder.withLongOpt("avro")
+                          .withDescription("Specify this option if processing Avro schemas")
+                          .create("a"));
+    _options.addOption(OptionBuilder.withLongOpt("expr").withArgName("expression").hasArg().isRequired().withDescription(
+        "Expression of filter predicate combinations, which are expressed in fully qualified class names").create("e"));
+  }
 }

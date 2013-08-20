@@ -94,6 +94,11 @@ public class Predicates
     return new OrPredicate(predicates);
   }
 
+  public static Predicate not(Predicate predicate)
+  {
+    return new NotPredicate(predicate);
+  }
+
   public static Predicate parent(Predicate predicate)
   {
     return new ParentPredicate(predicate);
