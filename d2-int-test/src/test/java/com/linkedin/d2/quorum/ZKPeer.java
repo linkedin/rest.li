@@ -111,7 +111,7 @@ public class ZKPeer
     _peer.setQuorumVerifier(new QuorumMaj(peersCount));
     _peer.setCnxnFactory(cnxnFactory);
     _peer.setZKDatabase(new ZKDatabase(_peer.getTxnFactory()));
-    _peer.setPeerType(LearnerType.PARTICIPANT);
+    _peer.setLearnerType(LearnerType.PARTICIPANT);
 
   }
 

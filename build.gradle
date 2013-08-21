@@ -60,7 +60,7 @@ project.ext.externalDependency = [
   'snappy': 'org.iq80.snappy:snappy:0.3',
   'testng': 'org.testng:testng:6.4',
   'velocity': 'org.apache.velocity:velocity:1.5',
-  'zookeeper': 'org.apache.zookeeper:zookeeper:3.3.0'
+  'zookeeper': 'org.apache.zookeeper:zookeeper:3.3.4'
 ];
 
 if (!project.ext.isDefaultEnvironment)
