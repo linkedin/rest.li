@@ -8,7 +8,7 @@ buildscript {
     mavenCentral()
   }
   dependencies {
-    classpath "com.linkedin.pegasus:gradle-plugins:1.9.3"
+    classpath "com.linkedin.pegasus:gradle-plugins:1.9.16"
   }
 }
 
@@ -16,7 +16,7 @@ task wrapper(type: Wrapper) {
   gradleVersion = '1.6'
 }
 
-pegasusVersion = "1.9.3"
+pegasusVersion = "1.9.16"
 spec = [
   "product" : [
     "pegasus" : [
@@ -26,7 +26,9 @@ spec = [
       "restliServer" : "com.linkedin.pegasus:restli-server:"+pegasusVersion,
       "restliTools" : "com.linkedin.pegasus:restli-tools:"+pegasusVersion,
       "gradlePlugins" : "com.linkedin.pegasus:gradle-plugins:"+pegasusVersion,
-      "r2Jetty" : "com.linkedin.pegasus:r2-jetty:"+pegasusVersion
+      "r2Jetty" : "com.linkedin.pegasus:r2-jetty:"+pegasusVersion,
+      "restliNettyStandalone" : "com.linkedin.pegasus:restli-netty-standalone:"+pegasusVersion,
+      "restliServerStandalone" : "com.linkedin.pegasus:restli-server-standalone:"+pegasusVersion
     ]
   ]
 ]

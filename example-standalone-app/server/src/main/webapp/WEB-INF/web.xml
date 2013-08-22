@@ -13,6 +13,10 @@
         <param-name>resourcePackages</param-name>
         <param-value>com.example.fortune.impl</param-value>
       </init-param>
+      <init-param>
+        <param-name>parseqThreadPoolSize</param-name>
+        <param-value>10</param-value>
+      </init-param>
       <load-on-startup>1</load-on-startup>
   </servlet>
 

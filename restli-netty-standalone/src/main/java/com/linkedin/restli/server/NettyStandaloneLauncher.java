@@ -41,6 +41,8 @@ import com.linkedin.restli.server.resources.PrototypeResourceFactory;
 public class NettyStandaloneLauncher
 {
   private final int _port;
+  private final int _threadPoolSize;
+  private final int _parseqThreadPoolSize;
   private final String[] _packages;
   private final HttpServer _server;
 
@@ -53,7 +55,23 @@ public class NettyStandaloneLauncher
    */
   public NettyStandaloneLauncher(final int port, final String... packages)
   {
+    this(port, HttpNettyServerFactory.DEFAULT_THREAD_POOL_SIZE, getDefaultParseqThreadPoolSize(), packages);
+  }
+
+  /**
+   * Construct a new standalone RestLi server that will listen on the given port and serve RestLi
+   * resources from the given packages.
+   *
+   * @param port the port to listen on
+   * @param threadPoolSize number of threads to keep in the server's netty request pool
+   * @param parseqThreadPoolSize number of threads to keep in the pool for outbound, parseq requests
+   * @param packages package names to scan for RestLi resources
+   */
+  public NettyStandaloneLauncher(final int port, int threadPoolSize, int parseqThreadPoolSize, final String... packages)
+  {
     _port = port;
+    _threadPoolSize = threadPoolSize;
+    _parseqThreadPoolSize = parseqThreadPoolSize;
     _packages = packages;
 
     final RestLiConfig config = new RestLiConfig();
@@ -61,8 +79,8 @@ public class NettyStandaloneLauncher
     config.setServerNodeUri(URI.create("/"));
     config.addResourcePackageNames(_packages);
 
-    final int numCores = Runtime.getRuntime().availableProcessors();
-    final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(numCores + 1);
+    System.err.println("Netty parseqThreadPoolSize: " + parseqThreadPoolSize);
+    final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(parseqThreadPoolSize);
     final Engine engine = new EngineBuilder()
         .setTaskExecutor(scheduler)
         .setTimerScheduler(scheduler)
@@ -70,7 +88,8 @@ public class NettyStandaloneLauncher
 
     final RestLiServer restServer = new RestLiServer(config, new PrototypeResourceFactory(), engine);
     final TransportDispatcher dispatcher = new DelegatingTransportDispatcher(restServer);
-    _server = new HttpNettyServerFactory(FilterChains.empty()).createServer(_port, dispatcher);
+    System.err.println("Netty threadPoolSize: " + threadPoolSize);
+    _server = new HttpNettyServerFactory(FilterChains.empty()).createServer(_port, threadPoolSize, dispatcher);
   }
 
   /**
@@ -79,6 +98,16 @@ public class NettyStandaloneLauncher
   public int getPort()
   {
     return _port;
+  }
+
+  public int getThreadPoolSize()
+  {
+    return _threadPoolSize;
+  }
+
+  public int getParseqThreadPoolSize()
+  {
+    return _parseqThreadPoolSize;
   }
 
   /**
@@ -128,6 +157,13 @@ public class NettyStandaloneLauncher
     launcher.stop();
   }
 
+
+  private static int getDefaultParseqThreadPoolSize()
+  {
+    int numCores = Runtime.getRuntime().availableProcessors();
+    return numCores + 1;
+  }
+
   /**
    * Parse command line arguments
    */
@@ -140,6 +176,9 @@ public class NettyStandaloneLauncher
 
     int port = 1338;
     String[] packages = null;
+    int threadPoolSize = HttpNettyServerFactory.DEFAULT_THREAD_POOL_SIZE;
+    int parseqThreadPoolSize = getDefaultParseqThreadPoolSize();
+
     for (int i = 0; i < args.length; i++)
     {
       final boolean hasValueArg = i + 1 < args.length;
@@ -163,6 +202,46 @@ public class NettyStandaloneLauncher
           help();
         }
       }
+      else if (args[i].equals("-threads"))
+      {
+        if (hasValueArg)
+        {
+          try
+          {
+            threadPoolSize = Integer.parseInt(args[i + 1]);
+          }
+          catch (final NumberFormatException e)
+          {
+            System.out.println("Invalid threads: " + args[i + 1]);
+            help();
+          }
+        }
+        else
+        {
+          System.out.println("Missing thread count");
+          help();
+        }
+      }
+      else if (args[i].equals("-parseqthreads"))
+      {
+        if (hasValueArg)
+        {
+          try
+          {
+            parseqThreadPoolSize = Integer.parseInt(args[i + 1]);
+          }
+          catch (final NumberFormatException e)
+          {
+            System.out.println("Invalid parseqthreads: " + args[i + 1]);
+            help();
+          }
+        }
+        else
+        {
+          System.out.println("Missing parseqthreads count");
+          help();
+        }
+      }
       else if (args[i].equals("-packages"))
       {
         if (hasValueArg)
@@ -181,7 +260,7 @@ public class NettyStandaloneLauncher
       help();
     }
 
-    return new NettyStandaloneLauncher(port, packages);
+    return new NettyStandaloneLauncher(port, threadPoolSize, parseqThreadPoolSize, packages);
   }
 
   /**
@@ -189,7 +268,7 @@ public class NettyStandaloneLauncher
    */
   private static void help()
   {
-    System.out.println("Usage: launcher [-port port] [-packages package1,package2,...]");
+    System.out.println("Usage: launcher [-port port] [-threads threadPoolSize] [-parseqthreads parseqThreadPoolSize] [-packages package1,package2,...]");
     System.exit(0);
   }
 }

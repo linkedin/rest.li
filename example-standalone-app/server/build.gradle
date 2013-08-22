@@ -7,4 +7,24 @@ dependencies {
   compile project(path: ':api', configuration: 'dataTemplate')
   compile spec.product.pegasus.r2Jetty
   compile spec.product.pegasus.restliServer
+  compile spec.product.pegasus.restliNettyStandalone
+  compile spec.product.pegasus.restliServerStandalone
+}
+
+// to start a server using a jetty servlet container, run: gradle JettyRunWar  (http://localhost:8080/server/fortunes/1)
+// to start a server using a netty standalone server, run: gradle startNettyFortunesServer (http://localhost:8080/fortunes/1)
+// to start a server using a jetty standalone server, run: gradle startJettyFortunesServer (http://localhost:8080/fortunes/1)
+
+task startNettyFortunesServer(type: JavaExec) {
+  main = 'com.linkedin.restli.server.NettyStandaloneLauncher'
+  args = ['-port', '8080', '-serverPath', '/server/', '-threads', '10', '-parseqthreads', '5', '-packages', 'com.example.fortune.impl']
+  classpath = sourceSets.main.runtimeClasspath
+  standardInput = System.in
+}
+
+task startJettyFortunesServer(type: JavaExec) {
+  main = 'com.linkedin.restli.server.StandaloneLauncher'
+  args = ['-port', '8080', '-serverPath', '/server/', '-threads', '10', '-parseqthreads', '5', '-packages', 'com.example.fortune.impl']
+  classpath = sourceSets.main.runtimeClasspath
+  standardInput = System.in
 }

@@ -28,6 +28,7 @@ import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
  */
 public class HttpServerFactory
 {
+  public static final int DEFAULT_THREAD_POOL_SIZE = 512;
   private final FilterChain _filters;
 
   public HttpServerFactory()
@@ -42,8 +43,13 @@ public class HttpServerFactory
 
   public HttpServer createServer(int port, TransportDispatcher transportDispatcher)
   {
+    return createServer(port, DEFAULT_THREAD_POOL_SIZE, transportDispatcher);
+  }
+
+  public HttpServer createServer(int port, int threadPoolSize, TransportDispatcher transportDispatcher)
+  {
     final TransportDispatcher filterDispatcher = new FilterChainDispatcher(transportDispatcher, _filters);
     final HttpDispatcher dispatcher = new HttpDispatcher(filterDispatcher);
-    return new HttpJettyServer(port, dispatcher);
+    return new HttpJettyServer(port, threadPoolSize, dispatcher);
   }
 }

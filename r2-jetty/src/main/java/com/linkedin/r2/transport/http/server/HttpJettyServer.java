@@ -39,6 +39,7 @@ import java.io.IOException;
 public class HttpJettyServer implements HttpServer
 {
   private int _port;
+  private int _threadPoolSize;
   private Server _server;
   private HttpServlet _servlet;
 
@@ -47,9 +48,20 @@ public class HttpJettyServer implements HttpServer
     this(port, new RAPServlet(dispatcher));
   }
 
+  public HttpJettyServer(int port, int threadPoolSize, HttpDispatcher dispatcher)
+  {
+    this(port, threadPoolSize, new RAPServlet(dispatcher));
+  }
+
   public HttpJettyServer(int port, HttpServlet servlet)
   {
+    this(port, HttpServerFactory.DEFAULT_THREAD_POOL_SIZE, servlet);
+  }
+
+  public HttpJettyServer(int port, int threadPoolSize, HttpServlet servlet)
+  {
     _port = port;
+    _threadPoolSize = threadPoolSize;
     _servlet = servlet;
   }
 
@@ -60,7 +72,7 @@ public class HttpJettyServer implements HttpServer
     SelectChannelConnector connector = new SelectChannelConnector();
     connector.setPort(_port);
     _server.setConnectors(new Connector[] { connector });
-    _server.setThreadPool(new QueuedThreadPool(512));
+    _server.setThreadPool(new QueuedThreadPool(_threadPoolSize));
     Context root = new Context(_server, "/", Context.SESSIONS);
     root.addServlet(new ServletHolder(_servlet), "/*");
 

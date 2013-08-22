@@ -72,11 +72,13 @@ import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
   private final ExecutionHandler _executionHandler = new ExecutionHandler(new OrderedMemoryAwareThreadPoolExecutor(256, 0, 0));
 
   private final int _port;
+  private final int _threadPoolSize;
   private final HttpDispatcher _dispatcher;
 
-  public HttpNettyServer(int port, HttpDispatcher dispatcher)
+  public HttpNettyServer(int port, int threadPoolSize, HttpDispatcher dispatcher)
   {
     _port = port;
+    _threadPoolSize = threadPoolSize;
     _dispatcher = dispatcher;
   }
 
@@ -86,7 +88,7 @@ import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
     ChannelFactory factory =
           new NioServerSocketChannelFactory(
                   Executors.newCachedThreadPool(),
-                  Executors.newFixedThreadPool(256)
+                  Executors.newFixedThreadPool(_threadPoolSize)
 //                  Executors.newCachedThreadPool()
           );
 
