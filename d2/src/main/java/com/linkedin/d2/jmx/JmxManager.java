@@ -253,7 +253,7 @@ public class JmxManager
     try
     {
       oName = getName(name);
-      return _registeredNames.contains(oName);
+      return _server.isRegistered(oName);
     }
     catch (Exception e)
     {
