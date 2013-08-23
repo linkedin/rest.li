@@ -1,5 +1,8 @@
 1.9.17
 ------
+(RB=198503)
+Added ability for clients to provide service level configs. Added support for clients to enable response compression.
+
 (RB=202201)
 Add thread pool size configuration parameters to RestliServlet, NettyStandaloneLauncher and StandaloneLauncher (jetty).
 
