@@ -55,7 +55,7 @@ public class StandaloneLauncher
    */
   public StandaloneLauncher(final int port, final String... packages)
   {
-    this(port, HttpNettyServerFactory.DEFAULT_THREAD_POOL_SIZE, getDefaultParseqThreadPoolSize(), packages);
+    this(port, HttpServerFactory.DEFAULT_THREAD_POOL_SIZE, getDefaultParseqThreadPoolSize(), packages);
   }
 
   /**
