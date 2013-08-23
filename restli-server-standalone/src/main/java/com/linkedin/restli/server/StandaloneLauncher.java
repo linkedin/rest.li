@@ -16,7 +16,7 @@
 
 package com.linkedin.restli.server;
 
-import com.linkedin.r2.transport.http.server.HttpNettyServerFactory;
+import com.linkedin.r2.transport.http.server.HttpServerFactory;
 import java.io.IOException;
 import java.net.URI;
 import java.util.concurrent.Executors;
@@ -27,7 +27,6 @@ import com.linkedin.parseq.EngineBuilder;
 import com.linkedin.r2.filter.FilterChains;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.http.server.HttpServer;
-import com.linkedin.r2.transport.http.server.HttpServerFactory;
 import com.linkedin.restli.docgen.DefaultDocumentationRequestHandler;
 import com.linkedin.restli.server.resources.PrototypeResourceFactory;
 
@@ -41,6 +40,7 @@ import com.linkedin.restli.server.resources.PrototypeResourceFactory;
 public class StandaloneLauncher
 {
   private final int _port;
+  private final String _contextPath;
   private final int _threadPoolSize;
   private final int _parseqThreadPoolSize;
   private final String[] _packages;
@@ -55,7 +55,7 @@ public class StandaloneLauncher
    */
   public StandaloneLauncher(final int port, final String... packages)
   {
-    this(port, HttpServerFactory.DEFAULT_THREAD_POOL_SIZE, getDefaultParseqThreadPoolSize(), packages);
+    this(port, HttpServerFactory.DEFAULT_CONTEXT_PATH, HttpServerFactory.DEFAULT_THREAD_POOL_SIZE, getDefaultParseqThreadPoolSize(), packages);
   }
 
   /**
@@ -67,9 +67,10 @@ public class StandaloneLauncher
    * @param parseqThreadPoolSize number of threads to keep in the pool for outbound, parseq requests
    * @param packages package names to scan for RestLi resources
    */
-  public StandaloneLauncher(final int port, int threadPoolSize, int parseqThreadPoolSize, final String... packages)
+  public StandaloneLauncher(final int port, String contextPath, int threadPoolSize, int parseqThreadPoolSize, final String... packages)
   {
     _port = port;
+    _contextPath = contextPath;
     _threadPoolSize = threadPoolSize;
     _parseqThreadPoolSize = parseqThreadPoolSize;
     _packages = packages;
@@ -89,7 +90,7 @@ public class StandaloneLauncher
     final RestLiServer restServer = new RestLiServer(config, new PrototypeResourceFactory(), engine);
     final TransportDispatcher dispatcher = new DelegatingTransportDispatcher(restServer);
     System.err.println("Jetty threadPoolSize: " + threadPoolSize);
-    _server = new HttpServerFactory(FilterChains.empty()).createServer(_port, _threadPoolSize, dispatcher);
+    _server = new HttpServerFactory(FilterChains.empty()).createServer(_port, _contextPath, _threadPoolSize, dispatcher);
   }
 
   /**
@@ -98,6 +99,11 @@ public class StandaloneLauncher
   public int getPort()
   {
     return _port;
+  }
+
+  public String getContextPath()
+  {
+    return _contextPath;
   }
 
   public int getThreadPoolSize()
@@ -175,7 +181,8 @@ public class StandaloneLauncher
 
     int port = 1338;
     String[] packages = null;
-    int threadPoolSize = HttpNettyServerFactory.DEFAULT_THREAD_POOL_SIZE;
+    String contextPath = HttpServerFactory.DEFAULT_CONTEXT_PATH;
+    int threadPoolSize = HttpServerFactory.DEFAULT_THREAD_POOL_SIZE;
     int parseqThreadPoolSize = getDefaultParseqThreadPoolSize();
 
     for (int i = 0; i < args.length; i++)
@@ -198,6 +205,18 @@ public class StandaloneLauncher
         else
         {
           System.out.println("Missing port number");
+          help();
+        }
+      }
+      else if (args[i].equals("-contextpath"))
+      {
+        if (hasValueArg)
+        {
+          contextPath = args[i + 1];
+        }
+        else
+        {
+          System.out.println("Missing context path");
           help();
         }
       }
@@ -259,7 +278,7 @@ public class StandaloneLauncher
       help();
     }
 
-    return new StandaloneLauncher(port, threadPoolSize, parseqThreadPoolSize, packages);
+    return new StandaloneLauncher(port, contextPath, threadPoolSize, parseqThreadPoolSize, packages);
   }
 
   /**
@@ -267,7 +286,7 @@ public class StandaloneLauncher
    */
   private static void help()
   {
-    System.out.println("Usage: launcher [-port port] [-threads threadPoolSize] [-parseqthreads parseqThreadPoolSize] [-packages package1,package2,...]");
+    System.out.println("Usage: launcher [-port port] [-contextpath context_path] [-threads threadPoolSize] [-parseqthreads parseqThreadPoolSize] [-packages package1,package2,...]");
     System.exit(0);
   }
 }

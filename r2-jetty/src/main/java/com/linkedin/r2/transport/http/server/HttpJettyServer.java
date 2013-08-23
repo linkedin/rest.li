@@ -39,6 +39,7 @@ import java.io.IOException;
 public class HttpJettyServer implements HttpServer
 {
   private int _port;
+  private String _contextPath;
   private int _threadPoolSize;
   private Server _server;
   private HttpServlet _servlet;
@@ -48,19 +49,20 @@ public class HttpJettyServer implements HttpServer
     this(port, new RAPServlet(dispatcher));
   }
 
-  public HttpJettyServer(int port, int threadPoolSize, HttpDispatcher dispatcher)
+  public HttpJettyServer(int port, String contextPath, int threadPoolSize, HttpDispatcher dispatcher)
   {
-    this(port, threadPoolSize, new RAPServlet(dispatcher));
+    this(port, contextPath, threadPoolSize, new RAPServlet(dispatcher));
   }
 
   public HttpJettyServer(int port, HttpServlet servlet)
   {
-    this(port, HttpServerFactory.DEFAULT_THREAD_POOL_SIZE, servlet);
+    this(port, HttpServerFactory.DEFAULT_CONTEXT_PATH, HttpServerFactory.DEFAULT_THREAD_POOL_SIZE, servlet);
   }
 
-  public HttpJettyServer(int port, int threadPoolSize, HttpServlet servlet)
+  public HttpJettyServer(int port, String contextPath, int threadPoolSize, HttpServlet servlet)
   {
     _port = port;
+    _contextPath = contextPath;
     _threadPoolSize = threadPoolSize;
     _servlet = servlet;
   }
@@ -73,7 +75,7 @@ public class HttpJettyServer implements HttpServer
     connector.setPort(_port);
     _server.setConnectors(new Connector[] { connector });
     _server.setThreadPool(new QueuedThreadPool(_threadPoolSize));
-    Context root = new Context(_server, "/", Context.SESSIONS);
+    Context root = new Context(_server, _contextPath, Context.SESSIONS);
     root.addServlet(new ServletHolder(_servlet), "/*");
 
     try

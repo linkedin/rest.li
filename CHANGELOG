@@ -6,6 +6,8 @@ Fixed bug in client only config key-values.
 (RB=203610)
 Add support for returning error details in batch create responses.
 
+(RB=202724)
+Implement context path for Jetty server.
 
 1.9.17
 ------
