@@ -33,6 +33,12 @@ import java.util.Collection;
 
 public interface AsyncPool<T>
 {
+  /**
+   * Get the pool's name.
+   *
+   * @return The pool's name.
+   */
+  String getName();
 
   /**
    * Start the pool.
@@ -99,6 +105,15 @@ public interface AsyncPool<T>
    * @param obj the object to be disposed
    */
   void dispose(T obj);
+
+  /**
+   * Get a snapshot of pool statistics. The specific statistics are described in
+   * {@link AsyncPoolStats}. Calling getStats will reset any 'latched' statistics.
+   *
+   * @return An {@link AsyncPoolStats} object representing the current pool
+   * statistics.
+   */
+  AsyncPoolStats getStats();
 
   public interface Lifecycle<T>
   {
