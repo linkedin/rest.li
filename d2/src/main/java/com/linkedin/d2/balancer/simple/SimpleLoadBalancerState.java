@@ -1091,39 +1091,42 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     {
       debug(_log, "Client supplied configs for service {}", new Object[]{serviceProperties.getServiceName()});
 
-      if (allowedClientOverrideKeys != null)
+      if (allowedClientOverrideKeys == null)
       {
-        // check for overrides
-        for (String clientSuppliedKey: clientSuppliedServiceProperties.keySet())
+        // Use an empty set to prevent iterating over the keys twice
+        allowedClientOverrideKeys = Collections.emptySet();
+      }
+
+      // check for overrides and new keys
+      for (String clientSuppliedKey: clientSuppliedServiceProperties.keySet())
+      {
+        // clients can only override config properties which have been allowed by the service
+        if (allowedClientOverrideKeys.contains(clientSuppliedKey))
         {
-          // clients can only override config properties which have been allowed by the service
-          if (allowedClientOverrideKeys.contains(clientSuppliedKey))
-          {
-            if (ClientServiceConfigValidator.isValidValue(transportClientProperties,
-                                                          clientSuppliedServiceProperties,
-                                                          clientSuppliedKey))
-            {
-              transportClientProperties.put(clientSuppliedKey, clientSuppliedServiceProperties.get(clientSuppliedKey));
-              info(_log,
-                   "Client overrode config property {} for service {}. This is being used to instantiate the Transport Client",
-                   new Object[]{clientSuppliedKey, serviceProperties.getServiceName()});
-            }
-            else
-            {
-              warn(_log,
-                   "Client supplied config property {} with an invalid value {} for service {}",
-                   new Object[]{clientSuppliedKey,
-                       clientSuppliedServiceProperties.get(clientSuppliedKey),
-                       serviceProperties.getServiceName()});
-            }
-          }
-          else if (AllowedClientOnlyPropertyKeys.isAllowedClientOnlyPropertyKey(clientSuppliedKey))
+          if (ClientServiceConfigValidator.isValidValue(transportClientProperties,
+                                                        clientSuppliedServiceProperties,
+                                                        clientSuppliedKey))
           {
             transportClientProperties.put(clientSuppliedKey, clientSuppliedServiceProperties.get(clientSuppliedKey));
             info(_log,
-                 "Client supplied config property {} for service {}. This is being used to instantiate the Transport Client",
+                 "Client overrode config property {} for service {}. This is being used to instantiate the Transport Client",
                  new Object[]{clientSuppliedKey, serviceProperties.getServiceName()});
           }
+          else
+          {
+            warn(_log,
+                 "Client supplied config property {} with an invalid value {} for service {}",
+                 new Object[]{clientSuppliedKey,
+                     clientSuppliedServiceProperties.get(clientSuppliedKey),
+                     serviceProperties.getServiceName()});
+          }
+        }
+        else if (AllowedClientOnlyPropertyKeys.isAllowedClientOnlyPropertyKey(clientSuppliedKey))
+        {
+          transportClientProperties.put(clientSuppliedKey, clientSuppliedServiceProperties.get(clientSuppliedKey));
+          info(_log,
+               "Client supplied config property {} for service {}. This is being used to instantiate the Transport Client",
+               new Object[]{clientSuppliedKey, serviceProperties.getServiceName()});
         }
       }
     }
