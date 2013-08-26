@@ -1,5 +1,11 @@
+1.9.18
+------
+
 1.9.17
 ------
+(RB=202641)
+fix isRegistered in JmxManager
+
 (RB=198503)
 Added ability for clients to provide service level configs. Added support for clients to enable response compression.
 
