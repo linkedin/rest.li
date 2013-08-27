@@ -21,11 +21,20 @@
 package com.linkedin.restli.examples.greetings.server;
 
 
+import com.linkedin.data.DataMap;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.examples.greetings.api.Greeting;
+import com.linkedin.restli.examples.greetings.api.Tone;
+import com.linkedin.restli.server.BatchCreateRequest;
+import com.linkedin.restli.server.BatchCreateResult;
+import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.annotations.RestLiCollection;
+import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
+import java.util.ArrayList;
+import java.util.List;
+
 
 /**
  * @author Josh Walker
@@ -51,5 +60,51 @@ public class ExceptionsResource extends CollectionResourceTemplate<Long, Greetin
               .setServiceErrorCode(42).setErrorDetails(details.data());
     }
     return null;
+  }
+
+  /**
+   * Responds with an error for requests to create insulting greetings, responds
+   * with 201 created for all other requests.
+   */
+  @RestMethod.Create
+  public CreateResponse create(Greeting g)
+  {
+    if(g.hasTone() && g.getTone() == Tone.INSULTING)
+    {
+      RestLiServiceException notAcceptableException = new RestLiServiceException(HttpStatus.S_406_NOT_ACCEPTABLE,
+                                                                          "I will not tolerate your insolence!");
+      DataMap details = new DataMap();
+      details.put("reason", "insultingGreeting");
+      notAcceptableException.setErrorDetails(details);
+      notAcceptableException.setServiceErrorCode(999);
+      throw notAcceptableException;
+    }
+    else
+    {
+      return new CreateResponse(g.getId(), HttpStatus.S_201_CREATED);
+    }
+  }
+
+  /**
+   * For a batch create request, responds with an error for requests to create insulting greetings, responds
+   * with 201 created for all other requests.
+   */
+  @Override
+  public BatchCreateResult<Long, Greeting> batchCreate(BatchCreateRequest<Long, Greeting> entities)
+  {
+    List<CreateResponse> responses = new ArrayList<CreateResponse>(entities.getInput().size());
+
+    for (Greeting g : entities.getInput())
+    {
+      try
+      {
+        responses.add(create(g));
+      }
+      catch (RestLiServiceException restliException)
+      {
+        responses.add(new CreateResponse(restliException));
+      }
+    }
+    return new BatchCreateResult<Long, Greeting>(responses);
   }
 }

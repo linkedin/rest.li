@@ -20,7 +20,12 @@
 
 package com.linkedin.restli.internal.server.methods.response;
 
+import com.linkedin.data.DataMap;
+import com.linkedin.restli.common.ErrorResponse;
+import com.linkedin.restli.server.RestLiServiceException;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Map;
 
 import com.linkedin.r2.message.rest.RestRequest;
@@ -54,7 +59,10 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
         s.setId(e.getId().toString());
       }
       s.setStatus(e.getStatus().getCode());
-
+      if(e.hasError())
+      {
+        s.setError(ErrorResponseBuilder.buildErrorResponse(e.getError()));
+      }
       batchResponse.getElements().add(s);
     }
     headers.put(RestConstants.HEADER_LINKEDIN_TYPE, CollectionResponse.class.getName());

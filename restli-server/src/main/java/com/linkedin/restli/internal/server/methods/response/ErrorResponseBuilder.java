@@ -54,6 +54,15 @@ public final class ErrorResponseBuilder implements RestLiResponseBuilder
                                            final Map<String, String> headers)
   {
     RestLiServiceException result = (RestLiServiceException) object;
+    ErrorResponse er = buildErrorResponse(result);
+    headers.put(RestConstants.HEADER_LINKEDIN_TYPE, er.getClass().getName());
+    headers.put(RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE,
+                RestConstants.HEADER_VALUE_ERROR_APPLICATION);
+    return new PartialRestResponse(result.getStatus(), er);
+  }
+
+  public static ErrorResponse buildErrorResponse(RestLiServiceException result)
+  {
     ErrorResponse er = new ErrorResponse();
     er.setStatus(result.getStatus().getCode());
     if (result.getMessage() != null)
@@ -75,9 +84,7 @@ public final class ErrorResponseBuilder implements RestLiResponseBuilder
     er.setStackTrace(sw.toString());
 
     er.setExceptionClass(result.getClass().getName());
-    headers.put(RestConstants.HEADER_LINKEDIN_TYPE, er.getClass().getName());
-    headers.put(RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE,
-                RestConstants.HEADER_VALUE_ERROR_APPLICATION);
-    return new PartialRestResponse(result.getStatus(), er);
+
+    return er;
   }
 }

@@ -9,9 +9,15 @@
       "name" : "exceptionsId",
       "type" : "long"
     },
-    "supports" : [ "get" ],
+    "supports" : [ "batch_create", "create", "get" ],
     "methods" : [ {
+      "method" : "create",
+      "doc" : "Responds with an error for requests to create insulting greetings, responds\n with 201 created for all other requests."
+    }, {
       "method" : "get"
+    }, {
+      "method" : "batch_create",
+      "doc" : "For a batch create request, responds with an error for requests to create insulting greetings, responds\n with 201 created for all other requests."
     } ],
     "entity" : {
       "path" : "/exceptions/{exceptionsId}"

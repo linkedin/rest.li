@@ -28,12 +28,18 @@
     "path" : "/exceptions",
     "collection" : {
       "methods" : [ {
+        "doc" : "Responds with an error for requests to create insulting greetings, responds\n with 201 created for all other requests.",
+        "method" : "create"
+      }, {
         "method" : "get"
+      }, {
+        "doc" : "For a batch create request, responds with an error for requests to create insulting greetings, responds\n with 201 created for all other requests.",
+        "method" : "batch_create"
       } ],
       "entity" : {
         "path" : "/exceptions/{exceptionsId}"
       },
-      "supports" : [ "get" ],
+      "supports" : [ "batch_create", "create", "get" ],
       "identifier" : {
         "name" : "exceptionsId",
         "type" : "long"

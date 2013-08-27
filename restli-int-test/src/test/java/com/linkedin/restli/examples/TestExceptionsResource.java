@@ -16,8 +16,15 @@
 
 package com.linkedin.restli.examples;
 
+import com.linkedin.restli.client.BatchCreateRequest;
+import com.linkedin.restli.client.CreateRequest;
+import com.linkedin.restli.common.CollectionResponse;
+import com.linkedin.restli.common.CreateStatus;
+import com.linkedin.restli.common.ErrorResponse;
+import com.linkedin.restli.examples.greetings.api.Tone;
 import java.util.Collections;
 
+import java.util.List;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -69,5 +76,59 @@ public class TestExceptionsResource extends RestLiIntegrationTest
       Assert.assertEquals(e.getServiceErrorMessage(), "error processing request");
       Assert.assertTrue(e.getServiceErrorStackTrace().contains("at com.linkedin.restli.examples.greetings.server.ExceptionsResource.get("));
     }
+  }
+
+  @Test
+  public void testCreateError() throws Exception
+  {
+    try
+    {
+      CreateRequest<Greeting> createRequest = new ExceptionsBuilders().create()
+          .input(new Greeting().setId(11L).setMessage("@#$%@!$%").setTone(Tone.INSULTING))
+          .build();
+      REST_CLIENT.sendRequest(createRequest).getResponse().getEntity();
+      Assert.fail("expected exception");
+    }
+    catch (RestLiResponseException e)
+    {
+      Assert.assertEquals(e.getStatus(), HttpStatus.S_406_NOT_ACCEPTABLE.getCode());
+      Assert.assertEquals(e.getServiceErrorMessage(), "I will not tolerate your insolence!");
+      Assert.assertEquals(e.getServiceErrorCode(), 999);
+      Assert.assertEquals(e.getErrorSource(), "APP");
+      Assert.assertEquals(e.getErrorDetails().getString("reason"), "insultingGreeting");
+      Assert.assertTrue(e.getServiceErrorStackTrace().startsWith(
+          "com.linkedin.restli.server.RestLiServiceException [HTTP Status:406, serviceErrorCode:999]: I will not tolerate your insolence!"),
+                        "stacktrace mismatch:" + e.getStackTrace());
+    }
+  }
+
+  @Test
+  public void testBatchCreateErrors() throws Exception
+  {
+    BatchCreateRequest<Greeting> batchCreateRequest = new ExceptionsBuilders().batchCreate()
+        .input(new Greeting().setId(10L).setMessage("Greetings.").setTone(Tone.SINCERE))
+        .input(new Greeting().setId(11L).setMessage("@#$%@!$%").setTone(Tone.INSULTING))
+        .build();
+
+    CollectionResponse<CreateStatus> response = REST_CLIENT.sendRequest(batchCreateRequest).getResponse().getEntity();
+    List<CreateStatus> createStatuses = response.getElements();
+    Assert.assertEquals(createStatuses.size(), 2);
+
+    Assert.assertEquals(createStatuses.get(0).getStatus().intValue(), HttpStatus.S_201_CREATED.getCode());
+    Assert.assertEquals(createStatuses.get(0).getId(), "10");
+    Assert.assertFalse(createStatuses.get(0).hasError());
+
+    CreateStatus status = createStatuses.get(1);
+    Assert.assertEquals(status.getStatus().intValue(), HttpStatus.S_406_NOT_ACCEPTABLE.getCode());
+    Assert.assertTrue(status.hasError());
+    ErrorResponse error = status.getError();
+    Assert.assertEquals(error.getStatus(), HttpStatus.S_406_NOT_ACCEPTABLE.getCode());
+    Assert.assertEquals(error.getMessage(), "I will not tolerate your insolence!");
+    Assert.assertEquals(error.getServiceErrorCode(), 999);
+    Assert.assertEquals(error.getExceptionClass(), "com.linkedin.restli.server.RestLiServiceException");
+    Assert.assertEquals(error.getErrorDetails().getString("reason"), "insultingGreeting");
+    Assert.assertTrue(error.getStackTrace().startsWith(
+        "com.linkedin.restli.server.RestLiServiceException [HTTP Status:406, serviceErrorCode:999]: I will not tolerate your insolence!"),
+                      "stacktrace mismatch:" + error.getStackTrace());
   }
 }

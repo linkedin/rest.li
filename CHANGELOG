@@ -1,11 +1,14 @@
 1.9.18
 ------
-
-1.9.17
-------
 (RB=203386)
 Fixed bug in client only config key-values.
 
+(RB=203610)
+Add support for returning error details in batch create responses.
+
+
+1.9.17
+------
 (RB=202641)
 fix isRegistered in JmxManager
 
