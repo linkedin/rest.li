@@ -3,6 +3,9 @@
 
 1.9.17
 ------
+(RB=203386)
+Fixed bug in client only config key-values.
+
 (RB=202641)
 fix isRegistered in JmxManager
 
