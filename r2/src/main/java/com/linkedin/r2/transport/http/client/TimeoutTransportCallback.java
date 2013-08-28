@@ -26,6 +26,7 @@ import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.r2.util.Timeout;
 import com.linkedin.r2.util.TimeoutExecutor;
 
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -55,6 +56,7 @@ public class TimeoutTransportCallback<T> implements TransportCallback<T>, Timeou
    *                       timeout occurs.
    */
   public TimeoutTransportCallback(ScheduledExecutorService scheduler,
+                                  final ExecutorService callbackExecutor,
                                   long timeout,
                                   TimeUnit timeoutUnit,
                                   final TransportCallback<T> callback,
@@ -66,7 +68,14 @@ public class TimeoutTransportCallback<T> implements TransportCallback<T>, Timeou
       @Override
       public void run()
       {
-        callback.onResponse(TransportResponseImpl.<T>error(new TimeoutException(timeoutMessage)));
+        callbackExecutor.submit(new Runnable()
+        {
+          @Override
+          public void run()
+          {
+            callback.onResponse(TransportResponseImpl.<T>error(new TimeoutException(timeoutMessage)));
+          }
+        });
       }
     });
   }

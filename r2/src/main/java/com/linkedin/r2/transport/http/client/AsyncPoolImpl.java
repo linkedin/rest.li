@@ -27,10 +27,12 @@ import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import com.linkedin.r2.SizeLimitExceededException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,8 +54,10 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
   private final String _poolName;
   private final Lifecycle<T> _lifecycle;
   private final int _maxSize;
+  private final int _maxWaiters;
   private final long _idleTimeout;
   private final ScheduledExecutorService _timeoutExecutor;
+  private final ExecutorService _callbackExecutor;
   private volatile ScheduledFuture<?> _objectTimeoutFuture;
 
   private enum State { NOT_YET_STARTED, RUNNING, SHUTTING_DOWN, STOPPED }
@@ -85,11 +89,30 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
                        long idleTimeout,
                        ScheduledExecutorService timeoutExecutor)
   {
+    this(name,
+        lifecycle,
+        maxSize,
+        idleTimeout,
+        timeoutExecutor,
+        timeoutExecutor,
+        Integer.MAX_VALUE);
+  }
+
+  public AsyncPoolImpl(String name,
+                       Lifecycle<T> lifecycle,
+                       int maxSize,
+                       long idleTimeout,
+                       ScheduledExecutorService timeoutExecutor,
+                       ExecutorService callbackExecutor,
+                       int maxWaiters)
+  {
     _poolName = name;
     _lifecycle = lifecycle;
     _maxSize = maxSize;
     _idleTimeout = idleTimeout;
     _timeoutExecutor = timeoutExecutor;
+    _callbackExecutor = callbackExecutor;
+    _maxWaiters = maxWaiters;
   }
 
   @Override
@@ -159,7 +182,8 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
   {
     // getter needs to add to wait queue atomically with check for empty pool
     // putter needs to add to pool atomically with check for empty wait queue
-    boolean create;
+    boolean create = false;
+    boolean reject = false;
     final LinkedDeque.Node<Callback<T>> node;
     for (;;)
     {
@@ -173,9 +197,17 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
           obj = _idle.pollLast();
           if (obj == null)
           {
-            // No objects available; add to waiter list and break out of loop
-            node = _waiters.addLastNode(callback);
-            create = shouldCreate();
+            if (_waiters.size() < _maxWaiters)
+            {
+              // No objects available and the waiter list is not full; add to waiter list and break out of loop
+              node = _waiters.addLastNode(callback);
+              create = shouldCreate();
+            }
+            else
+            {
+              reject = true;
+              node = null;
+            }
             break;
           }
         }
@@ -197,6 +229,12 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
       // Invalid object, discard it and keep trying
       destroy(rawObj, true);
       trc("dequeued and disposed an invalid idle object");
+    }
+    if (reject)
+    {
+      // This is a recoverable exception. User can simply retry the failed get() operation.
+      callback.onError(new SizeLimitExceededException("AsyncPool " + _poolName + " reached maximum waiter size: " + _maxWaiters));
+      return null;
     }
     trc("enqueued a waiter");
     if (create)
@@ -389,7 +427,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
         }
         // Note this callback is invoked by Netty boss thread. We hand the actual callback
         // task to a separate thread since we don't want to block the boss thread
-        _timeoutExecutor.submit(new Runnable() {
+        _callbackExecutor.submit(new Runnable() {
           @Override
           public void run() {
             // Note we drain all waiters if a create fails.  When a create fails, rate-limiting

@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -93,6 +94,7 @@ import com.linkedin.r2.util.TimeoutRunnable;
   private enum State { RUNNING, SHUTTING_DOWN, REQUESTS_STOPPING, SHUTDOWN }
 
   private final ScheduledExecutorService _scheduler;
+  private final ExecutorService _callbackExecutor;
 
   private final int _requestTimeout;
   private final int _shutdownTimeout;
@@ -104,7 +106,7 @@ import com.linkedin.r2.util.TimeoutRunnable;
   /**
    * Creates a new HttpNettyClient with some default parameters
    *
-   * @see #HttpNettyClient(ClientSocketChannelFactory,ScheduledExecutorService,int,int,int,int,int,SSLContext,SSLParameters,int)
+   * @see #HttpNettyClient(ClientSocketChannelFactory,ScheduledExecutorService,int,int,int,int,int,SSLContext,SSLParameters,int,ExecutorService,int)
    */
   public HttpNettyClient(ClientSocketChannelFactory factory,
                          ScheduledExecutorService executor,
@@ -123,10 +125,12 @@ import com.linkedin.r2.util.TimeoutRunnable;
          maxResponseSize,
          null,
          null,
+         Integer.MAX_VALUE,
+         executor,
          Integer.MAX_VALUE);
   }
 
-/**
+  /**
    * Creates a new HttpNettyClient
    *
    * @param factory The ClientSocketChannelFactory; it is the caller's responsibility to
@@ -141,9 +145,11 @@ import com.linkedin.r2.util.TimeoutRunnable;
    * @param sslContext {@link SSLContext}
    * @param sslParameters {@link SSLParameters}with overloaded construct
    * @param queryPostThreshold length of query params above which requests will be tunneled as POSTS
+   * @param callbackExecutor an optional executor to invoke user callback
+   * @param poolWaiterSize Maximum waiters waiting on the HTTP connection pool
    */
   public HttpNettyClient(ClientSocketChannelFactory factory,
-                       ScheduledExecutorService executor,
+                         ScheduledExecutorService executor,
                          int poolSize,
                          int requestTimeout,
                          int idleTimeout,
@@ -151,7 +157,9 @@ import com.linkedin.r2.util.TimeoutRunnable;
                          int maxResponseSize,
                          SSLContext sslContext,
                          SSLParameters sslParameters,
-                         int queryPostThreshold)
+                         int queryPostThreshold,
+                         ExecutorService callbackExecutor,
+                         int poolWaiterSize)
   {
     _maxResponseSize = maxResponseSize;
     _channelPoolManager =
@@ -159,8 +167,10 @@ import com.linkedin.r2.util.TimeoutRunnable;
                                                           poolSize,
                                                           idleTimeout,
                                                           sslContext,
-                                                          sslParameters));
+                                                          sslParameters,
+                                                          poolWaiterSize));
     _scheduler = executor;
+    _callbackExecutor = callbackExecutor;
     _requestTimeout = requestTimeout;
     _shutdownTimeout = shutdownTimeout;
     _requestTimeoutMessage = "Exceeded request timeout of " + _requestTimeout + "ms";
@@ -176,6 +186,7 @@ import com.linkedin.r2.util.TimeoutRunnable;
     _maxResponseSize = maxResponseSize;
     _channelPoolManager = new ChannelPoolManager(factory);
     _scheduler = executor;
+    _callbackExecutor = executor;
     _requestTimeout = requestTimeout;
     _shutdownTimeout = shutdownTimeout;
     _requestTimeoutMessage = "Exceeded request timeout of " + _requestTimeout + "ms";
@@ -292,6 +303,7 @@ import com.linkedin.r2.util.TimeoutRunnable;
     // 2. The user callback is never invoked more than once
     TimeoutTransportCallback<RestResponse> timeoutCallback =
         new TimeoutTransportCallback<RestResponse>(_scheduler,
+                                                   _callbackExecutor,
                                                    _requestTimeout,
                                                    TimeUnit.MILLISECONDS,
                                                    callback,
@@ -537,18 +549,21 @@ import com.linkedin.r2.util.TimeoutRunnable;
     private final ClientBootstrap _bootstrap;
     private final int _maxPoolSize;
     private final int _idleTimeout;
+    private final int _maxPoolWaiterSize;
 
     private ChannelPoolFactoryImpl(ClientBootstrap bootstrap,
                                    int maxPoolSize,
                                    int idleTimeout,
                                    SSLContext sslContext,
-                                   SSLParameters sslParameters)
+                                   SSLParameters sslParameters,
+                                   int maxPoolWaiterSize)
     {
       _bootstrap = bootstrap;
       _bootstrap.setPipelineFactory(new HttpClientPipelineFactory(sslContext,
                                                                   sslParameters));
       _maxPoolSize = maxPoolSize;
       _idleTimeout = idleTimeout;
+      _maxPoolWaiterSize = maxPoolWaiterSize;
     }
 
     @Override
@@ -562,7 +577,9 @@ import com.linkedin.r2.util.TimeoutRunnable;
                                                                  _allChannels),
                                         _maxPoolSize,
                                         _idleTimeout,
-                                        _scheduler);
+                                        _scheduler,
+                                        _callbackExecutor,
+                                        _maxPoolWaiterSize);
     }
   }
 

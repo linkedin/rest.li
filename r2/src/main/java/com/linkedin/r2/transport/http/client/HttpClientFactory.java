@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -84,12 +85,14 @@ public class HttpClientFactory implements TransportClientFactory
   public static final String HTTP_REQUEST_TIMEOUT = "http.requestTimeout";
   public static final String HTTP_MAX_RESPONSE_SIZE = "http.maxResponseSize";
   public static final String HTTP_POOL_SIZE = "http.poolSize";
+  public static final String HTTP_POOL_WAITER_SIZE = "http.poolWaiterSize";
   public static final String HTTP_IDLE_TIMEOUT = "http.idleTimeout";
   public static final String HTTP_SHUTDOWN_TIMEOUT = "http.shutdownTimeout";
   public static final String HTTP_SSL_CONTEXT = "http.sslContext";
   public static final String HTTP_SSL_PARAMS = "http.sslParams";
   public static final String HTTP_RESPONSE_COMPRESSION_OPERATIONS = "http.responseCompressionOperations";
 
+  public static final int DEFAULT_POOL_WAITER_SIZE = Integer.MAX_VALUE;
   public static final int DEFAULT_POOL_SIZE = 200;
   public static final int DEFAULT_REQUEST_TIMEOUT = 10000;
   public static final int DEFAULT_IDLE_TIMEOUT = 30000;
@@ -99,8 +102,10 @@ public class HttpClientFactory implements TransportClientFactory
 
   private final ClientSocketChannelFactory _channelFactory;
   private final ScheduledExecutorService   _executor;
+  private final ExecutorService            _callbackExecutor;
   private final boolean                    _shutdownFactory;
   private final boolean                    _shutdownExecutor;
+  private final boolean                    _shutdownCallbackExecutor;
   private final FilterChain                _filters;
 
   private final AtomicBoolean              _finishingShutdown = new AtomicBoolean(false);
@@ -118,6 +123,28 @@ public class HttpClientFactory implements TransportClientFactory
   public HttpClientFactory()
   {
     this(FilterChains.empty());
+  }
+
+  /**
+   * Construct a new instance with a specified callback executor.
+   *
+   * @param callbackExecutor an optional executor to invoke user callbacks that otherwise
+   *          will be invoked by scheduler executor.
+   * @param shutdownCallbackExecutor if true, the callback executor will be shut down when
+   *          this factory is shut down
+   */
+  public HttpClientFactory(ExecutorService callbackExecutor,
+                           boolean shutdownCallbackExecutor)
+  {
+    this(FilterChains.empty(),
+         new NioClientSocketChannelFactory(
+            Executors.newCachedThreadPool(new NamedThreadFactory("R2 Netty IO Boss")),
+            Executors.newCachedThreadPool(new NamedThreadFactory("R2 Netty IO Worker"))),
+         true,
+         Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("R2 Netty Scheduler")),
+         true,
+         callbackExecutor,
+         shutdownCallbackExecutor);
   }
 
   /**
@@ -157,11 +184,47 @@ public class HttpClientFactory implements TransportClientFactory
                            ScheduledExecutorService executor,
                            boolean shutdownExecutor)
   {
+    this(filters,
+         channelFactory,
+         shutdownFactory,
+         executor,
+         shutdownExecutor,
+         executor,
+         false);
+  }
+
+  /**
+   * Creates a new HttpClientFactory.
+   *
+   * @param filters the filter chain shared by all Clients created by this factory
+   * @param channelFactory the ClientSocketChannelFactory that all Clients created by this
+   *          factory will share
+   * @param shutdownFactory if true, the channelFactory will be shut down when this
+   *          factory is shut down
+   * @param executor an executor shared by all Clients created by this factory to schedule
+   *          tasks
+   * @param shutdownExecutor if true, the executor will be shut down when this factory is
+   *          shut down
+   * @param callbackExecutor an optional executor to invoke user callbacks that otherwise
+   *          will be invoked by scheduler executor.
+   * @param shutdownCallbackExecutor if true, the callback executor will be shut down when
+   *          this factory is shut down
+   */
+  public HttpClientFactory(FilterChain filters,
+                           ClientSocketChannelFactory channelFactory,
+                           boolean shutdownFactory,
+                           ScheduledExecutorService executor,
+                           boolean shutdownExecutor,
+                           ExecutorService callbackExecutor,
+                           boolean shutdownCallbackExecutor)
+  {
     _filters = filters;
     _channelFactory = channelFactory;
     _shutdownFactory = shutdownFactory;
     _executor = executor;
     _shutdownExecutor = shutdownExecutor;
+    _callbackExecutor = callbackExecutor;
+    _shutdownCallbackExecutor = shutdownCallbackExecutor;
   }
 
   @Override
@@ -323,6 +386,7 @@ public class HttpClientFactory implements TransportClientFactory
     Integer maxResponseSize = chooseNewOverDefault(getIntValue(properties, HTTP_MAX_RESPONSE_SIZE), DEFAULT_MAX_RESPONSE_SIZE);
     Integer queryPostThreshold = chooseNewOverDefault(getIntValue(properties, HTTP_QUERY_POST_THRESHOLD), Integer.MAX_VALUE);
     Integer requestTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_REQUEST_TIMEOUT), DEFAULT_REQUEST_TIMEOUT);
+    Integer poolWaiterSize = chooseNewOverDefault(getIntValue(properties, HTTP_POOL_WAITER_SIZE), DEFAULT_POOL_WAITER_SIZE);
 
     return new HttpNettyClient(_channelFactory,
                                _executor,
@@ -333,7 +397,9 @@ public class HttpClientFactory implements TransportClientFactory
                                maxResponseSize,
                                sslContext,
                                sslParameters,
-                               queryPostThreshold);
+                               queryPostThreshold,
+                               _callbackExecutor,
+                               poolWaiterSize);
   }
 
   /**
@@ -455,6 +521,12 @@ public class HttpClientFactory implements TransportClientFactory
           _executor.shutdown();
           _executor.shutdownNow();
           LOG.info("Scheduler shutdown complete");
+        }
+        if (_shutdownCallbackExecutor)
+        {
+          _callbackExecutor.shutdown();
+          _callbackExecutor.shutdownNow();
+          LOG.info("Callback Executor shutdown complete");
         }
         final Callback<None> callback;
         synchronized (_mutex)

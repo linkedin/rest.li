@@ -95,6 +95,7 @@ public class PropertyKeys
   public static final String FULL_CLUSTER_LIST = "fullClusterList";
 
   //used by transport client creation
+  public static final String HTTP_POOL_WAITER_SIZE = HttpClientFactory.HTTP_POOL_WAITER_SIZE;
   public static final String HTTP_REQUEST_TIMEOUT = HttpClientFactory.HTTP_REQUEST_TIMEOUT;
   public static final String HTTP_MAX_RESPONSE_SIZE = HttpClientFactory.HTTP_MAX_RESPONSE_SIZE;
   public static final String HTTP_POOL_SIZE = HttpClientFactory.HTTP_POOL_SIZE;
