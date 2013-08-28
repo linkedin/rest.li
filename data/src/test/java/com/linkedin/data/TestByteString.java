@@ -18,14 +18,24 @@
 package com.linkedin.data;
 
 
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * @author Chris Pettitt
@@ -69,6 +79,42 @@ public class TestByteString
     final String str = "test string";
     final ByteString bs = ByteString.copyString(str, "UTF-8");
     Assert.assertEquals("test string", bs.asString("UTF-8"));
+  }
+
+  @Test
+  public void testRead() throws IOException, InterruptedException, TimeoutException, ExecutionException
+  {
+    final int pipeBufSize = 1024;
+    final PipedOutputStream pos = new PipedOutputStream();
+    final PipedInputStream pis = new PipedInputStream(pos, pipeBufSize);
+
+    // We use twice the size of the pipe buffer to ensure that the first read
+    // will not get all bytes. We can't use more than twice the pipe buffer size
+    // because that the reader would effectively fall behind and pos.write(bytes)
+    // would block.
+    final byte[] bytes = new byte[2 * pipeBufSize];
+
+    final ExecutorService exec = Executors.newSingleThreadExecutor();
+    try
+    {
+      final Future<ByteString> result = exec.submit(new Callable<ByteString>()
+      {
+        @Override
+        public ByteString call() throws Exception
+        {
+          return ByteString.read(pis, bytes.length);
+        }
+      });
+
+      pos.write(bytes);
+      pos.flush();
+
+      Assert.assertEquals(result.get(60, TimeUnit.SECONDS).copyBytes(), bytes);
+    }
+    finally
+    {
+      exec.shutdownNow();
+    }
   }
 
   @Test

@@ -158,13 +158,22 @@ public final class ByteString
     {
       return empty();
     }
-    byte[] bytes = new byte[size];
-    int read = inputStream.read(bytes);
-    if (read != size)
+
+    final byte[] buf = new byte[size];
+
+    int bytesRead, bufIdx = 0;
+    while (bufIdx < size &&
+           (bytesRead = inputStream.read(buf, bufIdx, size - bufIdx)) != -1)
     {
-      throw new IOException("Insufficient data in InputStream, requested size " + size + ", read " + read);
+      bufIdx += bytesRead;
     }
-    return new ByteString(bytes);
+
+    if (bufIdx != size)
+    {
+      throw new IOException("Insufficient data in InputStream, requested size " + size + ", read " + bufIdx);
+    }
+
+    return new ByteString(buf);
   }
 
   private ByteString(byte[] bytes)
