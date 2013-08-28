@@ -1,0 +1,17 @@
+apply plugin: 'jetty'
+apply plugin: 'pegasus'
+
+ext.apiProject = project(':api')
+
+dependencies {
+  compile project(path: ':api', configuration: 'dataTemplate')
+  compile spec.product.pegasus.r2Jetty
+  compile spec.product.pegasus.restliServer
+  compile spec.product.pegasus.restliNettyStandalone
+  compile spec.product.pegasus.restliServerStandalone
+  compile "org.springframework:spring-core:3.2.4.RELEASE"
+  compile "org.springframework:spring-context:3.2.4.RELEASE"
+  compile "org.springframework:spring-web:3.2.4.RELEASE"
+}
+
+// to start a server using a jetty servlet container, run: gradle JettyRunWar  (http://localhost:8080/server/fortunes/1)

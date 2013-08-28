@@ -1,0 +1,59 @@
+apply plugin: 'idea'
+apply plugin: 'eclipse'
+
+// add rest.li's gradle plugins so they can be used throughout project
+buildscript {
+  repositories {
+    mavenLocal()
+    mavenCentral()
+  }
+  dependencies {
+    classpath "com.linkedin.pegasus:gradle-plugins:1.9.18"
+  }
+}
+
+task wrapper(type: Wrapper) {
+  gradleVersion = '1.6'
+}
+
+pegasusVersion = "1.9.18"
+spec = [
+  "product" : [
+    "pegasus" : [
+      "data" : "com.linkedin.pegasus:data:"+pegasusVersion,
+      "generator" : "com.linkedin.pegasus:generator:"+pegasusVersion,
+      "restliClient" : "com.linkedin.pegasus:restli-client:"+pegasusVersion,
+      "restliServer" : "com.linkedin.pegasus:restli-server:"+pegasusVersion,
+      "restliTools" : "com.linkedin.pegasus:restli-tools:"+pegasusVersion,
+      "gradlePlugins" : "com.linkedin.pegasus:gradle-plugins:"+pegasusVersion,
+      "r2Jetty" : "com.linkedin.pegasus:r2-jetty:"+pegasusVersion,
+      "restliNettyStandalone" : "com.linkedin.pegasus:restli-netty-standalone:"+pegasusVersion,
+      "restliServerStandalone" : "com.linkedin.pegasus:restli-server-standalone:"+pegasusVersion
+    ]
+  ]
+]
+
+subprojects {
+  apply plugin: 'eclipse'
+  apply plugin: 'maven'
+  apply plugin: 'idea'
+  apply plugin: 'eclipse'
+
+  sourceCompatibility = JavaVersion.VERSION_1_6
+
+  afterEvaluate {
+    // add the standard pegasus dependencies wherever the plugin is used
+    if (project.plugins.hasPlugin('pegasus')) {
+      dependencies {
+        dataTemplateCompile spec.product.pegasus.data
+        restClientCompile spec.product.pegasus.restliClient
+      }
+    }
+  }
+
+  repositories {
+    mavenLocal()
+    mavenCentral()
+  }
+}
+
