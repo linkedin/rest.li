@@ -24,6 +24,9 @@
   "schema" : {
     "actionsSet" : {
       "actions" : [ {
+        "name" : "arrayPromise",
+        "returns" : "{ \"type\" : \"array\", \"items\" : \"int\" }"
+      }, {
         "name" : "echo",
         "returns" : "string",
         "parameters" : [ {

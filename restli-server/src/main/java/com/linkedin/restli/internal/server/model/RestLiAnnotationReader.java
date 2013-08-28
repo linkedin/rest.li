@@ -1777,7 +1777,7 @@ public final class RestLiAnnotationReader
     int where = -1;
     for (int i = 0; i < types.length; i++)
     {
-      Class<?> c = typeToClass(types[i]);
+      Class<?> c = ReflectionUtils.getClass(types[i]);
       if (c != null && type.equals(c))
       {
         if (where == -1)
@@ -1801,7 +1801,7 @@ public final class RestLiAnnotationReader
    */
   private static Class<?> getLogicalReturnClass(final Method method)
   {
-    Class<?> c = typeToClass(getLogicalReturnType(method));
+    Class<?> c = ReflectionUtils.getClass(getLogicalReturnType(method));
     return Void.class.equals(c) ? Void.TYPE : c;
   }
 
@@ -1828,26 +1828,5 @@ public final class RestLiAnnotationReader
       default:
         throw new AssertionError();
     }
-  }
-
-  /**
-   * Convert the given Type object to a Class object if possible and return null
-   * otherwise.
-   */
-  private static Class<?> typeToClass(final Type t)
-  {
-    // TODO is this dependent on implementation detail?
-    // Type can be Class, GenericArrayType, ParameterizedType, TypeVariable, or
-    // WildcardType
-    if (t instanceof Class)
-    {
-      return (Class<?>) t;
-    }
-    else if (t instanceof ParameterizedType)
-    {
-      ParameterizedType param = (ParameterizedType) t;
-      return (Class<?>) param.getRawType();
-    }
-    return null;
   }
 }

@@ -1,6 +1,7 @@
 1.9.19
 ------
-
+(RB=204042)
+Fix bug when GenericArrayType is used in action return type.
 
 1.9.18
 ------

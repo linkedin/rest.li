@@ -347,4 +347,10 @@ public class ActionsResource
   {
     callback.onError(new Exception("Passing error to callback.onError"));
   }
+
+  @Action(name = "arrayPromise")
+  public Promise<Integer[]> arrayPromise()
+  {
+    return null;
+  }
 }
