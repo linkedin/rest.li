@@ -15,9 +15,9 @@
  */
 package com.linkedin.restli.server.spring;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.context.support.SpringBeanAutowiringSupport;
-import org.springframework.stereotype.Component;
+import com.linkedin.r2.filter.FilterChain;
+import com.linkedin.r2.filter.FilterChains;
+import com.linkedin.r2.filter.transport.FilterChainDispatcher;
 import org.springframework.web.HttpRequestHandler;
 
 import com.linkedin.restli.server.RestLiServer;
@@ -25,13 +25,9 @@ import com.linkedin.restli.server.RestLiConfig;
 import com.linkedin.restli.server.DelegatingTransportDispatcher;
 
 import com.linkedin.r2.transport.http.server.RAPServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 
 import java.io.IOException;
 
@@ -43,7 +39,7 @@ import java.io.IOException;
  *
  * <p>
  * To enable spring dependency injection, this class must to be instantiated by
- * spring as a bean so that it's dependencies, particularly InjectResourceFactory (which
+ * spring as a bean so that it's dependencies, particularly SpringInjectResourceFactory (which
  * is ApplicationContextAware and must be instantiated by spring), can be injected into it.
  * </p>
  *
@@ -77,15 +73,27 @@ public class RestliHttpRequestHandler implements HttpRequestHandler {
 
   private RAPServlet _r2Servlet;
 
-  public RestliHttpRequestHandler(RestLiConfig config, InjectResourceFactory injectResourceFactory)
+  public RestliHttpRequestHandler(RestLiConfig config, SpringInjectResourceFactory injectResourceFactory)
   {
-    RestLiServer restLiServer = new RestLiServer(config, injectResourceFactory);
-    _r2Servlet = new RAPServlet(new DelegatingTransportDispatcher(restLiServer));
+    this(config, injectResourceFactory, FilterChains.empty());
   }
-  
-  public RestliHttpRequestHandler(RestLiServer restLiServer)
+
+  public RestliHttpRequestHandler(RestLiConfig config,
+                                  SpringInjectResourceFactory injectResourceFactory,
+                                  FilterChain filterChain)
   {
-    _r2Servlet = new RAPServlet(new DelegatingTransportDispatcher(restLiServer));
+    _r2Servlet = new RAPServlet(
+        new FilterChainDispatcher(
+            new DelegatingTransportDispatcher(
+                new RestLiServer(config, injectResourceFactory)),
+            filterChain
+        )
+    );
+  }
+
+  public RestliHttpRequestHandler(RAPServlet r2Servlet)
+  {
+    _r2Servlet = r2Servlet;
   }
   
   public void handleRequest(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException

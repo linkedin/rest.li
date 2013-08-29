@@ -60,7 +60,17 @@ project.ext.externalDependency = [
   'snappy': 'org.iq80.snappy:snappy:0.3',
   'testng': 'org.testng:testng:6.4',
   'velocity': 'org.apache.velocity:velocity:1.5',
-  'zookeeper': 'org.apache.zookeeper:zookeeper:3.3.4'
+  'zookeeper': 'org.apache.zookeeper:zookeeper:3.3.4',
+
+  // for restli-spring-bridge ONLY, we must keep these dependencies isolated
+  'springCore': 'org.springframework:spring-core:3.2.4.RELEASE',
+  'springContext': 'org.springframework:spring-context:3.2.4.RELEASE',
+  'springWeb': 'org.springframework:spring-web:3.2.4.RELEASE',
+  'springBeans': 'org.springframework:spring-beans:3.2.4.RELEASE',
+
+  // for restli-guice-bridge ONLY, we should keep these dependencies isolated
+  'guice': 'com.google.inject:guice:3.0',
+  'guiceServlet': 'com.google.inject.extensions:guice-servlet:3.0'
 ];
 
 if (!project.ext.isDefaultEnvironment)

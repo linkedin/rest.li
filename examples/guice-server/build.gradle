@@ -29,7 +29,7 @@ spec = [
       "r2Jetty" : "com.linkedin.pegasus:r2-jetty:"+pegasusVersion,
       "restliNettyStandalone" : "com.linkedin.pegasus:restli-netty-standalone:"+pegasusVersion,
       "restliServerStandalone" : "com.linkedin.pegasus:restli-server-standalone:"+pegasusVersion,
-      "restliSpringBridge" : "com.linkedin.pegasus:restli-spring-bridge:"+pegasusVersion
+      "restliGuiceBridge" : "com.linkedin.pegasus:restli-guice-bridge:"+pegasusVersion
     ]
   ]
 ]
@@ -38,6 +38,7 @@ externalDependency = [
   'logbackClassic': 'ch.qos.logback:logback-classic:1.0.13',
   'logbackCore': 'ch.qos.logback:logback-core:1.0.13'
 ]
+
 
 subprojects {
   apply plugin: 'eclipse'

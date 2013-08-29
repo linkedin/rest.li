@@ -25,20 +25,20 @@ import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.server.resources.ResourceFactory;
 
 /**
- * This is Spring specific {@link ResourceProvider}, which injects dependencies
+ * This is Spring specific {@link ResourceFactory}, which injects dependencies
  * to the resource classes, which are expressed using JSR-330 annotations.
  * This class delegates calls to the more general InjectResourceProvider, which
  * is declared in {@link com.linkedin.restli.server.resources.InjectResourceFactory}.
  * This class initialization order which occurs in Spring: first, when this class is
- * instantiated by Spring, {@link #setApplicationContext(ApplicationContext)} method is
- * invoked, later RestLi invokes {@link #setRootResources(Map)} method, which concludes
+ * instantiated by Spring, {@link #setApplicationContext(org.springframework.context.ApplicationContext)} method is
+ * invoked, later RestLi invokes {@link #setRootResources(java.util.Map)} method, which concludes
  * initialization process.
  *
  * @author jodzga
  */
-public class InjectResourceFactory implements ResourceFactory, ApplicationContextAware
+public class SpringInjectResourceFactory implements ResourceFactory, ApplicationContextAware
 {
-  private static final Logger log = LoggerFactory.getLogger(InjectResourceFactory.class);
+  private static final Logger log = LoggerFactory.getLogger(SpringInjectResourceFactory.class);
 
   private com.linkedin.restli.server.resources.InjectResourceFactory _delegate;
 
@@ -56,7 +56,7 @@ public class InjectResourceFactory implements ResourceFactory, ApplicationContex
   }
 
   /**
-   * @see com.linkedin.restli.server.spring.LinkedInSpringResourceFactory#setRootResources(java.util.Map)
+   *
    */
   @Override
   public void setRootResources(Map<String, ResourceModel> rootResources)

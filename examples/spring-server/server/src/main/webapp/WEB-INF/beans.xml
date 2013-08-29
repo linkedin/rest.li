@@ -9,7 +9,23 @@
 
   <!-- An InjectResourceFactory must be created.  It is ApplicationContextAware so
   must be instantiated via spring and then passed into rest.li -->
-  <bean id="injectResourceFactory" class="com.linkedin.restli.server.spring.InjectResourceFactory" />
+  <bean id="injectResourceFactory" class="com.linkedin.restli.server.spring.SpringInjectResourceFactory" />
+
+  <!-- Example of how to add filters,  here we'll enable logging and snappy compression support -->
+  <bean id="loggingFilter" class="com.linkedin.r2.filter.logging.SimpleLoggingFilter" />
+
+  <bean id="compressionFilter" class="com.linkedin.r2.filter.compression.ServerCompressionFilter" >
+    <constructor-arg value="snappy" />
+  </bean>
+
+  <bean id="filterChain" class="com.linkedin.r2.filter.FilterChains" factory-method="create">
+    <constructor-arg>
+      <list>
+        <ref bean="loggingFilter"/>
+        <ref bean="compressionFilter"/>
+      </list>
+    </constructor-arg>
+  </bean>
 
   <!--
     In web.xml, HttpRequestHandlerServlet loads this "restliRequestHandler" spring bean as a servlet.  For details, see:
@@ -22,6 +38,7 @@
       </bean>
     </constructor-arg>
     <constructor-arg ref="injectResourceFactory" />
+    <constructor-arg ref="filterChain" />
   </bean>
     
 </beans>

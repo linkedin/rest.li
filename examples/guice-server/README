@@ -1,8 +1,4 @@
-This is a standalone example that demonstrates a very simple RestLi
-client and server. The code and logic behind it is described in detail
-in:
-
-https://github.com/linkedin/pegasus/wiki/Quickstart:-A-Tutorial-Introduction-to-RestLi
+This is an example of using Guice 3 dependency injection with rest.li.
 
 To build, use gradle 1.6 or greater.  If you need, you can run ../gradlew wrapper to generate a ./gradlew wrapper in this sample directory that will use gradle 1.6.  If you do
 this, use "./gradlew" instead of "gradle" for the remainder of this README.

@@ -21,7 +21,6 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.SourceSet
 
-
 class PegasusPluginLoader implements Plugin<Project>
 {
   @Override
@@ -33,7 +32,8 @@ class PegasusPluginLoader implements Plugin<Project>
 
     project.afterEvaluate {
       final URL[] classpathUrls = project.configurations.pluginsRuntime.collect { it.toURI().toURL() } as URL[]
-      project.ext.set(PegasusPlugin.GENERATOR_CLASSLOADER_NAME, new URLClassLoader(classpathUrls, null))
+      final ClassLoader parent = null // in some versions of java URLClassLoader's ctor is overloaded, by assigning type to the parent we avoid ambiguity
+      project.ext.set(PegasusPlugin.GENERATOR_CLASSLOADER_NAME, new URLClassLoader(classpathUrls, parent))
 
       project.tasks.each {
         // each Gradle task class is dynamically generated as subclass of the original task type

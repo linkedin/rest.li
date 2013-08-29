@@ -1,5 +1,7 @@
 1.9.21
 ------
+(RB=204527)
+Add spring and guice support, enables running rest.li servlets with dependency injection, also add a logging filter.
 
 1.9.20
 ------

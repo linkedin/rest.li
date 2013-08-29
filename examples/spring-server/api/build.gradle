@@ -1,6 +1,2 @@
 apply plugin: 'pegasus'
 apply plugin: 'java'
-
-dependencies {
-  compile project(':server')
-}

@@ -1,0 +1,8 @@
+dependencies {
+  compile project (':restli-server')
+  compile project (':r2')
+  compile externalDependency.servletApi
+  compile externalDependency.parseq
+  compile externalDependency.guice
+  compile externalDependency.guiceServlet
+}

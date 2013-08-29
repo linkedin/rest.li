@@ -25,6 +25,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
+ * Configuration for rest.li servers.
+ *
  * @author dellamag
  */
 public class RestLiConfig

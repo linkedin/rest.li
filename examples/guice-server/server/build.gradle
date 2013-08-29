@@ -6,10 +6,9 @@ ext.apiProject = project(':api')
 dependencies {
   compile project(path: ':api', configuration: 'dataTemplate')
   compile spec.product.pegasus.restliServer
-  compile spec.product.pegasus.restliSpringBridge
+  compile spec.product.pegasus.restliGuiceBridge
   compile externalDependency.logbackClassic
   compile externalDependency.logbackCore
 }
 
-// to start a server using a jetty servlet container,
-// run: gradle JettyRunWar  (http://localhost:8080/server/fortunes/1)
+// to start a server using a jetty servlet container, run: gradle JettyRunWar  (http://localhost:8080/server/fortunes/1)

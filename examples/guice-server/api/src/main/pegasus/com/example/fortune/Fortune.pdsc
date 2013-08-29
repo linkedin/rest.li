@@ -1,0 +1,13 @@
+{
+  "type": "record",
+  "name": "Fortune",
+  "namespace": "com.example.fortune",
+  "doc": "Generate a fortune cookie",
+  "fields": [
+    {
+      "name": "fortune",
+      "type": "string",
+      "doc": "The Fortune cookie string"
+    }
+  ]
+}

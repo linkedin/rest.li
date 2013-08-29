@@ -18,6 +18,7 @@ package com.linkedin.restli.server;
 import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.EngineBuilder;
 import com.linkedin.restli.server.resources.PrototypeResourceFactory;
+import com.linkedin.restli.server.resources.ResourceFactory;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
@@ -58,6 +59,10 @@ import org.apache.commons.lang.StringUtils;
  *
  * To set the number of server threads please refer to the documentation for the particular servlet container
  * you are using.
+ *
+ * JSR-330 Dependency Injection (@Named, @Inject) is not available on Resource classes when using this servlet.
+ * If dependency injection is needed, please see rest.li documentation about available integrations with dependency
+ * injection frameworks (guice, spring...).
  * 
  * @author Joe Betz
  */
@@ -75,26 +80,34 @@ public class RestliServlet extends HttpServlet
   public void init(ServletConfig servletConfig) throws ServletException
   {
     super.init(servletConfig);
+    r2Servlet = buildR2ServletFromServletParams(servletConfig);
+    r2Servlet.init(servletConfig);
+  }
 
+  private RAPServlet buildR2ServletFromServletParams(ServletConfig servletConfig)
+  {
+    ResourceFactory resourceFactory = new PrototypeResourceFactory();
+
+    RestLiConfig config = new RestLiConfig();
+    config.setResourcePackageNamesSet(getResourcePackageSet(servletConfig));
+
+    final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(getParseqThreadPoolSize(servletConfig));
+    Engine engine = new EngineBuilder()
+        .setTaskExecutor(scheduler)
+        .setTimerScheduler(scheduler)
+        .build();
+    return new RAPServlet(new DelegatingTransportDispatcher(new RestLiServer(config, resourceFactory, engine)));
+  }
+
+  private Set<String> getResourcePackageSet(ServletConfig servletConfig)
+  {
     String resourcePackages = servletConfig.getInitParameter(RESOURCE_PACKAGES_PARAM);
     Set<String> resourcePackageSet = new HashSet<String>();
     for(String resourcePackage : resourcePackages.split(PACKAGE_PARAM_SEPARATOR))
     {
       resourcePackageSet.add(resourcePackage.trim());
     }
-
-    final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(getParseqThreadPoolSize(servletConfig));
-    final Engine engine = new EngineBuilder()
-        .setTaskExecutor(scheduler)
-        .setTimerScheduler(scheduler)
-        .build();
-
-    RestLiConfig config = new RestLiConfig();
-    config.setResourcePackageNamesSet(resourcePackageSet);
-    r2Servlet = new RAPServlet(new DelegatingTransportDispatcher(new RestLiServer(config,
-                                                                                  new PrototypeResourceFactory(),
-                                                                                  engine)));
-    r2Servlet.init(servletConfig);
+    return resourcePackageSet;
   }
 
   private int getParseqThreadPoolSize(ServletConfig servletConfig)
