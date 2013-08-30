@@ -1493,6 +1493,60 @@ public class TestD2Config
     verifyServiceProperties("cluster1-WestCoast", "service2Master", "/service2", null);
   }
 
+
+  @Test
+  public static void testServiceVariantsWithDefaultRoutingToMaster() throws Exception {
+    final String masterColo = PropertyKeys.MASTER_COLO;
+    final String defaultColo = PropertyKeys.DEFAULT_COLO;
+    final String service1 = "service1";
+    final String service2 = "service2";
+    final String cluster1Name = "cluster1";
+    final String clusterVariantName = "clusterVariant1";
+    final String serviceGroupName = "serviceGroup1";
+
+    List<String> serviceList = new ArrayList<String>();
+    serviceList.add(service1);
+    serviceList.add(service2);
+
+    Map<String,List<String>> clustersData = new HashMap<String,List<String>>();
+    clustersData.put(cluster1Name, serviceList);
+
+    Map<String,Object> clusterProperties = new HashMap<String,Object>();
+    List<String> peerColos = new ArrayList<String>();
+    peerColos.add(masterColo);
+    peerColos.add(defaultColo);
+    @SuppressWarnings("serial")
+    Map<String,Object> clusterVariants = new HashMap<String,Object>()
+    {{
+        put(clusterVariantName,new HashMap<String,Object>());
+      }};
+
+    clusterProperties.put(PropertyKeys.COLO_VARIANTS, peerColos);
+    clusterProperties.put(PropertyKeys.MASTER_COLO, masterColo);
+    clusterProperties.put(PropertyKeys.CLUSTER_VARIANTS, clusterVariants);
+    Map<String,Map<String,Object>> clustersProperties = new HashMap<String,Map<String,Object>>();
+    clustersProperties.put(cluster1Name, clusterProperties);
+    @SuppressWarnings("serial")
+    Map<String,Object> serviceGroup = new HashMap<String,Object>()
+    {{
+        put(PropertyKeys.TYPE, PropertyKeys.CLUSTER_VARIANTS_LIST);
+        put(PropertyKeys.CLUSTER_LIST, Arrays.asList(new String[]{clusterVariantName}));
+      }};
+    Map<String, Object> serviceVariants = new HashMap<String, Object>();
+    serviceVariants.put(serviceGroupName, serviceGroup);
+
+    Set<String> servicesWithDefaultRoutingToMaster = Collections.singleton(service2);
+    D2ConfigTestUtil d2Conf = new D2ConfigTestUtil(clustersData, defaultColo, clustersProperties,
+        servicesWithDefaultRoutingToMaster);
+    d2Conf.setServiceVariants(serviceVariants);
+
+    d2Conf.runDiscovery(_zkHosts);
+
+    // Verify default routing
+    verifyServiceProperties(D2Utils.addSuffixToBaseName(clusterVariantName, defaultColo), service1, "/"+service1, serviceGroupName);
+    verifyServiceProperties(D2Utils.addSuffixToBaseName(clusterVariantName, masterColo), service2, "/"+service2, serviceGroupName);
+  }
+
   private static void verifyColoClusterAndServices(Map<String,List<String>> clustersData,
                                                    Map<String,List<String>> peerColoList,
                                                    Map<String,String> masterColoList, String defaultColo)

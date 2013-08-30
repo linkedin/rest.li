@@ -290,6 +290,11 @@ public class D2Config
             // the latter only being done for regular clusters, the former only being done for clusters
             // that have coloVariants specified.
             Map<String,Object> regularServiceConfig = new HashMap<String,Object>(serviceConfig);
+            if (createColoVariantsForService)
+            {
+              // we set isDefaultService flag only if it is a multi-colo aware service.
+              regularServiceConfig.put(PropertyKeys.IS_DEFAULT_SERVICE, "true");
+            }
 
             final String defaultColoClusterName = clusterNameWithRouting(clusterName,
                                                                          colo,
@@ -665,16 +670,30 @@ public class D2Config
         // Deep copy each of the services into the new map
         Map<String,Object> varServiceConfig = ConfigWriter.merge(entry.getValue(), null);
         String masterServiceString = (String)varServiceConfig.get(PropertyKeys.IS_MASTER_SERVICE);
-        // for all but the master service variants, we want them to point to the colo specific
-        // cluster variant name.
+        String defaultServiceString = (String)varServiceConfig.get(PropertyKeys.IS_DEFAULT_SERVICE);
+        boolean defaultRoutingToMasterColo =
+            varServiceConfig.containsKey(PropertyKeys.DEFAULT_ROUTING) &&
+                PropertyKeys.MASTER_SUFFIX.equals(varServiceConfig.get(PropertyKeys.DEFAULT_ROUTING));
+
         if (masterServiceString != null && "true".equalsIgnoreCase(masterServiceString))
         {
+          // for master service variants, we want them to point to the master colo.
+          varServiceConfig.put(PropertyKeys.CLUSTER_NAME, masterColoName);
+        }
+        else if (defaultRoutingToMasterColo &&
+                    defaultServiceString != null && "true".equalsIgnoreCase(defaultServiceString))
+        {
+          // for default services whose defaultRouting = Master, we also want them to
+          // point to the master colo.
           varServiceConfig.put(PropertyKeys.CLUSTER_NAME, masterColoName);
         }
         else
         {
+          // for all other service variants, we want them to point to the colo specific
+          // cluster variant name.
           varServiceConfig.put(PropertyKeys.CLUSTER_NAME, variantColoName);
         }
+
         varServicesConfig.put(entry.getKey(), varServiceConfig);
       }
       clusterToServiceMapping.put(variantColoName, varServicesConfig);

@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 
 import com.linkedin.d2.discovery.PropertyBuilder;
 import com.linkedin.d2.discovery.PropertySerializationException;
@@ -128,6 +129,13 @@ public class ServicePropertiesJsonSerializer implements
     Set<URI> banned = new HashSet<URI>(bannedList);
     List<String> prioritizedSchemes = mapGet(map,PropertyKeys.PRIORITIZED_SCHEMES);
 
+    Map<String, Object> metadataProperties = new HashMap<String,Object>();
+    String isDefaultService = mapGet(map, PropertyKeys.IS_DEFAULT_SERVICE);
+    if (isDefaultService != null && "true".equalsIgnoreCase(isDefaultService))
+    {
+      metadataProperties.put(PropertyKeys.IS_DEFAULT_SERVICE, isDefaultService);
+    }
+
     return new ServiceProperties((String) map.get(PropertyKeys.SERVICE_NAME),
                                  (String) map.get(PropertyKeys.CLUSTER_NAME),
                                  (String) map.get(PropertyKeys.PATH),
@@ -137,7 +145,8 @@ public class ServicePropertiesJsonSerializer implements
                                  transportClientProperties,
                                  degraderProperties,
                                  prioritizedSchemes,
-                                 banned);
+                                 banned,
+                                 metadataProperties);
 
   }
 }

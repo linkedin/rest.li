@@ -59,6 +59,7 @@ public class PropertyKeys
   public static final String BANNED_URIS = "bannedUri";
   public static final String DEFAULT_ROUTING = "defaultRouting";
   public static final String ALLOWED_CLIENT_OVERRIDE_KEYS = "allowedClientOverrideKeys";
+  public static final String SERVICE_METADATA_PROPERTIES = "serviceMetadataProperties";
 
   //load balancer specific properties
   public static final String LB_STRATEGY_NAME = "loadBalancerStrategyName";
@@ -113,5 +114,7 @@ public class PropertyKeys
   public static final String HAS_COLO_VARIANTS = "hasColoVariants";
   // IS_MASTER_SERVICE is used internally to identify variants of a service that are master services.
   public static final String IS_MASTER_SERVICE = "isMasterService";
+  // service metadata properties
+  public static final String IS_DEFAULT_SERVICE = "isDefaultService";
 
 }

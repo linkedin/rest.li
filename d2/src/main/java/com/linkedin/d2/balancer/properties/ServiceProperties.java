@@ -37,6 +37,7 @@ public class ServiceProperties
   private final Map<String,String> _degraderProperties;
   private final List<String> _prioritizedSchemes;
   private final Set<URI> _banned;
+  private final Map<String,Object> _serviceMetadataProperties;
 
   public ServiceProperties(String serviceName,
                            String clusterName,
@@ -86,6 +87,23 @@ public class ServiceProperties
                            List<String> prioritizedSchemes,
                            Set<URI> banned)
   {
+    this(serviceName,clusterName,path,loadBalancerStrategyName,loadBalancerStrategyList,loadBalancerStrategyProperties,
+        transportClientProperties, degraderProperties, prioritizedSchemes, banned,
+        Collections.<String,Object>emptyMap());
+  }
+
+  public ServiceProperties(String serviceName,
+                           String clusterName,
+                           String path,
+                           String loadBalancerStrategyName,
+                           List<String> loadBalancerStrategyList,
+                           Map<String,Object> loadBalancerStrategyProperties,
+                           Map<String,Object> transportClientProperties,
+                           Map<String,String> degraderProperties,
+                           List<String> prioritizedSchemes,
+                           Set<URI> banned,
+                           Map<String,Object> serviceMetadataProperties)
+  {
     ArgumentUtil.notNull(serviceName, PropertyKeys.SERVICE_NAME);
     ArgumentUtil.notNull(clusterName, PropertyKeys.CLUSTER_NAME);
     ArgumentUtil.notNull(path, PropertyKeys.PATH);
@@ -100,16 +118,18 @@ public class ServiceProperties
     _path = path;
     _loadBalancerStrategyName = loadBalancerStrategyName;
     _loadBalancerStrategyList = (loadBalancerStrategyList != null) ?
-            Collections.unmodifiableList(loadBalancerStrategyList)
-            : Collections.<String>emptyList();
+        Collections.unmodifiableList(loadBalancerStrategyList)
+        : Collections.<String>emptyList();
     _loadBalancerStrategyProperties = Collections.unmodifiableMap(loadBalancerStrategyProperties);
     _transportClientProperties = (transportClientProperties != null) ?
         Collections.unmodifiableMap(transportClientProperties) : Collections.<String, Object>emptyMap();
     _degraderProperties = (degraderProperties != null) ? Collections.unmodifiableMap(degraderProperties) :
-      Collections.<String, String>emptyMap();
+        Collections.<String, String>emptyMap();
     _prioritizedSchemes = (prioritizedSchemes != null) ? Collections.unmodifiableList(prioritizedSchemes) :
-       Collections.<String>emptyList();
+        Collections.<String>emptyList();
     _banned = (banned != null) ? Collections.unmodifiableSet(banned) : Collections.<URI>emptySet();
+    _serviceMetadataProperties = (serviceMetadataProperties != null) ? Collections.unmodifiableMap(serviceMetadataProperties) :
+        Collections.<String,Object>emptyMap();
   }
 
 
@@ -168,6 +188,11 @@ public class ServiceProperties
     return _banned.contains(uri);
   }
 
+  public Map<String,Object> getServiceMetadataProperties()
+  {
+    return _serviceMetadataProperties;
+  }
+
   @Override
   public String toString()
   {
@@ -184,6 +209,8 @@ public class ServiceProperties
         + _prioritizedSchemes
         + ", bannedUris="
         + _banned
+        + ", serviceMetadata="
+        + _serviceMetadataProperties
         + "]";
   }
 
@@ -202,6 +229,7 @@ public class ServiceProperties
     result = prime * result + _transportClientProperties.hashCode();
     result = prime * result + _prioritizedSchemes.hashCode();
     result = prime * result + _banned.hashCode();
+    result = prime * result + _serviceMetadataProperties.hashCode();
     return result;
   }
 
@@ -234,6 +262,8 @@ public class ServiceProperties
     if (!_prioritizedSchemes.equals(other._prioritizedSchemes))
           return false;
     if (!_banned.equals(other._banned))
+          return false;
+    if (!_serviceMetadataProperties.equals(other._serviceMetadataProperties))
           return false;
     return true;
   }
