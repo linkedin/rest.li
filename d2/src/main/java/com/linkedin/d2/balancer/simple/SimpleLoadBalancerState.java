@@ -21,7 +21,6 @@ import static com.linkedin.d2.discovery.util.LogUtil.info;
 import static com.linkedin.d2.discovery.util.LogUtil.trace;
 import static com.linkedin.d2.discovery.util.LogUtil.warn;
 
-import com.linkedin.d2.balancer.properties.AllowedClientOnlyPropertyKeys;
 import com.linkedin.d2.balancer.properties.ClientServiceConfigValidator;
 import com.linkedin.d2.balancer.properties.AllowedClientPropertyKeys;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
@@ -1085,19 +1084,22 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   {
     Map<String, Object> transportClientProperties = new HashMap<String,Object>(serviceProperties.getTransportClientProperties());
     @SuppressWarnings("unchecked")
-    Set<String> allowedClientOverrideKeys = (Set<String>)transportClientProperties.get(PropertyKeys.ALLOWED_CLIENT_OVERRIDE_KEYS);
+    List<String> allowedOverrideKeysList = (List<String>)transportClientProperties.get(PropertyKeys.ALLOWED_CLIENT_OVERRIDE_KEYS);
+    Set<String> allowedClientOverrideKeys;
+    if (allowedOverrideKeysList != null)
+    {
+      allowedClientOverrideKeys = new HashSet<String>(allowedOverrideKeysList);
+    }
+    else
+    {
+      allowedClientOverrideKeys = Collections.emptySet();
+    }
     Map<String, Object> clientSuppliedServiceProperties = _clientServicesConfig.get(serviceProperties.getServiceName());
     if (clientSuppliedServiceProperties != null)
     {
       debug(_log, "Client supplied configs for service {}", new Object[]{serviceProperties.getServiceName()});
 
-      if (allowedClientOverrideKeys == null)
-      {
-        // Use an empty set to prevent iterating over the keys twice
-        allowedClientOverrideKeys = Collections.emptySet();
-      }
-
-      // check for overrides and new keys
+      // check for overrides
       for (String clientSuppliedKey: clientSuppliedServiceProperties.keySet())
       {
         // clients can only override config properties which have been allowed by the service
@@ -1120,13 +1122,6 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
                      clientSuppliedServiceProperties.get(clientSuppliedKey),
                      serviceProperties.getServiceName()});
           }
-        }
-        else if (AllowedClientOnlyPropertyKeys.isAllowedClientOnlyPropertyKey(clientSuppliedKey))
-        {
-          transportClientProperties.put(clientSuppliedKey, clientSuppliedServiceProperties.get(clientSuppliedKey));
-          info(_log,
-               "Client supplied config property {} for service {}. This is being used to instantiate the Transport Client",
-               new Object[]{clientSuppliedKey, serviceProperties.getServiceName()});
         }
       }
     }
