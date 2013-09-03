@@ -1,8 +1,10 @@
+1.9.21
+------
+
 1.9.20
 ------
 (RB=205315)
 Removed the notion of client only supplied config keys. Fixed bug in reading set from transport client properties.
-
 
 1.9.19
 ------
