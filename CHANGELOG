@@ -1,6 +1,9 @@
 1.9.23
 ------
-
+(RB=206396)
+To detect, as early as possible, a mistake that is otherwise difficult to debug, add 
+check during data template generation that verifies filename and path match schema 
+name and namespace.
 
 1.9.22
 ------

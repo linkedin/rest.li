@@ -20,8 +20,10 @@ package com.linkedin.data.schema.generator;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaLocation;
 import com.linkedin.data.schema.DataSchemaResolver;
+import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.SchemaParserFactory;
+
 import com.linkedin.data.schema.resolver.DefaultDataSchemaResolver;
 import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
 import com.linkedin.data.schema.resolver.FileDataSchemaResolver;
@@ -190,7 +192,48 @@ public abstract class AbstractGenerator
 
     for (DataSchema schema : schemas)
     {
+      validateSchemaWithFilepath(schemaSourceFile, schema);
       handleSchema(schema);
+    }
+  }
+
+  /**
+   * Checks that the schema name and namespace match the file name and path.  These must match for
+   * FileDataSchemaResolver to find a schema pdscs by fully qualified name.
+   *
+   */
+  private void validateSchemaWithFilepath(File schemaSourceFile, DataSchema schema)
+  {
+    if(schemaSourceFile != null && schemaSourceFile.isFile() && schema instanceof NamedDataSchema)
+    {
+      NamedDataSchema namedDataSchema = (NamedDataSchema)schema;
+      String namespace = namedDataSchema.getNamespace();
+
+      if(!removeFileExtension(schemaSourceFile.getName()).equalsIgnoreCase(namedDataSchema.getName()))
+      {
+        throw new IllegalArgumentException(namedDataSchema.getFullName() + " has name that does not match filename '" +
+                schemaSourceFile.getAbsolutePath() + "'");
+      }
+
+      String directory = schemaSourceFile.getParentFile().getAbsolutePath();
+      if(!directory.endsWith(namespace.replace('.', File.separatorChar)))
+      {
+        throw new IllegalArgumentException(namedDataSchema.getFullName() + " has namespace that does not match " +
+                "file path '" + schemaSourceFile.getAbsolutePath() + "'");
+      }
+    }
+  }
+
+  private String removeFileExtension(String filename)
+  {
+    int idx = filename.lastIndexOf('.');
+    if(idx == 0)
+    {
+      return filename;
+    }
+    else
+    {
+      return filename.substring(0, idx);
     }
   }
 
