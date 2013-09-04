@@ -714,9 +714,11 @@ class PegasusPlugin implements Plugin<Project>
       // configuration for publishing jars containing sources for generated classes
       // to the project artifacts for including in the ivy.xml
       //
-      def generatedSourcesConfig = project.configurations.add('generatedSources')
-      def testGeneratedSourcesConfig = project.configurations.add('testGeneratedSources') {
-        extendsFrom(generatedSourcesConfig)
+      project.configurations {
+        generatedSources
+        testGeneratedSources {
+          extendsFrom generatedSources
+        }
       }
 
       _generateSourcesJarTask = project.task('generateSourcesJar', type: Jar) {
@@ -737,9 +739,11 @@ class PegasusPlugin implements Plugin<Project>
       // configuration for publishing jars containing Javadoc for generated classes
       // to the project artifacts for including in the ivy.xml
       //
-      def generatedJavadocConfig = project.configurations.add('generatedJavadoc')
-      def testGeneratedJavadocConfig = project.configurations.add('testGeneratedJavadoc') {
-        extendsFrom(generatedJavadocConfig)
+      project.configurations {
+        generatedJavadoc
+        testGeneratedJavadoc {
+          extendsFrom generatedJavadoc
+        }
       }
 
       _generateJavadocJarTask = project.task('generateJavadocJar', type: Jar, dependsOn: _generateJavadocTask) {
