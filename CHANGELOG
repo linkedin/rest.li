@@ -1,6 +1,7 @@
 1.9.22
 ------
-
+(RB=206507)
+Allow routing to batch partial update with no "X-RestLi-Method" HTTP header.
 
 1.9.21
 ------

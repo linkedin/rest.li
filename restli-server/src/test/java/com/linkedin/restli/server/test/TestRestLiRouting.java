@@ -418,7 +418,6 @@ public class TestRestLiRouting
     expectRoutingException("/statuses?ids=1&ids=2", "PUT", "CREATE");
     expectRoutingException("/statuses?ids=1&ids=2", "POST", "CREATE");
     expectRoutingException("/statuses?ids=1&ids=2", "DELETE", "CREATE");
-    expectRoutingException("/statuses?ids=1&ids=2", "POST");
 
     expectRoutingException("/statuses/1", "GET", "FOO");
     expectRoutingException("/statuses?ids=1,2,3", "GET", "FOO");

@@ -268,7 +268,6 @@ public class RestLiRouter
     Object[] config =
     {
             new ResourceMethodMatchKey("GET",    "",                        false,   false,  false,  true),  ResourceMethod.GET,
-
             new ResourceMethodMatchKey("GET",    "",                        false,   true,   false,  false), ResourceMethod.FINDER,
             new ResourceMethodMatchKey("PUT",    "",                        false,   false,  false,  true),  ResourceMethod.UPDATE,
             new ResourceMethodMatchKey("POST",   "",                        false,   false,  false,  true),  ResourceMethod.PARTIAL_UPDATE,
@@ -276,9 +275,7 @@ public class RestLiRouter
             new ResourceMethodMatchKey("POST",   "",                        true,    false,  false,  true),  ResourceMethod.ACTION,
             new ResourceMethodMatchKey("POST",   "",                        true,    false,  false,  false), ResourceMethod.ACTION,
             new ResourceMethodMatchKey("POST",   "",                        false,   false,  false,  false), ResourceMethod.CREATE,
-
             new ResourceMethodMatchKey("GET",    "",                        false,   false,  false,  false), ResourceMethod.GET_ALL,
-            new ResourceMethodMatchKey("GET",    "GET_ALL",                 false,   false,  false,  false), ResourceMethod.GET_ALL,
 
             new ResourceMethodMatchKey("GET",    "GET",                     false,   false,  false,  true),  ResourceMethod.GET,
             new ResourceMethodMatchKey("GET",    "FINDER",                  false,   true,   false,  false), ResourceMethod.FINDER,
@@ -288,17 +285,20 @@ public class RestLiRouter
             new ResourceMethodMatchKey("POST",   "ACTION",                  true,    false,  false,  true),  ResourceMethod.ACTION,
             new ResourceMethodMatchKey("POST",   "ACTION",                  true,    false,  false,  false), ResourceMethod.ACTION,
             new ResourceMethodMatchKey("POST",   "CREATE",                  false,   false,  false,  false), ResourceMethod.CREATE,
+            new ResourceMethodMatchKey("GET",    "GET_ALL",                 false,   false,  false,  false), ResourceMethod.GET_ALL,
 
             new ResourceMethodMatchKey("GET",    "",                        false,   false,  true,   false), ResourceMethod.BATCH_GET,
             new ResourceMethodMatchKey("DELETE", "",                        false,   false,  true,   false), ResourceMethod.BATCH_DELETE,
             new ResourceMethodMatchKey("PUT",    "",                        false,   false,  true,   false), ResourceMethod.BATCH_UPDATE,
+            new ResourceMethodMatchKey("POST",   "",                        false,   false,  true,   false), ResourceMethod.BATCH_PARTIAL_UPDATE,
 
             new ResourceMethodMatchKey("GET",    "BATCH_GET",               false,   false,  true,   false), ResourceMethod.BATCH_GET,
             new ResourceMethodMatchKey("DELETE", "BATCH_DELETE",            false,   false,  true,   false), ResourceMethod.BATCH_DELETE,
             new ResourceMethodMatchKey("PUT",    "BATCH_UPDATE",            false,   false,  true,   false), ResourceMethod.BATCH_UPDATE,
+            new ResourceMethodMatchKey("POST",   "BATCH_PARTIAL_UPDATE",    false,   false,  true,   false), ResourceMethod.BATCH_PARTIAL_UPDATE,
 
-            new ResourceMethodMatchKey("POST",   "BATCH_CREATE",            false,   false,  false,  false), ResourceMethod.BATCH_CREATE,
-            new ResourceMethodMatchKey("POST",   "BATCH_PARTIAL_UPDATE",    false,   false,  true,  false),  ResourceMethod.BATCH_PARTIAL_UPDATE
+            // batch create signature collides with non-batch create. requires RMETHOD header to distinguish
+            new ResourceMethodMatchKey("POST",   "BATCH_CREATE",            false,   false,  false,  false), ResourceMethod.BATCH_CREATE
     };
 
     for (int ii = 0; ii < config.length; ii += 2)
