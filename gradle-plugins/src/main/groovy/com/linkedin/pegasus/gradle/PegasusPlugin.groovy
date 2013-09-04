@@ -19,6 +19,7 @@ package com.linkedin.pegasus.gradle
 
 import org.gradle.BuildResult
 import org.gradle.api.DefaultTask
+import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -1475,7 +1476,7 @@ class PegasusPlugin implements Plugin<Project>
         }
         catch (IllegalArgumentException e)
         {
-          throw new Exception("Unrecognized compatibility level property.", e)
+          throw new GradleException("Unrecognized compatibility level property.", e)
         }
       }
       else
@@ -1566,7 +1567,7 @@ class PegasusPlugin implements Plugin<Project>
       }
       else
       {
-        throw new Exception(allCheckMessage.toString())
+        throw new GradleException(allCheckMessage.toString())
       }
     }
 
@@ -1609,7 +1610,7 @@ class PegasusPlugin implements Plugin<Project>
         }
         catch (IllegalArgumentException e)
         {
-          throw new Exception("Unrecognized compatibility level property.", e)
+          throw new GradleException("Unrecognized compatibility level property.", e)
         }
       }
       else
@@ -1684,7 +1685,7 @@ class PegasusPlugin implements Plugin<Project>
       }
       else
       {
-        throw new Exception(allCheckMessage.toString())
+        throw new GradleException(allCheckMessage.toString())
       }
     }
   }
