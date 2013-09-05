@@ -3,6 +3,9 @@
 (RB=206507)
 Allow routing to batch partial update with no "X-RestLi-Method" HTTP header.
 
+(RB=206724)
+Support more HTTP header manipulation methods in restli-client request builder.
+
 1.9.21
 ------
 (RB=204527)

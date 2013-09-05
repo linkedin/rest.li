@@ -60,13 +60,14 @@ import java.util.regex.Pattern;
 public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> implements RequestBuilder<R>
 {
   private static final Pattern SLASH_PATTERN = Pattern.compile("/");
+  protected static final char HEADER_DELIMITER = ',';
 
   private final String                _baseURITemplate;
-  protected final Map<String, String> _headers     = new HashMap<String, String>();
+  protected final ResourceSpec        _resourceSpec;
   protected final CompoundKey         _assocKey    = new CompoundKey();
   protected final Map<String, String> _pathKeys    = new HashMap<String, String>();
-  protected final ResourceSpec        _resourceSpec;
   protected final DataMap             _queryParams = new DataMap();
+  protected Map<String, String>       _headers     = new HashMap<String, String>();
 
   protected AbstractRequestBuilder(String baseURITemplate, ResourceSpec resourceSpec)
   {
@@ -74,15 +75,55 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
     _resourceSpec = resourceSpec;
   }
 
-  public AbstractRequestBuilder<K, V, R> header(String key, String value)
+  /**
+   * Create a header with the specified value if there is no existing name
+   * Otherwise, overwrite the existing header with the specified value to the existing value
+   *
+   * @param name name of the header
+   * @param value value of the header
+   * @return this {@link AbstractRequestBuilder}
+   */
+  public AbstractRequestBuilder<K, V, R> header(String name, String value)
   {
-    addHeader(key, value);
+    setHeader(name, value);
     return this;
   }
 
-  protected void addHeader(String key, String value)
+  /**
+   * Create a header with the specified value if there is no existing name
+   * Otherwise, append the specified value to the existing value, delimited by comma
+   *
+   * @param name name of the header
+   * @param value value of the header
+   */
+  public void addHeader(String name, String value)
   {
-    _headers.put(key, value);
+    final String currValue = _headers.get(name);
+    final String newValue = currValue == null ? value : currValue + HEADER_DELIMITER + value;
+    _headers.put(name, newValue);
+  }
+
+  /**
+   * Create a header with the specified value if there is no existing name
+   * Otherwise, overwrite the existing header with the specified value to the existing value
+   *
+   * @param name name of the header
+   * @param value value of the header
+   */
+  public void setHeader(String name, String value)
+  {
+    _headers.put(name, value);
+  }
+
+  /**
+   * Use the specified headers to replace the existing headers
+   * All old headers will be lost
+   *
+   * @param headers new headers
+   */
+  public void setHeaders(Map<String, String> headers)
+  {
+    _headers = new HashMap<String, String>(headers);
   }
 
   protected void addReqParam(String key, Object value)
