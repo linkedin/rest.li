@@ -1,7 +1,18 @@
+1.9.22
+------
+
+
 1.9.21
 ------
 (RB=204527)
 Add spring and guice support, enables running rest.li servlets with dependency injection, also add a logging filter.
+
+(RB=205233)
+Fix bug in D2Config that service variant doesn't point to master colo when defaultRoutingToMaster is set.
+
+(RB=204500)
+Fix bug that R2 Client may lose connection forever after the server being bounced when there is a very high downstream
+qps and D2 is not used.
 
 1.9.20
 ------
