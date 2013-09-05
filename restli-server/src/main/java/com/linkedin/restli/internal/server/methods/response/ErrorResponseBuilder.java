@@ -20,6 +20,7 @@
 
 package com.linkedin.restli.internal.server.methods.response;
 
+import com.linkedin.restli.server.ErrorResponseFormat;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Map;
@@ -36,15 +37,29 @@ import com.linkedin.restli.server.RestLiServiceException;
 */
 public final class ErrorResponseBuilder implements RestLiResponseBuilder
 {
-  private static final ErrorResponseBuilder _INSTANCE = new ErrorResponseBuilder();
+  public static final String DEFAULT_INTERNAL_ERROR_MESSAGE = "Error in application code";
+  private final ErrorResponseFormat _errorResponseFormat;
+  private final String _internalErrorMessage;
 
-  public static ErrorResponseBuilder getInstance()
+  public ErrorResponseBuilder()
   {
-    return _INSTANCE;
+    this(ErrorResponseFormat.defaultFormat());
   }
 
-  private ErrorResponseBuilder()
+  public ErrorResponseBuilder(ErrorResponseFormat errorResponseFormat)
   {
+    this(errorResponseFormat, DEFAULT_INTERNAL_ERROR_MESSAGE);
+  }
+
+  public ErrorResponseBuilder(ErrorResponseFormat errorResponseFormat, String internalErrorMessage)
+  {
+    _errorResponseFormat = errorResponseFormat;
+    _internalErrorMessage = internalErrorMessage;
+  }
+
+  public String getInternalErrorMessage()
+  {
+    return _internalErrorMessage;
   }
 
   @Override
@@ -55,35 +70,46 @@ public final class ErrorResponseBuilder implements RestLiResponseBuilder
   {
     RestLiServiceException result = (RestLiServiceException) object;
     ErrorResponse er = buildErrorResponse(result);
-    headers.put(RestConstants.HEADER_LINKEDIN_TYPE, er.getClass().getName());
-    headers.put(RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE,
-                RestConstants.HEADER_VALUE_ERROR_APPLICATION);
+
+    if(_errorResponseFormat.showHeaders())
+    {
+      headers.put(RestConstants.HEADER_LINKEDIN_TYPE, er.getClass().getName());
+      headers.put(RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE,
+                  RestConstants.HEADER_VALUE_ERROR_APPLICATION);
+    }
     return new PartialRestResponse(result.getStatus(), er);
   }
 
-  public static ErrorResponse buildErrorResponse(RestLiServiceException result)
+  public ErrorResponse buildErrorResponse(RestLiServiceException result)
   {
     ErrorResponse er = new ErrorResponse();
-    er.setStatus(result.getStatus().getCode());
-    if (result.getMessage() != null)
+    if(_errorResponseFormat.showStatusCodeInBody())
+    {
+      er.setStatus(result.getStatus().getCode());
+    }
+
+    if (_errorResponseFormat.showMessage() && result.getMessage() != null)
     {
       er.setMessage(result.getMessage());
     }
-    if (result.hasServiceErrorCode())
+    if (_errorResponseFormat.showServiceErrorCode() && result.hasServiceErrorCode())
     {
       er.setServiceErrorCode(result.getServiceErrorCode());
     }
-    if (result.hasErrorDetails())
+    if (_errorResponseFormat.showDetails() && result.hasErrorDetails())
     {
       er.setErrorDetails(result.getErrorDetails());
     }
 
-    StringWriter sw = new StringWriter();
-    PrintWriter pw = new PrintWriter(sw);
-    result.printStackTrace(pw);
-    er.setStackTrace(sw.toString());
+    if(_errorResponseFormat.showStacktrace())
+    {
+      StringWriter sw = new StringWriter();
+      PrintWriter pw = new PrintWriter(sw);
+      result.printStackTrace(pw);
+      er.setStackTrace(sw.toString());
 
-    er.setExceptionClass(result.getClass().getName());
+      er.setExceptionClass(result.getClass().getName());
+    }
 
     return er;
   }

@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.server;
 
+import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collection;
@@ -35,6 +36,8 @@ public class RestLiConfig
   private final Set<String> _resourceClassNames = new HashSet<String>();
   private URI _serverNodeUri = URI.create("");
   private RestLiDocumentationRequestHandler _documentationRequestHandler = null;
+  private ErrorResponseFormat _errorResponseFormat = ErrorResponseFormat.FULL;
+  private String _internalErrorMessage = ErrorResponseBuilder.DEFAULT_INTERNAL_ERROR_MESSAGE;
 
   /**
    * Constructor.
@@ -148,5 +151,25 @@ public class RestLiConfig
   public void setDocumentationRequestHandler(final RestLiDocumentationRequestHandler handler)
   {
     _documentationRequestHandler = handler;
+  }
+
+  public ErrorResponseFormat getErrorResponseFormat()
+  {
+    return _errorResponseFormat;
+  }
+
+  public void setErrorResponseFormat(ErrorResponseFormat errorResponseFormat)
+  {
+    this._errorResponseFormat = errorResponseFormat;
+  }
+
+  public String getInternalErrorMessage()
+  {
+    return _internalErrorMessage;
+  }
+
+  public void setInternalErrorMessage(String internalErrorMessage)
+  {
+    _internalErrorMessage = internalErrorMessage;
   }
 }

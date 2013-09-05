@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.internal.server;
 
+import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -48,6 +49,8 @@ public class RestLiMethodInvoker
 {
   private final ResourceFactory _resourceFactory;
   private final Engine _engine;
+  private final ErrorResponseBuilder _errorResponseBuilder;
+  private final MethodAdapterRegistry _methodAdapterRegistry;
 
   /**
    * Constructor.
@@ -57,8 +60,22 @@ public class RestLiMethodInvoker
    */
   public RestLiMethodInvoker(final ResourceFactory resourceFactory, final Engine engine)
   {
+    this(resourceFactory, engine, new ErrorResponseBuilder());
+  }
+
+  /**
+   * Constructor.
+   *
+   * @param resourceFactory {@link ResourceFactory}
+   * @param engine {@link Engine}
+   * @param errorResponseBuilder {@link ErrorResponseBuilder}
+   */
+  public RestLiMethodInvoker(final ResourceFactory resourceFactory, final Engine engine, final ErrorResponseBuilder errorResponseBuilder)
+  {
     _resourceFactory = resourceFactory;
     _engine = engine;
+    _errorResponseBuilder = errorResponseBuilder;
+    _methodAdapterRegistry = new MethodAdapterRegistry(errorResponseBuilder);
   }
 
   /**
@@ -85,7 +102,7 @@ public class RestLiMethodInvoker
     }
 
     RestLiArgumentBuilder adapter =
-        MethodAdapterRegistry.getArgumentBuilder(resourceMethodDescriptor.getType());
+        _methodAdapterRegistry.getArgumentBuilder(resourceMethodDescriptor.getType());
     if (adapter == null)
     {
       throw new IllegalArgumentException("Unsupported method type: "
@@ -179,7 +196,7 @@ public class RestLiMethodInvoker
       else
       {
         callback.onErrorApp(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
-                                                       "Error in application code",
+                                                       _errorResponseBuilder.getInternalErrorMessage(),
                                                        e.getCause()));
       }
     }

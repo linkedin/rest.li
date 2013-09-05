@@ -48,6 +48,8 @@ import com.linkedin.restli.internal.server.ResourceContextImpl;
 import com.linkedin.restli.internal.server.RestLiMethodInvoker;
 import com.linkedin.restli.internal.server.RestLiResponseHandler;
 import com.linkedin.restli.internal.server.RoutingResult;
+import com.linkedin.restli.internal.server.methods.MethodAdapterRegistry;
+import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
@@ -143,7 +145,7 @@ public class TestRestLiMethodInvocation
         .build();
 
     _resourceFactory  = new EasyMockResourceFactory();
-    _invoker = new RestLiMethodInvoker(_resourceFactory, _engine);
+    _invoker = new RestLiMethodInvoker(_resourceFactory, _engine, new ErrorResponseBuilder());
   }
 
   @AfterTest

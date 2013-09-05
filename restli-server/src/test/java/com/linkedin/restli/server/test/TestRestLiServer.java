@@ -18,9 +18,12 @@ package com.linkedin.restli.server.test;
 
 import static org.easymock.EasyMock.eq;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
+import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
+import com.linkedin.restli.server.ErrorResponseFormat;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashSet;
@@ -61,6 +64,7 @@ import com.linkedin.restli.server.twitter.TwitterTestDataModels.Status;
 public class TestRestLiServer
 {
   private RestLiServer _server;
+  private RestLiServer _serverWithCustomErrorResponseConfig; // configured different than server
   private EasyMockResourceFactory _resourceFactory;
 
   @BeforeTest
@@ -73,6 +77,13 @@ public class TestRestLiServer
     Engine fakeEngine = EasyMock.createMock(Engine.class);
     EasyMock.replay(fakeEngine);
     _server = new RestLiServer(config, _resourceFactory, fakeEngine);
+
+    RestLiConfig customErrorResponseConfig = new RestLiConfig();
+    customErrorResponseConfig.addResourcePackageNames("com.linkedin.restli.server.twitter");
+    customErrorResponseConfig.setErrorResponseFormat(ErrorResponseFormat.MESSAGE_AND_DETAILS);
+    customErrorResponseConfig.setInternalErrorMessage("kthxbye.");
+
+    _serverWithCustomErrorResponseConfig = new RestLiServer(customErrorResponseConfig, _resourceFactory, fakeEngine);
   }
 
   @AfterTest
@@ -250,6 +261,10 @@ public class TestRestLiServer
           assertEquals(restResponse.getHeader(RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE), RestConstants.HEADER_VALUE_ERROR_APPLICATION);
           ErrorResponse responseBody = DataMapUtils.read(restResponse.getEntity().asInputStream(), ErrorResponse.class);
           assertEquals(responseBody.getMessage(), "Mock Exception");
+          assertEquals(responseBody.getExceptionClass(), "com.linkedin.restli.server.RestLiServiceException");
+          assertTrue(responseBody.getStackTrace().startsWith(
+              "com.linkedin.restli.server.RestLiServiceException [HTTP Status:500]: Mock Exception"));
+          assertEquals(responseBody.getStatus(), 500);
 
           EasyMock.verify(statusResource);
           EasyMock.reset(statusResource);
@@ -262,6 +277,142 @@ public class TestRestLiServer
     };
 
     _server.handleRequest(request, new RequestContext(), callback);
+  }
+
+  @Test
+  public void testInternalErrorMessage() throws Exception
+  {
+    RestRequest request = new RestRequestBuilder(new URI("/statuses/1")).build();
+    final StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
+    EasyMock.expect(statusResource.get(eq(1L))).andThrow(new IllegalArgumentException("oops")).once();
+    EasyMock.replay(statusResource);
+
+    Callback<RestResponse> callback = new Callback<RestResponse>()
+    {
+      @Override
+      public void onSuccess(RestResponse restResponse)
+      {
+        fail();
+      }
+
+      @Override
+      public void onError(Throwable e)
+      {
+        assertTrue(e instanceof RestException);
+        RestException restException = (RestException)e;
+        RestResponse restResponse = restException.getResponse();
+
+        try
+        {
+          ErrorResponse responseBody = DataMapUtils.read(restResponse.getEntity().asInputStream(), ErrorResponse.class);
+          assertEquals(responseBody.getMessage(), ErrorResponseBuilder.DEFAULT_INTERNAL_ERROR_MESSAGE);
+
+          EasyMock.verify(statusResource);
+          EasyMock.reset(statusResource);
+        }
+        catch (Exception e2)
+        {
+          fail(e2.toString());
+        }
+      }
+    };
+
+    _server.handleRequest(request, new RequestContext(), callback);
+  }
+
+  @Test
+  public void testCustomizedInternalErrorMessage() throws Exception
+  {
+    RestRequest request = new RestRequestBuilder(new URI("/statuses/1")).build();
+    final StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
+    EasyMock.expect(statusResource.get(eq(1L))).andThrow(new IllegalArgumentException("oops")).once();
+    EasyMock.replay(statusResource);
+
+    Callback<RestResponse> callback = new Callback<RestResponse>()
+    {
+      @Override
+      public void onSuccess(RestResponse restResponse)
+      {
+        fail();
+      }
+
+      @Override
+      public void onError(Throwable e)
+      {
+        assertTrue(e instanceof RestException);
+        RestException restException = (RestException)e;
+        RestResponse restResponse = restException.getResponse();
+
+        try
+        {
+          ErrorResponse responseBody = DataMapUtils.read(restResponse.getEntity().asInputStream(), ErrorResponse.class);
+          assertEquals(responseBody.getMessage(), "kthxbye.");
+
+          EasyMock.verify(statusResource);
+          EasyMock.reset(statusResource);
+        }
+        catch (Exception e2)
+        {
+          fail(e2.toString());
+        }
+      }
+    };
+
+    _serverWithCustomErrorResponseConfig.handleRequest(request, new RequestContext(), callback);
+  }
+
+  @Test
+  public void testMessageAndDetailsErrorFormat() throws Exception
+  {
+    RestRequest request = new RestRequestBuilder(new URI("/statuses/1")).build();
+    final StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
+    final DataMap details = new DataMap();
+    details.put("errorKey", "errorDetail");
+    EasyMock.expect(statusResource.get(eq(1L))).andThrow(new RestLiServiceException(
+        HttpStatus.S_500_INTERNAL_SERVER_ERROR, "Mock Exception").setErrorDetails(details)).once();
+    EasyMock.replay(statusResource);
+
+    Callback<RestResponse> callback = new Callback<RestResponse>()
+    {
+      @Override
+      public void onSuccess(RestResponse restResponse)
+      {
+        fail();
+      }
+
+      @Override
+      public void onError(Throwable e)
+      {
+        assertTrue(e instanceof RestException);
+        RestException restException = (RestException)e;
+        RestResponse restResponse = restException.getResponse();
+
+        try
+        {
+          assertEquals(restResponse.getStatus(), 500);
+          assertTrue(restResponse.getEntity().length() > 0);
+          assertEquals(restResponse.getHeader(RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE), RestConstants.HEADER_VALUE_ERROR_APPLICATION);
+          ErrorResponse responseBody = DataMapUtils.read(restResponse.getEntity().asInputStream(), ErrorResponse.class);
+
+          // in this test, we're using the _serverWithCustomErrorResponseConfig (see below), which has been configure to use the
+          // MESSAGE_AND_DETAILS ErrorResponseFormat, so stack trace and other error response parts should be absent
+          assertEquals(responseBody.getMessage(), "Mock Exception");
+          assertEquals(responseBody.getErrorDetails().getString("errorKey"), "errorDetail");
+          assertFalse(responseBody.hasExceptionClass());
+          assertFalse(responseBody.hasStackTrace());
+          assertFalse(responseBody.hasStatus());
+
+          EasyMock.verify(statusResource);
+          EasyMock.reset(statusResource);
+        }
+        catch (Exception e2)
+        {
+          fail(e2.toString());
+        }
+      }
+    };
+
+    _serverWithCustomErrorResponseConfig.handleRequest(request, new RequestContext(), callback);
   }
 
   @Test

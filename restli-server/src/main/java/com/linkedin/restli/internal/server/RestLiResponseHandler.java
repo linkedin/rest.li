@@ -60,6 +60,24 @@ import com.linkedin.restli.server.resources.CollectionResource;
  */
 public class RestLiResponseHandler
 {
+  private final MethodAdapterRegistry _methodAdapterRegistry;
+  private final ErrorResponseBuilder _errorResponseBuilder;
+
+  public RestLiResponseHandler()
+  {
+    this(new ErrorResponseBuilder());
+  }
+
+  public RestLiResponseHandler(ErrorResponseBuilder errorResponseBuilder)
+  {
+    this(new MethodAdapterRegistry(errorResponseBuilder), errorResponseBuilder);
+  }
+
+  public RestLiResponseHandler(MethodAdapterRegistry methodAdapterRegistry, ErrorResponseBuilder errorResponseBuilder)
+  {
+    _methodAdapterRegistry = methodAdapterRegistry;
+    _errorResponseBuilder = errorResponseBuilder;
+  }
 
   /**
    * @param request {@link RestRequest}
@@ -121,6 +139,14 @@ public class RestLiResponseHandler
     return builder.build();
   }
 
+  public PartialRestResponse buildErrorResponse(final RestRequest request,
+                                 final RoutingResult routingResult,
+                                 final Object object,
+                                 final Map<String, String> headers)
+  {
+    return _errorResponseBuilder.buildResponse(request, routingResult, object, headers);
+  }
+
   private RestResponseBuilder encodeResult(RestResponseBuilder builder, DataMap dataMap, String acceptTypes)
   {
     String bestType = RestUtils.pickBestEncoding(acceptTypes);
@@ -147,10 +173,10 @@ public class RestLiResponseHandler
   {
     if (responseObject instanceof RestLiServiceException)
     {
-      return ErrorResponseBuilder.getInstance();
+      return _errorResponseBuilder;
     }
 
-    return MethodAdapterRegistry.getResponsebuilder(routingResult.getResourceMethod()
+    return _methodAdapterRegistry.getResponsebuilder(routingResult.getResourceMethod()
                                                                  .getType());
   }
 }

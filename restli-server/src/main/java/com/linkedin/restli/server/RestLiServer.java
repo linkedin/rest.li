@@ -17,6 +17,7 @@
 package com.linkedin.restli.server;
 
 import com.linkedin.r2.message.RequestContext;
+import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +49,7 @@ public class RestLiServer extends BaseRestServer
   private final RestLiMethodInvoker _methodInvoker;
   private final RestLiResponseHandler _responseHandler;
   private final RestLiDocumentationRequestHandler _docRequestHandler;
+  private final ErrorResponseBuilder _errorResponseBuilder;
   private boolean _isDocInitialized = false;
 
   public RestLiServer(final RestLiConfig config)
@@ -67,13 +69,16 @@ public class RestLiServer extends BaseRestServer
     super(config);
 
     _config = config;
+    _errorResponseBuilder = new ErrorResponseBuilder(config.getErrorResponseFormat(),
+                                                     config.getInternalErrorMessage());
     _resourceFactory = resourceFactory;
     _rootResources = new RestLiApiBuilder(config).build();
     _resourceFactory.setRootResources(_rootResources);
     _router = new RestLiRouter(_rootResources);
-    _methodInvoker = new RestLiMethodInvoker(_resourceFactory, engine);
-    _responseHandler = new RestLiResponseHandler();
+    _methodInvoker = new RestLiMethodInvoker(_resourceFactory, engine, _errorResponseBuilder);
+    _responseHandler = new RestLiResponseHandler(_errorResponseBuilder);
     _docRequestHandler = config.getDocumentationRequestHandler();
+
 
     // verify that if there are resources using the engine, then the engine is not null
     if (engine == null)

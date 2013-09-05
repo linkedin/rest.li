@@ -41,8 +41,9 @@ import com.linkedin.restli.server.UpdateResponse;
 public final class BatchUpdateResponseBuilder extends
     AbstractBatchResponseBuilder<UpdateResponse> implements RestLiResponseBuilder
 {
-  public BatchUpdateResponseBuilder()
+  public BatchUpdateResponseBuilder(ErrorResponseBuilder errorResponseBuilder)
   {
+    super(errorResponseBuilder);
   }
 
   @Override

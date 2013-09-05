@@ -41,6 +41,12 @@ import com.linkedin.restli.server.RestLiServiceException;
 
 public abstract class AbstractBatchResponseBuilder<V>
 {
+  ErrorResponseBuilder _errorResponseBuilder;
+
+  protected AbstractBatchResponseBuilder(ErrorResponseBuilder errorResponseBuilder)
+  {
+    _errorResponseBuilder = errorResponseBuilder;
+  }
 
   protected void populateErrors(final RestRequest request,
                                 final RoutingResult routingResult,
@@ -48,13 +54,12 @@ public abstract class AbstractBatchResponseBuilder<V>
                                 final Map<String, String> headers,
                                 final BatchResponse<? extends RecordTemplate> batchResponse) throws IOException
   {
-    ErrorResponseBuilder builder = ErrorResponseBuilder.getInstance();
 
     for (Map.Entry<?, RestLiServiceException> entry : ((ServerResourceContext) routingResult.getContext()).getBatchKeyErrors()
                                                                                                           .entrySet())
     {
       DataMap errorData =
-          builder.buildResponse(request, routingResult, entry.getValue(), headers)
+          _errorResponseBuilder.buildResponse(request, routingResult, entry.getValue(), headers)
                  .getDataMap();
       batchResponse.getErrors().put(entry.getKey().toString(),
                                     new ErrorResponse(errorData));
@@ -63,7 +68,7 @@ public abstract class AbstractBatchResponseBuilder<V>
     for (Map.Entry<?, RestLiServiceException> entry : map.entrySet())
     {
       DataMap errorData =
-          builder.buildResponse(request, routingResult, entry.getValue(), headers)
+          _errorResponseBuilder.buildResponse(request, routingResult, entry.getValue(), headers)
                  .getDataMap();
       batchResponse.getErrors().put(entry.getKey().toString(),
                                     new ErrorResponse(errorData));

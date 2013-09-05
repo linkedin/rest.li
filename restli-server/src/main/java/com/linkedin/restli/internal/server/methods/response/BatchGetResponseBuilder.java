@@ -35,6 +35,11 @@ import com.linkedin.restli.server.RestLiServiceException;
 public class BatchGetResponseBuilder extends AbstractBatchResponseBuilder<RecordTemplate> implements
     RestLiResponseBuilder
 {
+  public BatchGetResponseBuilder(ErrorResponseBuilder errorResponseBuilder)
+  {
+    super(errorResponseBuilder);
+  }
+
   @Override
   public PartialRestResponse buildResponse(final RestRequest request,
                                            final RoutingResult routingResult,

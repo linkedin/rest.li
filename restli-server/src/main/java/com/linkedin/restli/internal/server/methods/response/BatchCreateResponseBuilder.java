@@ -38,6 +38,13 @@ import com.linkedin.restli.server.CreateResponse;
 
 public class BatchCreateResponseBuilder implements RestLiResponseBuilder
 {
+  ErrorResponseBuilder _errorResponseBuilder;
+
+  public BatchCreateResponseBuilder(ErrorResponseBuilder errorResponseBuilder)
+  {
+    _errorResponseBuilder = errorResponseBuilder;
+  }
+
   @Override
   public PartialRestResponse buildResponse(final RestRequest request,
                                            final RoutingResult routingResult,
@@ -61,7 +68,8 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
       s.setStatus(e.getStatus().getCode());
       if(e.hasError())
       {
-        s.setError(ErrorResponseBuilder.buildErrorResponse(e.getError()));
+        ErrorResponse errorResponse = _errorResponseBuilder.buildErrorResponse(e.getError());
+        s.setError(errorResponse);
       }
       batchResponse.getElements().add(s);
     }

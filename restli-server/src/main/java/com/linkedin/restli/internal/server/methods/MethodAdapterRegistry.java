@@ -20,6 +20,7 @@
 
 package com.linkedin.restli.internal.server.methods;
 
+import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -54,11 +55,16 @@ import com.linkedin.restli.internal.server.methods.response.UpdateResponseBuilde
 
 public class MethodAdapterRegistry
 {
-  private static final Map<ResourceMethod, RestLiArgumentBuilder> _adapters = buildAdapterRegistry();
+  private final Map<ResourceMethod, RestLiArgumentBuilder> _adapters;
+  private final Map<ResourceMethod, RestLiResponseBuilder> _responseBuilders;
 
-  private static final Map<ResourceMethod, RestLiResponseBuilder> _responseBuilders = buildResponseBuilders();
+  public MethodAdapterRegistry(ErrorResponseBuilder errorResponseBuilder)
+  {
+    _adapters = buildAdapterRegistry();
+    _responseBuilders = buildResponseBuilders(errorResponseBuilder);
+  }
 
-  private static Map<ResourceMethod, RestLiArgumentBuilder> buildAdapterRegistry()
+  private Map<ResourceMethod, RestLiArgumentBuilder> buildAdapterRegistry()
   {
     Map<ResourceMethod, RestLiArgumentBuilder> result =
         new HashMap<ResourceMethod, RestLiArgumentBuilder>(ResourceMethod.values().length);
@@ -78,23 +84,23 @@ public class MethodAdapterRegistry
     return Collections.unmodifiableMap(result);
   }
 
-  private static Map<ResourceMethod, RestLiResponseBuilder> buildResponseBuilders()
+  private Map<ResourceMethod, RestLiResponseBuilder> buildResponseBuilders(ErrorResponseBuilder errorResponseBuilder)
   {
     Map<ResourceMethod, RestLiResponseBuilder> result =
         new HashMap<ResourceMethod, RestLiResponseBuilder>(ResourceMethod.values().length);
 
     result.put(ResourceMethod.GET, new GetResponseBuilder());
-    result.put(ResourceMethod.BATCH_GET, new BatchGetResponseBuilder());
+    result.put(ResourceMethod.BATCH_GET, new BatchGetResponseBuilder(errorResponseBuilder));
     result.put(ResourceMethod.FINDER, new CollectionResponseBuilder());
     result.put(ResourceMethod.CREATE, new CreateResponseBuilder());
     result.put(ResourceMethod.PARTIAL_UPDATE, new UpdateResponseBuilder());
     result.put(ResourceMethod.UPDATE, new UpdateResponseBuilder());
     result.put(ResourceMethod.DELETE, new UpdateResponseBuilder());
     result.put(ResourceMethod.ACTION, new ActionResponseBuilder());
-    result.put(ResourceMethod.BATCH_UPDATE, new BatchUpdateResponseBuilder());
-    result.put(ResourceMethod.BATCH_PARTIAL_UPDATE, new BatchUpdateResponseBuilder());
-    result.put(ResourceMethod.BATCH_CREATE, new BatchCreateResponseBuilder());
-    result.put(ResourceMethod.BATCH_DELETE, new BatchUpdateResponseBuilder());
+    result.put(ResourceMethod.BATCH_UPDATE, new BatchUpdateResponseBuilder(errorResponseBuilder));
+    result.put(ResourceMethod.BATCH_PARTIAL_UPDATE, new BatchUpdateResponseBuilder(errorResponseBuilder));
+    result.put(ResourceMethod.BATCH_CREATE, new BatchCreateResponseBuilder(errorResponseBuilder));
+    result.put(ResourceMethod.BATCH_DELETE, new BatchUpdateResponseBuilder(errorResponseBuilder));
     result.put(ResourceMethod.GET_ALL, new CollectionResponseBuilder());
 
     return Collections.unmodifiableMap(result);
@@ -107,12 +113,12 @@ public class MethodAdapterRegistry
    * @return the correct {@link RestLiArgumentBuilder} for the provided
    *         {@link ResourceMethod}
    */
-  public static RestLiArgumentBuilder getArgumentBuilder(final ResourceMethod resourceMethod)
+  public RestLiArgumentBuilder getArgumentBuilder(final ResourceMethod resourceMethod)
   {
     return _adapters.get(resourceMethod);
   }
 
-  public static RestLiResponseBuilder getResponsebuilder(final ResourceMethod resourceMethod)
+  public RestLiResponseBuilder getResponsebuilder(final ResourceMethod resourceMethod)
   {
     return _responseBuilders.get(resourceMethod);
   }

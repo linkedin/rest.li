@@ -5,6 +5,9 @@ To detect, as early as possible, a mistake that is otherwise difficult to debug,
 check during data template generation that verifies filename and path match schema 
 name and namespace.
 
+(RB=207258)
+Add configuration to allow the rest.li server to limit exception details in responses and to customize the default response for internal server error responses.
+
 1.9.22
 ------
 (RB=206507)

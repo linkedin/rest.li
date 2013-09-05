@@ -134,10 +134,9 @@ public class RestLiCallback<T> implements Callback<T>
                                      e);
     }
 
-    ErrorResponseBuilder errorResponseBuilder = ErrorResponseBuilder.getInstance();//new RestLiCoreResponseBuilders.ErrorResponseBuilder();
 
     PartialRestResponse partialResponse =
-        errorResponseBuilder.buildResponse(null, null, restLiServiceException, headers);
+        _responseHandler.buildErrorResponse(null, null, restLiServiceException, headers);
 
     headers.putAll(givenHeaders); // should overwrite app error with correct error
 
