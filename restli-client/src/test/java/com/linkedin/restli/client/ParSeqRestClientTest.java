@@ -212,7 +212,7 @@ public class ParSeqRestClientTest
     }
 
     final Map<String, String> headers = new HashMap<String, String>();
-    headers.put(RestConstants.HEADER_LINKEDIN_TYPE, er.getClass().getName());
+    headers.put(RestConstants.HEADER_RESTLI_TYPE, er.getClass().getName());
     headers.put(RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE,
                 RestConstants.HEADER_VALUE_ERROR_APPLICATION);
 
@@ -238,7 +238,7 @@ public class ParSeqRestClientTest
     }
 
     final Map<String, String> headers = new HashMap<String, String>();
-    headers.put(RestConstants.HEADER_LINKEDIN_TYPE, record.getClass().getName());
+    headers.put(RestConstants.HEADER_RESTLI_TYPE, record.getClass().getName());
 
     return new ParSeqRestClient(new RestClient(new MockClient(httpCode, headers, mapBytes),
                                                "http://localhost"));

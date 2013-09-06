@@ -93,8 +93,8 @@ public abstract class AbstractBatchResponseBuilder<V>
       dataMap.put(keyToString(entry.getKey()), data);
     }
 
-    headers.put(RestConstants.HEADER_LINKEDIN_TYPE, BatchResponse.class.getName());
-    headers.put(RestConstants.HEADER_LINKEDIN_SUB_TYPE, valueClass.getName());
+    headers.put(RestConstants.HEADER_RESTLI_TYPE, BatchResponse.class.getName());
+    headers.put(RestConstants.HEADER_RESTLI_SUB_TYPE, valueClass.getName());
   }
 
   protected <T extends RecordTemplate> BatchResponse<T> createBatchResponse(final Class<T> clazz,

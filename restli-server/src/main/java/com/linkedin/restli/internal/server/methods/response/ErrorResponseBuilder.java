@@ -73,9 +73,9 @@ public final class ErrorResponseBuilder implements RestLiResponseBuilder
 
     if(_errorResponseFormat.showHeaders())
     {
-      headers.put(RestConstants.HEADER_LINKEDIN_TYPE, er.getClass().getName());
+      headers.put(RestConstants.HEADER_RESTLI_TYPE, er.getClass().getName());
       headers.put(RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE,
-                  RestConstants.HEADER_VALUE_ERROR_APPLICATION);
+              RestConstants.HEADER_VALUE_ERROR_APPLICATION);
     }
     return new PartialRestResponse(result.getStatus(), er);
   }

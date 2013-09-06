@@ -56,7 +56,7 @@ public class GetResponseBuilder implements RestLiResponseBuilder
       status = HttpStatus.S_200_OK;
     }
 
-    headers.put(RestConstants.HEADER_LINKEDIN_TYPE, record.getClass().getName());
+    headers.put(RestConstants.HEADER_RESTLI_TYPE, record.getClass().getName());
     final DataMap data =
         RestUtils.projectFields(record.data(), routingResult.getContext());
     return new PartialRestResponse(status, new AnyRecord(data));

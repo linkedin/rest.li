@@ -59,7 +59,10 @@ public class ExceptionUtil
       RestException re = (RestException) e;
       RestResponse response = re.getResponse();
       ErrorResponse errorResponse;
-      if (response.getHeader(RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE) != null)
+
+      String header = getErrorResponseHeaderValue(response);
+
+      if (header != null)
       {
         try
         {
@@ -85,5 +88,13 @@ public class ExceptionUtil
       return mustWrap ? new RemoteInvocationException(e) : (RemoteInvocationException) e;
     }
     return new RemoteInvocationException(e);
+  }
+
+  public static String getErrorResponseHeaderValue(RestResponse response)
+  {
+    // we are deprecating all X-Linkedin header prefixes and replacing them with X-RestLi
+    String newHeader = response.getHeader(RestConstants.HEADER_RESTLI_ERROR_RESPONSE);
+    String oldHeader = response.getHeader(RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE);
+    return (newHeader != null) ? newHeader : oldHeader;
   }
 }

@@ -26,6 +26,7 @@ import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.client.ExceptionUtil;
 
 /**
  * @author Josh Walker
@@ -123,7 +124,8 @@ public class RestLiResponseException extends RestException
   
   public String getErrorSource()
   {
-    return getResponse().getHeader(RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE);
+    RestResponse response = getResponse();
+    return ExceptionUtil.getErrorResponseHeaderValue(response);
   }
 
   @Override

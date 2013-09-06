@@ -513,7 +513,7 @@ public class RestClientTest
     }
 
     Map<String,String> headers = new HashMap<String,String>();
-    headers.put(RestConstants.HEADER_LINKEDIN_TYPE, er.getClass().getName());
+    headers.put(RestConstants.HEADER_RESTLI_TYPE, er.getClass().getName());
     headers.put(RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE, RestConstants.HEADER_VALUE_ERROR_APPLICATION);
 
     return new RestClient(new MyMockClient(httpCode, headers, mapBytes), "http://localhost");

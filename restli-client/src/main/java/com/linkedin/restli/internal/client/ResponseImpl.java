@@ -92,7 +92,11 @@ public class ResponseImpl<T> implements Response<T>
    */
   @Override public String getId()
   {
-    return getHeader(RestConstants.HEADER_ID);
+    // We are deprecating all X-Linkedin header prefixes and replacing them with X-RestLi.
+    // During the transition we'll check for both the old and new header.
+    String newHeader = getHeader(RestConstants.HEADER_RESTLI_ID);
+    String oldHeader = getHeader(RestConstants.HEADER_ID);
+    return (newHeader != null) ? newHeader : oldHeader;
   }
 
   /**

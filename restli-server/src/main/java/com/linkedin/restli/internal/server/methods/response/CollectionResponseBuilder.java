@@ -112,8 +112,8 @@ public class CollectionResponseBuilder implements RestLiResponseBuilder
     {
       collectionResponse.setMetadataRaw(customMetadata.data());
     }
-    headers.put(RestConstants.HEADER_LINKEDIN_TYPE, CollectionResponse.class.getName());
-    headers.put(RestConstants.HEADER_LINKEDIN_SUB_TYPE, valueClass.getName());
+    headers.put(RestConstants.HEADER_RESTLI_TYPE, CollectionResponse.class.getName());
+    headers.put(RestConstants.HEADER_RESTLI_SUB_TYPE, valueClass.getName());
 
     return new PartialRestResponse(collectionResponse);
   }

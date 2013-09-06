@@ -866,10 +866,10 @@ public class TestRestLiResponseHandler
     assertEquals(response.getStatus(), status);
     assertEquals(response.getHeaders().size(), numHeaders);
     assertEquals(response.getHeader(RestConstants.HEADER_CONTENT_TYPE), contentType);
-    assertEquals(response.getHeader(RestConstants.HEADER_LINKEDIN_TYPE), type);
+    assertEquals(response.getHeader(RestConstants.HEADER_RESTLI_TYPE), type);
     if (subType != null)
     {
-      assertEquals(response.getHeader(RestConstants.HEADER_LINKEDIN_SUB_TYPE), subType);
+      assertEquals(response.getHeader(RestConstants.HEADER_RESTLI_SUB_TYPE), subType);
     }
 
     if (hasError)
