@@ -18,6 +18,7 @@ package com.linkedin.restli.server;
 
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
+import com.linkedin.restli.internal.server.RestLiCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

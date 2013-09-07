@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-package com.linkedin.restli.server;
+package com.linkedin.restli.internal.server;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Collections;
@@ -34,6 +34,8 @@ import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.methods.response.PartialRestResponse;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
+import com.linkedin.restli.server.RestLiServiceException;
+import com.linkedin.restli.server.RoutingException;
 
 public class RestLiCallback<T> implements Callback<T>
 {
