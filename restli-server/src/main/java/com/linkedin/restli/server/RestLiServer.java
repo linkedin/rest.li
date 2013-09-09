@@ -37,6 +37,10 @@ import com.linkedin.restli.internal.server.model.RestLiApiBuilder;
 import com.linkedin.restli.server.resources.PrototypeResourceFactory;
 import com.linkedin.restli.server.resources.ResourceFactory;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * @author dellamag
  */
@@ -51,6 +55,7 @@ public class RestLiServer extends BaseRestServer
   private final RestLiResponseHandler _responseHandler;
   private final RestLiDocumentationRequestHandler _docRequestHandler;
   private final ErrorResponseBuilder _errorResponseBuilder;
+  private final List<InvokeAware> _invokeAwares;
   private boolean _isDocInitialized = false;
 
   public RestLiServer(final RestLiConfig config)
@@ -60,12 +65,20 @@ public class RestLiServer extends BaseRestServer
 
   public RestLiServer(final RestLiConfig config, final ResourceFactory resourceFactory)
   {
-    this(config, resourceFactory, null);
+    this(config, resourceFactory, null, null);
   }
 
   public RestLiServer(final RestLiConfig config,
                       final ResourceFactory resourceFactory,
                       final Engine engine)
+  {
+    this(config, resourceFactory, engine, null);
+  }
+
+  public RestLiServer(final RestLiConfig config,
+                      final ResourceFactory resourceFactory,
+                      final Engine engine,
+                      final List<InvokeAware> invokeAwares)
   {
     super(config);
 
@@ -79,6 +92,7 @@ public class RestLiServer extends BaseRestServer
     _methodInvoker = new RestLiMethodInvoker(_resourceFactory, engine, _errorResponseBuilder);
     _responseHandler = new RestLiResponseHandler(_errorResponseBuilder);
     _docRequestHandler = config.getDocumentationRequestHandler();
+    _invokeAwares = (invokeAwares == null) ? Collections.<InvokeAware>emptyList() : Collections.unmodifiableList(invokeAwares);
 
 
     // verify that if there are resources using the engine, then the engine is not null
@@ -137,8 +151,10 @@ public class RestLiServer extends BaseRestServer
       return;
     }
 
+    final Callback<RestResponse> wrappedCallback = notifyInvokeAwares(method, callback);
+
     final RestLiCallback<Object> restLiCallback =
-        new RestLiCallback<Object>(request, method, _responseHandler, callback);
+        new RestLiCallback<Object>(request, method, _responseHandler, wrappedCallback);
 
     try
     {
@@ -173,5 +189,46 @@ public class RestLiServer extends BaseRestServer
           new RestLiCallback<Object>(request, null, _responseHandler, callback);
       restLiCallback.onErrorPre(e);
     }
+  }
+
+  /**
+   * Invoke {@link InvokeAware#onInvoke(ResourceContext, RestLiMethodContext)} of registered invokeAwares.
+   * @return A new callback that wraps the originalCallback, which invokes desired callbacks of invokeAwares after the method invocation finishes
+   */
+  private Callback<RestResponse> notifyInvokeAwares(final RoutingResult routingResult, final Callback<RestResponse> originalCallback)
+  {
+    if (!_invokeAwares.isEmpty())
+    {
+      final List<Callback<RestResponse>> invokeAwareCallbacks = new ArrayList<Callback<RestResponse>>();
+      for (InvokeAware invokeAware : _invokeAwares)
+      {
+        invokeAwareCallbacks.add(invokeAware.onInvoke(routingResult.getContext(), routingResult.getResourceMethod()));
+      }
+
+      return new Callback<RestResponse>()
+      {
+        @Override
+        public void onSuccess(RestResponse result)
+        {
+          for (Callback<RestResponse> callback : invokeAwareCallbacks)
+          {
+            callback.onSuccess(result);
+          }
+          originalCallback.onSuccess(result);
+        }
+
+        @Override
+        public void onError(Throwable error)
+        {
+          for (Callback<RestResponse> callback : invokeAwareCallbacks)
+          {
+            callback.onError(error);
+          }
+          originalCallback.onError(error);
+        }
+      };
+    }
+
+    return originalCallback;
   }
 }

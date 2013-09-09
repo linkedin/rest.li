@@ -22,6 +22,7 @@ import com.linkedin.data.template.FieldDef;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.server.ResourceLevel;
+import com.linkedin.restli.server.RestLiMethodContext;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -31,7 +32,7 @@ import java.util.List;
 /**
  * @author dellamag
  */
-public final class ResourceMethodDescriptor
+public final class ResourceMethodDescriptor implements RestLiMethodContext
 {
   public static enum InterfaceType
   {
@@ -297,6 +298,7 @@ public final class ResourceMethodDescriptor
   /**
    * @return method finder name
    */
+  @Override
   public String getFinderName()
   {
     return _finderName;
@@ -307,9 +309,28 @@ public final class ResourceMethodDescriptor
     return _finderMetadataType;
   }
 
+  @Override
   public String getActionName()
   {
     return _actionName;
+  }
+
+  @Override
+  public String getResourceName()
+  {
+    return _resourceModel.getName();
+  }
+
+  @Override
+  public String getNamespace()
+  {
+    return _resourceModel.getNamespace();
+  }
+
+  @Override
+  public ResourceMethod getMethodType()
+  {
+    return _type;
   }
 
   public ResourceLevel getActionResourceLevel()
