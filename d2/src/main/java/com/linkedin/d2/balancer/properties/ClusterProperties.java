@@ -37,12 +37,12 @@ public class ClusterProperties
 
   public ClusterProperties(String clusterName)
   {
-    this(clusterName, null);
+    this(clusterName, Collections.<String>emptyList());
   }
 
   public ClusterProperties(String clusterName, List<String> prioritizedSchemes)
   {
-    this(clusterName, prioritizedSchemes, null);
+    this(clusterName, prioritizedSchemes, Collections.<String,String>emptyMap());
   }
 
   public ClusterProperties(String clusterName,
@@ -69,8 +69,8 @@ public class ClusterProperties
     _clusterName = clusterName;
     _prioritizedSchemes =
         (prioritizedSchemes != null) ? Collections.unmodifiableList(prioritizedSchemes)
-            : null;
-    _properties = (properties == null) ? null : Collections.unmodifiableMap(properties);
+            : Collections.<String>emptyList();
+    _properties = (properties == null) ? Collections.<String,String>emptyMap() : Collections.unmodifiableMap(properties);
     _banned = Collections.unmodifiableSet(banned);
     _partitionProperties = partitionProperties;
   }
