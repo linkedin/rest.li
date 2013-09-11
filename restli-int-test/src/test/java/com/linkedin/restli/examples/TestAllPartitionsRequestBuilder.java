@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-package com.linkedin.restli.client;
+package com.linkedin.restli.examples;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -30,8 +30,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 
-import com.linkedin.data.template.DynamicRecordMetadata;
 import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.linkedin.common.callback.Callback;
@@ -41,30 +42,37 @@ import com.linkedin.d2.balancer.util.hashing.ConsistentHashKeyMapper;
 import com.linkedin.d2.balancer.util.hashing.ConsistentHashRing;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.d2.balancer.util.hashing.StaticRingProvider;
-import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.data.template.FieldDef;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import com.linkedin.restli.client.ActionRequest;
+import com.linkedin.restli.client.ActionRequestBuilder;
+import com.linkedin.restli.client.AllPartitionsRequestBuilder;
+import com.linkedin.restli.client.FindRequestBuilder;
+import com.linkedin.restli.client.Response;
+import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.ResourceSpecImpl;
 import com.linkedin.restli.examples.greetings.api.Greeting;
+import com.linkedin.restli.examples.greetings.api.Tone;
 
 /**
 * @author Zhenkai Zhu
 * @version $Revision: $
 */
-public class TestAllPartitionsRequestBuilder {
+public class TestAllPartitionsRequestBuilder extends RestLiIntegrationTest {
   private static final Client CLIENT = new TransportClientAdapter(new HttpClientFactory().
       getClient(Collections.<String, String>emptyMap()));
   private static final String URI_PREFIX = "http://localhost:1338/";
   private static final RestClient REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
-  private static final String TEST_URI = "test";
+  private static final String TEST_URI = "greetings";
   private static final ResourceSpec _COLL_SPEC      =
       new ResourceSpecImpl(EnumSet.allOf(ResourceMethod.class),
           Collections.<String, DynamicRecordMetadata> emptyMap(),
@@ -74,6 +82,18 @@ public class TestAllPartitionsRequestBuilder {
           null,
           Greeting.class,
           Collections.<String, Class<?>> emptyMap());
+
+  @BeforeClass
+  public void initClass() throws Exception
+  {
+    super.init();
+  }
+
+  @AfterClass
+  public void shutDown() throws Exception
+  {
+    super.shutdown();
+  }
 
   @Test
   public static void testBuildAllPartitionsRequest() throws ServiceUnavailableException, URISyntaxException, RestException
@@ -108,16 +128,16 @@ public class TestAllPartitionsRequestBuilder {
     Assert.assertEquals(expectedHostPrefixes, actualHostPrefixes);
   }
 
-  @Test(groups={"integration"})
+  @Test
   public static void testSendAllPartitionsRequests() throws ServiceUnavailableException, URISyntaxException, RestException, InterruptedException
   {
     final int PARTITION_NUM = 10;
     ConsistentHashKeyMapper mapper = getKeyToHostMapper(PARTITION_NUM);
     AllPartitionsRequestBuilder<Greeting> searchRB = new AllPartitionsRequestBuilder<Greeting>(mapper);
     ActionRequestBuilder<Long, Greeting> builder = new ActionRequestBuilder<Long, Greeting>(TEST_URI, Greeting.class,
-        null);
-    ActionRequest<Greeting> request = builder.name("action").param(
-            new FieldDef<String>("p", String.class, DataTemplateUtil.getSchema(String.class)), "42").build();
+        _COLL_SPEC);
+    ActionRequest<Greeting> request = builder.name("updateTone").id(1L).
+        param(new FieldDef<Tone>("newTone", Tone.class, DataTemplateUtil.getSchema(Tone.class)), Tone.FRIENDLY).build();
 
     final Map<String, Greeting> results = new ConcurrentHashMap<String, Greeting>();
     final CountDownLatch latch = new CountDownLatch(PARTITION_NUM);
