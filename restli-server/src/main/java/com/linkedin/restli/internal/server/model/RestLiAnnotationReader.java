@@ -810,7 +810,7 @@ public final class RestLiAnnotationReader
     }
   }
 
-  private static boolean checkParameterHasTyperefSchema(Parameter parameter)
+  private static boolean checkParameterHasTyperefSchema(Parameter<?> parameter)
   {
     boolean result = false;
     DataSchema dataSchema = parameter.getDataSchema();

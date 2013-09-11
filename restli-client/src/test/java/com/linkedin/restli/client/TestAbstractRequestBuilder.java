@@ -67,7 +67,7 @@ public class TestAbstractRequestBuilder
     Assert.assertEquals(builder._headers.get("c"), "e");
   }
 
-  private static class DummyAbstractRequestBuilder extends AbstractRequestBuilder
+  private static class DummyAbstractRequestBuilder extends AbstractRequestBuilder<Object, Object, Request<Object>>
   {
     public DummyAbstractRequestBuilder()
     {
@@ -75,7 +75,7 @@ public class TestAbstractRequestBuilder
     }
 
     @Override
-    public Request<?> build()
+    public Request<Object> build()
     {
       return null;
     }

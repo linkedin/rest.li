@@ -134,7 +134,7 @@ public class ArgumentBuilder
       Object k = arguments[i];
       if (k instanceof ComplexResourceKey)
       {
-        ComplexResourceKey complexResourceKey = (ComplexResourceKey)k;
+        ComplexResourceKey<?, ?> complexResourceKey = (ComplexResourceKey<?, ?>)k;
         RecordTemplate key = complexResourceKey.getKey();
         DataMap dataMap = key.data();
         for(RecordDataSchema.Field f : key.schema().getFields())
@@ -154,7 +154,8 @@ public class ArgumentBuilder
         }
         RecordTemplate wrappedKey = DataTemplateUtil.wrap(dataMap, key.getClass());
         @SuppressWarnings("unchecked")
-        ComplexResourceKey newKey = new ComplexResourceKey(wrappedKey, complexResourceKey.getParams());
+	ComplexResourceKey<?, ?> newKey = 
+          new ComplexResourceKey<RecordTemplate, RecordTemplate>(wrappedKey, complexResourceKey.getParams());
         arguments[i] = newKey;
       }
     }

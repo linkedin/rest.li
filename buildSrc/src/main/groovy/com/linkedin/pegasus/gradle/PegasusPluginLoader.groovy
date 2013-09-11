@@ -33,7 +33,7 @@ class PegasusPluginLoader implements Plugin<Project>
     project.afterEvaluate {
       final URL[] classpathUrls = project.configurations.pluginsRuntime.collect { it.toURI().toURL() } as URL[]
       final ClassLoader parent = null // in some versions of java URLClassLoader's ctor is overloaded, by assigning type to the parent we avoid ambiguity
-      project.ext.set(PegasusPlugin.GENERATOR_CLASSLOADER_NAME, new URLClassLoader(classpathUrls, parent))
+      project.ext.set(PegasusPlugin.GENERATOR_CLASSLOADER_NAME, new URLClassLoader(classpathUrls, parent as ClassLoader))
 
       project.tasks.each {
         // each Gradle task class is dynamically generated as subclass of the original task type

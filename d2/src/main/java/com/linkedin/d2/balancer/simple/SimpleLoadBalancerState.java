@@ -1083,8 +1083,10 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   private Map<String, TransportClient> createAndInsertTransportClientTo(ServiceProperties serviceProperties)
   {
     Map<String, Object> transportClientProperties = new HashMap<String,Object>(serviceProperties.getTransportClientProperties());
-    @SuppressWarnings("unchecked")
-    List<String> allowedOverrideKeysList = (List<String>)transportClientProperties.get(PropertyKeys.ALLOWED_CLIENT_OVERRIDE_KEYS);
+
+    Object obj = transportClientProperties.get(PropertyKeys.ALLOWED_CLIENT_OVERRIDE_KEYS);
+    @SuppressWarnings("unchecked") // to appease java 7, which appears to have compilation bugs that cause it to ignore some suppressions, needed to first assign to obj, then assign to the list
+    List<String> allowedOverrideKeysList = (List<String>)obj;
     Set<String> allowedClientOverrideKeys;
     if (allowedOverrideKeysList != null)
     {

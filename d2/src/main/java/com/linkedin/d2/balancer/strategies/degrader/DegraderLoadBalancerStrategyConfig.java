@@ -189,11 +189,12 @@ public class DegraderLoadBalancerStrategyConfig
     Double globalStepDown = MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_GLOBAL_STEP_DOWN,
                                            DEFAULT_GLOBAL_STEP_DOWN, Double.class);
 
-    @SuppressWarnings("unchecked")
-    Map<String,Object> hashConfig = MapUtil.getWithDefault(map,
+    Object obj = MapUtil.getWithDefault(map,
                                                    PropertyKeys.HTTP_LB_HASH_CONFIG,
                                                    Collections.emptyMap(),
                                                    Map.class);
+    @SuppressWarnings("unchecked") // // to appease java 7, which appears to have compilation bugs that cause it to ignore some suppressions, needed to first assign to obj, then assign to the map
+    Map<String,Object> hashConfig = (Map<String,Object>)obj;
 
     return new DegraderLoadBalancerStrategyConfig(
         updateIntervalMs, maxClusterLatencyWithoutDegrading,
