@@ -20,6 +20,7 @@
 
 package com.linkedin.restli.internal.server;
 
+import com.linkedin.restli.server.ProjectionMode;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
@@ -53,6 +54,8 @@ public class ResourceContextImpl implements ServerResourceContext
   private final Map<String, String>                 _responseHeaders;
   private final Map<String, RestLiServiceException> _batchKeyErrors;
   private final RequestContext                      _requestContext;
+
+  private ProjectionMode                      _projectionMode;
 
   /**
    * Default constructor.
@@ -106,6 +109,8 @@ public class ResourceContextImpl implements ServerResourceContext
     }
     _responseHeaders = new HashMap<String, String>();
     _batchKeyErrors = new HashMap<String, RestLiServiceException>();
+
+    _projectionMode = ProjectionMode.getDefault();
   }
 
 
@@ -256,4 +261,15 @@ public class ResourceContextImpl implements ServerResourceContext
     return headerValue == null ? "" : headerValue;
   }
 
+  @Override
+  public ProjectionMode getProjectionMode()
+  {
+    return _projectionMode;
+  }
+
+  @Override
+  public void setProjectionMode(ProjectionMode projectionMode)
+  {
+    _projectionMode = projectionMode;
+  }
 }

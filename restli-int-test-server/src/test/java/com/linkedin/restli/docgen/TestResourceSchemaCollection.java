@@ -89,6 +89,7 @@ public class TestResourceSchemaCollection
     expectedTypes.put("noNamespace.noNamespaceSub.subSub", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.noNamespace.noNamespace", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.typeref.client.typeref", ResourceType.COLLECTION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.manualProjections", ResourceType.COLLECTION);
 
     for (Map.Entry<String, ResourceSchema> entry: _schemas.getResources().entrySet())
     {

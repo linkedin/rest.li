@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.internal.server.util;
 
+import com.linkedin.restli.server.ProjectionMode;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
@@ -228,6 +229,11 @@ public class RestUtils
   public static DataMap projectFields(final DataMap dataMap,
                                       final ResourceContext resourceContext)
   {
+    if(resourceContext.getProjectionMode() == ProjectionMode.MANUAL)
+    {
+      return dataMap;
+    }
+
     MaskTree filter = resourceContext.getProjectionMask();
     if (filter == null)
     {

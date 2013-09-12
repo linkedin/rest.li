@@ -1,0 +1,49 @@
+{
+  "models" : [ {
+    "type" : "enum",
+    "name" : "Tone",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "symbols" : [ "FRIENDLY", "SINCERE", "INSULTING" ]
+  }, {
+    "type" : "record",
+    "name" : "Greeting",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "doc" : "A greeting",
+    "fields" : [ {
+      "name" : "id",
+      "type" : "long"
+    }, {
+      "name" : "message",
+      "type" : "string"
+    }, {
+      "name" : "tone",
+      "type" : "Tone",
+      "doc" : "tone"
+    } ]
+  } ],
+  "schema" : {
+    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+    "name" : "manualProjections",
+    "doc" : "Resource where all get operations are implemented to explicitly examine the projection\n sent by the client and then manually apply the projection.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.ManualProjectionsResource",
+    "path" : "/manualProjections",
+    "collection" : {
+      "methods" : [ {
+        "method" : "get",
+        "parameters" : [ {
+          "default" : "false",
+          "name" : "ignoreProjection",
+          "type" : "boolean"
+        } ]
+      } ],
+      "entity" : {
+        "path" : "/manualProjections/{manualProjectionsId}"
+      },
+      "supports" : [ "get" ],
+      "identifier" : {
+        "name" : "manualProjectionsId",
+        "type" : "long"
+      }
+    },
+    "namespace" : "com.linkedin.restli.examples.greetings.client"
+  }
+}

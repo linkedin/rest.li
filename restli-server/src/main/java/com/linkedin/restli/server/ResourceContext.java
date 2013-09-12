@@ -116,4 +116,16 @@ public interface ResourceContext
    * @return RequestContext for the current context
    */
   RequestContext getRawRequestContext();
+
+  /**
+   * Get the projection mode to be applied to the response body.
+   * @return Projection mode for the response body.
+   */
+  ProjectionMode getProjectionMode();
+
+  /**
+   * Set the projection mode to be applied to the response body.
+   * @param mode Projection mode for the response body.
+   */
+  void setProjectionMode(ProjectionMode mode);
 }

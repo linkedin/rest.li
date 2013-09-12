@@ -5,6 +5,11 @@ Refactor IDL and Snapshot compatibility checks. Move file number checks to their
 own tasks. Add in a flag -Prest.idl.skipCheck to allow all IDL checks to be
 skipped. (IDL file count check is still run with -Prest.idl.compatibility=OFF)
 
+(RB=209638)
+Add ProjectionMode option in ResourceContext to allow rest.li service implementers
+to disable automatic projection when they are explicitly examining and applying
+projections.
+
 1.9.23
 ------
 (RB=206396)
