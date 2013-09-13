@@ -31,7 +31,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServlet;
 
-import com.linkedin.r2.transport.http.server.RAPServlet;
+import com.linkedin.r2.transport.http.server.R2Servlet;
 import org.apache.commons.lang.StringUtils;
 
 
@@ -84,7 +84,7 @@ public class RestliServlet extends HttpServlet
     r2Servlet.init(servletConfig);
   }
 
-  private RAPServlet buildR2ServletFromServletParams(ServletConfig servletConfig)
+  private R2Servlet buildR2ServletFromServletParams(ServletConfig servletConfig)
   {
     ResourceFactory resourceFactory = new PrototypeResourceFactory();
 
@@ -96,7 +96,7 @@ public class RestliServlet extends HttpServlet
         .setTaskExecutor(scheduler)
         .setTimerScheduler(scheduler)
         .build();
-    return new RAPServlet(new DelegatingTransportDispatcher(new RestLiServer(config, resourceFactory, engine)));
+    return new R2Servlet(new DelegatingTransportDispatcher(new RestLiServer(config, resourceFactory, engine)));
   }
 
   private Set<String> getResourcePackageSet(ServletConfig servletConfig)

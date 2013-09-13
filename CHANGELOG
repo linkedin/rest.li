@@ -1,3 +1,11 @@
+1.9.29
+------
+
+1.9.28
+------
+(RB=210345)
+Make use of async servlet api in R2 servlet. Change integration tests to start test servers as necessary.
+
 1.9.27
 ------
 (RB=212287)

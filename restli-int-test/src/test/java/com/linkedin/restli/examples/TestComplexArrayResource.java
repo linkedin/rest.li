@@ -21,6 +21,17 @@
 package com.linkedin.restli.examples;
 
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.testng.ITestContext;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
 import com.linkedin.data.template.LongArray;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.transport.common.Client;
@@ -35,19 +46,14 @@ import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.examples.greetings.api.ComplexArray;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.client.ComplexArrayBuilders;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+import com.linkedin.restli.test.TestConstants;
 
 
 /**
  * @author Moira Tagle
  * @version $Revision: $
  */
+@Test(groups = { TestConstants.TESTNG_GROUP_ASYNC })
 public class TestComplexArrayResource  extends RestLiIntegrationTest
 {
   private static final Client CLIENT = new TransportClientAdapter(new HttpClientFactory().getClient(Collections.<String, String>emptyMap()));
@@ -55,10 +61,12 @@ public class TestComplexArrayResource  extends RestLiIntegrationTest
   private static final RestClient REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
   private static final ComplexArrayBuilders BUILDERS = new ComplexArrayBuilders();
 
-  @BeforeClass
-  public void initClass() throws Exception
+  @BeforeClass(alwaysRun=true)
+  public void initClass(ITestContext ctx) throws Exception
   {
-    super.init();
+    Set<String> includedGroups =
+        new HashSet<String>(ctx.getCurrentXmlTest().getIncludedGroups());
+    super.init(includedGroups.contains(TestConstants.TESTNG_GROUP_ASYNC));
   }
 
   @AfterClass

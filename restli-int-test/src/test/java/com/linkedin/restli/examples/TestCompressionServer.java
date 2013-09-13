@@ -25,8 +25,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-
 import java.util.Set;
+
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -238,7 +238,7 @@ public class TestCompressionServer extends RestLiIntegrationTest
   @BeforeClass
   public void initClass() throws Exception
   {
-    super.init();
+    super.init(false, true);
   }
 
   @AfterClass
