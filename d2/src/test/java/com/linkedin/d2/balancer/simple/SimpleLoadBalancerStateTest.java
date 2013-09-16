@@ -24,6 +24,7 @@ import com.linkedin.d2.balancer.LoadBalancerState.NullStateListenerCallback;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.PartitionData;
+import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.properties.RangeBasedPartitionProperties;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
@@ -943,7 +944,7 @@ public class SimpleLoadBalancerStateTest
     Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
     partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
     Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>();
-    uriData.put(uri, partitionData);;
+    uriData.put(uri, partitionData);
     schemes.add("http");
 
     // set up state
@@ -1024,6 +1025,61 @@ public class SimpleLoadBalancerStateTest
     Map<String,Object> transportClientProperties = new HashMap<String,Object>();
     transportClientProperties.put(HttpClientFactory.HTTP_SSL_CONTEXT, _sslContext);
     transportClientProperties.put(HttpClientFactory.HTTP_SSL_PARAMS, _sslParameters);
+    transportClientProperties = Collections.unmodifiableMap(transportClientProperties);
+
+    _serviceRegistry.put("service-1", new ServiceProperties("service-1", "cluster-1",
+                                                            "/test", "random", null,
+                                                            Collections.<String, Object>emptyMap(),
+                                                            transportClientProperties, null, schemes, null));
+
+    assertNull(_state.getClient("service-1", uri));
+
+    _uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData));
+
+    TrackerClient client = _state.getClient("service-1", uri);
+
+    assertNotNull(client);
+    assertEquals(client.getUri(), uri);
+  }
+
+  @Test(groups = { "small", "back-end" })
+  public void testListValueInTransportClientProperties() throws URISyntaxException
+  {
+    reset();
+
+    URI uri = URI.create("http://cluster-1/test");
+    List<String> schemes = new ArrayList<String>();
+    Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
+    partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>();
+    uriData.put(uri, partitionData);
+
+    schemes.add("http");
+
+    assertNull(_state.getClient("service-1", uri));
+
+    // set up state
+    _state.listenToCluster("cluster-1", new NullStateListenerCallback());
+
+    assertNull(_state.getClient("service-1", uri));
+
+    _state.listenToService("service-1", new NullStateListenerCallback());
+
+    assertNull(_state.getClient("service-1", uri));
+
+    Map<String,Object> transportClientProperties = new HashMap<String,Object>();
+
+    List<String> allowedClientOverrideKeys = new ArrayList<String>();
+    allowedClientOverrideKeys.add(PropertyKeys.HTTP_REQUEST_TIMEOUT);
+    allowedClientOverrideKeys.add(PropertyKeys.HTTP_RESPONSE_COMPRESSION_OPERATIONS);
+    transportClientProperties.put(PropertyKeys.ALLOWED_CLIENT_OVERRIDE_KEYS, allowedClientOverrideKeys);
+
+    List<String> compressionOperations = new ArrayList<String>();
+    compressionOperations.add("get");
+    compressionOperations.add("batch_get");
+    compressionOperations.add("get_all");
+    transportClientProperties.put(PropertyKeys.HTTP_RESPONSE_COMPRESSION_OPERATIONS, compressionOperations);
+
     transportClientProperties = Collections.unmodifiableMap(transportClientProperties);
 
     _serviceRegistry.put("service-1", new ServiceProperties("service-1", "cluster-1",

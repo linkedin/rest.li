@@ -24,7 +24,9 @@ import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.http.common.HttpConstants;
+import com.linkedin.r2.util.ConfigValueExtractor;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.slf4j.Logger;
@@ -42,7 +44,7 @@ public class ClientCompressionFilter implements Filter, RestFilter
   private final String _acceptEncodingHeader;
 
   /**
-   * The set of operations for which response compression will be turned on
+   * The set of methods for which response compression will be turned on
    */
   private Set<String> _responseCompressionMethods;
 
@@ -72,7 +74,7 @@ public class ClientCompressionFilter implements Filter, RestFilter
    */
   public ClientCompressionFilter(EncodingType requestCompression,
                                  EncodingType[] acceptCompression,
-                                 String responseCompressionOperations)
+                                 List<String> responseCompressionOperations)
   {
     if (requestCompression == null)
     {
@@ -115,10 +117,18 @@ public class ClientCompressionFilter implements Filter, RestFilter
    * @param requestCompression
    * @param acceptCompression
    */
-  public ClientCompressionFilter(String requestCompression, String acceptCompression, String responseCompressionMethods)
+  public ClientCompressionFilter(String requestCompression, String acceptCompression, List<String> responseCompressionOperations)
   {
     this(requestCompression.trim().isEmpty() ? EncodingType.IDENTITY : EncodingType.get(requestCompression.trim().toLowerCase()),
-        AcceptEncoding.parseAcceptEncoding(acceptCompression), responseCompressionMethods);
+        AcceptEncoding.parseAcceptEncoding(acceptCompression), responseCompressionOperations);
+  }
+
+  @Deprecated
+  public ClientCompressionFilter(String requestCompression, String acceptCompression, String responseCompressionOperations)
+  {
+    this(requestCompression,
+         acceptCompression,
+         ConfigValueExtractor.buildList(responseCompressionOperations, OPERATION_SEPARATOR));
   }
 
   /**
@@ -127,11 +137,10 @@ public class ClientCompressionFilter implements Filter, RestFilter
    * @param responseCompressionOperations
    * @return
    */
-  private void buildResponseCompressionMethodsAndFamiliesSet(String responseCompressionOperations)
+  private void buildResponseCompressionMethodsAndFamiliesSet(List<String> responseCompressionOperations)
   {
-    for (String operation: responseCompressionOperations.split(OPERATION_SEPARATOR))
+    for (String operation: responseCompressionOperations)
     {
-      operation = operation.trim();
       // family operations are represented in the config as "familyName:*"
       if (operation.endsWith(COMPRESS_ALL_IN_FAMILY))
       {

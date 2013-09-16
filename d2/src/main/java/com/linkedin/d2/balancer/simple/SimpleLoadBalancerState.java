@@ -73,6 +73,7 @@ import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdown
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.util.ClosableQueue;
+import com.linkedin.r2.util.ConfigValueExtractor;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
@@ -137,6 +138,8 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   private final SSLContext    _sslContext;
   private final SSLParameters _sslParameters;
   private final boolean       _isSSLEnabled;
+
+  private static final String LIST_SEPARATOR = ",";
 
   /**
    * Map from service name => Map of properties for that service. This map is supplied by the client and will
@@ -1084,18 +1087,9 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   {
     Map<String, Object> transportClientProperties = new HashMap<String,Object>(serviceProperties.getTransportClientProperties());
 
-    Object obj = transportClientProperties.get(PropertyKeys.ALLOWED_CLIENT_OVERRIDE_KEYS);
-    @SuppressWarnings("unchecked") // to appease java 7, which appears to have compilation bugs that cause it to ignore some suppressions, needed to first assign to obj, then assign to the list
-    List<String> allowedOverrideKeysList = (List<String>)obj;
-    Set<String> allowedClientOverrideKeys;
-    if (allowedOverrideKeysList != null)
-    {
-      allowedClientOverrideKeys = new HashSet<String>(allowedOverrideKeysList);
-    }
-    else
-    {
-      allowedClientOverrideKeys = Collections.emptySet();
-    }
+    Object allowedClientOverrideKeysObj = transportClientProperties.remove(PropertyKeys.ALLOWED_CLIENT_OVERRIDE_KEYS);
+    Set<String> allowedClientOverrideKeys = new HashSet<String>(ConfigValueExtractor.buildList(allowedClientOverrideKeysObj, LIST_SEPARATOR));
+
     Map<String, Object> clientSuppliedServiceProperties = _clientServicesConfig.get(serviceProperties.getServiceName());
     if (clientSuppliedServiceProperties != null)
     {

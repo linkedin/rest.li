@@ -267,7 +267,7 @@ public class TestCompressionServer extends RestLiIntegrationTest
   {
     ClientCompressionFilter cf = new ClientCompressionFilter(EncodingType.IDENTITY,
                                                              encoding,
-                                                             "*");
+                                                             Arrays.asList(new String[]{"*"}));
     Assert.assertEquals(cf.buildAcceptEncodingHeader(), acceptEncoding);
   }
 

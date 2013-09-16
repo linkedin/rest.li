@@ -17,6 +17,7 @@
 /* $Id$ */
 package com.linkedin.r2.transport.http.client;
 
+import com.linkedin.r2.util.ConfigValueExtractor;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -98,7 +99,8 @@ public class HttpClientFactory implements TransportClientFactory
   public static final int DEFAULT_IDLE_TIMEOUT = 30000;
   public static final int DEFAULT_SHUTDOWN_TIMEOUT = 5000;
   public static final int DEFAULT_MAX_RESPONSE_SIZE = 1024 * 1024 * 2;
-  public static final String DEFAULT_HTTP_RESPONSE_COMPRESSION_OPERATIONS = "";
+
+  private static final String LIST_SEPARATOR = ",";
 
   private final ClientSocketChannelFactory _channelFactory;
   private final ScheduledExecutorService   _executor;
@@ -230,9 +232,6 @@ public class HttpClientFactory implements TransportClientFactory
   @Override
   public TransportClient getClient(Map<String, ? extends Object> properties)
   {
-    // Translate the new Map<String, Object> into the old Map<String, String> + SSLContext
-    // and SSLParameters params.
-    Map<String, String> stringProperties = new HashMap<String, String>(properties.size());
     SSLContext sslContext;
     SSLParameters sslParameters;
 
@@ -241,12 +240,7 @@ public class HttpClientFactory implements TransportClientFactory
     sslContext = coerceAndRemoveFromMap(HTTP_SSL_CONTEXT, properties, SSLContext.class);
     sslParameters = coerceAndRemoveFromMap(HTTP_SSL_PARAMS, properties, SSLParameters.class);
 
-    for (Map.Entry<String, ?> entry : properties.entrySet())
-    {
-      stringProperties.put(entry.getKey(), coerce(entry.getKey(), entry.getValue(), String.class));
-    }
-
-    return getClient(stringProperties, sslContext, sslParameters);
+    return getClient(properties, sslContext, sslParameters);
   }
 
   HttpNettyClient getRawClient(Map<String, String> properties)
@@ -284,7 +278,7 @@ public class HttpClientFactory implements TransportClientFactory
    * @param sslParameters {@link SSLParameters} to configure secure connections.
    * @return an appropriate {@link TransportClient} instance, as specified by the properties.
    */
-  private TransportClient getClient(Map<String, String> properties,
+  private TransportClient getClient(Map<String, ? extends Object> properties,
                                    SSLContext sslContext,
                                    SSLParameters sslParameters)
   {
@@ -293,9 +287,8 @@ public class HttpClientFactory implements TransportClientFactory
              sslContext);
     TransportClient client = getRawClient(properties, sslContext, sslParameters);
 
-
-    String httpResponseCompressionOperations = chooseNewOverDefault(properties.get(HTTP_RESPONSE_COMPRESSION_OPERATIONS),
-                                                                    DEFAULT_HTTP_RESPONSE_COMPRESSION_OPERATIONS);
+    List<String> httpResponseCompressionOperations = ConfigValueExtractor.buildList(properties.remove(HTTP_RESPONSE_COMPRESSION_OPERATIONS),
+                                                                                    LIST_SEPARATOR);
 
     FilterChain filters;
     if (!httpResponseCompressionOperations.isEmpty())
@@ -356,7 +349,7 @@ public class HttpClientFactory implements TransportClientFactory
    * @param propertyKey
    * @return null if property key can't be found, integer otherwise
    */
-  private Integer getIntValue(Map<String, String> properties, String propertyKey)
+  private Integer getIntValue(Map<String, ? extends Object> properties, String propertyKey)
   {
     if (properties == null)
     {
@@ -365,7 +358,9 @@ public class HttpClientFactory implements TransportClientFactory
     }
     if (properties.containsKey(propertyKey))
     {
-      return Integer.parseInt(properties.get(propertyKey));
+      // These properties can be safely cast to String before converting them to Integers as we expect Integer values
+      // for all these properties.
+      return Integer.parseInt((String)properties.get(propertyKey));
     }
     else
     {
@@ -376,7 +371,7 @@ public class HttpClientFactory implements TransportClientFactory
   /**
    * Testing aid.
    */
-  HttpNettyClient getRawClient(Map<String, String> properties,
+  HttpNettyClient getRawClient(Map<String, ? extends Object> properties,
                                SSLContext sslContext,
                                SSLParameters sslParameters)
   {

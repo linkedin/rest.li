@@ -27,6 +27,8 @@ import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.http.common.HttpConstants;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import junit.framework.Assert;
@@ -95,17 +97,17 @@ public class TestCompressionOperations
         {"foo", new String[]{"foo"}, true},
         {"foo", new String[]{"bar", "foo:bar"}, false},
 
-        {"foo, bar, foobar", new String[]{"foo", "bar", "foobar"}, true},
-        {"foo, bar, foobar", new String[]{"baz", "foo:bar", "bar:foo"}, false},
+        {"foo,bar,foobar", new String[]{"foo", "bar", "foobar"}, true},
+        {"foo,bar,foobar", new String[]{"baz", "foo:bar", "bar:foo"}, false},
 
         {"foo:*", new String[]{"foo:foo", "foo:bar", "foo:baz"}, true},
         {"foo:*", new String[]{"foo", "bar"}, false},
 
-        {"foo:*, bar:*", new String[]{"foo:foo", "foo:bar", "bar:bar", "bar:foo"}, true},
-        {"foo:*, bar:*", new String[]{"baz", "baz:foo", "foo", "bar"}, false},
+        {"foo:*,bar:*", new String[]{"foo:foo", "foo:bar", "bar:bar", "bar:foo"}, true},
+        {"foo:*,bar:*", new String[]{"baz", "baz:foo", "foo", "bar"}, false},
 
-        {"foo:*, bar:*, baz, foo", new String[]{"foo:foo", "foo:bar", "bar:bar", "bar:foo", "baz", "foo"}, true},
-        {"foo:*, bar:*, baz, foo", new String[]{"bar", "foobar", "foobarbaz", "baz:bar", "foobar:bazbar"}, false}
+        {"foo:*,bar:*,baz,foo", new String[]{"foo:foo", "foo:bar", "bar:bar", "bar:foo", "baz", "foo"}, true},
+        {"foo:*,bar:*,baz,foo", new String[]{"bar", "foobar", "foobarbaz", "baz:bar", "foobar:bazbar"}, false}
     };
   }
 
@@ -116,7 +118,7 @@ public class TestCompressionOperations
     RestRequest restRequest = new RestRequestBuilder(new URI(URI)).build();
     ClientCompressionFilter clientCompressionFilter = new ClientCompressionFilter(EncodingType.IDENTITY.getHttpName(),
                                                                                   ACCEPT_COMPRESSIONS,
-                                                                                  compressionConfig);
+                                                                                  Arrays.asList(compressionConfig.split(",")));
 
     for (String operation: operations)
     {
