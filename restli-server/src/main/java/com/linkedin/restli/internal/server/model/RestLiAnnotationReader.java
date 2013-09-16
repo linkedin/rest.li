@@ -29,6 +29,7 @@ import com.linkedin.data.template.FieldDef;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.TemplateRuntimeException;
 import com.linkedin.data.template.TyperefInfo;
+import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.parseq.Task;
 import com.linkedin.parseq.promise.Promise;
 import com.linkedin.restli.common.ActionResponse;
@@ -37,6 +38,7 @@ import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.TyperefUtils;
+import com.linkedin.restli.internal.server.PathKeysImpl;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor.InterfaceType;
 import com.linkedin.restli.internal.server.util.ReflectionUtils;
@@ -49,6 +51,7 @@ import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.NoMetadata;
 import com.linkedin.restli.server.PagingContext;
+import com.linkedin.restli.server.PathKeys;
 import com.linkedin.restli.server.ResourceConfigException;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.annotations.Action;
@@ -57,8 +60,10 @@ import com.linkedin.restli.server.annotations.AssocKey;
 import com.linkedin.restli.server.annotations.CallbackParam;
 import com.linkedin.restli.server.annotations.Context;
 import com.linkedin.restli.server.annotations.Finder;
+import com.linkedin.restli.server.annotations.Keys;
 import com.linkedin.restli.server.annotations.Optional;
 import com.linkedin.restli.server.annotations.ParSeqContext;
+import com.linkedin.restli.server.annotations.Projection;
 import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestAnnotations;
 import com.linkedin.restli.server.annotations.RestLiActions;
@@ -654,10 +659,18 @@ public final class RestLiAnnotationReader
         {
           param = buildParSeqContextParam(method, methodType, idx, paramType, paramAnnotations);
         }
+        else if (paramAnnotations.contains(Projection.class))
+        {
+          param = buildProjectionParam(paramAnnotations, paramType);
+        }
+        else if (paramAnnotations.contains(Keys.class))
+        {
+          param = buildKeysParam(paramAnnotations, paramType);
+        }
         else
         {
           throw new ResourceConfigException(buildMethodMessage(method)
-              + " must annotate each parameter with @QueryParam, @ActionParam, @AssocKey, @Context, @CallbackParam or @ParSeqContext");
+              + " must annotate each parameter with @QueryParam, @ActionParam, @AssocKey, @Context, @Projection, @Keys, @CallbackParam or @ParSeqContext");
         }
       }
 
@@ -866,6 +879,48 @@ public final class RestLiAnnotationReader
                                                 + resourceName + " cannot be instantiated, " + e.getMessage(), e);
     }
 
+  }
+
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  private static Parameter<?> buildProjectionParam(final AnnotationSet annotations,
+                                                   final Class<?> paramType)
+  {
+    if (!paramType.equals(MaskTree.class))
+    {
+      throw new ResourceConfigException("Projection must be MaskTree");
+    }
+    Parameter<?> param;
+    Optional optional = annotations.get(Optional.class);
+    param = new Parameter("",
+                          paramType,
+                          null,
+                          optional != null,
+                          null, // default mask is null.
+                          Parameter.ParamType.PROJECTION,
+                          false,
+                          annotations);
+    return param;
+  }
+
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  private static Parameter<?> buildKeysParam(final AnnotationSet annotations,
+                                             final Class<?> paramType)
+  {
+    if (!paramType.equals(PathKeys.class))
+    {
+      throw new ResourceConfigException("Keys must be PathKeys");
+    }
+    Parameter<?> param;
+    Optional optional = annotations.get(Optional.class);
+    param = new Parameter("",
+                          paramType,
+                          null,
+                          optional != null,
+                          new PathKeysImpl(),
+                          Parameter.ParamType.PATH_KEYS,
+                          false,
+                          annotations);
+    return param;
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})

@@ -1,5 +1,9 @@
 1.9.26
 ------
+(RB=210935)
+Added the ability to inject MaskTree (@Projection) and PathKeys (@Keys) from a
+request into a method.  This allows KeyValueResources to be able to use
+Projections and PathKeys in their method implementations.
 
 1.9.25
 ------

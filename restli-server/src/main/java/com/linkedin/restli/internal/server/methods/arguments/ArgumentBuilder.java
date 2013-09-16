@@ -34,12 +34,14 @@ import com.linkedin.data.template.AbstractArrayTemplate;
 import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
 import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.PagingContext;
+import com.linkedin.restli.server.PathKeys;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RoutingException;
 
@@ -100,6 +102,14 @@ public class ArgumentBuilder
         PagingContext ctx =
             RestUtils.getPagingContext(context, (PagingContext) param.getDefaultValue());
         arguments[i] = ctx;
+      }
+      else if (param.getType().isAssignableFrom(MaskTree.class))
+      {
+        arguments[i] = context.getProjectionMask();
+      }
+      else if (param.getType().isAssignableFrom(PathKeys.class))
+      {
+        arguments[i] = context.getPathKeys();
       }
       else if (DataTemplate.class.isAssignableFrom(param.getType()))
       {

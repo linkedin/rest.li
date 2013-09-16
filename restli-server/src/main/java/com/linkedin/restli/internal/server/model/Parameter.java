@@ -69,7 +69,9 @@ public class Parameter<T> extends FieldDef<T>
     CONTEXT,        // @Context
     CALLBACK,       // @CallbackParam
     PARSEQ_CONTEXT, // @ParSeqContext
-    BATCH
+    BATCH,
+    PROJECTION,     // @Projection
+    PATH_KEYS       // @PathKeys
   }
 
   private final boolean _optional;
