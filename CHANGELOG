@@ -1,5 +1,7 @@
 1.9.25
 ------
+(RB=211206, 211283)
+Added ability for clients to specify either actual lists or string representation of lists for transport client properties.
 
 1.9.24
 ------
