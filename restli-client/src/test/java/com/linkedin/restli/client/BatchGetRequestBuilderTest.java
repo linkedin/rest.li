@@ -73,7 +73,7 @@ public class BatchGetRequestBuilderTest
                                                                         Collections.<String, Object>emptyMap()));
     requestBuilder.id(1)
                   .fields(FIELDS.id(), FIELDS.message())
-                  .param("param", "paramValue");
+                  .setParam("param", "paramValue");
     GetRequest<TestRecord> request = requestBuilder.build();
     BatchGetRequest<TestRecord> batchRequest = BatchGetRequestBuilder.batch(request);
     Assert.assertEquals(batchRequest.getBaseURI(), request.getBaseURI());
@@ -97,7 +97,7 @@ public class BatchGetRequestBuilderTest
         buildComplexKey(1L, "keyMessage1", 1L, "paramMessage1");
     requestBuilder.id(complexKey1)
                   .fields(FIELDS.id(), FIELDS.message())
-                  .param("param", "paramValue");
+                  .setParam("param", "paramValue");
     GetRequest<TestRecord> request = requestBuilder.build();
     BatchGetRequest<TestRecord> batchRequest = BatchGetRequestBuilder.batch(request);
     Assert.assertEquals(batchRequest.getBaseURI(), request.getBaseURI());
@@ -119,8 +119,8 @@ public class BatchGetRequestBuilderTest
                                                         new ResourceSpecImpl());
     batchRequestBuilder1.ids(1, 2)
                         .fields(FIELDS.id())
-                        .param("param2", "value2")
-                        .param("param1", "value1");
+                        .setParam("param2", "value2")
+                        .setParam("param1", "value1");
 
     BatchGetRequestBuilder<Integer, TestRecord> batchRequestBuilder2 =
         new BatchGetRequestBuilder<Integer, TestRecord>("/",
@@ -128,8 +128,8 @@ public class BatchGetRequestBuilderTest
                                                         new ResourceSpecImpl());
     batchRequestBuilder2.ids(2, 3)
                         .fields(FIELDS.id(), FIELDS.message())
-                        .param("param1", "value1")
-                        .param("param2", "value2");
+                        .setParam("param1", "value1")
+                        .setParam("param2", "value2");
 
     BatchGetRequest<TestRecord> batchRequest1 = batchRequestBuilder1.build();
     BatchGetRequest<TestRecord> batchRequest2 = batchRequestBuilder2.build();
@@ -168,8 +168,8 @@ public class BatchGetRequestBuilderTest
                                                              .toArray();
     batchRequestBuilder1.ids(complexKeys1)
                         .fields(FIELDS.id())
-                        .param("param2", "value2")
-                        .param("param1", "value1");
+                        .setParam("param2", "value2")
+                        .setParam("param1", "value1");
 
     BatchGetRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> batchRequestBuilder2 =
         new BatchGetRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord>("/",
@@ -182,8 +182,8 @@ public class BatchGetRequestBuilderTest
                                                              .toArray();
     batchRequestBuilder2.ids(complexKeys2)
                         .fields(FIELDS.id(), FIELDS.message())
-                        .param("param1", "value1")
-                        .param("param2", "value2");
+                        .setParam("param1", "value1")
+                        .setParam("param2", "value2");
 
     BatchGetRequest<TestRecord> batchRequest1 = batchRequestBuilder1.build();
     BatchGetRequest<TestRecord> batchRequest2 = batchRequestBuilder2.build();
@@ -254,7 +254,7 @@ public class BatchGetRequestBuilderTest
         new BatchGetRequestBuilder<Integer, TestRecord>("/",
                                                         TestRecord.class,
                                                         new ResourceSpecImpl());
-    batchRequestBuilder1.ids(1, 2).fields(FIELDS.id()).param("param1", "value1");
+    batchRequestBuilder1.ids(1, 2).fields(FIELDS.id()).setParam("param1", "value1");
 
     BatchGetRequestBuilder<Integer, TestRecord> batchRequestBuilder2 =
         new BatchGetRequestBuilder<Integer, TestRecord>("/",
@@ -262,8 +262,8 @@ public class BatchGetRequestBuilderTest
                                                         new ResourceSpecImpl());
     batchRequestBuilder2.ids(2, 3)
                         .fields(FIELDS.id(), FIELDS.message())
-                        .param("param1", "value1")
-                        .param("param2", "value2");
+                        .setParam("param1", "value1")
+                        .setParam("param2", "value2");
 
     BatchGetRequest<TestRecord> batchRequest1 = batchRequestBuilder1.build();
     BatchGetRequest<TestRecord> batchRequest2 = batchRequestBuilder2.build();

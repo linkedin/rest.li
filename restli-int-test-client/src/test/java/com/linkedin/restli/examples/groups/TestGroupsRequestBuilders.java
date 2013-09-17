@@ -566,8 +566,8 @@ public class TestGroupsRequestBuilders
   {
     final String X_LI_D2_TARGET_HOST = "X-LI-D2-Target-Host";
     final String TEST_HOST_VALUE = "http://test.linkedin.com/";
-    Request<Group> request = GROUPS_BUILDERS.get().id(1).header(X_LI_D2_TARGET_HOST,
-                                                                TEST_HOST_VALUE).build();
+    Request<Group> request = GROUPS_BUILDERS.get().id(1).setHeader(X_LI_D2_TARGET_HOST,
+                                                                   TEST_HOST_VALUE).build();
 
     Assert.assertTrue(request.getHeaders().containsKey(X_LI_D2_TARGET_HOST));
     assertEquals(request.getHeaders().get(X_LI_D2_TARGET_HOST), TEST_HOST_VALUE);

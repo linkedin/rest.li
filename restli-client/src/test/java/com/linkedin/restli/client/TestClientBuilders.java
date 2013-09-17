@@ -120,7 +120,7 @@ public class TestClientBuilders
     ActionRequestBuilder<Long, TestRecord> builder = new ActionRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class,
                                                                                                 resourceSpec);
 
-    ActionRequest<TestRecord> request = builder.name("action").param(pParam, "42").id(1L).build();
+    ActionRequest<TestRecord> request = builder.name("action").setParam(pParam, "42").id(1L).build();
 
     Assert.assertEquals(request.getUri(), URI.create("test/1?action=action"));
     Assert.assertEquals(request.getMethod(), ResourceMethod.ACTION);
@@ -324,7 +324,7 @@ public class TestClientBuilders
                .assocKey("key", "a:b")
                .paginate(1, 4)
                .fields(TestRecord.fields().id(), TestRecord.fields().message())
-               .param("p", 42)
+               .setParam("p", 42)
                .build();
     Assert.assertEquals(request.isSafe(), true);
     Assert.assertEquals(request.isIdempotent(), true);
@@ -340,7 +340,7 @@ public class TestClientBuilders
     request = builder.name("search")
             .assocKey("key", "a:b")
             .paginateStart(1)
-            .param("p", 42)
+            .setParam("p", 42)
             .build();
     Assert.assertEquals(request.isSafe(), true);
     Assert.assertEquals(request.isIdempotent(), true);
@@ -356,7 +356,7 @@ public class TestClientBuilders
     request = builder.name("search")
         .assocKey("key", "a:b")
         .paginateCount(4)
-        .param("p", 42)
+        .setParam("p", 42)
         .build();
     Assert.assertEquals(request.isSafe(), true);
     Assert.assertEquals(request.isIdempotent(), true);
@@ -448,9 +448,9 @@ public class TestClientBuilders
     final IntegerArray array = new IntegerArray(coll);
     final GetRequest<TestRecord> request = builder
                                           .id(1L)
-                                          .reqParam("simpleKey", 2)
-                                          .param("arrayKey1", coll)
-                                          .param("arrayKey2", array)
+                                          .setReqParam("simpleKey", 2)
+                                          .setParam("arrayKey1", coll)
+                                          .setParam("arrayKey2", array)
                                           .build();
     final URI expectedUri = UriBuilder
                            .fromPath(TEST_URI)
@@ -552,7 +552,7 @@ public class TestClientBuilders
         buildComplexKey(1L, "KeyMessage", 10L, "ParamMessage");
     RecordTemplate param1 = buildComplexParam(123, "ParamMessage");
 
-    GetRequest<TestRecord> request = builder.id(id).param("testParam", param1).build();
+    GetRequest<TestRecord> request = builder.id(id).setParam("testParam", param1).build();
     Assert.assertTrue(request.isSafe());
     Assert.assertTrue(request.isIdempotent());
     checkBasicRequest(request,
@@ -573,7 +573,7 @@ public class TestClientBuilders
         buildComplexKey(1L, "KeyMessage", 10L, "ParamMessage");
     RecordTemplate param = buildComplexParam(123, "ParamMessage");
 
-    DeleteRequest<TestRecord> request = builder.id(id).param("testParam", param).build();
+    DeleteRequest<TestRecord> request = builder.id(id).setParam("testParam", param).build();
     Assert.assertFalse(request.isSafe());
     Assert.assertTrue(request.isIdempotent());
     checkBasicRequest(request,
@@ -597,7 +597,7 @@ public class TestClientBuilders
     RecordTemplate param = buildComplexParam(123, "ParamMessage");
 
     @SuppressWarnings("unchecked")
-    BatchGetRequest<TestRecord> request = builder.ids(id1, id2).param("testParam", param).build();
+    BatchGetRequest<TestRecord> request = builder.ids(id1, id2).setParam("testParam", param).build();
     Assert.assertTrue(request.isIdempotent());
     Assert.assertTrue(request.isSafe());
     checkBasicRequest(request,
@@ -621,7 +621,7 @@ public class TestClientBuilders
     RecordTemplate param = buildComplexParam(123, "ParamMessage");
 
     BatchUpdateRequest<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> request =
-        builder.input(id1, new TestRecord()).input(id2, new TestRecord()).param("testParam", param).build();
+        builder.input(id1, new TestRecord()).input(id2, new TestRecord()).setParam("testParam", param).build();
 
     BatchRequest<TestRecord> expectedRequest = new BatchRequest<TestRecord>(new DataMap(), TestRecord.class);
     expectedRequest.getEntities().put(id1.toStringFull(), new TestRecord());
@@ -776,50 +776,50 @@ public class TestClientBuilders
   {
 
     URI uri;
-    uri = new CreateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).param("foo", "bar").build().getUri();
+    uri = new CreateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).setParam("foo", "bar").build().getUri();
     Assert.assertEquals(uri, URI.create("test?foo=bar"));
 
-    uri = new DeleteRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).id(3L).param("foo", "bar").build().getUri();
+    uri = new DeleteRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).id(3L).setParam("foo", "bar").build().getUri();
     Assert.assertEquals(uri, URI.create("test/3?foo=bar"));
 
-    uri = new FindRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).param("foo", "bar").build().getUri();
+    uri = new FindRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).setParam("foo", "bar").build().getUri();
     Assert.assertEquals(uri, URI.create("test?foo=bar"));
 
-    uri = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).id(3L).param("foo", "bar").build().getUri();
+    uri = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).id(3L).setParam("foo", "bar").build().getUri();
     Assert.assertEquals(uri, URI.create("test/3?foo=bar"));
 
-    uri = new PartialUpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).id(3L).param("foo", "bar").build().getUri();
+    uri = new PartialUpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).id(3L).setParam("foo", "bar").build().getUri();
     Assert.assertEquals(uri, URI.create("test/3?foo=bar"));
 
-    uri = new UpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).id(3L).param("foo", "bar").build().getUri();
+    uri = new UpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).id(3L).setParam("foo", "bar").build().getUri();
     Assert.assertEquals(uri, URI.create("test/3?foo=bar"));
 
-    uri = new BatchGetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).ids(1L,2L).param("foo", "bar").build().getUri();
+    uri = new BatchGetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).ids(1L,2L).setParam("foo", "bar").build().getUri();
     Assert.assertEquals(uri, URI.create("test?foo=bar&ids=1&ids=2"));
 
     uri = new BatchCreateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).input(
-            new TestRecord()).param("foo", "bar").build().getUri();
+            new TestRecord()).setParam("foo", "bar").build().getUri();
     Assert.assertEquals(uri, URI.create("test?foo=bar"));
 
-    uri = new BatchDeleteRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).ids(1L,2L).param("foo", "bar").build().getUri();
+    uri = new BatchDeleteRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).ids(1L,2L).setParam("foo", "bar").build().getUri();
     Assert.assertEquals(uri, URI.create("test?foo=bar&ids=1&ids=2"));
 
     uri = new BatchUpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).input(
-            1L, new TestRecord()).param("foo", "bar").build().getUri();
+            1L, new TestRecord()).setParam("foo", "bar").build().getUri();
     Assert.assertEquals(uri, URI.create("test?foo=bar&ids=1"));
 
     uri = new BatchPartialUpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).input(
-            1L, new PatchRequest<TestRecord>()).param("foo", "bar").build().getUri();
+            1L, new PatchRequest<TestRecord>()).setParam("foo", "bar").build().getUri();
     Assert.assertEquals(uri, URI.create("test?foo=bar&ids=1"));
 
     //Simple resource tests
-    uri = new DeleteRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _SIMPLE_RESOURCE_SPEC).param("foo", "bar").build().getUri();
+    uri = new DeleteRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _SIMPLE_RESOURCE_SPEC).setParam("foo", "bar").build().getUri();
     Assert.assertEquals(uri, URI.create("test?foo=bar"));
 
-    uri = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _SIMPLE_RESOURCE_SPEC).param("foo", "bar").build().getUri();
+    uri = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _SIMPLE_RESOURCE_SPEC).setParam("foo", "bar").build().getUri();
     Assert.assertEquals(uri, URI.create("test?foo=bar"));
 
-    uri = new UpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _SIMPLE_RESOURCE_SPEC).param("foo",
+    uri = new UpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _SIMPLE_RESOURCE_SPEC).setParam("foo",
                                                                                                             "bar").build().getUri();
     Assert.assertEquals(uri, URI.create("test?foo=bar"));
 
@@ -830,19 +830,19 @@ public class TestClientBuilders
   {
     URI uri;
 
-    uri = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).id(3L).param("foo", "bar&baz=qux").build().getUri();
+    uri = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).id(3L).setParam("foo", "bar&baz=qux").build().getUri();
     Assert.assertEquals(uri, URI.create("test/3?foo=bar%26baz%3Dqux"));
 
-    uri = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).id(3L).param("foo&bar=baz", "qux").build().getUri();
+    uri = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).id(3L).setParam("foo&bar=baz", "qux").build().getUri();
     Assert.assertEquals(uri, URI.create("test/3?foo%26bar%3Dbaz=qux"));
 
-    uri = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).id(3L).param("foo/bar", "baz/qux").build().getUri();
+    uri = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).id(3L).setParam("foo/bar", "baz/qux").build().getUri();
     Assert.assertEquals(uri, URI.create("test/3?foo/bar=baz/qux"));
 
-    uri = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).id(3L).param("foo:bar", "baz:qux").build().getUri();
+    uri = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).id(3L).setParam("foo:bar", "baz:qux").build().getUri();
     Assert.assertEquals(uri, URI.create("test/3?foo:bar=baz:qux"));
 
-    uri = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).id(3L).param("foo?bar", "baz?qux").build().getUri();
+    uri = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC).id(3L).setParam("foo?bar", "baz?qux").build().getUri();
     Assert.assertEquals(uri, URI.create("test/3?foo?bar=baz?qux"));
   }
 

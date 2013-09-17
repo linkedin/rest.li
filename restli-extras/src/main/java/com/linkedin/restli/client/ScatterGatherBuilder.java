@@ -92,7 +92,7 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
       builder.fields(request.getFields().toArray(new PathSpec[0]));
       for (Map.Entry<String,String> header : request.getHeaders().entrySet())
       {
-        builder.header(header.getKey(), header.getValue());
+        builder.setHeader(header.getKey(), header.getValue());
       }
 
       RequestContext context = requestContext.clone();
@@ -132,7 +132,7 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
       builder.inputs(batch.getValue());
       for (Map.Entry<String,String> header : request.getHeaders().entrySet())
       {
-        builder.header(header.getKey(), header.getValue());
+        builder.setHeader(header.getKey(), header.getValue());
       }
 
       RequestContext context = requestContext.clone();
@@ -251,7 +251,7 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
       builder.ids(batch.getValue());
       for (Map.Entry<String,String> header : request.getHeaders().entrySet())
       {
-        builder.header(header.getKey(), header.getValue());
+        builder.setHeader(header.getKey(), header.getValue());
       }
 
       RequestContext context = requestContext.clone();

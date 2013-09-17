@@ -1,6 +1,11 @@
 1.9.27
 ------
-
+(RB=212287)
+Refactor restli-client request builder classes:
+  1) deprecate header(), param and reqParam()
+  2) add setHeader(), setHeaders(), addHeader(), setParam(), setReqParam(), addParam() and addReqParam()
+For query parameter and action parameter that is array type, add convenient request builder method to add element one by one.
+For ActionRequestBuilder, required parameter will call reqParam() instead of param() now.
 
 1.9.26
 ------

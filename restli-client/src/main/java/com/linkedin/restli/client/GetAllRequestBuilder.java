@@ -23,6 +23,9 @@ import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
 
+import java.util.Map;
+
+
 /**
  * REST collection GetAll request builder.
  *
@@ -51,13 +54,13 @@ public class GetAllRequestBuilder<K, V extends RecordTemplate> extends
 
   public GetAllRequestBuilder<K, V> paginateStart(int start)
   {
-    addParam(RestConstants.START_PARAM, String.valueOf(start));
+    setParam(RestConstants.START_PARAM, String.valueOf(start));
     return this;
   }
 
   public GetAllRequestBuilder<K, V> paginateCount(int count)
   {
-    addParam(RestConstants.COUNT_PARAM, String.valueOf(count));
+    setParam(RestConstants.COUNT_PARAM, String.valueOf(count));
     return this;
   }
 
@@ -68,23 +71,75 @@ public class GetAllRequestBuilder<K, V extends RecordTemplate> extends
   }
 
   @Override
+  @Deprecated
   public GetAllRequestBuilder<K, V> param(String key, Object value)
   {
-    super.param(key, value);
+    super.setParam(key, value);
     return this;
   }
 
   @Override
+  @Deprecated
   public GetAllRequestBuilder<K, V> reqParam(String key, Object value)
   {
-    super.reqParam(key, value);
+    super.setReqParam(key, value);
     return this;
   }
 
   @Override
+  public GetAllRequestBuilder<K, V> setParam(String key, Object value)
+  {
+    super.setParam(key, value);
+    return this;
+  }
+
+  @Override
+  public GetAllRequestBuilder<K, V> setReqParam(String key, Object value)
+  {
+    super.setReqParam(key, value);
+    return this;
+  }
+
+  @Override
+  public GetAllRequestBuilder<K, V> addParam(String key, Object value)
+  {
+    super.addParam(key, value);
+    return this;
+  }
+
+  @Override
+  public GetAllRequestBuilder<K, V> addReqParam(String key, Object value)
+  {
+    super.addReqParam(key, value);
+    return this;
+  }
+
+  @Override
+  @Deprecated
   public GetAllRequestBuilder<K, V> header(String key, String value)
   {
-    super.header(key, value);
+    super.setHeader(key, value);
+    return this;
+  }
+
+  @Override
+  public GetAllRequestBuilder<K, V> setHeader(String key, String value)
+  {
+    super.setHeader(key, value);
+    return this;
+  }
+
+  @Override
+  public GetAllRequestBuilder<K, V> setHeaders(Map<String, String> headers)
+  {
+    super.setHeaders(headers);
+    return this;
+  }
+
+  @Override
+  public GetAllRequestBuilder<K, V> addHeader(String name, String value)
+  {
+    super.addHeader(name, value);
     return this;
   }
 

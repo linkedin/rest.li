@@ -72,7 +72,7 @@ public class TestCharacterEncoding
                                            QueryParamMockCollection.DummyRecord.class,
                                            Collections.<String, CompoundKey.TypeInfo> emptyMap()))
                       .id("dummy")
-                      .param(QueryParamMockCollection.VALUE_KEY, testValue).build();
+                      .setParam(QueryParamMockCollection.VALUE_KEY, testValue).build();
       RestRequest restRequest = new RestRequestBuilder(req.getUri())
               .setMethod(req.getMethod().getHttpMethod().toString()).build();
 

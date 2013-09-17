@@ -17,15 +17,6 @@
 package com.linkedin.restli.client;
 
 
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.PathSpec;
@@ -41,6 +32,16 @@ import com.linkedin.restli.internal.client.BatchResponseDecoder;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
 import com.linkedin.restli.internal.client.URIUtil;
 import com.linkedin.restli.internal.common.QueryParamsDataMap;
+
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -273,23 +274,75 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
   }
 
   @Override
+  @Deprecated
   public BatchGetRequestBuilder<K, V> reqParam(String key, Object value)
   {
-    super.reqParam(key, value);
+    super.setReqParam(key, value);
     return this;
   }
 
   @Override
+  @Deprecated
   public BatchGetRequestBuilder<K, V> param(String key, Object value)
   {
-    super.param(key, value);
+    super.setParam(key, value);
     return this;
   }
 
   @Override
+  public BatchGetRequestBuilder<K, V> setParam(String key, Object value)
+  {
+    super.setParam(key, value);
+    return this;
+  }
+
+  @Override
+  public BatchGetRequestBuilder<K, V> setReqParam(String key, Object value)
+  {
+    super.setReqParam(key, value);
+    return this;
+  }
+
+  @Override
+  public BatchGetRequestBuilder<K, V> addParam(String key, Object value)
+  {
+    super.addParam(key, value);
+    return this;
+  }
+
+  @Override
+  public BatchGetRequestBuilder<K, V> addReqParam(String key, Object value)
+  {
+    super.addReqParam(key, value);
+    return this;
+  }
+
+  @Override
+  @Deprecated
   public BatchGetRequestBuilder<K, V> header(String key, String value)
   {
-    super.header(key, value);
+    super.setHeader(key, value);
+    return this;
+  }
+
+  @Override
+  public BatchGetRequestBuilder<K, V> setHeader(String key, String value)
+  {
+    super.setHeader(key, value);
+    return this;
+  }
+
+  @Override
+  public BatchGetRequestBuilder<K, V> setHeaders(Map<String, String> headers)
+  {
+    super.setHeaders(headers);
+    return this;
+  }
+
+  @Override
+  public BatchGetRequestBuilder<K, V> addHeader(String name, String value)
+  {
+    super.addHeader(name, value);
     return this;
   }
 

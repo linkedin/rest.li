@@ -23,6 +23,9 @@ import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
 
+import java.util.Map;
+
+
 /**
  * REST collection finder request builder.
  *
@@ -46,7 +49,7 @@ public class FindRequestBuilder<K, V extends RecordTemplate> extends
 
   public FindRequestBuilder<K, V> name(String name)
   {
-    addParam(RestConstants.QUERY_TYPE_PARAM, name);
+    setParam(RestConstants.QUERY_TYPE_PARAM, name);
     _name = name;
     return this;
   }
@@ -66,13 +69,13 @@ public class FindRequestBuilder<K, V extends RecordTemplate> extends
 
   public FindRequestBuilder<K, V> paginateStart(int start)
   {
-    addParam(RestConstants.START_PARAM, String.valueOf(start));
+    setParam(RestConstants.START_PARAM, String.valueOf(start));
     return this;
   }
 
   public FindRequestBuilder<K, V> paginateCount(int count)
   {
-    addParam(RestConstants.COUNT_PARAM, String.valueOf(count));
+    setParam(RestConstants.COUNT_PARAM, String.valueOf(count));
     return this;
   }
 
@@ -83,23 +86,75 @@ public class FindRequestBuilder<K, V extends RecordTemplate> extends
   }
 
   @Override
+  @Deprecated
   public FindRequestBuilder<K, V> param(String key, Object value)
   {
-    super.param(key, value);
+    super.setParam(key, value);
     return this;
   }
 
   @Override
+  @Deprecated
   public FindRequestBuilder<K, V> reqParam(String key, Object value)
   {
-    super.reqParam(key, value);
+    super.setReqParam(key, value);
     return this;
   }
 
   @Override
+  public FindRequestBuilder<K, V> setParam(String key, Object value)
+  {
+    super.setParam(key, value);
+    return this;
+  }
+
+  @Override
+  public FindRequestBuilder<K, V> setReqParam(String key, Object value)
+  {
+    super.setReqParam(key, value);
+    return this;
+  }
+
+  @Override
+  public FindRequestBuilder<K, V> addParam(String key, Object value)
+  {
+    super.addParam(key, value);
+    return this;
+  }
+
+  @Override
+  public FindRequestBuilder<K, V> addReqParam(String key, Object value)
+  {
+    super.addReqParam(key, value);
+    return this;
+  }
+
+  @Override
+  @Deprecated
   public FindRequestBuilder<K, V> header(String key, String value)
   {
-    super.header(key, value);
+    super.setHeader(key, value);
+    return this;
+  }
+
+  @Override
+  public FindRequestBuilder<K, V> setHeader(String key, String value)
+  {
+    super.setHeader(key, value);
+    return this;
+  }
+
+  @Override
+  public FindRequestBuilder<K, V> setHeaders(Map<String, String> headers)
+  {
+    super.setHeaders(headers);
+    return this;
+  }
+
+  @Override
+  public FindRequestBuilder<K, V> addHeader(String name, String value)
+  {
+    super.addHeader(name, value);
     return this;
   }
 

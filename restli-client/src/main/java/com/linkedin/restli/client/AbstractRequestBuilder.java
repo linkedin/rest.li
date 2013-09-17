@@ -83,10 +83,10 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
    * @param value value of the header
    * @return this {@link AbstractRequestBuilder}
    */
+  @Deprecated
   public AbstractRequestBuilder<K, V, R> header(String name, String value)
   {
-    setHeader(name, value);
-    return this;
+    return setHeader(name, value);
   }
 
   /**
@@ -96,11 +96,12 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
    * @param name name of the header
    * @param value value of the header
    */
-  public void addHeader(String name, String value)
+  public AbstractRequestBuilder<K, V, R> addHeader(String name, String value)
   {
     final String currValue = _headers.get(name);
     final String newValue = currValue == null ? value : currValue + HEADER_DELIMITER + value;
     _headers.put(name, newValue);
+    return this;
   }
 
   /**
@@ -110,9 +111,10 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
    * @param name name of the header
    * @param value value of the header
    */
-  public void setHeader(String name, String value)
+  public AbstractRequestBuilder<K, V, R> setHeader(String name, String value)
   {
     _headers.put(name, value);
+    return this;
   }
 
   /**
@@ -121,54 +123,62 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
    *
    * @param headers new headers
    */
-  public void setHeaders(Map<String, String> headers)
+  public AbstractRequestBuilder<K, V, R> setHeaders(Map<String, String> headers)
   {
     _headers = new HashMap<String, String>(headers);
+    return this;
   }
 
-  protected void addReqParam(String key, Object value)
+  public AbstractRequestBuilder<K, V, R> setReqParam(String key, Object value)
   {
     ArgumentUtil.notNull(value, "value");
-    addParam(key, value);
+    return setParam(key, value);
+  }
+
+  public AbstractRequestBuilder<K, V, R> setParam(String key, Object value)
+  {
+    _queryParams.put(key, paramToDataObject(value));
+    return this;
+  }
+
+  public AbstractRequestBuilder<K, V, R> addReqParam(String key, Object value)
+  {
+    ArgumentUtil.notNull(value, "value");
+    return addParam(key, value);
+  }
+
+  public AbstractRequestBuilder<K, V, R> addParam(String key, Object value)
+  {
+    if (value != null)
+    {
+      final Object existingData = _queryParams.get(key);
+      if (existingData == null)
+      {
+        setParam(key, value);
+      }
+      else
+      {
+        final Object newData = paramToDataObject(value);
+        final DataList newList;
+        if (existingData instanceof DataList)
+        {
+          newList = ((DataList) existingData);
+          newList.add(newData);
+        }
+        else
+        {
+          newList = new DataList(Arrays.asList(existingData, newData));
+        }
+        _queryParams.put(key, newList);
+      }
+    }
+    return this;
   }
 
   public AbstractRequestBuilder<K, V, R> pathKey(String name, Object value)
   {
     addPathKey(name, keyToString(value, Escaping.NO_ESCAPING));
     return this;
-  }
-
-  /*
-   * Note that this method overrides the value at the given key, rather than adds to the collection
-   * of values for it.
-   */
-  protected void addParam(String key, Object value)
-  {
-    if (value != null)
-    {
-      if (value instanceof Object[])
-      {
-        _queryParams.put(key, new DataList(coerceIterable(Arrays.asList((Object[]) value))));
-      }
-      else if (value.getClass().isArray())
-      { // not an array of objects but still an array - must be an array of primitives
-        _queryParams.put(key, new DataList(stringify(value)));
-      }
-      else if (value instanceof DataTemplate)
-      {
-        @SuppressWarnings("rawtypes")
-        DataTemplate dataTemplate = (DataTemplate)value;
-        _queryParams.put(key, dataTemplate.data());
-      }
-      else if (value instanceof Iterable)
-      {
-        _queryParams.put(key, new DataList(coerceIterable((Iterable<?>) value)));
-      }
-      else
-      {
-        _queryParams.put(key, DataTemplateUtil.stringify(value));
-      }
-    }
   }
 
   /**
@@ -254,6 +264,36 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
       }
 
       uriBuilder.path(keyToString(key, Escaping.URL_ESCAPING));
+    }
+  }
+
+  private static Object paramToDataObject(Object param)
+  {
+    if (param == null)
+    {
+      return null;
+    }
+    else if (param instanceof Object[])
+    {
+      return new DataList(coerceIterable(Arrays.asList((Object[]) param)));
+    }
+    else if (param.getClass().isArray())
+    { // not an array of objects but still an array - must be an array of primitives
+      return new DataList(stringify(param));
+    }
+    else if (param instanceof DataTemplate)
+    {
+      @SuppressWarnings("rawtypes")
+      final DataTemplate dataTemplate = (DataTemplate)param;
+      return dataTemplate.data();
+    }
+    else if (param instanceof Iterable)
+    {
+      return new DataList(coerceIterable((Iterable<?>) param));
+    }
+    else
+    {
+      return DataTemplateUtil.stringify(param);
     }
   }
 
@@ -397,7 +437,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
                                           + _queryParams.get(RestConstants.FIELDS_PARAM));
     }
 
-    addParam(RestConstants.FIELDS_PARAM, URIUtil.encodeFields(fieldPaths));
+    setParam(RestConstants.FIELDS_PARAM, URIUtil.encodeFields(fieldPaths));
   }
 
   protected boolean isComplexKeyResource()

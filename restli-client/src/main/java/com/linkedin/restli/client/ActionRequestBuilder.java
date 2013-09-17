@@ -20,11 +20,13 @@
 
 package com.linkedin.restli.client;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.linkedin.data.DataList;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.DynamicRecordMetadata;
@@ -35,6 +37,8 @@ import com.linkedin.restli.common.ActionResponse;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.client.ActionResponseDecoder;
+import com.linkedin.util.ArgumentUtil;
+
 
 /**
  * @author Josh Walker
@@ -57,7 +61,7 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
   public ActionRequestBuilder<K, V> name(String name)
   {
     _name = name;
-    addParam(RestConstants.ACTION_PARAM, _name);
+    setParam(RestConstants.ACTION_PARAM, _name);
     return this;
   }
 
@@ -67,16 +71,92 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
     return this;
   }
 
+  @Deprecated
   public ActionRequestBuilder<K, V> param(FieldDef<?> key, Object value)
   {
     _actionParams.put(key, value);
     return this;
   }
 
+  @Deprecated
+  public ActionRequestBuilder<K, V> reqParam(FieldDef<?> key, Object value)
+  {
+    ArgumentUtil.notNull(value, "value");
+    return setParam(key, value);
+  }
+
+  public ActionRequestBuilder<K, V> setParam(FieldDef<?> key, Object value)
+  {
+    _actionParams.put(key, value);
+    return this;
+  }
+
+  public ActionRequestBuilder<K, V> setReqParam(FieldDef<?> key, Object value)
+  {
+    ArgumentUtil.notNull(value, "value");
+    return setParam(key, value);
+  }
+
+  public ActionRequestBuilder<K, V> addParam(FieldDef<?> key, Object value)
+  {
+    if (value != null)
+    {
+      final Object existingData = _actionParams.get(key);
+      if (existingData == null)
+      {
+        return setParam(key, value);
+      }
+      else
+      {
+        final DataList newList;
+        if (existingData instanceof DataList)
+        {
+          newList = ((DataList) existingData);
+          newList.add(value);
+        }
+        else
+        {
+          newList = new DataList(Arrays.asList(existingData, value));
+        }
+        _actionParams.put(key, newList);
+      }
+    }
+
+    return this;
+  }
+
+  public ActionRequestBuilder<K, V> addReqParam(FieldDef<?> key, Object value)
+  {
+    ArgumentUtil.notNull(value, "value");
+    return addParam(key, value);
+  }
+
   @Override
+  @Deprecated
   public ActionRequestBuilder<K, V> header(String key, String value)
   {
-    super.header(key, value);
+    super.setHeader(key, value);
+    return this;
+  }
+
+  @Override
+  public ActionRequestBuilder<K, V> setHeader(String key, String value)
+  {
+    super.setHeader(key, value);
+    return this;
+  }
+
+  @Override
+  public ActionRequestBuilder<K, V> setHeaders(Map<String, String> headers)
+  {
+    super.setHeaders(headers);
+    return this;
+  }
+
+  @Override
+  public ActionRequestBuilder<K, V> addHeader(String key, String value)
+  {
+    super.addHeader(key, value);
     return this;
   }
 

@@ -20,12 +20,13 @@
 
 package com.linkedin.restli.client.base;
 
-import java.util.Map;
 
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.client.BatchPartialUpdateRequestBuilder;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceSpec;
+
+import java.util.Map;
 
 /**
  * @author Josh Walker
@@ -60,9 +61,37 @@ public class BatchPartialUpdateRequestBuilderBase<
 
   @SuppressWarnings({"unchecked"})
   @Override
-  public RB header(String key, String value)
+  public RB setHeader(String key, String value)
   {
-    return (RB) super.header(key, value);
+    return (RB) super.setHeader(key, value);
+  }
+
+  @SuppressWarnings({"unchecked"})
+  @Override
+  public RB setParam(String key, Object value)
+  {
+    return (RB) super.setParam(key, value);
+  }
+
+  @SuppressWarnings({"unchecked"})
+  @Override
+  public RB setReqParam(String key, Object value)
+  {
+    return (RB) super.setReqParam(key, value);
+  }
+
+  @SuppressWarnings({"unchecked"})
+  @Override
+  public RB addParam(String key, Object value)
+  {
+    return (RB) super.addParam(key, value);
+  }
+
+  @SuppressWarnings({"unchecked"})
+  @Override
+  public RB addReqParam(String key, Object value)
+  {
+    return (RB) super.addReqParam(key, value);
   }
 
   @SuppressWarnings({"unchecked"})
@@ -71,5 +100,4 @@ public class BatchPartialUpdateRequestBuilderBase<
   {
     return (RB) super.pathKey(name, value);
   }
-
 }

@@ -19,8 +19,12 @@
  */
 package com.linkedin.restli.client;
 
+
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.ResourceSpec;
+
+import java.util.Map;
+
 
 /**
  * @author adubman
@@ -29,19 +33,44 @@ import com.linkedin.restli.common.ResourceSpec;
 public abstract class RestfulRequestBuilder<K, V extends RecordTemplate, R extends Request<?>> extends
     AbstractRequestBuilder<K, V, R>
 {
-
   protected RestfulRequestBuilder(String baseURITemplate, ResourceSpec resourceSpec)
   {
     super(baseURITemplate, resourceSpec);
   }
 
   /**
-   * Note that this method overrides the value at the given key, rather than adds to the
-   * collection of values for it.
+   * Create a header with the specified value if there is no existing name
+   * Otherwise, overwrite the existing header with the specified value to the existing value
+   *
+   * @param name name of the header
+   * @param value value of the header
    */
-  public RestfulRequestBuilder<K, V, R> param(String key, Object value)
+  @Override
+  @Deprecated
+  public RestfulRequestBuilder<K, V, R> header(String name, String value)
   {
-    super.addParam(key, value);
+    super.setHeader(name, value);
+    return this;
+  }
+
+  @Override
+  public RestfulRequestBuilder<K, V, R> setHeader(String key, String value)
+  {
+    super.setHeader(key, value);
+    return this;
+  }
+
+  @Override
+  public RestfulRequestBuilder<K, V, R> setHeaders(Map<String, String> headers)
+  {
+    super.setHeaders(headers);
+    return this;
+  }
+
+  @Override
+  public RestfulRequestBuilder<K, V, R> addHeader(String name, String value)
+  {
+    super.addHeader(name, value);
     return this;
   }
 
@@ -49,10 +78,49 @@ public abstract class RestfulRequestBuilder<K, V extends RecordTemplate, R exten
    * Note that this method overrides the value at the given key, rather than adds to the
    * collection of values for it.
    */
-  public RestfulRequestBuilder<K, V, R> reqParam(String key, Object value)
+  @Deprecated
+  public RestfulRequestBuilder<K, V, R> param(String key, Object value)
   {
-    addReqParam(key, value);
+    super.setParam(key, value);
     return this;
   }
 
+  /**
+   * Note that this method overrides the value at the given key, rather than adds to the
+   * collection of values for it.
+   */
+  @Deprecated
+  public RestfulRequestBuilder<K, V, R> reqParam(String key, Object value)
+  {
+    super.setReqParam(key, value);
+    return this;
+  }
+
+  @Override
+  public RestfulRequestBuilder<K, V, R> setParam(String key, Object value)
+  {
+    super.setParam(key, value);
+    return this;
+  }
+
+  @Override
+  public RestfulRequestBuilder<K, V, R> setReqParam(String key, Object value)
+  {
+    super.setReqParam(key, value);
+    return this;
+  }
+
+  @Override
+  public RestfulRequestBuilder<K, V, R> addParam(String key, Object value)
+  {
+    super.addParam(key, value);
+    return this;
+  }
+
+  @Override
+  public RestfulRequestBuilder<K, V, R> addReqParam(String key, Object value)
+  {
+    super.addReqParam(key, value);
+    return this;
+  }
 }

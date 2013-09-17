@@ -18,9 +18,9 @@ public class TestAbstractRequestBuilder
   {
     final AbstractRequestBuilder<?, ?, ?> builder = new DummyAbstractRequestBuilder();
 
-    Assert.assertSame(builder.header("a", "b"), builder);
+    Assert.assertSame(builder.setHeader("a", "b"), builder);
     Assert.assertEquals(builder._headers.get("a"), "b");
-    builder.header("a", "c");
+    builder.setHeader("a", "c");
     Assert.assertEquals(builder._headers.get("a"), "c");
   }
 

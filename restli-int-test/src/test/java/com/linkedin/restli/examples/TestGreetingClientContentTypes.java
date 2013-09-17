@@ -192,7 +192,7 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
       .paramC(new TransferOwnershipRequest())
       .paramD(new TransferOwnershipRequest())
       .paramE(3)
-      .header("Content-Type", "application/json; charset=UTF-8")
+      .setHeader("Content-Type", "application/json; charset=UTF-8")
       .build();
 
     Response<Greeting> response = restClient.sendRequest(request).getResponse();
@@ -207,7 +207,7 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
     CreateRequest<Greeting> createRequest = GREETINGS_BUILDERS
       .create()
       .input(createGreeting)
-      .header("Content-Type", "application/json; charset=UTF-8")
+      .setHeader("Content-Type", "application/json; charset=UTF-8")
       .build();
     Response<EmptyRecord> emptyRecordResponse = restClient.sendRequest(createRequest).getResponse();
     Assert.assertNull(emptyRecordResponse.getHeader(RestConstants.HEADER_CONTENT_TYPE));

@@ -54,15 +54,36 @@ public abstract class ActionRequestBuilderBase<K, V, RB extends ActionRequestBui
 
   @SuppressWarnings({"unchecked"})
   @Override
-  public RB header(String key, String value)
+  public RB setHeader(String key, String value)
   {
-    return (RB) super.header(key, value);
+    return (RB) super.setHeader(key, value);
   }
 
   @SuppressWarnings({"unchecked"})
   @Override
-  public RB param(FieldDef<?> key, Object value)
+  public RB setParam(FieldDef<?> key, Object value)
   {
-    return (RB) super.param(key, value);
+    return (RB) super.setParam(key, value);
+  }
+
+  @SuppressWarnings({"unchecked"})
+  @Override
+  public RB setReqParam(FieldDef<?> key, Object value)
+  {
+    return (RB) super.setReqParam(key, value);
+  }
+
+  @SuppressWarnings({"unchecked"})
+  @Override
+  public RB addParam(FieldDef<?> key, Object value)
+  {
+    return (RB) super.addParam(key, value);
+  }
+
+  @SuppressWarnings({"unchecked"})
+  @Override
+  public RB addReqParam(FieldDef<?> key, Object value)
+  {
+    return (RB) super.addReqParam(key, value);
   }
 }

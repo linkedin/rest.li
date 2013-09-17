@@ -20,13 +20,15 @@
 
 package com.linkedin.restli.client;
 
-import java.net.URI;
-import java.util.Arrays;
-import java.util.Collection;
 
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.restli.common.ResourceSpec;
+
+import java.net.URI;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * @author Josh Walker
@@ -57,23 +59,75 @@ public class BatchDeleteRequestBuilder<K, V extends RecordTemplate> extends
   }
 
   @Override
+  @Deprecated
   public BatchDeleteRequestBuilder<K, V> param(String key, Object value)
   {
-    super.param(key, value);
+    super.setParam(key, value);
     return this;
   }
 
   @Override
+  @Deprecated
   public BatchDeleteRequestBuilder<K, V> reqParam(String key, Object value)
   {
-    super.reqParam(key, value);
+    super.setReqParam(key, value);
     return this;
   }
 
   @Override
+  public BatchDeleteRequestBuilder<K, V> setParam(String key, Object value)
+  {
+    super.setParam(key, value);
+    return this;
+  }
+
+  @Override
+  public BatchDeleteRequestBuilder<K, V> setReqParam(String key, Object value)
+  {
+    super.setReqParam(key, value);
+    return this;
+  }
+
+  @Override
+  public BatchDeleteRequestBuilder<K, V> addParam(String key, Object value)
+  {
+    super.addParam(key, value);
+    return this;
+  }
+
+  @Override
+  public BatchDeleteRequestBuilder<K, V> addReqParam(String key, Object value)
+  {
+    super.addReqParam(key, value);
+    return this;
+  }
+
+  @Override
+  @Deprecated
   public BatchDeleteRequestBuilder<K, V> header(String key, String value)
   {
-    super.header(key, value);
+    super.setHeader(key, value);
+    return this;
+  }
+
+  @Override
+  public BatchDeleteRequestBuilder<K, V> setHeader(String key, String value)
+  {
+    super.setHeader(key, value);
+    return this;
+  }
+
+  @Override
+  public BatchDeleteRequestBuilder<K, V> setHeaders(Map<String, String> headers)
+  {
+    super.setHeaders(headers);
+    return this;
+  }
+
+  @Override
+  public BatchDeleteRequestBuilder<K, V> addHeader(String name, String value)
+  {
+    super.addHeader(name, value);
     return this;
   }
 

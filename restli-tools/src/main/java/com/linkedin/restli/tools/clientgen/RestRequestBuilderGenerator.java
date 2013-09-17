@@ -826,19 +826,18 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
   {
     for (ParameterSchema param : parameters)
     {
-      String paramName = param.getName();
-      boolean optional = param.isOptional()==null ? false : param.isOptional();
-      String methodName = nameCamelCase(paramName + "Param");
-
-      JClass paramClass;
       if ("array".equals(param.getType()))
       {
         final JClass paramItemsClass = getJavaBindingType(param.getItems(), facadeClass).valueClass;
-        paramClass = getCodeModel().ref(Iterable.class).narrow(paramItemsClass);
+        final JClass paramClass = getCodeModel().ref(Iterable.class).narrow(paramItemsClass);
+        generateQueryParamSetMethod(derivedBuilderClass, param, paramClass);
+        generateQueryParamAddMethod(derivedBuilderClass, param, paramItemsClass);
       }
       else
       {
         final DataSchema typeSchema = RestSpecCodec.textToSchema(param.getType(), getSchemaResolver());
+        final JClass paramClass = getJavaBindingType(typeSchema, facadeClass).valueClass;
+        generateQueryParamSetMethod(derivedBuilderClass, param, paramClass);
 
         // we deprecate the "items" field from ParameterSchema, which generates Iterable<Foo> in the builder
         // instead, we use the standard way to represent arrays, which generates FooArray
@@ -848,28 +847,10 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
           final DataSchema itemsSchema = ((ArrayDataSchema) typeSchema).getItems();
           final JClass paramItemsClass = getJavaBindingType(itemsSchema, facadeClass).valueClass;
           final JClass iterableItemsClass = getCodeModel().ref(Iterable.class).narrow(paramItemsClass);
-
-          final JMethod typesafeMethod = derivedBuilderClass.method(JMod.PUBLIC, derivedBuilderClass, methodName);
-          final JVar typesafeMethodParam = typesafeMethod.param(iterableItemsClass, "value");
-          typesafeMethod.body().add(JExpr._super().invoke(optional ? "param" : "reqParam")
-                                        .arg(paramName)
-                                        .arg(typesafeMethodParam));
-          typesafeMethod.body()._return(JExpr._this());
-
-          generateParamJavadoc(typesafeMethod, typesafeMethodParam, param);
+          generateQueryParamSetMethod(derivedBuilderClass, param, iterableItemsClass);
+          generateQueryParamAddMethod(derivedBuilderClass, param, paramItemsClass);
         }
-
-        paramClass = getJavaBindingType(typeSchema, facadeClass).valueClass;
       }
-
-      final JMethod typesafeMethod = derivedBuilderClass.method(JMod.PUBLIC, derivedBuilderClass, methodName);
-      final JVar typesafeMethodParam = typesafeMethod.param(paramClass, "value");
-      typesafeMethod.body().add(JExpr._super().invoke(optional ? "param" : "reqParam")
-                                    .arg(paramName)
-                                    .arg(typesafeMethodParam));
-      typesafeMethod.body()._return(JExpr._this());
-
-      generateParamJavadoc(typesafeMethod, typesafeMethodParam, param);
     }
   }
 
@@ -999,6 +980,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
       for (ParameterSchema param : action.getParameters())
       {
         String paramName = param.getName();
+        boolean isOptional = param.isOptional() == null ? false : param.isOptional();
         JavaBinding binding = getJavaBindingType(param.getType(), facadeClass);
 
         JMethod typesafeMethod = actionBuilderClass.method(JMod.PUBLIC, actionBuilderClass,
@@ -1008,7 +990,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
         JClass dataTemplateUtil = getCodeModel().ref(DataTemplateUtil.class);
         JExpression dataSchema = dataTemplateUtil.staticInvoke("getSchema").arg(binding.schemaClass.dotclass());
 
-        typesafeMethod.body().add(JExpr._super().invoke("param")
+        typesafeMethod.body().add(JExpr._super().invoke(isOptional ? "setParam" : "setReqParam")
                                           .arg(resourceSpecField
                                                        .invoke("getRequestMetadata").arg(actionName)
                                                        .invoke("getFieldDef").arg(paramName))
@@ -1135,6 +1117,38 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     //default constructor
     typesafeKeyClass.constructor(JMod.PUBLIC);
     return assocKeyTypeInfos;
+  }
+
+  private static void generateQueryParamSetMethod(JDefinedClass derivedBuilderClass, ParameterSchema param, JClass paramClass)
+  {
+    final String paramName = param.getName();
+    final boolean isOptional = param.isOptional() == null ? false : param.isOptional();
+
+    final String methodName = nameCamelCase(paramName + "Param");
+    final JMethod setMethod = derivedBuilderClass.method(JMod.PUBLIC, derivedBuilderClass, methodName);
+    final JVar setMethodParam = setMethod.param(paramClass, "value");
+    setMethod.body().add(JExpr._super().invoke(isOptional ? "setParam" : "setReqParam")
+                             .arg(paramName)
+                             .arg(setMethodParam));
+    setMethod.body()._return(JExpr._this());
+
+    generateParamJavadoc(setMethod, setMethodParam, param);
+  }
+
+  private static void generateQueryParamAddMethod(JDefinedClass derivedBuilderClass, ParameterSchema param, JClass paramClass)
+  {
+    final String paramName = param.getName();
+    final boolean isOptional = param.isOptional() == null ? false : param.isOptional();
+
+    final String methodName = nameCamelCase("add" + normalizeCaps(paramName) + "Param");
+    final JMethod addMethod = derivedBuilderClass.method(JMod.PUBLIC, derivedBuilderClass, methodName);
+    final JVar addMethodParam = addMethod.param(paramClass, "value");
+    addMethod.body().add(JExpr._super().invoke(isOptional ? "addParam" : "addReqParam")
+                             .arg(paramName)
+                             .arg(addMethodParam));
+    addMethod.body()._return(JExpr._this());
+
+    generateParamJavadoc(addMethod, addMethodParam, param);
   }
 
   private static void generateClassJavadoc(JDefinedClass clazz, RecordTemplate schema)
@@ -1352,7 +1366,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     return normalizeCaps(name);
   }
 
-  private String nameCamelCase(String name)
+  private static String nameCamelCase(String name)
   {
     StringBuilder builder = normalizeName(name);
     char firstLower = Character.toLowerCase(builder.charAt(0));
@@ -1360,7 +1374,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     return builder.toString();
   }
 
-  private String nameCapsCase(String name)
+  private static String nameCapsCase(String name)
   {
     return normalizeName(name).toString();
   }

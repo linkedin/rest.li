@@ -83,7 +83,7 @@ public class TestManualProjections extends RestLiIntegrationTest
   public void testDisableAutomaticProjection() throws RemoteInvocationException
   {
     GetRequest<Greeting> request = MANUAL_PROJECTIONS_BUILDERS.get().id(1L)
-        .param("ignoreProjection", true)
+        .setParam("ignoreProjection", true)
         .fields(Greeting.fields().message())
         .build();
     Greeting greeting = REST_CLIENT.sendRequest(request).getResponseEntity();

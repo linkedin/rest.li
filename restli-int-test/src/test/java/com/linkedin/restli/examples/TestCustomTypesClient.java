@@ -114,6 +114,14 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
   }
 
   @Test
+  public void testCustomLongArrayOBO() throws RemoteInvocationException
+  {
+    FindRequest<Greeting> request = CUSTOM_TYPES_BUILDERS.findByCustomLongArray().addLsParam(new CustomLong(1L)).addLsParam(new CustomLong(2L)).build();
+    List<Greeting> elements = REST_CLIENT.sendRequest(request).getResponse().getEntity().getElements();
+    Assert.assertEquals(0, elements.size());
+  }
+
+  @Test
   public void testDate() throws RemoteInvocationException
   {
     FindRequest<Greeting> request = CUSTOM_TYPES_BUILDERS.findByDate().dParam(new Date(100)).build();

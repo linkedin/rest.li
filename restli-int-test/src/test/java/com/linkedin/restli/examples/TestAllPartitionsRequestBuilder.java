@@ -137,7 +137,7 @@ public class TestAllPartitionsRequestBuilder extends RestLiIntegrationTest {
     ActionRequestBuilder<Long, Greeting> builder = new ActionRequestBuilder<Long, Greeting>(TEST_URI, Greeting.class,
         _COLL_SPEC);
     ActionRequest<Greeting> request = builder.name("updateTone").id(1L).
-        param(new FieldDef<Tone>("newTone", Tone.class, DataTemplateUtil.getSchema(Tone.class)), Tone.FRIENDLY).build();
+        setParam(new FieldDef<Tone>("newTone", Tone.class, DataTemplateUtil.getSchema(Tone.class)), Tone.FRIENDLY).build();
 
     final Map<String, Greeting> results = new ConcurrentHashMap<String, Greeting>();
     final CountDownLatch latch = new CountDownLatch(PARTITION_NUM);

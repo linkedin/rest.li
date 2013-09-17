@@ -741,7 +741,7 @@ public class TestCompressionServer extends RestLiIntegrationTest
   {
     try
     {
-      FindRequest<Greeting> request = new GreetingsBuilders().findBySearch().name("search").param("count", count).build();
+      FindRequest<Greeting> request = new GreetingsBuilders().findBySearch().name("search").setParam("count", count).build();
       client.sendRequest(request).getResponse();
       Assert.fail("expected exception");
     }
