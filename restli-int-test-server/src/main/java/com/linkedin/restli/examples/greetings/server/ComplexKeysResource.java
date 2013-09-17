@@ -20,23 +20,24 @@
 package com.linkedin.restli.examples.greetings.server;
 
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.linkedin.data.transform.DataProcessingException;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.examples.greetings.api.Message;
-import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.api.TwoPartKey;
+import com.linkedin.restli.server.BatchUpdateRequest;
+import com.linkedin.restli.server.BatchUpdateResult;
 import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.resources.ComplexKeyResourceTemplate;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -94,5 +95,12 @@ public class ComplexKeysResource extends ComplexKeyResourceTemplate<TwoPartKey, 
       final Set<ComplexResourceKey<TwoPartKey, TwoPartKey>> ids)
   {
     return _dataProvider.batchGet(ids);
+  }
+
+  @Override
+  public BatchUpdateResult<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> batchUpdate(
+      final BatchUpdateRequest<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> entities)
+  {
+    return _dataProvider.batchUpdate(entities);
   }
 }

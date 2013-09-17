@@ -18,11 +18,15 @@ package com.linkedin.restli.examples.greetings.server;
 
 import com.linkedin.data.transform.DataProcessingException;
 import com.linkedin.restli.common.ComplexResourceKey;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.examples.StringTestKeys;
 import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.api.TwoPartKey;
+import com.linkedin.restli.server.BatchUpdateRequest;
+import com.linkedin.restli.server.BatchUpdateResult;
+import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.util.PatchApplier;
 
 import java.util.ArrayList;
@@ -100,6 +104,20 @@ public class ComplexKeysDataProvider
     }
 
     return results;
+  }
+
+  public BatchUpdateResult<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> batchUpdate(
+      BatchUpdateRequest<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> entities)
+  {
+    final Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, UpdateResponse> results =
+        new HashMap<ComplexResourceKey<TwoPartKey, TwoPartKey>, UpdateResponse>();
+
+    for (Map.Entry<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> entry : entities.getData().entrySet())
+    {
+      results.put(entry.getKey(), new UpdateResponse(HttpStatus.S_200_OK));
+    }
+
+    return new BatchUpdateResult<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(results);
   }
 
   private String keyToString(TwoPartKey key)

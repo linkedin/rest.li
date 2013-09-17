@@ -166,7 +166,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
       }
       else
       {
-        _queryParams.put(key, stringifySimpleValue(value));
+        _queryParams.put(key, DataTemplateUtil.stringify(value));
       }
     }
   }
@@ -213,7 +213,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
 
     Object castId =
         id instanceof ComplexResourceKey<?, ?>
-            ? ((ComplexResourceKey<?, ?>) id).toDataMap() : stringifySimpleValue(id);
+            ? ((ComplexResourceKey<?, ?>) id).toDataMap() : DataTemplateUtil.stringify(id);
 
     ids.add(castId);
   }
@@ -257,15 +257,14 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
     }
   }
 
-  private String keyToString(Object key, Escaping escaping)
+  private static String keyToString(Object key, Escaping escaping)
   {
+    String result;
     if (key == null)
     {
-      return null;
+      result = null;
     }
-
-    String result;
-    if (key instanceof ComplexResourceKey)
+    else if (key instanceof ComplexResourceKey)
     {
       result = ((ComplexResourceKey<?,?>)key).toStringFull(escaping);
     }
@@ -275,7 +274,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
     }
     else
     {
-      result = URLEscaper.escape(stringifySimpleValue(key), escaping);
+      result = URLEscaper.escape(DataTemplateUtil.stringify(key), escaping);
     }
     return result;
   }
@@ -309,20 +308,8 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
     }
     else
     {
-      return stringifySimpleValue(value);
+      return DataTemplateUtil.stringify(value);
     }
-  }
-
-  static String stringifySimpleValue(Object value)
-  {
-    Class<?> valueClass = value.getClass();
-    if (DataTemplateUtil.hasCoercer(valueClass))
-    {
-      @SuppressWarnings("unchecked")
-      Class<Object> fromClass = (Class<Object>) value.getClass();
-      return DataTemplateUtil.coerceInput(value, fromClass, Object.class).toString();
-    }
-    return value.toString();
   }
 
   /** given an array of primitives returns a collection of strings */
@@ -348,7 +335,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
     {
       throw new IllegalArgumentException("Path key must be non-null");
     }
-    _pathKeys.put(key, stringifySimpleValue(value));
+    _pathKeys.put(key, DataTemplateUtil.stringify(value));
   }
 
   protected void addAssocKey(String key, Object value)

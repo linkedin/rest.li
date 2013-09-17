@@ -23,6 +23,7 @@ import java.util.Set;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.PathSpec;
+import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.ResourceMethod;
@@ -87,7 +88,7 @@ public class GetRequest<T extends RecordTemplate> extends Request<T>
     }
     else
     {
-      return AbstractRequestBuilder.stringifySimpleValue(_id);
+      return DataTemplateUtil.stringify(_id);
     }
   }
 

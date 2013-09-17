@@ -5,6 +5,9 @@ Added the ability to inject MaskTree (@Projection) and PathKeys (@Keys) from a
 request into a method.  This allows KeyValueResources to be able to use
 Projections and PathKeys in their method implementations.
 
+(RB=211406)
+Fix bug that when complex resource key contains invalid URI characters (e.g. space), batch update fails with URISyntaxException.
+
 1.9.25
 ------
 (RB=211206, 211283)

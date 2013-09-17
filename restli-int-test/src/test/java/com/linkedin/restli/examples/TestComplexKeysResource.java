@@ -23,6 +23,8 @@ import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.client.BatchGetRequest;
 import com.linkedin.restli.client.BatchGetRequestBuilder;
+import com.linkedin.restli.client.BatchUpdateRequest;
+import com.linkedin.restli.client.BatchUpdateRequestBuilder;
 import com.linkedin.restli.client.CreateRequest;
 import com.linkedin.restli.client.CreateRequestBuilder;
 import com.linkedin.restli.client.FindRequest;
@@ -34,25 +36,28 @@ import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
 import com.linkedin.restli.client.RestClient;
+import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.client.util.PatchGenerator;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.PatchRequest;
+import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.examples.greetings.api.Message;
-import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.api.TwoPartKey;
-import com.linkedin.restli.examples.greetings.client.ComplexKeysBuilders;
 import com.linkedin.restli.examples.greetings.client.AnnotatedComplexKeysBuilders;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import com.linkedin.restli.examples.greetings.client.ComplexKeysBuilders;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 public class TestComplexKeysResource extends RestLiIntegrationTest
@@ -131,6 +136,12 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
   }
 
   @Test
+  public void testBatchUpdate() throws RemoteInvocationException
+  {
+    testBatchUpdateMain(COMPLEX_KEYS_BUILDERS.batchUpdate());
+  }
+
+  @Test
   public void testPromiseBatchGet() throws RemoteInvocationException
   {
     testBatchGetMain(ANNOTATED_COMPLEX_KEYS_BUILDERS.batchGet());
@@ -144,8 +155,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     ResponseFuture<Message> future = REST_CLIENT.sendRequest(request);
     Response<Message> response = future.getResponse();
 
-    Assert.assertEquals(response.getEntity().getMessage(),
-                        StringTestKeys.SIMPLEKEY + " " + StringTestKeys.SIMPLEKEY2);
+    Assert.assertEquals(response.getEntity().getMessage(), StringTestKeys.SIMPLEKEY + " " + StringTestKeys.SIMPLEKEY2);
   }
 
   private void testCreateMain(
@@ -227,6 +237,29 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     BatchResponse<Message> response = future.getResponse().getEntity();
 
     Assert.assertEquals(response.getResults().size(), ids.size());
+  }
+
+  private void testBatchUpdateMain(
+      BatchUpdateRequestBuilder<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> requestBuilder)  throws RemoteInvocationException
+  {
+    final String messageText = "newMessage";
+    final Message message = new Message();
+    message.setMessage(messageText);
+
+    final Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> inputs = new HashMap<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>();
+    inputs.put(getComplexKey(StringTestKeys.SIMPLEKEY, StringTestKeys.SIMPLEKEY2), message);
+    inputs.put(getComplexKey(StringTestKeys.URL, StringTestKeys.URL2), message);
+    final BatchUpdateRequest<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> request = requestBuilder.inputs(inputs).build();
+    final ResponseFuture<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, UpdateStatus>> future = REST_CLIENT.sendRequest(request);
+    final BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, UpdateStatus> response = future.getResponse().getEntity();
+
+    for (Map.Entry<ComplexResourceKey<TwoPartKey, TwoPartKey>, UpdateStatus> resp : response.getResults().entrySet())
+    {
+      Assert.assertTrue(inputs.containsKey(resp.getKey()));
+      Assert.assertEquals(resp.getValue().getStatus().intValue(), 200);
+    }
+
+    Assert.assertTrue(response.getErrors().isEmpty());
   }
 
   private static ComplexResourceKey<TwoPartKey, TwoPartKey> getComplexKey(

@@ -30,9 +30,9 @@ public class StringTestKeys
   public static String URL2 = "http://foo.biz:1234/url2?k1=v1&k2=v2&k3=a+b&k4=1%202&q=1,2,3";
   public static String URL3 = "http://foo.biz:1234/url3?k1=v1&k2=v2&k3=a+b&k4=1%202";
 
-  public static String SIMPLEKEY = "KEY1";
-  public static String SIMPLEKEY2 = "KEY2";
-  public static String SIMPLEKEY3 = "KEY3";
+  public static String SIMPLEKEY = "KEY 1";
+  public static String SIMPLEKEY2 = "KEY 2";
+  public static String SIMPLEKEY3 = "KEY 3";
 
   static {
     try

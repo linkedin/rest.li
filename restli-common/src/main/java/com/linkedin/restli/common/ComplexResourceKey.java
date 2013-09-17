@@ -84,7 +84,12 @@ public final class ComplexResourceKey<K extends RecordTemplate, P extends Record
    */
   public String toString()
   {
-    return QueryParamsDataMap.dataMapToQueryString(key.data(), Escaping.NO_ESCAPING);
+    return toString(Escaping.NO_ESCAPING);
+  }
+
+  public String toString(Escaping escaping)
+  {
+    return QueryParamsDataMap.dataMapToQueryString(key.data(), escaping);
   }
 
   /**

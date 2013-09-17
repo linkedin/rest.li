@@ -216,7 +216,7 @@ public class CompoundKey
       {
         b.append(URLEncoder.encode(keyPart, RestConstants.DEFAULT_CHARSET_NAME));
         b.append(RestConstants.KEY_VALUE_DELIMITER);
-        b.append(URLEncoder.encode(stringifySimpleValue(_keys.get(keyPart)), RestConstants.DEFAULT_CHARSET_NAME));
+        b.append(URLEncoder.encode(DataTemplateUtil.stringify(_keys.get(keyPart)), RestConstants.DEFAULT_CHARSET_NAME));
       }
       catch (UnsupportedEncodingException e)
       {
@@ -225,18 +225,5 @@ public class CompoundKey
       delimit = true;
     }
     return b.toString();
-  }
-
-  // replicated from AbstractRequestBuilder.
-  private static String stringifySimpleValue(Object value)
-  {
-    Class<?> valueClass = value.getClass();
-    if (DataTemplateUtil.hasCoercer(valueClass))
-    {
-      @SuppressWarnings("unchecked")
-      Class<Object> fromClass = (Class<Object>) value.getClass();
-      return DataTemplateUtil.coerceInput(value, fromClass, Object.class).toString();
-    }
-    return value.toString();
   }
 }

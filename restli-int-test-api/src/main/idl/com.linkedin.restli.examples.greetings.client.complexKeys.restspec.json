@@ -10,7 +10,7 @@
       "type" : "com.linkedin.restli.examples.greetings.api.TwoPartKey",
       "params" : "com.linkedin.restli.examples.greetings.api.TwoPartKey"
     },
-    "supports" : [ "batch_get", "create", "get", "partial_update" ],
+    "supports" : [ "batch_get", "batch_update", "create", "get", "partial_update" ],
     "methods" : [ {
       "method" : "create"
     }, {
@@ -19,6 +19,8 @@
       "method" : "partial_update"
     }, {
       "method" : "batch_get"
+    }, {
+      "method" : "batch_update"
     } ],
     "finders" : [ {
       "name" : "prefix",

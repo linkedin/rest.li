@@ -658,6 +658,29 @@ public class DataTemplateUtil
     }
   }
 
+  /**
+   * Convert an input value to its string representation. Valid input type includes
+   * <ul>
+   *   <li>Java primitive types and their boxed versions</li>
+   *   <li>Java Enums</li>
+   *   <li>Custom classes that have their coercers registered</li>
+   * </ul>
+   *
+   * @param object provides the input value to be coerced.
+   * @return string representation of the input object.
+   */
+  public static String stringify(Object object)
+  {
+    final Class<?> valueClass = object.getClass();
+    if (DataTemplateUtil.hasCoercer(valueClass))
+    {
+      @SuppressWarnings("unchecked")
+      final Class<Object> fromClass = (Class<Object>) object.getClass();
+      return DataTemplateUtil.coerceInput(object, fromClass, Object.class).toString();
+    }
+    return object.toString();
+  }
+
   @SuppressWarnings("unchecked")
   private static final Object stringToEnum(@SuppressWarnings("rawtypes") Class targetClass, String value)
       throws TemplateOutputCastException
@@ -741,5 +764,4 @@ public class DataTemplateUtil
       throw new IllegalArgumentException(clazz + " cannot be initialized", exc);
     }
   }
-
 }

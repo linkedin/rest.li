@@ -24,11 +24,15 @@ import java.io.IOException;
 import java.util.Map;
 
 import com.linkedin.data.DataMap;
+import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.BatchResponse;
+import com.linkedin.restli.common.ComplexResourceKey;
+import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.common.URLEscaper;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.server.ResourceContext;
@@ -61,7 +65,7 @@ public abstract class AbstractBatchResponseBuilder<V>
       DataMap errorData =
           _errorResponseBuilder.buildResponse(request, routingResult, entry.getValue(), headers)
                  .getDataMap();
-      batchResponse.getErrors().put(entry.getKey().toString(),
+      batchResponse.getErrors().put(keyToString(entry.getKey()),
                                     new ErrorResponse(errorData));
     }
 
@@ -70,7 +74,7 @@ public abstract class AbstractBatchResponseBuilder<V>
       DataMap errorData =
           _errorResponseBuilder.buildResponse(request, routingResult, entry.getValue(), headers)
                  .getDataMap();
-      batchResponse.getErrors().put(entry.getKey().toString(),
+      batchResponse.getErrors().put(keyToString(entry.getKey()),
                                     new ErrorResponse(errorData));
     }
   }
@@ -86,7 +90,7 @@ public abstract class AbstractBatchResponseBuilder<V>
     for (Map.Entry<?, ? extends V> entry: resultsMap.entrySet())
     {
       DataMap data = buildResultRecord(entry.getValue(), resourceContext);
-      dataMap.put(entry.getKey().toString(), data);
+      dataMap.put(keyToString(entry.getKey()), data);
     }
 
     headers.put(RestConstants.HEADER_LINKEDIN_TYPE, BatchResponse.class.getName());
@@ -110,4 +114,26 @@ public abstract class AbstractBatchResponseBuilder<V>
    * @return a RecordTemplate representation of the converted object
    */
   protected abstract DataMap buildResultRecord(V o, ResourceContext resourceContext);
+
+  private static String keyToString(Object key)
+  {
+    String result;
+    if (key == null)
+    {
+      result = null;
+    }
+    else if (key instanceof ComplexResourceKey)
+    {
+      result = ((ComplexResourceKey<?,?>)key).toString(URLEscaper.Escaping.URL_ESCAPING);
+    }
+    else if (key instanceof CompoundKey)
+    {
+      result = key.toString(); // already escaped
+    }
+    else
+    {
+      result = URLEscaper.escape(DataTemplateUtil.stringify(key), URLEscaper.Escaping.NO_ESCAPING);
+    }
+    return result;
+  }
 }
