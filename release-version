@@ -1,8 +1,8 @@
 #!/bin/sh
 
-VERSION=`sed -n 's|version = ||p' gradle.properties`
+source $(dirname $0)/gradle.properties
 
-echo Attempting to publish: $VERSION
+echo Attempting to publish: $version
 echo
 
 DIRTY="`git status --porcelain || echo FAIL`"
@@ -22,10 +22,10 @@ then
     exit 1
 fi
 
-CHANGELOG=`grep $VERSION CHANGELOG`
+CHANGELOG=`grep $version CHANGELOG`
 if test $? -ne 0
 then
-    echo "No entry in the CHANGELOG for version $VERSION." 2>&1
+    echo "No entry in the CHANGELOG for version $version." 2>&1
     echo "To get a list of changes, use git log previous_tag.." 2>&1
     echo "Add an entry to the CHANGELOG and run this command again." 2>&1
     exit 1
@@ -33,7 +33,7 @@ fi
 
 if [ ! $SKIP_TAGGING_VERSION ]
 then
-    git tag v$VERSION && \
-    git push origin v$VERSION && \
+    git tag v$version && \
+    git push origin v$version && \
     echo "Publish completed successfully."
 fi
