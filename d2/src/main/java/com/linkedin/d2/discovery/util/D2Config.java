@@ -548,7 +548,7 @@ public class D2Config
                                          Map<String,Object> clusterConfig,
                                          String clusterName)
   {
-    PartitionProperties.PartitionType partitionType = PropertyUtil.checkAndGetValue(partitionProperties, "partitionType",
+    PartitionProperties.PartitionType partitionType = PropertyUtil.checkAndGetValue(partitionProperties, PropertyKeys.PARTITION_TYPE,
                                                                                     PartitionProperties.PartitionType.class, clusterName);
 
     switch (partitionType)
@@ -556,17 +556,17 @@ public class D2Config
 
       case RANGE:
       {
-        if (partitionProperties.get("partitionKeyRegex") == null)
+        if (partitionProperties.get(PropertyKeys.PARTITION_KEY_REGEX) == null)
         {
           _log.error("null partitionKeyRegex for cluster: " + clusterName);
           return PARTITION_CONFIG_ERROR_EXIT_CODE;
         }
-        Long partitionSize = PropertyUtil.parseLong("partitionSize",
-                                                    PropertyUtil.checkAndGetValue(partitionProperties, "partitionSize", String.class, clusterName));
-        int partitionCount = PropertyUtil.parseInt("partitionCount",
-                                                   PropertyUtil.checkAndGetValue(partitionProperties, "partitionCount", String.class, clusterName));
-        Long start = PropertyUtil.parseLong("keyRangeStart",
-                                            PropertyUtil.checkAndGetValue(partitionProperties, "keyRangeStart", String.class, clusterName));
+        Long partitionSize = PropertyUtil.parseLong(PropertyKeys.PARTITION_SIZE,
+                                                    PropertyUtil.checkAndGetValue(partitionProperties, PropertyKeys.PARTITION_SIZE, String.class, clusterName));
+        int partitionCount = PropertyUtil.parseInt(PropertyKeys.PARTITION_COUNT,
+                                                   PropertyUtil.checkAndGetValue(partitionProperties, PropertyKeys.PARTITION_COUNT, String.class, clusterName));
+        Long start = PropertyUtil.parseLong(PropertyKeys.KEY_RANGE_START,
+                                            PropertyUtil.checkAndGetValue(partitionProperties, PropertyKeys.KEY_RANGE_START, String.class, clusterName));
 
         if (partitionSize <= 0)
         {
@@ -585,35 +585,35 @@ public class D2Config
         }
 
         // replace string with numbers so that it works with the serializer
-        partitionProperties.put("partitionSize", partitionSize);
-        partitionProperties.put("partitionCount", partitionCount);
-        partitionProperties.put("keyRangeStart", start);
-        clusterConfig.put("partitionProperties", partitionProperties);
+        partitionProperties.put(PropertyKeys.PARTITION_SIZE, partitionSize);
+        partitionProperties.put(PropertyKeys.PARTITION_COUNT, partitionCount);
+        partitionProperties.put(PropertyKeys.KEY_RANGE_START, start);
+        clusterConfig.put(PropertyKeys.PARTITION_PROPERTIES, partitionProperties);
 
       }
       break;
 
       case HASH:
       {
-        if (partitionProperties.get("partitionKeyRegex") == null)
+        if (partitionProperties.get(PropertyKeys.PARTITION_KEY_REGEX) == null)
         {
           _log.error("null partitionKeyRegex for cluster: " + clusterName);
           return PARTITION_CONFIG_ERROR_EXIT_CODE;
         }
 
-        int partitionCount = PropertyUtil.parseInt("partitionCount",
-                                                   PropertyUtil.checkAndGetValue(partitionProperties, "partitionCount", String.class, clusterName));
+        int partitionCount = PropertyUtil.parseInt(PropertyKeys.PARTITION_COUNT,
+                                                   PropertyUtil.checkAndGetValue(partitionProperties, PropertyKeys.PARTITION_COUNT, String.class, clusterName));
         if (partitionCount < 0)
         {
           _log.error("partition count needs to be non negative");
           return PARTITION_CONFIG_ERROR_EXIT_CODE;
         }
         // replace string with number so that it works with the serializer
-        partitionProperties.put("partitionCount", partitionCount);
-        clusterConfig.put("partitionProperties", partitionProperties);
+        partitionProperties.put(PropertyKeys.PARTITION_COUNT, partitionCount);
+        clusterConfig.put(PropertyKeys.PARTITION_PROPERTIES, partitionProperties);
         try
         {
-          String algorithm = PropertyUtil.checkAndGetValue(partitionProperties, "hashAlgorithm", String.class, clusterName);
+          String algorithm = PropertyUtil.checkAndGetValue(partitionProperties, PropertyKeys.HASH_ALGORITHM, String.class, clusterName);
           HashBasedPartitionProperties.HashAlgorithm.valueOf(algorithm.toUpperCase());
         }
         catch(Exception e)
