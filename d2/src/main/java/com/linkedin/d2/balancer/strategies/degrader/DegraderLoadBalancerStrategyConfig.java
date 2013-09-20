@@ -29,9 +29,7 @@ import org.slf4j.LoggerFactory;
 
 public class DegraderLoadBalancerStrategyConfig
 {
-  private final double _maxClusterLatencyWithoutDegrading;
   private final long   _updateIntervalMs;
-  private final double _defaultSuccessfulTransmissionWeight;
   private final int    _pointsPerWeight;
   private final String _hashMethod;
   private final Map<String,Object> _hashConfig;
@@ -64,8 +62,6 @@ public class DegraderLoadBalancerStrategyConfig
   public static final double DEFAULT_INITIAL_RECOVERY_LEVEL = 0.01;
   public static final double DEFAULT_RAMP_FACTOR = 1.0;
   public static final long DEFAULT_UPDATE_INTERVAL_MS = 5000L;
-  public static final double DEFAULT_MAX_CLUSTER_LATENCY_WITHOUT_DEGRADING = 500d;
-  public static final double DEFAULT_SUCCESSFUL_TRANSMISSION_WEIGHT = 1d;
   public static final int DEFAULT_POINTS_PER_WEIGHT = 100;
   // I think that these two will require tuning, based upon the service SLA.
   // Using degrader's defaults.
@@ -80,7 +76,7 @@ public class DegraderLoadBalancerStrategyConfig
   public DegraderLoadBalancerStrategyConfig(long updateIntervalMs,
                                             double maxClusterLatencyWithoutDegrading)
   {
-    this(updateIntervalMs, maxClusterLatencyWithoutDegrading, 1d, 100, null, Collections.<String, Object>emptyMap(),
+    this(updateIntervalMs, 100, null, Collections.<String, Object>emptyMap(),
          DEFAULT_CLOCK, DEFAULT_INITIAL_RECOVERY_LEVEL, DEFAULT_RAMP_FACTOR, DEFAULT_HIGH_WATER_MARK, DEFAULT_LOW_WATER_MARK,
          DEFAULT_GLOBAL_STEP_UP, DEFAULT_GLOBAL_STEP_DOWN);
   }
@@ -88,8 +84,6 @@ public class DegraderLoadBalancerStrategyConfig
   public DegraderLoadBalancerStrategyConfig(DegraderLoadBalancerStrategyConfig config)
   {
     this(config.getUpdateIntervalMs(),
-         config.getMaxClusterLatencyWithoutDegrading(),
-         config.getDefaultSuccessfulTransmissionWeight(),
          config.getPointsPerWeight(),
          config.getHashMethod(),
          config.getHashConfig(),
@@ -103,8 +97,6 @@ public class DegraderLoadBalancerStrategyConfig
   }
 
   public DegraderLoadBalancerStrategyConfig(long updateIntervalMs,
-                                            double maxClusterLatencyWithoutDegrading,
-                                            double defaultSuccessfulTransmissionWeight,
                                             int pointsPerWeight,
                                             String hashMethod,
                                             Map<String,Object> hashConfig,
@@ -117,8 +109,6 @@ public class DegraderLoadBalancerStrategyConfig
                                             double globalStepDown)
   {
     _updateIntervalMs = updateIntervalMs;
-    _maxClusterLatencyWithoutDegrading = maxClusterLatencyWithoutDegrading;
-    _defaultSuccessfulTransmissionWeight = defaultSuccessfulTransmissionWeight;
     _pointsPerWeight = pointsPerWeight;
     _hashMethod = hashMethod;
     _hashConfig = Collections.unmodifiableMap(hashConfig);
@@ -158,14 +148,6 @@ public class DegraderLoadBalancerStrategyConfig
                        PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS,
                        DEFAULT_UPDATE_INTERVAL_MS, Long.class);
 
-    Double maxClusterLatencyWithoutDegrading = MapUtil.getWithDefault(map,
-                       PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_MAX_CLUSTER_LATENCY_WITHOUT_DEGRADING,
-                       DEFAULT_MAX_CLUSTER_LATENCY_WITHOUT_DEGRADING, Double.class);
-
-    Double defaultSuccessfulTransmissionWeight = MapUtil.getWithDefault(map,
-                       PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_DEFAULT_SUCCESSFUL_TRANSMISSION_WEIGHT,
-                       DEFAULT_SUCCESSFUL_TRANSMISSION_WEIGHT, Double.class);
-
     Integer pointsPerWeight = MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_POINTS_PER_WEIGHT,
                        DEFAULT_POINTS_PER_WEIGHT, Integer.class);
 
@@ -197,19 +179,9 @@ public class DegraderLoadBalancerStrategyConfig
     Map<String,Object> hashConfig = (Map<String,Object>)obj;
 
     return new DegraderLoadBalancerStrategyConfig(
-        updateIntervalMs, maxClusterLatencyWithoutDegrading,
-        defaultSuccessfulTransmissionWeight, pointsPerWeight, hashMethod, hashConfig,
+        updateIntervalMs, pointsPerWeight, hashMethod, hashConfig,
         clock, initialRecoveryLevel, ringRampFactor, highWaterMark, lowWaterMark,
         globalStepUp, globalStepDown);
-  }
-
-  /**
-   * @return The maximum cluster latency to tolerate before the degrader will begin
-   *         allowing nodes to drop traffic.
-   */
-  public double getMaxClusterLatencyWithoutDegrading()
-  {
-    return _maxClusterLatencyWithoutDegrading;
   }
 
   /**
@@ -218,15 +190,6 @@ public class DegraderLoadBalancerStrategyConfig
   public long getUpdateIntervalMs()
   {
     return _updateIntervalMs;
-  }
-
-  /**
-   * @return The weight to be assigned to a node by default if no calls have been made to
-   *         a cluster recently.
-   */
-  public double getDefaultSuccessfulTransmissionWeight()
-  {
-    return _defaultSuccessfulTransmissionWeight;
   }
 
   /**
@@ -288,7 +251,6 @@ public class DegraderLoadBalancerStrategyConfig
     return "DegraderLoadBalancerStrategyConfig [_highWaterMark=" + _highWaterMark
             + ", _lowWaterMark=" + _lowWaterMark + ", _initialRecoveryLevel=" + _initialRecoveryLevel
             + ", _ringRampFactor=" + _ringRampFactor + ", _globalStepUp=" + _globalStepUp
-            + ", _globalStepDown=" + _globalStepDown + ", _pointsPerWeight=" + _pointsPerWeight
-            + ", _defaultTransmissionRate=" + _defaultSuccessfulTransmissionWeight + "]";
+            + ", _globalStepDown=" + _globalStepDown + ", _pointsPerWeight=" + _pointsPerWeight + "]";
   }
 }

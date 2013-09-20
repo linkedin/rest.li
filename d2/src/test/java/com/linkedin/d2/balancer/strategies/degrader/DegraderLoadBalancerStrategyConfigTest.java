@@ -65,8 +65,6 @@ public class DegraderLoadBalancerStrategyConfigTest
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(properties);
 
     assertEquals(config.getUpdateIntervalMs(), httpUpdateIntervalMs);
-    assertEquals(config.getMaxClusterLatencyWithoutDegrading(), httpMaxClusterLatencyWithoutDegrading);
-    assertEquals(config.getDefaultSuccessfulTransmissionWeight(), httpDefaultSuccessfulTransmissionWeight);
     assertEquals(config.getPointsPerWeight(), httpPointsPerWeight);
     assertEquals(config.getHashMethod(), httpHashMethod);
     assertEquals(config.getInitialRecoveryLevel(), httpInitialRecoveryLevel);
@@ -81,10 +79,6 @@ public class DegraderLoadBalancerStrategyConfigTest
     properties.clear();
     config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(properties);
     assertEquals(config.getUpdateIntervalMs(), DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS);
-    assertEquals(config.getMaxClusterLatencyWithoutDegrading(),
-                 DegraderLoadBalancerStrategyConfig.DEFAULT_MAX_CLUSTER_LATENCY_WITHOUT_DEGRADING);
-    assertEquals(config.getDefaultSuccessfulTransmissionWeight(),
-                 DegraderLoadBalancerStrategyConfig.DEFAULT_SUCCESSFUL_TRANSMISSION_WEIGHT);
     assertEquals(config.getPointsPerWeight(),
                  DegraderLoadBalancerStrategyConfig.DEFAULT_POINTS_PER_WEIGHT);
     assertNull(config.getHashMethod());
