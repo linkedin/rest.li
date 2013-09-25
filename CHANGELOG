@@ -1,6 +1,11 @@
 1.9.36
 ------
-
+(RB=214848)
+Refactored Count checks as individual tasks out of PegasusPlugin, and reintegrated them back into
+regular compatibility checks.
+Changed the message emitted with changes.
+New message will appear if a compatibility check is run on what appears to be a continuous integ.
+environment (where -Prest.model.compatibility=equivalent).
 
 1.9.35
 ------
