@@ -753,6 +753,21 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
       trace(_log, _name, ".onAdd: ", propertyName, ": ", propertyValue);
 
       handlePut(propertyName, propertyValue);
+
+      // if bad properties are received, then onInitialize()::handlePut might throw an exception and
+      // the queue might not be closed. If the queue is not closed, then even if the underlying
+      // problem with the properties is fixed and handlePut succeeds, new callbacks will be added
+      // to the queue (in ensureListening) but never be triggered. We will attempt to close the
+      // queue here if needed, and trigger any callbacks on that queue. If the queue is already
+      // closed, it will return an empty list.
+      List<LoadBalancerStateListenerCallback> queueList = _waiters.get(propertyName).ensureClosed();
+      if (queueList != null)
+      {
+        for (LoadBalancerStateListenerCallback waiter : queueList)
+        {
+          waiter.done(_type, propertyName);
+        }
+      }
     }
 
     @Override
@@ -774,6 +789,20 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
       trace(_log, _name, ".onRemove: ", propertyName);
 
       handleRemove(propertyName);
+
+      // if we are removing this property, ensure that its corresponding queue is closed and
+      // remove it's entry from _waiters. We are invoking down on the callbacks to indicate we
+      // heard back from zookeeper, and that the callers can proceed (even if they subsequently get
+      // a ServiceUnavailableException)
+      List<LoadBalancerStateListenerCallback> queueList = _waiters.get(propertyName).ensureClosed();
+      if (queueList != null)
+      {
+        for (LoadBalancerStateListenerCallback waiter : queueList)
+        {
+          waiter.done(_type, propertyName);
+        }
+      }
+      _waiters.remove(propertyName);
     }
 
     protected abstract void handlePut(String propertyName, T propertyValue);

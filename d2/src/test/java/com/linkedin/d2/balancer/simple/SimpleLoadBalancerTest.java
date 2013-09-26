@@ -793,6 +793,10 @@ public class SimpleLoadBalancerTest
     public TransportClient getClient(Map<String, ? extends Object> properties)
     {
       _count.incrementAndGet();
+      if (properties.containsKey("foobar"))
+      {
+        throw new IllegalArgumentException();
+      }
       return new DoNothingClient();
     }
 

@@ -87,9 +87,19 @@ public class ClosableQueue<T>
    */
   public List<T> close()
   {
-    if (!_closing.compareAndSet(false, true))
+    List<T> queue = ensureClosed();
+    if (queue == null)
     {
       throw new IllegalStateException("Queue is already closed");
+    }
+    return queue;
+  }
+
+  public List<T> ensureClosed()
+  {
+    if (!_closing.compareAndSet(false, true))
+    {
+      return null;
     }
     boolean interrupted = false;
     int count = _count.get();

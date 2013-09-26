@@ -75,6 +75,16 @@ public class MockStore<T> implements PropertyEventPublisher<T>, PropertyStore<T>
     }
   }
 
+  // add to properties without publishing to the eventBus. This is needed so that we can test
+  // publishInitialize easily in this MockStore.
+  public void addPropertySecretly(String listenTo, T discoveryProperties)
+  {
+    synchronized (_properties)
+    {
+      _properties.put(listenTo, discoveryProperties);
+    }
+  }
+
   @Override
   public void remove(String listenTo)
   {

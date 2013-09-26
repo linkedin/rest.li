@@ -1097,6 +1097,58 @@ public class SimpleLoadBalancerStateTest
     assertEquals(client.getUri(), uri);
   }
 
+  @Test(groups = { "small", "back-end" })
+  public void testGetClientAfterBadProperties() throws URISyntaxException, InterruptedException
+  {
+    reset();
+
+    URI uri = URI.create("http://cluster-1/test");
+    List<String> schemes = new ArrayList<String>();
+    Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
+    partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>();
+    uriData.put(uri, partitionData);
+
+    schemes.add("http");
+
+    assertNull(_state.getClient("service-1", uri));
+
+    Map<String,Object> transportProperties = new HashMap<String,Object>();
+    transportProperties.put("foobar", "unsupportedValue");
+
+    _serviceRegistry.addPropertySecretly("service-1", new ServiceProperties("service-1", "cluster-1",
+                                                                            "/test", "random", null,
+                                                                            Collections.<String, Object>emptyMap(),
+                                                                            transportProperties, null, schemes, null));
+
+    // we add the property first before listening to the service because the MockStore will
+    // immediately publish to the eventBus, whereas the production stores wait until we get a response
+    // back from zookeeper, which triggers handlePut.
+    CountDownLatch cdl1 = new CountDownLatch(1);
+    _state.listenToService("service-1", new SimpleLoadBalancer.SimpleLoadBalancerCountDownCallback(cdl1));
+    assertEquals(cdl1.getCount(), 1);
+
+    // set up state
+    CountDownLatch cdl2 = new CountDownLatch(1);
+    _state.listenToCluster("cluster-1", new SimpleLoadBalancer.SimpleLoadBalancerCountDownCallback(cdl2));
+    assertTrue(cdl2.await(60, TimeUnit.SECONDS));
+
+    _uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData));
+
+    assertNull(_state.getClient("service-1", uri));
+
+    _serviceRegistry.put("service-1", new ServiceProperties("service-1", "cluster-1",
+                                                            "/test", "random", null,
+                                                            Collections.<String, Object>emptyMap(),
+                                                            null, null, schemes, null));
+
+    CountDownLatch cdl = new CountDownLatch(1);
+    _state.listenToService("service-1", new SimpleLoadBalancer.SimpleLoadBalancerCountDownCallback(cdl));
+
+    assertTrue(cdl.await(60, TimeUnit.SECONDS));
+
+  }
+
   private static class TestShutdownCallback implements PropertyEventShutdownCallback
   {
     private final CountDownLatch _latch = new CountDownLatch(1);
