@@ -24,6 +24,8 @@ import com.linkedin.restli.examples.StringTestKeys;
 import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.api.TwoPartKey;
+import com.linkedin.restli.server.BatchDeleteRequest;
+import com.linkedin.restli.server.BatchPatchRequest;
 import com.linkedin.restli.server.BatchUpdateRequest;
 import com.linkedin.restli.server.BatchUpdateResult;
 import com.linkedin.restli.server.UpdateResponse;
@@ -114,7 +116,49 @@ public class ComplexKeysDataProvider
 
     for (Map.Entry<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> entry : entities.getData().entrySet())
     {
+      if (_db.containsKey(keyToString(entry.getKey().getKey())))
+      {
+        _db.put(keyToString(entry.getKey().getKey()), entry.getValue());
+      }
+
       results.put(entry.getKey(), new UpdateResponse(HttpStatus.S_200_OK));
+    }
+
+    return new BatchUpdateResult<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(results);
+  }
+
+  public BatchUpdateResult<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> batchUpdate(
+      BatchPatchRequest<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> patches)
+  {
+    final Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, UpdateResponse> results =
+        new HashMap<ComplexResourceKey<TwoPartKey, TwoPartKey>, UpdateResponse>();
+
+    for (Map.Entry<ComplexResourceKey<TwoPartKey, TwoPartKey>, PatchRequest<Message>> patch : patches.getData().entrySet())
+    {
+      try
+      {
+        this.partialUpdate(patch.getKey(), patch.getValue());
+        results.put(patch.getKey(), new UpdateResponse(HttpStatus.S_204_NO_CONTENT));
+      }
+      catch (DataProcessingException e)
+      {
+        results.put(patch.getKey(), new UpdateResponse(HttpStatus.S_400_BAD_REQUEST));
+      }
+    }
+
+    return new BatchUpdateResult<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(results);
+  }
+
+  public BatchUpdateResult<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> batchDelete(
+      BatchDeleteRequest<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> ids)
+  {
+    final Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, UpdateResponse> results =
+        new HashMap<ComplexResourceKey<TwoPartKey, TwoPartKey>, UpdateResponse>();
+
+    for (ComplexResourceKey<TwoPartKey, TwoPartKey> id : ids.getKeys())
+    {
+      _db.remove(keyToString(id.getKey()));
+      results.put(id, new UpdateResponse(HttpStatus.S_204_NO_CONTENT));
     }
 
     return new BatchUpdateResult<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(results);

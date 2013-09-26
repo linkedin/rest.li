@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.internal.common;
 
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,8 +28,17 @@ import java.util.regex.Pattern;
 import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.schema.validation.CoercionMode;
+import com.linkedin.data.schema.validation.RequiredMode;
+import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
+import com.linkedin.data.schema.validation.ValidationOptions;
+import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.jersey.api.uri.UriComponent;
+import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.PathSegment.ListMap;
 import com.linkedin.restli.internal.common.PathSegment.MapMap;
@@ -405,5 +415,54 @@ public class QueryParamsDataMap
   public static void addSortedParams(UriBuilder uriBuilder, DataMap params)
   {
     addSortedParams(uriBuilder, queryString(params));
+  }
+
+  /**
+   * Because of backwards compatibility concerns, array fields of the key component of a
+   * {@link ComplexResourceKey}s in a get request will be represented in the request url in the old
+   * style.  That is, if an array field has the name "a", and contains [1,2] the part of the url
+   * representing the serialized array will look like  "a=1&a=2".  However, if the array is a
+   * singleton it will just be represented by "a=1". Therefore it is not possible to distinguish
+   * between a single value itself and an array containing a single value.
+   *
+   * The purpose of this function is to fix up the singleton array problem by checking to see whether the given
+   * ComplexKey's key part has an array component, and, if so and the data for that field is NOT a dataList,
+   * placing the data into a dataList.
+   *
+   * @param complexResourceKey The complex key to be fixed.
+   */
+  public static ComplexResourceKey<?, ?> fixUpComplexKeySingletonArray(ComplexResourceKey<?,?> complexResourceKey)
+  {
+    RecordTemplate key = complexResourceKey.getKey();
+    DataMap dataMap = key.data();
+
+    for (RecordDataSchema.Field f : key.schema().getFields())
+    {
+      DataSchema.Type type = f.getType().getType();
+      String fieldName = f.getName();
+
+      if (type == DataSchema.Type.ARRAY && dataMap.containsKey(fieldName))
+      {
+        Object arrayFieldValue = dataMap.get(fieldName);
+
+        if (!(arrayFieldValue instanceof DataList))
+        {
+          DataList list = new DataList();
+          list.add(arrayFieldValue);
+          ValidateDataAgainstSchema.validate(list,
+                                             f.getType(),
+                                             new ValidationOptions(RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT,
+                                                                   CoercionMode.STRING_TO_PRIMITIVE));
+          dataMap.put(fieldName, list);
+        }
+      }
+    }
+
+    RecordTemplate wrappedKey = DataTemplateUtil.wrap(dataMap, key.getClass());
+    @SuppressWarnings("unchecked")
+    ComplexResourceKey<?, ?> newKey =
+        new ComplexResourceKey<RecordTemplate, RecordTemplate>(wrappedKey, complexResourceKey.getParams());
+
+    return newKey;
   }
 }

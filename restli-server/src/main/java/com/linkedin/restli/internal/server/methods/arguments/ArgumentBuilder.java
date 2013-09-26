@@ -22,10 +22,7 @@ package com.linkedin.restli.internal.server.methods.arguments;
 
 
 import com.linkedin.data.DataList;
-import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.ArrayDataSchema;
-import com.linkedin.data.schema.DataSchema;
-import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.validation.CoercionMode;
 import com.linkedin.data.schema.validation.RequiredMode;
 import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
@@ -37,6 +34,7 @@ import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.internal.common.QueryParamsDataMap;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
 import com.linkedin.restli.internal.server.util.RestUtils;
@@ -74,7 +72,7 @@ public class ArgumentBuilder
   {
     Object[] arguments = Arrays.copyOf(positionalArguments, parameters.size());
 
-    fixUpComplexKeySingletonArray(arguments);
+    fixUpComplexKeySingletonArraysInArguments(arguments);
 
     for (int i = positionalArguments.length; i < parameters.size(); ++i)
     {
@@ -131,13 +129,13 @@ public class ArgumentBuilder
    * singleton it will just be represented by "a=1". Therefore it is not possible to distinguish
    * between a single value itself and an array containing a single value.
    *
-   * The purpose of this function is to fixup the singleton array problem by checking to see if the
-   * request is a ComplexKey, whether that ComplesKey's key part has an array component, and, if so
+   * The purpose of this function is to fix up the singleton array problem by checking to see if the
+   * request is a ComplexKey, whether that ComplexKey's key part has an array component, and, if so
    * and the data for that field is NOT a dataList, placing the data into a dataList.
    *
    * @param arguments the final list of all the arguments.
    */
-  private static void fixUpComplexKeySingletonArray(Object[] arguments)
+  private static void fixUpComplexKeySingletonArraysInArguments(Object[] arguments)
   {
     for(int i=0; i < arguments.length; i++)
     {
@@ -145,27 +143,7 @@ public class ArgumentBuilder
       if (k instanceof ComplexResourceKey)
       {
         ComplexResourceKey<?, ?> complexResourceKey = (ComplexResourceKey<?, ?>)k;
-        RecordTemplate key = complexResourceKey.getKey();
-        DataMap dataMap = key.data();
-        for(RecordDataSchema.Field f : key.schema().getFields())
-        {
-          DataSchema.Type type = f.getType().getType();
-          String fieldName = f.getName();
-          if (type == DataSchema.Type.ARRAY && dataMap.containsKey(fieldName))
-          {
-            Object arrayFieldValue = dataMap.get(fieldName);
-            if (!(arrayFieldValue instanceof DataList))
-            {
-              DataList list = new DataList();
-              list.add(arrayFieldValue);
-              dataMap.put(fieldName, list);
-            }
-          }
-        }
-        RecordTemplate wrappedKey = DataTemplateUtil.wrap(dataMap, key.getClass());
-        @SuppressWarnings("unchecked")
-	ComplexResourceKey<?, ?> newKey = 
-          new ComplexResourceKey<RecordTemplate, RecordTemplate>(wrappedKey, complexResourceKey.getParams());
+        ComplexResourceKey<?, ?> newKey = QueryParamsDataMap.fixUpComplexKeySingletonArray(complexResourceKey);
         arguments[i] = newKey;
       }
     }

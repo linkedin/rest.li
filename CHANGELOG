@@ -1,5 +1,8 @@
 1.9.36
 ------
+(RB=215380)
+Enabling complex key based look ups on BatchKVResponse objects. Fixing a query parameter array serialization issue in BatchKVResponse for Complex Keys.
+
 (RB=214848)
 Refactored Count checks as individual tasks out of PegasusPlugin, and reintegrated them back into
 regular compatibility checks.

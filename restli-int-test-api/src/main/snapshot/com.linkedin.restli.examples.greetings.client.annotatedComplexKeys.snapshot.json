@@ -46,6 +46,12 @@
         "method" : "partial_update"
       }, {
         "method" : "batch_get"
+      }, {
+        "method" : "batch_update"
+      }, {
+        "method" : "batch_partial_update"
+      }, {
+        "method" : "batch_delete"
       } ],
       "entity" : {
         "path" : "/annotatedComplexKeys/{annotatedComplexKeyId}"
@@ -57,7 +63,7 @@
           "type" : "string"
         } ]
       } ],
-      "supports" : [ "batch_get", "create", "get", "partial_update" ],
+      "supports" : [ "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "get", "partial_update" ],
       "identifier" : {
         "name" : "annotatedComplexKeyId",
         "params" : "com.linkedin.restli.examples.greetings.api.TwoPartKey",

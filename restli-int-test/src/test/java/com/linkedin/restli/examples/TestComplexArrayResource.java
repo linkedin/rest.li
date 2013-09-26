@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.testng.Assert;
 import org.testng.ITestContext;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -38,10 +39,14 @@ import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.client.ActionRequest;
+import com.linkedin.restli.client.BatchGetKVRequest;
 import com.linkedin.restli.client.BatchGetRequest;
 import com.linkedin.restli.client.FindRequest;
 import com.linkedin.restli.client.GetRequest;
+import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestClient;
+import com.linkedin.restli.client.response.BatchKVResponse;
+import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.examples.greetings.api.ComplexArray;
 import com.linkedin.restli.examples.greetings.api.Greeting;
@@ -99,22 +104,39 @@ public class TestComplexArrayResource  extends RestLiIntegrationTest
     ComplexArray next1 = new ComplexArray().setArray(singleton1);
     ComplexArray key1 = new ComplexArray().setArray(singleton1).setNext(next1);
     ComplexArray params1 = new ComplexArray().setArray(singleton1).setNext(next1);
-    ComplexResourceKey<ComplexArray, ComplexArray> complexKey1 = new ComplexResourceKey<ComplexArray, ComplexArray>(key1, params1);
+    ComplexResourceKey<ComplexArray, ComplexArray> complexKey1 =
+        new ComplexResourceKey<ComplexArray, ComplexArray>(key1, params1);
 
     LongArray singleton2 = new LongArray();
     singleton2.add(2L);
     ComplexArray next2 = new ComplexArray().setArray(singleton2);
     ComplexArray key2 = new ComplexArray().setArray(singleton2).setNext(next2);
     ComplexArray params2 = new ComplexArray().setArray(singleton2).setNext(next2);
-    ComplexResourceKey<ComplexArray, ComplexArray> complexKey2 = new ComplexResourceKey<ComplexArray, ComplexArray>(key2, params2);
+    ComplexResourceKey<ComplexArray, ComplexArray> complexKey2 =
+        new ComplexResourceKey<ComplexArray, ComplexArray>(key2, params2);
 
-    Collection<ComplexResourceKey<ComplexArray, ComplexArray>> complexKeys = new ArrayList<ComplexResourceKey<ComplexArray, ComplexArray>>();
+    Collection<ComplexResourceKey<ComplexArray, ComplexArray>> complexKeys =
+        new ArrayList<ComplexResourceKey<ComplexArray, ComplexArray>>();
     complexKeys.add(complexKey1);
     complexKeys.add(complexKey2);
 
     BatchGetRequest<Greeting> request = BUILDERS.batchGet().ids(complexKeys).build();
 
-    REST_CLIENT.sendRequest(request).getResponse().getEntity();
+    Response<BatchResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+
+    Greeting greeting = response.getEntity().getResults().get(complexKey1.toString());
+
+    Assert.assertNotNull(greeting);
+
+    BatchGetKVRequest<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting> request2 =
+        BUILDERS.batchGet().ids(complexKeys).buildKV();
+
+    Response<BatchKVResponse<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting>> response2 =
+        REST_CLIENT.sendRequest(request2).getResponse();
+
+    Greeting greeting2 = response2.getEntity().getResults().get(complexKey2);
+
+    Assert.assertNotNull(greeting2);
   }
 
   @Test

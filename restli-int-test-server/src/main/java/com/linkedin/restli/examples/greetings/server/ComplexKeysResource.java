@@ -26,6 +26,8 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.examples.greetings.api.TwoPartKey;
+import com.linkedin.restli.server.BatchDeleteRequest;
+import com.linkedin.restli.server.BatchPatchRequest;
 import com.linkedin.restli.server.BatchUpdateRequest;
 import com.linkedin.restli.server.BatchUpdateResult;
 import com.linkedin.restli.server.CreateResponse;
@@ -102,5 +104,19 @@ public class ComplexKeysResource extends ComplexKeyResourceTemplate<TwoPartKey, 
       final BatchUpdateRequest<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> entities)
   {
     return _dataProvider.batchUpdate(entities);
+  }
+
+  @Override
+  public BatchUpdateResult<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> batchUpdate(
+      final BatchPatchRequest<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> patches)
+  {
+    return _dataProvider.batchUpdate(patches);
+  }
+
+  @Override
+  public BatchUpdateResult<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> batchDelete(
+      final BatchDeleteRequest<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> ids)
+  {
+    return _dataProvider.batchDelete(ids);
   }
 }

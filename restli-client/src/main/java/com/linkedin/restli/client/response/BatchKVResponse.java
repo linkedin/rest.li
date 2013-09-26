@@ -38,6 +38,7 @@ import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.CompoundKey.TypeInfo;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.internal.common.PathSegment.PathSegmentSyntaxException;
+import com.linkedin.restli.internal.common.QueryParamsDataMap;
 import com.linkedin.restli.internal.common.TyperefUtils;
 import com.linkedin.restli.internal.common.ValueConverter;
 
@@ -130,7 +131,81 @@ public class BatchKVResponse<K, V extends RecordTemplate> extends RecordTemplate
     _schema.setFields(Arrays.asList(resultsField, errorsField), errorMessageBuilder);
 
     DataMap resultsRaw = (DataMap) data().get(RESULTS);
-    _results = new HashMap<K, V>((int)Math.ceil(resultsRaw.size() / 0.75f));
+    _results = new HashMap<K, V>((int)Math.ceil(resultsRaw.size() / 0.75f)){
+
+      private static final long serialVersionUID = 1L;
+
+      @Override
+      public V get(Object key)
+      {
+        if (key instanceof ComplexResourceKey)
+        {
+          ComplexResourceKey<RecordTemplate, RecordTemplate> paramlessKey =
+              getParameterlessComplexKey((ComplexResourceKey) key);
+          return super.get(paramlessKey);
+        }
+        else
+        {
+          return super.get(key);
+        }
+      }
+
+      @Override
+      public boolean containsKey(Object key)
+      {
+        if (key instanceof ComplexResourceKey)
+        {
+          ComplexResourceKey<RecordTemplate, RecordTemplate> paramlessKey =
+              getParameterlessComplexKey((ComplexResourceKey) key);
+
+          return super.containsKey(paramlessKey);
+        }
+        else
+        {
+          return super.containsKey(key);
+        }
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public V put(K key, V value)
+      {
+        if (key instanceof ComplexResourceKey)
+        {
+          ComplexResourceKey<RecordTemplate, RecordTemplate> paramlessKey =
+              getParameterlessComplexKey((ComplexResourceKey) key);
+
+          return super.put((K) paramlessKey, value);
+        }
+        else
+        {
+          return super.put(key, value);
+        }
+      }
+
+      @Override
+      public V remove(Object key)
+      {
+        if (key instanceof ComplexResourceKey)
+        {
+          ComplexResourceKey<RecordTemplate, RecordTemplate> paramlessKey =
+              getParameterlessComplexKey((ComplexResourceKey) key);
+
+          return super.remove(paramlessKey);
+        }
+        else
+        {
+          return super.remove(key);
+        }
+      }
+
+      private ComplexResourceKey<RecordTemplate, RecordTemplate> getParameterlessComplexKey(ComplexResourceKey key)
+      {
+        return new ComplexResourceKey<RecordTemplate, RecordTemplate>(
+            key.getKey(),
+            DataTemplateUtil.wrap(new DataMap(), _keyParamsClass));
+      }
+    };
     for (Map.Entry<String, Object> entry : resultsRaw.entrySet())
     {
       K key = convertKey(entry.getKey(), keyClass);
@@ -178,8 +253,8 @@ public class BatchKVResponse<K, V extends RecordTemplate> extends RecordTemplate
     {
       try
       {
-        result =
-            ComplexResourceKey.parseFromPathSegment(rawKey, _keyKeyClass, _keyParamsClass);
+        result = QueryParamsDataMap.fixUpComplexKeySingletonArray(
+            ComplexResourceKey.parseFromPathSegment(rawKey, _keyKeyClass, _keyParamsClass));
       }
       catch (PathSegmentSyntaxException e)
       {

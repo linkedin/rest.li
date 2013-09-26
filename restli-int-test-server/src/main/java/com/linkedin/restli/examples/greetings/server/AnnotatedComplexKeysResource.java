@@ -25,8 +25,11 @@ import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.examples.greetings.api.Message;
-import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.api.TwoPartKey;
+import com.linkedin.restli.server.BatchDeleteRequest;
+import com.linkedin.restli.server.BatchPatchRequest;
+import com.linkedin.restli.server.BatchUpdateRequest;
+import com.linkedin.restli.server.BatchUpdateResult;
 import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.Finder;
@@ -140,5 +143,26 @@ public class AnnotatedComplexKeysResource
     _scheduler.schedule(requestHandler, DELAY, TimeUnit.MILLISECONDS);
 
     return result;
+  }
+
+  @RestMethod.BatchUpdate
+  public BatchUpdateResult<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> batchUpdate(
+      final BatchUpdateRequest<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> entities)
+  {
+    return _dataProvider.batchUpdate(entities);
+  }
+
+  @RestMethod.BatchPartialUpdate
+  public BatchUpdateResult<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> batchUpdate(
+      final BatchPatchRequest<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> patches)
+  {
+    return _dataProvider.batchUpdate(patches);
+  }
+
+  @RestMethod.BatchDelete
+  public BatchUpdateResult<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> batchDelete(
+      final BatchDeleteRequest<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> ids)
+  {
+    return _dataProvider.batchDelete(ids);
   }
 }
