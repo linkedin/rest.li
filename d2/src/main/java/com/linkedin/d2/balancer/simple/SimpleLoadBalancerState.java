@@ -802,7 +802,6 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
           waiter.done(_type, propertyName);
         }
       }
-      _waiters.remove(propertyName);
     }
 
     protected abstract void handlePut(String propertyName, T propertyValue);
