@@ -16,9 +16,10 @@
 
 package com.linkedin.d2.discovery.stores.mock;
 
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import com.linkedin.d2.discovery.event.PropertyEventBus;
 import com.linkedin.d2.discovery.event.PropertyEventPublisher;
@@ -29,7 +30,8 @@ import com.linkedin.common.util.None;
 
 public class MockStore<T> implements PropertyEventPublisher<T>, PropertyStore<T>
 {
-  private PropertyEventBus<T>  _eventBus;
+  private volatile PropertyEventBus<T>  _eventBus;
+  private volatile boolean     _shutdown;
 
   /**
    * Concurrency considerations: updates to _properties (all of which are published), or
@@ -37,16 +39,16 @@ public class MockStore<T> implements PropertyEventPublisher<T>, PropertyStore<T>
    * must be atomic with the corresponding publish operation. Else events might be
    * published to the bus in an order which does not reflect the order of updates.
    *
-   * To ensure this, we use the lock on _properties itself, since we already need to
-   * acquire it anyway.
-   *
+   * All access to _properties or _publishing must be synchronized with _lock.
    */
+  private final Object         _lock = new Object();
   private final Map<String, T> _properties;
-  private boolean              _shutdown;
+  private final Set<String>    _publishing;
 
   public MockStore()
   {
-    _properties = Collections.synchronizedMap(new HashMap<String, T>());
+    _properties = new HashMap<String, T>();
+    _publishing = new HashSet<String>();
     _shutdown = false;
   }
 
@@ -59,39 +61,32 @@ public class MockStore<T> implements PropertyEventPublisher<T>, PropertyStore<T>
   @Override
   public T get(String listenTo)
   {
-    return _properties.get(listenTo);
+    synchronized (_lock)
+    {
+      return _properties.get(listenTo);
+    }
   }
 
   @Override
   public void put(String listenTo, T discoveryProperties)
   {
-    synchronized (_properties)
+    synchronized (_lock)
     {
       _properties.put(listenTo, discoveryProperties);
-      if (_eventBus != null)
+      if (_eventBus != null && _publishing.contains(listenTo))
       {
         _eventBus.publishAdd(listenTo, discoveryProperties);
       }
     }
   }
 
-  // add to properties without publishing to the eventBus. This is needed so that we can test
-  // publishInitialize easily in this MockStore.
-  public void addPropertySecretly(String listenTo, T discoveryProperties)
-  {
-    synchronized (_properties)
-    {
-      _properties.put(listenTo, discoveryProperties);
-    }
-  }
-
   @Override
   public void remove(String listenTo)
   {
-    synchronized (_properties)
+    synchronized (_lock)
     {
       _properties.remove(listenTo);
-      if (_eventBus != null)
+      if (_eventBus != null && _publishing.contains(listenTo))
       {
         _eventBus.publishRemove(listenTo);
       }
@@ -102,15 +97,22 @@ public class MockStore<T> implements PropertyEventPublisher<T>, PropertyStore<T>
   @Override
   public void startPublishing(String prop)
   {
-    synchronized (_properties)
+    synchronized (_lock)
     {
-      _eventBus.publishInitialize(prop, _properties.get(prop));
+      if (_publishing.add(prop))
+      {
+        _eventBus.publishInitialize(prop, _properties.get(prop));
+      }
     }
   }
 
   @Override
   public void stopPublishing(String prop)
   {
+    synchronized (_lock)
+    {
+      _publishing.remove(prop);
+    }
 
   }
 

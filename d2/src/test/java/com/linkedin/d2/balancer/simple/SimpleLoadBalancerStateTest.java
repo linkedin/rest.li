@@ -1115,17 +1115,18 @@ public class SimpleLoadBalancerStateTest
 
     Map<String,Object> transportProperties = new HashMap<String,Object>();
     transportProperties.put("foobar", "unsupportedValue");
-
-    _serviceRegistry.addPropertySecretly("service-1", new ServiceProperties("service-1", "cluster-1",
-                                                                            "/test", "random", null,
-                                                                            Collections.<String, Object>emptyMap(),
-                                                                            transportProperties, null, schemes, null));
+    _serviceRegistry.put("service-1", new ServiceProperties("service-1", "cluster-1",
+                                                            "/test", "random", null,
+                                                            Collections.<String, Object>emptyMap(),
+                                                            transportProperties, null, schemes, null));
 
     // we add the property first before listening to the service because the MockStore will
-    // immediately publish to the eventBus, whereas the production stores wait until we get a response
-    // back from zookeeper, which triggers handlePut.
+    // immediately publish to the eventBus when listenToService() is called, whereas the
+    // ZooKeeper stores wait until we get a response back from zookeeper, which triggers handlePut.
     CountDownLatch cdl1 = new CountDownLatch(1);
     _state.listenToService("service-1", new SimpleLoadBalancer.SimpleLoadBalancerCountDownCallback(cdl1));
+
+    // Verify the callback did NOT get invoked, i.e., the exception was thrown during handlePut()
     assertEquals(cdl1.getCount(), 1);
 
     // set up state
