@@ -16,30 +16,30 @@
 
 package com.linkedin.restli.server;
 
-import com.linkedin.r2.message.RequestContext;
-import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
-import com.linkedin.restli.internal.server.RestLiCallback;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.parseq.Engine;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.restli.internal.server.RestLiCallback;
 import com.linkedin.restli.internal.server.RestLiMethodInvoker;
 import com.linkedin.restli.internal.server.RestLiResponseHandler;
 import com.linkedin.restli.internal.server.RestLiRouter;
 import com.linkedin.restli.internal.server.RoutingResult;
+import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor.InterfaceType;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.model.RestLiApiBuilder;
 import com.linkedin.restli.server.resources.PrototypeResourceFactory;
 import com.linkedin.restli.server.resources.ResourceFactory;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author dellamag
@@ -115,6 +115,11 @@ public class RestLiServer extends BaseRestServer
         }
       }
     }
+  }
+
+  public Map<String, ResourceModel> getRootResources()
+  {
+    return Collections.unmodifiableMap(_rootResources);
   }
 
   /**

@@ -286,7 +286,7 @@ public class ResourceModelEncoder
     }
   }
 
-  private static String buildPath(final ResourceModel resourceModel)
+  public static String buildPath(final ResourceModel resourceModel)
   {
     StringBuilder sb = new StringBuilder();
     buildPathInternal(resourceModel, sb, false);
