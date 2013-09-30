@@ -1,5 +1,7 @@
 1.9.30
 ------
+(RB=207412)
+Allowed access to the ResourceModels of a RestLiServer. Made the resourcePath generation function public.
 
 1.9.29
 ------
