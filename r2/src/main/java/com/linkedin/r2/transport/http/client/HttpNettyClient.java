@@ -26,6 +26,7 @@ import java.net.SocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -581,6 +582,17 @@ import com.linkedin.r2.util.TimeoutRunnable;
                                         _callbackExecutor,
                                         _maxPoolWaiterSize);
     }
+  }
+
+  /**
+   * Get statistics from each channel pool. The map keys represent pool names.
+   * The values are the corresponding {@link AsyncPoolStats} objects.
+   *
+   * @return A map of pool names and statistics.
+   */
+  public Map<String, AsyncPoolStats> getPoolStats()
+  {
+    return _channelPoolManager.getPoolStats();
   }
 
   // Test support
