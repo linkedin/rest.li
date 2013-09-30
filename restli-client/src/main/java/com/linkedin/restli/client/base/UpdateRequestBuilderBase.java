@@ -55,6 +55,19 @@ public abstract class UpdateRequestBuilderBase<
     return (RB) super.input(entity);
   }
 
+  /**
+   * @deprecated This method is deprecated and replaced by a set* method for API consistency reasons.
+   * This method cannot be removed permanently until all projects use a version of Rest.li containing the
+   * set* methods in a multi-project build environment for binary compatibility.
+   */
+  @SuppressWarnings({"unchecked"})
+  @Deprecated
+  @Override
+  public RB header(String key, String value)
+  {
+    return (RB) super.header(key, value);
+  }
+
   @SuppressWarnings({"unchecked"})
   @Override
   public RB setHeader(String key, String value)

@@ -52,11 +52,37 @@ public abstract class ActionRequestBuilderBase<K, V, RB extends ActionRequestBui
     return (RB) super.id(id);
   }
 
+  /**
+   * @deprecated This method is deprecated and replaced by a set* method for API consistency reasons.
+   * This method cannot be removed permanently until all projects use a version of Rest.li containing the
+   * set* methods in a multi-project build environment for binary compatibility.
+   */
+  @SuppressWarnings({"unchecked"})
+  @Deprecated
+  @Override
+  public RB header(String key, String value)
+  {
+    return (RB) super.header(key, value);
+  }
+
   @SuppressWarnings({"unchecked"})
   @Override
   public RB setHeader(String key, String value)
   {
     return (RB) super.setHeader(key, value);
+  }
+
+  /**
+   * @deprecated This method is deprecated and replaced by a set* method for API consistency reasons.
+   * This method cannot be removed permanently until all projects use a version of Rest.li containing the
+   * set* methods in a multi-project build environment for binary compatibility.
+   */
+  @SuppressWarnings({"unchecked"})
+  @Deprecated
+  @Override
+  public RB param(FieldDef<?> key, Object value)
+  {
+    return (RB) super.param(key, value);
   }
 
   @SuppressWarnings({"unchecked"})
