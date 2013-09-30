@@ -30,6 +30,8 @@ import org.slf4j.LoggerFactory;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -156,4 +158,19 @@ class ChannelPoolManager
     return pool;
   }
 
+  /**
+   * Get statistics from each pool. The map keys represent pool names.
+   * The values are the corresponding {@link AsyncPoolStats} objects.
+   *
+   * @return A map of pool names and statistics.
+   */
+  public Map<String, AsyncPoolStats> getPoolStats()
+  {
+    final Map<String, AsyncPoolStats> stats = new HashMap<String, AsyncPoolStats>();
+    for(AsyncPool<Channel> pool : _pool.values())
+    {
+      stats.put(pool.getName(), pool.getStats());
+    }
+    return stats;
+  }
 }

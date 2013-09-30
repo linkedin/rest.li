@@ -74,6 +74,12 @@ public class TestChannelPoolManager
   private static class FakePool<T> implements AsyncPool<T>
   {
     @Override
+    public String getName()
+    {
+      return "fake pool";
+    }
+
+    @Override
     public void start()
     {
 
@@ -107,6 +113,12 @@ public class TestChannelPoolManager
     public void dispose(T obj)
     {
 
+    }
+
+    @Override
+    public AsyncPoolStats getStats()
+    {
+      return null;
     }
   }
 }
