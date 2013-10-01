@@ -28,9 +28,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.mail.MessagingException;
-import javax.servlet.AsyncContext;
-import javax.servlet.AsyncEvent;
-import javax.servlet.AsyncListener;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -40,12 +37,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.linkedin.data.ByteString;
-import com.linkedin.r2.message.rest.QueryTunnelUtil;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestStatus;
+import com.linkedin.r2.message.rest.QueryTunnelUtil;
 import com.linkedin.r2.transport.common.WireAttributeHelper;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
@@ -59,26 +56,35 @@ import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
  */
 public abstract class AbstractR2Servlet extends HttpServlet
 {
-  private static final String TRANSPORT_CALLBACK_IOEXCEPTION = "TransportCallbackIOException";
   private static final Logger _log = LoggerFactory.getLogger(AbstractR2Servlet.class);
-  private static final long   serialVersionUID = 0L;
-  // servlet async context timeout in ms.
-  private final int           _timeOut;
-  // True to use servlet 3.0 async API, false to use the old dispatch method
-  private boolean             _useAsync;
+  private static final long serialVersionUID = 0L;
 
   /**
-   * Initialize the servlet, optionally using servlet-api-3.0 async API, if supported
-   * by the container. The latter is checked later in init()
+   * Initialize the servlet using Jetty continuations for async support.
    *
-   * @param useAsync whether to use servlet-api 3.0 async API. Ignored if the container
-   *        does not support it.
-   * @param servlet async context timeout (ignored if not using async API)
+   * Not supported until we upgrade to Servlet 3 async / Jetty 8
+   *
+   * @param useContinuations whether to use Continuations
+   * @param timeOut timeout to suspend the thread while waiting for response (ignored if
+   *          useContinuations is false)
+   * @param timeOutDelta if woken before timeOut - timeoutDelta and no response is
+   *          available, will sleep again assuming spurious wakeup (ignored if
+   *          useContinuations is false)
    */
-  public AbstractR2Servlet(boolean useAsync, int timeOut)
+  public AbstractR2Servlet(boolean useContinuations, int timeOut, int timeOutDelta)
   {
-    _timeOut = timeOut;
-    _useAsync = useAsync;
+    if (useContinuations)
+    {
+      throw new UnsupportedOperationException("Asynchronous continuations not supported");
+    }
+  }
+
+  /**
+   * Construct a new instance using synchronous servlet support.
+   */
+  public AbstractR2Servlet()
+  {
+    this(false, -1, -1);
   }
 
   protected abstract HttpDispatcher getDispatcher();
@@ -87,118 +93,32 @@ public abstract class AbstractR2Servlet extends HttpServlet
   protected void service(final HttpServletRequest req, final HttpServletResponse resp)
           throws ServletException, IOException
   {
-    if (_useAsync)
-    {
-      serviceAsync(req, resp);
-    }
-    else
-    {
-      serviceNoAsync(req, resp);
-    }
+    serviceNoContinuation(req, resp);
   }
 
-
-  /**
-   * Check whether async API is supported by the container. If not - log and don't use it
-   */
-  @Override
-  public void init() throws ServletException
-  {
-    super.init();
-    if (!_useAsync)
-      return;
-
-    if (getServletContext().getMajorVersion() < 3)
-    {
-      _log.warn("Use of asyncronous servlet API requested but not supported by the container.");
-      _useAsync = false;
-    }
-  }
-
-  private void serviceAsync(final HttpServletRequest req, final HttpServletResponse resp) throws ServletException,
-      IOException
-  {
-    RestRequest restRequest = getRestRequest(req, resp);
-    if (restRequest == null)
-      return;
-
-    final AsyncContext ctx = req.startAsync(req, resp);
-    
-    ctx.setTimeout(_timeOut);
-    ctx.addListener(new AsyncListener()
-    {
-      @Override
-      public void onTimeout(AsyncEvent event) throws IOException
-      {
-        AsyncContext ctx = event.getAsyncContext();
-        writeToServletError((HttpServletResponse) ctx.getResponse(), "Server Timeout");
-        ctx.complete();
-      }
-
-      @Override
-      public void onStartAsync(AsyncEvent event) throws IOException
-      {
-        // Nothing to do here
-      }
-
-      @Override
-      public void onError(AsyncEvent event) throws IOException
-      {
-        writeToServletError((HttpServletResponse) event.getSuppliedResponse(),
-                            "Server Error");
-        ctx.complete();
-      }
-
-      @Override
-      public void onComplete(AsyncEvent event) throws IOException
-      {
-        Object exception = req.getAttribute(TRANSPORT_CALLBACK_IOEXCEPTION);
-        if (exception != null)
-          throw new IOException((IOException) exception);
-      }
-    });
-
-    TransportCallback<RestResponse> callback = new TransportCallback<RestResponse>()
-    {
-      @Override
-      public void onResponse(TransportResponse<RestResponse> response)
-      {
-        try
-        {
-          writeToServletResponse(response, (HttpServletResponse) ctx.getResponse());
-        }
-        catch (IOException e)
-        {
-          req.setAttribute(TRANSPORT_CALLBACK_IOEXCEPTION, e);
-        }
-        finally
-        {
-          ctx.complete();
-        }
-      }
-    };
-
-    getDispatcher().handleRequest(restRequest, callback);
-  }
-
-  private void writeToServletError(HttpServletResponse resp, String message) throws IOException
-  {
-    RestResponse restResponse =
-        RestStatus.responseForStatus(RestStatus.INTERNAL_SERVER_ERROR, message);
-    writeToServletResponse(TransportResponseImpl.success(restResponse), resp);
-  }
-
-  private void serviceNoAsync(final HttpServletRequest req, final HttpServletResponse resp)
+  private void serviceNoContinuation(final HttpServletRequest req, final HttpServletResponse resp)
       throws ServletException, IOException
   {
-    RestRequest restRequest = getRestRequest(req, resp);
-    if (restRequest == null)
+    RestRequest restRequest;
+    try
+    {
+      restRequest = readFromServletRequest(req);
+    }
+    catch (URISyntaxException e)
+    {
+      RestResponse restResponse = RestStatus.responseForError(RestStatus.BAD_REQUEST, e);
+      writeToServletResponse(TransportResponseImpl.success(restResponse), resp);
       return;
+    }
+    catch (MessagingException e)
+    {
+      RestResponse restResponse = RestStatus.responseForError(RestStatus.BAD_REQUEST, e);
+      writeToServletResponse(TransportResponseImpl.success(restResponse), resp);
+      return;
+    }
 
-    final AtomicReference<TransportResponse<RestResponse>> result =
-        new AtomicReference<TransportResponse<RestResponse>>();
+    final AtomicReference<TransportResponse<RestResponse>> result = new AtomicReference<TransportResponse<RestResponse>>();
     final CountDownLatch latch = new CountDownLatch(1);
-
     TransportCallback<RestResponse> callback = new TransportCallback<RestResponse>()
     {
       @Override
@@ -208,9 +128,7 @@ public abstract class AbstractR2Servlet extends HttpServlet
         latch.countDown();
       }
     };
-
     getDispatcher().handleRequest(restRequest, callback);
-
     try
     {
       latch.await();
@@ -223,33 +141,9 @@ public abstract class AbstractR2Servlet extends HttpServlet
     writeToServletResponse(result.get(), resp);
   }
 
-
-  private RestRequest getRestRequest(final HttpServletRequest req,
-                                     final HttpServletResponse resp) throws IOException,
-      ServletException
-  {
-    try
-    {
-      return readFromServletRequest(req);
-    }
-    catch (URISyntaxException e)
-    {
-      RestResponse restResponse = RestStatus.responseForError(RestStatus.BAD_REQUEST, e);
-      writeToServletResponse(TransportResponseImpl.success(restResponse), resp);
-      return null;
-    }
-    catch (MessagingException e)
-    {
-      RestResponse restResponse = RestStatus.responseForError(RestStatus.BAD_REQUEST, e);
-      writeToServletResponse(TransportResponseImpl.success(restResponse), resp);
-      return null;
-    }
-  }
-
   private RestRequest readFromServletRequest(HttpServletRequest req) throws IOException,
       ServletException,
-      URISyntaxException,
-      MessagingException
+      URISyntaxException, MessagingException
   {
     StringBuilder sb = new StringBuilder();
     sb.append(extractPathInfo(req));
@@ -265,10 +159,10 @@ public abstract class AbstractR2Servlet extends HttpServlet
     RestRequestBuilder rb = new RestRequestBuilder(uri);
     rb.setMethod(req.getMethod());
 
-    for (Enumeration<String> headerNames = req.getHeaderNames(); headerNames.hasMoreElements();)
+    for (Enumeration<?> headerNames = req.getHeaderNames(); headerNames.hasMoreElements();)
     {
       // TODO multi-valued headers
-      String headerName = headerNames.nextElement();
+      String headerName = (String) headerNames.nextElement();
       rb.setHeader(headerName, req.getHeader(headerName));
     }
     int length = req.getContentLength();
@@ -279,8 +173,8 @@ public abstract class AbstractR2Servlet extends HttpServlet
       int offset = 0;
       for (int r; offset < length && (r = in.read(buf, offset, length - offset)) != -1; offset += r)
       {
-      }
 
+      }
       rb.setEntity(buf);
     }
     return QueryTunnelUtil.decode(rb.build());

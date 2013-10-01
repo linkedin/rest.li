@@ -51,13 +51,8 @@ import com.linkedin.restli.server.resources.ResourceFactory;
  */
 public class RestLiIntTestServer
 {
-  public static final int      DEFAULT_PORT           = 1338;
-  public static final int      NO_COMPRESSION_PORT    = 1339;
-  public static final String   supportedCompression   = "gzip,snappy,bzip2,deflate";
-  public static final String[] RESOURCE_PACKAGE_NAMES = {
-      "com.linkedin.restli.examples.groups.server.rest.impl",
-      "com.linkedin.restli.examples.greetings.server",
-      "com.linkedin.restli.examples.typeref.server"  };
+  public static final int PORT = 1338;
+  public static final String supportedCompression = "gzip,snappy,bzip2,deflate";
 
   public static void main(String[] args) throws IOException
   {
@@ -68,10 +63,10 @@ public class RestLiIntTestServer
         .setTimerScheduler(scheduler)
         .build();
 
-    HttpServer server = createServer(engine, DEFAULT_PORT, supportedCompression);
+    HttpServer server = createServer(engine, PORT, supportedCompression);
     server.start();
 
-    System.out.println("HttpServer running on port " + DEFAULT_PORT + ". Press any key to stop server");
+    System.out.println("HttpServer running on port " + PORT + ". Press any key to stop server");
     System.in.read();
 
     server.stop();
@@ -80,22 +75,16 @@ public class RestLiIntTestServer
 
   public static HttpServer createServer(final Engine engine, int port, String supportedCompression)
   {
-    return createServer(engine, port, supportedCompression, false, -1);
-  }
-
-  public static HttpServer createServer(final Engine engine,
-                                        int port,
-                                        String supportedCompression,
-                                        boolean useAsyncServletApi,
-                                        int asyncTimeOut)
-  {
     Properties properties = new Properties();
     properties.put("log4j.rootLogger", "INFO");
     PropertyConfigurator.configure(properties);
     BasicConfigurator.configure();
 
     RestLiConfig config = new RestLiConfig();
-    config.addResourcePackageNames(RESOURCE_PACKAGE_NAMES);
+    config.addResourcePackageNames("com.linkedin.restli.examples.groups.server.rest.impl",
+                                   "com.linkedin.restli.examples.greetings.server",
+                                   "com.linkedin.restli.examples.typeref.server"
+                                   );
     config.setServerNodeUri(URI.create("http://localhost:" + port));
     config.setDocumentationRequestHandler(new DefaultDocumentationRequestHandler());
 
@@ -110,16 +99,11 @@ public class RestLiIntTestServer
     TransportDispatcher dispatcher = new DelegatingTransportDispatcher(new RestLiServer(config, factory, engine));
 
     FilterChain fc = FilterChains.empty().addLast(new ServerCompressionFilter(supportedCompression));
-    return new HttpServerFactory(fc).createServer(port,
-                                                  HttpServerFactory.DEFAULT_CONTEXT_PATH,
-                                                  HttpServerFactory.DEFAULT_THREAD_POOL_SIZE,
-                                                  dispatcher,
-                                                  useAsyncServletApi,
-                                                  asyncTimeOut);
+    return new HttpServerFactory(fc).createServer(port, dispatcher);
   }
 
   public static HttpServer createServer(Engine engine)
   {
-    return createServer(engine, DEFAULT_PORT, supportedCompression);
+    return createServer(engine, PORT, supportedCompression);
   }
 }

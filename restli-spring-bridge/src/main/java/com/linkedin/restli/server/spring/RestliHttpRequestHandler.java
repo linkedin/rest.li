@@ -24,7 +24,7 @@ import com.linkedin.restli.server.RestLiServer;
 import com.linkedin.restli.server.RestLiConfig;
 import com.linkedin.restli.server.DelegatingTransportDispatcher;
 
-import com.linkedin.r2.transport.http.server.R2Servlet;
+import com.linkedin.r2.transport.http.server.RAPServlet;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -71,7 +71,7 @@ import java.io.IOException;
  */
 public class RestliHttpRequestHandler implements HttpRequestHandler {
 
-  private R2Servlet _r2Servlet;
+  private RAPServlet _r2Servlet;
 
   public RestliHttpRequestHandler(RestLiConfig config, SpringInjectResourceFactory injectResourceFactory)
   {
@@ -82,7 +82,7 @@ public class RestliHttpRequestHandler implements HttpRequestHandler {
                                   SpringInjectResourceFactory injectResourceFactory,
                                   FilterChain filterChain)
   {
-    _r2Servlet = new R2Servlet(
+    _r2Servlet = new RAPServlet(
         new FilterChainDispatcher(
             new DelegatingTransportDispatcher(
                 new RestLiServer(config, injectResourceFactory)),
@@ -91,7 +91,7 @@ public class RestliHttpRequestHandler implements HttpRequestHandler {
     );
   }
 
-  public RestliHttpRequestHandler(R2Servlet r2Servlet)
+  public RestliHttpRequestHandler(RAPServlet r2Servlet)
   {
     _r2Servlet = r2Servlet;
   }

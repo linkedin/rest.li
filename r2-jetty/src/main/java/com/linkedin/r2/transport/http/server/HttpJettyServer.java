@@ -20,16 +20,16 @@
 
 package com.linkedin.r2.transport.http.server;
 
-import java.io.IOException;
-
 import javax.servlet.http.HttpServlet;
 
-import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.nio.SelectChannelConnector;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.mortbay.jetty.Connector;
+import org.mortbay.jetty.Server;
+import org.mortbay.jetty.nio.SelectChannelConnector;
+import org.mortbay.jetty.servlet.Context;
+import org.mortbay.jetty.servlet.ServletHolder;
+import org.mortbay.thread.QueuedThreadPool;
+
+import java.io.IOException;
 
 /**
  * @author Steven Ihde
@@ -38,46 +38,25 @@ import org.eclipse.jetty.util.thread.QueuedThreadPool;
 
 public class HttpJettyServer implements HttpServer
 {
-  private final int         _port;
-  private final String      _contextPath;
-  private final int         _threadPoolSize;
-  private Server            _server;
-  private final HttpServlet _servlet;
+  private int _port;
+  private String _contextPath;
+  private int _threadPoolSize;
+  private Server _server;
+  private HttpServlet _servlet;
 
   public HttpJettyServer(int port, HttpDispatcher dispatcher)
   {
-    this(port, new R2Servlet(dispatcher));
+    this(port, new RAPServlet(dispatcher));
   }
 
-  public HttpJettyServer(int port,
-                         String contextPath,
-                         int threadPoolSize,
-                         HttpDispatcher dispatcher,
-                         boolean useAnync,
-                         int asyncTimeOut)
-  {
-    this(port, contextPath, threadPoolSize, new R2Servlet(dispatcher,
-                                                          useAnync,
-                                                          asyncTimeOut));
-  }
-
-  @Deprecated
   public HttpJettyServer(int port, String contextPath, int threadPoolSize, HttpDispatcher dispatcher)
   {
-    this(port,
-         contextPath,
-         threadPoolSize,
-         dispatcher,
-         HttpServerFactory.DEFAULT_USE_ASYNC_SERVLET_API,
-         HttpServerFactory.DEFAULT_ASYNC_TIMEOUT);
+    this(port, contextPath, threadPoolSize, new RAPServlet(dispatcher));
   }
 
   public HttpJettyServer(int port, HttpServlet servlet)
   {
-    this(port,
-         HttpServerFactory.DEFAULT_CONTEXT_PATH,
-         HttpServerFactory.DEFAULT_THREAD_POOL_SIZE,
-         servlet);
+    this(port, HttpServerFactory.DEFAULT_CONTEXT_PATH, HttpServerFactory.DEFAULT_THREAD_POOL_SIZE, servlet);
   }
 
   public HttpJettyServer(int port, String contextPath, int threadPoolSize, HttpServlet servlet)
@@ -96,8 +75,7 @@ public class HttpJettyServer implements HttpServer
     connector.setPort(_port);
     _server.setConnectors(new Connector[] { connector });
     _server.setThreadPool(new QueuedThreadPool(_threadPoolSize));
-    ServletContextHandler root =
-        new ServletContextHandler(_server, _contextPath, ServletContextHandler.SESSIONS);
+    Context root = new Context(_server, _contextPath, Context.SESSIONS);
     root.addServlet(new ServletHolder(_servlet), "/*");
 
     try

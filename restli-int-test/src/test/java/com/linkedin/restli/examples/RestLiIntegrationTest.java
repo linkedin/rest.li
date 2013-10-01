@@ -20,7 +20,6 @@
 
 package com.linkedin.restli.examples;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -46,56 +45,26 @@ public class RestLiIntegrationTest
   private final int numCores = Runtime.getRuntime().availableProcessors();
 
   private ScheduledExecutorService _scheduler;
-  private Engine                   _engine;
-  private HttpServer               _server;
-  private HttpServer               _serverWithoutCompression;
-  private final Map<String, Level> _originalLevels     = new HashMap<String, Level>();
+  private Engine _engine;
+  private HttpServer _server;
+  private HttpServer _serverWithoutCompression;
+  private final Map<String, Level> _originalLevels = new HashMap<String, Level>();
 
-  // By default start a single synchronous server with compression.
   public void init() throws Exception
   {
-    init(false, false);
-  }
-
-  // If not requested, don't start no-compression server
-  public void init(boolean async) throws IOException
-  {
-    init(async, false);
-  }
-
-  public void init(boolean async, boolean includeNoCompression) throws IOException
-  {
-    int asyncTimeout = async ? 5000 : -1;
-
     _scheduler = Executors.newScheduledThreadPool(numCores + 1);
-    _engine =
-        new EngineBuilder().setTaskExecutor(_scheduler)
-                           .setTimerScheduler(_scheduler)
-                           .build();
+    _engine = new EngineBuilder()
+        .setTaskExecutor(_scheduler)
+        .setTimerScheduler(_scheduler)
+        .build();
 
     reduceLogging(NETTY_CLIENT_LOGGER, Level.ERROR);
     reduceLogging(ASYNC_POOL_LOGGER, Level.FATAL);
 
-    // Always start one server, whether sync or async
-    _server =
-        RestLiIntTestServer.createServer(_engine,
-                                         RestLiIntTestServer.DEFAULT_PORT,
-                                         RestLiIntTestServer.supportedCompression,
-                                         async,
-                                         asyncTimeout);
+    _server = RestLiIntTestServer.createServer(_engine);
+    _serverWithoutCompression = RestLiIntTestServer.createServer(_engine, RestLiIntTestServer.PORT + 1, "");
     _server.start();
-
-    // If requested, also start no compression server
-    if (includeNoCompression)
-    {
-      _serverWithoutCompression =
-          RestLiIntTestServer.createServer(_engine,
-                                           RestLiIntTestServer.NO_COMPRESSION_PORT,
-                                           "",
-                                           async,
-                                           asyncTimeout);
-      _serverWithoutCompression.start();
-    }
+    _serverWithoutCompression.start();
   }
 
   private void reduceLogging(String logName, Level newLevel)
@@ -114,14 +83,8 @@ public class RestLiIntegrationTest
 
   public void shutdown() throws Exception
   {
-    if (_server != null)
-    {
-      _server.stop();
-    }
-    if (_serverWithoutCompression != null)
-    {
-      _serverWithoutCompression.stop();
-    }
+    _server.stop();
+    _serverWithoutCompression.stop();
     _engine.shutdown();
     _scheduler.shutdownNow();
 

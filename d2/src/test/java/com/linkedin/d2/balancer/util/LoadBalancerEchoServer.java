@@ -16,27 +16,6 @@
 
 package com.linkedin.d2.balancer.util;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
@@ -68,6 +47,26 @@ import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcherBuilder;
 import com.linkedin.r2.transport.http.server.HttpJettyServer;
 import com.linkedin.r2.transport.http.server.HttpServerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 // Server startup
@@ -83,7 +82,7 @@ public class LoadBalancerEchoServer
   private final Set<String>  _validPaths;
   private final URI          _uri;
   private Server             _server;
-  private final LoadBalancerServer _announcer;
+  private LoadBalancerServer _announcer;
   private boolean            _isStopped = false;
   private int                _timeout = 5000;
   private final Map<Integer, Double> _partitionWeight;
@@ -126,9 +125,9 @@ public class LoadBalancerEchoServer
       InterruptedException,
       TimeoutException
   {
-    this(zookeeperHost, zookeeperPort, echoServerHost, echoServerPort, 5000, scheme, basePath, cluster, null, services);
+    this(zookeeperHost, zookeeperPort, echoServerHost, echoServerPort, 5000, scheme, basePath, cluster, null, services); 
   }
-
+  
   public LoadBalancerEchoServer(String zookeeperHost,
                                 int zookeeperPort,
                                 String echoServerHost,
@@ -142,7 +141,7 @@ public class LoadBalancerEchoServer
       InterruptedException,
       TimeoutException
   {
-    this(zookeeperHost, zookeeperPort, echoServerHost, echoServerPort, 5000, scheme, basePath, cluster, partitionWeight, services);
+    this(zookeeperHost, zookeeperPort, echoServerHost, echoServerPort, 5000, scheme, basePath, cluster, partitionWeight, services); 
   }
 
   public LoadBalancerEchoServer(String zookeeperHost,
@@ -158,9 +157,9 @@ public class LoadBalancerEchoServer
       InterruptedException,
       TimeoutException
   {
-    this(zookeeperHost, zookeeperPort, echoServerHost, echoServerPort, timeout, scheme, basePath, cluster, null, services);
+    this(zookeeperHost, zookeeperPort, echoServerHost, echoServerPort, timeout, scheme, basePath, cluster, null, services); 
   }
-
+  
   public LoadBalancerEchoServer(String zookeeperHost,
                                 int zookeeperPort,
                                 String echoServerHost,
@@ -246,7 +245,7 @@ public class LoadBalancerEchoServer
   {
     return _partitionWeight;
   }
-
+  
   public void startServer() throws IOException,
       InterruptedException,
       URISyntaxException
@@ -283,8 +282,7 @@ public class LoadBalancerEchoServer
     {
       Field serverField = HttpJettyServer.class.getDeclaredField("_server");
       serverField.setAccessible(true);
-      org.eclipse.jetty.server.Server jettyServer =
-          (org.eclipse.jetty.server.Server) serverField.get(_server);
+      org.mortbay.jetty.Server jettyServer = (org.mortbay.jetty.Server)serverField.get(_server);
 
      _isStopped = jettyServer.isStopped();
 
@@ -307,7 +305,7 @@ public class LoadBalancerEchoServer
   {
     markUp(_partitionWeight);
   }
-
+  
   public void markUp(Map<Integer, Double> partitionWeight) throws PropertyStoreException
   {
     FutureCallback<None> callback = new FutureCallback<None>();
@@ -379,7 +377,7 @@ public class LoadBalancerEchoServer
     }
     return null;
   }
-
+  
   private Server getHttpServer(TransportDispatcher dispatcher)
   {
     return new HttpServerFactory().createServer(_port, dispatcher);
@@ -404,12 +402,12 @@ public class LoadBalancerEchoServer
   {
     return RESPONSE_POSTFIX;
   }
-
+  
   public String getResponsePostfixStringWithPort()
   {
     return RESPONSE_POSTFIX+_port;
   }
-
+  
   private String printWeights()
   {
     StringBuilder sb = new StringBuilder();
@@ -422,7 +420,7 @@ public class LoadBalancerEchoServer
     {
       partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new Double(1d));
     }
-
+      
     for (int partitionId : partitionDataMap.keySet())
     {
       sb.append(((sb.length() > 0) ? "," : ""));
@@ -433,8 +431,8 @@ public class LoadBalancerEchoServer
 
     return sb.toString();
   }
-
-
+  
+  
   public class RpcDispatcher implements RpcRequestHandler
   {
     @Override
