@@ -92,6 +92,8 @@ public class HttpClientFactory implements TransportClientFactory
   public static final String HTTP_SSL_CONTEXT = "http.sslContext";
   public static final String HTTP_SSL_PARAMS = "http.sslParams";
   public static final String HTTP_RESPONSE_COMPRESSION_OPERATIONS = "http.responseCompressionOperations";
+  public static final String HTTP_POOL_STRATEGY = "http.poolStrategy";
+  public static final String HTTP_POOL_MIN_SIZE = "http.poolMinSize";
 
   public static final int DEFAULT_POOL_WAITER_SIZE = Integer.MAX_VALUE;
   public static final int DEFAULT_POOL_SIZE = 200;
@@ -99,6 +101,8 @@ public class HttpClientFactory implements TransportClientFactory
   public static final int DEFAULT_IDLE_TIMEOUT = 30000;
   public static final int DEFAULT_SHUTDOWN_TIMEOUT = 5000;
   public static final int DEFAULT_MAX_RESPONSE_SIZE = 1024 * 1024 * 2;
+  public static final AsyncPoolImpl.Strategy DEFAULT_POOL_STRATEGY = AsyncPoolImpl.Strategy.MRU;
+  public static final int DEFAULT_POOL_MIN_SIZE = 0;
 
   private static final String LIST_SEPARATOR = ",";
 
@@ -368,6 +372,29 @@ public class HttpClientFactory implements TransportClientFactory
     }
   }
 
+  private AsyncPoolImpl.Strategy getStrategy(Map<String, ? extends Object> properties, String propertyKey)
+  {
+    if (properties == null)
+    {
+      LOG.warn("passed a null raw client properties");
+      return null;
+    }
+    if (properties.containsKey(propertyKey))
+    {
+      String strategyString = (String)properties.get(propertyKey);
+      if (strategyString.equalsIgnoreCase("LRU"))
+      {
+        return AsyncPoolImpl.Strategy.LRU;
+      }
+      else if (strategyString.equalsIgnoreCase("MRU"))
+      {
+        return AsyncPoolImpl.Strategy.MRU;
+      }
+    }
+    // for all other cases
+    return null;
+  }
+
   /**
    * Testing aid.
    */
@@ -382,6 +409,8 @@ public class HttpClientFactory implements TransportClientFactory
     Integer queryPostThreshold = chooseNewOverDefault(getIntValue(properties, HTTP_QUERY_POST_THRESHOLD), Integer.MAX_VALUE);
     Integer requestTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_REQUEST_TIMEOUT), DEFAULT_REQUEST_TIMEOUT);
     Integer poolWaiterSize = chooseNewOverDefault(getIntValue(properties, HTTP_POOL_WAITER_SIZE), DEFAULT_POOL_WAITER_SIZE);
+    AsyncPoolImpl.Strategy strategy = chooseNewOverDefault(getStrategy(properties, HTTP_POOL_STRATEGY), DEFAULT_POOL_STRATEGY);
+    Integer poolMinSize = chooseNewOverDefault(getIntValue(properties, HTTP_POOL_MIN_SIZE), DEFAULT_POOL_MIN_SIZE);
 
     return new HttpNettyClient(_channelFactory,
                                _executor,
@@ -394,7 +423,9 @@ public class HttpClientFactory implements TransportClientFactory
                                sslParameters,
                                queryPostThreshold,
                                _callbackExecutor,
-                               poolWaiterSize);
+                               poolWaiterSize,
+                               strategy,
+                               poolMinSize);
   }
 
   /**

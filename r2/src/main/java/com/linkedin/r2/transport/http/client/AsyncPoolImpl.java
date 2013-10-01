@@ -165,6 +165,9 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
    *                    may be destroyed.
    * @param timeoutExecutor A ScheduledExecutorService that will be used to
    *                        periodically timeout objects.
+   * @param callbackExecutor A ScheduledExecutorService that will be used to
+   *                         invoke user callbacks.
+   * @param maxWaiters the maximum number of waiters waiting for a pool object.
    * @param strategy The strategy used to return pool objects.
    * @param minSize Minimum number of objects in the pool. Set to zero for
    *                no minimum.
@@ -425,27 +428,50 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
   @Override
   public AsyncPoolStats getStats()
   {
-    // get a copy of the stats
+    int totalCreated;
+    int totalDestroyed;
+    int totalCreateErrors;
+    int totalDestroyErrors;
+    int totalBadDestroyed;
+    int totalTimedOut;
+    int checkedOut;
+    int maxSize;
+    int minSize;
+    int poolSize;
+    int sampleMaxCheckedOut;
+    int sampleMaxPoolSize;
     synchronized (_lock)
     {
-      AsyncPoolStats stats = new AsyncPoolStats(
-        _totalCreated,
-        _totalDestroyed,
-        _totalCreateErrors,
-        _totalDestroyErrors,
-        _totalBadDestroyed,
-        _totalTimedOut,
-        _checkedOut,
-        _maxSize,
-        _minSize,
-        _poolSize,
-        _sampleMaxCheckedOut,
-        _sampleMaxPoolSize
-      );
+      // get a copy of the stats
+      totalCreated = _totalCreated;
+      totalDestroyed = _totalDestroyed;
+      totalCreateErrors = _totalCreateErrors;
+      totalDestroyErrors = _totalDestroyErrors;
+      totalBadDestroyed = _totalBadDestroyed;
+      totalTimedOut = _totalTimedOut;
+      checkedOut = _checkedOut;
+      maxSize = _maxSize;
+      minSize = _minSize;
+      poolSize = _poolSize;
+      sampleMaxCheckedOut = _sampleMaxCheckedOut;
+      sampleMaxPoolSize = _sampleMaxPoolSize;
+      // reset max value
       _sampleMaxCheckedOut = _checkedOut;
       _sampleMaxPoolSize = _poolSize;
-      return stats;
     }
+    return new AsyncPoolStats(
+                totalCreated,
+                totalDestroyed,
+                totalCreateErrors,
+                totalDestroyErrors,
+                totalBadDestroyed,
+                totalTimedOut,
+                checkedOut,
+                maxSize,
+                minSize,
+                poolSize,
+                sampleMaxCheckedOut,
+                sampleMaxPoolSize);
   }
 
   private void destroy(T obj, boolean bad)

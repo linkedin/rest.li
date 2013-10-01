@@ -26,7 +26,6 @@ import java.net.SocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -162,6 +161,58 @@ import com.linkedin.r2.util.TimeoutRunnable;
                          ExecutorService callbackExecutor,
                          int poolWaiterSize)
   {
+    this(factory,
+        executor,
+        poolSize,
+        requestTimeout,
+        idleTimeout,
+        shutdownTimeout,
+        maxResponseSize,
+        sslContext,
+        sslParameters,
+        queryPostThreshold,
+        callbackExecutor,
+        poolWaiterSize,
+        AsyncPoolImpl.Strategy.MRU,
+        0);
+  }
+
+  /**
+   * Creates a new HttpNettyClient
+   *
+   * @param factory The ClientSocketChannelFactory; it is the caller's responsibility to
+   *          shut it down
+   * @param executor an executor; it is the caller's responsibility to shut it down
+   * @param poolSize Maximum size of the underlying HTTP connection pool
+   * @param requestTimeout timeout, in ms, to get a connection from the pool or create one
+   * @param idleTimeout interval after which idle connections will be automatically closed
+   * @param shutdownTimeout timeout, in ms, the client should wait after shutdown is
+   *          initiated before terminating outstanding requests
+   * @param maxResponseSize
+   * @param sslContext {@link SSLContext}
+   * @param sslParameters {@link SSLParameters}with overloaded construct
+   * @param queryPostThreshold length of query params above which requests will be tunneled as POSTS
+   * @param callbackExecutor an optional executor to invoke user callback
+   * @param poolWaiterSize Maximum waiters waiting on the HTTP connection pool
+   * @param strategy The strategy used to return pool objects.
+   * @param minPoolSize Minimum number of objects in the pool. Set to zero for
+   *                no minimum.
+   */
+  public HttpNettyClient(ClientSocketChannelFactory factory,
+                         ScheduledExecutorService executor,
+                         int poolSize,
+                         int requestTimeout,
+                         int idleTimeout,
+                         int shutdownTimeout,
+                         int maxResponseSize,
+                         SSLContext sslContext,
+                         SSLParameters sslParameters,
+                         int queryPostThreshold,
+                         ExecutorService callbackExecutor,
+                         int poolWaiterSize,
+                         AsyncPoolImpl.Strategy strategy,
+                         int minPoolSize)
+  {
     _maxResponseSize = maxResponseSize;
     _channelPoolManager =
         new ChannelPoolManager(new ChannelPoolFactoryImpl(new ClientBootstrap(factory),
@@ -169,7 +220,9 @@ import com.linkedin.r2.util.TimeoutRunnable;
                                                           idleTimeout,
                                                           sslContext,
                                                           sslParameters,
-                                                          poolWaiterSize));
+                                                          poolWaiterSize,
+                                                          strategy,
+                                                          minPoolSize));
     _scheduler = executor;
     _callbackExecutor = callbackExecutor;
     _requestTimeout = requestTimeout;
@@ -551,13 +604,17 @@ import com.linkedin.r2.util.TimeoutRunnable;
     private final int _maxPoolSize;
     private final int _idleTimeout;
     private final int _maxPoolWaiterSize;
+    private final AsyncPoolImpl.Strategy _strategy;
+    private final int _minPoolSize;
 
     private ChannelPoolFactoryImpl(ClientBootstrap bootstrap,
                                    int maxPoolSize,
                                    int idleTimeout,
                                    SSLContext sslContext,
                                    SSLParameters sslParameters,
-                                   int maxPoolWaiterSize)
+                                   int maxPoolWaiterSize,
+                                   AsyncPoolImpl.Strategy strategy,
+                                   int minPoolSize)
     {
       _bootstrap = bootstrap;
       _bootstrap.setPipelineFactory(new HttpClientPipelineFactory(sslContext,
@@ -565,6 +622,8 @@ import com.linkedin.r2.util.TimeoutRunnable;
       _maxPoolSize = maxPoolSize;
       _idleTimeout = idleTimeout;
       _maxPoolWaiterSize = maxPoolWaiterSize;
+      _strategy = strategy;
+      _minPoolSize = minPoolSize;
     }
 
     @Override
@@ -580,7 +639,9 @@ import com.linkedin.r2.util.TimeoutRunnable;
                                         _idleTimeout,
                                         _scheduler,
                                         _callbackExecutor,
-                                        _maxPoolWaiterSize);
+                                        _maxPoolWaiterSize,
+                                        _strategy,
+                                        _minPoolSize);
     }
   }
 
