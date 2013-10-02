@@ -1,6 +1,7 @@
 1.9.32
 ------
-
+(RB=218023)
+Fix the allowed client override keys.
 
 1.9.31
 ------
