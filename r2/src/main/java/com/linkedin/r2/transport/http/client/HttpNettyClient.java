@@ -40,6 +40,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLParameters;
 
+import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelPipeline;
@@ -66,7 +67,6 @@ import com.linkedin.r2.message.rpc.RpcRequest;
 import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.MessageType;
 import com.linkedin.r2.transport.common.WireAttributeHelper;
-import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.r2.transport.http.common.HttpBridge;
@@ -78,7 +78,7 @@ import com.linkedin.r2.util.TimeoutRunnable;
  * @version $Revision: $
  */
 
-/* package private */ class HttpNettyClient implements TransportClient
+/* package private */ class HttpNettyClient implements TransportClient, NamedPoolStatsProvider
 {
   static final Logger LOG = LoggerFactory.getLogger(HttpNettyClient.class);
   private static final int HTTP_DEFAULT_PORT = 80;
@@ -102,6 +102,9 @@ import com.linkedin.r2.util.TimeoutRunnable;
 
   private final String _requestTimeoutMessage;
   private final int _queryPostThreshold;
+
+  private final String _name;
+  private final HttpClientFactory.ClientLifecycleListener _lifecycleListener;
 
   /**
    * Creates a new HttpNettyClient with some default parameters
@@ -174,7 +177,9 @@ import com.linkedin.r2.util.TimeoutRunnable;
         callbackExecutor,
         poolWaiterSize,
         AsyncPoolImpl.Strategy.MRU,
-        0);
+        0,
+        HttpClientFactory.DEFAULT_HTTP_CLIENT_NAME,
+        HttpClientFactory.NULL_LISTENER);
   }
 
   /**
@@ -197,6 +202,9 @@ import com.linkedin.r2.util.TimeoutRunnable;
    * @param strategy The strategy used to return pool objects.
    * @param minPoolSize Minimum number of objects in the pool. Set to zero for
    *                no minimum.
+   * @param name Name of the client. It would be useful bookkeeping information in the case
+   *             there are multiple clients present.
+   * @param lifecycleListener A listener listen to the lifecycle event of this client.
    */
   public HttpNettyClient(ClientSocketChannelFactory factory,
                          ScheduledExecutorService executor,
@@ -211,7 +219,9 @@ import com.linkedin.r2.util.TimeoutRunnable;
                          ExecutorService callbackExecutor,
                          int poolWaiterSize,
                          AsyncPoolImpl.Strategy strategy,
-                         int minPoolSize)
+                         int minPoolSize,
+                         String name,
+                         HttpClientFactory.ClientLifecycleListener lifecycleListener)
   {
     _maxResponseSize = maxResponseSize;
     _channelPoolManager =
@@ -229,6 +239,8 @@ import com.linkedin.r2.util.TimeoutRunnable;
     _shutdownTimeout = shutdownTimeout;
     _requestTimeoutMessage = "Exceeded request timeout of " + _requestTimeout + "ms";
     _queryPostThreshold = queryPostThreshold;
+    _name = name;
+    _lifecycleListener = lifecycleListener;
   }
 
   HttpNettyClient(ChannelPoolFactory factory,
@@ -245,6 +257,8 @@ import com.linkedin.r2.util.TimeoutRunnable;
     _shutdownTimeout = shutdownTimeout;
     _requestTimeoutMessage = "Exceeded request timeout of " + _requestTimeout + "ms";
     _queryPostThreshold = Integer.MAX_VALUE;
+    _name = HttpClientFactory.DEFAULT_HTTP_CLIENT_NAME;
+    _lifecycleListener = HttpClientFactory.NULL_LISTENER;
   }
 
   @Override
@@ -345,6 +359,7 @@ import com.linkedin.r2.util.TimeoutRunnable;
         }
       }, "Connection pool shutdown timeout exceeded (" + _shutdownTimeout + "ms)");
       _channelPoolManager.shutdown(closeChannels);
+      _lifecycleListener.onShutdownClient(this);
     }
   }
 
@@ -645,15 +660,16 @@ import com.linkedin.r2.util.TimeoutRunnable;
     }
   }
 
-  /**
-   * Get statistics from each channel pool. The map keys represent pool names.
-   * The values are the corresponding {@link AsyncPoolStats} objects.
-   *
-   * @return A map of pool names and statistics.
-   */
-  public Map<String, AsyncPoolStats> getPoolStats()
+  @Override
+  public Map<String, PoolStats> getPoolStats()
   {
     return _channelPoolManager.getPoolStats();
+  }
+
+  @Override
+  public String getName()
+  {
+    return _name;
   }
 
   // Test support

@@ -28,7 +28,7 @@ package com.linkedin.r2.transport.http.client;
  * @version $Revision: $
  */
 
-public class AsyncPoolStats {
+public class AsyncPoolStats implements PoolStats {
   private final int _totalCreated;
   private final int _totalDestroyed;
   private final int _totalCreateErrors;
@@ -87,6 +87,7 @@ public class AsyncPoolStats {
    * Does not include create errors.
    * @return The total number of pool objects created
    */
+  @Override
   public int getTotalCreated()
   {
     return _totalCreated;
@@ -99,6 +100,7 @@ public class AsyncPoolStats {
    * and timed-out objects, but does not include destroy errors.
    * @return The total number of pool objects destroyed
    */
+  @Override
   public int getTotalDestroyed()
   {
     return _totalDestroyed;
@@ -109,6 +111,7 @@ public class AsyncPoolStats {
    * the starting of the AsyncPool and the call to getStats().
    * @return The total number of create errors
    */
+  @Override
   public int getTotalCreateErrors()
   {
     return _totalCreateErrors;
@@ -119,6 +122,7 @@ public class AsyncPoolStats {
    * the starting of the AsyncPool and the call to getStats().
    * @return The total number of destroy errors
    */
+  @Override
   public int getTotalDestroyErrors()
   {
     return _totalDestroyErrors;
@@ -131,6 +135,7 @@ public class AsyncPoolStats {
    * and the call to getStats().
    * @return The total number of destroyed "bad" objects
    */
+  @Override
   public int getTotalBadDestroyed()
   {
     return _totalBadDestroyed;
@@ -141,6 +146,7 @@ public class AsyncPoolStats {
    * starting of the AsyncPool and the call to getStats().
    * @return The total number of timed out objects
    */
+  @Override
   public int getTotalTimedOut()
   {
     return _totalTimedOut;
@@ -151,6 +157,7 @@ public class AsyncPoolStats {
    * the call to getStats().
    * @return The number of checked out pool objects
    */
+  @Override
   public int getCheckedOut()
   {
     return _checkedOut;
@@ -160,6 +167,7 @@ public class AsyncPoolStats {
    * Get the configured maximum pool size.
    * @return The maximum pool size
    */
+  @Override
   public int getMaxPoolSize()
   {
     return _maxPoolSize;
@@ -169,6 +177,7 @@ public class AsyncPoolStats {
    * Get the configured minimum pool size.
    * @return The minimum pool size
    */
+  @Override
   public int getMinPoolSize()
   {
     return _minPoolSize;
@@ -178,6 +187,7 @@ public class AsyncPoolStats {
    * Get the pool size at the time of the call to getStats().
    * @return The pool size
    */
+  @Override
   public int getPoolSize()
   {
     return _poolSize;
@@ -188,6 +198,7 @@ public class AsyncPoolStats {
    * after each call to getStats().
    * @return The maximum number of checked out objects
    */
+  @Override
   public int getSampleMaxCheckedOut()
   {
     return _sampleMaxCheckedOut;
@@ -198,8 +209,26 @@ public class AsyncPoolStats {
    * getStats().
    * @return The maximum pool size
    */
+  @Override
   public int getSampleMaxPoolSize()
   {
     return _sampleMaxPoolSize;
+  }
+
+  @Override
+  public String toString()
+  {
+    return "\ntotalCreated: " + _totalCreated +
+            "\ntotalDestroyed: " + _totalDestroyed +
+            "\ntotalCreateErrors: " + _totalCreateErrors +
+            "\ntotalDestroyErrors: " + _totalDestroyErrors +
+            "\ntotalBadDestroyed: " + _totalBadDestroyed +
+            "\ntotalTimeOut: " + _totalTimedOut +
+            "\ncheckedOut: " + _totalTimedOut +
+            "\nmaxPoolSize: " + _maxPoolSize +
+            "\nminPoolSize: " + _minPoolSize +
+            "\npoolSize: " + _poolSize +
+            "\nsampleMaxCheckedOut: " + _sampleMaxCheckedOut +
+            "\nsampleMaxPoolSize: " + _sampleMaxPoolSize;
   }
 }

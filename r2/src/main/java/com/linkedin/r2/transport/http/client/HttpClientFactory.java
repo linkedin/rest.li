@@ -94,6 +94,7 @@ public class HttpClientFactory implements TransportClientFactory
   public static final String HTTP_RESPONSE_COMPRESSION_OPERATIONS = "http.responseCompressionOperations";
   public static final String HTTP_POOL_STRATEGY = "http.poolStrategy";
   public static final String HTTP_POOL_MIN_SIZE = "http.poolMinSize";
+  public static final String HTTP_CLIENT_NAME = "http.clientName";
 
   public static final int DEFAULT_POOL_WAITER_SIZE = Integer.MAX_VALUE;
   public static final int DEFAULT_POOL_SIZE = 200;
@@ -103,6 +104,20 @@ public class HttpClientFactory implements TransportClientFactory
   public static final int DEFAULT_MAX_RESPONSE_SIZE = 1024 * 1024 * 2;
   public static final AsyncPoolImpl.Strategy DEFAULT_POOL_STRATEGY = AsyncPoolImpl.Strategy.MRU;
   public static final int DEFAULT_POOL_MIN_SIZE = 0;
+  public static final String DEFAULT_HTTP_CLIENT_NAME = "NoNameSpecifiedClient";
+
+  public static final ClientLifecycleListener NULL_LISTENER = new ClientLifecycleListener()
+  {
+    @Override
+    public void onCreateClient(TransportClient client)
+    {
+    }
+
+    @Override
+    public void onShutdownClient(TransportClient client)
+    {
+    }
+  };
 
   private static final String LIST_SEPARATOR = ",";
 
@@ -116,6 +131,7 @@ public class HttpClientFactory implements TransportClientFactory
 
   private final AtomicBoolean              _finishingShutdown = new AtomicBoolean(false);
   private volatile ScheduledFuture<?>      _shutdownTimeoutTask;
+  private final ClientLifecycleListener    _clientLifecycleListener;
 
   // All fields below protected by _mutex
   private final Object                     _mutex               = new Object();
@@ -224,6 +240,25 @@ public class HttpClientFactory implements TransportClientFactory
                            ExecutorService callbackExecutor,
                            boolean shutdownCallbackExecutor)
   {
+    this(filters,
+        channelFactory,
+        shutdownFactory,
+        executor,
+        shutdownExecutor,
+        callbackExecutor,
+        shutdownCallbackExecutor,
+        NULL_LISTENER);
+  }
+
+  public HttpClientFactory(FilterChain filters,
+                           ClientSocketChannelFactory channelFactory,
+                           boolean shutdownFactory,
+                           ScheduledExecutorService executor,
+                           boolean shutdownExecutor,
+                           ExecutorService callbackExecutor,
+                           boolean shutdownCallbackExecutor,
+                           ClientLifecycleListener clientLifecycleListener)
+  {
     _filters = filters;
     _channelFactory = channelFactory;
     _shutdownFactory = shutdownFactory;
@@ -231,6 +266,7 @@ public class HttpClientFactory implements TransportClientFactory
     _shutdownExecutor = shutdownExecutor;
     _callbackExecutor = callbackExecutor;
     _shutdownCallbackExecutor = shutdownCallbackExecutor;
+    _clientLifecycleListener = (clientLifecycleListener != null) ? clientLifecycleListener : NULL_LISTENER;
   }
 
   @Override
@@ -411,21 +447,31 @@ public class HttpClientFactory implements TransportClientFactory
     Integer poolWaiterSize = chooseNewOverDefault(getIntValue(properties, HTTP_POOL_WAITER_SIZE), DEFAULT_POOL_WAITER_SIZE);
     AsyncPoolImpl.Strategy strategy = chooseNewOverDefault(getStrategy(properties, HTTP_POOL_STRATEGY), DEFAULT_POOL_STRATEGY);
     Integer poolMinSize = chooseNewOverDefault(getIntValue(properties, HTTP_POOL_MIN_SIZE), DEFAULT_POOL_MIN_SIZE);
+    String clientName = null;
+    if (properties != null && properties.containsKey(HTTP_CLIENT_NAME))
+    {
+      clientName = (String)properties.remove(HTTP_CLIENT_NAME);
+    }
+    clientName = chooseNewOverDefault(clientName, DEFAULT_HTTP_CLIENT_NAME);
 
-    return new HttpNettyClient(_channelFactory,
-                               _executor,
-                               poolSize,
-                               requestTimeout,
-                               idleTimeout,
-                               shutdownTimeout,
-                               maxResponseSize,
-                               sslContext,
-                               sslParameters,
-                               queryPostThreshold,
-                               _callbackExecutor,
-                               poolWaiterSize,
-                               strategy,
-                               poolMinSize);
+    HttpNettyClient rawClient = new HttpNettyClient(_channelFactory,
+                                                   _executor,
+                                                   poolSize,
+                                                   requestTimeout,
+                                                   idleTimeout,
+                                                   shutdownTimeout,
+                                                   maxResponseSize,
+                                                   sslContext,
+                                                   sslParameters,
+                                                   queryPostThreshold,
+                                                   _callbackExecutor,
+                                                   poolWaiterSize,
+                                                   strategy,
+                                                   poolMinSize,
+                                                   clientName,
+                                                   _clientLifecycleListener);
+    _clientLifecycleListener.onCreateClient(rawClient);
+    return rawClient;
   }
 
   /**
@@ -643,5 +689,20 @@ public class HttpClientFactory implements TransportClientFactory
         }
       });
     }
+  }
+
+  public interface ClientLifecycleListener
+  {
+    /**
+     * Notify listener on the client creation event.
+     * @param client reference to the client has been created.
+     */
+    public void onCreateClient(TransportClient client);
+
+    /**
+     * Notify listener on the client shutdown event.
+     * @param client reference to the client has been shutdown.
+     */
+    public void onShutdownClient(TransportClient client);
   }
 }
