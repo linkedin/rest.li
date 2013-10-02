@@ -105,6 +105,7 @@ public class PropertyKeys
   public static final String HTTP_SSL_CONTEXT = HttpClientFactory.HTTP_SSL_CONTEXT;
   public static final String HTTP_SSL_PARAMS = HttpClientFactory.HTTP_SSL_PARAMS;
   public static final String HTTP_RESPONSE_COMPRESSION_OPERATIONS = HttpClientFactory.HTTP_RESPONSE_COMPRESSION_OPERATIONS;
+  public static final String HTTP_QUERY_POST_THRESHOLD = HttpClientFactory.HTTP_QUERY_POST_THRESHOLD;
 
   //used for multi colo
   public static final String DEFAULT_COLO = "defaultColo";
