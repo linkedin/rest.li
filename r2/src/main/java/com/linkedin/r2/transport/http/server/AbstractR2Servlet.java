@@ -37,12 +37,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.linkedin.data.ByteString;
+import com.linkedin.r2.message.rest.QueryTunnelUtil;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestStatus;
-import com.linkedin.r2.message.rest.QueryTunnelUtil;
 import com.linkedin.r2.transport.common.WireAttributeHelper;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
@@ -57,20 +57,13 @@ import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 public abstract class AbstractR2Servlet extends HttpServlet
 {
   private static final Logger _log = LoggerFactory.getLogger(AbstractR2Servlet.class);
-  private static final long serialVersionUID = 0L;
+  private static final long   serialVersionUID = 0L;
 
   /**
-   * Initialize the servlet using Jetty continuations for async support.
-   *
-   * Not supported until we upgrade to Servlet 3 async / Jetty 8
-   *
-   * @param useContinuations whether to use Continuations
-   * @param timeOut timeout to suspend the thread while waiting for response (ignored if
-   *          useContinuations is false)
-   * @param timeOutDelta if woken before timeOut - timeoutDelta and no response is
-   *          available, will sleep again assuming spurious wakeup (ignored if
-   *          useContinuations is false)
+   * @deprecated This constructor is deprecated as support for async servlet support
+   * is provided through {@link AbstractAsyncR2Servlet} class.
    */
+  @Deprecated
   public AbstractR2Servlet(boolean useContinuations, int timeOut, int timeOutDelta)
   {
     if (useContinuations)
@@ -93,32 +86,27 @@ public abstract class AbstractR2Servlet extends HttpServlet
   protected void service(final HttpServletRequest req, final HttpServletResponse resp)
           throws ServletException, IOException
   {
-    serviceNoContinuation(req, resp);
-  }
-
-  private void serviceNoContinuation(final HttpServletRequest req, final HttpServletResponse resp)
-      throws ServletException, IOException
-  {
     RestRequest restRequest;
+
     try
     {
       restRequest = readFromServletRequest(req);
     }
     catch (URISyntaxException e)
     {
-      RestResponse restResponse = RestStatus.responseForError(RestStatus.BAD_REQUEST, e);
-      writeToServletResponse(TransportResponseImpl.success(restResponse), resp);
+      writeToServletError(resp, RestStatus.BAD_REQUEST, e.toString());
       return;
     }
     catch (MessagingException e)
     {
-      RestResponse restResponse = RestStatus.responseForError(RestStatus.BAD_REQUEST, e);
-      writeToServletResponse(TransportResponseImpl.success(restResponse), resp);
+      writeToServletError(resp, RestStatus.BAD_REQUEST, e.toString());
       return;
     }
 
-    final AtomicReference<TransportResponse<RestResponse>> result = new AtomicReference<TransportResponse<RestResponse>>();
+    final AtomicReference<TransportResponse<RestResponse>> result =
+        new AtomicReference<TransportResponse<RestResponse>>();
     final CountDownLatch latch = new CountDownLatch(1);
+
     TransportCallback<RestResponse> callback = new TransportCallback<RestResponse>()
     {
       @Override
@@ -128,7 +116,9 @@ public abstract class AbstractR2Servlet extends HttpServlet
         latch.countDown();
       }
     };
+
     getDispatcher().handleRequest(restRequest, callback);
+
     try
     {
       latch.await();
@@ -141,9 +131,59 @@ public abstract class AbstractR2Servlet extends HttpServlet
     writeToServletResponse(result.get(), resp);
   }
 
-  private RestRequest readFromServletRequest(HttpServletRequest req) throws IOException,
+  protected void writeToServletResponse(TransportResponse<RestResponse> response,
+                                        HttpServletResponse resp)
+      throws IOException
+  {
+    Map<String, String> wireAttrs = response.getWireAttributes();
+    for (Map.Entry<String, String> e : WireAttributeHelper.toWireAttributes(wireAttrs)
+        .entrySet())
+    {
+      resp.setHeader(e.getKey(), e.getValue());
+    }
+
+    RestResponse restResponse = null;
+    if (response.hasError())
+    {
+      Throwable e = response.getError();
+      if (e instanceof RestException)
+      {
+        restResponse = ((RestException) e).getResponse();
+      }
+      if (restResponse == null)
+      {
+        restResponse = RestStatus.responseForError(RestStatus.INTERNAL_SERVER_ERROR, e);
+      }
+    }
+    else
+    {
+      restResponse = response.getResponse();
+    }
+
+    resp.setStatus(restResponse.getStatus());
+    Map<String, String> headers = restResponse.getHeaders();
+    for (Map.Entry<String, String> e : headers.entrySet())
+    {
+      // TODO multi-valued headers
+      resp.setHeader(e.getKey(), e.getValue());
+    }
+    final ByteString entity = restResponse.getEntity();
+    entity.write(resp.getOutputStream());
+
+    resp.getOutputStream().close();
+  }
+
+  protected void writeToServletError(HttpServletResponse resp, int statusCode, String message) throws IOException
+  {
+    RestResponse restResponse =
+        RestStatus.responseForStatus(statusCode, message);
+    writeToServletResponse(TransportResponseImpl.success(restResponse), resp);
+  }
+
+  protected RestRequest readFromServletRequest(HttpServletRequest req) throws IOException,
       ServletException,
-      URISyntaxException, MessagingException
+      URISyntaxException,
+      MessagingException
   {
     StringBuilder sb = new StringBuilder();
     sb.append(extractPathInfo(req));
@@ -159,10 +199,10 @@ public abstract class AbstractR2Servlet extends HttpServlet
     RestRequestBuilder rb = new RestRequestBuilder(uri);
     rb.setMethod(req.getMethod());
 
-    for (Enumeration<?> headerNames = req.getHeaderNames(); headerNames.hasMoreElements();)
+    for (Enumeration<String> headerNames = req.getHeaderNames(); headerNames.hasMoreElements();)
     {
       // TODO multi-valued headers
-      String headerName = (String) headerNames.nextElement();
+      String headerName = headerNames.nextElement();
       rb.setHeader(headerName, req.getHeader(headerName));
     }
     int length = req.getContentLength();
@@ -173,8 +213,8 @@ public abstract class AbstractR2Servlet extends HttpServlet
       int offset = 0;
       for (int r; offset < length && (r = in.read(buf, offset, length - offset)) != -1; offset += r)
       {
-
       }
+
       rb.setEntity(buf);
     }
     return QueryTunnelUtil.decode(rb.build());
@@ -237,47 +277,5 @@ public abstract class AbstractR2Servlet extends HttpServlet
     }
 
     return pathInfo;
-  }
-
-  private void writeToServletResponse(TransportResponse<RestResponse> response,
-                                      HttpServletResponse resp)
-          throws IOException
-  {
-    Map<String, String> wireAttrs = response.getWireAttributes();
-    for (Map.Entry<String, String> e : WireAttributeHelper.toWireAttributes(wireAttrs)
-                                                          .entrySet())
-    {
-      resp.setHeader(e.getKey(), e.getValue());
-    }
-
-    RestResponse restResponse = null;
-    if (response.hasError())
-    {
-      Throwable e = response.getError();
-      if (e instanceof RestException)
-      {
-        restResponse = ((RestException) e).getResponse();
-      }
-      if (restResponse == null)
-      {
-        restResponse = RestStatus.responseForError(RestStatus.INTERNAL_SERVER_ERROR, e);
-      }
-    }
-    else
-    {
-      restResponse = response.getResponse();
-    }
-
-    resp.setStatus(restResponse.getStatus());
-    Map<String, String> headers = restResponse.getHeaders();
-    for (Map.Entry<String, String> e : headers.entrySet())
-    {
-      // TODO multi-valued headers
-      resp.setHeader(e.getKey(), e.getValue());
-    }
-    final ByteString entity = restResponse.getEntity();
-    entity.write(resp.getOutputStream());
-
-    resp.getOutputStream().close();
   }
 }

@@ -16,7 +16,6 @@
 
 package com.linkedin.restli.server;
 
-import com.linkedin.r2.transport.http.server.HttpServerFactory;
 import java.io.IOException;
 import java.net.URI;
 import java.util.concurrent.Executors;
@@ -27,6 +26,7 @@ import com.linkedin.parseq.EngineBuilder;
 import com.linkedin.r2.filter.FilterChains;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.http.server.HttpServer;
+import com.linkedin.r2.transport.http.server.HttpServerFactory;
 import com.linkedin.restli.docgen.DefaultDocumentationRequestHandler;
 import com.linkedin.restli.server.resources.PrototypeResourceFactory;
 
@@ -55,7 +55,13 @@ public class StandaloneLauncher
    */
   public StandaloneLauncher(final int port, final String... packages)
   {
-    this(port, HttpServerFactory.DEFAULT_CONTEXT_PATH, HttpServerFactory.DEFAULT_THREAD_POOL_SIZE, getDefaultParseqThreadPoolSize(), packages);
+    this(port,
+         HttpServerFactory.DEFAULT_CONTEXT_PATH,
+         HttpServerFactory.DEFAULT_THREAD_POOL_SIZE,
+         getDefaultParseqThreadPoolSize(),
+         HttpServerFactory.DEFAULT_USE_ASYNC_SERVLET_API,
+         HttpServerFactory.DEFAULT_ASYNC_TIMEOUT,
+         packages);
   }
 
   /**
@@ -67,7 +73,27 @@ public class StandaloneLauncher
    * @param parseqThreadPoolSize number of threads to keep in the pool for outbound, parseq requests
    * @param packages package names to scan for RestLi resources
    */
-  public StandaloneLauncher(final int port, String contextPath, int threadPoolSize, int parseqThreadPoolSize, final String... packages)
+  public StandaloneLauncher(final int port,
+                            String contextPath,
+                            int threadPoolSize,
+                            int parseqThreadPoolSize,
+                            final String... packages)
+  {
+    this(port,
+          contextPath,
+          threadPoolSize,
+          parseqThreadPoolSize,
+          HttpServerFactory.DEFAULT_USE_ASYNC_SERVLET_API,
+          HttpServerFactory.DEFAULT_ASYNC_TIMEOUT);
+  }
+
+  public StandaloneLauncher(final int port,
+                            String contextPath,
+                            int threadPoolSize,
+                            int parseqThreadPoolSize,
+                            boolean useAsyncserverApi,
+                            int asyncTimeout,
+                            final String... packages)
   {
     _port = port;
     _contextPath = contextPath;
@@ -90,7 +116,13 @@ public class StandaloneLauncher
     final RestLiServer restServer = new RestLiServer(config, new PrototypeResourceFactory(), engine);
     final TransportDispatcher dispatcher = new DelegatingTransportDispatcher(restServer);
     System.err.println("Jetty threadPoolSize: " + threadPoolSize);
-    _server = new HttpServerFactory(FilterChains.empty()).createServer(_port, _contextPath, _threadPoolSize, dispatcher);
+    _server =
+        new HttpServerFactory(FilterChains.empty()).createServer(_port,
+                                                                 _contextPath,
+                                                                 _threadPoolSize,
+                                                                 dispatcher,
+                                                                 useAsyncserverApi,
+                                                                 asyncTimeout);
   }
 
   /**
@@ -184,6 +216,8 @@ public class StandaloneLauncher
     String contextPath = HttpServerFactory.DEFAULT_CONTEXT_PATH;
     int threadPoolSize = HttpServerFactory.DEFAULT_THREAD_POOL_SIZE;
     int parseqThreadPoolSize = getDefaultParseqThreadPoolSize();
+    boolean useAsyncServletApi = HttpServerFactory.DEFAULT_USE_ASYNC_SERVLET_API;
+    int asyncTimeout = HttpServerFactory.DEFAULT_ASYNC_TIMEOUT;
 
     for (int i = 0; i < args.length; i++)
     {
@@ -271,6 +305,37 @@ public class StandaloneLauncher
           System.out.println("Missing packages");
         }
       }
+      else if (args[i].equals("-useAsync"))
+      {
+        if (hasValueArg)
+        {
+          useAsyncServletApi = Boolean.parseBoolean(args[i + 1]);
+        }
+        else
+        {
+          useAsyncServletApi = true;
+        }
+      }
+      else if (args[i].equals("-asyncTimeout"))
+      {
+        if (hasValueArg)
+        {
+          try
+          {
+            asyncTimeout = Integer.parseInt(args[i + 1]);
+          }
+          catch (final NumberFormatException e)
+          {
+            System.out.println("Invalid asyncTimeout: " + args[i + 1]);
+            help();
+          }
+        }
+        else
+        {
+          System.out.println("Missing asyncTimeout value");
+          help();
+        }
+      }
     }
 
     if (packages == null)
@@ -278,7 +343,13 @@ public class StandaloneLauncher
       help();
     }
 
-    return new StandaloneLauncher(port, contextPath, threadPoolSize, parseqThreadPoolSize, packages);
+    return new StandaloneLauncher(port,
+                                  contextPath,
+                                  threadPoolSize,
+                                  parseqThreadPoolSize,
+                                  useAsyncServletApi,
+                                  asyncTimeout,
+                                  packages);
   }
 
   /**
@@ -286,7 +357,7 @@ public class StandaloneLauncher
    */
   private static void help()
   {
-    System.out.println("Usage: launcher [-port port] [-contextpath context_path] [-threads threadPoolSize] [-parseqthreads parseqThreadPoolSize] [-packages package1,package2,...]");
+    System.out.println("Usage: launcher [-port port] [-contextpath context_path] [-threads threadPoolSize] [-parseqthreads parseqThreadPoolSize] [-useAsync [true]] [-asyncTimeout timeoutInMilliseconds] [-packages package1,package2,...]");
     System.exit(0);
   }
 }

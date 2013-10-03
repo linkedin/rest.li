@@ -28,8 +28,11 @@ import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
  */
 public class HttpServerFactory
 {
-  public static final String DEFAULT_CONTEXT_PATH = "/";
-  public static final int DEFAULT_THREAD_POOL_SIZE = 512;
+  public static final String  DEFAULT_CONTEXT_PATH          = "/";
+  public static final int     DEFAULT_THREAD_POOL_SIZE      = 512;
+  public static final int     DEFAULT_ASYNC_TIMEOUT         = 5000;
+  public static final boolean DEFAULT_USE_ASYNC_SERVLET_API = false;
+
   private final FilterChain _filters;
 
   public HttpServerFactory()
@@ -44,13 +47,42 @@ public class HttpServerFactory
 
   public HttpServer createServer(int port, TransportDispatcher transportDispatcher)
   {
-    return createServer(port, DEFAULT_CONTEXT_PATH, DEFAULT_THREAD_POOL_SIZE, transportDispatcher);
+    return createServer(port,
+                        DEFAULT_CONTEXT_PATH,
+                        DEFAULT_THREAD_POOL_SIZE,
+                        transportDispatcher,
+                        DEFAULT_USE_ASYNC_SERVLET_API,
+                        DEFAULT_ASYNC_TIMEOUT);
   }
 
-  public HttpServer createServer(int port, String contextPath, int threadPoolSize, TransportDispatcher transportDispatcher)
+  public HttpServer createServer(int port,
+                                 String contextPath,
+                                 int threadPoolSize,
+                                 TransportDispatcher transportDispatcher)
   {
-    final TransportDispatcher filterDispatcher = new FilterChainDispatcher(transportDispatcher, _filters);
+    return createServer(port,
+                        contextPath,
+                        threadPoolSize,
+                        transportDispatcher,
+                        DEFAULT_USE_ASYNC_SERVLET_API,
+                        DEFAULT_ASYNC_TIMEOUT);
+  }
+
+  public HttpServer createServer(int port,
+                                 String contextPath,
+                                 int threadPoolSize,
+                                 TransportDispatcher transportDispatcher,
+                                 boolean useAsyncServletApi,
+                                 int asyncTimeOut)
+  {
+    final TransportDispatcher filterDispatcher =
+        new FilterChainDispatcher(transportDispatcher, _filters);
     final HttpDispatcher dispatcher = new HttpDispatcher(filterDispatcher);
-    return new HttpJettyServer(port, contextPath, threadPoolSize, dispatcher);
+    return new HttpJettyServer(port,
+                               contextPath,
+                               threadPoolSize,
+                               dispatcher,
+                               useAsyncServletApi,
+                               asyncTimeOut);
   }
 }
