@@ -1,5 +1,7 @@
 1.9.33
 ------
+(RB=218537)
+Disallow null values in setParam. Add more tests.
 
 1.9.32
 ------
