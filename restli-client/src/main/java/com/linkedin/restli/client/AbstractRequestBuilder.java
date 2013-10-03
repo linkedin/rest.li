@@ -137,7 +137,11 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
 
   public AbstractRequestBuilder<K, V, R> setParam(String key, Object value)
   {
-    _queryParams.put(key, paramToDataObject(value));
+    Object dataObject = paramToDataObject(value);
+    if (dataObject != null)
+    {
+      _queryParams.put(key, dataObject);
+    }
     return this;
   }
 
