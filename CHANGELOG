@@ -1,6 +1,14 @@
-1.9.35
+1.9.36
 ------
 
+
+1.9.35
+------
+(RB=217963)
+Add ability to collect and export R2 AsyncPool Stats
+
+(RB=216982)
+Add ability to config R2 AsyncPool strategy between LRU and MRU.
 
 1.9.34
 ------
