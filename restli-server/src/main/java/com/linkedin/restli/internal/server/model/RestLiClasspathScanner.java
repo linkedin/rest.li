@@ -56,6 +56,7 @@ class RestLiClasspathScanner
   public static final String CLASS_SUFFIX = ".class";
   public static final char PACKAGE_SEPARATOR = '.';
   public static final char FILE_SEPARATOR = File.separatorChar;
+  public static final char UNIX_FILE_SEPARATOR = '/';
   public static final String SCHEME_FILE = "file";
   public static final String SCHEME_JAR = "jar";
   public static final String SCHEME_ZIP = "zip";
@@ -101,6 +102,16 @@ class RestLiClasspathScanner
     return path.replace(FILE_SEPARATOR, PACKAGE_SEPARATOR);
   }
 
+  private String toUnixPath(final String path)
+  {
+    return path.replace(FILE_SEPARATOR, UNIX_FILE_SEPARATOR);
+  }
+
+  private String toNativePath(final String path)
+  {
+    return path.replace(UNIX_FILE_SEPARATOR, FILE_SEPARATOR);
+  }
+
   public Class<?> classForName(final String name)
           throws ClassNotFoundException
   {
@@ -118,7 +129,7 @@ class RestLiClasspathScanner
     {
       for (String p : _packagePaths)
       {
-        Enumeration<URL> resources = _classLoader.getResources(p);
+        Enumeration<URL> resources = _classLoader.getResources(toUnixPath(p));
         while (resources.hasMoreElements())
         {
           URI u = resources.nextElement().toURI();
@@ -193,7 +204,7 @@ class RestLiClasspathScanner
       {
         if (!e.isDirectory() && e.getName().startsWith(parent))
         {
-          checkForMatchingClass(e.getName());
+          checkForMatchingClass(toNativePath(e.getName()));
         }
         jarIn.closeEntry();
       }

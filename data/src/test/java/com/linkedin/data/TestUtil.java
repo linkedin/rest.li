@@ -19,7 +19,6 @@ package com.linkedin.data;
 import com.linkedin.data.codec.DataLocation;
 import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.schema.DataSchema;
-import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.SchemaParser;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -244,7 +243,8 @@ public class TestUtil
     for (Map.Entry<String,String> entry : fileToSchemaMap.entrySet())
     {
       String key = entry.getKey();
-      String filename = "pegasus" + key.replace('/', File.separatorChar);
+      // JARs use resource separator as the file separator
+      String filename = "pegasus" + key.replace(File.separatorChar, '/');
       if (debug) out.println("  adding " + filename);
       JarEntry jarEntry = new JarEntry(filename);
       jarStream.putNextEntry(jarEntry);
@@ -299,9 +299,12 @@ public class TestUtil
   {
     boolean first = true;
     StringBuilder sb = new StringBuilder();
+
+    String separator = File.pathSeparator;
+
     for (String path : paths)
     {
-      if (!first) sb.append(":");
+      if (!first) sb.append(separator);
       sb.append(path);
       first = false;
     }

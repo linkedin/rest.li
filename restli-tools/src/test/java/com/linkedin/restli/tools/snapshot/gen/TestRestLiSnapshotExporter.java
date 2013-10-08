@@ -202,12 +202,18 @@ public class TestRestLiSnapshotExporter
     BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
 
     StringBuilder sb = new StringBuilder();
-    String line = null;
-    while ((line = reader.readLine()) != null)
+    String line;
+    try
     {
-      sb.append(line);
+      while ((line = reader.readLine()) != null)
+      {
+        sb.append(line);
+      }
     }
-
+    finally
+    {
+      reader.close();
+    }
     return sb.toString();
   }
 

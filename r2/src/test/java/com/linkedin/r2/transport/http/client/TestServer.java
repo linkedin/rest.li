@@ -32,14 +32,17 @@ import java.util.concurrent.CountDownLatch;
 
 /**
  * @author Steven Ihde
+ *
+ * THIS CLASS IS NOT THREAD SAFE AND CANNOT HANDLE CONCURRENT REQUESTS!
+ *
  * @version $Revision: $
  */
-
 public class TestServer
 {
   private final Thread _thread;
   private final ServerSocket _serverSocket;
-  private volatile String _lastRequest;
+  private final Object _lastRequestLock = new Object();
+  private String _lastRequest;
   private volatile CountDownLatch _responseLatch;
 
   public TestServer() throws IOException
@@ -57,11 +60,15 @@ public class TestServer
           {
             // Catch IOException from accept() in the OUTER loop so it terminates the thread
             Socket s = _serverSocket.accept();
-            _lastRequest = null;
+            synchronized (_lastRequestLock)
+            {
+              _lastRequest = null;
+            }
             try
             {
               // Use 8859-1 because it can reversibly encode/decode any sequence of octets.
-              BufferedReader r = new BufferedReader(new InputStreamReader(s.getInputStream(), Charset.forName("ISO-8859-1")));
+              BufferedReader r = new BufferedReader(new InputStreamReader(s.getInputStream(),
+                                                                          Charset.forName("ISO-8859-1")));
               String line = r.readLine();
               String response = line==null ? null : getResponse(line);
 
@@ -77,8 +84,15 @@ public class TestServer
                 // a RST; gather all the input in case the client wants it.
                 StringBuilder sb = new StringBuilder(line);
                 while ((line = r.readLine()) != null)
+                {
                   sb.append(line);
-                _lastRequest = sb.toString();
+                }
+                synchronized (_lastRequestLock)
+                {
+                  _lastRequest = sb.toString();
+                  _lastRequestLock.notify();
+                }
+
                 s.close();
               }
             }
@@ -139,8 +153,16 @@ public class TestServer
   }
 
   public String getLastRequest()
+      throws InterruptedException
   {
-    return _lastRequest;
+    synchronized (_lastRequestLock)
+    {
+      while (_lastRequest == null)
+      {
+        _lastRequestLock.wait();
+      }
+      return _lastRequest;
+    }
   }
 
   public void shutdown() throws InterruptedException, IOException

@@ -71,7 +71,8 @@ public class RestLiExampleBasicClient
     final RestClient restClient = new RestClient(r2Client, serverUrlBuilder.toString());
     final RestLiExampleBasicClient photoClient = new RestLiExampleBasicClient(restClient);
 
-    photoClient.sendRequest(args[0], new PrintWriter(System.out));
+    String pathInfo = args.length == 0 ? "" : args[0];
+    photoClient.sendRequest(pathInfo, new PrintWriter(System.out));
     photoClient.shutdown();
     http.shutdown(new FutureCallback<None>());
   }

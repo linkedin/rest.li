@@ -20,17 +20,13 @@
 
 package com.linkedin.d2.discovery.stores.zk;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.zookeeper.server.ServerConfig;
-import org.apache.zookeeper.server.NIOServerCnxn;
-import org.apache.zookeeper.server.ZooKeeperServer;
-import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
-import org.apache.zookeeper.server.quorum.QuorumPeerMain;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.CountDownLatch;
+import org.apache.commons.io.FileUtils;
+import org.apache.zookeeper.server.NIOServerCnxn;
+import org.apache.zookeeper.server.ZooKeeperServer;
 
 /**
  * Very simple wrapper around ZooKeeper server, intended only for TEST use.
@@ -117,6 +113,10 @@ public class ZKServer
       e.printStackTrace();
     }
     _zk.shutdown();
+    if (_zk.getZKDatabase() != null)
+    {
+      _zk.getZKDatabase().close();
+    }
     if (erase)
     {
       FileUtils.deleteDirectory(_dataDir);

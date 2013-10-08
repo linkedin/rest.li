@@ -274,6 +274,5 @@ public class TestHttpClient
     final FutureCallback<None> callback = new FutureCallback<None>();
     client.shutdown(callback);
     callback.get();
-
   }
 }

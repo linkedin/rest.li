@@ -19,19 +19,21 @@ package com.linkedin.data.avro.generator;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import org.apache.avro.Schema;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
 import static com.linkedin.data.TestUtil.*;
+import static com.linkedin.util.FileUtil.buildSystemIndependentPath;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
@@ -43,29 +45,33 @@ public class TestAvroSchemaGenerator
 
   private Map<String,String> _testSchemas = asMap
   (
-    "/a1/foo.pdsc",       "{ \"name\" : \"foo\", \"type\" : \"record\", \"fields\" : [] }",
-    "/a1/x/y/z.pdsc",     "{ \"name\" : \"x.y.z\", \"type\" : \"record\", \"fields\" : [] }",
-    "/a2/b/bar.pdsc",     "{ \"name\" : \"bar\", \"type\" : \"fixed\", \"size\" : 34 }",
-    "/a3/b/c/baz.pdsc",   "{ \"name\" : \"baz\", \"type\" : \"record\", \"fields\" : [] }",
-    "/a3/b/c/referrer1.pdsc", "{ \"name\" : \"referrer1\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"referree\", \"type\" : \"referree1\" } ] }",
-    "/a3/b/c/referree1.pdsc", "{ \"name\" : \"referree1\", \"type\" : \"enum\", \"symbols\" : [ \"good\", \"bad\", \"ugly\" ] }",
-    "/a3/b/c/referrer2.pdsc", "{ \"name\" : \"referrer2\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"referree\", \"type\" : \"referree2\" } ] }",
-    "/a3/b/c/referree2.pdsc", "{ \"name\" : \"referree2\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"f\", \"type\" : \"string\" } ] }",
-    "/a3/b/c/circular1.pdsc", "{ \"name\" : \"circular1\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"member\", \"type\" : \"circular2\" } ] }",
-    "/a3/b/c/circular2.pdsc", "{ \"name\" : \"circular2\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"member\", \"type\" : \"circular1\" } ] }"
+    buildSystemIndependentPath("a1", "foo.pdsc"),       "{ \"name\" : \"foo\", \"type\" : \"record\", \"fields\" : [] }",
+    buildSystemIndependentPath("a1", "x", "y", "z.pdsc"),     "{ \"name\" : \"x.y.z\", \"type\" : \"record\", \"fields\" : [] }",
+    buildSystemIndependentPath("a2", "b", "bar.pdsc"),     "{ \"name\" : \"bar\", \"type\" : \"fixed\", \"size\" : 34 }",
+    buildSystemIndependentPath("a3", "b", "c", "baz.pdsc"),   "{ \"name\" : \"baz\", \"type\" : \"record\", \"fields\" : [] }",
+    buildSystemIndependentPath("a3", "b", "c", "referrer1.pdsc"), "{ \"name\" : \"referrer1\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"referree\", \"type\" : \"referree1\" } ] }",
+    buildSystemIndependentPath("a3", "b", "c", "referree1.pdsc"), "{ \"name\" : \"referree1\", \"type\" : \"enum\", \"symbols\" : [ \"good\", \"bad\", \"ugly\" ] }",
+    buildSystemIndependentPath("a3", "b", "c", "referrer2.pdsc"), "{ \"name\" : \"referrer2\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"referree\", \"type\" : \"referree2\" } ] }",
+    buildSystemIndependentPath("a3", "b", "c", "referree2.pdsc"), "{ \"name\" : \"referree2\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"f\", \"type\" : \"string\" } ] }",
+    buildSystemIndependentPath("a3", "b", "c", "circular1.pdsc"), "{ \"name\" : \"circular1\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"member\", \"type\" : \"circular2\" } ] }",
+    buildSystemIndependentPath("a3", "b", "c", "circular2.pdsc"), "{ \"name\" : \"circular2\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"member\", \"type\" : \"circular1\" } ] }"
   );
 
-  private List<String> _testPaths = Arrays.asList("/a1", "/a2/b", "/a3/b/c");
+  private List<String> _testPaths = Arrays.asList(
+    buildSystemIndependentPath("a1"),
+    buildSystemIndependentPath("a2", "b"),
+    buildSystemIndependentPath("a3", "b", "c")
+  );
 
   private Map<String, String> _expectedAvroSchemas = asMap(
-    "/a1/foo.pdsc", "{\"type\":\"record\",\"name\":\"foo\",\"fields\":[]}",
-    "/a1/x/y/z.pdsc", "{\"type\":\"record\",\"name\":\"z\",\"namespace\":\"x.y\",\"fields\":[]}",
-    "/a3/b/c/baz.pdsc", "{\"type\":\"record\",\"name\":\"baz\",\"fields\":[]}",
-    "/a3/b/c/referrer1.pdsc", "{\"type\":\"record\",\"name\":\"referrer1\",\"fields\":[{\"name\":\"referree\",\"type\":{\"type\":\"enum\",\"name\":\"referree1\",\"symbols\":[\"good\",\"bad\",\"ugly\"]}}]}",
-    "/a3/b/c/referrer2.pdsc", "{\"type\":\"record\",\"name\":\"referrer2\",\"fields\":[{\"name\":\"referree\",\"type\":{\"type\":\"record\",\"name\":\"referree2\",\"fields\":[{\"name\":\"f\",\"type\":\"string\"}]}}]}",
-    "/a3/b/c/referree2.pdsc", "{\"type\":\"record\",\"name\":\"referree2\",\"fields\":[{\"name\":\"f\",\"type\":\"string\"}]}",
-    "/a3/b/c/circular1.pdsc", "{\"type\":\"record\",\"name\":\"circular1\",\"fields\":[{\"name\":\"member\",\"type\":{\"type\":\"record\",\"name\":\"circular2\",\"fields\":[{\"name\":\"member\",\"type\":\"circular1\"}]}}]}",
-    "/a3/b/c/circular2.pdsc", "{\"type\":\"record\",\"name\":\"circular2\",\"fields\":[{\"name\":\"member\",\"type\":{\"type\":\"record\",\"name\":\"circular1\",\"fields\":[{\"name\":\"member\",\"type\":\"circular2\"}]}}]}"
+    buildSystemIndependentPath("a1", "foo.pdsc"), "{\"type\":\"record\",\"name\":\"foo\",\"fields\":[]}",
+    buildSystemIndependentPath("a1", "x", "y", "z.pdsc"), "{\"type\":\"record\",\"name\":\"z\",\"namespace\":\"x.y\",\"fields\":[]}",
+    buildSystemIndependentPath("a3", "b", "c", "baz.pdsc"), "{\"type\":\"record\",\"name\":\"baz\",\"fields\":[]}",
+    buildSystemIndependentPath("a3", "b", "c", "referrer1.pdsc"), "{\"type\":\"record\",\"name\":\"referrer1\",\"fields\":[{\"name\":\"referree\",\"type\":{\"type\":\"enum\",\"name\":\"referree1\",\"symbols\":[\"good\",\"bad\",\"ugly\"]}}]}",
+    buildSystemIndependentPath("a3", "b", "c", "referrer2.pdsc"), "{\"type\":\"record\",\"name\":\"referrer2\",\"fields\":[{\"name\":\"referree\",\"type\":{\"type\":\"record\",\"name\":\"referree2\",\"fields\":[{\"name\":\"f\",\"type\":\"string\"}]}}]}",
+    buildSystemIndependentPath("a3", "b", "c", "referree2.pdsc"), "{\"type\":\"record\",\"name\":\"referree2\",\"fields\":[{\"name\":\"f\",\"type\":\"string\"}]}",
+    buildSystemIndependentPath("a3", "b", "c", "circular1.pdsc"), "{\"type\":\"record\",\"name\":\"circular1\",\"fields\":[{\"name\":\"member\",\"type\":{\"type\":\"record\",\"name\":\"circular2\",\"fields\":[{\"name\":\"member\",\"type\":\"circular1\"}]}}]}",
+    buildSystemIndependentPath("a3", "b", "c", "circular2.pdsc"), "{\"type\":\"record\",\"name\":\"circular2\",\"fields\":[{\"name\":\"member\",\"type\":{\"type\":\"record\",\"name\":\"circular1\",\"fields\":[{\"name\":\"member\",\"type\":\"circular2\"}]}}]}"
   );
 
   private File _testDir;
@@ -113,7 +119,16 @@ public class TestAvroSchemaGenerator
       assertNull(exc);
       File expectedOutputFile = schemaOutputFile(targetDir.getCanonicalPath(), entry.getValue().getValue());
       assertTrue(expectedOutputFile.exists());
-      Schema avroSchema = Schema.parse(expectedOutputFile);
+      InputStream avroSchemaInputStream = new FileInputStream(expectedOutputFile);
+      Schema avroSchema;
+      try
+      {
+        avroSchema = Schema.parse(avroSchemaInputStream);
+      }
+      finally
+      {
+        avroSchemaInputStream.close();
+      }
       assertFalse(avroSchema.isError());
       String avroSchemaText = avroSchema.toString();
       if (_debug) out.println(avroSchemaText);
@@ -167,8 +182,8 @@ public class TestAvroSchemaGenerator
   public void testReferrerBeforeReferreeInArgs() throws IOException
   {
     Collection<String> testPaths = computePathFromRelativePaths(_testDir, _testPaths);
-    Map.Entry<File, Map.Entry<String,String>> referrer2 = findEntryForPdsc("/a3/b/c/referrer2.pdsc", _files);
-    Map.Entry<File, Map.Entry<String,String>> referree2 = findEntryForPdsc("/a3/b/c/referree2.pdsc", _files);
+    Map.Entry<File, Map.Entry<String,String>> referrer2 = findEntryForPdsc(buildSystemIndependentPath("a3", "b", "c", "referrer2.pdsc"), _files);
+    Map.Entry<File, Map.Entry<String,String>> referree2 = findEntryForPdsc(buildSystemIndependentPath("a3", "b", "c", "referree2.pdsc"), _files);
 
     File targetDir = setup(testPaths);
 
@@ -201,15 +216,14 @@ public class TestAvroSchemaGenerator
     }
     assertNull(exc);
 
+    assertEquals(targetDir.listFiles().length, expectedOutputFiles.length);
+
     // make sure expected file is generated
     for (File f : expectedOutputFiles)
     {
       assertTrue(f.exists(), f + " expected to exist");
       f.delete();
     }
-
-    // no other file generated
-    assertEquals(targetDir.listFiles().length, 0);
   }
 
   @AfterClass

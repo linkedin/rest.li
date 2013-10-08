@@ -78,5 +78,17 @@ public class FileUtil
     return result;
   }
 
+  public static String buildSystemIndependentPath(String ... pathPieces)
+  {
+    char separtor = File.separatorChar;
+    StringBuilder sb = new StringBuilder();
+    for (String piece: pathPieces)
+    {
+      sb.append(separtor);
+      sb.append(piece);
+    }
+    return sb.toString();
+  }
+
   private static final Logger _log = LoggerFactory.getLogger(FileUtil.class);
 }
