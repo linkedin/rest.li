@@ -510,6 +510,7 @@ class PegasusPlugin implements Plugin<Project>
 
   private static final StringBuffer _restModelCompatMessage = new StringBuffer()
   private static final StringBuffer _restModelPublishReminder = new StringBuffer()
+  private static final Collection<String> _needCheckinFiles = new HashSet<String>()
 
   private static final Object STATIC_PROJECT_EVALUATED_LOCK = new Object()
   private static final Object STATIC_BUILD_FINISHED_LOCK = new Object()
@@ -578,6 +579,11 @@ class PegasusPlugin implements Plugin<Project>
 
             if (_restModelPublishReminder.length() > 0) {
               endOfBuildMessage.append(_restModelPublishReminder)
+            }
+
+            if (_needCheckinFiles.size() > 0)
+            {
+              endOfBuildMessage.append(createCheckinFileMessage(_needCheckinFiles))
             }
 
             if (endOfBuildMessage.length() > 0) {
@@ -1364,6 +1370,31 @@ class PegasusPlugin implements Plugin<Project>
     return compatLevel
   }
 
+  private static void addNeedCheckinFiles(Project project, Collection<String> snapshotFiles, Collection<String> idlFiles)
+  {
+    if (!isPropertyTrue(project, IDL_NO_PUBLISH))
+    {
+      _needCheckinFiles.addAll(idlFiles)
+    }
+    if (!isPropertyTrue(project, SNAPSHOT_NO_PUBLISH))
+    {
+      _needCheckinFiles.addAll(snapshotFiles)
+    }
+  }
+
+  private static String createCheckinFileMessage(Collection<String> nonEquivExpectedFiles)
+  {
+    StringBuilder builder = new StringBuilder();
+    builder.append("\nRemember to checkin the changes to the following modified files:\n")
+    for (String file: nonEquivExpectedFiles)
+    {
+      builder.append("  ")
+      builder.append(file)
+      builder.append("\n")
+    }
+    return builder.toString();
+  }
+
   // returns nothing but modifies the passed in StringBuilder
   private static void finishMessage(Project project, StringBuilder currentMessage, FileCompatibilityType type, Collection<String> expectedFiles)
   {
@@ -1648,33 +1679,35 @@ class PegasusPlugin implements Plugin<Project>
   {
     final StringBuilder allCheckMessage = new StringBuilder()
     boolean isCompatible = true;
-    List<String> incompatibleCanonFiles = new ArrayList<String>()
+    boolean isEquivalent = true;
+    List<String> nonEquivExistingFiles = new ArrayList<String>()
 
-    final Set<String> apiExistingSnapshotFilePaths = previousDirectory.listFiles(filter).collect { it.absolutePath }
+    final Set<String> apiExistingFilePaths = previousDirectory.listFiles(filter).collect { it.absolutePath }
     currentFiles.each {
       project.logger.info('Checking interface file: ' + it.path)
 
-      String apiSnapshotFilePath = "${previousDirectory.path}${File.separatorChar}${it.name}"
-      final File apiSnapshotFile = project.file(apiSnapshotFilePath)
-      if (apiSnapshotFile.exists())
+      String apiFilePath = "${previousDirectory.path}${File.separatorChar}${it.name}"
+      final File apiFile = project.file(apiFilePath)
+      if (apiFile.exists())
       {
-        apiExistingSnapshotFilePaths.remove(apiSnapshotFilePath)
+        apiExistingFilePaths.remove(apiFilePath)
 
-        final infoMap = compatibilityChecker.check(apiSnapshotFilePath, it.path, compatLevel)
-        final boolean isCurrentSnapshotCompatible = infoMap.isCompatible(compatLevel)
-        isCompatible &= isCurrentSnapshotCompatible
-        if (!isCurrentSnapshotCompatible)
+        final infoMap = compatibilityChecker.check(apiFilePath, it.path, compatLevel)
+        final boolean isCurrentFileCompatible = infoMap.isCompatible(compatLevel)
+        isCompatible &= isCurrentFileCompatible
+        final boolean isCurrentFileEquivalent = infoMap.isEquivalent()
+        isEquivalent &= isCurrentFileEquivalent
+        if (!isCurrentFileEquivalent)
         {
-          incompatibleCanonFiles.add(apiSnapshotFilePath)
+          nonEquivExistingFiles.add(apiFilePath)
         }
 
-        project.logger.info("Checked compatibility in mode: $compatLevel; $apiSnapshotFilePath VS $it.path; result: $isCurrentSnapshotCompatible")
-        allCheckMessage.append(infoMap.createSummary(apiSnapshotFilePath, it.path))
+        project.logger.info("Checked compatibility in mode: $compatLevel; $apiFilePath VS $it.path; result: $isCurrentFileCompatible")
+        allCheckMessage.append(infoMap.createSummary(apiFilePath, it.path))
       }
     }
 
-    boolean isEquivalent = allCheckMessage.length() == 0
-    return new CompatibilityResult(isEquivalent, isCompatible, allCheckMessage, incompatibleCanonFiles)
+    return new CompatibilityResult(isEquivalent, isCompatible, allCheckMessage, nonEquivExistingFiles)
   }
 
   private static CompatibilityResult checkFileCount(Project project,
@@ -1687,7 +1720,7 @@ class PegasusPlugin implements Plugin<Project>
     final StringBuilder allCheckMessage = new StringBuilder()
     boolean isEquivalent = true
     boolean isCompatible = true
-    List<String> missingExpectedFiles = new ArrayList<String>()
+    List<String> nonEquivExpectedFiles = new ArrayList<String>()
 
     final errorFilePairs = []
     final Set<String> apiExistingFilePaths = previousDirectory.listFiles(filter).collect { it.absolutePath }
@@ -1703,7 +1736,7 @@ class PegasusPlugin implements Plugin<Project>
         // found new file that has no matching old file
         errorFilePairs.add(["", it.path])
         isEquivalent = false
-        missingExpectedFiles.add(expectedFile.absolutePath)
+        nonEquivExpectedFiles.add(expectedFile.absolutePath)
       }
     }
 
@@ -1719,7 +1752,7 @@ class PegasusPlugin implements Plugin<Project>
       allCheckMessage.append(infoMap.createSummary())
     }
 
-    return new CompatibilityResult(isEquivalent, isCompatible, allCheckMessage, missingExpectedFiles)
+    return new CompatibilityResult(isEquivalent, isCompatible, allCheckMessage, nonEquivExpectedFiles)
   }
 
   private static class CompatibilityResult
@@ -1727,14 +1760,14 @@ class PegasusPlugin implements Plugin<Project>
     final boolean isEquivalent;
     final boolean isCompatible;
     final StringBuilder message;
-    final Collection<String> badExpectedFiles
+    final Collection<String> nonEquivExistingFiles
 
-    public CompatibilityResult(boolean isEquivalent, boolean isCompatible, StringBuilder message, Collection<String> badExpectedFiles)
+    public CompatibilityResult(boolean isEquivalent, boolean isCompatible, StringBuilder message, Collection<String> nonEquivExistingFiles)
     {
       this.isEquivalent = isEquivalent
       this.isCompatible = isCompatible
       this.message = message
-      this.badExpectedFiles = badExpectedFiles
+      this.nonEquivExistingFiles = nonEquivExistingFiles
     }
   }
 
@@ -1783,7 +1816,7 @@ class PegasusPlugin implements Plugin<Project>
 
       final StringBuilder allCheckMessage = new StringBuilder(snapshotCountResult.message)
       boolean isCompatible = snapshotCountResult.isCompatible
-      List<String> badExistingFiles = snapshotCountResult.badExpectedFiles;
+      List<String> badExistingFiles = snapshotCountResult.nonEquivExistingFiles;
 
       final CompatibilityResult snapshotCompatResult = checkSnapshotCompatibility(project,
                                                                               snapshotCompatibilityChecker,
@@ -1794,7 +1827,7 @@ class PegasusPlugin implements Plugin<Project>
 
       allCheckMessage.append(snapshotCompatResult)
       isCompatible &= snapshotCompatResult.isCompatible
-      badExistingFiles.addAll(snapshotCompatResult.badExpectedFiles)
+      badExistingFiles.addAll(snapshotCompatResult.nonEquivExistingFiles)
       isEquivalent = snapshotCountResult.isEquivalent && snapshotCompatResult.isEquivalent
 
       if (isEquivalent)
@@ -1807,6 +1840,7 @@ class PegasusPlugin implements Plugin<Project>
       if (isCompatible)
       {
         _restModelCompatMessage.append(allCheckMessage)
+        addNeedCheckinFiles(project, badExistingFiles, Collections.emptyList())
       }
       else
       {
@@ -1849,7 +1883,7 @@ class PegasusPlugin implements Plugin<Project>
 
       final StringBuilder allCheckMessage = new StringBuilder(snapshotCountResult.message)
       boolean isCompatible = snapshotCountResult.isCompatible
-      List<String> badExistingFiles = snapshotCountResult.badExpectedFiles
+      List<String> badExistingSnapshotFiles = snapshotCountResult.nonEquivExistingFiles
 
       // check Idl Count
       final CompatibilityResult idlCountResult = checkFileCount(project,
@@ -1861,7 +1895,7 @@ class PegasusPlugin implements Plugin<Project>
 
       allCheckMessage.append(idlCountResult.message)
       isCompatible &= idlCountResult.isCompatible
-      badExistingFiles.addAll(idlCountResult.badExpectedFiles)
+      List<String> badExistingIdlFiles = idlCountResult.nonEquivExistingFiles
 
       final CompatibilityResult snapshotCompatResult = checkSnapshotCompatibility(project,
                                                                               snapshotCompatibilityChecker,
@@ -1872,7 +1906,7 @@ class PegasusPlugin implements Plugin<Project>
 
       allCheckMessage.append(snapshotCompatResult.message)
       isCompatible &= snapshotCompatResult.isCompatible
-      badExistingFiles.addAll(snapshotCompatResult.badExpectedFiles)
+      badExistingSnapshotFiles.addAll(snapshotCompatResult.nonEquivExistingFiles)
       isEquivalent = snapshotCountResult.isEquivalent && idlCountResult.isEquivalent && snapshotCompatResult.isEquivalent
 
       if (isEquivalent)
@@ -1880,12 +1914,12 @@ class PegasusPlugin implements Plugin<Project>
         return
       }
 
-      finishMessage(project, allCheckMessage, FileCompatibilityType.SNAPSHOT, badExistingFiles)
-
+      finishMessage(project, allCheckMessage, FileCompatibilityType.SNAPSHOT, badExistingSnapshotFiles)
 
       if (isCompatible)
       {
         _restModelCompatMessage.append(allCheckMessage)
+        addNeedCheckinFiles(project, badExistingSnapshotFiles, badExistingIdlFiles)
       }
       else
       {
@@ -1925,16 +1959,15 @@ class PegasusPlugin implements Plugin<Project>
 
       final StringBuilder allCheckMessage = new StringBuilder(countResult.message)
       boolean isCompatible = countResult.isCompatible
-      Collection<String> badExistingFiles = countResult.badExpectedFiles;
+      Collection<String> badExistingFiles = countResult.nonEquivExistingFiles
 
       final CompatibilityResult compatResult = checkIdlCompatibility(project,
                                                                      currentIdlFiles,
                                                                      previousIdlDirectory,
                                                                      resolverPath,
                                                                      idlCompatLevel)
-      allCheckMessage.append(compatResult.message)
       isCompatible &= compatResult.isCompatible
-      badExistingFiles.addAll(compatResult.badExpectedFiles)
+      badExistingFiles.addAll(compatResult.nonEquivExistingFiles)
 
       isEquivalent = countResult.isEquivalent && compatResult.isEquivalent
 
@@ -1948,6 +1981,7 @@ class PegasusPlugin implements Plugin<Project>
       if (isCompatible)
       {
         _restModelCompatMessage.append(allCheckMessage)
+        addNeedCheckinFiles(project, Collections.emptyList(), badExistingFiles)
       }
       else
       {

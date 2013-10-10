@@ -1,5 +1,9 @@
 1.9.37
 ------
+(RB=221327)
+Change emitted message on successful build to include a listing of all published
+IDLs and snapshots that likely need to be committed.
+
 (RB=222817)
 Fixes to checkIdl task in PegausPlugin.  Some small clean-up in compatibility tasks:
 Only initialize a single checker class rather than one per pair of files, and don't

@@ -186,6 +186,11 @@ public class CompatibilityInfoMap
             (compatibles.isEmpty()   || level.ordinal() < CompatibilityLevel.EQUIVALENT.ordinal()));
   }
 
+  public boolean isEquivalent()
+  {
+    return isCompatible(CompatibilityLevel.EQUIVALENT);
+  }
+
   /**
    * @return check results in the backwards incompatibility category.
    *         empty collection if called before checking any files
