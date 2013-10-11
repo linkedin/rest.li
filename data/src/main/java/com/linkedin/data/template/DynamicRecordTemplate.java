@@ -22,12 +22,11 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaUtil;
-import com.linkedin.data.schema.Name;
 import com.linkedin.data.schema.RecordDataSchema;
 
 import com.linkedin.data.schema.TyperefDataSchema;
 import java.lang.reflect.Array;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -279,11 +278,33 @@ public class DynamicRecordTemplate extends RecordTemplate
     }
 
     boolean isDataTemplate = DataTemplate.class.isAssignableFrom(itemType);
-    for(Object item: (Object[])value)
+    List<Object> items;
+
+    if (value instanceof DataList)
+    {
+      items = (List<Object>) value;
+    }
+    else
+    {
+      items = Arrays.asList((Object[]) value);
+    }
+
+    for (Object item: items)
     {
       if (isDataTemplate)
       {
-        data.add(((DataTemplate)item).data());
+        Object itemData;
+
+        if (item instanceof DataMap)
+        {
+          itemData = item;
+        }
+        else
+        {
+          itemData = ((DataTemplate) item).data();
+        }
+
+        data.add(itemData);
       }
       else
       {

@@ -37,6 +37,7 @@ import com.linkedin.restli.common.ActionResponse;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.examples.greetings.api.Greeting;
+import com.linkedin.restli.examples.greetings.server.ActionsResource;
 import com.linkedin.restli.examples.greetings.server.CollectionUnderSimpleResource;
 import com.linkedin.restli.examples.greetings.server.GreetingsResource;
 import com.linkedin.restli.examples.greetings.server.RootSimpleResource;
@@ -51,6 +52,7 @@ import com.linkedin.restli.internal.server.model.RestLiApiBuilder;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.restspec.ActionSchema;
 import com.linkedin.restli.restspec.ActionSchemaArray;
+import com.linkedin.restli.restspec.ActionsSetSchema;
 import com.linkedin.restli.restspec.AssociationSchema;
 import com.linkedin.restli.restspec.CollectionSchema;
 import com.linkedin.restli.restspec.EntitySchema;
@@ -82,7 +84,8 @@ public class TestExamplesGenerator
   @Test
   public void testExamples() throws IOException
   {
-    final Map<String, ResourceModel> resources = buildResourceModels(GreetingsResource.class,
+    final Map<String, ResourceModel> resources = buildResourceModels(ActionsResource.class,
+                                                                     GreetingsResource.class,
                                                                      GroupsResource2.class,
                                                                      GroupContactsResource2.class,
                                                                      GroupMembershipsResource2.class,
@@ -103,6 +106,7 @@ public class TestExamplesGenerator
     final ResourceSchema groups = resourceSchemas.getResource("groups");
     final ResourceSchema groupsContacts = resourceSchemas.getResource("groups.contacts");
     final ResourceSchema greeting = resourceSchemas.getResource("greeting");
+    final ResourceSchema actions = resourceSchemas.getResource("actions");
 
     List<ResourceSchema> subResources = resourceSchemas.getSubResources(greeting);
     final ResourceSchema subgreetings = subResources.get(0);
@@ -233,6 +237,20 @@ public class TestExamplesGenerator
     Assert.assertTrue(validateUrlPath(request.getURI(),
                                       new String[]{"greeting", "subgreetings", null, "subsubgreeting"}));
 
+    final ActionSchema actionsEchoMessageArray = findActionsSetAction(actions, "echoMessageArray");
+    capture = generator.generateActionExample(actions, actionsEchoMessageArray, ResourceLevel.COLLECTION, spec);
+    final DataMap echoMessageArrayResponse = DataMapUtils.readMap(capture.getResponse());
+    Assert.assertTrue(echoMessageArrayResponse.containsKey("value"));
+
+    final ActionSchema actionsEchoToneArray = findActionsSetAction(actions, "echoToneArray");
+    capture = generator.generateActionExample(actions, actionsEchoToneArray, ResourceLevel.COLLECTION, spec);
+    final DataMap echoToneArrayResponse = DataMapUtils.readMap(capture.getResponse());
+    Assert.assertTrue(echoToneArrayResponse.containsKey("value"));
+
+    final ActionSchema actionsEchoStringArray = findActionsSetAction(actions, "echoStringArray");
+    capture = generator.generateActionExample(actions, actionsEchoStringArray, ResourceLevel.COLLECTION, spec);
+    final DataMap echoStringArrayResponse = DataMapUtils.readMap(capture.getResponse());
+    Assert.assertTrue(echoStringArrayResponse.containsKey("value"));
   }
 
   private static void checkPatchMap(DataMap patchMap)
@@ -315,6 +333,27 @@ public class TestExamplesGenerator
           if (finderSchema.getName().equals(finderName))
           {
             return finderSchema;
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
+  private static ActionSchema findActionsSetAction(ResourceSchema resourceSchema, String actionName)
+  {
+    final ActionsSetSchema actionsSetSchema = resourceSchema.getActionsSet();
+    if (actionsSetSchema != null)
+    {
+      final ActionSchemaArray actions = actionsSetSchema.getActions();
+      if (actions != null)
+      {
+        for (ActionSchema actionSchema: actions)
+        {
+          if (actionSchema.getName().equals(actionName))
+          {
+            return actionSchema;
           }
         }
       }
