@@ -164,9 +164,9 @@ class ChannelPoolManager
    *
    * @return A map of pool names and statistics.
    */
-  public Map<String, PoolStats> getPoolStats()
+  public Map<String, AsyncPoolStats> getPoolStats()
   {
-    final Map<String, PoolStats> stats = new HashMap<String, PoolStats>();
+    final Map<String, AsyncPoolStats> stats = new HashMap<String, AsyncPoolStats>();
     for(AsyncPool<Channel> pool : _pool.values())
     {
       stats.put(pool.getName(), pool.getStats());

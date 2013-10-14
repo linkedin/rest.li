@@ -33,10 +33,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.CountDownLatch;
 
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import org.jboss.netty.channel.socket.ClientSocketChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.testng.Assert;
@@ -389,68 +387,6 @@ public class TestHttpClientFactory
       factory.shutdown(Callbacks.<None>empty());
     }
 
-  }
-
-  @Test
-  public void testClientLifecycleListenerOnCreateClient()
-      throws InterruptedException, ExecutionException, TimeoutException
-  {
-    final CountDownLatch createClientLatch = new CountDownLatch(1);
-    final CountDownLatch shutdownClientLatch = new CountDownLatch(1);
-    HttpClientFactory.ClientLifecycleListener listener = new HttpClientFactory.ClientLifecycleListener()
-    {
-      @Override
-      public void onCreateClient(TransportClient client)
-      {
-        createClientLatch.countDown();
-      }
-
-      @Override
-      public void onShutdownClient(TransportClient client)
-      {
-        shutdownClientLatch.countDown();
-      }
-    };
-    ExecutorService boss = Executors.newCachedThreadPool();
-    ExecutorService worker = Executors.newCachedThreadPool();
-    ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-    ClientSocketChannelFactory channelFactory = new NioClientSocketChannelFactory(boss, worker);
-    HttpClientFactory factory = new HttpClientFactory(FilterChains.empty(),
-                                                      channelFactory,
-                                                      false,
-                                                      scheduler,
-                                                      false,
-                                                      scheduler,
-                                                      false,
-                                                      listener);
-    TransportClient client = factory.getRawClient(new HashMap<String, String>());
-    try
-    {
-      createClientLatch.await(60, TimeUnit.SECONDS);
-    }
-    catch (InterruptedException e)
-    {
-      Assert.fail("Client Lifecycle Listener didn't get notified when creating client.");
-    }
-
-    FutureCallback<None> callback = new FutureCallback<None>();
-    client.shutdown(callback);
-    try
-    {
-      shutdownClientLatch.await(60, TimeUnit.SECONDS);
-    }
-    catch (InterruptedException e)
-    {
-      Assert.fail("Client Lifecycle Listener didn't get notified when shutting down client.");
-    }
-
-    factory.shutdown(callback, 60, TimeUnit.MINUTES);
-    callback.get(60, TimeUnit.SECONDS);
-    scheduler.shutdown();
-    channelFactory.releaseExternalResources();
-    Assert.assertTrue(scheduler.awaitTermination(60, TimeUnit.SECONDS));
-    Assert.assertTrue(boss.awaitTermination(60, TimeUnit.SECONDS));
-    Assert.assertTrue(worker.awaitTermination(60, TimeUnit.SECONDS));
   }
 
 }

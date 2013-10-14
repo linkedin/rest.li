@@ -26,6 +26,7 @@ import java.net.SocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -40,7 +41,6 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLParameters;
 
-import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelPipeline;
@@ -67,6 +67,7 @@ import com.linkedin.r2.message.rpc.RpcRequest;
 import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.MessageType;
 import com.linkedin.r2.transport.common.WireAttributeHelper;
+import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.r2.transport.http.common.HttpBridge;
@@ -78,7 +79,7 @@ import com.linkedin.r2.util.TimeoutRunnable;
  * @version $Revision: $
  */
 
-/* package private */ class HttpNettyClient implements TransportClient, NamedPoolStatsProvider
+/* package private */ class HttpNettyClient implements TransportClient
 {
   static final Logger LOG = LoggerFactory.getLogger(HttpNettyClient.class);
   private static final int HTTP_DEFAULT_PORT = 80;
@@ -102,9 +103,6 @@ import com.linkedin.r2.util.TimeoutRunnable;
 
   private final String _requestTimeoutMessage;
   private final int _queryPostThreshold;
-
-  private final String _name;
-  private final HttpClientFactory.ClientLifecycleListener _lifecycleListener;
 
   /**
    * Creates a new HttpNettyClient with some default parameters
@@ -164,65 +162,6 @@ import com.linkedin.r2.util.TimeoutRunnable;
                          ExecutorService callbackExecutor,
                          int poolWaiterSize)
   {
-    this(factory,
-        executor,
-        poolSize,
-        requestTimeout,
-        idleTimeout,
-        shutdownTimeout,
-        maxResponseSize,
-        sslContext,
-        sslParameters,
-        queryPostThreshold,
-        callbackExecutor,
-        poolWaiterSize,
-        AsyncPoolImpl.Strategy.MRU,
-        0,
-        HttpClientFactory.DEFAULT_HTTP_CLIENT_NAME,
-        HttpClientFactory.NULL_LISTENER);
-  }
-
-  /**
-   * Creates a new HttpNettyClient
-   *
-   * @param factory The ClientSocketChannelFactory; it is the caller's responsibility to
-   *          shut it down
-   * @param executor an executor; it is the caller's responsibility to shut it down
-   * @param poolSize Maximum size of the underlying HTTP connection pool
-   * @param requestTimeout timeout, in ms, to get a connection from the pool or create one
-   * @param idleTimeout interval after which idle connections will be automatically closed
-   * @param shutdownTimeout timeout, in ms, the client should wait after shutdown is
-   *          initiated before terminating outstanding requests
-   * @param maxResponseSize
-   * @param sslContext {@link SSLContext}
-   * @param sslParameters {@link SSLParameters}with overloaded construct
-   * @param queryPostThreshold length of query params above which requests will be tunneled as POSTS
-   * @param callbackExecutor an optional executor to invoke user callback
-   * @param poolWaiterSize Maximum waiters waiting on the HTTP connection pool
-   * @param strategy The strategy used to return pool objects.
-   * @param minPoolSize Minimum number of objects in the pool. Set to zero for
-   *                no minimum.
-   * @param name Name of the client. It would be useful bookkeeping information in the case
-   *             there are multiple clients present.
-   * @param lifecycleListener A listener listen to the lifecycle event of this client.
-   */
-  public HttpNettyClient(ClientSocketChannelFactory factory,
-                         ScheduledExecutorService executor,
-                         int poolSize,
-                         int requestTimeout,
-                         int idleTimeout,
-                         int shutdownTimeout,
-                         int maxResponseSize,
-                         SSLContext sslContext,
-                         SSLParameters sslParameters,
-                         int queryPostThreshold,
-                         ExecutorService callbackExecutor,
-                         int poolWaiterSize,
-                         AsyncPoolImpl.Strategy strategy,
-                         int minPoolSize,
-                         String name,
-                         HttpClientFactory.ClientLifecycleListener lifecycleListener)
-  {
     _maxResponseSize = maxResponseSize;
     _channelPoolManager =
         new ChannelPoolManager(new ChannelPoolFactoryImpl(new ClientBootstrap(factory),
@@ -230,17 +169,13 @@ import com.linkedin.r2.util.TimeoutRunnable;
                                                           idleTimeout,
                                                           sslContext,
                                                           sslParameters,
-                                                          poolWaiterSize,
-                                                          strategy,
-                                                          minPoolSize));
+                                                          poolWaiterSize));
     _scheduler = executor;
     _callbackExecutor = callbackExecutor;
     _requestTimeout = requestTimeout;
     _shutdownTimeout = shutdownTimeout;
     _requestTimeoutMessage = "Exceeded request timeout of " + _requestTimeout + "ms";
     _queryPostThreshold = queryPostThreshold;
-    _name = name;
-    _lifecycleListener = lifecycleListener;
   }
 
   HttpNettyClient(ChannelPoolFactory factory,
@@ -257,8 +192,6 @@ import com.linkedin.r2.util.TimeoutRunnable;
     _shutdownTimeout = shutdownTimeout;
     _requestTimeoutMessage = "Exceeded request timeout of " + _requestTimeout + "ms";
     _queryPostThreshold = Integer.MAX_VALUE;
-    _name = HttpClientFactory.DEFAULT_HTTP_CLIENT_NAME;
-    _lifecycleListener = HttpClientFactory.NULL_LISTENER;
   }
 
   @Override
@@ -359,7 +292,6 @@ import com.linkedin.r2.util.TimeoutRunnable;
         }
       }, "Connection pool shutdown timeout exceeded (" + _shutdownTimeout + "ms)");
       _channelPoolManager.shutdown(closeChannels);
-      _lifecycleListener.onShutdownClient(this);
     }
   }
 
@@ -619,17 +551,13 @@ import com.linkedin.r2.util.TimeoutRunnable;
     private final int _maxPoolSize;
     private final int _idleTimeout;
     private final int _maxPoolWaiterSize;
-    private final AsyncPoolImpl.Strategy _strategy;
-    private final int _minPoolSize;
 
     private ChannelPoolFactoryImpl(ClientBootstrap bootstrap,
                                    int maxPoolSize,
                                    int idleTimeout,
                                    SSLContext sslContext,
                                    SSLParameters sslParameters,
-                                   int maxPoolWaiterSize,
-                                   AsyncPoolImpl.Strategy strategy,
-                                   int minPoolSize)
+                                   int maxPoolWaiterSize)
     {
       _bootstrap = bootstrap;
       _bootstrap.setPipelineFactory(new HttpClientPipelineFactory(sslContext,
@@ -637,8 +565,6 @@ import com.linkedin.r2.util.TimeoutRunnable;
       _maxPoolSize = maxPoolSize;
       _idleTimeout = idleTimeout;
       _maxPoolWaiterSize = maxPoolWaiterSize;
-      _strategy = strategy;
-      _minPoolSize = minPoolSize;
     }
 
     @Override
@@ -654,22 +580,19 @@ import com.linkedin.r2.util.TimeoutRunnable;
                                         _idleTimeout,
                                         _scheduler,
                                         _callbackExecutor,
-                                        _maxPoolWaiterSize,
-                                        _strategy,
-                                        _minPoolSize);
+                                        _maxPoolWaiterSize);
     }
   }
 
-  @Override
-  public Map<String, PoolStats> getPoolStats()
+  /**
+   * Get statistics from each channel pool. The map keys represent pool names.
+   * The values are the corresponding {@link AsyncPoolStats} objects.
+   *
+   * @return A map of pool names and statistics.
+   */
+  public Map<String, AsyncPoolStats> getPoolStats()
   {
     return _channelPoolManager.getPoolStats();
-  }
-
-  @Override
-  public String getName()
-  {
-    return _name;
   }
 
   // Test support
