@@ -31,6 +31,7 @@ import com.linkedin.util.FileUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -249,6 +250,24 @@ public abstract class AbstractGenerator
     return getSchemaResolver().locationResolved(schemaLocation);
   }
 
+  class SchemaFileInputStream extends FileInputStream
+  {
+    private File _schemaSourceFile;
+
+    public SchemaFileInputStream(File file)
+        throws FileNotFoundException
+    {
+      super(file);
+      _schemaSourceFile = file;
+    }
+
+    @Override
+    public String toString()
+    {
+      return _schemaSourceFile.toString();
+    }
+  }
+
   /**
    * Parse a source file to obtain the data schemas contained within.
    *
@@ -259,16 +278,11 @@ public abstract class AbstractGenerator
   protected List<DataSchema> parseSchema(final File schemaSourceFile) throws IOException
   {
     SchemaParser parser = new SchemaParser(getSchemaResolver());
+    FileInputStream schemaStream = new SchemaFileInputStream(schemaSourceFile);
     try
     {
       parser.setLocation(new FileDataSchemaLocation(schemaSourceFile));
-      parser.parse(new FileInputStream(schemaSourceFile) {
-        @Override
-        public String toString()
-        {
-          return schemaSourceFile.toString();
-        }
-      });
+      parser.parse(schemaStream);
       if (parser.hasError())
       {
         return Collections.emptyList();
@@ -277,6 +291,7 @@ public abstract class AbstractGenerator
     }
     finally
     {
+      schemaStream.close();
       getMessage().append(parser.errorMessage());
     }
   }

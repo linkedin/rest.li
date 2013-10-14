@@ -147,7 +147,9 @@ public class FilterSchemaGenerator
           continue;
         }
 
-        new FileOutputStream(outputFile).write(filteredSchema.toString().getBytes(RestConstants.DEFAULT_CHARSET));
+        FileOutputStream fout = new FileOutputStream(outputFile);
+        fout.write(filteredSchema.toString().getBytes(RestConstants.DEFAULT_CHARSET));
+        fout.close();
       }
       catch (IOException e)
       {

@@ -16,7 +16,6 @@
 
 package com.linkedin.data.schema;
 
-
 import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
 import com.linkedin.data.DataList;
@@ -1378,6 +1377,7 @@ public class TestDataSchema
       "  ]" +
       "}";
 
+    String br = System.getProperty("line.separator");
     Object[][] testData =
     {
         {
@@ -1390,20 +1390,19 @@ public class TestDataSchema
         },
         {
           JsonBuilder.Pretty.INDENTED,
-          "{\n" +
-          "  \"type\" : \"record\",\n" +
-          "  \"name\" : \"LongList\",\n" +
-          "  \"fields\" : [ {\n" +
-          "    \"name\" : \"value\",\n" +
-          "    \"type\" : \"long\"\n" +
-          "  }, {\n" +
-          "    \"name\" : \"next\",\n" +
-          "    \"type\" : [ \"LongList\", \"null\" ]\n" +
-          "  } ]\n" +
+          "{" + br +
+          "  \"type\" : \"record\"," + br +
+          "  \"name\" : \"LongList\"," + br +
+          "  \"fields\" : [ {" + br +
+          "    \"name\" : \"value\"," + br +
+          "    \"type\" : \"long\"" + br +
+          "  }, {" + br +
+          "    \"name\" : \"next\"," + br +
+          "    \"type\" : [ \"LongList\", \"null\" ]" + br +
+          "  } ]" + br +
           "}"
         },
     };
-
 
     for (Object[] input : testData)
     {

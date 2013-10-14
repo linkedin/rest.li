@@ -44,6 +44,7 @@ import org.testng.annotations.Test;
 
 import static com.linkedin.data.TestUtil.asMap;
 import static com.linkedin.data.TestUtil.out;
+import static com.linkedin.util.FileUtil.buildSystemIndependentPath;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
@@ -143,24 +144,24 @@ public class TestDataSchemaResolver
 
   List<String> _testPaths = Arrays.asList
   (
-   "/a1",
-   "/a2/b",
-   "/a3/b/c"
+    buildSystemIndependentPath("a1"),
+    buildSystemIndependentPath("a2", "b"),
+    buildSystemIndependentPath("a3", "b", "c")
   );
 
   Map<String,String> _testSchemas = asMap
   (
-   "/a1/foo.pdsc",       "{ \"name\" : \"foo\", \"type\" : \"fixed\", \"size\" : 4 }",
-   "/a1/x/y/z.pdsc",     "{ \"name\" : \"x.y.z\", \"type\" : \"fixed\", \"size\" : 7 }",
-   "/a2/b/bar.pdsc",     "{ \"name\" : \"bar\", \"type\" : \"fixed\", \"size\" : 5 }",
-   "/a3/b/c/baz.pdsc",   "{ \"name\" : \"baz\", \"type\" : \"fixed\", \"size\" : 6 }",
-   "/a3/b/c/error.pdsc", "{ \"name\" : \"error\", \"type\" : \"fixed\", \"size\" : -1 }",
-   "/a3/b/c/referrer.pdsc", "{ \"name\" : \"referrer\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"referree\", \"type\" : \"referree\" } ] }",
-   "/a3/b/c/referree.pdsc", "{ \"name\" : \"referree\", \"type\" : \"enum\", \"symbols\" : [ \"good\", \"bad\", \"ugly\" ] }",
-   "/a3/b/c/circular1.pdsc", "{ \"name\" : \"circular1\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"member\", \"type\" : \"circular2\" } ] }",
-   "/a3/b/c/circular2.pdsc", "{ \"name\" : \"circular2\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"member\", \"type\" : \"circular1\" } ] }",
-   "/a3/b/c/redefine1.pdsc", "{ \"name\" : \"redefine1\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"member\", \"type\" : \"redefine2\" } ] }",
-   "/a3/b/c/redefine2.pdsc", "{ \"name\" : \"redefine2\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"member\", \"type\" : { \"type\" : \"fixed\", \"name\" : \"redefine1\", \"size\" : 8 } } ] }"
+    buildSystemIndependentPath("a1", "foo.pdsc"),       "{ \"name\" : \"foo\", \"type\" : \"fixed\", \"size\" : 4 }",
+    buildSystemIndependentPath("a1", "x", "y", "z.pdsc"),     "{ \"name\" : \"x.y.z\", \"type\" : \"fixed\", \"size\" : 7 }",
+    buildSystemIndependentPath("a2", "b", "bar.pdsc"),     "{ \"name\" : \"bar\", \"type\" : \"fixed\", \"size\" : 5 }",
+    buildSystemIndependentPath("a3", "b", "c", "baz.pdsc"),   "{ \"name\" : \"baz\", \"type\" : \"fixed\", \"size\" : 6 }",
+    buildSystemIndependentPath("a3", "b", "c", "error.pdsc"), "{ \"name\" : \"error\", \"type\" : \"fixed\", \"size\" : -1 }",
+    buildSystemIndependentPath("a3", "b", "c", "referrer.pdsc"), "{ \"name\" : \"referrer\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"referree\", \"type\" : \"referree\" } ] }",
+    buildSystemIndependentPath("a3", "b", "c", "referree.pdsc"), "{ \"name\" : \"referree\", \"type\" : \"enum\", \"symbols\" : [ \"good\", \"bad\", \"ugly\" ] }",
+    buildSystemIndependentPath("a3", "b", "c", "circular1.pdsc"), "{ \"name\" : \"circular1\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"member\", \"type\" : \"circular2\" } ] }",
+    buildSystemIndependentPath("a3", "b", "c", "circular2.pdsc"), "{ \"name\" : \"circular2\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"member\", \"type\" : \"circular1\" } ] }",
+    buildSystemIndependentPath("a3", "b", "c", "redefine1.pdsc"), "{ \"name\" : \"redefine1\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"member\", \"type\" : \"redefine2\" } ] }",
+    buildSystemIndependentPath("a3", "b", "c", "redefine2.pdsc"), "{ \"name\" : \"redefine2\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"member\", \"type\" : { \"type\" : \"fixed\", \"name\" : \"redefine1\", \"size\" : 8 } } ] }"
   );
 
   String[][] _testLookupAndExpectedResults = {
@@ -168,37 +169,37 @@ public class TestDataSchemaResolver
         "referrer",
         FOUND,
         "\"name\" : \"referrer\"",
-        "/referrer.pdsc"
+        buildSystemIndependentPath("referrer.pdsc").toString()
       },
       {
         "x.y.z",
         FOUND,
         "\"size\" : 7",
-        "/x/y/z.pdsc"
+        buildSystemIndependentPath("x", "y", "z.pdsc").toString()
       },
       {
         "foo",
         FOUND,
         "\"size\" : 4",
-        "/foo.pdsc"
+        buildSystemIndependentPath("foo.pdsc").toString()
       },
       {
         "bar",
         FOUND,
         "\"size\" : 5",
-        "/bar.pdsc"
+        buildSystemIndependentPath("bar.pdsc").toString()
       },
       {
         "baz",
         FOUND,
         "\"size\" : 6",
-        "/baz.pdsc"
+        buildSystemIndependentPath("baz.pdsc").toString()
       },
       {
         "circular1",
         FOUND,
         "\"name\" : \"circular1\"",
-        "/circular1.pdsc"
+        buildSystemIndependentPath("circular1.pdsc").toString()
       },
       {
         "apple",
@@ -223,7 +224,7 @@ public class TestDataSchemaResolver
     boolean debug = false;
 
     DataSchemaResolver resolver = new MapDataSchemaResolver(SchemaParserFactory.instance(), _testPaths, ".pdsc", _testSchemas);
-    lookup(resolver, _testLookupAndExpectedResults, '/', debug);
+    lookup(resolver, _testLookupAndExpectedResults, File.separatorChar, debug);
   }
 
   @Test
@@ -337,10 +338,19 @@ public class TestDataSchemaResolver
         assertTrue(resolver.bindings().containsKey(name));
         assertSame(resolver.bindings().get(name), namedSchema);
         String location = entry[3];
-        String locationNorm = location.replace('/', separator);
         DataSchemaLocation namedSchemalocation = resolver.nameToDataSchemaLocations().get(name);
+        String locationNorm;
+        if (namedSchemalocation.toString().contains(".jar"))
+        {
+          locationNorm = location.replace(separator, '/');
+        }
+        else
+        {
+          locationNorm = location.replace('/', separator);
+        }
         assertNotNull(namedSchemalocation);
-        assertEquals(namedSchemalocation.toString().indexOf(locationNorm), namedSchemalocation.toString().length() - locationNorm.length());
+        assertEquals(namedSchemalocation.toString().indexOf(locationNorm),
+                     namedSchemalocation.toString().length() - locationNorm.length());
         assertTrue(resolver.locationResolved(namedSchemalocation));
       }
       else if (expectFound == NOT_FOUND)

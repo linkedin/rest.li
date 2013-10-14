@@ -105,7 +105,14 @@ public class SnapshotGenerator
 
     jsonBuilder.writeEndObject();
 
-    fileOutputStream.write(jsonBuilder.result().getBytes());
+    try
+    {
+      fileOutputStream.write(jsonBuilder.result().getBytes());
+    }
+    finally
+    {
+      fileOutputStream.close();
+    }
     return file;
   }
 

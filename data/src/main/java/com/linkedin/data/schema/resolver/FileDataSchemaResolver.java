@@ -204,7 +204,9 @@ public class FileDataSchemaResolver extends AbstractDataSchemaResolver
             }
           }
           StringBuilder builder = new StringBuilder();
-          builder.append(DIR_IN_JAR).append(File.separatorChar).append(transformedName);
+          // within a JAR file, files are treated as resources. Thus, we should lookup using the resource separator
+          // character, which is '/'
+          builder.append(DIR_IN_JAR).append('/').append(transformedName.replace(File.separatorChar, '/'));
           return new InJarFileDataSchemaLocation(jarFile, builder.toString());
         }
         else

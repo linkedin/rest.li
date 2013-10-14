@@ -262,7 +262,14 @@ public class TestAbstractGenerator
       assertTrue(expectedOutputFile.exists());
       FileInputStream is = new FileInputStream(expectedOutputFile);
       byte[] bytes = new byte[is.available()];
-      is.read(bytes);
+      try
+      {
+        is.read(bytes);
+      }
+      finally
+      {
+        is.close();
+      }
       String fileSchemaText = new String(bytes);
       DataSchema fileSchema = DataTemplateUtil.parseSchema(fileSchemaText);
       assertTrue(fileSchema instanceof NamedDataSchema);
