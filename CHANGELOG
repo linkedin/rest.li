@@ -1,5 +1,8 @@
 1.9.36
 ------
+(RB=220182)
+Fixes to make Rest.li build on Windows.
+
 (RB=221652)
 Fix DynamicRecordTemplate to accept DataList argument while setting fields of type array.
 
