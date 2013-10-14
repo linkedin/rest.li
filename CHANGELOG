@@ -1,3 +1,7 @@
+1.9.37
+------
+
+
 1.9.36
 ------
 (RB=220182)
@@ -15,6 +19,9 @@ regular compatibility checks.
 Changed the message emitted with changes.
 New message will appear if a compatibility check is run on what appears to be a continuous integ.
 environment (where -Prest.model.compatibility=equivalent).
+
+(RB=222257)
+Revert suspicious changes in R2 AsyncPool that may cause site relibility issue.
 
 1.9.35
 ------
