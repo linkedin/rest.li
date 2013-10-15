@@ -1592,8 +1592,55 @@ class PegasusPlugin implements Plugin<Project>
     }
   }
 
-  private static CompatibilityResult checkFileCompatibility(Project project,
-                                                            Class<?> checkerClass,
+  // this calls the IDL compatibility checker. The IDL checker is not symetric to the Snapshot checker
+  // due to backwards compatibility concerns, and therefore needs its own slightly different helper method.
+  private static CompatibilityResult checkIdlCompatibility(Project project,
+                                                           Collection<File> currentFiles,
+                                                           File previousDirectory,
+                                                           FileCollection resolverPath,
+                                                           Enum compatLevel)
+  {
+    final FileExtensionFilter filter = new FileExtensionFilter(IDL_FILE_SUFFIX)
+    final StringBuilder allCheckMessage = new StringBuilder()
+    boolean isCompatible = true;
+    List<String> incompatibleCanonFiles = new ArrayList<String>()
+
+    final ClassLoader generatorClassLoader = (ClassLoader) project.property(GENERATOR_CLASSLOADER_NAME)
+    final Class<?> idlCheckerClass = generatorClassLoader.loadClass('com.linkedin.restli.tools.idlcheck.RestLiResourceModelCompatibilityChecker')
+    final String resolverPathStr = resolverPath.collect { it.path }.join(File.pathSeparator)
+    final idlCompatibilityChecker = idlCheckerClass.newInstance()
+    idlCompatibilityChecker.setResolverPath(resolverPathStr)
+
+    final Set<String> apiExistingIdlFilePaths = previousDirectory.listFiles(filter).collect { it.absolutePath }
+    currentFiles.each {
+      project.logger.info('Checking interface file: ' + it.path)
+
+      String apiIdlFilePath = "${previousDirectory.path}${File.separatorChar}${it.name}"
+      final File apiIdlFile = project.file(apiIdlFilePath)
+      if (apiIdlFile.exists())
+      {
+        apiExistingIdlFilePaths.remove(apiIdlFilePath)
+
+        idlCompatibilityChecker.check(apiIdlFilePath, it.path, compatLevel)
+        final infoMap = idlCompatibilityChecker.getInfoMap()
+        final boolean isCurrentIdlCompatible = infoMap.isCompatible(compatLevel)
+        isCompatible &= isCurrentIdlCompatible
+        if (!isCurrentIdlCompatible)
+        {
+          incompatibleCanonFiles.add(apiIdlFilePath)
+        }
+
+        project.logger.info("Checked compatibility in mode: $compatLevel; $apiIdlFilePath VS $it.path; result: $isCurrentIdlCompatible")
+        allCheckMessage.append(infoMap.createSummary(apiIdlFilePath, it.path))
+      }
+    }
+
+    boolean isEquivalent = allCheckMessage.length() == 0
+    return new CompatibilityResult(isEquivalent, isCompatible, allCheckMessage, incompatibleCanonFiles)
+  }
+
+  private static CompatibilityResult checkSnapshotCompatibility(Project project,
+                                                            Object compatibilityChecker,
                                                             Collection<File> currentFiles,
                                                             File previousDirectory,
                                                             FileExtensionFilter filter,
@@ -1609,7 +1656,6 @@ class PegasusPlugin implements Plugin<Project>
 
       String apiSnapshotFilePath = "${previousDirectory.path}${File.separatorChar}${it.name}"
       final File apiSnapshotFile = project.file(apiSnapshotFilePath)
-      final compatibilityChecker = checkerClass.newInstance()
       if (apiSnapshotFile.exists())
       {
         apiExistingSnapshotFilePaths.remove(apiSnapshotFilePath)
@@ -1632,7 +1678,7 @@ class PegasusPlugin implements Plugin<Project>
   }
 
   private static CompatibilityResult checkFileCount(Project project,
-                                                    Class<?> checkerClass,
+                                                    Object compatibilityChecker,
                                                     Collection<File> currentFiles,
                                                     File previousDirectory,
                                                     FileExtensionFilter filter,
@@ -1667,9 +1713,8 @@ class PegasusPlugin implements Plugin<Project>
       isEquivalent = false
     }
 
-    final restModelFileChecker = checkerClass.newInstance()
     errorFilePairs.each {
-      final infoMap = restModelFileChecker.check(it[0], it[1], compatLevel)
+      final infoMap = compatibilityChecker.check(it[0], it[1], compatLevel)
       isCompatible &= infoMap.isCompatible(compatLevel)
       allCheckMessage.append(infoMap.createSummary())
     }
@@ -1680,14 +1725,14 @@ class PegasusPlugin implements Plugin<Project>
   private static class CompatibilityResult
   {
     final boolean isEquivalent;
-    final boolean isCompatibile;
+    final boolean isCompatible;
     final StringBuilder message;
     final Collection<String> badExpectedFiles
 
-    public CompatibilityResult(boolean isEquivalent, boolean isCompatibile, StringBuilder message, Collection<String> badExpectedFiles)
+    public CompatibilityResult(boolean isEquivalent, boolean isCompatible, StringBuilder message, Collection<String> badExpectedFiles)
     {
       this.isEquivalent = isEquivalent
-      this.isCompatibile = isCompatibile
+      this.isCompatible = isCompatible
       this.message = message
       this.badExpectedFiles = badExpectedFiles
     }
@@ -1727,30 +1772,28 @@ class PegasusPlugin implements Plugin<Project>
 
       final Class<?> snapshotCheckerClass = generatorClassLoader.loadClass('com.linkedin.restli.tools.snapshot.check.RestLiSnapshotCompatibilityChecker')
       final snapshotCompatibilityChecker = snapshotCheckerClass.newInstance()
-      final String resolverPathStr = resolverPath.collect { it.path }.join(File.pathSeparator)
-      snapshotCompatibilityChecker.setResolverPath(resolverPathStr)
 
       // check Snapshot Count
       final CompatibilityResult snapshotCountResult = checkFileCount(project,
-                                                                     snapshotCheckerClass,
+                                                                     snapshotCompatibilityChecker,
                                                                      currentSnapshotFiles,
                                                                      previousSnapshotDirectory,
                                                                      _snapshotFilter,
                                                                      snapshotCompatLevel)
 
       final StringBuilder allCheckMessage = new StringBuilder(snapshotCountResult.message)
-      boolean isCompatible = snapshotCountResult.isCompatibile
+      boolean isCompatible = snapshotCountResult.isCompatible
       List<String> badExistingFiles = snapshotCountResult.badExpectedFiles;
 
-      final CompatibilityResult snapshotCompatResult = checkFileCompatibility(project,
-                                                                              snapshotCheckerClass,
+      final CompatibilityResult snapshotCompatResult = checkSnapshotCompatibility(project,
+                                                                              snapshotCompatibilityChecker,
                                                                               currentSnapshotFiles,
                                                                               previousSnapshotDirectory,
                                                                               _snapshotFilter,
                                                                               snapshotCompatLevel)
 
       allCheckMessage.append(snapshotCompatResult)
-      isCompatible &= snapshotCompatResult.isCompatibile
+      isCompatible &= snapshotCompatResult.isCompatible
       badExistingFiles.addAll(snapshotCompatResult.badExpectedFiles)
       isEquivalent = snapshotCountResult.isEquivalent && snapshotCompatResult.isEquivalent
 
@@ -1795,42 +1838,40 @@ class PegasusPlugin implements Plugin<Project>
 
       final Class<?> snapshotCheckerClass = generatorClassLoader.loadClass('com.linkedin.restli.tools.snapshot.check.RestLiSnapshotCompatibilityChecker')
       final snapshotCompatibilityChecker = snapshotCheckerClass.newInstance()
-      final String resolverPathStr = resolverPath.collect { it.path }.join(File.pathSeparator)
-      snapshotCompatibilityChecker.setResolverPath(resolverPathStr)
 
       // check Snapshot Count
       final CompatibilityResult snapshotCountResult = checkFileCount(project,
-                                                                     snapshotCheckerClass,
+                                                                     snapshotCompatibilityChecker,
                                                                      currentSnapshotFiles,
                                                                      previousSnapshotDirectory,
                                                                      _snapshotFilter,
                                                                      modelCompatLevel)
 
       final StringBuilder allCheckMessage = new StringBuilder(snapshotCountResult.message)
-      boolean isCompatible = snapshotCountResult.isCompatibile
+      boolean isCompatible = snapshotCountResult.isCompatible
       List<String> badExistingFiles = snapshotCountResult.badExpectedFiles
 
       // check Idl Count
       final CompatibilityResult idlCountResult = checkFileCount(project,
-                                                                snapshotCheckerClass,
+                                                                snapshotCompatibilityChecker,
                                                                 currentIdlFiles,
                                                                 previousIdlDirectory,
                                                                 _idlFilter,
                                                                 modelCompatLevel)
 
       allCheckMessage.append(idlCountResult.message)
-      isCompatible &= idlCountResult.isCompatibile
+      isCompatible &= idlCountResult.isCompatible
       badExistingFiles.addAll(idlCountResult.badExpectedFiles)
 
-      final CompatibilityResult snapshotCompatResult = checkFileCompatibility(project,
-                                                                              snapshotCheckerClass,
+      final CompatibilityResult snapshotCompatResult = checkSnapshotCompatibility(project,
+                                                                              snapshotCompatibilityChecker,
                                                                               currentSnapshotFiles,
                                                                               previousSnapshotDirectory,
                                                                               _snapshotFilter,
                                                                               modelCompatLevel)
 
       allCheckMessage.append(snapshotCompatResult.message)
-      isCompatible &= snapshotCompatResult.isCompatibile
+      isCompatible &= snapshotCompatResult.isCompatible
       badExistingFiles.addAll(snapshotCompatResult.badExpectedFiles)
       isEquivalent = snapshotCountResult.isEquivalent && idlCountResult.isEquivalent && snapshotCompatResult.isEquivalent
 
@@ -1883,17 +1924,16 @@ class PegasusPlugin implements Plugin<Project>
                        idlCompatLevel)
 
       final StringBuilder allCheckMessage = new StringBuilder(countResult.message)
-      boolean isCompatible = countResult.isCompatibile
+      boolean isCompatible = countResult.isCompatible
       Collection<String> badExistingFiles = countResult.badExpectedFiles;
 
-      final CompatibilityResult compatResult = checkFileCompatibility(project,
-                                                                      idlCheckerClass,
-                                                                      currentIdlFiles,
-                                                                      previousIdlDirectory,
-                                                                      _idlFilter,
-                                                                      idlCompatLevel)
+      final CompatibilityResult compatResult = checkIdlCompatibility(project,
+                                                                     currentIdlFiles,
+                                                                     previousIdlDirectory,
+                                                                     resolverPath,
+                                                                     idlCompatLevel)
       allCheckMessage.append(compatResult.message)
-      isCompatible &= compatResult.isCompatibile
+      isCompatible &= compatResult.isCompatible
       badExistingFiles.addAll(compatResult.badExpectedFiles)
 
       isEquivalent = countResult.isEquivalent && compatResult.isEquivalent

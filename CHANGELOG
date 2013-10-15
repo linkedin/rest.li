@@ -1,6 +1,9 @@
 1.9.37
 ------
-
+(RB=222817)
+Fixes to checkIdl task in PegausPlugin.  Some small clean-up in compatibility tasks:
+Only initialize a single checker class rather than one per pair of files, and don't
+bother setting resolver paths when checking snapshots of file counts.
 
 1.9.36
 ------
