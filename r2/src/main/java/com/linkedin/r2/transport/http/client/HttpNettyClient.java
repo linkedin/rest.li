@@ -26,7 +26,6 @@ import java.net.SocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -46,6 +45,7 @@ import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.Channels;
+import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.ChannelGroupFuture;
 import org.jboss.netty.channel.group.ChannelGroupFutureListener;
@@ -242,7 +242,7 @@ import com.linkedin.r2.util.TimeoutRunnable;
           for (Channel c : _allChannels)
           {
             @SuppressWarnings("unchecked")
-            TransportCallback<RestResponse> callback = (TransportCallback<RestResponse>)c.getPipeline().getContext(RAPResponseHandler.class).getAttachment();
+            TransportCallback<RestResponse> callback = c.getPipeline().get(RAPResponseHandler.class).removeAttachment(c.getPipeline().getContext(RAPResponseHandler.class));
             if (callback != null)
             {
               errorResponse(callback,
@@ -379,18 +379,26 @@ import com.linkedin.r2.util.TimeoutRunnable;
       {
         // This handler ensures the channel is returned to the pool at the end of the
         // Netty pipeline.
-        channel.getPipeline().getContext(ChannelPoolHandler.class).setAttachment(pool);
+        final ChannelPoolHandler channelPoolHandler = channel.getPipeline().get(ChannelPoolHandler.class);
+        final ChannelHandlerContext channelPoolHandlerContext = channel.getPipeline().getContext(ChannelPoolHandler.class);
+        channelPoolHandler.setAttachment(channelPoolHandlerContext, pool);
         callback.addTimeoutTask(new Runnable()
         {
           @Override
           public void run()
           {
-            pool.dispose(channel);
+            AsyncPool<Channel> pool = channelPoolHandler.removeAttachment(channelPoolHandlerContext);
+            if (pool != null)
+            {
+              pool.dispose(channel);
+            }
           }
         });
 
         // This handler invokes the callback with the response once it arrives.
-        channel.getPipeline().getContext(RAPResponseHandler.class).setAttachment(callback);
+        channel.getPipeline().get(RAPResponseHandler.class).setAttachment(
+                                                              channel.getPipeline().getContext(RAPResponseHandler.class),
+                                                              callback);
 
         final State state = _state.get();
         if (state == State.REQUESTS_STOPPING || state == State.SHUTDOWN)

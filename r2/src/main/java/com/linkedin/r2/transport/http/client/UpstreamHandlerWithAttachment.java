@@ -23,6 +23,8 @@ package com.linkedin.r2.transport.http.client;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 /**
  * @author Steven Ihde
  * @version $Revision: $
@@ -30,7 +32,22 @@ import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 public class UpstreamHandlerWithAttachment<T> extends SimpleChannelUpstreamHandler
 {
   /**
-   * Remove any attachment from the {@link ChannelHandlerContext}.
+   * Set attachment to the {@link ChannelHandlerContext}. We wrap the actual attachment
+   * with an {@link AtomicReference} to make the subsequent removeAttachment() an atomic
+   * operation.
+   *
+   * @param ctx the {@link ChannelHandlerContext} for the attachment.
+   * @param attachment the attachment to set
+   */
+  public void setAttachment(ChannelHandlerContext ctx, T attachment)
+  {
+    AtomicReference<T> atomicRef = new AtomicReference<T>(attachment);
+    ctx.setAttachment(atomicRef);
+  }
+
+  /**
+   * Remove any attachment from the {@link ChannelHandlerContext}. It is safe to call this
+   * method in multiple threads since the actual attachment can be returned only once.
    *
    * @param ctx the {@link ChannelHandlerContext} for the attachment.
    * @return the attachment which was removed, or null if no attachment exists.
@@ -38,10 +55,11 @@ public class UpstreamHandlerWithAttachment<T> extends SimpleChannelUpstreamHandl
   public T removeAttachment(ChannelHandlerContext ctx)
   {
     @SuppressWarnings("unchecked")
-    T attachment = (T)ctx.getAttachment();
-    if (attachment != null)
+    AtomicReference<T> atomicRef = (AtomicReference<T>)ctx.getAttachment();
+    T attachment = null;
+    if (atomicRef != null)
     {
-      ctx.setAttachment(null);
+      attachment = atomicRef.getAndSet(null);
     }
     return attachment;
   }
