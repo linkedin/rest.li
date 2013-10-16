@@ -57,6 +57,8 @@ public class DegraderLoadBalancerStrategyConfig
   private final double _lowWaterMark;
   private final double _globalStepUp;
   private final double _globalStepDown;
+  private final long _minClusterCallCountHighWaterMark;
+  private final long _minClusterCallCountLowWaterMark;
 
   public static final Clock DEFAULT_CLOCK = SystemClock.instance();
   public static final double DEFAULT_INITIAL_RECOVERY_LEVEL = 0.01;
@@ -72,13 +74,16 @@ public class DegraderLoadBalancerStrategyConfig
   // the globalStepUp and globalStepDown drop rates.
   public static final double DEFAULT_GLOBAL_STEP_UP = 0.20;
   public static final double DEFAULT_GLOBAL_STEP_DOWN = 0.20;
+  public static final long DEFAULT_CLUSTER_MIN_CALL_COUNT_HIGH_WATER_MARK = 10;
+  public static final long DEFAULT_CLUSTER_MIN_CALL_COUNT_LOW_WATER_MARK = 5;
 
-  public DegraderLoadBalancerStrategyConfig(long updateIntervalMs,
-                                            double maxClusterLatencyWithoutDegrading)
+  public DegraderLoadBalancerStrategyConfig(long updateIntervalMs)
   {
     this(updateIntervalMs, 100, null, Collections.<String, Object>emptyMap(),
          DEFAULT_CLOCK, DEFAULT_INITIAL_RECOVERY_LEVEL, DEFAULT_RAMP_FACTOR, DEFAULT_HIGH_WATER_MARK, DEFAULT_LOW_WATER_MARK,
-         DEFAULT_GLOBAL_STEP_UP, DEFAULT_GLOBAL_STEP_DOWN);
+         DEFAULT_GLOBAL_STEP_UP, DEFAULT_GLOBAL_STEP_DOWN,
+         DEFAULT_CLUSTER_MIN_CALL_COUNT_HIGH_WATER_MARK,
+         DEFAULT_CLUSTER_MIN_CALL_COUNT_LOW_WATER_MARK);
   }
 
   public DegraderLoadBalancerStrategyConfig(DegraderLoadBalancerStrategyConfig config)
@@ -93,7 +98,9 @@ public class DegraderLoadBalancerStrategyConfig
          config.getHighWaterMark(),
          config.getLowWaterMark(),
          config.getGlobalStepUp(),
-         config.getGlobalStepDown());
+         config.getGlobalStepDown(),
+         config.getMinClusterCallCountHighWaterMark(),
+         config.getMinClusterCallCountLowWaterMark());
   }
 
   public DegraderLoadBalancerStrategyConfig(long updateIntervalMs,
@@ -106,7 +113,9 @@ public class DegraderLoadBalancerStrategyConfig
                                             double highWaterMark,
                                             double lowWaterMark,
                                             double globalStepUp,
-                                            double globalStepDown)
+                                            double globalStepDown,
+                                            long minCallCountHighWaterMark,
+                                            long minCallCountLowWaterMark)
   {
     _updateIntervalMs = updateIntervalMs;
     _pointsPerWeight = pointsPerWeight;
@@ -119,6 +128,8 @@ public class DegraderLoadBalancerStrategyConfig
     _lowWaterMark = lowWaterMark;
     _globalStepUp = globalStepUp;
     _globalStepDown = globalStepDown;
+    _minClusterCallCountHighWaterMark = minCallCountHighWaterMark;
+    _minClusterCallCountLowWaterMark = minCallCountLowWaterMark;
   }
 
   /**
@@ -153,6 +164,12 @@ public class DegraderLoadBalancerStrategyConfig
 
     String hashMethod = MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_HASH_METHOD, null, String.class);
 
+    Long minClusterCallCountHighWaterMark = MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_CLUSTER_MIN_CALL_COUNT_HIGH_WATER_MARK,
+                                                      DEFAULT_CLUSTER_MIN_CALL_COUNT_HIGH_WATER_MARK, Long.class);
+
+    Long minClusterCallCountLowWaterMark = MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_CLUSTER_MIN_CALL_COUNT_LOW_WATER_MARK,
+                                                          DEFAULT_CLUSTER_MIN_CALL_COUNT_HIGH_WATER_MARK, Long.class);
+
     Double initialRecoveryLevel = MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_INITIAL_RECOVERY_LEVEL,
                        DEFAULT_INITIAL_RECOVERY_LEVEL, Double.class);
 
@@ -171,8 +188,7 @@ public class DegraderLoadBalancerStrategyConfig
     Double globalStepDown = MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_GLOBAL_STEP_DOWN,
                                            DEFAULT_GLOBAL_STEP_DOWN, Double.class);
 
-    Object obj = MapUtil.getWithDefault(map,
-                                                   PropertyKeys.HTTP_LB_HASH_CONFIG,
+    Object obj = MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_HASH_CONFIG,
                                                    Collections.emptyMap(),
                                                    Map.class);
     @SuppressWarnings("unchecked") // // to appease java 7, which appears to have compilation bugs that cause it to ignore some suppressions, needed to first assign to obj, then assign to the map
@@ -181,7 +197,8 @@ public class DegraderLoadBalancerStrategyConfig
     return new DegraderLoadBalancerStrategyConfig(
         updateIntervalMs, pointsPerWeight, hashMethod, hashConfig,
         clock, initialRecoveryLevel, ringRampFactor, highWaterMark, lowWaterMark,
-        globalStepUp, globalStepDown);
+        globalStepUp, globalStepDown, minClusterCallCountHighWaterMark,
+        minClusterCallCountLowWaterMark);
   }
 
   /**
@@ -200,6 +217,11 @@ public class DegraderLoadBalancerStrategyConfig
     return _pointsPerWeight;
   }
 
+  public long getMinClusterCallCountHighWaterMark()
+  {
+    return _minClusterCallCountHighWaterMark;
+  }
+
   public String getHashMethod()
   {
     return _hashMethod;
@@ -208,6 +230,11 @@ public class DegraderLoadBalancerStrategyConfig
   public Map<String, Object> getHashConfig()
   {
     return _hashConfig;
+  }
+
+  public long getMinClusterCallCountLowWaterMark()
+  {
+    return _minClusterCallCountLowWaterMark;
   }
 
   public Clock getClock()

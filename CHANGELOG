@@ -1,5 +1,8 @@
 1.9.37
 ------
+(RB=222898)
+added logic to prevent callDroppingMode in LBStrategy to be changed when traffic is low
+
 (RB=221327)
 Change emitted message on successful build to include a listing of all published
 IDLs and snapshots that likely need to be committed.

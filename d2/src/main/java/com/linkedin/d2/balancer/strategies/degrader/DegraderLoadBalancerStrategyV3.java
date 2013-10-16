@@ -78,7 +78,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     {
       degraderProperties = Collections.<String, String>emptyMap();
     }
-    _state = new DegraderLoadBalancerState(serviceName, degraderProperties);
+    _state = new DegraderLoadBalancerState(serviceName, degraderProperties, config);
   }
 
   @Override
@@ -416,14 +416,6 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
         _log.info("Strategy updated: partitionId= " + partitionId + ", newState=" + newState + ", oldState =" +
                       oldState + ", new state's config=" + config);
       }
-      else
-      {
-        //we print minimum amount of information because we don't want to spam the logs
-        _log.info("Strategy updated: partitionId= " + partitionId +
-                      ". But the old state is the same as the new state. Cluster health: [cluster latency ="
-                      + newState.getCurrentAvgClusterLatency() + ", override drop rate =" +
-                      newState.getCurrentOverrideDropRate() + ", service name = " + newState.getServiceName() + "]");
-      }
     }
   }
 
@@ -712,7 +704,8 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                         newCurrentAvgClusterLatency,
                                         newRecoveryMap,
                                         oldState.getServiceName(),
-                                        oldState.getDegraderProperties());
+                                        oldState.getDegraderProperties(),
+                                        totalClusterCallCount);
 
       logState(oldState, newState, partitionId, config, trackerClients);
     }
@@ -730,8 +723,10 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       // overrideDropRate, and that their hash ring bump ups will also alternate with this
       // overrideDropRate adjustment, if necessary. This is fine because the first priority is
       // to get the cluster latency stabilized
-      if (newCurrentAvgClusterLatency > 0)
+      if (newCurrentAvgClusterLatency > 0 && totalClusterCallCount >= config.getMinClusterCallCountHighWaterMark())
       {
+        // if we enter here that means we have enough call counts to be confident that our average latency is
+        // statistically significant
         if (newCurrentAvgClusterLatency >= config.getHighWaterMark() && currentOverrideDropRate != 1.0)
         {
           // if the cluster latency is too high and we can drop more traffic
@@ -745,10 +740,23 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
         // else the averageClusterLatency is between Low and High, or we can't change anything more,
         // then do not change anything.
       }
+      else if (newCurrentAvgClusterLatency > 0 && totalClusterCallCount >= config.getMinClusterCallCountLowWaterMark())
+      {
+        //if we enter here that means, we don't have enough calls to the cluster. We shouldn't degrade more
+        //but we might recover a bit if the latency is healthy
+        if (newCurrentAvgClusterLatency <= config.getLowWaterMark() && currentOverrideDropRate != 0.0)
+        {
+          // the cluster latency is good and we can reduce the override drop rate
+          newDropLevel = Math.max(0.0, newDropLevel - config.getGlobalStepDown());
+        }
+        // else the averageClusterLatency is somewhat high but since the qps is not that high, we shouldn't degrade
+      }
       else
       {
-        // if we weren't receiving any traffic, then reduce the overrideDropRate, if possible.
-        // this might have happened if we had somehow choked off all traffic to the cluster, most
+        // if we enter here that means we have very low traffic. We should reduce the overrideDropRate, if possible.
+        // when we have below 1 QPS traffic, we should be pretty confident that the cluster can handle very low
+        // traffic. Of course this is depending on the MinClusterCallCountLowWaterMark that the service owner sets.
+        // Another reason is this might have happened if we had somehow choked off all traffic to the cluster, most
         // likely in a one node/small cluster scenario. Obviously, we can't check latency here,
         // we'll have to rely on the metric in the next updatePartitionState. If the cluster is still having
         // latency problems, then we will oscillate between off and letting a little traffic through,
@@ -770,7 +778,8 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                             newCurrentAvgClusterLatency,
                                             oldRecoveryMap,
                                             oldState.getServiceName(),
-                                            oldState.getDegraderProperties());
+                                            oldState.getDegraderProperties(),
+                                            oldState.getCurrentClusterCallCount());
 
       logState(oldState, newState, partitionId, config, trackerClients);
 
@@ -956,7 +965,8 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                              oldState.getCurrentAvgClusterLatency(),
                                              oldState.getRecoveryMap(),
                                              oldState.getServiceName(),
-                                             oldState.getDegraderProperties());
+                                             oldState.getDegraderProperties(),
+                                             oldState.getCurrentClusterCallCount());
 
     _state.setPartitionState(partitionId, newState);
   }
@@ -984,7 +994,8 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     private final String _serviceName;
     private final Map<String, String> _degraderProperties;
 
-    DegraderLoadBalancerState(String serviceName, Map<String, String> degraderProperties)
+    DegraderLoadBalancerState(String serviceName, Map<String, String> degraderProperties,
+                              DegraderLoadBalancerStrategyConfig loadBalancerStrategyConfig)
     {
       _degraderProperties = degraderProperties;
       _locks = new Object[1];
@@ -1000,7 +1011,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                                                0, 0,
                                                                new HashMap<TrackerClient, Double>(),
                                                                serviceName,
-                                                               degraderProperties));
+                                                               degraderProperties, 0));
       _partitionCount = 1;
       _serviceName = serviceName;
     }
@@ -1037,7 +1048,8 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                                                        LOAD_BALANCE,
                                                                    0, 0,
                                                                    new HashMap<TrackerClient, Double>(),
-                                                                   _serviceName, _degraderProperties));
+                                                                   _serviceName, _degraderProperties,
+                                                                   0));
           newLocks[i] = new Object();
         }
         _partitionStates = newStates;
@@ -1123,6 +1135,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
 
     private final double      _currentOverrideDropRate;
     private final double      _currentAvgClusterLatency;
+    private final long        _currentClusterCallCount;
 
     // We will only update a state once. In reality we only use a state ONCE per instance.
     // After it's used, a state will be discarded and a new instance will take over
@@ -1159,6 +1172,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       _errorDuringInitFlag = false;
       _degraderProperties = state._degraderProperties;
       _previousMaxDropRate = new HashMap<TrackerClient, Double>();
+      _currentClusterCallCount = state._currentClusterCallCount;
     }
 
     public PartitionDegraderLoadBalancerState(PartitionDegraderLoadBalancerState state,
@@ -1181,9 +1195,10 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       _degraderProperties = state._degraderProperties;
       _errorDuringInitFlag = errorDuringInit;
       _previousMaxDropRate = new HashMap<TrackerClient, Double>();
+      _currentClusterCallCount = state._currentClusterCallCount;
     }
 
-        public PartitionDegraderLoadBalancerState(long clusterGenerationId,
+    public PartitionDegraderLoadBalancerState(long clusterGenerationId,
                                          long lastUpdated,
                                          boolean initState,
                                          Map<URI,Integer> pointsMap,
@@ -1192,29 +1207,31 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                          double currentAvgClusterLatency,
                                          Map<TrackerClient,Double> recoveryMap,
                                          String serviceName,
-                                         Map<String, String> degraderProperties)
-        {
-          _clusterGenerationId = clusterGenerationId;
-          _ring = new ConsistentHashRing<URI>(pointsMap);
-          _pointsMap = (pointsMap != null) ?
-                Collections.unmodifiableMap(new HashMap<URI,Integer>(pointsMap)) :
-                Collections.<URI,Integer>emptyMap();
-          _strategy = strategy;
-          _currentOverrideDropRate = currentOverrideDropRate;
-          _currentAvgClusterLatency = currentAvgClusterLatency;
-          _recoveryMap = (recoveryMap != null) ?
-              Collections.unmodifiableMap(new HashMap<TrackerClient,Double>(recoveryMap)) :
-              Collections.<TrackerClient,Double>emptyMap();
-          _initialized = initState;
-          _lastUpdated = lastUpdated;
-          _updateStarted = new AtomicBoolean(false);
-          _serviceName = serviceName;
-          _errorDuringInitFlag = false;
-          _degraderProperties = (degraderProperties != null) ?
-              Collections.unmodifiableMap(new HashMap<String, String>(degraderProperties)) :
-              Collections.<String, String>emptyMap();
-          _previousMaxDropRate = new HashMap<TrackerClient, Double>();
-        }
+                                         Map<String, String> degraderProperties,
+                                         long currentClusterCallCount)
+    {
+      _clusterGenerationId = clusterGenerationId;
+      _ring = new ConsistentHashRing<URI>(pointsMap);
+      _pointsMap = (pointsMap != null) ?
+            Collections.unmodifiableMap(new HashMap<URI,Integer>(pointsMap)) :
+            Collections.<URI,Integer>emptyMap();
+      _strategy = strategy;
+      _currentOverrideDropRate = currentOverrideDropRate;
+      _currentAvgClusterLatency = currentAvgClusterLatency;
+      _recoveryMap = (recoveryMap != null) ?
+          Collections.unmodifiableMap(new HashMap<TrackerClient,Double>(recoveryMap)) :
+          Collections.<TrackerClient,Double>emptyMap();
+      _initialized = initState;
+      _lastUpdated = lastUpdated;
+      _updateStarted = new AtomicBoolean(false);
+      _serviceName = serviceName;
+      _errorDuringInitFlag = false;
+      _degraderProperties = (degraderProperties != null) ?
+          Collections.unmodifiableMap(new HashMap<String, String>(degraderProperties)) :
+          Collections.<String, String>emptyMap();
+      _previousMaxDropRate = new HashMap<TrackerClient, Double>();
+      _currentClusterCallCount = currentClusterCallCount;
+    }
 
     public Map<String, String> getDegraderProperties()
     {
@@ -1224,6 +1241,11 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     private String getServiceName()
     {
       return _serviceName;
+    }
+
+    public long getCurrentClusterCallCount()
+    {
+      return _currentClusterCallCount;
     }
 
     private boolean compareAndSetUpdateStarted()
@@ -1295,6 +1317,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
           + ", _currentAvgClusterLatency=" + _currentAvgClusterLatency
           + ", _strategy=" + _strategy
           + ", _recoveryMap=" + _recoveryMap
+          + ", _currentClusterCallCount=" + _currentClusterCallCount
           + ", _serviceName="+ _serviceName + "]";
     }
   }

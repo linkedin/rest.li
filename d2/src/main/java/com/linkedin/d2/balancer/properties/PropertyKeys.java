@@ -79,6 +79,8 @@ public class PropertyKeys
   public static final String HTTP_LB_RING_RAMP_FACTOR = "http.loadBalancer.ringRampFactor";
   public static final String HTTP_LB_GLOBAL_STEP_UP = "http.loadBalancer.globalStepUp";
   public static final String HTTP_LB_GLOBAL_STEP_DOWN = "http.loadBalancer.globalStepDown";
+  public static final String HTTP_LB_CLUSTER_MIN_CALL_COUNT_HIGH_WATER_MARK = "http.loadBalancer.clusterMinCallCount.highWaterMark";
+  public static final String HTTP_LB_CLUSTER_MIN_CALL_COUNT_LOW_WATER_MARK = "http.loadBalancer.clusterMinCallCount.lowWaterMark";
 
   //used by cluster properties
   public static final String CLUSTER_NAME = "clusterName";
