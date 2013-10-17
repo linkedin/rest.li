@@ -16,8 +16,8 @@
 package com.linkedin.r2.filter.logging;
 
 
+import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.filter.NextFilter;
-import com.linkedin.r2.filter.compression.CompressionConstants;
 import com.linkedin.r2.filter.message.rest.RestFilter;
 import com.linkedin.r2.filter.message.rpc.RpcFilter;
 import com.linkedin.r2.message.Request;
@@ -48,8 +48,7 @@ public class SimpleLoggingFilter implements RpcFilter, RestFilter
   // _log is not static because we need to be able to set it during test.
   private final Logger _log;
 
-  // only available on client currently
-  private static final String OPERATION = CompressionConstants.OPERATION;
+  private static final String OPERATION = R2Constants.OPERATION;
 
   private static final String REQUEST_URI = "com.linkedin.r2.requestURI";
   private static final String REQUEST_METHOD = "com.linkedin.r2.requestMethod";

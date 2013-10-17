@@ -20,7 +20,7 @@
 
 package com.linkedin.restli.client;
 
-import com.linkedin.r2.filter.compression.CompressionConstants;
+import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import java.io.IOException;
@@ -425,7 +425,7 @@ public class RestClientTest
   {
     for (Map.Entry<String, Object> attr : DEFAULT_REQUEST_CONTEXT.getLocalAttrs().entrySet())
     {
-      if (attr.getKey().equals(CompressionConstants.OPERATION))
+      if (attr.getKey().equals(R2Constants.OPERATION))
       {
         continue;
       }

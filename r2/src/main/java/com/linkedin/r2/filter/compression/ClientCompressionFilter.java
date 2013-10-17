@@ -17,6 +17,7 @@
 package com.linkedin.r2.filter.compression;
 
 
+import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.filter.Filter;
 import com.linkedin.r2.filter.NextFilter;
 import com.linkedin.r2.filter.message.rest.RestFilter;
@@ -213,7 +214,7 @@ public class ClientCompressionFilter implements Filter, RestFilter
       }
 
       //Set accepted encoding for compressed response
-      String operation = (String)requestContext.getLocalAttr(CompressionConstants.OPERATION);
+      String operation = (String)requestContext.getLocalAttr(R2Constants.OPERATION);
       if (_acceptCompression.length > 0 && shouldCompress(operation))
       {
         req = req.builder().addHeaderValue(HttpConstants.ACCEPT_ENCODING, _acceptEncodingHeader).build();

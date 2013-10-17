@@ -23,6 +23,7 @@ import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
+import com.linkedin.r2.filter.R2Constants;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
@@ -659,6 +660,23 @@ public class TestRestLiRouting
     for (String pathKey : expectedPathKeys)
     {
       assertNotNull(result.getContext().getPathKeys().get(pathKey));
+    }
+    if (method != null)
+    {
+      String expectedOperationName;
+      switch (method)
+      {
+        case ACTION:
+          expectedOperationName = "action:" + result.getResourceMethod().getActionName();
+          break;
+        case FINDER:
+          expectedOperationName = "finder:" + result.getResourceMethod().getFinderName();
+          break;
+        default:
+          expectedOperationName = method.toString().toLowerCase();
+      }
+      assertEquals(result.getContext().getRawRequestContext().getLocalAttr(R2Constants.OPERATION),
+                   expectedOperationName);
     }
   }
 

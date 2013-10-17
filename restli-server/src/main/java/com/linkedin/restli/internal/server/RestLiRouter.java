@@ -16,6 +16,8 @@
 
 package com.linkedin.restli.internal.server;
 
+import com.linkedin.r2.filter.R2Constants;
+import com.linkedin.restli.common.OperationNameGenerator;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.Arrays;
@@ -228,6 +230,9 @@ public class RestLiRouter
 
     if (methodDescriptor != null)
     {
+      context.getRawRequestContext().putLocalAttr(R2Constants.OPERATION,
+                                                  OperationNameGenerator.generate(methodDescriptor.getMethodType(),
+                                                                                  methodName));
       return new RoutingResult(context, methodDescriptor);
     }
 

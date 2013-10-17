@@ -24,13 +24,14 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.codec.PsonDataCodec;
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.r2.filter.compression.CompressionConstants;
+import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.restli.common.HttpMethod;
+import com.linkedin.restli.common.OperationNameGenerator;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.client.ExceptionUtil;
@@ -376,8 +377,8 @@ public class RestClient
     try
     {
       RestRequest request = buildRequest(uri, method, dataMap, headers);
-      String operation = buildOperation(method, methodName);
-      requestContext.putLocalAttr(CompressionConstants.OPERATION, operation);
+      String operation = OperationNameGenerator.generate(method, methodName);
+      requestContext.putLocalAttr(R2Constants.OPERATION, operation);
       _client.restRequest(request, requestContext, callback);
     }
     catch (Exception e)
@@ -385,31 +386,6 @@ public class RestClient
       // No need to wrap the exception; RestLiCallbackAdapter.onError() will take care of that
       callback.onError(e);
     }
-  }
-
-  /**
-   * Builds the operation String for the method. This operation String is used to determine if responses should be
-   * compressed or not
-   * @param method
-   * @param methodName
-   * @return
-   */
-  private String buildOperation(ResourceMethod method, String methodName)
-  {
-    String operation = method.toString();
-    final String ACTION_AND_FINDER_SEPARATOR = ":";
-
-    switch (method)
-    {
-      case ACTION:
-        operation += (ACTION_AND_FINDER_SEPARATOR + methodName);
-        break;
-      case FINDER:
-        operation += (ACTION_AND_FINDER_SEPARATOR + methodName);
-        break;
-    }
-
-    return operation;
   }
 
   // This throws Exception to remind the caller to deal with arbitrary exceptions including RuntimeException

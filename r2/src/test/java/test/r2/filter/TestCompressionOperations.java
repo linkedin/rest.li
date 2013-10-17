@@ -16,9 +16,9 @@
 
 package test.r2.filter;
 
+import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.filter.NextFilter;
 import com.linkedin.r2.filter.compression.ClientCompressionFilter;
-import com.linkedin.r2.filter.compression.CompressionConstants;
 import com.linkedin.r2.filter.compression.EncodingType;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -27,7 +27,6 @@ import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.http.common.HttpConstants;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
@@ -123,7 +122,7 @@ public class TestCompressionOperations
     for (String operation: operations)
     {
       RequestContext context = new RequestContext();
-      context.putLocalAttr(CompressionConstants.OPERATION, operation);
+      context.putLocalAttr(R2Constants.OPERATION, operation);
 
       clientCompressionFilter.onRestRequest(restRequest,
                                             context,
