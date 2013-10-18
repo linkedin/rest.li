@@ -3,6 +3,9 @@
 (RB=226303)
 Add @TestMethod annotation to indicate which methods on a resource are intended to only be used for testing.
 
+(RB=224402)
+Add compatibility checking between snapshot and idl.
+
 1.9.41
 ------
 (RB=225308)
@@ -180,8 +183,8 @@ projections.
 1.9.23
 ------
 (RB=206396)
-To detect, as early as possible, a mistake that is otherwise difficult to debug, add 
-check during data template generation that verifies filename and path match schema 
+To detect, as early as possible, a mistake that is otherwise difficult to debug, add
+check during data template generation that verifies filename and path match schema
 name and namespace.
 
 (RB=207258)
@@ -621,7 +624,7 @@ event leading to shutdown occurs on a Netty IO thread.
 Support typerefs in association keys for batch responses.
 
 (RB=160441)
-Disable interning of field names by Jackson parser. 
+Disable interning of field names by Jackson parser.
 This should reduce intended growth in perm gen.
 
 (RB=160184)
@@ -744,8 +747,8 @@ fix for ZKConnection/DefaultWatcher race condition
 1.8.7
 -----
 (RB=146100)
-Performance optimization for construction of query params to avoid 
-needlessly appending the array index as a string for each field in 
+Performance optimization for construction of query params to avoid
+needlessly appending the array index as a string for each field in
 a list only to remove it later.
 
 (RB=146833)
@@ -873,7 +876,7 @@ Clients can signify that a response should be in pson format by sending the requ
 header "Accept-Type : application/x-pson".  The server will then encode the result in pson and
 send it back with the header "Content-Type : application/x-pson". If the client recieves a
 response with this header it will decode it with the pson codec.
-    
+
 Some headers will now work a bit differently:
 Content-Type headers will no longer be sent with responses unless there is actual body content
 to encode.  This change was made primarily to simplify picking the right header.  There's no
@@ -893,7 +896,7 @@ Accept-Type headers:
    formats that are explicitly mentioned in the header, even when they are lower quality than */*
 
 (RB=128653)
-ActionResponseDecoder.getEntity() will return Void.class if its fieldDef is 
+ActionResponseDecoder.getEntity() will return Void.class if its fieldDef is
 null, to preserve compatibility from before the Action response changes.
 
 (RB=128251)
@@ -906,7 +909,7 @@ Add default value handling for query parameter in complex type, including all Da
 Union can be used as query parameter type.
 
 (RB=127439)
-Fix NPE resulting from calling .getEntityClass() on an ActionResponseDecoder for a void-returning Action. 
+Fix NPE resulting from calling .getEntityClass() on an ActionResponseDecoder for a void-returning Action.
 
 1.7.7
 -----
@@ -967,14 +970,14 @@ Change generated and up-to-date log messages to info. This was useful initially 
 it has not been a problem, changing to info will reduce build output noise from generator.
 
 (RB=120925)
-Add requisite maven configuration and pom generation to root build.gradle to enable releasing pegasus 
+Add requisite maven configuration and pom generation to root build.gradle to enable releasing pegasus
 to maven central.
 
 (RB=120249)
 Copy 'pegasus' gradle plugin into pegasus codebase from RUM, so 3rd party developers have access to
 the build tools required for a working development flow.  Also add maven central and maven local as repos
 so developers can publish pegasus artifacts to their local repo and build standalone apps based on those
-artifacts (this part will not be needed after we push pegasus artifacts to the maven central repo but 
+artifacts (this part will not be needed after we push pegasus artifacts to the maven central repo but
 helps in the short term).
 
 (RB=119121)
@@ -1361,13 +1364,13 @@ Add access to client factories from D2 Facilities interface.
 Enhance validator API to enable AnyRecord validator to be implemented.
 See AnyRecordValidator example and test cases in data.
 
-(RB=83380) 
+(RB=83380)
 Add support for structured query parameters on CRUD methods.
 
-(RB=86674) 
-Remove c3po support 
+(RB=86674)
+Remove c3po support
 
-(RB=86313) 
+(RB=86313)
 Modify IDL generation to only emit shallow references to named schema types.
 
 1.3.1
@@ -1542,7 +1545,7 @@ The report messages are revised and parameterized to be more readable.
 (RB=81960)
 Prototype custom class for records (not for production use yet.)
 
-Enable auto-registration of coercer when it is not possible to use 
+Enable auto-registration of coercer when it is not possible to use
 a static initializer on the custom class to register. Here is the
 comments from com.linkedin.data.template.Custom.
 
@@ -1613,7 +1616,7 @@ Fix indentation errors.
 Remove used classes.
 
 (RB=81019)
-1st installment.  Remove unneeded code from imported util cases. 
+1st installment.  Remove unneeded code from imported util cases.
 Fix problem with pegasus-common test directory is under src/main instead of src.
 Remove LongStats. Make ImmutableLongStats the replacement.
 Remove callsInLastSecond tracking (this is legacy that is not used and not needed in network.)
@@ -1688,12 +1691,12 @@ while the standard Future interface will throw a RestLiResponseException wrapped
 ExecutionException.
 
 (RB=73689)
-Remove dependency on ASM and Jersey package scanning logic.  Our ASM version is fairly 
+Remove dependency on ASM and Jersey package scanning logic.  Our ASM version is fairly
 old, and presents a compatibility challenge, especially for open source usage.
 
-This patch removes the relevant Jersey code and implements very simple package scanning 
-by loading the classes in the specified packages.  In theory this could waste more 
-resources by loading classes unnecessarily.  In practice, we expect the rest.li resource 
+This patch removes the relevant Jersey code and implements very simple package scanning
+by loading the classes in the specified packages.  In theory this could waste more
+resources by loading classes unnecessarily.  In practice, we expect the rest.li resource
 packages to be fairly narrowly specified, so it should not be a significant issue.
 
 (RB=73067)
@@ -1739,8 +1742,8 @@ which they are defined.
 
 As part of this fix, the parser needs to have knowledge of the location of
 a data object within the input stream. JacksonCodec has been extended to
-provide this location. Because this location is now available, various parsers 
-have been improved emit error messages that include the likely location 
+provide this location. Because this location is now available, various parsers
+have been improved emit error messages that include the likely location
 of the error.
 
 Remove noisy TestCloudPerformance output.
@@ -1750,7 +1753,7 @@ Remove noisy TestCloudPerformance output.
 (RB=69279)
 An ability to define arbitrarily complex resource keys has been added. The resource
 implementation has to extend ComplexKeyResource parameterized, in addition to the
-value type, with key and params types, both extending RecordTemplate.  This feature is 
+value type, with key and params types, both extending RecordTemplate.  This feature is
 currently considered experimental - future versions may be backwards incompatible.
 
 1.0.5

@@ -132,7 +132,7 @@ public class CompatibilityInfoMap
    * @return summary message about the check result, including all categories
    *         empty string if called before checking any files
    */
-  public String createSummary(String prevRestspecPath, String currRestspecPath)
+  public String createSummary(String prevRestModelPath, String currRestModelPath)
   {
     final StringBuilder summaryMessage = new StringBuilder();
 
@@ -141,10 +141,10 @@ public class CompatibilityInfoMap
 
     if (summaryMessage.length() != 0)
     {
-      summaryMessage.insert(0, new StringBuilder("\nidl compatibility report between published \"")
-                                 .append(prevRestspecPath)
+      summaryMessage.insert(0, new StringBuilder("\nRest.li compatibility report between published \"")
+                                 .append(prevRestModelPath)
                                  .append("\" and current \"")
-                                 .append(currRestspecPath)
+                                 .append(currRestModelPath)
                                  .append("\":\n"));
     }
 
@@ -296,5 +296,4 @@ public class CompatibilityInfoMap
     }
     return true;
   }
-
 }

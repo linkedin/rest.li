@@ -135,22 +135,42 @@ public class RestLiSnapshotCompatibilityChecker
   /**
    * Check backwards compatibility between two snapshot (snapshot.json) files.
    *
-   * @param prevRestspecPath previously existing snapshot file
-   * @param currRestspecPath current snapshot file
+   * @param prevSnapshotPath previously existing snapshot file
+   * @param currSnapshotPath current snapshot file
    * @param compatLevel compatibility level which affects the return value
    * @return true if the check result conforms the compatibility level requirement
    *         e.g. false if backwards compatible changes are found but the level is equivalent
    */
-  public CompatibilityInfoMap check(String prevRestspecPath, String currRestspecPath, CompatibilityLevel compatLevel)
+  public CompatibilityInfoMap check(String prevSnapshotPath, String currSnapshotPath, CompatibilityLevel compatLevel)
   {
-    CompatibilityInfoMap infoMap = new CompatibilityInfoMap();
+    return checkCompatibility(prevSnapshotPath, currSnapshotPath, compatLevel, false);
+  }
+
+  /**
+   * Check backwards compatibility between a idl (restspec.json) and a snapshot (snapshot.json) file.
+   *
+   * @param prevRestSpecPath previously existing idl file
+   * @param currSnapshotPath current snapshot file
+   * @param compatLevel compatibility level which affects the return value
+   * @return true if the check result conforms the compatibility level requirement
+   *         only restspec related compatibilities are reported
+   *         e.g. false if backwards compatible changes are found but the level is equivalent
+   */
+  public CompatibilityInfoMap checkRestSpecVsSnapshot(String prevRestSpecPath, String currSnapshotPath, CompatibilityLevel compatLevel)
+  {
+    return checkCompatibility(prevRestSpecPath, currSnapshotPath, compatLevel, true);
+  }
+
+  private CompatibilityInfoMap checkCompatibility(String prevRestModelPath, String currRestModelPath, CompatibilityLevel compatLevel, boolean isAgainstRestSpec)
+  {
+    final CompatibilityInfoMap infoMap = new CompatibilityInfoMap();
     if (compatLevel == CompatibilityLevel.OFF)
     {
       // skip check entirely.
       return infoMap;
     }
 
-    Stack<Object> path = new Stack<Object>();
+    final Stack<Object> path = new Stack<Object>();
     path.push("");
 
     FileInputStream prevSnapshotFile = null;
@@ -158,20 +178,20 @@ public class RestLiSnapshotCompatibilityChecker
 
     try
     {
-      prevSnapshotFile = new FileInputStream(prevRestspecPath);
+      prevSnapshotFile = new FileInputStream(prevRestModelPath);
     }
     catch (FileNotFoundException e)
     {
-      infoMap.addRestSpecInfo(CompatibilityInfo.Type.RESOURCE_NEW, path, currRestspecPath);
+      infoMap.addRestSpecInfo(CompatibilityInfo.Type.RESOURCE_NEW, path, currRestModelPath);
     }
 
     try
     {
-      currSnapshotFile = new FileInputStream(currRestspecPath);
+      currSnapshotFile = new FileInputStream(currRestModelPath);
     }
     catch (FileNotFoundException e)
     {
-      infoMap.addRestSpecInfo(CompatibilityInfo.Type.RESOURCE_MISSING, path, prevRestspecPath);
+      infoMap.addRestSpecInfo(CompatibilityInfo.Type.RESOURCE_MISSING, path, prevRestModelPath);
     }
 
     if (prevSnapshotFile == null || currSnapshotFile == null)
@@ -179,11 +199,19 @@ public class RestLiSnapshotCompatibilityChecker
       return infoMap;
     }
 
-    Snapshot prevSnapshot = null;
-    Snapshot currSnapshot = null;
+    AbstractSnapshot prevSnapshot = null;
+    AbstractSnapshot currSnapshot = null;
     try
     {
-      prevSnapshot = new Snapshot(prevSnapshotFile);
+      if (isAgainstRestSpec)
+      {
+        prevSnapshot = new RestSpec(prevSnapshotFile);
+      }
+      else
+      {
+        prevSnapshot = new Snapshot(prevSnapshotFile);
+      }
+
       currSnapshot = new Snapshot(currSnapshotFile);
     }
     catch (IOException e)
@@ -196,11 +224,19 @@ public class RestLiSnapshotCompatibilityChecker
       return infoMap;
     }
 
-    DataSchemaResolver prevResolver = createResolverFromSnapshot(prevSnapshot, _resolverPath);
-    DataSchemaResolver currResolver = createResolverFromSnapshot(currSnapshot, _resolverPath);
+    final DataSchemaResolver currResolver = createResolverFromSnapshot(currSnapshot, _resolverPath);
+    final DataSchemaResolver prevResolver;
+    if (isAgainstRestSpec)
+    {
+      prevResolver = currResolver;
+    }
+    else
+    {
+      prevResolver = createResolverFromSnapshot(prevSnapshot, _resolverPath);
+    }
 
-    ResourceCompatibilityChecker checker = new ResourceCompatibilityChecker(prevSnapshot.getResourceSchema(), prevResolver,
-                                                                            currSnapshot.getResourceSchema(), currResolver);
+    final ResourceCompatibilityChecker checker = new ResourceCompatibilityChecker(prevSnapshot.getResourceSchema(), prevResolver,
+                                                                                  currSnapshot.getResourceSchema(), currResolver);
     checker.check(compatLevel);
     infoMap.addAll(checker.getInfoMap());
 
@@ -219,7 +255,7 @@ public class RestLiSnapshotCompatibilityChecker
     return options.toString();
   }
 
-  private static DataSchemaResolver createResolverFromSnapshot(Snapshot snapshot, String resolverPath)
+  private static DataSchemaResolver createResolverFromSnapshot(AbstractSnapshot snapshot, String resolverPath)
   {
     final DataSchemaResolver resolver = CompatibilityUtil.getDataSchemaResolver(resolverPath);
 

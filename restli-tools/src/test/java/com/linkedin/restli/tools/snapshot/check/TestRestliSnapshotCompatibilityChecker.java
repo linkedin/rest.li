@@ -22,6 +22,7 @@ import com.linkedin.restli.tools.idlcheck.CompatibilityLevel;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -33,6 +34,51 @@ import java.util.HashSet;
 
 public class TestRestliSnapshotCompatibilityChecker
 {
+  @Test
+  public void testCompatibleRestSpecVsSnapshot()
+  {
+    final RestLiSnapshotCompatibilityChecker checker = new RestLiSnapshotCompatibilityChecker();
+    final CompatibilityInfoMap infoMap = checker.checkRestSpecVsSnapshot(RESOURCES_DIR + FS + "idls" + FS + "twitter-statuses.restspec.json",
+                                                                         RESOURCES_DIR + FS + "snapshots" + FS + "twitter-statuses.snapshot.json",
+                                                                         CompatibilityLevel.EQUIVALENT);
+    Assert.assertTrue(infoMap.isEquivalent());
+  }
+
+  @Test
+  public void testIncompatibleRestSpecVsSnapshot()
+  {
+    final Collection<CompatibilityInfo> restSpecErrors = new HashSet<CompatibilityInfo>();
+    final Collection<CompatibilityInfo> restSpecDiffs = new HashSet<CompatibilityInfo>();
+    restSpecErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "identifier", "type"),
+                                            CompatibilityInfo.Type.TYPE_INCOMPATIBLE, "int", "long"));
+    restSpecDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "supports"),
+                                            CompatibilityInfo.Type.SUPERSET, new HashSet<String>(Arrays.asList("create"))));
+    restSpecDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "methods"),
+                                            CompatibilityInfo.Type.SUPERSET, new HashSet<String>(Arrays.asList("create"))));
+
+    final RestLiSnapshotCompatibilityChecker checker = new RestLiSnapshotCompatibilityChecker();
+    final CompatibilityInfoMap incompatibleInfoMap = checker.checkRestSpecVsSnapshot(RESOURCES_DIR + FS + "idls" + FS + "twitter-statuses-incompatible.restspec.json",
+                                                                                     RESOURCES_DIR + FS + "snapshots" + FS + "twitter-statuses.snapshot.json",
+                                                                                     CompatibilityLevel.EQUIVALENT);
+    Assert.assertTrue(incompatibleInfoMap.isModelEquivalent());
+
+    final Collection<CompatibilityInfo> restSpecIncompatibles = incompatibleInfoMap.getRestSpecIncompatibles();
+    final Collection<CompatibilityInfo> restSpecCompatibles = incompatibleInfoMap.getRestSpecCompatibles();
+
+    for (CompatibilityInfo te : restSpecErrors)
+    {
+      Assert.assertTrue(restSpecIncompatibles.contains(te), "Reported restspec incompatibles should contain: " + te.toString());
+      restSpecIncompatibles.remove(te);
+    }
+    for (CompatibilityInfo di : restSpecDiffs)
+    {
+      Assert.assertTrue(restSpecCompatibles.contains(di), "Reported restspec compatibles should contain: " + di.toString());
+      restSpecCompatibles.remove(di);
+    }
+
+    Assert.assertTrue(restSpecIncompatibles.isEmpty());
+    Assert.assertTrue(restSpecCompatibles.isEmpty());
+  }
 
   @Test
   public void testFileNotFound()
@@ -72,4 +118,6 @@ public class TestRestliSnapshotCompatibilityChecker
     }
   }
 
+  private static final String FS = File.separator;
+  private static final String RESOURCES_DIR = "src" + FS + "test" + FS + "resources";
 }

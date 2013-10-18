@@ -16,36 +16,19 @@
 
 package com.linkedin.restli.tools.snapshot.check;
 
-import com.linkedin.data.DataList;
+
 import com.linkedin.data.DataMap;
-import com.linkedin.data.codec.JacksonDataCodec;
-import com.linkedin.data.schema.DataSchemaResolver;
-import com.linkedin.data.schema.NamedDataSchema;
-import com.linkedin.data.schema.resolver.DefaultDataSchemaResolver;
-import com.linkedin.restli.restspec.ResourceSchema;
-import com.linkedin.restli.restspec.RestSpecCodec;
-import com.linkedin.restli.tools.compatibility.CompatibilityInfoMap;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author Moira Tagle
  * @version $Revision: $
  */
 
-public class Snapshot
+public class Snapshot extends AbstractSnapshot
 {
-  public static final String MODELS_KEY = "models";
-  public static final String SCHEMA_KEY = "schema";
-
-  private static JacksonDataCodec _dataCodec = new JacksonDataCodec();
-  private DataSchemaResolver _dataSchemaResolver = new DefaultDataSchemaResolver(); // each Snapshot should have its own DataSchemaResolver.
-  private Map<String, NamedDataSchema> _models = new HashMap<String, NamedDataSchema>();
-  private ResourceSchema _resourceSchema;
-
   /**
    * Create a Snapshot based on the given {@link InputStream}
    * @param inputStream an input stream that represents a {@link DataMap} with two fields: "models", which
@@ -53,44 +36,8 @@ public class Snapshot
    */
   public Snapshot(InputStream inputStream) throws IOException
   {
-    DataMap dataMap = _dataCodec.readMap(inputStream);
-    DataList models = dataMap.getDataList(MODELS_KEY);
-    for(Object modelObj : models)
-    {
-      NamedDataSchema dataSchema;
-      if (modelObj instanceof DataMap)
-      {
-        DataMap model = (DataMap)modelObj;
-        dataSchema = (NamedDataSchema) RestSpecCodec.textToSchema(_dataCodec.mapToString(model), _dataSchemaResolver);
-      }
-      else if (modelObj instanceof String)
-      {
-        String str = (String)modelObj;
-        dataSchema = (NamedDataSchema) RestSpecCodec.textToSchema(str, _dataSchemaResolver);
-      }
-      else
-      {
-        throw new IOException("Found " + modelObj.getClass() + " in models list; Models must be strings or DataMaps.");
-      }
-      _models.put(dataSchema.getFullName(), dataSchema);
-    }
-    _resourceSchema =  new ResourceSchema(dataMap.getDataMap(SCHEMA_KEY));
+    DataMap data = _dataCodec.readMap(inputStream);
+    _models = parseModels(data.getDataList(MODELS_KEY));
+    _resourceSchema = parseSchema(data.getDataMap(SCHEMA_KEY));
   }
-
-  /**
-   * @return a map containing all of the NamedDataSchemas in this Snapshot, keyed by fully qualified schema name.
-   */
-  public Map<String, NamedDataSchema> getModels()
-  {
-    return _models;
-  }
-
-  /**
-   * @return the {@link ResourceSchema} of this snapshot
-   */
-  public ResourceSchema getResourceSchema()
-  {
-    return _resourceSchema;
-  }
-
 }
