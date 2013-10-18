@@ -171,7 +171,7 @@ public class RetryZooKeeper extends ZooKeeper
                 else
                 {
                   // no children belong to us found, retry create directly
-                  _log.info("Retry create operation: path = " + retryPath + "data length: " + data.length);
+                  _log.info("Retry create operation: path = " + retryPath + "data length: " + getDataLength(data));
                   zkCreate(retryPath, data, acl, createMode, stringCallback, ctx);
                 }
                 break;
@@ -210,7 +210,7 @@ public class RetryZooKeeper extends ZooKeeper
                       // this is the last child to be inspected
                       // all previous children do not have the data we wanted to create
                       // trigger retry create
-                      _log.info("Retry create operation: path = " + retryPath + "data length: " + data.length);
+                      _log.info("Retry create operation: path = " + retryPath + "data length: " + getDataLength(data));
                       zkCreate(retryPath, data, acl, createMode, stringCallback, ctx);
                     }
                   }
@@ -247,7 +247,7 @@ public class RetryZooKeeper extends ZooKeeper
         if (!createMode.isSequential())
         {
           // it's always safe to retry create for non-sequential names
-          _log.info("Retry create operation: path = " + path + " data length " + data.length);
+          _log.info("Retry create operation: path = " + path + " data length " + getDataLength(data));
           zkCreate(path, data, acl, createMode, this, ctx);
         }
         else
@@ -403,7 +403,7 @@ public class RetryZooKeeper extends ZooKeeper
     final RetryCallback callback = new RetryCallback() {
       @Override
       protected void retry() {
-        _log.info("Retry setData operation: path = " + path + " version = " + version + " data length " + data.length);
+        _log.info("Retry setData operation: path = " + path + " version = " + version + " data length " + getDataLength(data));
         zkSetData(path, data, version, this, ctx);
       }
       @Override
@@ -413,6 +413,11 @@ public class RetryZooKeeper extends ZooKeeper
       }
     };
     zkSetData(path, data, version, callback, ctx);
+  }
+
+  private int getDataLength(byte [] data)
+  {
+    return data == null ? 0 : data.length;
   }
 
   /*
