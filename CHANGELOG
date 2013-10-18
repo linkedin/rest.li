@@ -12,6 +12,9 @@ bother setting resolver paths when checking snapshots of file counts.
 (RB=223135)
 Fix a bug in R2 that a pooled channel can be disposed twice.
 
+(RB=223827)
+Add operation information to the resource context to enable logging on the server side.
+
 1.9.36
 ------
 (RB=220182)
