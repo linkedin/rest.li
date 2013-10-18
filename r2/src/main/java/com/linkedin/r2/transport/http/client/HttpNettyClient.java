@@ -103,6 +103,8 @@ import com.linkedin.r2.util.TimeoutRunnable;
 
   private final String _requestTimeoutMessage;
   private final int _queryPostThreshold;
+  private final AbstractJmxManager _jmxManager;
+  private final String _name;
 
   /**
    * Creates a new HttpNettyClient with some default parameters
@@ -162,20 +164,76 @@ import com.linkedin.r2.util.TimeoutRunnable;
                          ExecutorService callbackExecutor,
                          int poolWaiterSize)
   {
+    this(factory,
+        executor,
+        poolSize,
+        requestTimeout,
+        idleTimeout,
+        shutdownTimeout,
+        maxResponseSize,
+        sslContext,
+        sslParameters,
+        queryPostThreshold,
+        callbackExecutor,
+        poolWaiterSize,
+        HttpClientFactory.DEFAULT_CLIENT_NAME,
+        HttpClientFactory.NULL_JMX_MANAGER);
+  }
+
+  /**
+   * Creates a new HttpNettyClient
+   *
+   * @param factory The ClientSocketChannelFactory; it is the caller's responsibility to
+   *          shut it down
+   * @param executor an executor; it is the caller's responsibility to shut it down
+   * @param poolSize Maximum size of the underlying HTTP connection pool
+   * @param requestTimeout timeout, in ms, to get a connection from the pool or create one
+   * @param idleTimeout interval after which idle connections will be automatically closed
+   * @param shutdownTimeout timeout, in ms, the client should wait after shutdown is
+   *          initiated before terminating outstanding requests
+   * @param maxResponseSize
+   * @param sslContext {@link SSLContext}
+   * @param sslParameters {@link SSLParameters}with overloaded construct
+   * @param queryPostThreshold length of query params above which requests will be tunneled as POSTS
+   * @param callbackExecutor an optional executor to invoke user callback
+   * @param poolWaiterSize Maximum waiters waiting on the HTTP connection pool
+   * @param name Name of the {@link HttpNettyClient}
+   * @param jmxManager A management class that is aware of the creation/shutdown event
+   *          of the underlying {@link ChannelPoolManager}
+   */
+  public HttpNettyClient(ClientSocketChannelFactory factory,
+                         ScheduledExecutorService executor,
+                         int poolSize,
+                         int requestTimeout,
+                         int idleTimeout,
+                         int shutdownTimeout,
+                         int maxResponseSize,
+                         SSLContext sslContext,
+                         SSLParameters sslParameters,
+                         int queryPostThreshold,
+                         ExecutorService callbackExecutor,
+                         int poolWaiterSize,
+                         String name,
+                         AbstractJmxManager jmxManager)
+  {
     _maxResponseSize = maxResponseSize;
+    _name = name;
     _channelPoolManager =
         new ChannelPoolManager(new ChannelPoolFactoryImpl(new ClientBootstrap(factory),
-                                                          poolSize,
-                                                          idleTimeout,
-                                                          sslContext,
-                                                          sslParameters,
-                                                          poolWaiterSize));
+            poolSize,
+            idleTimeout,
+            sslContext,
+            sslParameters,
+            poolWaiterSize),
+            name + ChannelPoolManager.BASE_NAME);
     _scheduler = executor;
     _callbackExecutor = callbackExecutor;
     _requestTimeout = requestTimeout;
     _shutdownTimeout = shutdownTimeout;
     _requestTimeoutMessage = "Exceeded request timeout of " + _requestTimeout + "ms";
     _queryPostThreshold = queryPostThreshold;
+    _jmxManager = jmxManager;
+    _jmxManager.onProviderCreate(_channelPoolManager);
   }
 
   HttpNettyClient(ChannelPoolFactory factory,
@@ -192,6 +250,9 @@ import com.linkedin.r2.util.TimeoutRunnable;
     _shutdownTimeout = shutdownTimeout;
     _requestTimeoutMessage = "Exceeded request timeout of " + _requestTimeout + "ms";
     _queryPostThreshold = Integer.MAX_VALUE;
+    _name = HttpClientFactory.DEFAULT_CLIENT_NAME;
+    _jmxManager = HttpClientFactory.NULL_JMX_MANAGER;
+    _jmxManager.onProviderCreate(_channelPoolManager);
   }
 
   @Override
@@ -292,6 +353,7 @@ import com.linkedin.r2.util.TimeoutRunnable;
         }
       }, "Connection pool shutdown timeout exceeded (" + _shutdownTimeout + "ms)");
       _channelPoolManager.shutdown(closeChannels);
+      _jmxManager.onProviderShutdown(_channelPoolManager);
     }
   }
 
@@ -598,7 +660,7 @@ import com.linkedin.r2.util.TimeoutRunnable;
    *
    * @return A map of pool names and statistics.
    */
-  public Map<String, AsyncPoolStats> getPoolStats()
+  public Map<String, PoolStats> getPoolStats()
   {
     return _channelPoolManager.getPoolStats();
   }

@@ -39,9 +39,11 @@ import java.util.concurrent.ConcurrentMap;
  * @author Steven Ihde
  * @version $Revision: $
  */
-class ChannelPoolManager
+class ChannelPoolManager implements PoolStatsProvider
 {
   private static final Logger LOG = LoggerFactory.getLogger(ChannelPoolManager.class);
+
+  public static final String BASE_NAME = "ChannelPools";
 
   // All modifications of _pool and all access to _state must be locked on _mutex.
   // READS of _pool are allowed without synchronization
@@ -53,10 +55,19 @@ class ChannelPoolManager
   private State _state = State.RUNNING;
 
   private final ChannelPoolFactory _channelPoolFactory;
+  private final String _name;
 
   public ChannelPoolManager(ChannelPoolFactory channelPoolFactory)
   {
+    this(channelPoolFactory,
+         HttpClientFactory.DEFAULT_CLIENT_NAME + BASE_NAME);
+  }
+
+  public ChannelPoolManager(ChannelPoolFactory channelPoolFactory,
+                            String name)
+  {
     _channelPoolFactory = channelPoolFactory;
+    _name = name;
   }
 
   public void shutdown(final Callback<None> callback)
@@ -164,13 +175,20 @@ class ChannelPoolManager
    *
    * @return A map of pool names and statistics.
    */
-  public Map<String, AsyncPoolStats> getPoolStats()
+  @Override
+  public Map<String, PoolStats> getPoolStats()
   {
-    final Map<String, AsyncPoolStats> stats = new HashMap<String, AsyncPoolStats>();
+    final Map<String, PoolStats> stats = new HashMap<String, PoolStats>();
     for(AsyncPool<Channel> pool : _pool.values())
     {
       stats.put(pool.getName(), pool.getStats());
     }
     return stats;
+  }
+
+  @Override
+  public String getName()
+  {
+    return _name;
   }
 }

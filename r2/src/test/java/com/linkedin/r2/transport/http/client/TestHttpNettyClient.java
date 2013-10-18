@@ -32,6 +32,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.CountDownLatch;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
@@ -473,6 +474,63 @@ public class TestHttpNettyClient
                         Integer.MAX_VALUE,
                         _scheduler,
                         Integer.MAX_VALUE);
+  }
+
+  @Test
+  public void testPoolStatsProviderManager() throws InterruptedException, ExecutionException, TimeoutException
+  {
+    final CountDownLatch setLatch = new CountDownLatch(1);
+    final CountDownLatch removeLatch = new CountDownLatch(1);
+    AbstractJmxManager manager = new AbstractJmxManager()
+    {
+      @Override
+      public void onProviderCreate(PoolStatsProvider provider)
+      {
+        setLatch.countDown();
+      }
+
+      @Override
+      public void onProviderShutdown(PoolStatsProvider provider)
+      {
+        removeLatch.countDown();
+      }
+    };
+
+    HttpNettyClient client = new HttpNettyClient(_factory,
+                                                  _scheduler,
+                                                  1,
+                                                  1,
+                                                  1,
+                                                  1000,
+                                                  1,
+                                                  null,
+                                                  null,
+                                                  Integer.MAX_VALUE,
+                                                  _scheduler,
+                                                  Integer.MAX_VALUE,
+                                                  HttpClientFactory.DEFAULT_CLIENT_NAME,
+                                                  manager);
+    // test setPoolStatsProvider
+    try
+    {
+      setLatch.await(30, TimeUnit.SECONDS);
+    }
+    catch (InterruptedException e)
+    {
+      Assert.fail("PoolStatsAware setPoolStatsProvider didn't get called when creating channel pool.");
+    }
+    // test removePoolStatsProvider
+    FutureCallback<None> shutdownCallback = new FutureCallback<None>();
+    client.shutdown(shutdownCallback);
+    try
+    {
+      removeLatch.await(30, TimeUnit.SECONDS);
+    }
+    catch (InterruptedException e)
+    {
+      Assert.fail("PoolStatsAware removePoolStatsProvider didn't get called when shutting down channel pool.");
+    }
+    shutdownCallback.get(30, TimeUnit.SECONDS);
   }
 
   /*

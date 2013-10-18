@@ -92,6 +92,7 @@ public class HttpClientFactory implements TransportClientFactory
   public static final String HTTP_SSL_CONTEXT = "http.sslContext";
   public static final String HTTP_SSL_PARAMS = "http.sslParams";
   public static final String HTTP_RESPONSE_COMPRESSION_OPERATIONS = "http.responseCompressionOperations";
+  public static final String HTTP_SERVICE_NAME = "http.serviceName";
 
   public static final int DEFAULT_POOL_WAITER_SIZE = Integer.MAX_VALUE;
   public static final int DEFAULT_POOL_SIZE = 200;
@@ -99,6 +100,19 @@ public class HttpClientFactory implements TransportClientFactory
   public static final int DEFAULT_IDLE_TIMEOUT = 30000;
   public static final int DEFAULT_SHUTDOWN_TIMEOUT = 5000;
   public static final int DEFAULT_MAX_RESPONSE_SIZE = 1024 * 1024 * 2;
+  public static final String DEFAULT_CLIENT_NAME = "noNameSpecifiedClient";
+  public static final AbstractJmxManager NULL_JMX_MANAGER = new AbstractJmxManager()
+  {
+    @Override
+    public void onProviderCreate(PoolStatsProvider provider)
+    {
+    }
+
+    @Override
+    public void onProviderShutdown(PoolStatsProvider provider)
+    {
+    }
+  };
 
   private static final String LIST_SEPARATOR = ",";
 
@@ -112,6 +126,7 @@ public class HttpClientFactory implements TransportClientFactory
 
   private final AtomicBoolean              _finishingShutdown = new AtomicBoolean(false);
   private volatile ScheduledFuture<?>      _shutdownTimeoutTask;
+  private final AbstractJmxManager         _jmxManager;
 
   // All fields below protected by _mutex
   private final Object                     _mutex               = new Object();
@@ -220,6 +235,25 @@ public class HttpClientFactory implements TransportClientFactory
                            ExecutorService callbackExecutor,
                            boolean shutdownCallbackExecutor)
   {
+    this(filters,
+         channelFactory,
+         shutdownFactory,
+         executor,
+         shutdownExecutor,
+         callbackExecutor,
+         shutdownCallbackExecutor,
+         NULL_JMX_MANAGER);
+  }
+
+  public HttpClientFactory(FilterChain filters,
+                           ClientSocketChannelFactory channelFactory,
+                           boolean shutdownFactory,
+                           ScheduledExecutorService executor,
+                           boolean shutdownExecutor,
+                           ExecutorService callbackExecutor,
+                           boolean shutdownCallbackExecutor,
+                           AbstractJmxManager jmxManager)
+  {
     _filters = filters;
     _channelFactory = channelFactory;
     _shutdownFactory = shutdownFactory;
@@ -227,6 +261,7 @@ public class HttpClientFactory implements TransportClientFactory
     _shutdownExecutor = shutdownExecutor;
     _callbackExecutor = callbackExecutor;
     _shutdownCallbackExecutor = shutdownCallbackExecutor;
+    _jmxManager = jmxManager;
   }
 
   @Override
@@ -382,6 +417,12 @@ public class HttpClientFactory implements TransportClientFactory
     Integer queryPostThreshold = chooseNewOverDefault(getIntValue(properties, HTTP_QUERY_POST_THRESHOLD), Integer.MAX_VALUE);
     Integer requestTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_REQUEST_TIMEOUT), DEFAULT_REQUEST_TIMEOUT);
     Integer poolWaiterSize = chooseNewOverDefault(getIntValue(properties, HTTP_POOL_WAITER_SIZE), DEFAULT_POOL_WAITER_SIZE);
+    String clientName = null;
+    if (properties != null && properties.containsKey(HTTP_SERVICE_NAME))
+    {
+      clientName = (String)properties.get(HTTP_SERVICE_NAME) + "Client";
+    }
+    clientName = chooseNewOverDefault(clientName, DEFAULT_CLIENT_NAME);
 
     return new HttpNettyClient(_channelFactory,
                                _executor,
@@ -394,7 +435,9 @@ public class HttpClientFactory implements TransportClientFactory
                                sslParameters,
                                queryPostThreshold,
                                _callbackExecutor,
-                               poolWaiterSize);
+                               poolWaiterSize,
+                               clientName,
+                               _jmxManager);
   }
 
   /**

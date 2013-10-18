@@ -1216,6 +1216,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
 
         if (factory != null)
         {
+          transportClientProperties.put(HttpClientFactory.HTTP_SERVICE_NAME, serviceProperties.getServiceName());
           TransportClient client = factory.getClient(transportClientProperties);
           newTransportClients.put(scheme.toLowerCase(), client);
         }

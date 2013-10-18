@@ -1,5 +1,11 @@
+1.9.42
+------
+
+
 1.9.41
 ------
+(RB=225308)
+Refactor r2 asyncpool stats to make it visible outside the package.
 
 1.9.40
 ------
