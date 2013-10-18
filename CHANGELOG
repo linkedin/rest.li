@@ -18,6 +18,12 @@ Fix a bug in R2 that a pooled channel can be disposed twice.
 (RB=223827)
 Add operation information to the resource context to enable logging on the server side.
 
+(RB=224108)
+Made get data length safe in RetryZooKeeper
+
+(RB=224314)
+Fixed the READMEs in the examples folder and converted them to Markdown
+
 1.9.36
 ------
 (RB=220182)
