@@ -332,9 +332,20 @@ public class RetryZooKeeperTest {
     EasyMock.verify(rzkPartialMock);
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void testCreate() throws NoSuchMethodException
+  {
+    testCreateHelper(_dummyData);
+  }
+
+  @Test
+  public void testCreateNullData() throws NoSuchMethodException
+  {
+    testCreateHelper(null);
+  }
+
+  @SuppressWarnings("unchecked")
+  public void testCreateHelper(byte[] data) throws NoSuchMethodException
   {
     final RetryZooKeeper rzkPartialMock = createMockObject(
         RetryZooKeeper.class.getMethod("zkCreate",
@@ -351,7 +362,7 @@ public class RetryZooKeeperTest {
     // mock up zkCreate, which wrapper's ZooKeeper's create
     rzkPartialMock.zkCreate(
         (String) EasyMock.anyObject(),
-        (byte[]) EasyMock.anyObject(),
+        (byte []) EasyMock.anyObject(),
         (List<ACL>) EasyMock.anyObject(),
         (CreateMode) EasyMock.anyObject(),
         (AsyncCallback.StringCallback) EasyMock.anyObject(),
@@ -364,7 +375,7 @@ public class RetryZooKeeperTest {
     // third try, "ok"
     expectCreateCallbackWithCode(_okRC);
     EasyMock.replay(rzkPartialMock);
-    rzkPartialMock.create(_dummyPath, _dummyData, _dummyACL, CreateMode.PERSISTENT, _dummyStringCallback, _dummyCtx);
+    rzkPartialMock.create(_dummyPath, data, _dummyACL, CreateMode.PERSISTENT, _dummyStringCallback, _dummyCtx);
     EasyMock.verify(rzkPartialMock);
   }
 
