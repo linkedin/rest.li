@@ -156,11 +156,11 @@ public class RestLiResourceModelCompatibilityChecker
     }
     catch (FileNotFoundException e)
     {
-      _infoMap.addInfo(CompatibilityInfo.Type.RESOURCE_NEW, path, currRestspecPath);
+      _infoMap.addRestSpecInfo(CompatibilityInfo.Type.RESOURCE_NEW, path, currRestspecPath);
     }
     catch (IOException e)
     {
-      _infoMap.addInfo(CompatibilityInfo.Type.OTHER_ERROR, path, e.getMessage());
+      _infoMap.addRestSpecInfo(CompatibilityInfo.Type.OTHER_ERROR, path, e.getMessage());
     }
 
     try
@@ -169,11 +169,11 @@ public class RestLiResourceModelCompatibilityChecker
     }
     catch (FileNotFoundException e)
     {
-      _infoMap.addInfo(CompatibilityInfo.Type.RESOURCE_MISSING, path, prevRestspecPath);
+      _infoMap.addRestSpecInfo(CompatibilityInfo.Type.RESOURCE_MISSING, path, prevRestspecPath);
     }
     catch (Exception e)
     {
-      _infoMap.addInfo(CompatibilityInfo.Type.OTHER_ERROR, path, e.getMessage());
+      _infoMap.addRestSpecInfo(CompatibilityInfo.Type.OTHER_ERROR, path, e.getMessage());
     }
 
     if (prevRec == null || currRec == null)

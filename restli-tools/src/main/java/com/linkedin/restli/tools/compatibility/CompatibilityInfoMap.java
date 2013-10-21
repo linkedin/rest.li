@@ -35,27 +35,34 @@ import java.util.Stack;
 
 public class CompatibilityInfoMap
 {
-  private Map<CompatibilityInfo.Level, Collection<CompatibilityInfo>> _map = new HashMap<CompatibilityInfo.Level, Collection<CompatibilityInfo>>();
+  private Map<CompatibilityInfo.Level, Collection<CompatibilityInfo>> _restSpecMap = new HashMap<CompatibilityInfo.Level, Collection<CompatibilityInfo>>();
+  private Map<CompatibilityInfo.Level, Collection<CompatibilityInfo>> _modelMap = new HashMap<CompatibilityInfo.Level, Collection<CompatibilityInfo>>();
 
   public CompatibilityInfoMap()
   {
-    _map.put(CompatibilityInfo.Level.INCOMPATIBLE, new ArrayList<CompatibilityInfo>());
-    _map.put(CompatibilityInfo.Level.COMPATIBLE, new ArrayList<CompatibilityInfo>());
+    _restSpecMap.put(CompatibilityInfo.Level.INCOMPATIBLE, new ArrayList<CompatibilityInfo>());
+    _restSpecMap.put(CompatibilityInfo.Level.COMPATIBLE, new ArrayList<CompatibilityInfo>());
+
+    _modelMap.put(CompatibilityInfo.Level.INCOMPATIBLE, new ArrayList<CompatibilityInfo>());
+    _modelMap.put(CompatibilityInfo.Level.COMPATIBLE, new ArrayList<CompatibilityInfo>());
   }
 
-  public void addInfo(CompatibilityInfo.Type infoType, Stack<Object> path, Object... parameters)
+  public void addRestSpecInfo(CompatibilityInfo.Type infoType, Stack<Object> path,
+                              Object... parameters)
   {
-    _map.get(infoType.getLevel()).add(new CompatibilityInfo(path, infoType, parameters));
+    _restSpecMap.get(infoType.getLevel()).add(new CompatibilityInfo(path, infoType, parameters));
   }
 
-  public void addInfo(Object pathTail, CompatibilityInfo.Type infoType, Stack<Object> path, Object... parameters)
+  public void addRestspecInfo(Object pathTail, CompatibilityInfo.Type infoType, Stack<Object> path,
+                              Object... parameters)
   {
     path.push(pathTail);
-    _map.get(infoType.getLevel()).add(new CompatibilityInfo(path, infoType, parameters));
+    _restSpecMap.get(infoType.getLevel()).add(
+      new CompatibilityInfo(path, infoType, parameters));
     path.pop();
   }
 
-  public void addInfo(Object pathTail, CompatibilityMessage message, Stack<Object> path)
+  public void addRestSpecInfo(Object pathTail, CompatibilityMessage message, Stack<Object> path)
   {
     path.push(pathTail);
 
@@ -63,16 +70,24 @@ public class CompatibilityInfoMap
     if (message.isError())
     {
        infoType = CompatibilityInfo.Type.TYPE_INCOMPATIBLE;
-      _map.get(infoType.getLevel()).add(new CompatibilityInfo(path, infoType, message.getArgs()));
+      _restSpecMap.get(infoType.getLevel()).add(new CompatibilityInfo(path, infoType, message.getArgs()));
     }
     else
     {
       infoType = CompatibilityInfo.Type.TYPE_INFO;
       String info = String.format(message.getFormat(), message.getArgs());
-      _map.get(infoType.getLevel()).add(new CompatibilityInfo(Arrays.asList(message.getPath()), infoType, info));
+      _restSpecMap.get(infoType.getLevel()).add(new CompatibilityInfo(Arrays.asList(message.getPath()), infoType, info));
     }
 
     path.pop();
+  }
+
+  public void addRestSpecInfo(Message message)
+  {
+    final CompatibilityInfo.Type infoType = CompatibilityInfo.Type.OTHER_ERROR;
+    _restSpecMap.get(infoType.getLevel()).add(new CompatibilityInfo(Arrays.asList(message.getPath()),
+                                                                    infoType,
+                                                                    message.toString()));
   }
 
   /**
@@ -80,7 +95,7 @@ public class CompatibilityInfoMap
    * The path will be the path to the relevant field within the NamedDataSchema.
    * @param message {@link CompatibilityMessage}
    */
-  public void addInfo(CompatibilityMessage message)
+  public void addModelInfo(CompatibilityMessage message)
   {
     final CompatibilityInfo.Type infoType;
     CompatibilityInfo info;
@@ -109,16 +124,8 @@ public class CompatibilityInfoMap
       infoType = CompatibilityInfo.Type.TYPE_INFO;
     }
     info = new CompatibilityInfo(Arrays.asList(message.getPath()), infoType, infoMessage);
-    _map.get(infoType.getLevel()).add(info);
+    _modelMap.get(infoType.getLevel()).add(info);
 
-  }
-
-  public void addInfo(Message message)
-  {
-    final CompatibilityInfo.Type infoType = CompatibilityInfo.Type.OTHER_ERROR;
-    _map.get(infoType.getLevel()).add(new CompatibilityInfo(Arrays.asList(message.getPath()),
-                                                            infoType,
-                                                            message.toString()));
   }
 
   /**
@@ -182,6 +189,27 @@ public class CompatibilityInfoMap
     final Collection<CompatibilityInfo> incompatibles = getIncompatibles();
     final Collection<CompatibilityInfo> compatibles = getCompatibles();
 
+    return isCompatible(incompatibles, compatibles, level);
+  }
+
+  public boolean isRestSpecCompatible(CompatibilityLevel level)
+  {
+    final Collection<CompatibilityInfo> incompatibles = getRestSpecIncompatibles();
+    final Collection<CompatibilityInfo> compatibles = getRestSpecCompatibles();
+
+    return isCompatible(incompatibles, compatibles, level);
+  }
+
+  public boolean isModelCompatible(CompatibilityLevel level)
+  {
+    final Collection<CompatibilityInfo> incompatibles = getModelIncompatibles();
+    final Collection<CompatibilityInfo> compatibles = getModelCompatibles();
+
+    return isCompatible(incompatibles, compatibles, level);
+  }
+
+  private boolean isCompatible(Collection<CompatibilityInfo> incompatibles, Collection<CompatibilityInfo> compatibles, CompatibilityLevel level)
+  {
     return ((incompatibles.isEmpty() || level.ordinal() < CompatibilityLevel.BACKWARDS.ordinal()) &&
             (compatibles.isEmpty()   || level.ordinal() < CompatibilityLevel.EQUIVALENT.ordinal()));
   }
@@ -189,6 +217,16 @@ public class CompatibilityInfoMap
   public boolean isEquivalent()
   {
     return isCompatible(CompatibilityLevel.EQUIVALENT);
+  }
+
+  public boolean isRestSpecEquivalent()
+  {
+    return isRestSpecCompatible(CompatibilityLevel.EQUIVALENT);
+  }
+
+  public boolean isModelEquivalent()
+  {
+    return isModelCompatible(CompatibilityLevel.EQUIVALENT);
   }
 
   /**
@@ -209,16 +247,52 @@ public class CompatibilityInfoMap
     return get(CompatibilityInfo.Level.COMPATIBLE);
   }
 
+  public Collection<CompatibilityInfo> getRestSpecIncompatibles()
+  {
+    return getRestSpecInfo(CompatibilityInfo.Level.INCOMPATIBLE);
+  }
+
+  public Collection<CompatibilityInfo> getRestSpecCompatibles()
+  {
+    return getRestSpecInfo(CompatibilityInfo.Level.COMPATIBLE);
+  }
+
+  public Collection<CompatibilityInfo> getModelIncompatibles()
+  {
+    return getModelInfo(CompatibilityInfo.Level.INCOMPATIBLE);
+  }
+
+  public Collection<CompatibilityInfo> getModelCompatibles()
+  {
+    return getModelInfo(CompatibilityInfo.Level.COMPATIBLE);
+  }
+
   public Collection<CompatibilityInfo> get(CompatibilityInfo.Level level)
   {
-    return _map.get(level);
+    Collection<CompatibilityInfo> infos = new ArrayList<CompatibilityInfo>(getRestSpecInfo(level));
+    infos.addAll(getModelInfo(level));
+    return infos;
+  }
+
+  public Collection<CompatibilityInfo> getRestSpecInfo(CompatibilityInfo.Level level)
+  {
+    return _restSpecMap.get(level);
+  }
+
+  public Collection<CompatibilityInfo> getModelInfo(CompatibilityInfo.Level level)
+  {
+    return _modelMap.get(level);
   }
 
   public boolean addAll(CompatibilityInfoMap other)
   {
-    for(Map.Entry<CompatibilityInfo.Level, Collection<CompatibilityInfo>> entry : _map.entrySet())
+    for(Map.Entry<CompatibilityInfo.Level, Collection<CompatibilityInfo>> entry : _restSpecMap.entrySet())
     {
-      entry.getValue().addAll(other.get(entry.getKey()));
+      entry.getValue().addAll(other.getRestSpecInfo(entry.getKey()));
+    }
+    for(Map.Entry<CompatibilityInfo.Level, Collection<CompatibilityInfo>> entry : _modelMap.entrySet())
+    {
+      entry.getValue().addAll(other.getModelInfo(entry.getKey()));
     }
     return true;
   }

@@ -5,6 +5,11 @@ Fix two bugs related to snapshots:
 snapshot compatibility messages during checkSnapshot task should now print correctly.
 snapshots of simple resources should be generated correctly.
 
+(RB=225673)
+break up compatibility info in CompatibilityInfoMap into two maps: one for tracking info from restSpecs, the other for
+tracking info from models.  Added new methods for extracting this information from the infoMap.  Old methods for getting
+general data are still around.  Backwards-incompatible changes to method names for inserting info into compatibilityInfoMap.
+
 1.9.39
 ------
 (RB=224558)

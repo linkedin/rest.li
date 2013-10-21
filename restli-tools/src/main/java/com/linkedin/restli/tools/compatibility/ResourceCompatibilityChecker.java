@@ -135,7 +135,7 @@ public class ResourceCompatibilityChecker
     final Collection<Message> valErrorMessages = valResult.getMessages();
     for (final Message message : valErrorMessages)
     {
-      _infoMap.addInfo(message);
+      _infoMap.addRestSpecInfo(message);
     }
 
     return false;
@@ -166,7 +166,7 @@ public class ResourceCompatibilityChecker
 
     if (isCompatible && isLeaderNull != isFollowerNull)
     {
-      _infoMap.addInfo(CompatibilityInfo.Type.OPTIONAL_VALUE, _infoPath, field.getName());
+      _infoMap.addRestSpecInfo(CompatibilityInfo.Type.OPTIONAL_VALUE, _infoPath, field.getName());
     }
 
     return isCompatible;
@@ -182,7 +182,8 @@ public class ResourceCompatibilityChecker
 
     if (!isOptionalityCompatible(field, prevData, currData))
     {
-      _infoMap.addInfo(CompatibilityInfo.Type.VALUE_WRONG_OPTIONALITY, _infoPath, field.getName());
+      _infoMap.addRestSpecInfo(CompatibilityInfo.Type.VALUE_WRONG_OPTIONALITY, _infoPath,
+                               field.getName());
       return false;
     }
 
@@ -192,7 +193,8 @@ public class ResourceCompatibilityChecker
 
     if (prevData != null && !prevData.equals(currData))
     {
-      _infoMap.addInfo(field.getName(), CompatibilityInfo.Type.VALUE_NOT_EQUAL, _infoPath, prevData, currData);
+      _infoMap.addRestspecInfo(field.getName(), CompatibilityInfo.Type.VALUE_NOT_EQUAL, _infoPath,
+                               prevData, currData);
       return false;
     }
 
@@ -205,13 +207,13 @@ public class ResourceCompatibilityChecker
 
     if ((prevData == null) != (currData == null))
     {
-      _infoMap.addInfo(field.getName(), CompatibilityInfo.Type.DOC_NOT_EQUAL, _infoPath);
+      _infoMap.addRestspecInfo(field.getName(), CompatibilityInfo.Type.DOC_NOT_EQUAL, _infoPath);
       return false;
     }
 
     if (prevData != null && !prevData.equals(currData))
     {
-      _infoMap.addInfo(field.getName(), CompatibilityInfo.Type.DOC_NOT_EQUAL, _infoPath);
+      _infoMap.addRestspecInfo(field.getName(), CompatibilityInfo.Type.DOC_NOT_EQUAL, _infoPath);
       return false;
     }
 
@@ -229,7 +231,8 @@ public class ResourceCompatibilityChecker
 
     if (!isOptionalityCompatible(field, containee, container))
     {
-      _infoMap.addInfo(CompatibilityInfo.Type.VALUE_WRONG_OPTIONALITY, _infoPath, field.getName());
+      _infoMap.addRestSpecInfo(CompatibilityInfo.Type.VALUE_WRONG_OPTIONALITY, _infoPath,
+                               field.getName());
       return false;
     }
 
@@ -245,14 +248,15 @@ public class ResourceCompatibilityChecker
       {
         final Set<Object> diff = new HashSet<Object>(container);
         diff.removeAll(containee);
-        _infoMap.addInfo(field.getName(), CompatibilityInfo.Type.SUPERSET, _infoPath, diff);
+        _infoMap.addRestspecInfo(field.getName(), CompatibilityInfo.Type.SUPERSET, _infoPath, diff);
       }
 
       return true;
     }
     else
     {
-      _infoMap.addInfo(field.getName(), CompatibilityInfo.Type.ARRAY_NOT_CONTAIN, _infoPath, containee);
+      _infoMap.addRestspecInfo(field.getName(), CompatibilityInfo.Type.ARRAY_NOT_CONTAIN, _infoPath,
+                               containee);
       return false;
     }
   }
@@ -269,7 +273,7 @@ public class ResourceCompatibilityChecker
 
     if (prevType == null || currType == null)
     {
-      _infoMap.addInfo(pathTail, CompatibilityInfo.Type.TYPE_MISSING, _infoPath);
+      _infoMap.addRestspecInfo(pathTail, CompatibilityInfo.Type.TYPE_MISSING, _infoPath);
       return false;
     }
 
@@ -302,7 +306,8 @@ public class ResourceCompatibilityChecker
     }
     catch (IllegalArgumentException e)
     {
-      _infoMap.addInfo(pathTail, CompatibilityInfo.Type.TYPE_UNKNOWN, _infoPath, e.getMessage());
+      _infoMap.addRestspecInfo(pathTail, CompatibilityInfo.Type.TYPE_UNKNOWN, _infoPath,
+                               e.getMessage());
       return false;
     }
   }
@@ -311,7 +316,7 @@ public class ResourceCompatibilityChecker
   {
     for(CompatibilityMessage message : messages)
     {
-      _infoMap.addInfo(message);
+      _infoMap.addModelInfo(message);
     }
   }
 
@@ -319,7 +324,7 @@ public class ResourceCompatibilityChecker
   {
     for(CompatibilityMessage message : messages)
     {
-      _infoMap.addInfo(pathTail, message, _infoPath);
+      _infoMap.addRestSpecInfo(pathTail, message, _infoPath);
     }
   }
 
@@ -334,7 +339,8 @@ public class ResourceCompatibilityChecker
     // here curr is the leader, prev is the follower
     if (!isOptionalityCompatible(field, currOptional, prevOptional))
     {
-      _infoMap.addInfo(CompatibilityInfo.Type.VALUE_WRONG_OPTIONALITY, _infoPath, field.getName());
+      _infoMap.addRestSpecInfo(CompatibilityInfo.Type.VALUE_WRONG_OPTIONALITY, _infoPath,
+                               field.getName());
       return false;
     }
 
@@ -345,14 +351,15 @@ public class ResourceCompatibilityChecker
 
     if (prevOptional && !currOptional)
     {
-      _infoMap.addInfo(field.getName(), CompatibilityInfo.Type.PARAMETER_WRONG_OPTIONALITY, _infoPath);
+      _infoMap.addRestspecInfo(field.getName(), CompatibilityInfo.Type.PARAMETER_WRONG_OPTIONALITY,
+                               _infoPath);
       return false;
     }
 
     if (!prevOptional && currOptional)
     {
       // previous required and currently optional should be the only difference that retains backwards compatibility
-     _infoMap.addInfo(CompatibilityInfo.Type.OPTIONAL_PARAMETER, _infoPath);
+     _infoMap.addRestSpecInfo(CompatibilityInfo.Type.OPTIONAL_PARAMETER, _infoPath);
     }
 
     return true;
@@ -415,8 +422,8 @@ public class ResourceCompatibilityChecker
     }
     else
     {
-      _infoMap.addInfo(CompatibilityInfo.Type.OTHER_ERROR,
-                       _infoPath, "Unknown schema type: \"" + prevRec.getClass() + "\"");
+      _infoMap.addRestSpecInfo(CompatibilityInfo.Type.OTHER_ERROR,
+                               _infoPath, "Unknown schema type: \"" + prevRec.getClass() + "\"");
     }
   }
 
@@ -429,7 +436,8 @@ public class ResourceCompatibilityChecker
 
     if (!isOptionalityCompatible(field, prevRec, currRec))
     {
-      _infoMap.addInfo(CompatibilityInfo.Type.VALUE_WRONG_OPTIONALITY, _infoPath, field.getName());
+      _infoMap.addRestSpecInfo(CompatibilityInfo.Type.VALUE_WRONG_OPTIONALITY, _infoPath,
+                               field.getName());
       return false;
     }
 
@@ -459,7 +467,8 @@ public class ResourceCompatibilityChecker
 
     if (!isOptionalityCompatible(field, prevArray, currArray))
     {
-      _infoMap.addInfo(CompatibilityInfo.Type.VALUE_WRONG_OPTIONALITY, _infoPath, field.getName());
+      _infoMap.addRestSpecInfo(CompatibilityInfo.Type.VALUE_WRONG_OPTIONALITY, _infoPath,
+                               field.getName());
       return false;
     }
 
@@ -485,7 +494,7 @@ public class ResourceCompatibilityChecker
 
       if (currIndex == null)
       {
-        _infoMap.addInfo(CompatibilityInfo.Type.ARRAY_MISSING_ELEMENT, _infoPath, prevKey);
+        _infoMap.addRestSpecInfo(CompatibilityInfo.Type.ARRAY_MISSING_ELEMENT, _infoPath, prevKey);
       }
       else
       {
@@ -500,7 +509,7 @@ public class ResourceCompatibilityChecker
 
     if (checkRemainder && !currRemainder.isEmpty())
     {
-      _infoMap.addInfo(CompatibilityInfo.Type.SUPERSET, _infoPath, currRemainder.keySet());
+      _infoMap.addRestSpecInfo(CompatibilityInfo.Type.SUPERSET, _infoPath, currRemainder.keySet());
     }
 
     _infoPath.pop();
@@ -533,7 +542,8 @@ public class ResourceCompatibilityChecker
     // if prev has less than curr, the remainder will contain the extra current elements
     if (!currRemainder.isEmpty())
     {
-      _infoMap.addInfo(field.getName(), CompatibilityInfo.Type.ARRAY_NOT_EQUAL, _infoPath, prevArray);
+      _infoMap.addRestspecInfo(field.getName(), CompatibilityInfo.Type.ARRAY_NOT_EQUAL, _infoPath,
+                               prevArray);
       return false;
     }
 
@@ -561,11 +571,13 @@ public class ResourceCompatibilityChecker
       final ParameterSchema param = currArray.get(paramIndex);
       if (isQueryParameterOptional(param.isOptional(), param.getDefault(GetMode.DEFAULT)))
       {
-        _infoMap.addInfo(CompatibilityInfo.Type.PARAMETER_NEW_OPTIONAL, _infoPath, param.getName());
+        _infoMap.addRestSpecInfo(CompatibilityInfo.Type.PARAMETER_NEW_OPTIONAL, _infoPath,
+                                 param.getName());
       }
       else
       {
-        _infoMap.addInfo(CompatibilityInfo.Type.PARAMETER_NEW_REQUIRED, _infoPath, param.getName());
+        _infoMap.addRestSpecInfo(CompatibilityInfo.Type.PARAMETER_NEW_REQUIRED, _infoPath,
+                                 param.getName());
         result = false;
       }
     }
@@ -580,7 +592,7 @@ public class ResourceCompatibilityChecker
   {
     if (param.hasItems())
     {
-      _infoMap.addInfo(CompatibilityInfo.Type.DEPRECATED, _infoPath, "The \"items\" field");
+      _infoMap.addRestSpecInfo(CompatibilityInfo.Type.DEPRECATED, _infoPath, "The \"items\" field");
       return param.getItems(GetMode.DEFAULT);
     }
 
@@ -592,7 +604,8 @@ public class ResourceCompatibilityChecker
     }
     else
     {
-      _infoMap.addInfo("type", CompatibilityInfo.Type.TYPE_INCOMPATIBLE, _infoPath, "items", paramDataSchema.getType());
+      _infoMap.addRestspecInfo("type", CompatibilityInfo.Type.TYPE_INCOMPATIBLE, _infoPath, "items",
+                               paramDataSchema.getType());
       return null;
     }
   }
@@ -717,7 +730,8 @@ public class ResourceCompatibilityChecker
     {
       // downgrade case
 
-      _infoMap.addInfo("assocKeys", CompatibilityInfo.Type.FINDER_ASSOCKEYS_DOWNGRADE, _infoPath);
+      _infoMap.addRestspecInfo("assocKeys", CompatibilityInfo.Type.FINDER_ASSOCKEYS_DOWNGRADE,
+                               _infoPath);
     }
   }
 
@@ -790,7 +804,8 @@ public class ResourceCompatibilityChecker
 
     if (prevDefault != null && currDefault != null && !prevDefault.equals(currDefault))
     {
-      _infoMap.addInfo("default", CompatibilityInfo.Type.VALUE_DIFFERENT, _infoPath, prevDefault, currDefault);
+      _infoMap.addRestspecInfo("default", CompatibilityInfo.Type.VALUE_DIFFERENT, _infoPath,
+                               prevDefault, currDefault);
     }
   }
 

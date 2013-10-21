@@ -75,33 +75,35 @@ public class TestResourceCompatibilityChecker
   @Test
   public void testPassCollectionFile() throws IOException
   {
-    final Collection<CompatibilityInfo> testDiffs = new HashSet<CompatibilityInfo>();
-    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList(""),
-                                        CompatibilityInfo.Type.OPTIONAL_VALUE, "namespace"));
-    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "supports"),
-                                        CompatibilityInfo.Type.SUPERSET, new HashSet<String>(Arrays.asList("update"))));
-    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "methods"),
-                                        CompatibilityInfo.Type.SUPERSET, new HashSet<String>(Arrays.asList("update"))));
-    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "finders", "search", "parameters", "tone"),
-                                        CompatibilityInfo.Type.OPTIONAL_PARAMETER));
-    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "finders", "search", "parameters"),
-                                        CompatibilityInfo.Type.PARAMETER_NEW_OPTIONAL, "newParam"));
-    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "finders", "search", "parameters", "tone"),
-                                        CompatibilityInfo.Type.DEPRECATED, "The \"items\" field"));
-    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "oneAction", "parameters"),
-                                        CompatibilityInfo.Type.PARAMETER_NEW_OPTIONAL, "newParam"));
-    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "oneAction", "parameters", "bitfield"),
-                                        CompatibilityInfo.Type.DEPRECATED, "The \"items\" field"));
-    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "oneAction", "parameters", "someString"),
-                                        CompatibilityInfo.Type.OPTIONAL_PARAMETER));
-    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "exceptionTest", "throws"),
-                                        CompatibilityInfo.Type.SUPERSET, new HashSet<String>(Arrays.asList("java.lang.NullPointerException"))));
-    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "entity", "actions", "someAction", "parameters", "b", "default"),
-                                        CompatibilityInfo.Type.VALUE_DIFFERENT, "default", "changed"));
-    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting"),
-                                        CompatibilityInfo.Type.TYPE_INFO, "new record removed optional fields tone"));
-    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting"),
-                                        CompatibilityInfo.Type.TYPE_INFO, "new record added optional fields newField"));
+    final Collection<CompatibilityInfo> resourceTestDiffs = new HashSet<CompatibilityInfo>();
+    final Collection<CompatibilityInfo> modelTestDiffs = new HashSet<CompatibilityInfo>();
+
+    resourceTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList(""),
+                                                CompatibilityInfo.Type.OPTIONAL_VALUE, "namespace"));
+    resourceTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "supports"),
+                                                CompatibilityInfo.Type.SUPERSET, new HashSet<String>(Arrays.asList("update"))));
+    resourceTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "methods"),
+                                                CompatibilityInfo.Type.SUPERSET, new HashSet<String>(Arrays.asList("update"))));
+    resourceTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "finders", "search", "parameters", "tone"),
+                                                CompatibilityInfo.Type.OPTIONAL_PARAMETER));
+    resourceTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "finders", "search", "parameters"),
+                                                CompatibilityInfo.Type.PARAMETER_NEW_OPTIONAL, "newParam"));
+    resourceTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "finders", "search", "parameters", "tone"),
+                                                CompatibilityInfo.Type.DEPRECATED, "The \"items\" field"));
+    resourceTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "oneAction", "parameters"),
+                                                CompatibilityInfo.Type.PARAMETER_NEW_OPTIONAL, "newParam"));
+    resourceTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "oneAction", "parameters", "bitfield"),
+                                                CompatibilityInfo.Type.DEPRECATED, "The \"items\" field"));
+    resourceTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "oneAction", "parameters", "someString"),
+                                                CompatibilityInfo.Type.OPTIONAL_PARAMETER));
+    resourceTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "exceptionTest", "throws"),
+                                                CompatibilityInfo.Type.SUPERSET, new HashSet<String>(Arrays.asList("java.lang.NullPointerException"))));
+    resourceTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "entity", "actions", "someAction", "parameters", "b", "default"),
+                                                CompatibilityInfo.Type.VALUE_DIFFERENT, "default", "changed"));
+    modelTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting"),
+                                             CompatibilityInfo.Type.TYPE_INFO, "new record removed optional fields tone"));
+    modelTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting"),
+                                             CompatibilityInfo.Type.TYPE_INFO, "new record added optional fields newField"));
 
     ResourceSchema prevResource = idlToResource(idlsDir + PREV_COLL_FILE);
     ResourceSchema currResource = idlToResource(idlsDir + CURR_COLL_PASS_FILE);
@@ -112,17 +114,29 @@ public class TestResourceCompatibilityChecker
     boolean check = checker.check(CompatibilityLevel.BACKWARDS);
     Assert.assertTrue(check);
 
-    final Collection<CompatibilityInfo> incompatibles = checker.getInfoMap().getIncompatibles();
-    final Collection<CompatibilityInfo> compatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getCompatibles());
+    final Collection<CompatibilityInfo> resourceIncompatibles = checker.getInfoMap().getRestSpecIncompatibles();
+    final Collection<CompatibilityInfo> resourceCompatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getRestSpecCompatibles());
 
-    for (CompatibilityInfo di : testDiffs)
+    for (CompatibilityInfo di : resourceTestDiffs)
     {
-      Assert.assertTrue(compatibles.contains(di), "Reported compatibles should contain: " + di.toString());
-      compatibles.remove(di);
+      Assert.assertTrue(resourceCompatibles.contains(di), "Reported resource compatibles should contain: " + di.toString());
+      resourceCompatibles.remove(di);
     }
 
-    Assert.assertTrue(incompatibles.isEmpty());
-    Assert.assertTrue(compatibles.isEmpty());
+    Assert.assertTrue(resourceIncompatibles.isEmpty());
+    Assert.assertTrue(resourceCompatibles.isEmpty());
+
+    final Collection<CompatibilityInfo> modelIncompatibles = checker.getInfoMap().getModelIncompatibles();
+    final Collection<CompatibilityInfo> modelCompatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getModelCompatibles());
+
+    for (CompatibilityInfo di : modelTestDiffs)
+    {
+      Assert.assertTrue(modelCompatibles.contains(di), "Reported model compatibles should contain: " + di.toString());
+      modelCompatibles.remove(di);
+    }
+
+    Assert.assertTrue(modelIncompatibles.isEmpty());
+    Assert.assertTrue(modelCompatibles.isEmpty());
   }
 
   @Test
@@ -156,27 +170,29 @@ public class TestResourceCompatibilityChecker
   @Test
   public void testPassSimpleFile() throws IOException
   {
-    final Collection<CompatibilityInfo> testDiffs = new HashSet<CompatibilityInfo>();
-    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList(""),
-                                        CompatibilityInfo.Type.OPTIONAL_VALUE, "namespace"));
-    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "supports"),
-                                        CompatibilityInfo.Type.SUPERSET, new HashSet<String>(Arrays.asList("update"))));
-    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "methods"),
-                                        CompatibilityInfo.Type.SUPERSET, new HashSet<String>(Arrays.asList("update"))));
-    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "methods", "get", "parameters", "param1", "default"),
-                                        CompatibilityInfo.Type.VALUE_DIFFERENT, "abcd", "abc"));
-    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "actions", "oneAction", "parameters", "bitfield"),
-                                        CompatibilityInfo.Type.DEPRECATED, "The \"items\" field"));
-    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "actions", "oneAction", "parameters", "someString"),
-                                        CompatibilityInfo.Type.OPTIONAL_PARAMETER));
-    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "actions", "oneAction", "parameters"),
-                                        CompatibilityInfo.Type.PARAMETER_NEW_OPTIONAL, "newParam"));
-    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "actions", "oneAction", "parameters", "someString2", "default"),
-                                        CompatibilityInfo.Type.VALUE_DIFFERENT, "default", "changed"));
-    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting"),
-                                        CompatibilityInfo.Type.TYPE_INFO, "new record removed optional fields tone"));
-    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting"),
-                                        CompatibilityInfo.Type.TYPE_INFO, "new record added optional fields newField"));
+    final Collection<CompatibilityInfo> resourceTestDiffs = new HashSet<CompatibilityInfo>();
+    final Collection<CompatibilityInfo> modelTestDiffs = new HashSet<CompatibilityInfo>();
+
+    resourceTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList(""),
+                                                CompatibilityInfo.Type.OPTIONAL_VALUE, "namespace"));
+    resourceTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "supports"),
+                                                CompatibilityInfo.Type.SUPERSET, new HashSet<String>(Arrays.asList("update"))));
+    resourceTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "methods"),
+                                                CompatibilityInfo.Type.SUPERSET, new HashSet<String>(Arrays.asList("update"))));
+    resourceTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "methods", "get", "parameters", "param1", "default"),
+                                                CompatibilityInfo.Type.VALUE_DIFFERENT, "abcd", "abc"));
+    resourceTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "actions", "oneAction", "parameters", "bitfield"),
+                                                CompatibilityInfo.Type.DEPRECATED, "The \"items\" field"));
+    resourceTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "actions", "oneAction", "parameters", "someString"),
+                                                CompatibilityInfo.Type.OPTIONAL_PARAMETER));
+    resourceTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "actions", "oneAction", "parameters"),
+                                                CompatibilityInfo.Type.PARAMETER_NEW_OPTIONAL, "newParam"));
+    resourceTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "actions", "oneAction", "parameters", "someString2", "default"),
+                                                CompatibilityInfo.Type.VALUE_DIFFERENT, "default", "changed"));
+    modelTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting"),
+                                             CompatibilityInfo.Type.TYPE_INFO, "new record removed optional fields tone"));
+    modelTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting"),
+                                             CompatibilityInfo.Type.TYPE_INFO, "new record added optional fields newField"));
 
     ResourceSchema prevResource = idlToResource(idlsDir + PREV_SIMPLE_FILE);
     ResourceSchema currResource = idlToResource(idlsDir + CURR_SIMPLE_PASS_FILE);
@@ -187,17 +203,29 @@ public class TestResourceCompatibilityChecker
     boolean check = checker.check(CompatibilityLevel.BACKWARDS);
     Assert.assertTrue(check);
 
-    final Collection<CompatibilityInfo> incompatibles = checker.getInfoMap().getIncompatibles();
-    final Collection<CompatibilityInfo> compatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getCompatibles());
+    final Collection<CompatibilityInfo> resourceIncompatibles = checker.getInfoMap().getRestSpecIncompatibles();
+    final Collection<CompatibilityInfo> resourceCompatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getRestSpecCompatibles());
 
-    for (CompatibilityInfo di : testDiffs)
+    for (CompatibilityInfo di : resourceTestDiffs)
     {
-      Assert.assertTrue(compatibles.contains(di), "Reported compatibles should contain: " + di.toString());
-      compatibles.remove(di);
+      Assert.assertTrue(resourceCompatibles.contains(di), "Reported resource compatibles should contain: " + di.toString());
+      resourceCompatibles.remove(di);
     }
 
-    Assert.assertTrue(incompatibles.isEmpty());
-    Assert.assertTrue(compatibles.isEmpty());
+    Assert.assertTrue(resourceIncompatibles.isEmpty());
+    Assert.assertTrue(resourceCompatibles.isEmpty());
+
+    final Collection<CompatibilityInfo> modelIncompatibles = checker.getInfoMap().getModelIncompatibles();
+    final Collection<CompatibilityInfo> modelCompatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getModelCompatibles());
+
+    for (CompatibilityInfo di : modelTestDiffs)
+    {
+      Assert.assertTrue(modelCompatibles.contains(di), "Reported model compatibles should contain: " + di.toString());
+      modelCompatibles.remove(di);
+    }
+
+    Assert.assertTrue(modelIncompatibles.isEmpty());
+    Assert.assertTrue(modelCompatibles.isEmpty());
   }
 
   @Test
@@ -206,46 +234,41 @@ public class TestResourceCompatibilityChecker
     final SchemaParser sp = new SchemaParser();
     sp.parse("\"StringRef\"");
 
-    final Collection<CompatibilityInfo> testErrors = new HashSet<CompatibilityInfo>();
-    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "identifier", "params"),
-                                         CompatibilityInfo.Type.TYPE_INCOMPATIBLE, "string", "long"));
-    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "supports"),
+    final Collection<CompatibilityInfo> resourceTestErrors = new HashSet<CompatibilityInfo>();
+    final Collection<CompatibilityInfo> modelTestErrors = new HashSet<CompatibilityInfo>();
+    resourceTestErrors.add(
+      new CompatibilityInfo(Arrays.<Object>asList("", "collection", "identifier", "params"),
+                            CompatibilityInfo.Type.TYPE_INCOMPATIBLE, "string", "long"));
+    resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "supports"),
                                          CompatibilityInfo.Type.ARRAY_NOT_CONTAIN,
                                          new StringArray(Arrays.asList("batch_get", "create", "delete", "get"))));
-    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "methods"),
+    resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "methods"),
                                          CompatibilityInfo.Type.ARRAY_MISSING_ELEMENT, "batch_get"));
-    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "finders", "search", "metadata", "type"),
-                                         CompatibilityInfo.Type.TYPE_INCOMPATIBLE,
-                                         "array",
-                                         "int"));
-    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "finders", "search", "assocKeys"),
-                                         CompatibilityInfo.Type.VALUE_NOT_EQUAL,
-                                         new StringArray(Arrays.asList("q", "s")),
-                                         new StringArray(Arrays.asList("q", "changed_key"))));
-    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "finders", "find_assocKey_downgrade", "assocKeys"),
-                                         CompatibilityInfo.Type.FINDER_ASSOCKEYS_DOWNGRADE));
-    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "oneAction", "parameters", "bitfield", "items"),
-                                         CompatibilityInfo.Type.TYPE_INCOMPATIBLE, "boolean", "int"));
-    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "oneAction", "parameters", "someString", "type"),
-                                         CompatibilityInfo.Type.TYPE_UNKNOWN,
-                                         sp.errorMessage()));
-    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "oneAction", "parameters", "stringMap", "type"),
-                                         CompatibilityInfo.Type.TYPE_INCOMPATIBLE,
-                                         "string",
-                                         "int"));
-    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "entity", "actions", "anotherAction", "parameters"),
-                                         CompatibilityInfo.Type.ARRAY_MISSING_ELEMENT, "subMap"));
-    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "entity", "actions", "exceptionTest", "throws"),
-                                         CompatibilityInfo.Type.ARRAY_NOT_CONTAIN,
-                                         new StringArray(Arrays.asList("com.linkedin.groups.api.GroupOwnerException",
-                                                                       "java.io.FileNotFoundException"))));
-    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "entity", "actions", "someAction", "parameters", "a", "optional"),
-                                         CompatibilityInfo.Type.PARAMETER_WRONG_OPTIONALITY));
-    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "entity", "actions", "someAction", "parameters", "b", "type"),
-                                         CompatibilityInfo.Type.TYPE_INCOMPATIBLE, "string", "int"));
-    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "entity", "actions", "someAction", "parameters"),
-                                         CompatibilityInfo.Type.ARRAY_MISSING_ELEMENT, "e"));
-    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("",
+    resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "finders", "search", "metadata", "type"),
+                                                 CompatibilityInfo.Type.TYPE_INCOMPATIBLE, "array", "int"));
+    resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "finders", "search", "assocKeys"),
+                                                 CompatibilityInfo.Type.VALUE_NOT_EQUAL,
+                                                 new StringArray(Arrays.asList("q", "s")), new StringArray(Arrays.asList("q", "changed_key"))));
+    resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "finders", "find_assocKey_downgrade", "assocKeys"),
+                                                 CompatibilityInfo.Type.FINDER_ASSOCKEYS_DOWNGRADE));
+    resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "oneAction", "parameters", "bitfield", "items"),
+                                                 CompatibilityInfo.Type.TYPE_INCOMPATIBLE, "boolean", "int"));
+    resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "oneAction", "parameters", "someString", "type"),
+                                                 CompatibilityInfo.Type.TYPE_UNKNOWN, sp.errorMessage()));
+    resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "oneAction", "parameters", "stringMap", "type"),
+                                                 CompatibilityInfo.Type.TYPE_INCOMPATIBLE, "string", "int"));
+    resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "entity", "actions", "anotherAction", "parameters"),
+                                                 CompatibilityInfo.Type.ARRAY_MISSING_ELEMENT, "subMap"));
+    resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "entity", "actions", "exceptionTest", "throws"),
+                                                 CompatibilityInfo.Type.ARRAY_NOT_CONTAIN,
+                                                 new StringArray(Arrays.asList("com.linkedin.groups.api.GroupOwnerException", "java.io.FileNotFoundException"))));
+    resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "entity", "actions", "someAction", "parameters", "a", "optional"),
+                                                 CompatibilityInfo.Type.PARAMETER_WRONG_OPTIONALITY));
+    resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "entity", "actions", "someAction", "parameters", "b", "type"),
+                                                 CompatibilityInfo.Type.TYPE_INCOMPATIBLE, "string", "int"));
+    resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "entity", "actions", "someAction", "parameters"),
+                                                 CompatibilityInfo.Type.ARRAY_MISSING_ELEMENT, "e"));
+    resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("",
                                                                "collection",
                                                                "entity",
                                                                "actions",
@@ -253,14 +276,21 @@ public class TestResourceCompatibilityChecker
                                                                "parameters"),
                                          CompatibilityInfo.Type.PARAMETER_NEW_REQUIRED,
                                          "f"));
-    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "entity", "actions", "someAction", "returns"),
-                                         CompatibilityInfo.Type.TYPE_MISSING));
-    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting"),
-                                         CompatibilityInfo.Type.TYPE_BREAKS_NEW_READER, "new record added required fields newField"));
-    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting"),
-                                         CompatibilityInfo.Type.TYPE_BREAKS_OLD_READER, "new record removed required fields message"));
-    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting", "id", "string"),
-                                         CompatibilityInfo.Type.TYPE_BREAKS_NEW_AND_OLD_READERS, "schema type changed from long to string"));
+    resourceTestErrors.add(new CompatibilityInfo(
+      Arrays.<Object>asList("", "collection", "entity", "actions", "someAction", "returns"),
+      CompatibilityInfo.Type.TYPE_MISSING));
+    modelTestErrors.add(
+      new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting"),
+                            CompatibilityInfo.Type.TYPE_BREAKS_NEW_READER,
+                            "new record added required fields newField"));
+    modelTestErrors.add(
+      new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting"),
+                            CompatibilityInfo.Type.TYPE_BREAKS_OLD_READER,
+                            "new record removed required fields message"));
+    modelTestErrors.add(
+      new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting", "id", "string"),
+                            CompatibilityInfo.Type.TYPE_BREAKS_NEW_AND_OLD_READERS,
+                            "schema type changed from long to string"));
 
     ResourceSchema prevResource = idlToResource(idlsDir + PREV_COLL_FILE);
     ResourceSchema currResource = idlToResource(idlsDir + CURR_COLL_FAIL_FILE);
@@ -270,15 +300,21 @@ public class TestResourceCompatibilityChecker
 
     Assert.assertFalse(checker.check(CompatibilityLevel.BACKWARDS));
 
-    final Collection<CompatibilityInfo> incompatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getIncompatibles());
-
-    for (CompatibilityInfo te : testErrors)
+    final Collection<CompatibilityInfo> resourceIncompatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getRestSpecIncompatibles());
+    for (CompatibilityInfo te : resourceTestErrors)
     {
-      Assert.assertTrue(incompatibles.contains(te), "Reported incompatibles should contain: " + te.toString());
-      incompatibles.remove(te);
+      Assert.assertTrue(resourceIncompatibles.contains(te), "Reported resource incompatibles should contain: " + te.toString());
+      resourceIncompatibles.remove(te);
     }
+    Assert.assertTrue(resourceIncompatibles.isEmpty());
 
-    Assert.assertTrue(incompatibles.isEmpty());
+    final Collection<CompatibilityInfo> modelIncompatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getModelIncompatibles());
+    for (CompatibilityInfo te : modelTestErrors)
+    {
+      Assert.assertTrue(modelIncompatibles.contains(te), "Reported model incompatibles should contain: " + te.toString());
+      modelIncompatibles.remove(te);
+    }
+    Assert.assertTrue(modelIncompatibles.isEmpty());
 
     // ignore compatibles
   }
@@ -328,28 +364,30 @@ public class TestResourceCompatibilityChecker
   @Test
   public void testFailSimpleFile() throws IOException
   {
-    final Collection<CompatibilityInfo> testErrors = new HashSet<CompatibilityInfo>();
-    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "supports"),
-                                         CompatibilityInfo.Type.ARRAY_NOT_CONTAIN,
-                                         new StringArray(Arrays.asList("delete", "get"))));
-    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "methods"),
-                                         CompatibilityInfo.Type.ARRAY_MISSING_ELEMENT, "delete"));
-    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "methods", "get", "parameters", "param1", "type"),
-                                         CompatibilityInfo.Type.TYPE_INCOMPATIBLE,
-                                         "string",
-                                         "int"));
-    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "actions", "oneAction", "parameters", "bitfield", "items"),
-                                         CompatibilityInfo.Type.TYPE_INCOMPATIBLE, "boolean", "int"));
-    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "actions", "oneAction", "parameters"),
-                                         CompatibilityInfo.Type.ARRAY_MISSING_ELEMENT, "someString"));
-    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "actions", "oneAction", "parameters"),
-                                         CompatibilityInfo.Type.PARAMETER_NEW_REQUIRED, "someStringNew"));
-    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting"),
-                                         CompatibilityInfo.Type.TYPE_BREAKS_NEW_READER, "new record added required fields newField"));
-    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting"),
-                                         CompatibilityInfo.Type.TYPE_BREAKS_OLD_READER, "new record removed required fields message"));
-    testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting", "id", "string"),
-                                         CompatibilityInfo.Type.TYPE_BREAKS_NEW_AND_OLD_READERS, "schema type changed from long to string"));
+    final Collection<CompatibilityInfo> resourceTestErrors = new HashSet<CompatibilityInfo>();
+    final Collection<CompatibilityInfo> modelTestErrors = new HashSet<CompatibilityInfo>();
+
+    resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "supports"),
+                                                 CompatibilityInfo.Type.ARRAY_NOT_CONTAIN,
+                                                 new StringArray(Arrays.asList("delete", "get"))));
+    resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "methods"),
+                                                 CompatibilityInfo.Type.ARRAY_MISSING_ELEMENT, "delete"));
+    resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "methods", "get", "parameters", "param1", "type"),
+                                                 CompatibilityInfo.Type.TYPE_INCOMPATIBLE,
+                                                 "string",
+                                                 "int"));
+    resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "actions", "oneAction", "parameters", "bitfield", "items"),
+                                                 CompatibilityInfo.Type.TYPE_INCOMPATIBLE, "boolean", "int"));
+    resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "actions", "oneAction", "parameters"),
+                                                 CompatibilityInfo.Type.ARRAY_MISSING_ELEMENT, "someString"));
+    resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "actions", "oneAction", "parameters"),
+                                                 CompatibilityInfo.Type.PARAMETER_NEW_REQUIRED, "someStringNew"));
+    modelTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting"),
+                                              CompatibilityInfo.Type.TYPE_BREAKS_NEW_READER, "new record added required fields newField"));
+    modelTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting"),
+                                              CompatibilityInfo.Type.TYPE_BREAKS_OLD_READER, "new record removed required fields message"));
+    modelTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting", "id", "string"),
+                                              CompatibilityInfo.Type.TYPE_BREAKS_NEW_AND_OLD_READERS, "schema type changed from long to string"));
 
     ResourceSchema prevResource = idlToResource(idlsDir + PREV_SIMPLE_FILE);
     ResourceSchema currResource = idlToResource(idlsDir + CURR_SIMPLE_FAIL_FILE);
@@ -359,15 +397,25 @@ public class TestResourceCompatibilityChecker
 
     Assert.assertFalse(checker.check(CompatibilityLevel.BACKWARDS));
 
-    final Collection<CompatibilityInfo> incompatible = new HashSet<CompatibilityInfo>(checker.getInfoMap().getIncompatibles());
+    final Collection<CompatibilityInfo> resourceIncompatible = new HashSet<CompatibilityInfo>(checker.getInfoMap().getRestSpecIncompatibles());
 
-    for (CompatibilityInfo te : testErrors)
+    for (CompatibilityInfo te : resourceTestErrors)
     {
-      Assert.assertTrue(incompatible.contains(te), "Reported incompatibles should contain: " + te.toString());
-      incompatible.remove(te);
+      Assert.assertTrue(resourceIncompatible.contains(te), "Reported resource incompatibles should contain: " + te.toString());
+      resourceIncompatible.remove(te);
     }
 
-    Assert.assertTrue(incompatible.isEmpty());
+    Assert.assertTrue(resourceIncompatible.isEmpty());
+
+    final Collection<CompatibilityInfo> modelIncompatible = new HashSet<CompatibilityInfo>(checker.getInfoMap().getModelIncompatibles());
+
+    for (CompatibilityInfo te : modelTestErrors)
+    {
+      Assert.assertTrue(modelIncompatible.contains(te), "Reported model incompatibles should contain: " + te.toString());
+      modelIncompatible.remove(te);
+    }
+
+    Assert.assertTrue(modelIncompatible.isEmpty());
 
     // ignore compatibles
   }

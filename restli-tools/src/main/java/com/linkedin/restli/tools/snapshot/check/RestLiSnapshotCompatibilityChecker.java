@@ -162,7 +162,7 @@ public class RestLiSnapshotCompatibilityChecker
     }
     catch (FileNotFoundException e)
     {
-      infoMap.addInfo(CompatibilityInfo.Type.RESOURCE_NEW, path, currRestspecPath);
+      infoMap.addRestSpecInfo(CompatibilityInfo.Type.RESOURCE_NEW, path, currRestspecPath);
     }
 
     try
@@ -171,7 +171,7 @@ public class RestLiSnapshotCompatibilityChecker
     }
     catch (FileNotFoundException e)
     {
-      infoMap.addInfo(CompatibilityInfo.Type.RESOURCE_MISSING, path, prevRestspecPath);
+      infoMap.addRestSpecInfo(CompatibilityInfo.Type.RESOURCE_MISSING, path, prevRestspecPath);
     }
 
     if (prevSnapshotFile == null || currSnapshotFile == null)
@@ -188,7 +188,7 @@ public class RestLiSnapshotCompatibilityChecker
     }
     catch (IOException e)
     {
-      infoMap.addInfo(CompatibilityInfo.Type.OTHER_ERROR, path, e.getMessage());
+      infoMap.addRestSpecInfo(CompatibilityInfo.Type.OTHER_ERROR, path, e.getMessage());
     }
 
     if (prevSnapshot == null || currSnapshot == null)

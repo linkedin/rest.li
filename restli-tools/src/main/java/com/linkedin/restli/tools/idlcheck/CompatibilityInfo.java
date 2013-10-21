@@ -79,6 +79,12 @@ public class CompatibilityInfo
     private String _description;
   }
 
+  private final static String _pathSeparator = "/";
+
+  protected String _path;
+  protected Type _type;
+  protected Object[] _parameters;
+
   /**
    * @param path path to the subject node in the idl (JSON) file, delimited by slash "/"
    * @param type type of the information
@@ -154,10 +160,4 @@ public class CompatibilityInfo
 
     return output.toString();
   }
-
-  protected String _path;
-  protected Type _type;
-  protected Object[] _parameters;
-
-  private final static String _pathSeparator = "/";
 }
