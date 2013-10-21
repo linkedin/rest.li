@@ -509,11 +509,13 @@ class PegasusPlugin implements Plugin<Project>
   private static boolean _runOnce = false
 
   private static final StringBuffer _restModelCompatMessage = new StringBuffer()
-  private static final StringBuffer _restModelPublishReminder = new StringBuffer()
-  private static final Collection<String> _needCheckinFiles = new HashSet<String>()
+  private static final Collection<String> _needCheckinFiles = new ArrayList<String>()
+  private static final Collection<String> _needBuildFolders = new ArrayList<String>()
+  private static final Collection<String> _possibleMissingFilesInEarlierCommit = new ArrayList<String>()
 
   private static final Object STATIC_PROJECT_EVALUATED_LOCK = new Object()
-  private static final Object STATIC_BUILD_FINISHED_LOCK = new Object()
+  private static final Object STATIC_MODIFIED_FILES_LOCK = new Object()
+  private static final Object STATIC_MISSING_FILES_LOCK = new Object()
 
   private Class<? extends Plugin> _thisPluginType = getClass().asSubclass(Plugin)
   private Task _generateSourcesJarTask = null
@@ -546,52 +548,45 @@ class PegasusPlugin implements Plugin<Project>
     // this map will extract PegasusOptions.GenerationMode to project property
     project.ext.set('PegasusGenerationMode', PegasusOptions.GenerationMode.values().collectEntries {[it.name(), it]})
 
-    if (!_runOnce)
+    synchronized(STATIC_PROJECT_EVALUATED_LOCK)
     {
-      synchronized(STATIC_PROJECT_EVALUATED_LOCK)
+      if (!_runOnce)
       {
-        if (!_runOnce) //double-check pattern for efficiency
-        {
-          project.gradle.projectsEvaluated { Gradle gradle ->
-            gradle.rootProject.subprojects { Project subproject ->
-              ['dataTemplateGenerator', 'restTools', 'avroSchemaGenerator'].each { String configurationName ->
-                final Configuration conf = subproject.configurations.findByName(configurationName)
-                if (conf != null && !conf.isEmpty())
-                {
-                  subproject.getLogger().warn('*** Project ' + subproject.path + ' declares dependency to unused configuration "' + configurationName + '". This configuration is deprecated and you can safely remove the dependency. ***')
-                }
+        project.gradle.projectsEvaluated { Gradle gradle ->
+          gradle.rootProject.subprojects { Project subproject ->
+            ['dataTemplateGenerator', 'restTools', 'avroSchemaGenerator'].each { String configurationName ->
+              final Configuration conf = subproject.configurations.findByName(configurationName)
+              if (conf != null && !conf.isEmpty())
+              {
+                subproject.getLogger().warn('*** Project ' + subproject.path + ' declares dependency to unused configuration "' + configurationName + '". This configuration is deprecated and you can safely remove the dependency. ***')
               }
             }
           }
         }
-      }
 
-      synchronized(STATIC_BUILD_FINISHED_LOCK)
-      {
-        if (!_runOnce) //double-check pattern for efficiency
-        {
-          project.gradle.buildFinished { BuildResult result ->
-            final StringBuilder endOfBuildMessage = new StringBuilder()
+        project.gradle.buildFinished { BuildResult result ->
+          final StringBuilder endOfBuildMessage = new StringBuilder()
 
-            if (_restModelCompatMessage.length() > 0) {
-              endOfBuildMessage.append(_restModelCompatMessage)
-            }
-
-            if (_restModelPublishReminder.length() > 0) {
-              endOfBuildMessage.append(_restModelPublishReminder)
-            }
-
-            if (_needCheckinFiles.size() > 0)
-            {
-              endOfBuildMessage.append(createCheckinFileMessage(_needCheckinFiles))
-            }
-
-            if (endOfBuildMessage.length() > 0) {
-              result.gradle.rootProject.logger.quiet(endOfBuildMessage.toString())
-            }
+          if (_restModelCompatMessage.length() > 0) {
+            endOfBuildMessage.append(_restModelCompatMessage)
           }
-          _runOnce = true
+
+          if (_needCheckinFiles.size() > 0)
+          {
+            endOfBuildMessage.append(createModifiedFilesMessage(_needCheckinFiles, _needBuildFolders))
+          }
+
+          if (_possibleMissingFilesInEarlierCommit.size() > 0)
+          {
+            endOfBuildMessage.append(createPossibleMissingFilesMessage(_possibleMissingFilesInEarlierCommit))
+          }
+
+          if (endOfBuildMessage.length() > 0) {
+            result.gradle.rootProject.logger.quiet(endOfBuildMessage.toString())
+          }
         }
+
+        _runOnce = true
       }
     }
 
@@ -773,6 +768,14 @@ class PegasusPlugin implements Plugin<Project>
     }
   }
 
+  private static Class<? extends Enum> getCompatibilityLevelClass(Project project)
+  {
+    final ClassLoader generatorClassLoader = (ClassLoader) project.property(GENERATOR_CLASSLOADER_NAME)
+    final Class<? extends Enum> compatLevelClass =
+      generatorClassLoader.loadClass('com.linkedin.restli.tools.idlcheck.CompatibilityLevel').asSubclass(Enum.class)
+    return compatLevelClass;
+  }
+
   private static addGeneratedDir(Project project, SourceSet sourceSet, Collection<Configuration> configurations)
   {
     // stupid if block needed because of stupid assignment required to update source dirs
@@ -920,7 +923,8 @@ class PegasusPlugin implements Plugin<Project>
         resolverPath = restModelResolverPath
 
         onlyIf {
-          findCompatLevel(project, FileCompatibilityType.SNAPSHOT).ordinal() != 0 && !isPropertyTrue(project, SKIP_IDL_CHECK)
+          findCompatLevel(project, FileCompatibilityType.SNAPSHOT) != getCompatibilityLevelClass(project).OFF &&
+                                   !isPropertyTrue(project, SKIP_IDL_CHECK)
         }
       }
 
@@ -932,7 +936,8 @@ class PegasusPlugin implements Plugin<Project>
         resolverPath = restModelResolverPath
 
         onlyIf {
-          findCompatLevel(project, FileCompatibilityType.SNAPSHOT).ordinal() != 0 && isPropertyTrue(project, SKIP_IDL_CHECK)
+          findCompatLevel(project, FileCompatibilityType.SNAPSHOT) != getCompatibilityLevelClass(project).OFF &&
+                          isPropertyTrue(project, SKIP_IDL_CHECK)
         }
       }
 
@@ -944,7 +949,8 @@ class PegasusPlugin implements Plugin<Project>
         resolverPath = restModelResolverPath
 
         onlyIf {
-          !isPropertyTrue(project, SKIP_IDL_CHECK) && findCompatLevel(project, FileCompatibilityType.IDL).ordinal() != 0
+          !isPropertyTrue(project, SKIP_IDL_CHECK) &&
+          findCompatLevel(project, FileCompatibilityType.IDL) != getCompatibilityLevelClass(project).OFF
         }
       }
 
@@ -1333,8 +1339,7 @@ class PegasusPlugin implements Plugin<Project>
 
   private static Enum findCompatLevel(Project project, String propertyName)
   {
-    final ClassLoader generatorClassLoader = (ClassLoader) project.property(GENERATOR_CLASSLOADER_NAME)
-    final Class<? extends Enum> compatLevelClass = generatorClassLoader.loadClass('com.linkedin.restli.tools.idlcheck.CompatibilityLevel').asSubclass(Enum.class)
+    final Class<? extends Enum> compatLevelClass = getCompatibilityLevelClass(project)
     final Enum compatLevel
 
     if (project.hasProperty(propertyName))
@@ -1362,7 +1367,7 @@ class PegasusPlugin implements Plugin<Project>
       }
     }
 
-    if (compatLevel.ordinal() == 0)
+    if (compatLevel == compatLevelClass.OFF)
     {
       project.logger.info('Interface compatibility checking is turned off.');
     }
@@ -1370,57 +1375,109 @@ class PegasusPlugin implements Plugin<Project>
     return compatLevel
   }
 
-  private static void addNeedCheckinFiles(Project project, Collection<String> snapshotFiles, Collection<String> idlFiles)
+  private static void addModifiedFiles(Project project, Collection<String> snapshotFiles, Collection<String> idlFiles)
   {
-    if (!isPropertyTrue(project, IDL_NO_PUBLISH))
+    synchronized (STATIC_MODIFIED_FILES_LOCK)
     {
-      _needCheckinFiles.addAll(idlFiles)
-    }
-    if (!isPropertyTrue(project, SNAPSHOT_NO_PUBLISH))
-    {
-      _needCheckinFiles.addAll(snapshotFiles)
+      //Synchronization here is needed to make sure the ordering of the files and folders among multiple
+      //modules built in parallel.
+      if (!isPropertyTrue(project, IDL_NO_PUBLISH))
+      {
+        _needCheckinFiles.addAll(idlFiles)
+        _needBuildFolders.add(getApiProject(project).getPath())
+      }
+
+      if (!isPropertyTrue(project, SNAPSHOT_NO_PUBLISH))
+      {
+        _needCheckinFiles.addAll(snapshotFiles)
+      }
     }
   }
 
-  private static String createCheckinFileMessage(Collection<String> nonEquivExpectedFiles)
+  private static void addPossibleMissingFilesInEarlierCommit(Project project, FileCompatibilityType type,
+                                      Collection<String> snapshotFiles, Collection<String> idlFiles)
+  {
+    if (type == FileCompatibilityType.SNAPSHOT)
+    {
+      final Enum compatLevel = findCompatLevel(project, FileCompatibilityType.SNAPSHOT);
+
+      // If the compatibility mode is Equivalent, then this build can be automated by a build system.
+      //So we should collect all the files which might have been missed in an earlier commit.
+      if (compatLevel == getCompatibilityLevelClass(project).EQUIVALENT)
+      {
+        synchronized (STATIC_MISSING_FILES_LOCK)
+        {
+          //Synchronization here is needed to make sure the ordering of the files and folders among multiple
+          //modules built in parallel.
+          if (!isPropertyTrue(project, IDL_NO_PUBLISH))
+          {
+            _possibleMissingFilesInEarlierCommit.addAll(idlFiles)
+          }
+
+          if (!isPropertyTrue(project, SNAPSHOT_NO_PUBLISH))
+          {
+            _possibleMissingFilesInEarlierCommit.addAll(snapshotFiles)
+          }
+        }
+      }
+    }
+  }
+
+  private static String createModifiedFilesMessage(Collection<String> nonEquivExpectedFiles,
+                                                   Collection<String> foldersToBeBuilt)
   {
     StringBuilder builder = new StringBuilder();
-    builder.append("\nRemember to checkin the changes to the following modified files:\n")
+    builder.append("\nRemember to checkin the changes to the following new or modified files:\n")
     for (String file: nonEquivExpectedFiles)
     {
       builder.append("  ")
       builder.append(file)
       builder.append("\n")
     }
+
+    if (!foldersToBeBuilt.isEmpty())
+    {
+      builder.append("\nThe file modifications include service interface changes, you can build the the following projects "
+                             + "to re-generate the client APIs accordingly:\n")
+      for (String folder: foldersToBeBuilt)
+      {
+        builder.append("  ")
+        builder.append(folder)
+        builder.append("\n")
+      }
+    }
+
+    return builder.toString();
+  }
+
+  private static String createPossibleMissingFilesMessage(Collection<String> missingFiles)
+  {
+    StringBuilder builder = new StringBuilder()
+    builder.append("If this is the result of an automated build, then you may have forgotten to check in some snapshot or idl files:\n")
+    for(String file: missingFiles)
+    {
+      builder.append("  ")
+      builder.append(file)
+      builder.append("\n")
+    }
+
     return builder.toString();
   }
 
   // returns nothing but modifies the passed in StringBuilder
-  private static void finishMessage(Project project, StringBuilder currentMessage, FileCompatibilityType type, Collection<String> expectedFiles)
+  private static void finishMessage(Project project, StringBuilder currentMessage, FileCompatibilityType type)
   {
     String property = findProperty(type)
     final Enum compatLevel = findCompatLevel(project, type)
-
-    if (type == FileCompatibilityType.SNAPSHOT && compatLevel.ordinal() == 3 && !expectedFiles.isEmpty())
-    {
-      StringBuilder automatedBuildMessage = new StringBuilder()
-      automatedBuildMessage.append("If this is the result of an automated build, then you may have forgotten to check in some snapshot or idl files:\n")
-      for(String file: expectedFiles)
-      {
-        automatedBuildMessage.append("  ")
-        automatedBuildMessage.append(file)
-        automatedBuildMessage.append("\n")
-      }
-      currentMessage.insert(0, automatedBuildMessage)
-    }
+    final Class<? extends Enum> compatLevelClass = getCompatibilityLevelClass(project)
 
     final StringBuilder endMessage = new StringBuilder("\nThis check was run on compatibility level ${compatLevel}\n")
 
-    if (compatLevel.ordinal() == 3) // equivalent
+    if (compatLevel == compatLevelClass.EQUIVALENT)
     {
       endMessage.append("You may add \"-P${property}=backwards\" to the build command to allow backwards compatible changes in interface.\n")
     }
-    if (compatLevel.ordinal() >= 2) // equiv or backwards
+    if (compatLevel == compatLevelClass.BACKWARDS || compatLevel == compatLevelClass.EQUIVALENT)
     {
       endMessage.append("You may use \"-P${property}=ignore\" to ignore compatibility errors.\n")
     }
@@ -1835,12 +1892,13 @@ class PegasusPlugin implements Plugin<Project>
         return
       }
 
-      finishMessage(project, allCheckMessage, FileCompatibilityType.SNAPSHOT, badExistingFiles)
+      finishMessage(project, allCheckMessage, FileCompatibilityType.SNAPSHOT)
+      addPossibleMissingFilesInEarlierCommit(project, FileCompatibilityType.SNAPSHOT, badExistingFiles, Collections.emptyList())
 
       if (isCompatible)
       {
         _restModelCompatMessage.append(allCheckMessage)
-        addNeedCheckinFiles(project, badExistingFiles, Collections.emptyList())
+        addModifiedFiles(project, badExistingFiles, Collections.emptyList())
       }
       else
       {
@@ -1914,12 +1972,13 @@ class PegasusPlugin implements Plugin<Project>
         return
       }
 
-      finishMessage(project, allCheckMessage, FileCompatibilityType.SNAPSHOT, badExistingSnapshotFiles)
+      finishMessage(project, allCheckMessage, FileCompatibilityType.SNAPSHOT)
+      addPossibleMissingFilesInEarlierCommit(project, FileCompatibilityType.SNAPSHOT, badExistingSnapshotFiles, badExistingIdlFiles)
 
       if (isCompatible)
       {
         _restModelCompatMessage.append(allCheckMessage)
-        addNeedCheckinFiles(project, badExistingSnapshotFiles, badExistingIdlFiles)
+        addModifiedFiles(project, badExistingSnapshotFiles, badExistingIdlFiles)
       }
       else
       {
@@ -1976,12 +2035,13 @@ class PegasusPlugin implements Plugin<Project>
         return
       }
 
-      finishMessage(project, allCheckMessage, FileCompatibilityType.IDL, badExistingFiles)
+      finishMessage(project, allCheckMessage, FileCompatibilityType.IDL)
+      addPossibleMissingFilesInEarlierCommit(project, FileCompatibilityType.IDL, Collections.emptyList(), badExistingFiles)
 
       if (isCompatible)
       {
         _restModelCompatMessage.append(allCheckMessage)
-        addNeedCheckinFiles(project, Collections.emptyList(), badExistingFiles)
+        addModifiedFiles(project, Collections.emptyList(), badExistingFiles)
       }
       else
       {
@@ -2022,13 +2082,6 @@ class PegasusPlugin implements Plugin<Project>
       if (apiRestModelFileCount != 0 && apiRestModelFileCount != apiRestModelFiles.files.size())
       {
         project.logger.warn(suffix + ' files count changed after publish. You may have duplicate files with different names.')
-      }
-
-      if (_restModelPublishReminder.length() == 0)
-      {
-        _restModelPublishReminder.append("\n")
-                                 .append("Rest model files have been changed during the build. You must run the following command line at project root to pick up the changes:\n")
-                                 .append("  gradle build")
       }
     }
   }

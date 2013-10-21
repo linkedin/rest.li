@@ -1,5 +1,7 @@
 1.9.39
 ------
+(RB=224558)
+Improving Pegasus build messages for network parallel builds. Making sure the access to static variables are synchronized.
 
 1.9.38
 ------
