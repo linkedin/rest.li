@@ -162,20 +162,25 @@ public class SnapshotGenerator
       if (collection.hasEntity())
       {
         EntitySchema entity = collection.getEntity();
-        if (entity.hasActions())
-        {
-          for(ActionSchema actionSchema : entity.getActions())
-          {
-            findModelsAction(actionSchema, foundTypes, typeOrder);
-          }
-        }
-        if (entity.hasSubresources())
-        {
-          for(ResourceSchema subresourceSchema : entity.getSubresources())
-          {
-            findModelsResource(subresourceSchema, foundTypes, typeOrder);
-          }
-        }
+        findModelsEntity(entity, foundTypes, typeOrder);
+      }
+    }
+  }
+
+  private void findModelsEntity(EntitySchema entity, Map<String, NamedDataSchema> foundTypes, List<NamedDataSchema> typeOrder)
+  {
+    if (entity.hasActions())
+    {
+      for(ActionSchema actionSchema : entity.getActions())
+      {
+        findModelsAction(actionSchema, foundTypes, typeOrder);
+      }
+    }
+    if (entity.hasSubresources())
+    {
+      for(ResourceSchema subresourceSchema : entity.getSubresources())
+      {
+        findModelsResource(subresourceSchema, foundTypes, typeOrder);
       }
     }
   }
@@ -223,6 +228,11 @@ public class SnapshotGenerator
           findModelsAction(actionSchema, foundTypes, typeOrder);
         }
       }
+      if (association.hasEntity())
+      {
+        EntitySchema entitySchema = association.getEntity();
+        findModelsEntity(entitySchema, foundTypes, typeOrder);
+      }
     }
   }
 
@@ -248,13 +258,7 @@ public class SnapshotGenerator
       if (simple.hasEntity())
       {
         EntitySchema entity = simple.getEntity();
-        if (entity.hasSubresources())
-        {
-          for (ResourceSchema subresourceSchema : entity.getSubresources())
-          {
-            findModelsResource(subresourceSchema, foundTypes, typeOrder);
-          }
-        }
+        findModelsEntity(entity, foundTypes, typeOrder);
       }
     }
   }

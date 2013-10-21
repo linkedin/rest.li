@@ -4,6 +4,11 @@
     "name" : "Followed",
     "namespace" : "com.linkedin.restli.tools.twitter",
     "fields" : [ ]
+  }, {
+    "type" : "record",
+    "name" : "Status",
+    "namespace" : "com.linkedin.restli.tools.twitter",
+    "fields" : [ ]
   } ],
   "schema" : {
     "schema" : "com.linkedin.restli.tools.twitter.Followed",
@@ -19,7 +24,11 @@
         "method" : "batch_get"
       } ],
       "entity" : {
-        "path" : "/follows/followerID={followerID}&followeeID={followeeID}"
+        "path" : "/follows/followerID={followerID}&followeeID={followeeID}",
+        "actions" : [ {
+          "name" : "entityAction",
+          "returns" : "com.linkedin.restli.tools.twitter.Status"
+        } ]
       },
       "finders" : [ {
         "name" : "followers",

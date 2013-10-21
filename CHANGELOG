@@ -24,6 +24,10 @@ Made get data length safe in RetryZooKeeper
 (RB=224314)
 Fixed the READMEs in the examples folder and converted them to Markdown
 
+(RB=224729)
+Fixed a bug in Snapshot generation relating to entity-level Actions and Finders in
+Association resources.
+
 1.9.36
 ------
 (RB=220182)

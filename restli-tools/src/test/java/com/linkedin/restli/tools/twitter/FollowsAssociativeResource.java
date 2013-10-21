@@ -18,6 +18,8 @@ package com.linkedin.restli.tools.twitter;
 
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.PatchRequest;
+import com.linkedin.restli.server.ResourceLevel;
+import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.AssocKey;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.Key;
@@ -26,6 +28,7 @@ import com.linkedin.restli.server.annotations.RestLiAssociation;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.resources.AssociationResourceTemplate;
 import com.linkedin.restli.tools.twitter.TwitterTestDataModels.Followed;
+import com.linkedin.restli.tools.twitter.TwitterTestDataModels.Status;
 
 import java.util.List;
 import java.util.Map;
@@ -93,6 +96,11 @@ public class FollowsAssociativeResource extends AssociationResourceTemplate<Foll
     return null;
   }
 
+  @Action(name="entityAction", resourceLevel = ResourceLevel.ENTITY)
+  public Status entityAction()
+  {
+    return null;
+  }
 
   /**
    * Updates the given Followed relationship

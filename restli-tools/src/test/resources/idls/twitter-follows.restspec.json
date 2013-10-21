@@ -49,7 +49,11 @@
       "assocKeys" : [ "followerID" ]
     } ],
     "entity" : {
-      "path" : "/follows/followerID={followerID}&followeeID={followeeID}"
+      "path" : "/follows/followerID={followerID}&followeeID={followeeID}",
+      "actions" : [ {
+        "name" : "entityAction",
+        "returns" : "com.linkedin.restli.tools.twitter.Status"
+      } ]
     }
   }
 }
