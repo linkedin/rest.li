@@ -56,3 +56,9 @@ task scripts(dependsOn: packup, type: Zip) {
     baseName = 'lb-tool'
     description = "Zip a package up with all scripts, log4js, and jars."
 }
+
+configurations {
+  testArtifacts {
+    visible = true
+  }
+}
