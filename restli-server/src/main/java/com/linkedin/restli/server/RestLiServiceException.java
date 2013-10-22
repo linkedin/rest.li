@@ -20,6 +20,7 @@ import com.linkedin.data.DataMap;
 import com.linkedin.restli.common.HttpStatus;
 
 /**
+ * Represents an unexpected service failure.
  *
  * @author dellamag
  */
@@ -39,6 +40,13 @@ public class RestLiServiceException extends RuntimeException
   public RestLiServiceException(final HttpStatus status, final String message)
   {
     this(status, message, null);
+  }
+
+  public RestLiServiceException(final HttpStatus status,
+                                final Throwable cause)
+  {
+    super(cause);
+    _status = status;
   }
 
   public RestLiServiceException(final HttpStatus status,
