@@ -1882,7 +1882,7 @@ class PegasusPlugin implements Plugin<Project>
                                                                               _snapshotFilter,
                                                                               snapshotCompatLevel)
 
-      allCheckMessage.append(snapshotCompatResult)
+      allCheckMessage.append(snapshotCompatResult.message)
       isCompatible &= snapshotCompatResult.isCompatible
       badExistingFiles.addAll(snapshotCompatResult.nonEquivExistingFiles)
       isEquivalent = snapshotCountResult.isEquivalent && snapshotCompatResult.isEquivalent

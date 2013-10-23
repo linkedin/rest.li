@@ -129,6 +129,8 @@ public class SnapshotGenerator
     findModelsAssocation(resourceSchema, foundTypes, typeOrder);
 
     findModelsCollection(resourceSchema, foundTypes, typeOrder);
+
+    findModelsSimple(resourceSchema, foundTypes, typeOrder);
   }
 
   private void findModelsCollection(ResourceSchema resourceSchema, Map<String, NamedDataSchema> foundTypes, List<NamedDataSchema> typeOrder)

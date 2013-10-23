@@ -1,5 +1,9 @@
 1.9.40
 ------
+(RB=225607)
+Fix two bugs related to snapshots:
+snapshot compatibility messages during checkSnapshot task should now print correctly.
+snapshots of simple resources should be generated correctly.
 
 1.9.39
 ------
