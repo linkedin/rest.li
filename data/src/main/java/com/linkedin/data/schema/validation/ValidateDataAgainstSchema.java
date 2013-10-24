@@ -41,6 +41,7 @@ import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
 import com.linkedin.data.schema.validator.Validator;
 import com.linkedin.data.schema.validator.ValidatorContext;
+import com.linkedin.data.template.DataTemplate;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
@@ -73,6 +74,21 @@ public final class ValidateDataAgainstSchema
       put(DataSchema.Type.NULL, Null.class);
     }
   };
+
+  public static ValidationResult validate(DataTemplate dataTemplate, ValidationOptions options)
+  {
+    return validate(dataTemplate, options, null);
+  }
+
+  public static ValidationResult validate(DataTemplate dataTemplate, ValidationOptions options, Validator validator)
+  {
+    if(dataTemplate.schema() == null)
+    {
+      return new State(options, validator); // return an empty validation response if no schema is available
+    }
+
+    return validate(dataTemplate.data(), dataTemplate.schema(), options, validator);
+  }
 
   public static ValidationResult validate(Object object, DataSchema schema, ValidationOptions options)
   {
