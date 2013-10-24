@@ -75,9 +75,7 @@ public interface PropertyEventBus<T>
    * Register a subscriber to receive notification for events pertaining to the specified property.
    * The subscriber will receive exactly one onInitialize call with the current value of the
    * property (which may be null), followed by zero or more onAdd/onRemove calls as the value
-   * of the property changes. Subsequent calls to register new subscribers to the same property
-   * will not launch onInitialize event on the new subscribers. Only the first subscriber will
-   * get the onInitialize event. This rule resets if the property is unregistered.
+   * of the property changes.
    * @param propertyNames Property names to subscribe to
    * @param subscriber subscriber to be notified
    */
