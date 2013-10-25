@@ -25,6 +25,7 @@ import java.util.List;
 import com.linkedin.d2.balancer.LoadBalancerState.NullStateListenerCallback;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancerState;
 
+
 public class SimpleLoadBalancerStateJmx implements SimpleLoadBalancerStateJmxMBean
 {
   private final SimpleLoadBalancerState _state;
@@ -149,18 +150,24 @@ public class SimpleLoadBalancerStateJmx implements SimpleLoadBalancerStateJmxMBe
   }
 
   @Override
-  public String getServerUrisForClusterName(String clusterName)
+  public String getServerUrisForServiceName(String serviceName)
   {
-    return _state.getServerUrisForClusterName(clusterName).toString();
+    return _state.getServerUrisForServiceName(serviceName).toString();
   }
 
   @Override
-  public String getTrackerClientInformation(String trackerClientUri, String clusterName)
+  public String getTrackerClientInformation(String trackerClientUri, String serviceName)
       throws URISyntaxException
   {
     URI uri = new URI(trackerClientUri);
-    TrackerClient client = _state.getClient(clusterName, uri);
+    TrackerClient client = _state.getClient(serviceName, uri);
     return client.toString();
+  }
+
+  @Override
+  public String getInternalMappingServicesForClusterName(String clusterName)
+  {
+    return _state.getServicesForCluster(clusterName).toString();
   }
 
   @Override

@@ -530,6 +530,19 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     return count;
   }
 
+  public Set<String> getServicesForCluster(String clusterName)
+  {
+    Set<String> services = _servicesPerCluster.get(clusterName);
+    if (services == null)
+    {
+      return Collections.emptySet();
+    }
+    else
+    {
+      return services;
+    }
+  }
+
   public int getUriCount()
   {
     return _uriProperties.size();
@@ -591,7 +604,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     return trackerClient;
   }
 
-  public List<URI> getServerUrisForClusterName(String clusterName)
+  public List<URI> getServerUrisForServiceName(String clusterName)
   {
     Map<URI, TrackerClient> trackerClients = _trackerClients.get(clusterName);
     if (trackerClients == null)
@@ -1021,6 +1034,23 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
       // always refresh strategies when we receive service event
       if (discoveryProperties != null)
       {
+        //if this service changes its cluster, we should update the cluster -> service map saying that
+        //this service is no longer hosted in the old cluster.
+        if (oldServicePropertiesItem != null)
+        {
+          ServiceProperties oldServiceProperties = oldServicePropertiesItem.getProperty();
+          if (oldServiceProperties != null && oldServiceProperties.getClusterName() != null &&
+              !oldServiceProperties.getClusterName().equals(discoveryProperties.getClusterName()))
+          {
+            Set<String> serviceNames =
+                          _servicesPerCluster.get(oldServiceProperties.getClusterName());
+            if (serviceNames != null)
+            {
+              serviceNames.remove(oldServiceProperties.getServiceName());
+            }
+          }
+        }
+
         refreshServiceStrategies(discoveryProperties);
         refreshTransportClientsPerService(discoveryProperties);
 

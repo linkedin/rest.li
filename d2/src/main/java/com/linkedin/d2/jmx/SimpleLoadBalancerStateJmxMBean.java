@@ -62,16 +62,24 @@ public interface SimpleLoadBalancerStateJmxMBean
   void setDelayedExecution(long milliseconds);
 
   /**
-   * @param clusterName this can be obtained through serviceProperty
+   * @param serviceName this can be obtained through serviceProperty
    * @return returns a list of tracker clients URI (this will include banned URI for the cluster)
    */
-  String getServerUrisForClusterName(String clusterName);
+  String getServerUrisForServiceName(String serviceName);
 
   /**
    *
    * @param trackerClientUri the URI for trackerClient
+   * @param serviceName this can be obtained through serviceProperty
    * @return the trackerClient information for that URI
    */
-  String getTrackerClientInformation(String trackerClientUri, String clusterName) throws URISyntaxException;
+  String getTrackerClientInformation(String trackerClientUri, String serviceName) throws URISyntaxException;
+
+  /**
+   * get what services are mapped to this cluster according to the state's internal mapping. Useful for debugging.
+   * @param clusterName
+   * @return
+   */
+  String getInternalMappingServicesForClusterName(String clusterName);
 
 }

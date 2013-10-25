@@ -191,13 +191,6 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     return client;
   }
 
-  //TODO remove the getPrioritizedSchemes from clusterProperties after migration is done
-  private static List<String> chooseServiceSchemeOverCluster(ServiceProperties service, ClusterProperties cluster)
-  {
-    return  service.getPrioritizedSchemes() == null ? cluster.getPrioritizedSchemes() :
-            service.getPrioritizedSchemes();
-  }
-
   @Override
   public <K> MapKeyResult<Ring<URI>, K> getRings(URI serviceUri, Iterable<K> keys) throws ServiceUnavailableException
   {
@@ -209,8 +202,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     UriProperties uris = uriItem.getProperty();
 
     List<LoadBalancerState.SchemeStrategyPair> orderedStrategies =
-        _state.getStrategiesForService(serviceName,
-                                       chooseServiceSchemeOverCluster(service, cluster));
+        _state.getStrategiesForService(serviceName, service.getPrioritizedSchemes());
 
     if (! orderedStrategies.isEmpty())
     {
@@ -280,8 +272,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     UriProperties uris = uriItem.getProperty();
 
     List<LoadBalancerState.SchemeStrategyPair> orderedStrategies =
-        _state.getStrategiesForService(serviceName,
-                                       chooseServiceSchemeOverCluster(service, cluster));
+        _state.getStrategiesForService(serviceName, service.getPrioritizedSchemes());
 
     if (! orderedStrategies.isEmpty())
     {

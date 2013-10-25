@@ -1098,6 +1098,87 @@ public class SimpleLoadBalancerStateTest
   }
 
   @Test(groups = { "small", "back-end" })
+  public void testGetClientAfterServiceMetadataChange()
+  {
+    reset();
+    URI uri = URI.create("http://cluster-1/test");
+    List<String> schemes = new ArrayList<String>();
+    Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
+    partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>();
+    uriData.put(uri, partitionData);
+
+    schemes.add("http");
+
+    assertNull(_state.getClient("service-1", uri));
+
+    // set up state
+    _state.listenToCluster("cluster-1", new NullStateListenerCallback());
+
+    assertNull(_state.getClient("service-1", uri));
+
+    _state.listenToService("service-1", new NullStateListenerCallback());
+
+    assertNull(_state.getClient("service-1", uri));
+
+    _serviceRegistry.put("service-1", new ServiceProperties("service-1", "cluster-1",
+                                                            "/test", "random", null,
+                                                            Collections.<String, Object>emptyMap(),
+                                                             null, null, schemes, null));
+
+    assertNull(_state.getClient("service-1", uri));
+
+    _uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData));
+
+    TrackerClient client = _state.getClient("service-1", uri);
+
+    assertNotNull(client);
+    assertEquals(client.getUri(), uri);
+
+    //now we publish an event that tells service-1 changes cluster. Now it's hosted in cluster-2
+    _serviceRegistry.put("service-1", new ServiceProperties("service-1", "cluster-2",
+                                                            "/test", "random", null,
+                                                            Collections.<String, Object>emptyMap(),
+                                                             null, null, schemes, null));
+
+    //this time, since we haven't listened to cluster-2 and there's no uri in cluster-2, we get no client.
+    assertNull(_state.getClient("service-1", uri));
+
+    //we shouldn't be affected by any update to cluster-1 uris because now service-1 listen to cluster-2
+    _uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData));
+    assertNull(_state.getClient("service-1", uri));
+
+    //now let's create URI for cluster 2 and make the state listen to cluster_2
+    _state.listenToCluster("cluster-2", new NullStateListenerCallback());
+
+    URI uri2 = URI.create("http://cluster-2/test");
+    Map<Integer, PartitionData> partitionData2 = new HashMap<Integer, PartitionData>(1);
+    partitionData2.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
+    Map<URI, Map<Integer, PartitionData>> uriData2 = new HashMap<URI, Map<Integer, PartitionData>>();
+    uriData2.put(uri2, partitionData2);
+
+    //if we start publishing new event to cluster-2 then we should get trackerClient
+    _uriRegistry.put("cluster-2", new UriProperties("cluster-2", uriData2));
+
+    client = _state.getClient("service-1", uri2);
+
+    assertNotNull(client);
+    assertEquals(client.getUri(), uri2);
+
+    //just to make sure that any event from cluster-1 doesn't affect us anymore
+    _uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData));
+    client = _state.getClient("service-1", uri2);
+
+    assertNotNull(client);
+    assertEquals(client.getUri(), uri2);
+
+    //if we pass uri from cluster-1, we also get no tracker client
+    client = _state.getClient("service-1", uri);
+
+    assertNull(client);
+  }
+
+  @Test(groups = { "small", "back-end" })
   public void testGetClientAfterBadProperties() throws URISyntaxException, InterruptedException
   {
     reset();

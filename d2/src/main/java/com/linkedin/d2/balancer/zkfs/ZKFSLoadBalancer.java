@@ -424,33 +424,7 @@ public class ZKFSLoadBalancer
           {
             case SyncConnected:
             {
-              // TOGGLE ON, we don't need to reconstruct state
-              if (suppressZK())
-              {
-                LOG.warn("ZooKeeper currently suppressed by flag file {}, enabling backup stores",
-                         _zkFlagFile.getAbsolutePath());
-                _balancer.enableBackup(getStartupOrLoggerCallback());
-              }
-              else
-              {
-                LOG.info("Enabling primary ZK stores");
-                _directory.setConnection(_zkConnection);
-                _balancer.enablePrimary(new Callback<None>()
-                {
-                  @Override
-                  public void onSuccess(None result)
-                  {
-                    getStartupOrLoggerCallback().onSuccess(result);
-                  }
-
-                  @Override
-                  public void onError(Throwable e)
-                  {
-                    //we will receive Disconnected shortly
-                    LOG.info("Ignored error enabling primary ZK stores; expecting Disconnected notification", e);
-                  }
-                });
-              }
+              processSyncConnected(_balancer);
               break;
             }
 
@@ -467,66 +441,7 @@ public class ZKFSLoadBalancer
               // We were disconnected for longer than the session timeout (or ZK lost our
               // session due to ZK crash or whatever). Thus, we may have missed some
               // notifications and our stored state (in the bus/FS store) is no longer valid
-              LOG.info("Resetting LoadBalancerState");
-
-              // Pretty unlikely that the startup callback is still pending when we
-              // are notified of session expiration, but checking anyway...
-              Callback<None> callback = _startupCallback.getAndSet(null);
-              if (callback != null)
-              {
-                callback.onError(new KeeperException.SessionExpiredException());
-              }
-
-              callback = new Callback<None>()
-              {
-                @Override
-                public void onSuccess(None none)
-                {
-                  LOG.info("Successfully reset LoadBalancer after ZooKeeper session expiration");
-
-                  // We shut down the old LoadBalancer here, which shuts down resources it created,
-                  // but not the stores we created.
-                  // However there is a concurrency edge case that we should handle here by delaying the shutdown.
-                  // See example below:
-                  //
-                  // Thread 1 in DynamicClient.java         Thread 2 in ZKFSLoadBalancer.java
-                  // client = _balancer.getClient()
-                  //                                        We receive ZK state change -> ZK connection is expired
-                  //                                        ZKListener shuts down load balancer which eventually
-                  //                                        shutdown all clients
-                  // client.send() -> ERROR because
-                  // the client is in shut down state
-                  // so we need to delay the the shutdown until we replace the _currentLoadBalancer with
-                  // the new LoadBalancer and the old client holder in DynamicClient has finished calling send()
-                  _executor.schedule(new Runnable()
-                  {
-                    @Override
-                    public void run()
-                    {
-                      _balancer.shutdown(new PropertyEventThread.PropertyEventShutdownCallback()
-                      {
-                        @Override
-                        public void done()
-                        {
-                          LOG.info("Shut down old LoadBalancer after ZooKeeper session expiration");
-                        }
-                      });
-                    }
-                  }, _delayedExecution, TimeUnit.MILLISECONDS);
-
-                }
-
-                @Override
-                public void onError(Throwable e)
-                {
-                  LOG.error("Failed to reset LoadBalancer after ZooKeeper session expiration");
-                }
-              };
-
-              // create a new load balancer and swap the old balancer with the new load balancer then the callback
-              // will shutdown the old balancer
-              start(callback);
-
+              reset(_balancer);
               break;
             }
 
@@ -539,6 +454,106 @@ public class ZKFSLoadBalancer
         }
       });
     }
+  }
+
+  private void processSyncConnected(TogglingLoadBalancer balancer)
+  {
+    // TOGGLE ON, we don't need to reconstruct state
+    if (suppressZK())
+    {
+      LOG.warn("ZooKeeper currently suppressed by flag file {}, enabling backup stores",
+               _zkFlagFile.getAbsolutePath());
+      balancer.enableBackup(getStartupOrLoggerCallback());
+    }
+    else
+    {
+      LOG.info("Enabling primary ZK stores");
+      _directory.setConnection(_zkConnection);
+      balancer.enablePrimary(new Callback<None>()
+      {
+        @Override
+        public void onSuccess(None result)
+        {
+          getStartupOrLoggerCallback().onSuccess(result);
+        }
+
+        @Override
+        public void onError(Throwable e)
+        {
+          //we will receive Disconnected shortly
+          LOG.info("Ignored error enabling primary ZK stores; expecting Disconnected notification", e);
+        }
+      });
+    }
+  }
+
+  private void reset(final LoadBalancer balancer)
+  {
+
+    LOG.info("Resetting LoadBalancerState");
+
+    // Pretty unlikely that the startup callback is still pending when we
+    // are notified of session expiration, but checking anyway...
+    Callback<None> callback = _startupCallback.getAndSet(null);
+    if (callback != null)
+    {
+      callback.onError(new KeeperException.SessionExpiredException());
+    }
+
+    callback = new Callback<None>()
+    {
+      @Override
+      public void onSuccess(None none)
+      {
+        LOG.info("Successfully reset LoadBalancer after ZooKeeper session expiration");
+
+        // We shut down the old LoadBalancer here, which shuts down resources it created,
+        // but not the stores we created.
+        // However there is a concurrency edge case that we should handle here by delaying the shutdown.
+        // See example below:
+        //
+        // Thread 1 in DynamicClient.java         Thread 2 in ZKFSLoadBalancer.java
+        // client = _balancer.getClient()
+        //                                        We receive a call to reset the load balancer.
+        //                                        ZKListener shuts down load balancer which eventually
+        //                                        shutdown all clients
+        // client.send() -> ERROR because
+        // the client is in shut down state
+        // so we need to delay the the shutdown until we replace the _currentLoadBalancer with
+        // the new LoadBalancer and the old client holder in DynamicClient has finished calling send()
+        _executor.schedule(new Runnable()
+        {
+          @Override
+          public void run()
+          {
+            balancer.shutdown(new PropertyEventThread.PropertyEventShutdownCallback()
+            {
+              @Override
+              public void done()
+              {
+                LOG.info("Shut down old LoadBalancer after ZooKeeper session expiration");
+              }
+            });
+          }
+        }, _delayedExecution, TimeUnit.MILLISECONDS);
+
+      }
+
+      @Override
+      public void onError(Throwable e)
+      {
+        LOG.error("Failed to reset LoadBalancer after ZooKeeper session expiration");
+      }
+    };
+
+    // create a new load balancer and swap the old balancer with the new load balancer then the callback
+    // will shutdown the old balancer
+    start(callback);
+  }
+
+  public void reset()
+  {
+    reset(_currentLoadBalancer);
   }
 
   /**

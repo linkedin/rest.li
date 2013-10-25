@@ -1,5 +1,13 @@
+1.9.41
+------
+
 1.9.40
 ------
+(RB=226611)
+Fix a bug where SimpleLoadBalancerState didn't remove an old entry in cluster -> services
+mapping when SimpleLoadBalancerState receive a service changes notifications from Zookeeper.
+At the same time we are adding more JMX handle to load balancers to allow more control at runtime.
+
 (RB=225607)
 Fix two bugs related to snapshots:
 snapshot compatibility messages during checkSnapshot task should now print correctly.
