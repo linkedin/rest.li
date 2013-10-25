@@ -7,6 +7,9 @@ Adding perf test for Record Template put performance.
 Make skipping publishRestliIdl task more precise by taking advantage to changes to CompatibilityInfoMap.
 PublishRestliIdl should now be skipped if there are only model changes.
 
+(RB=229233)
+Add support for deprecated annotation.
+
 1.9.42
 ------
 (RB=226303)

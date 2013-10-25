@@ -18,6 +18,7 @@ package com.linkedin.restli.internal.server.model;
 
 
 import com.linkedin.common.callback.Callback;
+import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
@@ -76,6 +77,7 @@ import com.linkedin.restli.server.resources.ComplexKeyResource;
 import com.linkedin.restli.server.resources.ComplexKeyResourceAsync;
 import com.linkedin.restli.server.resources.KeyValueResource;
 import com.linkedin.restli.server.resources.SingleObjectResource;
+import java.lang.reflect.AccessibleObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -153,8 +155,29 @@ public final class RestLiAnnotationReader
           + "' must be annotated with a valid @RestLi... annotation");
     }
 
-    model.setCustomAnnotation(ResourceModelAnnotation.getAnnotationsMap(resourceClass.getAnnotations()));
+    DataMap annotationsMap = ResourceModelAnnotation.getAnnotationsMap(resourceClass.getAnnotations());
+    addDeprecatedAnnotation(annotationsMap, resourceClass);
+
+    model.setCustomAnnotation(annotationsMap);
     return model;
+  }
+
+  private static DataMap addDeprecatedAnnotation(DataMap annotationsMap, Class<?> clazz)
+  {
+    if(clazz.isAnnotationPresent(Deprecated.class))
+    {
+      annotationsMap.put("deprecated", new DataMap());
+    }
+    return annotationsMap;
+  }
+
+  private static DataMap addDeprecatedAnnotation(DataMap annotationsMap, AccessibleObject accessibleObject)
+  {
+    if(accessibleObject.isAnnotationPresent(Deprecated.class))
+    {
+      annotationsMap.put("deprecated", new DataMap());
+    }
+    return annotationsMap;
   }
 
   private static ResourceModel processCollection(final Class<? extends KeyValueResource<?, ?>> collectionResourceClass)
@@ -1335,13 +1358,16 @@ public final class RestLiAnnotationReader
         }
       }
 
+      DataMap annotationsMap = ResourceModelAnnotation.getAnnotationsMap(method.getAnnotations());
+      addDeprecatedAnnotation(annotationsMap, method);
+
       ResourceMethodDescriptor finderMethodDescriptor =
           ResourceMethodDescriptor.createForFinder(method,
                                                    queryParameters,
                                                    queryType,
                                                    metadataType,
                                                    getInterfaceType(method),
-                                                   ResourceModelAnnotation.getAnnotationsMap(method.getAnnotations()));
+                                                   annotationsMap);
       validateFinderMethod(finderMethodDescriptor, model);
 
       if (!Modifier.isPublic(method.getModifiers()))
@@ -1393,12 +1419,15 @@ public final class RestLiAnnotationReader
                                                         method.getName()));
       }
 
+      DataMap annotationsMap = ResourceModelAnnotation.getAnnotationsMap(method.getAnnotations());
+      addDeprecatedAnnotation(annotationsMap, method);
+
       List<Parameter<?>> parameters = getParameters(model, method, resourceMethod);
       model.addResourceMethodDescriptor(ResourceMethodDescriptor.createForRestful(resourceMethod,
                                                                                   method,
                                                                                   parameters,
                                                                                   getInterfaceType(method),
-                                                                                  ResourceModelAnnotation.getAnnotationsMap(method.getAnnotations())));
+                                                                                  annotationsMap));
     }
   }
 
@@ -1466,12 +1495,15 @@ public final class RestLiAnnotationReader
                                                           method.getName()));
         }
 
+        DataMap annotationsMap = ResourceModelAnnotation.getAnnotationsMap(method.getAnnotations());
+        addDeprecatedAnnotation(annotationsMap, method);
+
         List<Parameter<?>> parameters = getParameters(model, method, resourceMethod);
         model.addResourceMethodDescriptor(ResourceMethodDescriptor.createForRestful(resourceMethod,
                                                                                     method,
                                                                                     parameters,
                                                                                     getInterfaceType(method),
-                                                                                    ResourceModelAnnotation.getAnnotationsMap(method.getAnnotations())));
+                                                                                    annotationsMap));
       }
     }
   }
@@ -1529,6 +1561,9 @@ public final class RestLiAnnotationReader
             model.getName()));
     }
 
+    DataMap annotationsMap = ResourceModelAnnotation.getAnnotationsMap(method.getAnnotations());
+    addDeprecatedAnnotation(annotationsMap, method);
+
     model.addResourceMethodDescriptor(ResourceMethodDescriptor.createForAction(method,
                                                                                parameters,
                                                                                actionName,
@@ -1537,8 +1572,7 @@ public final class RestLiAnnotationReader
                                                                                actionReturnRecordDataSchema,
                                                                                recordDataSchema,
                                                                                getInterfaceType(method),
-                                                                               ResourceModelAnnotation.getAnnotationsMap(
-                                                                                   method.getAnnotations())));
+                                                                               annotationsMap));
 
   }
 

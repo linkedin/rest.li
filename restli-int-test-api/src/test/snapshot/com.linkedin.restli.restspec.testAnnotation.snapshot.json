@@ -126,6 +126,9 @@
             },
             "classField" : "com.linkedin.restli.restspec.TestAnnotationResource",
             "myName" : "action annotation"
+          },
+          "testMethod" : {
+            "doc" : "For integration testing only."
           }
         },
         "returns" : "int",

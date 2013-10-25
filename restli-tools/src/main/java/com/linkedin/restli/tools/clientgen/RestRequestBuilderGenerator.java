@@ -55,6 +55,7 @@ import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.ResourceSpecImpl;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.TyperefUtils;
+import com.linkedin.restli.internal.server.model.ResourceModelEncoder;
 import com.linkedin.restli.restspec.ActionSchema;
 import com.linkedin.restli.restspec.ActionSchemaArray;
 import com.linkedin.restli.restspec.ActionsSetSchema;
@@ -75,6 +76,7 @@ import com.linkedin.util.FileUtil;
 import com.sun.codemodel.JBlock;
 import com.sun.codemodel.JClass;
 import com.sun.codemodel.JClassAlreadyExistsException;
+import com.sun.codemodel.JCommentPart;
 import com.sun.codemodel.JDefinedClass;
 import com.sun.codemodel.JDocComment;
 import com.sun.codemodel.JExpr;
@@ -604,6 +606,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
 
 
     generateClassJavadoc(facadeClass, resource);
+    generateClassAnnotations(facadeClass, resource);
 
     return facadeClass;
   }
@@ -1162,6 +1165,24 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     }
   }
 
+  private static void generateClassAnnotations(JDefinedClass clazz, RecordTemplate schema)
+  {
+    if(schema.data().containsKey("annotations"))
+    {
+      DataMap annotations = schema.data().getDataMap("annotations");
+      if(annotations.containsKey(ResourceModelEncoder.DEPRECATED_ANNOTATION_NAME))
+      {
+        clazz.annotate(Deprecated.class);
+
+        DataMap deprecated = annotations.getDataMap(ResourceModelEncoder.DEPRECATED_ANNOTATION_NAME);
+        if(deprecated.containsKey(ResourceModelEncoder.DEPRECATED_ANNOTATION_DOC_FIELD))
+        {
+          clazz.javadoc().addDeprecated().append(deprecated.getString(ResourceModelEncoder.DEPRECATED_ANNOTATION_DOC_FIELD));
+        }
+      }
+    }
+  }
+
   private static void generateFactoryMethodJavadoc(JMethod method, RecordTemplate schema)
   {
     StringBuilder docString = new StringBuilder();
@@ -1193,6 +1214,21 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     {
       method.javadoc().append(docString.toString());
       method.javadoc().addReturn().add("builder for the resource method");
+    }
+
+    if(schema.data().containsKey("annotations"))
+    {
+      DataMap annotations = schema.data().getDataMap("annotations");
+      if(annotations.containsKey(ResourceModelEncoder.DEPRECATED_ANNOTATION_NAME))
+      {
+        method.annotate(Deprecated.class);
+
+        DataMap deprecated = annotations.getDataMap(ResourceModelEncoder.DEPRECATED_ANNOTATION_NAME);
+        if(deprecated.containsKey(ResourceModelEncoder.DEPRECATED_ANNOTATION_DOC_FIELD))
+        {
+          method.javadoc().addDeprecated().append(deprecated.getString(ResourceModelEncoder.DEPRECATED_ANNOTATION_DOC_FIELD));
+        }
+      }
     }
   }
 

@@ -1,0 +1,74 @@
+{
+  "models" : [ {
+    "type" : "record",
+    "name" : "MockRecord",
+    "namespace" : "com.linkedin.restli.examples",
+    "doc" : "A mock record with no contents.",
+    "fields" : [ ]
+  } ],
+  "schema" : {
+    "schema" : "com.linkedin.restli.examples.MockRecord",
+    "name" : "testDeprecationAnnotation",
+    "doc" : "generated from: com.linkedin.restli.restspec.TestDeprecationAnnotationResource",
+    "path" : "/testDeprecationAnnotation",
+    "annotations" : {
+      "deprecated" : {
+        "doc" : "This is a deprecation documentation string for a resource."
+      }
+    },
+    "collection" : {
+      "methods" : [ {
+        "method" : "create",
+        "annotations" : {
+          "deprecated" : {
+            "doc" : "Please use something else instead."
+          }
+        }
+      }, {
+        "method" : "get",
+        "parameters" : [ {
+          "name" : "extra",
+          "annotations" : {
+            "com.linkedin.restli.restspec.UnnamedAnnotation" : {
+              "value" : 123
+            }
+          },
+          "type" : "string"
+        } ]
+      } ],
+      "entity" : {
+        "path" : "/testDeprecationAnnotation/{testDeprecationAnnotationId}"
+      },
+      "finders" : [ {
+        "name" : "testFinder",
+        "annotations" : {
+          "deprecated" : {
+            "doc" : "Please use something else instead."
+          }
+        },
+        "parameters" : [ {
+          "name" : "title",
+          "type" : "string"
+        } ]
+      } ],
+      "supports" : [ "create", "get" ],
+      "identifier" : {
+        "name" : "testDeprecationAnnotationId",
+        "type" : "long"
+      },
+      "actions" : [ {
+        "name" : "testAction",
+        "annotations" : {
+          "deprecated" : {
+          }
+        },
+        "returns" : "int",
+        "parameters" : [ {
+          "name" : "num",
+          "type" : "int"
+        } ]
+      } ]
+    },
+    "namespace" : "com.linkedin.restli.restspec"
+  }
+}

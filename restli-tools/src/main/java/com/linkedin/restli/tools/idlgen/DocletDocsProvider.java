@@ -18,9 +18,13 @@ package com.linkedin.restli.tools.idlgen;
 
 import com.linkedin.restli.internal.server.model.ResourceModelEncoder.DocsProvider;
 import com.sun.javadoc.ClassDoc;
+import com.sun.javadoc.Doc;
 import com.sun.javadoc.MethodDoc;
 import com.sun.javadoc.ParamTag;
+import com.sun.javadoc.Tag;
 import java.lang.reflect.Method;
+import org.apache.commons.lang.StringUtils;
+
 
 /**
  * Specialized {@link DocsProvider} whose documentation comes from the Javadoc Doclet {@link RestLiDoclet}.
@@ -51,6 +55,40 @@ public class DocletDocsProvider implements DocsProvider
   }
 
   @Override
+  public String getClassDeprecatedTag(Class<?> resourceClass)
+  {
+    final ClassDoc doc = RestLiDoclet.getClassDoc(resourceClass);
+    if (doc == null)
+    {
+      return null;
+    }
+
+    return formatDeprecatedTags(doc);
+  }
+
+  private String formatDeprecatedTags(Doc doc)
+  {
+    Tag[] deprecatedTags = doc.tags("deprecated");
+    if(deprecatedTags.length > 0)
+    {
+      StringBuilder deprecatedText = new StringBuilder();
+      for(int i = 0; i < deprecatedTags.length; i++)
+      {
+        deprecatedText.append(deprecatedTags[i].text());
+        if(i < deprecatedTags.length - 1)
+        {
+          deprecatedText.append(" ");
+        }
+      }
+      return deprecatedText.toString();
+    }
+    else
+    {
+      return null;
+    }
+  }
+
+  @Override
   public String getMethodDoc(Method method)
   {
     final MethodDoc doc = RestLiDoclet.getMethodDoc(_docletId, method);
@@ -60,6 +98,17 @@ public class DocletDocsProvider implements DocsProvider
     }
 
     return buildDoc(doc.commentText());
+  }
+
+  public String getMethodDeprecatedTag(Method method)
+  {
+    final MethodDoc doc = RestLiDoclet.getMethodDoc(method);
+    if (doc == null)
+    {
+      return null;
+    }
+
+    return formatDeprecatedTags(doc);
   }
 
   @Override

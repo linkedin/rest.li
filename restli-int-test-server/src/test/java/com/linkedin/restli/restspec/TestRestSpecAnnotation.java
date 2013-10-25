@@ -20,6 +20,7 @@ package com.linkedin.restli.restspec;
 import com.linkedin.data.DataMap;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.File;
@@ -48,18 +49,18 @@ public class TestRestSpecAnnotation
     EXPECTED_IDL_DIR = projectDir + File.separator + RESOURCES_SUFFIX;
   }
 
-  @Test
-  public void testExport() throws FileNotFoundException
+  @Test(dataProvider = "annotationFiles")
+  public void testExport(String annotationFile) throws FileNotFoundException
   {
-    final DataMap actualRestSpecData = DataMapUtils.readMap(new FileInputStream(GENERATED_IDL_DIR + TEST_ANNOTATION_FILE));
-    final DataMap expectedRestSpecData = DataMapUtils.readMap(new FileInputStream(EXPECTED_IDL_DIR + TEST_ANNOTATION_FILE));
+    final DataMap actualRestSpecData = DataMapUtils.readMap(new FileInputStream(GENERATED_IDL_DIR + annotationFile));
+    final DataMap expectedRestSpecData = DataMapUtils.readMap(new FileInputStream(EXPECTED_IDL_DIR + annotationFile));
     Assert.assertEquals(actualRestSpecData, expectedRestSpecData);
   }
 
-  @Test
-  public void testParse() throws FileNotFoundException
+  @Test(dataProvider = "annotationFiles")
+  public void testParse(String annotationFile) throws FileNotFoundException
   {
-    final DataMap generatedRestSpecData = DataMapUtils.readMap(new FileInputStream(GENERATED_IDL_DIR + TEST_ANNOTATION_FILE));
+    final DataMap generatedRestSpecData = DataMapUtils.readMap(new FileInputStream(GENERATED_IDL_DIR + annotationFile));
     final ResourceSchema schema = new ResourceSchema(generatedRestSpecData);
     Assert.assertTrue(schema.hasAnnotations());
     final DataMap parsedRestSpecData = schema.getAnnotations().data();
@@ -69,7 +70,14 @@ public class TestRestSpecAnnotation
   private static final String RESOURCES_SUFFIX = "src" + File.separator + "test" + File.separator + "resources" + File.separator;
   private static final String PROJECT_DIR_PROP = "test.projectDir";
   private static final String IDL_DIR_PROP = "test.idlDir";
-  private static final String TEST_ANNOTATION_FILE = "com.linkedin.restli.restspec.testAnnotation.restspec.json";
+
+  @DataProvider(name="annotationFiles")
+  private String[] createAnnotationFiles() {
+    return new String[] {
+      "com.linkedin.restli.restspec.testAnnotation.restspec.json",
+      "com.linkedin.restli.restspec.testDeprecationAnnotation.restspec.json"
+    };
+  }
 
   private final String GENERATED_IDL_DIR;
   private final String EXPECTED_IDL_DIR;

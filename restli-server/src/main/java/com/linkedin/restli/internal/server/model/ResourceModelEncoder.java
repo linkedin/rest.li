@@ -20,7 +20,6 @@ package com.linkedin.restli.internal.server.model;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.DataCodec;
 import com.linkedin.data.codec.JacksonDataCodec;
-import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.JsonBuilder;
 import com.linkedin.data.schema.NamedDataSchema;
@@ -60,7 +59,6 @@ import com.linkedin.restli.restspec.RestMethodSchemaArray;
 import com.linkedin.restli.restspec.SimpleSchema;
 import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.ResourceLevel;
-import com.linkedin.restli.server.resources.ComplexKeyResource;
 import org.apache.commons.io.IOUtils;
 
 import java.io.File;
@@ -81,6 +79,9 @@ import java.util.List;
  */
 public class ResourceModelEncoder
 {
+  public static final String DEPRECATED_ANNOTATION_NAME = "deprecated";
+  public static final String DEPRECATED_ANNOTATION_DOC_FIELD = "doc";
+
   private final DataCodec codec = new JacksonDataCodec();
 
   public interface DocsProvider
@@ -91,11 +92,15 @@ public class ResourceModelEncoder
      */
     String getClassDoc(Class<?> resourceClass);
 
+    String getClassDeprecatedTag(Class<?> resourceClass);
+
     /**
      * @param method resource {@link Method}
      * @return method JavaDoc
      */
     String getMethodDoc(Method method);
+
+    String getMethodDeprecatedTag(Method method);
 
     /**
      * @param method resource {@link Method}
@@ -114,7 +119,19 @@ public class ResourceModelEncoder
     }
 
     @Override
+    public String getClassDeprecatedTag(Class<?> resourceClass)
+    {
+      return null;
+    }
+
+    @Override
     public String getMethodDoc(final Method method)
+    {
+      return null;
+    }
+
+    @Override
+    public String getMethodDeprecatedTag(Method method)
     {
       return null;
     }
@@ -361,6 +378,20 @@ public class ResourceModelEncoder
       docBuilder.append(doc).append("\n\n");
     }
     docBuilder.append("generated from: ").append(resourceClass.getCanonicalName());
+
+
+    final String deprecatedDoc = _docsProvider.getClassDeprecatedTag(resourceClass);
+    if(deprecatedDoc != null)
+    {
+      DataMap customAnnotationData = resourceModel.getCustomAnnotationData();
+      if(customAnnotationData == null)
+      {
+        customAnnotationData = new DataMap();
+        resourceModel.setCustomAnnotation(customAnnotationData);
+      }
+      customAnnotationData.put(DEPRECATED_ANNOTATION_NAME, deprecateDocToAnnotationMap(deprecatedDoc));
+    }
+
     resourceSchema.setDoc(docBuilder.toString());
   }
 
@@ -615,6 +646,12 @@ public class ResourceModelEncoder
         }
 
         final DataMap customAnnotation = resourceMethodDescriptor.getCustomAnnotationData();
+        String deprecatedDoc = _docsProvider.getMethodDeprecatedTag(resourceMethodDescriptor.getMethod());
+        if(deprecatedDoc != null)
+        {
+          customAnnotation.put(DEPRECATED_ANNOTATION_NAME, deprecateDocToAnnotationMap(deprecatedDoc));
+        }
+
         if (!customAnnotation.isEmpty())
         {
           action.setAnnotations(new CustomAnnotationContentSchemaMap(customAnnotation));
@@ -624,6 +661,17 @@ public class ResourceModelEncoder
       }
     }
     return actionsArray;
+  }
+
+  private DataMap deprecateDocToAnnotationMap(String deprecatedDoc)
+  {
+    deprecatedDoc = deprecatedDoc.trim();
+    DataMap deprecatedAnnotation = new DataMap();
+    if(!deprecatedDoc.isEmpty())
+    {
+      deprecatedAnnotation.put(DEPRECATED_ANNOTATION_DOC_FIELD, deprecatedDoc);
+    }
+    return deprecatedAnnotation;
   }
 
   private FinderSchemaArray createFinders(final ResourceModel resourceModel)
@@ -683,6 +731,13 @@ public class ResourceModelEncoder
         }
 
         final DataMap customAnnotation = resourceMethodDescriptor.getCustomAnnotationData();
+
+        String deprecatedDoc = _docsProvider.getMethodDeprecatedTag(resourceMethodDescriptor.getMethod());
+        if(deprecatedDoc != null)
+        {
+          customAnnotation.put(DEPRECATED_ANNOTATION_NAME, deprecateDocToAnnotationMap(deprecatedDoc));
+        }
+
         if (!customAnnotation.isEmpty())
         {
           finder.setAnnotations(new CustomAnnotationContentSchemaMap(customAnnotation));
@@ -794,6 +849,7 @@ public class ResourceModelEncoder
       {
         restMethod.setDoc(doc);
       }
+
       ParameterSchemaArray parameters = createParameters(descriptor);
       if (parameters.size() > 0)
       {
@@ -801,6 +857,14 @@ public class ResourceModelEncoder
       }
 
       final DataMap customAnnotation = descriptor.getCustomAnnotationData();
+
+
+      String deprecatedDoc = _docsProvider.getMethodDeprecatedTag(descriptor.getMethod());
+      if(deprecatedDoc != null)
+      {
+        customAnnotation.put(DEPRECATED_ANNOTATION_NAME, deprecateDocToAnnotationMap(deprecatedDoc));
+      }
+
       if (!customAnnotation.isEmpty())
       {
         restMethod.setAnnotations(new CustomAnnotationContentSchemaMap(customAnnotation));
