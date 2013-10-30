@@ -47,7 +47,7 @@ public class RestLiFortunesClient
   {
     // Create an HttpClient and wrap it in an abstraction layer
     final HttpClientFactory http = new HttpClientFactory(FilterChains.create(
-        new ClientCompressionFilter(EncodingType.IDENTITY, new EncodingType[]{ EncodingType.SNAPPY}, "*")
+      new ClientCompressionFilter(EncodingType.IDENTITY, new EncodingType[]{ EncodingType.SNAPPY}, Collections.singletonList("*"))
     ));
 
     final Client r2Client = new TransportClientAdapter(
