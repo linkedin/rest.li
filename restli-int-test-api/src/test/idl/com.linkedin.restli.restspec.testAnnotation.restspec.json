@@ -86,6 +86,9 @@
             "value" : 27
           }, {
           } ]
+        },
+        "testMethod" : {
+          "doc" : "For integration testing only."
         }
       },
       "name" : "testAction",

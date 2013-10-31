@@ -27,7 +27,13 @@
       "method" : "batch_delete"
     } ],
     "finders" : [ {
+      "annotations" : {
+        "testMethod" : {
+          "doc" : "For integration tests only."
+        }
+      },
       "name" : "prefix",
+      "doc" : "Example javadoc",
       "parameters" : [ {
         "name" : "prefix",
         "type" : "string"

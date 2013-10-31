@@ -17,6 +17,7 @@
 package com.linkedin.restli.tools.clientgen;
 
 
+import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.TyperefDataSchema;
@@ -75,6 +76,7 @@ import com.sun.codemodel.JBlock;
 import com.sun.codemodel.JClass;
 import com.sun.codemodel.JClassAlreadyExistsException;
 import com.sun.codemodel.JDefinedClass;
+import com.sun.codemodel.JDocComment;
 import com.sun.codemodel.JExpr;
 import com.sun.codemodel.JExpression;
 import com.sun.codemodel.JFieldVar;
@@ -1162,10 +1164,34 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
 
   private static void generateFactoryMethodJavadoc(JMethod method, RecordTemplate schema)
   {
+    StringBuilder docString = new StringBuilder();
+    if(schema.data().containsKey("annotations"))
+    {
+      DataMap annotations = schema.data().getDataMap("annotations");
+      if(annotations.containsKey("testMethod"))
+      {
+        DataMap testMethod = annotations.getDataMap("testMethod");
+        docString.append("<b>Test Method");
+
+        String testMethodDoc = testMethod.getString("doc");
+        if(testMethodDoc !=  null)
+        {
+          docString.append(": ");
+          docString.append(testMethodDoc);
+        }
+
+        docString.append("</b>\n");
+      }
+    }
     final String doc = schema.data().getString("doc");
     if (doc != null)
     {
-      method.javadoc().append(doc);
+      docString.append(doc);
+    }
+
+    if(docString.length() > 0)
+    {
+      method.javadoc().append(docString.toString());
       method.javadoc().addReturn().add("builder for the resource method");
     }
   }

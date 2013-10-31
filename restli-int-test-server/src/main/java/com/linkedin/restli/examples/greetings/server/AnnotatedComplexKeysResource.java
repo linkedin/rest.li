@@ -36,6 +36,7 @@ import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestMethod;
+import com.linkedin.restli.server.annotations.TestMethod;
 import com.linkedin.restli.server.resources.KeyValueResource;
 import java.util.List;
 import java.util.Map;
@@ -112,6 +113,10 @@ public class AnnotatedComplexKeysResource
     return result;
   }
 
+  /**
+   * Example javadoc
+   */
+  @TestMethod(doc = "For integration tests only.")
   @Finder("prefix")
   public Promise<List<Message>> prefix(@QueryParam("prefix")final String prefix)
   {

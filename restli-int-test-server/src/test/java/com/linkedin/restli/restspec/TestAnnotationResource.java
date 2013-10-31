@@ -30,6 +30,7 @@ import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestMethod;
+import com.linkedin.restli.server.annotations.TestMethod;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
 import org.testng.annotations.Optional;
 
@@ -76,6 +77,7 @@ public class TestAnnotationResource extends CollectionResourceTemplate<Long, Moc
     return null;
   }
 
+  @TestMethod(doc = "For integration testing only.")
   @Action(name = "testAction", resourceLevel = ResourceLevel.COLLECTION)
   @NamedAnnotation(stringField = "action annotation",
                    classField = TestAnnotationResource.class,

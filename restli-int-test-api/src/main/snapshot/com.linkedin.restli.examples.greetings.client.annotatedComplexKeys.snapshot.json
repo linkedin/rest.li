@@ -58,6 +58,12 @@
       },
       "finders" : [ {
         "name" : "prefix",
+        "doc" : "Example javadoc",
+        "annotations" : {
+          "testMethod" : {
+            "doc" : "For integration tests only."
+          }
+        },
         "parameters" : [ {
           "name" : "prefix",
           "type" : "string"

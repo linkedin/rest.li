@@ -1,6 +1,7 @@
 1.9.42
 ------
-
+(RB=226303)
+Add @TestMethod annotation to indicate which methods on a resource are intended to only be used for testing.
 
 1.9.41
 ------
