@@ -965,19 +965,36 @@ class PegasusPlugin implements Plugin<Project>
         suffix = SNAPSHOT_FILE_SUFFIX
 
         onlyIf {
+
+          project.logger.info("SKIP_IDL: " + isPropertyTrue(project, SKIP_IDL_CHECK) + "\n" +
+                              "SNAPSHOT_NO_PUBLISH: " + isPropertyTrue(project, SNAPSHOT_NO_PUBLISH) + "\n" +
+                              "checkRestModelTask:" +
+                                      " Executed: " +  checkRestModelTask.state.executed +
+                                      ", Not Skipped: " + !checkRestModelTask.state.skipped +
+                                      ", No Failure: " + (checkRestModelTask.state.failure == null) +
+                                      ", Is Not Equivalent: " + !checkRestModelTask.isEquivalent + "\n" +
+                              "checkSnapshotTask:" +
+                                      " Executed: " +  checkSnapshotTask.state.executed +
+                                      ", Not Skipped: " + !checkSnapshotTask.state.skipped +
+                                      ", No Failure: " + (checkSnapshotTask.state.failure == null) +
+                                      ", Is Not Equivalent: " + !checkSnapshotTask.isEquivalent + "\n")
+
+
           if (isPropertyTrue(project, SKIP_IDL_CHECK))
           {
-            !isPropertyTrue(project, SNAPSHOT_NO_PUBLISH) &&
-            checkSnapshotTask.state.executed &&
-            checkSnapshotTask.state.failure == null &&
-            !checkSnapshotTask.isEquivalent
+            return !isPropertyTrue(project, SNAPSHOT_NO_PUBLISH) &&
+              checkSnapshotTask.state.executed &&
+              !checkSnapshotTask.state.skipped &&
+              checkSnapshotTask.state.failure == null &&
+              !checkSnapshotTask.isEquivalent
           }
           else
           {
-            !isPropertyTrue(project, SNAPSHOT_NO_PUBLISH) &&
-            checkRestModelTask.state.executed &&
-            checkRestModelTask.state.failure == null &&
-            !checkRestModelTask.isEquivalent
+            return !isPropertyTrue(project, SNAPSHOT_NO_PUBLISH) &&
+              checkRestModelTask.state.executed &&
+              !checkRestModelTask.state.skipped &&
+              checkRestModelTask.state.failure == null &&
+              !checkRestModelTask.isEquivalent
           }
 
         }
@@ -991,18 +1008,44 @@ class PegasusPlugin implements Plugin<Project>
         suffix = IDL_FILE_SUFFIX
 
         onlyIf {
+
+          project.logger.info("SKIP_IDL: " + isPropertyTrue(project, SKIP_IDL_CHECK) + "\n" +
+                              "SNAPSHOT_NO_PUBLISH: " + isPropertyTrue(project, IDL_NO_PUBLISH) + "\n" +
+                              "checkRestModelTask:" +
+                                      " Executed: " + checkRestModelTask.state.executed +
+                                      ", Not Skipped: " + !checkRestModelTask.state.skipped +
+                                      ", No Failure: " + (checkRestModelTask.state.failure == null) +
+                                      ", Is Not Equivalent: " + !checkRestModelTask.isEquivalent + "\n" +
+                              "checkIdlTask:" +
+                                      " Executed: "  + checkIdlTask.state.executed +
+                                      ", Not Skipped: " + !checkIdlTask.state.skipped +
+                                      ", No Failure: " + (checkIdlTask.state.failure == null) +
+                                      ", Is Not Equivalent: " + !checkIdlTask.isEquivalent + "\n" +
+                              "checkSnapshotTask:" +
+                                      " Executed: " + checkSnapshotTask.state.executed +
+                                      ", Not Skipped: " + !checkSnapshotTask.state.skipped +
+                                      ", No Failure: " + (checkSnapshotTask.state.failure == null) +
+                                      ", Is Not Equivalent: " + !checkSnapshotTask.isEquivalent + "\n")
+
           if (isPropertyTrue(project, SKIP_IDL_CHECK))
           {
-            !isPropertyTrue(project, IDL_NO_PUBLISH) &&
-            checkSnapshotTask.state.executed &&
-            checkSnapshotTask.state.failure == null &&
-            !checkSnapshotTask.isEquivalent
+            return !isPropertyTrue(project, IDL_NO_PUBLISH) &&
+              checkSnapshotTask.state.executed &&
+              !checkSnapshotTask.state.skipped &&
+              checkSnapshotTask.state.failure == null &&
+              !checkSnapshotTask.isEquivalent
           }
           else
           {
-            !isPropertyTrue(project, IDL_NO_PUBLISH) &&
-            ((checkRestModelTask.state.executed && checkRestModelTask.state.failure == null && !checkRestModelTask.isEquivalent) ||
-             (checkIdlTask.state.executed && checkIdlTask.state.failure == null && !checkIdlTask.isEquivalent))
+            return !isPropertyTrue(project, IDL_NO_PUBLISH) &&
+              ((checkRestModelTask.state.executed &&
+                !checkRestModelTask.state.skipped &&
+                checkRestModelTask.state.failure == null &&
+                !checkRestModelTask.isEquivalent) ||
+               (checkIdlTask.state.executed &&
+                !checkIdlTask.state.skipped &&
+                checkIdlTask.state.failure == null &&
+                !checkIdlTask.isEquivalent))
           }
         }
       }

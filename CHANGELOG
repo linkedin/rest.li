@@ -6,6 +6,9 @@ Add @TestMethod annotation to indicate which methods on a resource are intended 
 (RB=224402)
 Add compatibility checking between snapshot and idl.
 
+(RB=228981)
+Fixing the onlyIf closure for Publish tasks, adding more logging to ease debugging for future.
+
 1.9.41
 ------
 (RB=225308)
