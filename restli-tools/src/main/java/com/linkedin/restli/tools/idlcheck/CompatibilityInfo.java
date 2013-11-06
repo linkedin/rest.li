@@ -37,7 +37,7 @@ public class CompatibilityInfo
     ARRAY_NOT_CONTAIN(Level.INCOMPATIBLE, "Current field must contain these values: %s"),
     ARRAY_NOT_EQUAL(Level.INCOMPATIBLE, "Current field must be these values: %s"),
     ARRAY_MISSING_ELEMENT(Level.INCOMPATIBLE, "\"%s\" has been removed from the current field"),
-    OTHER_ERROR(Level.INCOMPATIBLE, "%s"),
+    OTHER_ERROR(Level.INCOMPATIBLE, "%s"), // errors that are outside the scope of compatibility checking, such as FileNotFoundException
     PARAMETER_NEW_REQUIRED(Level.INCOMPATIBLE, "Unable to add the new required parameter \"%s\""),
     PARAMETER_WRONG_OPTIONALITY(Level.INCOMPATIBLE, "Unable to change the previous optional parameter to currently required"),
     RESOURCE_MISSING(Level.INCOMPATIBLE, "Resource for \"%s\" is not found. This endpoint will not be released. Please remove this file and build again"),
@@ -49,6 +49,7 @@ public class CompatibilityInfo
     TYPE_BREAKS_OLD_READER(Level.INCOMPATIBLE, "%s, breaks old readers"),
     TYPE_BREAKS_NEW_READER(Level.INCOMPATIBLE, "%s, breaks new readers"),
     TYPE_BREAKS_NEW_AND_OLD_READERS(Level.INCOMPATIBLE, "%s, breaks new and old readers"),
+    TYPE_ERROR(Level.INCOMPATIBLE, "%s"), // data type related errors, reported by com.linkedin.data.schema.compatibility.CompatibilityChecker
     DOC_NOT_EQUAL(Level.COMPATIBLE, "Documentation is updated"),
     DEPRECATED(Level.COMPATIBLE, "%s is deprecated"),
     PARAMETER_NEW_OPTIONAL(Level.COMPATIBLE, "New optional parameter \"%s\" is added"),
@@ -57,7 +58,7 @@ public class CompatibilityInfo
     RESOURCE_NEW(Level.COMPATIBLE, "New resource is created in \"%s\""),
     SUPERSET(Level.COMPATIBLE, "Current values have these extra values: %s"),
     VALUE_DIFFERENT(Level.COMPATIBLE, "Previous value \"%s\" is changed to \"%s\""),
-    TYPE_INFO(Level.COMPATIBLE, "%s");
+    TYPE_INFO(Level.COMPATIBLE, "%s"); // data type related information or warning, reported by com.linkedin.data.schema.compatibility.CompatibilityChecker
 
     public String getDescription(Object[] parameters)
     {

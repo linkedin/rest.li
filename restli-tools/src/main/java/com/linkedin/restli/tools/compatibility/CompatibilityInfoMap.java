@@ -66,18 +66,9 @@ public class CompatibilityInfoMap
   {
     path.push(pathTail);
 
-    final CompatibilityInfo.Type infoType;
-    if (message.isError())
-    {
-       infoType = CompatibilityInfo.Type.TYPE_INCOMPATIBLE;
-      _restSpecMap.get(infoType.getLevel()).add(new CompatibilityInfo(path, infoType, message.getArgs()));
-    }
-    else
-    {
-      infoType = CompatibilityInfo.Type.TYPE_INFO;
-      String info = String.format(message.getFormat(), message.getArgs());
-      _restSpecMap.get(infoType.getLevel()).add(new CompatibilityInfo(Arrays.asList(message.getPath()), infoType, info));
-    }
+    final CompatibilityInfo.Type infoType = (message.isError() ? CompatibilityInfo.Type.TYPE_ERROR : CompatibilityInfo.Type.TYPE_INFO);
+    final String info = String.format(message.getFormat(), message.getArgs());
+    _restSpecMap.get(infoType.getLevel()).add(new CompatibilityInfo(Arrays.asList(message.getPath()), infoType, info));
 
     path.pop();
   }

@@ -9,6 +9,9 @@ Add compatibility checking between snapshot and idl.
 (RB=228981)
 Fixing the onlyIf closure for Publish tasks, adding more logging to ease debugging for future.
 
+(RB=230533)
+Fix bug that schema compatibility checking throws exception of "java.util.MissingFormatArgumentException: Format specifier 's'".
+
 1.9.41
 ------
 (RB=225308)
