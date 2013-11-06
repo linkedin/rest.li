@@ -16,18 +16,24 @@
 
 package com.linkedin.restli.tools.idlgen;
 
+
 import com.sun.javadoc.ClassDoc;
 import com.sun.javadoc.MethodDoc;
 import com.sun.javadoc.Parameter;
 import com.sun.javadoc.RootDoc;
 import com.sun.tools.javadoc.Main;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
+
+import java.io.PrintWriter;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
 
 /**
  * Custom Javadoc processor that merges documentation into the restspec.json. The embedded Javadoc
@@ -36,13 +42,53 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
  * cleanly integrate the output into the {@link RestLiResourceModelExporter} tool. Thus, we're just
  * dumping the docs into a static Map which can be accessed by {@link RestLiResourceModelExporter}.
  *
- * <p>This class is NOT thread-safe
+ * This class supports multiple runs of Javadoc Doclet API {@link Main#execute(String[])}.
+ * Each run will be assigned an unique "Doclet ID", returned by
+ * {@link #generateJavadoc(String, java.io.PrintWriter, java.io.PrintWriter, java.io.PrintWriter, String[])}.
+ * The Doclet ID should be subsequently used to initialize {@link DocletDocsProvider}.
+ *
+ * This class is thread-safe. However, #generateJavadoc() will be synchronized.
  *
  * @author dellamag
- * @see Main#execute(String[])
+ * @see {@link Main#execute(String, java.io.PrintWriter, java.io.PrintWriter, java.io.PrintWriter, String, String[])}
  */
 public class RestLiDoclet
 {
+  /**
+   * Generate Javadoc and return associated Doclet ID.
+   * This method is synchronized.
+   *
+   * @param programName Name of the program (for error messages).
+   * @param errWriter PrintWriter to receive error messages.
+   * @param warnWriter PrintWriter to receive warning messages.
+   * @param noticeWriter PrintWriter to receive notice messages.
+   * @param args The command line parameters.
+   * @return an unique doclet ID which represent the subsequent Main#execute() run.
+   * @throws IllegalStateException if the generated doclet ID is already used. Try again.
+   * @throws IllegalArgumentException if Javadoc fails to generate docs.
+   */
+  public static synchronized long generateJavadoc(String programName,
+                                                  PrintWriter errWriter,
+                                                  PrintWriter warnWriter,
+                                                  PrintWriter noticeWriter,
+                                                  String[] args)
+  {
+    if (_docInfo.containsKey(_id))
+    {
+      throw new IllegalStateException("Doclet information with ID " + _id + " already exists");
+    }
+
+    final int javadocRetCode = Main.execute(programName, errWriter, warnWriter, noticeWriter, RestLiDoclet.class.getName(), args);
+    if (javadocRetCode != 0)
+    {
+      throw new IllegalArgumentException("Javadoc failed with return code " + javadocRetCode);
+    }
+
+    final long currentId = _id;
+    ++_id;
+    return currentId;
+  }
+
   /**
    * Entry point for Javadoc Doclet.
    *
@@ -51,18 +97,19 @@ public class RestLiDoclet
    */
   public static boolean start(RootDoc root)
   {
-    _nameToClassDoc.clear();
-    _identityToMethodDoc.clear();
+    final DocInfo docInfo = new DocInfo();
 
     for (ClassDoc classDoc : root.classes())
     {
-      _nameToClassDoc.put(classDoc.qualifiedName(), classDoc);
+      docInfo.setClassDoc(classDoc.qualifiedName(), classDoc);
 
       for (MethodDoc methodDoc : classDoc.methods())
       {
-        _identityToMethodDoc.put(MethodIdentity.create(methodDoc), methodDoc);
+        docInfo.setMethodDoc(MethodIdentity.create(methodDoc), methodDoc);
       }
     }
+
+    _docInfo.put(_id, docInfo);
 
     return true;
   }
@@ -73,9 +120,15 @@ public class RestLiDoclet
    * @param resourceClass resource class to be queried
    * @return corresponding {@link ClassDoc}
    */
-  public static ClassDoc getClassDoc(Class<?> resourceClass)
+  public static ClassDoc getClassDoc(long docletId, Class<?> resourceClass)
   {
-    return _nameToClassDoc.get(resourceClass.getCanonicalName());
+    final DocInfo docInfo = _docInfo.get(docletId);
+    if (docInfo == null)
+    {
+      return null;
+    }
+
+    return docInfo.getClassDoc(resourceClass.getCanonicalName());
   }
 
   /**
@@ -84,9 +137,42 @@ public class RestLiDoclet
    * @param method Java method to be queried
    * @return corresponding {@link MethodDoc}
    */
-  public static MethodDoc getMethodDoc(Method method)
+  public static MethodDoc getMethodDoc(long docletId, Method method)
   {
-    return _identityToMethodDoc.get(MethodIdentity.create(method));
+    final DocInfo docInfo = _docInfo.get(docletId);
+    if (docInfo == null)
+    {
+      return null;
+    }
+
+    final MethodIdentity methodId = MethodIdentity.create(method);
+    return docInfo.getMethodDoc(methodId);
+  }
+
+  private static class DocInfo
+  {
+    public ClassDoc getClassDoc(String className)
+    {
+      return _classNameToClassDoc.get(className);
+    }
+
+    public MethodDoc getMethodDoc(MethodIdentity methodId)
+    {
+      return _methodIdToMethodDoc.get(methodId);
+    }
+
+    public void setClassDoc(String className, ClassDoc classDoc)
+    {
+      _classNameToClassDoc.put(className, classDoc);
+    }
+
+    public void setMethodDoc(MethodIdentity methodId, MethodDoc methodDoc)
+    {
+      _methodIdToMethodDoc.put(methodId, methodDoc);
+    }
+
+    private final Map<String, ClassDoc> _classNameToClassDoc = new HashMap<String, ClassDoc>();
+    private final Map<MethodIdentity, MethodDoc> _methodIdToMethodDoc = new HashMap<MethodIdentity, MethodDoc>();
   }
 
   private static class MethodIdentity
@@ -162,6 +248,6 @@ public class RestLiDoclet
     private final List<String> _parameterTypeNames;
   }
 
-  private static final Map<String, ClassDoc> _nameToClassDoc = new HashMap<String, ClassDoc>();
-  private static final Map<MethodIdentity, MethodDoc> _identityToMethodDoc = new HashMap<MethodIdentity, MethodDoc>();
+  private static final ConcurrentMap<Long, DocInfo> _docInfo = new ConcurrentHashMap<Long, DocInfo>();
+  private static long _id = 0;
 }

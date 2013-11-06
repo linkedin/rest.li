@@ -15,6 +15,9 @@ Fix bug that schema compatibility checking throws exception of "java.util.Missin
 (RB=230897)
 Support per-sourceSet pegasus/snapshot/idl override properties.
 
+(RB=230550)
+Fix missing doc field in generated snapshot/idl files, which is caused by multi-threaded generation.
+
 1.9.41
 ------
 (RB=225308)

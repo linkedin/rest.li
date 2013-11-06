@@ -27,7 +27,7 @@ import com.linkedin.restli.server.RestLiConfig;
 import com.linkedin.restli.server.util.FileClassNameScanner;
 import com.linkedin.restli.tools.compatibility.CompatibilityUtil;
 import com.linkedin.restli.tools.idlgen.DocletDocsProvider;
-import com.sun.tools.javadoc.Main;
+import com.linkedin.restli.tools.idlgen.RestLiDoclet;
 import org.apache.commons.io.output.NullWriter;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -143,12 +143,12 @@ public class RestLiSnapshotExporter
     {
       javadocArgs.addAll(sourceFileNames);
     }
-    Main.execute(apiName, sysoutWriter, nullWriter, nullWriter, "com.linkedin.restli.tools.idlgen.RestLiDoclet", javadocArgs.toArray(new String[0]));
 
+    final Long docletId = RestLiDoclet.generateJavadoc(apiName, sysoutWriter, nullWriter, nullWriter, javadocArgs.toArray(new String[0]));
 
     log.info("Exporting snapshot files...");
 
-    final GeneratorResult result = generateSnapshotFiles(apiName, outdir, rootResourceMap);
+    final GeneratorResult result = generateSnapshotFiles(apiName, outdir, rootResourceMap, docletId);
 
     log.info("Done!");
 
@@ -157,7 +157,8 @@ public class RestLiSnapshotExporter
 
   private GeneratorResult generateSnapshotFiles(String apiName,
                                                 String outdir,
-                                                Map<String, ResourceModel> rootResourceMap)
+                                                Map<String, ResourceModel> rootResourceMap,
+                                                Long docletId)
     throws IOException
   {
     SnapshotResult result = new SnapshotResult();
@@ -179,7 +180,7 @@ public class RestLiSnapshotExporter
       throw new RuntimeException("Output directory '" + outdir + "' must be writeable");
     }
 
-    final ResourceModelEncoder encoder = new ResourceModelEncoder(new DocletDocsProvider());
+    final ResourceModelEncoder encoder = new ResourceModelEncoder(new DocletDocsProvider(docletId));
 
     final List<ResourceSchema> rootResourceNodes = new ArrayList<ResourceSchema>();
     for (Map.Entry<String, ResourceModel> entry: rootResourceMap.entrySet())

@@ -26,7 +26,7 @@ import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.restspec.RestSpecCodec;
 import com.linkedin.restli.server.RestLiConfig;
 import com.linkedin.restli.server.util.FileClassNameScanner;
-import com.sun.tools.javadoc.Main;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -172,11 +172,12 @@ public class RestLiResourceModelExporter
     {
       javadocArgs.addAll(sourceFileNames);
     }
-    Main.execute(apiName, sysoutWriter, nullWriter, nullWriter, "com.linkedin.restli.tools.idlgen.RestLiDoclet", javadocArgs.toArray(new String[0]));
+
+    final long docletId = RestLiDoclet.generateJavadoc(apiName, sysoutWriter, nullWriter, nullWriter, javadocArgs.toArray(new String[0]));
 
     log.info("Exporting IDL files...");
 
-    final GeneratorResult result = generateIDLFiles(apiName, outdir, rootResourceMap);
+    final GeneratorResult result = generateIDLFiles(apiName, outdir, rootResourceMap, docletId);
 
     log.info("Done!");
 
@@ -214,7 +215,8 @@ public class RestLiResourceModelExporter
 
   private GeneratorResult generateIDLFiles(String apiName,
                                            String outdir,
-                                           Map<String, ResourceModel> rootResourceMap)
+                                           Map<String, ResourceModel> rootResourceMap,
+                                           long docletId)
       throws IOException
   {
     Result result = new Result();
@@ -236,7 +238,7 @@ public class RestLiResourceModelExporter
       throw new RuntimeException("Output directory '" + outdir + "' must be writeable");
     }
 
-    final ResourceModelEncoder encoder = new ResourceModelEncoder(new DocletDocsProvider());
+    final ResourceModelEncoder encoder = new ResourceModelEncoder(new DocletDocsProvider(docletId));
 
     final List<ResourceSchema> rootResourceNodes = new ArrayList<ResourceSchema>();
     for (Entry<String, ResourceModel> entry: rootResourceMap.entrySet())
