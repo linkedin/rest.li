@@ -812,26 +812,54 @@ class PegasusPlugin implements Plugin<Project>
 
   private static String getDataSchemaRelativePath(Project project, SourceSet sourceSet)
   {
-    if (project.hasProperty('overridePegasusDir') && project.overridePegasusDir) {
-      return project.overridePegasusDir
+    final String override = getOverridePath(project, sourceSet, 'overridePegasusDir')
+    if (override == null)
+    {
+      return "src${File.separatorChar}${sourceSet.name}${File.separatorChar}pegasus"
     }
-    return "src${File.separatorChar}${sourceSet.name}${File.separatorChar}pegasus"
+    else
+    {
+      return override
+    }
   }
 
   private static String getSnapshotRelativePath(Project project, SourceSet sourceSet)
   {
-    if (project.hasProperty('overrideSnapshotDir') && project.overrideSnapshotDir) {
-      return project.overrideSnapshotDir
+    final String override = getOverridePath(project, sourceSet, 'overrideSnapshotDir')
+    if (override == null)
+    {
+      return "src${File.separatorChar}${sourceSet.name}${File.separatorChar}snapshot"
     }
-    return "src${File.separatorChar}${sourceSet.name}${File.separatorChar}snapshot"
+    else
+    {
+      return override
+    }
   }
 
   private static String getIdlRelativePath(Project project, SourceSet sourceSet)
   {
-    if (project.hasProperty('overrideIdlDir') && project.overrideIdlDir) {
-      return project.overrideIdlDir
+    final String override = getOverridePath(project, sourceSet, 'overrideIdlDir')
+    if (override == null)
+    {
+      return "src${File.separatorChar}${sourceSet.name}${File.separatorChar}idl"
     }
-    return "src${File.separatorChar}${sourceSet.name}${File.separatorChar}idl"
+    else
+    {
+      return override
+    }
+  }
+
+  private static String getOverridePath(Project project, SourceSet sourceSet, String overridePropertyName)
+  {
+    final String sourceSetPropertyName = "${sourceSet.name}.${overridePropertyName}"
+    String override = getNonEmptyProperty(project, sourceSetPropertyName)
+
+    if (override == null && sourceSet.name.equals('main'))
+    {
+      override = getNonEmptyProperty(project, overridePropertyName)
+    }
+
+    return override
   }
 
   private static FileTree getSuffixedFiles(Project project, Object baseDir, String suffix)
@@ -1355,14 +1383,37 @@ class PegasusPlugin implements Plugin<Project>
   }
 
   /**
+   * return the property value if the property exists and is not empty (-Pname=value)
+   * return null if property does not exist or the property is empty (-Pname)
+   *
+   * @param project the project where to look for the property
+   * @param propertyName the name of the property
+   */
+  public static String getNonEmptyProperty(Project project, String propertyName)
+  {
+    if (!project.hasProperty(propertyName))
+    {
+      return null
+    }
+
+    final String propertyValue = project.property(propertyName).toString()
+    if (propertyValue.empty)
+    {
+      return null
+    }
+
+    return propertyValue
+  }
+
+  /**
    * Return true if the given property exists and its value is true
    *
    * @param project the project where to look for the property
-   * @param property the name of the property
+   * @param propertyName the name of the property
    */
-  public static boolean isPropertyTrue(Project project, String property)
+  public static boolean isPropertyTrue(Project project, String propertyName)
   {
-    return project.hasProperty(property) && Boolean.valueOf(project.property(property).toString())
+    return project.hasProperty(propertyName) && Boolean.valueOf(project.property(propertyName).toString())
   }
 
   private static enum FileCompatibilityType

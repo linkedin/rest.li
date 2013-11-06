@@ -12,6 +12,9 @@ Fixing the onlyIf closure for Publish tasks, adding more logging to ease debuggi
 (RB=230533)
 Fix bug that schema compatibility checking throws exception of "java.util.MissingFormatArgumentException: Format specifier 's'".
 
+(RB=230897)
+Support per-sourceSet pegasus/snapshot/idl override properties.
+
 1.9.41
 ------
 (RB=225308)
