@@ -334,12 +334,12 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
     {
       // given a path, return the path if we're watching it, or the parent
       // if we're watching the parent.
-      if (containsWatch(inputPath))
+      if (containsWatch(getPropertyForPath(inputPath)))
       {
         return inputPath;
       }
       String parentPath = getParentPath(inputPath);
-      if (parentPath != null && containsWatch(parentPath))
+      if (parentPath != null && containsWatch(getPropertyForPath(parentPath)))
       {
         return parentPath;
       }

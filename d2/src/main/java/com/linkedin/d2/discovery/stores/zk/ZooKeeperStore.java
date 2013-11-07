@@ -192,25 +192,32 @@ public abstract class ZooKeeperStore<T> extends AbstractPropertyStoreAsync<T>
 
     public void addWatch(String propertyName)
     {
-      String path = getPath(propertyName);
       synchronized (_mutex)
       {
-        _watches.add(path);
+        _watches.add(propertyName);
         _watchCount++;
       }
     }
     public void cancelWatch(String propertyName)
     {
-      String path = getPath(propertyName);
       synchronized (_mutex)
       {
-        _watches.remove(path);
+        _watches.remove(propertyName);
         _watchCount--;
       }
     }
     public int getWatchCount()
     {
       return _watchCount;
+    }
+
+    public void cancelAllWatches()
+    {
+      synchronized (_mutex)
+      {
+        _watches.clear();
+        _watchCount = 0;
+      }
     }
 
     protected boolean containsWatch(String prop)
@@ -256,7 +263,7 @@ public abstract class ZooKeeperStore<T> extends AbstractPropertyStoreAsync<T>
     {
       // the default is to just return the path that the watchedEvent
       // was for.
-      if(containsWatch(inputPath))
+      if(containsWatch(getPropertyForPath(inputPath)))
       {
         return inputPath;
       }
