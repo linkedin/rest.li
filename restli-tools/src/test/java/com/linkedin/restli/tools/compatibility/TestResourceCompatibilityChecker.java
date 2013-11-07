@@ -238,25 +238,25 @@ public class TestResourceCompatibilityChecker
     final Collection<CompatibilityInfo> modelTestErrors = new HashSet<CompatibilityInfo>();
     resourceTestErrors.add(
       new CompatibilityInfo(Arrays.<Object>asList("", "collection", "identifier", "params"),
-                            CompatibilityInfo.Type.TYPE_INCOMPATIBLE, "string", "long"));
+                            CompatibilityInfo.Type.TYPE_ERROR, "schema type changed from string to long"));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "supports"),
                                          CompatibilityInfo.Type.ARRAY_NOT_CONTAIN,
                                          new StringArray(Arrays.asList("batch_get", "create", "delete", "get"))));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "methods"),
                                          CompatibilityInfo.Type.ARRAY_MISSING_ELEMENT, "batch_get"));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "finders", "search", "metadata", "type"),
-                                                 CompatibilityInfo.Type.TYPE_INCOMPATIBLE, "array", "int"));
+                                                 CompatibilityInfo.Type.TYPE_ERROR, "schema type changed from array to int"));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "finders", "search", "assocKeys"),
                                                  CompatibilityInfo.Type.VALUE_NOT_EQUAL,
                                                  new StringArray(Arrays.asList("q", "s")), new StringArray(Arrays.asList("q", "changed_key"))));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "finders", "find_assocKey_downgrade", "assocKeys"),
                                                  CompatibilityInfo.Type.FINDER_ASSOCKEYS_DOWNGRADE));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "oneAction", "parameters", "bitfield", "items"),
-                                                 CompatibilityInfo.Type.TYPE_INCOMPATIBLE, "boolean", "int"));
+                                                 CompatibilityInfo.Type.TYPE_ERROR, "schema type changed from boolean to int"));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "oneAction", "parameters", "someString", "type"),
                                                  CompatibilityInfo.Type.TYPE_UNKNOWN, sp.errorMessage()));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "oneAction", "parameters", "stringMap", "type"),
-                                                 CompatibilityInfo.Type.TYPE_INCOMPATIBLE, "string", "int"));
+                                                 CompatibilityInfo.Type.TYPE_ERROR, "schema type changed from string to int"));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "entity", "actions", "anotherAction", "parameters"),
                                                  CompatibilityInfo.Type.ARRAY_MISSING_ELEMENT, "subMap"));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "entity", "actions", "exceptionTest", "throws"),
@@ -265,7 +265,7 @@ public class TestResourceCompatibilityChecker
     resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "entity", "actions", "someAction", "parameters", "a", "optional"),
                                                  CompatibilityInfo.Type.PARAMETER_WRONG_OPTIONALITY));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "entity", "actions", "someAction", "parameters", "b", "type"),
-                                                 CompatibilityInfo.Type.TYPE_INCOMPATIBLE, "string", "int"));
+                                                 CompatibilityInfo.Type.TYPE_ERROR, "schema type changed from string to int"));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "entity", "actions", "someAction", "parameters"),
                                                  CompatibilityInfo.Type.ARRAY_MISSING_ELEMENT, "e"));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("",
@@ -373,11 +373,9 @@ public class TestResourceCompatibilityChecker
     resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "methods"),
                                                  CompatibilityInfo.Type.ARRAY_MISSING_ELEMENT, "delete"));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "methods", "get", "parameters", "param1", "type"),
-                                                 CompatibilityInfo.Type.TYPE_INCOMPATIBLE,
-                                                 "string",
-                                                 "int"));
+                                                 CompatibilityInfo.Type.TYPE_ERROR, "schema type changed from string to int"));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "actions", "oneAction", "parameters", "bitfield", "items"),
-                                                 CompatibilityInfo.Type.TYPE_INCOMPATIBLE, "boolean", "int"));
+                                                 CompatibilityInfo.Type.TYPE_ERROR, "schema type changed from boolean to int"));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "actions", "oneAction", "parameters"),
                                                  CompatibilityInfo.Type.ARRAY_MISSING_ELEMENT, "someString"));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "actions", "oneAction", "parameters"),

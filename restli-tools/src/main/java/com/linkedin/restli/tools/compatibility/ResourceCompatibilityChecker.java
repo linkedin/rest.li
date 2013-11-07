@@ -604,8 +604,7 @@ public class ResourceCompatibilityChecker
     }
     else
     {
-      _infoMap.addRestspecInfo("type", CompatibilityInfo.Type.TYPE_INCOMPATIBLE, _infoPath, "items",
-                               paramDataSchema.getType());
+      _infoMap.addRestspecInfo("type", CompatibilityInfo.Type.TYPE_ERROR, _infoPath, "expect an array, got " + paramDataSchema.getType());
       return null;
     }
   }

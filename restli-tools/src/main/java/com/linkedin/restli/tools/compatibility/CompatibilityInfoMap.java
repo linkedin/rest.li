@@ -57,8 +57,7 @@ public class CompatibilityInfoMap
                               Object... parameters)
   {
     path.push(pathTail);
-    _restSpecMap.get(infoType.getLevel()).add(
-      new CompatibilityInfo(path, infoType, parameters));
+    _restSpecMap.get(infoType.getLevel()).add(new CompatibilityInfo(path, infoType, parameters));
     path.pop();
   }
 
@@ -66,9 +65,19 @@ public class CompatibilityInfoMap
   {
     path.push(pathTail);
 
-    final CompatibilityInfo.Type infoType = (message.isError() ? CompatibilityInfo.Type.TYPE_ERROR : CompatibilityInfo.Type.TYPE_INFO);
-    final String info = String.format(message.getFormat(), message.getArgs());
-    _restSpecMap.get(infoType.getLevel()).add(new CompatibilityInfo(Arrays.asList(message.getPath()), infoType, info));
+    final CompatibilityInfo.Type infoType;
+    if (message.isError())
+    {
+      infoType = CompatibilityInfo.Type.TYPE_ERROR;
+      final String info = String.format(message.getFormat(), message.getArgs());
+      _restSpecMap.get(infoType.getLevel()).add(new CompatibilityInfo(path, infoType, info));
+    }
+    else
+    {
+      infoType = CompatibilityInfo.Type.TYPE_INFO;
+      final String info = String.format(message.getFormat(), message.getArgs());
+      _restSpecMap.get(infoType.getLevel()).add(new CompatibilityInfo(Arrays.asList(message.getPath()), infoType, info));
+    }
 
     path.pop();
   }

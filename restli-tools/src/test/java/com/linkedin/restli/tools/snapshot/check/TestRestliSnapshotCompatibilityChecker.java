@@ -50,7 +50,7 @@ public class TestRestliSnapshotCompatibilityChecker
     final Collection<CompatibilityInfo> restSpecErrors = new HashSet<CompatibilityInfo>();
     final Collection<CompatibilityInfo> restSpecDiffs = new HashSet<CompatibilityInfo>();
     restSpecErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "identifier", "type"),
-                                            CompatibilityInfo.Type.TYPE_INCOMPATIBLE, "int", "long"));
+                                            CompatibilityInfo.Type.TYPE_ERROR, "schema type changed from int to long"));
     restSpecDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "supports"),
                                             CompatibilityInfo.Type.SUPERSET, new HashSet<String>(Arrays.asList("create"))));
     restSpecDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "methods"),
