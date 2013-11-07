@@ -37,8 +37,8 @@ interface D2TestConstants
 
   public static final String D2_CONFIG_DATA =
     "{" +
-      "\"clusterDefaults\": {\"prioritizedSchemes\":[\"http\"], \"properties\":{\"requestTimeout\":\"10000\"}}," +
-      "\"serviceDefaults\": { \"loadBalancerStrategyProperties\":{\"maxClusterLatencyWithoutDegrading\":\"500\", \"updateIntervalsMs\":\"5000\", \"defaultSuccessfulTransmissionWeight\":\"1.0\", \"pointsPerWeight\":\"100\"}, \"loadBalancerStrategyList\":[\"degraderV3\"]}," +
+      "\"clusterDefaults\": {\"properties\":{\"requestTimeout\":\"10000\"}}," +
+      "\"serviceDefaults\": { \"prioritizedSchemes\":[\"http\"], \"loadBalancerStrategyProperties\":{\"maxClusterLatencyWithoutDegrading\":\"500\", \"updateIntervalsMs\":\"5000\", \"defaultSuccessfulTransmissionWeight\":\"1.0\", \"pointsPerWeight\":\"100\"}, \"loadBalancerStrategyList\":[\"degraderV3\"]}," +
       "\"serviceVariants\":{}," +
       "\"extraClusterServiceConfigurations\":{}," +
       "\"clusterServiceConfigurations\":" +
@@ -52,8 +52,8 @@ interface D2TestConstants
 
   public static final String D2_CONFIG_DEFAULT_PARTITION_DATA =
     "{" +
-      "\"clusterDefaults\": {\"prioritizedSchemes\":[\"http\"], \"properties\":{\"requestTimeout\":\"10000\"}}," +
-      "\"serviceDefaults\": { \"loadBalancerStrategyProperties\":{\"maxClusterLatencyWithoutDegrading\":\"500\", \"updateIntervalsMs\":\"5000\", \"defaultSuccessfulTransmissionWeight\":\"1.0\", \"pointsPerWeight\":\"100\"}, \"loadBalancerStrategyList\":[\"degraderV3\"]}," +
+      "\"clusterDefaults\": { \"properties\":{\"requestTimeout\":\"10000\"}}," +
+      "\"serviceDefaults\": {\"prioritizedSchemes\":[\"http\"], \"loadBalancerStrategyProperties\":{\"maxClusterLatencyWithoutDegrading\":\"500\", \"updateIntervalsMs\":\"5000\", \"defaultSuccessfulTransmissionWeight\":\"1.0\", \"pointsPerWeight\":\"100\"}, \"loadBalancerStrategyList\":[\"degraderV3\"]}," +
       "\"serviceVariants\":{}," +
       "\"extraClusterServiceConfigurations\":{}," +
       "\"clusterServiceConfigurations\":" +
@@ -66,8 +66,8 @@ interface D2TestConstants
 
   public static final String D2_CONFIG_CUSTOM_PARTITION_DATA =
     "{" +
-      "\"clusterDefaults\": {\"prioritizedSchemes\":[\"http\"], \"properties\":{\"requestTimeout\":\"10000\"}}," +
-      "\"serviceDefaults\": { \"loadBalancerStrategyProperties\":{\"maxClusterLatencyWithoutDegrading\":\"500\", \"updateIntervalsMs\":\"5000\", \"defaultSuccessfulTransmissionWeight\":\"1.0\", \"pointsPerWeight\":\"100\"}, \"loadBalancerStrategyList\":[\"degraderV3\"]}," +
+      "\"clusterDefaults\": { \"properties\":{\"requestTimeout\":\"10000\"}}," +
+      "\"serviceDefaults\": { \"prioritizedSchemes\":[\"http\"], \"loadBalancerStrategyProperties\":{\"maxClusterLatencyWithoutDegrading\":\"500\", \"updateIntervalsMs\":\"5000\", \"defaultSuccessfulTransmissionWeight\":\"1.0\", \"pointsPerWeight\":\"100\"}, \"loadBalancerStrategyList\":[\"degraderV3\"]}," +
       "\"serviceVariants\":{}," +
       "\"extraClusterServiceConfigurations\":{}," +
       "\"clusterServiceConfigurations\":" +
@@ -78,8 +78,8 @@ interface D2TestConstants
 
   public static final String D2_CONFIG_CUSTOM_PARTITION_DATA2 =
     "{" +
-    "\"clusterDefaults\": {\"prioritizedSchemes\":[\"http\"], \"properties\":{\"requestTimeout\":\"10000\"}}," +
-    "\"serviceDefaults\": { \"loadBalancerStrategyProperties\":{\"maxClusterLatencyWithoutDegrading\":\"500\", \"updateIntervalsMs\":\"5000\", \"defaultSuccessfulTransmissionWeight\":\"1.0\", \"pointsPerWeight\":\"100\"}, \"loadBalancerStrategyList\":[\"degraderV3\"]}," +
+    "\"clusterDefaults\": {\"properties\":{\"requestTimeout\":\"10000\"}}," +
+    "\"serviceDefaults\": { \"prioritizedSchemes\":[\"http\"], \"loadBalancerStrategyProperties\":{\"maxClusterLatencyWithoutDegrading\":\"500\", \"updateIntervalsMs\":\"5000\", \"defaultSuccessfulTransmissionWeight\":\"1.0\", \"pointsPerWeight\":\"100\"}, \"loadBalancerStrategyList\":[\"degraderV3\"]}," +
     "\"serviceVariants\":{}," +
     "\"extraClusterServiceConfigurations\":" +
     "{" +

@@ -456,7 +456,7 @@ public class LoadBalancerEchoServer
       System.out.println("REST server request: " + request.getEntity().asString("UTF-8"));
 
       String requestStr = request.getEntity().asString("UTF-8");
-      String response = request.getEntity() + ";WEIGHT=" + printWeights() + getResponsePostfixStringWithPort();
+      String response = requestStr + ";WEIGHT=" + printWeights() + getResponsePostfixStringWithPort();
       isStopped();
 
        // Return response only if server is running
