@@ -17,6 +17,13 @@
 package com.linkedin.data.schema.validation;
 
 
+import java.math.BigDecimal;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
 import com.linkedin.data.DataList;
@@ -42,12 +49,6 @@ import com.linkedin.data.schema.UnionDataSchema;
 import com.linkedin.data.schema.validator.Validator;
 import com.linkedin.data.schema.validator.ValidatorContext;
 import com.linkedin.data.template.DataTemplate;
-import java.math.BigDecimal;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 
 
@@ -385,20 +386,23 @@ public final class ValidateDataAgainstSchema
         DataMap map = (DataMap) object;
         if (map.size() != 1)
         {
-          addMessage(element, "DataMap should have only one entry for a union type");
+          addMessage(element, "DataMap should have exactly one entry for a union type");
         }
-        Map.Entry<String, Object> entry = map.entrySet().iterator().next();
-        String key = entry.getKey();
-        DataSchema memberSchema = schema.getType(key);
-        if (memberSchema == null)
+        else
         {
-          addMessage(element, "\"%1$s\" is not a member type of union %2$s", key, schema);
-        }
-        else if (_recursive)
-        {
-          Object value = entry.getValue();
-          MutableDataElement memberElement = new MutableDataElement(value, key, memberSchema, element);
-          validate(memberElement, memberSchema, value);
+          Map.Entry<String, Object> entry = map.entrySet().iterator().next();
+          String key = entry.getKey();
+          DataSchema memberSchema = schema.getType(key);
+          if (memberSchema == null)
+          {
+            addMessage(element, "\"%1$s\" is not a member type of union %2$s", key, schema);
+          }
+          else if (_recursive)
+          {
+            Object value = entry.getValue();
+            MutableDataElement memberElement = new MutableDataElement(value, key, memberSchema, element);
+            validate(memberElement, memberSchema, value);
+          }
         }
       }
       else

@@ -17,6 +17,13 @@
 package com.linkedin.data.schema.validation;
 
 
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.Collection;
+import java.util.Collections;
+
+import org.testng.annotations.Test;
+
 import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
 import com.linkedin.data.DataComplex;
@@ -28,11 +35,6 @@ import com.linkedin.data.message.Message;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.validator.VisitedTrackingValidator;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.Collection;
-import java.util.Collections;
-import org.testng.annotations.Test;
 
 import static com.linkedin.data.TestUtil.*;
 import static org.testng.Assert.*;
@@ -1107,6 +1109,7 @@ public class TestValidation
         new Double(1),
         new String(),
         new DataList(),
+        new DataMap(),
         new DataMap(asMap("int", new Boolean(true))),
         new DataMap(asMap("int", new String("1"))),
         new DataMap(asMap("int", new Long(1L))),
