@@ -1,6 +1,7 @@
 1.9.43
 ------
-
+(RB=232974)
+Adding perf test for Record Template put performance.
 
 1.9.42
 ------
