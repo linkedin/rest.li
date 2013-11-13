@@ -696,9 +696,9 @@ class PegasusPlugin implements Plugin<Project>
       configureRestClientGeneration(project, sourceSet)
 
       Task cleanGeneratedDirTask = project.task(sourceSet.getTaskName('clean', 'GeneratedDir')) << {
-        project.delete(getGeneratedSourceDirName(project, sourceSet, DATA_TEMPLATE_GEN_TYPE))
-        project.delete(getGeneratedSourceDirName(project, sourceSet, REST_GEN_TYPE))
-        project.delete(getGeneratedSourceDirName(project, sourceSet, AVRO_SCHEMA_GEN_TYPE))
+        deleteGeneratedDir(project, sourceSet, REST_GEN_TYPE)
+        deleteGeneratedDir(project, sourceSet, AVRO_SCHEMA_GEN_TYPE)
+        deleteGeneratedDir(project, sourceSet, DATA_TEMPLATE_GEN_TYPE)
       }
       // make clean depends on deleting the generated directories
       project.tasks.clean.dependsOn(cleanGeneratedDirTask)
@@ -766,6 +766,11 @@ class PegasusPlugin implements Plugin<Project>
       _generateJavadocJarTask.from(_generateJavadocTask.destinationDir)
       _generateJavadocJarTask.dependsOn(_generateJavadocTask)
     }
+  }
+
+  private static void deleteGeneratedDir(Project project, SourceSet sourceSet, String dirType)
+  {
+    project.delete(getGeneratedSourceDirName(project, sourceSet, dirType))
   }
 
   private static Class<? extends Enum> getCompatibilityLevelClass(Project project)
@@ -931,6 +936,10 @@ class PegasusPlugin implements Plugin<Project>
         resolverPath = restModelResolverPath
         generatedSnapshotFiles = getSuffixedFiles(project, snapshotDestinationDir, SNAPSHOT_FILE_SUFFIX).files
         generatedIdlFiles = getSuffixedFiles(project, idlDestinationDir, IDL_FILE_SUFFIX).files
+
+        doFirst {
+          deleteGeneratedDir(project, sourceSet, REST_GEN_TYPE)
+        }
       }
 
       final File apiSnapshotDir = apiProject.file(getSnapshotRelativePath(apiProject, sourceSet))
@@ -1107,6 +1116,10 @@ class PegasusPlugin implements Plugin<Project>
         project.pegasus[sourceSet.name].hasGenerationMode(PegasusOptions.GenerationMode.AVRO) ||
         !project.configurations.avroSchemaGenerator.empty
       }
+
+      doFirst {
+        deleteGeneratedDir(project, sourceSet, AVRO_SCHEMA_GEN_TYPE)
+      }
     }
 
     project.tasks[sourceSet.compileJavaTaskName].dependsOn(generateAvroSchemaTask)
@@ -1156,6 +1169,10 @@ class PegasusPlugin implements Plugin<Project>
 
       onlyIf {
         project.pegasus[sourceSet.name].hasGenerationMode(PegasusOptions.GenerationMode.PEGASUS)
+      }
+
+      doFirst {
+        deleteGeneratedDir(project, sourceSet, DATA_TEMPLATE_GEN_TYPE)
       }
     }
 
