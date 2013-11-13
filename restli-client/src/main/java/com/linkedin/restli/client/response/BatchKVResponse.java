@@ -23,6 +23,7 @@ import java.util.Map;
 
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaUtil;
 import com.linkedin.data.schema.MapDataSchema;
@@ -291,7 +292,7 @@ public class BatchKVResponse<K, V extends RecordTemplate> extends RecordTemplate
       }
       else
       {
-        result.put(entry.getKey(), new DataList(entry.getValue()));
+        CheckedUtil.putWithoutChecking(result, entry.getKey(), new DataList(entry.getValue()));
       }
     }
     return result;

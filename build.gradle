@@ -303,6 +303,7 @@ subprojects {
       excludeGroups 'd2integration'
       excludeGroups 'integration_external_product_dependent'
       excludeGroups 'known_issue'
+      excludeGroups 'withoutAssertion'
     }
   }
 
@@ -311,8 +312,6 @@ subprojects {
       includeGroups 'async'
     }
   }
-
-  project.tasks.test.dependsOn(asyncTests)
 
   task integrationTests(type: Test) {
     useTestNG() {
@@ -340,7 +339,6 @@ subprojects {
     }
   }
 
-
   task integrationExternalProductDependentTests(type: Test) {
     useTestNG() {
       includeGroups 'integration_external_product_dependent'
@@ -365,6 +363,17 @@ subprojects {
       includeGroups 'not_implemented'
     }
   }
+
+  task testsWithoutAssertion(type: Test) {
+    enableAssertions = false
+
+    useTestNG() {
+      includeGroups 'withoutAssertion'
+    }
+  }
+
+  project.tasks.test.dependsOn(asyncTests)
+  project.tasks.test.dependsOn(testsWithoutAssertion)
 
   task cleanBuildDir(type: Exec){
     delete(rootDir.toString()+'build')

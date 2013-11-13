@@ -729,6 +729,7 @@ public class Data
       clas == DataMap.class ||
       clas == DataList.class;
   }
+
   /**
    * Deep copy a Data object.
    *

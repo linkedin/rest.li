@@ -22,6 +22,7 @@ import com.linkedin.data.Data;
 import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.collections.CheckedUtil;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,6 +37,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+
 import org.codehaus.jackson.JsonEncoding;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerationException;
@@ -481,7 +483,7 @@ public class JacksonDataCodec implements TextDataCodec
     private final JsonLocation _location;
   }
 
-  private class Parser
+  private static class Parser
   {
     private StringBuilder _errorBuilder = null;
     private JsonParser _parser = null;
@@ -518,7 +520,7 @@ public class JacksonDataCodec implements TextDataCodec
     }
 
     List<Object> parse(JsonParser parser, StringBuilder mesg, Map<Object, DataLocation> locationMap)
-      throws JsonParseException, IOException
+        throws JsonParseException, IOException
     {
       _locationMap = locationMap;
 
@@ -526,7 +528,7 @@ public class JacksonDataCodec implements TextDataCodec
       _errorBuilder = mesg;
       if (_debug)
       {
-         _nameStack = new ArrayDeque<Object>();
+        _nameStack = new ArrayDeque<Object>();
       }
 
       _parser = parser;
@@ -545,7 +547,7 @@ public class JacksonDataCodec implements TextDataCodec
       _errorBuilder = null;
       if (_debug)
       {
-         _nameStack = new ArrayDeque<Object>();
+        _nameStack = new ArrayDeque<Object>();
       }
 
       _parser = parser;
@@ -642,7 +644,7 @@ public class JacksonDataCodec implements TextDataCodec
     {
       if (parentMap != null)
       {
-        Object replaced = parentMap.put(name, value);
+        Object replaced = CheckedUtil.putWithoutChecking(parentMap, name, value);
         if (replaced != null)
         {
           if (_errorBuilder == null)
@@ -654,7 +656,7 @@ public class JacksonDataCodec implements TextDataCodec
       }
       else
       {
-        parentList.add(value);
+        CheckedUtil.addWithoutChecking(parentList, value);
       }
     }
 

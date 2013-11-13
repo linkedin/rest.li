@@ -327,6 +327,18 @@ public class CheckedList<E> extends AbstractList<E> implements CommonList<E>, Cl
     return _list.set(index, element);
   }
 
+  boolean addWithAssertChecking(E element)
+  {
+    assert(assertCheck(element)) : "Check is failed";
+    return addWithoutChecking(element);
+  }
+
+  E setWithAssertChecking(int index, E element)
+  {
+    assert(assertCheck(element)) : "Check is failed";
+    return setWithoutChecking(index, element);
+  }
+
   private final void checkMutability()
   {
     if (_readOnly)
@@ -351,6 +363,19 @@ public class CheckedList<E> extends AbstractList<E> implements CommonList<E>, Cl
       {
         _checker.check(this, e);
       }
+    }
+  }
+
+  private boolean assertCheck(E e)
+  {
+    try
+    {
+      check(e);
+      return true;
+    }
+    catch (IllegalArgumentException ex)
+    {
+      return false;
     }
   }
 

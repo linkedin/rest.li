@@ -22,6 +22,7 @@ import java.util.Map;
 
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.CollectionMetadata;
@@ -105,7 +106,7 @@ public class CollectionResponseBuilder implements RestLiResponseBuilder
     {
       DataMap data = RestUtils.projectFields(entry.data(), routingResult.getContext());
 
-      elementsMap.add(data);
+      CheckedUtil.addWithoutChecking(elementsMap, data);
     }
 
     if (customMetadata != null)

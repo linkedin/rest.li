@@ -19,6 +19,7 @@ package com.linkedin.restli.client;
 
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.jersey.api.uri.UriBuilder;
@@ -183,7 +184,7 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
       for (Object obj : ids)
       {
         assert (obj instanceof ComplexResourceKey<?, ?>);
-        idsDataList.add(((ComplexResourceKey<?, ?>) obj).toDataMap());
+        CheckedUtil.addWithoutChecking(idsDataList, ((ComplexResourceKey<?, ?>) obj).toDataMap());
       }
     }
     else

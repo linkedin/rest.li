@@ -26,6 +26,8 @@ import com.linkedin.data.Data;
 import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.collections.CheckedUtil;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -583,7 +585,7 @@ public class PsonDataCodec implements DataCodec
         {
           break;
         }
-        list.add(item);
+        CheckedUtil.addWithoutChecking(list, item);
       }
 
       if (size >= 0 && count != size)
@@ -633,7 +635,7 @@ public class PsonDataCodec implements DataCodec
         {
           throw new IOException("Unexpected end of array");
         }
-        map.put(key, item);
+        CheckedUtil.putWithoutChecking(map, key, item);
       }
 
       if (size >= 0 && count != size)

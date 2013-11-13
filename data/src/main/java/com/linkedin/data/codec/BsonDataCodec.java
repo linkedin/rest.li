@@ -22,6 +22,8 @@ import com.linkedin.data.Data;
 import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.collections.CheckedUtil;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -551,11 +553,11 @@ public class BsonDataCodec implements DataCodec
     {
       if (parentMap != null)
       {
-        parentMap.put(name, value);
+        CheckedUtil.putWithoutChecking(parentMap, name, value);
       }
       else
       {
-        parentList.add(value);
+        CheckedUtil.addWithoutChecking(parentList, value);
       }
     }
 

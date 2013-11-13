@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import com.linkedin.data.DataMap;
+import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -90,7 +91,7 @@ public abstract class AbstractBatchResponseBuilder<V>
     for (Map.Entry<?, ? extends V> entry: resultsMap.entrySet())
     {
       DataMap data = buildResultRecord(entry.getValue(), resourceContext);
-      dataMap.put(keyToString(entry.getKey()), data);
+      CheckedUtil.putWithoutChecking(dataMap, keyToString(entry.getKey()), data);
     }
 
     headers.put(RestConstants.HEADER_RESTLI_TYPE, BatchResponse.class.getName());

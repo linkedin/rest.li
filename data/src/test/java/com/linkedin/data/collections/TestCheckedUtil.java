@@ -16,10 +16,14 @@
 
 package com.linkedin.data.collections;
 
-import java.util.Collection;
-import java.util.Map;
+
+import com.linkedin.data.DataList;
+import com.linkedin.data.DataMap;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import java.util.Collection;
+import java.util.Map;
 
 
 /**
@@ -87,6 +91,46 @@ public class TestCheckedUtil
 
     Assert.assertFalse(list.equals(listClone));
     Assert.assertFalse(map.equals(mapClone));
+  }
+
+  @Test(expectedExceptions = AssertionError.class)
+  public void testAddCycleWithAssertChecking()
+  {
+    final DataList list = new DataList();
+    CheckedUtil.addWithoutChecking(list, list);
+  }
+
+  @Test(groups = "withoutAssertion")
+  public void testAddCycleWithoutChecking()
+  {
+    testAddCycleWithAssertChecking();
+  }
+
+  @Test(expectedExceptions = AssertionError.class)
+  public void testSetCycleWithAssertChecking()
+  {
+    final DataList list = new DataList();
+    CheckedUtil.addWithoutChecking(list, "not cycle");
+    CheckedUtil.setWithoutChecking(list, 0, list);
+  }
+
+  @Test(groups = "withoutAssertion")
+  public void testSetCycleWithoutChecking()
+  {
+    testSetCycleWithAssertChecking();
+  }
+
+  @Test(expectedExceptions = AssertionError.class)
+  public void testPutCycleWithAssertChecking()
+  {
+    final DataMap map = new DataMap();
+    CheckedUtil.putWithoutChecking(map, "cycle", map);
+  }
+
+  @Test(groups = "withoutAssertion")
+  public void testPutCycleWithoutChecking()
+  {
+    testPutCycleWithAssertChecking();
   }
 
   private void mutateMap(Map<String, String> map)

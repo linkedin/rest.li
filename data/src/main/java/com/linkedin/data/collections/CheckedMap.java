@@ -189,7 +189,7 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
   @Override
   public Set<java.util.Map.Entry<K, V>> entrySet()
   {
-     return Collections.unmodifiableMap(_map).entrySet();
+    return Collections.unmodifiableMap(_map).entrySet();
   }
 
   @Override
@@ -335,6 +335,12 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
     return _map.put(key, value);
   }
 
+  V putWithAssertedChecking(K key, V value)
+  {
+    assert(assertCheckKeyValue(key, value)) : "Check is failed";
+    return putWithoutChecking(key, value);
+  }
+
   /**
    * Unit test use only.
    *
@@ -343,6 +349,19 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
   protected final Map<K,V> getObject()
   {
     return _map;
+  }
+
+  private boolean assertCheckKeyValue(K key, V value)
+  {
+    try
+    {
+      checkKeyValue(key, value);
+      return true;
+    }
+    catch (IllegalArgumentException e)
+    {
+      return false;
+    }
   }
 
   private boolean _readOnly = false;
