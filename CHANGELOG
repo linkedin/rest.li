@@ -1,4 +1,8 @@
-1.9.43
+1.9.45
+------
+
+
+1.9.44
 ------
 (RB=232974)
 Adding perf test for Record Template put performance.
@@ -9,6 +13,11 @@ PublishRestliIdl should now be skipped if there are only model changes.
 
 (RB=229233)
 Add support for deprecated annotation.
+
+1.9.43
+------
+(RB=231737)
+Only validate union data if map has a single entry
 
 1.9.42
 ------
