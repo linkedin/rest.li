@@ -57,7 +57,7 @@ public class DocletDocsProvider implements DocsProvider
   @Override
   public String getClassDeprecatedTag(Class<?> resourceClass)
   {
-    final ClassDoc doc = RestLiDoclet.getClassDoc(resourceClass);
+    final ClassDoc doc = RestLiDoclet.getClassDoc(_docletId, resourceClass);
     if (doc == null)
     {
       return null;
@@ -102,7 +102,7 @@ public class DocletDocsProvider implements DocsProvider
 
   public String getMethodDeprecatedTag(Method method)
   {
-    final MethodDoc doc = RestLiDoclet.getMethodDoc(method);
+    final MethodDoc doc = RestLiDoclet.getMethodDoc(_docletId, method);
     if (doc == null)
     {
       return null;
