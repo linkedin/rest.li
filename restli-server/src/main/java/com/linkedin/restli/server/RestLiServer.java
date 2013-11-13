@@ -43,6 +43,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @author dellamag
+ * @author Zhenkai Zhu
  */
 public class RestLiServer extends BaseRestServer
 {
@@ -90,7 +91,10 @@ public class RestLiServer extends BaseRestServer
     _resourceFactory.setRootResources(_rootResources);
     _router = new RestLiRouter(_rootResources);
     _methodInvoker = new RestLiMethodInvoker(_resourceFactory, engine, _errorResponseBuilder);
-    _responseHandler = new RestLiResponseHandler(_errorResponseBuilder);
+    _responseHandler = new RestLiResponseHandler.Builder()
+                                                .setErrorResponseBuilder(_errorResponseBuilder)
+                                                .setPermissiveEncoding(config.getPermissiveEncoding())
+                                                .build();
     _docRequestHandler = config.getDocumentationRequestHandler();
     _invokeAwares = (invokeAwares == null) ? Collections.<InvokeAware>emptyList() : Collections.unmodifiableList(invokeAwares);
 

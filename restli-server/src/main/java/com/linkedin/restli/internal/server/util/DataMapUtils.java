@@ -17,6 +17,7 @@
 package com.linkedin.restli.internal.server.util;
 
 
+import com.linkedin.data.Data;
 import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
@@ -33,19 +34,31 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.server.RoutingException;
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.JsonGenerator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.mail.internet.ContentType;
 import javax.mail.internet.ParseException;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
 
 public class DataMapUtils
 {
   private static final JacksonDataCodec CODEC = new JacksonDataCodec();
+  private static final PermissiveJacksonDataCodec PERMISSIVE_JACKSON_DATA_CODEC = new PermissiveJacksonDataCodec();
   private static final PsonDataCodec PSON_DATA_CODEC = new PsonDataCodec();
   private static final JacksonDataTemplateCodec TEMPLATE_CODEC = new JacksonDataTemplateCodec();
+  private static final Logger LOG = LoggerFactory.getLogger(DataMapUtils.class);
 
   /**
    * Read {@link DataMap} from InputStream.
@@ -327,12 +340,31 @@ public class DataMapUtils
    */
   public static byte[] mapToBytes(final DataMap dataMap)
   {
+    return mapToBytes(dataMap, false);
+  }
+
+  public static byte[] mapToBytes(final DataMap dataMap, boolean permissive)
+  {
     try
     {
       return CODEC.mapToBytes(dataMap);
     }
     catch (IOException e)
     {
+      if (permissive)
+      {
+        LOG.info("Failed to serialize dataMap due to encoding error. Attempt to fix by replacing.");
+        try
+        {
+          return PERMISSIVE_JACKSON_DATA_CODEC.mapToBytes(dataMap);
+        }
+        catch (IOException innerEx)
+        {
+          // our best-effort attempt to fix failed
+          // do nothing; continue to throw the original exception
+          LOG.info("Fixing encoding error failed. Please sanitize your input data.");
+        }
+      }
       throw new RestLiInternalException(e);
     }
   }
@@ -380,6 +412,62 @@ public class DataMapUtils
     catch (IOException e)
     {
       throw new RestLiInternalException(e);
+    }
+  }
+
+  /**
+   * This codec extends JacksonDataCodec and does an extra passing for string values
+   * to fix any malformed data or unmappable characters. It is relatively more costly
+   * than the original JacksonDataCodec.
+   *
+   * @author Zhenkai Zhu
+   */
+  private static class PermissiveJacksonDataCodec extends JacksonDataCodec
+  {
+    @Override
+    protected void writeObject(Object object, JsonGenerator generator) throws IOException
+    {
+      JsonTraverseCallback callback = new PermissiveJsonTraverseCallback(generator);
+      Data.traverse(object, callback);
+      generator.flush();
+      generator.close();
+    }
+
+    private static class PermissiveJsonTraverseCallback extends JsonTraverseCallback
+    {
+      private static final Charset CHARSET = Charset.forName("UTF-8");
+      private static final CharsetDecoder CHARSET_DECODER =
+          CHARSET.newDecoder().onMalformedInput(CodingErrorAction.REPLACE).onUnmappableCharacter(CodingErrorAction.REPLACE);
+
+      protected PermissiveJsonTraverseCallback(JsonGenerator jsonGenerator)
+      {
+        super(jsonGenerator);
+      }
+
+      @Override
+      public void stringValue(String value) throws JsonGenerationException, IOException
+      {
+        super.stringValue(fix(value));
+      }
+
+      /**
+       * @param value A string that is malformed or has unmappable character
+       * @return A string who's malformed part of unmappable character has been replaced.
+       *         The default replacement is "\uFFFD".
+       * @throws IOException
+       */
+      private String fix(String value) throws IOException
+      {
+        InputStream is = new ByteArrayInputStream(value.getBytes(CHARSET));
+        BufferedReader br = new BufferedReader(new InputStreamReader(is, CHARSET_DECODER));
+        StringBuilder sb = new StringBuilder();
+        String line;
+        while((line = br.readLine()) != null)
+        {
+          sb.append(line);
+        }
+        return sb.toString();
+      }
     }
   }
 }

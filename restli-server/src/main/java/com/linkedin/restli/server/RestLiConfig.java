@@ -38,6 +38,7 @@ public class RestLiConfig
   private RestLiDocumentationRequestHandler _documentationRequestHandler = null;
   private ErrorResponseFormat _errorResponseFormat = ErrorResponseFormat.FULL;
   private String _internalErrorMessage = ErrorResponseBuilder.DEFAULT_INTERNAL_ERROR_MESSAGE;
+  private boolean _permissiveEncoding = false;
 
   /**
    * Constructor.
@@ -171,5 +172,15 @@ public class RestLiConfig
   public void setInternalErrorMessage(String internalErrorMessage)
   {
     _internalErrorMessage = internalErrorMessage;
+  }
+
+  public boolean getPermissiveEncoding()
+  {
+    return _permissiveEncoding;
+  }
+
+  public void setPermissiveEncoding(boolean permissiveEncoding)
+  {
+    _permissiveEncoding = permissiveEncoding;
   }
 }

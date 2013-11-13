@@ -688,7 +688,7 @@ public class RestLiExampleGenerator
 
   private final ResourceSchemaCollection _resourceSchemas;
   private final Map<String, ResourceModel> _allResources;
-  private final RestLiResponseHandler _responseHandler = new RestLiResponseHandler();
+  private final RestLiResponseHandler _responseHandler = new RestLiResponseHandler.Builder().build();
   private final DataSchemaResolver _schemaResolver;
   private final ClassLoader _schemaClassLoader;
 }

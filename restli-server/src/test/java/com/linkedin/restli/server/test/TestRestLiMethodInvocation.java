@@ -3253,7 +3253,7 @@ public class TestRestLiMethodInvocation
       RoutingResult routingResult = new RoutingResult(new ResourceContextImpl(pathkeys, request,
                                                                               new RequestContext()), resourceMethodDescriptor);
       final CountDownLatch latch = new CountDownLatch(1);
-      final RestLiCallback<Object> callback = new RestLiCallback<Object>(request, routingResult, new RestLiResponseHandler(), new Callback<RestResponse>()
+      final RestLiCallback<Object> callback = new RestLiCallback<Object>(request, routingResult, new RestLiResponseHandler.Builder().build(), new Callback<RestResponse>()
       {
         @Override
         public void onError(final Throwable e)

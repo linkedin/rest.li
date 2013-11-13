@@ -62,23 +62,52 @@ public class RestLiResponseHandler
 {
   private final MethodAdapterRegistry _methodAdapterRegistry;
   private final ErrorResponseBuilder _errorResponseBuilder;
+  private final boolean  _permissiveEncoding;
 
-  public RestLiResponseHandler()
-  {
-    this(new ErrorResponseBuilder());
-  }
-
-  public RestLiResponseHandler(ErrorResponseBuilder errorResponseBuilder)
-  {
-    this(new MethodAdapterRegistry(errorResponseBuilder), errorResponseBuilder);
-  }
-
-  public RestLiResponseHandler(MethodAdapterRegistry methodAdapterRegistry, ErrorResponseBuilder errorResponseBuilder)
+  public RestLiResponseHandler(MethodAdapterRegistry methodAdapterRegistry, ErrorResponseBuilder errorResponseBuilder, boolean permissiveEncoding)
   {
     _methodAdapterRegistry = methodAdapterRegistry;
     _errorResponseBuilder = errorResponseBuilder;
+    _permissiveEncoding = permissiveEncoding;
   }
 
+  public static class Builder
+  {
+    private MethodAdapterRegistry _methodAdapterRegistry = null;
+    private ErrorResponseBuilder _errorResponseBuilder = null;
+    private boolean _permissiveEncoding = false;
+
+    public Builder setMethodAdapterRegistry(MethodAdapterRegistry methodAdapterRegistry)
+    {
+      _methodAdapterRegistry = methodAdapterRegistry;
+      return this;
+    }
+
+    public Builder setErrorResponseBuilder(ErrorResponseBuilder errorResponseBuilder)
+    {
+      _errorResponseBuilder = errorResponseBuilder;
+      return this;
+    }
+
+    public Builder setPermissiveEncoding(boolean permissiveEncoding)
+    {
+      _permissiveEncoding = permissiveEncoding;
+      return this;
+    }
+
+    public RestLiResponseHandler build()
+    {
+      if (_errorResponseBuilder == null)
+      {
+        _errorResponseBuilder = new ErrorResponseBuilder();
+      }
+      if (_methodAdapterRegistry == null)
+      {
+        _methodAdapterRegistry = new MethodAdapterRegistry(_errorResponseBuilder);
+      }
+      return new RestLiResponseHandler(_methodAdapterRegistry, _errorResponseBuilder, _permissiveEncoding);
+    }
+  }
   /**
    * @param request {@link RestRequest}
    * @param routingResult {@link RoutingResult}
@@ -159,7 +188,7 @@ public class RestLiResponseHandler
     else if (RestConstants.HEADER_VALUE_APPLICATION_JSON.equalsIgnoreCase(bestType))
     {
       builder.setHeader(RestConstants.HEADER_CONTENT_TYPE, RestConstants.HEADER_VALUE_APPLICATION_JSON);
-      builder.setEntity(DataMapUtils.mapToBytes(dataMap));
+      builder.setEntity(DataMapUtils.mapToBytes(dataMap, _permissiveEncoding));
     }
     else
     {

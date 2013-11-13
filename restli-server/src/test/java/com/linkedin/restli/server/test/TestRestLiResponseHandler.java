@@ -94,7 +94,7 @@ import static org.testng.Assert.*;
  */
 public class TestRestLiResponseHandler
 {
-  private final RestLiResponseHandler _responseHandler = new RestLiResponseHandler();
+  private final RestLiResponseHandler _responseHandler = new RestLiResponseHandler.Builder().build();
 
   private static final String APPLICATION_JSON = "application/json";
   private static final String APPLICATION_PSON = "application/x-pson";
