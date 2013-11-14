@@ -1,6 +1,11 @@
-1.9.45
+1.9.46
 ------
 
+
+1.9.45
+------
+(RB=233764)
+Add permissive option to degrade on serializing bad user data
 
 1.9.44
 ------
