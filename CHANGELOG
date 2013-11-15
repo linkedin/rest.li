@@ -1,6 +1,7 @@
 1.9.47
 ------
-
+(RB=234511)
+Replacing IdentityHashMap in RecordTemplate, WrappingMapTemplate and WrappingArrayTemplate with a custom cache implementation.
 
 1.9.46
 ------

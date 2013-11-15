@@ -20,12 +20,12 @@ package com.linkedin.data.template;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.MapDataSchema;
+import com.linkedin.data.template.DataObjectToObjectCache;
 import com.linkedin.util.ArgumentUtil;
 import java.lang.reflect.Constructor;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -49,7 +49,7 @@ public abstract class WrappingMapTemplate<V extends DataTemplate<?>> extends Abs
   {
     super(map, schema, valueClass, DataMap.class);
     _constructor = DataTemplateUtil.templateConstructor(valueClass, schema.getValues());
-    _cache = new IdentityHashMap<Object, V>(data().size());
+    _cache = new DataObjectToObjectCache<V>(data().size());
     _entrySet = new EntrySet();
   }
 
@@ -115,9 +115,9 @@ public abstract class WrappingMapTemplate<V extends DataTemplate<?>> extends Abs
   }
 
   @SuppressWarnings("unchecked")
-  private void initializeClone()
+  private void initializeClone() throws CloneNotSupportedException
   {
-    _cache = (IdentityHashMap<Object, V>) _cache.clone();
+    _cache = _cache.clone();
     _entrySet = new EntrySet();
   }
 
@@ -132,7 +132,7 @@ public abstract class WrappingMapTemplate<V extends DataTemplate<?>> extends Abs
   @SuppressWarnings("unchecked")
   private void initializeCopy()
   {
-    _cache = new IdentityHashMap<Object, V>(data().size());
+    _cache = new DataObjectToObjectCache<V>(data().size());
     _entrySet = new EntrySet();
   }
 
@@ -322,5 +322,5 @@ public abstract class WrappingMapTemplate<V extends DataTemplate<?>> extends Abs
 
   protected final Constructor<V> _constructor;
   protected EntrySet _entrySet;
-  protected IdentityHashMap<Object, V> _cache;
+  protected DataObjectToObjectCache<V> _cache;
 }

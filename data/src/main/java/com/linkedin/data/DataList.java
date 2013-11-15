@@ -213,6 +213,12 @@ public final class DataList extends CheckedList<Object> implements DataComplex
     }
   }
 
+  @Override
+  public int dataComplexHashCode()
+  {
+    return _dataComplexHashCode;
+  }
+
   // Unit test use only
   void disableChecker()
   {
@@ -257,4 +263,5 @@ public final class DataList extends CheckedList<Object> implements DataComplex
   private boolean _madeReadOnly = false;
   private boolean _instrumented = false;
   private ArrayList<Integer> _accessList;
+  private int _dataComplexHashCode = DataComplexHashCode.nextHashCode();
 }

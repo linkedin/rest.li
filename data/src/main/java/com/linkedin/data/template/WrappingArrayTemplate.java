@@ -20,9 +20,9 @@ package com.linkedin.data.template;
 import com.linkedin.data.DataList;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.template.DataObjectToObjectCache;
 import com.linkedin.util.ArgumentUtil;
 import java.lang.reflect.Constructor;
-import java.util.IdentityHashMap;
 
 
 /**
@@ -44,7 +44,7 @@ public class WrappingArrayTemplate<E extends DataTemplate<?>> extends AbstractAr
   {
     super(list, schema, elementClass, DataList.class);
     _constructor = DataTemplateUtil.templateConstructor(elementClass, schema.getItems());
-    _cache = new IdentityHashMap<Object, E>(data().size());
+    _cache = new DataObjectToObjectCache<E>(data().size());
   }
 
   @Override
@@ -100,7 +100,7 @@ public class WrappingArrayTemplate<E extends DataTemplate<?>> extends AbstractAr
   public WrappingArrayTemplate<E> clone() throws CloneNotSupportedException
   {
     WrappingArrayTemplate<E> clone = (WrappingArrayTemplate<E>) super.clone();
-    clone._cache = (IdentityHashMap<Object, E>) clone._cache.clone();
+    clone._cache = clone._cache.clone();
     return clone;
   }
 
@@ -109,7 +109,7 @@ public class WrappingArrayTemplate<E extends DataTemplate<?>> extends AbstractAr
   {
     @SuppressWarnings("unchecked")
     WrappingArrayTemplate<E> copy = (WrappingArrayTemplate<E>) super.copy();
-    copy._cache = new IdentityHashMap<Object, E>(copy.data().size());
+    copy._cache = new DataObjectToObjectCache<E>(copy.data().size());
     return copy;
   }
 
@@ -164,7 +164,6 @@ public class WrappingArrayTemplate<E extends DataTemplate<?>> extends AbstractAr
   }
 
   protected final Constructor<E> _constructor;
-  protected IdentityHashMap<Object, E> _cache;
-
+  protected DataObjectToObjectCache<E> _cache;
 }
 

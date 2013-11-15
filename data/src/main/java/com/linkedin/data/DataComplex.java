@@ -89,4 +89,10 @@ public interface DataComplex extends Common, Instrumentable
    * @throws CloneNotSupportedException if the referenced object cannot be copied.
    */
   void copyReferencedObjects(IdentityHashMap<DataComplex, DataComplex> alreadyCopied) throws CloneNotSupportedException;
+
+  /**
+   * Returns the data complex hash code of this data complex object.
+   * @return the data complex hash code.
+   */
+  int dataComplexHashCode();
 }

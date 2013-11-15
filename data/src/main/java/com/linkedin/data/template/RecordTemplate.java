@@ -16,10 +16,11 @@
 
 package com.linkedin.data.template;
 
-import java.util.IdentityHashMap;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.template.DataObjectToObjectCache;
+
 
 /**
  * Abstract {@link DataTemplate} for records.
@@ -68,7 +69,7 @@ public abstract class RecordTemplate implements DataTemplate<DataMap>
   {
     RecordTemplate clone = (RecordTemplate) super.clone();
     clone._map = clone._map.clone();
-    clone._cache = (IdentityHashMap<Object, DataTemplate<?>>) clone._cache.clone();
+    clone._cache = clone._cache.clone();
     return clone;
   }
 
@@ -90,7 +91,7 @@ public abstract class RecordTemplate implements DataTemplate<DataMap>
   {
     RecordTemplate copy = (RecordTemplate) super.clone();
     copy._map = _map.copy();
-    copy._cache = new IdentityHashMap<Object, DataTemplate<?>>();
+    copy._cache = new DataObjectToObjectCache<DataTemplate<?>>();
     return copy;
   }
 
@@ -419,5 +420,5 @@ public abstract class RecordTemplate implements DataTemplate<DataMap>
 
   private DataMap _map;
   private final RecordDataSchema _schema;
-  private IdentityHashMap<Object, DataTemplate<?>> _cache = new IdentityHashMap<Object, DataTemplate<?>>();
+  private DataObjectToObjectCache<DataTemplate<?>> _cache = new DataObjectToObjectCache<DataTemplate<?>>();
 }
