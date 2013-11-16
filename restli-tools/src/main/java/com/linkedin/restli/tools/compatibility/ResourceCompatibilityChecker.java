@@ -193,7 +193,7 @@ public class ResourceCompatibilityChecker
 
     if (prevData != null && !prevData.equals(currData))
     {
-      _infoMap.addRestspecInfo(field.getName(), CompatibilityInfo.Type.VALUE_NOT_EQUAL, _infoPath,
+      _infoMap.addRestSpecInfo(field.getName(), CompatibilityInfo.Type.VALUE_NOT_EQUAL, _infoPath,
                                prevData, currData);
       return false;
     }
@@ -207,13 +207,13 @@ public class ResourceCompatibilityChecker
 
     if ((prevData == null) != (currData == null))
     {
-      _infoMap.addRestspecInfo(field.getName(), CompatibilityInfo.Type.DOC_NOT_EQUAL, _infoPath);
+      _infoMap.addRestSpecInfo(field.getName(), CompatibilityInfo.Type.DOC_NOT_EQUAL, _infoPath);
       return false;
     }
 
     if (prevData != null && !prevData.equals(currData))
     {
-      _infoMap.addRestspecInfo(field.getName(), CompatibilityInfo.Type.DOC_NOT_EQUAL, _infoPath);
+      _infoMap.addRestSpecInfo(field.getName(), CompatibilityInfo.Type.DOC_NOT_EQUAL, _infoPath);
       return false;
     }
 
@@ -248,14 +248,14 @@ public class ResourceCompatibilityChecker
       {
         final Set<Object> diff = new HashSet<Object>(container);
         diff.removeAll(containee);
-        _infoMap.addRestspecInfo(field.getName(), CompatibilityInfo.Type.SUPERSET, _infoPath, diff);
+        _infoMap.addRestSpecInfo(field.getName(), CompatibilityInfo.Type.SUPERSET, _infoPath, diff);
       }
 
       return true;
     }
     else
     {
-      _infoMap.addRestspecInfo(field.getName(), CompatibilityInfo.Type.ARRAY_NOT_CONTAIN, _infoPath,
+      _infoMap.addRestSpecInfo(field.getName(), CompatibilityInfo.Type.ARRAY_NOT_CONTAIN, _infoPath,
                                containee);
       return false;
     }
@@ -273,7 +273,7 @@ public class ResourceCompatibilityChecker
 
     if (prevType == null || currType == null)
     {
-      _infoMap.addRestspecInfo(pathTail, CompatibilityInfo.Type.TYPE_MISSING, _infoPath);
+      _infoMap.addRestSpecInfo(pathTail, CompatibilityInfo.Type.TYPE_MISSING, _infoPath);
       return false;
     }
 
@@ -306,7 +306,7 @@ public class ResourceCompatibilityChecker
     }
     catch (IllegalArgumentException e)
     {
-      _infoMap.addRestspecInfo(pathTail, CompatibilityInfo.Type.TYPE_UNKNOWN, _infoPath,
+      _infoMap.addRestSpecInfo(pathTail, CompatibilityInfo.Type.TYPE_UNKNOWN, _infoPath,
                                e.getMessage());
       return false;
     }
@@ -351,7 +351,7 @@ public class ResourceCompatibilityChecker
 
     if (prevOptional && !currOptional)
     {
-      _infoMap.addRestspecInfo(field.getName(), CompatibilityInfo.Type.PARAMETER_WRONG_OPTIONALITY,
+      _infoMap.addRestSpecInfo(field.getName(), CompatibilityInfo.Type.PARAMETER_WRONG_OPTIONALITY,
                                _infoPath);
       return false;
     }
@@ -542,7 +542,7 @@ public class ResourceCompatibilityChecker
     // if prev has less than curr, the remainder will contain the extra current elements
     if (!currRemainder.isEmpty())
     {
-      _infoMap.addRestspecInfo(field.getName(), CompatibilityInfo.Type.ARRAY_NOT_EQUAL, _infoPath,
+      _infoMap.addRestSpecInfo(field.getName(), CompatibilityInfo.Type.ARRAY_NOT_EQUAL, _infoPath,
                                prevArray);
       return false;
     }
@@ -604,7 +604,7 @@ public class ResourceCompatibilityChecker
     }
     else
     {
-      _infoMap.addRestspecInfo("type", CompatibilityInfo.Type.TYPE_ERROR, _infoPath, "expect an array, got " + paramDataSchema.getType());
+      _infoMap.addRestSpecInfo("type", CompatibilityInfo.Type.TYPE_ERROR, _infoPath, "expect an array, got " + paramDataSchema.getType());
       return null;
     }
   }
@@ -729,7 +729,7 @@ public class ResourceCompatibilityChecker
     {
       // downgrade case
 
-      _infoMap.addRestspecInfo("assocKeys", CompatibilityInfo.Type.FINDER_ASSOCKEYS_DOWNGRADE,
+      _infoMap.addRestSpecInfo("assocKeys", CompatibilityInfo.Type.FINDER_ASSOCKEYS_DOWNGRADE,
                                _infoPath);
     }
   }
@@ -803,7 +803,7 @@ public class ResourceCompatibilityChecker
 
     if (prevDefault != null && currDefault != null && !prevDefault.equals(currDefault))
     {
-      _infoMap.addRestspecInfo("default", CompatibilityInfo.Type.VALUE_DIFFERENT, _infoPath,
+      _infoMap.addRestSpecInfo("default", CompatibilityInfo.Type.VALUE_DIFFERENT, _infoPath,
                                prevDefault, currDefault);
     }
   }

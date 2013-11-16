@@ -53,7 +53,7 @@ public class CompatibilityInfoMap
     _restSpecMap.get(infoType.getLevel()).add(new CompatibilityInfo(path, infoType, parameters));
   }
 
-  public void addRestspecInfo(Object pathTail, CompatibilityInfo.Type infoType, Stack<Object> path,
+  public void addRestSpecInfo(Object pathTail, CompatibilityInfo.Type infoType, Stack<Object> path,
                               Object... parameters)
   {
     path.push(pathTail);
