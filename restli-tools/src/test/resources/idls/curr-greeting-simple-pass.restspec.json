@@ -4,11 +4,21 @@
   "path" : "/greeting",
   "schema" : "com.linkedin.greetings.api.Greeting",
   "doc" : "A simple greeting resource",
+  "annotations" : {
+    "deprecated" : {
+      "doc" : "this resource is deprecated"
+    }
+  },
   "simple" : {
     "supports" : [ "delete", "get", "update" ],
     "methods" : [ {
       "method" : "get",
       "doc" : "Gets the greeting.",
+      "annotations" : {
+        "deprecated" : {
+          "doc" : "this method is deprecated"
+        }
+      },
       "parameters" : [ {
         "name" : "param1",
         "type" : "string",
@@ -53,6 +63,14 @@
     }, {
       "name" : "exceptionTest",
       "throws" : [ "com.linkedin.groups.api.GroupOwnerException", "java.lang.NullPointerException" ]
+    }, {
+      "name" : "twoAction",
+      "doc" : "an action to be deprecated",
+      "annotations" : {
+        "deprecated" : {
+          "doc" : "this action is deprecated"
+        }
+      }
     } ],
     "entity" : {
       "path" : "/greetings/{id}"

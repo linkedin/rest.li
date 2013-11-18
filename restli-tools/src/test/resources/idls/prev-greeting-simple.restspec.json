@@ -45,6 +45,9 @@
     }, {
       "name" : "exceptionTest",
       "throws" : [ "com.linkedin.groups.api.GroupOwnerException", "java.lang.NullPointerException" ]
+    }, {
+      "name" : "twoAction",
+      "doc" : "an action to be deprecated"
     } ],
     "entity" : {
       "path" : "/greetings/{id}"

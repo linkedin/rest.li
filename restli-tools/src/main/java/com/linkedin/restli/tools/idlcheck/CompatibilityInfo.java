@@ -50,6 +50,7 @@ public class CompatibilityInfo
     TYPE_BREAKS_NEW_AND_OLD_READERS(Level.INCOMPATIBLE, "%s, breaks new and old readers"),
     TYPE_ERROR(Level.INCOMPATIBLE, "%s"), // data type related errors, reported by com.linkedin.data.schema.compatibility.CompatibilityChecker
     DOC_NOT_EQUAL(Level.COMPATIBLE, "Documentation is updated"),
+    ANNOTATIONS_CHANGED(Level.COMPATIBLE, "Annotation %s"),
     DEPRECATED(Level.COMPATIBLE, "%s is deprecated"),
     PARAMETER_NEW_OPTIONAL(Level.COMPATIBLE, "New optional parameter \"%s\" is added"),
     OPTIONAL_PARAMETER(Level.COMPATIBLE, "Previous required parameter is changed to currently optional"),

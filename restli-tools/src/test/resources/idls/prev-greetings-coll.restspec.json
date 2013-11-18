@@ -28,6 +28,14 @@
     }, {
       "name" : "find_assocKey_downgrade",
       "assocKeys" : [ "plural" ]
+    }, {
+      "name" : "oneFinder",
+      "doc" : "A finder to be deprecated",
+      "parameters" : [ {
+        "name" : "param1",
+        "type" : "string",
+        "default" : "none"
+      } ]
     } ],
     "actions" : [ {
       "name" : "oneAction",

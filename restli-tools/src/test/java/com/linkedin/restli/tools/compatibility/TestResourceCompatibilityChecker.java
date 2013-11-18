@@ -100,6 +100,10 @@ public class TestResourceCompatibilityChecker
                                                 CompatibilityInfo.Type.SUPERSET, new HashSet<String>(Arrays.asList("java.lang.NullPointerException"))));
     resourceTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "entity", "actions", "someAction", "parameters", "b", "default"),
                                                 CompatibilityInfo.Type.VALUE_DIFFERENT, "default", "changed"));
+    resourceTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "finders", "oneFinder", "annotations", "deprecated"),
+                                                CompatibilityInfo.Type.ANNOTATIONS_CHANGED, "added"));
+    resourceTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "finders", "oneFinder", "parameters", "param1", "annotations", "deprecated"),
+                                                CompatibilityInfo.Type.ANNOTATIONS_CHANGED, "added"));
     modelTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting"),
                                              CompatibilityInfo.Type.TYPE_INFO, "new record removed optional fields tone"));
     modelTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting"),
@@ -189,6 +193,12 @@ public class TestResourceCompatibilityChecker
                                                 CompatibilityInfo.Type.PARAMETER_NEW_OPTIONAL, "newParam"));
     resourceTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "actions", "oneAction", "parameters", "someString2", "default"),
                                                 CompatibilityInfo.Type.VALUE_DIFFERENT, "default", "changed"));
+    resourceTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "actions", "twoAction", "annotations", "deprecated"),
+                                                CompatibilityInfo.Type.ANNOTATIONS_CHANGED, "added"));
+    resourceTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "annotations", "deprecated"),
+                                                CompatibilityInfo.Type.ANNOTATIONS_CHANGED, "added"));
+    resourceTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "methods", "get", "annotations", "deprecated"),
+                                                CompatibilityInfo.Type.ANNOTATIONS_CHANGED, "added"));
     modelTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting"),
                                              CompatibilityInfo.Type.TYPE_INFO, "new record removed optional fields tone"));
     modelTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting"),

@@ -39,6 +39,8 @@ import com.linkedin.restli.restspec.ActionsSetSchema;
 import com.linkedin.restli.restspec.AssocKeySchema;
 import com.linkedin.restli.restspec.AssociationSchema;
 import com.linkedin.restli.restspec.CollectionSchema;
+import com.linkedin.restli.restspec.CustomAnnotationContentSchema;
+import com.linkedin.restli.restspec.CustomAnnotationContentSchemaMap;
 import com.linkedin.restli.restspec.EntitySchema;
 import com.linkedin.restli.restspec.FinderSchema;
 import com.linkedin.restli.restspec.IdentifierSchema;
@@ -617,6 +619,10 @@ public class ResourceCompatibilityChecker
 
     checkDoc(prevRec.schema().getField("doc"), prevRec.getDoc(GetMode.DEFAULT), currRec.getDoc(GetMode.DEFAULT));
 
+    checkAnnotationsMap(prevRec.schema().getField("annotations"),
+                        prevRec.getAnnotations(GetMode.DEFAULT),
+                        currRec.getAnnotations(GetMode.DEFAULT));
+
     checkEqualSingleValue(prevRec.schema().getField("namespace"),
                           prevRec.getNamespace(GetMode.DEFAULT),
                           currRec.getNamespace(GetMode.DEFAULT));
@@ -688,6 +694,10 @@ public class ResourceCompatibilityChecker
                           currRec.getName(GetMode.DEFAULT));
 
     checkDoc(prevRec.schema().getField("doc"), prevRec.getDoc(GetMode.DEFAULT), currRec.getDoc(GetMode.DEFAULT));
+
+    checkAnnotationsMap(prevRec.schema().getField("annotations"),
+                        prevRec.getAnnotations(GetMode.DEFAULT),
+                        currRec.getAnnotations(GetMode.DEFAULT));
 
     checkParameterArrayField(prevRec.schema().getField("parameters"),
                              prevRec.getParameters(GetMode.DEFAULT),
@@ -763,6 +773,10 @@ public class ResourceCompatibilityChecker
 
     checkDoc(prevRec.schema().getField("doc"), prevRec.getDoc(GetMode.DEFAULT), currRec.getDoc(GetMode.DEFAULT));
 
+    checkAnnotationsMap(prevRec.schema().getField("annotations"),
+                        prevRec.getAnnotations(GetMode.DEFAULT),
+                        currRec.getAnnotations(GetMode.DEFAULT));
+
     /*
     Compatibility of the deprecated "items" field:
     O: Has items   X: Has Not items
@@ -821,6 +835,10 @@ public class ResourceCompatibilityChecker
 
     checkDoc(prevRec.schema().getField("doc"), prevRec.getDoc(GetMode.DEFAULT), currRec.getDoc(GetMode.DEFAULT));
 
+    checkAnnotationsMap(prevRec.schema().getField("annotations"),
+                        prevRec.getAnnotations(GetMode.DEFAULT),
+                        currRec.getAnnotations(GetMode.DEFAULT));
+
     checkParameterArrayField(prevRec.schema().getField("parameters"),
                              prevRec.getParameters(GetMode.DEFAULT),
                              currRec.getParameters(GetMode.DEFAULT));
@@ -830,6 +848,37 @@ public class ResourceCompatibilityChecker
     checkArrayContainment(prevRec.schema().getField("throws"),
                           prevRec.getThrows(GetMode.DEFAULT),
                           currRec.getThrows(GetMode.DEFAULT));
+  }
+
+  private void checkAnnotationsMap(RecordDataSchema.Field field, CustomAnnotationContentSchemaMap prevMap, CustomAnnotationContentSchemaMap currMap)
+  {
+    Set<String> allKeys = new HashSet<String>();
+    if (prevMap != null) allKeys.addAll(prevMap.keySet());
+    if (currMap != null) allKeys.addAll(currMap.keySet());
+    for(String key : allKeys)
+    {
+      CustomAnnotationContentSchema prevMapAnnotation = prevMap == null ? null : prevMap.get(key);
+      CustomAnnotationContentSchema currMapAnnotation = currMap == null ? null : currMap.get(key);
+      _infoPath.push(field.getName());
+      checkAnnotationsSchema(key, prevMapAnnotation, currMapAnnotation);
+      _infoPath.pop();
+    }
+  }
+
+  private void checkAnnotationsSchema(String key, CustomAnnotationContentSchema prevRec, CustomAnnotationContentSchema currRec)
+  {
+    if (prevRec == null)
+    {
+      _infoMap.addRestSpecInfo(key, CompatibilityInfo.Type.ANNOTATIONS_CHANGED, _infoPath, "added");
+    }
+    else if (currRec == null)
+    {
+      _infoMap.addRestSpecInfo(key, CompatibilityInfo.Type.ANNOTATIONS_CHANGED, _infoPath, "removed");
+    }
+    else if (!prevRec.equals(currRec))
+    {
+      _infoMap.addRestSpecInfo(key, CompatibilityInfo.Type.ANNOTATIONS_CHANGED, _infoPath, "value changed");
+    }
   }
 
   private void checkEntitySchema(EntitySchema prevRec, EntitySchema currRec)
@@ -904,6 +953,10 @@ public class ResourceCompatibilityChecker
                           currRec.getMethod(GetMode.DEFAULT));
 
     checkDoc(prevRec.schema().getField("doc"), prevRec.getDoc(GetMode.DEFAULT), currRec.getDoc(GetMode.DEFAULT));
+
+    checkAnnotationsMap(prevRec.schema().getField("annotations"),
+                        prevRec.getAnnotations(GetMode.DEFAULT),
+                        currRec.getAnnotations(GetMode.DEFAULT));
 
     checkParameterArrayField(prevRec.schema().getField("parameters"),
                              prevRec.getParameters(GetMode.DEFAULT),
