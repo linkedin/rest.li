@@ -11,6 +11,9 @@ outer type (e.g. record) that overrides default of an inner type (e.g. string fi
 (RB=242652)
 Add support for schema JSON strings greater max Java string literal length.
 
+(RB=235794)
+Add propagation of deprecated keys used on types and fields in pdscs to generated java data templates.
+
 1.10.2
 ------
 (RB=241241)
@@ -46,6 +49,7 @@ Replacing IdentityHashMap in RecordTemplate, WrappingMapTemplate and WrappingArr
 
 1.9.46
 ------
+<<<<<<< HEAD
 (RB=233744)
 Disable data object checking on safe and performance-critical situations.
 

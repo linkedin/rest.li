@@ -11,3 +11,12 @@ project.idea.module.testSourceDirs.add('src/test/javaPegasus')
 apply from: "${buildScriptDirPath}/dataTemplate.gradle"
 apply from: "${buildScriptDirPath}/cleanGenerated.gradle"
 apply from: "${buildScriptDirPath}/avroSchema.gradle"
+
+// This module tests that deprecated types and fields in "deprecated.pdsc",
+// result in correctly generated classes and methods that are also marked as deprecated.
+// Since the classes are generated, they cannot be marked with @SuppressWarnings("deprecated"), we must disable the 'deprecation' compiler warnings.
+// For example, see: Deprecated.getSampleEnum()
+testCompileDataTemplate.options.compilerArgs += '-Xlint:-deprecation'
+// unfortunately, our build system also requires I disable the warning for compileTestJava, otherwise we get the same
+// deprecation errors.  I'm not clear on why I need disable testCompileDataTemplate AND compileTestJava, but I do.
+compileTestJava.options.compilerArgs += '-Xlint:-deprecation'

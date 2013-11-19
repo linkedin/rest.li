@@ -82,11 +82,13 @@ import com.linkedin.data.template.UnionTemplate;
 import com.linkedin.data.template.WrappingArrayTemplate;
 import com.linkedin.data.template.WrappingMapTemplate;
 import com.sun.codemodel.ClassType;
+import com.sun.codemodel.JAnnotatable;
 import com.sun.codemodel.JBlock;
 import com.sun.codemodel.JClass;
 import com.sun.codemodel.JClassAlreadyExistsException;
 import com.sun.codemodel.JCodeModel;
 import com.sun.codemodel.JDefinedClass;
+import com.sun.codemodel.JDocCommentable;
 import com.sun.codemodel.JEnumConstant;
 import com.sun.codemodel.JExpr;
 import com.sun.codemodel.JExpression;
@@ -1018,6 +1020,8 @@ public abstract class DataTemplateGenerator extends CodeGenerator
     JDefinedClass enumClass = getPackage(schema.getNamespace())._class(JMod.PUBLIC, escapeReserved(schema.getName()), ClassType.ENUM);
 
     enumClass.javadoc().append(schema.getDoc());
+    setDeprecatedAnnotationAndJavadoc(schema, enumClass);
+
     registerGeneratedClass(schema, enumClass);
     generateSchemaField(enumClass, schema);
 
@@ -1036,6 +1040,7 @@ public abstract class DataTemplateGenerator extends CodeGenerator
       {
         enumConstant.javadoc().append(enumConstantDoc);
       }
+      setDeprecatedAnnotationAndJavadoc(schema, value, enumConstant);
     }
     enumClass.enumConstant(DataTemplateUtil.UNKNOWN_ENUM);
 
@@ -1047,6 +1052,8 @@ public abstract class DataTemplateGenerator extends CodeGenerator
     JDefinedClass fixedClass = getPackage(schema.getNamespace())._class(escapeReserved(schema.getName()));
 
     fixedClass.javadoc().append(schema.getDoc());
+    setDeprecatedAnnotationAndJavadoc(schema, fixedClass);
+
     registerGeneratedClass(schema, fixedClass);
 
     fixedClass._extends(FixedTemplate.class);
@@ -1074,6 +1081,7 @@ public abstract class DataTemplateGenerator extends CodeGenerator
   private JDefinedClass generateTyperef(TyperefDataSchema schema, JDefinedClass typerefClass)
   {
     typerefClass.javadoc().append(schema.getDoc());
+    setDeprecatedAnnotationAndJavadoc(schema, typerefClass);
 
     typerefClass._extends(TyperefInfo.class);
 
@@ -1090,14 +1098,11 @@ public abstract class DataTemplateGenerator extends CodeGenerator
     JDefinedClass templateClass = getPackage(schema.getNamespace())._class(escapeReserved(schema.getName()));
 
     templateClass.javadoc().append(schema.getDoc());
+    setDeprecatedAnnotationAndJavadoc(schema, templateClass);
+
     registerGeneratedClass(schema, templateClass);
 
     templateClass._extends(RecordTemplate.class);
-
-    if (Boolean.TRUE.equals(schema.getProperties().get("deprecated")))
-    {
-      templateClass.annotate(Deprecated.class);
-    }
 
     generatePathSpecMethodsForRecord(templateClass, schema);
 
@@ -1238,8 +1243,9 @@ public abstract class DataTemplateGenerator extends CodeGenerator
       constantField.body()._return(JExpr._new(fieldsRefType).arg(JExpr.invoke("getPathComponents")).arg(
               field.getName()));
       if (! field.getDoc().isEmpty()) {
-         constantField.javadoc().append(field.getDoc());
+        constantField.javadoc().append(field.getDoc());
       }
+      setDeprecatedAnnotationAndJavadoc(constantField, field);
     }
 
     JVar staticFields = templateClass.field(JMod.PRIVATE | JMod.STATIC | JMod.FINAL, fieldsNestedClass, "_fields").init(JExpr._new(fieldsNestedClass));
@@ -1390,6 +1396,7 @@ public abstract class DataTemplateGenerator extends CodeGenerator
     // Generate has method.
     JMethod has = templateClass.method(JMod.PUBLIC, getCodeModel().BOOLEAN, "has" + capitalizedName);
     addAccessorDoc(has, field, "Existence checker");
+    setDeprecatedAnnotationAndJavadoc(has, field);
     JBlock hasBody = has.body();
     JExpression res = JExpr.invoke("contains").arg(fieldField);
     hasBody._return(res);
@@ -1398,6 +1405,7 @@ public abstract class DataTemplateGenerator extends CodeGenerator
     String removeName = "remove" + capitalizedName;
     JMethod remove = templateClass.method(JMod.PUBLIC, getCodeModel().VOID, removeName);
     addAccessorDoc(remove, field, "Remover");
+    setDeprecatedAnnotationAndJavadoc(remove, field);
     JBlock removeBody = remove.body();
     removeBody.invoke("remove").arg(fieldField);
 
@@ -1405,6 +1413,7 @@ public abstract class DataTemplateGenerator extends CodeGenerator
     String getterName = getGetterName(type, capitalizedName);
     JMethod getterWithMode = templateClass.method(JMod.PUBLIC, type, getterName);
     addAccessorDoc(getterWithMode, field, "Getter");
+    setDeprecatedAnnotationAndJavadoc(getterWithMode, field);
     JVar modeParam = getterWithMode.param(_getModeClass, "mode");
     JBlock getterWithModeBody = getterWithMode.body();
     res = JExpr.invoke("obtain" + wrappedOrDirect).arg(fieldField).arg(JExpr.dotclass(type)).arg(modeParam);
@@ -1413,6 +1422,7 @@ public abstract class DataTemplateGenerator extends CodeGenerator
     // Getter method without mode.
     JMethod getterWithoutMode = templateClass.method(JMod.PUBLIC, type, getterName);
     addAccessorDoc(getterWithoutMode, field, "Getter");
+    setDeprecatedAnnotationAndJavadoc(getterWithoutMode, field);
     res = JExpr.invoke(getterName).arg(_strictGetMode);
     getterWithoutMode.body()._return(res);
 
@@ -1423,6 +1433,7 @@ public abstract class DataTemplateGenerator extends CodeGenerator
     String setterName = "set" + capitalizedName;
     JMethod setterWithMode =  templateClass.method(JMod.PUBLIC, templateClass, setterName);
     addAccessorDoc(setterWithMode, field, "Setter");
+    setDeprecatedAnnotationAndJavadoc(setterWithMode, field);
     JVar param = setterWithMode.param(type, "value");
     modeParam = setterWithMode.param(_setModeClass, "mode");
     JInvocation inv = setterWithMode.body().invoke("put" + wrappedOrDirect).arg(fieldField).arg(JExpr.dotclass(type));
@@ -1432,6 +1443,7 @@ public abstract class DataTemplateGenerator extends CodeGenerator
     // Setter method without mode
     JMethod setter =  templateClass.method(JMod.PUBLIC, templateClass, setterName);
     addAccessorDoc(setter, field, "Setter");
+    setDeprecatedAnnotationAndJavadoc(setter, field);
     param = setter.param(type, "value");
     inv = setter.body().invoke("put" + wrappedOrDirect).arg(fieldField).arg(JExpr.dotclass(type));
     dataClassArg(inv, dataClass).arg(param).arg(_disallowNullSetMode);
@@ -1442,6 +1454,7 @@ public abstract class DataTemplateGenerator extends CodeGenerator
     {
       JMethod unboxifySetter =  templateClass.method(JMod.PUBLIC, templateClass, setterName);
       addAccessorDoc(unboxifySetter, field, "Setter");
+      setDeprecatedAnnotationAndJavadoc(unboxifySetter, field);
       param = unboxifySetter.param(type.unboxify(), "value");
       inv = unboxifySetter.body().invoke("put" + wrappedOrDirect).arg(fieldField).arg(JExpr.dotclass(type));
       dataClassArg(inv, dataClass).arg(param).arg(_disallowNullSetMode);
@@ -1715,5 +1728,55 @@ public abstract class DataTemplateGenerator extends CodeGenerator
   protected static boolean isDirectType(DataSchema schema)
   {
     return _directTypes.contains(schema.getDereferencedType());
+  }
+
+  //
+  // Deprecated annotation utils
+  //
+  private static final String DEPRECATED_KEY = "deprecated";
+  private static final String DEPRECATED_SYMBOLS_KEY = "deprecatedSymbols";
+
+  private void setDeprecatedAnnotationAndJavadoc(DataSchema schema, JDefinedClass schemaClass)
+  {
+    setDeprecatedAnnotationAndJavadoc(schema.getProperties().get(DEPRECATED_KEY), schemaClass, schemaClass);
+  }
+
+  private void setDeprecatedAnnotationAndJavadoc(JMethod method, RecordDataSchema.Field field)
+  {
+    setDeprecatedAnnotationAndJavadoc(field.getProperties().get(DEPRECATED_KEY), method, method);
+  }
+
+  private void setDeprecatedAnnotationAndJavadoc(EnumDataSchema enumSchema, String symbol, JEnumConstant constant)
+  {
+    Object deprecatedSymbolsProp = enumSchema.getProperties().get(DEPRECATED_SYMBOLS_KEY);
+    if (deprecatedSymbolsProp instanceof DataMap)
+    {
+      DataMap deprecatedSymbols = (DataMap)deprecatedSymbolsProp;
+
+      Object deprecatedProp = deprecatedSymbols.get(symbol);
+      setDeprecatedAnnotationAndJavadoc(deprecatedProp, constant, constant);
+    }
+  }
+
+  private void setDeprecatedAnnotationAndJavadoc(Object deprecatedProp,
+                                                 JAnnotatable annotatable,
+                                                 JDocCommentable commentable)
+  {
+    if (Boolean.TRUE.equals(deprecatedProp) && annotatable != null)
+    {
+      annotatable.annotate(Deprecated.class);
+    }
+    else if (deprecatedProp instanceof String)
+    {
+      if (commentable != null)
+      {
+        String deprecatedReason = (String)deprecatedProp;
+        commentable.javadoc().addDeprecated().append(deprecatedReason);
+      }
+      if (annotatable != null)
+      {
+        annotatable.annotate(Deprecated.class);
+      }
+    }
   }
 }
