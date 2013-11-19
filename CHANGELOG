@@ -1,6 +1,7 @@
 1.9.46
 ------
-
+(RB=233744)
+Disable data object checking on safe and performance-critical situations.
 
 1.9.45
 ------
