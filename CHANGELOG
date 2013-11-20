@@ -1,3 +1,7 @@
+1.9.47
+------
+
+
 1.9.46
 ------
 (RB=233744)
@@ -6,6 +10,9 @@ Disable data object checking on safe and performance-critical situations.
 (RB=235277)
 Added compatibility checking to annotations. Annotation changes will now be considered compatible rather than
 simply skipped over and thus considered equivalent.
+
+(RB=235831)
+Add functionality of listening to all children's data under a certain znode in ZooKeeper.
 
 1.9.45
 ------
