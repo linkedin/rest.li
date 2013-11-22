@@ -1,5 +1,12 @@
+1.9.48
+------
+
+
 1.9.47
 ------
+(RB=237507)
+Fix of getClient for scatter/gather and search
+
 (RB=234511)
 Replacing IdentityHashMap in RecordTemplate, WrappingMapTemplate and WrappingArrayTemplate with a custom cache implementation.
 

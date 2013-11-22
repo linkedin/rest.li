@@ -19,6 +19,7 @@ package com.linkedin.d2.balancer.simple;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
+import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.LoadBalancer;
 import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.LoadBalancerState.LoadBalancerStateListenerCallback;
@@ -28,6 +29,7 @@ import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.clients.RewriteClient;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
+import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
@@ -53,8 +55,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -74,6 +78,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   private final Stats             _serviceAvailableStats;
   private final long              _timeout;
   private final TimeUnit          _unit;
+  private final Random            _random = new Random();
 
   public SimpleLoadBalancer(LoadBalancerState state)
   {
@@ -514,16 +519,53 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   {
     // now try and find a tracker client for the uri
     TrackerClient trackerClient = null;
-    PartitionAccessor accessor = getPartitionAccessor(serviceName, clusterName);
-    URI requestUri = request.getURI();
+    URI targetHost = KeyMapper.TargetHostHints.getRequestContextTargetHost(requestContext);
     int partitionId = -1;
-    try
+    URI requestUri = request.getURI();
+
+    if (targetHost == null)
     {
-      partitionId = accessor.getPartitionId(requestUri);
+      PartitionAccessor accessor = getPartitionAccessor(serviceName, clusterName);
+      try
+      {
+        partitionId = accessor.getPartitionId(requestUri);
+      }
+      catch (PartitionAccessException e)
+      {
+        die(serviceName, "Error in finding the partition for URI: " + requestUri + ", " + e.getMessage());
+      }
     }
-    catch (PartitionAccessException e)
+    else
     {
-      die(serviceName, "Error in finding the partition for URI: " + requestUri + ", " + e.getMessage());
+      // This is the case of scatter/gather or search, where the target host may be chosen to be responsible for
+      // more than one partitions (The target host was picked from a consistent hash ring, so load balancing is already in effect).
+
+      // we randomly pick one partition to check for the call dropping
+      // This is done for two reasons:
+      // 1. Currently there is no way to know for which subset of partitions the target host is chosen for
+      //    if it is serving more than one partitions. This can be added, but it requires the change of public interfaces (KeyMapper) so that
+      //    more hints can be added to the request context for the concerned the partitions
+      // 2. More importantly, there is no good way to check for call dropping even if the above problem is solved.
+      //    For example, if a target host is chosen for partition 1, 5, 7, with call drop rates of 0, 0.2, 0.4 respectively
+      //    A reasonable way to proceed would be use the highest drop rate and do the check once for the target host,
+      //    but currently the check can only be done for each partition and only with boolean result (no access to drop rate)
+
+      // The partition to check is picked at random to be conservative.
+      // E.g. in the above example, we don't want to always use the drop rate of partition 1.
+
+      Map<Integer, PartitionData> partitionDataMap = uris.getPartitionDataMap(targetHost);
+      if (partitionDataMap == null || partitionDataMap.isEmpty())
+      {
+        die(serviceName, "There is no partition data for server host: " + targetHost + ". URI: " + requestUri);
+      }
+
+      Set<Integer> partitions = partitionDataMap.keySet();
+      Iterator<Integer> iterator = partitions.iterator();
+      int index = _random.nextInt(partitions.size());
+      for (int i = 0; i <= index; i++)
+      {
+        partitionId = iterator.next();
+      }
     }
 
     List<TrackerClient> clientsToLoadBalance = null;

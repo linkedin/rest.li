@@ -22,6 +22,7 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
+import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.discovery.event.SynchronousExecutorService;
 import java.io.File;
 import java.io.IOException;
@@ -43,6 +44,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.io.FileUtils;
+import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -359,6 +361,18 @@ public class SimpleLoadBalancerTest
         String clientUri = client.getUri().toString();
         HashFunction<String[]> hashFunction = null;
         String[] str = new String[1];
+
+        // test KeyMapper target host hint: request is always to target host regardless of what's in d2 URI and whether it's hash-based or range-based partitions
+        RequestContext requestContextWithHint = new RequestContext();
+        KeyMapper.TargetHostHints.setRequestContextTargetHost(requestContextWithHint, uri1);
+        RewriteClient hintedClient1 = (RewriteClient)loadBalancer.getClient(new URIRequest("d2://foo/id=" + ii), requestContextWithHint);
+        String hintedUri1 = hintedClient1.getUri().toString();
+        Assert.assertEquals(hintedUri1, uri1.toString() + "/foo");
+        RewriteClient hintedClient2 = (RewriteClient)loadBalancer.getClient(new URIRequest("d2://foo/action=purge-all"), requestContextWithHint);
+        String hintedUri2 = hintedClient2.getUri().toString();
+        Assert.assertEquals(hintedUri2, uri1.toString() + "/foo");
+        // end test KeyMapper target host hint
+
         if (partitionMethod == 2)
         {
           hashFunction = new MD5Hash();
