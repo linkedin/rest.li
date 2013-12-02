@@ -17,6 +17,9 @@
 package com.linkedin.d2.balancer.properties;
 
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 /**
  * Validates values for configs provided by the clients
@@ -25,6 +28,8 @@ import java.util.Map;
  */
 public class ClientServiceConfigValidator
 {
+  private static final Logger _log = LoggerFactory.getLogger(ClientServiceConfigValidator.class);
+
   public static boolean isValidValue(Map<String, Object> serviceSuppliedConfig,
                                      Map<String, Object> clientSuppliedServiceConfig,
                                      String propertyName)
@@ -32,9 +37,18 @@ public class ClientServiceConfigValidator
     // prevent clients from violating SLAs as published by the service
     if (propertyName.equals(PropertyKeys.HTTP_REQUEST_TIMEOUT))
     {
-      int clientSuppliedTimeout = (Integer)clientSuppliedServiceConfig.get(propertyName);
-      int serviceSuppliedTimeout = (Integer)serviceSuppliedConfig.get(propertyName);
-      return clientSuppliedTimeout >= serviceSuppliedTimeout;
+      String clientSuppliedTimeout = (String)clientSuppliedServiceConfig.get(propertyName);
+      String serviceSuppliedTimeout = (String)serviceSuppliedConfig.get(propertyName);
+      try
+      {
+        return Integer.parseInt(clientSuppliedTimeout) >= Integer.parseInt(serviceSuppliedTimeout);
+      }
+      catch (NumberFormatException e)
+      {
+        _log.error("Failed to convert HTTP Request Timeout to an int. clientSuppliedTimeout {}, " +
+                       "serviceSuppliedTimeout {}. Exception {}", clientSuppliedTimeout, serviceSuppliedTimeout);
+        return false;
+      }
     }
     return true;
   }
