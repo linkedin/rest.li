@@ -1,6 +1,10 @@
-1.9.48
+1.9.49
 ------
 
+1.9.48
+------
+(RB=239561)
+Fix bug in ClientServiceConfigValidator. We were previously casting the values directly to an int. However, this is incorrect as the values in the map are Strings.
 
 1.9.47
 ------
