@@ -1,5 +1,10 @@
+1.9.50
+------
+
 1.9.49
 ------
+(RB=239631)
+Fixed log error message in ClientServiceConfigValidator.
 
 1.9.48
 ------
