@@ -196,8 +196,7 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
     if (value == null)
     {
       _log.warn("Received a null event during publishInitialize for String prop = " + prop +
-                    ". Nevertheless, we will still publish the null event. Here is the stack trace: ",
-                new Throwable());
+                    ". Still publishing the null event.");
     }
     _thread.send(new PropertyEvent("PropertyEventBus.publishInitialize " + prop)
     {
@@ -230,8 +229,7 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
     if (value == null)
     {
       _log.warn("Received a null event during publishAdd for String prop = " + prop +
-                    ". Nevertheless, we will still publish the null event. Here is the stack trace: ",
-                new Throwable());
+                    ". Still publishing the null event.");
     }
     _thread.send(new PropertyEvent("PropertyEventBus.publishAdd " + prop)
     {

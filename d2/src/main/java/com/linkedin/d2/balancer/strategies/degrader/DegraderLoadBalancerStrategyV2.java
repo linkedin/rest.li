@@ -1205,15 +1205,17 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
     @Override
     public String toString()
     {
-      return "DegraderLoadBalancerState [_clusterGenerationId=" + _clusterGenerationId
-          + ", _lastUpdated=" + _lastUpdated + ", _pointsMap=" + _pointsMap
-          + ", _updateIntervalMs=" + _updateIntervalMs
-          + ", _currentOverrideDropRate=" + _currentOverrideDropRate
-          + ", _currentAvgClusterLatency=" + _currentAvgClusterLatency
-          + ", _strategy=" + _strategy
-          + ", _recoveryMap=" + _recoveryMap
+      return "DegraderLoadBalancerState [_serviceName="+ _serviceName
           + ", _currentClusterCallCount=" + _currentClusterCallCount
-          + ", _serviceName="+ _serviceName+ "]";
+          + ", _currentAvgClusterLatency=" + _currentAvgClusterLatency
+          + ", _currentOverrideDropRate=" + _currentOverrideDropRate
+          + ", _clusterGenerationId=" + _clusterGenerationId
+          + ", _updateIntervalMs=" + _updateIntervalMs
+          + ", _lastUpdated=" + _lastUpdated
+          + ", _strategy=" + _strategy
+          + ", _pointsMap=" + _pointsMap
+          + ", _recoveryMap=" + _recoveryMap
+          + "]";
     }
   }
 }
