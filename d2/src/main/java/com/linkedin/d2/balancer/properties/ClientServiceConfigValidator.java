@@ -45,8 +45,8 @@ public class ClientServiceConfigValidator
       }
       catch (NumberFormatException e)
       {
-        _log.error("Failed to convert HTTP Request Timeout to an int. clientSuppliedTimeout {}, " +
-                       "serviceSuppliedTimeout {}. Exception {}", clientSuppliedTimeout, serviceSuppliedTimeout);
+        _log.error("Failed to convert HTTP Request Timeout to an int. clientSuppliedTimeout is " + clientSuppliedTimeout
+                       + ". serviceSuppliedTimeout is " + serviceSuppliedTimeout, e);
         return false;
       }
     }
