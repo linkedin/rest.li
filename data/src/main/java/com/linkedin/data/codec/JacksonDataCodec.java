@@ -17,12 +17,23 @@
 package com.linkedin.data.codec;
 
 
+import com.fasterxml.jackson.core.JsonEncoding;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonLocation;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.PrettyPrinter;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
 import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.collections.CheckedUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,7 +41,6 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.IdentityHashMap;
@@ -38,15 +48,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.codehaus.jackson.JsonEncoding;
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.JsonGenerator;
-import org.codehaus.jackson.JsonLocation;
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.JsonParser;
-import org.codehaus.jackson.JsonToken;
-import org.codehaus.jackson.PrettyPrinter;
 
 /**
  * A JSON codec that uses Jackson for serialization and de-serialization.
@@ -63,7 +64,7 @@ public class JacksonDataCodec implements TextDataCodec
   public JacksonDataCodec(JsonFactory jsonFactory)
   {
     _jsonFactory = jsonFactory;
-    _jsonFactory.disable(JsonParser.Feature.INTERN_FIELD_NAMES);
+    _jsonFactory.disable(JsonFactory.Feature.INTERN_FIELD_NAMES);
     setAllowComments(true);
   }
 
@@ -131,28 +132,80 @@ public class JacksonDataCodec implements TextDataCodec
   public DataMap bytesToMap(byte[] input) throws IOException
   {
     final Parser parser = new Parser();
-    return parser.parse(_jsonFactory.createJsonParser(input), DataMap.class);
+    JsonParser jsonParser = null;
+    try
+    {
+      jsonParser = _jsonFactory.createParser(input);
+      return parser.parse(jsonParser, DataMap.class);
+    }
+    catch (IOException e)
+    {
+      throw e;
+    }
+    finally
+    {
+      closeJsonParserQuietly(jsonParser);
+    }
   }
 
   @Override
   public DataMap stringToMap(String input) throws IOException
   {
     final Parser parser = new Parser();
-    return parser.parse(_jsonFactory.createJsonParser(input), DataMap.class);
+    JsonParser jsonParser = null;
+    try
+    {
+      jsonParser = _jsonFactory.createParser(input);
+      return parser.parse(jsonParser, DataMap.class);
+    }
+    catch (IOException e)
+    {
+      throw e;
+    }
+    finally
+    {
+      closeJsonParserQuietly(jsonParser);
+    }
   }
 
   @Override
   public DataList bytesToList(byte[] input) throws IOException
   {
     final Parser parser = new Parser();
-    return parser.parse(_jsonFactory.createJsonParser(input), DataList.class);
+    JsonParser jsonParser = null;
+    try
+    {
+      jsonParser = _jsonFactory.createParser(input);
+      return parser.parse(jsonParser, DataList.class);
+    }
+    catch (IOException e)
+    {
+      throw e;
+    }
+    finally
+    {
+      closeJsonParserQuietly(jsonParser);
+    }
   }
 
   @Override
   public DataList stringToList(String input) throws IOException
   {
     final Parser parser = new Parser();
-    return parser.parse(_jsonFactory.createJsonParser(input), DataList.class);
+    JsonParser jsonParser = null;
+    try
+    {
+      jsonParser = _jsonFactory.createParser(input);
+      return parser.parse(jsonParser, DataList.class);
+    }
+    catch (IOException e)
+    {
+      throw e;
+    }
+    finally
+    {
+      closeJsonParserQuietly(jsonParser);
+    }
   }
 
   @Override
@@ -181,7 +234,7 @@ public class JacksonDataCodec implements TextDataCodec
 
   protected JsonGenerator createJsonGenerator(OutputStream out) throws IOException
   {
-    final JsonGenerator generator = _jsonFactory.createJsonGenerator(out, _jsonEncoding);
+    final JsonGenerator generator = _jsonFactory.createGenerator(out, _jsonEncoding);
     if (_prettyPrinter != null)
     {
       generator.setPrettyPrinter(_prettyPrinter);
@@ -191,7 +244,7 @@ public class JacksonDataCodec implements TextDataCodec
 
   protected JsonGenerator createJsonGenerator(Writer out) throws IOException
   {
-    final JsonGenerator generator = _jsonFactory.createJsonGenerator(out);
+    final JsonGenerator generator = _jsonFactory.createGenerator(out);
     if (_prettyPrinter != null)
     {
       generator.setPrettyPrinter(_prettyPrinter);
@@ -201,24 +254,67 @@ public class JacksonDataCodec implements TextDataCodec
 
   protected void writeObject(Object object, JsonGenerator generator) throws IOException
   {
-    JsonTraverseCallback callback = new JsonTraverseCallback(generator);
-    Data.traverse(object, callback);
-    generator.flush();
-    generator.close();
+    try
+    {
+      JsonTraverseCallback callback = new JsonTraverseCallback(generator);
+      Data.traverse(object, callback);
+      generator.flush();
+    }
+    catch (IOException e)
+    {
+      throw e;
+    }
+    finally
+    {
+      try
+      {
+        generator.close();
+      }
+      catch (IOException e)
+      {
+        _log.error(e.getMessage());
+      }
+    }
   }
 
   @Override
   public DataMap readMap(InputStream in) throws IOException
   {
     final Parser parser = new Parser();
-    return parser.parse(_jsonFactory.createJsonParser(in), DataMap.class);
+    JsonParser jsonParser = null;
+    try
+    {
+      jsonParser = _jsonFactory.createParser(in);
+      return parser.parse(jsonParser, DataMap.class);
+    }
+    catch (IOException e)
+    {
+      throw e;
+    }
+    finally
+    {
+      closeJsonParserQuietly(jsonParser);
+    }
   }
 
   @Override
   public DataMap readMap(Reader in) throws IOException
   {
     final Parser parser = new Parser();
-    return parser.parse(_jsonFactory.createJsonParser(in), DataMap.class);
+    JsonParser jsonParser = null;
+    try
+    {
+      jsonParser = _jsonFactory.createParser(in);
+      return parser.parse(jsonParser, DataMap.class);
+    }
+    catch (IOException e)
+    {
+      throw e;
+    }
+    finally
+    {
+      closeJsonParserQuietly(jsonParser);
+    }
   }
 
 
@@ -226,14 +322,40 @@ public class JacksonDataCodec implements TextDataCodec
   public DataList readList(InputStream in) throws IOException
   {
     final Parser parser = new Parser();
-    return parser.parse(_jsonFactory.createJsonParser(in), DataList.class);
+    JsonParser jsonParser = null;
+    try
+    {
+      jsonParser = _jsonFactory.createParser(in);
+      return parser.parse(jsonParser, DataList.class);
+    }
+    catch (IOException e)
+    {
+      throw e;
+    }
+    finally
+    {
+      closeJsonParserQuietly(jsonParser);
+    }
   }
 
   @Override
   public DataList readList(Reader in) throws IOException
   {
     final Parser parser = new Parser();
-    return parser.parse(_jsonFactory.createJsonParser(in), DataList.class);
+    JsonParser jsonParser = null;
+    try
+    {
+      jsonParser = _jsonFactory.createParser(in);
+      return parser.parse(jsonParser, DataList.class);
+    }
+    catch (IOException e)
+    {
+      throw e;
+    }
+    finally
+    {
+      closeJsonParserQuietly(jsonParser);
+    }
   }
 
   @Deprecated
@@ -256,10 +378,23 @@ public class JacksonDataCodec implements TextDataCodec
    * @throws IOException if there is a syntax error in the input.
    */
   public List<Object> parse(InputStream in, StringBuilder mesg, Map<Object, DataLocation> locationMap)
-    throws IOException
+      throws IOException
   {
-    Parser parser = new Parser(true);
-    return parser.parse(_jsonFactory.createJsonParser(in), mesg, locationMap);
+    final Parser parser = new Parser(true);
+    JsonParser jsonParser = null;
+    try
+    {
+      jsonParser = _jsonFactory.createParser(in);
+      return parser.parse(jsonParser, mesg, locationMap);
+    }
+    catch (IOException e)
+    {
+      throw e;
+    }
+    finally
+    {
+      closeJsonParserQuietly(jsonParser);
+    }
   }
 
   /**
@@ -276,10 +411,23 @@ public class JacksonDataCodec implements TextDataCodec
    * @throws IOException if there is a syntax error in the input.
    */
   public List<Object> parse(Reader in, StringBuilder mesg, Map<Object, DataLocation> locationMap)
-    throws IOException
+      throws IOException
   {
-    Parser parser = new Parser(true);
-    return parser.parse(_jsonFactory.createJsonParser(in), mesg, locationMap);
+    final Parser parser = new Parser(true);
+    JsonParser jsonParser = null;
+    try
+    {
+      jsonParser = _jsonFactory.createParser(in);
+      return parser.parse(jsonParser, mesg, locationMap);
+    }
+    catch (IOException e)
+    {
+      throw e;
+    }
+    finally
+    {
+      closeJsonParserQuietly(jsonParser);
+    }
   }
 
   public void objectToJsonGenerator(Object object, JsonGenerator generator) throws IOException
@@ -302,49 +450,49 @@ public class JacksonDataCodec implements TextDataCodec
     }
 
     @Override
-    public void nullValue() throws JsonGenerationException, IOException
+    public void nullValue() throws IOException
     {
       _jsonGenerator.writeNull();
     }
 
     @Override
-    public void booleanValue(boolean value) throws JsonGenerationException, IOException
+    public void booleanValue(boolean value) throws IOException
     {
       _jsonGenerator.writeBoolean(value);
     }
 
     @Override
-    public void integerValue(int value) throws JsonGenerationException, IOException
+    public void integerValue(int value) throws IOException
     {
       _jsonGenerator.writeNumber(value);
     }
 
     @Override
-    public void longValue(long value) throws JsonGenerationException, IOException
+    public void longValue(long value) throws IOException
     {
       _jsonGenerator.writeNumber(value);
     }
 
     @Override
-    public void floatValue(float value) throws JsonGenerationException, IOException
+    public void floatValue(float value) throws IOException
     {
       _jsonGenerator.writeNumber(value);
     }
 
     @Override
-    public void doubleValue(double value) throws JsonGenerationException, IOException
+    public void doubleValue(double value) throws IOException
     {
       _jsonGenerator.writeNumber(value);
     }
 
     @Override
-    public void stringValue(String value) throws JsonGenerationException, IOException
+    public void stringValue(String value) throws IOException
     {
       _jsonGenerator.writeString(value);
     }
 
     @Override
-    public void byteStringValue(ByteString value) throws JsonGenerationException, IOException
+    public void byteStringValue(ByteString value) throws IOException
     {
       _jsonGenerator.writeString(value.asAvroString());
     }
@@ -356,39 +504,39 @@ public class JacksonDataCodec implements TextDataCodec
     }
 
     @Override
-    public void emptyMap() throws JsonGenerationException, IOException
+    public void emptyMap() throws IOException
     {
       _jsonGenerator.writeStartObject();
       _jsonGenerator.writeEndObject();
     }
 
     @Override
-    public void startMap(DataMap map) throws JsonGenerationException, IOException
+    public void startMap(DataMap map) throws IOException
     {
       _jsonGenerator.writeStartObject();
     }
 
     @Override
-    public void key(String key) throws JsonGenerationException, IOException
+    public void key(String key) throws IOException
     {
       _jsonGenerator.writeFieldName(key);
     }
 
     @Override
-    public void endMap() throws JsonGenerationException, IOException
+    public void endMap() throws IOException
     {
       _jsonGenerator.writeEndObject();
     }
 
     @Override
-    public void emptyList() throws JsonGenerationException, IOException
+    public void emptyList() throws IOException
     {
       _jsonGenerator.writeStartArray();
       _jsonGenerator.writeEndArray();
     }
 
     @Override
-    public void startList(DataList list) throws JsonGenerationException, IOException
+    public void startList(DataList list) throws IOException
     {
       _jsonGenerator.writeStartArray();
     }
@@ -399,60 +547,13 @@ public class JacksonDataCodec implements TextDataCodec
     }
 
     @Override
-    public void endList() throws JsonGenerationException, IOException
+    public void endList() throws IOException
     {
       _jsonGenerator.writeEndArray();
     }
 
     private final JsonGenerator _jsonGenerator;
   }
-
-  // http://jira.codehaus.org/browse/JACKSON-230
-  // http://jira.codehaus.org/browse/JACKSON-491
-  // begin of workaround code
-  private static final boolean JACKSON_230_WORKAROUND;
-  private static final boolean JACKSON_491_WORKAROUND;
-  private static final long MAX_INT = Integer.MAX_VALUE;
-  private static final long MIN_INT = Integer.MIN_VALUE;
-  private static final BigInteger MAX_LONG = BigInteger.valueOf(Long.MAX_VALUE);
-  private static final BigInteger MIN_LONG = BigInteger.valueOf(Long.MIN_VALUE);
-  static
-  {
-    boolean isJackson230Bug;
-    boolean isJackson491Bug;
-    String json = "{ \"int\" : " + Integer.MAX_VALUE + ", \"long\" : 1323372036854775807 }";
-    try
-    {
-      JsonFactory factory = new JsonFactory();
-      factory.disable(JsonParser.Feature.INTERN_FIELD_NAMES);
-      JsonParser parser = factory.createJsonParser(json);
-      JsonToken token = parser.nextToken();
-      assert(token == JsonToken.START_OBJECT);
-      token = parser.nextToken();
-      assert(token == JsonToken.FIELD_NAME);
-      assert(parser.getCurrentName().equals("int"));
-      token = parser.nextToken();
-      assert(token == JsonToken.VALUE_NUMBER_INT);
-      JsonParser.NumberType numberType = parser.getNumberType();
-      isJackson230Bug = (numberType == JsonParser.NumberType.LONG);
-      assert(isJackson230Bug || numberType == JsonParser.NumberType.INT);
-      token = parser.nextToken();
-      assert(token == JsonToken.FIELD_NAME);
-      assert(parser.getCurrentName().equals("long"));
-      token = parser.nextToken();
-      assert(token == JsonToken.VALUE_NUMBER_INT);
-      numberType = parser.getNumberType();
-      isJackson491Bug = (numberType == JsonParser.NumberType.BIG_INTEGER);
-      assert(isJackson491Bug || numberType == JsonParser.NumberType.LONG);
-    }
-    catch (IOException e)
-    {
-      throw new IllegalStateException("Parsing " + json + " should not fail", e);
-    }
-    JACKSON_230_WORKAROUND = isJackson230Bug;
-    JACKSON_491_WORKAROUND = isJackson491Bug;
-  }
-  // end of workaround code
 
   private static class Location implements DataLocation
   {
@@ -605,8 +706,7 @@ public class JacksonDataCodec implements TextDataCodec
       }
     }
 
-    private Object parse(DataList parentList, DataMap parentMap, String name, JsonToken token)
-        throws JsonParseException, IOException
+    private Object parse(DataList parentList, DataMap parentMap, String name, JsonToken token) throws IOException
     {
       if (token == null)
       {
@@ -660,10 +760,10 @@ public class JacksonDataCodec implements TextDataCodec
       }
     }
 
-    private Object parsePrimitive(JsonToken token) throws JsonParseException, IOException
+    private Object parsePrimitive(JsonToken token) throws IOException
     {
       Object object;
-      JsonParser.NumberType numberType = null;
+      JsonParser.NumberType numberType;
       switch (token) {
         case VALUE_STRING:
           object = _parser.getText();
@@ -676,18 +776,7 @@ public class JacksonDataCodec implements TextDataCodec
               object = _parser.getIntValue();
               break;
             case LONG:
-              if (JACKSON_230_WORKAROUND)
-              {
-                // Jackson too eagerly use longs for ints
-                // http://jira.codehaus.org/browse/JACKSON-230
-                // cast to Object required to avoid numeric conversion
-                long longValue = _parser.getLongValue();
-                object = (MIN_INT <= longValue && longValue <= MAX_INT) ? (Object) Integer.valueOf((int) longValue) : (Object) Long.valueOf(longValue);
-              }
-              else
-              {
-                object = _parser.getLongValue();
-              }
+              object = _parser.getLongValue();
               break;
             case FLOAT:
               object = _parser.getFloatValue();
@@ -696,18 +785,6 @@ public class JacksonDataCodec implements TextDataCodec
               object = _parser.getDoubleValue();
               break;
             case BIG_INTEGER:
-              if (JACKSON_230_WORKAROUND || JACKSON_491_WORKAROUND)
-              {
-                // Jackson too eagerly use big integers for long
-                // http://jira.codehaus.org/browse/JACKSON-230
-                // http://jira.codehaus.org/browse/JACKSON-491
-                BigInteger bigInteger = _parser.getBigIntegerValue();
-                if (bigInteger.compareTo(MIN_LONG) >= 0 && bigInteger.compareTo(MAX_LONG) <= 0)
-                {
-                  object = bigInteger.longValue();
-                  break;
-                }
-              }
               // repeat to avoid fall through warning
               error(token, numberType);
               object = null;
@@ -736,7 +813,7 @@ public class JacksonDataCodec implements TextDataCodec
       return object;
     }
 
-    private void parseDataMap(DataMap map) throws JsonParseException, IOException
+    private void parseDataMap(DataMap map) throws IOException
     {
       while (_parser.nextToken() != JsonToken.END_OBJECT)
       {
@@ -754,7 +831,7 @@ public class JacksonDataCodec implements TextDataCodec
       }
     }
 
-    private void parseDataList(DataList list) throws JsonParseException, IOException
+    private void parseDataList(DataList list) throws IOException
     {
       JsonToken token;
       int index = 0;
@@ -773,7 +850,7 @@ public class JacksonDataCodec implements TextDataCodec
       }
     }
 
-    private void error(JsonToken token, JsonParser.NumberType type) throws JsonParseException, IOException
+    private void error(JsonToken token, JsonParser.NumberType type) throws IOException
     {
       if (_errorBuilder == null)
       {
@@ -794,6 +871,23 @@ public class JacksonDataCodec implements TextDataCodec
       _errorBuilder.append(" not parsed.\n");
     }
   }
+
+  private static void closeJsonParserQuietly(JsonParser parser)
+  {
+    if (parser != null)
+    {
+      try
+      {
+        parser.close();
+      }
+      catch (IOException e)
+      {
+        _log.error(e.getMessage());
+      }
+    }
+  }
+
+  private static final Logger _log = LoggerFactory.getLogger(JacksonDataCodec.class);
 
   protected boolean _allowComments;
   protected PrettyPrinter _prettyPrinter;

@@ -16,9 +16,9 @@
 
 package com.linkedin.d2.balancer.properties;
 
+import com.linkedin.d2.balancer.util.JacksonUtil;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.d2.discovery.PropertySerializationException;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.testng.annotations.Test;
 
 import java.net.URI;
@@ -101,13 +101,11 @@ public class UriPropertiesSerializerTest
 
   public UriProperties fromOldFormatBytes(byte[] bytes) throws PropertySerializationException
   {
-
-    ObjectMapper mapper = new ObjectMapper();
     try
     {
       @SuppressWarnings("unchecked")
       Map<String, Object> untyped =
-          mapper.readValue(new String(bytes, "UTF-8"), HashMap.class);
+          JacksonUtil.getObjectMapper().readValue(new String(bytes, "UTF-8"), HashMap.class);
       return fromOldFormatMap(untyped);
     }
     catch (Exception e)

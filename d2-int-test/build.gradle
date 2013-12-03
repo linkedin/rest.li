@@ -12,8 +12,6 @@ dependencies {
   compile externalDependency.commonsHttpClient
   compile externalDependency.json
   compile externalDependency.zookeeper
-  compile externalDependency.jacksonCoreAsl
-  compile externalDependency.jacksonMapperAsl
   compile externalDependency.jdkTools
   compile externalDependency.netty
   testCompile externalDependency.testng

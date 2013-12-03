@@ -10,8 +10,8 @@ dependencies {
   compile externalDependency.codemodel
   compile externalDependency.commonsCli
   compile externalDependency.commonsLang
-  compile externalDependency.jacksonCoreAsl
-  compile externalDependency.jacksonMapperAsl
+  compile externalDependency.jacksonCore
+  compile externalDependency.jacksonDataBind
   compile externalDependency.jdkTools
   runtime externalDependency.log4j
   runtime externalDependency.slf4jLog4j12

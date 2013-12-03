@@ -19,18 +19,18 @@
  */
 package com.linkedin.data.transform.patch;
 
-import static org.testng.Assert.*;
+
+import com.fasterxml.jackson.core.JsonParseException;
+import com.linkedin.data.DataMap;
+import com.linkedin.data.transform.DataMapProcessor;
+import com.linkedin.data.transform.DataProcessingException;
+import org.testng.annotations.Test;
 
 import java.io.IOException;
 
-import org.codehaus.jackson.JsonParseException;
-import org.testng.annotations.Test;
-
-import com.linkedin.data.DataMap;
-import com.linkedin.data.codec.JacksonDataCodec;
-import com.linkedin.data.transform.DataMapProcessor;
-import com.linkedin.data.transform.DataProcessingException;
 import static com.linkedin.data.TestUtil.dataMapFromString;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.fail;
 
 
 public class TestPatchOnData

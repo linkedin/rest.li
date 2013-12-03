@@ -16,16 +16,6 @@
 
 package com.linkedin.restli.examples.greetings.server;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 
 import com.linkedin.data.template.BooleanArray;
 import com.linkedin.data.template.StringMap;
@@ -63,6 +53,17 @@ import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.resources.BaseResource;
 import com.linkedin.restli.server.resources.KeyValueResource;
 import com.linkedin.restli.server.util.PatchApplier;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Base class to various interfaces of a richer "Hello world" example, demonstrating a

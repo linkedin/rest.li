@@ -237,16 +237,24 @@ public class ResourceModelEncoder
       return schema.getUnionMemberKey();
     }
 
+    JsonBuilder builder = null;
     try
     {
-      JsonBuilder builder = new JsonBuilder(JsonBuilder.Pretty.SPACES);
-      SchemaToJsonEncoder encoder = new NamedSchemaReferencingJsonEncoder(builder);
+      builder = new JsonBuilder(JsonBuilder.Pretty.SPACES);
+      final SchemaToJsonEncoder encoder = new NamedSchemaReferencingJsonEncoder(builder);
       encoder.encode(schema);
       return builder.result();
     }
     catch (IOException e)
     {
       throw new RestLiInternalException("could not encode schema for '" + schema.toString() +  "'", e);
+    }
+    finally
+    {
+      if (builder != null)
+      {
+        builder.closeQuietly();
+      }
     }
   }
 
@@ -290,16 +298,24 @@ public class ResourceModelEncoder
       schemaToEncode = dataSchema;
     }
 
+    JsonBuilder builder = null;
     try
     {
-      JsonBuilder builder = new JsonBuilder(JsonBuilder.Pretty.SPACES);
-      SchemaToJsonEncoder encoder = new NamedSchemaReferencingJsonEncoder(builder);
+      builder = new JsonBuilder(JsonBuilder.Pretty.SPACES);
+      final SchemaToJsonEncoder encoder = new NamedSchemaReferencingJsonEncoder(builder);
       encoder.encode(schemaToEncode);
       return builder.result();
     }
     catch (IOException e)
     {
       throw new RestLiInternalException("could not encode schema for '" + type.getName() + "'", e);
+    }
+    finally
+    {
+      if (builder != null)
+      {
+        builder.closeQuietly();
+      }
     }
   }
 

@@ -16,12 +16,13 @@
 
 package com.linkedin.d2.balancer.properties;
 
+
 import com.linkedin.d2.balancer.properties.util.PropertyUtil;
+import com.linkedin.d2.balancer.util.JacksonUtil;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.d2.discovery.PropertyBuilder;
 import com.linkedin.d2.discovery.PropertySerializationException;
 import com.linkedin.d2.discovery.PropertySerializer;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,13 +32,7 @@ import java.util.Map;
 
 public class UriPropertiesJsonSerializer implements PropertySerializer<UriProperties>, PropertyBuilder<UriProperties>
 {
-  private final ObjectMapper _mapper;
   private static final Logger _log = LoggerFactory.getLogger(UriPropertiesJsonSerializer.class);
-
-  public UriPropertiesJsonSerializer()
-  {
-    _mapper = new ObjectMapper();
-  }
 
   @Override
   public byte[] toBytes(UriProperties property)
@@ -77,7 +72,7 @@ public class UriPropertiesJsonSerializer implements PropertySerializer<UriProper
           }
         };
       }
-      return _mapper.writeValueAsString(propertyToSerialize).getBytes("UTF-8");
+      return JacksonUtil.getObjectMapper().writeValueAsString(propertyToSerialize).getBytes("UTF-8");
     }
     catch (Exception e)
     {
@@ -94,8 +89,7 @@ public class UriPropertiesJsonSerializer implements PropertySerializer<UriProper
     try
     {
       @SuppressWarnings("unchecked")
-      Map<String, Object> untyped =
-          _mapper.readValue(new String(bytes, "UTF-8"), HashMap.class);
+      Map<String, Object> untyped = JacksonUtil.getObjectMapper().readValue(new String(bytes, "UTF-8"), HashMap.class);
       return fromMap(untyped);
     }
     catch (Exception e)

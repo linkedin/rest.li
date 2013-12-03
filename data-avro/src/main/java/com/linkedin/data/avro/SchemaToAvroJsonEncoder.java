@@ -25,6 +25,7 @@ import com.linkedin.data.schema.JsonBuilder;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.SchemaToJsonEncoder;
 import com.linkedin.data.schema.UnionDataSchema;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -57,16 +58,24 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
                              IdentityHashMap<RecordDataSchema.Field, Object> fieldDefaultValues,
                              DataToAvroSchemaTranslationOptions options)
   {
+    JsonBuilder builder = null;
     try
     {
-      JsonBuilder builder = new JsonBuilder(options.getPretty());
-      SchemaToAvroJsonEncoder serializer = new SchemaToAvroJsonEncoder(builder, schema, fieldDefaultValues, options);
+      builder = new JsonBuilder(options.getPretty());
+      final SchemaToAvroJsonEncoder serializer = new SchemaToAvroJsonEncoder(builder, schema, fieldDefaultValues, options);
       serializer.encode(schema);
       return builder.result();
     }
     catch (IOException exc)
     {
       throw new IllegalStateException(exc);
+    }
+    finally
+    {
+      if (builder != null)
+      {
+        builder.closeQuietly();
+      }
     }
   }
 
@@ -419,8 +428,7 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
         throw new SchemaTranslationException(sb.toString());
       }
     }
-
-  };
+  }
 
   private final AvroOverrideMap _avroOverrideMap = new AvroOverrideMap(_avroOverrideFactory);
 }

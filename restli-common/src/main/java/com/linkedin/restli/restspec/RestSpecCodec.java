@@ -20,6 +20,8 @@
 
 package com.linkedin.restli.restspec;
 
+
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.JacksonDataCodec;
@@ -29,11 +31,11 @@ import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.JacksonDataTemplateCodec;
 import com.linkedin.restli.common.RestConstants;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
-import org.codehaus.jackson.impl.DefaultPrettyPrinter;
 
 
 /**

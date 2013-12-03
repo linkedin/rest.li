@@ -7,8 +7,7 @@ dependencies {
   compile project(':li-jersey-uri')
   compile externalDependency.mail
   compile externalDependency.commonsLang
-  compile externalDependency.jacksonCoreAsl
-  compile externalDependency.jacksonMapperAsl
+  compile externalDependency.jacksonCore
   compile externalDependency.parseq
   testCompile externalDependency.testng
   testCompile externalDependency.easymock

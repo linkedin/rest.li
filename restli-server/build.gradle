@@ -9,8 +9,7 @@ dependencies {
   compile externalDependency.mail
   compile externalDependency.commonsLang
   compile externalDependency.commonsIo
-  compile externalDependency.jacksonCoreAsl
-  compile externalDependency.jacksonMapperAsl
+  compile externalDependency.jacksonCore
   compile externalDependency.parseq
   compile externalDependency.servletApi
   testCompile project(path: ':generator-test', configuration: 'testArtifacts')

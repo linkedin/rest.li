@@ -17,16 +17,18 @@
 package com.linkedin.data.schema;
 
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.PrettyPrinter;
 import com.linkedin.data.codec.JacksonDataCodec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.List;
 import java.util.Map;
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.JsonGenerator;
-import org.codehaus.jackson.JsonParser;
-import org.codehaus.jackson.PrettyPrinter;
+
 
 /**
  * A {@link JsonBuilder} is used to build JSON output.
@@ -34,7 +36,7 @@ import org.codehaus.jackson.PrettyPrinter;
  *
  * It provides methods to write JSON content,
  * common methods for writing common types of fields,
- * tracking the current namspace, and
+ * tracking the current namespace, and
  * the names have already been dumped.
  * <p>
  *
@@ -72,7 +74,7 @@ public class JsonBuilder
   public JsonBuilder(Pretty pretty) throws IOException
   {
     _writer = new StringWriter();
-    _jsonGenerator = _jsonFactory.createJsonGenerator(_writer);
+    _jsonGenerator = _jsonFactory.createGenerator(_writer);
     switch (pretty)
     {
       case SPACES:
@@ -95,6 +97,33 @@ public class JsonBuilder
   {
     _jsonGenerator.flush();
     return _writer.toString();
+  }
+
+  /**
+   * Close underlying objects and release their resources.
+   *
+   * @throws IOException
+   */
+  public void close() throws IOException
+  {
+    _jsonGenerator.close();
+    _writer.close();
+  }
+
+  /**
+   * Close underlying objects and release their resources.
+   * This method will log the {@link java.io.IOException} instead of throwing it.
+   */
+  public void closeQuietly()
+  {
+    try
+    {
+      close();
+    }
+    catch (IOException e)
+    {
+      _log.error(e.getMessage());
+    }
   }
 
   public void writeBoolean(boolean value) throws IOException
@@ -260,80 +289,72 @@ public class JsonBuilder
     }
   }
 
+  private static final Logger _log = LoggerFactory.getLogger(JsonBuilder.class);
+
   private final StringWriter _writer;
   private final JsonGenerator _jsonGenerator;
   private final JacksonDataCodec _jacksonDataCodec = new JacksonDataCodec();
 
-  private static final JsonFactory _jsonFactory = new JsonFactory().disable(JsonParser.Feature.INTERN_FIELD_NAMES);
+  private static final JsonFactory _jsonFactory = new JsonFactory().disable(JsonFactory.Feature.INTERN_FIELD_NAMES);
   private static final PrettyPrinter _spacesPrettyPrinter = new SpacesPrettyPrinter();
 
   private static class SpacesPrettyPrinter implements PrettyPrinter
   {
     @Override
-    public void beforeArrayValues(JsonGenerator generator) throws IOException,
-        JsonGenerationException
+    public void beforeArrayValues(JsonGenerator generator) throws IOException
     {
     }
 
     @Override
-    public void beforeObjectEntries(JsonGenerator generator) throws IOException,
-        JsonGenerationException
+    public void beforeObjectEntries(JsonGenerator generator) throws IOException
     {
     }
 
     @Override
-    public void writeArrayValueSeparator(JsonGenerator generator) throws IOException,
-        JsonGenerationException
+    public void writeArrayValueSeparator(JsonGenerator generator) throws IOException
     {
       generator.writeRaw(", ");
     }
 
     @Override
-    public void writeEndArray(JsonGenerator generator, int arg1) throws IOException,
-        JsonGenerationException
+    public void writeEndArray(JsonGenerator generator, int arg1) throws IOException
     {
       generator.writeRaw(" ]");
     }
 
     @Override
-    public void writeEndObject(JsonGenerator generator, int arg1) throws IOException,
-        JsonGenerationException
+    public void writeEndObject(JsonGenerator generator, int arg1) throws IOException
     {
       generator.writeRaw(" }");
     }
 
     @Override
-    public void writeObjectEntrySeparator(JsonGenerator generator) throws IOException,
-        JsonGenerationException
+    public void writeObjectEntrySeparator(JsonGenerator generator) throws IOException
     {
       generator.writeRaw(", ");
     }
 
     @Override
-    public void writeObjectFieldValueSeparator(JsonGenerator generator) throws IOException,
-        JsonGenerationException
+    public void writeObjectFieldValueSeparator(JsonGenerator generator) throws IOException
     {
       generator.writeRaw(" : ");
     }
 
     @Override
-    public void writeRootValueSeparator(JsonGenerator generator) throws IOException,
-        JsonGenerationException
+    public void writeRootValueSeparator(JsonGenerator generator) throws IOException
     {
     }
 
     @Override
-    public void writeStartArray(JsonGenerator generator) throws IOException,
-        JsonGenerationException
+    public void writeStartArray(JsonGenerator generator) throws IOException
     {
       generator.writeRaw("[ ");
     }
 
     @Override
-    public void writeStartObject(JsonGenerator generator) throws IOException,
-        JsonGenerationException
+    public void writeStartObject(JsonGenerator generator) throws IOException
     {
       generator.writeRaw("{ ");
     }
-  };
+  }
 }

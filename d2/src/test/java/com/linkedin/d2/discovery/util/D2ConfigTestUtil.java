@@ -16,6 +16,12 @@
 
 package com.linkedin.d2.discovery.util;
 
+
+import com.linkedin.d2.balancer.properties.PropertyKeys;
+import com.linkedin.d2.balancer.util.JacksonUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Arrays;
@@ -24,12 +30,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import org.codehaus.jackson.map.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.linkedin.d2.balancer.properties.PropertyKeys;
 
 public class D2ConfigTestUtil
 {
@@ -485,9 +485,8 @@ public class D2ConfigTestUtil
 
   public static Map<String, Object>  getD2ConfigDataMap(String jsonConfigData) throws Exception
   {
-    ObjectMapper mapper = new ObjectMapper();
     @SuppressWarnings("unchecked")
-    Map<String, Object> configMap = (Map<String, Object>) mapper.readValue(jsonConfigData, HashMap.class);
+    Map<String, Object> configMap = (Map<String, Object>) JacksonUtil.getObjectMapper().readValue(jsonConfigData, HashMap.class);
 
     return configMap;
   }
@@ -495,8 +494,7 @@ public class D2ConfigTestUtil
   @SuppressWarnings("unchecked")
   public static Map<String, Object>  getClusterServiceConfiguration(String jsonConfigData) throws Exception
   {
-    ObjectMapper mapper = new ObjectMapper();
-    Map<String, Object> configMap = (Map<String, Object>) mapper.readValue(jsonConfigData, HashMap.class);
+    Map<String, Object> configMap = (Map<String, Object>) JacksonUtil.getObjectMapper().readValue(jsonConfigData, HashMap.class);
 
     return (Map<String, Object>) configMap.get("clusterServiceConfigurations");
   }
@@ -504,8 +502,7 @@ public class D2ConfigTestUtil
   @SuppressWarnings("unchecked")
   public static Map<String, Object>  getClusterDefaults(String jsonConfigData) throws Exception
   {
-    ObjectMapper mapper = new ObjectMapper();
-    Map<String, Object> configMap = (Map<String, Object>) mapper.readValue(jsonConfigData, HashMap.class);
+    Map<String, Object> configMap = (Map<String, Object>) JacksonUtil.getObjectMapper().readValue(jsonConfigData, HashMap.class);
 
     return (Map<String, Object>) configMap.get("clusterDefaults");
   }
@@ -513,8 +510,7 @@ public class D2ConfigTestUtil
   @SuppressWarnings("unchecked")
   public static Map<String, Object>  getServiceDefaults(String jsonConfigData) throws Exception
   {
-    ObjectMapper mapper = new ObjectMapper();
-    Map<String, Object> configMap = (Map<String, Object>) mapper.readValue(jsonConfigData, HashMap.class);
+    Map<String, Object> configMap = (Map<String, Object>) JacksonUtil.getObjectMapper().readValue(jsonConfigData, HashMap.class);
 
     return (Map<String, Object>) configMap.get("serviceDefaults");
   }
@@ -522,8 +518,7 @@ public class D2ConfigTestUtil
   @SuppressWarnings("unchecked")
   public static Map<String, Object>  getExtraClusterServiceConfigurations(String jsonConfigData) throws Exception
   {
-    ObjectMapper mapper = new ObjectMapper();
-    Map<String, Object> configMap = (Map<String, Object>) mapper.readValue(jsonConfigData, HashMap.class);
+    Map<String, Object> configMap = (Map<String, Object>) JacksonUtil.getObjectMapper().readValue(jsonConfigData, HashMap.class);
 
     return (Map<String, Object>) configMap.get("extraClusterServiceConfigurations");
   }
@@ -531,8 +526,7 @@ public class D2ConfigTestUtil
   @SuppressWarnings("unchecked")
   public static Map<String, Object>  getServiceVariants(String jsonConfigData) throws Exception
   {
-    ObjectMapper mapper = new ObjectMapper();
-    Map<String, Object> configMap = (Map<String, Object>) mapper.readValue(jsonConfigData, HashMap.class);
+    Map<String, Object> configMap = (Map<String, Object>) JacksonUtil.getObjectMapper().readValue(jsonConfigData, HashMap.class);
 
     return (Map<String, Object>) configMap.get("serviceVariants");
   }

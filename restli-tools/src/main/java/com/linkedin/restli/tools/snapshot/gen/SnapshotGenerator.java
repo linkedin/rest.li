@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.tools.snapshot.gen;
 
+
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaResolver;
@@ -39,8 +40,8 @@ import com.linkedin.restli.restspec.ParameterSchema;
 import com.linkedin.restli.restspec.ParameterSchemaArray;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.restspec.RestMethodSchema;
-import com.linkedin.restli.restspec.SimpleSchema;
 import com.linkedin.restli.restspec.RestSpecCodec;
+import com.linkedin.restli.restspec.SimpleSchema;
 import com.linkedin.restli.tools.snapshot.check.Snapshot;
 
 import java.io.File;
@@ -112,6 +113,7 @@ public class SnapshotGenerator
     finally
     {
       fileOutputStream.close();
+      jsonBuilder.close();
     }
     return file;
   }

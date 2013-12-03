@@ -6,6 +6,6 @@ dependencies {
   compile project(':restli-common')
   compile project(':restli-server')
   compile externalDependency.commonsLang
-  compile externalDependency.jacksonCoreAsl
+  compile externalDependency.jacksonCore
   compile externalDependency.velocity
 }

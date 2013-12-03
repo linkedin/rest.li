@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer.util;
 
+
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.clients.DynamicClient;
@@ -62,6 +63,26 @@ import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.util.NamedThreadFactory;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.io.FileUtils;
+import org.apache.zookeeper.Watcher.Event.KeeperState;
+import org.apache.zookeeper.ZooKeeper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import sun.jvmstat.monitor.HostIdentifier;
+import sun.jvmstat.monitor.MonitoredHost;
+
+import javax.management.MBeanServerConnection;
+import javax.management.ObjectInstance;
+import javax.management.ObjectName;
+import javax.management.remote.JMXConnector;
+import javax.management.remote.JMXConnectorFactory;
+import javax.management.remote.JMXServiceURL;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -79,26 +100,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import javax.management.MBeanServerConnection;
-import javax.management.ObjectInstance;
-import javax.management.ObjectName;
-import javax.management.remote.JMXConnector;
-import javax.management.remote.JMXConnectorFactory;
-import javax.management.remote.JMXServiceURL;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.GnuParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
-import org.apache.commons.io.FileUtils;
-import org.apache.zookeeper.Watcher.Event.KeeperState;
-import org.apache.zookeeper.ZooKeeper;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import sun.jvmstat.monitor.HostIdentifier;
-import sun.jvmstat.monitor.MonitoredHost;
 
 
 public class LoadBalancerClientCli
@@ -332,9 +333,8 @@ public class LoadBalancerClientCli
     if (jsonConfigFile.exists())
     {
       _log.info("Reading d2 config data:" + jsonConfigFile.getAbsolutePath());
-      ObjectMapper mapper = new ObjectMapper();
       @SuppressWarnings("unchecked")
-      Map<String, Object> configMap = mapper.readValue(jsonConfigFile, HashMap.class);
+      Map<String, Object> configMap = JacksonUtil.getObjectMapper().readValue(jsonConfigFile, HashMap.class);
       return runDiscovery(zkserverHostPort, d2path, configMap);
     }
     else
@@ -348,9 +348,8 @@ public class LoadBalancerClientCli
   public static int runDiscovery(String zkserverHostPort, String d2path, String jsonConfigData) throws Exception
   {
     _log.info("Reading d2 config data:" + jsonConfigData);
-    ObjectMapper mapper = new ObjectMapper();
     @SuppressWarnings("unchecked")
-    Map<String, Object> configMap = (Map<String, Object>) mapper.readValue(jsonConfigData, HashMap.class);
+    Map<String, Object> configMap = (Map<String, Object>) JacksonUtil.getObjectMapper().readValue(jsonConfigData, HashMap.class);
 
     return runDiscovery(zkserverHostPort, d2path, configMap);
   }

@@ -17,6 +17,8 @@
 package com.linkedin.restli.tools.clientgen;
 
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
@@ -76,9 +78,7 @@ import com.linkedin.util.FileUtil;
 import com.sun.codemodel.JBlock;
 import com.sun.codemodel.JClass;
 import com.sun.codemodel.JClassAlreadyExistsException;
-import com.sun.codemodel.JCommentPart;
 import com.sun.codemodel.JDefinedClass;
-import com.sun.codemodel.JDocComment;
 import com.sun.codemodel.JExpr;
 import com.sun.codemodel.JExpression;
 import com.sun.codemodel.JFieldVar;
@@ -88,11 +88,6 @@ import com.sun.codemodel.JMod;
 import com.sun.codemodel.JPackage;
 import com.sun.codemodel.JVar;
 import com.sun.codemodel.writer.FileCodeWriter;
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.JsonParser;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -273,9 +268,6 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
   {
     initializeDefaultPackage();
     initSchemaResolver();
-
-    JsonFactory jsonFactory = new JsonFactory(new ObjectMapper());
-    jsonFactory.configure(JsonParser.Feature.ALLOW_COMMENTS, true);
 
     List<File> sourceFiles = new ArrayList<File>();
 
@@ -1306,7 +1298,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
 
   private static String getName(JsonNode namedEntry)
   {
-    return namedEntry.get(NAME).getTextValue();
+    return namedEntry.get(NAME).textValue();
   }
 
   private static String getNamespace(JsonNode entry)
@@ -1317,7 +1309,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     }
     else
     {
-      return entry.get(NAMESPACE).getTextValue();
+      return entry.get(NAMESPACE).textValue();
     }
   }
 

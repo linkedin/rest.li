@@ -16,11 +16,12 @@
 
 package com.linkedin.d2.balancer.properties;
 
+
 import com.linkedin.d2.balancer.properties.util.PropertyUtil;
+import com.linkedin.d2.balancer.util.JacksonUtil;
 import com.linkedin.d2.discovery.PropertyBuilder;
 import com.linkedin.d2.discovery.PropertySerializationException;
 import com.linkedin.d2.discovery.PropertySerializer;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,23 +33,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+
 public class ClusterPropertiesJsonSerializer implements
     PropertySerializer<ClusterProperties>, PropertyBuilder<ClusterProperties>
 {
   private static final Logger _log = LoggerFactory.getLogger(ClusterPropertiesJsonSerializer.class);
-  private final ObjectMapper _mapper;
-
-  public ClusterPropertiesJsonSerializer()
-  {
-    _mapper = new ObjectMapper();
-  }
 
   @Override
   public byte[] toBytes(ClusterProperties property)
   {
     try
     {
-      return _mapper.writeValueAsString(property).getBytes("UTF-8");
+      return JacksonUtil.getObjectMapper().writeValueAsString(property).getBytes("UTF-8");
     }
     catch (Exception e)
     {
@@ -65,7 +61,7 @@ public class ClusterPropertiesJsonSerializer implements
     {
       @SuppressWarnings("unchecked")
       Map<String, Object> untyped =
-          _mapper.readValue(new String(bytes, "UTF-8"), HashMap.class);
+          JacksonUtil.getObjectMapper().readValue(new String(bytes, "UTF-8"), HashMap.class);
       return fromMap(untyped);
 
     }

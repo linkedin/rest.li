@@ -16,20 +16,21 @@
 
 package com.linkedin.d2.balancer.util;
 
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
+import com.linkedin.d2.discovery.stores.zk.ZKServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.linkedin.d2.discovery.stores.zk.ZKServer;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 public class TestLoadBalancerClientCli
 {
@@ -42,7 +43,7 @@ public class TestLoadBalancerClientCli
 
   private static final String configData =
     "{" +
-      "\"clusterDefaults\": {\"prioritizedSchemes\":[\"http\"], \"properties\":{\"requestTimeout\":10000}}," +
+      "\"clusterDefaults\": {\"prioritizedSchemes\":[\"http\"], \"properties\":{\"requestTimeout\":\"10000\"}}," +
       "\"serviceDefaults\": { \"loadBalancerStrategyProperties\":{\"maxClusterLatencyWithoutDegrading\":500, \"updateIntervalsMs\":5000, \"defaultSuccessfulTransmissionWeight\":1.0, \"pointsPerWeight\":100}, \"loadBalancerStrategyList\":[\"degraderV3\"]}," +
       "\"serviceVariants\":{}," +
       "\"extraClusterServiceConfigurations\":" +

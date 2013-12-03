@@ -16,12 +16,13 @@
 
 package com.linkedin.data.codec;
 
+
+import com.fasterxml.jackson.core.JsonFactory;
 import com.linkedin.data.Data;
 import com.linkedin.data.DataMap;
-import java.io.IOException;
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonParser;
 import org.testng.annotations.Test;
+
+import java.io.IOException;
 
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotSame;
@@ -41,30 +42,31 @@ public class TestJacksonCodec
   @Test
   public void testNoStringIntern() throws IOException
   {
-    JsonFactory jsonFactory = new JsonFactory();
-    JacksonDataCodec codec = new JacksonDataCodec(jsonFactory);
-    String json = "{ \"testKey\" : 1 }";
+    String keyName = "testKey";
+    String json = "{ \"" + keyName + "\" : 1 }";
     byte[] jsonAsBytes = json.getBytes(Data.UTF_8_CHARSET);
 
     {
+      JsonFactory jsonFactory = new JsonFactory();
+      JacksonDataCodec codec = new JacksonDataCodec(jsonFactory);
       // make sure intern field names is not enabled
-      assertFalse(jsonFactory.isEnabled(JsonParser.Feature.INTERN_FIELD_NAMES));
-      DataMap map1 = codec.bytesToMap(jsonAsBytes);
-      DataMap map2 = codec.bytesToMap(jsonAsBytes);
-      String key1 = map1.keySet().iterator().next();
-      String key2 = map2.keySet().iterator().next();
-      assertNotSame(key1, key2);
+      assertFalse(jsonFactory.isEnabled(JsonFactory.Feature.INTERN_FIELD_NAMES));
+      assertTrue(jsonFactory.isEnabled(JsonFactory.Feature.CANONICALIZE_FIELD_NAMES));
+      DataMap map = codec.bytesToMap(jsonAsBytes);
+      String key = map.keySet().iterator().next();
+      assertNotSame(key, keyName);
     }
 
     {
+      JsonFactory jsonFactory = new JsonFactory();
+      JacksonDataCodec codec = new JacksonDataCodec(jsonFactory);
       // enable intern field names
-      jsonFactory.enable(JsonParser.Feature.INTERN_FIELD_NAMES);
-      assertTrue(jsonFactory.isEnabled(JsonParser.Feature.INTERN_FIELD_NAMES));
-      DataMap map1 = codec.bytesToMap(jsonAsBytes);
-      DataMap map2 = codec.bytesToMap(jsonAsBytes);
-      String key1 = map1.keySet().iterator().next();
-      String key2 = map2.keySet().iterator().next();
-      assertSame(key1, key2);
+      jsonFactory.enable(JsonFactory.Feature.INTERN_FIELD_NAMES);
+      assertTrue(jsonFactory.isEnabled(JsonFactory.Feature.INTERN_FIELD_NAMES));
+      assertTrue(jsonFactory.isEnabled(JsonFactory.Feature.CANONICALIZE_FIELD_NAMES));
+      DataMap map = codec.bytesToMap(jsonAsBytes);
+      String key = map.keySet().iterator().next();
+      assertSame(key, keyName);
     }
   }
 }

@@ -17,6 +17,8 @@
 package com.linkedin.data.template;
 
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
 import com.linkedin.data.DataList;
@@ -28,6 +30,7 @@ import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -39,10 +42,19 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import org.codehaus.jackson.JsonGenerator;
 
 public class JacksonDataTemplateCodec extends JacksonDataCodec
 {
+  public JacksonDataTemplateCodec()
+  {
+    super();
+  }
+
+  public JacksonDataTemplateCodec(JsonFactory jsonFactory)
+  {
+    super(jsonFactory);
+  }
+
   protected void writeDataTemplate(Object data,
                                    DataSchema schema,
                                    JsonGenerator generator,

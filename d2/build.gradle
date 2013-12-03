@@ -10,8 +10,8 @@ dependencies {
   compile externalDependency.commonsHttpClient
   compile externalDependency.json
   compile externalDependency.zookeeper
-  compile externalDependency.jacksonCoreAsl
-  compile externalDependency.jacksonMapperAsl
+  compile externalDependency.jacksonCore
+  compile externalDependency.jacksonDataBind
   compile externalDependency.jdkTools
   testCompile externalDependency.testng
   testCompile externalDependency.commonsIo

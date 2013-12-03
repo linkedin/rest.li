@@ -1,6 +1,6 @@
 dependencies {
   compile externalDependency.json
-  compile externalDependency.jacksonCoreAsl
+  compile externalDependency.jacksonCore
   testCompile externalDependency.testng
 }
 

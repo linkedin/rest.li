@@ -5,7 +5,7 @@
 
 dependencies {
   compile project(':data')
-  compile externalDependency.jacksonCoreAsl
+  compile externalDependency.jacksonCoreAsl_1_4
   compile externalDependency.avro
   testCompile externalDependency.testng
   testCompile project(path: ':data', configuration: 'testArtifacts')

@@ -17,6 +17,7 @@
 package com.linkedin.data;
 
 
+import com.fasterxml.jackson.core.JsonEncoding;
 import com.linkedin.data.codec.BsonDataCodec;
 import com.linkedin.data.codec.DataCodec;
 import com.linkedin.data.codec.DataDecodingException;
@@ -24,6 +25,11 @@ import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.codec.PsonDataCodec;
 import com.linkedin.data.codec.TextDataCodec;
 import com.linkedin.data.collections.CheckedMap;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileDescriptor;
@@ -46,12 +52,6 @@ import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import org.codehaus.jackson.JsonEncoding;
-import org.codehaus.jackson.JsonParseException;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
 
 import static com.linkedin.data.TestUtil.asMap;
 import static com.linkedin.data.TestUtil.assertEquivalent;
@@ -1285,7 +1285,7 @@ public class TestData
     }
   }
 
-  private DataMap getMapFromJson(JacksonDataCodec codec, String input) throws JsonParseException, IOException
+  private DataMap getMapFromJson(JacksonDataCodec codec, String input) throws IOException
   {
     return codec.stringToMap(input);
   }

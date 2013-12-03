@@ -40,16 +40,24 @@ public class SchemaToJsonEncoder
    */
   public static String schemaToJson(DataSchema schema, JsonBuilder.Pretty pretty)
   {
+    JsonBuilder builder = null;
     try
     {
-      JsonBuilder builder = new JsonBuilder(pretty);
-      SchemaToJsonEncoder encoder = new SchemaToJsonEncoder(builder);
+      builder = new JsonBuilder(pretty);
+      final SchemaToJsonEncoder encoder = new SchemaToJsonEncoder(builder);
       encoder.encode(schema);
-      return builder.result();
+      return  builder.result();
     }
     catch (IOException exc)
     {
       return exc.getMessage();
+    }
+    finally
+    {
+      if (builder != null)
+      {
+        builder.closeQuietly();
+      }
     }
   }
 
@@ -62,10 +70,11 @@ public class SchemaToJsonEncoder
    */
   public static String schemasToJson(Collection<DataSchema> schemas, JsonBuilder.Pretty pretty)
   {
+    JsonBuilder builder = null;
     try
     {
-      JsonBuilder builder = new JsonBuilder(pretty);
-      SchemaToJsonEncoder encoder = new SchemaToJsonEncoder(builder);
+      builder = new JsonBuilder(pretty);
+      final SchemaToJsonEncoder encoder = new SchemaToJsonEncoder(builder);
       for (DataSchema schema : schemas)
       {
         encoder.encode(schema);
@@ -75,6 +84,13 @@ public class SchemaToJsonEncoder
     catch (IOException exc)
     {
       return exc.getMessage();
+    }
+    finally
+    {
+      if (builder != null)
+      {
+        builder.closeQuietly();
+      }
     }
   }
 

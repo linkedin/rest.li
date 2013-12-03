@@ -1,7 +1,6 @@
 package com.linkedin.restli.internal.server.util;
 
 import com.linkedin.data.DataMap;
-import com.linkedin.restli.internal.server.RestLiInternalException;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -22,14 +21,6 @@ public class TestDataMapUtils
     DataMap map = new DataMap();
     map.put("initial", new String(UNMATCHED_SURROGATE_PAIR));
     DataMapUtils.mapToBytes(map, true);
-  }
-
-  @Test(expectedExceptions = RestLiInternalException.class)
-  public void testStrict()
-  {
-    DataMap map = new DataMap();
-    map.put("initial", new String(UNMATCHED_SURROGATE_PAIR));
-    DataMapUtils.mapToBytes(map);
   }
 
   @Test

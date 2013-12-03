@@ -17,6 +17,7 @@
 package com.linkedin.restli.docgen;
 
 
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.schema.DataSchemaResolver;
@@ -37,7 +38,6 @@ import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.RestLiServer;
 import com.linkedin.restli.server.RoutingException;
 import org.apache.commons.lang.exception.ExceptionUtils;
-import org.codehaus.jackson.impl.DefaultPrettyPrinter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

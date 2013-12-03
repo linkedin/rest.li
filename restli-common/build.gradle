@@ -2,7 +2,7 @@ dependencies {
   compile project(':data')
   compile project(':data-transform')
   compile project(':li-jersey-uri')
-  compile externalDependency.jacksonCoreAsl
+  compile externalDependency.jacksonCore
   testCompile project(path: ':data', configuration: 'testArtifacts')
   testCompile project(path: ':generator-test', configuration: 'testArtifacts')
   testCompile project(':li-jersey-uri')

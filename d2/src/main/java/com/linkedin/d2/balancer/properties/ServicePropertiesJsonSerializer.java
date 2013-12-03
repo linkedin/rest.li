@@ -16,27 +16,26 @@
 
 package com.linkedin.d2.balancer.properties;
 
+
+import com.linkedin.d2.balancer.util.JacksonUtil;
+import com.linkedin.d2.discovery.PropertyBuilder;
+import com.linkedin.d2.discovery.PropertySerializationException;
+import com.linkedin.d2.discovery.PropertySerializer;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
-
-import com.linkedin.d2.discovery.PropertyBuilder;
-import com.linkedin.d2.discovery.PropertySerializationException;
 import java.util.Set;
-import org.codehaus.jackson.map.ObjectMapper;
 
-import com.linkedin.d2.discovery.PropertySerializer;
 
 public class ServicePropertiesJsonSerializer implements
     PropertySerializer<ServiceProperties>, PropertyBuilder<ServiceProperties>
 {
-  private final ObjectMapper _mapper;
-
   public static void main(String[] args) throws UnsupportedEncodingException,
       URISyntaxException, PropertySerializationException
   {
@@ -53,17 +52,12 @@ public class ServicePropertiesJsonSerializer implements
     System.err.println(serializer.fromBytes(serializer.toBytes(property)));
   }
 
-  public ServicePropertiesJsonSerializer()
-  {
-    _mapper = new ObjectMapper();
-  }
-
   @Override
   public byte[] toBytes(ServiceProperties property)
   {
     try
     {
-      return _mapper.writeValueAsString(property).getBytes("UTF-8");
+      return JacksonUtil.getObjectMapper().writeValueAsString(property).getBytes("UTF-8");
     }
     catch (Exception e)
     {
@@ -81,7 +75,7 @@ public class ServicePropertiesJsonSerializer implements
     {
       @SuppressWarnings("unchecked")
       Map<String, Object> untyped =
-          _mapper.readValue(new String(bytes, "UTF-8"), Map.class);
+          JacksonUtil.getObjectMapper().readValue(new String(bytes, "UTF-8"), Map.class);
 
       return fromMap(untyped);
 

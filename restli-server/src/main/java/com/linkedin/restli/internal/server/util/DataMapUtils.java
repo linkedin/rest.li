@@ -17,6 +17,9 @@
 package com.linkedin.restli.internal.server.util;
 
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.linkedin.data.Data;
 import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
@@ -34,8 +37,6 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.server.RoutingException;
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.JsonGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -424,6 +425,16 @@ public class DataMapUtils
    */
   private static class PermissiveJacksonDataCodec extends JacksonDataCodec
   {
+    public PermissiveJacksonDataCodec()
+    {
+      super();
+    }
+
+    public PermissiveJacksonDataCodec(JsonFactory jsonFactory)
+    {
+      super(jsonFactory);
+    }
+
     @Override
     protected void writeObject(Object object, JsonGenerator generator) throws IOException
     {

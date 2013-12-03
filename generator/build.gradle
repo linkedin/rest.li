@@ -4,8 +4,6 @@ dependencies {
   compile project(':pegasus-common')
   compile externalDependency.commonsIo
   compile externalDependency.codemodel
-  compile externalDependency.jacksonCoreAsl
-  compile externalDependency.jacksonMapperAsl
   runtime externalDependency.slf4jLog4j12
   runtime externalDependency.log4j
 }
