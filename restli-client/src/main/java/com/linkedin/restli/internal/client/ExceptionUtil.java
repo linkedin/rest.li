@@ -23,6 +23,7 @@ package com.linkedin.restli.internal.client;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestLiDecodingException;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.common.ErrorResponse;
@@ -42,52 +43,91 @@ public class ExceptionUtil
   {
   }
 
-  /**
-   * Returns a RemoteInvocationException
-   *
-   * @param e
-   *          original cause
-   * @param mustWrap
-   *          true if the Throwable should always be wrapped, e.g. because it may have
-   *          originated on a different thread and will be thrown on the current thread.
-   */
-  public static RemoteInvocationException exceptionForThrowable(Throwable e,
-                                                                final boolean mustWrap)
+  public static RemoteInvocationException exceptionForThrowable(Throwable e, RestResponseDecoder<?> responseDecoder)
   {
     if (e instanceof RestException)
     {
-      RestException re = (RestException) e;
-      RestResponse response = re.getResponse();
-      ErrorResponse errorResponse;
+      final RestException re = (RestException) e;
+      final RestResponse response = re.getResponse();
+      final ErrorResponse errorResponse;
 
+      try
+      {
+        errorResponse = getErrorResponse(response);
+      }
+      catch (RestLiDecodingException decodingException)
+      {
+        return new RemoteInvocationException(decodingException);
+      }
+
+      Response<?> decodedResponse = null;
       String header = getErrorResponseHeaderValue(response);
 
-      if (header != null)
+      if (header == null)
       {
         try
         {
-          errorResponse =  ERROR_DECODER.decodeResponse(response).getEntity();
-          if (errorResponse == null)
-          {
-            errorResponse = new ErrorResponse();
-          }
+          decodedResponse = responseDecoder.decodeResponse(response);
         }
-        catch (RestLiDecodingException e1)
+        catch (RestLiDecodingException decodingException)
         {
-          errorResponse = new ErrorResponse();
+          return new RemoteInvocationException(decodingException);
         }
       }
-      else
-      {
-        errorResponse = new ErrorResponse();
-      }
-      return new RestLiResponseException(response, errorResponse, e);
+
+      return new RestLiResponseException(response, decodedResponse, errorResponse, e);
     }
+
     if (e instanceof RemoteInvocationException)
     {
-      return mustWrap ? new RemoteInvocationException(e) : (RemoteInvocationException) e;
+      return (RemoteInvocationException) e;
     }
+
     return new RemoteInvocationException(e);
+  }
+
+  static RemoteInvocationException wrapThrowable(Throwable e)
+  {
+    if (e instanceof RestLiResponseException)
+    {
+      final RestLiResponseException restliException = (RestLiResponseException) e;
+      final ErrorResponse errorResponse;
+
+      try
+      {
+        errorResponse = getErrorResponse(restliException.getResponse());
+      }
+      catch (RestLiDecodingException decodingException)
+      {
+        return new RemoteInvocationException(decodingException);
+      }
+
+      return new RestLiResponseException(restliException.getResponse(),
+                                         restliException.getDecodedResponse(),
+                                         errorResponse,
+                                         restliException);
+    }
+
+    return new RemoteInvocationException(e);
+  }
+
+  private static ErrorResponse getErrorResponse(RestResponse response) throws RestLiDecodingException
+  {
+    ErrorResponse errorResponse = null;
+
+    String header = getErrorResponseHeaderValue(response);
+
+    if (header != null)
+    {
+      errorResponse =  ERROR_DECODER.decodeResponse(response).getEntity();
+    }
+
+    if (errorResponse == null)
+    {
+      errorResponse = new ErrorResponse();
+    }
+
+    return errorResponse;
   }
 
   public static String getErrorResponseHeaderValue(RestResponse response)

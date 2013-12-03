@@ -71,7 +71,7 @@ public class RestClientTest
   public void testEmptyErrorResponse()
   {
     RestResponse response = new RestResponseBuilder().setStatus(200).build();
-    RestLiResponseException e = new RestLiResponseException(response, new ErrorResponse());
+    RestLiResponseException e = new RestLiResponseException(response, null, new ErrorResponse());
 
     Assert.assertNull(e.getServiceErrorMessage());
     Assert.assertNull(e.getErrorDetails());
@@ -137,7 +137,11 @@ public class RestClientTest
   {
     GET,
     GET_RESPONSE,
-    GET_RESPONSE_ENTITY
+    GET_RESPONSE_EXPLICIT_NO_THROW,
+    GET_RESPONSE_EXPLICIT_THROW,
+    GET_RESPONSE_ENTITY,
+    GET_RESPONSE_ENTITY_EXPLICIT_NO_THROW,
+    GET_RESPONSE_ENTITY_EXPLICIT_THROW,
   }
 
   private enum TimeoutOption
@@ -190,6 +194,26 @@ public class RestClientTest
     return result;
   }
 
+  @DataProvider(name = "sendRequestAndNoThrowGetResponseOptions")
+  private Object[][] sendRequestAndNoThrowGetResponseOptions()
+  {
+    Object[][] result = new Object[SendRequestOption.values().length *
+        2 * TimeoutOption.values().length][];
+    int i = 0;
+    for (SendRequestOption sendRequestOption : SendRequestOption.values())
+    {
+      for (TimeoutOption timeoutOption : TimeoutOption.values())
+      {
+        result[i++] = new Object[]
+            { sendRequestOption, GetResponseOption.GET_RESPONSE_ENTITY_EXPLICIT_NO_THROW, timeoutOption };
+        result[i++] = new Object[]
+            { sendRequestOption, GetResponseOption.GET_RESPONSE_EXPLICIT_NO_THROW, timeoutOption };
+      }
+    }
+
+    return result;
+  }
+
   @Test(dataProvider = "sendRequestAndGetResponseOptions")
   public void testRestLiResponseFuture(SendRequestOption sendRequestOption,
                                        GetResponseOption getResponseOption,
@@ -207,10 +231,16 @@ public class RestClientTest
     Request<ErrorResponse> request = mockRequest(ErrorResponse.class);
     RequestBuilder<Request<ErrorResponse>> requestBuilder = mockRequestBuilder(request);
 
-    ResponseFuture<ErrorResponse> future = sendRequest(sendRequestOption, client, request, requestBuilder);
+    ResponseFuture<ErrorResponse> future = sendRequest(sendRequestOption,
+                                                       determineErrorHandlingBehavior(getResponseOption),
+                                                       client,
+                                                       request,
+                                                       requestBuilder);
     Response<ErrorResponse> response = getOkResponse(getResponseOption, future, timeoutOption);
     ErrorResponse e = response.getEntity();
 
+    Assert.assertNull(response.getError());
+    Assert.assertFalse(response.hasError());
     Assert.assertEquals(HTTP_CODE, response.getStatus());
     Assert.assertEquals(ERR_VALUE, e.getErrorDetails().get(ERR_KEY));
     Assert.assertEquals(APP_CODE, e.getServiceErrorCode());
@@ -234,15 +264,61 @@ public class RestClientTest
     Request<EmptyRecord> request = mockRequest(EmptyRecord.class);
     RequestBuilder<Request<EmptyRecord>> requestBuilder = mockRequestBuilder(request);
 
-    ResponseFuture<EmptyRecord> future = sendRequest(sendRequestOption, client, request, requestBuilder);
+    ResponseFuture<EmptyRecord> future = sendRequest(sendRequestOption,
+                                                     determineErrorHandlingBehavior(getResponseOption),
+                                                     client,
+                                                     request,
+                                                     requestBuilder);
     RestLiResponseException e = getErrorResponse(getResponseOption, future, timeoutOption);
 
+    if (getResponseOption == GetResponseOption.GET_RESPONSE_ENTITY_EXPLICIT_NO_THROW)
+    {
+      Assert.assertNull(e);
+    }
+    else
+    {
+      Assert.assertEquals(HTTP_CODE, e.getStatus());
+      Assert.assertEquals(ERR_VALUE, e.getErrorDetails().get(ERR_KEY));
+      Assert.assertEquals(APP_CODE, e.getServiceErrorCode());
+      Assert.assertEquals(ERR_MSG, e.getServiceErrorMessage());
+
+      verifyResponseHeader(sendRequestOption, e.getResponse().getHeaders());
+    }
+  }
+
+  @Test(dataProvider = "sendRequestAndNoThrowGetResponseOptions")
+  public void testRestLiResponseExceptionFutureNoThrow(SendRequestOption sendRequestOption,
+                                                GetResponseOption getResponseOption,
+                                                TimeoutOption timeoutOption)
+      throws RemoteInvocationException, ExecutionException, TimeoutException, InterruptedException, IOException
+  {
+    final String ERR_KEY = "someErr";
+    final String ERR_VALUE = "WHOOPS!";
+    final String ERR_MSG = "whoops2";
+    final int HTTP_CODE = 400;
+    final int APP_CODE = 666;
+
+    RestClient client = mockClient(ERR_KEY, ERR_VALUE, ERR_MSG, HTTP_CODE, APP_CODE);
+    Request<EmptyRecord> request = mockRequest(EmptyRecord.class);
+    RequestBuilder<Request<EmptyRecord>> requestBuilder = mockRequestBuilder(request);
+
+    ResponseFuture<EmptyRecord> future = sendRequest(sendRequestOption,
+                                                     determineErrorHandlingBehavior(getResponseOption),
+                                                     client,
+                                                     request,
+                                                     requestBuilder);
+
+    Response<EmptyRecord> response = getOkResponse(getResponseOption, future, timeoutOption);
+    Assert.assertTrue(response.hasError());
+    RestLiResponseException e = response.getError();
+
+    Assert.assertNotNull(e);
     Assert.assertEquals(HTTP_CODE, e.getStatus());
     Assert.assertEquals(ERR_VALUE, e.getErrorDetails().get(ERR_KEY));
     Assert.assertEquals(APP_CODE, e.getServiceErrorCode());
     Assert.assertEquals(ERR_MSG, e.getServiceErrorMessage());
 
-    verifyResponseHeader(sendRequestOption, e.getResponse().getHeaders());
+    verifyResponseHeader(sendRequestOption, response.getHeaders());
   }
 
   @Test(dataProvider = "sendRequestOptions")
@@ -297,7 +373,27 @@ public class RestClientTest
     }
   }
 
+  private ErrorHandlingBehavior determineErrorHandlingBehavior(GetResponseOption getResponseOption)
+  {
+    switch (getResponseOption)
+    {
+      case GET:
+      case GET_RESPONSE:
+      case GET_RESPONSE_ENTITY:
+        return null;
+      case GET_RESPONSE_EXPLICIT_NO_THROW:
+      case GET_RESPONSE_ENTITY_EXPLICIT_NO_THROW:
+        return ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS;
+      case GET_RESPONSE_EXPLICIT_THROW:
+      case GET_RESPONSE_ENTITY_EXPLICIT_THROW:
+        return ErrorHandlingBehavior.FAIL_ON_ERROR;
+      default:
+        throw new IllegalStateException();
+    }
+  }
+
   private <T extends RecordTemplate> ResponseFuture<T> sendRequest(SendRequestOption option,
+                                                                   ErrorHandlingBehavior errorHandlingBehavior,
                                                                    RestClient client,
                                                                    Request<T> request,
                                                                    RequestBuilder<Request<T>> requestBuilder)
@@ -305,13 +401,41 @@ public class RestClientTest
     switch (option)
     {
       case REQUEST_NO_CONTEXT:
-        return client.sendRequest(request);
+        if (errorHandlingBehavior == null)
+        {
+          return client.sendRequest(request);
+        }
+        else
+        {
+          return client.sendRequest(request, errorHandlingBehavior);
+        }
       case REQUEST_WITH_CONTEXT:
-        return client.sendRequest(request, DEFAULT_REQUEST_CONTEXT);
+        if (errorHandlingBehavior == null)
+        {
+          return client.sendRequest(request, DEFAULT_REQUEST_CONTEXT);
+        }
+        else
+        {
+          return client.sendRequest(request, DEFAULT_REQUEST_CONTEXT, errorHandlingBehavior);
+        }
       case REQUESTBUILDER_NO_CONTEXT:
-        return client.sendRequest(requestBuilder);
+        if (errorHandlingBehavior == null)
+        {
+          return client.sendRequest(requestBuilder);
+        }
+        else
+        {
+          return client.sendRequest(requestBuilder, errorHandlingBehavior);
+        }
       case REQUESTBUILDER_WITH_CONTEXT:
-        return client.sendRequest(requestBuilder, DEFAULT_REQUEST_CONTEXT);
+        if (errorHandlingBehavior == null)
+        {
+          return client.sendRequest(requestBuilder, DEFAULT_REQUEST_CONTEXT);
+        }
+        else
+        {
+          return client.sendRequest(requestBuilder, DEFAULT_REQUEST_CONTEXT, errorHandlingBehavior);
+        }
       default:
         throw new IllegalStateException();
     }
@@ -348,6 +472,7 @@ public class RestClientTest
     throws ExecutionException, InterruptedException, TimeoutException, RemoteInvocationException
   {
     Response<T> result = null;
+    T entity;
     Long l = timeoutOption._l;
     TimeUnit timeUnit = timeoutOption._timeUnit;
     switch (option)
@@ -356,10 +481,14 @@ public class RestClientTest
         result = l == null ? future.get() : future.get(l, timeUnit);
         break;
       case GET_RESPONSE:
+      case GET_RESPONSE_EXPLICIT_NO_THROW:
+      case GET_RESPONSE_EXPLICIT_THROW:
         result = l == null ? future.getResponse() : future.getResponse(l, timeUnit);
         break;
       case GET_RESPONSE_ENTITY:
-        T entity = l == null ? future.getResponseEntity() : future.getResponseEntity(l, timeUnit);
+      case GET_RESPONSE_ENTITY_EXPLICIT_NO_THROW:
+      case GET_RESPONSE_ENTITY_EXPLICIT_THROW:
+        entity = l == null ? future.getResponseEntity() : future.getResponseEntity(l, timeUnit);
         result = future.getResponse();
         Assert.assertSame(entity, result.getEntity());
         break;
@@ -375,6 +504,7 @@ public class RestClientTest
     throws InterruptedException, TimeoutException, RemoteInvocationException
   {
     Response<T> response = null;
+    T entity;
     RestLiResponseException result = null;
     Long l = timeoutOption._l;
     TimeUnit timeUnit = timeoutOption._timeUnit;
@@ -394,6 +524,7 @@ public class RestClientTest
         }
         break;
       case GET_RESPONSE:
+      case GET_RESPONSE_EXPLICIT_THROW:
         try
         {
           response = l == null ? future.getResponse() : future.getResponse(l, timeUnit);
@@ -404,16 +535,24 @@ public class RestClientTest
           result = e;
         }
         break;
+      case GET_RESPONSE_EXPLICIT_NO_THROW:
+        response = l == null ? future.getResponse() : future.getResponse(l, timeUnit);
+        result = response.getError();
+        break;
       case GET_RESPONSE_ENTITY:
+      case GET_RESPONSE_ENTITY_EXPLICIT_THROW:
         try
         {
-          T entity = l == null ? future.getResponseEntity() : future.getResponseEntity(l, timeUnit);
+          entity = l == null ? future.getResponseEntity() : future.getResponseEntity(l, timeUnit);
           Assert.fail("Should have thrown");
         }
         catch (RestLiResponseException e)
         {
           result = e;
         }
+        break;
+      case GET_RESPONSE_ENTITY_EXPLICIT_NO_THROW:
+        entity = l == null ? future.getResponseEntity() : future.getResponseEntity(l, timeUnit);
         break;
       default:
         throw new IllegalStateException();

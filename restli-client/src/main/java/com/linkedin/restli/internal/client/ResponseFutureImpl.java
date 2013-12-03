@@ -16,17 +16,17 @@
 
 package com.linkedin.restli.internal.client;
 
+import com.linkedin.restli.client.ErrorHandlingBehavior;
+import com.linkedin.restli.client.RestClient;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import com.linkedin.r2.RemoteInvocationException;
-import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
-import com.linkedin.restli.client.RestLiDecodingException;
-import com.linkedin.restli.common.ErrorResponse;
+import com.linkedin.restli.client.RestLiResponseException;
 
 
 /**
@@ -39,11 +39,18 @@ import com.linkedin.restli.common.ErrorResponse;
 public class ResponseFutureImpl<T> implements ResponseFuture<T>
 {
   private final Future<Response<T>> _responseFuture;
-
+  private final ErrorHandlingBehavior _errorHandlingBehavior;
 
   public ResponseFutureImpl(Future<Response<T>> responseFuture)
   {
     _responseFuture = responseFuture;
+    _errorHandlingBehavior = ErrorHandlingBehavior.FAIL_ON_ERROR;
+  }
+
+  public ResponseFutureImpl(Future<Response<T>> responseFuture, ErrorHandlingBehavior errorHandlingBehavior)
+  {
+    _responseFuture = responseFuture;
+    _errorHandlingBehavior = errorHandlingBehavior;
   }
 
   @Override
@@ -117,8 +124,43 @@ public class ResponseFutureImpl<T> implements ResponseFuture<T>
     {
       // Always need to wrap it, because the cause likely came from a different thread
       // and is not suitable to throw on the current thread.
-      throw ExceptionUtil.exceptionForThrowable(e.getCause(), true);
+      RemoteInvocationException exception = ExceptionUtil.wrapThrowable(e.getCause());
+
+      if (_errorHandlingBehavior == ErrorHandlingBehavior.FAIL_ON_ERROR ||
+          !(exception instanceof RestLiResponseException))
+      {
+        throw exception;
+      }
+      else
+      {
+        return createResponseFromError((RestLiResponseException) exception);
+      }
     }
+  }
+
+  @SuppressWarnings("unchecked")
+  private Response<T> createResponseFromError(RestLiResponseException restLiResponseException)
+      throws RemoteInvocationException
+  {
+    Response<T> response = null;
+
+    // If the exception contains a decoded response, we use it. Otherwise we do manual response
+    // creation which will not have an entity.
+    if (restLiResponseException.hasDecodedResponse())
+    {
+      response = new ResponseImpl<T>(
+        (Response<T>) restLiResponseException.getDecodedResponse(),
+        restLiResponseException);
+    }
+    else
+    {
+      response = new ResponseImpl<T>(
+          restLiResponseException.getStatus(),
+          restLiResponseException.getResponse().getHeaders(),
+          restLiResponseException);
+    }
+
+    return response;
   }
 
   @Override

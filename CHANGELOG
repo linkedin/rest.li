@@ -1,5 +1,12 @@
+1.10.8
+------
+
+
 1.10.7
 ------
+(RB=240001)
+Providing a way to get the response payload and status without catching exceptions in case of a Rest.Li error.
+
 (RB=242468)
 Add more tests for AbstractRequestBuilder.
 Use resource stream in restli-tools tests.

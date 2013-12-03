@@ -20,8 +20,8 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.Map;
 
-import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.client.Response;
+import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.common.RestConstants;
 
 
@@ -38,16 +38,26 @@ public class ResponseImpl<T> implements Response<T>
   private int _status = 102;  // SC_PROCESSING
   private Map<String, String> _headers;
   private T _entity;
+  private RestLiResponseException _error;
+
+  ResponseImpl(Response<T> origin, RestLiResponseException error)	{
+    this(origin, origin.getEntity());
+    _error = error;
+  }
+
+  ResponseImpl(int status, Map<String, String> headers, RestLiResponseException error)	{
+    this(status, headers);
+    _error = error;
+  }
+
+  public ResponseImpl(Response<?> origin, T entity)	{
+    this(origin.getStatus(), origin.getHeaders());
+    _entity = entity;
+  }
 
   ResponseImpl(int status, Map<String, String> headers)	{
     _status = status;
     _headers = headers;
-  }
-
-  public ResponseImpl(Response<?> origin, T entity)	{
-    _status = origin.getStatus();
-    _headers = origin.getHeaders();
-    _entity = entity;
   }
 
   /**
@@ -90,7 +100,8 @@ public class ResponseImpl<T> implements Response<T>
   /**
    * Specific getter for the 'X-LinkedIn-Id' header
    */
-  @Override public String getId()
+  @Override
+  public String getId()
   {
     // We are deprecating all X-Linkedin header prefixes and replacing them with X-RestLi.
     // During the transition we'll check for both the old and new header.
@@ -102,8 +113,21 @@ public class ResponseImpl<T> implements Response<T>
   /**
    * Specific getter for the 'Location' header
    */
-  @Override public URI getLocation()
+  @Override
+  public URI getLocation()
   {
     return URI.create(getHeader(RestConstants.HEADER_LOCATION));
+  }
+
+  @Override
+  public RestLiResponseException getError()
+  {
+    return _error;
+  }
+
+  @Override
+  public boolean hasError()
+  {
+    return _error != null;
   }
 }

@@ -25,7 +25,6 @@ import com.linkedin.data.template.GetMode;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.restli.common.ErrorResponse;
-import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.client.ExceptionUtil;
 
 /**
@@ -36,7 +35,9 @@ import com.linkedin.restli.internal.client.ExceptionUtil;
 /**
  * RestLiResponseException is thrown when the client receives a response with a non-success
  * HttpStatus (<200 or >=300).  If the response body includes an ErrorResponse document, it will
- * be parsed, and its contents may be accessed via the accessor methods in RestLiResponseException.
+ * be parsed, and its contents may be accessed via the accessor methods in {@link RestLiResponseException}.
+ * It also contains a decoded {@link Response} for the raw {@link RestResponse} when the raw
+ * {@link RestResponse} does not contain an error response.
  */
 public class RestLiResponseException extends RestException
 {
@@ -44,27 +45,55 @@ public class RestLiResponseException extends RestException
 
   private final int _status;
   private final ErrorResponse _errorResponse;
+  private final Response<?> _decodedResponse;
 
+  @Deprecated
   public RestLiResponseException(RestResponse rawResponse, ErrorResponse errorResponse)
   {
     super(rawResponse);
     _status = rawResponse.getStatus();
     _errorResponse = errorResponse;
+    _decodedResponse = null;
   }
 
+  public RestLiResponseException(RestResponse rawResponse,
+                                 Response<?> decodedResponse,
+                                 ErrorResponse errorResponse)
+  {
+    super(rawResponse);
+    _status = rawResponse.getStatus();
+    _errorResponse = errorResponse;
+    _decodedResponse = decodedResponse;
+  }
+
+  @Deprecated
   public RestLiResponseException(RestResponse rawResponse, ErrorResponse errorResponse,
                                  Throwable cause)
   {
     super(rawResponse, cause);
     _status = rawResponse.getStatus();
     _errorResponse = errorResponse;
+    _decodedResponse = null;
   }
 
+  @Deprecated
   public RestLiResponseException(ErrorResponse errorResponse)
   {
     super(RestResponse.NO_RESPONSE, errorResponse.getMessage());
     _status = errorResponse.getStatus();
     _errorResponse = errorResponse;
+    _decodedResponse = null;
+  }
+
+  public RestLiResponseException(RestResponse rawResponse,
+                                 Response<?> decodedResponse,
+                                 ErrorResponse errorResponse,
+                                 Throwable cause)
+  {
+    super(rawResponse, cause);
+    _status = rawResponse.getStatus();
+    _errorResponse = errorResponse;
+    _decodedResponse = decodedResponse;
   }
 
   public int getStatus()
@@ -153,5 +182,15 @@ public class RestLiResponseException extends RestException
 
     // E.g.:
     // RestLiResponseException: Response status 400, serviceErrorMessage: Illegal content type "application/xml", serviceErrorCode: 999
+  }
+
+  public Response<?> getDecodedResponse()
+  {
+    return _decodedResponse;
+  }
+
+  public boolean hasDecodedResponse()
+  {
+    return _decodedResponse != null;
   }
 }

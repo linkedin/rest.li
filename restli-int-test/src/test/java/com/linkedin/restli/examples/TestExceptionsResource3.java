@@ -16,19 +16,9 @@
 
 package com.linkedin.restli.examples;
 
-import com.linkedin.restli.client.BatchCreateRequest;
-import com.linkedin.restli.client.CreateRequest;
-import com.linkedin.restli.client.ErrorHandlingBehavior;
-import com.linkedin.restli.client.Response;
-import com.linkedin.restli.client.ResponseFuture;
-import com.linkedin.restli.common.CollectionResponse;
-import com.linkedin.restli.common.CreateStatus;
-import com.linkedin.restli.common.EmptyRecord;
-import com.linkedin.restli.common.ErrorResponse;
-import com.linkedin.restli.examples.greetings.api.Tone;
+
 import java.util.Collections;
 
-import java.util.List;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -39,14 +29,21 @@ import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import com.linkedin.restli.client.ErrorHandlingBehavior;
 import com.linkedin.restli.client.GetRequest;
+import com.linkedin.restli.client.Response;
+import com.linkedin.restli.client.ResponseFuture;
 import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.RestLiResponseException;
+import com.linkedin.restli.client.UpdateRequest;
+import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.examples.greetings.api.Greeting;
-import com.linkedin.restli.examples.greetings.client.ExceptionsBuilders;
+import com.linkedin.restli.examples.greetings.api.Tone;
+import com.linkedin.restli.examples.greetings.client.Exceptions3Builders;
 
-public class TestExceptionsResource extends RestLiIntegrationTest
+
+public class TestExceptionsResource3 extends RestLiIntegrationTest
 {
   private static final Client CLIENT = new TransportClientAdapter(new HttpClientFactory().getClient(Collections.<String, String>emptyMap()));
   private static final String URI_PREFIX = "http://localhost:1338/";
@@ -65,14 +62,14 @@ public class TestExceptionsResource extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = "exceptionHandlingModes")
-  public void testException(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior) throws RemoteInvocationException
+  public void testGet404(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior) throws RemoteInvocationException
   {
     Response<Greeting> response = null;
     RestLiResponseException exception = null;
 
     try
     {
-      GetRequest<Greeting> readRequest = new ExceptionsBuilders().get().id(1L).build();
+      GetRequest<Greeting> readRequest = new Exceptions3Builders().get().id(1L).build();
       ResponseFuture<Greeting> future;
 
       if (explicit)
@@ -108,39 +105,35 @@ public class TestExceptionsResource extends RestLiIntegrationTest
       Assert.assertNotNull(response);
       Assert.assertTrue(response.hasError());
       exception = response.getError();
-      Assert.assertEquals(response.getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode());
+      Assert.assertEquals(response.getStatus(), HttpStatus.S_404_NOT_FOUND.getCode());
       Assert.assertNull(response.getEntity());
     }
 
     Assert.assertNotNull(exception);
     Assert.assertFalse(exception.hasDecodedResponse());
-    Assert.assertEquals(exception.getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode());
-    Assert.assertEquals(exception.getServiceErrorCode(), 42);
-    Assert.assertEquals(exception.getServiceErrorMessage(), "error processing request");
-    Assert.assertTrue(exception.getServiceErrorStackTrace().contains(
-        "at com.linkedin.restli.examples.greetings.server.ExceptionsResource.get("));
+    Assert.assertEquals(exception.getStatus(), HttpStatus.S_404_NOT_FOUND.getCode());
   }
 
   @Test(dataProvider = "exceptionHandlingModes")
-  public void testCreateError(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior) throws Exception
+  public void testUpdate(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior) throws Exception
   {
     Response<EmptyRecord> response = null;
     RestLiResponseException exception = null;
 
     try
     {
-      CreateRequest<Greeting> createRequest = new ExceptionsBuilders().create()
+      UpdateRequest<Greeting> request = new Exceptions3Builders().update().id(11L)
           .input(new Greeting().setId(11L).setMessage("@#$%@!$%").setTone(Tone.INSULTING))
           .build();
       ResponseFuture<EmptyRecord> future;
 
       if (explicit)
       {
-        future = REST_CLIENT.sendRequest(createRequest, errorHandlingBehavior);
+        future = REST_CLIENT.sendRequest(request, errorHandlingBehavior);
       }
       else
       {
-        future = REST_CLIENT.sendRequest(createRequest);
+        future = REST_CLIENT.sendRequest(request);
       }
 
       response = future.getResponse();
@@ -167,50 +160,13 @@ public class TestExceptionsResource extends RestLiIntegrationTest
       Assert.assertNotNull(response);
       Assert.assertTrue(response.hasError());
       exception = response.getError();
-      Assert.assertEquals(response.getStatus(), HttpStatus.S_406_NOT_ACCEPTABLE.getCode());
+      Assert.assertEquals(response.getStatus(), HttpStatus.S_404_NOT_FOUND.getCode());
       Assert.assertNull(response.getEntity());
     }
 
     Assert.assertNotNull(exception);
-    Assert.assertFalse(exception.hasDecodedResponse());
-    Assert.assertEquals(exception.getStatus(), HttpStatus.S_406_NOT_ACCEPTABLE.getCode());
-    Assert.assertEquals(exception.getServiceErrorMessage(), "I will not tolerate your insolence!");
-    Assert.assertEquals(exception.getServiceErrorCode(), 999);
-    Assert.assertEquals(exception.getErrorSource(), "APP");
-    Assert.assertEquals(exception.getErrorDetails().getString("reason"), "insultingGreeting");
-    Assert.assertTrue(exception.getServiceErrorStackTrace().startsWith(
-        "com.linkedin.restli.server.RestLiServiceException [HTTP Status:406, serviceErrorCode:999]: I will not tolerate your insolence!"),
-                      "stacktrace mismatch:" + exception.getStackTrace());
-  }
-
-  @Test
-  public void testBatchCreateErrors() throws Exception
-  {
-    BatchCreateRequest<Greeting> batchCreateRequest = new ExceptionsBuilders().batchCreate()
-        .input(new Greeting().setId(10L).setMessage("Greetings.").setTone(Tone.SINCERE))
-        .input(new Greeting().setId(11L).setMessage("@#$%@!$%").setTone(Tone.INSULTING))
-        .build();
-
-    CollectionResponse<CreateStatus> response = REST_CLIENT.sendRequest(batchCreateRequest).getResponse().getEntity();
-    List<CreateStatus> createStatuses = response.getElements();
-    Assert.assertEquals(createStatuses.size(), 2);
-
-    Assert.assertEquals(createStatuses.get(0).getStatus().intValue(), HttpStatus.S_201_CREATED.getCode());
-    Assert.assertEquals(createStatuses.get(0).getId(), "10");
-    Assert.assertFalse(createStatuses.get(0).hasError());
-
-    CreateStatus status = createStatuses.get(1);
-    Assert.assertEquals(status.getStatus().intValue(), HttpStatus.S_406_NOT_ACCEPTABLE.getCode());
-    Assert.assertTrue(status.hasError());
-    ErrorResponse error = status.getError();
-    Assert.assertEquals(error.getStatus(), HttpStatus.S_406_NOT_ACCEPTABLE.getCode());
-    Assert.assertEquals(error.getMessage(), "I will not tolerate your insolence!");
-    Assert.assertEquals(error.getServiceErrorCode(), 999);
-    Assert.assertEquals(error.getExceptionClass(), "com.linkedin.restli.server.RestLiServiceException");
-    Assert.assertEquals(error.getErrorDetails().getString("reason"), "insultingGreeting");
-    Assert.assertTrue(error.getStackTrace().startsWith(
-        "com.linkedin.restli.server.RestLiServiceException [HTTP Status:406, serviceErrorCode:999]: I will not tolerate your insolence!"),
-                      "stacktrace mismatch:" + error.getStackTrace());
+    Assert.assertTrue(exception.hasDecodedResponse());
+    Assert.assertEquals(exception.getStatus(), HttpStatus.S_404_NOT_FOUND.getCode());
   }
 
   @DataProvider(name = "exceptionHandlingModes")

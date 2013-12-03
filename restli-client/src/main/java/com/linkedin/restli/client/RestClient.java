@@ -139,11 +139,30 @@ public class RestClient
    * @param requestContext context for the request
    * @return response future
    */
-  public <T> ResponseFuture<T> sendRequest(Request<T> request, RequestContext requestContext)
+  public <T> ResponseFuture<T> sendRequest(Request<T> request,
+                                           RequestContext requestContext)
   {
     FutureCallback<Response<T>> callback = new FutureCallback<Response<T>>();
     sendRequest(request, requestContext, callback);
     return new ResponseFutureImpl<T>(callback);
+  }
+
+  /**
+   * Sends a type-bound REST request, returning a future.
+   *
+   *
+   * @param request to send
+   * @param requestContext context for the request
+   * @param errorHandlingBehavior error handling behavior
+   * @return response future
+   */
+  public <T> ResponseFuture<T> sendRequest(Request<T> request,
+                                           RequestContext requestContext,
+                                           ErrorHandlingBehavior errorHandlingBehavior)
+  {
+    FutureCallback<Response<T>> callback = new FutureCallback<Response<T>>();
+    sendRequest(request, requestContext, callback);
+    return new ResponseFutureImpl<T>(callback, errorHandlingBehavior);
   }
 
   /**
@@ -159,6 +178,23 @@ public class RestClient
                                            RequestContext requestContext)
   {
     return sendRequest(requestBuilder.build(), requestContext);
+  }
+
+  /**
+   * Sends a type-bound REST request, returning a future.
+   *
+   *
+   * @param requestBuilder to invoke {@link com.linkedin.restli.client.RequestBuilder#build()} on to obtain the request
+   *                       to send.
+   * @param requestContext context for the request
+   * @param errorHandlingBehavior error handling behavior
+   * @return response future
+   */
+  public <T> ResponseFuture<T> sendRequest(RequestBuilder<? extends Request<T>> requestBuilder,
+                                           RequestContext requestContext,
+                                           ErrorHandlingBehavior errorHandlingBehavior)
+  {
+    return sendRequest(requestBuilder.build(), requestContext, errorHandlingBehavior);
   }
 
   /**
@@ -315,6 +351,17 @@ public class RestClient
 
   /**
    * Sends a type-bound REST request, returning a future
+   * @param request to send
+   * @param errorHandlingBehavior error handling behavior
+   * @return response future
+   */
+  public <T> ResponseFuture<T> sendRequest(Request<T> request, ErrorHandlingBehavior errorHandlingBehavior)
+  {
+    return sendRequest(request, new RequestContext(), errorHandlingBehavior);
+  }
+
+  /**
+   * Sends a type-bound REST request, returning a future
    *
    * @param requestBuilder to invoke {@link com.linkedin.restli.client.RequestBuilder#build()} on to obtain the request
    *                       to send.
@@ -323,6 +370,20 @@ public class RestClient
   public <T> ResponseFuture<T> sendRequest(RequestBuilder<? extends Request<T>> requestBuilder)
   {
     return sendRequest(requestBuilder.build(), new RequestContext());
+  }
+
+  /**
+   * Sends a type-bound REST request, returning a future
+   *
+   * @param requestBuilder to invoke {@link com.linkedin.restli.client.RequestBuilder#build()} on to obtain the request
+   *                       to send.
+   * @param errorHandlingBehavior error handling behavior
+   * @return response future
+   */
+  public <T> ResponseFuture<T> sendRequest(RequestBuilder<? extends Request<T>> requestBuilder,
+                                           ErrorHandlingBehavior errorHandlingBehavior)
+  {
+    return sendRequest(requestBuilder.build(), new RequestContext(), errorHandlingBehavior);
   }
 
   /**
@@ -472,7 +533,7 @@ public class RestClient
     @Override
     protected Throwable convertError(Throwable error)
     {
-      return ExceptionUtil.exceptionForThrowable(error, false);
+      return ExceptionUtil.exceptionForThrowable(error, _decoder);
     }
   }
 }

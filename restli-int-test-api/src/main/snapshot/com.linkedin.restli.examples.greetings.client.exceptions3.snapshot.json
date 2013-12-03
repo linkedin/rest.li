@@ -1,0 +1,46 @@
+{
+  "models" : [ {
+    "type" : "enum",
+    "name" : "Tone",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "symbols" : [ "FRIENDLY", "SINCERE", "INSULTING" ]
+  }, {
+    "type" : "record",
+    "name" : "Greeting",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "doc" : "A greeting",
+    "fields" : [ {
+      "name" : "id",
+      "type" : "long"
+    }, {
+      "name" : "message",
+      "type" : "string"
+    }, {
+      "name" : "tone",
+      "type" : "Tone",
+      "doc" : "tone"
+    } ]
+  } ],
+  "schema" : {
+    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+    "name" : "exceptions3",
+    "doc" : "generated from: com.linkedin.restli.examples.greetings.server.ExceptionsResource3",
+    "path" : "/exceptions3",
+    "collection" : {
+      "methods" : [ {
+        "method" : "get"
+      }, {
+        "method" : "update"
+      } ],
+      "entity" : {
+        "path" : "/exceptions3/{exceptions3Id}"
+      },
+      "supports" : [ "get", "update" ],
+      "identifier" : {
+        "name" : "exceptions3Id",
+        "type" : "long"
+      }
+    },
+    "namespace" : "com.linkedin.restli.examples.greetings.client"
+  }
+}

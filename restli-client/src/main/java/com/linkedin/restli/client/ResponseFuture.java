@@ -33,8 +33,17 @@ import com.linkedin.r2.RemoteInvocationException;
  */
 public interface ResponseFuture<T> extends Future<Response<T>>
 {
+  /**
+   * Returns the response of a REST request. An exception is thrown in case of a communication issue or
+   * an error response from the server.
+  */
   Response<T> getResponse() throws RemoteInvocationException;
 
+  /**
+   * Returns the response of a REST request. An exception is thrown in case of any communication issue or
+   * an error response from the server. If the specified timeout elapses before getting response a
+   * {@link TimeoutException} is thrown.
+   */
   Response<T> getResponse(long timeout, TimeUnit unit) throws RemoteInvocationException, TimeoutException;
 
   /**

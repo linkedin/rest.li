@@ -14,36 +14,24 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.restli.client;
 
-import java.net.URI;
-import java.util.Map;
 
 /**
- * @author Josh Walker
- * @version $Revision: $
+ * {@link ErrorHandlingBehavior} specifies the way {@link RestClient} will handle errors
+ * occurred during request execution.
  */
-
-public interface Response<T>
+public enum ErrorHandlingBehavior
 {
+  /**
+   * All errors will be treated as a request failure.
+   */
+  FAIL_ON_ERROR,
 
-  int getStatus();
-
-  T getEntity();
-
-  String getHeader(String name);
-
-  Map<String, String> getHeaders();
-
-  String getId();
-
-  URI getLocation();
-
-  RestLiResponseException getError();
-
-  boolean hasError();
+  /**
+   * The server error responses will be transformed into regular responses that can be used
+   * to access partial results as well as the original exception. The communication errors will
+   * still be handled as a request failure.
+   */
+  TREAT_SERVER_ERROR_AS_SUCCESS
 }
