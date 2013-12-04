@@ -16,7 +16,7 @@
 
 package com.linkedin.data.schema.generator;
 
-import com.linkedin.data.ByteString;
+
 import com.linkedin.data.Data;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
@@ -36,7 +36,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
+
 
 /**
  * Generates example data given a Pegasus schema. The schema can be provided in a
@@ -119,12 +121,27 @@ public class SchemaSampleDataGenerator
       _arraySize = arraySize;
     }
 
+    /**
+     * @return {@link SampleDataCallback} used for generating sample data,
+     *         which by default is an instance of {@link DefaultSampleDataCallback}
+     */
+    public SampleDataCallback getCallback()
+    {
+      return _callback;
+    }
+
+    public void setCallback(SampleDataCallback pool)
+    {
+      _callback = pool;
+    }
+
     private boolean _requiredFieldsOnly = false;
     private boolean _useDefaults = false;
     private int _arraySize = (int)(Math.random() * 3) + 1;
+    private SampleDataCallback _callback = DefaultSampleDataCallback.INSTANCE;
   }
 
-  public static class ParentSchemas
+  private static class ParentSchemas
   {
     private final Map<DataSchema, Integer> counts = new HashMap<DataSchema, Integer>();
     public void incrementReferences(DataSchema schema)
@@ -171,16 +188,39 @@ public class SchemaSampleDataGenerator
     }
   }
 
+  /**
+   * Generate a {@link DataMap} of the specified schema and filled with random values.
+   *
+   * @param schema schema of the result
+   * @param spec options of how to generate the result
+   * @return generated DataMap
+   */
   public static DataMap buildRecordData(NamedDataSchema schema, DataGenerationOptions spec)
   {
     return buildRecordData(new ParentSchemas(), schema, spec);
   }
 
+  /**
+   * Generate a data object of the specified schema and filled with random value.
+   *
+   * @param schema schema of the result
+   * @param spec options of how to generate the result
+   * @return generated data object
+   */
   public static Object buildData(DataSchema schema, DataGenerationOptions spec)
   {
     return buildData(new ParentSchemas(), schema, null, spec);
   }
 
+  /**
+   * Generate a data object of the specified schema and filled with random value.
+   *
+   * @param schema schema of the result
+   * @param fieldName field name associated to the data object, which is used to specialize the random value
+   *                  use null if not sure
+   * @param spec options of how to generate the result
+   * @return generated data object
+   */
   public static Object buildData(DataSchema schema, String fieldName, DataGenerationOptions spec)
   {
     return buildData(new ParentSchemas(), schema, fieldName, spec);
@@ -243,10 +283,41 @@ public class SchemaSampleDataGenerator
   {
     spec = preventRecursionIntoAlreadyTraversedSchemas(parentSchemas, spec, schema);
     parentSchemas.incrementReferences(schema);
-    Object data = null;
     final DataSchema derefSchema = schema.getDereferencedDataSchema();
+    final SampleDataCallback callback = spec.getCallback();
+    Object data = null;
     switch (derefSchema.getType())
     {
+      case BOOLEAN:
+        data = callback.getBoolean(fieldName);
+        break;
+      case INT:
+        data = callback.getInteger(fieldName);
+        break;
+      case LONG:
+        data = callback.getLong(fieldName);
+        break;
+      case FLOAT:
+        data = callback.getFloat(fieldName);
+        break;
+      case DOUBLE:
+        data = callback.getDouble(fieldName);
+        break;
+      case BYTES:
+        data = callback.getBytes(fieldName);
+        break;
+      case STRING:
+        data = callback.getString(fieldName);
+        break;
+      case NULL:
+        data = Data.NULL;
+        break;
+      case FIXED:
+        data = callback.getFixed(fieldName, (FixedDataSchema) derefSchema);
+        break;
+      case ENUM:
+        data = callback.getEnum(fieldName, (EnumDataSchema) derefSchema);
+        break;
       case ARRAY:
         final DataList dataList = new DataList(spec.getArraySize());
         for (int i = 0; i < spec.getArraySize(); i++)
@@ -256,66 +327,23 @@ public class SchemaSampleDataGenerator
         }
         data = dataList;
         break;
-      case BOOLEAN:
-        data = (Math.random() > 0.5);
-        break;
-      case BYTES:
-        data = ByteString.copy("some bytes".getBytes(Data.UTF_8_CHARSET));
-        break;
-      case DOUBLE:
-        data = Math.random() * 100;
-        break;
-      case FLOAT:
-        data = (float)(Math.random() * 100);
-        break;
-      case ENUM:
-        final EnumDataSchema enumSchema = (EnumDataSchema) derefSchema;
-        final int idx = (int)(Math.random() * enumSchema.getSymbols().size());
-        data = enumSchema.getSymbols().get(idx);
-        break;
-      case FIXED:
-        final FixedDataSchema fixedSchema = (FixedDataSchema) derefSchema;
-        final byte[] bytes = new byte[fixedSchema.getSize()];
-        for (int i = 0; i < fixedSchema.getSize(); i++)
-        {
-          bytes[i] = '1';
-        }
-        data = ByteString.copy(bytes);
-        break;
-      case INT:
-        data = (int)(Math.random() * 100);
-        break;
-      case LONG:
-        data = (long)(Math.random() * 100);
+      case RECORD:
+        data = buildRecordData(parentSchemas, (RecordDataSchema) derefSchema, spec);
         break;
       case MAP:
         final DataMap dataMap = new DataMap();
         for (int i = 0; i < spec.getArraySize(); i++)
         {
           final Object item = buildData(parentSchemas, ((MapDataSchema) derefSchema).getValues(), fieldName, spec);
-          final int key = (int)(Math.random() * 1000) + 1000;
-          dataMap.put(String.valueOf(key), item);
+          dataMap.put("mapField_" + _random.nextInt(), item);
         }
         data = dataMap;
-        break;
-      case NULL:
-        // ???
-        data = null;
-        break;
-      case RECORD:
-        data = buildRecordData(parentSchemas, (RecordDataSchema) derefSchema, spec);
-        break;
-      case STRING:
-        data = buildStringData(parentSchemas, fieldName, spec);
-        break;
-      case TYPEREF:
-        data = buildData(parentSchemas, derefSchema, fieldName, spec);
         break;
       case UNION:
         final UnionDataSchema unionSchema = (UnionDataSchema) derefSchema;
         final List<DataSchema> types = removeAlreadyTraversedSchemasFromUnionMemberList(parentSchemas, unionSchema.getTypes());
-        final int unionIdx = (int)(Math.random() * types.size());
-        final DataSchema unionItemSchema = types.get(unionIdx);
+        final int unionIndex = _random.nextInt(types.size());
+        final DataSchema unionItemSchema = types.get(unionIndex);
         data = buildData(parentSchemas, unionItemSchema, fieldName, spec);
 
         if (data != null)
@@ -325,56 +353,13 @@ public class SchemaSampleDataGenerator
           data = unionMap;
         }
         break;
+      case TYPEREF:
+        data = buildData(parentSchemas, derefSchema, fieldName, spec);
+        break;
     }
 
     parentSchemas.decrementReferences(schema);
     return data;
-  }
-
-  // TODO Consider validation rules here as well, such as length (easy), regex (really hard), etc
-  private static Object buildStringData(ParentSchemas parentSchemas, String fieldName, DataGenerationOptions spec)
-  {
-    String[] EXAMPLE_STRINGS = STRINGS;
-
-    if (fieldName != null)
-    {
-      // hacky guess as to the type of string we should generate (based on field name)
-      if (matchFieldName(fieldName, new String[] {"Url", "Link"}))
-      {
-        EXAMPLE_STRINGS = URL_STRINGS;
-      }
-      else if (matchFieldName(fieldName, new String[] {"Name"}))
-      {
-        EXAMPLE_STRINGS = NAME_STRINGS;
-      }
-      else if (matchFieldName(fieldName, new String[] {"Email", "emailAddress", "email_address"}))
-      {
-        EXAMPLE_STRINGS = EMAIL_STRINGS;
-      }
-      else if (matchFieldName(fieldName, new String[] {"Description", "Summary"}))
-      {
-        EXAMPLE_STRINGS = DESCRIPTION_STRINGS;
-      }
-    }
-
-    final int stringIdx = (int)(Math.random() * EXAMPLE_STRINGS.length);
-    return EXAMPLE_STRINGS[stringIdx];
-  }
-
-  private static boolean matchFieldName(String fieldName, String[] parts)
-  {
-    boolean matches = false;
-    for (String part : parts)
-    {
-      if (fieldName.equals(part) || fieldName.equals(part.toLowerCase()) ||
-          fieldName.endsWith(part) || fieldName.endsWith(part.toLowerCase()))
-      {
-        matches = true;
-        break;
-      }
-    }
-
-    return matches;
   }
 
   public SchemaSampleDataGenerator(DataSchemaResolver resolver)
@@ -418,32 +403,6 @@ public class SchemaSampleDataGenerator
     else return copy;
   }
 
-  private static final String[] STRINGS = new String[] {
-    "foo"
-  };
-
-  private static final String[] URL_STRINGS = new String[] {
-    "http://www.example.com"
-  };
-
-  private static final String[] NAME_STRINGS = new String[] {
-    "Loreum Ipsum"
-  };
-
-  private static final String[] EMAIL_STRINGS = new String[] {
-    "foo@example.com"
-  };
-
-  private static final String[] DESCRIPTION_STRINGS = new String[] {
-    "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-    "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-    // http://hipsteripsum.me/
-    "Aesthetic sustainable raw denim messenger bag narwhal 8-bit, ethnic vegan craft beer quinoa selvage authentic dolor.",
-    "Vegan commodo kogi twee, consectetur single-origin coffee readymade swag.",
-    "Organic american apparel eiusmod, high life craft beer mollit polaroid lo-fi sed culpa.",
-    "Lo-fi vinyl 3 wolf moon hoodie PBR eiusmod farm-to-table next level, est aliqua sriracha pour-over raw denim"
-  };
-
   private final SchemaParser _schemaParser;
 
   // TODO this Main function will be used in offline documentation generation, which is not ready yet
@@ -460,4 +419,6 @@ public class SchemaSampleDataGenerator
                                              new DataGenerationSpec());
   }
   */
+
+  private static final Random _random = new Random();
 }

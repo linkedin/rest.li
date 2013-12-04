@@ -18,6 +18,7 @@ package com.linkedin.data.schema.generator;
 
 
 import com.linkedin.data.ByteString;
+import com.linkedin.data.Data;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.ArrayDataSchema;
@@ -59,7 +60,6 @@ import com.linkedin.pegasus.generator.test.SelfReference;
 import com.linkedin.pegasus.generator.test.TyperefTest;
 import com.linkedin.pegasus.generator.test.UnionTest;
 import org.testng.Assert;
-import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.ParameterizedType;
@@ -71,39 +71,6 @@ import java.util.Set;
 
 public class TestSchemaSampleDataGenerator
 {
-  @BeforeTest
-  public void prepare()
-  {
-    _dataSchemaTypeToPrimitiveJavaTypeMap = new IdentityHashMap<DataSchema.Type, Class<?>>();
-    _dataSchemaTypeToPrimitiveJavaTypeMap.put(DataSchema.Type.INT, Integer.class);
-    _dataSchemaTypeToPrimitiveJavaTypeMap.put(DataSchema.Type.LONG, Long.class);
-    _dataSchemaTypeToPrimitiveJavaTypeMap.put(DataSchema.Type.FLOAT, Float.class);
-    _dataSchemaTypeToPrimitiveJavaTypeMap.put(DataSchema.Type.DOUBLE, Double.class);
-    _dataSchemaTypeToPrimitiveJavaTypeMap.put(DataSchema.Type.BOOLEAN, Boolean.class);
-    _dataSchemaTypeToPrimitiveJavaTypeMap.put(DataSchema.Type.STRING, String.class);
-    _dataSchemaTypeToPrimitiveJavaTypeMap.put(DataSchema.Type.BYTES, ByteString.class);
-
-    _dataSchemaTypeToprimitiveArrayMap = new IdentityHashMap<DataSchema.Type, Class<? extends DirectArrayTemplate<?>>>();
-    _dataSchemaTypeToprimitiveArrayMap.put(DataSchema.Type.BOOLEAN, BooleanArray.class);
-    _dataSchemaTypeToprimitiveArrayMap.put(DataSchema.Type.INT, IntegerArray.class);
-    _dataSchemaTypeToprimitiveArrayMap.put(DataSchema.Type.LONG, LongArray.class);
-    _dataSchemaTypeToprimitiveArrayMap.put(DataSchema.Type.FLOAT, FloatArray.class);
-    _dataSchemaTypeToprimitiveArrayMap.put(DataSchema.Type.DOUBLE, DoubleArray.class);
-    _dataSchemaTypeToprimitiveArrayMap.put(DataSchema.Type.STRING, StringArray.class);
-    _dataSchemaTypeToprimitiveArrayMap.put(DataSchema.Type.BYTES, BytesArray.class);
-
-    _dataSchemaTypeToprimitiveMapMap = new IdentityHashMap<DataSchema.Type, Class<? extends DirectMapTemplate<?>>>();
-    _dataSchemaTypeToprimitiveMapMap.put(DataSchema.Type.BOOLEAN, BooleanMap.class);
-    _dataSchemaTypeToprimitiveMapMap.put(DataSchema.Type.INT, IntegerMap.class);
-    _dataSchemaTypeToprimitiveMapMap.put(DataSchema.Type.LONG, LongMap.class);
-    _dataSchemaTypeToprimitiveMapMap.put(DataSchema.Type.FLOAT, FloatMap.class);
-    _dataSchemaTypeToprimitiveMapMap.put(DataSchema.Type.DOUBLE, DoubleMap.class);
-    _dataSchemaTypeToprimitiveMapMap.put(DataSchema.Type.STRING, StringMap.class);
-    _dataSchemaTypeToprimitiveMapMap.put(DataSchema.Type.BYTES, BytesMap.class);
-
-    _spec = new SchemaSampleDataGenerator.DataGenerationOptions();
-  }
-
   @Test
   public void testPrimitiveSchema()
   {
@@ -116,7 +83,7 @@ public class TestSchemaSampleDataGenerator
 
     final PrimitiveDataSchema nullSchema = DataSchemaConstants.NULL_DATA_SCHEMA;
     final Object nullData = SchemaSampleDataGenerator.buildData(nullSchema, _spec);
-    Assert.assertNull(nullData);
+    Assert.assertEquals(nullData, Data.NULL);
   }
 
   @Test
@@ -240,9 +207,9 @@ public class TestSchemaSampleDataGenerator
     try
     {
       final RecordDataSchema schema = (RecordDataSchema) DataTemplateUtil.getSchema(SelfReference.class);
-      DataMap data = SchemaSampleDataGenerator.buildRecordData(schema, _spec);
+      final DataMap data = SchemaSampleDataGenerator.buildRecordData(schema, _spec);
       Assert.assertTrue(data.getDataList("listRef").getDataMap(0).getDataList("listRef").isEmpty(), "Self referenced schema in list should not be embedded recursively");
-      String firstKey = data.getDataMap("mapRef").keySet().iterator().next();
+      final String firstKey = data.getDataMap("mapRef").keySet().iterator().next();
       Assert.assertTrue(data.getDataMap("mapRef").getDataMap(firstKey).getDataMap("mapRef").isEmpty(), "Self referenced schema in map should not be embedded recursively");
       Assert.assertFalse(data.getDataMap("indirectRef").containsKey("ref"), "Self referenced schema (via indirect reference) should not be embedded recursively");
       Assert.assertFalse(data.getDataMap("unionRef").containsKey("com.linkedin.pegasus.generator.test.SelfReference"), "Self referenced schema in union should not be embedded recursively");
@@ -253,8 +220,38 @@ public class TestSchemaSampleDataGenerator
     }
   }
 
-  private Map<DataSchema.Type, Class<?>> _dataSchemaTypeToPrimitiveJavaTypeMap;
-  private Map<DataSchema.Type, Class<? extends DirectArrayTemplate<?>>> _dataSchemaTypeToprimitiveArrayMap;
-  private Map<DataSchema.Type, Class<? extends DirectMapTemplate<?>>> _dataSchemaTypeToprimitiveMapMap;
-  private SchemaSampleDataGenerator.DataGenerationOptions _spec;
+  private static final Map<DataSchema.Type, Class<?>> _dataSchemaTypeToPrimitiveJavaTypeMap =
+      new IdentityHashMap<DataSchema.Type, Class<?>>();
+  private static final Map<DataSchema.Type, Class<? extends DirectArrayTemplate<?>>> _dataSchemaTypeToprimitiveArrayMap =
+      new IdentityHashMap<DataSchema.Type, Class<? extends DirectArrayTemplate<?>>>();
+  private static final Map<DataSchema.Type, Class<? extends DirectMapTemplate<?>>> _dataSchemaTypeToprimitiveMapMap =
+      new IdentityHashMap<DataSchema.Type, Class<? extends DirectMapTemplate<?>>>();
+  private static final SchemaSampleDataGenerator.DataGenerationOptions _spec =
+      new SchemaSampleDataGenerator.DataGenerationOptions();
+  static
+  {
+    _dataSchemaTypeToPrimitiveJavaTypeMap.put(DataSchema.Type.INT, Integer.class);
+    _dataSchemaTypeToPrimitiveJavaTypeMap.put(DataSchema.Type.LONG, Long.class);
+    _dataSchemaTypeToPrimitiveJavaTypeMap.put(DataSchema.Type.FLOAT, Float.class);
+    _dataSchemaTypeToPrimitiveJavaTypeMap.put(DataSchema.Type.DOUBLE, Double.class);
+    _dataSchemaTypeToPrimitiveJavaTypeMap.put(DataSchema.Type.BOOLEAN, Boolean.class);
+    _dataSchemaTypeToPrimitiveJavaTypeMap.put(DataSchema.Type.STRING, String.class);
+    _dataSchemaTypeToPrimitiveJavaTypeMap.put(DataSchema.Type.BYTES, ByteString.class);
+
+    _dataSchemaTypeToprimitiveArrayMap.put(DataSchema.Type.BOOLEAN, BooleanArray.class);
+    _dataSchemaTypeToprimitiveArrayMap.put(DataSchema.Type.INT, IntegerArray.class);
+    _dataSchemaTypeToprimitiveArrayMap.put(DataSchema.Type.LONG, LongArray.class);
+    _dataSchemaTypeToprimitiveArrayMap.put(DataSchema.Type.FLOAT, FloatArray.class);
+    _dataSchemaTypeToprimitiveArrayMap.put(DataSchema.Type.DOUBLE, DoubleArray.class);
+    _dataSchemaTypeToprimitiveArrayMap.put(DataSchema.Type.STRING, StringArray.class);
+    _dataSchemaTypeToprimitiveArrayMap.put(DataSchema.Type.BYTES, BytesArray.class);
+
+    _dataSchemaTypeToprimitiveMapMap.put(DataSchema.Type.BOOLEAN, BooleanMap.class);
+    _dataSchemaTypeToprimitiveMapMap.put(DataSchema.Type.INT, IntegerMap.class);
+    _dataSchemaTypeToprimitiveMapMap.put(DataSchema.Type.LONG, LongMap.class);
+    _dataSchemaTypeToprimitiveMapMap.put(DataSchema.Type.FLOAT, FloatMap.class);
+    _dataSchemaTypeToprimitiveMapMap.put(DataSchema.Type.DOUBLE, DoubleMap.class);
+    _dataSchemaTypeToprimitiveMapMap.put(DataSchema.Type.STRING, StringMap.class);
+    _dataSchemaTypeToprimitiveMapMap.put(DataSchema.Type.BYTES, BytesMap.class);
+  }
 }
