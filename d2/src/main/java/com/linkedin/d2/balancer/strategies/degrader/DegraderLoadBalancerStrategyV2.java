@@ -233,6 +233,10 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
           debug(_log, "updating for cluster generation id: " + clusterGenerationId + " state last updated timestamp: " +
               currentState.getLastUpdated());
           debug(_log, "old state was: ", currentState);
+          if (!currentState.isInitialized())
+          {
+            _log.info("Starting to initialize state");
+          }
           _state = updateState(clusterGenerationId, trackerClients, currentState, config);
           assert(_state.isInitialized());
         }
@@ -268,14 +272,15 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
         {
           currentState = getState();
           _lock.notifyAll();
-          if (currentState.hasError())
-          {
-            //if there is an error while updating the state, that means the updateStarted flag never got reverted
-            //so after we notify other threads to wake up, we have to revert the flag so next thread can try updating
-            //the state
-            _state = new DegraderLoadBalancerState(_state, _state._clusterGenerationId, config.getUpdateIntervalMs(),
-                                                   _state.getLastUpdated(), _state.hasError(),
+          //after updateState() is called we should have the state initialized or there is an error
+          //So we cannot have a state that is not initialized and there's no error.
+          boolean errorDuringUpdate = !currentState.isInitialized() || currentState.hasError();
+          _state = new DegraderLoadBalancerState(_state, _state._clusterGenerationId, config.getUpdateIntervalMs(),
+                                                   _state.getLastUpdated(), errorDuringUpdate,
                                                    false);
+          if (!currentState.isInitialized())
+          {
+            _log.error("Uncaught throwable is causing state initialization to fail. Continuing...");
           }
         }
       }

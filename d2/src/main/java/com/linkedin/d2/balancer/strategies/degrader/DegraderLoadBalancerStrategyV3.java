@@ -252,9 +252,11 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
         {
           PartitionDegraderLoadBalancerState partitionState = _state.getPartitionState(partitionId);
           debug(_log, "updating for cluster generation id: ", clusterGenerationId, ", partitionId: ", partitionId);
-
           debug(_log, "old state was: ", partitionState);
-
+          if (!partitionState.isInitialized())
+          {
+            _log.info("Starting to initialize state for partition id = " + partitionId);
+          }
           partitionState = updatePartitionState(clusterGenerationId, partitionId, trackerClients, partitionState,
                                                 config);
           _state.setPartitionState(partitionId, partitionState);
@@ -265,7 +267,6 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
           PartitionDegraderLoadBalancerState currentPartitionState = _state.getPartitionState(partitionId);
           if (!currentPartitionState.isInitialized())
           {
-
             // this means this is the first time we are creating the strategy state. So we have no old working state
             // to fall back to. So just set the errorDuringInitFlag so other trackers know that we have problems.
             // then update the lastUpdate time to prevent the next thread from updating immediately
@@ -303,17 +304,20 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
         {
           PartitionDegraderLoadBalancerState currentPartitionState = _state.getPartitionState(partitionId);
           lock.notifyAll();
-          if (currentPartitionState.hasError())
-          {
-            //if there is an error while updating the state, that means the updateStarted flag never got reverted
-            //so after we notify other threads to wake up, we have to revert the flag so next thread can try updating
-            //the state
-            _state.setPartitionState(partitionId, new PartitionDegraderLoadBalancerState(currentPartitionState,
-                                                                                    currentPartitionState.getClusterGenerationId(),
-                                                                                    currentPartitionState.getLastUpdated(),
-                                                                                    currentPartitionState.hasError(), false));
-          }
 
+          //after updatePartitionState() is called we should have the state initialized or there is an error
+          //So we cannot have a state that is not initialized and there's no error.
+          boolean errorDuringUpdate = !currentPartitionState.isInitialized() || currentPartitionState.hasError();
+          _state.setPartitionState(partitionId,
+                                   new PartitionDegraderLoadBalancerState(currentPartitionState,
+                                                                          currentPartitionState.getClusterGenerationId(),
+                                                                          config.getClock().currentTimeMillis(),
+                                                                          errorDuringUpdate,
+                                                                          false));
+          if (!currentPartitionState.isInitialized())
+          {
+            _log.error("Uncaught throwable is causing state initialization to fail. Continuing...");
+          }
         }
       }
     }

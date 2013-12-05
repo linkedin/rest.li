@@ -7,6 +7,9 @@
 (RB=241529)
 Remove logging from data.
 
+(RB=241241)
+fix a problem where threads will get locked if there is an uncaught exception being thrown during updateState in LoadBalancerStrategy
+
 1.10.0
 ------
 (RB=231736)

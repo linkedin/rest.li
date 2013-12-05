@@ -49,12 +49,17 @@ import com.linkedin.util.degrader.ErrorType;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Random;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicLong;
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.net.URI;
@@ -99,8 +104,15 @@ public class DegraderLoadBalancerTest
 
   public static Map<Integer, PartitionData> getDefaultPartitionData(double weight)
   {
-    Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>(2);
-    partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(weight));
+    return getDefaultPartitionData(weight, 1);
+  }
+
+  public static Map<Integer, PartitionData> getDefaultPartitionData(double weight, int numberOfPartitions)
+  {
+    PartitionData data = new PartitionData(weight);
+    Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>(numberOfPartitions + 1);
+    for (int p = 0; p < numberOfPartitions; ++p)
+      partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID + p, data);
     return partitionDataMap;
   }
 
@@ -461,6 +473,24 @@ public class DegraderLoadBalancerTest
    assertFalse(DegraderLoadBalancerStrategyV3.isNewStateHealthy(newStateV3, config, clients, DEFAULT_PARTITION_ID));
  }
 
+  /** A type of checked exception that we intentionally throw during testing */
+  private static class DummyCheckedException extends Exception
+  {
+    private static final long serialVersionUID = 1;
+
+    public void throwMe()
+    {
+      DummyCheckedException.<RuntimeException>throwAny(this);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <E extends Throwable> void throwAny(Throwable e)
+        throws E
+    {
+      throw (E) e;
+    }
+  }
+
   private static class DummyException extends RuntimeException
   {
     static final long serialVersionUID = 1L;
@@ -662,7 +692,7 @@ public class DegraderLoadBalancerTest
   private void runMultiThreadedTest(final DegraderLoadBalancerStrategyAdapter strategyAdapter,
                                     final List<TrackerClient> clients,
                                     final int numberOfThread,
-                                    final boolean checkTrackerClientIsNull)
+                                    final boolean trackerClientMustNotBeNull)
   {
     final CountDownLatch exitLatch = new CountDownLatch(numberOfThread);
     final CountDownLatch startLatch = new CountDownLatch(numberOfThread);
@@ -695,7 +725,7 @@ public class DegraderLoadBalancerTest
           // thread will get an exception. The rest will not try to update because we only update the state
           // in a fixed time period defined in PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS
           TrackerClient resultTC = getTrackerClient(strategyAdapter, null, new RequestContext(), 1, clients);
-          if (checkTrackerClientIsNull && resultTC == null)
+          if (trackerClientMustNotBeNull && resultTC == null)
           {
             throw new RuntimeException("Failed the test because resultTC returns null");
           }
@@ -1880,6 +1910,130 @@ public class DegraderLoadBalancerTest
                        DegraderLoadBalancerStrategyV2.DegraderLoadBalancerState.Strategy.LOAD_BALANCE,
                        null);
   }
+
+  @Test(groups = { "small", "back-end" }, dataProvider = "clientGlitch")
+  /** The strategy recovers after a TrackerClient throws one Exception. */
+  public void testClientGlitch(final int numberOfPartitions,
+                               final LoadBalancerStrategy strategy,
+                               final TestClock clock,
+                               final long timeInterval)
+      throws Exception
+  {
+    final List<TrackerClient> client = Collections.<TrackerClient>singletonList(new ErrorClient(1, numberOfPartitions, clock));
+    final int partitionId = DefaultPartitionAccessor.DEFAULT_PARTITION_ID + numberOfPartitions - 1;
+    final Callable<Ring<URI>> getRing = new Callable<Ring<URI>>()
+    {
+      @Override
+      public Ring<URI> call()
+      {
+        return strategy.getRing(1L, partitionId, client);
+      }
+    };
+    try
+    {
+      getRing.call(); // initialization
+      fail("no glitch");
+    }
+    catch (DummyCheckedException expectedGlitch)
+    {
+    }
+    final int numberOfThreads = 5;
+    final ExecutorService executor = Executors.newFixedThreadPool(numberOfThreads);
+    try
+    {
+      final List<Future<Ring<URI>>> results = new ArrayList<Future<Ring<URI>>>();
+      for (int r = 0; r < numberOfThreads; ++r)
+        results.add(executor.submit(getRing));
+      clock.addMs(timeInterval);
+      Thread.sleep(timeInterval * 2); // During this time,
+      // one of the threads should initialize the partition state,
+      // and then all of the threads should get the new ring.
+      assertEquals(countDone(results), results.size());
+    }
+    finally
+    {
+      executor.shutdownNow();
+    }
+  }
+
+  @DataProvider(name = "clientGlitch")
+  public Object[][] clientGlitch()
+  {
+    long timeInterval = 10; // msec
+    TestClock clock = new TestClock();
+    Map<String, Object> props = new HashMap<String, Object>();
+    props.put(PropertyKeys.CLOCK, clock);
+    // We want the degrader to re-enter the ring after one cooling off period:
+    props.put(PropertyKeys.HTTP_LB_INITIAL_RECOVERY_LEVEL, 0.005);
+    props.put(PropertyKeys.HTTP_LB_RING_RAMP_FACTOR, 1.0);
+    props.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS, timeInterval);
+    DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(props);
+    return new Object[][]{clientGlitchV2(config), clientGlitchV3(1, config), clientGlitchV3(3, config)};
+  }
+
+  private Object[] clientGlitchV2(DegraderLoadBalancerStrategyConfig config)
+  {
+    return new Object[]{1,
+                        new DegraderLoadBalancerStrategyV2(config, "DegraderLoadBalancerTest.V2", null),
+                        config.getClock(),
+                        config.getUpdateIntervalMs()};
+  }
+
+  private Object[] clientGlitchV3(int numberOfPartitions, DegraderLoadBalancerStrategyConfig config)
+  {
+    return new Object[]{numberOfPartitions,
+                        new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest.V3", null),
+                        config.getClock(),
+                        config.getUpdateIntervalMs()};
+  }
+
+  /** A TrackerClient that throws some DummyCheckedExceptions before starting normal operation. */
+  private static class ErrorClient extends TrackerClient
+  {
+    private static final URI myURI = URI.create("http://nonexistent.nowhere.linkedin.com:9999/ErrorClient");
+    private final AtomicLong _numberOfExceptions;
+
+    ErrorClient(int numberOfExceptions, int numberOfPartitions, Clock clock)
+    {
+      super(myURI, getDefaultPartitionData(1d, numberOfPartitions), new TestLoadBalancerClient(myURI), clock, null);
+      _numberOfExceptions = new AtomicLong(numberOfExceptions);
+    }
+
+    @Override
+    public Double getPartitionWeight(int partitionId)
+    {
+      if (_numberOfExceptions.getAndDecrement() > 0)
+        new DummyCheckedException().throwMe();
+      return super.getPartitionWeight(partitionId);
+    }
+
+    @Override
+    public DegraderControl getDegraderControl(int partitionId)
+    {
+      if (_numberOfExceptions.getAndDecrement() > 0)
+        new DummyCheckedException().throwMe();
+      return super.getDegraderControl(partitionId);
+    }
+  }
+
+  /** Count how many of the given futures are done. */
+  private static int countDone(Iterable<? extends Future<?>> results)
+      throws ExecutionException, InterruptedException
+  {
+    int done = 0;
+    for (Future<?> result : results)
+      try
+      {
+        result.get(1, TimeUnit.MILLISECONDS);
+        ++done;
+      }
+      catch (TimeoutException notDone)
+      {
+      }
+    return done;
+  }
+
+  private static final AtomicLong THREAD_POOL_NUMBER = new AtomicLong(0);
 
   private static class DegraderLoadBalancerStrategyAdapter implements LoadBalancerStrategy
   {
