@@ -21,8 +21,6 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.PrettyPrinter;
 import com.linkedin.data.codec.JacksonDataCodec;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -122,7 +120,7 @@ public class JsonBuilder
     }
     catch (IOException e)
     {
-      _log.error(e.getMessage());
+      // TODO: use Java 7 try-with-resources statement and Throwable.getSuppressed()
     }
   }
 
@@ -288,8 +286,6 @@ public class JsonBuilder
       }
     }
   }
-
-  private static final Logger _log = LoggerFactory.getLogger(JsonBuilder.class);
 
   private final StringWriter _writer;
   private final JsonGenerator _jsonGenerator;

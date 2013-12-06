@@ -31,8 +31,6 @@ import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.collections.CheckedUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -272,7 +270,7 @@ public class JacksonDataCodec implements TextDataCodec
       }
       catch (IOException e)
       {
-        _log.error(e.getMessage());
+        // TODO: use Java 7 try-with-resources statement and Throwable.getSuppressed()
       }
     }
   }
@@ -882,12 +880,10 @@ public class JacksonDataCodec implements TextDataCodec
       }
       catch (IOException e)
       {
-        _log.error(e.getMessage());
+        // TODO: use Java 7 try-with-resources statement and Throwable.getSuppressed()
       }
     }
   }
-
-  private static final Logger _log = LoggerFactory.getLogger(JacksonDataCodec.class);
 
   protected boolean _allowComments;
   protected PrettyPrinter _prettyPrinter;
