@@ -270,8 +270,8 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
         }
         finally
         {
-          currentState = getState();
           _lock.notifyAll();
+          currentState = getState();
           //after updateState() is called we should have the state initialized or there is an error
           //So we cannot have a state that is not initialized and there's no error.
           boolean errorDuringUpdate = !currentState.isInitialized() || currentState.hasError();
@@ -280,7 +280,7 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
                                                    false);
           if (!currentState.isInitialized())
           {
-            _log.error("Uncaught throwable is causing state initialization to fail. Continuing...");
+            _log.error("Uncaught throwable is causing state initialization to fail. Continuing... currentState = " + currentState);
           }
         }
       }

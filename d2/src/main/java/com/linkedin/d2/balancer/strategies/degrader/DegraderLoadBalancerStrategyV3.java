@@ -302,9 +302,8 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
         }
         finally
         {
-          PartitionDegraderLoadBalancerState currentPartitionState = _state.getPartitionState(partitionId);
           lock.notifyAll();
-
+          PartitionDegraderLoadBalancerState currentPartitionState = _state.getPartitionState(partitionId);
           //after updatePartitionState() is called we should have the state initialized or there is an error
           //So we cannot have a state that is not initialized and there's no error.
           boolean errorDuringUpdate = !currentPartitionState.isInitialized() || currentPartitionState.hasError();
@@ -316,7 +315,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                                                           false));
           if (!currentPartitionState.isInitialized())
           {
-            _log.error("Uncaught throwable is causing state initialization to fail. Continuing...");
+            _log.error("Uncaught throwable is causing state initialization to fail. Continuing... CurrentPartitionState = " + currentPartitionState);
           }
         }
       }

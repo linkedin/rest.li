@@ -1,11 +1,13 @@
+1.10.3
+------
+(RB=239728)
+Add javadoc to SchemaSampleDataGenerator.
+Implement sample data callback for SchemaSampleDataGenerator.
+
 1.10.2
 ------
 (RB=241241)
 fix a problem where threads will get locked if there is an uncaught exception being thrown during updateState in LoadBalancerStrategy
-
-(RB=239728)
-Add javadoc to SchemaSampleDataGenerator.
-Implement sample data callback for SchemaSampleDataGenerator.
 
 1.10.1
 ------
