@@ -15,7 +15,29 @@ import org.testng.annotations.Test;
 public class TestAbstractRequestBuilder
 {
   @Test
-  public void testHeader()
+  public void testAddHeaderWithNonNullValue()
+  {
+    final AbstractRequestBuilder<?, ?, ?> builder = new DummyAbstractRequestBuilder();
+
+    Assert.assertSame(builder.addHeader("a", "b"), builder);
+    Assert.assertEquals(builder._headers.get("a"), "b");
+    builder.addHeader("a", "c");
+    Assert.assertEquals(builder._headers.get("a"), "b" + AbstractRequestBuilder.HEADER_DELIMITER + "c");
+  }
+
+  @Test
+  public void testAddHeaderWithNullValue()
+  {
+    final AbstractRequestBuilder<?, ?, ?> builder = new DummyAbstractRequestBuilder();
+
+    builder.addHeader("a", "b");
+    builder.addHeader("a", null);
+    builder.addHeader("a", "c");
+    Assert.assertEquals(builder._headers.get("a"), "b" + AbstractRequestBuilder.HEADER_DELIMITER + "c");
+  }
+
+  @Test
+  public void testSetHeaderWithNonNullValue()
   {
     final AbstractRequestBuilder<?, ?, ?> builder = new DummyAbstractRequestBuilder();
 
@@ -26,29 +48,17 @@ public class TestAbstractRequestBuilder
   }
 
   @Test
-  public void testAddHeader()
-  {
-    final AbstractRequestBuilder<?, ?, ?> builder = new DummyAbstractRequestBuilder();
-
-    builder.addHeader("a", "b");
-    Assert.assertEquals(builder._headers.get("a"), "b");
-    builder.addHeader("a", "c");
-    Assert.assertEquals(builder._headers.get("a"), "b" + AbstractRequestBuilder.HEADER_DELIMITER + "c");
-  }
-
-  @Test
-  public void testSetHeader()
+  public void testSetHeaderWithNullValue()
   {
     final AbstractRequestBuilder<?, ?, ?> builder = new DummyAbstractRequestBuilder();
 
     builder.setHeader("a", "b");
-    Assert.assertEquals(builder._headers.get("a"), "b");
-    builder.setHeader("a", "c");
-    Assert.assertEquals(builder._headers.get("a"), "c");
+    builder.setHeader("a", null);
+    Assert.assertNull(builder._headers.get("a"));
   }
 
   @Test
-  public void testSetHeaders()
+  public void testSetHeadersWithNonNullValue()
   {
     final AbstractRequestBuilder<?, ?, ?> builder = new DummyAbstractRequestBuilder();
 
@@ -66,6 +76,19 @@ public class TestAbstractRequestBuilder
 
     newHeaders.put("c", "f");
     Assert.assertEquals(builder._headers.get("c"), "e");
+  }
+
+  @Test
+  public void testSetHeadersWithNullValue()
+  {
+    final AbstractRequestBuilder<?, ?, ?> builder = new DummyAbstractRequestBuilder();
+    final Map<String, String> newHeaders = new HashMap<String, String>();
+    newHeaders.put("a", "b");
+    newHeaders.put("c", null);
+
+    builder.setHeaders(newHeaders);
+    Assert.assertEquals(builder._headers.get("a"), "b");
+    Assert.assertNull(builder._headers.get("c"));
   }
 
   @Test

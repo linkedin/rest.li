@@ -1,6 +1,8 @@
 1.10.7
 ------
-
+(RB=242468)
+Add more tests for AbstractRequestBuilder.
+Use resource stream in restli-tools tests.
 
 1.10.6
 ------
@@ -31,10 +33,6 @@ Fix a bug where CallTracker doesn't honor the use of LoadBalancer interval
 
 1.10.3
 ------
-(RB=239728)
-Add javadoc to SchemaSampleDataGenerator.
-Implement sample data callback for SchemaSampleDataGenerator.
-
 (RB=242286)
 Generate error that was not previously detected when trying to set incompatible overriding default value in
 outer type (e.g. record) that overrides default of an inner type (e.g. string field within record.)
@@ -49,6 +47,10 @@ Add propagation of deprecated keys used on types and fields in pdscs to generate
 ------
 (RB=241241)
 fix a problem where threads will get locked if there is an uncaught exception being thrown during updateState in LoadBalancerStrategy
+
+(RB=239728)
+Add javadoc to SchemaSampleDataGenerator.
+Implement sample data callback for SchemaSampleDataGenerator.
 
 1.10.1
 ------

@@ -90,17 +90,21 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
   }
 
   /**
-   * Create a header with the specified value if there is no existing name
+   * Create a header with the specified value if there is no existing name.
    * Otherwise, append the specified value to the existing value, delimited by comma
    *
    * @param name name of the header
-   * @param value value of the header
+   * @param value value of the header. If null, this method is no-op.
    */
   public AbstractRequestBuilder<K, V, R> addHeader(String name, String value)
   {
-    final String currValue = _headers.get(name);
-    final String newValue = currValue == null ? value : currValue + HEADER_DELIMITER + value;
-    _headers.put(name, newValue);
+    if (value != null)
+    {
+      final String currValue = _headers.get(name);
+      final String newValue = currValue == null ? value : currValue + HEADER_DELIMITER + value;
+      _headers.put(name, newValue);
+    }
+
     return this;
   }
 
@@ -114,6 +118,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
   public AbstractRequestBuilder<K, V, R> setHeader(String name, String value)
   {
     _headers.put(name, value);
+
     return this;
   }
 

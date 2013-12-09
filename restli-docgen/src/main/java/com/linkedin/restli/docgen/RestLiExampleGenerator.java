@@ -382,7 +382,9 @@ public class RestLiExampleGenerator
 
       final Class<?> returnsClass = method.getActionReturnType();
       if (DataTemplate.class.isAssignableFrom(returnsClass))
+      {
         responseEntity = DataTemplateUtil.wrap(responseEntity, returnsClass.asSubclass(DataTemplate.class));
+      }
     }
 
     return doRequest(uriBuilder,

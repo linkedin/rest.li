@@ -19,12 +19,11 @@ package com.linkedin.restli.tools.snapshot.check;
 
 import com.linkedin.data.schema.NamedDataSchema;
 import org.testng.Assert;
-import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -39,26 +38,13 @@ public class TestSnapshot
 {
   private static final String FS = File.separator;
   private static final String CIRCULAR_FILE = "circular-circular.snapshot.json";
-  private static final String SNAPSHOTS_DIR = "src" + FS + "test" + FS + "resources" + FS + "snapshots";
-
-  // Gradle by default will use the module directory as the working directory
-  // IDE such as IntelliJ IDEA may use the project directory instead
-  // If you create test in IDE, make sure the working directory is always the module directory
-  private String moduleDir;
-
-  @BeforeTest
-  public void setUpTest()
-  {
-    moduleDir = System.getProperty("user.dir");
-  }
-
+  private static final String SNAPSHOTS_DIR = "snapshots";
 
   // Test to make sure that Snapshots handle interpreting circularly dependent models correctly.
   @Test
   public void testCircularlyDependentModels() throws IOException
   {
-    File file = new File(moduleDir + FS + SNAPSHOTS_DIR + FS + CIRCULAR_FILE);
-    FileInputStream stream = new FileInputStream(file);
+    InputStream stream = getClass().getClassLoader().getResourceAsStream(SNAPSHOTS_DIR + FS + CIRCULAR_FILE);
     Snapshot snapshot = new Snapshot(stream);
 
     Map<String, NamedDataSchema> models = snapshot.getModels();
