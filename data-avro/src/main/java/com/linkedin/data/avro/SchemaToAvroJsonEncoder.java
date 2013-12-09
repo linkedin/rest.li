@@ -50,19 +50,19 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
    * Serialize a {@link DataSchema} to an Avro-compliant schema as a JSON encoded string.
    *
    * @param schema is the {@link DataSchema} to build a JSON encoded output for.
-   * @param fieldDefaultValues provides the default values for each of the fields.
+   * @param fieldDefaultValueProvider provides the default values for each of the fields.
    * @param options provides the {@link DataToAvroSchemaTranslationOptions}.
    * @return the Avro-compliant schema as JSON encoded string.
    */
   static String schemaToAvro(DataSchema schema,
-                             IdentityHashMap<RecordDataSchema.Field, Object> fieldDefaultValues,
+                             SchemaTranslator.FieldDefaultValueProvider fieldDefaultValueProvider,
                              DataToAvroSchemaTranslationOptions options)
   {
     JsonBuilder builder = null;
     try
     {
       builder = new JsonBuilder(options.getPretty());
-      final SchemaToAvroJsonEncoder serializer = new SchemaToAvroJsonEncoder(builder, schema, fieldDefaultValues, options);
+      final SchemaToAvroJsonEncoder serializer = new SchemaToAvroJsonEncoder(builder, schema, fieldDefaultValueProvider, options);
       serializer.encode(schema);
       return builder.result();
     }
@@ -81,12 +81,12 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
 
   protected SchemaToAvroJsonEncoder(JsonBuilder builder,
                                     DataSchema rootSchema,
-                                    IdentityHashMap<RecordDataSchema.Field, Object> fieldDefaultValues,
+                                    SchemaTranslator.FieldDefaultValueProvider fieldDefaultValueProvider,
                                     DataToAvroSchemaTranslationOptions options)
   {
     super(builder);
     _rootSchema = rootSchema;
-    _fieldDefaultValues = fieldDefaultValues;
+    _fieldDefaultValueProvider = fieldDefaultValueProvider;
     _options = options;
   }
 
@@ -324,7 +324,7 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
   @Override
   protected void encodeFieldDefault(RecordDataSchema.Field field) throws IOException
   {
-    Object defaultValue = _fieldDefaultValues.get(field);
+    Object defaultValue = _fieldDefaultValueProvider.defaultValue(field);
 
     // if field is optional, it must have a default value - either Data.NULL or translated value
     assert(field.getOptional() == false || defaultValue != null);
@@ -389,7 +389,7 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
   }
 
   private final DataSchema _rootSchema;
-  private final IdentityHashMap<RecordDataSchema.Field, Object> _fieldDefaultValues;
+  private final SchemaTranslator.FieldDefaultValueProvider _fieldDefaultValueProvider;
   private final DataToAvroSchemaTranslationOptions _options;
 
   private static final MyAvroOverrideFactory _avroOverrideFactory = new MyAvroOverrideFactory();

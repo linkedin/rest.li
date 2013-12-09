@@ -321,12 +321,17 @@ public class SchemaTranslator
   public static String dataToAvroSchemaJson(DataSchema dataSchema, DataToAvroSchemaTranslationOptions options) throws IllegalArgumentException
   {
     // convert default values
-    DataSchemaTraverse traverse = new DataSchemaTraverse();
-    DefaultDataToAvroConvertCallback defaultConverter = new DefaultDataToAvroConvertCallback(options);
-    traverse.traverse(dataSchema, defaultConverter);
+    DataSchemaTraverse postOrderTraverse = new DataSchemaTraverse(DataSchemaTraverse.Order.POST_ORDER);
+    final DefaultDataToAvroConvertCallback defaultConverter = new DefaultDataToAvroConvertCallback(options);
+    postOrderTraverse.traverse(dataSchema, defaultConverter);
     // convert schema
-    String schemaJson = SchemaToAvroJsonEncoder.schemaToAvro(dataSchema, defaultConverter._fieldDefaultValues, options);
+    String schemaJson = SchemaToAvroJsonEncoder.schemaToAvro(dataSchema, defaultConverter.fieldDefaultValueProvider(), options);
     return schemaJson;
+  }
+
+  interface FieldDefaultValueProvider
+  {
+    Object defaultValue(RecordDataSchema.Field field);
   }
 
   private abstract static class AbstractDefaultDataTranslator
@@ -475,17 +480,52 @@ public class SchemaTranslator
    */
   private static class DefaultDataToAvroConvertCallback extends AbstractDefaultDataTranslator implements DataSchemaTraverse.Callback
   {
-    private IdentityHashMap<RecordDataSchema.Field, Object> _fieldDefaultValues = new IdentityHashMap<RecordDataSchema.Field, Object>();
+    private static class FieldInfo
+    {
+      private FieldInfo(DataSchema defaultSchema, Object defaultValue)
+      {
+        _defaultSchema = defaultSchema;
+        _defaultValue = defaultValue;
+      }
+
+      public String toString()
+      {
+        return _defaultSchema + " " + _defaultValue;
+      }
+
+      final DataSchema _defaultSchema;
+      final Object _defaultValue;
+
+      private static FieldInfo NULL_FIELD_INFO = new FieldInfo(DataSchemaConstants.NULL_DATA_SCHEMA, Data.NULL);
+      private static FieldInfo ABSENT_FIELD_INFO = new FieldInfo(null, null);
+    }
+
+    private IdentityHashMap<RecordDataSchema.Field, FieldInfo> _fieldInfos = new IdentityHashMap<RecordDataSchema.Field, FieldInfo>();
     private final DataToAvroSchemaTranslationOptions _options;
+    private DataSchema _newDefaultSchema;
 
     private DefaultDataToAvroConvertCallback(DataToAvroSchemaTranslationOptions options)
     {
       _options = options;
     }
 
-    protected void addDefaultValue(RecordDataSchema.Field field, Object value)
+    private FieldDefaultValueProvider fieldDefaultValueProvider()
     {
-      Object existingValue = _fieldDefaultValues.put(field, value);
+      FieldDefaultValueProvider defaultValueProvider = new FieldDefaultValueProvider()
+      {
+        @Override
+        public Object defaultValue(RecordDataSchema.Field field)
+        {
+          DefaultDataToAvroConvertCallback.FieldInfo fieldInfo = _fieldInfos.get(field);
+          return fieldInfo == null ? null : fieldInfo._defaultValue;
+        }
+      };
+      return defaultValueProvider;
+    }
+
+    protected void addFieldInfo(RecordDataSchema.Field field, FieldInfo fieldInfo)
+    {
+      Object existingValue = _fieldInfos.put(field, fieldInfo);
       assert(existingValue == null);
     }
 
@@ -503,14 +543,15 @@ public class SchemaTranslator
         if (defaultData != null)
         {
           path.add(DataSchemaConstants.DEFAULT_KEY);
+          _newDefaultSchema = null;
           Object newDefault = translateField(pathList(path), defaultData, field);
-          addDefaultValue(field, newDefault);
+          addFieldInfo(field, new FieldInfo(_newDefaultSchema, newDefault));
           path.remove(path.size() - 1);
         }
         else if (field.getOptional())
         {
           // no default specified and optional
-          addDefaultValue(field, Data.NULL);
+          addFieldInfo(field, FieldInfo.NULL_FIELD_INFO);
         }
       }
     }
@@ -585,7 +626,22 @@ public class SchemaTranslator
             else
             {
               // Avro schema should be union with 2 types: null and the field's type
-              // default value is field's type
+              // Figure out field's type is same as the chosen type for the 1st member of the translated field's union.
+              // For example, this can occur if the string field is optional and has no default, but a record's default
+              // overrides the field's default to a string. This will cause the field's union to be [ "null", "string" ].
+              // Since "null" is the first member of the translated union, the record cannot provide a default that
+              // is not "null".
+              FieldInfo fieldInfo = _fieldInfos.get(field);
+              if (fieldInfo != null)
+              {
+                if (fieldInfo._defaultSchema != fieldDataSchema)
+                {
+                  throw new IllegalArgumentException(
+                    message(path,
+                            "cannot translate field because its default value's type is not the same as translated field's first union member's type"));
+                }
+              }
+              fieldDataSchema = field.getType();
             }
           }
         }
@@ -622,6 +678,7 @@ public class SchemaTranslator
                fieldValue == Data.NULL);
       }
       Object resultFieldValue = translate(path, fieldValue, fieldDataSchema);
+      _newDefaultSchema = fieldDataSchema;
       return resultFieldValue;
     }
   }

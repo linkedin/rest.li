@@ -24,6 +24,7 @@ import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.JsonBuilder;
 import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.SchemaToJsonEncoder;
+import com.linkedin.data.schema.validation.ValidationOptions;
 import java.io.IOException;
 import java.util.Arrays;
 import org.apache.avro.Schema;
@@ -919,6 +920,71 @@ public class TestSchemaTranslator
           "{ \"type\" : \"record\", \"name\" : \"Bar\", \"fields\" : [ { \"name\" : \"barbara\", \"type\" : { \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"frank\", \"type\" : [ \"null\", \"string\" ], \"default\" : null } ] }, \"default\" : { \"frank\" : null } } ] }",
         }
       },
+      {
+        // default override "foo1" default for "bar1" is "xyz", it should override "bar1" default "abc".
+        "{\n" +
+        "  \"type\":\"record\",\n" +
+        "  \"name\":\"foo\",\n" +
+        "  \"fields\":[\n" +
+        "    {\n" +
+        "      \"name\": \"foo1\",\n" +
+        "      \"type\": {\n" +
+        "        \"type\" : \"record\",\n" +
+        "        \"name\" : \"bar\",\n" +
+        "        \"fields\" : [\n" +
+        "           {\n" +
+        "             \"name\" : \"bar1\",\n" +
+        "             \"type\" : \"string\",\n" +
+        "             \"default\" : \"abc\", " +
+        "             \"optional\" : true\n" +
+        "           }\n" +
+        "        ]\n" +
+        "      },\n" +
+        "      \"optional\": true,\n" +
+        "      \"default\": { \"bar1\": \"xyz\" }\n" +
+        "    }\n" +
+        "  ]\n" +
+        "}\n",
+        new Object[] {
+          translateDefault,
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"foo1\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"bar\", \"fields\" : [ { \"name\" : \"bar1\", \"type\" : [ \"string\", \"null\" ], \"default\" : \"abc\" } ] }, \"null\" ], \"default\" : { \"bar1\" : \"xyz\" } } ] }",
+          emptyFooSchema,
+          "{}",
+          "{ \"foo1\" : { \"bar1\" : \"xyz\" } }"
+        },
+      },
+      {
+        // inconsistent default,
+        // a referenced record has an optional field "bar1" without default which translates with union with null as 1st member
+        // but field of referenced record type has default value and it provides string value for "bar1"
+        "{\n" +
+        "  \"type\":\"record\",\n" +
+        "  \"name\":\"foo\",\n" +
+        "  \"fields\":[\n" +
+        "    {\n" +
+        "      \"name\": \"foo1\",\n" +
+        "      \"type\": {\n" +
+        "        \"type\" : \"record\",\n" +
+        "        \"name\" : \"bar\",\n" +
+        "        \"fields\" : [\n" +
+        "           {\n" +
+        "             \"name\" : \"bar1\",\n" +
+        "             \"type\" : \"string\",\n" +
+        "             \"optional\" : true\n" +
+        "           }\n" +
+        "        ]\n" +
+        "      },\n" +
+        "      \"optional\": true,\n" +
+        "      \"default\": { \"bar1\": \"US\" }\n" +
+        "    }\n" +
+        "  ]\n" +
+        "}\n",
+        new Object[] {
+          translateDefault,
+          IllegalArgumentException.class,
+          "cannot translate field because its default value's type is not the same as translated field's first union member's type"
+        },
+      },
     };
 
     // test generating Avro schema from Pegasus schema
@@ -1036,6 +1102,13 @@ public class TestSchemaTranslator
             Schema avroSchema = Schema.parse(avroTextFromSchema);
             if (debug) System.out.println("AvroSchema: " + avroSchema);
 
+            SchemaParser parser = new SchemaParser();
+            ValidationOptions options = new ValidationOptions();
+            options.setAvroUnionMode(true);
+            parser.setValidationOptions(options);
+            parser.parse(avroTextFromSchema);
+            assertFalse(parser.hasError(), parser.errorMessage());
+
             if (optionalDefaultMode == DataToAvroSchemaTranslationOptions.DEFAULT_OPTIONAL_DEFAULT_MODE)
             {
               // use other dataToAvroSchemaJson
@@ -1063,7 +1136,16 @@ public class TestSchemaTranslator
               String writerSchemaText = (String) modeInputs[2];
               String avroValueJson = (String) modeInputs[3];
               Schema writerSchema = Schema.parse(writerSchemaText);
-              genericRecordFromString(avroValueJson, writerSchema, avroSchema);
+              GenericRecord genericRecord = genericRecordFromString(avroValueJson, writerSchema, avroSchema);
+
+              if (modeInputs.length >= 5)
+              {
+                String genericRecordJson = (String) modeInputs[4];
+                String genericRecordAsString = genericRecord.toString();
+                DataMap expectedGenericRecord = TestUtil.dataMapFromString(genericRecordJson);
+                DataMap resultGenericRecord = TestUtil.dataMapFromString(genericRecordAsString);
+                assertEquals(resultGenericRecord, expectedGenericRecord);
+              }
             }
 
             if (embedSchemaMode == EmbedSchemaMode.ROOT_ONLY && hasEmbeddedSchema(schema))
@@ -1387,7 +1469,7 @@ public class TestSchemaTranslator
   @Test
   public void testUnionDefaultValues() throws IOException
   {
-    boolean debug = false;
+    boolean debug = true;
 
     final String emptySchemaText =
       "{ " +
@@ -1456,7 +1538,7 @@ public class TestSchemaTranslator
     {
       final Schema readerSchema = Schema.parse(readerSchemaText);
 
-      GenericRecord record = TestSchemaTranslator.genericRecordFromString(emptyRecord, emptySchema, readerSchema);
+      GenericRecord record = genericRecordFromString(emptyRecord, emptySchema, readerSchema);
       if (debug) System.out.println(record);
 
       SchemaParser parser = new SchemaParser();
@@ -1467,5 +1549,4 @@ public class TestSchemaTranslator
 
     }
   }
-
 }

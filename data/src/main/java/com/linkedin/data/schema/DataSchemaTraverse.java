@@ -26,13 +26,16 @@ import java.util.List;
  * descendants and invokes a callback method for each unique {@link com.linkedin.data.schema.DataSchema}
  * visited.
  * <p>
- *
- * The traversal order is pre-order.
- *
  * @author slim
  */
 public class DataSchemaTraverse
 {
+  public static enum Order
+  {
+    PRE_ORDER,
+    POST_ORDER
+  }
+
   public static interface Callback
   {
     void callback(List<String> path, DataSchema schema);
@@ -40,10 +43,17 @@ public class DataSchemaTraverse
 
   private final IdentityHashMap<DataSchema, Boolean> _seen = new IdentityHashMap<DataSchema, Boolean>();
   private final ArrayList<String> _path = new ArrayList<String>();
+  private final Order _order;
   private Callback _callback;
 
   public DataSchemaTraverse()
   {
+    this(Order.PRE_ORDER);
+  }
+
+  public DataSchemaTraverse(Order order)
+  {
+    _order = order;
   }
 
   public void traverse(DataSchema schema, Callback callback)
@@ -67,7 +77,10 @@ public class DataSchemaTraverse
       _path.add(schema.getUnionMemberKey());
     }
 
-    _callback.callback(_path, schema);
+    if (_order == Order.PRE_ORDER)
+    {
+      _callback.callback(_path, schema);
+    }
 
     switch (schema.getType())
     {
@@ -87,14 +100,14 @@ public class DataSchemaTraverse
         RecordDataSchema recordDataSchema = (RecordDataSchema) schema;
         for (RecordDataSchema.Field field : recordDataSchema.getFields())
         {
-            traverseChild(field.getName(), field.getType());
+          traverseChild(field.getName(), field.getType());
         }
         break;
       case UNION:
         UnionDataSchema unionDataSchema = (UnionDataSchema) schema;
         for (DataSchema memberType : unionDataSchema.getTypes())
         {
-            traverseChild(memberType.getUnionMemberKey(), memberType);
+          traverseChild(memberType.getUnionMemberKey(), memberType);
         }
         break;
       case FIXED:
@@ -104,6 +117,11 @@ public class DataSchemaTraverse
       default:
         assert(schema.isPrimitive());
         break;
+    }
+
+    if (_order == Order.POST_ORDER)
+    {
+      _callback.callback(_path, schema);
     }
 
     _path.remove(_path.size() - 1);
