@@ -125,6 +125,8 @@ public abstract class DataTemplateGenerator extends CodeGenerator
     MAP_SUFFIX
   };
 
+  private static final int MAX_SCHEMA_JSON_LENGTH = 32000;
+
   /**
    * Useful type references
    */
@@ -145,6 +147,7 @@ public abstract class DataTemplateGenerator extends CodeGenerator
   private final JFieldRef _disallowNullSetMode = getCodeModel().ref(SetMode.class).staticRef("DISALLOW_NULL");
   private final JClass _byteStringClass = getCodeModel().ref(ByteString.class);
   private final JClass _pathSpecClass = getCodeModel().ref(PathSpec.class);
+  private final JClass _stringBuilderClass = getCodeModel().ref(StringBuilder.class);
 
   private final String _templatePackageName = DataTemplate.class.getPackage().getName();
 
@@ -1282,8 +1285,26 @@ public abstract class DataTemplateGenerator extends CodeGenerator
                                                 schema.getClass(),
                                                 DataTemplateUtil.SCHEMA_FIELD_NAME);
     String schemaJson = SchemaToJsonEncoder.schemaToJson(schema, JsonBuilder.Pretty.COMPACT);
+    JInvocation parseSchemaInvocation;
+    if (schemaJson.length() < MAX_SCHEMA_JSON_LENGTH)
+    {
+      parseSchemaInvocation = _dataTemplateUtilClass.staticInvoke("parseSchema").arg(schemaJson);
+    }
+    else
+    {
+      JInvocation stringBuilderInvocation = JExpr._new(_stringBuilderClass);
+      for (int index = 0; index < schemaJson.length(); index += MAX_SCHEMA_JSON_LENGTH)
+      {
+        stringBuilderInvocation = stringBuilderInvocation.
+          invoke("append").
+          arg(schemaJson.substring(index, Math.min(schemaJson.length(), index + MAX_SCHEMA_JSON_LENGTH)));
+      }
+      stringBuilderInvocation = stringBuilderInvocation.invoke("toString");
+      parseSchemaInvocation = _dataTemplateUtilClass.staticInvoke("parseSchema").arg(stringBuilderInvocation);
+    }
     schemaField.init(JExpr.cast(getCodeModel()._ref(schema.getClass()),
-                                _dataTemplateUtilClass.staticInvoke("parseSchema").arg(schemaJson)));
+                                parseSchemaInvocation));
+
     return schemaField;
   }
 
