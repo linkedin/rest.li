@@ -4,6 +4,10 @@
 Add javadoc to SchemaSampleDataGenerator.
 Implement sample data callback for SchemaSampleDataGenerator.
 
+(RB=242286)
+Generate error that was not previously detected when trying to set incompatible overriding default value in
+outer type (e.g. record) that overrides default of an inner type (e.g. string field within record.)
+
 1.10.2
 ------
 (RB=241241)
