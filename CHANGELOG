@@ -3,6 +3,9 @@
 (RB=243172)
 Fix bug caused by race condition in resize() of DegraderLoadBalancerStrategyV3
 
+(RB=243503)
+Fix a bug where CallTracker doesn't honor the use of LoadBalancer interval
+
 1.10.3
 ------
 (RB=239728)

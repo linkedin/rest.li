@@ -20,6 +20,7 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.LoadBalancerClient;
 import com.linkedin.d2.balancer.properties.PartitionData;
+import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.message.RequestContext;
@@ -69,15 +70,23 @@ public class TrackerClient implements LoadBalancerClient
 
   public TrackerClient(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient wrappedClient)
   {
-    this(uri, partitionDataMap, wrappedClient, SystemClock.instance(), null);
+    this(uri, partitionDataMap, wrappedClient, SystemClock.instance(), null,
+         DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS);
   }
 
   public TrackerClient(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient wrappedClient,
                        Clock clock, Config config)
     {
+      this(uri, partitionDataMap, wrappedClient, clock, config,
+           DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS);
+    }
+
+  public TrackerClient(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient wrappedClient,
+                       Clock clock, Config config, long interval)
+    {
       _uri = uri;
       _wrappedClient = wrappedClient;
-      _callTracker = new CallTrackerImpl(Time.milliseconds(5000), clock);
+      _callTracker = new CallTrackerImpl(interval, clock);
 
       if (config == null)
       {

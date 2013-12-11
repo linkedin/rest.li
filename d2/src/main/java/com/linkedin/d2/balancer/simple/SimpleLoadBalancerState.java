@@ -21,10 +21,12 @@ import static com.linkedin.d2.discovery.util.LogUtil.info;
 import static com.linkedin.d2.discovery.util.LogUtil.trace;
 import static com.linkedin.d2.discovery.util.LogUtil.warn;
 
+import com.linkedin.common.util.MapUtil;
 import com.linkedin.d2.balancer.properties.ClientServiceConfigValidator;
 import com.linkedin.d2.balancer.properties.AllowedClientPropertyKeys;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderConfigFactory;
+import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.util.clock.SystemClock;
 import com.linkedin.util.degrader.DegraderImpl;
@@ -866,6 +868,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
                   serviceProperties.getProperty().getDegraderProperties();
               config = DegraderConfigFactory.toDegraderConfig(degraderImplProperties);
             }
+            long trackerClientInterval = getTrackerClientInterval (serviceProperties.getProperty());
             for (URI uri : discoveryProperties.Uris())
             {
               if (!trackerClients.containsKey(uri))
@@ -873,7 +876,8 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
                 TrackerClient client = getTrackerClient(serviceName,
                     uri,
                     discoveryProperties.getPartitionDataMap(uri),
-                    config);
+                    config,
+                    trackerClientInterval);
 
                 if (client != null)
                 {
@@ -1121,7 +1125,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   }
 
   private TrackerClient getTrackerClient(String serviceName, URI uri, Map<Integer, PartitionData> partitionDataMap,
-                                         DegraderImpl.Config config)
+                                         DegraderImpl.Config config, long callTrackerInterval)
   {
     Map<String,TransportClient> clientsByScheme = _serviceClients.get(serviceName);
     if (clientsByScheme == null)
@@ -1137,7 +1141,8 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
           new Object[]{ serviceName, uri, partitionDataMap });
       return null;
     }
-    TrackerClient trackerClient = new TrackerClient(uri, partitionDataMap, client, SystemClock.instance(), config);
+    TrackerClient trackerClient = new TrackerClient(uri, partitionDataMap, client, SystemClock.instance(), config,
+                                                    callTrackerInterval);
     return trackerClient;
   }
 
@@ -1233,6 +1238,19 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     return newTransportClients;
   }
 
+  private static long getTrackerClientInterval(ServiceProperties serviceProperties)
+  {
+    long trackerClientInterval = DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS;
+    if (serviceProperties.getLoadBalancerStrategyProperties() != null)
+    {
+      trackerClientInterval = MapUtil.getWithDefault(serviceProperties.getLoadBalancerStrategyProperties(),
+                             PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS,
+                             DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS,
+                             Long.class);
+    }
+    return trackerClientInterval;
+  }
+
   void refreshTransportClientsPerService(ServiceProperties serviceProperties)
   {
     String serviceName = serviceProperties.getServiceName();
@@ -1268,10 +1286,11 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
       Set<URI> uris = uriProperties.Uris();
       // clients-by-uri map may be edited later by UriPropertiesListener.handlePut
       newTrackerClients = new ConcurrentHashMap<URI, TrackerClient>((int)Math.ceil(uris.size() / 0.75f), 0.75f, 1);
+      long trackerClientInterval = getTrackerClientInterval (serviceProperties);
       for (URI uri : uris)
       {
         TrackerClient trackerClient = getTrackerClient(serviceName, uri, uriProperties.getPartitionDataMap(uri),
-                                                       config);
+                                                       config, trackerClientInterval);
         if (trackerClient != null)
         {
           newTrackerClients.put(uri, trackerClient);
