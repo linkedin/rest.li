@@ -20,6 +20,7 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.FieldDef;
 import com.linkedin.restli.common.ActionResponse;
+import com.linkedin.restli.common.ProtocolVersion;
 
 
 /**
@@ -56,7 +57,7 @@ public class ActionResponseDecoder<T> extends RestResponseDecoder<T>
   }
 
   @Override
-  public T wrapResponse(DataMap dataMap)
+  protected T wrapResponse(DataMap dataMap, ProtocolVersion version)
   {
     return new ActionResponse<T>(dataMap, _returnFieldDef, _recordDataSchema).getValue();
   }

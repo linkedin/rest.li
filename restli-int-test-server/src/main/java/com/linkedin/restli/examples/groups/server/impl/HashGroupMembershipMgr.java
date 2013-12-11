@@ -32,6 +32,8 @@ import com.linkedin.restli.examples.groups.api.MembershipLevel;
 import com.linkedin.restli.examples.groups.server.api.GroupMembershipMgr;
 import com.linkedin.restli.examples.groups.server.api.GroupMembershipSearchQuery;
 import com.linkedin.restli.examples.groups.server.api.GroupsKeys;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
+import com.linkedin.restli.internal.common.URIParamUtils;
 
 /**
  * @author Josh Walker
@@ -100,7 +102,7 @@ public class HashGroupMembershipMgr implements GroupMembershipMgr
     int memberID = membership.getMemberID();
 
     CompoundKey key = buildKey(groupID, memberID);
-    membership.setId(key.toString());
+    membership.setId(URIParamUtils.encodeKeyForBody(key, true, AllProtocolVersions.BASELINE_PROTOCOL_VERSION));
 
     _data.put(key, membership);
     return membership;

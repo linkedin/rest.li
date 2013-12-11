@@ -70,7 +70,7 @@ public class TestContexts extends RestLiIntegrationTest
     super.shutdown();
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testGet(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Request<Greeting> requestWithProjection =
@@ -85,7 +85,7 @@ public class TestContexts extends RestLiIntegrationTest
     Assert.assertEquals(greeting.getTone(), HAS_KEYS);
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testFinder(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Request<CollectionResponse<Greeting>> requestWithProjection =
@@ -117,12 +117,14 @@ public class TestContexts extends RestLiIntegrationTest
     Assert.assertEquals(noHeaderGreeting.getMessage(), NO_HEADER_MESSAGE);
   }
 
-  @DataProvider
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
       { new RootBuilderWrapper<Long, Greeting>(new WithContextBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new WithContextRequestBuilders()) }
+      { new RootBuilderWrapper<Long, Greeting>(new WithContextBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+      { new RootBuilderWrapper<Long, Greeting>(new WithContextRequestBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new WithContextRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
   }
 }

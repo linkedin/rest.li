@@ -19,16 +19,24 @@ package com.linkedin.restli.client;
 
 import com.linkedin.restli.client.test.TestRecord;
 import com.linkedin.restli.common.BatchRequest;
+import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionRequest;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.KeyValueRecord;
 import com.linkedin.restli.common.KeyValueRecordFactory;
+import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.internal.client.CollectionRequestUtil;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
+import com.linkedin.restli.internal.common.TestConstants;
+import com.linkedin.restli.internal.common.URIParamUtils;
+import com.linkedin.restli.internal.common.URLEscaper;
+import org.testng.Assert;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
+
 import java.util.HashMap;
 import java.util.Map;
-import org.testng.Assert;
-import org.testng.annotations.Test;
 
 
 /**
@@ -36,8 +44,8 @@ import org.testng.annotations.Test;
  */
 public class TestCollectionRequestUtil
 {
-  @Test
-  public void testPrimitiveKeySingleEntity()
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "versions")
+  public void testPrimitiveKeySingleEntity(ProtocolVersion version)
   {
     KeyValueRecordFactory<Long, TestRecord> factory = new KeyValueRecordFactory<Long, TestRecord>(Long.class,
                                                                                                   null,
@@ -58,7 +66,8 @@ public class TestCollectionRequestUtil
                                                     null,
                                                     null,
                                                     null,
-                                                    TestRecord.class);
+                                                    TestRecord.class,
+                                                    version);
 
     Map<String,TestRecord> entities = batchRequest.getEntities();
 
@@ -66,8 +75,8 @@ public class TestCollectionRequestUtil
     Assert.assertEquals(entities.get("1"), testRecord);
   }
 
-  @Test
-  public void testPrimitiveKeyMultipleEntities()
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "versions")
+  public void testPrimitiveKeyMultipleEntities(ProtocolVersion version)
   {
     @SuppressWarnings("rawtypes")
     KeyValueRecordFactory<Long, TestRecord> factory = new KeyValueRecordFactory<Long, TestRecord>(Long.class,
@@ -94,7 +103,8 @@ public class TestCollectionRequestUtil
                                                     null,
                                                     null,
                                                     null,
-                                                    TestRecord.class);
+                                                    TestRecord.class,
+                                                    version);
 
     Map<String,TestRecord> entities = batchRequest.getEntities();
 
@@ -105,8 +115,8 @@ public class TestCollectionRequestUtil
     }
   }
 
-  @Test
-  public void testCompoundKeyMultipleEntities()
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "versions")
+  public void testCompoundKeyMultipleEntities(ProtocolVersion version)
   {
     String key1 = "key1";
     String key2 = "key2";
@@ -131,7 +141,7 @@ public class TestCollectionRequestUtil
     Map<CompoundKey, TestRecord> inputs = new HashMap<CompoundKey, TestRecord>();
     for (CompoundKey key: keys)
     {
-      TestRecord testRecord = buildTestRecord(1L, key.toString());
+      TestRecord testRecord = buildTestRecord(1L, "message" + key.hashCode());
       inputs.put(key, testRecord);
       collectionRequest.getElements().add(factory.create(key, testRecord));
     }
@@ -143,20 +153,21 @@ public class TestCollectionRequestUtil
                                                     null,
                                                     null,
                                                     fieldTypes,
-                                                    TestRecord.class);
+                                                    TestRecord.class,
+                                                    version);
 
     Map<String,TestRecord> entities = batchRequest.getEntities();
 
     Assert.assertEquals(entities.size(), inputs.size());
     for (CompoundKey key: keys)
     {
-      Assert.assertEquals(entities.get(key.toString()), inputs.get(key));
+      Assert.assertEquals(entities.get(BatchResponse.keyToString(key, version)), inputs.get(key));
     }
   }
 
-  @Test
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "versions")
   @SuppressWarnings({"unchecked", "rawtypes"})
-  public void testComplexKeyMultipleEntities()
+  public void testComplexKeyMultipleEntities(ProtocolVersion version)
   {
     // TestRecord is not keyed by a ComplexResourceKey, but for this test we pretend that it is.
     TestRecord kk1 = buildTestRecord(1, "key key 1");
@@ -191,19 +202,34 @@ public class TestCollectionRequestUtil
                                                     TestRecord.class,
                                                     TestRecord.class,
                                                     null,
-                                                    TestRecord.class);
+                                                    TestRecord.class,
+                                                    version);
 
     Map<String,TestRecord> entities = batchRequest.getEntities();
 
     Assert.assertEquals(entities.size(), inputs.size());
     for (ComplexResourceKey key: keys)
     {
-      Assert.assertEquals(entities.get(key.toStringFull()), inputs.get(key));
+      Assert.assertEquals(entities.get(URIParamUtils.keyToString(key,
+                                                                 URLEscaper.Escaping.NO_ESCAPING,
+                                                                 null,
+                                                                 true,
+                                                                 version)),
+                          inputs.get(key));
     }
   }
 
   private TestRecord buildTestRecord(long id, String message)
   {
     return new TestRecord().setId(id).setMessage(message);
+  }
+
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "versions")
+  public Object[][] versions()
+  {
+    return new Object[][] {
+      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion() },
+      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion() }
+    };
   }
 }

@@ -22,6 +22,8 @@ import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaUtil;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.restli.common.OptionsResponse;
+import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.restspec.ResourceSchema;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -40,7 +42,10 @@ public class OptionsResponseDecoder extends RestResponseDecoder<OptionsResponse>
   public static final String MODELS = "models";
 
   private static final JacksonDataCodec CODEC = new JacksonDataCodec();
-  public OptionsResponse wrapResponse(DataMap dataMap) throws IOException
+
+  @Override
+  protected OptionsResponse wrapResponse(DataMap dataMap, ProtocolVersion version)
+    throws IOException
   {
     DataMap resources = dataMap.getDataMap(RESOURCES);
     if(resources == null) resources = new DataMap();

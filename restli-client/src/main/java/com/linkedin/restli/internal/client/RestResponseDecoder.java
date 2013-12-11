@@ -31,7 +31,10 @@ import com.linkedin.data.codec.PsonDataCodec;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestLiDecodingException;
+import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
+import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 
 /**
  * Converts a raw RestResponse into a type-bound response.  The class is abstract
@@ -69,7 +72,7 @@ public abstract class RestResponseDecoder<T>
       {
         dataMap = JACKSON_DATA_CODEC.readMap(inputStream);
       }
-      response.setEntity(wrapResponse(dataMap));
+      response.setEntity(wrapResponse(dataMap, ProtocolVersionUtil.extractProtocolVersion(response.getHeaders())));
       return response;
     }
     catch (IOException e)
@@ -96,6 +99,6 @@ public abstract class RestResponseDecoder<T>
 
   public abstract Class<?> getEntityClass();
 
-  public abstract T wrapResponse(DataMap dataMap)
+  protected abstract T wrapResponse(DataMap dataMap, ProtocolVersion version)
                   throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, IOException;
 }

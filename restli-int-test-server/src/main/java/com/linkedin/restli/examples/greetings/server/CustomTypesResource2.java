@@ -14,11 +14,8 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.restli.examples.greetings.server;
+
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.examples.custom.types.CustomLong;
 import com.linkedin.restli.examples.greetings.api.Greeting;
@@ -40,6 +38,7 @@ import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
+
 
 /**
  * @author Moira Tagle
@@ -105,12 +104,19 @@ public class CustomTypesResource2 extends CollectionResourceTemplate<CustomLong,
   }
 
   @Override
+  public CreateResponse create(final Greeting greeting)
+  {
+    // just echo back the provided id (for testing only, this would not a be correct implementation of POST)
+    return new CreateResponse(new CustomLong(greeting.getId()));
+  }
+
+  @Override
   public BatchCreateResult<CustomLong, Greeting> batchCreate(BatchCreateRequest<CustomLong, Greeting> entities)
   {
     List<CreateResponse> results = new ArrayList<CreateResponse>();
     for (Greeting greeting: entities.getInput())
     {
-      // just echo back the provided ids (for testing only,  this would not a correct implementation of POST)
+      // just echo back the provided ids (for testing only, this would not a be correct implementation of POST)
       results.add(new CreateResponse(new CustomLong(greeting.getId()), HttpStatus.S_204_NO_CONTENT));
     }
     return new BatchCreateResult<CustomLong, Greeting>(results);

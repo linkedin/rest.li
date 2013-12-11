@@ -62,7 +62,7 @@ public class TestExceptionsResource3 extends RestLiIntegrationTest
     super.shutdown();
   }
 
-  @Test(dataProvider = "exceptionHandlingModesDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "exceptionHandlingModesDataProvider")
   public void testGet404(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior, RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Response<Greeting> response = null;
@@ -115,7 +115,7 @@ public class TestExceptionsResource3 extends RestLiIntegrationTest
     Assert.assertEquals(exception.getStatus(), HttpStatus.S_404_NOT_FOUND.getCode());
   }
 
-  @Test(dataProvider = "exceptionHandlingModesDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "exceptionHandlingModesDataProvider")
   public void testUpdate(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior, RootBuilderWrapper<Long, Greeting> builders) throws Exception
   {
     Response<EmptyRecord> response = null;
@@ -170,16 +170,23 @@ public class TestExceptionsResource3 extends RestLiIntegrationTest
     Assert.assertEquals(exception.getStatus(), HttpStatus.S_404_NOT_FOUND.getCode());
   }
 
-  @DataProvider
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "exceptionHandlingModesDataProvider")
   public Object[][] exceptionHandlingModesDataProvider()
   {
-    return new Object[][] {
+    return new Object[][]
+      {
         { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper<Long, Greeting>(new Exceptions3Builders()) },
+        { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper<Long, Greeting>(new Exceptions3Builders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
         { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper<Long, Greeting>(new Exceptions3RequestBuilders()) },
+        { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper<Long, Greeting>(new Exceptions3RequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
         { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper<Long, Greeting>(new Exceptions3Builders()) },
+        { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper<Long, Greeting>(new Exceptions3Builders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
         { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper<Long, Greeting>(new Exceptions3RequestBuilders()) },
+        { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper<Long, Greeting>(new Exceptions3RequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
         { false, null, new RootBuilderWrapper<Long, Greeting>(new Exceptions3Builders()) },
-        { false, null, new RootBuilderWrapper<Long, Greeting>(new Exceptions3RequestBuilders()) }
-    };
+        { false, null, new RootBuilderWrapper<Long, Greeting>(new Exceptions3Builders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+        { false, null, new RootBuilderWrapper<Long, Greeting>(new Exceptions3RequestBuilders()) },
+        { false, null, new RootBuilderWrapper<Long, Greeting>(new Exceptions3RequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
+      };
   }
 }

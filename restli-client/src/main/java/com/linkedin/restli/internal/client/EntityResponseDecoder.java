@@ -24,6 +24,8 @@ import java.lang.reflect.InvocationTargetException;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.common.RestConstants;
 
 /**
  * Converts a raw RestResponse into a type-bound entity response.
@@ -47,7 +49,7 @@ public class EntityResponseDecoder<T extends RecordTemplate> extends RestRespons
   }
 
   @Override
-  public T wrapResponse(DataMap dataMap)
+  protected T wrapResponse(DataMap dataMap, ProtocolVersion version)
                   throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException
   {
     return _entityClass.getConstructor(DataMap.class).newInstance(dataMap);

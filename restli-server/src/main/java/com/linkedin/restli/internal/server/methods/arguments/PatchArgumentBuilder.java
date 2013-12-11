@@ -38,7 +38,7 @@ public class PatchArgumentBuilder implements RestLiArgumentBuilder
                                  final RestRequest request)
   {
     Object[] positionalArgs;
-    RecordTemplate patch = ArgumentUtils.extractEntity(request, PatchRequest.class);
+    RecordTemplate patch = ArgumentBuilder.extractEntity(request, PatchRequest.class);
 
     if (ArgumentUtils.hasResourceKey(routingResult))
     {

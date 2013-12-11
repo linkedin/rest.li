@@ -24,6 +24,10 @@ import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ErrorResponse;
+import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
+import com.linkedin.restli.internal.common.URIParamUtils;
+
 import java.util.Collections;
 import java.util.Map;
 
@@ -57,7 +61,7 @@ public class MockBatchKVResponseFactory
        Map<K, V> recordTemplates,
        Map<K, ErrorResponse> errorResponses)
   {
-    return create(keyClass, valueClass, keyParts, recordTemplates, errorResponses);
+    return create(keyClass, valueClass, keyParts, recordTemplates, errorResponses, AllProtocolVersions.BASELINE_PROTOCOL_VERSION);
   }
 
   /**
@@ -83,14 +87,17 @@ public class MockBatchKVResponseFactory
        Map<ComplexResourceKey<KK, KP>, V> recordTemplates,
        Map<ComplexResourceKey<KK, KP>, ErrorResponse> errorResponses)
   {
-    DataMap batchResponseDataMap = buildDataMap(recordTemplates, errorResponses);
+    ProtocolVersion version = AllProtocolVersions.BASELINE_PROTOCOL_VERSION;
+
+    DataMap batchResponseDataMap = buildDataMap(recordTemplates, errorResponses, version);
 
     return new BatchKVResponse<ComplexResourceKey, V>(batchResponseDataMap,
                                                       ComplexResourceKey.class,
                                                       valueClass,
                                                       null,
                                                       keyKeyClass,
-                                                      keyParamsClass);
+                                                      keyParamsClass,
+                                                      version);
   }
 
   /**
@@ -109,7 +116,7 @@ public class MockBatchKVResponseFactory
                                                                                            Map<K, V> recordTemplates,
                                                                                            Map<K, ErrorResponse> errorResponses)
   {
-    return create(keyClass, valueClass, null, recordTemplates, errorResponses);
+    return create(keyClass, valueClass, null, recordTemplates, errorResponses, AllProtocolVersions.BASELINE_PROTOCOL_VERSION);
   }
 
   /**
@@ -132,22 +139,27 @@ public class MockBatchKVResponseFactory
                                                                                                    Map<K, V> recordTemplates,
                                                                                                    Map<K, ErrorResponse> errorResponses)
   {
-    DataMap batchResponseDataMap = buildDataMap(recordTemplates, errorResponses);
+    ProtocolVersion version = AllProtocolVersions.BASELINE_PROTOCOL_VERSION;
+
+    DataMap batchResponseDataMap = buildDataMap(recordTemplates, errorResponses, version);
 
     return new BatchKVResponse(batchResponseDataMap,
                                typerefClass,
                                valueClass,
-                               Collections.<String, CompoundKey.TypeInfo>emptyMap());
+                               Collections.<String, CompoundKey.TypeInfo>emptyMap(),
+                               version);
   }
 
   private static <K, V extends RecordTemplate> DataMap buildDataMap(Map<K, V> recordTemplates,
-                                                                    Map<K, ErrorResponse> errorResponses)
+                                                                    Map<K, ErrorResponse> errorResponses,
+                                                                    ProtocolVersion version)
   {
     DataMap batchResponseDataMap = new DataMap();
     DataMap rawBatchData = new DataMap();
     for (Map.Entry<K, V> entry : recordTemplates.entrySet())
     {
-      rawBatchData.put(String.valueOf(entry.getKey()), entry.getValue().data());
+      String stringKey = URIParamUtils.encodeKeyForBody(entry.getKey(), false, version);
+      rawBatchData.put(stringKey, entry.getValue().data());
     }
     batchResponseDataMap.put(BatchResponse.RESULTS, rawBatchData);
 
@@ -165,15 +177,17 @@ public class MockBatchKVResponseFactory
        Class<V> valueClass,
        Map<String, CompoundKey.TypeInfo> keyParts,
        Map<K, V> recordTemplates,
-       Map<K, ErrorResponse> errorResponses)
+       Map<K, ErrorResponse> errorResponses,
+       ProtocolVersion version)
   {
-    DataMap batchResponseDataMap = buildDataMap(recordTemplates, errorResponses);
+    DataMap batchResponseDataMap = buildDataMap(recordTemplates, errorResponses, version);
 
     return new BatchKVResponse<K, V>(batchResponseDataMap,
                                      keyClass,
                                      valueClass,
                                      keyParts,
                                      null,
-                                     null);
+                                     null,
+                                     version);
   }
 }

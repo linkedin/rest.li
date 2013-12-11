@@ -14,9 +14,6 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
 package com.linkedin.restli.examples;
 
 
@@ -27,6 +24,7 @@ import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestClient;
+import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.ComplexResourceKey;
@@ -101,7 +99,7 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
     return useStringsRequiringEscaping ? StringTestKeys.URL3 : StringTestKeys.SIMPLEKEY3;
   }
 
-  @Test(dataProvider = "requestStringKeysBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestStringKeysBuilderDataProvider")
   public void testGetWithSimpleKey(RootBuilderWrapper<String, Message> builders) throws Exception
   {
     Request<Message> req = builders.get().id(key1()).build();
@@ -110,7 +108,7 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
     Assert.assertEquals(response.getEntity().getMessage(), key1(), "Message should match key for key1");
   }
 
-  @Test(dataProvider = "requestStringKeysBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestStringKeysBuilderDataProvider")
   public void testBatchGetWithSimpleKey(RootBuilderWrapper<String, Message> builders) throws Exception
   {
     Set<String> keys = new HashSet<String>();
@@ -123,7 +121,20 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
     Assert.assertEquals(results.get(key2()).getMessage(), key2(), "Message should match key for key2");
   }
 
-  @Test(dataProvider = "requestAssociationsSubBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestStringKeysBuilderDataProvider")
+  public void testBatchKVGetWithSimpleKey(RootBuilderWrapper<String, Message> builders) throws Exception
+  {
+    Set<String> keys = new HashSet<String>();
+    keys.add(key1());
+    keys.add(key2());
+    Request<BatchKVResponse<String, Message>> req = builders.batchGet().ids(keys).buildKV();
+    BatchKVResponse<String,Message> response = REST_CLIENT.sendRequest(req).get().getEntity();
+    Map<String, Message> results = response.getResults();
+    Assert.assertEquals(results.get(key1()).getMessage(), key1(), "Message should match key for key1");
+    Assert.assertEquals(results.get(key2()).getMessage(), key2(), "Message should match key for key2");
+  }
+
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestAssociationsSubBuilderDataProvider")
   public void testGetWithAssociationKey(RootBuilderWrapper<CompoundKey, Message> builders) throws Exception
   {
     CompoundKey key = new CompoundKey();
@@ -136,7 +147,7 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
     Assert.assertEquals(response.getId(), key.getPart("src") + " " + key.getPart("dest"), "Message should be key1 + ' ' + key2 for associationKey(key1,key2)");
   }
 
-  @Test(dataProvider = "requestComplexKeysBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestComplexKeysBuilderDataProvider")
   public void testGetWithComplexKey(RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> builders) throws Exception
   {
     TwoPartKey key = new TwoPartKey();
@@ -154,7 +165,7 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
     Assert.assertEquals(response.getId(), key.getMajor() + " " + key.getMinor(), "Message should be key1 + ' ' + key2 for complexKey(key1,key2)");
   }
 
-  @Test(dataProvider = "requestStringKeysSubBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestStringKeysSubBuilderDataProvider")
   public void testGetSubResourceKeys(RootBuilderWrapper<String, Message> builders) throws Exception
   {
     String parentKey = key1();
@@ -166,7 +177,7 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
     Assert.assertEquals(response.getId(), parentKey + " " + subKey, "Message should be key1 + ' ' + key2 for subResourceKey(key1,key2)");
   }
 
-  @Test(dataProvider = "requestActionBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestActionBuilderDataProvider")
   public void testActionWithStringParam(RootBuilderWrapper<?, ?> builders) throws Exception
   {
     Request<String> request = builders.<String>action("Echo").setActionParam("Input", key1()).build();
@@ -174,7 +185,7 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
     Assert.assertEquals(echo, key1(), "Echo response should be key1");
   }
 
-  @Test(dataProvider = "requestStringKeysBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestStringKeysBuilderDataProvider")
   public void testFinderWithStringParam(RootBuilderWrapper<String, Message> builders) throws Exception
   {
     Request<CollectionResponse<Message>> request = builders.findBy("Search").setQueryParam("keyword", key1()).build();
@@ -185,48 +196,58 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
     Assert.assertEquals(hit.getMessage(), key1(), "Message of matching result should be key1");
   }
 
-  @DataProvider
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestStringKeysBuilderDataProvider")
   private static Object[][] requestStringKeysBuilderDataProvider()
   {
     return new Object[][] {
       { new RootBuilderWrapper<String, Message>(new StringKeysBuilders()) },
-      { new RootBuilderWrapper<String, Message>(new StringKeysRequestBuilders()) }
+      { new RootBuilderWrapper<String, Message>(new StringKeysBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+      { new RootBuilderWrapper<String, Message>(new StringKeysRequestBuilders()) },
+      { new RootBuilderWrapper<String, Message>(new StringKeysRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
   }
 
-  @DataProvider
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestStringKeysSubBuilderDataProvider")
   private static Object[][] requestStringKeysSubBuilderDataProvider()
   {
     return new Object[][] {
       { new RootBuilderWrapper<String, Message>(new StringKeysSubBuilders()) },
-      { new RootBuilderWrapper<String, Message>(new StringKeysSubRequestBuilders()) }
+      { new RootBuilderWrapper<String, Message>(new StringKeysSubBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+      { new RootBuilderWrapper<String, Message>(new StringKeysSubRequestBuilders()) },
+      { new RootBuilderWrapper<String, Message>(new StringKeysSubRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
   }
 
-  @DataProvider
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestAssociationsSubBuilderDataProvider")
   private static Object[][] requestAssociationsSubBuilderDataProvider()
   {
     return new Object[][] {
       { new RootBuilderWrapper<CompoundKey, Message>(new AssociationsBuilders()) },
-      { new RootBuilderWrapper<CompoundKey, Message>(new AssociationsRequestBuilders()) }
+      { new RootBuilderWrapper<CompoundKey, Message>(new AssociationsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+      { new RootBuilderWrapper<CompoundKey, Message>(new AssociationsRequestBuilders()) },
+      { new RootBuilderWrapper<CompoundKey, Message>(new AssociationsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
   }
 
-  @DataProvider
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestComplexKeysBuilderDataProvider")
   private static Object[][] requestComplexKeysBuilderDataProvider()
   {
     return new Object[][] {
       { new RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(new ComplexKeysBuilders()) },
-      { new RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(new ComplexKeysRequestBuilders()) }
+      { new RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(new ComplexKeysBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+      { new RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(new ComplexKeysRequestBuilders()) },
+      { new RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(new ComplexKeysRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
   }
 
-  @DataProvider
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestActionBuilderDataProvider")
   private static Object[][] requestActionBuilderDataProvider()
   {
     return new Object[][] {
       { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsBuilders()) },
-      { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsRequestBuilders()) }
+      { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+      { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsRequestBuilders()) },
+      { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
   }
 }

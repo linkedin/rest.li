@@ -17,17 +17,17 @@
 package com.linkedin.restli.client.uribuilders;
 
 
-import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.data.DataMap;
 import com.linkedin.jersey.api.uri.UriBuilder;
+import com.linkedin.jersey.api.uri.UriComponent;
 import com.linkedin.jersey.api.uri.UriTemplate;
 import com.linkedin.restli.client.Request;
-import com.linkedin.restli.client.util.RestliBuilderUtils;
-import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.internal.client.QueryParamsUtil;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.QueryParamsDataMap;
+import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.internal.common.URLEscaper;
 
 import java.net.URI;
@@ -96,7 +96,7 @@ abstract class AbstractRestliRequestUriBuilder<R extends Request<?>> implements 
 
     for(Map.Entry<String, Object> entry : pathKeys.entrySet())
     {
-      String value = RestliBuilderUtils.keyToString(entry.getValue(), URLEscaper.Escaping.URL_ESCAPING, _version);
+      String value = URIParamUtils.encodeKeyForUri(entry.getValue(), UriComponent.Type.PATH_SEGMENT, _version);
       if (value == null)
       {
         throw new IllegalArgumentException("Missing value for path key " + entry.getKey());
@@ -112,41 +112,28 @@ abstract class AbstractRestliRequestUriBuilder<R extends Request<?>> implements 
     return _uriPrefix + uri;
   }
 
-  private static String keyToString(Object key, URLEscaper.Escaping escaping)
-  {
-    String result;
-    if (key == null)
-    {
-      result = null;
-    }
-    else if (key instanceof ComplexResourceKey)
-    {
-      result = ((ComplexResourceKey<?,?>)key).toStringFull(escaping);
-    }
-    else if (key instanceof CompoundKey)
-    {
-      result = key.toString(); // already escaped
-    }
-    else
-    {
-      result = URLEscaper.escape(DataTemplateUtil.stringify(key), escaping);
-    }
-    return result;
-  }
-
   protected void appendKeyToPath(UriBuilder uriBuilder, Object key)
   {
     if (!_request.getResourceSpec().isKeylessResource())
     {
-      uriBuilder.path(keyToString(key, URLEscaper.Escaping.URL_ESCAPING));
+      uriBuilder.path(URIParamUtils.encodeKeyForUri(key, UriComponent.Type.PATH_SEGMENT, _version));
     }
   }
 
   @SuppressWarnings("unchecked")
   protected void appendQueryParams(UriBuilder b)
   {
-    QueryParamsDataMap.addSortedParams(b, QueryParamsUtil.convertToDataMap(_request.getQueryParamsObjects(),
-                                                                           _version));
+    DataMap params = QueryParamsUtil.convertToDataMap(_request.getQueryParamsObjects(),
+                                                      _version);
+    if (_version.compareTo(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()) >= 0)
+    {
+      URIParamUtils.addSortedParams(b, params);
+    }
+    else
+    {
+      QueryParamsDataMap.addSortedParams(b, params);
+    }
+
   }
 
   protected final void appendAssocKeys(UriBuilder uriBuilder)
@@ -155,7 +142,10 @@ abstract class AbstractRestliRequestUriBuilder<R extends Request<?>> implements 
     {
       throw new IllegalArgumentException("_assocKey is null");
     }
-    uriBuilder.path(_assocKey.toString());
+    if (_assocKey.getNumParts() != 0)
+    {
+      uriBuilder.path(URIParamUtils.encodeKeyForUri(_assocKey, UriComponent.Type.PATH_SEGMENT, _version));
+    }
   }
 
   @Override

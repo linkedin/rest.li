@@ -23,6 +23,8 @@ package com.linkedin.restli.internal.client;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.BatchResponse;
+import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.common.RestConstants;
 
 /**
  * Converts a raw RestResponse into a type-bound batch response.
@@ -46,9 +48,8 @@ public class BatchResponseDecoder<T extends RecordTemplate> extends RestResponse
   }
 
   @Override
-  @SuppressWarnings("unchecked")
-  public BatchResponse<T> wrapResponse(DataMap dataMap)
+  protected BatchResponse<T> wrapResponse(DataMap dataMap, ProtocolVersion version)
   {
-     return new BatchResponse<T>(dataMap, _elementClass);
+    return new BatchResponse<T>(dataMap, _elementClass);
   }
 }

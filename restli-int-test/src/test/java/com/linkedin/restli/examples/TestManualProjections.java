@@ -48,7 +48,7 @@ public class TestManualProjections extends RestLiIntegrationTest
    * Test that a simple projection is applied correctly.
    * @throws RemoteInvocationException
    */
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testGetWithProjection(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Request<Greeting> request = builders.get().id(1L)
@@ -65,7 +65,7 @@ public class TestManualProjections extends RestLiIntegrationTest
    * Test for when the client does not send a projection.  The full entity should be included in the response.
    * @throws RemoteInvocationException
    */
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testGetFull(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Request<Greeting> request = builders.get().id(1L).build();
@@ -83,7 +83,7 @@ public class TestManualProjections extends RestLiIntegrationTest
    *
    * @throws RemoteInvocationException
    */
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testDisableAutomaticProjection(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Request<Greeting> request = builders.get().id(1L)
@@ -97,12 +97,14 @@ public class TestManualProjections extends RestLiIntegrationTest
     Assert.assertEquals(greeting.getMessage(), "Full greeting.");
   }
 
-  @DataProvider
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
       { new RootBuilderWrapper<Long, Greeting>(new ManualProjectionsBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new ManualProjectionsRequestBuilders()) }
+      { new RootBuilderWrapper<Long, Greeting>(new ManualProjectionsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+      { new RootBuilderWrapper<Long, Greeting>(new ManualProjectionsRequestBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new ManualProjectionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
   }
 }

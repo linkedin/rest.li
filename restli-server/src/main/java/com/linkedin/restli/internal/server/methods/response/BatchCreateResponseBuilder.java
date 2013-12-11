@@ -26,6 +26,8 @@ import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.CreateStatus;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.common.ProtocolVersionUtil;
+import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.server.BatchCreateResult;
 import com.linkedin.restli.server.CreateResponse;
@@ -59,7 +61,7 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
       CreateStatus s = new CreateStatus();
       if (e.hasId())
       {
-        s.setId(e.getId().toString());
+        s.setId(URIParamUtils.encodeKeyForBody(e.getId(), false, ProtocolVersionUtil.extractProtocolVersion(headers)));
       }
       s.setStatus(e.getStatus().getCode());
       if(e.hasError())

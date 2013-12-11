@@ -14,11 +14,8 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.restli.examples.greetings.server;
+
 
 import com.linkedin.restli.examples.custom.types.CustomLong;
 import com.linkedin.restli.examples.greetings.api.Greeting;
@@ -36,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+
 
 /**
  * @author Moira Tagle

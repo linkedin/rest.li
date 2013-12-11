@@ -16,7 +16,14 @@
 
 package com.linkedin.restli.examples;
 
+import com.linkedin.restli.client.ProtocolVersionOption;
+import com.linkedin.restli.client.RestliRequestOptions;
+import com.linkedin.restli.client.RestliRequestOptionsBuilder;
+
 public interface TestConstants
 {
   String TESTNG_GROUP_NOT_IMPLEMENTED = "not_implemented";
+
+  static final RestliRequestOptions FORCE_USE_NEXT_OPTIONS =
+    new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.FORCE_USE_NEXT).build();
 }

@@ -26,8 +26,10 @@ import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.api.TwoPartKey;
 import com.linkedin.restli.server.BatchDeleteRequest;
 import com.linkedin.restli.server.BatchPatchRequest;
+import com.linkedin.restli.server.BatchResult;
 import com.linkedin.restli.server.BatchUpdateRequest;
 import com.linkedin.restli.server.BatchUpdateResult;
+import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.util.PatchApplier;
 
@@ -90,22 +92,28 @@ public class ComplexKeysDataProvider
     return results;
   }
 
-  public Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> batchGet(
+  public BatchResult<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> batchGet(
       Set<ComplexResourceKey<TwoPartKey, TwoPartKey>> keys)
   {
-    Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> results =
+    Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> data =
         new HashMap<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>();
+    Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, RestLiServiceException> errors =
+        new HashMap<ComplexResourceKey<TwoPartKey, TwoPartKey>, RestLiServiceException>();
 
     for (ComplexResourceKey<TwoPartKey, TwoPartKey> key : keys)
     {
       String stringKey = keyToString(key.getKey());
       if (_db.containsKey(stringKey))
       {
-        results.put(key, _db.get(stringKey));
+        data.put(key, _db.get(stringKey));
+      }
+      else
+      {
+        errors.put(key, new RestLiServiceException(HttpStatus.S_404_NOT_FOUND));
       }
     }
 
-    return results;
+    return new BatchResult<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(data, errors);
   }
 
   public BatchUpdateResult<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> batchUpdate(
@@ -113,18 +121,23 @@ public class ComplexKeysDataProvider
   {
     final Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, UpdateResponse> results =
         new HashMap<ComplexResourceKey<TwoPartKey, TwoPartKey>, UpdateResponse>();
+    final Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, RestLiServiceException> errors =
+        new HashMap<ComplexResourceKey<TwoPartKey, TwoPartKey>, RestLiServiceException>();
 
     for (Map.Entry<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> entry : entities.getData().entrySet())
     {
       if (_db.containsKey(keyToString(entry.getKey().getKey())))
       {
         _db.put(keyToString(entry.getKey().getKey()), entry.getValue());
+        results.put(entry.getKey(), new UpdateResponse(HttpStatus.S_200_OK));
       }
-
-      results.put(entry.getKey(), new UpdateResponse(HttpStatus.S_200_OK));
+      else
+      {
+        errors.put(entry.getKey(), new RestLiServiceException(HttpStatus.S_404_NOT_FOUND));
+      }
     }
 
-    return new BatchUpdateResult<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(results);
+    return new BatchUpdateResult<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(results, errors);
   }
 
   public BatchUpdateResult<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> batchUpdate(

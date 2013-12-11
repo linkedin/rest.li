@@ -22,7 +22,9 @@ package com.linkedin.restli.internal.server.methods.arguments;
 
 
 import com.linkedin.data.DataList;
+import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.ArrayDataSchema;
+import com.linkedin.data.schema.DataSchemaUtil;
 import com.linkedin.data.schema.validation.CoercionMode;
 import com.linkedin.data.schema.validation.RequiredMode;
 import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
@@ -32,11 +34,17 @@ import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.transform.filter.request.MaskTree;
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.restli.common.BatchRequest;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.internal.common.QueryParamsDataMap;
+import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
+import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.PathKeys;
@@ -44,9 +52,13 @@ import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.annotations.HeaderParam;
 
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -209,10 +221,31 @@ public class ArgumentBuilder
           throw new RoutingException("Parameter '" + param.getName()
                                          + "' cannot contain null values", HttpStatus.S_400_BAD_REQUEST.getCode());
         }
-        Array.set(convertedValue,
-                  j++,
-                  ArgumentUtils.convertSimpleValue(
-                      itemStringValue, parameterSchema.getItems(), param.getItemType(), false));
+        try
+        {
+          Array.set(convertedValue,
+                    j++,
+                    ArgumentUtils.convertSimpleValue(itemStringValue, parameterSchema.getItems(), param.getItemType()));
+        }
+        catch (NumberFormatException e)
+        {
+          Class<?> targetClass = DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchemaClass(parameterSchema.getItems().getDereferencedType());
+          // thrown from Integer.valueOf or Long.valueOf
+          throw new RoutingException(String.format("Array parameter '%s' value '%s' must be of type '%s'",
+                                                   param.getName(),
+                                                   itemStringValue,
+                                                   targetClass.getName()),
+                                     HttpStatus.S_400_BAD_REQUEST.getCode());
+        }
+        catch (IllegalArgumentException e)
+        {
+          // thrown from Enum.valueOf
+          throw new RoutingException(String.format("Array parameter '%s' value '%s' is invalid",
+                                                   param.getName(),
+                                                   itemStringValue),
+                                     HttpStatus.S_400_BAD_REQUEST.getCode());
+        }
+
       }
     }
 
@@ -259,7 +292,29 @@ public class ArgumentBuilder
       }
       else
       {
-        convertedValue = ArgumentUtils.convertSimpleValue(value, param.getDataSchema(), param.getType(), false);
+        try
+        {
+          convertedValue = ArgumentUtils.convertSimpleValue(value, param.getDataSchema(), param.getType());
+        }
+        catch (NumberFormatException e)
+        {
+          Class<?> targetClass = DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchemaClass(param.getDataSchema().getDereferencedType());
+          // thrown from Integer.valueOf or Long.valueOf
+          throw new RoutingException(String.format("Argument parameter '%s' value '%s' must be of type '%s'",
+                                                   param.getName(),
+                                                   value,
+                                                   targetClass.getName()),
+                                     HttpStatus.S_400_BAD_REQUEST.getCode());
+        }
+        catch (IllegalArgumentException e)
+        {
+          // thrown from Enum.valueOf
+          throw new RoutingException(String.format("Argument parameter '%s' value '%s' is invalid",
+                                                   param.getName(),
+                                                   value),
+                                     HttpStatus.S_400_BAD_REQUEST.getCode());
+        }
+
       }
     }
 
@@ -318,5 +373,78 @@ public class ArgumentBuilder
                                        new ValidationOptions(RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT,
                                                              CoercionMode.STRING_TO_PRIMITIVE));
     return paramRecordTemplate;
+  }
+
+  /**
+   * @param request {@link com.linkedin.r2.message.rest.RestRequest}
+   * @param recordClass resource value class
+   * @param <V> resource value type which is a subclass of {@link RecordTemplate}
+   * @return resource value
+   */
+  public static <V extends RecordTemplate> V extractEntity(final RestRequest request,
+                                                           final Class<V> recordClass)
+  {
+    try
+    {
+      return DataMapUtils.read(request, recordClass);
+    }
+    catch (IOException e)
+    {
+      throw new RoutingException("Error parsing entity body: " + e.getMessage(),
+                                 HttpStatus.S_400_BAD_REQUEST.getCode());
+    }
+  }
+
+  /**
+   * Convert a DataMap representation of a BatchRequest (string->record) into a Java Map
+   * appropriate for passing into application code.  Note that compound/complex keys are
+   * represented as their string encoding in the DataMap.  Since we have already parsed
+   * these keys, we simply try to match the string representations, rather than re-parsing.
+   *
+   *
+   * @param data - the input DataMap to be converted
+   * @param valueClass - the RecordTemplate type of the values
+   * @param ids - the parsed batch ids from the request URI
+   * @return a map using appropriate key and value classes
+   */
+  public static <R extends RecordTemplate> Map<Object, R> buildBatchRequestMap(final DataMap data,
+                                                                               final Class<R> valueClass,
+                                                                               final Set<?> ids,
+                                                                               final ProtocolVersion version)
+  {
+    BatchRequest<R> batchRequest = new BatchRequest<R>(data, new TypeSpec<R>(valueClass));
+
+    Map<String, Object> parsedKeyMap = new HashMap<String, Object>();
+    for (Object o : ids)
+    {
+      parsedKeyMap.put(URIParamUtils.encodeKeyForBody(o, true, version),
+                       o);
+    }
+
+    Map<Object, R> result =
+      new HashMap<Object, R>(batchRequest.getEntities().size());
+    for (Map.Entry<String, R> entry : batchRequest.getEntities().entrySet())
+    {
+      Object key = parsedKeyMap.get(entry.getKey());
+      if (key == null)
+      {
+        throw new RoutingException(
+          String.format("Batch request mismatch, URI keys: '%s'  Entity keys: '%s'",
+                        ids.toString(),
+                        result.keySet().toString()),
+          HttpStatus.S_400_BAD_REQUEST.getCode());
+      }
+      R value = DataTemplateUtil.wrap(entry.getValue().data(), valueClass);
+      result.put(key, value);
+    }
+    if (!ids.equals(result.keySet()))
+    {
+      throw new RoutingException(
+        String.format("Batch request mismatch, URI keys: '%s'  Entity keys: '%s'",
+                      ids.toString(),
+                      result.keySet().toString()),
+        HttpStatus.S_400_BAD_REQUEST.getCode());
+    }
+    return result;
   }
 }

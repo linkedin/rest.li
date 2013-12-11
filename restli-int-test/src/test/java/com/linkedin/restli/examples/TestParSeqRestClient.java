@@ -84,7 +84,7 @@ public class TestParSeqRestClient extends RestLiIntegrationTest
   /**
    * Request that should succeed, using promise
    */
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testPromise(RootBuilderWrapper<?, ?> builders) throws InterruptedException
   {
     final Request<String> req =
@@ -99,7 +99,7 @@ public class TestParSeqRestClient extends RestLiIntegrationTest
   /**
    * Request that should succeed, using task
    */
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testTask(RootBuilderWrapper<?, ?> builders) throws InterruptedException
   {
     final Request<String> req =
@@ -117,7 +117,7 @@ public class TestParSeqRestClient extends RestLiIntegrationTest
   /**
    * Multiple requests that should succeed, using task
    */
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testMultipleTask(RootBuilderWrapper<?, ?> builders) throws InterruptedException
   {
     final Request<String> req1 =
@@ -143,7 +143,7 @@ public class TestParSeqRestClient extends RestLiIntegrationTest
   /**
    * Request that should fail, using promise
    */
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testFailPromise(RootBuilderWrapper<?, ?> builders) throws InterruptedException
   {
     final Request<Void> req = builders.<Void>action("FailPromiseCall").build();
@@ -157,7 +157,7 @@ public class TestParSeqRestClient extends RestLiIntegrationTest
   /**
    * Request that should fail, using task
    */
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testFailTask(RootBuilderWrapper<?, ?> builders) throws InterruptedException
   {
     final Request<Void> req = builders.<Void>action("FailPromiseCall").build();
@@ -171,12 +171,15 @@ public class TestParSeqRestClient extends RestLiIntegrationTest
     Assert.assertTrue(t instanceof RestLiResponseException);
   }
 
-  @DataProvider
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   private static Object[][] requestBuilderDataProvider()
   {
-    return new Object[][] {
-      { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsBuilders()) },
-      { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsRequestBuilders()) }
-    };
+    return new Object[][]
+      {
+        { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsBuilders()) },
+        { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+        { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsRequestBuilders()) },
+        { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
+      };
   }
 }

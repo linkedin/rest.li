@@ -730,15 +730,40 @@ public class TestRestLiResponseHandler
     assertTrue(status1.data().containsKey("f3"));
   }
 
-  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "basicData")
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "basicDataWithBatchUri")
+  public Object[][] basicDataWithBatchUri()
+  {
+    return new Object[][]
+      {
+        { AcceptTypeData.EMPTY, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "/test?ids=1&ids=2&ids=3&fields=f1,f2", RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE },
+        { AcceptTypeData.EMPTY, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "/test?ids=List(1,2,3)&fields=f1,f2", RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE },
+        { AcceptTypeData.ANY, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "/test?ids=1&ids=2&ids=3&fields=f1,f2", RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE },
+        { AcceptTypeData.ANY, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "/test?ids=List(1,2,3)&fields=f1,f2", RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE },
+        { AcceptTypeData.JSON, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "/test?ids=1&ids=2&ids=3&fields=f1,f2", RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE },
+        { AcceptTypeData.JSON, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "/test?ids=List(1,2,3)&fields=f1,f2", RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE },
+        { AcceptTypeData.PSON, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "/test?ids=1&ids=2&ids=3&fields=f1,f2", RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE },
+        { AcceptTypeData.PSON, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "/test?ids=List(1,2,3)&fields=f1,f2", RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE }
+      };
+  }
+
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "basicDataWithBatchUri")
   public void testFieldProjection_batch(AcceptTypeData acceptTypeData,
                                         ProtocolVersion protocolVersion,
+                                        String uri,
                                         String errorResponseHeaderName) throws Exception
   {
     RestResponse response;
 
     Map<Integer, Status> statusBatch = buildStatusBatchResponse(10, "f1", "f2", "f3");
-    RestRequest request = buildRequest("/test?ids=1,2,3&fields=f1,f2", acceptTypeData.acceptHeaders, protocolVersion);
+    RestRequest request = buildRequest(uri, acceptTypeData.acceptHeaders, protocolVersion);
     response = _responseHandler.buildResponse(request,
                                               buildRoutingResult(
                                                   ResourceMethod.BATCH_GET, request, acceptTypeData.acceptHeaders),

@@ -45,6 +45,8 @@
       }, {
         "method" : "partial_update"
       }, {
+        "method" : "batch_create"
+      }, {
         "method" : "batch_get"
       }, {
         "method" : "batch_update"
@@ -83,7 +85,7 @@
           "type" : "string"
         } ]
       } ],
-      "supports" : [ "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "get", "partial_update" ],
+      "supports" : [ "batch_create", "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "get", "partial_update" ],
       "identifier" : {
         "name" : "keys",
         "params" : "com.linkedin.restli.examples.greetings.api.TwoPartKey",

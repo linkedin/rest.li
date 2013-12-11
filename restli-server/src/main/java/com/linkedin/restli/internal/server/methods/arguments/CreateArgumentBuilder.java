@@ -36,7 +36,7 @@ public class CreateArgumentBuilder implements RestLiArgumentBuilder
                                  final RestRequest request)
   {
     RecordTemplate inputEntity =
-        ArgumentUtils.extractEntity(request, ArgumentUtils.getValueClass(routingResult));
+        ArgumentBuilder.extractEntity(request, ArgumentUtils.getValueClass(routingResult));
     Object[] positionalArgs = { inputEntity };
     return ArgumentBuilder.buildArgs(positionalArgs,
                                      routingResult.getResourceMethod().getParameters(),

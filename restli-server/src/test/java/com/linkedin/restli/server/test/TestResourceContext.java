@@ -14,31 +14,35 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.restli.server.test;
 
+
 import com.linkedin.data.ByteString;
+import com.linkedin.data.DataList;
+import com.linkedin.data.DataMap;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.r2.message.RequestBuilder;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestMessageBuilder;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
+import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
+import com.linkedin.restli.internal.common.TestConstants;
 import com.linkedin.restli.internal.server.PathKeysImpl;
 import com.linkedin.restli.internal.server.ResourceContextImpl;
-import com.linkedin.restli.server.PathKeys;
+import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.server.ResourceContext;
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.net.URI;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+
 
 /**
  * @author Josh Walker
@@ -47,49 +51,139 @@ import java.util.Set;
 
 public class TestResourceContext
 {
-
-  @Test
-  public void testResourceContextGetProjectionMask() throws Exception
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "projectionMask")
+  public Object[][] projectionMask()
   {
-    URI uri = URI.create(
-            "groups/?count=10&emailDomain=foo.com&fields=locale,state&q=emailDomain&start=0");
+    return new Object[][]
+      {
+        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "groups/?count=10&emailDomain=foo.com&fields=locale,state&q=emailDomain&start=0"},
+        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "groups/?count=10&emailDomain=foo.com&fields=locale,state&q=emailDomain&start=0"}
+      };
+  }
 
-    ResourceContext context = new ResourceContextImpl(new PathKeysImpl(), new MockRequest(uri),
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "projectionMask")
+  public void testResourceContextGetProjectionMask(ProtocolVersion version, String stringUri) throws Exception
+  {
+    URI uri = URI.create(stringUri);
+    Map<String, String> headers = new HashMap<String, String>(1);
+    headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, version.toString());
+
+    ResourceContext context = new ResourceContextImpl(new PathKeysImpl(),
+                                                      new MockRequest(uri, headers),
                                                       new RequestContext());
     MaskTree mask = context.getProjectionMask();
     Assert.assertEquals(mask.toString(), "{locale=1, state=1}");
   }
 
-  @Test
-  public void testResourceContextGetProjectionMaskWithMaskSyntax() throws Exception
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "queryParamsProjectionMaskWithSyntax")
+  public Object[][] queryParamsProjectionMaskWithSyntax()
   {
-    URI uri = URI.create(
-            "groups/?count=10&emailDomain=foo.com&fields=locale,state,location:(longitude,latitude)&q=emailDomain&start=0");
+    return new Object[][]
+      {
+        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "groups/?count=10&emailDomain=foo.com&fields=locale,state,location:(longitude,latitude)&q=emailDomain&start=0"},
+        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "groups/?count=10&emailDomain=foo.com&fields=locale,state,location:(longitude,latitude)&q=emailDomain&start=0"}
+      };
+  }
 
-    ResourceContext context = new ResourceContextImpl(new PathKeysImpl(), new MockRequest(uri),
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "queryParamsProjectionMaskWithSyntax")
+  public void testResourceContextWithQueryParamsGetProjectionMaskWithMaskSyntax(ProtocolVersion version, String stringUri) throws Exception
+  {
+    URI uri = URI.create(stringUri);
+    Map<String, String> headers = new HashMap<String, String>(1);
+    headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, version.toString());
+
+    ResourceContext context = new ResourceContextImpl(new PathKeysImpl(),
+                                                      new MockRequest(uri, headers),
                                                       new RequestContext());
     MaskTree mask = context.getProjectionMask();
     Assert.assertEquals(mask.toString(), "{location={longitude=1, latitude=1}, locale=1, state=1}");
-
-    uri = URI.create(
-            "groups/?fields=a:($*),b:($*:(c)),d:($*:(e,f))");
-
-    context = new ResourceContextImpl(new PathKeysImpl(), new MockRequest(uri),
-                                      new RequestContext());
-    mask = context.getProjectionMask();
-    Assert.assertEquals(mask.toString(), "{d={$*={f=1, e=1}}, b={$*={c=1}}, a={$*=1}}");
-
   }
 
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "projectionMaskWithSyntax")
+  public Object[][] projectionMaskWithSyntax()
+  {
+    return new Object[][]
+      {
+        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "groups/?fields=a:($*),b:($*:(c)),d:($*:(e,f))"},
+        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "groups/?fields=a:($*),b:($*:(c)),d:($*:(e,f))"}
+      };
+  }
 
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "projectionMaskWithSyntax")
+  public void testResourceContextGetProjectionMaskWithSyntax(ProtocolVersion version, String stringUri) throws Exception
+  {
+    URI uri = URI.create(stringUri);
+    Map<String, String> headers = new HashMap<String, String>(1);
+    headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, version.toString());
+
+    ResourceContext context = new ResourceContextImpl(new PathKeysImpl(),
+                                                      new MockRequest(uri, headers),
+                                                      new RequestContext());
+    MaskTree mask = context.getProjectionMask();
+    Assert.assertEquals(mask.toString(), "{d={$*={f=1, e=1}}, b={$*={c=1}}, a={$*=1}}");
+  }
+
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "uriDecoding")
+  public Object[][] uriDecoding()
+  {
+    return new Object[][]
+      {
+        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "groups/?fields=foo,bar,baz&testParam.a%5B0%5D=b&testParam.a%5B1%5D=c&testParam.a%5B2%5D=d&q=test"},
+        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "groups/?fields=foo,bar,baz&testParam=(a:List(b,c,d))&q=test"}
+      };
+  }
+
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "uriDecoding")
+  public void testResourceContextURIDecoding(ProtocolVersion version, String stringUri) throws Exception
+  {
+    URI uri = URI.create(stringUri);
+    Map<String, String> headers = new HashMap<String, String>(1);
+    headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, version.toString());
+
+    ServerResourceContext context = new ResourceContextImpl(new PathKeysImpl(),
+                                                            new MockRequest(uri, headers),
+                                                            new RequestContext());
+
+    MaskTree projectionMask = context.getProjectionMask();
+    Assert.assertEquals(projectionMask.toString(), "{baz=1, foo=1, bar=1}");
+
+    DataMap parameters = context.getParameters();
+    DataMap expectedParameters = new DataMap();
+    expectedParameters.put("fields", "foo,bar,baz");
+    expectedParameters.put("q", "test");
+    DataMap testParam = new DataMap();
+    DataList aValue = new DataList();
+    aValue.add("b");
+    aValue.add("c");
+    aValue.add("d");
+    testParam.put("a", aValue);
+    expectedParameters.put("testParam", testParam);
+    Assert.assertEquals(parameters, expectedParameters);
+  }
 
   public static class MockRequest implements RestRequest
   {
     private final URI _uri;
+    private final Map<String, String> _headers;
 
     public MockRequest(URI uri)
     {
       _uri = uri;
+      _headers = new HashMap<String, String>();
+    }
+
+    public MockRequest(URI uri, Map<String, String> headers)
+    {
+      _uri = uri;
+      _headers = headers;
     }
 
     @Override
@@ -119,7 +213,7 @@ public class TestResourceContext
     @Override
     public Map<String, String> getHeaders()
     {
-      return null;
+      return _headers;
     }
 
     @Override
@@ -131,7 +225,7 @@ public class TestResourceContext
     @Override
     public String getHeader(String name)
     {
-      return null;
+      return _headers.get(name);
     }
 
     @Override

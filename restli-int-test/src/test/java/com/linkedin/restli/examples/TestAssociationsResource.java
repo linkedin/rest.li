@@ -38,18 +38,18 @@ import com.linkedin.restli.examples.greetings.client.AssociationsBuilders;
 import com.linkedin.restli.examples.greetings.client.AssociationsRequestBuilders;
 import com.linkedin.restli.examples.greetings.client.AssociationsSubBuilders;
 import com.linkedin.restli.examples.greetings.client.AssociationsSubRequestBuilders;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.linkedin.restli.examples.AssociationResourceHelpers.DB;
 import static com.linkedin.restli.examples.AssociationResourceHelpers.SIMPLE_COMPOUND_KEY;
@@ -58,9 +58,9 @@ import static com.linkedin.restli.examples.AssociationResourceHelpers.URL_COMPOU
 
 public class TestAssociationsResource extends RestLiIntegrationTest
 {
-  private static final Client            CLIENT      = new TransportClientAdapter(new HttpClientFactory().getClient(Collections.<String, String> emptyMap()));
+  private static final Client            CLIENT      = new TransportClientAdapter(new HttpClientFactory().getClient(Collections.<String, String>emptyMap()));
   private static final String            URI_PREFIX  = "http://localhost:1338/";
-  private static final RestClient REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
+  private static final RestClient        REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
 
   @BeforeClass
   public void initClass() throws Exception
@@ -74,7 +74,7 @@ public class TestAssociationsResource extends RestLiIntegrationTest
     super.shutdown();
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testOptionalAssociationKeyInFinder(RootBuilderWrapper<CompoundKey, Message> builders) throws Exception
   {
     // optional and present
@@ -86,7 +86,7 @@ public class TestAssociationsResource extends RestLiIntegrationTest
     Assert.assertEquals(200, REST_CLIENT.sendRequest(finderNoAssocKey).getResponse().getStatus());
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testRequiredAssociationKeyInFinder(RootBuilderWrapper<CompoundKey, Message> builders) throws Exception
   {
     // required and present
@@ -106,7 +106,7 @@ public class TestAssociationsResource extends RestLiIntegrationTest
     }
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testBatchGet(RootBuilderWrapper<CompoundKey, Message> builders)
       throws RemoteInvocationException
   {
@@ -125,7 +125,7 @@ public class TestAssociationsResource extends RestLiIntegrationTest
     }
   }
 
-  @Test(dataProvider = "requestSubBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestSubBuilderDataProvider")
   public void testSubresourceGet(RootBuilderWrapper<String, Message> builders) throws RemoteInvocationException
   {
     Request<Message> request = builders.get().setPathKey("dest", "dest").setPathKey("src", "src").id("id").build();
@@ -134,7 +134,7 @@ public class TestAssociationsResource extends RestLiIntegrationTest
     Assert.assertEquals(message.getMessage(), "dest");
   }
 
-  @Test(dataProvider = "requestSubBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestSubBuilderDataProvider")
   public void testSubresourceGetForbiddenCharacters(RootBuilderWrapper<String, Message> builders) throws RemoteInvocationException
   {
     Request<Message> request = builders.get().setPathKey("dest", "d&est").setPathKey("src", "s&rc").id("id").build();
@@ -143,7 +143,7 @@ public class TestAssociationsResource extends RestLiIntegrationTest
     Assert.assertEquals(message.getMessage(), "d&est");
   }
 
-  @Test(dataProvider = "requestSubBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestSubBuilderDataProvider")
   public void testSubresourceFinder(RootBuilderWrapper<String, Message> builders) throws RemoteInvocationException
   {
     Request<CollectionResponse<Message>> request = builders.findBy("Tone").setPathKey("dest", "dest").setPathKey("src", "src").setQueryParam("tone", Tone.FRIENDLY).build();
@@ -155,7 +155,7 @@ public class TestAssociationsResource extends RestLiIntegrationTest
     }
   }
 
-  @Test(dataProvider = "requestSubBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestSubBuilderDataProvider")
   public void testSubresourceAction(RootBuilderWrapper<CompoundKey, Message> builders) throws RemoteInvocationException
   {
     Request<Integer> request = builders.<Integer>action("Action").setPathKey("dest", "dest").setPathKey("src", "src").build();
@@ -164,7 +164,7 @@ public class TestAssociationsResource extends RestLiIntegrationTest
     Assert.assertEquals(integer, new Integer(1));
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testBatchUpdate(RootBuilderWrapper<CompoundKey, Message> builders)
       throws RemoteInvocationException
   {
@@ -175,7 +175,7 @@ public class TestAssociationsResource extends RestLiIntegrationTest
     runAssertions(entities);
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testBatchPartialUpdate(RootBuilderWrapper<CompoundKey, PatchRequest<Message>> builders)
       throws RemoteInvocationException
   {
@@ -196,21 +196,25 @@ public class TestAssociationsResource extends RestLiIntegrationTest
     Assert.assertEquals(entities.getResults().keySet(), DB.keySet());
   }
 
-  @DataProvider
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
       { new RootBuilderWrapper<CompoundKey, Message>(new AssociationsBuilders()) },
-      { new RootBuilderWrapper<CompoundKey, Message>(new AssociationsRequestBuilders()) }
+      { new RootBuilderWrapper<CompoundKey, Message>(new AssociationsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+      { new RootBuilderWrapper<CompoundKey, Message>(new AssociationsRequestBuilders()) },
+      { new RootBuilderWrapper<CompoundKey, Message>(new AssociationsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
   }
 
-  @DataProvider
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestSubBuilderDataProvider")
   private static Object[][] requestSubBuilderDataProvider()
   {
     return new Object[][] {
       { new RootBuilderWrapper<String, Message>(new AssociationsSubBuilders()) },
-      { new RootBuilderWrapper<String, Message>(new AssociationsSubRequestBuilders()) }
+      { new RootBuilderWrapper<String, Message>(new AssociationsSubBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+      { new RootBuilderWrapper<String, Message>(new AssociationsSubRequestBuilders()) },
+      { new RootBuilderWrapper<String, Message>(new AssociationsSubRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
   }
 }

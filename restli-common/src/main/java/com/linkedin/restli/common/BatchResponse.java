@@ -25,6 +25,7 @@ import com.linkedin.data.schema.Name;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.WrappingMapTemplate;
+import com.linkedin.restli.internal.common.URIParamUtils;
 
 
 /**
@@ -134,5 +135,18 @@ public class BatchResponse<T extends RecordTemplate> extends RecordTemplate
     DataMap value = (DataMap) data().get(ERRORS);
 
     return new DynamicRecordMap<ErrorResponse>(value, _errorsSchema, ErrorResponse.class);
+  }
+
+  /**
+   * Returns a string representation of the given key, as it will appear on the body of a batch response.
+   * This is important for being able to extract the response information related to that key.
+   *
+   * @param key the key
+   * @param version the {@link ProtocolVersion}
+   * @return the stringified version of the key.
+   */
+  public static String keyToString(Object key, ProtocolVersion version)
+  {
+    return URIParamUtils.encodeKeyForBody(key, false, version);
   }
 }

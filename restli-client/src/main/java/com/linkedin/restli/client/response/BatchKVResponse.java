@@ -35,10 +35,13 @@ import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.CompoundKey.TypeInfo;
 import com.linkedin.restli.common.ErrorResponse;
+import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.TypeSpec;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.PathSegment.PathSegmentSyntaxException;
 import com.linkedin.restli.internal.common.QueryParamsDataMap;
 import com.linkedin.restli.internal.common.TyperefUtils;
+import com.linkedin.restli.internal.common.URIElementParser;
 import com.linkedin.restli.internal.common.ValueConverter;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -62,6 +65,8 @@ public class BatchKVResponse<K, V extends RecordTemplate> extends RecordTemplate
   private final Map<K, V> _results;
   private final Map<K, ErrorResponse> _errors;
 
+  private final ProtocolVersion _version;
+
   /**
    * Constructor for collection and association resource responses.  For complex key resources
    * use the constructor that accepts keyKeyClass and keyParamsClass.
@@ -79,14 +84,25 @@ public class BatchKVResponse<K, V extends RecordTemplate> extends RecordTemplate
   public BatchKVResponse(DataMap data,
                          Class<K> keyClass,
                          Class<V> valueClass,
-                         Map<String, CompoundKey.TypeInfo> keyParts)
+                         Map<String, CompoundKey.TypeInfo> keyParts,
+                         ProtocolVersion version)
   {
     this(data,
          keyClass,
          valueClass,
          keyParts,
          null,
-         null);
+         null,
+         version);
+  }
+
+  @Deprecated
+  public BatchKVResponse(DataMap data,
+                         Class<K> keyClass,
+                         Class<V> valueClass,
+                         Map<String, CompoundKey.TypeInfo> keyParts)
+  {
+    this(data, keyClass, valueClass, keyParts, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion());
   }
 
   /**
@@ -106,9 +122,19 @@ public class BatchKVResponse<K, V extends RecordTemplate> extends RecordTemplate
   public BatchKVResponse(DataMap data,
                          TypeSpec<K> keyType,
                          TypeSpec<V> valueType,
+                         Map<String, CompoundKey.TypeInfo> keyParts,
+                         ProtocolVersion version)
+  {
+    this(data, keyType, valueType, keyParts, null, version);
+  }
+
+  @Deprecated
+  public BatchKVResponse(DataMap data,
+                         TypeSpec<K> keyType,
+                         TypeSpec<V> valueType,
                          Map<String, CompoundKey.TypeInfo> keyParts)
   {
-    this(data, keyType, valueType, keyParts, null);
+    this(data, keyType, valueType, keyParts, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion());
   }
 
   /**
@@ -131,13 +157,26 @@ public class BatchKVResponse<K, V extends RecordTemplate> extends RecordTemplate
                          Class<V> valueClass,
                          Map<String, CompoundKey.TypeInfo> keyParts,
                          Class<? extends RecordTemplate> keyKeyClass,
-                         Class<? extends RecordTemplate> keyParamsClass)
+                         Class<? extends RecordTemplate> keyParamsClass,
+                         ProtocolVersion version)
   {
     this(data,
          TypeSpec.forClassMaybeNull(keyClass),
          TypeSpec.forClassMaybeNull(valueClass),
          keyParts,
-         ComplexKeySpec.forClassesMaybeNull(keyKeyClass, keyParamsClass));
+         ComplexKeySpec.forClassesMaybeNull(keyKeyClass, keyParamsClass),
+         version);
+  }
+
+  @Deprecated
+  public BatchKVResponse(DataMap data,
+                         Class<K> keyClass,
+                         Class<V> valueClass,
+                         Map<String, CompoundKey.TypeInfo> keyParts,
+                         Class<? extends RecordTemplate> keyKeyClass,
+                         Class<? extends RecordTemplate> keyParamsClass)
+  {
+    this(data, keyClass, valueClass, keyParts, keyKeyClass, keyParamsClass, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion());
   }
 
   /**
@@ -158,11 +197,13 @@ public class BatchKVResponse<K, V extends RecordTemplate> extends RecordTemplate
                          TypeSpec<K> keyType,
                          TypeSpec<V> valueType,
                          Map<String, CompoundKey.TypeInfo> keyParts,
-                         ComplexKeySpec<?,?> complexKeyType)
+                         ComplexKeySpec<?,?> complexKeyType,
+                         ProtocolVersion version)
   {
     super(data, null);
     _keyParts = keyParts;
     _complexKeyType = complexKeyType;
+    _version = version;
 
     StringBuilder errorMessageBuilder = new StringBuilder(10);
     Name elementSchemaName = new Name(valueType.getType().getSimpleName(), errorMessageBuilder);
@@ -272,6 +313,16 @@ public class BatchKVResponse<K, V extends RecordTemplate> extends RecordTemplate
     }
   }
 
+  @Deprecated
+  public BatchKVResponse(DataMap data,
+                         TypeSpec<K> keyType,
+                         TypeSpec<V> valueType,
+                         Map<String, CompoundKey.TypeInfo> keyParts,
+                         ComplexKeySpec<?,?> complexKeyType)
+  {
+    this(data, keyType, valueType, keyParts, complexKeyType, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion());
+  }
+
   @SuppressWarnings("unchecked")
   private <T> T convertKey(String rawKey, TypeSpec<T> key)
   {
@@ -295,15 +346,32 @@ public class BatchKVResponse<K, V extends RecordTemplate> extends RecordTemplate
     }
     else if (CompoundKey.class.isAssignableFrom(key.getType()))
     {
-      DataMap keyDataMap = parseKey(rawKey);
+      DataMap keyDataMap;
+      if (_version.compareTo(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()) >= 0)
+      {
+        try
+        {
+          keyDataMap =  (DataMap) URIElementParser.parse(rawKey);
+        }
+        catch (PathSegmentSyntaxException e)
+        {
+          throw new IllegalStateException(rawKey + " is not a valid value for the resource key", e);
+        }
+      }
+      else
+      {
+        keyDataMap = parseKey(rawKey);
+      }
+
       result = CompoundKey.fromValues(keyDataMap, _keyParts);
     }
     else if (ComplexResourceKey.class.isAssignableFrom(key.getType()))
     {
       try
       {
-        result = QueryParamsDataMap.fixUpComplexKeySingletonArray(
-            ComplexResourceKey.parseFromPathSegment(rawKey, _complexKeyType));
+        ComplexResourceKey<RecordTemplate, RecordTemplate> complexResourceKey =
+            ComplexResourceKey.parseString(rawKey, _complexKeyType, _version);
+        result = QueryParamsDataMap.fixUpComplexKeySingletonArray(complexResourceKey);
       }
       catch (PathSegmentSyntaxException e)
       {

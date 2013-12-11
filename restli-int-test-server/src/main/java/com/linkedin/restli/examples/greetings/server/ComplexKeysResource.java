@@ -14,9 +14,6 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
 package com.linkedin.restli.examples.greetings.server;
 
 
@@ -26,8 +23,11 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.examples.greetings.api.TwoPartKey;
+import com.linkedin.restli.server.BatchCreateRequest;
+import com.linkedin.restli.server.BatchCreateResult;
 import com.linkedin.restli.server.BatchDeleteRequest;
 import com.linkedin.restli.server.BatchPatchRequest;
+import com.linkedin.restli.server.BatchResult;
 import com.linkedin.restli.server.BatchUpdateRequest;
 import com.linkedin.restli.server.BatchUpdateResult;
 import com.linkedin.restli.server.CreateResponse;
@@ -37,8 +37,8 @@ import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.resources.ComplexKeyResourceTemplate;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 
@@ -71,6 +71,21 @@ public class ComplexKeysResource extends ComplexKeyResourceTemplate<TwoPartKey, 
   }
 
   @Override
+  public BatchCreateResult<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> batchCreate(final BatchCreateRequest<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> entities)
+  {
+    List<CreateResponse> createResponses = new ArrayList<CreateResponse>(entities.getInput().size());
+
+    for(Message message : entities.getInput())
+    {
+      ComplexResourceKey<TwoPartKey, TwoPartKey> key = _dataProvider.create(message);
+      CreateResponse createResponse = new CreateResponse(key);
+      createResponses.add(createResponse);
+    }
+
+    return new BatchCreateResult<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(createResponses);
+  }
+
+  @Override
   public UpdateResponse update(final ComplexResourceKey<TwoPartKey, TwoPartKey> key,
                                final PatchRequest<Message> patch)
   {
@@ -93,7 +108,7 @@ public class ComplexKeysResource extends ComplexKeyResourceTemplate<TwoPartKey, 
   }
 
   @Override
-  public Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> batchGet(
+  public BatchResult<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> batchGet(
       final Set<ComplexResourceKey<TwoPartKey, TwoPartKey>> ids)
   {
     return _dataProvider.batchGet(ids);

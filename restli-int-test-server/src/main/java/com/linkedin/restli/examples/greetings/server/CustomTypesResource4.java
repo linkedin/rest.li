@@ -14,11 +14,8 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.restli.examples.greetings.server;
+
 
 import com.linkedin.restli.examples.custom.types.CustomLong;
 import com.linkedin.restli.examples.greetings.api.Greeting;
@@ -28,6 +25,7 @@ import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
+
 
 /**
  * @author Moira Tagle

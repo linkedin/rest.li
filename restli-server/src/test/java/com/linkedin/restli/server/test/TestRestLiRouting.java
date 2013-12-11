@@ -16,30 +16,18 @@
 
 package com.linkedin.restli.server.test;
 
-import static com.linkedin.restli.server.test.RestLiTestHelper.buildResourceModels;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
-
 import com.linkedin.r2.filter.R2Constants;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import org.testng.annotations.Test;
-
-import com.linkedin.jersey.api.uri.UriComponent;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
+import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.PatchRequest;
+import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
+import com.linkedin.restli.internal.common.TestConstants;
 import com.linkedin.restli.internal.server.RestLiRouter;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
@@ -47,15 +35,33 @@ import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.server.PathKeys;
 import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.combined.CombinedResources;
+import com.linkedin.restli.server.twitter.DiscoveredItemsResource;
 import com.linkedin.restli.server.twitter.FollowsAssociativeResource;
 import com.linkedin.restli.server.twitter.LocationResource;
 import com.linkedin.restli.server.twitter.RepliesCollectionResource;
 import com.linkedin.restli.server.twitter.StatusCollectionResource;
-import com.linkedin.restli.server.twitter.TrendingResource;
 import com.linkedin.restli.server.twitter.TrendRegionsCollectionResource;
+import com.linkedin.restli.server.twitter.TrendingResource;
 import com.linkedin.restli.server.twitter.TwitterAccountsResource;
+import com.linkedin.restli.server.twitter.TwitterTestDataModels;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Status;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Trending;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import static com.linkedin.restli.server.test.RestLiTestHelper.buildResourceModels;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 /**
  * @author dellamag
@@ -64,31 +70,29 @@ public class TestRestLiRouting
 {
   private RestLiRouter _router;
 
-  /**
-   * Tests details of the RoutingResponse, including PathKeys and fields of the ResourceMethodDescriptor itself
-   */
-  @Test
-  public void testRoutingDetails() throws Exception
+  @DataProvider(name =  TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingDetailsCollectionEntity")
+  public Object[][] routingDetailsCollectionEntity()
   {
-    Map<String, ResourceModel> pathRootResourceMap =
-      buildResourceModels(StatusCollectionResource.class,
-                          FollowsAssociativeResource.class,
-                          TrendingResource.class);
+    return new Object[][]
+      {
+        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/statuses/1" },
+        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/statuses/1" }
+      };
+  }
 
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingDetailsCollectionEntity")
+  public void testRoutingDetailsCollectionGet(ProtocolVersion version, String uri) throws Exception
+  {
+    Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(StatusCollectionResource.class);
     _router = new RestLiRouter(pathRootResourceMap);
 
-    RestRequest request;
-    RoutingResult result;
-    ResourceMethodDescriptor resourceMethodDescriptor;
-    PathKeys keys;
-
     // #1 simple GET
-    request = new RestRequestBuilder(new URI("/statuses/1")).setMethod("GET").build();
+    RestRequest request = createRequest(uri, "GET", version);
 
-    result = _router.process(request, new RequestContext());
+    RoutingResult result = _router.process(request, new RequestContext());
     assertNotNull(result);
 
-    resourceMethodDescriptor = result.getResourceMethod();
+    ResourceMethodDescriptor resourceMethodDescriptor = result.getResourceMethod();
     assertNotNull(resourceMethodDescriptor);
     assertEquals(resourceMethodDescriptor.getType(), ResourceMethod.GET);
     assertNull(resourceMethodDescriptor.getActionName());
@@ -99,18 +103,33 @@ public class TestRestLiRouting
     assertEquals(resourceMethodDescriptor.getResourceModel().getName(), "statuses");
 
     assertNotNull(result.getContext());
-    keys = result.getContext().getPathKeys();
+    PathKeys keys = result.getContext().getPathKeys();
     assertEquals(keys.getAsLong("statusID"), new Long(1));
     assertNull(keys.getAsString("foo"));
+  }
 
-    // #2 GET with compound key
-    request = new RestRequestBuilder(new URI("/follows/followerID:1;followeeID:2"))
-             .setMethod("GET").build();
+  @DataProvider(name =  TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingDetailsAssociationEntity")
+  public Object[][] routingDetailsAssociationEntity()
+  {
+    return new Object[][]
+      {
+        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/follows/followerID=1&followeeID=2" },
+        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/follows/(followerID:1,followeeID:2)" }
+      };
+  }
 
-    result = _router.process(request, new RequestContext());
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingDetailsAssociationEntity")
+  public void testRoutingDetailsAssociationGet(ProtocolVersion version, String uri) throws Exception
+  {
+    Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(FollowsAssociativeResource.class);
+    _router = new RestLiRouter(pathRootResourceMap);
+
+    RestRequest request = createRequest(uri, "GET", version);
+
+    RoutingResult result = _router.process(request, new RequestContext());
     assertNotNull(result);
 
-    resourceMethodDescriptor = result.getResourceMethod();
+    ResourceMethodDescriptor resourceMethodDescriptor = result.getResourceMethod();
     assertNotNull(resourceMethodDescriptor);
     assertEquals(resourceMethodDescriptor.getType(), ResourceMethod.GET);
     assertNull(resourceMethodDescriptor.getActionName());
@@ -121,17 +140,23 @@ public class TestRestLiRouting
     assertEquals(resourceMethodDescriptor.getResourceModel().getName(), "follows");
 
     assertNotNull(result.getContext());
-    keys = result.getContext().getPathKeys();
+    PathKeys keys = result.getContext().getPathKeys();
     assertEquals(keys.getAsLong("followerID"), new Long(1L));
     assertEquals(keys.getAsLong("followeeID"), new Long(2L));
+  }
 
-    // #3 simple UPDATE
-    request = new RestRequestBuilder(new URI("/statuses/1")).setMethod("PUT").build();
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingDetailsCollectionEntity")
+  public void testRoutingDetailsCollectionUpdate(ProtocolVersion version, String uri) throws Exception
+  {
+    Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(StatusCollectionResource.class);
+    _router = new RestLiRouter(pathRootResourceMap);
 
-    result = _router.process(request, new RequestContext());
+    RestRequest request = createRequest(uri, "PUT", version);
+
+    RoutingResult result = _router.process(request, new RequestContext());
     assertNotNull(result);
 
-    resourceMethodDescriptor = result.getResourceMethod();
+    ResourceMethodDescriptor resourceMethodDescriptor = result.getResourceMethod();
     assertNotNull(resourceMethodDescriptor);
     assertEquals(resourceMethodDescriptor.getType(), ResourceMethod.UPDATE);
     assertNull(resourceMethodDescriptor.getActionName());
@@ -142,17 +167,23 @@ public class TestRestLiRouting
     assertEquals(resourceMethodDescriptor.getResourceModel().getName(), "statuses");
 
     assertNotNull(result.getContext());
-    keys = result.getContext().getPathKeys();
+    PathKeys keys = result.getContext().getPathKeys();
     assertEquals(keys.getAsLong("statusID"), new Long(1));
     assertNull(keys.getAsString("foo"));
+  }
 
-    // #4 simple DELETE
-    request = new RestRequestBuilder(new URI("/statuses/1")).setMethod("DELETE").build();
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingDetailsCollectionEntity")
+  public void testRoutingDetailsCollectionDelete(ProtocolVersion version, String uri) throws Exception
+  {
+    Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(StatusCollectionResource.class);
+    _router = new RestLiRouter(pathRootResourceMap);
 
-    result = _router.process(request, new RequestContext());
+    RestRequest request = createRequest(uri, "DELETE", version);
+
+    RoutingResult result = _router.process(request, new RequestContext());
     assertNotNull(result);
 
-    resourceMethodDescriptor = result.getResourceMethod();
+    ResourceMethodDescriptor resourceMethodDescriptor = result.getResourceMethod();
     assertNotNull(resourceMethodDescriptor);
     assertEquals(resourceMethodDescriptor.getType(), ResourceMethod.DELETE);
     assertNull(resourceMethodDescriptor.getActionName());
@@ -163,21 +194,33 @@ public class TestRestLiRouting
     assertEquals(resourceMethodDescriptor.getResourceModel().getName(), "statuses");
 
     assertNotNull(result.getContext());
-    keys = result.getContext().getPathKeys();
+    PathKeys keys = result.getContext().getPathKeys();
     assertEquals(keys.getAsLong("statusID"), new Long(1));
     assertNull(keys.getAsString("foo"));
+  }
 
-    // #5 GET association
-    // TODO Need a real associative resource
+  @DataProvider(name =  TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingDetailsAssociationBatch")
+  public Object[][] routingDetailsAssociationBatch()
+  {
+    return new Object[][]
+      {
+        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/follows?ids=followerID%3D1%26followeeID%3D2&ids=followerID%3D3%26followeeID%3D4" },
+        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/follows?ids=List((followerID:1,followeeID:2),(followerID:3,followeeID:4))" }
+      };
+  }
 
-    // #6 Batch GET association
-    request = new RestRequestBuilder(new URI("/follows?ids=followerID:1;followeeID:2&ids=followerID:3;followeeID:4"))
-              .setMethod("GET").build();
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingDetailsAssociationBatch")
+  public void testRoutingDetailsAssociationBatchGet(ProtocolVersion version, String uri) throws Exception
+  {
+    Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(FollowsAssociativeResource.class);
+    _router = new RestLiRouter(pathRootResourceMap);
 
-    result = _router.process(request, new RequestContext());
+    RestRequest request = createRequest(uri, "GET", version);
+
+    RoutingResult result = _router.process(request, new RequestContext());
     assertNotNull(result);
 
-    resourceMethodDescriptor = result.getResourceMethod();
+    ResourceMethodDescriptor resourceMethodDescriptor = result.getResourceMethod();
     assertNotNull(resourceMethodDescriptor);
     assertEquals(resourceMethodDescriptor.getType(), ResourceMethod.BATCH_GET);
     assertNull(resourceMethodDescriptor.getActionName());
@@ -188,7 +231,7 @@ public class TestRestLiRouting
     assertEquals(resourceMethodDescriptor.getResourceModel().getName(), "follows");
 
     assertNotNull(result.getContext());
-    keys = result.getContext().getPathKeys();
+    PathKeys keys = result.getContext().getPathKeys();
     assertNull(keys.getAsString("followerID"));
     assertNull(keys.getAsString("followeeID"));
 
@@ -209,14 +252,30 @@ public class TestRestLiRouting
       expectedBatchKeys.remove(batchKey);
     }
     assertEquals(expectedBatchKeys.size(), 0);
+  }
 
-    // #7 simple GET on simple resource
-    request = new RestRequestBuilder(new URI("/trending")).setMethod("GET").build();
+  @DataProvider(name =  TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingDetailsSimple")
+  public Object[][] routingDetailsSimple()
+  {
+    return new Object[][]
+      {
+        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/trending" },
+        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/trending" }
+      };
+  }
 
-    result = _router.process(request, new RequestContext());
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingDetailsSimple")
+  public void testRoutingDetailsSimpleGet(ProtocolVersion version, String uri) throws Exception
+  {
+    Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(TrendingResource.class);
+    _router = new RestLiRouter(pathRootResourceMap);
+
+    RestRequest request = createRequest(uri, "GET", version);
+
+    RoutingResult result = _router.process(request, new RequestContext());
     assertNotNull(result);
 
-    resourceMethodDescriptor = result.getResourceMethod();
+    ResourceMethodDescriptor resourceMethodDescriptor = result.getResourceMethod();
     assertNotNull(resourceMethodDescriptor);
     assertEquals(resourceMethodDescriptor.getType(), ResourceMethod.GET);
     assertNull(resourceMethodDescriptor.getActionName());
@@ -227,16 +286,22 @@ public class TestRestLiRouting
     assertEquals(resourceMethodDescriptor.getResourceModel().getName(), "trending");
 
     assertNotNull(result.getContext());
-    keys = result.getContext().getPathKeys();
+    PathKeys keys = result.getContext().getPathKeys();
     assertEquals(keys.getBatchKeys().size(), 0);
+  }
 
-    // #8 simple UPDATE on simple resource
-    request = new RestRequestBuilder(new URI("/trending")).setMethod("PUT").build();
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingDetailsSimple")
+  public void testRoutingDetailsSimpleUpdate(ProtocolVersion version, String uri) throws Exception
+  {
+    Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(TrendingResource.class);
+    _router = new RestLiRouter(pathRootResourceMap);
 
-    result = _router.process(request, new RequestContext());
+    RestRequest request = createRequest(uri, "PUT", version);
+
+    RoutingResult result = _router.process(request, new RequestContext());
     assertNotNull(result);
 
-    resourceMethodDescriptor = result.getResourceMethod();
+    ResourceMethodDescriptor resourceMethodDescriptor = result.getResourceMethod();
     assertNotNull(resourceMethodDescriptor);
     assertEquals(resourceMethodDescriptor.getType(), ResourceMethod.UPDATE);
     assertNull(resourceMethodDescriptor.getActionName());
@@ -247,16 +312,22 @@ public class TestRestLiRouting
     assertEquals(resourceMethodDescriptor.getResourceModel().getName(), "trending");
 
     assertNotNull(result.getContext());
-    keys = result.getContext().getPathKeys();
+    PathKeys keys = result.getContext().getPathKeys();
     assertEquals(keys.getBatchKeys().size(), 0);
+  }
 
-    // #9 partial UPDATE on simple resource
-    request = new RestRequestBuilder(new URI("/trending")).setMethod("POST").build();
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingDetailsSimple")
+  public void testRoutingDetailsSimplePartialUpdate(ProtocolVersion version, String uri) throws Exception
+  {
+    Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(TrendingResource.class);
+    _router = new RestLiRouter(pathRootResourceMap);
 
-    result = _router.process(request, new RequestContext());
+    RestRequest request = createRequest(uri, "POST", version);
+
+    RoutingResult result = _router.process(request, new RequestContext());
     assertNotNull(result);
 
-    resourceMethodDescriptor = result.getResourceMethod();
+    ResourceMethodDescriptor resourceMethodDescriptor = result.getResourceMethod();
     assertNotNull(resourceMethodDescriptor);
     assertEquals(resourceMethodDescriptor.getType(), ResourceMethod.PARTIAL_UPDATE);
     assertNull(resourceMethodDescriptor.getActionName());
@@ -267,16 +338,22 @@ public class TestRestLiRouting
     assertEquals(resourceMethodDescriptor.getResourceModel().getName(), "trending");
 
     assertNotNull(result.getContext());
-    keys = result.getContext().getPathKeys();
+    PathKeys keys = result.getContext().getPathKeys();
     assertEquals(keys.getBatchKeys().size(), 0);
+  }
 
-    // #10 simple DELETE on simple resource
-    request = new RestRequestBuilder(new URI("/trending")).setMethod("DELETE").build();
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingDetailsSimple")
+  public void testRoutingDetailsSimpleDelete(ProtocolVersion version, String uri) throws Exception
+  {
+    Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(TrendingResource.class);
+    _router = new RestLiRouter(pathRootResourceMap);
 
-    result = _router.process(request, new RequestContext());
+    RestRequest request = createRequest(uri, "DELETE", version);
+
+    RoutingResult result = _router.process(request, new RequestContext());
     assertNotNull(result);
 
-    resourceMethodDescriptor = result.getResourceMethod();
+    ResourceMethodDescriptor resourceMethodDescriptor = result.getResourceMethod();
     assertNotNull(resourceMethodDescriptor);
     assertEquals(resourceMethodDescriptor.getType(), ResourceMethod.DELETE);
     assertNull(resourceMethodDescriptor.getActionName());
@@ -287,119 +364,1657 @@ public class TestRestLiRouting
     assertEquals(resourceMethodDescriptor.getResourceModel().getName(), "trending");
 
     assertNotNull(result.getContext());
-    keys = result.getContext().getPathKeys();
+    PathKeys keys = result.getContext().getPathKeys();
     assertEquals(keys.getBatchKeys().size(), 0);
   }
 
-  /**
-   * Covers all the conditional routing logic to ensure the correct method was located.
-   */
-  @Test
-  public void testRoutingBasic() throws Exception
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingCollectionBatch")
+  public Object[][] routingCollectionBatch()
+  {
+    return new Object[][]
+      {
+        {
+          "/statuses?ids=1&ids=2&ids=3",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.BATCH_GET,
+          "batchGet",
+          new HashSet<Long>(Arrays.asList(1L, 2L, 3L))
+        },        
+        {
+          "/statuses?ids=List(1,2,3)",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.BATCH_GET,
+          "batchGet",
+          new HashSet<Long>(Arrays.asList(1L, 2L, 3L))
+       
+        },                
+        {
+          "/statuses?ids=1&ids=2&ids=3",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          "BATCH_GET",
+          ResourceMethod.BATCH_GET,
+          "batchGet",
+          new HashSet<Long>(Arrays.asList(1L, 2L, 3L))
+        },        
+        {
+          "/statuses?ids=List(1,2,3)",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          "BATCH_GET",
+          ResourceMethod.BATCH_GET,
+          "batchGet",
+          new HashSet<Long>(Arrays.asList(1L, 2L, 3L))
+        },        
+        {
+          "/statuses?ids=1&ids=2",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "PUT",
+          null,
+          ResourceMethod.BATCH_UPDATE,
+          "batchUpdate",
+          new HashSet<Long>(Arrays.asList(1L, 2L))
+        },        
+        {
+          "/statuses?ids=List(1,2)",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "PUT",
+          null,
+          ResourceMethod.BATCH_UPDATE,
+          "batchUpdate",
+          new HashSet<Long>(Arrays.asList(1L, 2L))
+        },        
+        {
+          "/statuses?ids=1&ids=2",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "PUT",
+          "BATCH_UPDATE",
+          ResourceMethod.BATCH_UPDATE,
+          "batchUpdate",
+          new HashSet<Long>(Arrays.asList(1L, 2L))
+        },        
+        {
+          "/statuses?ids=List(1,2)",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "PUT",
+          "BATCH_UPDATE",
+          ResourceMethod.BATCH_UPDATE,
+          "batchUpdate",
+          new HashSet<Long>(Arrays.asList(1L, 2L))
+        },        
+        {
+          "/statuses?ids=1&ids=2",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "POST",
+          "BATCH_PARTIAL_UPDATE",
+          ResourceMethod.BATCH_PARTIAL_UPDATE,
+          "batchUpdate",
+          new HashSet<Long>(Arrays.asList(1L, 2L))
+        },        
+        {
+          "/statuses?ids=List(1,2)",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "POST",
+          "BATCH_PARTIAL_UPDATE",
+          ResourceMethod.BATCH_PARTIAL_UPDATE,
+          "batchUpdate",
+          new HashSet<Long>(Arrays.asList(1L, 2L))
+        },        
+        {
+          "/statuses?ids=1&ids=2",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "DELETE",
+          null,
+          ResourceMethod.BATCH_DELETE,
+          "batchDelete",
+          new HashSet<Long>(Arrays.asList(1L, 2L))
+        },        
+        {
+          "/statuses?ids=List(1,2)",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "DELETE",
+          null,
+          ResourceMethod.BATCH_DELETE,
+          "batchDelete",
+          new HashSet<Long>(Arrays.asList(1L, 2L))
+        },        
+        {
+          "/statuses?ids=1&ids=2",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "DELETE",
+          "BATCH_DELETE",
+          ResourceMethod.BATCH_DELETE,
+          "batchDelete",
+          new HashSet<Long>(Arrays.asList(1L, 2L))
+        },        
+        {
+          "/statuses?ids=List(1,2)",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "DELETE",
+          "BATCH_DELETE",
+          ResourceMethod.BATCH_DELETE,
+          "batchDelete",
+          new HashSet<Long>(Arrays.asList(1L, 2L))
+        },        
+      };
+  }
+
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingCollectionBatch")
+  public void testRoutingCollectionBatch(String uri,
+                                         ProtocolVersion version,
+                                         String httpMethod, String restliMethod,
+                                         ResourceMethod method,
+                                         String methodName,
+                                         Set<Long> keys) throws Exception
+  {
+    Map<String, ResourceModel> pathRootResourceMap =
+      buildResourceModels(StatusCollectionResource.class);
+    _router = new RestLiRouter(pathRootResourceMap);
+
+    checkResult(uri, version, httpMethod, restliMethod, method, StatusCollectionResource.class, methodName, true);
+    checkBatchKeys(uri, version, httpMethod, keys);
+  }
+
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingSubResourceCollectionBatch")
+  public Object[][] routingSubResourceCollectionBatch()
+  {
+    return new Object[][]
+      {
+        {
+          "/statuses/1/replies?ids=1&ids=2&ids=3",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.BATCH_GET,
+          "batchGet",
+          new HashSet<Long>(Arrays.asList(1L, 2L, 3L))
+        },
+        {
+          "/statuses/1/replies?ids=List(1,2,3)",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.BATCH_GET,
+          "batchGet",
+          new HashSet<Long>(Arrays.asList(1L, 2L, 3L))
+        }
+      };
+  }
+
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingSubResourceCollectionBatch")
+  public void testRoutingSubResourceCollectionBatch(String uri,
+                                                    ProtocolVersion version,
+                                                    String httpMethod, String restliMethod,
+                                                    ResourceMethod method,
+                                                    String methodName,
+                                                    Set<Long> keys) throws Exception
   {
     Map<String, ResourceModel> pathRootResourceMap =
       buildResourceModels(StatusCollectionResource.class,
-                          FollowsAssociativeResource.class,
-                          RepliesCollectionResource.class,
-                          LocationResource.class,
-                          TrendingResource.class,
-                          TrendRegionsCollectionResource.class);
-
+                          RepliesCollectionResource.class);
     _router = new RestLiRouter(pathRootResourceMap);
 
-    checkResult("/statuses/1", "GET",
-                ResourceMethod.GET, StatusCollectionResource.class, "get", false, "statusID");
-    checkResult("/statuses/1", "GET", "GET",
-                ResourceMethod.GET, StatusCollectionResource.class, "get", false, "statusID");
-
-    checkResult("/st%61tuses/1", "GET",
-                ResourceMethod.GET, StatusCollectionResource.class, "get", false, "statusID");
-    checkResult("/statuses/%31", "GET",
-                ResourceMethod.GET, StatusCollectionResource.class, "get", false, "statusID");
-    expectRoutingException("/statuses%2F1", "GET");
-    checkResult("/statuses/-1", "GET",
-                ResourceMethod.GET, StatusCollectionResource.class, "get", false, "statusID");
-    checkResult("/statuses?ids=1&ids=2&ids3", "GET",
-                ResourceMethod.BATCH_GET, StatusCollectionResource.class, "batchGet", true);
-    checkResult("/statuses?ids=1&ids=2&ids=3", "GET", "BATCH_GET",
-                ResourceMethod.BATCH_GET, StatusCollectionResource.class, "batchGet", true);
-    checkResult("/statuses", "POST", ResourceMethod.CREATE, StatusCollectionResource.class, "create", false);
-    checkResult("/statuses", "POST", "CREATE", ResourceMethod.CREATE, StatusCollectionResource.class, "create", false);
-    checkResult("/statuses/1/replies", "POST", ResourceMethod.CREATE, RepliesCollectionResource.class, "create", false, "statusID");
-    checkResult("/statuses/1/replies?ids=1&ids=2&ids=3", "GET",
-                ResourceMethod.BATCH_GET, RepliesCollectionResource.class, "batchGet", true, "statusID");
-    checkResult("/statuses/1/location", "GET", ResourceMethod.GET, LocationResource.class, "get", false, "statusID");
-    checkResult("/statuses/1/location", "PUT", ResourceMethod.UPDATE, LocationResource.class, "update", false, "statusID");
-    checkResult("/statuses/1/location", "DELETE", ResourceMethod.DELETE, LocationResource.class, "delete", false, "statusID");
-    checkResult("/statuses/1", "PUT", ResourceMethod.UPDATE, StatusCollectionResource.class, "update", false);
-    checkResult("/statuses/1", "PUT", "UPDATE", ResourceMethod.UPDATE, StatusCollectionResource.class, "update", false);
-    checkResult("/statuses/1", "POST", ResourceMethod.PARTIAL_UPDATE, StatusCollectionResource.class, "update", false);
-    checkResult("/statuses/1", "POST", "PARTIAL_UPDATE", ResourceMethod.PARTIAL_UPDATE, StatusCollectionResource.class, "update", false);
-    checkResult("/statuses/1", "DELETE", ResourceMethod.DELETE, StatusCollectionResource.class, "delete", false);
-    checkResult("/statuses/1", "DELETE", "DELETE", ResourceMethod.DELETE, StatusCollectionResource.class, "delete", false);
-
-    checkResult("/statuses?q=search", "GET",
-                ResourceMethod.FINDER, StatusCollectionResource.class, "search", false);
-    checkResult("/statuses?q=search", "GET", "FINDER",
-                ResourceMethod.FINDER, StatusCollectionResource.class, "search", false);
-    checkResult("/statuses?q=search&keywords=linkedin", "GET",
-                ResourceMethod.FINDER, StatusCollectionResource.class, "search", false);
-    checkResult("/statuses?q=user_timeline", "GET",
-                ResourceMethod.FINDER, StatusCollectionResource.class, "getUserTimeline", false);
-    checkResult("/statuses?q=public_timeline", "GET",
-                ResourceMethod.FINDER, StatusCollectionResource.class, "getPublicTimeline", false);
-
-    checkResult("/follows/followerID:1;followeeID:1", "GET",
-                ResourceMethod.GET, FollowsAssociativeResource.class, "get", false, "followerID", "followeeID");
-    checkResult("/follows/followerID:1;followeeID:1", "PUT",
-                ResourceMethod.UPDATE, FollowsAssociativeResource.class, "update", false, "followerID", "followeeID");
-    checkResult("/follows/followerID:1;followeeID:1", "POST",
-                ResourceMethod.PARTIAL_UPDATE, FollowsAssociativeResource.class, "update", false, "followerID", "followeeID");
-    checkResult("/follows?ids=followerID:1;followeeID:1&ids=followerID:1;followeeID:3&ids=followerID:1;followeeID:2", "GET",
-                ResourceMethod.BATCH_GET, FollowsAssociativeResource.class, "batchGet", true);
-    checkResult("/follows?q=friends&userID=1", "GET",
-                ResourceMethod.FINDER, FollowsAssociativeResource.class, "getFriends", false);
-    checkResult("/follows?q=followers&userID=1", "GET",
-                ResourceMethod.FINDER, FollowsAssociativeResource.class, "getFollowers", false);
-    checkResult("/follows?q=followers&userID=1", "GET",
-                ResourceMethod.FINDER, FollowsAssociativeResource.class, "getFollowers", false);
-    checkResult("/follows/followerID:1?q=other&someParam=value", "GET",
-                ResourceMethod.FINDER, FollowsAssociativeResource.class, "getOther", false);
-
-    checkBatchKeys("/statuses?ids=1&ids=2&ids=3", "GET", new HashSet<Object>(Arrays.asList(1L, 2L, 3L)));
-    checkBatchKeys("/statuses?ids=1&ids=%32&ids=3", "GET", new HashSet<Object>(Arrays.asList(1L, 2L, 3L)));
-
-    checkResult("/statuses", "POST", "BATCH_CREATE", ResourceMethod.BATCH_CREATE, StatusCollectionResource.class, "batchCreate", false);
-    checkResult("/statuses?ids=1&ids=2", "PUT", ResourceMethod.BATCH_UPDATE, StatusCollectionResource.class, "batchUpdate", true);
-    checkResult("/statuses?ids=1&ids=2", "PUT", "BATCH_UPDATE", ResourceMethod.BATCH_UPDATE, StatusCollectionResource.class, "batchUpdate", true);
-    checkResult("/statuses?ids=1&ids=2", "POST", "BATCH_PARTIAL_UPDATE", ResourceMethod.BATCH_PARTIAL_UPDATE, StatusCollectionResource.class, "batchUpdate", true);
-    checkResult("/statuses?ids=1&ids=2", "DELETE", ResourceMethod.BATCH_DELETE, StatusCollectionResource.class, "batchDelete", true);
-    checkResult("/statuses?ids=1&ids=2", "DELETE", "BATCH_DELETE", ResourceMethod.BATCH_DELETE, StatusCollectionResource.class, "batchDelete", true);
-
-    checkResult("/trending", "GET", ResourceMethod.GET, TrendingResource.class, "get", false);
-    checkResult("/trending", "PUT", ResourceMethod.UPDATE, TrendingResource.class, "update", false);
-    checkResult("/trending", "DELETE", ResourceMethod.DELETE, TrendingResource.class, "delete", false);
-    checkResult("/trending", "POST", "PARTIAL_UPDATE", ResourceMethod.PARTIAL_UPDATE, TrendingResource.class, "update", false);
-
-    checkResult("/trending/trendRegions/1", "GET", ResourceMethod.GET, TrendRegionsCollectionResource.class, "get", false, "trendRegionId");
-    checkResult("/trending/trendRegions/1", "PUT", ResourceMethod.UPDATE, TrendRegionsCollectionResource.class, "update", false);
-    checkResult("/trending/trendRegions/1", "POST", ResourceMethod.PARTIAL_UPDATE, TrendRegionsCollectionResource.class, "update", false);
-    checkResult("/trending/trendRegions", "POST", ResourceMethod.CREATE, TrendRegionsCollectionResource.class, "create", false);
-    checkResult("/trending/trendRegions/1", "DELETE", ResourceMethod.DELETE, TrendRegionsCollectionResource.class, "delete", false);
-    checkResult("/trending/trendRegions?ids=1&ids=2&ids=3", "GET",
-                ResourceMethod.BATCH_GET, TrendRegionsCollectionResource.class, "batchGet", true);
-    checkResult("/trending/trendRegions?ids=1&ids=2", "PUT", "BATCH_UPDATE", ResourceMethod.BATCH_UPDATE, TrendRegionsCollectionResource.class, "batchUpdate", true);
-    checkResult("/trending/trendRegions?ids=1&ids=2", "POST", "BATCH_PARTIAL_UPDATE", ResourceMethod.BATCH_PARTIAL_UPDATE, TrendRegionsCollectionResource.class, "batchUpdate", true);
-    checkResult("/trending/trendRegions?q=get_trending_by_popularity", "GET",
-                ResourceMethod.FINDER, TrendRegionsCollectionResource.class, "getTrendingByPopularity", false);
-
-    //the following two cases would log warnings
-    checkBatchKeys("/statuses?ids=1&ids=&ids=3", "GET", new HashSet<Object>(Arrays.asList(1L, 3L)));
-    checkBatchKeys("/statuses?ids=1&ids=abc&ids=3", "GET", new HashSet<Object>(Arrays.asList(1L, 3L)));
+    checkResult(uri, version, httpMethod, restliMethod, method, RepliesCollectionResource.class, methodName, true);
+    checkBatchKeys(uri, version, httpMethod, keys);
   }
 
-  @Test
-  public void testRestLiMethodMismatch() throws Exception
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingSimpleSubResourceBatch")
+  public Object[][] routingSimpleSubResourceBatch()
+  {
+    return new Object[][]
+      {
+        {
+          "/trending/trendRegions?ids=1&ids=2&ids=3",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.BATCH_GET,
+          "batchGet",
+          new HashSet<String>(Arrays.asList("1", "2", "3"))
+        },
+        {
+          "/trending/trendRegions?ids=List(1,2,3)",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.BATCH_GET,
+          "batchGet",
+          new HashSet<String>(Arrays.asList("1", "2", "3"))
+        },
+        {
+          "/trending/trendRegions?ids=1&ids=2",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "PUT",
+          "BATCH_UPDATE",
+          ResourceMethod.BATCH_UPDATE,
+          "batchUpdate",
+          new HashSet<String>(Arrays.asList("1", "2"))
+        },
+        {
+          "/trending/trendRegions?ids=List(1,2)",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "PUT",
+          "BATCH_UPDATE",
+          ResourceMethod.BATCH_UPDATE,
+          "batchUpdate",
+          new HashSet<String>(Arrays.asList("1", "2"))
+        },
+        {
+          "/trending/trendRegions?ids=1&ids=2",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "POST",
+          "BATCH_PARTIAL_UPDATE",
+          ResourceMethod.BATCH_PARTIAL_UPDATE,
+          "batchUpdate",
+          new HashSet<String>(Arrays.asList("1", "2"))
+        },
+        {
+          "/trending/trendRegions?ids=List(1,2)",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "POST",
+          "BATCH_PARTIAL_UPDATE",
+          ResourceMethod.BATCH_PARTIAL_UPDATE,
+          "batchUpdate",
+          new HashSet<String>(Arrays.asList("1", "2"))
+        }
+      };
+  }
+
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingSimpleSubResourceBatch")
+  public void testRoutingSimbleSubResourceBatch(String uri,
+                                                ProtocolVersion version,
+                                                String httpMethod, String restliMethod,
+                                                ResourceMethod method,
+                                                String methodName,
+                                                Set<String> keys) throws Exception
+  {
+    Map<String, ResourceModel> pathRootResourceMap =
+      buildResourceModels(TrendingResource.class,
+                          TrendRegionsCollectionResource.class);
+    _router = new RestLiRouter(pathRootResourceMap);
+
+    checkResult(uri, version, httpMethod, restliMethod, method, TrendRegionsCollectionResource.class, methodName, true);
+    checkBatchKeys(uri, version, httpMethod, keys);
+  }
+
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingAssociationResourceBatch")
+  public Object[][] routingAssociationResourceBatch()
+  {
+
+    CompoundKey key1 = new CompoundKey();
+    key1.append("followeeID", 1L);
+    key1.append("followerID", 1L);
+
+    CompoundKey key2 = new CompoundKey();
+    key2.append("followeeID", 3L);
+    key2.append("followerID", 1L);
+
+    CompoundKey key3 = new CompoundKey();
+    key3.append("followeeID", 2L);
+    key3.append("followerID", 1L);
+
+    // for reference.
+    CompoundKey key2Mismatch = new CompoundKey();
+    key2Mismatch.append("followeeID", 3L);
+    key2Mismatch.append("followerID", 1L);
+    key2Mismatch.append("badKey", 5L);
+
+    CompoundKey key2Partial = new CompoundKey();
+    key2Partial.append("followeeID", 3L);
+
+    return new Object[][]
+      {
+        { "/follows?ids=followerID:1;followeeID:1&ids=followerID:1;followeeID:3&ids=followerID:1;followeeID:2", // legacy
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.BATCH_GET,
+          "batchGet",
+          new HashSet<CompoundKey>(Arrays.asList(key1, key2, key3))
+        },
+        { "/follows?ids=followerID%3D1%26followeeID%3D1&ids=followerID%3D1%26followeeID%3D3&ids=followerID%3D1%26followeeID%3D2",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.BATCH_GET,
+          "batchGet",
+          new HashSet<CompoundKey>(Arrays.asList(key1, key2, key3))
+        },
+        { "/follows?ids=List((followerID:1,followeeID:1),(followerID:1,followeeID:3),(followerID:1,followeeID:2))",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.BATCH_GET,
+          "batchGet",
+          new HashSet<CompoundKey>(Arrays.asList(key1, key2, key3))
+        },
+        { "/follows?ids=followerID:1;followeeID:1&ids=followerID:1;followeeID:3;badKey:5&ids=followerID:1;followeeID:2", // legacy
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.BATCH_GET,
+          "batchGet",
+          new HashSet<CompoundKey>(Arrays.asList(key1, key3)) // second key should log an error.
+        },
+        { "/follows?ids=followerID%3D1%26followeeID%3D1&ids=followerID%3D1%26followeeID%3D3%26badKey%3D5&ids=followerID%3D1%26followeeID%3D2",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.BATCH_GET,
+          "batchGet",
+          new HashSet<CompoundKey>(Arrays.asList(key1, key3)) // second key should log an error
+        },
+        { "/follows?ids=List((followerID:1,followeeID:1),(followerID:1,followeeID:3,badKey:5),(followerID:1,followeeID:2))",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.BATCH_GET,
+          "batchGet",
+          new HashSet<CompoundKey>(Arrays.asList(key1, key3)) // second key should log an error
+        },
+      };
+  }
+
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingAssociationResourceBatch")
+  public void testRoutingAssociationBatch(String uri,
+                                          ProtocolVersion version,
+                                          String httpMethod,
+                                          String restliMethod,
+                                          ResourceMethod method,
+                                          String methodName,
+                                          Set<CompoundKey> compoundKeys) throws Exception
+  {
+    Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(FollowsAssociativeResource.class);
+    _router = new RestLiRouter(pathRootResourceMap);
+
+    checkResult(uri, version, httpMethod, restliMethod, method, FollowsAssociativeResource.class, methodName, true);
+    checkBatchKeys(uri, version, httpMethod, compoundKeys);
+  }
+
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingComplexKeyBatch")
+  @SuppressWarnings("unchecked")
+  public Object[][] routingComplexKeyBatch()
+  {
+    TwitterTestDataModels.DiscoveredItemKey keyPart1 = new TwitterTestDataModels.DiscoveredItemKey().setUserId(1L).setType(2).setItemId(3L);
+    TwitterTestDataModels.DiscoveredItemKey keyPart2 = new TwitterTestDataModels.DiscoveredItemKey().setUserId(4L).setType(5).setItemId(6L);
+
+    TwitterTestDataModels.DiscoveredItemKeyParams emptyParams = new TwitterTestDataModels.DiscoveredItemKeyParams();
+
+    ComplexResourceKey<TwitterTestDataModels.DiscoveredItemKey, TwitterTestDataModels.DiscoveredItemKeyParams> complexKey1 =
+      new ComplexResourceKey<TwitterTestDataModels.DiscoveredItemKey, TwitterTestDataModels.DiscoveredItemKeyParams>(keyPart1, emptyParams);
+    ComplexResourceKey<TwitterTestDataModels.DiscoveredItemKey, TwitterTestDataModels.DiscoveredItemKeyParams> complexKey2 =
+      new ComplexResourceKey<TwitterTestDataModels.DiscoveredItemKey, TwitterTestDataModels.DiscoveredItemKeyParams>(keyPart2, emptyParams);
+
+    return new Object[][]
+      {
+        {
+          "/discovereditems?ids%5B0%5D.userId=1&ids%5B0%5D.type=2&ids%5B0%5D.itemId=3&ids%5B1%5D.userId=4&ids%5B1%5D.type=5&ids%5B1%5D.itemId=6",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          "BATCH_GET",
+          ResourceMethod.BATCH_GET,
+          "batchGet",
+          new HashSet<ComplexResourceKey<TwitterTestDataModels.DiscoveredItemKey, TwitterTestDataModels.DiscoveredItemKeyParams>>(Arrays.asList(complexKey1, complexKey2))
+        },
+        {
+          "/discovereditems?ids=List((userId:1,type:2,itemId:3),(userId:4,type:5,itemId:6))",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          "BATCH_GET",
+          ResourceMethod.BATCH_GET,
+          "batchGet",
+          new HashSet<ComplexResourceKey<TwitterTestDataModels.DiscoveredItemKey, TwitterTestDataModels.DiscoveredItemKeyParams>>(Arrays.asList(complexKey1, complexKey2))
+        },
+        {
+          "/discovereditems?ids%5B0%5D.userId=1&ids%5B0%5D.type=2&ids%5B0%5D.itemId=3&ids%5B1%5D.userId=4&ids%5B1%5D.type=5&ids%5B1%5D.itemId=6",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "PUT",
+          "BATCH_UPDATE",
+          ResourceMethod.BATCH_UPDATE,
+          "batchUpdate",
+          new HashSet<ComplexResourceKey<TwitterTestDataModels.DiscoveredItemKey, TwitterTestDataModels.DiscoveredItemKeyParams>>(Arrays.asList(complexKey1, complexKey2))
+        },
+        {
+          "/discovereditems?ids=List((userId:1,type:2,itemId:3),(userId:4,type:5,itemId:6))",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "PUT",
+          "BATCH_UPDATE",
+          ResourceMethod.BATCH_UPDATE,
+          "batchUpdate",
+          new HashSet<ComplexResourceKey<TwitterTestDataModels.DiscoveredItemKey, TwitterTestDataModels.DiscoveredItemKeyParams>>(Arrays.asList(complexKey1, complexKey2))
+        },
+        {
+          "/discovereditems?ids%5B0%5D.userId=1&ids%5B0%5D.type=2&ids%5B0%5D.itemId=3&ids%5B1%5D.userId=4&ids%5B1%5D.type=5&ids%5B1%5D.itemId=6",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "POST",
+          "BATCH_PARTIAL_UPDATE",
+          ResourceMethod.BATCH_PARTIAL_UPDATE,
+          "batchUpdate",
+          new HashSet<ComplexResourceKey<TwitterTestDataModels.DiscoveredItemKey, TwitterTestDataModels.DiscoveredItemKeyParams>>(Arrays.asList(complexKey1, complexKey2))
+        },
+        {
+          "/discovereditems?ids=List((userId:1,type:2,itemId:3),(userId:4,type:5,itemId:6))",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "POST",
+          "BATCH_PARTIAL_UPDATE",
+          ResourceMethod.BATCH_PARTIAL_UPDATE,
+          "batchUpdate",
+          new HashSet<ComplexResourceKey<TwitterTestDataModels.DiscoveredItemKey, TwitterTestDataModels.DiscoveredItemKeyParams>>(Arrays.asList(complexKey1, complexKey2))
+        },
+        {
+          "/discovereditems?ids%5B0%5D.userId=1&ids%5B0%5D.type=2&ids%5B0%5D.itemId=3&ids%5B1%5D.userId=4&ids%5B1%5D.type=5&ids%5B1%5D.itemId=6",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "DELETE",
+          "BATCH_DELETE",
+          ResourceMethod.BATCH_DELETE,
+          "batchDelete",
+          new HashSet<ComplexResourceKey<TwitterTestDataModels.DiscoveredItemKey, TwitterTestDataModels.DiscoveredItemKeyParams>>(Arrays.asList(complexKey1, complexKey2))
+        },
+        {
+          "/discovereditems?ids=List((userId:1,type:2,itemId:3),(userId:4,type:5,itemId:6))",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "DELETE",
+          "BATCH_DELETE",
+          ResourceMethod.BATCH_DELETE,
+          "batchDelete",
+          new HashSet<ComplexResourceKey<TwitterTestDataModels.DiscoveredItemKey, TwitterTestDataModels.DiscoveredItemKeyParams>>(Arrays.asList(complexKey1, complexKey2))
+        },
+      };
+  }
+
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingComplexKeyBatch")
+  public void testRoutingComplexKeyBatch(String uri,
+                                         ProtocolVersion version,
+                                         String httpMethod,
+                                         String restliMethod,
+                                         ResourceMethod method,
+                                         String methodName,
+                                         Set<ComplexResourceKey<TwitterTestDataModels.DiscoveredItemKey,
+                                                                TwitterTestDataModels.DiscoveredItemKeyParams>> compoundKeys) throws Exception
+  {
+    Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(DiscoveredItemsResource.class);
+    _router = new RestLiRouter(pathRootResourceMap);
+
+    checkResult(uri, version, httpMethod, restliMethod, method, DiscoveredItemsResource.class, methodName, true);
+    checkBatchKeys(uri, version, httpMethod, compoundKeys);
+  }
+
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingCollection")
+  public Object[][] routingCollection()
+  {
+    String[] statusKey = new String[] { "statusID" };
+    
+    return new Object[][]
+      {
+        { 
+          "/statuses/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), 
+          "GET", 
+          null,
+          ResourceMethod.GET, 
+          "get", 
+          statusKey 
+        },
+        { "/statuses/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.GET,
+          "get",
+          statusKey 
+        },
+        { "/statuses/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          "GET",
+          ResourceMethod.GET,
+          "get",
+          statusKey 
+        },
+        { "/statuses/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          "GET",
+          ResourceMethod.GET,
+          "get",
+          statusKey 
+        },
+        { "/st%61tuses/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.GET,
+          "get",
+          statusKey 
+        },
+        { "/st%61tuses/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.GET,
+          "get",
+          statusKey 
+        },
+        { "/statuses/%31",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.GET,
+          "get",
+          statusKey 
+        },
+        { "/statuses/%31",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.GET,
+          "get",
+          statusKey 
+        },
+        { "/statuses/-1",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+           null,
+          ResourceMethod.GET,
+          "get",
+          statusKey 
+        },
+        { "/statuses/-1",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+           null,
+          ResourceMethod.GET,
+          "get",
+          statusKey 
+        },
+        { "/statuses",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "POST",
+          null,
+          ResourceMethod.CREATE,
+          "create",
+          new String[0] 
+        },
+        { "/statuses",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "POST",
+          null,
+          ResourceMethod.CREATE,
+          "create",
+          new String[0] 
+        },
+        { "/statuses",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "POST",
+          "CREATE",
+          ResourceMethod.CREATE,
+          "create",
+          new String[0] 
+        },
+        { "/statuses",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "POST",
+          "CREATE",
+          ResourceMethod.CREATE,
+          "create",
+          new String[0] 
+        },
+        { "/statuses/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "PUT",
+          null,
+          ResourceMethod.UPDATE,
+          "update",
+          statusKey 
+        },
+        { "/statuses/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "PUT",
+          null,
+          ResourceMethod.UPDATE,
+          "update",
+          statusKey 
+        },
+        { "/statuses/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "PUT",
+          "UPDATE",
+          ResourceMethod.UPDATE,
+          "update",
+          statusKey 
+        },
+        { "/statuses/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "PUT",
+          "UPDATE",
+          ResourceMethod.UPDATE,
+          "update",
+          statusKey 
+        },
+        { "/statuses/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "POST",
+          null,
+          ResourceMethod.PARTIAL_UPDATE,
+          "update",
+          statusKey 
+        },
+        { "/statuses/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "POST",
+          null,
+          ResourceMethod.PARTIAL_UPDATE,
+          "update",
+          statusKey 
+        },
+        { "/statuses/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "POST",
+          "PARTIAL_UPDATE",
+          ResourceMethod.PARTIAL_UPDATE,
+          "update",
+          statusKey 
+        },
+        { "/statuses/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "POST",
+          "PARTIAL_UPDATE",
+          ResourceMethod.PARTIAL_UPDATE,
+          "update",
+          statusKey 
+        },
+        { "/statuses/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "DELETE",
+          null,
+          ResourceMethod.DELETE,
+          "delete",
+          statusKey 
+        },
+        { "/statuses/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "DELETE",
+          null,
+          ResourceMethod.DELETE,
+          "delete",
+          statusKey 
+        },
+        { "/statuses/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "DELETE",
+          "DELETE",
+          ResourceMethod.DELETE,
+          "delete",
+          statusKey 
+        },
+        { "/statuses/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "DELETE",
+          "DELETE",
+          ResourceMethod.DELETE,
+          "delete",
+          statusKey 
+        },
+        { "/statuses?q=search",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.FINDER,
+          "search",
+          new String[0] 
+        },
+        { "/statuses?q=search",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.FINDER,
+          "search",
+          new String[0] 
+        },
+        { "/statuses?q=search",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          "FINDER",
+          ResourceMethod.FINDER,
+          "search",
+          new String[0] 
+        },
+        { "/statuses?q=search",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          "FINDER",
+          ResourceMethod.FINDER,
+          "search",
+          new String[0] 
+        },
+        { "/statuses?q=search&keywords=linkedin",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.FINDER,
+          "search",
+          new String[0] 
+        },
+        { "/statuses?q=search&keywords=linkedin",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.FINDER,
+          "search",
+          new String[0] 
+        },
+        { "/statuses?q=user_timeline",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.FINDER,
+          "getUserTimeline",
+          new String[0] 
+        },
+        { "/statuses?q=user_timeline",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.FINDER,
+          "getUserTimeline",
+          new String[0] 
+        },
+        { "/statuses?q=public_timeline",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.FINDER,
+          "getPublicTimeline",
+          new String[0] 
+        },
+        { "/statuses?q=public_timeline",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.FINDER,
+          "getPublicTimeline",
+          new String[0] 
+        },
+        { "/statuses",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "POST",
+          "BATCH_CREATE",
+          ResourceMethod.BATCH_CREATE,
+          "batchCreate",
+          new String[0] 
+        },
+        { "/statuses",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "POST",
+          "BATCH_CREATE",
+          ResourceMethod.BATCH_CREATE,
+          "batchCreate",
+          new String[0] 
+        }
+      };
+  }
+
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingCollection")
+  public void testRoutingCollection(String uri, ProtocolVersion version, String httpMethod, String restliMethod, ResourceMethod method, String methodName, String[] pathKeys) throws Exception
+  {
+    Map<String, ResourceModel> pathRootResourceMap =
+      buildResourceModels(StatusCollectionResource.class);
+    _router = new RestLiRouter(pathRootResourceMap);
+
+    checkResult(uri, version, httpMethod, restliMethod, method, StatusCollectionResource.class, methodName, false, pathKeys);
+  }
+  
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingCollectionSubResource")
+  public Object[][] routingCollectionSubResource()
+  {
+    return new Object[][]
+      {
+        {
+          "/statuses/1/replies",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "POST",
+          ResourceMethod.CREATE,
+          RepliesCollectionResource.class,
+          "create"
+        },
+        {
+          "/statuses/1/replies",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "POST",
+          ResourceMethod.CREATE,
+          RepliesCollectionResource.class,
+          "create"
+        },
+        {
+          "/statuses/1/location",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          ResourceMethod.GET,
+          LocationResource.class,
+          "get"
+        },
+        {
+          "/statuses/1/location",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          ResourceMethod.GET,
+          LocationResource.class,
+          "get"
+        },
+        {
+          "/statuses/1/location",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "PUT",
+          ResourceMethod.UPDATE,
+          LocationResource.class,
+          "update"
+        },
+        {
+          "/statuses/1/location",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "PUT",
+          ResourceMethod.UPDATE,
+          LocationResource.class,
+          "update"
+        },
+        {
+          "/statuses/1/location",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "DELETE",
+          ResourceMethod.DELETE,
+          LocationResource.class,
+          "delete"
+        },
+        {
+          "/statuses/1/location",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "DELETE",
+          ResourceMethod.DELETE,
+          LocationResource.class,
+          "delete"
+        },
+      };
+  }
+
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingCollectionSubResource")
+  public void testRoutingCollectionSubResource(String uri,
+                                               ProtocolVersion version,
+                                               String httpMethod,
+                                               ResourceMethod method,
+                                               Class<?> resourceClass,
+                                               String methodName) throws Exception
+  {
+    Map<String, ResourceModel> pathRootResourceMap =
+      buildResourceModels(StatusCollectionResource.class,
+                          RepliesCollectionResource.class,
+                          LocationResource.class);
+    _router = new RestLiRouter(pathRootResourceMap);
+
+    checkResult(uri, version, httpMethod, method, resourceClass, methodName, false, "statusID");
+  }
+
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingAssociation")
+  public Object[][] routingAssociation()
+  {
+    String[] assocPathKeys = new String[] { "followerID", "followeeID" };
+    
+    return new Object[][]
+      {
+        {
+          "/follows/followerID:1;followeeID:1", // legacy
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          ResourceMethod.GET,
+          "get",
+          assocPathKeys
+        },
+        {
+          "/follows/followerID=1&followeeID=1",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          ResourceMethod.GET,
+          "get",
+          assocPathKeys
+        },
+        {
+          "/follows/(followerID:1,followeeID:1)",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          ResourceMethod.GET,
+          "get",
+          assocPathKeys
+        },
+        { "/follows/followerID:1;followeeID:1", // legacy
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "PUT",
+          ResourceMethod.UPDATE,
+          "update",
+          assocPathKeys
+        },
+        { "/follows/followerID=1&followeeID=1",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "PUT",
+          ResourceMethod.UPDATE,
+          "update",
+          assocPathKeys
+        },
+        { "/follows/(followerID:1,followeeID:1)",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "PUT",
+          ResourceMethod.UPDATE,
+          "update",
+          assocPathKeys
+        },
+        { "/follows/followerID:1;followeeID:1", // legacy
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "POST",
+          ResourceMethod.PARTIAL_UPDATE,
+          "update",
+          assocPathKeys
+        },
+        { "/follows/followerID=1&followeeID=1",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "POST",
+          ResourceMethod.PARTIAL_UPDATE,
+          "update",
+          assocPathKeys
+        },
+        { "/follows/(followerID:1,followeeID:1)",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "POST",
+          ResourceMethod.PARTIAL_UPDATE,
+          "update",
+          assocPathKeys
+        },
+        { "/follows?q=friends&userID=1",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          ResourceMethod.FINDER,
+          "getFriends",
+          new String[0]
+        },
+        { "/follows?q=friends&userID=1",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          ResourceMethod.FINDER,
+          "getFriends",
+          new String[0]
+        },
+        { "/follows?q=followers&userID=1",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          ResourceMethod.FINDER,
+          "getFollowers",
+          new String[0]
+        },
+        { "/follows?q=followers&userID=1",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          ResourceMethod.FINDER,
+          "getFollowers",
+          new String[0]
+        },
+        { "/follows/followerID:1?q=other&someParam=value", // legacy
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          ResourceMethod.FINDER,
+          "getOther",
+          new String[] { "followerID" }
+        },
+        { "/follows/followerID=1?q=other&someParam=value",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          ResourceMethod.FINDER,
+          "getOther",
+          new String[] { "followerID" }
+        },
+        { "/follows/(followerID:1)?q=other&someParam=value",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          ResourceMethod.FINDER,
+          "getOther",
+          new String[] { "followerID" }
+        }
+      };
+  }
+
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingAssociation")
+  public void testRoutingAssociation(String uri, ProtocolVersion version, String httpMethod, ResourceMethod method, String methodName, String[] pathKeys) throws Exception
+  {
+    Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(FollowsAssociativeResource.class);
+    _router = new RestLiRouter(pathRootResourceMap);
+
+    checkResult(uri, version, httpMethod, method, FollowsAssociativeResource.class, methodName, false, pathKeys);
+  }
+
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingComplexKey")
+  public Object[][] routingComplexKey()
+  {
+    return new Object[][]
+      {
+        {
+          "/discovereditems/userId=1&type=2&itemId=3",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.GET,
+          "get",
+          true
+        },
+        {
+          "/discovereditems/(userId:1,type:2,itemId:3)",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.GET,
+          "get",
+          true
+        },
+        {
+          "/discovereditems/",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "POST",
+          null,
+          ResourceMethod.CREATE,
+          "create",
+          false
+        },
+        {
+          "/discovereditems/",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "POST",
+          null,
+          ResourceMethod.CREATE,
+          "create",
+          false
+        },
+        {
+          "/discovereditems/",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "POST",
+          "BATCH_CREATE",
+          ResourceMethod.BATCH_CREATE,
+          "batchCreate",
+          false
+        },
+        {
+          "/discovereditems/",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "POST",
+          "BATCH_CREATE",
+          ResourceMethod.BATCH_CREATE,
+          "batchCreate",
+          false
+        },
+        {
+          "/discovereditems/userId=1&type=2&itemId=3",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "PUT",
+          null,
+          ResourceMethod.UPDATE,
+          "update",
+          true
+        },
+        {
+          "/discovereditems/(userId:1,type:2,itemId:3)",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "PUT",
+          null,
+          ResourceMethod.UPDATE,
+          "update",
+          true
+        },
+        {
+          "/discovereditems/userId=1&type=2&itemId=3",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "POST",
+          null,
+          ResourceMethod.PARTIAL_UPDATE,
+          "update",
+          true
+        },
+        {
+          "/discovereditems/(userId:1,type:2,itemId:3)",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "POST",
+          null,
+          ResourceMethod.PARTIAL_UPDATE,
+          "update",
+          true
+        },
+        {
+          "/discovereditems/userId=1&type=2&itemId=3",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "DELETE",
+          null,
+          ResourceMethod.DELETE,
+          "delete",
+          true
+        },
+        {
+          "/discovereditems/(userId:1,type:2,itemId:3)",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "DELETE",
+          null,
+          ResourceMethod.DELETE,
+          "delete",
+          true
+        },
+        {
+          "/discovereditems?q=user&userId=1",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.FINDER,
+          "findByUser",
+          false
+        },
+        {
+          "/discovereditems?q=user&userId=1",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.FINDER,
+          "findByUser",
+          false
+        },
+        {
+          "/discovereditems?action=purge&user=1",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "POST",
+          null,
+          ResourceMethod.ACTION,
+          "purge",
+          false
+        },
+        {
+          "/discovereditems?action=purge&user=1",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "POST",
+          null,
+          ResourceMethod.ACTION,
+          "purge",
+          false
+        },
+      };
+  }
+
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingComplexKey")
+  public void testRoutingComplexKey(String uri,
+                                    ProtocolVersion version,
+                                    String httpMethod,
+                                    String restliMethod,
+                                    ResourceMethod method,
+                                    String methodName,
+                                    boolean hasKeys) throws Exception
+  {
+    Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(DiscoveredItemsResource.class);
+    _router = new RestLiRouter(pathRootResourceMap);
+
+    checkResult(uri, version, httpMethod, restliMethod, method, DiscoveredItemsResource.class, methodName, false, hasKeys? new String[]{"discoveredItemId"} : new String[0]);
+  }
+  
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingSimpleResource")
+  public Object[][] routingSimpleResource() throws Exception
+  {
+    return new Object[][]
+      {
+        {
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.GET,
+          "get"
+        },
+        {
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.GET,
+          "get"
+        },
+        {
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "PUT",
+          null,
+          ResourceMethod.UPDATE,
+          "update"
+        },
+        {
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "PUT",
+          null,
+          ResourceMethod.UPDATE,
+          "update"
+        },
+        {
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "DELETE",
+          null,
+          ResourceMethod.DELETE,
+          "delete"
+        },
+        {
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "DELETE",
+          null,
+          ResourceMethod.DELETE,
+          "delete"
+        },
+        {
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "POST",
+          "PARTIAL_UPDATE",
+          ResourceMethod.PARTIAL_UPDATE,
+          "update"
+        },
+        {
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "POST",
+          "PARTIAL_UPDATE",
+          ResourceMethod.PARTIAL_UPDATE,
+          "update"
+        }
+      };
+  }
+
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingSimpleResource")
+  public void testRoutingSimpleResource(ProtocolVersion version, String httpMethod, String restliMethod, ResourceMethod method, String methodName) throws Exception
+  {
+    Map<String, ResourceModel> pathRootResourceMap =
+      buildResourceModels(TrendingResource.class);
+    _router = new RestLiRouter(pathRootResourceMap);
+
+    checkResult("/trending", version, httpMethod, restliMethod, method, TrendingResource.class, methodName, false);
+  }
+
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingSubSimpleResource")
+  public Object[][] routingSubSimpleResource() throws Exception
+  {
+    return new Object[][]
+      {
+        {
+          "/trending/trendRegions/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          ResourceMethod.GET,
+          "get",
+          new String[] { "trendRegionId" }
+        },
+        {
+          "/trending/trendRegions/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          ResourceMethod.GET,
+          "get",
+          new String[] { "trendRegionId" }
+        },
+        {
+          "/trending/trendRegions/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "PUT",
+          ResourceMethod.UPDATE,
+          "update",
+          new String[] { "trendRegionId" }
+        },
+        {
+          "/trending/trendRegions/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "PUT",
+          ResourceMethod.UPDATE,
+          "update",
+          new String[] { "trendRegionId" }
+        },
+        {
+          "/trending/trendRegions/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "POST",
+          ResourceMethod.PARTIAL_UPDATE,
+          "update",
+          new String[] { "trendRegionId" }
+        },
+        {
+          "/trending/trendRegions/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "POST",
+          ResourceMethod.PARTIAL_UPDATE,
+          "update",
+          new String[] { "trendRegionId" }
+        },
+        {
+          "/trending/trendRegions",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "POST",
+          ResourceMethod.CREATE,
+          "create",
+          new String[0]
+        },
+        {
+          "/trending/trendRegions",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "POST",
+          ResourceMethod.CREATE,
+          "create",
+          new String[0]
+        },
+        {
+          "/trending/trendRegions/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "DELETE",
+          ResourceMethod.DELETE,
+          "delete",
+          new String[] { "trendRegionId" }
+        },
+        {
+          "/trending/trendRegions/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "DELETE",
+          ResourceMethod.DELETE,
+          "delete",
+          new String[] { "trendRegionId" }
+        },
+        {
+          "/trending/trendRegions?q=get_trending_by_popularity",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          ResourceMethod.FINDER,
+          "getTrendingByPopularity",
+          new String[0]
+        },
+        {
+          "/trending/trendRegions?q=get_trending_by_popularity",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          ResourceMethod.FINDER,
+          "getTrendingByPopularity",
+          new String[0]
+        },
+      };
+  }
+
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingSubSimpleResource")
+  public void testRoutingSubSimpleResource(String uri, ProtocolVersion version, String httpMethod, ResourceMethod method, String methodName, String[] pathKeys) throws Exception
+  {
+    Map<String, ResourceModel> pathRootResourceMap =
+      buildResourceModels(TrendingResource.class,
+                          TrendRegionsCollectionResource.class);
+    _router = new RestLiRouter(pathRootResourceMap);
+
+    checkResult(uri, version, httpMethod, method, TrendRegionsCollectionResource.class, methodName, false, pathKeys);
+  }
+
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "methodMismatch")
+  public Object[][] methodMismatch()
+  {
+    return new Object[][]
+      {
+        {
+          "/statuses/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          "CREATE"
+        },
+        {
+          "/statuses/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          "CREATE"
+        },
+        {
+          "/statuses?ids=1&ids=2&ids=3",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          "CREATE"
+        },
+        {
+          "/statuses?ids=List(1,2,3)",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          "CREATE"
+        },
+        {
+          "/statuses",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "POST",
+          "GET"
+        },
+        {
+          "/statuses",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "POST",
+          "GET"
+        },
+        {
+          "/statuses/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "PUT",
+          "CREATE"
+        },
+        {
+          "/statuses/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "PUT",
+          "CREATE"
+        },
+        {
+          "/statuses/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "POST",
+          "CREATE"
+        },
+        {
+          "/statuses/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "POST",
+          "CREATE"
+        },
+        {
+          "/statuses/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "DELETE",
+          "CREATE"
+        },
+        {
+          "/statuses/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "DELETE",
+          "CREATE"
+        },
+        {
+          "/statuses?q=search",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          "CREATE"
+        },
+        {
+          "/statuses?q=search",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          "CREATE"
+        },
+        {
+          "/statuses",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "POST",
+          "GET"
+        },
+        {
+          "/statuses",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "POST",
+          "GET"
+        },
+        {
+          "/statuses?ids=1&ids=2",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "PUT",
+          "CREATE"
+        },
+        {
+          "/statuses?ids=List(1,2)",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "PUT",
+          "CREATE"
+        },
+        {
+          "/statuses?ids=1&ids=2",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "POST",
+          "CREATE"
+        },
+        {
+          "/statuses?ids=List(1,2)",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "POST",
+          "CREATE"
+        },
+        {
+          "/statuses?ids=1&ids=2",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "DELETE",
+          "CREATE"
+        },
+        {
+          "/statuses?ids=List(1,2)",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "DELETE",
+          "CREATE"
+        },
+        {
+          "/statuses/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          "FOO"
+        },
+        {
+          "/statuses/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          "FOO"
+        },
+        {
+          "/statuses?ids=1,2,3",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          "FOO"
+        },
+        {
+          "/statuses",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "POST",
+          "FOO"
+        },
+        {
+          "/statuses",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "POST",
+          "FOO"
+        },
+        {
+          "/statuses/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "PUT",
+          "FOO"
+        },
+        {
+          "/statuses/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "PUT",
+          "FOO"
+        },
+        {
+          "/statuses/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "POST",
+          "FOO"
+        },
+        {
+          "/statuses/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "POST",
+          "FOO"
+        },
+        {
+          "/statuses/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "DELETE",
+          "FOO"
+        },
+        {
+          "/statuses/1",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "DELETE",
+          "FOO"
+        },
+        {
+          "/statuses?q=search",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          "FOO"
+        },
+        {
+          "/statuses?q=search",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          "FOO"
+        },
+        {
+          "/statuses",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "POST",
+          "FOO"
+        },
+        {
+          "/statuses",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "POST",
+          "FOO"
+        },
+        {
+          "/statuses?ids=1&ids=2",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "PUT",
+          "FOO"
+        },
+        {
+          "/statuses?ids=List(1,2)",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "PUT",
+          "FOO"
+        },
+        {
+          "/statuses?ids=1&ids=2",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "POST",
+          "FOO"
+        },
+        {
+          "/statuses?ids=List(1,2)",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "POST",
+          "FOO"
+        },
+        {
+          "/statuses?ids=1&ids=2",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "DELETE",
+          "FOO"
+        },
+        {
+          "/statuses?ids=List(1,2)",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "DELETE",
+          "FOO"
+        },
+      };
+  }
+
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "methodMismatch")
+  public void testRestLiMethodMismatch(String uri, ProtocolVersion version, String httpMethod, String restliMethod) throws Exception
   {
     Map<String, ResourceModel> pathRootResourceMap =
       buildResourceModels(StatusCollectionResource.class,
@@ -408,193 +2023,238 @@ public class TestRestLiRouting
 
     _router = new RestLiRouter(pathRootResourceMap);
 
-    expectRoutingException("/statuses/1", "GET", "CREATE");
-    expectRoutingException("/statuses?ids=1&ids=2&ids=3", "GET", "CREATE");
-    expectRoutingException("/statuses", "POST", "GET");
-    expectRoutingException("/statuses/1", "PUT", "CREATE");
-    expectRoutingException("/statuses/1", "POST", "CREATE");
-    expectRoutingException("/statuses/1", "DELETE", "CREATE");
-    expectRoutingException("/statuses?q=search", "GET", "CREATE");
-    expectRoutingException("/statuses", "POST", "GET");
-    expectRoutingException("/statuses?ids=1&ids=2", "PUT", "CREATE");
-    expectRoutingException("/statuses?ids=1&ids=2", "POST", "CREATE");
-    expectRoutingException("/statuses?ids=1&ids=2", "DELETE", "CREATE");
-
-    expectRoutingException("/statuses/1", "GET", "FOO");
-    expectRoutingException("/statuses?ids=1,2,3", "GET", "FOO");
-    expectRoutingException("/statuses", "POST", "FOO");
-    expectRoutingException("/statuses/1", "PUT", "FOO");
-    expectRoutingException("/statuses/1", "POST", "FOO");
-    expectRoutingException("/statuses/1", "DELETE", "FOO");
-    expectRoutingException("/statuses?q=search", "GET", "FOO");
-    expectRoutingException("/statuses", "POST", "FOO");
-    expectRoutingException("/statuses?ids=1&ids=2", "PUT", "FOO");
-    expectRoutingException("/statuses?ids=1&ids=2", "POST", "FOO");
-    expectRoutingException("/statuses?ids=1&ids=2", "DELETE", "FOO");
+    expectRoutingException(uri, version, httpMethod, restliMethod);
   }
 
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "nKeyAssociationRouting")
+  public Object[][] nKeyAssociationRouting()
+  {
+    return new Object[][]
+      {
+        {
+          "/test/foo:1;bar:2;baz:3", // legacy
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          ResourceMethod.GET,
+          "get",
+          new String[] {"foo", "bar", "baz"}
+        },
+        {
+          "/test/foo=1&bar=2&baz=3",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          ResourceMethod.GET,
+          "get",
+          new String[] {"foo", "bar", "baz"}
+        },
+        {
+          "/test/(foo:1,bar:2,baz:3)",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          ResourceMethod.GET ,
+          "get",
+          new String[] {"foo", "bar", "baz"}
+        },
+        {
+          "/test/foo:%3A;bar:%3B;baz:%3D", // legacy
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          ResourceMethod.GET,
+          "get",
+          new String[] {"foo", "bar", "baz"}
+        },
+        {
+          "/test/foo=%3A&bar=%3B&baz=%3D",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          ResourceMethod.GET,
+          "get",
+          new String[] {"foo", "bar", "baz"}
+        },
+        {
+          "/test/(foo:%3A,bar:%3B,baz:%3D)",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          ResourceMethod.GET,
+          "get",
+          new String[] {"foo", "bar", "baz"}
+        },
+        {
+          "/test/foo=1&bar=2?q=find",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          ResourceMethod.FINDER,
+          "find",
+          new String[] {"foo", "bar"}
+        },
+        {
+          "test/foo:1;bar:2?q=find",  // legacy
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          ResourceMethod.FINDER,
+          "find",
+          new String[] {"foo", "bar"}
+        },
+        {
+          "/test/(foo:1,bar:2)?q=find",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          ResourceMethod.FINDER,
+          "find",
+          new String[] {"foo", "bar"}
+        },
+      };
+  }
 
-  @Test
-  public void testNKeyAssociationRouting() throws Exception
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "nKeyAssociationRouting")
+  public void testNKeyAssociationRoutingBasicNonBatch(String uri,
+                                                      ProtocolVersion version,
+                                                      String httpMethod,
+                                                      ResourceMethod method,
+                                                      String methodName,
+                                                      String[] expectedPathKeys)
+    throws Exception
   {
     Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(
-            CombinedResources.CombinedNKeyAssociationResource.class);
+      CombinedResources.CombinedNKeyAssociationResource.class);
     _router = new RestLiRouter(pathRootResourceMap);
 
-    checkResult("/test/foo=1&bar=2&baz=3", "GET",
-                ResourceMethod.GET, CombinedResources.CombinedNKeyAssociationResource.class, "get", false, "foo", "bar", "baz");
-    checkResult("/test/foo:1;bar:2;baz:3", "GET", // same as above but legacy way to spell compound keys
-                ResourceMethod.GET, CombinedResources.CombinedNKeyAssociationResource.class, "get", false, "foo", "bar", "baz");
+    checkResult(uri,
+                version,
+                httpMethod,
+                method,
+                CombinedResources.CombinedNKeyAssociationResource.class,
+                methodName,
+                false,
+                expectedPathKeys);
+  }
 
-    checkResult("/test/foo=%3A&bar=%3B&baz=%3D", "GET",
-                ResourceMethod.GET, CombinedResources.CombinedNKeyAssociationResource.class, "get", false, "foo", "bar", "baz");
-    checkResult("/test/foo:%3A;bar:%3B;baz:%3D", "GET", // same as above but legacy way to spell compound keys
-                ResourceMethod.GET, CombinedResources.CombinedNKeyAssociationResource.class, "get", false, "foo", "bar", "baz");
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "nKeyAssociationRoutingBatch")
+  public Object[][] nKeyAssociationRoutingBatch()
+  {
 
-    checkResult("/test/foo=1&bar=2?q=find", "GET",
-                ResourceMethod.FINDER, CombinedResources.CombinedNKeyAssociationResource.class, "find", false, "foo", "bar");
-    checkResult("/test/foo:1;bar:2?q=find", "GET", // same as above but legacy way to spell compound keys
-                ResourceMethod.FINDER, CombinedResources.CombinedNKeyAssociationResource.class, "find", false, "foo", "bar");
-
-    // Test delimiters encoding/decoding in assocKeys values
     CompoundKey key1 = new CompoundKey();
     key1.append("foo", "1,1").append("bar", "1:2");
     CompoundKey key2 = new CompoundKey();
     key2.append("foo", "2,1").append("bar", "2;2");
-    // Note double encoding of the separators in the compound keys. One comes from CompoundKey.toString(), another is applied
-    // to the entire ids param value.
-    String uri =
-        "/test?ids=" + UriComponent.encode(key1.toString(), UriComponent.Type.QUERY_PARAM) + "&ids="
-            + UriComponent.encode(key2.toString(), UriComponent.Type.QUERY_PARAM);
-    assertEquals(uri, "/test?ids=bar%3D1%253A2%26foo%3D1%252C1&ids=bar%3D2%253B2%26foo%3D2%252C1");
 
-    checkResult(uri, "GET",
-                ResourceMethod.BATCH_GET, CombinedResources.CombinedNKeyAssociationResource.class, "batchGet", true);
+    Set<CompoundKey> keys = new HashSet<CompoundKey>();
+    keys.add(key1);
+    keys.add(key2);
 
-    checkBatchKeys(uri, "GET", new HashSet<Object>(Arrays.asList(key1, key2)));
-
-    expectRoutingException("/test/foo=1", "GET");
-    expectRoutingException("/test/foo:1", "GET"); // same as above but legacy way to spell compound keys
-
-    expectRoutingException("/test/foo=1&bar=2&baz=3&qux=4", "GET");
-    expectRoutingException("/test/foo:1;bar:2;baz:3;qux:4", "GET"); // same as above but legacy way to spell compound keys
-
+    return new Object[][]
+      {
+        {
+          "/test?ids=bar%3D1%253A2%26foo%3D1%252C1&ids=bar%3D2%253B2%26foo%3D2%252C1",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          ResourceMethod.BATCH_GET,
+          "batchGet",
+          keys
+        },
+        {
+          "/test?ids=List((bar:1%3A2,foo:1%2C1),(bar:2;2,foo:2%2C1))",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          ResourceMethod.BATCH_GET,
+          "batchGet",
+          keys
+        },
+      };
   }
-
-  @Test
-  public void testRoutingExceptions() throws Exception
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "nKeyAssociationRoutingBatch")
+  public void testNKeyAssociationRoutingBasicBatch(String uri,
+                                                      ProtocolVersion version,
+                                                      String httpMethod,
+                                                      ResourceMethod method,
+                                                      String methodName,
+                                                      Set<CompoundKey> batchKeys)
+    throws Exception
   {
-    Map<String, ResourceModel> pathRootResourceMap =
-      buildResourceModels(StatusCollectionResource.class,
-                          FollowsAssociativeResource.class,
-                          RepliesCollectionResource.class,
-                          LocationResource.class,
-                          TrendingResource.class,
-                          TrendRegionsCollectionResource.class);
-
+    Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(
+      CombinedResources.CombinedNKeyAssociationResource.class);
     _router = new RestLiRouter(pathRootResourceMap);
 
-    // TODO Would be nice to check status code as well
-    expectRoutingException("/", "GET");
-    expectRoutingException("/", "POST");
-    expectRoutingException("/", "PUT");
-    expectRoutingException("/", "DELETE");
+    checkResult(uri,
+                version,
+                httpMethod,
+                method,
+                CombinedResources.CombinedNKeyAssociationResource.class,
+                methodName,
+                true);
 
-    expectRoutingException("/replies", "GET");
-    expectRoutingException("/location", "GET");
-    expectRoutingException("/trendRegions", "GET");
-    expectRoutingException("/asdfasf", "GET");
-    expectRoutingException("/1", "GET");
-
-    expectRoutingException("/statuses", "PUT");
-    expectRoutingException("/statuses", "DELETE");
-    expectRoutingException("/statuses/1/asdf", "GET");
-    expectRoutingException("/statuses/1/replies/2", "GET");
-    expectRoutingException("/statuses/replies", "GET");
-    expectRoutingException("/statuses/2.3", "GET");
-    expectRoutingException("/statuses/1/replies", "DELETE");
-    expectRoutingException("/statuses/1/replies", "PUT");
-    expectRoutingException("/statuses/1/2", "GET");
-    expectRoutingException("/statuses/1/badpath", "GET");
-    expectRoutingException("/statuses/1/badpath/2", "GET");
-
-    expectRoutingException("/statuses?q=wrong&keywords=linkedin", "GET");
-    expectRoutingException("/statuses?q=wrong&keywords=linkedin", "PUT");
-    expectRoutingException("/statuses?q=wrong&keywords=linkedin", "DELETE");
-    expectRoutingException("/statuses?q=wrong&keywords=linkedin", "POST");
-    expectRoutingException("/statuses/1/replies?q=wrong", "GET");
-    expectRoutingException("/statuses/1/location/1", "GET");
-    expectRoutingException("/statuses/1/location/1", "PUT");
-    expectRoutingException("/statuses/1/location/1", "POST");
-    expectRoutingException("/statuses/1/location/1", "DELETE");
-    expectRoutingException("/statuses/1/location?q=wrong", "GET");
-    expectRoutingException("/statuses/1/location?q=wrong&keywords=linkedin", "POST");
-
-    expectRoutingException("/follows", "POST");
-    expectRoutingException("/follows", "PUT");
-    expectRoutingException("/follows", "DELETE");
-    expectRoutingException("/follows/1", "GET");
-    expectRoutingException("/follows?q=wrong", "GET");
-    expectRoutingException("/follows/followerID=1/bad_path", "GET");
-    expectRoutingException("/follows/followerID:1;followerID:2/bad_path", "GET");
-    expectRoutingException("/follows/followerID=1;wrongID=2", "GET");
-
-    // delete not supported
-    expectRoutingException("/follows/followerID:1;followeeID:1", "DELETE");
-
-    expectRoutingException("/trending/1", "GET");
-    expectRoutingException("/trending/1", "PUT");
-    expectRoutingException("/trending/1", "POST");
-    expectRoutingException("/trending/1", "DELETE");
-    expectRoutingException("/trending?q=abc", "GET");
-    expectRoutingException("/trending?q=def&param1=1", "POST");
-
-    expectRoutingException("/trending/1/trendRegions/1", "GET");
-    expectRoutingException("/trending/1/trendRegions/1", "PUT");
-    expectRoutingException("/trending/1/trendRegions/1", "POST");
-    expectRoutingException("/trending/1/trendRegions/1", "DELETE");
-
-    expectRoutingException("/trending/trendRegions", "GET");
-    expectRoutingException("/trending/trendRegions", "PUT");
-    expectRoutingException("/trending/trendRegions", "DELETE");
-    expectRoutingException("/trending/trendRegions?q=abc", "GET");
-    expectRoutingException("/trending/trendRegions?q=def&param1=1", "POST");
+    checkBatchKeys(uri, version, httpMethod, batchKeys);
   }
 
-  @Test
-  public void testActionRouting() throws Exception
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "actionRootRouting")
+  public Object[][] actionRootRouting()
   {
-    Map<String, ResourceModel> pathRootResourceMap =
-      buildResourceModels(StatusCollectionResource.class,
-                          RepliesCollectionResource.class,
-                          LocationResource.class,
-                          TwitterAccountsResource.class);
+    return new Object[][]
+      {
+        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/accounts?action=register" },
+        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/accounts?action=register" }
+      };
+  }
+
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "actionRootRouting")
+  public void testActionRootRouting(ProtocolVersion version, String uri) throws Exception
+  {
+    Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(TwitterAccountsResource.class);
     _router = new RestLiRouter(pathRootResourceMap);
 
-    RestRequest request;
-    RoutingResult result;
-
-    // #1 route to root action
-    request = new RestRequestBuilder(new URI("/accounts?action=register")).setMethod("POST").build();
-
-    result = _router.process(request, new RequestContext());
+    RestRequest request = createRequest(uri, "POST", version);
+    RoutingResult result = _router.process(request, new RequestContext());
     assertNotNull(result);
     assertEquals(result.getResourceMethod().getActionName(), "register");
     assertEquals(result.getResourceMethod().getType(), ResourceMethod.ACTION);
+  }
 
-    // #2 route to contextual action on a nested resource
-    request = new RestRequestBuilder(new URI("/statuses/1/replies?action=replyToAll")).setMethod("POST").build();
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "actionNestedRouting")
+  public Object[][] actionNestedRouting()
+  {
+    return new Object[][]
+      {
+        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/statuses/1/replies?action=replyToAll" },
+        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/statuses/1/replies?action=replyToAll" }
+      };
+  }
 
-    result = _router.process(request, new RequestContext());
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "actionNestedRouting")
+  public void testActionNestedRouting(ProtocolVersion version, String uri) throws Exception
+  {
+    Map<String, ResourceModel> pathRootResourceMap =
+      buildResourceModels(StatusCollectionResource.class,
+                          RepliesCollectionResource.class);
+    _router = new RestLiRouter(pathRootResourceMap);
+
+    RestRequest request = createRequest(uri, "POST", version);
+    RoutingResult result = _router.process(request, new RequestContext());
     assertNotNull(result);
     assertEquals(result.getResourceMethod().getActionName(), "replyToAll");
     assertEquals(result.getResourceMethod().getType(), ResourceMethod.ACTION);
     assertEquals(result.getContext().getPathKeys().get("statusID"), 1L);
+  }
 
-    // #3 route to action on a nested simple resource
-    request = new RestRequestBuilder(new URI("/statuses/1/location?action=new_status_from_location")).setMethod("POST").build();
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "actionNestedSimpleRouting")
+  public Object[][] actionNestedSimpleRouting()
+  {
+    return new Object[][]
+      {
+        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/statuses/1/location?action=new_status_from_location" },
+        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/statuses/1/location?action=new_status_from_location" }
+      };
+  }
 
-    result = _router.process(request, new RequestContext());
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "actionNestedSimpleRouting")
+  public void testActionNestedSimpleRouting(ProtocolVersion version, String uri) throws Exception
+  {
+    Map<String, ResourceModel> pathRootResourceMap =
+      buildResourceModels(StatusCollectionResource.class,
+                          LocationResource.class);
+    _router = new RestLiRouter(pathRootResourceMap);
+
+    RestRequest request = createRequest(uri, "POST", version);
+    RoutingResult result = _router.process(request, new RequestContext());
     assertNotNull(result);
     assertEquals(result.getResourceMethod().getActionName(), "new_status_from_location");
     assertEquals(result.getResourceMethod().getType(), ResourceMethod.ACTION);
@@ -602,37 +2262,186 @@ public class TestRestLiRouting
     assertEquals(result.getContext().getPathKeys().get("statusID"), 1L);
   }
 
-  @Test
-  public void testActionRoutingErrors() throws Exception
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingErrors")
+  public Object[][] routingErrors() throws Exception
+  {
+    return new Object[][]
+      {
+        { "/", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
+        { "/", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
+        { "/", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
+        { "/", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" },
+        { "/", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "PUT" },
+        { "/", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "PUT" },
+        { "/", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE" },
+        { "/", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE" },
+        { "/replies", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
+        { "/replies", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
+        { "/location", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
+        { "/location", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
+        { "/trendRegions", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
+        { "/trendRegions", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
+        { "/asdfasf", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
+        { "/asdfasf", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
+        { "/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
+        { "/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
+        { "/statuses", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "PUT" },
+        { "/statuses", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "PUT" },
+        { "/statuses", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE" },
+        { "/statuses", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE" },
+        { "/statuses%2F1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
+        { "/statuses%2F1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
+        { "/statuses/1/asdf", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
+        { "/statuses/1/asdf", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
+        { "/statuses/1/replies/2", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
+        { "/statuses/1/replies/2", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
+        { "/statuses/replies", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
+        { "/statuses/replies", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
+        { "/statuses/2.3", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
+        { "/statuses/2.3", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
+        { "/statuses/1/replies", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE" },
+        { "/statuses/1/replies", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE" },
+        { "/statuses/1/replies", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "PUT" },
+        { "/statuses/1/replies", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "PUT" },
+        { "/statuses/1/2", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
+        { "/statuses/1/2", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
+        { "/statuses/1/badpath", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
+        { "/statuses/1/badpath", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
+        { "/statuses/1/badpath/2", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
+        { "/statuses/1/badpath/2", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
+        { "/statuses?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
+        { "/statuses?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
+        { "/statuses?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "PUT" },
+        { "/statuses?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "PUT" },
+        { "/statuses?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE" },
+        { "/statuses?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE" },
+        { "/statuses?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
+        { "/statuses?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" },
+        { "/statuses/1/replies?q=wrong", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
+        { "/statuses/1/replies?q=wrong", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
+        { "/statuses/1/location/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
+        { "/statuses/1/location/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
+        { "/statuses/1/location/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "PUT" },
+        { "/statuses/1/location/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "PUT" },
+        { "/statuses/1/location/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
+        { "/statuses/1/location/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" },
+        { "/statuses/1/location/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE" },
+        { "/statuses/1/location/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE" },
+        { "/statuses/1/location?q=wrong", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
+        { "/statuses/1/location?q=wrong", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
+        { "/statuses/1/location?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
+        { "/statuses/1/location?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" },
+        { "/follows", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
+        { "/follows", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" },
+        { "/follows", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "PUT" },
+        { "/follows", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "PUT" },
+        { "/follows", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE" },
+        { "/follows", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE" },
+        { "/follows/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
+        { "/follows/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
+        { "/follows?q=wrong", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
+        { "/follows?q=wrong", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
+        { "/follows/followerID=1/bad_path", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
+        { "/follows/(followerID:1)/bad_path", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
+        { "/follows/followerID=1&followerID=2/bad_path", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
+        { "/follows/(followerID:1,followerID:2)/bad_path", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
+        { "/follows/followerID=1&wrongID=2", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
+        { "/follows/(followerID:1,wrongID:2)", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
+        { "/follows/followerID=1&followerID=2", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE" }, // delete not supported
+        { "/follows/(followerID:1,followerID:2)", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE" },
+        { "/trending/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
+        { "/trending/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
+        { "/trending/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "PUT" },
+        { "/trending/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "PUT" },
+        { "/trending/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
+        { "/trending/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" },
+        { "/trending/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE" },
+        { "/trending/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE" },
+        { "/trending?q=abc", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
+        { "/trending?q=abc", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
+        { "/trending?q=def&param1=1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
+        { "/trending?q=def&param1=1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" },
+        { "/trending/1/trendRegions/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
+        { "/trending/1/trendRegions/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
+        { "/trending/1/trendRegions/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "PUT" },
+        { "/trending/1/trendRegions/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "PUT" },
+        { "/trending/1/trendRegions/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
+        { "/trending/1/trendRegions/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" },
+        { "/trending/1/trendRegions/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE" },
+        { "/trending/1/trendRegions/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE" },
+        { "/trending/trendRegions", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
+        { "/trending/trendRegions", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
+        { "/trending/trendRegions", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "PUT" },
+        { "/trending/trendRegions", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "PUT" },
+        { "/trending/trendRegions", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE" },
+        { "/trending/trendRegions", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE" },
+        { "/trending/trendRegions?q=abc", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
+        { "/trending/trendRegions?q=abc", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
+        { "/trending/trendRegions?q=def&param1=1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
+        { "/trending/trendRegions?q=def&param1=1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" },
+        { "/bogusResource", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
+        { "/bogusResource", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
+        { "/accounts", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
+        { "/accounts", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" },
+        { "/accounts?q=register", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
+        { "/accounts?q=register", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" },
+        // associations
+        { "/test/foo:1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" }, // legacy
+        { "/test/foo=1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
+        { "/test/(foo:1)", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
+        { "/test/foo:1;bar:2;baz:3;qux:4", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" }, // legacy
+        { "/test/foo=1&bar=2&baz=3&qux=4", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
+        { "/test/(foo:1,bar:2,baz:3,qux:4)", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
+        // actions
+        { "/accounts?action=bogusMethod", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
+        { "/accounts?action=bogusMethod", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" },
+        { "/accounts?action=", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
+        { "/accounts?action=", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" },
+        { "/accounts?action", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
+        { "/accounts?action", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" },
+        { "/accounts?action=register", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
+        { "/accounts?action=register", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
+        { "/accounts?action=register", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "PUT" },
+        { "/accounts?action=register", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "PUT" },
+        { "/accounts?action=register", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE" },
+        { "/accounts?action=register", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE" },
+        { "/accounts/1?action=register", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
+        { "/accounts/1?action=register", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" },
+        { "/statuses/1/replies/1,2,3?action=replyToAll", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
+        { "/statuses/1/replies/1,2,3?action=replyToAll", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
+        { "/statuses/1/replies?action=replyToAll", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE" },
+        { "/statuses/1/replies?action=replyToAll", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE" },
+        { "/statuses/1/replies?action=bogusAction", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
+        { "/statuses/1/replies?action=bogusAction", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" },
+        { "/statuses/1?action=search", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
+        { "/statuses/1?action=search", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" },
+        { "/statuses/1/location?action=new_status_from_location", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
+        { "/statuses/1/location?action=new_status_from_location", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
+        { "/statuses/1/location?action=bogusAction", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
+        { "/statuses/1/location?action=bogusAction", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" }
+      };
+  }
+
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingErrors")
+  public void testRoutingErrors(String uri, ProtocolVersion version, String httpMethod) throws Exception
   {
     Map<String, ResourceModel> pathRootResourceMap =
-      buildResourceModels(StatusCollectionResource.class,
-                          RepliesCollectionResource.class,
+      buildResourceModels(CombinedResources.CombinedNKeyAssociationResource.class,
+                          DiscoveredItemsResource.class,
+                          FollowsAssociativeResource.class,
                           LocationResource.class,
+                          RepliesCollectionResource.class,
+                          StatusCollectionResource.class,
+                          TrendRegionsCollectionResource.class,
+                          TrendingResource.class,
                           TwitterAccountsResource.class);
     _router = new RestLiRouter(pathRootResourceMap);
 
-    expectRoutingException("/bogusResource", "GET");
-    expectRoutingException("/accounts", "POST");
-    expectRoutingException("/accounts?q=register", "POST");
-    expectRoutingException("/accounts?action=bogusMethod", "POST");
-    expectRoutingException("/accounts?action=", "POST");
-    expectRoutingException("/accounts?action", "POST");
-    expectRoutingException("/accounts?action=register", "GET");
-    expectRoutingException("/accounts?action=register", "PUT");
-    expectRoutingException("/accounts?action=register", "DELETE");
-    expectRoutingException("/accounts/1?action=register", "POST");
-
-    expectRoutingException("/statuses/1/replies/1,2,3?action=replyToAll", "GET");
-    expectRoutingException("/statuses/1/replies?action=replyToAll", "DELETE");
-    expectRoutingException("/statuses/1/replies?action=bogusAction", "POST");
-    expectRoutingException("/statuses/1?action=search", "POST");
-
-    expectRoutingException("/statuses/1/location?action=new_status_from_location", "GET");
-    expectRoutingException("/statuses/1/location?action=bogusAction", "POST");
+    expectRoutingException(uri, version, httpMethod);
   }
 
   private void checkResult(String uri,
+                           ProtocolVersion version,
                            String httpMethod,
                            String restliMethod,
                            ResourceMethod method,
@@ -642,8 +2451,7 @@ public class TestRestLiRouting
                            String... expectedPathKeys)
           throws URISyntaxException
   {
-
-    RestRequestBuilder builder = new RestRequestBuilder(new URI(uri)).setMethod(httpMethod);
+    RestRequestBuilder builder = createRequestBuilder(uri, httpMethod, version);
     if (restliMethod != null)
     {
       builder.setHeader("X-RestLi-Method", restliMethod);
@@ -681,6 +2489,7 @@ public class TestRestLiRouting
   }
 
   private void checkResult(String uri,
+                           ProtocolVersion version,
                            String httpMethod,
                            ResourceMethod method,
                            Class<?> resourceClass,
@@ -690,31 +2499,34 @@ public class TestRestLiRouting
       throws URISyntaxException
   {
     checkResult(uri,
+                version,
                 httpMethod,
                 null,
                 method,
                 resourceClass,
                 methodName,
                 hasBatchKeys,
-                expectedPathKeys
-                );
+                expectedPathKeys);
   }
 
   private void checkBatchKeys(String uri,
-                           String httpMethod,
-                           Set<?> batchCompoundKeys)
+                              ProtocolVersion version,
+                              String httpMethod,
+                              Set<?> batchCompoundKeys)
       throws URISyntaxException
   {
-    RestRequest request = new RestRequestBuilder(new URI(uri)).setMethod(httpMethod).build();
+    RestRequest request = createRequest(uri, httpMethod, version);
     RoutingResult result = _router.process(request, new RequestContext());
-    assertEquals(result.getContext().getPathKeys().getBatchKeys(), batchCompoundKeys);
+    Set<?> batchKeys = result.getContext().getPathKeys().getBatchKeys();
+    assertEquals(batchKeys, batchCompoundKeys);
   }
 
   private void expectRoutingException(String uri,
+                                      ProtocolVersion version,
                                       String httpMethod,
                                       String restliMethod) throws URISyntaxException
   {
-    RestRequestBuilder builder = new RestRequestBuilder(new URI(uri)).setMethod(httpMethod);
+    RestRequestBuilder builder = createRequestBuilder(uri, httpMethod, version);
     if (restliMethod != null)
     {
       builder.setHeader("X-RestLi-Method", restliMethod);
@@ -733,9 +2545,23 @@ public class TestRestLiRouting
   }
 
   private void expectRoutingException(String uri,
+                                      ProtocolVersion version,
                                       String httpMethod) throws URISyntaxException
   {
-    expectRoutingException(uri, httpMethod, null);
+    expectRoutingException(uri, version, httpMethod, null);
+  }
+
+  private RestRequest createRequest(String uri, String method, ProtocolVersion version)
+    throws URISyntaxException
+  {
+    return createRequestBuilder(uri, method, version).build();
+  }
+
+  private RestRequestBuilder createRequestBuilder(String uri, String method, ProtocolVersion version)
+    throws URISyntaxException
+  {
+    return new RestRequestBuilder(new URI(uri)).setMethod(method)
+                                               .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, version.toString());
   }
 
   /**
@@ -747,8 +2573,8 @@ public class TestRestLiRouting
     // TODO Need new domain for testing
   }
 
-  @Test
-  public void testDefaultPathKeyUniqueness() throws Exception
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "uniqueness")
+  public void testDefaultPathKeyUniqueness(ProtocolVersion version, String uri) throws Exception
   {
     Map<String, ResourceModel> pathRootResourceMap =
       buildResourceModels(CombinedResources.CombinedCollectionWithSubresources.class,
@@ -759,12 +2585,22 @@ public class TestRestLiRouting
     RoutingResult result;
 
     // #1 simple GET
-    request = new RestRequestBuilder(new URI("/test/foo/sub/bar")).setMethod("GET").build();
+    request = createRequest(uri, "GET", version);
 
     result = _router.process(request, new RequestContext());
     assertNotNull(result);
     PathKeys keys = result.getContext().getPathKeys();
     assertEquals(keys.getAsString("testId"), "foo");
     assertEquals(keys.getAsString("subId"), "bar");
+  }
+
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "uniqueness")
+  public Object[][] uniqueness()
+  {
+    return new Object[][]
+      {
+        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/test/foo/sub/bar" },
+        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/test/foo/sub/bar" }
+      };
   }
 }

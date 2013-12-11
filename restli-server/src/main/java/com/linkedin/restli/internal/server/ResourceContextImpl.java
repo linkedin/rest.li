@@ -25,6 +25,7 @@ import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.data.transform.filter.request.MaskTree;
+import com.linkedin.jersey.api.uri.UriComponent;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
@@ -34,6 +35,7 @@ import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.PathSegment.PathSegmentSyntaxException;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.common.QueryParamsDataMap;
+import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
 import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
 import com.linkedin.restli.server.ProjectionMode;
@@ -98,10 +100,18 @@ public class ResourceContextImpl implements ServerResourceContext
 
     _protocolVersion = ProtocolVersionUtil.extractProtocolVersion(request.getHeaders());
 
-    Map<String, List<String>> queryParameters = ArgumentUtils.getQueryParameters(_request.getURI());
     try
     {
-      _parameters = QueryParamsDataMap.parseDataMapKeys(queryParameters);
+      if (_protocolVersion.compareTo(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()) >= 0)
+      {
+        Map<String, List<String>> queryParameters = UriComponent.decodeQuery(_request.getURI(), false);
+        _parameters = URIParamUtils.parseUriParams(queryParameters);
+      }
+      else
+      {
+        Map<String, List<String>> queryParameters = ArgumentUtils.getQueryParameters(_request.getURI());
+        _parameters = QueryParamsDataMap.parseDataMapKeys(queryParameters);
+      }
     }
     catch (PathSegmentSyntaxException e)
     {

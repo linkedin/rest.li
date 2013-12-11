@@ -9,8 +9,10 @@
       "name" : "customTypes2Id",
       "type" : "com.linkedin.restli.examples.typeref.api.CustomLongRef"
     },
-    "supports" : [ "batch_create", "batch_delete", "batch_get", "batch_partial_update", "batch_update", "get" ],
+    "supports" : [ "batch_create", "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "get" ],
     "methods" : [ {
+      "method" : "create"
+    }, {
       "method" : "get"
     }, {
       "method" : "batch_create"

@@ -37,6 +37,7 @@ import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.CreateStatus;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.PatchRequest;
+import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.examples.groups.api.ComplexKeyGroupMembership;
 import com.linkedin.restli.examples.groups.api.EmailDigestFrequency;
@@ -55,6 +56,8 @@ import com.linkedin.restli.examples.groups.client.GroupMembershipsComplexRequest
 import com.linkedin.restli.examples.groups.client.GroupMembershipsRequestBuilders;
 import com.linkedin.restli.examples.groups.client.GroupsBuilders;
 import com.linkedin.restli.examples.groups.client.GroupsRequestBuilders;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
+import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.util.Arrays;
@@ -114,7 +117,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
     super.shutdown();
   }
 
-  @Test(dataProvider = "requestGroupsAndMembershipsBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestGroupsAndMembershipsBuilderDataProvider")
   public void testCollectionCreateGetUpdateDelete(RootBuilderWrapper<Integer, Group> groupBuilders,
                                                   RootBuilderWrapper<CompoundKey, GroupMembership> membershipBuilders)
     throws RemoteInvocationException
@@ -236,8 +239,8 @@ public class TestGroupsClient extends RestLiIntegrationTest
     return groupMembership;
   }
 
-  @Test(dataProvider = "requestMembershipsBuilderDataProvider")
-  public void testAssociationBatchCreateGetUpdatePatchDelete(RootBuilderWrapper<CompoundKey, GroupMembership> membershipBuilders)
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestMembershipsBuilderDataProvider")
+  public void testAssociationBatchCreateGetUpdatePatchDelete(ProtocolVersion version, RootBuilderWrapper<CompoundKey, GroupMembership> membershipBuilders)
     throws RemoteInvocationException
   {
     // Setup - batch create two group memberships
@@ -261,10 +264,10 @@ public class TestGroupsClient extends RestLiIntegrationTest
                                   .build();
     Map<String, GroupMembership> groupMemberships =
         REST_CLIENT.sendRequest(request).getResponse().getEntity().getResults();
-    Assert.assertTrue(groupMemberships.containsKey(key1.toString()));
-    Assert.assertEquals(groupMemberships.get(key1.toString()).getContactEmail(), "alfred@test.linkedin.com");
-    Assert.assertTrue(groupMemberships.containsKey(key2.toString()));
-    Assert.assertEquals(groupMemberships.get(key2.toString()).getContactEmail(), "bruce@test.linkedin.com");
+    Assert.assertTrue(groupMemberships.containsKey(BatchResponse.keyToString(key1, version)));
+    Assert.assertEquals(groupMemberships.get(BatchResponse.keyToString(key1, version)).getContactEmail(), "alfred@test.linkedin.com");
+    Assert.assertTrue(groupMemberships.containsKey(BatchResponse.keyToString(key2, version)));
+    Assert.assertEquals(groupMemberships.get(BatchResponse.keyToString(key2, version)).getContactEmail(), "bruce@test.linkedin.com");
 
     // Batch partial update
     GroupMembership patchedGroupMembership1 = buildGroupMembership(null, "ALFRED@test.linkedin.com", "ALFRED", "Hitchcock");
@@ -319,14 +322,14 @@ public class TestGroupsClient extends RestLiIntegrationTest
     // Make sure they are gone
     BatchResponse<GroupMembership> getResponse = REST_CLIENT.sendRequest(request).getResponse().getEntity();
     Assert.assertTrue(getResponse.getResults().isEmpty());
-    Assert.assertTrue(getResponse.getErrors().containsKey(key1.toString())); // Why .toString() here?
-    Assert.assertTrue(getResponse.getErrors().containsKey(key2.toString()));
-    Assert.assertEquals(getResponse.getErrors().get(key1.toString()).getStatus().intValue(), 404);
-    Assert.assertEquals(getResponse.getErrors().get(key2.toString()).getStatus().intValue(), 404);
+    Assert.assertTrue(getResponse.getErrors().containsKey(BatchResponse.keyToString(key1, version)));
+    Assert.assertTrue(getResponse.getErrors().containsKey(BatchResponse.keyToString(key2, version)));
+    Assert.assertEquals(getResponse.getErrors().get(BatchResponse.keyToString(key1, version)).getStatus().intValue(), 404);
+    Assert.assertEquals(getResponse.getErrors().get(BatchResponse.keyToString(key2, version)).getStatus().intValue(), 404);
   }
 
-  @Test(dataProvider = "requestMembershipsBuilderDataProvider")
-  public void testAssociationCreateGetDelete(RootBuilderWrapper<CompoundKey, GroupMembership> membershipBuilders)
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestMembershipsBuilderDataProvider")
+  public void testAssociationCreateGetDelete(ProtocolVersion version, RootBuilderWrapper<CompoundKey, GroupMembership> membershipBuilders)
     throws RemoteInvocationException
   {
     // Setup - create group memberships
@@ -362,8 +365,9 @@ public class TestGroupsClient extends RestLiIntegrationTest
     }
   }
 
-  @Test(dataProvider = "requestComplexBuilderDataProvider")
-  public void testComplexKeyCreateGetUpdateDelete(RootBuilderWrapper<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, ComplexKeyGroupMembership> builders)
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestComplexBuilderDataProvider")
+  public void testComplexKeyCreateGetUpdateDelete(ProtocolVersion version,
+                                                  RootBuilderWrapper<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, ComplexKeyGroupMembership> builders)
     throws RemoteInvocationException
   {
     // Create a new complex key resource
@@ -430,8 +434,9 @@ public class TestGroupsClient extends RestLiIntegrationTest
     }
   }
 
-  @Test(dataProvider = "requestComplexBuilderDataProvider")
-  public void testComplexKeyBatchCreateGetUpdateDelete(RootBuilderWrapper<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, ComplexKeyGroupMembership> builders)
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestComplexBuilderDataProvider")
+  public void testComplexKeyBatchCreateGetUpdateDelete(ProtocolVersion version,
+                                                       RootBuilderWrapper<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, ComplexKeyGroupMembership> builders)
     throws RemoteInvocationException
   {
     ComplexResourceKey<GroupMembershipKey, GroupMembershipParam> complexKey1 =
@@ -467,9 +472,12 @@ public class TestGroupsClient extends RestLiIntegrationTest
     BatchResponse<ComplexKeyGroupMembership> groupMemberships =
         REST_CLIENT.sendRequest(request).getResponse().getEntity();
     Map<String, ComplexKeyGroupMembership> results = groupMemberships.getResults();
-    ComplexKeyGroupMembership groupMembership1_ = results.get(complexKey1.toString());
-    ComplexKeyGroupMembership groupMembership2_ = results.get(complexKey2.toString());
-    ComplexKeyGroupMembership groupMembership3_ = results.get(complexKey3.toString());
+    ComplexKeyGroupMembership groupMembership1_ =
+        results.get(BatchResponse.keyToString(complexKey1, version));
+    ComplexKeyGroupMembership groupMembership2_ =
+        results.get(BatchResponse.keyToString(complexKey2, version));
+    ComplexKeyGroupMembership groupMembership3_ =
+        results.get(BatchResponse.keyToString(complexKey3,version));
     Assert.assertNotNull(groupMembership1_);
     Assert.assertEquals(groupMembership1_.getContactEmail(), "alfred@test.linkedin.com");
     Assert.assertNotNull(groupMembership2_);
@@ -490,8 +498,8 @@ public class TestGroupsClient extends RestLiIntegrationTest
     Assert.assertEquals(status, 200);
   }
 
-  @Test(dataProvider = "requestMembershipsBuilderDataProvider")
-  public void testAssociationBatchGetCompoundKeyResponse(RootBuilderWrapper<CompoundKey, GroupMembership> membershipBuilders)
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestMembershipsBuilderDataProvider")
+  public void testAssociationBatchGetCompoundKeyResponse(ProtocolVersion version, RootBuilderWrapper<CompoundKey, GroupMembership> membershipBuilders)
     throws RemoteInvocationException
   {
     CompoundKey key1 = buildCompoundKey(1, 1);
@@ -511,7 +519,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
     Assert.assertEquals(allResponseKeys, allRequestedKeys);
   }
 
-  @Test(dataProvider = "requestGroupsBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestGroupsBuilderDataProvider")
   public void testDefaultValue(RootBuilderWrapper<Integer, Group> groupBuilders)
     throws RemoteInvocationException
   {
@@ -533,7 +541,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
     }
   }
 
-  @Test(dataProvider = "requestGroupsBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestGroupsBuilderDataProvider")
   public void testSimpleArrayParameter(RootBuilderWrapper<Integer, Group> groupBuilders)
     throws RemoteInvocationException
   {
@@ -544,7 +552,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
     REST_CLIENT.sendRequest(groupBuilders.findBy("ComplexCircuit").setQueryParam("coercedArray", array).build()).getResponse();
   }
 
-  @Test(dataProvider = "requestGroupsBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestGroupsBuilderDataProvider")
   public void testComplexArrayParameter(RootBuilderWrapper<Integer, Group> groupBuilders)
     throws RemoteInvocationException
   {
@@ -585,41 +593,51 @@ public class TestGroupsClient extends RestLiIntegrationTest
     return compoundKey;
   }
 
-  @DataProvider
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestGroupsBuilderDataProvider")
   private static Object[][] requestGroupsBuilderDataProvider()
   {
     return new Object[][] {
       { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders()) },
-      { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders()) }
+      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+      { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders()) },
+      { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
   }
 
-  @DataProvider
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestMembershipsBuilderDataProvider")
   private static Object[][] requestMembershipsBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsBuilders()) },
-      { new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsRequestBuilders()) }
+      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsBuilders()) },
+      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsRequestBuilders()) },
+      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
   }
 
-  @DataProvider
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestGroupsAndMembershipsBuilderDataProvider")
   private static Object[][] requestGroupsAndMembershipsBuilderDataProvider()
   {
     return new Object[][] {
       { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders()), new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsBuilders()) },
-      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders()), new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsRequestBuilders()) },
+      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
       { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders()), new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsBuilders()) },
-      { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders()), new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsRequestBuilders()) }
+      { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
   }
 
-  @DataProvider
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestComplexBuilderDataProvider")
   private static Object[][] requestComplexBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, ComplexKeyGroupMembership>(new GroupMembershipsComplexBuilders()) },
-      { new RootBuilderWrapper<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, ComplexKeyGroupMembership>(new GroupMembershipsComplexRequestBuilders()) }
+      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+        new RootBuilderWrapper<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, ComplexKeyGroupMembership>(new GroupMembershipsComplexBuilders()) },
+      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+        new RootBuilderWrapper<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, ComplexKeyGroupMembership>(new GroupMembershipsComplexBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+        new RootBuilderWrapper<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, ComplexKeyGroupMembership>(new GroupMembershipsComplexRequestBuilders()) },
+      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+        new RootBuilderWrapper<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, ComplexKeyGroupMembership>(new GroupMembershipsComplexRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
   }
 }

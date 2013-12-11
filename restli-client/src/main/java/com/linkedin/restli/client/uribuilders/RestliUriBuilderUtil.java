@@ -52,6 +52,11 @@ public class RestliUriBuilderUtil
     return createUriBuilder(request, uriPrefix, AllProtocolVersions.BASELINE_PROTOCOL_VERSION);
   }
 
+  public static RestliUriBuilder createUriBuilder(Request request, ProtocolVersion version)
+  {
+    return createUriBuilder(request, "", version);
+  }
+
   /**
    * Create a {@link RestliUriBuilder} based on {@code request}
    * @param request the {@link Request} we are building the {@link RestliUriBuilder} for

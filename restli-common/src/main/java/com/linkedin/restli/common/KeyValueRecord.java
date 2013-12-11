@@ -139,20 +139,7 @@ public class KeyValueRecord<K, V extends RecordTemplate> extends RecordTemplate
       throw new IllegalArgumentException("Key must be a CompoundKey!");
     }
     CompoundKey compoundKey = (CompoundKey)key;
-    DataMap compoundKeyData = new DataMap();
-    for (String partKey: compoundKey.getPartKeys())
-    {
-      Object keyValue = compoundKey.getPart(partKey);
-      DataSchema schema = fieldTypes.get(partKey).getDeclared().getSchema();
-      DataSchema dereferencedSchema = schema.getDereferencedDataSchema();
-      Class<?> dereferencedClass = DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchemaClass(dereferencedSchema.getType());
-
-      @SuppressWarnings("unchecked")
-      Object coercedInput = DataTemplateUtil.coerceInput(keyValue,
-                                                         (Class<Object>) keyValue.getClass(),
-                                                         dereferencedClass);
-      compoundKeyData.put(partKey, coercedInput);
-    }
+    DataMap compoundKeyData = compoundKey.toDataMap(fieldTypes);
     putDirect(keyField, DataMap.class, DataMap.class, compoundKeyData, SetMode.IGNORE_NULL);
   }
 

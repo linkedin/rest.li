@@ -25,6 +25,8 @@ import com.linkedin.restli.examples.groups.api.GroupMembership;
 import com.linkedin.restli.examples.groups.api.MembershipLevel;
 import com.linkedin.restli.examples.groups.api.MembershipSortOrder;
 import com.linkedin.restli.examples.groups.server.api.GroupMembershipSearchQuery;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
+import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.server.BatchDeleteRequest;
 import com.linkedin.restli.server.BatchPatchRequest;
 import com.linkedin.restli.server.BatchResult;
@@ -158,7 +160,7 @@ public class GroupMembershipsResource2 extends AssociationResourceTemplate<Group
       CompoundKey id = entry.getKey();
       GroupMembership membership = entry.getValue();
 
-      membership.setId(id.toString());
+      membership.setId(URIParamUtils.encodeKeyForBody(id, true, AllProtocolVersions.BASELINE_PROTOCOL_VERSION));
       membership.setGroupID(((Integer)id.getPart(GROUP_ID)));
       membership.setMemberID(((Integer)id.getPart(MEMBER_ID)));
       _app.getMembershipMgr().save(membership);
@@ -230,7 +232,7 @@ public class GroupMembershipsResource2 extends AssociationResourceTemplate<Group
     validate(membership);
 
     // we set groupID, memberID based on the URI
-    membership.setId(id.toString());
+    membership.setId(URIParamUtils.encodeKeyForBody(id, true, AllProtocolVersions.BASELINE_PROTOCOL_VERSION));
     membership.setGroupID(getContext().getPathKeys().getAsInt(GROUP_ID));
     membership.setMemberID(getContext().getPathKeys().getAsInt(MEMBER_ID));
 
@@ -248,7 +250,7 @@ public class GroupMembershipsResource2 extends AssociationResourceTemplate<Group
     validate(membership);
 
     // we set groupID, memberID based on the URI
-    membership.setId(key.toString());
+    membership.setId(URIParamUtils.encodeKeyForBody(key, true, AllProtocolVersions.BASELINE_PROTOCOL_VERSION));
     membership.setGroupID(getContext().getPathKeys().getAsInt(GROUP_ID));
     membership.setMemberID(getContext().getPathKeys().getAsInt(MEMBER_ID));
 

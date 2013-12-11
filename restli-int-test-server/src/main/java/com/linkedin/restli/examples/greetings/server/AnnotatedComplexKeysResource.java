@@ -28,6 +28,7 @@ import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.examples.greetings.api.TwoPartKey;
 import com.linkedin.restli.server.BatchDeleteRequest;
 import com.linkedin.restli.server.BatchPatchRequest;
+import com.linkedin.restli.server.BatchResult;
 import com.linkedin.restli.server.BatchUpdateRequest;
 import com.linkedin.restli.server.BatchUpdateResult;
 import com.linkedin.restli.server.CreateResponse;
@@ -134,10 +135,10 @@ public class AnnotatedComplexKeysResource
   }
 
   @RestMethod.BatchGet
-  public Promise<Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>> batchGet(
+  public Promise<BatchResult<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>> batchGet(
       final Set<ComplexResourceKey<TwoPartKey, TwoPartKey>> ids)
   {
-    final SettablePromise<Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>> result = Promises.settable();
+    final SettablePromise<BatchResult<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>> result = Promises.settable();
     final Runnable requestHandler = new Runnable() {
       public void run()
       {

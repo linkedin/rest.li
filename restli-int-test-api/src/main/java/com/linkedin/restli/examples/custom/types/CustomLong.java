@@ -89,6 +89,6 @@ public class CustomLong
   @Override
   public String toString()
   {
-    return l.toString();
+    return "CustomLong:" + l.toString();
   }
 }

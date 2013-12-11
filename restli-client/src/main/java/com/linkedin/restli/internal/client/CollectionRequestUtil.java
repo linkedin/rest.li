@@ -19,7 +19,6 @@ package com.linkedin.restli.internal.client;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.restli.client.util.RestliBuilderUtils;
 import com.linkedin.restli.common.BatchRequest;
 import com.linkedin.restli.common.CollectionRequest;
 import com.linkedin.restli.common.ComplexKeySpec;
@@ -29,6 +28,7 @@ import com.linkedin.restli.common.KeyValueRecord;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
+import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.internal.common.URLEscaper;
 
 import java.util.Map;
@@ -62,21 +62,23 @@ public class CollectionRequestUtil
    * @param keyParts
    * @param valueClass
    * @param <V>
+   * @param version
    * @return a data map with one key, "entities". "entities" maps to another data map (as in the old body encoding)
    */
-  @SuppressWarnings({"unchecked", "rawtypes"})
   public static <V extends RecordTemplate> BatchRequest<V> convertToBatchRequest(CollectionRequest<KeyValueRecord> elementList,
                                                                                  Class<?> keyClass,
                                                                                  Class<? extends RecordTemplate> keyKeyClass,
                                                                                  Class<? extends RecordTemplate> keyParamsClass,
                                                                                  Map<String, CompoundKey.TypeInfo> keyParts,
-                                                                                 Class<V> valueClass)
+                                                                                 Class<V> valueClass,
+                                                                                 ProtocolVersion version)
   {
     return convertToBatchRequest(elementList,
                                  TypeSpec.forClassMaybeNull(keyClass),
                                  ComplexKeySpec.forClassesMaybeNull(keyKeyClass, keyParamsClass),
                                  keyParts,
-                                 TypeSpec.forClassMaybeNull(valueClass));
+                                 TypeSpec.forClassMaybeNull(valueClass),
+                                 version);
   }
 
   /**
@@ -126,7 +128,7 @@ public class CollectionRequestUtil
         }
       }
 
-      batchRequest.getEntities().put(RestliBuilderUtils.keyToString(key, URLEscaper.Escaping.NO_ESCAPING, version), value);
+      batchRequest.getEntities().put(URIParamUtils.encodeKeyForBody(key, true, version), value);
     }
 
     return batchRequest;

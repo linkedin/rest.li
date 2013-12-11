@@ -36,6 +36,8 @@
     "path" : "/customTypes2",
     "collection" : {
       "methods" : [ {
+        "method" : "create"
+      }, {
         "method" : "get"
       }, {
         "method" : "batch_create"
@@ -71,7 +73,7 @@
         } ],
         "path" : "/customTypes2/{customTypes2Id}"
       },
-      "supports" : [ "batch_create", "batch_delete", "batch_get", "batch_partial_update", "batch_update", "get" ],
+      "supports" : [ "batch_create", "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "get" ],
       "identifier" : {
         "name" : "customTypes2Id",
         "type" : "com.linkedin.restli.examples.typeref.api.CustomLongRef"

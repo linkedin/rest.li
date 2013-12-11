@@ -34,6 +34,7 @@ import java.util.concurrent.CountDownLatch;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import com.linkedin.common.callback.Callback;
@@ -96,8 +97,8 @@ public class TestAllPartitionsRequestBuilder extends RestLiIntegrationTest {
     super.shutdown();
   }
 
-  @Test
-  public static void testBuildAllPartitionsRequest() throws ServiceUnavailableException, URISyntaxException, RestException
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "restliRequestOptions")
+  public static void testBuildAllPartitionsRequest(RestliRequestOptions options) throws ServiceUnavailableException, URISyntaxException, RestException
   {
 
     final int PARTITION_NUM = 10;
@@ -108,7 +109,7 @@ public class TestAllPartitionsRequestBuilder extends RestLiIntegrationTest {
     FindRequestBuilder<Long, Greeting> findRB = new FindRequestBuilder<Long, Greeting>(TEST_URI,
                                                                                        Greeting.class,
                                                                                        _COLL_SPEC,
-                                                                                       RestliRequestOptions.DEFAULT_OPTIONS);
+                                                                                       options);
     Collection<RequestContext> requestContexts =
         (searchRB.buildRequestContexts(findRB.fields(Greeting.fields().message()).build(), new RequestContext())).getPartitionInfo();
 
@@ -132,8 +133,8 @@ public class TestAllPartitionsRequestBuilder extends RestLiIntegrationTest {
     Assert.assertEquals(expectedHostPrefixes, actualHostPrefixes);
   }
 
-  @Test
-  public static void testSendAllPartitionsRequests() throws ServiceUnavailableException, URISyntaxException, RestException, InterruptedException
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "restliRequestOptions")
+  public static void testSendAllPartitionsRequests(RestliRequestOptions options) throws ServiceUnavailableException, URISyntaxException, RestException, InterruptedException
   {
     final int PARTITION_NUM = 10;
     ConsistentHashKeyMapper mapper = getKeyToHostMapper(PARTITION_NUM);
@@ -141,7 +142,7 @@ public class TestAllPartitionsRequestBuilder extends RestLiIntegrationTest {
     ActionRequestBuilder<Long, Greeting> builder = new ActionRequestBuilder<Long, Greeting>(TEST_URI,
                                                                                             Greeting.class,
                                                                                             _COLL_SPEC,
-                                                                                            RestliRequestOptions.DEFAULT_OPTIONS);
+                                                                                            options);
     ActionRequest<Greeting> request = builder.name("updateTone").id(1L).
         setParam(new FieldDef<Tone>("newTone", Tone.class, DataTemplateUtil.getSchema(Tone.class)), Tone.FRIENDLY).build();
 
@@ -208,5 +209,15 @@ public class TestAllPartitionsRequestBuilder extends RestLiIntegrationTest {
     }
 
     return new ConsistentHashKeyMapper(new StaticRingProvider(rings));
+  }
+
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "restliRequestOptions")
+  public Object[][] restliRequestOptions()
+  {
+    return new Object[][]
+      {
+        { RestliRequestOptions.DEFAULT_OPTIONS },
+        { TestConstants.FORCE_USE_NEXT_OPTIONS }
+      };
   }
 }

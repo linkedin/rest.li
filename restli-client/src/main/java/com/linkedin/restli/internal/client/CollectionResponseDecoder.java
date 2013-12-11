@@ -23,6 +23,8 @@ package com.linkedin.restli.internal.client;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.CollectionResponse;
+import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.common.RestConstants;
 
 /**
  * Converts a raw RestResponse into a type-bound Collection response.
@@ -46,7 +48,7 @@ public class CollectionResponseDecoder<T extends RecordTemplate> extends RestRes
   }
 
   @Override
-  public CollectionResponse<T> wrapResponse(DataMap dataMap)
+  protected CollectionResponse<T> wrapResponse(DataMap dataMap, ProtocolVersion version)
   {
     return new CollectionResponse<T>(dataMap, _elementClass);
   }

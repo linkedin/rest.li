@@ -32,14 +32,12 @@ import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.client.OptionsRequestBuilder;
-import com.linkedin.restli.client.ProtocolVersionOption;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
 import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.client.RestliRequestOptions;
-import com.linkedin.restli.client.RestliRequestOptionsBuilder;
 import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.client.util.PatchGenerator;
 import com.linkedin.restli.common.BatchResponse;
@@ -121,21 +119,21 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     super.shutdown();
   }
 
-  @Test(dataProvider = "requestBuilderWithOptionsDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderWithOptionsDataProvider")
   public void testActionRequestOptionsPropagation(RootBuilderWrapper<Long, Greeting> builders, RestliRequestOptions options)
   {
     Request<Integer> request = builders.<Integer>action("Purge").build();
     Assert.assertEquals(request.getRequestOptions(), options);
   }
 
-  @Test(dataProvider = "requestBuilderWithOptionsDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderWithOptionsDataProvider")
   public void testGetRequestOptionsPropagation(RootBuilderWrapper<Long, Greeting> builders, RestliRequestOptions options)
   {
     Request<Greeting> request = builders.get().id(1L).build();
     Assert.assertEquals(request.getRequestOptions(), options);
   }
 
-  @Test(dataProvider = "requestBuilderWithOptionsDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderWithOptionsDataProvider")
   public void testFinderRequestOptionsPropagation(RootBuilderWrapper<Long, Greeting> builders, RestliRequestOptions options)
   {
     Request<CollectionResponse<Greeting>> findRequest =
@@ -143,7 +141,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     Assert.assertEquals(findRequest.getRequestOptions(), options);
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testIntAction(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Request<Integer> request = builders.<Integer>action("Purge").build();
@@ -171,7 +169,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
                         AllProtocolVersions.BASELINE_PROTOCOL_VERSION.toString());
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testRecordAction(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Request<Greeting> request = builders.<Greeting>action("SomeAction")
@@ -187,7 +185,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     Assert.assertNotNull(responseFuture.getResponse().getEntity());
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testUpdateToneAction(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Request<Greeting> request = builders.<Greeting>action("UpdateTone")
@@ -203,7 +201,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     Assert.assertEquals(newGreeting.getTone(), Tone.SINCERE);
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   //test update on retrieved entity
   public void testUpdate(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException, CloneNotSupportedException,
           URISyntaxException
@@ -231,7 +229,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     Assert.assertEquals(response2, response1 + "Again");
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testPartialUpdate(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException, CloneNotSupportedException, URISyntaxException
   {
     // GET
@@ -259,7 +257,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     Assert.assertEquals(response2, greeting.getMessage());
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   //test cookbook example from quickstart wiki
   public void testCookbook(RootBuilderWrapper<Long, Greeting> builders) throws Exception
   {
@@ -294,7 +292,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     futureCallback.get();
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testCookbookInBatch(RootBuilderWrapper<Long, Greeting> builders) throws Exception
   {
     // GET
@@ -326,7 +324,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     }
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testSearch(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Request<CollectionResponse<Greeting>> findRequest = builders.findBy("Search").setQueryParam("tone", Tone.FRIENDLY).build();
@@ -338,7 +336,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     }
   }
 
-  @Test(dataProvider = "requestBuilderWithResourceNameDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderWithResourceNameDataProvider")
   public void testSearchWithPostFilter(RootBuilderWrapper<Long, Greeting> builders, String resourceName) throws RemoteInvocationException
   {
     Request<CollectionResponse<Greeting>> findRequest = builders.findBy("SearchWithPostFilter").paginate(0, 5).build();
@@ -354,7 +352,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     Assert.assertEquals(next.getHref(), "/" + resourceName + "?count=5&start=5&q=searchWithPostFilter");
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void TestPagination(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Request<CollectionResponse<Greeting>> findRequest = builders.findBy("SearchWithPostFilter").paginateStart(1).build();
@@ -372,7 +370,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     Assert.assertEquals(entity.getElements().size(), 4); // expected to be 4 instead of 5 because of post filter
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testSearchWithTones(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Request<CollectionResponse<Greeting>> req =
@@ -388,7 +386,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     }
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testSearchFacets(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Request<CollectionResponse<Greeting>> req = builders.findBy("SearchWithFacets").setQueryParam("tone", Tone.SINCERE).build();
@@ -399,7 +397,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     // "randomly" generated data is guaranteed to have positive number of each tone
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testEmptyBatchGetWithProjection(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Request<BatchResponse<Greeting>> request = builders.batchGet().ids(1000L, 2000L).fields(Greeting.fields().message()).build();
@@ -407,7 +405,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     Assert.assertEquals(response.getResults().size(), 0);
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testBatchGetUsingCollection(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     List<Long> ids = Arrays.asList(1L, 2L, 3L, 4L);
@@ -416,7 +414,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     Assert.assertEquals(response.getResults().size(), ids.size());
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testBatchGetUsingCollectionKV(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     List<Long> ids = Arrays.asList(1L, 2L, 3L, 4L);
@@ -614,7 +612,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     }
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testBatchCreate(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     List<Greeting> greetings = generateBatchTestData(3, "BatchCreate", Tone.FRIENDLY);
@@ -634,7 +632,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     deleteAndVerifyBatchTestDataSerially(builders, createdIds);
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testBatchDelete(RootBuilderWrapper<Long, Greeting> builders)
       throws RemoteInvocationException
   {
@@ -660,7 +658,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     }
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testBatchUpdate(RootBuilderWrapper<Long, Greeting> builders)
       throws RemoteInvocationException, CloneNotSupportedException
   {
@@ -697,7 +695,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     deleteAndVerifyBatchTestDataSerially(builders, createdIds);
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testBatchPartialUpdate(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException, CloneNotSupportedException
   {
     List<Greeting> greetings = generateBatchTestData(3, "BatchPatch", Tone.FRIENDLY);
@@ -734,7 +732,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     deleteAndVerifyBatchTestDataSerially(builders, createdIds);
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testGetAll(RootBuilderWrapper<Long, Greeting> builders)
       throws RemoteInvocationException
   {
@@ -765,7 +763,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     deleteAndVerifyBatchTestDataSerially(builders, createdIds);
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testMalformedPagination(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     expectPaginationError("-1", builders);
@@ -786,7 +784,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     }
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testException(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     try
@@ -802,7 +800,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     }
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void test404(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Request<Greeting> request = builders.get().id(999L).build();
@@ -818,7 +816,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     }
   }
 
-  @Test(dataProvider = "requestBuilderWithResourceNameDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderWithResourceNameDataProvider")
   public void testOptions(RootBuilderWrapper<Long, Greeting> builders, String resourceName)
       throws RemoteInvocationException, URISyntaxException, IOException
   {
@@ -832,99 +830,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     Assert.assertTrue(resourceSchema.hasCollection());
   }
 
-  @DataProvider
-  protected Object[][] requestBuilderDataProvider()
-  {
-    return new Object[][] {
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackRequestBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxRequestBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskRequestBuilders()) }
-    };
-  }
-
-  @DataProvider
-  protected Object[][] requestBuilderWithOptionsDataProvider()
-  {
-    final RestliRequestOptions customRequestOptions =
-      new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.FORCE_USE_NEXT).build();
-    return new Object[][] {
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(customRequestOptions)), customRequestOptions },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(customRequestOptions)), customRequestOptions },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseBuilders(customRequestOptions)), customRequestOptions },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders(customRequestOptions)), customRequestOptions },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackBuilders(customRequestOptions)), customRequestOptions },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackRequestBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackRequestBuilders(customRequestOptions)), customRequestOptions },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxBuilders(customRequestOptions)), customRequestOptions },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxRequestBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxRequestBuilders(customRequestOptions)), customRequestOptions },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskBuilders(customRequestOptions)), customRequestOptions },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskRequestBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskRequestBuilders(customRequestOptions)), customRequestOptions }
-    };
-  }
-
-  @DataProvider
-  protected Object[][] requestBuilderWithResourceNameDataProvider()
-  {
-    return new Object[][] {
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()), "greetings" },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()), "greetings" },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseBuilders()), "greetingsPromise" },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders()), "greetingsPromise" },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackBuilders()), "greetingsCallback" },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackRequestBuilders()), "greetingsCallback" },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxBuilders()), "greetingsPromiseCtx" },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxRequestBuilders()), "greetingsPromiseCtx" },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskBuilders()), "greetingsTask" },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskRequestBuilders()), "greetingsTask" },
-    };
-  }
-
-  @DataProvider
-  public Object[][] optionsData()
-  {
-    return new Object[][] {
-        new Object[] { new GreetingsBuilders().options(), new NamedDataSchema[] {
-            new Greeting().schema(),
-            new TransferOwnershipRequest().schema(),
-            new SearchMetadata().schema(),
-            new Empty().schema(),
-            (NamedDataSchema)DataTemplateUtil.getSchema(Tone.class)
-        }},
-        new Object[] { new GreetingsRequestBuilders().options(), new NamedDataSchema[] {
-          new Greeting().schema(),
-          new TransferOwnershipRequest().schema(),
-          new SearchMetadata().schema(),
-          new Empty().schema(),
-          (NamedDataSchema)DataTemplateUtil.getSchema(Tone.class)
-        }},
-        new Object[] { new ActionsBuilders().options(), new NamedDataSchema[] {
-            new Message().schema(),
-            (NamedDataSchema)DataTemplateUtil.getSchema(Tone.class)
-        }},
-        new Object[] { new ActionsRequestBuilders().options(), new NamedDataSchema[] {
-          new Message().schema(),
-          (NamedDataSchema)DataTemplateUtil.getSchema(Tone.class)
-        }}
-    };
-  }
-
-  @Test(dataProvider = "optionsData")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "optionsData")
   public void testModelsForOptionsRequest(OptionsRequestBuilder request, NamedDataSchema[] schemas)
       throws RemoteInvocationException, URISyntaxException, IOException
   {
@@ -937,5 +843,136 @@ public class TestGreetingsClient extends RestLiIntegrationTest
       DataSchema optionsDataSchema = rawDataSchemas.get(dataSchema.getFullName());
       Assert.assertEquals(optionsDataSchema, dataSchema);
     }
+  }
+
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
+  protected Object[][] requestBuilderDataProvider()
+  {
+    return new Object[][] {
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackRequestBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxRequestBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskRequestBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
+    };
+  }
+
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderWithOptionsDataProvider")
+  protected Object[][] requestBuilderWithOptionsDataProvider()
+  {
+    return new Object[][] {
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), TestConstants.FORCE_USE_NEXT_OPTIONS },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), TestConstants.FORCE_USE_NEXT_OPTIONS },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), TestConstants.FORCE_USE_NEXT_OPTIONS },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), TestConstants.FORCE_USE_NEXT_OPTIONS },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), TestConstants.FORCE_USE_NEXT_OPTIONS },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackRequestBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), TestConstants.FORCE_USE_NEXT_OPTIONS },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), TestConstants.FORCE_USE_NEXT_OPTIONS },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxRequestBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), TestConstants.FORCE_USE_NEXT_OPTIONS },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), TestConstants.FORCE_USE_NEXT_OPTIONS },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskRequestBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), TestConstants.FORCE_USE_NEXT_OPTIONS }
+    };
+  }
+
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderWithResourceNameDataProvider")
+  protected Object[][] requestBuilderWithResourceNameDataProvider()
+  {
+    return new Object[][] {
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()), "greetings" },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "greetings" },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()), "greetings" },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "greetings" },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseBuilders()), "greetingsPromise" },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "greetingsPromise" },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders()), "greetingsPromise" },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "greetingsPromise" },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackBuilders()), "greetingsCallback" },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "greetingsCallback" },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackRequestBuilders()), "greetingsCallback" },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "greetingsCallback" },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxBuilders()), "greetingsPromiseCtx" },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "greetingsPromiseCtx" },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxRequestBuilders()), "greetingsPromiseCtx" },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "greetingsPromiseCtx" },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskBuilders()), "greetingsTask" },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "greetingsTask" },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskRequestBuilders()), "greetingsTask" },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "greetingsTask" },
+    };
+  }
+
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "optionsData")
+  public Object[][] optionsData()
+  {
+    return new Object[][]
+      {
+        new Object[]
+          {
+            new GreetingsBuilders().options(),
+            new NamedDataSchema[]
+              {
+                new Greeting().schema(),
+                new TransferOwnershipRequest().schema(),
+                new SearchMetadata().schema(),
+                new Empty().schema(),
+                (NamedDataSchema)DataTemplateUtil.getSchema(Tone.class)
+              }
+          },
+        new Object[]
+          {
+            new GreetingsRequestBuilders().options(),
+            new NamedDataSchema[]
+              {
+                new Greeting().schema(),
+                new TransferOwnershipRequest().schema(),
+                new SearchMetadata().schema(),
+                new Empty().schema(),
+                (NamedDataSchema)DataTemplateUtil.getSchema(Tone.class)
+              }
+          },
+        new Object[]
+          {
+            new ActionsBuilders().options(),
+            new NamedDataSchema[]
+              {
+                new Message().schema(),
+                (NamedDataSchema)DataTemplateUtil.getSchema(Tone.class)
+              }
+          },
+        new Object[]
+          {
+            new ActionsRequestBuilders().options(),
+            new NamedDataSchema[]
+              {
+                new Message().schema(),
+                (NamedDataSchema)DataTemplateUtil.getSchema(Tone.class)
+              }
+          }
+      };
   }
 }

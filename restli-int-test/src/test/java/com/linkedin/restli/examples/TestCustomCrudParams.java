@@ -58,7 +58,7 @@ public class TestCustomCrudParams extends RestLiIntegrationTest
     super.shutdown();
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public static void testCookbookCrudParams(RootBuilderWrapper<Long, Greeting> builders) throws Exception
   {
     try
@@ -94,12 +94,14 @@ public class TestCustomCrudParams extends RestLiIntegrationTest
     Assert.assertEquals(greetingResponse.getEntity().getMessage(), "This is a new message!");
   }
 
-  @DataProvider
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
       { new RootBuilderWrapper<Long, Greeting>(new GreetingsAuthBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsAuthRequestBuilders()) }
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsAuthBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsAuthRequestBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsAuthRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
   }
 }

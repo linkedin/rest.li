@@ -22,6 +22,8 @@ package com.linkedin.restli.internal.client;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.restli.common.EmptyRecord;
+import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.common.RestConstants;
 
 /**
  * Converts a raw RestResponse into a status-only response by ensuring the RestResponse
@@ -39,7 +41,7 @@ public class EmptyResponseDecoder extends RestResponseDecoder<EmptyRecord>
   }
 
   @Override
-  public EmptyRecord wrapResponse(DataMap dataMap)
+  protected EmptyRecord wrapResponse(DataMap dataMap, ProtocolVersion version)
   {
     throw new UnsupportedOperationException("Empty response should have no entity");
   }

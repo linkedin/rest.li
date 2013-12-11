@@ -86,7 +86,7 @@ public class TestDebugRequestHandlers extends RestLiIntegrationTest
     sendRequestAndVerifyParseqTracevisResponse(request);
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testParseqTraceDebugPutRequestHandlerTracevis(RootBuilderWrapper<Long, Greeting> builders)
       throws URISyntaxException, ExecutionException, InterruptedException, RemoteInvocationException
   {
@@ -116,7 +116,7 @@ public class TestDebugRequestHandlers extends RestLiIntegrationTest
     sendRequestAndVerifyParseqTracevisResponse(request);
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testParseqTraceDebugDeleteRequestHandlerTracevis(RootBuilderWrapper<Long, Greeting> builders)
       throws URISyntaxException, ExecutionException, InterruptedException, RemoteInvocationException
   {
@@ -145,7 +145,7 @@ public class TestDebugRequestHandlers extends RestLiIntegrationTest
     sendRequestAndVerifyParseqTraceRaw(request);
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testParseqTraceDebugPutRequestHandlerRaw(RootBuilderWrapper<Long, Greeting> builders)
       throws URISyntaxException, ExecutionException, InterruptedException, RemoteInvocationException
   {
@@ -175,7 +175,7 @@ public class TestDebugRequestHandlers extends RestLiIntegrationTest
     sendRequestAndVerifyParseqTraceRaw(request);
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testParseqTraceDebugDeleteRequestHandlerRaw(RootBuilderWrapper<Long, Greeting> builders)
       throws URISyntaxException, ExecutionException, InterruptedException, RemoteInvocationException
   {
@@ -244,12 +244,14 @@ public class TestDebugRequestHandlers extends RestLiIntegrationTest
     return Long.parseLong(createdId);
   }
 
-  @DataProvider
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
       { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders()) }
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
   }
 }

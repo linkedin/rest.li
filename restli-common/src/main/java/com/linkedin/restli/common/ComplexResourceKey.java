@@ -26,8 +26,11 @@ import com.linkedin.data.schema.validation.ValidationOptions;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.jersey.api.uri.UriComponent;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.PathSegment.PathSegmentSyntaxException;
 import com.linkedin.restli.internal.common.QueryParamsDataMap;
+import com.linkedin.restli.internal.common.URIElementParser;
+import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.internal.common.URLEscaper.Escaping;
 
 import java.lang.reflect.Constructor;
@@ -82,15 +85,37 @@ public final class ComplexResourceKey<K extends RecordTemplate, P extends Record
     return params;
   }
 
-  @Override
   /**
-   * Only the key part is used here, as the params are not, strictly speaking, a part of the resource identifier
+   * Only the key part is used here, as the params are not, strictly speaking, a part of the resource identifier.
+   *
+   * This returns a v1 style serialized key. It should not be used structurally.
+   * @see {@link #toString(com.linkedin.restli.internal.common.URLEscaper.Escaping)}
+   * @deprecated the output of this function may change in the future, but it is still acceptable to use for
+   *             logging purposes.
+   *             If you need a stringified version of a key to extract information from a batch response,
+   *             you should use {@link BatchResponse#keyToString(Object, ProtocolVersion)}.
+   *             Internal developers can use {@link com.linkedin.restli.internal.common.URIParamUtils#keyToString(Object, com.linkedin.restli.internal.common.URLEscaper.Escaping, com.linkedin.jersey.api.uri.UriComponent.Type, boolean, ProtocolVersion)},
+   *             {@link com.linkedin.restli.internal.common.URIParamUtils#encodeKeyForBody(Object, boolean, ProtocolVersion)}, or {@link com.linkedin.restli.internal.common.URIParamUtils#encodeKeyForUri(Object, com.linkedin.jersey.api.uri.UriComponent.Type, ProtocolVersion)}
+   *             as needed.
    */
+  @Override
+  @SuppressWarnings("deprecation")
+  @Deprecated
   public String toString()
   {
     return toString(Escaping.NO_ESCAPING);
   }
 
+  /**
+   * @param escaping what type of escaping should be done.
+   * @return a v1 style serialized key.
+   * @deprecated If you need a stringified version of a key to extract information from a batch response,
+   *             you should use {@link BatchResponse#keyToString(Object, ProtocolVersion)}.
+   *             Internal developers can use {@link com.linkedin.restli.internal.common.URIParamUtils#keyToString(Object, com.linkedin.restli.internal.common.URLEscaper.Escaping, com.linkedin.jersey.api.uri.UriComponent.Type, boolean, ProtocolVersion)},
+   *             {@link com.linkedin.restli.internal.common.URIParamUtils#encodeKeyForBody(Object, boolean, ProtocolVersion)}, or {@link com.linkedin.restli.internal.common.URIParamUtils#encodeKeyForUri(Object, com.linkedin.jersey.api.uri.UriComponent.Type, ProtocolVersion)}
+   *             as needed.
+   */
+  @Deprecated
   public String toString(Escaping escaping)
   {
     return QueryParamsDataMap.dataMapToQueryString(key.data(), escaping);
@@ -102,12 +127,27 @@ public final class ComplexResourceKey<K extends RecordTemplate, P extends Record
    * builders.
    *
    * @return a String
+   * @deprecated This can only return a v1 style serialized key. Developers should use one of
+   *             {@link URIParamUtils#encodeKeyForBody(Object, boolean, ProtocolVersion)}, {@link URIParamUtils#encodeKeyForUri(Object, com.linkedin.jersey.api.uri.UriComponent.Type, ProtocolVersion)}
+   *             {@link URIParamUtils#keyToString(Object, com.linkedin.restli.internal.common.URLEscaper.Escaping, com.linkedin.jersey.api.uri.UriComponent.Type, boolean, ProtocolVersion)}
+   *             instead.
    */
+  @Deprecated
+  @SuppressWarnings("deprecation")
   public String toStringFull()
   {
     return toStringFull(Escaping.NO_ESCAPING);
   }
 
+  /**
+   * @param escaping what type of escaping should be done.
+   * @return this ComplexResourceKey, serialized as a string, including $params.
+   * @deprecated This can only return a v1 style serialized key. Developers should use one of
+   *             {@link URIParamUtils#encodeKeyForBody(Object, boolean, ProtocolVersion)}, {@link URIParamUtils#encodeKeyForUri(Object, com.linkedin.jersey.api.uri.UriComponent.Type, ProtocolVersion)}
+   *             {@link URIParamUtils#keyToString(Object, com.linkedin.restli.internal.common.URLEscaper.Escaping, com.linkedin.jersey.api.uri.UriComponent.Type, boolean, ProtocolVersion)}
+   *             instead.
+   */
+  @Deprecated
   public String toStringFull(Escaping escaping)
   {
     return QueryParamsDataMap.dataMapToQueryString(toDataMap(), escaping);
@@ -187,6 +227,11 @@ public final class ComplexResourceKey<K extends RecordTemplate, P extends Record
     return new ComplexResourceKey<RecordTemplate, RecordTemplate>(key, params);
   }
 
+  /**
+   * @deprecated use {@link ComplexResourceKey#parseString(String, Class, Class, ProtocolVersion)} instead.
+   */
+  @Deprecated
+  @SuppressWarnings("deprecation")
   public static ComplexResourceKey<RecordTemplate, RecordTemplate> parseFromPathSegment(String currentPathSegment,
                                                                                         Class<? extends RecordTemplate> keyKeyClass,
                                                                                         Class<? extends RecordTemplate> keyParamsClass) throws PathSegmentSyntaxException
@@ -194,6 +239,10 @@ public final class ComplexResourceKey<K extends RecordTemplate, P extends Record
     return parseFromPathSegment(currentPathSegment, ComplexKeySpec.forClassesMaybeNull(keyKeyClass, keyParamsClass));
   }
 
+  /**
+   * @deprecated use {@link ComplexResourceKey#parseString(String, ComplexKeySpec, ProtocolVersion)} instead.
+   */
+  @Deprecated
   public static ComplexResourceKey<RecordTemplate, RecordTemplate> parseFromPathSegment(String currentPathSegment,
                                                                                         ComplexKeySpec<?, ?> complexKeyType) throws PathSegmentSyntaxException
   {
@@ -201,6 +250,51 @@ public final class ComplexResourceKey<K extends RecordTemplate, P extends Record
         UriComponent.decodeQuery(URI.create("?" + currentPathSegment), true);
     DataMap allParametersDataMap = QueryParamsDataMap.parseDataMapKeys(queryParameters);
     return buildFromDataMap(allParametersDataMap, complexKeyType);
+  }
+
+  /**
+   * Parse the given {@link String} into a {@link ComplexResourceKey}.
+   *
+   * @param str the {@link String} to parse
+   * @param keyKeyClass the {@link RecordTemplate} derived {@link Class} of the key part of the key
+   * @param keyParamsClass the {@link RecordTemplate} derived {@link Class} of the param part of the key
+   * @param version the {@link ProtocolVersion}
+   * @return a {@link ComplexResourceKey}
+   * @throws PathSegmentSyntaxException
+   */
+  public static ComplexResourceKey<RecordTemplate, RecordTemplate> parseString(String str,
+                                                                               Class<? extends RecordTemplate> keyKeyClass,
+                                                                               Class<? extends RecordTemplate> keyParamsClass,
+                                                                               ProtocolVersion version) throws PathSegmentSyntaxException
+  {
+    return parseString(str, ComplexKeySpec.forClassesMaybeNull(keyKeyClass, keyParamsClass), version);
+  }
+
+  /**
+   * Parse the given {@link String} into a {@link ComplexResourceKey}.
+   *
+   * @param str the {@link String} to parse
+   * @param complexKeyType the {@link ComplexKeySpec} of the {@link ComplexResourceKey}
+   * @param version the {@link ProtocolVersion}
+   * @return a {@link ComplexResourceKey}
+   * @throws PathSegmentSyntaxException
+   */
+  @SuppressWarnings("deprecation")
+  public static ComplexResourceKey<RecordTemplate, RecordTemplate> parseString(String str,
+                                                                               ComplexKeySpec<?, ?> complexKeyType,
+                                                                               ProtocolVersion version)
+    throws PathSegmentSyntaxException
+  {
+    if (version.compareTo(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()) >= 0)
+    {
+      DataMap dataMap = (DataMap) URIElementParser.parse(str);
+      return buildFromDataMap(dataMap, complexKeyType);
+    }
+    else
+    {
+      // v1 Complex Keys are always URI encoded, so we don't need to worry about errors from .decodeQuery
+      return parseFromPathSegment(str, complexKeyType);
+    }
   }
 
   private static RecordTemplate validateDataMap(DataMap dataMap,

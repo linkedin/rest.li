@@ -16,6 +16,13 @@
 
 package com.linkedin.restli.common;
 
+
+import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.DataSchemaUtil;
+import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.restli.internal.common.ValueConverter;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -24,12 +31,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import com.linkedin.data.DataMap;
-import com.linkedin.data.schema.DataSchema;
-import com.linkedin.data.schema.DataSchemaUtil;
-import com.linkedin.data.template.DataTemplateUtil;
-import com.linkedin.restli.internal.common.ValueConverter;
 
 
 /**
@@ -259,6 +260,47 @@ public class CompoundKey
     return true;
   }
 
+  /**
+   * Create a DataMap representation of this CompoundKey.  If any of its fields are CustomTypes,
+   * they will be coerced down to their base type before being placed into the map.
+   *
+   * @param fieldTypes the fieldTypes of this {@link CompoundKey}
+   * @return a {@link DataMap} representation of this {@link CompoundKey}
+   * @see {@link com.linkedin.restli.internal.common.URIParamUtils#compoundKeyToDataMap(CompoundKey)}
+   */
+  public DataMap toDataMap(Map<String, CompoundKey.TypeInfo> fieldTypes)
+  {
+    DataMap dataMap = new DataMap(_keys.size());
+    for (Map.Entry<String, Object> keyParts : _keys.entrySet())
+    {
+      String key = keyParts.getKey();
+      Object value = keyParts.getValue();
+      DataSchema schema = fieldTypes.get(key).getDeclared().getSchema();
+      DataSchema dereferencedSchema = schema.getDereferencedDataSchema();
+      Class<?> dereferencedClass = DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchemaClass(dereferencedSchema.getType());
+
+      @SuppressWarnings("unchecked")
+      Object coercedInput = DataTemplateUtil.coerceInput(value,
+                                                         (Class<Object>) value.getClass(),
+                                                         dereferencedClass);
+      dataMap.put(key, coercedInput);
+    }
+    return dataMap;
+  }
+
+  /**
+   This returns a v1 style serialized key. It should not be used structurally.
+   *
+   * @return a {@link ProtocolVersion} v1 style serialized version of this {@link CompoundKey}.
+   * @deprecated the output of this function may change in the future, but it is still acceptable to use for
+   *             logging purposes.
+   *             If you need a stringified version of a key to extract information from a batch response,
+   *             you should use {@link BatchResponse#keyToString(Object, ProtocolVersion)}.
+   *             Internal developers can use {@link com.linkedin.restli.internal.common.URIParamUtils#keyToString(Object, com.linkedin.restli.internal.common.URLEscaper.Escaping, com.linkedin.jersey.api.uri.UriComponent.Type, boolean, ProtocolVersion)},
+   *             {@link com.linkedin.restli.internal.common.URIParamUtils#encodeKeyForBody(Object, boolean, ProtocolVersion)}, or {@link com.linkedin.restli.internal.common.URIParamUtils#encodeKeyForUri(Object, com.linkedin.jersey.api.uri.UriComponent.Type, ProtocolVersion)}
+   *             as needed.
+   */
+  @Deprecated
   @Override
   public String toString()
   {

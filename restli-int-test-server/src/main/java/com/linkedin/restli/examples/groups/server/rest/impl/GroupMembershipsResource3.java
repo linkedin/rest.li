@@ -43,6 +43,8 @@ import com.linkedin.restli.examples.groups.api.GroupMembership;
 import com.linkedin.restli.examples.groups.api.GroupMembershipKey;
 import com.linkedin.restli.examples.groups.api.GroupMembershipParam;
 import com.linkedin.restli.examples.groups.api.GroupMembershipQueryParamArray;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
+import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.server.BatchCreateRequest;
 import com.linkedin.restli.server.BatchCreateResult;
 import com.linkedin.restli.server.BatchDeleteRequest;
@@ -263,7 +265,9 @@ public class GroupMembershipsResource3 extends ComplexKeyResourceTemplate<GroupM
     CompoundKey compoundKey =
         new CompoundKey().append(GROUP_ID, complexKey.getGroupID())
                          .append(MEMBER_ID, complexKey.getMemberID());
-    groupMembership.setId(compoundKey.toString());
+    groupMembership.setId(URIParamUtils.encodeKeyForBody(compoundKey,
+                                                         true,
+                                                         AllProtocolVersions.BASELINE_PROTOCOL_VERSION));
     groupMembership.setMemberID(complexKey.getMemberID());
     groupMembership.setGroupID(complexKey.getGroupID());
     return groupMembership;

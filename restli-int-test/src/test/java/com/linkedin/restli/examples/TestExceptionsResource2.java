@@ -62,7 +62,7 @@ public class TestExceptionsResource2 extends RestLiIntegrationTest
     super.shutdown();
   }
 
-  @Test(dataProvider = "exceptionHandlingModesDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "exceptionHandlingModesDataProvider")
   public void testGet(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior, RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Response<Greeting> response = null;
@@ -118,7 +118,7 @@ public class TestExceptionsResource2 extends RestLiIntegrationTest
     Assert.assertEquals(respEntityMap, new Greeting().setMessage("Hello, sorry for the mess").data());
   }
 
-  @Test(dataProvider = "exceptionHandlingModesDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "exceptionHandlingModesDataProvider")
   public void testExceptionWithValue(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior, RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Response<Integer> response = null;
@@ -174,7 +174,7 @@ public class TestExceptionsResource2 extends RestLiIntegrationTest
     Assert.assertSame(respEntityMap.getInteger("value"), 42);
   }
 
-  @Test(dataProvider = "exceptionHandlingModesDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "exceptionHandlingModesDataProvider")
   public void testExceptionWithoutValue(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior, RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Response<Void> response = null;
@@ -227,7 +227,7 @@ public class TestExceptionsResource2 extends RestLiIntegrationTest
     Assert.assertEquals(exception.getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode());
   }
 
-  @Test(dataProvider = "exceptionHandlingModesDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "exceptionHandlingModesDataProvider")
   public void testNonRestException(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior, RootBuilderWrapper<Long, Greeting> builders)
   {
     Response<Greeting> response = null;
@@ -256,16 +256,23 @@ public class TestExceptionsResource2 extends RestLiIntegrationTest
     }
   }
 
-  @DataProvider
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "exceptionHandlingModesDataProvider")
   public Object[][] exceptionHandlingModesDataProvider()
   {
-    return new Object[][] {
+    return new Object[][]
+      {
         { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper<Long, Greeting>(new Exceptions2Builders()) },
+        { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper<Long, Greeting>(new Exceptions2Builders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
         { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper<Long, Greeting>(new Exceptions2RequestBuilders()) },
+        { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper<Long, Greeting>(new Exceptions2RequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
         { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper<Long, Greeting>(new Exceptions2Builders()) },
+        { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper<Long, Greeting>(new Exceptions2Builders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
         { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper<Long, Greeting>(new Exceptions2RequestBuilders()) },
+        { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper<Long, Greeting>(new Exceptions2RequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
         { false, null, new RootBuilderWrapper<Long, Greeting>(new Exceptions2Builders()) },
-        { false, null, new RootBuilderWrapper<Long, Greeting>(new Exceptions2RequestBuilders()) }
-    };
+        { false, null, new RootBuilderWrapper<Long, Greeting>(new Exceptions2Builders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+        { false, null, new RootBuilderWrapper<Long, Greeting>(new Exceptions2RequestBuilders()) },
+        { false, null, new RootBuilderWrapper<Long, Greeting>(new Exceptions2RequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
+      };
   }
 }

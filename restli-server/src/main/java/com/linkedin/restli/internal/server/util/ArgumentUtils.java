@@ -14,28 +14,8 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.restli.internal.server.util;
 
-import com.linkedin.restli.common.ComplexKeySpec;
-import com.linkedin.restli.common.TypeSpec;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URI;
-import java.net.URLDecoder;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Pattern;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.DataSchema;
@@ -44,14 +24,14 @@ import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.jersey.api.uri.UriComponent;
-import com.linkedin.r2.message.rest.RestRequest;
-import com.linkedin.restli.common.BatchRequest;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
-import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.IllegalMaskException;
 import com.linkedin.restli.internal.common.PathSegment.PathSegmentSyntaxException;
+import com.linkedin.restli.internal.common.URIElementParser;
 import com.linkedin.restli.internal.common.URIMaskUtil;
 import com.linkedin.restli.internal.common.ValueConverter;
 import com.linkedin.restli.internal.server.RestLiInternalException;
@@ -59,6 +39,18 @@ import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.RoutingException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URLDecoder;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
+
 
 /**
  * @author Josh Walker
@@ -81,8 +73,8 @@ public class ArgumentUtils
    */
   public static Object getResourceKey(final RoutingResult routingResult)
   {
-    return routingResult.getContext().getPathKeys().get(
-            routingResult.getResourceMethod().getResourceModel().getKeyName());
+    String keyName = routingResult.getResourceMethod().getResourceModel().getKeyName();
+    return routingResult.getContext().getPathKeys().get(keyName);
   }
 
   /**
@@ -95,85 +87,12 @@ public class ArgumentUtils
   }
 
   /**
-   * @param request {@link RestRequest}
-   * @param recordClass resource value class
-   * @param <V> resource value type which is a subclass of {@link RecordTemplate}
-   * @return resource value
-   */
-  public static <V extends RecordTemplate> V extractEntity(final RestRequest request,
-                                                           final Class<V> recordClass)
-  {
-    try
-    {
-      return DataMapUtils.read(request, recordClass);
-    }
-    catch (IOException e)
-    {
-      throw new RoutingException("Error parsing entity body: " + e.getMessage(),
-                                 HttpStatus.S_400_BAD_REQUEST.getCode());
-    }
-  }
-
-  /**
    * @param routingResult {@link RoutingResult}
    * @return value class of the resource addressed by this method
    */
   public static Class<? extends RecordTemplate> getValueClass(final RoutingResult routingResult)
   {
     return routingResult.getResourceMethod().getResourceModel().getValueClass();
-  }
-
-  /**
-   * Convert a DataMap representation of a BatchRequest (string->record) into a Java Map
-   * appropriate for passing into application code.  Note that compound/complex keys are
-   * represented as their string encoding in the DataMap.  Since we have already parsed
-   * these keys, we simply try to match the string representations, rather than re-parsing.
-   *
-   *
-   * @param data - the input DataMap to be converted
-   * @param valueClass - the RecordTemplate type of the values
-   * @param ids - the parsed batch ids from the request URI
-   * @return a map using appropriate key and value classes
-   */
-  public static <R extends RecordTemplate> Map<Object, R> buildBatchRequestMap(final DataMap data,
-                                         final Class<R> valueClass,
-                                         final Set<?> ids)
-  {
-    BatchRequest<R> batchRequest = new BatchRequest<R>(data, new TypeSpec<R>(valueClass));
-
-    Map<String, Object> parsedKeyMap = new HashMap<String, Object>();
-    for (Object o : ids)
-    {
-      parsedKeyMap.put(o instanceof ComplexResourceKey
-                           ? ((ComplexResourceKey<?, ?>) o).toStringFull() : o.toString(),
-                       o);
-    }
-
-    Map<Object, R> result =
-        new HashMap<Object, R>(batchRequest.getEntities().size());
-    for (Map.Entry<String, R> entry : batchRequest.getEntities().entrySet())
-    {
-      Object key = parsedKeyMap.get(entry.getKey());
-      if (key == null)
-      {
-        throw new RoutingException(
-                String.format("Batch request mismatch, URI keys: '%s'  Entity keys: '%s'",
-                              ids.toString(),
-                              result.keySet().toString()),
-                HttpStatus.S_400_BAD_REQUEST.getCode());
-      }
-      R value = DataTemplateUtil.wrap(entry.getValue().data(), valueClass);
-      result.put(key, value);
-    }
-    if (!ids.equals(result.keySet()))
-    {
-      throw new RoutingException(
-              String.format("Batch request mismatch, URI keys: '%s'  Entity keys: '%s'",
-                            ids.toString(),
-                            result.keySet().toString()),
-              HttpStatus.S_400_BAD_REQUEST.getCode());
-    }
-    return result;
   }
 
   /**
@@ -238,106 +157,122 @@ public class ArgumentUtils
    * The method parses out runtime-typesafe simple keys for the compound key based on the
    * provided key set for the resource.
    *
-   * @param urlString a string representation of the compound key in the form:
-   *          name1:value1;name2:value2...
-   * @param partialKeys a set of {@link com.linkedin.restli.server.Key} objects specifying
-   *          names and types of the constituent simple keys
-   * @return a runtime-typesafe CompoundKey
    *
-   * @deprecated Should take a Collection of fully formed {@link Key}s.
-   */
-  @Deprecated
-  public static CompoundKey parseCompoundKey(final String urlString,
-                                             final Map<String, Class<?>> partialKeys)
-  {
-    Collection<Key> keys = new ArrayList<Key>(partialKeys.size());
-    for(Map.Entry<String, Class<?>> entry : partialKeys.entrySet())
-    {
-      keys.add(new Key(entry.getKey(), entry.getValue()));
-    }
-    return parseCompoundKey(urlString, keys);
-  }
-
-  /**
-   * The method parses out runtime-typesafe simple keys for the compound key based on the
-   * provided key set for the resource.
-   *
-   * @param urlString a string representation of the compound key in the form:
-   *          name1:value1;name2:value2...
+   * @param urlString a string representation of the compound key.
    * @param keys a set of {@link com.linkedin.restli.server.Key} objects specifying
    *          names and types of the constituent simple keys
    * @return a runtime-typesafe CompoundKey
+   * @throws IllegalArgumentException if there are unexpected key parts in the urlString that are not in keys,
+   *         or any error in {@link ProtocolVersion} 1.0
+   * @throws PathSegmentSyntaxException if the given string is not a valid encoded compound key
    */
   public static CompoundKey parseCompoundKey(final String urlString,
-                                             final Collection<Key> keys)
+                                             final Collection<Key> keys,
+                                             final ProtocolVersion version) throws IllegalArgumentException,
+                                                                                   PathSegmentSyntaxException
   {
     if (urlString == null || urlString.trim().isEmpty())
     {
       return null;
     }
 
-    //There are two compound key syntaxes potentially in use by clients, depending on the version
-    //of rest.li being used.  The syntaxes use different delimiters: ";" and ":" for the legacy
-    //syntax, and "&" and "=" for the newer syntax.  When parsing compound keys, we do not
-    //know which syntax the client used, and we cannot rely on correct percent-encoding of
-    //delimiter characters for both syntaxes.  Therefore we simulate parsing using each syntax in
-    //turn, and choose the best match.
-    StringBuilder legacyParseError = new StringBuilder();
-    StringBuilder currentParseError = new StringBuilder();
-    CompoundKey legacyParsedKey = parseCompoundKey(urlString,
-                                                   keys,
-                                                   legacyParseError,
-                                                   LEGACY_SIMPLE_KEY_DELIMETER_PATTERN,
-                                                   LEGACY_KEY_VALUE_DELIMETER_PATTERN);
-    CompoundKey currentParsedKey = parseCompoundKey(urlString,
-                                                    keys,
-                                                    currentParseError,
-                                                    SIMPLE_KEY_DELIMETER_PATTERN,
-                                                    KEY_VALUE_DELIMETER_PATTERN);
-    if (legacyParsedKey != null && currentParsedKey != null)
+    if (version.compareTo(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()) >= 0)
     {
-      boolean legacy = legacyParsedKey.getNumParts() > currentParsedKey.getNumParts();
-      _log.warn("Ambiguous compound key syntax, using heuristic decision for '{}', legacy: {}",
-                urlString, String.valueOf(legacy));
-      return legacy ? legacyParsedKey : currentParsedKey;
-    }
-    else if (legacyParsedKey == null && currentParsedKey == null)
-    {
-      throw new RoutingException(currentParseError.toString(),
-                                 HttpStatus.S_400_BAD_REQUEST.getCode());
+      return parseCompoundKeyV2(urlString, keys);
     }
     else
     {
-      return currentParsedKey == null ? legacyParsedKey : currentParsedKey;
+      //There are two compound key syntaxes potentially in use by clients, depending on the version
+      //of rest.li being used.  The syntaxes use different delimiters: ";" and ":" for the legacy
+      //syntax, and "&" and "=" for the newer syntax.  When parsing compound keys, we do not
+      //know which syntax the client used, and we cannot rely on correct percent-encoding of
+      //delimiter characters for both syntaxes.  Therefore we simulate parsing using each syntax in
+      //turn, and choose the best match.
+      StringBuilder legacyParseError = new StringBuilder();
+      StringBuilder currentParseError = new StringBuilder();
+      CompoundKey legacyParsedKey = parseCompoundKey(urlString,
+                                                     keys,
+                                                     legacyParseError,
+                                                     LEGACY_SIMPLE_KEY_DELIMETER_PATTERN,
+                                                     LEGACY_KEY_VALUE_DELIMETER_PATTERN);
+      CompoundKey currentParsedKey = parseCompoundKey(urlString,
+                                                      keys,
+                                                      currentParseError,
+                                                      SIMPLE_KEY_DELIMETER_PATTERN,
+                                                      KEY_VALUE_DELIMETER_PATTERN);
+      if (legacyParsedKey != null && currentParsedKey != null)
+      {
+        boolean legacy = legacyParsedKey.getNumParts() > currentParsedKey.getNumParts();
+        _log.warn("Ambiguous compound key syntax, using heuristic decision for '{}', legacy: {}",
+                  urlString, String.valueOf(legacy));
+        return legacy ? legacyParsedKey : currentParsedKey;
+      }
+      else if (legacyParsedKey == null && currentParsedKey == null)
+      {
+        throw new IllegalArgumentException(currentParseError.toString());
+      }
+      else
+      {
+        return currentParsedKey == null ? legacyParsedKey : currentParsedKey;
+      }
     }
   }
 
   /**
-   * Parse {@link CompoundKey} from its String representation.
    *
-   * @param urlString {@link CompoundKey} string representation
-   * @param partialKeys {@link CompoundKey} constituent keys' classes keyed on their names
-   * @param errorMessageBuilder {@link StringBuilder} to build error message if necessary
-   * @param simpleKeyDelimiterPattern delimiter of constituent keys in the compound key
-   * @param keyValueDelimiterPattern delimiter of key and value in a constituent key
-   * @return {@link CompoundKey} parsed from the input string
-   *
-   * @deprecated Should take a Collection of fully formed {@link Key}s.
+   * @param urlString {@link String} representation of the v2 compound key
+   * @param keys the {@link Key}s representing each part of the compound key.
+   * @return a {@link CompoundKey}
+   * @throws IllegalArgumentException if there are unexpected key parts in the urlString that are not in keys.
+   * @throws PathSegmentSyntaxException if the given string is not a valid encoded v2 compound key
    */
-  @Deprecated
-  public static CompoundKey parseCompoundKey(final String urlString,
-                                             final Map<String, Class<?>> partialKeys,
-                                             final StringBuilder errorMessageBuilder,
-                                             final Pattern simpleKeyDelimiterPattern,
-                                             final Pattern keyValueDelimiterPattern)
-          throws RoutingException
+  private static CompoundKey parseCompoundKeyV2(final String urlString,
+                                                final Collection<Key> keys) throws PathSegmentSyntaxException,
+                                                                                   IllegalArgumentException
   {
-    Collection<Key> keys = new ArrayList<Key>(partialKeys.size());
-    for(Map.Entry<String, Class<?>> entry : partialKeys.entrySet())
+    DataMap dataMap;
+    // dataMap looks like keyName1: keyValue1, keyName2: keyValue2, ...
+    Object parsedObject = URIElementParser.parse(urlString);
+    if (parsedObject instanceof DataMap)
     {
-      keys.add(new Key(entry.getKey(), entry.getValue()));
+      dataMap = (DataMap) parsedObject;
+      return dataMapToCompoundKey(dataMap, keys);
     }
-    return parseCompoundKey(urlString, keys, errorMessageBuilder, simpleKeyDelimiterPattern, keyValueDelimiterPattern);
+    else
+    {
+      throw new PathSegmentSyntaxException(String.format("input '%s' is not a valid CompoundKey",
+                                                         urlString));
+    }
+  }
+
+  public static CompoundKey dataMapToCompoundKey(DataMap dataMap, Collection<Key> keys) throws IllegalArgumentException
+  {
+    CompoundKey compoundKey = new CompoundKey();
+    for (Key key : keys)
+    {
+      String name = key.getName();
+
+      // may be a partial compound key
+      String value = dataMap.getString(name);
+      if (value != null)
+      {
+        dataMap.remove(name);
+        compoundKey.append(name, convertSimpleValue(value, key.getDataSchema(), key.getType()));
+      }
+    }
+    if (!dataMap.isEmpty())
+    {
+      StringBuilder errorMessageBuilder = new StringBuilder();
+      for (String leftOverKey: dataMap.keySet())
+      {
+        errorMessageBuilder.append("Unknown key part named '");
+        errorMessageBuilder.append(leftOverKey);
+        errorMessageBuilder.append("'");
+      }
+      throw new IllegalArgumentException(errorMessageBuilder.toString());
+    }
+
+    return compoundKey;
   }
 
   /**
@@ -405,7 +340,7 @@ public class ArgumentUtils
         throw new RestLiInternalException(e);
       }
 
-      compoundKey.append(name, convertSimpleValue(decodedStringValue, currentKey.getDataSchema(), currentKey.getType(), false));
+      compoundKey.append(name, convertSimpleValue(decodedStringValue, currentKey.getDataSchema(), currentKey.getType()));
     }
     return compoundKey;
   }
@@ -423,120 +358,24 @@ public class ArgumentUtils
   }
 
   /**
-   * The method parses out and returns the correct type of the key out of the Object. It
-   * can possibly call parseCompoundKey which, in turn, can call this method. While this
-   * may appear recursive, in practice the recursion does not happen, since nested
-   * compound keys are not supported. It is functionally equivalent to
-   * {@link #parseOptionalKey(String, ResourceModel)} with the exception that it
-   * translates its various exceptions into {@link RoutingException}
+   * The method parses out and returns the correct simple type of the key out of the Object.
+   * It does not handle {@link CompoundKey}s or {@link ComplexResourceKey}s.
+   *
    *
    * @param value key value string representation to parse
-   * @param resource {@link ResourceModel} containing the key type
+   * @param resource {@link com.linkedin.restli.internal.server.model.ResourceModel} containing the key type
    * @return parsed key value in the correct type for the key
+   * @throws IllegalArgumentException
+   * @throws NumberFormatException
    */
-  public static Object parseKeyIntoCorrectType(final String value,
-                                               final ResourceModel resource)
-  {
-    try
-    {
-      return parseOptionalKey(value, resource);
-    }
-    catch (NumberFormatException e)
-    {
-      // thrown from Integer.valueOf or Long.valueOf
-      throw new RoutingException(String.format("Key value '%s' must be of type '%s'",
-                                               value,
-                                               resource.getKeyClass().getName()),
-                                 HttpStatus.S_400_BAD_REQUEST.getCode());
-    }
-    catch (IllegalArgumentException e)
-    {
-      // thrown from Enum.valueOf
-      throw new RoutingException(String.format("Key parameter value '%s' is invalid",
-                                               value),
-                                 HttpStatus.S_400_BAD_REQUEST.getCode());
-    }
-    catch (PathSegmentSyntaxException e)
-    {
-      throw new RoutingException(String.format("Key parameter value '%s' is invalid",
-                                               value),
-                                 HttpStatus.S_400_BAD_REQUEST.getCode());
-    }
-  }
+  public static Object parseSimplePathKey(final String value,
+                                          final ResourceModel resource) throws IllegalArgumentException,
+                                                                               NumberFormatException
 
-  /**
-   * Similar to {@link #parseKeyIntoCorrectType(String, ResourceModel)} but throws
-   * different exceptions.
-   *
-   * @param value key value string representation to parse
-   * @param resource {@link ResourceModel} containing the key type
-   * @return parsed key value in the correct type for the key
-   * @throws PathSegmentSyntaxException if cannot parse {@link ComplexResourceKey}
-   */
-  public static Object parseOptionalKey(final String value, final ResourceModel resource) throws PathSegmentSyntaxException
   {
-    if (CompoundKey.class.isAssignableFrom(resource.getKeyClass()))
-    {
-      return parseCompoundKey(value, resource.getKeys());
-    }
-    else if (ComplexResourceKey.class.isAssignableFrom(resource.getKeyClass()))
-    {
-      return ComplexResourceKey.parseFromPathSegment(value,
-                                                     ComplexKeySpec.forClassesMaybeNull(resource.getKeyKeyClass(),
-                                                                                        resource.getKeyParamsClass()));
-    }
-    else
-    {
       Key key = resource.getPrimaryKey();
-      return convertSimpleValue(value, key.getDataSchema(), key.getType(), true);
-    }
-  }
-
-  /**
-   * Parse the parameter value string representation according to the parameter type and
-   * return in that type.
-   *
-   * @param value string to parse
-   * @param keyClass key class
-   * @return parameter value in the correct type.
-   * @throws RoutingException if value cannot be correctly converted to the keyClass or keyClass
-   * does not represent a primitive or enum.
-   */
-  public static Object parseSimpleKey(final String value, final Class<?> keyClass)
-          throws RoutingException
-  {
-    if (CompoundKey.class.isAssignableFrom(keyClass)
-        || ComplexResourceKey.class.isAssignableFrom(keyClass))
-    {
-      throw new RoutingException("Passing a complex key in place of a simple key",
-                                 HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode());
-    }
-
-    return parseBasicValue(value, keyClass);
-  }
-
-  private static Object parseBasicValue(String value, Class<?> targetClass)
-          throws RoutingException
-  {
-    try
-    {
-      return ValueConverter.coerceString(value, targetClass);
-    }
-    catch (NumberFormatException e)
-    {
-      // thrown from Integer.valueOf or Long.valueOf
-      throw new RoutingException(String.format("Value '%s' must be of type '%s'",
-                                               value,
-                                               targetClass.getName()),
-                                 HttpStatus.S_400_BAD_REQUEST.getCode());
-    }
-    catch (IllegalArgumentException e)
-    {
-      // thrown from Enum.valueOf
-      throw new RoutingException(String.format("Parameter value '%s' is invalid",
-                                               value),
-                                 HttpStatus.S_400_BAD_REQUEST.getCode());
-    }
+      String decodedValue = UriComponent.decode(value, UriComponent.Type.PATH_SEGMENT);
+      return convertSimpleValue(decodedValue, key.getDataSchema(), key.getType());
   }
 
   /**
@@ -544,15 +383,11 @@ public class ArgumentUtils
    * @param value the stringified value
    * @param schema the schema of the type
    * @param type a non-complex type to convert to
-   * @param optionalValue if the value is optional or not.
    * @return the converted value
-   * @throws RoutingException if optionalValue is false and the value cannot be converted.
    */
   public static Object convertSimpleValue(final String value,
                                           final DataSchema schema,
-                                          final Class<?> type,
-                                          final boolean optionalValue)
-          throws RoutingException
+                                          final Class<?> type)
   {
     DataSchema.Type dereferencedType = schema.getDereferencedType();
 
@@ -561,14 +396,9 @@ public class ArgumentUtils
     {
       underlyingValue = value;
     }
-    else if (optionalValue)
-    {
-      underlyingValue = ValueConverter.coerceString(value,
-                                                    DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchemaClass(dereferencedType));
-    }
     else
     {
-      underlyingValue = parseBasicValue(value, DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchemaClass(dereferencedType));
+      underlyingValue = ValueConverter.coerceString(value, DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchemaClass(dereferencedType));
     }
 
     return DataTemplateUtil.coerceOutput(underlyingValue, type);

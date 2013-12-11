@@ -16,9 +16,35 @@
 
 package com.linkedin.restli.internal.server;
 
+
+import com.linkedin.data.DataList;
+import com.linkedin.data.DataMap;
+import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.jersey.api.uri.UriComponent;
 import com.linkedin.r2.filter.R2Constants;
+import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.ComplexKeySpec;
+import com.linkedin.restli.common.ComplexResourceKey;
+import com.linkedin.restli.common.CompoundKey;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.OperationNameGenerator;
+import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
+import com.linkedin.restli.internal.common.PathSegment.PathSegmentSyntaxException;
+import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
+import com.linkedin.restli.internal.server.model.ResourceModel;
+import com.linkedin.restli.internal.server.util.ArgumentUtils;
+import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
+import com.linkedin.restli.server.Key;
+import com.linkedin.restli.server.ResourceLevel;
+import com.linkedin.restli.server.RestLiServiceException;
+import com.linkedin.restli.server.RoutingException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.Arrays;
@@ -29,27 +55,6 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.regex.Pattern;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.linkedin.data.DataList;
-import com.linkedin.data.DataMap;
-import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.r2.message.RequestContext;
-import com.linkedin.r2.message.rest.RestRequest;
-import com.linkedin.restli.common.ComplexResourceKey;
-import com.linkedin.restli.common.CompoundKey;
-import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.common.ResourceMethod;
-import com.linkedin.restli.common.RestConstants;
-import com.linkedin.restli.internal.common.PathSegment.PathSegmentSyntaxException;
-import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
-import com.linkedin.restli.internal.server.model.ResourceModel;
-import com.linkedin.restli.internal.server.util.ArgumentUtils;
-import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
-import com.linkedin.restli.server.ResourceLevel;
-import com.linkedin.restli.server.RestLiServiceException;
-import com.linkedin.restli.server.RoutingException;
 
 /**
  * Navigates the resource hierarchy to find a Resource handler for the a given URI.
@@ -170,11 +175,20 @@ public class RestLiRouter
           parseComplexKey(currentResource, context, currentPathSegment);
           currentLevel = ResourceLevel.ENTITY;
         }
-
         else if (currentResource.getKeyClass() == CompoundKey.class)
         {
-          CompoundKey compoundKey =
-              parseCompoundKey(currentCollectionResource, context, currentPathSegment);
+          CompoundKey compoundKey;
+          try
+          {
+            compoundKey = parseCompoundKey(currentCollectionResource, context, currentPathSegment);
+          }
+          catch (IllegalArgumentException e)
+          {
+            throw new RoutingException(String.format("Malformed Compound Key: '%s'", currentPathSegment),
+                                       HttpStatus.S_400_BAD_REQUEST.getCode(),
+                                       e);
+          }
+
           if (compoundKey != null
               && compoundKey.getPartKeys().containsAll(currentResource.getKeyNames()))
           {
@@ -182,9 +196,7 @@ public class RestLiRouter
             currentLevel = ResourceLevel.ENTITY;
           }
         }
-
-        // Must be a simple key then
-        else
+        else // Must be a simple key then
         {
           parseSimpleKey(currentResource, context, currentPathSegment);
           currentLevel = ResourceLevel.ENTITY;
@@ -357,12 +369,30 @@ public class RestLiRouter
 
   }
 
-  private CompoundKey parseCompoundKey(final ResourceModel resource,
-                                final ServerResourceContext context,
-                                final String pathSegment)
+  private static CompoundKey parseCompoundKey(final ResourceModel resource,
+                                              final ServerResourceContext context,
+                                              final String pathSegment)
  {
-    CompoundKey compoundKey =
-        ArgumentUtils.parseCompoundKey(pathSegment, resource.getKeys());
+   CompoundKey compoundKey;
+   try
+   {
+     compoundKey =
+       ArgumentUtils.parseCompoundKey(pathSegment, resource.getKeys(),
+                                      context.getRestliProtocolVersion());
+   }
+   catch (PathSegmentSyntaxException e)
+   {
+     throw new RoutingException(String.format("input %s is not a Compound key", pathSegment),
+                                HttpStatus.S_400_BAD_REQUEST.getCode(),
+                                e);
+   }
+   catch (IllegalArgumentException e)
+   {
+     throw new RoutingException(String.format("input %s is not a Compound key", pathSegment),
+                                HttpStatus.S_400_BAD_REQUEST.getCode(),
+                                e);
+   }
+
 
     for (String simpleKeyName : compoundKey.getPartKeys())
     {
@@ -388,10 +418,10 @@ public class RestLiRouter
   {
     try
     {
+      ComplexKeySpec<? extends RecordTemplate, ? extends RecordTemplate> complexKeyType =
+          ComplexKeySpec.forClassesMaybeNull( resource.getKeyKeyClass(), resource.getKeyParamsClass());
       ComplexResourceKey<RecordTemplate, RecordTemplate> complexKey =
-          ComplexResourceKey.parseFromPathSegment(currentPathSegment,
-                                                  ComplexKeySpec.forClassesMaybeNull(resource.getKeyKeyClass(),
-                                                                                     resource.getKeyParamsClass()));
+          ComplexResourceKey.parseString(currentPathSegment, complexKeyType, context.getRestliProtocolVersion());
 
       context.getPathKeys().append(resource.getKeyName(), complexKey);
     }
@@ -406,8 +436,10 @@ public class RestLiRouter
   private void parseBatchKeysParameter(final ResourceModel resource,
                                        final ServerResourceContext context)
   {
-    // Complex key batch get
-    if (ComplexResourceKey.class.equals(resource.getKeyClass()))
+    Class<?> keyClass = resource.getKeyClass();
+    ProtocolVersion version = context.getRestliProtocolVersion();
+
+    if (ComplexResourceKey.class.equals(keyClass))
     {
       // Parse all query parameters into a data map.
       DataMap allParametersDataMap = context.getParameters();
@@ -420,7 +452,8 @@ public class RestLiRouter
       }
 
       // Validate the complex keys and put them into the context batch keys
-      for (Object complexKey : batchIds) {
+      for (Object complexKey : batchIds)
+      {
         if (!(complexKey instanceof DataMap))
         {
           log.warn("Invalid structure of key '" + complexKey.toString() + "', skipping key.");
@@ -433,51 +466,131 @@ public class RestLiRouter
                                                                                                         resource.getKeyParamsClass())));
       }
     }
-    // collection batch get
-    else if (context.hasParameter(RestConstants.QUERY_BATCH_IDS_PARAM))
+    else if (CompoundKey.class.equals(keyClass)
+      && version.compareTo(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()) >= 0)
     {
-      List<String> ids = context.getParameterValues(RestConstants.QUERY_BATCH_IDS_PARAM);
-      for (String id : ids)
+      DataMap allParametersDataMap = context.getParameters();
+
+      // Get the batch request keys from the IDS list at the root of the map.
+      DataList batchIds = allParametersDataMap.getDataList(RestConstants.QUERY_BATCH_IDS_PARAM);
+      if (batchIds == null || batchIds.isEmpty())
       {
+        return;
+      }
+
+      // Validate the compound keys and put them into the contex batch keys
+      for (Object compoundKey : batchIds)
+      {
+        if (!(compoundKey instanceof DataMap))
+        {
+          log.warn("Invalid structure of key '" + compoundKey.toString() + "', skipping key.");
+          context.getBatchKeyErrors().put(compoundKey.toString(), new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST));
+          continue;
+        }
+        CompoundKey finalKey;
         try
         {
-          context.getPathKeys()
-                 .appendBatchValue(ArgumentUtils.parseOptionalKey(id, resource));
-        }
-        catch (NumberFormatException e)
-        {
-          log.warn("Caught NumberFormatException parsing batch key '" + id + "', skipping key.");
-          context.getBatchKeyErrors().put(id, new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, null, e));
+          finalKey = ArgumentUtils.dataMapToCompoundKey((DataMap) compoundKey,
+                                                        resource.getKeys());
         }
         catch (IllegalArgumentException e)
         {
-          log.warn("Caught IllegalArgumentException parsing batch key '" + id + "', skipping key.");
-          context.getBatchKeyErrors().put(id, new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, null, e));
+          log.warn("Invalid structure of key '" + compoundKey.toString() + "', skipping key.");
+          context.getBatchKeyErrors().put(compoundKey.toString(), new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST));
+          continue;
         }
-        catch (PathSegmentSyntaxException e)
+        context.getPathKeys().appendBatchValue(finalKey);
+      }
+    }
+    // collection batch get in v2, collection or association batch get in v1
+    else if (context.hasParameter(RestConstants.QUERY_BATCH_IDS_PARAM))
+    {
+      List<String> ids = context.getParameterValues(RestConstants.QUERY_BATCH_IDS_PARAM);
+      if (version.compareTo(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()) >= 0)
+      {
+        for (String id: ids)
         {
-          log.warn("Caught PathSegmentSyntaxException parsing batch key '" + id + "', skipping key.");
-          context.getBatchKeyErrors().put(id, new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, null, e));
+          Key key = resource.getPrimaryKey();
+          Object value;
+          // in v2, compound keys have already been converted and dealt with, so all we need to do here is convert simple values.
+          value = ArgumentUtils.convertSimpleValue(id, key.getDataSchema(), key.getType());
+          context.getPathKeys().appendBatchValue(value);
         }
+      }
+      else
+      {
+        for (String id: ids)
+        {
+          try
+          {
+            // in v1, compound keys have not been fully parsed or dealt with yet, so we need to take them into account.
+            Object value = parseKeyFromBatchV1(id, resource);
+            context.getPathKeys().appendBatchValue(value);
+          }
+          catch (NumberFormatException e)
+          {
+            log.warn("Caught NumberFormatException parsing batch key '" + id + "', skipping key.");
+            context.getBatchKeyErrors().put(id, new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, null, e));
+          }
+          catch (IllegalArgumentException e)
+          {
+            log.warn("Caught IllegalArgumentException parsing batch key '" + id + "', skipping key.");
+            context.getBatchKeyErrors().put(id, new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, null, e));
+          }
+          catch (PathSegmentSyntaxException e)
+          {
+            log.warn("Caught IllegalArgumentException parsing batch key '" + id + "', skipping key.");
+            context.getBatchKeyErrors().put(id,
+                                            new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST,
+                                                                       null, e));
+          }
+        }
+
       }
     }
   }
 
-  private void parseSimpleKey(final ResourceModel resource,
-                              final ServerResourceContext context,
-                              final String pathSegment)
+  private static void parseSimpleKey(final ResourceModel resource,
+                                     final ServerResourceContext context,
+                                     final String pathSegment)
   {
+    Object parsedKey;
     try
     {
-      context.getPathKeys()
-             .append(resource.getKeyName(),
-                     ArgumentUtils.parseKeyIntoCorrectType(URLDecoder.decode(pathSegment,
-                                                                             RestConstants.DEFAULT_CHARSET_NAME),
-                                                           resource));
+      parsedKey = ArgumentUtils.parseSimplePathKey(pathSegment, resource);
     }
-    catch (UnsupportedEncodingException e)
+    catch (NumberFormatException e)
     {
-      throw new RestLiInternalException("UnsupportedEncodingException while trying to decode the key", e);
+      // thrown from Integer.valueOf or Long.valueOf
+      throw new RoutingException(String.format("Key value '%s' must be of type '%s'",
+                                                pathSegment,
+                                                resource.getKeyClass().getName()),
+                                 HttpStatus.S_400_BAD_REQUEST.getCode(),
+                                 e);
+    }
+    catch (IllegalArgumentException e)
+    {
+      // thrown from Enum.valueOf
+      throw new RoutingException(String.format("Key parameter value '%s' is invalid", pathSegment),
+                                 HttpStatus.S_400_BAD_REQUEST.getCode(),
+                                 e);
+    }
+    context.getPathKeys()
+      .append(resource.getKeyName(), parsedKey);
+  }
+
+  private static Object parseKeyFromBatchV1(String value, ResourceModel resource)
+    throws PathSegmentSyntaxException, IllegalArgumentException
+  {
+    ProtocolVersion version = AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion();
+    if (CompoundKey.class.isAssignableFrom(resource.getKeyClass()))
+    {
+      return ArgumentUtils.parseCompoundKey(value, resource.getKeys(), version);
+    }
+    else
+    {
+      Key key = resource.getPrimaryKey();
+      return ArgumentUtils.convertSimpleValue(value, key.getDataSchema(), key.getType());
     }
   }
 

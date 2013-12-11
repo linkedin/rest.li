@@ -14,11 +14,8 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.restli.examples.greetings.server;
+
 
 import java.util.Collections;
 import java.util.Date;
@@ -42,6 +39,7 @@ import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.Key;
 import com.linkedin.restli.server.annotations.RestLiAssociation;
 import com.linkedin.restli.server.resources.AssociationResourceTemplate;
+
 
 /**
  * @author Moira Tagle

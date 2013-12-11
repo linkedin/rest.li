@@ -31,6 +31,7 @@ import com.linkedin.restli.client.util.PatchGenerator;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.ComplexResourceKey;
+import com.linkedin.restli.common.CreateStatus;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.UpdateStatus;
@@ -43,20 +44,23 @@ import com.linkedin.restli.examples.greetings.client.ComplexKeysBuilders;
 import com.linkedin.restli.examples.greetings.client.ComplexKeysRequestBuilders;
 import com.linkedin.restli.examples.greetings.client.ComplexKeysSubBuilders;
 import com.linkedin.restli.examples.greetings.client.ComplexKeysSubRequestBuilders;
+import com.linkedin.restli.internal.common.ProtocolVersionUtil;
+import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 
 public class TestComplexKeysResource extends RestLiIntegrationTest
@@ -77,13 +81,13 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     super.shutdown();
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testGet(RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> builders) throws RemoteInvocationException
   {
     testGetMain(builders.get());
   }
 
-  @Test(dataProvider = "requestSubBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestSubBuilderDataProvider")
   public void testSubGet(RootBuilderWrapper<String, TwoPartKey> builders) throws ExecutionException, InterruptedException
   {
     TwoPartKey key = new TwoPartKey();
@@ -99,7 +103,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     Assert.assertEquals(response.getMinor(), "bANDd");
   }
 
-  @Test(dataProvider = "requestSubBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestSubBuilderDataProvider")
   public void testSubGetWithReservedChars(RootBuilderWrapper<String, TwoPartKey> builders) throws ExecutionException, InterruptedException
   {
     TwoPartKey key = new TwoPartKey();
@@ -115,91 +119,97 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     Assert.assertEquals(response.getMinor(), "b&2ANDd&4");
   }
 
-  @Test(dataProvider = "requestAnnotatedBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestAnnotatedBuilderDataProvider")
   public void testPromiseGet(RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> builders) throws RemoteInvocationException
   {
     testGetMain(builders.get());
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testCreate(RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> builders) throws RemoteInvocationException
   {
     testCreateMain(builders.create(), builders.get());
   }
 
-  @Test(dataProvider = "requestAnnotatedBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestAnnotatedBuilderDataProvider")
   public void testPromiseCreate(RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> builders) throws RemoteInvocationException
   {
     testCreateMain(builders.create(), builders.get());
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
+  public void testBatchCreate(RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> builders) throws RemoteInvocationException
+  {
+    testBatchCreateMain(builders.batchCreate(), builders.batchGet());
+  }
+
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testPartialUpdate(RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> builders) throws RemoteInvocationException
   {
     testPartialUpdateMain(builders.partialUpdate(), builders.get());
   }
 
-  @Test(dataProvider = "requestAnnotatedBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestAnnotatedBuilderDataProvider")
   public void testPromisePartialUpdate(RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> builders) throws RemoteInvocationException
   {
     testPartialUpdateMain(builders.partialUpdate(), builders.get());
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testFinder(RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> builders) throws RemoteInvocationException
   {
     testFinderMain(builders.findBy("Prefix").setQueryParam("prefix", StringTestKeys.SIMPLEKEY));
   }
 
-  @Test(dataProvider = "requestAnnotatedBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestAnnotatedBuilderDataProvider")
   public void testPromiseFinder(RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> builders) throws RemoteInvocationException
   {
     testFinderMain(builders.findBy("Prefix").setQueryParam("prefix", StringTestKeys.SIMPLEKEY));
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testBatchGet(RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> builders) throws RemoteInvocationException
   {
     testBatchGetMain(builders.batchGet());
   }
 
-  @Test(dataProvider = "requestAnnotatedBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestAnnotatedBuilderDataProvider")
   public void testPromiseBatchGet(RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> builders) throws RemoteInvocationException
   {
     testBatchGetMain(builders.batchGet());
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testBatchUpdate(RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> builders) throws RemoteInvocationException
   {
     testBatchUpdateMain(builders.batchUpdate(), builders.batchGet());
   }
 
-  @Test(dataProvider = "requestAnnotatedBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestAnnotatedBuilderDataProvider")
   public void testPromiseBatchUpdate(RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> builders) throws RemoteInvocationException
   {
     testBatchUpdateMain(builders.batchUpdate(), builders.batchGet());
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testBatchPartialUpdate(RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> builders) throws RemoteInvocationException
   {
     testBatchPartialUpdateMain(builders.batchPartialUpdate(), builders.batchGet());
   }
 
-  @Test(dataProvider = "requestAnnotatedBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestAnnotatedBuilderDataProvider")
   public void testPromiseBatchPartialUpdate(RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> builders) throws RemoteInvocationException
   {
     testBatchPartialUpdateMain(builders.batchPartialUpdate(), builders.batchGet());
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testBatchDelete(RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> builders) throws RemoteInvocationException
   {
     testBatchDeleteMain(builders.batchDelete(), builders.create(), builders.batchGet());
   }
 
-  @Test(dataProvider = "requestAnnotatedBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestAnnotatedBuilderDataProvider")
   public void testPromiseBatchDelete(RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> builders) throws RemoteInvocationException
   {
     testBatchDeleteMain(builders.batchDelete(), builders.create(), builders.batchGet());
@@ -228,14 +238,61 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     ResponseFuture<EmptyRecord> future = REST_CLIENT.sendRequest(request);
     Response<EmptyRecord> response = future.getResponse();
     Assert.assertEquals(response.getStatus(), 201);
+    ComplexResourceKey<TwoPartKey, TwoPartKey> expectedComplexKey = getComplexKey(messageText, messageText);
+    Assert.assertEquals(response.getId(), URIParamUtils.encodeKeyForBody(expectedComplexKey, false, ProtocolVersionUtil.extractProtocolVersion(response.getHeaders())));
 
+    // attempt to get the record you just created
     @SuppressWarnings("unchecked")
-    Request<Message> getRequest = getRequestBuilder.id(
-        getComplexKey(messageText, messageText)).build();
+    Request<Message> getRequest = getRequestBuilder.id(expectedComplexKey).build();
     ResponseFuture<Message> getFuture = REST_CLIENT.sendRequest(getRequest);
     Response<Message> getResponse = getFuture.getResponse();
 
     Assert.assertEquals(getResponse.getEntity().getMessage(), messageText);
+  }
+
+  private void testBatchCreateMain(RootBuilderWrapper.MethodBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message, CollectionResponse<CreateStatus>> batchCreateRequestBuilder,
+                                   RootBuilderWrapper.MethodBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message, BatchResponse<Message>> batchGetRequestBuilder) throws RemoteInvocationException
+  {
+    final String messageText1 = "firstMessage";
+    Message message1 = new Message();
+    message1.setMessage(messageText1);
+    final String messageText2 = "secondMessage";
+    Message message2 = new Message();
+    message2.setMessage(messageText2);
+    List<Message> messages = new ArrayList<Message>(2);
+    messages.add(message1);
+    messages.add(message2);
+
+    ComplexResourceKey<TwoPartKey, TwoPartKey> expectedComplexKey1 = getComplexKey(messageText1, messageText1);
+    ComplexResourceKey<TwoPartKey, TwoPartKey> expectedComplexKey2 = getComplexKey(messageText2, messageText2);
+
+    // test build
+    Request<CollectionResponse<CreateStatus>> request = batchCreateRequestBuilder.inputs(messages).build();
+    ResponseFuture<CollectionResponse<CreateStatus>> future = REST_CLIENT.sendRequest(request);
+    Response<CollectionResponse<CreateStatus>> response = future.getResponse();
+    Assert.assertEquals(response.getStatus(), 200);
+    Set<String> expectedComplexKeyStrings = new HashSet<String>();
+    expectedComplexKeyStrings.add(URIParamUtils.encodeKeyForBody(expectedComplexKey1, false, ProtocolVersionUtil.extractProtocolVersion(response.getHeaders())));
+    expectedComplexKeyStrings.add(URIParamUtils.encodeKeyForBody(expectedComplexKey2, false, ProtocolVersionUtil.extractProtocolVersion(response.getHeaders())));
+    for (CreateStatus createStatus : response.getEntity().getElements())
+    {
+      Assert.assertEquals(createStatus.getStatus(), new Integer(201));
+      Assert.assertTrue(expectedComplexKeyStrings.contains(createStatus.getId()));
+      expectedComplexKeyStrings.remove(createStatus.getId());
+    }
+    Assert.assertTrue(expectedComplexKeyStrings.isEmpty());
+
+    // attempt to batch get created records
+    List<ComplexResourceKey<TwoPartKey, TwoPartKey>> createdKeys = new ArrayList<ComplexResourceKey<TwoPartKey, TwoPartKey>>(2);
+    createdKeys.add(expectedComplexKey1);
+    createdKeys.add(expectedComplexKey2);
+    BatchGetKVRequest<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> getRequest = batchGetRequestBuilder.ids(createdKeys).buildKV();
+    ResponseFuture<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>> getFuture = REST_CLIENT.sendRequest(getRequest);
+    Response<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>> getResponse = getFuture.getResponse();
+    Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> getResults = getResponse.getEntity().getResults();
+    Assert.assertEquals(getResults.get(expectedComplexKey1), message1);
+    Assert.assertEquals(getResults.get(expectedComplexKey2), message2);
+    Assert.assertEquals(getResults.size(), 2);
   }
 
   private void testPartialUpdateMain(
@@ -291,17 +348,20 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
         new ArrayList<ComplexResourceKey<TwoPartKey, TwoPartKey>>();
     ComplexResourceKey<TwoPartKey, TwoPartKey> key1 = getComplexKey(StringTestKeys.SIMPLEKEY, StringTestKeys.SIMPLEKEY2);
     ComplexResourceKey<TwoPartKey, TwoPartKey> key2 = getComplexKey(StringTestKeys.URL, StringTestKeys.URL2);
+    ComplexResourceKey<TwoPartKey, TwoPartKey> key3 = getComplexKey(StringTestKeys.ERROR, StringTestKeys.ERROR);
     ids.add(key1);
     ids.add(key2);
+    ids.add(key3);
     BatchGetKVRequest<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> request = requestBuilder.ids(ids).buildKV();
     ResponseFuture<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>> future =
         REST_CLIENT.sendRequest(request);
     BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> response =
         future.getResponse().getEntity();
 
-    Assert.assertEquals(response.getResults().size(), ids.size());
+    Assert.assertEquals(response.getResults().size(), 2);
     Assert.assertNotNull(response.getResults().get(key1));
     Assert.assertNotNull(response.getResults().get(key2));
+    Assert.assertNotNull(response.getErrors().get(key3));
   }
 
   private void testBatchUpdateMain(
@@ -323,8 +383,10 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     final Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> inputs = new HashMap<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>();
     ComplexResourceKey<TwoPartKey, TwoPartKey> key1 = getComplexKey(StringTestKeys.SIMPLEKEY, StringTestKeys.SIMPLEKEY2);
     ComplexResourceKey<TwoPartKey, TwoPartKey> key2 = getComplexKey(StringTestKeys.URL, StringTestKeys.URL2);
+    ComplexResourceKey<TwoPartKey, TwoPartKey> key3 = getComplexKey(StringTestKeys.ERROR, StringTestKeys.ERROR);
     inputs.put(key1, message);
     inputs.put(key2, message2);
+    inputs.put(key3, message); // key3 should error anyway, so message is irrelevant.
     final Request<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, UpdateStatus>> request =
         requestBuilder.inputs(inputs).build();
     final ResponseFuture<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, UpdateStatus>> future =
@@ -341,7 +403,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     Assert.assertNotNull(response.getResults().get(key1));
     Assert.assertNotNull(response.getResults().get(key2));
 
-    Assert.assertTrue(response.getErrors().isEmpty());
+    Assert.assertNotNull(response.getErrors().get(key3));
 
     ArrayList<ComplexResourceKey<TwoPartKey, TwoPartKey>> ids = new ArrayList<ComplexResourceKey<TwoPartKey, TwoPartKey>>();
     ids.add(key1);
@@ -469,30 +531,36 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
         new TwoPartKey());
   }
 
-  @DataProvider
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
       { new RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(new ComplexKeysBuilders()) },
-      { new RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(new ComplexKeysRequestBuilders()) }
+      { new RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(new ComplexKeysBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+      { new RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(new ComplexKeysRequestBuilders()) },
+      { new RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(new ComplexKeysRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
   }
 
-  @DataProvider
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestSubBuilderDataProvider")
   private static Object[][] requestSubBuilderDataProvider()
   {
     return new Object[][] {
       { new RootBuilderWrapper<String, TwoPartKey>(new ComplexKeysSubBuilders()) },
-      { new RootBuilderWrapper<String, TwoPartKey>(new ComplexKeysSubRequestBuilders()) }
+      { new RootBuilderWrapper<String, TwoPartKey>(new ComplexKeysSubBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+      { new RootBuilderWrapper<String, TwoPartKey>(new ComplexKeysSubRequestBuilders()) },
+      { new RootBuilderWrapper<String, TwoPartKey>(new ComplexKeysSubRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
   }
 
-  @DataProvider
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestAnnotatedBuilderDataProvider")
   private static Object[][] requestAnnotatedBuilderDataProvider()
   {
     return new Object[][] {
       { new RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(new AnnotatedComplexKeysBuilders()) },
-      { new RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(new AnnotatedComplexKeysRequestBuilders()) }
+      { new RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(new AnnotatedComplexKeysBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+      { new RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(new AnnotatedComplexKeysRequestBuilders()) },
+      { new RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(new AnnotatedComplexKeysRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
   }
 }

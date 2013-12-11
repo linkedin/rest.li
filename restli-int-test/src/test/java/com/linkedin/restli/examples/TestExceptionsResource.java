@@ -67,7 +67,7 @@ public class TestExceptionsResource extends RestLiIntegrationTest
     super.shutdown();
   }
 
-  @Test(dataProvider = "exceptionHandlingModesDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "exceptionHandlingModesDataProvider")
   public void testException(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior, RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Response<Greeting> response = null;
@@ -123,7 +123,7 @@ public class TestExceptionsResource extends RestLiIntegrationTest
     Assert.assertTrue(exception.getServiceErrorStackTrace().contains("at com.linkedin.restli.examples.greetings.server.ExceptionsResource.get("));
   }
 
-  @Test(dataProvider = "exceptionHandlingModesDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "exceptionHandlingModesDataProvider")
   public void testCreateError(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior, RootBuilderWrapper<Long, Greeting> builders) throws Exception
   {
     Response<EmptyRecord> response = null;
@@ -184,7 +184,7 @@ public class TestExceptionsResource extends RestLiIntegrationTest
                       "stacktrace mismatch:" + exception.getStackTrace());
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testBatchCreateErrors(RootBuilderWrapper<Long, Greeting> builders) throws Exception
   {
     Request<CollectionResponse<CreateStatus>> batchCreateRequest = builders.batchCreate()
@@ -214,25 +214,33 @@ public class TestExceptionsResource extends RestLiIntegrationTest
                       "stacktrace mismatch:" + error.getStackTrace());
   }
 
-  @DataProvider
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "exceptionHandlingModesDataProvider")
   public Object[][] exceptionHandlingModesDataProvider()
   {
     return new Object[][] {
       { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper<Long, Greeting>(new ExceptionsBuilders()) },
+      { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper<Long, Greeting>(new ExceptionsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
       { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper<Long, Greeting>(new ExceptionsRequestBuilders()) },
+      { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper<Long, Greeting>(new ExceptionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
       { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper<Long, Greeting>(new ExceptionsBuilders()) },
+      { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper<Long, Greeting>(new ExceptionsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
       { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper<Long, Greeting>(new ExceptionsRequestBuilders()) },
+      { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper<Long, Greeting>(new ExceptionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
       { false, null, new RootBuilderWrapper<Long, Greeting>(new ExceptionsBuilders()) },
-      { false, null, new RootBuilderWrapper<Long, Greeting>(new ExceptionsRequestBuilders()) }
+      { false, null, new RootBuilderWrapper<Long, Greeting>(new ExceptionsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+      { false, null, new RootBuilderWrapper<Long, Greeting>(new ExceptionsRequestBuilders()) },
+      { false, null, new RootBuilderWrapper<Long, Greeting>(new ExceptionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
   }
 
-  @DataProvider
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
       { new RootBuilderWrapper<Long, Greeting>(new ExceptionsBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new ExceptionsRequestBuilders()) }
+      { new RootBuilderWrapper<Long, Greeting>(new ExceptionsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+      { new RootBuilderWrapper<Long, Greeting>(new ExceptionsRequestBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new ExceptionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
   }
 }

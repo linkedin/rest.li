@@ -25,9 +25,11 @@ import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.transform.filter.request.MaskCreator;
 import com.linkedin.restli.common.ComplexResourceKey;
+import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
+import com.linkedin.restli.internal.common.URIParamUtils;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -67,14 +69,14 @@ public class QueryParamsUtil
       }
       else
       {
-        result.put(key, paramToDataObject(value));
+        result.put(key, paramToDataObject(value, version));
       }
     }
     result.makeReadOnly();
     return result;
   }
 
-  private static Object paramToDataObject(Object param)
+  private static Object paramToDataObject(Object param, ProtocolVersion version)
   {
     if (param == null)
     {
@@ -83,6 +85,11 @@ public class QueryParamsUtil
     else if (param instanceof ComplexResourceKey)
     {
       return ((ComplexResourceKey) param).toDataMap();
+    }
+    else if (version.compareTo(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()) >= 0
+             && param instanceof CompoundKey)
+    {
+      return URIParamUtils.compoundKeyToDataMap((CompoundKey) param);
     }
     else if (param instanceof DataTemplate)
     {
@@ -96,7 +103,7 @@ public class QueryParamsUtil
     }
     else if (param instanceof List)
     {
-      return coerceList((List) param);
+      return coerceList((List) param, version);
     }
     else
     {
@@ -108,7 +115,7 @@ public class QueryParamsUtil
    * given a list of objects returns the objects either in a DataList, or, if
    * they are PathSpecs (projections), encode them and return a String.
    */
-  private static Object coerceList(List<?> values)
+  private static Object coerceList(List<?> values, ProtocolVersion version)
   {
     assert values != null;
     DataList dataList = new DataList();
@@ -116,7 +123,7 @@ public class QueryParamsUtil
     {
       if (value != null)
       {
-        dataList.add(paramToDataObject(value));
+        dataList.add(paramToDataObject(value, version));
       }
     }
     return dataList;

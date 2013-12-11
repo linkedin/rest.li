@@ -23,15 +23,13 @@ package com.linkedin.restli.internal.server.methods.response;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.collections.CheckedUtil;
-import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.BatchResponse;
-import com.linkedin.restli.common.ComplexResourceKey;
-import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ErrorResponse;
+import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
-import com.linkedin.restli.internal.common.URLEscaper;
+import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.server.ResourceContext;
@@ -59,14 +57,17 @@ public abstract class AbstractBatchResponseBuilder<V>
                                 final Map<String, String> headers,
                                 final BatchResponse<? extends RecordTemplate> batchResponse) throws IOException
   {
+    ProtocolVersion protocolVersion = ((ServerResourceContext) routingResult.getContext()).getRestliProtocolVersion();
 
     for (Map.Entry<?, RestLiServiceException> entry : ((ServerResourceContext) routingResult.getContext()).getBatchKeyErrors()
                                                                                                           .entrySet())
     {
+
       DataMap errorData =
           _errorResponseBuilder.buildResponse(request, routingResult, entry.getValue(), headers)
                  .getDataMap();
-      batchResponse.getErrors().put(keyToString(entry.getKey()),
+      batchResponse.getErrors().put(URIParamUtils.encodeKeyForBody(entry.getKey(), false,
+                                                                   protocolVersion),
                                     new ErrorResponse(errorData));
     }
 
@@ -75,7 +76,8 @@ public abstract class AbstractBatchResponseBuilder<V>
       DataMap errorData =
           _errorResponseBuilder.buildResponse(request, routingResult, entry.getValue(), headers)
                  .getDataMap();
-      batchResponse.getErrors().put(keyToString(entry.getKey()),
+      batchResponse.getErrors().put(URIParamUtils.encodeKeyForBody(entry.getKey(), false,
+                                                                   protocolVersion),
                                     new ErrorResponse(errorData));
     }
   }
@@ -86,12 +88,17 @@ public abstract class AbstractBatchResponseBuilder<V>
                                  final Class<? extends RecordTemplate> valueClass,
                                  final ResourceContext resourceContext)
   {
+    ProtocolVersion protocolVersion = ((ServerResourceContext)resourceContext).getRestliProtocolVersion();
     DataMap dataMap = (DataMap) response.data().get(BatchResponse.RESULTS);
 
     for (Map.Entry<?, ? extends V> entry: resultsMap.entrySet())
     {
       DataMap data = buildResultRecord(entry.getValue(), resourceContext);
-      CheckedUtil.putWithoutChecking(dataMap, keyToString(entry.getKey()), data);
+
+      CheckedUtil.putWithoutChecking(dataMap,
+                                     URIParamUtils.encodeKeyForBody(entry.getKey(),
+                                                                    false, protocolVersion),
+                                     data);
     }
   }
 
@@ -112,26 +119,4 @@ public abstract class AbstractBatchResponseBuilder<V>
    * @return a RecordTemplate representation of the converted object
    */
   protected abstract DataMap buildResultRecord(V o, ResourceContext resourceContext);
-
-  private static String keyToString(Object key)
-  {
-    String result;
-    if (key == null)
-    {
-      result = null;
-    }
-    else if (key instanceof ComplexResourceKey)
-    {
-      result = ((ComplexResourceKey<?,?>)key).toString(URLEscaper.Escaping.URL_ESCAPING);
-    }
-    else if (key instanceof CompoundKey)
-    {
-      result = key.toString(); // already escaped
-    }
-    else
-    {
-      result = URLEscaper.escape(DataTemplateUtil.stringify(key), URLEscaper.Escaping.NO_ESCAPING);
-    }
-    return result;
-  }
 }

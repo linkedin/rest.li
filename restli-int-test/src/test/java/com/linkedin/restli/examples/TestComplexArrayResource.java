@@ -34,24 +34,28 @@ import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.ComplexResourceKey;
+import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.examples.greetings.api.ComplexArray;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.client.ComplexArrayBuilders;
 import com.linkedin.restli.examples.greetings.client.ComplexArrayRequestBuilders;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
+import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.testng.Assert;
 import org.testng.ITestContext;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
+
 
 
 /**
@@ -79,7 +83,7 @@ public class TestComplexArrayResource  extends RestLiIntegrationTest
     super.shutdown();
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testGet(RootBuilderWrapper<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting> builders) throws RemoteInvocationException, CloneNotSupportedException
   {
     // all array are singletons with single element
@@ -96,8 +100,10 @@ public class TestComplexArrayResource  extends RestLiIntegrationTest
     REST_CLIENT.sendRequest(request).getResponse().getEntity();
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
-  public void testBatchGet(RootBuilderWrapper<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting> builders) throws RemoteInvocationException
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "versionWithRequestBuilderDataProvider")
+  public void testBatchGet(ProtocolVersion version,
+                           RootBuilderWrapper<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting> builders)
+    throws RemoteInvocationException
   {
     LongArray singleton1 = new LongArray();
     singleton1.add(1L);
@@ -124,7 +130,8 @@ public class TestComplexArrayResource  extends RestLiIntegrationTest
 
     Response<BatchResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
 
-    Greeting greeting = response.getEntity().getResults().get(complexKey1.toString());
+    String key = BatchResponse.keyToString(complexKey1, version);
+    Greeting greeting = response.getEntity().getResults().get(key);
 
     Assert.assertNotNull(greeting);
 
@@ -139,7 +146,7 @@ public class TestComplexArrayResource  extends RestLiIntegrationTest
     Assert.assertNotNull(greeting2);
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testFinder(RootBuilderWrapper<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting> builders) throws RemoteInvocationException
   {
     LongArray singleton = new LongArray();
@@ -151,7 +158,7 @@ public class TestComplexArrayResource  extends RestLiIntegrationTest
     REST_CLIENT.sendRequest(request).getResponse().getEntity();
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testAction(RootBuilderWrapper<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting> builders) throws RemoteInvocationException
   {
     LongArray singleton = new LongArray();
@@ -163,12 +170,29 @@ public class TestComplexArrayResource  extends RestLiIntegrationTest
     REST_CLIENT.sendRequest(request).getResponse().getEntity();
   }
 
-  @DataProvider
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
       { new RootBuilderWrapper<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting>(new ComplexArrayBuilders()) },
-      { new RootBuilderWrapper<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting>(new ComplexArrayRequestBuilders()) }
+      { new RootBuilderWrapper<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting>(new ComplexArrayBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+      { new RootBuilderWrapper<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting>(new ComplexArrayRequestBuilders()) },
+      { new RootBuilderWrapper<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting>(new ComplexArrayRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
+    };
+  }
+
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "versionWithRequestBuilderDataProvider")
+  private static Object[][] versionWithRequestBuilderDataProvider()
+  {
+    return new Object[][] {
+      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+        new RootBuilderWrapper<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting>(new ComplexArrayBuilders()) },
+      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+        new RootBuilderWrapper<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting>(new ComplexArrayBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+        new RootBuilderWrapper<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting>(new ComplexArrayRequestBuilders()) },
+      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+        new RootBuilderWrapper<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting>(new ComplexArrayRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
   }
 }

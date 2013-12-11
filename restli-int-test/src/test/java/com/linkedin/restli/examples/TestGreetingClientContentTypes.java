@@ -1,6 +1,18 @@
-/**
- * $Id: $
- */
+/*
+   Copyright (c) 2012 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
 
 package com.linkedin.restli.examples;
 
@@ -57,30 +69,7 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
     super.shutdown();
   }
 
-  @DataProvider
-  public Object[][] clientDataDataProvider()
-  {
-    return new Object[][]
-      {
-        { new RestClient(CLIENT, URI_PREFIX), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) }, // default client
-        { new RestClient(CLIENT, URI_PREFIX), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) }, // default client
-        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.JSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
-        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.JSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) },
-        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.PSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
-        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.PSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) }
-      };
-  }
-
-  @DataProvider
-  private static Object[][] requestBuilderDataProvider()
-  {
-    return new Object[][] {
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) }
-    };
-  }
-
-  @Test(dataProvider = "clientDataDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientDataDataProvider")
   public void testGet(RestClient restClient, RootBuilderWrapper<Long, Greeting> builders) throws
     RemoteInvocationException
   {
@@ -90,7 +79,7 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
     Assert.assertEquals(greeting.getId(), new Long(1));
   }
 
-  @Test(dataProvider = "clientDataDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientDataDataProvider")
   public void testBatchGet(RestClient restClient, RootBuilderWrapper<Long, Greeting> builders)
     throws RemoteInvocationException
   {
@@ -102,7 +91,7 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
     Assert.assertEquals(batchResponse.getResults().size(), ids.size());
   }
 
-  @Test(dataProvider = "clientDataDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientDataDataProvider")
   public void testFinder(RestClient restClient, RootBuilderWrapper<Long, Greeting> builders)
     throws RemoteInvocationException
   {
@@ -121,7 +110,7 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
     collectionResponse.getPaging().getLinks();
   }
 
-  @Test(dataProvider = "clientDataDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientDataDataProvider")
   public void testAction(RestClient restClient, RootBuilderWrapper<Long, Greeting> builders)
     throws RemoteInvocationException
   {
@@ -139,7 +128,7 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
     Assert.assertEquals(greeting.getMessage(), "This is a newly created greeting");
   }
 
-  @Test(dataProvider = "clientDataDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientDataDataProvider")
   public void testCreate(RestClient restClient, RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Greeting greeting = new Greeting();
@@ -159,7 +148,7 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
     Assert.assertEquals(responseGreeting.getTone(), greeting.getTone());
   }
 
-  @Test(dataProvider = "clientDataDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientDataDataProvider")
   public void testUpdate(RestClient restClient, RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException, CloneNotSupportedException
   {
     // GET
@@ -185,7 +174,7 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
     Assert.assertEquals(response2, response1 + "Again");
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testPostsWithCharset(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     RestClient restClient = new RestClient(CLIENT, URI_PREFIX);
@@ -217,4 +206,34 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
     Assert.assertNull(emptyRecordResponse.getHeader(RestConstants.HEADER_CONTENT_TYPE));
   }
 
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientDataDataProvider")
+  public Object[][] clientDataDataProvider()
+  {
+    return new Object[][]
+      {
+        { new RestClient(CLIENT, URI_PREFIX), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) }, // default client
+        { new RestClient(CLIENT, URI_PREFIX), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }, // default client
+        { new RestClient(CLIENT, URI_PREFIX), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) }, // default client
+        { new RestClient(CLIENT, URI_PREFIX), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }, // default client
+        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.JSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
+        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.JSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.JSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) },
+        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.JSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.PSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
+        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.PSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.PSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) },
+        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.PSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
+      };
+  }
+
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
+  private static Object[][] requestBuilderDataProvider()
+  {
+    return new Object[][] {
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
+    };
+  }
 }

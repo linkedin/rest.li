@@ -65,7 +65,7 @@ public class TestMixedClient extends RestLiIntegrationTest
     super.shutdown();
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testGet(RootBuilderWrapper<Long, Greeting> builders) throws InterruptedException,
       ExecutionException
   {
@@ -75,7 +75,7 @@ public class TestMixedClient extends RestLiIntegrationTest
     Assert.assertEquals(g, "42");
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testCreate(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException,
       InterruptedException,
       ExecutionException
@@ -86,7 +86,7 @@ public class TestMixedClient extends RestLiIntegrationTest
     response.get().getEntity();
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testUpdate(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException,
       InterruptedException,
       ExecutionException
@@ -97,7 +97,7 @@ public class TestMixedClient extends RestLiIntegrationTest
     response.get().getEntity();
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testDelete(RootBuilderWrapper<Long, Greeting> builders) throws InterruptedException,
       ExecutionException,
       RemoteInvocationException
@@ -108,7 +108,7 @@ public class TestMixedClient extends RestLiIntegrationTest
     response.get().getEntity();
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testSearch(RootBuilderWrapper<Long, Greeting> builders) throws InterruptedException,
       ExecutionException
   {
@@ -120,12 +120,14 @@ public class TestMixedClient extends RestLiIntegrationTest
     Assert.assertEquals(g, "yay");
   }
 
-  @DataProvider
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
       { new RootBuilderWrapper<Long, Greeting>(new MixedBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new MixedRequestBuilders()) }
+      { new RootBuilderWrapper<Long, Greeting>(new MixedBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+      { new RootBuilderWrapper<Long, Greeting>(new MixedRequestBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new MixedRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
   }
 }

@@ -23,6 +23,8 @@ import java.net.URLEncoder;
 
 public class StringTestKeys
 {
+  public static String ERROR = "ERROR";
+
   public static String URL = "http://foo.biz:1234/path/path/path?k1=v1&k2=v2&k3=string+with+pluses&k4=string%20with%20pcts";
   public static String SINGLE_ENCODED_URL;
   public static String DOUBLE_ENCODED_URL;

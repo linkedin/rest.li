@@ -29,6 +29,8 @@ import com.linkedin.restli.common.ComplexKeySpec;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.CompoundKey.TypeInfo;
+import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.TypeSpec;
 
 /**
@@ -45,7 +47,6 @@ public class BatchKVResponseDecoder<K, V extends RecordTemplate> extends RestRes
   private final ComplexKeySpec<?, ?> _complexKeyType;
 
   /**
-   *
    * @param elementClass provides the entity type of the collection.
    *
    * @param keyClass provides the class identifying the key type.
@@ -71,7 +72,6 @@ public class BatchKVResponseDecoder<K, V extends RecordTemplate> extends RestRes
   }
 
   /**
-   *
    * @param elementType provides the entity type of the collection.
    *
    * @param keyType provides the class identifying the key type.
@@ -101,13 +101,13 @@ public class BatchKVResponseDecoder<K, V extends RecordTemplate> extends RestRes
   }
 
   @Override
-  @SuppressWarnings("unchecked")
-  public BatchKVResponse<K, V> wrapResponse(DataMap dataMap)
+  protected BatchKVResponse<K, V> wrapResponse(DataMap dataMap, ProtocolVersion version)
   {
-     return new BatchKVResponse<K, V>(dataMap,
-                                      _keyType,
-                                      _elementType,
-                                      _keyParts,
-                                      _complexKeyType);
+    return new BatchKVResponse<K, V>(dataMap,
+                                     _keyType,
+                                     _elementType,
+                                     _keyParts,
+                                     _complexKeyType,
+                                     version);
   }
 }

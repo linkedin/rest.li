@@ -26,6 +26,8 @@ import java.util.Set;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
@@ -48,9 +50,10 @@ public class BatchUpdateArgumentBuilder implements RestLiArgumentBuilder
     DataMap dataMap = DataMapUtils.readMap(request);
     Set<?> ids = routingResult.getContext().getPathKeys().getBatchKeys();
     @SuppressWarnings({"rawtypes"})
-    Map inputMap = ArgumentUtils.buildBatchRequestMap(dataMap,
-                                                      valueClass,
-                                                      ids);
+    Map inputMap = ArgumentBuilder.buildBatchRequestMap(dataMap,
+                                                        valueClass,
+                                                        ids,
+                                                        ProtocolVersionUtil.extractProtocolVersion(request.getHeaders()));
     @SuppressWarnings({ "unchecked", "rawtypes" })
     BatchUpdateRequest batchRequest = new BatchUpdateRequest(inputMap);
     Object[] positionalArgs = { batchRequest };
