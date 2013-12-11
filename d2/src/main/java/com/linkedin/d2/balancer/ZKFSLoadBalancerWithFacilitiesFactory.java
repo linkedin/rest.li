@@ -22,6 +22,7 @@ import java.util.Map;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyFactoryV2;
+import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyFactoryV2_1;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyFactoryV3;
 import com.linkedin.d2.balancer.strategies.random.RandomLoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.zkfs.ZKFSComponentFactory;
@@ -85,11 +86,13 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
     final RandomLoadBalancerStrategyFactory randomStrategyFactory = new RandomLoadBalancerStrategyFactory();
     final DegraderLoadBalancerStrategyFactoryV2 degraderStrategyFactoryV2 = new DegraderLoadBalancerStrategyFactoryV2();
     final DegraderLoadBalancerStrategyFactoryV3 degraderStrategyFactoryV3 = new DegraderLoadBalancerStrategyFactoryV3();
+    final DegraderLoadBalancerStrategyFactoryV2_1 degraderStrategyFactoryV2_1 = new DegraderLoadBalancerStrategyFactoryV2_1();
 
     loadBalancerStrategyFactories.put("random", randomStrategyFactory);
     loadBalancerStrategyFactories.put("degrader", degraderStrategyFactoryV2);
     loadBalancerStrategyFactories.put("degraderV2", degraderStrategyFactoryV2);
     loadBalancerStrategyFactories.put("degraderV3", degraderStrategyFactoryV3);
+    loadBalancerStrategyFactories.put("degraderV2_1", degraderStrategyFactoryV2_1);
 
     return loadBalancerStrategyFactories;
   }

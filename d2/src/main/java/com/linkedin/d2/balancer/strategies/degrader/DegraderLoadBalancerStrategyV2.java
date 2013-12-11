@@ -238,7 +238,10 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
             _log.info("Starting to initialize state");
           }
           _state = updateState(clusterGenerationId, trackerClients, currentState, config);
-          assert(_state.isInitialized());
+          if(!_state.isInitialized())
+          {
+            _log.error("Failed to initialize state");
+          }
         }
         catch (RuntimeException e)
         {

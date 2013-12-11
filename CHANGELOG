@@ -1,5 +1,9 @@
 1.10.5
 ------
+(RB=240968)
+Simplify state update logic in degrader balancer strategy in V3
+The same change for V2 is made to the new V2_1 strategy to leave
+V2 untouched for the safer rollout
 
 1.10.4
 ------
