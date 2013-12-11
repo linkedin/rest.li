@@ -1,5 +1,7 @@
 1.10.4
 ------
+(RB=243172)
+Fix bug caused by race condition in resize() of DegraderLoadBalancerStrategyV3
 
 1.10.3
 ------

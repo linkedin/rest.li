@@ -21,6 +21,7 @@ import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.LoadBalancerClient;
 import com.linkedin.d2.balancer.clients.TrackerClient;
+import com.linkedin.d2.balancer.clients.TrackerClientTest;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
@@ -37,6 +38,7 @@ import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rpc.RpcRequest;
 import com.linkedin.r2.message.rpc.RpcResponse;
+import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.SettableClock;
@@ -1909,6 +1911,192 @@ public class DegraderLoadBalancerTest
     clusterRecovery1TC(myMap, clock, stepsToFullRecovery, timeInterval, strategy,
                        DegraderLoadBalancerStrategyV2.DegraderLoadBalancerState.Strategy.LOAD_BALANCE,
                        null);
+  }
+
+  @Test(groups = { "small", "back-end"})
+  public void stressTest()
+  {
+    final DegraderLoadBalancerStrategyV3 strategyV3 = getStrategy();
+    TestClock testClock = new TestClock();
+    String baseUri = "http://linkedin.com:9999";
+    int numberOfPartitions = 10;
+    Map<String, String> degraderProperties = new HashMap<String,String>();
+    degraderProperties.put(PropertyKeys.DEGRADER_HIGH_ERROR_RATE, "0.5");
+    degraderProperties.put(PropertyKeys.DEGRADER_LOW_ERROR_RATE, "0.2");
+    DegraderImpl.Config degraderConfig = DegraderConfigFactory.toDegraderConfig(degraderProperties);
+    final List<TrackerClient> clients = new ArrayList<TrackerClient>();
+    for (int i = 0; i < numberOfPartitions; i++)
+    {
+      URI uri = URI.create(baseUri + i);
+      TrackerClient client =   new TrackerClient(uri,
+                                                 getDefaultPartitionData(1, numberOfPartitions),
+                                                 new TestLoadBalancerClient(uri), testClock, degraderConfig);
+      clients.add(client);
+    }
+
+    final ExecutorService executor = Executors.newFixedThreadPool(100);
+    final CountDownLatch startLatch = new CountDownLatch(1);
+    final CountDownLatch finishLatch = new CountDownLatch(100);
+    try
+    {
+      for (int i = 0; i < numberOfPartitions; i++)
+      {
+        Assert.assertFalse(strategyV3.getState().getPartitionState(i).isInitialized());
+      }
+      for (int i = 0; i < 100; i++)
+      {
+        final int partitionId = i % numberOfPartitions;
+        executor.submit(new Runnable()
+        {
+          @Override
+          public void run()
+          {
+            try
+            {
+              startLatch.await();
+            }
+            catch (InterruptedException ex)
+            {
+
+            }
+            strategyV3.getRing(1, partitionId, clients);
+            finishLatch.countDown();
+          }
+        });
+      }
+      // all threads would try to getRing simultanously
+      startLatch.countDown();
+      if (!finishLatch.await(10, TimeUnit.SECONDS))
+      {
+        fail("Stress test failed to finish within 10 seconds");
+      }
+      for (int i = 0; i < numberOfPartitions; i++)
+      {
+        Assert.assertTrue(strategyV3.getState().getPartitionState(i).isInitialized());
+      }
+    }
+    catch (InterruptedException ex)
+    {
+
+    }
+    finally
+    {
+      executor.shutdownNow();
+    }
+
+  }
+
+  @Test(groups = { "small", "back-end"})
+  public void testResizeProblem()
+  {
+    URI uri = URI.create("http://linkedin.com:9999");
+
+    final ExecutorService executor = Executors.newFixedThreadPool(2);
+    int totalSuccessfulInitialization = 0;
+
+    try
+    {
+      for (int i = 0; i < 20000; i++)
+      {
+        CountDownLatch joinLatch = new CountDownLatch(2);
+        TestClock clock = new TestClock();
+        final DegraderLoadBalancerStrategyV3 strategy = getStrategy();
+        for (Runnable runnable : createRaceCondition(uri, clock, strategy, joinLatch))
+        {
+          executor.submit(runnable);
+        }
+        try
+        {
+          if (!joinLatch.await(10, TimeUnit.SECONDS))
+          {
+            fail("Update or resize failed to finish within 10 seconds");
+          }
+          // Before the fix the resize problem, initialization for partiion 0 would fail if the following race condition happened:
+          // thread A sets updateStarted flag for partition 0, thread B resizes partition count and
+          // copies state for partition0 with updateStarted == true, thread A clears the flag and updates state for partition 0,
+          // thread B swaps in the new array of states for enlarged number of partitions, finishes resize, ignoring thread A's update
+
+          // Now with the fix, we expect the above not to happen
+          DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState state = strategy.getState().getPartitionState(0);
+          // Always success
+          assertFalse(state.hasError());
+          totalSuccessfulInitialization += state.isInitialized() ? 1 : 0;
+        }
+        catch (InterruptedException ex)
+        {
+        }
+      }
+    }
+    finally
+    {
+      executor.shutdownNow();
+    }
+    assertEquals(totalSuccessfulInitialization, 20000);
+  }
+
+  private static class EvilClient extends TrackerClient
+  {
+    private final CountDownLatch _latch;
+    public EvilClient(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient wrappedClient,
+                      Clock clock, DegraderImpl.Config config, CountDownLatch latch)
+    {
+      super(uri, partitionDataMap, wrappedClient, clock, config);
+      _latch = latch;
+    }
+
+    @Override
+    public Double getPartitionWeight(int partitionId)
+    {
+      if(partitionId == 0)
+      {
+        try
+        {
+          // wait for latch after setting updateStarted to true
+          _latch.await(5, TimeUnit.MILLISECONDS);
+        }
+        catch (InterruptedException ex)
+        {
+          // do nothing
+        }
+      }
+      return super.getPartitionWeight(partitionId);
+    }
+  }
+
+  private List<Runnable> createRaceCondition(final URI uri, Clock clock, final DegraderLoadBalancerStrategyV3 strategy, final CountDownLatch joinLatch)
+  {
+    final CountDownLatch clientLatch = new CountDownLatch(1);
+    TrackerClient evilClient = new EvilClient(uri, getDefaultPartitionData(1, 2), new TrackerClientTest.TestClient(),
+                                              clock, null, clientLatch);
+    final List<TrackerClient> clients = Collections.singletonList(evilClient);
+    final Runnable update = new Runnable()
+    {
+      @Override
+      public void run()
+      {
+        // getRing will wait for latch in getPartitionWeight
+        strategy.getRing(1, 0, clients);
+        joinLatch.countDown();
+      }
+    };
+
+    final Runnable resize = new Runnable()
+    {
+      @Override
+      public void run()
+      {
+        // releases latch for partition 0
+        clientLatch.countDown();
+        // resize
+        strategy.getRing(1, 1, clients);
+        joinLatch.countDown();
+      }
+    };
+
+    List<Runnable> actions = new ArrayList<Runnable>();
+    actions.add(update);
+    actions.add(resize);
+    return actions;
   }
 
   @Test(groups = { "small", "back-end" }, dataProvider = "clientGlitch")

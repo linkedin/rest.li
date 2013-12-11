@@ -28,6 +28,7 @@ import com.linkedin.d2.balancer.util.hashing.URIRegexHash;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
+import com.linkedin.util.clock.Clock;
 import com.linkedin.util.degrader.DegraderControl;
 import com.linkedin.util.degrader.DegraderImpl;
 import java.util.Random;
@@ -39,8 +40,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReferenceArray;
 
 import static com.linkedin.d2.discovery.util.LogUtil.debug;
 import static com.linkedin.d2.discovery.util.LogUtil.warn;
@@ -989,34 +990,24 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
 
   public static class DegraderLoadBalancerState
   {
-    private volatile AtomicReferenceArray<PartitionDegraderLoadBalancerState> _partitionStates;
+    private final Map<Integer, PartitionDegraderLoadBalancerState> _partitionStates;
     // this controls access to updatePartitionState for each partition:
     // only one thread should update the state for a particular partition at any one time.
-    private volatile Object[] _locks;
+    private final Map<Integer, Object> _locks;
     private volatile int _partitionCount;
     private final String _serviceName;
     private final Map<String, String> _degraderProperties;
+    private final DegraderLoadBalancerStrategyConfig _config;
 
     DegraderLoadBalancerState(String serviceName, Map<String, String> degraderProperties,
-                              DegraderLoadBalancerStrategyConfig loadBalancerStrategyConfig)
+                              DegraderLoadBalancerStrategyConfig config)
     {
-      _degraderProperties = degraderProperties;
-      _locks = new Object[1];
-      _locks[0] = new Object();
-      if (degraderProperties == null)
-      {
-        degraderProperties = Collections.<String,String>emptyMap();
-      }
-      _partitionStates = new AtomicReferenceArray<PartitionDegraderLoadBalancerState>(1);
-      _partitionStates.set(0, new PartitionDegraderLoadBalancerState(-1, System.currentTimeMillis(), false,
-                                                               new HashMap<URI, Integer>(),
-                                                               PartitionDegraderLoadBalancerState.Strategy.LOAD_BALANCE,
-                                                               0, 0,
-                                                               new HashMap<TrackerClient, Double>(),
-                                                               serviceName,
-                                                               degraderProperties, 0));
-      _partitionCount = 1;
+      _degraderProperties = degraderProperties != null ? degraderProperties : Collections.<String, String>emptyMap();
+      _locks = new ConcurrentHashMap<Integer, Object>();
+      _partitionStates = new ConcurrentHashMap<Integer, PartitionDegraderLoadBalancerState>();
+      _partitionCount = 0;
       _serviceName = serviceName;
+      _config = config;
     }
 
     // this method is mainly called in bootstrap time
@@ -1025,27 +1016,20 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     // Note that we do this resize trick because partition count is not available in
     // service configuration (it's in cluster configuration) and we do not want to
     // intermingle the two configurations
+
     private synchronized void resize(int maxPartitionId)
     {
-      int oldSize = _partitionCount;
-      int newSize = maxPartitionId + 1;
+      final int newSize = maxPartitionId + 1;
+      final int oldSize = _partitionCount;
       // do another check after we enter this synchronized block
       // if some other thread already resized the arrays to include the
       // maxPartitionId, then we don't have to do any work here
       if (oldSize < newSize)
       {
-        AtomicReferenceArray<PartitionDegraderLoadBalancerState> newStates =
-            new AtomicReferenceArray<PartitionDegraderLoadBalancerState>(newSize);
-        for (int i = 0; i < oldSize; i++)
-        {
-          newStates.set(i, _partitionStates.get(i));
-        }
 
-        Object[] newLocks = new Object[newSize];
-        System.arraycopy(_locks, 0, newLocks, 0, oldSize);
         for (int i = oldSize; i < newSize; i++)
         {
-          newStates.set(i, new PartitionDegraderLoadBalancerState(-1, System.currentTimeMillis(), false,
+          _partitionStates.put(i, new PartitionDegraderLoadBalancerState(-1, _config.getClock().currentTimeMillis(), false,
                                                                    new HashMap<URI, Integer>(),
                                                                    PartitionDegraderLoadBalancerState.Strategy.
                                                                        LOAD_BALANCE,
@@ -1053,10 +1037,8 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                                                    new HashMap<TrackerClient, Double>(),
                                                                    _serviceName, _degraderProperties,
                                                                    0));
-          newLocks[i] = new Object();
+          _locks.put(i, new Object());
         }
-        _partitionStates = newStates;
-        _locks = newLocks;
         _partitionCount = newSize;
       }
     }
@@ -1079,7 +1061,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
 
     void setPartitionState(int partitionId, PartitionDegraderLoadBalancerState newState)
     {
-      _partitionStates.set(partitionId, newState);
+      _partitionStates.put(partitionId, newState);
     }
 
     // this method never returns null
@@ -1090,7 +1072,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       {
         resize(partitionId);
       }
-      return _locks[partitionId];
+      return _locks.get(partitionId);
     }
 
     @Override
