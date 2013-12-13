@@ -31,6 +31,7 @@ import com.linkedin.util.clock.Clock;
 import com.linkedin.util.degrader.DegraderControl;
 
 import java.util.ArrayList;
+import java.util.concurrent.ConcurrentMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -192,20 +193,20 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
   private void checkUpdatePartitionState(long clusterGenerationId, int partitionId, List<TrackerClient> trackerClients)
   {
     DegraderLoadBalancerStrategyConfig config = getConfig();
+    final Partition partition = _state.getPartition(partitionId);
+    final Lock lock = partition.getLock();
 
-    Lock lock = _state.getLock(partitionId);
-
-    if (!_state.getPartitionState(partitionId).isInitialized())
+    if (!partition.getState().isInitialized())
     {
       // threads attempt to access the state would block here if partition state is not initialized
       lock.lock();
       try
       {
-        if (!_state.getPartitionState(partitionId).isInitialized())
+        if (!partition.getState().isInitialized())
         {
           debug(_log, "initializing partition state for partition: ", partitionId);
-          updatePartitionState(clusterGenerationId, partitionId, trackerClients, config);
-          if(!_state.getPartitionState(partitionId).isInitialized())
+          updatePartitionState(clusterGenerationId, partition, trackerClients, config);
+          if(!partition.getState().isInitialized())
           {
             _log.error("Failed to initialize partition state for patition: ", partitionId);
           }
@@ -216,18 +217,18 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
         lock.unlock();
       }
     }
-    else if(shouldUpdatePartition(clusterGenerationId, _state.getPartitionState(partitionId), config, _updateEnabled))
+    else if(shouldUpdatePartition(clusterGenerationId, partition.getState(), config, _updateEnabled))
     {
       // threads attempt to update the state would return immediately if some thread is already in the updating process
       if(lock.tryLock())
       {
         try
         {
-          if(shouldUpdatePartition(clusterGenerationId, _state.getPartitionState(partitionId), config, _updateEnabled))
+          if(shouldUpdatePartition(clusterGenerationId, partition.getState(), config, _updateEnabled))
           {
             debug(_log, "updating for cluster generation id: ", clusterGenerationId, ", partitionId: ", partitionId);
-            debug(_log, "old state was: ", _state.getPartitionState(partitionId));
-            updatePartitionState(clusterGenerationId, partitionId, trackerClients, config);
+            debug(_log, "old state was: ", partition.getState());
+            updatePartitionState(clusterGenerationId, partition, trackerClients, config);
           }
         }
         finally
@@ -238,21 +239,21 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     }
   }
 
-  private void updatePartitionState(long clusterGenerationId, int partitionId, List<TrackerClient> trackerClients, DegraderLoadBalancerStrategyConfig config)
+  private void updatePartitionState(long clusterGenerationId, Partition partition, List<TrackerClient> trackerClients, DegraderLoadBalancerStrategyConfig config)
   {
-    PartitionDegraderLoadBalancerState partitionState = _state.getPartitionState(partitionId);
+    PartitionDegraderLoadBalancerState partitionState = partition.getState();
 
     List<TrackerClientUpdater> clientUpdaters = new ArrayList<TrackerClientUpdater>();
     for (TrackerClient client: trackerClients)
     {
-      clientUpdaters.add(new TrackerClientUpdater(client, partitionId));
+      clientUpdaters.add(new TrackerClientUpdater(client, partition.getId()));
     }
 
     // doUpdatePartitionState has no side effects on _state or trackerClients.
     // all changes to the trackerClients would be recorded in clientUpdaters
-    partitionState = doUpdatePartitionState(clusterGenerationId, partitionId, partitionState,
+    partitionState = doUpdatePartitionState(clusterGenerationId, partition.getId(), partitionState,
                                           config, clientUpdaters);
-    _state.setPartitionState(partitionId, partitionState);
+    partition.setState(partitionState);
 
     // only if state update succeeded, do we actually apply the recorded changes to trackerClients
     for (TrackerClientUpdater clientUpdater : clientUpdaters)
@@ -847,7 +848,8 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
   // is called. This is not to be used in prod code.
   void setStrategy(int partitionId, PartitionDegraderLoadBalancerState.Strategy strategy)
   {
-    PartitionDegraderLoadBalancerState oldState = _state.getPartitionState(partitionId);
+    final Partition partition = _state.getPartition(partitionId);
+    PartitionDegraderLoadBalancerState oldState = partition.getState();
     PartitionDegraderLoadBalancerState newState =
         new PartitionDegraderLoadBalancerState(oldState.getClusterGenerationId(), oldState.getLastUpdated(), oldState.isInitialized(),
                                              oldState.getPointsMap(),
@@ -859,7 +861,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                              oldState.getDegraderProperties(),
                                              oldState.getCurrentClusterCallCount());
 
-    _state.setPartitionState(partitionId, newState);
+    partition.setState(newState);
   }
 
   @Override
@@ -875,13 +877,53 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     return _state.getPartitionState(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getCurrentOverrideDropRate();
   }
 
+  private static class Partition
+  {
+    private final int _id;
+    private final Lock _lock;
+    private volatile PartitionDegraderLoadBalancerState _state;
+
+    Partition(int id, Lock lock, PartitionDegraderLoadBalancerState state)
+    {
+      _id = id;
+      _lock = lock;
+      _state = state;
+    }
+
+    public int getId()
+    {
+      return _id;
+    }
+
+    /** this controls access to updatePartitionState for each partition:
+     * only one thread should update the state for a particular partition at any one time.
+     */
+    public Lock getLock()
+    {
+      return _lock;
+    }
+
+    public PartitionDegraderLoadBalancerState getState()
+    {
+      return _state;
+    }
+
+    public void setState(PartitionDegraderLoadBalancerState state)
+    {
+      _state = state;
+    }
+
+    @Override
+    public String toString()
+    {
+      return String.valueOf(_state);
+    }
+  }
+
+  /** A collection of Partition objects, one for each partition, lazily initialized. */
   public static class DegraderLoadBalancerState
   {
-    private final Map<Integer, PartitionDegraderLoadBalancerState> _partitionStates;
-    // this controls access to updatePartitionState for each partition:
-    // only one thread should update the state for a particular partition at any one time.
-    private final Map<Integer, Lock> _locks;
-    private volatile int _partitionCount;
+    private final ConcurrentMap<Integer, Partition> _partitions;
     private final String _serviceName;
     private final Map<String, String> _degraderProperties;
     private final DegraderLoadBalancerStrategyConfig _config;
@@ -890,33 +932,26 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                               DegraderLoadBalancerStrategyConfig config)
     {
       _degraderProperties = degraderProperties != null ? degraderProperties : Collections.<String, String>emptyMap();
-      _locks = new ConcurrentHashMap<Integer, Lock>();
-      _partitionStates = new ConcurrentHashMap<Integer, PartitionDegraderLoadBalancerState>();
-      _partitionCount = 0;
+      _partitions = new ConcurrentHashMap<Integer, Partition>();
       _serviceName = serviceName;
       _config = config;
     }
 
-    // this method is mainly called in bootstrap time
-    // after the system is stablized, i.e. after the maximum partitionId is seen, there will be
-    // no need to resize the array
-    // Note that we do this resize trick because partition count is not available in
-    // service configuration (it's in cluster configuration) and we do not want to
-    // intermingle the two configurations
-
-    private synchronized void resize(int maxPartitionId)
+    private Partition getPartition(int partitionId)
     {
-      final int newSize = maxPartitionId + 1;
-      final int oldSize = _partitionCount;
-      // do another check after we enter this synchronized block
-      // if some other thread already resized the arrays to include the
-      // maxPartitionId, then we don't have to do any work here
-      if (oldSize < newSize)
+      Partition partition = _partitions.get(partitionId);
+      if (partition == null)
       {
-
-        for (int i = oldSize; i < newSize; i++)
-        {
-          _partitionStates.put(i, new PartitionDegraderLoadBalancerState(-1, _config.getClock().currentTimeMillis(), false,
+        // this is mainly executed in bootstrap time
+        // after the system is stabilized, i.e. after all partitionIds have been seen,
+        // there will be no need to initialize the map
+        // Note that we do this trick because partition count is not available in
+        // service configuration (it's in cluster configuration) and we do not want to
+        // intermingle the two configurations
+        Partition newValue = new Partition(partitionId,
+                                           new ReentrantLock(),
+                                           new PartitionDegraderLoadBalancerState
+                                                                  (-1, _config.getClock().currentTimeMillis(), false,
                                                                    new HashMap<URI, Integer>(),
                                                                    PartitionDegraderLoadBalancerState.Strategy.
                                                                        LOAD_BALANCE,
@@ -924,48 +959,36 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                                                    new HashMap<TrackerClient, Double>(),
                                                                    _serviceName, _degraderProperties,
                                                                    0));
-          _locks.put(i, new ReentrantLock());
-        }
-        _partitionCount = newSize;
+        Partition oldValue = _partitions.putIfAbsent(partitionId, newValue);
+        if (oldValue == null)
+          partition = newValue;
+        else // another thread already initialized this partition
+          partition = oldValue; // newValue is discarded
       }
+      return partition;
     }
 
     private Ring<URI> getRing(int partitionId)
     {
-      PartitionDegraderLoadBalancerState state = _partitionStates.get(partitionId);
+      PartitionDegraderLoadBalancerState state = _partitions.get(partitionId).getState();
       return state.getRing();
     }
 
     // this method never returns null
     public PartitionDegraderLoadBalancerState getPartitionState(int partitionId)
     {
-      if (_partitionCount < partitionId + 1)
-      {
-        resize(partitionId);
-      }
-      return _partitionStates.get(partitionId);
+      return getPartition(partitionId).getState();
     }
 
     void setPartitionState(int partitionId, PartitionDegraderLoadBalancerState newState)
     {
-      _partitionStates.put(partitionId, newState);
-    }
-
-    // this method never returns null
-    // returns the lock that corresponds to a partition
-    private Lock getLock(int partitionId)
-    {
-      if (_partitionCount < partitionId + 1)
-      {
-        resize(partitionId);
-      }
-      return _locks.get(partitionId);
+      getPartition(partitionId).setState(newState);
     }
 
     @Override
     public String toString()
     {
-      return "PartitionStates: [" + _partitionStates + "]";
+      return "PartitionStates: [" + _partitions + "]";
     }
   }
 

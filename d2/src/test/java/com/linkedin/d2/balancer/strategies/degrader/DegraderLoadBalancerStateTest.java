@@ -150,7 +150,7 @@ public class DegraderLoadBalancerStateTest
       for (int p = 0; p < numberOfPartitions; ++p)
         reads.add(new GetPartitionState(subject, p));
     List<List<PartitionDegraderLoadBalancerState>> actual =
-        split(getAll(concurrently(reads), numberOfPartitions * 10, TimeUnit.SECONDS), numberOfPartitions);
+        split(getAll(concurrently(reads)), numberOfPartitions);
     assertEquals(actual.size(), getsPerPartition);
     List<PartitionDegraderLoadBalancerState> a0 = actual.get(0);
     assertEquals(a0.size(), numberOfPartitions);
@@ -196,7 +196,7 @@ public class DegraderLoadBalancerStateTest
     for (int g = 0; g < getsPerPartition; ++g)
       for (int p = 0; p < numberOfPartitions; ++p)
         calls.add(new GetPartitionState(subject, p));
-    getAll(concurrently(calls), numberOfPartitions * 10, TimeUnit.SECONDS);
+    getAll(concurrently(calls));
     List<PartitionDegraderLoadBalancerState> actual = new ArrayList<PartitionDegraderLoadBalancerState>();
     for (int p = 0; p < numberOfPartitions; ++p)
       actual.add(subject.getPartitionState(p));

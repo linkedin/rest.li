@@ -32,11 +32,11 @@ public class TestHelper
     int index = 0;
     for (T a : actual)
     {
-      assertTrue(e.hasNext(), actual + ".size > " + expected + ".size");
-      assertSame(a, e.next(), actual + "[" + index + "]");
+      assertTrue(e.hasNext(), "too long: " + actual + ".size > " + expected + ".size");
+      assertSame(a, e.next(), "not same: actual[" + index + "]");
       ++index;
     }
-    assertFalse(e.hasNext(), actual + ".size < " + expected + ".size");
+    assertFalse(e.hasNext(), "too short: " + actual + ".size < " + expected + ".size");
   }
 
   /**
@@ -52,35 +52,9 @@ public class TestHelper
     return into;
   }
 
-  public static int max(Iterable<Integer> values)
+  public static <T> List<T> getAll(Collection<Future<T>> futures)
   {
-    int result = Integer.MIN_VALUE;
-    for (Integer value : values)
-      result = Math.max(result, value);
-    return result;
-  }
-
-  /**
-   * Call subject.map(i) concurrently, for i in 0 .. numberOfInputs-1. Run 3 threads for each input; make all the
-   * threads call subject.map as close to concurrently as practical. This test is not repeatable, since the timing of
-   * the threads' execution depends on the hardware and the thread scheduler.
-   *
-   * @return [subject.map(0) .. subject.map(numberOfInputs - 1)]
-   */
-  public static <O> List<O> concurrentCalls(Function<Integer, O> subject, int numberOfInputs)
-  {
-    int callsPerInput = 3;
-    List<Callable<O>> calls = new ArrayList<Callable<O>>();
-    for (int c = 0; c < callsPerInput; ++c)
-      for (int i = 0; i < numberOfInputs; ++i)
-        calls.add(new Call<Integer, O>(subject, i));
-    List<List<O>> actual = split(getAll(concurrently(calls), numberOfInputs * 10, TimeUnit.SECONDS), numberOfInputs);
-    assertEquals(actual.size(), callsPerInput);
-    List<O> a0 = actual.get(0);
-    assertEquals(a0.size(), numberOfInputs);
-    for (int a = 1; a < actual.size(); ++a)
-      assertSameElements(actual.get(a), a0);
-    return a0;
+    return getAll(futures, futures.size() * 10, TimeUnit.SECONDS); // plenty of time
   }
 
   public static <T> List<T> getAll(Iterable<Future<T>> futures, long timeout, TimeUnit unit)
@@ -112,7 +86,7 @@ public class TestHelper
     {
       ExecutorService pool = newFixedDaemonPool(numberOfCalls);
       for (Callable<T> call : calls)
-        futures.add(pool.submit(new Coordinated<T>(ready, start, call)));
+        futures.add(pool.submit(new PauseCallable<T>(1, ready, start, call)));
       assertEquals(futures.size(), numberOfCalls);
     }
     try
@@ -150,87 +124,40 @@ public class TestHelper
   }
 
   /**
-   * Call a Callable, after coordinating with other threads.
+   * A Callable that pauses execution of its calling threads.
    */
-  public static class Coordinated<T> implements Callable<T>
+  public static class PauseCallable<T> implements Callable<T>
   {
-    private final CountDownLatch _ready;
-    private final CountDownLatch _start;
+    private final long _pauseCall;
+    private final CountDownLatch _paused;
+    private final CountDownLatch _resume;
     private final Callable<T> _target;
+    private final AtomicLong _calls = new AtomicLong(0);
 
-    public Coordinated(CountDownLatch ready, CountDownLatch start, Callable<T> target)
+    public PauseCallable(long pauseCall, CountDownLatch paused, CountDownLatch resume, Callable<T> target)
     {
-      _ready = ready;
-      _start = start;
+      _pauseCall = pauseCall;
+      _paused = paused;
+      _resume = resume;
       _target = target;
+    }
+
+    /** The number of times this object has been called. */
+    public long getCalls()
+    {
+      return _calls.get();
     }
 
     @Override
     public T call()
         throws Exception
     {
-      _ready.countDown();
-      _start.await();
-      return _target.call();
-    }
-  }
-
-  public static class ToString<I> implements Function<I, String>
-  {
-    @Override
-    public String map(I input)
-    {
-      return String.valueOf(input);
-    }
-  }
-
-  /**
-   * Call Function.map.
-   */
-  public static class Call<I, O> implements Callable<O>
-  {
-    private final Function<I, O> _function;
-    private final I _input;
-
-    public Call(Function<I, O> function, I input)
-    {
-      _function = function;
-      _input = input;
-    }
-
-    @Override
-    public O call()
-        throws InterruptedException
-    {
-      return _function.map(_input);
-    }
-  }
-
-  /**
-   * A Function that pauses execution of its calling threads.
-   */
-  public static class PauseFunction<T> implements Function<T, T>
-  {
-    final AtomicInteger _calls = new AtomicInteger(0);
-    final CountDownLatch _paused = new CountDownLatch(1);
-    final CountDownLatch _resume = new CountDownLatch(1);
-
-    @Override
-    public T map(T input)
-    {
-      if (_calls.incrementAndGet() == 1)
+      if (_calls.incrementAndGet() >= _pauseCall)
       {
         _paused.countDown();
-      }
-      try
-      {
         _resume.await();
       }
-      catch (Exception e)
-      {
-        fail(e + "", e);
-      }
-      return input;
+      return _target.call();
     }
   }
 }
