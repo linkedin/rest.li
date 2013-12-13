@@ -1,3 +1,6 @@
+1.10.6
+------
+
 1.10.5
 ------
 (RB=240968)
@@ -64,7 +67,6 @@ Replacing IdentityHashMap in RecordTemplate, WrappingMapTemplate and WrappingArr
 
 1.9.46
 ------
-<<<<<<< HEAD
 (RB=233744)
 Disable data object checking on safe and performance-critical situations.
 
