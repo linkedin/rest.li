@@ -27,10 +27,11 @@ import java.lang.annotation.Target;
  * @author Moira Tagle
  * @version $Revision: $
  * 
- * Used to denote an injected type of {@link com.linkedin.restli.server.PathKeys}
+ * Used to denote an injected type of {@link String} representing a particular header value.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
-public @interface Keys
+public @interface HeaderParam
 {
+  String value();
 }

@@ -22,6 +22,7 @@ import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.server.PathKeys;
 import com.linkedin.restli.server.annotations.Finder;
+import com.linkedin.restli.server.annotations.HeaderParam;
 import com.linkedin.restli.server.annotations.Keys;
 import com.linkedin.restli.server.annotations.Projection;
 import com.linkedin.restli.server.annotations.RestLiCollection;
@@ -41,8 +42,9 @@ import java.util.List;
 public class WithContextResource implements KeyValueResource<Long,Greeting>
 {
   private static final String ID = "withContextId";
-  private static final String projectionMessage = "Projection!";
-  private static final String noProjectionMessage = "No Projection!";
+  private static final String PROJECTION_MESSAGE = "Projection!";
+  private static final String NO_PROJECTION_MESSAGE = "No Projection!";
+  private static final String NO_HEADER_MESSAGE = "No Header!";
 
   @RestMethod.Get
   public Greeting get(Long key, @Projection MaskTree projection, @Keys PathKeys keys)
@@ -54,15 +56,35 @@ public class WithContextResource implements KeyValueResource<Long,Greeting>
   }
 
   @Finder("finder")
-  public List<Greeting> finder(@Projection MaskTree projection, @Keys PathKeys keys)
+  public List<Greeting> finder(@HeaderParam("Expected-Header") String header, @Projection MaskTree projection, @Keys PathKeys keys)
   {
     List<Greeting> list = new ArrayList<Greeting>();
 
-    Greeting greeting = createGreeting(projection, keys);
-    greeting.setId(1L);
+    Greeting greeting1 = createGreeting(projection, keys);
+    greeting1.setId(1L);
 
-    list.add(greeting);
+    Greeting greeting2 = createGreeting(header);
+    greeting2.setId(2L);
+
+    list.add(greeting1);
+    list.add(greeting2);
     return list;
+  }
+
+  private static Greeting createGreeting(String header)
+  {
+    Greeting greeting = new Greeting();
+    if (header != null)
+    {
+      greeting.setMessage(header);
+    }
+    else
+    {
+      greeting.setMessage(NO_HEADER_MESSAGE);
+    }
+    greeting.setTone(Tone.SINCERE);
+    return greeting;
+
   }
 
   private static Greeting createGreeting(MaskTree projection, PathKeys keys)
@@ -70,11 +92,11 @@ public class WithContextResource implements KeyValueResource<Long,Greeting>
     Greeting greeting = new Greeting();
     if (projection != null)
     {
-      greeting.setMessage(projectionMessage);
+      greeting.setMessage(PROJECTION_MESSAGE);
     }
     else
     {
-      greeting.setMessage(noProjectionMessage);
+      greeting.setMessage(NO_PROJECTION_MESSAGE);
     }
     if (keys.get(ID) == null)
     {

@@ -71,7 +71,8 @@ public class Parameter<T> extends FieldDef<T>
     PARSEQ_CONTEXT, // @ParSeqContext
     BATCH,
     PROJECTION,     // @Projection
-    PATH_KEYS       // @PathKeys
+    PATH_KEYS,      // @PathKeys
+    HEADER          // @Header
   }
 
   private final boolean _optional;

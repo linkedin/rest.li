@@ -49,6 +49,8 @@ public class TestContexts extends RestLiIntegrationTest
 
   private static final String PROJECTION_MESSAGE = "Projection!";
   private static final String NO_PROJECTION_MESSAGE = "No Projection!";
+  private static final String HEADER_MESSAGE = "Header!";
+  private static final String NO_HEADER_MESSAGE = "No Header!";
   private static final Tone HAS_KEYS = Tone.FRIENDLY;
   private static final Tone NO_KEYS = Tone.INSULTING;
 
@@ -83,18 +85,31 @@ public class TestContexts extends RestLiIntegrationTest
   public void testFinder() throws RemoteInvocationException
   {
     FindRequest<Greeting> requestWithProjection =
-      WITH_CONTEXT_BUILDERS.findByFinder().fields(Greeting.fields().message(), Greeting.fields().tone()).build();
+      WITH_CONTEXT_BUILDERS.findByFinder()
+        .fields(Greeting.fields().message(), Greeting.fields().tone())
+        .setHeader("Expected-Header", HEADER_MESSAGE)
+        .build();
     List<Greeting> projectionGreetings = REST_CLIENT.sendRequest(requestWithProjection).getResponse().getEntity().getElements();
 
+    // test projection and keys
     Greeting projectionGreeting = projectionGreetings.get(0);
     Assert.assertEquals(projectionGreeting.getMessage(), PROJECTION_MESSAGE);
     Assert.assertEquals(projectionGreeting.getTone(), NO_KEYS);
 
+    // test header
+    Greeting headerGreeting = projectionGreetings.get(1);
+    Assert.assertEquals(headerGreeting.getMessage(), HEADER_MESSAGE);
+
     FindRequest<Greeting> requestNoProjection = WITH_CONTEXT_BUILDERS.findByFinder().build();
     List<Greeting> noProjectionGreetings = REST_CLIENT.sendRequest(requestNoProjection).getResponse().getEntity().getElements();
 
+    // test projection and keys
     Greeting noProjectionGreeting = noProjectionGreetings.get(0);
     Assert.assertEquals(noProjectionGreeting.getMessage(), NO_PROJECTION_MESSAGE);
     Assert.assertEquals(noProjectionGreeting.getTone(), NO_KEYS);
+
+    // test header
+    Greeting noHeaderGreeting = noProjectionGreetings.get(1);
+    Assert.assertEquals(noHeaderGreeting.getMessage(), NO_HEADER_MESSAGE);
   }
 }

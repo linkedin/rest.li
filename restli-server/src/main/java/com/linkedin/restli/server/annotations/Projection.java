@@ -26,9 +26,7 @@ import java.lang.annotation.Target;
 /**
  * @author Moira Tagle
  * @version $Revision: $
- */
-
-/**
+ * 
  * Used to denote an injected type of {@link com.linkedin.data.transform.filter.request.MaskTree}
  */
 @Retention(RetentionPolicy.RUNTIME)

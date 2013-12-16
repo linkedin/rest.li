@@ -42,6 +42,7 @@ import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.PathKeys;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RoutingException;
+import com.linkedin.restli.server.annotations.HeaderParam;
 
 import java.lang.reflect.Array;
 import java.util.Arrays;
@@ -95,6 +96,14 @@ public class ArgumentBuilder
       {
         continue; // don't know what to fill in yet
       }
+
+      else if (param.getParamType() == Parameter.ParamType.HEADER)
+      {
+        HeaderParam headerParam = param.getAnnotations().get(HeaderParam.class);
+        String value = context.getRequestHeaders().get(headerParam.value());
+        arguments[i] = value;
+      }
+
       else if (param.getType().isAssignableFrom(PagingContext.class))
       {
         PagingContext ctx =

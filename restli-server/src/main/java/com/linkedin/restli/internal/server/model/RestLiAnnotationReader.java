@@ -61,6 +61,7 @@ import com.linkedin.restli.server.annotations.AssocKey;
 import com.linkedin.restli.server.annotations.CallbackParam;
 import com.linkedin.restli.server.annotations.Context;
 import com.linkedin.restli.server.annotations.Finder;
+import com.linkedin.restli.server.annotations.HeaderParam;
 import com.linkedin.restli.server.annotations.Keys;
 import com.linkedin.restli.server.annotations.Optional;
 import com.linkedin.restli.server.annotations.ParSeqContext;
@@ -690,10 +691,14 @@ public final class RestLiAnnotationReader
         {
           param = buildKeysParam(paramAnnotations, paramType);
         }
+        else if (paramAnnotations.contains(HeaderParam.class))
+        {
+          param = buildHeaderParam(paramAnnotations, paramType);
+        }
         else
         {
           throw new ResourceConfigException(buildMethodMessage(method)
-              + " must annotate each parameter with @QueryParam, @ActionParam, @AssocKey, @Context, @Projection, @Keys, @CallbackParam or @ParSeqContext");
+              + " must annotate each parameter with @QueryParam, @ActionParam, @AssocKey, @Context, @Projection, @Keys, @HeaderParam, @CallbackParam or @ParSeqContext");
         }
       }
 
@@ -904,7 +909,6 @@ public final class RestLiAnnotationReader
 
   }
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
   private static Parameter<?> buildProjectionParam(final AnnotationSet annotations,
                                                    final Class<?> paramType)
   {
@@ -912,20 +916,20 @@ public final class RestLiAnnotationReader
     {
       throw new ResourceConfigException("Projection must be MaskTree");
     }
-    Parameter<?> param;
     Optional optional = annotations.get(Optional.class);
-    param = new Parameter("",
-                          paramType,
-                          null,
-                          optional != null,
-                          null, // default mask is null.
-                          Parameter.ParamType.PROJECTION,
-                          false,
-                          annotations);
+
+    @SuppressWarnings("unchecked")
+    Parameter<?> param = new Parameter("",
+                                       paramType,
+                                       null,
+                                       optional != null,
+                                       null, // default mask is null.
+                                       Parameter.ParamType.PROJECTION,
+                                       false,
+                                       annotations);
     return param;
   }
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
   private static Parameter<?> buildKeysParam(final AnnotationSet annotations,
                                              final Class<?> paramType)
   {
@@ -933,33 +937,56 @@ public final class RestLiAnnotationReader
     {
       throw new ResourceConfigException("Keys must be PathKeys");
     }
-    Parameter<?> param;
+
     Optional optional = annotations.get(Optional.class);
-    param = new Parameter("",
-                          paramType,
-                          null,
-                          optional != null,
-                          new PathKeysImpl(),
-                          Parameter.ParamType.PATH_KEYS,
-                          false,
-                          annotations);
+
+    @SuppressWarnings("unchecked")
+    Parameter<?> param = new Parameter("",
+                                       paramType,
+                                       null,
+                                       optional != null,
+                                       new PathKeysImpl(),
+                                       Parameter.ParamType.PATH_KEYS,
+                                       false,
+                                       annotations);
     return param;
   }
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
+  private static Parameter<?> buildHeaderParam(final AnnotationSet annotations,
+                                               final Class<?> paramType)
+  {
+    if (!paramType.equals(String.class))
+    {
+      throw new ResourceConfigException("Header must be a String");
+    }
+    Optional optional = annotations.get(Optional.class);
+
+    @SuppressWarnings("unchecked")
+    Parameter<?> param = new Parameter("",
+                                       paramType,
+                                       null,
+                                       optional != null,
+                                       "",
+                                       Parameter.ParamType.HEADER,
+                                       false,
+                                       annotations);
+    return param;
+  }
+
   private static Parameter<?> buildContextParam(final AnnotationSet annotations,
-                                             final Class<?> paramType)
+                                                final Class<?> paramType)
   {
     if (!paramType.equals(PagingContext.class))
     {
       throw new ResourceConfigException("Context must be PagingContext");
     }
-    Parameter<?> param;
+
     Context context = annotations.get(Context.class);
     Optional optional = annotations.get(Optional.class);
     PagingContext defaultContext =
         new PagingContext(context.defaultStart(), context.defaultCount(), false, false);
-    param =
+    @SuppressWarnings("unchecked")
+    Parameter<?> param =
         new Parameter("",
                       paramType,
                       null,
@@ -971,18 +998,17 @@ public final class RestLiAnnotationReader
     return param;
   }
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
   private static Parameter<?> buildAssocKeyParam(final Method method,
-                                              final AnnotationSet annotations,
-                                              final Class<?> paramType)
+                                                 final AnnotationSet annotations,
+                                                 final Class<?> paramType)
   {
-    Parameter<?> param;
     AssocKey assocKey = annotations.get(AssocKey.class);
     Optional optional = annotations.get(Optional.class);
     Class<? extends TyperefInfo> typerefInfoClass = assocKey.typeref();
     try
     {
-      param =
+      @SuppressWarnings("unchecked")
+      Parameter<?> param =
           new Parameter(assocKey.value(),
                         paramType,
                         getDataSchema(paramType, getSchemaFromTyperefInfo(typerefInfoClass)),
@@ -991,6 +1017,7 @@ public final class RestLiAnnotationReader
                         Parameter.ParamType.KEY,
                         true,
                         annotations);
+      return param;
     }
     catch (TemplateRuntimeException e)
     {
@@ -1002,23 +1029,20 @@ public final class RestLiAnnotationReader
       throw new ResourceConfigException("Typeref for assocKey '" + assocKey.value() + "' on "
                                                 + buildMethodMessage(method) + " cannot be instantiated, " + e.getMessage(), e);
     }
-
-    return param;
   }
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
   private static Parameter buildActionParam(final Method method,
                                             final AnnotationSet annotations,
                                             final Class<?> paramType)
   {
-    Parameter param;
     ActionParam actionParam = annotations.get(ActionParam.class);
     Optional optional = annotations.get(Optional.class);
     String paramName = actionParam.value();
     Class<? extends TyperefInfo> typerefInfoClass = actionParam.typeref();
     try
     {
-      param =
+      @SuppressWarnings("unchecked")
+      Parameter param =
           new Parameter(paramName,
                         paramType,
                         getDataSchema(paramType, getSchemaFromTyperefInfo(typerefInfoClass)),
@@ -1027,6 +1051,7 @@ public final class RestLiAnnotationReader
                         Parameter.ParamType.POST,
                         true,
                         annotations);
+      return param;
     }
     catch (TemplateRuntimeException e)
     {
@@ -1038,7 +1063,6 @@ public final class RestLiAnnotationReader
       throw new ResourceConfigException("Typeref for parameter '" + paramName + "' on "
           + buildMethodMessage(method) + " cannot be instantiated, " + e.getMessage(), e);
     }
-    return param;
   }
 
   private static TyperefDataSchema getSchemaFromTyperefInfo(Class<? extends TyperefInfo> typerefInfoClass)
@@ -1083,12 +1107,11 @@ public final class RestLiAnnotationReader
     return DataTemplateUtil.getSchema(type);
   }
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
+
   private static Parameter<?> buildQueryParam(final Method method,
                                               final AnnotationSet annotations,
                                               final Class<?> paramType)
   {
-    Parameter<?> param;
     QueryParam queryParam = annotations.get(QueryParam.class);
     Optional optional = annotations.get(Optional.class);
     String paramName = queryParam.value();
@@ -1100,7 +1123,8 @@ public final class RestLiAnnotationReader
     Class<? extends TyperefInfo> typerefInfoClass = queryParam.typeref();
     try
     {
-      param =
+      @SuppressWarnings("unchecked")
+      Parameter<?> param =
           new Parameter(queryParam.value(),
                         paramType,
                         getDataSchema(paramType, getSchemaFromTyperefInfo(typerefInfoClass)),
@@ -1109,6 +1133,7 @@ public final class RestLiAnnotationReader
                         Parameter.ParamType.QUERY,
                         true,
                         annotations);
+      return param;
     }
     catch (TemplateRuntimeException e)
     {
@@ -1120,7 +1145,6 @@ public final class RestLiAnnotationReader
       throw new ResourceConfigException("Typeref for parameter '" + paramName + "' on "
           + buildMethodMessage(method) + " cannot be instantiated, " + e.getMessage(), e);
     }
-    return param;
   }
 
   private static String buildMethodMessage(final Method method)

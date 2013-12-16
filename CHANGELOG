@@ -4,6 +4,11 @@
 Add more tests for AbstractRequestBuilder.
 Use resource stream in restli-tools tests.
 
+(RB=246314)
+Added injectable headers to resource methods.
+Use by adding a param to a resource method like @HeaderParam("Header-Name") headerValue
+This allows KeyValueResources to access headers, even though they cannot call getContex.
+
 1.10.6
 ------
 (RB=243742)
