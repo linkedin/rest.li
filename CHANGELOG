@@ -1,5 +1,9 @@
 1.10.6
 ------
+(RB=243742)
+Add test for DegraderLoadBalancerState
+(RB=244652)
+Improve test for DegraderLoadBalancerState
 
 1.10.5
 ------
