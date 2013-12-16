@@ -4,6 +4,8 @@
 Add test for DegraderLoadBalancerState
 (RB=244652)
 Improve test for DegraderLoadBalancerState
+(RB=244397)
+Simplify V3 DegraderLoadBalancerState
 
 1.10.5
 ------
