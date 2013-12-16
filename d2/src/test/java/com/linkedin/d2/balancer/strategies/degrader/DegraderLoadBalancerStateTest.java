@@ -36,9 +36,9 @@ public class DegraderLoadBalancerStateTest
     // To reproduce this, we inject a tricky Clock, which pauses execution of the latter
     // thread in the middle of resizing (when constructing the new partition state).
 
-    // This depends on DegraderLoadBalancerState to call the clock exactly once to initialize
-    // each partition. If that changes, you'll have to change clock-related constants below.
-    final PauseClock clock = new PauseClock(2); // pause the second caller
+    // This depends on DegraderLoadBalancerState to call the clock at least once to initialize
+    // partition 1. If that changes, you'll have to change clock-related constants below.
+    final PauseClock clock = new PauseClock();
     final DegraderLoadBalancerState subject
         = new DegraderLoadBalancerStrategyV3
             (new DegraderLoadBalancerStrategyConfig(5000, 1, null, Collections.<String, Object>emptyMap(),
@@ -53,7 +53,10 @@ public class DegraderLoadBalancerStateTest
       }
     };
     assertNotNull(subject.getPartitionState(0));
-    assertEquals(clock._calls.get(), 1); // 1 partition initialized (so far)
+    final long clockCalled = clock._calls.get();
+    assertTrue(clockCalled > 0, "clock not called"); // 1 partition initialized (so far)
+    clock._paused = new CountDownLatch(1);
+    clock._resume = new CountDownLatch(1);
     getPartition1.start();
     assertTrue(clock._paused.await(60, TimeUnit.SECONDS));
     // Now getPartition1 has started resizing the array.
@@ -66,41 +69,30 @@ public class DegraderLoadBalancerStateTest
     assertFalse(getPartition1.isAlive());
     // Now getPartition1 has finished resizing the array.
     assertSame(subject.getPartitionState(0), newState); // as before
-    assertEquals(clock._calls.get(), 2); // 2 partitions initialized
+    assertTrue(clock._calls.get() > clockCalled, "clock not called again"); // 2 partitions initialized
   }
 
   /**
-   * A clock that pauses execution of the Nth call to currentTimeMillis.
+   * A clock that can pause execution of calls to currentTimeMillis.
    */
   private static class PauseClock extends SettableClock
   {
-    final long _pauseCall;
     final AtomicLong _calls = new AtomicLong(0);
-    final CountDownLatch _paused = new CountDownLatch(1);
-    final CountDownLatch _resume = new CountDownLatch(1);
-
-    /**
-     * @param pauseCall the ordinal numbers (starting at 1) of the calls to pause
-     */
-    PauseClock(long pauseCall)
-    {
-      _pauseCall = pauseCall;
-    }
+    CountDownLatch _paused = new CountDownLatch(0);
+    CountDownLatch _resume = new CountDownLatch(0);
 
     @Override
     public long currentTimeMillis()
     {
-      if (_calls.incrementAndGet() == _pauseCall)
+      _calls.incrementAndGet();
+      _paused.countDown();
+      try
       {
-        _paused.countDown();
-        try
-        {
-          _resume.await();
-        }
-        catch (Exception e)
-        {
-          fail(e + "", e);
-        }
+        _resume.await();
+      }
+      catch (Exception e)
+      {
+        fail(e + "", e);
       }
       return super.currentTimeMillis();
     }
