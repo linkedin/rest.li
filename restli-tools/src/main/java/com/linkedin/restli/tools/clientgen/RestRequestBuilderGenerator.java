@@ -36,6 +36,7 @@ import com.linkedin.data.template.StringArray;
 import com.linkedin.jersey.api.uri.UriTemplate;
 import com.linkedin.pegasus.generator.DataTemplateGenerator;
 import com.linkedin.pegasus.generator.GeneratorResult;
+import com.linkedin.restli.client.OptionsRequestBuilder;
 import com.linkedin.restli.client.base.ActionRequestBuilderBase;
 import com.linkedin.restli.client.base.BatchCreateRequestBuilderBase;
 import com.linkedin.restli.client.base.BatchDeleteRequestBuilderBase;
@@ -471,6 +472,8 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
       throw new IllegalArgumentException("unsupported resource type for resource: '" + resourceName + '\'');
     }
 
+    generateOptions(facadeClass, baseUriField);
+
     JFieldVar resourceSpecField = facadeClass.field(JMod.PRIVATE | JMod.STATIC | JMod.FINAL, _resourceSpecClass, "_resourceSpec");
     if (resourceSchemaClass == CollectionSchema.class ||
         resourceSchemaClass == AssociationSchema.class ||
@@ -733,6 +736,14 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
   {
     UriTemplate template = new UriTemplate(basePath);
     return template.getTemplateVariables();
+  }
+
+
+  private void generateOptions(JDefinedClass facadeClass, JFieldVar baseUriField)
+  {
+    JClass builderClass = getCodeModel().ref(OptionsRequestBuilder.class);
+    JMethod finderMethod = facadeClass.method(JMod.PUBLIC, OptionsRequestBuilder.class, "options");
+    finderMethod.body()._return(JExpr._new(builderClass).arg(baseUriField));
   }
 
   private void generateSubResources(String sourceFile,

@@ -34,7 +34,8 @@ public enum ResourceMethod
   ACTION          (HttpMethod.POST),
   BATCH_PARTIAL_UPDATE (HttpMethod.POST),
   BATCH_DELETE    (HttpMethod.DELETE),
-  GET_ALL         (HttpMethod.GET);
+  GET_ALL         (HttpMethod.GET),
+  OPTIONS         (HttpMethod.OPTIONS);
 
   ResourceMethod(HttpMethod httpMethod)
   {

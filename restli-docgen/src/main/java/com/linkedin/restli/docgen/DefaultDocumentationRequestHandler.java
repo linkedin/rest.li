@@ -88,7 +88,7 @@ public class DefaultDocumentationRequestHandler implements RestLiDocumentationRe
         prefixSegment = pathSegments.get(1).getPath();
     }
 
-    assert(prefixSegment.equals(DOC_PREFIX));
+    assert(prefixSegment.equals(DOC_PREFIX) || (HttpMethod.valueOf(request.getMethod()) == HttpMethod.OPTIONS));
 
     final ByteArrayOutputStream out = new ByteArrayOutputStream(BAOS_BUFFER_SIZE);
     final RestLiDocumentationRenderer renderer;

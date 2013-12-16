@@ -97,5 +97,5 @@ public abstract class RestResponseDecoder<T>
   public abstract Class<?> getEntityClass();
 
   public abstract T wrapResponse(DataMap dataMap)
-                  throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException;
+                  throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, IOException;
 }

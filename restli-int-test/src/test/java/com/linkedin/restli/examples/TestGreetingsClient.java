@@ -17,13 +17,21 @@
 package com.linkedin.restli.examples;
 
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.DataSchemaUtil;
+import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
 import com.linkedin.data.schema.validation.ValidationOptions;
+import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.restli.client.BatchPartialUpdateRequest;
 import com.linkedin.restli.client.CreateRequest;
 import com.linkedin.restli.client.DeleteRequest;
 import com.linkedin.restli.client.GetAllRequest;
+import com.linkedin.restli.common.OptionsResponse;
 import com.linkedin.restli.common.UpdateStatus;
+import com.linkedin.restli.examples.greetings.api.Empty;
+import com.linkedin.restli.restspec.ResourceSchema;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -758,6 +766,36 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     {
       Assert.assertEquals(e.getStatus(), HttpStatus.S_404_NOT_FOUND.getCode());
     }
+  }
+
+  @Test
+  public void testOptions()
+      throws RemoteInvocationException, URISyntaxException, IOException
+  {
+    Request<OptionsResponse> optionsRequest = GREETINGS_BUILDERS.options().build();
+    OptionsResponse optionsResponse = REST_CLIENT.sendRequest(optionsRequest).getResponse().getEntity();
+    Map<String, DataSchema> rawDataSchemas = optionsResponse.getDataSchemas();
+
+    NamedDataSchema[] schemas = new NamedDataSchema[] {
+      new Greeting().schema(),
+      new TransferOwnershipRequest().schema(),
+      new SearchMetadata().schema(),
+      new Empty().schema(),
+      (NamedDataSchema)DataTemplateUtil.getSchema(Tone.class)
+    };
+
+    for(NamedDataSchema dataSchema: schemas)
+    {
+      DataSchema optionsDataSchema = rawDataSchemas.get(dataSchema.getFullName());
+      Assert.assertEquals(optionsDataSchema, dataSchema);
+    }
+
+    Map<String, ResourceSchema> resources = optionsResponse.getResourceSchemas();
+    Assert.assertEquals(resources.size(), 1);
+    ResourceSchema resourceSchema = resources.get("com.linkedin.restli.examples.greetings.client.greetings");
+    // sanity check the resource schema
+    Assert.assertEquals(resourceSchema.getName(), "greetings");
+    Assert.assertTrue(resourceSchema.hasCollection());
   }
 
 }

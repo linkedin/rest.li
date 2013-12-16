@@ -7,6 +7,9 @@ Improve test for DegraderLoadBalancerState
 (RB=244397)
 Simplify V3 DegraderLoadBalancerState
 
+(RB=244654)
+Add support for rest.li 'OPTIONS' requests to java client bindings.
+
 1.10.5
 ------
 (RB=240968)
