@@ -8,7 +8,7 @@ buildscript {
     mavenCentral()
   }
   dependencies {
-    classpath "com.linkedin.pegasus:gradle-plugins:1.9.40"
+    classpath "com.linkedin.pegasus:gradle-plugins:1.10.6"
   }
 }
 
@@ -16,7 +16,7 @@ task wrapper(type: Wrapper) {
   gradleVersion = '1.6'
 }
 
-pegasusVersion = "1.9.40"
+pegasusVersion = "1.10.6"
 spec = [
   "product" : [
     "pegasus" : [
