@@ -1,0 +1,6 @@
+{
+  "type" : "enum",
+  "name" : "SimpleEnum",
+  "namespace": "com.linkedin.restli.common.test",
+  "symbols" : [ "A", "B", "C" ]
+}

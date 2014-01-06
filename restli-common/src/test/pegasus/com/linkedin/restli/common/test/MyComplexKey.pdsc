@@ -1,0 +1,16 @@
+{
+  "type" : "record",
+  "name" : "MyComplexKey",
+  "namespace": "com.linkedin.restli.common.test",
+  "fields":
+  [
+    {
+      "name": "a",
+      "type": "string"
+    },
+    {
+      "name": "b",
+      "type": "long"
+    }
+  ]
+}

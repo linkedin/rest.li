@@ -21,14 +21,13 @@
 package com.linkedin.restli.client;
 
 
-import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.jersey.api.uri.UriBuilder;
-import com.linkedin.restli.common.BatchRequest;
+import com.linkedin.restli.common.CollectionRequest;
+import com.linkedin.restli.common.KeyValueRecord;
+import com.linkedin.restli.common.KeyValueRecordFactory;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceSpec;
 
-import java.net.URI;
 import java.util.Map;
 
 /**
@@ -39,20 +38,28 @@ import java.util.Map;
 public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> extends
     RestfulRequestBuilder<K, V, BatchPartialUpdateRequest<K, V>>
 {
-  private final BatchRequest<PatchRequest<V>> _input;
+  private final CollectionRequest<KeyValueRecord<K, PatchRequest>> _entities;
+  private final KeyValueRecordFactory<K, PatchRequest> _keyValueRecordFactory;
 
-  @SuppressWarnings({ "unchecked" })
+  @SuppressWarnings("unchecked")
   public BatchPartialUpdateRequestBuilder(String baseUriTemplate,
                                           Class<V> valueClass,
                                           ResourceSpec resourceSpec)
   {
     super(baseUriTemplate, resourceSpec);
-    _input = new BatchRequest<PatchRequest<V>>(new DataMap(), (Class) PatchRequest.class);
+    _entities = new CollectionRequest(KeyValueRecord.class);
+    _keyValueRecordFactory
+        = new KeyValueRecordFactory(_resourceSpec.getKeyClass(),
+                                    _resourceSpec.getKeyKeyClass(),
+                                    _resourceSpec.getKeyParamsClass(),
+                                    _resourceSpec.getKeyParts(),
+                                    PatchRequest.class);
   }
 
   public BatchPartialUpdateRequestBuilder<K, V> input(K id, PatchRequest<V> patch)
   {
-    _input.getEntities().put(keyToString(id), patch);
+
+    _entities.getElements().add(_keyValueRecordFactory.create(id, patch));
     addKey(id);
     return this;
   }
@@ -62,7 +69,9 @@ public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> exten
     addKeys(patches.keySet());
     for (Map.Entry<K, PatchRequest<V>> entry : patches.entrySet())
     {
-      _input.getEntities().put(keyToString(entry.getKey()), entry.getValue());
+      K key = entry.getKey();
+      PatchRequest value = entry.getValue();
+      _entities.getElements().add(_keyValueRecordFactory.create(key, value));
     }
     return this;
   }
@@ -150,17 +159,12 @@ public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> exten
   @Override
   public BatchPartialUpdateRequest<K, V> build()
   {
-    URI baseUri = bindPathKeys();
-    UriBuilder b = UriBuilder.fromUri(baseUri);
-    appendQueryParams(b);
-
-    return new BatchPartialUpdateRequest<K, V>(b.build(),
-                                               _headers,
-                                               baseUri,
-                                               _input,
+    return new BatchPartialUpdateRequest<K, V>(_headers,
+                                               _entities,
                                                _queryParams,
                                                _resourceSpec,
-                                               getResourcePath());
+                                               _baseURITemplate,
+                                               _pathKeys);
   }
 
 }

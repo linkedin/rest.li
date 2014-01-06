@@ -20,6 +20,36 @@
 
 package com.linkedin.restli.client;
 
+
+import com.linkedin.common.callback.Callback;
+import com.linkedin.d2.balancer.KeyMapper;
+import com.linkedin.d2.balancer.ServiceUnavailableException;
+import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
+import com.linkedin.d2.balancer.util.hashing.ConsistentHashKeyMapper;
+import com.linkedin.d2.balancer.util.hashing.ConsistentHashRing;
+import com.linkedin.d2.balancer.util.hashing.Ring;
+import com.linkedin.d2.balancer.util.hashing.StaticRingProvider;
+import com.linkedin.data.DataMap;
+import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.rest.RestException;
+import com.linkedin.r2.transport.common.Client;
+import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
+import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import com.linkedin.restli.client.response.BatchKVResponse;
+import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
+import com.linkedin.restli.common.BatchResponse;
+import com.linkedin.restli.common.CollectionRequest;
+import com.linkedin.restli.common.ResourceSpec;
+import com.linkedin.restli.common.UpdateStatus;
+import com.linkedin.restli.examples.RestLiIntegrationTest;
+import com.linkedin.restli.examples.greetings.api.Greeting;
+import com.linkedin.restli.examples.greetings.api.Tone;
+import com.linkedin.restli.examples.greetings.client.GreetingsBatchDeleteBuilder;
+import com.linkedin.restli.examples.greetings.client.GreetingsBatchGetBuilder;
+import com.linkedin.restli.examples.greetings.client.GreetingsBatchUpdateBuilder;
+import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
+import com.linkedin.restli.internal.client.CollectionRequestUtil;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -33,37 +63,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
-
-import com.linkedin.data.DataMap;
-import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.restli.client.response.BatchKVResponse;
-import com.linkedin.restli.examples.greetings.api.Tone;
-import com.linkedin.restli.examples.greetings.client.GreetingsBatchDeleteBuilder;
-import com.linkedin.restli.examples.greetings.client.GreetingsBatchUpdateBuilder;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import com.linkedin.common.callback.Callback;
-import com.linkedin.d2.balancer.KeyMapper;
-import com.linkedin.d2.balancer.ServiceUnavailableException;
-import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
-import com.linkedin.d2.balancer.util.hashing.ConsistentHashKeyMapper;
-import com.linkedin.d2.balancer.util.hashing.ConsistentHashRing;
-import com.linkedin.d2.balancer.util.hashing.Ring;
-import com.linkedin.d2.balancer.util.hashing.StaticRingProvider;
-import com.linkedin.r2.message.RequestContext;
-import com.linkedin.r2.message.rest.RestException;
-import com.linkedin.r2.transport.common.Client;
-import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
-import com.linkedin.r2.transport.http.client.HttpClientFactory;
-import com.linkedin.restli.common.BatchResponse;
-import com.linkedin.restli.common.UpdateStatus;
-import com.linkedin.restli.examples.RestLiIntegrationTest;
-import com.linkedin.restli.examples.greetings.api.Greeting;
-import com.linkedin.restli.examples.greetings.client.GreetingsBatchGetBuilder;
-import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
 
 /**
  * @author Josh Walker
@@ -195,6 +198,7 @@ public class TestScatterGather extends RestLiIntegrationTest
     Assert.assertEquals(requestIds.size(), ids.length);
   }
 
+  @SuppressWarnings("unchecked")
   private static void testRequest(BatchRequest<?> request,
                                   Set<String> expectedParams,
                                   Set<String> expectedFields,
@@ -202,7 +206,7 @@ public class TestScatterGather extends RestLiIntegrationTest
                                   Set<Set<String>> requestIdSets,
                                   Set<Long> requestIds)
   {
-    String[] queryParams = request.getUri().getQuery().split("&");
+    String[] queryParams = RestliUriBuilderUtil.createUriBuilder(request).build().getQuery().split("&");
     Map<String, List<String>> params = new HashMap<String, List<String>>();
     for (String paramString : queryParams)
     {
@@ -229,11 +233,31 @@ public class TestScatterGather extends RestLiIntegrationTest
 
     if (expectedInput != null)
     {
-      checkInput(request.getInput(), expectedInput, uriIds);
+      RecordTemplate inputRecordTemplate;
+      if (request instanceof BatchUpdateRequest)
+      {
+        ResourceSpec resourceSpec = request.getResourceSpec();
+
+        CollectionRequest inputRecord = (CollectionRequest)request.getInputRecord();
+
+        inputRecordTemplate = CollectionRequestUtil.convertToBatchRequest(inputRecord,
+                                                                          resourceSpec.getKeyClass(),
+                                                                          resourceSpec.getKeyKeyClass(),
+                                                                          resourceSpec.getKeyParamsClass(),
+                                                                          resourceSpec.getKeyParts(),
+                                                                          resourceSpec.getValueClass());
+      }
+      else
+      {
+        inputRecordTemplate = request.getInputRecord();
+      }
+      checkInput(inputRecordTemplate.data().getDataMap(com.linkedin.restli.common.BatchRequest.ENTITIES),
+                 expectedInput,
+                 uriIds);
     }
 
     @SuppressWarnings("unchecked")
-    Set<Object> idObjects = request.getIdObjects();
+    Set<Object> idObjects = request.getObjectIds();
     Set<String> theseIds = new HashSet<String>(idObjects.size());
     for (Object o : idObjects)
     {
@@ -251,9 +275,11 @@ public class TestScatterGather extends RestLiIntegrationTest
     requestIdSets.add(theseIds);
   }
 
-  private static void checkInput(RecordTemplate inputRecord, Map<Long, Greeting> inputMap, Set<String> uriIds)
+  // TODO modify this method to accept a CollectionRequest as it's first parameter once our server code has been
+  //      updated to work with the new representation of BatchUpdateRequests and BatchPartialUpdateRequests. As of now
+  //      we are still converting to the old representation using CollectionRequestUtil.convertToBatchRequest
+  private static void checkInput(DataMap dataMap, Map<Long, Greeting> inputMap, Set<String> uriIds)
   {
-    DataMap dataMap = inputRecord.data().getDataMap(com.linkedin.restli.common.BatchRequest.ENTITIES);
     Assert.assertEquals(dataMap.size(), uriIds.size());
 
     for(String key : dataMap.keySet())

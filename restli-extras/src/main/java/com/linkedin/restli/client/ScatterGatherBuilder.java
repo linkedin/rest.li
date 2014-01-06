@@ -20,7 +20,17 @@
 
 package com.linkedin.restli.client;
 
-import java.lang.reflect.InvocationTargetException;
+
+import com.linkedin.common.callback.Callback;
+import com.linkedin.d2.balancer.KeyMapper;
+import com.linkedin.d2.balancer.ServiceUnavailableException;
+import com.linkedin.d2.balancer.util.MapKeyResult;
+import com.linkedin.data.schema.PathSpec;
+import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.r2.message.RequestContext;
+import com.linkedin.restli.client.response.BatchKVResponse;
+import com.linkedin.restli.common.BatchResponse;
+import com.linkedin.restli.common.UpdateStatus;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -30,18 +40,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import com.linkedin.common.callback.Callback;
-import com.linkedin.d2.balancer.KeyMapper;
-import com.linkedin.d2.balancer.ServiceUnavailableException;
-import com.linkedin.d2.balancer.util.MapKeyResult;
-import com.linkedin.data.DataMap;
-import com.linkedin.data.schema.PathSpec;
-import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.r2.message.RequestContext;
-import com.linkedin.restli.client.response.BatchKVResponse;
-import com.linkedin.restli.common.BatchResponse;
-import com.linkedin.restli.common.UpdateStatus;
 
 /**
  * @author Josh Walker
@@ -71,21 +69,16 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
   public ScatterGatherResult<T> buildRequestsV2(BatchGetRequest<T> request, RequestContext requestContext) throws
           ServiceUnavailableException
   {
-    Set<Object> idObjects = request.getIdObjects();
-    Collection<String> ids = new HashSet<String>(idObjects.size());
-    for (Object o : idObjects)
-    {
-      ids.add(o.toString());
-    }
+    Set<Object> idObjects = request.getObjectIds();
 
-    MapKeyResult<URI, String> mapKeyResult = mapKeys(request, ids);
+    MapKeyResult<URI, Object> mapKeyResult = mapKeys(request, idObjects);
 
-    Map<URI, Collection<String>> batches = mapKeyResult.getMapResult();
+    Map<URI, Collection<Object>> batches = mapKeyResult.getMapResult();
     Collection<RequestInfo<T>> scatterGatherRequests = new ArrayList<RequestInfo<T>>(batches.size());
 
-    for (Map.Entry<URI, Collection<String>> batch : batches.entrySet())
+    for (Map.Entry<URI, Collection<Object>> batch : batches.entrySet())
     {
-      BatchGetRequestBuilder<String, T> builder = new BatchGetRequestBuilder<String, T>(request.getBaseURI().toString(),
+      BatchGetRequestBuilder<Object, T> builder = new BatchGetRequestBuilder<Object, T>(request.getBaseUriTemplate(),
                                                                                         request.getResponseDecoder(),
                                                                                         request.getResourceSpec());
       builder.ids(batch.getValue());
@@ -107,7 +100,7 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
   public <K> KVScatterGatherResult<K, UpdateStatus> buildRequests(BatchUpdateRequest<K, T> request, RequestContext requestContext) throws
     ServiceUnavailableException
   {
-    Set<Object> idObjects = request.getIdObjects();
+    Set<Object> idObjects = request.getObjectIds();
     Collection<K> ids = new HashSet<K>(idObjects.size());
     for (Object o : idObjects)
     {
@@ -126,7 +119,7 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
     for (Map.Entry<URI, Map<K, T>> batch : batches.entrySet())
     {
       BatchUpdateRequestBuilder<K, T> builder =
-        new BatchUpdateRequestBuilder<K, T>(request.getBaseURI().toString(),
+        new BatchUpdateRequestBuilder<K, T>(request.getBaseUriTemplate(),
                                             tClass,
                                             request.getResourceSpec());
       builder.inputs(batch.getValue());
@@ -150,7 +143,7 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
     URI serviceUri;
     try
     {
-      serviceUri = new URI(D2_URI_PREFIX + request.getUri().toString());
+      serviceUri = new URI(D2_URI_PREFIX + request.getServiceName());
     }
     catch (URISyntaxException e)
     {
@@ -176,13 +169,15 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
    * @param <K> the key type.
    * @return a map from U to request input, where request input is a map from keys to {@link RecordTemplate}s.
    */
-  private <U, K> Map<U, Map<K, T>> keyMapToInput(MapKeyResult<U, K> mapKeyResult, BatchRequest<?> batchRequest, Class<T> tClass)
+  private <U, K> Map<U, Map<K, T>> keyMapToInput(MapKeyResult<U, K> mapKeyResult, BatchUpdateRequest<K, T> batchRequest, Class<T> tClass)
   {
-    DataMap dataMap = batchRequest.getInput().data().getDataMap(com.linkedin.restli.common.BatchRequest.ENTITIES);
-    if (dataMap == null)
+    Map<K, T> updateInput = batchRequest.getUpdateInputMap();
+
+    if (updateInput == null)
     {
       throw new IllegalArgumentException("given BatchRequest must have input data");
     }
+
     Map<U, Collection<K>> map = mapKeyResult.getMapResult();
     Map<U, Map<K, T>> result = new HashMap<U, Map<K, T>>(map.size());
     for(Map.Entry<U, Collection<K>> entry : map.entrySet())
@@ -191,31 +186,10 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
       Map<K, T> keyRecordMap = new HashMap<K, T>(keyList.size());
       for(K key : keyList)
       {
-        DataMap recordDataMap = dataMap.getDataMap(key.toString());
-        if (recordDataMap == null)
+        T record = updateInput.get(key);
+        if (record == null)
         {
           throw new IllegalArgumentException("given BatchRequest input must have all keys present in mapKeyResult");
-        }
-        T record;
-        try
-        {
-          record = tClass.getConstructor(DataMap.class).newInstance(recordDataMap);
-        }
-        catch (InstantiationException e)
-        {
-          throw new IllegalArgumentException("RecordTemplate class " + tClass + " should have a public DataMap constructor", e);
-        }
-        catch (IllegalAccessException e)
-        {
-          throw new IllegalArgumentException("RecordTemplate class " + tClass + " should have a public DataMap constructor", e);
-        }
-        catch (InvocationTargetException e)
-        {
-          throw new IllegalArgumentException("RecordTemplate class " + tClass + " should have a public DataMap constructor", e);
-        }
-        catch (NoSuchMethodException e)
-        {
-          throw new IllegalArgumentException("RecordTemplate class " + tClass + " should have a public DataMap constructor", e);
         }
         keyRecordMap.put(key, record);
       }
@@ -227,7 +201,7 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
   public <K> KVScatterGatherResult<K, UpdateStatus> buildRequests(BatchDeleteRequest<K, T> request, RequestContext requestContext) throws
     ServiceUnavailableException
   {
-    Set<Object> idObjects = request.getIdObjects();
+    Set<Object> idObjects = request.getObjectIds();
     Collection<K> ids = new HashSet<K>(idObjects.size());
     for (Object o : idObjects)
     {
@@ -245,7 +219,7 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
       @SuppressWarnings("unchecked")
       Class<T> keyClass = (Class<T>) request.getResourceSpec().getValueClass();
       BatchDeleteRequestBuilder<K, T> builder =
-        new BatchDeleteRequestBuilder<K, T>(request.getBaseURI().toString(),
+        new BatchDeleteRequestBuilder<K, T>(request.getBaseUriTemplate(),
                                             keyClass,
                                             request.getResourceSpec());
       builder.ids(batch.getValue());
@@ -340,9 +314,9 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
   public static class ScatterGatherResult<T extends RecordTemplate>
   {
     private final Collection<RequestInfo<T>> _requestInfos;
-    private final Collection<MapKeyResult.UnmappedKey<String>> _unmappedKeys;
+    private final Collection<MapKeyResult.UnmappedKey<Object>> _unmappedKeys;
 
-    public ScatterGatherResult(Collection<RequestInfo<T>> requestInfos, Collection<MapKeyResult.UnmappedKey<String>> unmappedKeys)
+    public ScatterGatherResult(Collection<RequestInfo<T>> requestInfos, Collection<MapKeyResult.UnmappedKey<Object>> unmappedKeys)
     {
       _requestInfos = Collections.unmodifiableCollection(requestInfos);
       _unmappedKeys = Collections.unmodifiableCollection(unmappedKeys);
@@ -353,7 +327,7 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
       return _requestInfos;
     }
 
-    Collection<MapKeyResult.UnmappedKey<String>> getUnmappedKeys()
+    Collection<MapKeyResult.UnmappedKey<Object>> getUnmappedKeys()
     {
       return _unmappedKeys;
     }

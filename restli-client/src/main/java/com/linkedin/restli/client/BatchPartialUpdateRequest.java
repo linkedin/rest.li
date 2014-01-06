@@ -20,19 +20,20 @@
 
 package com.linkedin.restli.client;
 
-import java.net.URI;
-import java.util.List;
-import java.util.Map;
 
-import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.client.response.BatchKVResponse;
-import com.linkedin.restli.common.BatchRequest;
+import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
+import com.linkedin.restli.internal.client.CollectionRequestUtil;
+import com.linkedin.restli.common.CollectionRequest;
+import com.linkedin.restli.common.KeyValueRecord;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.internal.client.BatchKVResponseDecoder;
+import java.net.URI;
+import java.util.Map;
 
 /**
  * @author Josh Walker
@@ -42,21 +43,16 @@ import com.linkedin.restli.internal.client.BatchKVResponseDecoder;
 public class BatchPartialUpdateRequest<K, V extends RecordTemplate> extends
     com.linkedin.restli.client.BatchRequest<BatchKVResponse<K, UpdateStatus>>
 {
-  private final URI _baseURI;
-
-  // framework should ensure that ResourceSpec.getKeyClass() returns Class<K>
   @SuppressWarnings("unchecked")
-  BatchPartialUpdateRequest(URI uri,
-                            Map<String, String> headers,
-                            URI baseURI,
-                            BatchRequest<PatchRequest<V>> input,
-                            DataMap queryParams,
+  BatchPartialUpdateRequest(Map<String, String> headers,
+                            CollectionRequest<KeyValueRecord<K, PatchRequest>> entities,
+                            Map<String, Object> queryParams,
                             ResourceSpec resourceSpec,
-                            List<String> resourcePath)
+                            String baseUriTemplate,
+                            Map<String, Object> pathKeys)
   {
-    super(uri,
-          ResourceMethod.BATCH_PARTIAL_UPDATE,
-          input,
+    super(ResourceMethod.BATCH_PARTIAL_UPDATE,
+          entities,
           headers,
           new BatchKVResponseDecoder<K, UpdateStatus>(UpdateStatus.class,
                                                       (Class<K>) resourceSpec.getKeyClass(),
@@ -65,12 +61,33 @@ public class BatchPartialUpdateRequest<K, V extends RecordTemplate> extends
                                                       resourceSpec.getKeyParamsClass()),
           resourceSpec,
           queryParams,
-          resourcePath);
-    _baseURI = baseURI;
+          baseUriTemplate,
+          pathKeys);
   }
 
+  /**
+   * @deprecated Please use {@link #getInputRecord()} instead
+   */
+  @SuppressWarnings("unchecked")
+  @Deprecated
+  @Override
+  public RecordTemplate getInput()
+  {
+    return CollectionRequestUtil.convertToBatchRequest((CollectionRequest<KeyValueRecord>) getInputRecord(),
+                                                       getResourceSpec().getKeyClass(),
+                                                       getResourceSpec().getKeyKeyClass(),
+                                                       getResourceSpec().getKeyParamsClass(),
+                                                       getResourceSpec().getKeyParts(),
+                                                       PatchRequest.class);
+  }
+
+  /**
+   * @deprecated Please use {@link com.linkedin.restli.client.uribuilders.RestliUriBuilder#buildBaseUri()} instead
+   * @return
+   */
+  @Deprecated
   public URI getBaseURI()
   {
-    return _baseURI;
+    return RestliUriBuilderUtil.createUriBuilder(this).buildBaseUri();
   }
 }

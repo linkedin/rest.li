@@ -24,6 +24,9 @@ import com.linkedin.parseq.promise.Promise;
 import com.linkedin.parseq.promise.Promises;
 import com.linkedin.parseq.promise.SettablePromise;
 import com.linkedin.r2.message.RequestContext;
+import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
+import com.linkedin.restli.common.OperationNameGenerator;
+
 
 /**
  * Wrapper around {@link RestClient} that facilitates usage with ParSeq.
@@ -120,7 +123,20 @@ public class ParSeqRestClient
   public <T> Task<Response<T>> createTask(final Request<T> request,
                                           final RequestContext requestContext)
   {
-    return createTask(request.getUri().getPath(), request, requestContext);
+    return createTask(generateTaskName(request), request, requestContext);
+  }
+
+  /**
+   * Generates a task name for the current task.
+   * @param request the outgoing request
+   * @return a task name
+   */
+  private String generateTaskName(final Request request)
+  {
+    StringBuilder sb = new StringBuilder(request.getBaseUriTemplate());
+    sb.append(" ");
+    sb.append(OperationNameGenerator.generate(request.getMethod(), request.getMethodName()));
+    return sb.toString();
   }
 
   /**

@@ -19,22 +19,29 @@
  */
 package com.linkedin.restli.examples.greetings.server;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import com.linkedin.restli.common.CompoundKey;
-import com.linkedin.restli.examples.StringTestKeys;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.examples.greetings.api.Message;
-import com.linkedin.restli.examples.greetings.api.Tone;
-import com.linkedin.restli.examples.greetings.api.ToneFacet;
+import com.linkedin.restli.server.BatchPatchRequest;
+import com.linkedin.restli.server.BatchUpdateRequest;
+import com.linkedin.restli.server.BatchUpdateResult;
+import com.linkedin.restli.server.RestLiServiceException;
+import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.AssocKey;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.Key;
 import com.linkedin.restli.server.annotations.Optional;
 import com.linkedin.restli.server.annotations.RestLiAssociation;
 import com.linkedin.restli.server.resources.AssociationResourceTemplate;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static com.linkedin.restli.examples.AssociationResourceHelpers.DB;
+
 
 /**
  * Demonstrates an assocation resource keyed by string.
@@ -47,31 +54,53 @@ assocKeys={@Key(name="src", type=String.class),
            @Key(name="dest", type=String.class)})
 public class AssociationsResource extends AssociationResourceTemplate<Message>
 {
-  private Map<CompoundKey, Message> _db;
-
-  public AssociationsResource()
-  {
-    _db = new HashMap<CompoundKey, Message>();
-    createExample(StringTestKeys.URL, StringTestKeys.URL2, "I need some %20.");
-    createExample(StringTestKeys.SIMPLEKEY, StringTestKeys.SIMPLEKEY2, "src1-dest1");
-  }
-
-  private void createExample(String srcKey, String destKey, String message)
-  {
-    CompoundKey key = new CompoundKey();
-    key.append("src", srcKey);
-    key.append("dest", destKey);
-    Message greeting = new Message();
-    greeting.setId(key.getPartAsString("src") + " " + key.getPartAsString("dest"));
-    greeting.setMessage(message);
-    greeting.setTone(Tone.SINCERE);
-    _db.put(key, greeting);
-  }
-
   @Override
   public Message get(CompoundKey id)
   {
-    return _db.get(id);
+    return DB.get(id);
+  }
+
+  @Override
+  public Map<CompoundKey, Message> batchGet(Set<CompoundKey> ids)
+  {
+    Map<CompoundKey, Message> result = new HashMap<CompoundKey, Message>();
+    for (CompoundKey key: ids)
+    {
+      result.put(key, DB.get(key));
+    }
+    return result;
+  }
+
+  @Override
+  public BatchUpdateResult<CompoundKey, Message> batchUpdate(BatchUpdateRequest<CompoundKey, Message> entities)
+  {
+    if (!entities.getData().equals(DB))
+    {
+      throw new RestLiServiceException(HttpStatus.S_417_EXPECTATION_FAILED);
+    }
+
+    return buildUpdateResult(entities.getData().keySet());
+  }
+
+  @Override
+  public BatchUpdateResult<CompoundKey, Message> batchUpdate(BatchPatchRequest<CompoundKey, Message> patches)
+  {
+    if (!patches.getData().keySet().equals(DB.keySet()))
+    {
+      throw new RestLiServiceException(HttpStatus.S_417_EXPECTATION_FAILED);
+    }
+
+    return buildUpdateResult(patches.getData().keySet());
+  }
+
+  private BatchUpdateResult<CompoundKey, Message> buildUpdateResult(Set<CompoundKey> keys)
+  {
+    Map<CompoundKey, UpdateResponse> result = new HashMap<CompoundKey, UpdateResponse>();
+    for (CompoundKey key: keys)
+    {
+      result.put(key, new UpdateResponse(HttpStatus.S_204_NO_CONTENT));
+    }
+    return new BatchUpdateResult<CompoundKey, Message>(result);
   }
 
   @Finder("assocKeyFinder")

@@ -20,20 +20,14 @@
 
 package com.linkedin.restli.examples.greetings;
 
+
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.message.rest.RestException;
-import com.linkedin.r2.transport.common.Client;
-import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
-import com.linkedin.r2.transport.http.client.HttpClientFactory;
-import com.linkedin.restli.TestConstants;
 import com.linkedin.restli.client.BatchGetRequest;
 import com.linkedin.restli.client.FindRequest;
 import com.linkedin.restli.client.GetRequest;
 import com.linkedin.restli.client.Request;
-import com.linkedin.restli.client.RestClient;
-import com.linkedin.restli.common.CollectionRequest;
-import com.linkedin.restli.common.CollectionResponse;
+import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.examples.custom.types.CustomLong;
 import com.linkedin.restli.examples.custom.types.DateCoercer;
@@ -42,20 +36,15 @@ import com.linkedin.restli.examples.greetings.client.CustomTypes2Builders;
 import com.linkedin.restli.examples.greetings.client.CustomTypes3Builders;
 import com.linkedin.restli.examples.greetings.client.CustomTypes4Builders;
 import com.linkedin.restli.examples.greetings.client.CustomTypesBuilders;
-import com.linkedin.restli.examples.groups.api.GroupMembership;
-import com.linkedin.restli.examples.groups.client.GroupMembershipsFindByGroupBuilder;
 import com.linkedin.restli.internal.client.BatchResponseDecoder;
 import com.linkedin.restli.internal.client.CollectionResponseDecoder;
 import com.linkedin.restli.internal.client.EntityResponseDecoder;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
 
@@ -167,14 +156,16 @@ public class TestCustomTypesRequestBuilders
 
   }
 
-  @SuppressWarnings({"rawtypes"})
+  @SuppressWarnings({"rawtypes", "deprecation"})
   private static void checkRequestBuilder(Request<?> request, ResourceMethod resourceMethod,
                                           Class<? extends RestResponseDecoder> responseDecoderClass, Class<?> templateClass,
                                           String expectedUri, RecordTemplate requestInput)
   {
+    assertEquals(request.getInputRecord(), requestInput);
     assertEquals(request.getInput(), requestInput);
     assertEquals(request.getMethod(), resourceMethod);
     assertEquals(request.getResponseDecoder().getClass(), responseDecoderClass);
+    assertEquals(RestliUriBuilderUtil.createUriBuilder(request).build().toString(), expectedUri);
     assertEquals(request.getUri().toString(), expectedUri);
   }
 

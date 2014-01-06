@@ -63,12 +63,14 @@ import com.linkedin.restli.examples.groups.api.State;
 import com.linkedin.restli.examples.groups.api.TransferOwnershipRequest;
 import com.linkedin.restli.examples.groups.api.WriteLevel;
 import com.linkedin.restli.examples.groups.client.ContactsBuilders;
+import com.linkedin.restli.examples.groups.client.GroupMembershipsBatchPartialUpdateBuilder;
 import com.linkedin.restli.examples.groups.client.GroupMembershipsBuilders;
 import com.linkedin.restli.examples.groups.client.GroupMembershipsComplexBuilders;
 import com.linkedin.restli.examples.groups.client.GroupMembershipsFindByMemberBuilder;
 import com.linkedin.restli.examples.groups.client.GroupsBatchGetBuilder;
 import com.linkedin.restli.examples.groups.client.GroupsBuilders;
 import com.linkedin.restli.examples.groups.client.GroupsFindByEmailDomainBuilder;
+import java.util.HashMap;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -126,45 +128,6 @@ public class TestGroupsClient extends RestLiIntegrationTest
   public void shutDown() throws Exception
   {
     super.shutdown();
-  }
-
-  //@Test
-  public void testEntityGet() throws RemoteInvocationException
-  {
-    Request<Group> request = GROUPS_BUILDERS.get().id(1).fields(Group.fields().badge()).build();
-    Group group = REST_CLIENT.sendRequest(request).getResponse().getEntity();
-    Assert.assertEquals(Badge.FEATURED, group.getBadge());
-  }
-
-  //@Test
-  public void testFinder() throws RemoteInvocationException
-  {
-    // Find by email domain with some debug, pagination and projection
-    GroupsFindByEmailDomainBuilder groupsRequest = GROUPS_BUILDERS
-            .findByEmailDomain()
-            .emailDomainParam("foo.com")
-            .paginate(0, 10)
-            .fields(Group.fields().state(), Group.fields().locale());
-    CollectionResponse<Group> groupCollectionResponse = REST_CLIENT.sendRequest(groupsRequest.build()).getResponse().getEntity();
-    Group group = groupCollectionResponse.getElements().get(0);
-    Assert.assertEquals(State.ACTIVE, group.getState());
-  }
-
-  //@Test
-  public void testSubResource() throws RemoteInvocationException
-  {
-    Request<GroupContact> request = CONTACTS_BUILDERS.get().groupIdKey(1).id(1).build();
-    GroupContact groupContact = REST_CLIENT.sendRequest(request).getResponse().getEntity();
-    Assert.assertEquals("Bob", groupContact.getFirstName());
-  }
-
-  //@Test
-  public void testBatchGet() throws RemoteInvocationException
-  {
-    GroupsBatchGetBuilder groupsRequest =
-            GROUPS_BUILDERS.batchGet().ids(1, 8).fields(Group.fields().approvalModes());
-    BatchResponse<Group> groupBatchResponse = REST_CLIENT.sendRequest(groupsRequest.build()).getResponse().getEntity();
-    Assert.assertEquals(1, (int) groupBatchResponse.getResults().get("1").getApprovalModes());
   }
 
   @Test
@@ -290,28 +253,8 @@ public class TestGroupsClient extends RestLiIntegrationTest
     return groupMembership;
   }
 
-  //@Test
-  public void testAction() throws RemoteInvocationException
-  {
-    ActionRequest<Void> request = GROUPS_BUILDERS.actionTransferOwnership()
-            .id(1)
-            .paramRequest(new TransferOwnershipRequest())
-            .build();
-    ResponseFuture<Void> responseFuture = REST_CLIENT.sendRequest(request);
-    Assert.assertEquals(responseFuture.getResponse().getStatus(), 200);
-    Assert.assertNull(responseFuture.getResponse().getEntity());
-  }
-
-  //@Test
-  public void testAssociationFinder() throws RemoteInvocationException
-  {
-    GroupMembershipsFindByMemberBuilder requestBuilder = GROUP_MEMBERSHIPS_BUILDERS.findByMember().memberIdKey(1);
-    ResponseFuture<CollectionResponse<GroupMembership>> responseFuture = REST_CLIENT.sendRequest(requestBuilder.build());
-    Assert.assertEquals(responseFuture.getResponse().getEntity().getElements().get(0).getId(), "1_1");
-  }
-
   @Test
-  public void testAssociationBatchCreateGetUpdateDelete() throws RemoteInvocationException
+  public void testAssociationBatchCreateGetUpdatePatchDelete() throws RemoteInvocationException
   {
     // Setup - batch create two group memberships
     CompoundKey key1 = buildCompoundKey(1, 1);
@@ -339,6 +282,34 @@ public class TestGroupsClient extends RestLiIntegrationTest
     Assert.assertEquals(groupMemberships.get(key1.toString()).getContactEmail(), "alfred@test.linkedin.com");
     Assert.assertTrue(groupMemberships.containsKey(key2.toString()));
     Assert.assertEquals(groupMemberships.get(key2.toString()).getContactEmail(), "bruce@test.linkedin.com");
+
+    // Batch partial update
+    GroupMembership patchedGroupMembership1 = buildGroupMembership(null, "ALFRED@test.linkedin.com", "ALFRED", "Hitchcock");
+    GroupMembership patchedGroupMembership2 = buildGroupMembership(null, "BRUCE@test.linkedin.com", "BRUCE", "Willis");
+
+    Map<CompoundKey, PatchRequest<GroupMembership>> patchInputs = new HashMap<CompoundKey, PatchRequest<GroupMembership>>();
+    patchInputs.put(key1, PatchGenerator.diff(groupMembership1, patchedGroupMembership1));
+    patchInputs.put(key2, PatchGenerator.diff(groupMembership2, patchedGroupMembership2));
+
+    Map<CompoundKey, UpdateStatus> patchResults = REST_CLIENT.sendRequest(GROUP_MEMBERSHIPS_BUILDERS.batchPartialUpdate().inputs(
+        patchInputs).build()).getResponse().getEntity().getResults();
+    Assert.assertEquals(patchResults.get(key1).getStatus().intValue(), 204);
+    Assert.assertEquals(patchResults.get(key2).getStatus().intValue(), 204);
+
+    // Batch get to make sure our patch applied
+    BatchGetKVRequest<CompoundKey, GroupMembership> batchGetRequest =
+        GROUP_MEMBERSHIPS_BUILDERS.batchGet()
+            .ids(key1, key2)
+            .fields(GroupMembership.fields().contactEmail(), GroupMembership.fields().firstName())
+            .buildKV();
+    BatchKVResponse<CompoundKey, GroupMembership> entity =
+        REST_CLIENT.sendRequest(batchGetRequest).getResponse().getEntity();
+    Assert.assertEquals(entity.getErrors().size(), 0);
+    Assert.assertEquals(entity.getResults().size(), 2);
+    Assert.assertEquals(entity.getResults().get(key1).getContactEmail(), "ALFRED@test.linkedin.com");
+    Assert.assertEquals(entity.getResults().get(key1).getFirstName(), "ALFRED");
+    Assert.assertEquals(entity.getResults().get(key2).getContactEmail(), "BRUCE@test.linkedin.com");
+    Assert.assertEquals(entity.getResults().get(key2).getFirstName(), "BRUCE");
 
     // GetAll memberships
     GetAllRequest<GroupMembership> getAllRequest =

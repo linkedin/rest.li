@@ -119,6 +119,15 @@ public final class ComplexResourceKey<K extends RecordTemplate, P extends Record
     return m;
   }
 
+  /**
+   * Makes this key read only by making the underlying {@link DataMap}s in the key and params read only.
+   */
+  public void makeReadOnly()
+  {
+    key.data().makeReadOnly();
+    params.data().makeReadOnly();
+  }
+
   protected final K           key;
   protected final P           params;
 

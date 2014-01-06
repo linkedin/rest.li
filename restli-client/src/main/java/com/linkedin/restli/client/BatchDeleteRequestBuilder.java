@@ -141,15 +141,10 @@ public class BatchDeleteRequestBuilder<K, V extends RecordTemplate> extends
   @Override
   public BatchDeleteRequest<K, V> build()
   {
-    URI baseUri = bindPathKeys();
-    UriBuilder b = UriBuilder.fromUri(baseUri);
-    appendQueryParams(b);
-
-    return new BatchDeleteRequest<K, V>(b.build(),
-                                        _headers,
-                                        baseUri,
+    return new BatchDeleteRequest<K, V>(_headers,
                                         _queryParams,
                                         _resourceSpec,
-                                        getResourcePath());
+                                        _baseURITemplate,
+                                        _pathKeys);
   }
 }

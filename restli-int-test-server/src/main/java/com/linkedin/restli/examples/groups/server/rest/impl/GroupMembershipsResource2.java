@@ -16,20 +16,6 @@
 
 package com.linkedin.restli.examples.groups.server.rest.impl;
 
-import static com.linkedin.restli.common.HttpStatus.S_204_NO_CONTENT;
-import static com.linkedin.restli.common.HttpStatus.S_400_BAD_REQUEST;
-import static com.linkedin.restli.common.HttpStatus.S_404_NOT_FOUND;
-import static com.linkedin.restli.examples.groups.server.api.GroupsKeys.GROUP_ID;
-import static com.linkedin.restli.examples.groups.server.api.GroupsKeys.MEMBER_ID;
-
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.inject.Inject;
-import javax.inject.Named;
 
 import com.linkedin.data.transform.DataProcessingException;
 import com.linkedin.restli.common.CompoundKey;
@@ -40,6 +26,7 @@ import com.linkedin.restli.examples.groups.api.MembershipLevel;
 import com.linkedin.restli.examples.groups.api.MembershipSortOrder;
 import com.linkedin.restli.examples.groups.server.api.GroupMembershipSearchQuery;
 import com.linkedin.restli.server.BatchDeleteRequest;
+import com.linkedin.restli.server.BatchPatchRequest;
 import com.linkedin.restli.server.BatchResult;
 import com.linkedin.restli.server.BatchUpdateRequest;
 import com.linkedin.restli.server.BatchUpdateResult;
@@ -56,6 +43,19 @@ import com.linkedin.restli.server.annotations.RestLiAssociation;
 import com.linkedin.restli.server.resources.AssociationResource;
 import com.linkedin.restli.server.resources.AssociationResourceTemplate;
 import com.linkedin.restli.server.util.PatchApplier;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Named;
+
+import static com.linkedin.restli.common.HttpStatus.S_204_NO_CONTENT;
+import static com.linkedin.restli.common.HttpStatus.S_400_BAD_REQUEST;
+import static com.linkedin.restli.common.HttpStatus.S_404_NOT_FOUND;
+import static com.linkedin.restli.examples.groups.server.api.GroupsKeys.GROUP_ID;
+import static com.linkedin.restli.examples.groups.server.api.GroupsKeys.MEMBER_ID;
 
 /**
  * Association between members and groups
@@ -163,6 +163,38 @@ public class GroupMembershipsResource2 extends AssociationResourceTemplate<Group
       membership.setMemberID(((Integer)id.getPart(MEMBER_ID)));
       _app.getMembershipMgr().save(membership);
       results.put(id, new UpdateResponse(S_204_NO_CONTENT));
+    }
+    return new BatchUpdateResult<CompoundKey, GroupMembership>(results);
+  }
+
+  @Override
+  public BatchUpdateResult<CompoundKey, GroupMembership> batchUpdate(BatchPatchRequest<CompoundKey, GroupMembership> patches)
+  {
+    Map<CompoundKey, UpdateResponse> results = new HashMap<CompoundKey, UpdateResponse>();
+    for (Map.Entry<CompoundKey, PatchRequest<GroupMembership>> entry: patches.getData().entrySet())
+    {
+      CompoundKey key = entry.getKey();
+      PatchRequest<GroupMembership> patch = entry.getValue();
+
+      GroupMembership groupMembership = _app.getMembershipMgr().get(key);
+
+      if (groupMembership == null)
+      {
+        results.put(key, new UpdateResponse(HttpStatus.S_404_NOT_FOUND));
+      }
+      else
+      {
+        try
+        {
+          PatchApplier.applyPatch(groupMembership, patch);
+          _app.getMembershipMgr().save(groupMembership);
+          results.put(key, new UpdateResponse(HttpStatus.S_204_NO_CONTENT));
+        }
+        catch (DataProcessingException e)
+        {
+          results.put(key, new UpdateResponse(HttpStatus.S_400_BAD_REQUEST));
+        }
+      }
     }
     return new BatchUpdateResult<CompoundKey, GroupMembership>(results);
   }

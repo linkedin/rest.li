@@ -14,7 +14,7 @@
    limitations under the License.
  */
 
-package com.linkedin.restli.internal.server.util;
+package com.linkedin.restli.internal.common;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.GenericArrayType;

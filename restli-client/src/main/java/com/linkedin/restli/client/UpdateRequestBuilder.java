@@ -139,11 +139,7 @@ public class UpdateRequestBuilder<K, V extends RecordTemplate> extends
   @Override
   public UpdateRequest<V> build()
   {
-    UriBuilder b = UriBuilder.fromUri(bindPathKeys());
-    appendKeyToPath(b, _id);
-    appendQueryParams(b);
-
-    return new UpdateRequest<V>(b.build(), _input, _headers, _resourceSpec, getResourcePath());
+    return new UpdateRequest<V>(_input, _headers, _resourceSpec, _queryParams, _baseURITemplate, _pathKeys, _id);
   }
 
 }

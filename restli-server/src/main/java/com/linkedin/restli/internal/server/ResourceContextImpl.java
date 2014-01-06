@@ -20,12 +20,6 @@
 
 package com.linkedin.restli.internal.server;
 
-import com.linkedin.restli.server.ProjectionMode;
-import java.net.URI;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
@@ -33,12 +27,19 @@ import com.linkedin.data.template.StringArray;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.PathSegment.PathSegmentSyntaxException;
 import com.linkedin.restli.internal.common.QueryParamsDataMap;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
 import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
+import com.linkedin.restli.server.ProjectionMode;
 import com.linkedin.restli.server.RestLiServiceException;
+import java.net.URI;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Josh Walker
@@ -54,6 +55,7 @@ public class ResourceContextImpl implements ServerResourceContext
   private final Map<String, String>                 _responseHeaders;
   private final Map<String, RestLiServiceException> _batchKeyErrors;
   private final RequestContext                      _requestContext;
+  private final ProtocolVersion                     _protocolVersion;
 
   private ProjectionMode                      _projectionMode;
 
@@ -111,6 +113,24 @@ public class ResourceContextImpl implements ServerResourceContext
     _batchKeyErrors = new HashMap<String, RestLiServiceException>();
 
     _projectionMode = ProjectionMode.getDefault();
+
+    if (request != null)
+    {
+      String protocolVersionString = request.getHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION);
+      if (protocolVersionString != null)
+      {
+        _protocolVersion = new ProtocolVersion(protocolVersionString);
+      }
+      else
+      {
+        _protocolVersion = RestConstants.DEFAULT_PROTOCOL_VERSION;
+      }
+    }
+    else
+    {
+      _protocolVersion = RestConstants.DEFAULT_PROTOCOL_VERSION;
+    }
+
   }
 
 
@@ -259,6 +279,12 @@ public class ResourceContextImpl implements ServerResourceContext
   {
     String headerValue = _request.getHeader(RestConstants.HEADER_RESTLI_REQUEST_METHOD);
     return headerValue == null ? "" : headerValue;
+  }
+
+  @Override
+  public ProtocolVersion getRestliProtocolVersion()
+  {
+    return _protocolVersion;
   }
 
   @Override

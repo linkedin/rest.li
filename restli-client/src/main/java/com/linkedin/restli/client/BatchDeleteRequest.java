@@ -20,17 +20,16 @@
 
 package com.linkedin.restli.client;
 
-import java.net.URI;
-import java.util.List;
-import java.util.Map;
 
-import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.client.response.BatchKVResponse;
+import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.internal.client.BatchKVResponseDecoder;
+import java.net.URI;
+import java.util.Map;
 
 /**
  * @author Josh Walker
@@ -39,19 +38,14 @@ import com.linkedin.restli.internal.client.BatchKVResponseDecoder;
 
 public class BatchDeleteRequest<K, V extends RecordTemplate> extends BatchRequest<BatchKVResponse<K, UpdateStatus>>
 {
-  private final URI _baseURI;
-
-  //framework should ensure that ResourceSpec.getKeyClass() returns Class<K>
   @SuppressWarnings("unchecked")
-  BatchDeleteRequest(URI uri,
-                  Map<String, String> headers,
-                  URI baseURI,
-                  DataMap queryParams,
-                  ResourceSpec resourceSpec,
-                  List<String> resourcePath)
+  BatchDeleteRequest(Map<String, String> headers,
+                     Map<String, Object> queryParams,
+                     ResourceSpec resourceSpec,
+                     String baseUriTemplate,
+                     Map<String, Object> pathKeys)
   {
-    super(uri,
-          ResourceMethod.BATCH_DELETE,
+    super(ResourceMethod.BATCH_DELETE,
           null,
           headers,
           new BatchKVResponseDecoder<K, UpdateStatus>(UpdateStatus.class,
@@ -61,12 +55,17 @@ public class BatchDeleteRequest<K, V extends RecordTemplate> extends BatchReques
                                                       resourceSpec.getKeyParamsClass()),
           resourceSpec,
           queryParams,
-          resourcePath);
-    _baseURI = baseURI;
+          baseUriTemplate,
+          pathKeys);
   }
 
-  public URI getBaseURI()
+  /**
+   * @deprecated Please use {@link com.linkedin.restli.client.uribuilders.RestliUriBuilder#buildBaseUri()} instead
+   * @return
+   */
+  @Deprecated
+  public URI getBaseUri()
   {
-    return _baseURI;
+    return RestliUriBuilderUtil.createUriBuilder(this).buildBaseUri();
   }
 }

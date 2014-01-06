@@ -131,11 +131,7 @@ public class DeleteRequestBuilder<K, V extends RecordTemplate>
   @Override
   public DeleteRequest<V> build()
   {
-    UriBuilder b = UriBuilder.fromUri(bindPathKeys());
-    appendKeyToPath(b, _id);
-    appendQueryParams(b);
-
-    return new DeleteRequest<V>(b.build(), _headers, _resourceSpec, getResourcePath());
+    return new DeleteRequest<V>(_headers, _resourceSpec, _queryParams, _baseURITemplate, _pathKeys, _id);
   }
 
 }

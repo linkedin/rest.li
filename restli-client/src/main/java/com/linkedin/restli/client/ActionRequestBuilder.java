@@ -176,13 +176,6 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
       throw new IllegalStateException("name required to build action request");
     }
 
-    UriBuilder b = UriBuilder.fromUri(bindPathKeys());
-    if (_id != null)
-    {
-      b.path(_id.toString());
-    }
-    appendQueryParams(b);
-
     RecordDataSchema requestDataSchema;
     RecordDataSchema actionResponseDataSchema;
     FieldDef<V> responseFieldDef;
@@ -214,13 +207,15 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
     @SuppressWarnings("unchecked")
     ActionResponseDecoder<V> actionResponseDecoder = new ActionResponseDecoder<V>(responseFieldDef, actionResponseDataSchema);
 
-    return new ActionRequest<V>(b.build(),
-                                new DynamicRecordTemplate(requestDataSchema, _actionParams),
+    return new ActionRequest<V>(new DynamicRecordTemplate(requestDataSchema, _actionParams),
                                 _headers,
                                 actionResponseDecoder,
                                 _resourceSpec,
-                                getResourcePath(),
-                                _name);
+                                _queryParams,
+                                _name,
+                                _baseURITemplate,
+                                _pathKeys,
+                                _id);
 
   }
 }

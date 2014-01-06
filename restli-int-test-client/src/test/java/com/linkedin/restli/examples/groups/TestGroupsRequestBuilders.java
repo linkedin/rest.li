@@ -16,20 +16,10 @@
 
 package com.linkedin.restli.examples.groups;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.fail;
-
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.Map;
 
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.DynamicRecordMetadata;
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
 import com.linkedin.data.template.DynamicRecordTemplate;
 import com.linkedin.data.template.FieldDef;
 import com.linkedin.data.template.RecordTemplate;
@@ -37,6 +27,7 @@ import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.restli.client.ActionRequest;
 import com.linkedin.restli.client.BatchGetRequest;
 import com.linkedin.restli.client.Request;
+import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
 import com.linkedin.restli.client.util.PatchGenerator;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionResponse;
@@ -63,6 +54,15 @@ import com.linkedin.restli.internal.client.CollectionResponseDecoder;
 import com.linkedin.restli.internal.client.EmptyResponseDecoder;
 import com.linkedin.restli.internal.client.EntityResponseDecoder;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.fail;
 
 /**
  * Groups REST request builder unit test.
@@ -243,7 +243,7 @@ public class TestGroupsRequestBuilders
     }
     catch (NullPointerException e)
     {
-      //expected
+      // expected
     }
   }
 
@@ -257,7 +257,7 @@ public class TestGroupsRequestBuilders
     }
     catch (IllegalStateException e)
     {
-      //expected
+      // expected
     }
   }
 
@@ -267,11 +267,11 @@ public class TestGroupsRequestBuilders
     try
     {
       CONTACTS_BUILDERS.get().groupIdKey(null).id(1).build();
-      fail("should have thrown IllegalArgumentException");
+      fail("should have thrown IllegalStateException");
     }
-    catch (IllegalArgumentException e)
+    catch (IllegalStateException e)
     {
-      //expected
+      // expected
     }
   }
 
@@ -300,7 +300,7 @@ public class TestGroupsRequestBuilders
     }
     catch (IllegalArgumentException e)
     {
-      //expected
+      // expected
     }
   }
 
@@ -368,7 +368,7 @@ public class TestGroupsRequestBuilders
     }
     catch (IllegalArgumentException e)
     {
-      //expected
+      // expected
     }
   }
 
@@ -388,7 +388,6 @@ public class TestGroupsRequestBuilders
 
     Request<EmptyRecord>  request = CONTACTS_BUILDERS.create().groupIdKey(1).input(contact).build();
 
-    assertEquals(request.getInput().data().size(),7);
     String expectedUri = "groups/1/contacts";
     checkRequestBuilder(request, ResourceMethod.CREATE, EmptyResponseDecoder.class, EmptyRecord.class, expectedUri, contact);
   }
@@ -604,16 +603,22 @@ public class TestGroupsRequestBuilders
     checkRequestBuilder(request, ResourceMethod.ACTION, ActionResponseDecoder.class, null, expectedUri, requestInput);
   }
 
-  @SuppressWarnings({"rawtypes"})
+  @SuppressWarnings({"rawtypes", "deprecation"})
   private static void checkRequestBuilder(Request<?> request, ResourceMethod resourceMethod,
                                    Class<? extends RestResponseDecoder> responseDecoderClass, Class<?> templateClass,
                                    String expectedUri, RecordTemplate requestInput)
   {
-    assertEquals(request.getInput(), requestInput);
+    testInput(request, requestInput);
     assertEquals(request.getMethod(), resourceMethod);
     assertEquals(request.getResponseDecoder().getClass(), responseDecoderClass);
+    assertEquals(RestliUriBuilderUtil.createUriBuilder(request).build().toString(), expectedUri);
     assertEquals(request.getUri().toString(), expectedUri);
   }
 
-
+  @SuppressWarnings("deprecation")
+  private static void testInput(Request request, RecordTemplate expectedInput)
+  {
+    assertEquals(request.getInputRecord(), expectedInput);
+    assertEquals(request.getInput(), expectedInput);
+  }
 }

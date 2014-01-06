@@ -4,6 +4,12 @@
 
 package com.linkedin.restli.client.util;
 
+import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.restli.common.ComplexResourceKey;
+import com.linkedin.restli.common.CompoundKey;
+import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.common.URLEscaper;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -46,4 +52,31 @@ public class RestliBuilderUtils
     }
   }
 
+  /**
+   * Depending on whether or not this is a complex resource key, return either a full (key + params)
+   * string representation of the key (which for ComplexResource includes both key and params), or
+   * simply key.toString() (which for ComplexResourceKey only uses key part).
+   */
+  public static String keyToString(Object key, URLEscaper.Escaping escaping, ProtocolVersion version)
+  {
+    String result;
+    version = (version == null) ? RestConstants.DEFAULT_PROTOCOL_VERSION : version;
+    if (key == null)
+    {
+      result = null;
+    }
+    else if (key instanceof ComplexResourceKey)
+    {
+      result = ((ComplexResourceKey<?,?>)key).toStringFull(escaping);
+    }
+    else if (key instanceof CompoundKey)
+    {
+      result = key.toString(); // already escaped
+    }
+    else
+    {
+      result = URLEscaper.escape(DataTemplateUtil.stringify(key), escaping);
+    }
+    return result;
+  }
 }

@@ -16,12 +16,12 @@
 
 package com.linkedin.restli.client;
 
+
 import com.linkedin.common.callback.Callback;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.util.AllPartitionsResult;
 import com.linkedin.r2.message.RequestContext;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -59,7 +59,7 @@ public class AllPartitionsRequestBuilder <T>
     URI serviceUri;
     try
     {
-      serviceUri = new URI(D2_URI_PREFIX + request.getUri().toString());
+      serviceUri = new URI(D2_URI_PREFIX + request.getServiceName());
     }
     catch(URISyntaxException e)
     {
@@ -67,7 +67,7 @@ public class AllPartitionsRequestBuilder <T>
     }
 
     final Collection<RequestContext> queryAllRequestContext = new ArrayList<RequestContext>();
-    final AllPartitionsResult<URI> uriResult = _mapper.getAllPartitions(serviceUri);
+    final AllPartitionsResult<URI> uriResult = _mapper.getAllPartitions(serviceUri, request.hashCode());
     Collection<URI> targetHosts = uriResult.getPartitionInfo();
     for (URI targetHost : targetHosts)
     {

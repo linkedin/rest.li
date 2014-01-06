@@ -136,19 +136,13 @@ public class GetRequestBuilder<K, V extends RecordTemplate> extends
   @Override
   public GetRequest<V> build()
   {
-    URI baseUri = bindPathKeys();
-    UriBuilder b = UriBuilder.fromUri(bindPathKeys());
-    appendKeyToPath(b, _id);
-    appendQueryParams(b);
-
-    return new GetRequest<V>(b.build(),
-                             _headers,
+    return new GetRequest<V>(_headers,
                              _elementClass,
-                             baseUri,
                              _id,
                              _queryParams,
                              _resourceSpec,
-                             getResourcePath());
+                             _baseURITemplate,
+                             _pathKeys);
   }
 
   public GetRequestBuilder<K, V> fields(PathSpec... fieldPaths)

@@ -17,6 +17,7 @@
 package com.linkedin.restli.test;
 
 
+import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
 import java.io.IOException;
 import java.util.Collections;
 
@@ -73,7 +74,7 @@ public class TestCharacterEncoding
                                            Collections.<String, CompoundKey.TypeInfo> emptyMap()))
                       .id("dummy")
                       .setParam(QueryParamMockCollection.VALUE_KEY, testValue).build();
-      RestRequest restRequest = new RestRequestBuilder(req.getUri())
+      RestRequest restRequest = new RestRequestBuilder(RestliUriBuilderUtil.createUriBuilder(req).build())
               .setMethod(req.getMethod().getHttpMethod().toString()).build();
 
       // N.B. since QueryParamMockCollection is implemented using the synchronous rest.li interface,

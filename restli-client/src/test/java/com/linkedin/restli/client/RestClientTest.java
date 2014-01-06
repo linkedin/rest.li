@@ -23,6 +23,7 @@ package com.linkedin.restli.client;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.restli.common.ResourceSpecImpl;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Collections;
@@ -586,14 +587,13 @@ public class RestClientTest
 
   private <T extends RecordTemplate> Request<T> mockRequest(Class<T> clazz)
   {
-    return new GetRequest<T>(URI.create(""),
-                             Collections.<String, String> emptyMap(),
+    return new GetRequest<T>(Collections.<String, String> emptyMap(),
                              clazz,
-                             URI.create(""),
-                             "foo",
-                             new DataMap(),
                              null,
-                             Collections.<String>emptyList());
+                             new DataMap(),
+                             new ResourceSpecImpl(),
+                             "/foo",
+                             Collections.<String, Object>emptyMap());
   }
 
   private static class MyMockClient extends MockClient

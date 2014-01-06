@@ -21,13 +21,12 @@
 package com.linkedin.restli.client;
 
 
-import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.jersey.api.uri.UriBuilder;
-import com.linkedin.restli.common.BatchRequest;
+import com.linkedin.restli.common.CollectionRequest;
+import com.linkedin.restli.common.KeyValueRecord;
+import com.linkedin.restli.common.KeyValueRecordFactory;
 import com.linkedin.restli.common.ResourceSpec;
-
-import java.net.URI;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -38,29 +37,43 @@ import java.util.Map;
 public class BatchUpdateRequestBuilder<K, V extends RecordTemplate> extends
     RestfulRequestBuilder<K, V, BatchUpdateRequest<K, V>>
 {
-  private final BatchRequest<V> _input;
+  private final CollectionRequest<KeyValueRecord<K, V>> _entities;
+  private final KeyValueRecordFactory<K, V> _keyValueRecordFactory;
+  private final Map<K, V> _updateInputMap;
 
+  @SuppressWarnings("unchecked")
   public BatchUpdateRequestBuilder(String baseUriTemplate,
                                    Class<V> valueClass,
                                    ResourceSpec resourceSpec)
   {
     super(baseUriTemplate, resourceSpec);
-    _input = new BatchRequest<V>(new DataMap(), valueClass);
+    _entities = new CollectionRequest(KeyValueRecord.class);
+    _keyValueRecordFactory
+        = new KeyValueRecordFactory(_resourceSpec.getKeyClass(),
+                                    _resourceSpec.getKeyKeyClass(),
+                                    _resourceSpec.getKeyParamsClass(),
+                                    _resourceSpec.getKeyParts(),
+                                    _resourceSpec.getValueClass());
+    _updateInputMap = new HashMap<K, V>();
   }
 
   public BatchUpdateRequestBuilder<K, V> input(K id, V entity)
   {
-    _input.getEntities().put(keyToString(id), entity);
+    _entities.getElements().add(_keyValueRecordFactory.create(id, entity));
     addKey(id);
+    _updateInputMap.put(id, entity);
     return this;
   }
 
   public BatchUpdateRequestBuilder<K, V> inputs(Map<K, V> entities)
   {
     addKeys(entities.keySet());
-    for (Map.Entry<K, V> entry : entities.entrySet())
+    for (Map.Entry<K, V> entry: entities.entrySet())
     {
-      _input.getEntities().put(keyToString(entry.getKey()), entry.getValue());
+      K key = entry.getKey();
+      V value = entry.getValue();
+      _entities.getElements().add(_keyValueRecordFactory.create(key, value));
+      _updateInputMap.put(key, value);
     }
     return this;
   }
@@ -148,17 +161,13 @@ public class BatchUpdateRequestBuilder<K, V extends RecordTemplate> extends
   @Override
   public BatchUpdateRequest<K, V> build()
   {
-    URI baseUri = bindPathKeys();
-    UriBuilder b = UriBuilder.fromUri(baseUri);
-    appendQueryParams(b);
-
-    return new BatchUpdateRequest<K, V>(b.build(),
-                                        _headers,
-                                        baseUri,
-                                        _input,
+    return new BatchUpdateRequest<K, V>(_headers,
+                                        _entities,
                                         _queryParams,
                                         _resourceSpec,
-                                        getResourcePath());
+                                        _baseURITemplate,
+                                        _pathKeys,
+                                        _updateInputMap);
   }
 
 }

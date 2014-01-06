@@ -142,16 +142,12 @@ public class BatchCreateRequestBuilder<K, V extends RecordTemplate> extends
   @Override
   public BatchCreateRequest<V> build()
   {
-    URI baseUri = bindPathKeys();
-    UriBuilder b = UriBuilder.fromUri(baseUri);
-    appendQueryParams(b);
-
-    return new BatchCreateRequest<V>(b.build(),
-                                  _headers,
-                                  baseUri,
-                                  _input,
-                                  _resourceSpec,
-                                  getResourcePath());
+    return new BatchCreateRequest<V>(_headers,
+                                     _input,
+                                     _resourceSpec,
+                                     _queryParams,
+                                     _baseURITemplate,
+                                     _pathKeys);
   }
 
 }

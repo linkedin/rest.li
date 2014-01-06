@@ -140,11 +140,13 @@ public class PartialUpdateRequestBuilder<K, V extends RecordTemplate> extends
   @Override
   public PartialUpdateRequest<V> build()
   {
-    UriBuilder b = UriBuilder.fromUri(bindPathKeys());
-    appendKeyToPath(b, _id);
-    appendQueryParams(b);
-
-    return new PartialUpdateRequest<V>(b.build(), _input, _headers, _resourceSpec, getResourcePath());
+    return new PartialUpdateRequest<V>(_input,
+                                       _headers,
+                                       _resourceSpec,
+                                       _queryParams,
+                                       _baseURITemplate,
+                                       _pathKeys,
+                                       _id);
   }
 
 }

@@ -15,21 +15,40 @@
 */
 package com.linkedin.restli.examples;
 
-import java.util.Collections;
 
+import com.linkedin.r2.RemoteInvocationException;
+import com.linkedin.r2.transport.common.Client;
+import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
+import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import com.linkedin.restli.client.BatchGetKVRequest;
+import com.linkedin.restli.client.BatchGetRequest;
+import com.linkedin.restli.client.Response;
+import com.linkedin.restli.client.ResponseFuture;
+import com.linkedin.restli.client.RestClient;
+import com.linkedin.restli.client.RestLiResponseException;
+import com.linkedin.restli.client.response.BatchKVResponse;
+import com.linkedin.restli.common.BatchResponse;
+import com.linkedin.restli.common.CompoundKey;
+import com.linkedin.restli.common.PatchRequest;
+import com.linkedin.restli.common.UpdateStatus;
+import com.linkedin.restli.examples.greetings.api.Message;
+import com.linkedin.restli.examples.greetings.client.AssociationsBatchGetBuilder;
+import com.linkedin.restli.examples.greetings.client.AssociationsBatchPartialUpdateBuilder;
+import com.linkedin.restli.examples.greetings.client.AssociationsBatchUpdateBuilder;
+import com.linkedin.restli.examples.greetings.client.AssociationsBuilders;
+import com.linkedin.restli.examples.greetings.client.AssociationsFindByAssocKeyFinderBuilder;
+import com.linkedin.restli.examples.greetings.client.AssociationsFindByAssocKeyFinderOptBuilder;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.linkedin.r2.transport.common.Client;
-import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
-import com.linkedin.r2.transport.http.client.HttpClientFactory;
-import com.linkedin.restli.client.RestClient;
-import com.linkedin.restli.client.RestLiResponseException;
-import com.linkedin.restli.examples.greetings.client.AssociationsBuilders;
-import com.linkedin.restli.examples.greetings.client.AssociationsFindByAssocKeyFinderBuilder;
-import com.linkedin.restli.examples.greetings.client.AssociationsFindByAssocKeyFinderOptBuilder;
+import static com.linkedin.restli.examples.AssociationResourceHelpers.DB;
+import static com.linkedin.restli.examples.AssociationResourceHelpers.SIMPLE_COMPOUND_KEY;
+import static com.linkedin.restli.examples.AssociationResourceHelpers.URL_COMPOUND_KEY;
 
 public class TestAssociationsResource extends RestLiIntegrationTest
 {
@@ -79,5 +98,59 @@ public class TestAssociationsResource extends RestLiIntegrationTest
     {
       Assert.assertEquals(400, e.getStatus());
     }
+  }
+
+  @Test
+  public void testBatchGet()
+      throws RemoteInvocationException
+  {
+    AssociationsBatchGetBuilder builder = new AssociationsBuilders().batchGet();
+    builder.ids(DB.keySet());
+
+    BatchGetKVRequest<CompoundKey, Message> request = builder.buildKV();
+    ResponseFuture<BatchKVResponse<CompoundKey, Message>> responseFuture = REST_CLIENT.sendRequest(request);
+    Response<BatchKVResponse<CompoundKey, Message>> response = responseFuture.getResponse();
+
+    BatchKVResponse<CompoundKey, Message> entity = response.getEntity();
+
+    Assert.assertEquals(entity.getErrors().size(), 0);
+    Assert.assertEquals(entity.getResults().size(), 2);
+    for (CompoundKey id: DB.keySet())
+    {
+      Assert.assertTrue(entity.getResults().containsKey(id));
+      Assert.assertEquals(entity.getResults().get(id), DB.get(id));
+    }
+  }
+
+  @Test
+  public void testBatchUpdate()
+      throws RemoteInvocationException
+  {
+    AssociationsBatchUpdateBuilder updateBuilder = new AssociationsBuilders().batchUpdate();
+
+    BatchKVResponse<CompoundKey,UpdateStatus> entities =
+        REST_CLIENT.sendRequest(updateBuilder.inputs(DB).build()).getResponse().getEntity();
+    runAssertions(entities);
+  }
+
+  @Test
+  public void testBatchPartialUpdate()
+      throws RemoteInvocationException
+  {
+    AssociationsBatchPartialUpdateBuilder patchBuilder = new AssociationsBuilders().batchPartialUpdate();
+
+    Map<CompoundKey, PatchRequest<Message>> patches = new HashMap<CompoundKey, PatchRequest<Message>>();
+    patches.put(URL_COMPOUND_KEY, new PatchRequest<Message>());
+    patches.put(SIMPLE_COMPOUND_KEY, new PatchRequest<Message>());
+
+    BatchKVResponse<CompoundKey, UpdateStatus> entities =
+        REST_CLIENT.sendRequest(patchBuilder.inputs(patches).build()).getResponse().getEntity();
+    runAssertions(entities);
+  }
+
+  private void runAssertions(BatchKVResponse<CompoundKey, UpdateStatus> entities)
+  {
+    Assert.assertEquals(entities.getErrors().size(), 0);
+    Assert.assertEquals(entities.getResults().keySet(), DB.keySet());
   }
 }

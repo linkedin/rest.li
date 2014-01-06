@@ -72,4 +72,8 @@ public interface ResourceSpec
    */
   public DynamicRecordMetadata getActionResponseMetadata(String methodName);
 
+  /**
+   * @return true if the resource represented by this ResourceSpec doesn't have a key, false otherwise
+   */
+  boolean isKeylessResource();
 }

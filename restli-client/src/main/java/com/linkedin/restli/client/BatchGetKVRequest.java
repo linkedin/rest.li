@@ -16,18 +16,17 @@
 
 package com.linkedin.restli.client;
 
-import java.net.URI;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
-import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.client.response.BatchKVResponse;
+import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
+import java.net.URI;
+import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -40,29 +39,30 @@ import com.linkedin.restli.internal.client.RestResponseDecoder;
  */
 public class BatchGetKVRequest<K, V extends RecordTemplate> extends BatchRequest<BatchKVResponse<K, V>>
 {
-  private final URI _baseURI;
-
-  BatchGetKVRequest(URI uri,
-                    ResourceMethod method,
+  BatchGetKVRequest(ResourceMethod method,
                     Map<String, String> headers,
                     RestResponseDecoder<BatchKVResponse<K, V>> decoder,
-                    URI baseURI,
-                    DataMap queryParams,
+                    Map<String, Object> queryParams,
                     ResourceSpec resourceSpec,
-                    List<String> resourcePath)
+                    String baseUriTemplate,
+                    Map<String, Object> pathKeys)
   {
-    super(uri, method, null, headers, decoder, resourceSpec, queryParams, resourcePath);
-    _baseURI = baseURI;
-  }
-
-  public URI getBaseURI()
-  {
-    return _baseURI;
+    super(method, null, headers, decoder, resourceSpec, queryParams, baseUriTemplate, pathKeys);
   }
 
   @Override
   public Set<PathSpec> getFields()
   {
     return super.getFields();
+  }
+
+  /**
+   * @deprecated Please use {@link com.linkedin.restli.client.uribuilders.RestliUriBuilder#buildBaseUri()} instead
+   * @return
+   */
+  @Deprecated
+  public URI getBaseUri()
+  {
+    return RestliUriBuilderUtil.createUriBuilder(this).buildBaseUri();
   }
 }

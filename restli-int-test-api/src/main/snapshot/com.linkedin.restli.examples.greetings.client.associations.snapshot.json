@@ -26,6 +26,12 @@
     "association" : {
       "methods" : [ {
         "method" : "get"
+      }, {
+        "method" : "batch_get"
+      }, {
+        "method" : "batch_update"
+      }, {
+        "method" : "batch_partial_update"
       } ],
       "entity" : {
         "path" : "/associations/src={src}&dest={dest}"
@@ -37,7 +43,7 @@
         "name" : "assocKeyFinderOpt",
         "assocKeys" : [ "src" ]
       } ],
-      "supports" : [ "get" ],
+      "supports" : [ "batch_get", "batch_partial_update", "batch_update", "get" ],
       "assocKeys" : [ {
         "name" : "dest",
         "type" : "string"

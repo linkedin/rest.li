@@ -16,12 +16,6 @@
 
 package com.linkedin.restli.client;
 
-import java.net.URI;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
@@ -30,7 +24,13 @@ import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.client.QueryParamsUtil;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * A type-bound Batch Request for a resource.
@@ -42,36 +42,42 @@ import com.linkedin.restli.internal.client.RestResponseDecoder;
 public class BatchRequest<T> extends Request<T>
 {
   /**
-   * @param uri
+   *
    * @param method
    * @param input
    * @param headers
    * @param decoder
    * @param resourceSpec
    * @param queryParams
-   * @param resourcePath
+   * @param baseUriTemplate
+   * @param pathKeys
    */
-  public BatchRequest(URI uri,
-                      ResourceMethod method,
+  BatchRequest(ResourceMethod method,
                       RecordTemplate input,
                       Map<String, String> headers,
                       RestResponseDecoder<T> decoder,
                       ResourceSpec resourceSpec,
-                      DataMap queryParams,
-                      List<String> resourcePath)
+                      Map<String, Object> queryParams,
+                      String baseUriTemplate,
+                      Map<String, Object> pathKeys)
   {
-    super(uri, method, input, headers, decoder, resourceSpec, queryParams, resourcePath);
+    super(method, input, headers, decoder, resourceSpec, queryParams, null, baseUriTemplate, pathKeys);
   }
 
   /**
+   * @deprecated Please use {@link #getObjectIds()} instead. {@link #getObjectIds()} returns IDs as their original,
+   *             non-coerced type.
+   *
    * Return ids of this batch request as object. At the query params datamap level complex
    * keys are represented as datamaps. Need to convert them back to ComplexResourceKeys
    * before returning.
    */
+  @Deprecated
   public Set<Object> getIdObjects()
   {
+    DataMap dataMap = QueryParamsUtil.convertToDataMap(getQueryParamsObjects());
     DataList idsList =
-        (DataList) getQueryParams().get(RestConstants.QUERY_BATCH_IDS_PARAM);
+        (DataList) dataMap.get(RestConstants.QUERY_BATCH_IDS_PARAM);
     if (idsList == null || idsList.isEmpty())
     {
       return Collections.emptySet();
@@ -97,6 +103,25 @@ public class BatchRequest<T> extends Request<T>
     return result;
   }
 
+  /**
+   * @return the IDs of the objects in this request. The IDs are the keys with their original types (non-coerced)
+   */
+  @SuppressWarnings("unchecked")
+  public Set<Object> getObjectIds()
+  {
+    Collection ids = (Collection) getQueryParamsObjects().get(RestConstants.QUERY_BATCH_IDS_PARAM);
+    if (ids == null || ids.isEmpty())
+    {
+      return Collections.emptySet();
+    }
+    return new HashSet<Object>(ids);
+  }
+
+  /**
+   * @deprecated Please use {@link #getObjectIds()} instead
+   * @return
+   */
+  @SuppressWarnings("deprecation")
   @Deprecated
   public Set<String> getIds()
   {

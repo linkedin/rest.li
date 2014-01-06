@@ -21,6 +21,9 @@
 package com.linkedin.restli.common;
 
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
 
 /**
@@ -31,13 +34,20 @@ import com.linkedin.data.template.RecordTemplate;
 public class PatchRequest<T> extends RecordTemplate
 {
   private static final String PATCH="patch";
+  private static final String SCHEMA_STRING = "{\n" +
+      "  \"type\" : \"record\",\n" +
+      "  \"name\" : \"PatchRequest\",\n" +
+      "  \"namespace\" : \"com.linkedin.restli.common\",\n" +
+      "  \"fields\" : []\n" +
+      "}";
+  private static final RecordDataSchema SCHEMA = (RecordDataSchema) DataTemplateUtil.parseSchema(SCHEMA_STRING);
 
   /**
    * Initialize an empty PatchRequest.
    */
   public PatchRequest()
   {
-    super(new DataMap(), null);
+    super(new DataMap(), SCHEMA);
   }
 
   /**
@@ -47,7 +57,7 @@ public class PatchRequest<T> extends RecordTemplate
    */
   public PatchRequest(DataMap dataMap)
   {
-    super(dataMap, null);
+    super(dataMap, SCHEMA);
   }
 
   /**

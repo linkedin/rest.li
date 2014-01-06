@@ -153,10 +153,12 @@ public class GetAllRequestBuilder<K, V extends RecordTemplate> extends
   @Override
   public GetAllRequest<V> build()
   {
-    UriBuilder b = UriBuilder.fromUri(bindPathKeys());
-    appendAssocKeys(b);
-    appendQueryParams(b);
-
-    return new GetAllRequest<V>(b.build(), _headers, _elementClass, _resourceSpec, getResourcePath());
+    return new GetAllRequest<V>(_headers,
+                                _elementClass,
+                                _resourceSpec,
+                                _queryParams,
+                                _baseURITemplate,
+                                _pathKeys,
+                                _assocKey);
   }
 }

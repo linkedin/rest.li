@@ -20,8 +20,6 @@
 
 package com.linkedin.restli.client;
 
-import java.net.URI;
-import java.util.List;
 import java.util.Map;
 
 import com.linkedin.data.template.RecordTemplate;
@@ -38,25 +36,32 @@ import com.linkedin.restli.internal.client.ActionResponseDecoder;
 
 public class ActionRequest<T> extends Request<T>
 {
-  @Deprecated
-  ActionRequest(URI uri,
-                RecordTemplate input,
+  private final Object _id;
+
+  ActionRequest(RecordTemplate input,
                 Map<String, String> headers,
                 ActionResponseDecoder<T> decoder,
                 ResourceSpec resourceSpec,
-                List<String> resourcePath)
+                Map<String, Object> queryParams,
+                String name,
+                String baseUriTemplate,
+                Map<String, Object> pathKeys,
+                Object id)
   {
-    super(uri, ResourceMethod.ACTION, input, headers, decoder, resourceSpec, resourcePath);
+    super(ResourceMethod.ACTION,
+          input,
+          headers,
+          decoder,
+          resourceSpec,
+          queryParams,
+          name,
+          baseUriTemplate,
+          pathKeys);
+    _id = id;
   }
 
-  ActionRequest(URI uri,
-                RecordTemplate input,
-                Map<String, String> headers,
-                ActionResponseDecoder<T> decoder,
-                ResourceSpec resourceSpec,
-                List<String> resourcePath,
-                String name)
+  public Object getId()
   {
-    super(uri, ResourceMethod.ACTION, input, headers, decoder, resourceSpec, null, resourcePath, name);
+    return _id;
   }
 }

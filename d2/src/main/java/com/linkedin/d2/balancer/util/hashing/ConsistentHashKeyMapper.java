@@ -61,9 +61,17 @@ public class ConsistentHashKeyMapper
   @Override
   public AllPartitionsResult<URI> getAllPartitions(URI serviceUri) throws ServiceUnavailableException
   {
-    Map<Integer, Ring<URI>> ringMap = _ringProvider.getRings(serviceUri);
     String[] uriStrings = {serviceUri.toString()};
     int hashCode = _hashFunction.hash(uriStrings);
+
+    return getAllPartitions(serviceUri, hashCode);
+  }
+
+  @Override
+  public AllPartitionsResult<URI> getAllPartitions(URI serviceUri, int hashCode)
+      throws ServiceUnavailableException
+  {
+    Map<Integer, Ring<URI>> ringMap = _ringProvider.getRings(serviceUri);
 
     final Set<URI> hostUris = new HashSet<URI>();
     final Set<Integer> missingPartitions = new HashSet<Integer>();

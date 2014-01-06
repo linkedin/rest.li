@@ -124,6 +124,16 @@ public interface KeyMapper
    */
   public AllPartitionsResult<URI> getAllPartitions(URI serviceUri) throws ServiceUnavailableException;
 
+  /**
+   * Get host uris that cover all the partitions. The number of uris does not neccessarily equal
+   * to the number of partitions, because a server may join multiple partitions. Additional information
+   * about partition availability is supplied in {@link AllPartitionsResult}
+   * @param serviceUri the service uri
+   * @param hashCode used to pick a node in each partition
+   * @return {@link AllPartitionsResult}
+   */
+  public AllPartitionsResult<URI> getAllPartitions(URI serviceUri, int hashCode) throws ServiceUnavailableException;
+
   public static class TargetHostHints
   {
     private static final String TARGET_HOST_KEY_NAME = "D2-KeyMapper-TargetHost";

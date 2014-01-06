@@ -16,15 +16,14 @@
 
 package com.linkedin.restli.client;
 
-import java.net.URI;
-import java.util.List;
-import java.util.Map;
 
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.CollectionResponse;
+import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.internal.client.CollectionResponseDecoder;
+import java.util.Map;
 
 
 /**
@@ -37,25 +36,31 @@ import com.linkedin.restli.internal.client.CollectionResponseDecoder;
 public class FindRequest<T extends RecordTemplate>
                 extends Request<CollectionResponse<T>>
 {
-  @Deprecated
-  FindRequest(URI uri, Map<String, String> headers, Class<T> templateClass,
-              ResourceSpec resourceSpec, List<String> resourcePath)
-  {
-    super(uri, ResourceMethod.FINDER, null, headers, new CollectionResponseDecoder<T>(templateClass),
-          resourceSpec, resourcePath);
-  }
+  private final CompoundKey _assocKey;
 
-  FindRequest(URI uri, Map<String, String> headers, Class<T> templateClass,
-              ResourceSpec resourceSpec, List<String> resourcePath, String name)
+  FindRequest(Map<String, String> headers,
+              Class<T> templateClass,
+              ResourceSpec resourceSpec,
+              Map<String, Object> queryParams,
+              String name,
+              String baseUriTemplate,
+              Map<String, Object> pathKeys,
+              CompoundKey assocKey)
   {
-    super(uri,
-          ResourceMethod.FINDER,
+    super(ResourceMethod.FINDER,
           null,
           headers,
           new CollectionResponseDecoder<T>(templateClass),
           resourceSpec,
-          null,
-          resourcePath,
-          name);
+          queryParams,
+          name,
+          baseUriTemplate,
+          pathKeys);
+    _assocKey = assocKey;
+  }
+
+  public CompoundKey getAssocKey()
+  {
+    return _assocKey;
   }
 }

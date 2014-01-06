@@ -160,7 +160,7 @@ public class TestRestLiResponseHandler
 
     // check response without body (expect no error)
     RestResponse response = invokeResponseHandler("/test", new CreateResponse(HttpStatus.S_201_CREATED), ResourceMethod.CREATE, badAcceptHeaders);
-    checkResponse(response, 201, 0, null, null, null, false, false);
+    checkResponse(response, 201, 1, null, null, null, false, false);
   }
 
   @DataProvider(name="statusData")
@@ -182,36 +182,35 @@ public class TestRestLiResponseHandler
     // #1 simple record template
     response = invokeResponseHandler("/test", buildStatusRecord(), ResourceMethod.GET, acceptTypeData.acceptHeaders);
 
-    checkResponse(response, 200, 2, acceptTypeData.responseContentType, Status.class.getName(), null, true);
+    checkResponse(response, 200, 3, acceptTypeData.responseContentType, Status.class.getName(), null, true);
     assertEquals(response.getEntity().asAvroString(), expectedStatus);
 
     // #2 create (with id)
     response = invokeResponseHandler("/test", new CreateResponse(1), ResourceMethod.CREATE, acceptTypeData.acceptHeaders);
-    checkResponse(response, 201, 2, null, null, null, false);
+    checkResponse(response, 201, 3, null, null, null, false);
     assertEquals(response.getHeader(RestConstants.HEADER_LOCATION), "/test/1");
     assertEquals(response.getHeader(RestConstants.HEADER_ID), "1");
 
     // #2.1 create (without id)
     response = invokeResponseHandler("/test", new CreateResponse(HttpStatus.S_201_CREATED),
                                      ResourceMethod.CREATE, acceptTypeData.acceptHeaders);
-    checkResponse(response, 201, 0, null, null, null, false);
+    checkResponse(response, 201, 1, null, null, null, false);
 
     // #2.2 create (with id and slash at the end of uri)
     response = invokeResponseHandler("/test/", new CreateResponse(1), ResourceMethod.CREATE, acceptTypeData.acceptHeaders);
-    checkResponse(response, 201, 2, null, null, null, false);
+    checkResponse(response, 201, 3, null, null, null, false);
     assertEquals(response.getHeader(RestConstants.HEADER_LOCATION), "/test/1");
     assertEquals(response.getHeader(RestConstants.HEADER_ID), "1");
 
     // #2.3 create (without id and slash at the end of uri)
     response = invokeResponseHandler("/test/", new CreateResponse(HttpStatus.S_201_CREATED),
                                      ResourceMethod.CREATE, acceptTypeData.acceptHeaders);
-    checkResponse(response, 201, 0, null, null, null, false);
+    checkResponse(response, 201, 1, null, null, null, false);
 
     // #3 update
     response = invokeResponseHandler("/test", new UpdateResponse(HttpStatus.S_204_NO_CONTENT),
                                      ResourceMethod.UPDATE, acceptTypeData.acceptHeaders);
-    checkResponse(response, 204, 0, null, null, null, false);
-
+    checkResponse(response, 204, 1, null, null, null, false);
   }
 
   @DataProvider(name="basicData")
@@ -237,7 +236,7 @@ public class TestRestLiResponseHandler
     map.put(2L, buildStatusRecord());
     map.put(3L, buildStatusRecord());
     response = invokeResponseHandler("/test", map, ResourceMethod.BATCH_GET, acceptTypeData.acceptHeaders);
-    checkResponse(response, 200, 3, acceptTypeData.responseContentType, BatchResponse.class.getName(), Status.class.getName(), true);
+    checkResponse(response, 200, 4, acceptTypeData.responseContentType, BatchResponse.class.getName(), Status.class.getName(), true);
 
     Map<Long, UpdateResponse> updateStatusMap = new HashMap<Long, UpdateResponse>();
     updateStatusMap.put(1L, new UpdateResponse(HttpStatus.S_204_NO_CONTENT));
@@ -245,13 +244,13 @@ public class TestRestLiResponseHandler
     updateStatusMap.put(3L, new UpdateResponse(HttpStatus.S_204_NO_CONTENT));
     BatchUpdateResult<Long, Status> batchUpdateResult = new BatchUpdateResult<Long, Status>(updateStatusMap);
     response = invokeResponseHandler("/test", batchUpdateResult, ResourceMethod.BATCH_UPDATE, acceptTypeData.acceptHeaders);
-    checkResponse(response, 200, 3, acceptTypeData.responseContentType, BatchResponse.class.getName(), UpdateStatus.class.getName(), true);
+    checkResponse(response, 200, 4, acceptTypeData.responseContentType, BatchResponse.class.getName(), UpdateStatus.class.getName(), true);
 
     response = invokeResponseHandler("/test", batchUpdateResult, ResourceMethod.BATCH_PARTIAL_UPDATE, acceptTypeData.acceptHeaders);
-    checkResponse(response, 200, 3, acceptTypeData.responseContentType, BatchResponse.class.getName(), UpdateStatus.class.getName(), true);
+    checkResponse(response, 200, 4, acceptTypeData.responseContentType, BatchResponse.class.getName(), UpdateStatus.class.getName(), true);
 
     response = invokeResponseHandler("/test", batchUpdateResult, ResourceMethod.BATCH_DELETE, acceptTypeData.acceptHeaders);
-    checkResponse(response, 200, 3, acceptTypeData.responseContentType, BatchResponse.class.getName(), UpdateStatus.class.getName(), true);
+    checkResponse(response, 200, 4, acceptTypeData.responseContentType, BatchResponse.class.getName(), UpdateStatus.class.getName(), true);
 
     List<CreateResponse> createResponses = new ArrayList<CreateResponse>();
     createResponses.add(new CreateResponse("42", HttpStatus.S_204_NO_CONTENT));
@@ -260,7 +259,7 @@ public class TestRestLiResponseHandler
     BatchCreateResult<Long, Status> batchCreateResult = new BatchCreateResult<Long, Status>(createResponses);
 
     response = invokeResponseHandler("/test", batchCreateResult, ResourceMethod.BATCH_CREATE, acceptTypeData.acceptHeaders); // here
-    checkResponse(response, 200, 3, acceptTypeData.responseContentType, CollectionResponse.class.getName(), CreateStatus.class.getName(), true);
+    checkResponse(response, 200, 4, acceptTypeData.responseContentType, CollectionResponse.class.getName(), CreateStatus.class.getName(), true);
   }
 
   @Test(dataProvider = "basicData")
@@ -275,7 +274,7 @@ public class TestRestLiResponseHandler
                                               new RoutingResult(new ResourceContextImpl(), methodDescriptor),
                                               buildStatusList(3));
 
-    checkResponse(response, 200, 3, acceptTypeData.responseContentType, CollectionResponse.class.getName(), Status.class.getName(), true);
+    checkResponse(response, 200, 4, acceptTypeData.responseContentType, CollectionResponse.class.getName(), Status.class.getName(), true);
 
     String baseUri = "/test?someParam=foo";
 
@@ -410,7 +409,7 @@ public class TestRestLiResponseHandler
                                               buildRoutingResultAction(Status.class),
                                               buildStatusRecord());
 
-    checkResponse(response, 200, 3, acceptTypeData.responseContentType, ActionResponse.class.getName(), Status.class.getName(), true);
+    checkResponse(response, 200, 4, acceptTypeData.responseContentType, ActionResponse.class.getName(), Status.class.getName(), true);
     assertEquals(response.getEntity().asAvroString(), response1);
 
     // #2 DataTemplate response
@@ -421,7 +420,7 @@ public class TestRestLiResponseHandler
                                               buildRoutingResultAction(StringMap.class),
                                               map);
 
-    checkResponse(response, 200, 3, acceptTypeData.responseContentType, ActionResponse.class.getName(), StringMap.class.getName(), true);
+    checkResponse(response, 200, 4, acceptTypeData.responseContentType, ActionResponse.class.getName(), StringMap.class.getName(), true);
     String actual = response.getEntity().asAvroString();
     assertEquals(actual, response2);
 
@@ -430,7 +429,7 @@ public class TestRestLiResponseHandler
                                               buildRoutingResultAction(Void.TYPE),
                                               null);
 
-    checkResponse(response, 200, 0, null, null, null, false);
+    checkResponse(response, 200, 1, null, null, null, false);
     assertEquals(response.getEntity().asAvroString(), "");
   }
 
@@ -446,7 +445,7 @@ public class TestRestLiResponseHandler
                                               buildRoutingResult(),
                                               ex);
 
-    checkResponse(response, 400, 3, acceptTypeData.responseContentType, ErrorResponse.class.getName(), null, true, true);
+    checkResponse(response, 400, 4, acceptTypeData.responseContentType, ErrorResponse.class.getName(), null, true, true);
     DataMap dataMap = acceptTypeData.dataCodec.readMap(response.getEntity().asInputStream());
 
     assertEquals(dataMap.getInteger("status"), Integer.valueOf(400));
@@ -458,7 +457,7 @@ public class TestRestLiResponseHandler
                                               buildRoutingResult(),
                                               ex);
 
-    checkResponse(response, 400, 3, acceptTypeData.responseContentType, ErrorResponse.class.getName(), null, true, true);
+    checkResponse(response, 400, 4, acceptTypeData.responseContentType, ErrorResponse.class.getName(), null, true, true);
     dataMap = acceptTypeData.dataCodec.readMap(response.getEntity().asInputStream());
 
     assertEquals(dataMap.getInteger("status"), Integer.valueOf(400));
@@ -479,7 +478,7 @@ public class TestRestLiResponseHandler
                                               buildRoutingResult(request1),
                                               status);
 
-    checkResponse(response, 200, 2, acceptTypeData.responseContentType, Status.class.getName(), null, true);
+    checkResponse(response, 200, 3, acceptTypeData.responseContentType, Status.class.getName(), null, true);
     checkProjectedFields(response, new String[] {"f1", "f2", "f3"}, new String[0]);
 
     // #2 some fields
@@ -489,7 +488,7 @@ public class TestRestLiResponseHandler
                                               status);
     assertTrue(status.data().containsKey("f2"));
 
-    checkResponse(response, 200, 2, acceptTypeData.responseContentType, Status.class.getName(), null, true);
+    checkResponse(response, 200, 3, acceptTypeData.responseContentType, Status.class.getName(), null, true);
     checkProjectedFields(response, new String[] {"f1", "f3"}, new String[] {"f2"});
 
     // #3 no fields
@@ -498,7 +497,7 @@ public class TestRestLiResponseHandler
                                               buildRoutingResult(request3),
                                               status);
 
-    checkResponse(response, 200, 2, acceptTypeData.responseContentType, Status.class.getName(), null, true);
+    checkResponse(response, 200, 3, acceptTypeData.responseContentType, Status.class.getName(), null, true);
     checkProjectedFields(response, new String[]{}, new String[]{"f1", "f2", "f3"});
     assertTrue(status.data().containsKey("f1"));
     assertTrue(status.data().containsKey("f2"));
@@ -510,7 +509,7 @@ public class TestRestLiResponseHandler
                                               buildRoutingResult(request4),
                                               status);
 
-    checkResponse(response, 200, 2, acceptTypeData.responseContentType, Status.class.getName(), null, true);
+    checkResponse(response, 200, 3, acceptTypeData.responseContentType, Status.class.getName(), null, true);
     checkProjectedFields(response, new String[] {"f1"}, new String[] {"f2", "f3", "f99"});
     assertTrue(status.data().containsKey("f2"));
     assertTrue(status.data().containsKey("f3"));
@@ -537,7 +536,7 @@ public class TestRestLiResponseHandler
                                               buildRoutingResult(request1),
                                               status);
 
-    checkResponse(response, 200, 2, acceptTypeData.responseContentType, Status.class.getName(), null, true);
+    checkResponse(response, 200, 3, acceptTypeData.responseContentType, Status.class.getName(), null, true);
     checkProjectedFields(response, new String[] {"f1", "f2", "f3"}, new String[0]);
 
     // #2 some fields
@@ -547,7 +546,7 @@ public class TestRestLiResponseHandler
                                               status);
     assertTrue(status.data().containsKey("f2"));
 
-    checkResponse(response, 200, 2, acceptTypeData.responseContentType, Status.class.getName(), null, true);
+    checkResponse(response, 200, 3, acceptTypeData.responseContentType, Status.class.getName(), null, true);
     checkProjectedFields(response, new String[] {"f1", "f2", "f3"}, new String[] {"f4"});
 
     // #3 no fields
@@ -556,7 +555,7 @@ public class TestRestLiResponseHandler
                                               buildRoutingResult(request3),
                                               status);
 
-    checkResponse(response, 200, 2, acceptTypeData.responseContentType, Status.class.getName(), null, true);
+    checkResponse(response, 200, 3, acceptTypeData.responseContentType, Status.class.getName(), null, true);
     checkProjectedFields(response, new String[]{}, new String[]{"f1", "f2", "f3", "f4"});
     assertTrue(status.data().containsKey("f1"));
     assertTrue(status.data().containsKey("f2"));
@@ -567,7 +566,7 @@ public class TestRestLiResponseHandler
                                               buildRoutingResult(request4),
                                               status);
 
-    checkResponse(response, 200, 2, acceptTypeData.responseContentType, Status.class.getName(), null, true);
+    checkResponse(response, 200, 3, acceptTypeData.responseContentType, Status.class.getName(), null, true);
     checkProjectedFields(response, new String[] {"f2"}, new String[] {"f1", "f3", "f99"});
     assertTrue(status.data().containsKey("f2"));
   }
@@ -585,7 +584,7 @@ public class TestRestLiResponseHandler
                                               buildRoutingResultFinder(request),
                                               statusCollection);
 
-    checkResponse(response, 200, 3, acceptTypeData.responseContentType, CollectionResponse.class.getName(), null, true);
+    checkResponse(response, 200, 4, acceptTypeData.responseContentType, CollectionResponse.class.getName(), null, true);
 
     DataMap dataMap = acceptTypeData.dataCodec.readMap(response.getEntity().asInputStream());
     CollectionResponse<Status> collectionResponse = new CollectionResponse<Status>(dataMap, Status.class);
@@ -614,7 +613,7 @@ public class TestRestLiResponseHandler
                                               buildRoutingResultFinder(request),
                                               statusCollection);
 
-    checkResponse(response, 200, 3, acceptTypeData.responseContentType, CollectionResponse.class.getName(), null, true);
+    checkResponse(response, 200, 4, acceptTypeData.responseContentType, CollectionResponse.class.getName(), null, true);
 
     DataMap dataMap = acceptTypeData.dataCodec.readMap(response.getEntity().asInputStream());
     CollectionResponse<Status> collectionResponse = new CollectionResponse<Status>(dataMap, Status.class);
@@ -643,7 +642,7 @@ public class TestRestLiResponseHandler
                                               buildRoutingResult(ResourceMethod.BATCH_GET, request),
                                               statusBatch);
 
-    checkResponse(response, 200, 3, acceptTypeData.responseContentType, BatchResponse.class.getName(), Status.class.getName(), true);
+    checkResponse(response, 200, 4, acceptTypeData.responseContentType, BatchResponse.class.getName(), Status.class.getName(), true);
 
     DataMap dataMap = acceptTypeData.dataCodec.readMap(response.getEntity().asInputStream());
     BatchResponse<Status> batchResponse = new BatchResponse<Status>(dataMap, Status.class);
@@ -701,7 +700,7 @@ public class TestRestLiResponseHandler
 
     final GetResult<Status> getResult = new GetResult<Status>(status, HttpStatus.S_500_INTERNAL_SERVER_ERROR);
     response = invokeResponseHandler("/test", getResult, ResourceMethod.GET, acceptTypeData.acceptHeaders);
-    checkResponse(response, HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode(), 2, acceptTypeData.responseContentType, Status.class.getName(), null, true);
+    checkResponse(response, HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode(), 3, acceptTypeData.responseContentType, Status.class.getName(), null, true);
     assertEquals(response.getEntity().asAvroString(), expectedStatus);
 
     final ActionResult<Status> actionResult = new ActionResult<Status>(status, HttpStatus.S_500_INTERNAL_SERVER_ERROR);
@@ -710,7 +709,7 @@ public class TestRestLiResponseHandler
                                               actionResult);
     checkResponse(response,
                   HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode(),
-                  3,
+                  4,
                   acceptTypeData.responseContentType,
                   ActionResponse.class.getName(),
                   Status.class.getName(),

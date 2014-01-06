@@ -42,7 +42,7 @@ import com.linkedin.restli.internal.common.TyperefUtils;
 import com.linkedin.restli.internal.server.PathKeysImpl;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor.InterfaceType;
-import com.linkedin.restli.internal.server.util.ReflectionUtils;
+import com.linkedin.restli.internal.common.ReflectionUtils;
 import com.linkedin.restli.server.ActionResult;
 import com.linkedin.restli.server.BatchCreateRequest;
 import com.linkedin.restli.server.BatchDeleteRequest;

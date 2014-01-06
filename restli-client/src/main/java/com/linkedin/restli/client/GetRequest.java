@@ -16,19 +16,18 @@
 
 package com.linkedin.restli.client;
 
-import java.net.URI;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
-import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.internal.client.EntityResponseDecoder;
+import java.net.URI;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * A request for reading an entity resource.
@@ -40,30 +39,29 @@ import com.linkedin.restli.internal.client.EntityResponseDecoder;
 public class GetRequest<T extends RecordTemplate> extends Request<T>
 {
   private final Class<T> _templateClass;
-  private final URI      _baseURI;
   private final Object   _id;
 
-  GetRequest(URI fullURI,
-             Map<String, String> headers,
+  GetRequest(Map<String, String> headers,
              Class<T> templateClass,
-             URI baseURI,
              Object id,
-             DataMap queryParams,
+             Map<String, Object> queryParams,
              ResourceSpec resourceSpec,
-             List<String> resourcePath)
+             String baseUriTemplate,
+             Map<String, Object> pathKeys)
   {
-    super(fullURI,
-          ResourceMethod.GET,
+    super(ResourceMethod.GET,
           null,
           headers,
           new EntityResponseDecoder<T>(templateClass),
           resourceSpec,
           queryParams,
-          resourcePath);
+          null,
+          baseUriTemplate,
+          pathKeys);
 
-    _baseURI = baseURI;
     _templateClass = templateClass;
     _id = id;
+    validateKeyPresence(_id);
   }
 
   public Class<T> getEntityClass()
@@ -71,11 +69,16 @@ public class GetRequest<T extends RecordTemplate> extends Request<T>
     return _templateClass;
   }
 
-  public URI getBaseURI()
+  public Object getObjectId()
   {
-    return _baseURI;
+    return _id;
   }
 
+  /**
+   * @deprecated Please use {@link #getObjectId()} instead
+   * @return
+   */
+  @Deprecated
   public Object getIdObject()
   {
     if (_id == null)
@@ -92,6 +95,10 @@ public class GetRequest<T extends RecordTemplate> extends Request<T>
     }
   }
 
+  /**
+   * @deprecated Please use {@link #getObjectId()} instead
+   * @return
+   */
   @Deprecated
   public String getId()
   {
@@ -102,5 +109,15 @@ public class GetRequest<T extends RecordTemplate> extends Request<T>
   public Set<PathSpec> getFields()
   {
     return super.getFields();
+  }
+
+  /**
+   * @deprecated Please use {@link com.linkedin.restli.client.uribuilders.RestliUriBuilder#buildBaseUri()} instead
+   * @return
+   */
+  @Deprecated
+  public URI getBaseURI()
+  {
+    return RestliUriBuilderUtil.createUriBuilder(this).buildBaseUri();
   }
 }

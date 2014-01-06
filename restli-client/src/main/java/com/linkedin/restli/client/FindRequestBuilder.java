@@ -168,10 +168,13 @@ public class FindRequestBuilder<K, V extends RecordTemplate> extends
   @Override
   public FindRequest<V> build()
   {
-    UriBuilder b = UriBuilder.fromUri(bindPathKeys());
-    appendAssocKeys(b);
-    appendQueryParams(b);
-
-    return new FindRequest<V>(b.build(), _headers, _elementClass, _resourceSpec, getResourcePath(), _name);
+    return new FindRequest<V>(_headers,
+                              _elementClass,
+                              _resourceSpec,
+                              _queryParams,
+                              _name,
+                              _baseURITemplate,
+                              _pathKeys,
+                              _assocKey);
   }
 }

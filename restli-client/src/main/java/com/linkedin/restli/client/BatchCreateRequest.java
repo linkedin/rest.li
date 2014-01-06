@@ -20,17 +20,17 @@
 
 package com.linkedin.restli.client;
 
-import java.net.URI;
-import java.util.List;
-import java.util.Map;
 
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
 import com.linkedin.restli.common.CollectionRequest;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.CreateStatus;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.internal.client.CollectionResponseDecoder;
+import java.net.URI;
+import java.util.Map;
 
 /**
  * @author Josh Walker
@@ -39,22 +39,36 @@ import com.linkedin.restli.internal.client.CollectionResponseDecoder;
 
 public class BatchCreateRequest<T extends RecordTemplate> extends Request<CollectionResponse<CreateStatus>>
 {
-  private final URI _baseURI;
+  private URI _baseUri = null;
 
-  BatchCreateRequest(URI uri,
-                  Map<String, String> headers,
-                  URI baseURI,
-                  CollectionRequest<T> input,
-                  ResourceSpec resourceSpec,
-                  List<String> resourcePath)
+  BatchCreateRequest(Map<String, String> headers,
+                     CollectionRequest<T> input,
+                     ResourceSpec resourceSpec,
+                     Map<String, Object> queryParams,
+                     String baseUriTemplate,
+                     Map<String, Object> pathKeys)
   {
-    super(uri, ResourceMethod.BATCH_CREATE, input, headers,
-          new CollectionResponseDecoder<CreateStatus>(CreateStatus.class), resourceSpec, resourcePath);
-    _baseURI = baseURI;
+    super(ResourceMethod.BATCH_CREATE,
+          input,
+          headers,
+          new CollectionResponseDecoder<CreateStatus>(CreateStatus.class),
+          resourceSpec,
+          queryParams,
+          null,
+          baseUriTemplate,
+          pathKeys);
   }
 
+  /**
+   * @deprecated Please use {@link com.linkedin.restli.client.uribuilders.RestliUriBuilder#buildBaseUri()} instead
+   */
+  @Deprecated
   public URI getBaseURI()
   {
-    return _baseURI;
+    if (_baseUri == null)
+    {
+      _baseUri = RestliUriBuilderUtil.createUriBuilder(this).buildBaseUri();
+    }
+    return _baseUri;
   }
 }

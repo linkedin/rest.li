@@ -1,3 +1,19 @@
+/*
+   Copyright (c) 2013 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package com.linkedin.restli.common;
 
 import org.testng.Assert;
@@ -45,5 +61,42 @@ public class TestComplexResourceKey
     // Both param null
     complexKey2 = new ComplexResourceKey<EmptyRecord, EmptyRecord>(key2, null);
     Assert.assertTrue(complexKey1.equals(complexKey2));
+  }
+
+  @Test
+  public void testMakeReadOnly()
+  {
+    DataMap keyDataMap = new DataMap();
+    keyDataMap.put("key", "key-value");
+    EmptyRecord key = new EmptyRecord(keyDataMap);
+
+    DataMap paramsDataMap = new DataMap();
+    paramsDataMap.put("params", "params-value");
+    EmptyRecord params = new EmptyRecord(paramsDataMap);
+
+    ComplexResourceKey<EmptyRecord, EmptyRecord> complexResourceKey =
+        new ComplexResourceKey<EmptyRecord, EmptyRecord>(key, params);
+
+    complexResourceKey.makeReadOnly();
+
+    try
+    {
+      key.data().put("key", "new key value");
+      Assert.fail("Should not be able to update the key after the ComplexResourceKey has been made read only!");
+    }
+    catch (UnsupportedOperationException e)
+    {
+
+    }
+
+    try
+    {
+      params.data().put("params", "new params value");
+      Assert.fail("Should not be able to update the params after the ComplexResourceKey has been made read only!");
+    }
+    catch (UnsupportedOperationException e)
+    {
+
+    }
   }
 }

@@ -1,0 +1,10 @@
+{
+  "type" : "typeref",
+  "name" : "MyCustomStringRef",
+  "namespace": "com.linkedin.restli.common.test",
+  "ref"  : "string",
+  "java":
+  {
+    "class": "com.linkedin.restli.common.MyCustomString"
+  }
+}

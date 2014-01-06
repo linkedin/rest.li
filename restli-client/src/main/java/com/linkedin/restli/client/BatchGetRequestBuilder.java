@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -114,7 +115,8 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
 
     BatchGetRequest<RT> firstRequest = requests.get(0);
     ResourceSpec firstResourceSpec = firstRequest.getResourceSpec();
-    URI baseURI = firstRequest.getBaseURI();
+    String firstRequestBaseUriTemplate = firstRequest.getBaseUriTemplate();
+    Map<String, Object> firstRequestPathKeys = firstRequest.getPathKeys();
     Set<PathSpec> firstFields = firstRequest.getFields();
     Set<Object> ids = new HashSet<Object>();
 
@@ -122,17 +124,20 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
     Set<PathSpec> fields =
         batchFields ? new HashSet<PathSpec>() : firstFields;
 
-    //Defensive shallow copy
-    DataMap firstQueryParams = new DataMap(firstRequest.getQueryParams());
+    // Defensive shallow copy
+    Map<String, Object> firstQueryParams = new HashMap<String, Object>(firstRequest.getQueryParamsObjects());
 
     firstQueryParams.remove(RestConstants.QUERY_BATCH_IDS_PARAM);
     firstQueryParams.remove(RestConstants.FIELDS_PARAM);
 
     for (BatchGetRequest<RT> request : requests)
     {
-      if (!request.getBaseURI().equals(baseURI))
+      String currentRequestBaseUriTemplate = request.getBaseUriTemplate();
+      Map<String, Object> currentRequestPathKeys = request.getPathKeys();
+      if (!currentRequestBaseUriTemplate.equals(firstRequestBaseUriTemplate) ||
+          !currentRequestPathKeys.equals(firstRequestPathKeys))
       {
-        throw new IllegalArgumentException("Requests must have same URI to batch");
+        throw new IllegalArgumentException("Requests must have same base URI template and path keys to batch");
       }
 
       if (!request.getResourceSpec().equals(firstResourceSpec))
@@ -140,10 +145,10 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
         throw new IllegalArgumentException("Requests must be for the same resource to batch");
       }
 
-      Set<Object> requestIds = request.getIdObjects();
+      Set<Object> requestIds = request.getObjectIds();
       Set<PathSpec> requestFields = request.getFields();
       // Defensive shallow copy
-      DataMap queryParams = new DataMap(request.getQueryParams());
+      Map<String, Object> queryParams = new HashMap<String, Object>(request.getQueryParamsObjects());
 
       queryParams.remove(RestConstants.FIELDS_PARAM);
       queryParams.remove(RestConstants.QUERY_BATCH_IDS_PARAM);
@@ -177,21 +182,7 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
       }
     }
 
-    // If ComplexResourceKey, convert keys to DataMaps before adding to query params
-    DataList idsDataList = new DataList(ids.size());
-    if (firstResourceSpec.getKeyClass() == ComplexResourceKey.class)
-    {
-      for (Object obj : ids)
-      {
-        assert (obj instanceof ComplexResourceKey<?, ?>);
-        CheckedUtil.addWithoutChecking(idsDataList, ((ComplexResourceKey<?, ?>) obj).toDataMap());
-      }
-    }
-    else
-    {
-      idsDataList.addAll(new ArrayList<Object>(ids));
-    }
-    firstQueryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM, idsDataList);
+    firstQueryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM, ids);
 
     if (fields != null && !fields.isEmpty())
     {
@@ -199,18 +190,12 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
                            URIUtil.encodeFields(fields.toArray(new PathSpec[0])));
     }
 
-    UriBuilder urlBuilder = UriBuilder.fromUri(baseURI);
-    QueryParamsDataMap.addSortedParams(urlBuilder, firstQueryParams);
-
-    URI uri = urlBuilder.build();
-
-    return new BatchGetRequest<RT>(uri,
-                                   firstRequest.getHeaders(),
+    return new BatchGetRequest<RT>(firstRequest.getHeaders(),
                                    firstRequest.getResponseDecoder(),
-                                   baseURI,
                                    firstQueryParams,
                                    firstResourceSpec,
-                                   firstRequest.getResourcePath());
+                                   firstRequest.getBaseUriTemplate(),
+                                   firstRequest.getPathKeys());
   }
 
   /**
@@ -221,8 +206,7 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
    */
   public static <RT extends RecordTemplate> BatchGetRequest<RT> batch(GetRequest<RT> request)
   {
-    URI baseURI = request.getBaseURI();
-    Object id = request.getIdObject();
+    Object id = request.getObjectId();
 
     if (id == null)
     {
@@ -230,23 +214,16 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
           "It is not possible to create a batch get request from a get request without an id.");
     }
 
-    DataMap queryParams = new DataMap(request.getQueryParams());
-    Object idsParam =
-        id instanceof ComplexResourceKey ? ((ComplexResourceKey<?, ?>) id).toDataMap()
-            : id.toString();
+    Map<String, Object> queryParams = new HashMap<String, Object>(request.getQueryParamsObjects());
     queryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM,
-                    new DataList(Collections.singletonList(idsParam)));
+                    new ArrayList<Object>(Arrays.asList(id)));
 
-    UriBuilder urlBuilder = UriBuilder.fromUri(baseURI);
-    QueryParamsDataMap.addSortedParams(urlBuilder, queryParams);
-
-    return new BatchGetRequest<RT>(urlBuilder.build(),
-                                   request.getHeaders(),
+    return new BatchGetRequest<RT>(request.getHeaders(),
                                    new BatchResponseDecoder<RT>(request.getEntityClass()),
-                                   baseURI,
                                    queryParams,
                                    request.getResourceSpec(),
-                                   request.getResourcePath());
+                                   request.getBaseUriTemplate(),
+                                   request.getPathKeys());
   }
 
   public BatchGetRequestBuilder(String baseUriTemplate, Class<V> modelClass, ResourceSpec resourceSpec)
@@ -362,25 +339,16 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
   @Override
   public BatchGetRequest<V> build()
   {
-    URI baseUri = bindPathKeys();
-    UriBuilder b = UriBuilder.fromUri(baseUri);
-    appendQueryParams(b);
-
-    return new BatchGetRequest<V>(b.build(),
-                                  _headers,
+    return new BatchGetRequest<V>(_headers,
                                   _decoder,
-                                  baseUri,
                                   _queryParams,
                                   _resourceSpec,
-                                  getResourcePath());
+                                  _baseURITemplate,
+                                  _pathKeys);
   }
 
   public BatchGetKVRequest<K, V> buildKV()
   {
-    URI baseUri = bindPathKeys();
-    UriBuilder b = UriBuilder.fromUri(baseUri);
-    appendQueryParams(b);
-
     //Framework code should ensure that the ResourceSpec matches the static types of these parameters
     @SuppressWarnings("unchecked")
     BatchKVResponseDecoder<K, V> decoder =
@@ -390,14 +358,13 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
                                          _resourceSpec.getKeyKeyClass(),
                                          _resourceSpec.getKeyParamsClass());
 
-    return new BatchGetKVRequest<K, V>(b.build(),
-                                  ResourceMethod.BATCH_GET,
+    return new BatchGetKVRequest<K, V>(ResourceMethod.BATCH_GET,
                                   _headers,
                                   decoder,
-                                  baseUri,
                                   _queryParams,
                                   _resourceSpec,
-                                  getResourcePath());
+                                  _baseURITemplate,
+                                  _pathKeys);
   }
 
   public BatchGetRequestBuilder<K, V> fields(PathSpec... fieldPaths)

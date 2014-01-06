@@ -222,6 +222,13 @@ public class DynamicClientTest
     {
       return null;
     }
+
+    @Override
+    public AllPartitionsResult<URI> getAllPartitions(URI serviceUri, int hashCode)
+        throws ServiceUnavailableException
+    {
+      return null;
+    }
   }
 
   public static class TestDirectoryProvider implements DirectoryProvider

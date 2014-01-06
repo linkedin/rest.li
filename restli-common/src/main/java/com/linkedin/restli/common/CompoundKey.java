@@ -40,21 +40,35 @@ import com.linkedin.restli.internal.common.ValueConverter;
 public class CompoundKey
 {
   private final Map<String, Object> _keys;
+  private boolean _isReadOnly;
 
   public CompoundKey()
   {
     _keys = new HashMap<String, Object>(4);
+    _isReadOnly = false;
   }
 
   public static final class TypeInfo
   {
+    // binding type could be any type (primitive or custom)
     private final Class<?> _bindingType;
+    // declared type is potentially a typeref to a primitive, otherwise it is a primitive
     private final Class<?> _declaredType;
 
     public TypeInfo(Class<?> bindingType, Class<?> declaredType)
     {
       _bindingType = bindingType;
       _declaredType = declaredType;
+    }
+
+    public Class<?> getBindingType()
+    {
+      return _bindingType;
+    }
+
+    public Class<?> getDeclaredType()
+    {
+      return _declaredType;
     }
   }
 
@@ -78,9 +92,25 @@ public class CompoundKey
       {
         throw new IllegalArgumentException("Compound key type must dereference to a primitive type.");
       }
-      Object primitive = ValueConverter.coerceString(entry.getValue().toString(), DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchemaClass(dereferencedType));
-      Object value = DataTemplateUtil.coerceOutput(primitive, typeInfo._bindingType);
 
+      Object value = entry.getValue();
+      Class<?> dereferencedClass = DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchemaClass(dereferencedType);
+
+      if (!value.getClass().equals(dereferencedClass))
+      {
+        if (value.getClass().equals(String.class))
+        {
+          // we coerce Strings to the dereferenced class
+          value = ValueConverter.coerceString((String)value,
+                                              DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchemaClass(dereferencedType));
+        }
+        else
+        {
+          throw new IllegalArgumentException("Value " + value + " is not a String or an object of " +
+                                                 dereferencedClass.getSimpleName());
+        }
+      }
+      value = DataTemplateUtil.coerceOutput(value, typeInfo._bindingType);
       result.append(entry.getKey(), value);
     }
     return result;
@@ -95,6 +125,10 @@ public class CompoundKey
    */
   public CompoundKey append(String name, Object value)
   {
+    if (_isReadOnly)
+    {
+      throw new UnsupportedOperationException("Can't append to a read only key!");
+    }
     if (name==null)
     {
       throw new IllegalArgumentException("name of CompoundKey part cannot be null");
@@ -167,6 +201,16 @@ public class CompoundKey
   {
     return _keys.keySet();
   }
+
+  /**
+   * Makes this key read only. Subsequent calls to {@link #append(String, Object)} will throw an
+   * {@link UnsupportedOperationException}
+   */
+  public void makeReadOnly()
+  {
+    _isReadOnly = true;
+  }
+
 
   @Override
   public int hashCode()

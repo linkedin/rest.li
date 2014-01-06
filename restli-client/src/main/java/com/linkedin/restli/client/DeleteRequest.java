@@ -20,15 +20,13 @@
 
 package com.linkedin.restli.client;
 
-import java.net.URI;
-import java.util.List;
-import java.util.Map;
 
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.internal.client.EmptyResponseDecoder;
+import java.util.Map;
 
 /**
  * @author Josh Walker
@@ -38,8 +36,30 @@ import com.linkedin.restli.internal.client.EmptyResponseDecoder;
 public class DeleteRequest<T extends RecordTemplate>
         extends Request<EmptyRecord>
 {
-  DeleteRequest(URI uri, Map<String, String> headers, ResourceSpec resourceSpec, List<String> resourcePath)
+  private final Object _id;
+
+  DeleteRequest(Map<String, String> headers,
+                ResourceSpec resourceSpec,
+                Map<String, Object> queryParams,
+                String baseUriTemplate,
+                Map<String, Object> pathKeys,
+                Object id)
   {
-    super(uri, ResourceMethod.DELETE, null, headers, new EmptyResponseDecoder(), resourceSpec, resourcePath);
+    super(ResourceMethod.DELETE,
+          null,
+          headers,
+          new EmptyResponseDecoder(),
+          resourceSpec,
+          queryParams,
+          null,
+          baseUriTemplate,
+          pathKeys);
+    _id = id;
+    validateKeyPresence(_id);
+  }
+
+  public Object getId()
+  {
+    return _id;
   }
 }

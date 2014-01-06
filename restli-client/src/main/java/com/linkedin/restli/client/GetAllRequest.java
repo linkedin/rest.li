@@ -16,31 +16,42 @@
 
 package com.linkedin.restli.client;
 
-import java.net.URI;
-import java.util.List;
-import java.util.Map;
 
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.CollectionResponse;
+import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.internal.client.CollectionResponseDecoder;
+import java.util.Map;
 
 public class GetAllRequest<T extends RecordTemplate> extends
     Request<CollectionResponse<T>>
 {
-  GetAllRequest(URI uri,
-                Map<String, String> headers,
+  private final CompoundKey _assocKey;
+
+  GetAllRequest(Map<String, String> headers,
                 Class<T> templateClass,
                 ResourceSpec resourceSpec,
-                List<String> resourcePath)
+                Map<String, Object> queryParams,
+                String baseUriTemplate,
+                Map<String, Object> pathKeys,
+                CompoundKey assocKey)
   {
-    super(uri,
-          ResourceMethod.GET_ALL,
+    super(ResourceMethod.GET_ALL,
           null,
           headers,
           new CollectionResponseDecoder<T>(templateClass),
           resourceSpec,
-          resourcePath);
+          queryParams,
+          null,
+          baseUriTemplate,
+          pathKeys);
+    _assocKey = assocKey;
+  }
+
+  public CompoundKey getAssocKey()
+  {
+    return _assocKey;
   }
 }

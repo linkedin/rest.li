@@ -21,35 +21,22 @@
 package com.linkedin.restli.client;
 
 
-import com.linkedin.data.DataList;
-import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.PathSpec;
-import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.DataTemplateUtil;
-import com.linkedin.jersey.api.uri.UriBuilder;
-import com.linkedin.jersey.api.uri.UriTemplate;
-import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.client.URIUtil;
-import com.linkedin.restli.internal.common.QueryParamsDataMap;
-import com.linkedin.restli.internal.common.URLEscaper;
-import com.linkedin.restli.internal.common.URLEscaper.Escaping;
 import com.linkedin.util.ArgumentUtil;
 
-import java.lang.reflect.Array;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 
 /**
@@ -59,14 +46,13 @@ import java.util.regex.Pattern;
 
 public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> implements RequestBuilder<R>
 {
-  private static final Pattern SLASH_PATTERN = Pattern.compile("/");
   protected static final char HEADER_DELIMITER = ',';
 
-  private final String                _baseURITemplate;
+  protected final String              _baseURITemplate;
   protected final ResourceSpec        _resourceSpec;
   protected final CompoundKey         _assocKey    = new CompoundKey();
-  protected final Map<String, String> _pathKeys    = new HashMap<String, String>();
-  protected final DataMap             _queryParams = new DataMap();
+  protected final Map<String, Object> _pathKeys    = new HashMap<String, Object>();
+  protected final Map<String, Object> _queryParams = new HashMap<String, Object>();
   protected Map<String, String>       _headers     = new HashMap<String, String>();
 
   protected AbstractRequestBuilder(String baseURITemplate, ResourceSpec resourceSpec)
@@ -142,11 +128,11 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
 
   public AbstractRequestBuilder<K, V, R> setParam(String key, Object value)
   {
-    Object dataObject = paramToDataObject(value);
-    if (dataObject != null)
+    if (value == null)
     {
-      _queryParams.put(key, dataObject);
+      return this;
     }
+    _queryParams.put(key, value);
     return this;
   }
 
@@ -156,37 +142,39 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
     return addParam(key, value);
   }
 
+  @SuppressWarnings("unchecked")
   public AbstractRequestBuilder<K, V, R> addParam(String key, Object value)
   {
-    if (value != null)
+    if (value == null)
     {
-      final Object existingData = _queryParams.get(key);
-      if (existingData == null)
+      return this;
+    }
+
+    final Object existingData = _queryParams.get(key);
+    if (existingData == null)
+    {
+      setParam(key, value);
+    }
+    else
+    {
+      Collection newCollection;
+      if (existingData instanceof Collection)
       {
-        setParam(key, value);
+        newCollection = (Collection)existingData;
+        newCollection.add(value);
       }
       else
       {
-        final Object newData = paramToDataObject(value);
-        final DataList newList;
-        if (existingData instanceof DataList)
-        {
-          newList = ((DataList) existingData);
-          newList.add(newData);
-        }
-        else
-        {
-          newList = new DataList(Arrays.asList(existingData, newData));
-        }
-        _queryParams.put(key, newList);
+        newCollection = new ArrayList(Arrays.asList(existingData, value));
       }
+      _queryParams.put(key, newCollection);
     }
     return this;
   }
 
   public AbstractRequestBuilder<K, V, R> pathKey(String name, Object value)
   {
-    addPathKey(name, keyToString(value, Escaping.NO_ESCAPING));
+    _pathKeys.put(name, value);
     return this;
   }
 
@@ -200,7 +188,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
   {
     if (ids == null)
     {
-      throw new IllegalArgumentException("null id");
+      throw new IllegalArgumentException("null ids");
     }
 
     Set<Object> allIds = new HashSet<Object>();
@@ -209,32 +197,24 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
       addKey(allIds, id);
     }
 
-    DataList existingIds = (DataList)_queryParams.get(RestConstants.QUERY_BATCH_IDS_PARAM);
+    @SuppressWarnings("unchecked")
+    Collection<K> existingIds = (Collection<K>)_queryParams.get(RestConstants.QUERY_BATCH_IDS_PARAM);
     if (existingIds != null && !existingIds.isEmpty())
     {
       allIds.addAll(existingIds);
     }
 
-    _queryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM,
-                     new DataList(new ArrayList<Object>(allIds)));
-
+    _queryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM, allIds);
   }
 
-  /**
-   * Adds the provided id to the provided set of objects that can be put into a DataMap (i.e. DataObject of String)
-   * If the id is an instance of ComplexResourceKey, convert to DataMap, otherwise stringify.
-   */
   private void addKey(Set<Object> ids, Object id)
   {
-    if (id == null) {
+    if (id == null)
+    {
       throw new IllegalArgumentException("Null key");
     }
 
-    Object castId =
-        id instanceof ComplexResourceKey<?, ?>
-            ? ((ComplexResourceKey<?, ?>) id).toDataMap() : DataTemplateUtil.stringify(id);
-
-    ids.add(castId);
+    ids.add(id);
   }
 
   /**
@@ -247,137 +227,11 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
   }
 
   /**
-   * Depending on whether or not this is a complex resource key, return either a full (key + params)
-   * string representation of the key (which for ComplexResource includes both key and params), or
-   * simply key.toString() (which for ComplexResourceKey only uses key part).
+   * @deprecated Please use {@link #pathKey(String, Object)} instead.
+   * @param key
+   * @param value
    */
-  protected String keyToString(K key)
-  {
-    return keyToString(key, Escaping.NO_ESCAPING);
-  }
-
-  protected void appendKeyToPath(UriBuilder uriBuilder, Object key)
-  {
-    if (isKeylessResource())
-    {
-      if (key != null)
-      {
-        throw new IllegalArgumentException("id is not allowed in this key-less resource request");
-      }
-    }
-    else
-    {
-      if (key == null)
-      {
-        throw new IllegalArgumentException("id required to build this request");
-      }
-
-      uriBuilder.path(keyToString(key, Escaping.URL_ESCAPING));
-    }
-  }
-
-  private static Object paramToDataObject(Object param)
-  {
-    if (param == null)
-    {
-      return null;
-    }
-    else if (param instanceof Object[])
-    {
-      return new DataList(coerceIterable(Arrays.asList((Object[]) param)));
-    }
-    else if (param.getClass().isArray())
-    { // not an array of objects but still an array - must be an array of primitives
-      return new DataList(stringify(param));
-    }
-    else if (param instanceof DataTemplate)
-    {
-      @SuppressWarnings("rawtypes")
-      final DataTemplate dataTemplate = (DataTemplate)param;
-      return dataTemplate.data();
-    }
-    else if (param instanceof Iterable)
-    {
-      return new DataList(coerceIterable((Iterable<?>) param));
-    }
-    else
-    {
-      return DataTemplateUtil.stringify(param);
-    }
-  }
-
-  private static String keyToString(Object key, Escaping escaping)
-  {
-    String result;
-    if (key == null)
-    {
-      result = null;
-    }
-    else if (key instanceof ComplexResourceKey)
-    {
-      result = ((ComplexResourceKey<?,?>)key).toStringFull(escaping);
-    }
-    else if (key instanceof CompoundKey)
-    {
-      result = key.toString(); // already escaped
-    }
-    else
-    {
-      result = URLEscaper.escape(DataTemplateUtil.stringify(key), escaping);
-    }
-    return result;
-  }
-
-  /**
-   * given an iterable of objects returns a list of (non-null) Objects,
-   * which can be Strings or DataMap
-   * */
-  private static List<Object> coerceIterable(Iterable<?> values)
-  {
-    assert values != null;
-    List<Object> objects =
-        new ArrayList<Object>(values instanceof Collection ? ((Collection<?>) values).size() : 10);
-    for (Object value : values)
-    {
-      if (value != null)
-      {
-        objects.add(coerceObject(value));
-      }
-    }
-    return objects;
-  }
-
-  private static Object coerceObject(Object value)
-  {
-    if (value instanceof DataTemplate)
-    {
-      @SuppressWarnings("rawtypes")
-      DataTemplate result = (DataTemplate)value;
-      return result.data();
-    }
-    else
-    {
-      return DataTemplateUtil.stringify(value);
-    }
-  }
-
-  /** given an array of primitives returns a collection of strings */
-  private static List<String> stringify(Object array)
-  {
-    assert array != null && array.getClass().isArray();
-    int len = Array.getLength(array);
-    List<String> strings = new ArrayList<String>(len);
-    for (int i = 0; i < len; ++i)
-    {
-      Object value = Array.get(array, i);
-      if (value != null)
-      {
-        strings.add(value.toString());
-      }
-    }
-    return strings;
-  }
-
+  @Deprecated
   protected void addPathKey(String key, Object value)
   {
     if (value == null)
@@ -392,52 +246,6 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
     _assocKey.append(key, value);
   }
 
-  protected void appendQueryParams(UriBuilder b)
-  {
-    QueryParamsDataMap.addSortedParams(b, _queryParams);
-  }
-
-  protected final void appendAssocKeys(UriBuilder uriBuilder)
-  {
-    uriBuilder.path(_assocKey.toString());
-  }
-
-  protected URI bindPathKeys()
-  {
-    UriTemplate template = new UriTemplate(_baseURITemplate);
-    for (String key : template.getTemplateVariables())
-    {
-      if (!_pathKeys.containsKey(key))
-      {
-        throw new IllegalStateException("Missing path key: '" + key + "'");
-      }
-    }
-    Map<String, String> escapedKeys = new HashMap<String, String>();
-    for(Map.Entry<String, String> key : _pathKeys.entrySet())
-    {
-      escapedKeys.put(key.getKey(), URLEscaper.escape(key.getValue(), Escaping.URL_ESCAPING));
-    }
-
-    return URI.create(template.createURI(escapedKeys));
-  }
-
-  protected List<String> getResourcePath()
-  {
-    UriTemplate template = new UriTemplate(_baseURITemplate);
-    List<String> resourcePath = new ArrayList<String>(1);
-    String[] pathParts = SLASH_PATTERN.split(template.createURI(Collections.<String, String>emptyMap()));
-
-    for (String pathPart : pathParts)
-    {
-      if (!pathPart.equals(""))
-      {
-        resourcePath.add(pathPart);
-      }
-    }
-
-    return resourcePath;
-  }
-
   protected void addFields(PathSpec... fieldPaths)
   {
     if (_queryParams.containsKey(RestConstants.FIELDS_PARAM))
@@ -447,16 +255,6 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
     }
 
     setParam(RestConstants.FIELDS_PARAM, URIUtil.encodeFields(fieldPaths));
-  }
-
-  protected boolean isComplexKeyResource()
-  {
-    return _resourceSpec.getKeyClass() == ComplexResourceKey.class;
-  }
-
-  protected boolean isKeylessResource()
-  {
-    return _resourceSpec.getKeyClass() == null;
   }
 
   @Override

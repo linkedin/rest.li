@@ -16,18 +16,6 @@
 
 package com.linkedin.restli.client;
 
-import java.io.IOException;
-import java.net.URI;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.JacksonDataCodec;
@@ -39,7 +27,18 @@ import com.linkedin.parseq.promise.Promise;
 import com.linkedin.restli.client.test.TestRecord;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.ErrorResponse;
+import com.linkedin.restli.common.ResourceSpecImpl;
 import com.linkedin.restli.common.RestConstants;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 /**
  * Exercise {@link com.linkedin.restli.client.ParSeqRestClient}
@@ -173,14 +172,13 @@ public class ParSeqRestClientTest
    */
   private <T extends RecordTemplate> Request<T> mockRequest(final Class<T> clazz)
   {
-    return new GetRequest<T>(URI.create(""),
-                             Collections.<String, String> emptyMap(),
+    return new GetRequest<T>(Collections.<String, String> emptyMap(),
                              clazz,
-                             URI.create(""),
-                             "foo",
-                             new DataMap(),
                              null,
-                             Collections.<String>emptyList());
+                             new DataMap(),
+                             new ResourceSpecImpl(),
+                             "/foo",
+                             Collections.<String, Object>emptyMap());
   }
 
   /**

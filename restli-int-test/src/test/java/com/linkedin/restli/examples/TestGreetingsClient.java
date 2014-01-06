@@ -16,37 +16,12 @@
 
 package com.linkedin.restli.examples;
 
-import com.linkedin.data.DataMap;
-import com.linkedin.data.schema.DataSchema;
-import com.linkedin.data.schema.DataSchemaUtil;
-import com.linkedin.data.schema.NamedDataSchema;
-import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
-import com.linkedin.data.schema.validation.ValidationOptions;
-import com.linkedin.data.template.DataTemplateUtil;
-import com.linkedin.restli.client.BatchPartialUpdateRequest;
-import com.linkedin.restli.client.CreateRequest;
-import com.linkedin.restli.client.DeleteRequest;
-import com.linkedin.restli.client.GetAllRequest;
-import com.linkedin.restli.common.OptionsResponse;
-import com.linkedin.restli.common.UpdateStatus;
-import com.linkedin.restli.examples.greetings.api.Empty;
-import com.linkedin.restli.restspec.ResourceSchema;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
 
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
+import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
+import com.linkedin.data.schema.validation.ValidationOptions;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.transport.common.Client;
@@ -55,8 +30,12 @@ import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.client.ActionRequest;
 import com.linkedin.restli.client.BatchCreateRequest;
 import com.linkedin.restli.client.BatchGetRequest;
+import com.linkedin.restli.client.BatchPartialUpdateRequest;
 import com.linkedin.restli.client.BatchUpdateRequest;
+import com.linkedin.restli.client.CreateRequest;
+import com.linkedin.restli.client.DeleteRequest;
 import com.linkedin.restli.client.FindRequest;
+import com.linkedin.restli.client.GetAllRequest;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
@@ -72,11 +51,23 @@ import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.Link;
 import com.linkedin.restli.common.PatchRequest;
+import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.SearchMetadata;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
 import com.linkedin.restli.examples.groups.api.TransferOwnershipRequest;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 /**
  * Base class for greetings testers. This is an integration test, requiring that you have

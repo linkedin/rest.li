@@ -12,9 +12,15 @@
       "name" : "src",
       "type" : "string"
     } ],
-    "supports" : [ "get" ],
+    "supports" : [ "batch_get", "batch_partial_update", "batch_update", "get" ],
     "methods" : [ {
       "method" : "get"
+    }, {
+      "method" : "batch_get"
+    }, {
+      "method" : "batch_update"
+    }, {
+      "method" : "batch_partial_update"
     } ],
     "finders" : [ {
       "name" : "assocKeyFinder",

@@ -303,6 +303,12 @@ public class ResourceSpecImpl implements ResourceSpec
   }
 
   @Override
+  public boolean isKeylessResource()
+  {
+    return _keyClass == null;
+  }
+
+  @Override
   public boolean equals(Object other)
   {
     if (this == other)

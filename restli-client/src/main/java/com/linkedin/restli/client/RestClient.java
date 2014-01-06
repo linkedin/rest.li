@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.client;
 
+
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.CallbackAdapter;
 import com.linkedin.common.callback.FutureCallback;
@@ -30,15 +31,20 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.common.Client;
+import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
+import com.linkedin.restli.common.CollectionRequest;
 import com.linkedin.restli.common.HttpMethod;
+import com.linkedin.restli.common.KeyValueRecord;
 import com.linkedin.restli.common.OperationNameGenerator;
+import com.linkedin.restli.common.PatchRequest;
+import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.client.CollectionRequestUtil;
 import com.linkedin.restli.internal.client.ExceptionUtil;
 import com.linkedin.restli.internal.client.ResponseFutureImpl;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
-
-import javax.mail.internet.ParseException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -46,6 +52,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import javax.mail.internet.ParseException;
 
 /**
  * Subset of Jersey's REST client, omitting things we probably won't use for internal API calls +
@@ -103,6 +110,9 @@ public class RestClient
   private final String _uriPrefix;
   private final List<AcceptType> _acceptTypes;
   private final ContentType _contentType;
+  // Maps service names to the version of Rest.li running on that service. This is used to decide which wire protocol
+  // to use while communicating with the service.
+  private final Map<String, String> _serviceToVersionMapping;
 
   public RestClient(Client client, String uriPrefix)
   {
@@ -116,10 +126,25 @@ public class RestClient
 
   public RestClient(Client client, String uriPrefix, ContentType contentType, List<AcceptType> acceptTypes)
   {
+    this(client,
+         uriPrefix,
+         contentType,
+         acceptTypes,
+         Collections.<String, String>emptyMap());
+  }
+
+  RestClient(Client client,
+                    String uriPrefix,
+                    ContentType contentType,
+                    List<AcceptType> acceptTypes,
+                    Map<String, String> serviceToVersionMapping)
+  {
     _client = client;
-    _uriPrefix = uriPrefix;
+    _uriPrefix = (uriPrefix == null) ? null : uriPrefix.trim();
     _acceptTypes = acceptTypes;
     _contentType = contentType;
+    _serviceToVersionMapping = (serviceToVersionMapping == null)
+        ? Collections.<String, String>emptyMap() : Collections.unmodifiableMap(serviceToVersionMapping);
   }
 
   /**
@@ -214,25 +239,99 @@ public class RestClient
     sendRestRequest(request, requestContext, new RestLiCallbackAdapter<T>(request.getResponseDecoder(), callback));
   }
 
-  /**
+/**
    * Sends a type-bound REST request using a {@link CallbackAdapter}.
    *
    * @param request to send
    * @param requestContext context for the request
    * @param callback to call on request completion
    */
+  @SuppressWarnings("deprecation")
   public <T> void sendRestRequest(final Request<T> request,
                                   RequestContext requestContext,
                                   Callback<RestResponse> callback)
   {
-    RecordTemplate input = request.getInput();
+    RecordTemplate input = request.getInputRecord();
+    String serviceName = request.getServiceName();
+    ProtocolVersion protocolVersion = getProtocolVersionForService(serviceName);
+
+    URI requestUri;
+    boolean hasPrefix;
+
+    if (request.hasUri())
+    {
+      // if someone has manually crafted a request with a URI we want to use that. This if check will be removed when
+      // we remove the getUri() method. In this case hasPrefix is false because the old constructor assumed no prefix
+      // and prepended a prefix in this class.
+      requestUri = request.getUri();
+      hasPrefix = false;
+    }
+    else
+    {
+      requestUri = RestliUriBuilderUtil.createUriBuilder(request, _uriPrefix, protocolVersion).build();
+      hasPrefix = true;
+    }
+
     sendRequestImpl(requestContext,
-                    request.getUri(),
+                    requestUri,
+                    hasPrefix,
                     request.getMethod(),
-                    input != null ? input.data() : null,
+                    input != null ? getInputData(request, protocolVersion) : null,
                     request.getHeaders(),
                     request.getMethodName(),
+                    protocolVersion,
                     callback);
+  }
+
+  /**
+   * @param serviceName the service to get the version number for
+   * @return If the service name is present in {@link #_serviceToVersionMapping} return that.
+   *         Otherwise, {@link RestConstants#DEFAULT_PROTOCOL_VERSION} is returned.
+   */
+  private ProtocolVersion getProtocolVersionForService(final String serviceName)
+  {
+    if (_serviceToVersionMapping.containsKey(serviceName))
+    {
+      return new ProtocolVersion(_serviceToVersionMapping.get(serviceName));
+    }
+    return RestConstants.DEFAULT_PROTOCOL_VERSION;
+  }
+
+  /**
+   * For {@link BatchUpdateRequest}s and {@link BatchPartialUpdateRequest}s convert the body to the old style body
+   * encoding. For any other {@link Request} simply return the {@link DataMap} of the underlying {@link RecordTemplate}
+   * @param request
+   * @param version
+   * @param <T>
+   * @return
+   */
+  @SuppressWarnings("unchecked")
+  private <T> DataMap getInputData(Request<T> request, ProtocolVersion version)
+  {
+    ResourceSpec resourceSpec = request.getResourceSpec();
+    switch (request.getMethod())
+    {
+      case BATCH_UPDATE:
+        return CollectionRequestUtil.
+            convertToBatchRequest((CollectionRequest<KeyValueRecord>) request.getInputRecord(),
+                                  resourceSpec.getKeyClass(),
+                                  resourceSpec.getKeyKeyClass(),
+                                  resourceSpec.getKeyParamsClass(),
+                                  resourceSpec.getKeyParts(),
+                                  resourceSpec.getValueClass(),
+                                  version).data();
+      case BATCH_PARTIAL_UPDATE:
+        return CollectionRequestUtil.
+            convertToBatchRequest((CollectionRequest<KeyValueRecord>) request.getInputRecord(),
+                                  resourceSpec.getKeyClass(),
+                                  resourceSpec.getKeyKeyClass(),
+                                  resourceSpec.getKeyParamsClass(),
+                                  resourceSpec.getKeyParts(),
+                                  PatchRequest.class,
+                                  version).data();
+      default:
+        return request.getInputRecord().data();
+    }
   }
 
   private void addAcceptHeaders(RestRequestBuilder builder)
@@ -420,8 +519,10 @@ public class RestClient
    *
    * @param requestContext context for the request
    * @param uri for resource
+   * @param hasPrefix
    * @param method to perform
    * @param dataMap request body entity
+   * @param protocolVersion the version of the Rest.li protocol used to build this request
    * @param callback to call on request completion. In the event of an error, the callback
    *                 will receive a {@link com.linkedin.r2.RemoteInvocationException}. If a valid
    *                 error response was received from the remote server, the callback will receive
@@ -429,15 +530,17 @@ public class RestClient
    */
   private void sendRequestImpl(RequestContext requestContext,
                                URI uri,
+                               boolean hasPrefix,
                                ResourceMethod method,
                                DataMap dataMap,
                                Map<String, String> headers,
                                String methodName,
+                               ProtocolVersion protocolVersion,
                                Callback<RestResponse> callback)
   {
     try
     {
-      RestRequest request = buildRequest(uri, method, dataMap, headers);
+      RestRequest request = buildRequest(uri, hasPrefix, method, dataMap, headers, protocolVersion);
       String operation = OperationNameGenerator.generate(method, methodName);
       requestContext.putLocalAttr(R2Constants.OPERATION, operation);
       _client.restRequest(request, requestContext, callback);
@@ -451,15 +554,23 @@ public class RestClient
 
   // This throws Exception to remind the caller to deal with arbitrary exceptions including RuntimeException
   // in a way appropriate for the public method that was originally invoked.
-  private RestRequest buildRequest(URI uri, ResourceMethod method, DataMap dataMap, Map<String, String> headers) throws Exception
+  private RestRequest buildRequest(URI uri,
+                                   boolean hasPrefix,
+                                   ResourceMethod method,
+                                   DataMap dataMap,
+                                   Map<String, String> headers,
+                                   ProtocolVersion protocolVersion) throws Exception
   {
-    try
+    if (!hasPrefix)
     {
-      uri = new URI(_uriPrefix + uri.toString());
-    }
-    catch (URISyntaxException e)
-    {
-      throw new IllegalArgumentException(e);
+      try
+      {
+        uri = new URI(_uriPrefix + uri.toString());
+      }
+      catch (URISyntaxException e)
+      {
+        throw new IllegalArgumentException(e);
+      }
     }
 
     RestRequestBuilder requestBuilder = new RestRequestBuilder(uri).setMethod(
@@ -468,6 +579,7 @@ public class RestClient
     requestBuilder.setHeaders(headers);
     addAcceptHeaders(requestBuilder);
     addEntityAndContentTypeHeaders(requestBuilder, dataMap);
+    addProtocolVersionHeader(requestBuilder, protocolVersion);
 
     if (method.getHttpMethod() == HttpMethod.POST)
     {
@@ -475,6 +587,16 @@ public class RestClient
     }
 
     return requestBuilder.build();
+  }
+
+  /**
+   * Adds the protocol version of Rest.li used to build the request to the headers for this request
+   * @param builder
+   * @param protocolVersion
+   */
+  private void addProtocolVersionHeader(RestRequestBuilder builder, ProtocolVersion protocolVersion)
+  {
+    builder.setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString());
   }
 
   public static enum AcceptType

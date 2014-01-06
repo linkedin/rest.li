@@ -20,8 +20,6 @@
 
 package com.linkedin.restli.common;
 
-import java.util.Arrays;
-import java.util.Map;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.MapDataSchema;
@@ -29,6 +27,8 @@ import com.linkedin.data.schema.Name;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.WrappingMapTemplate;
+import java.util.Arrays;
+import java.util.Map;
 
 /**
  * @author Josh Walker

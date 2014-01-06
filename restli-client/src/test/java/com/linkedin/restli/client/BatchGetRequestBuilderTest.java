@@ -16,8 +16,10 @@
 
 package com.linkedin.restli.client;
 
+import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -76,11 +78,11 @@ public class BatchGetRequestBuilderTest
                   .setParam("param", "paramValue");
     GetRequest<TestRecord> request = requestBuilder.build();
     BatchGetRequest<TestRecord> batchRequest = BatchGetRequestBuilder.batch(request);
-    Assert.assertEquals(batchRequest.getBaseURI(), request.getBaseURI());
-    Assert.assertEquals(batchRequest.getUri().toString(), expectedUri);
+    Assert.assertEquals(RestliUriBuilderUtil.createUriBuilder(batchRequest).buildBaseUri(),
+                        RestliUriBuilderUtil.createUriBuilder(request).buildBaseUri());
+    testUriGeneration(batchRequest, expectedUri);
     Assert.assertEquals(batchRequest.getFields(), request.getFields());
-    Assert.assertEquals(batchRequest.getIdObjects().size(), 1);
-    Assert.assertEquals(batchRequest.getIdObjects().iterator().next(), request.getIdObject());
+    checkObjectIds(batchRequest, new HashSet<Object>(Arrays.asList(request.getObjectId())), false);
   }
 
   @Test
@@ -100,11 +102,11 @@ public class BatchGetRequestBuilderTest
                   .setParam("param", "paramValue");
     GetRequest<TestRecord> request = requestBuilder.build();
     BatchGetRequest<TestRecord> batchRequest = BatchGetRequestBuilder.batch(request);
-    Assert.assertEquals(batchRequest.getBaseURI(), request.getBaseURI());
-    Assert.assertEquals(batchRequest.getUri().toString(), expectedUri);
+    Assert.assertEquals(RestliUriBuilderUtil.createUriBuilder(batchRequest).buildBaseUri(),
+                        RestliUriBuilderUtil.createUriBuilder(request).buildBaseUri());
+    testUriGeneration(batchRequest, expectedUri);
     Assert.assertEquals(batchRequest.getFields(), request.getFields());
-    Assert.assertEquals(batchRequest.getIdObjects().size(), 1);
-    Assert.assertEquals(batchRequest.getIdObjects().iterator().next(), request.getIdObject());
+    checkObjectIds(batchRequest, new HashSet<Object>(Arrays.asList(request.getObjectId())), true);
   }
 
   @Test
@@ -136,14 +138,15 @@ public class BatchGetRequestBuilderTest
     @SuppressWarnings("unchecked")
     BatchGetRequest<TestRecord> batchingRequest =
         BatchGetRequestBuilder.batch(Arrays.asList(batchRequest1, batchRequest2));
-    Assert.assertEquals(batchingRequest.getUri().toString(), expectedUri);
-    Assert.assertEquals(batchingRequest.getBaseURI(), batchRequest1.getBaseURI());
+    testUriGeneration(batchingRequest, expectedUri);
+    Assert.assertEquals(RestliUriBuilderUtil.createUriBuilder(batchingRequest).buildBaseUri(),
+                        RestliUriBuilderUtil.createUriBuilder(batchRequest1).buildBaseUri());
     Assert.assertEquals(batchingRequest.getFields(),
                         new HashSet<PathSpec>(Arrays.asList(FIELDS.id(), FIELDS.message())));
-    Assert.assertEquals(batchingRequest.getIdObjects(),
-                        new HashSet<String>(Arrays.asList("1", "2", "3")));
+    checkObjectIds(batchingRequest, new HashSet<Integer>(Arrays.asList(1, 2, 3)), false);
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void testComplexKeyBatching()
   {
@@ -191,7 +194,7 @@ public class BatchGetRequestBuilderTest
     BatchGetRequest<TestRecord> batchingRequest =
         BatchGetRequestBuilder.batch(Arrays.asList(batchRequest1, batchRequest2));
 
-    URI actualUri = batchingRequest.getUri();
+    URI actualUri = RestliUriBuilderUtil.createUriBuilder(batchingRequest).build();
     MultivaluedMap actualParams = UriComponent.decodeQuery(actualUri, true);
     MultivaluedMap expectedUriParams =
         UriComponent.decodeQuery(URI.create(expectedUri), true);
@@ -218,19 +221,11 @@ public class BatchGetRequestBuilderTest
         (DataList) expectedParamsDataMap.remove(RestConstants.QUERY_BATCH_IDS_PARAM);
     Assert.assertEquals(new HashSet<Object>(actualIds), new HashSet<Object>(expectedIds));
     Assert.assertEquals(actualParamsDataMap, expectedParamsDataMap);
-    Assert.assertEquals(batchingRequest.getBaseURI(), batchRequest1.getBaseURI());
+    Assert.assertEquals(RestliUriBuilderUtil.createUriBuilder(batchingRequest).buildBaseUri(),
+                        RestliUriBuilderUtil.createUriBuilder(batchRequest1).buildBaseUri());
     Assert.assertEquals(batchingRequest.getFields(),
                         new HashSet<PathSpec>(Arrays.asList(FIELDS.id(), FIELDS.message())));
-    Set<Object> ids = batchingRequest.getIdObjects();
-    Set<String> idStrs = new HashSet<String>(ids.size());
-    for (Object id : ids)
-    {
-      idStrs.add(id.toString());
-    }
-    Assert.assertEquals(idStrs,
-                        new HashSet<String>(Arrays.asList("id=3&message=keyMessage3",
-                                                          "id=1&message=keyMessage1",
-                                                          "id=2&message=keyMessage2")));
+    checkObjectIds(batchingRequest, new HashSet<Object>(Arrays.asList(complexKey1, complexKey2, complexKey3)), true);
   }
 
   private ComplexResourceKey<TestRecord, TestRecord> buildComplexKey(Long keyId,
@@ -330,11 +325,11 @@ public class BatchGetRequestBuilderTest
         BatchGetRequestBuilder.batch(Arrays.asList(batchRequest1,
                                                    batchRequestBuilder2.build()),
                                      false);
-    Assert.assertEquals(batchingRequest.getBaseURI(), batchRequest1.getBaseURI());
+    Assert.assertEquals(RestliUriBuilderUtil.createUriBuilder(batchingRequest).buildBaseUri(),
+                        RestliUriBuilderUtil.createUriBuilder(batchRequest1).buildBaseUri());
     Assert.assertEquals(batchingRequest.getFields(),
                         new HashSet<PathSpec>(Arrays.asList(FIELDS.id())));
-    Assert.assertEquals(batchingRequest.getIdObjects(),
-                        new HashSet<String>(Arrays.asList("1", "2", "3")));
+    checkObjectIds(batchingRequest, new HashSet<Integer>(Arrays.asList(1, 2, 3)), false);
   }
 
   @Test
@@ -390,10 +385,10 @@ public class BatchGetRequestBuilderTest
     BatchGetRequest<TestRecord> batchingRequest =
         BatchGetRequestBuilder.batch(Arrays.asList(batchRequest1,
                                                    batchRequestBuilder2.build()));
-    Assert.assertEquals(batchingRequest.getBaseURI(), batchRequest1.getBaseURI());
+    Assert.assertEquals(RestliUriBuilderUtil.createUriBuilder(batchingRequest).buildBaseUri(),
+                        RestliUriBuilderUtil.createUriBuilder(batchRequest1).buildBaseUri());
     Assert.assertEquals(batchingRequest.getFields(), Collections.emptySet());
-    Assert.assertEquals(batchingRequest.getIdObjects(),
-                        new HashSet<String>(Arrays.asList("1", "2", "3")));
+    checkObjectIds(batchingRequest, new HashSet<Integer>(Arrays.asList(1, 2, 3)), false);
   }
 
   @Test
@@ -417,10 +412,10 @@ public class BatchGetRequestBuilderTest
     BatchGetRequest<TestRecord> batchingRequest =
         BatchGetRequestBuilder.batch(Arrays.asList(batchRequest1,
                                                    batchRequestBuilder2.build()));
-    Assert.assertEquals(batchingRequest.getBaseURI(), batchRequest1.getBaseURI());
+    Assert.assertEquals(RestliUriBuilderUtil.createUriBuilder(batchingRequest).buildBaseUri(),
+                        RestliUriBuilderUtil.createUriBuilder(batchRequest1).buildBaseUri());
     Assert.assertEquals(batchingRequest.getFields(), Collections.emptySet());
-    Assert.assertEquals(batchingRequest.getIdObjects(),
-                        new HashSet<String>(Arrays.asList("1", "2", "3")));
+    checkObjectIds(batchingRequest, new HashSet<Integer>(Arrays.asList(1, 2, 3)), false);
   }
 
   @Test
@@ -444,9 +439,35 @@ public class BatchGetRequestBuilderTest
     BatchGetRequest<TestRecord> batchingRequest =
         BatchGetRequestBuilder.batch(Arrays.asList(batchRequest1,
                                                    batchRequestBuilder2.build()));
-    Assert.assertEquals(batchingRequest.getBaseURI(), batchRequest1.getBaseURI());
+    Assert.assertEquals(RestliUriBuilderUtil.createUriBuilder(batchingRequest).buildBaseUri(),
+                        RestliUriBuilderUtil.createUriBuilder(batchRequest1).buildBaseUri());
     Assert.assertEquals(batchingRequest.getFields(), Collections.emptySet());
-    Assert.assertEquals(batchingRequest.getIdObjects(),
-                        new HashSet<String>(Arrays.asList("1", "2", "3")));
+    checkObjectIds(batchingRequest, new HashSet<Integer>(Arrays.asList(1, 2, 3)), false);
+  }
+
+  @SuppressWarnings("deprecation")
+  private void testUriGeneration(BatchGetRequest request, String expectedUri)
+  {
+    Assert.assertEquals(RestliUriBuilderUtil.createUriBuilder(request).build().toString(), expectedUri);
+    Assert.assertEquals(request.getUri().toString(), expectedUri);
+  }
+
+  @SuppressWarnings("deprecation")
+  private void checkObjectIds(BatchRequest request, Set<?> expectedIds, boolean isComplexKey)
+  {
+    Assert.assertEquals(request.getObjectIds(), expectedIds);
+    if (isComplexKey)
+    {
+      Assert.assertEquals(request.getIdObjects(), expectedIds);
+    }
+    else
+    {
+      Set<String> idsAsStrings = new HashSet<String>(expectedIds.size());
+      for (Object o: expectedIds)
+      {
+        idsAsStrings.add(o.toString());
+      }
+      Assert.assertEquals(request.getIdObjects(), idsAsStrings);
+    }
   }
 }

@@ -122,6 +122,9 @@ public class RestLiResponseHandler
     Map<String, String> headers = new HashMap<String, String>();
     headers.putAll(((ServerResourceContext) routingResult.getContext()).getResponseHeaders());
 
+    headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION,
+                ((ServerResourceContext) routingResult.getContext()).getRestliProtocolVersion().toString());
+
     if (responseObject == null)
     {
       boolean isAction =
