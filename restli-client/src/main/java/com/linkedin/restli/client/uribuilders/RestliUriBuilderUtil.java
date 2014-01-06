@@ -29,6 +29,7 @@ import com.linkedin.restli.client.DeleteRequest;
 import com.linkedin.restli.client.FindRequest;
 import com.linkedin.restli.client.GetAllRequest;
 import com.linkedin.restli.client.GetRequest;
+import com.linkedin.restli.client.OptionsRequest;
 import com.linkedin.restli.client.PartialUpdateRequest;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.UpdateRequest;
@@ -95,6 +96,8 @@ public class RestliUriBuilderUtil
         return new BatchDeleteRequestUriBuilder((BatchDeleteRequest)request, uriPrefix, version);
       case GET_ALL:
         return new GetAllRequestUriBuilder((GetAllRequest)request, uriPrefix, version);
+      case OPTIONS:
+        return new OptionsRequestUriBuilder((OptionsRequest)request, uriPrefix, version);
       default:
         throw new IllegalArgumentException("Unknown Request method " + request.getMethod());
     }

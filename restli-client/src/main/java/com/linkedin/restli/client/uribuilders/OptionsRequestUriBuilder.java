@@ -13,27 +13,32 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
-package com.linkedin.restli.client;
+
+package com.linkedin.restli.client.uribuilders;
 
 
-import com.linkedin.restli.common.OptionsResponse;
+import com.linkedin.jersey.api.uri.UriBuilder;
+import com.linkedin.restli.client.OptionsRequest;
+import com.linkedin.restli.common.ProtocolVersion;
+import java.net.URI;
 
 
 /**
- * Builds an OptionsRequest.
- *
- * @author jbetz
+ * @author kparikh
  */
-public class OptionsRequestBuilder extends AbstractRequestBuilder<Void, OptionsResponse, OptionsRequest>
+class OptionsRequestUriBuilder extends AbstractRestliRequestUriBuilder<OptionsRequest>
 {
-  public OptionsRequestBuilder(String baseUriTemplate)
+
+  OptionsRequestUriBuilder(OptionsRequest request, String uriPrefix, ProtocolVersion version)
   {
-    super(baseUriTemplate, null);
+    super(request, uriPrefix, version);
   }
 
   @Override
-  public OptionsRequest build()
+  public URI build()
   {
-    return new OptionsRequest(_headers, _queryParams, _resourceSpec, _baseURITemplate, _pathKeys);
+    UriBuilder b = UriBuilder.fromUri(buildBaseUriWithPrefix());
+    appendQueryParams(b);
+    return b.build();
   }
 }
