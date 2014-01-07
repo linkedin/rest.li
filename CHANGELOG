@@ -1,6 +1,11 @@
-1.10.8
+1.11.1
 ------
 
+1.11.0
+------
+(RB=235394)
+Refactor *RequestBuilders into *RequestUriBuilders that are responsbile for constructing the request URI.
+Introduced the concept of a Rest.li protocol version.
 
 1.10.7
 ------
