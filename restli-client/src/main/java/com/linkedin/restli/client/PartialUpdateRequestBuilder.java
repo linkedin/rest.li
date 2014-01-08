@@ -40,9 +40,18 @@ public class PartialUpdateRequestBuilder<K, V extends RecordTemplate> extends
   private K _id;
   private PatchRequest<V> _input;
 
+  @Deprecated
   public PartialUpdateRequestBuilder(String baseUriTemplate, Class<V> valueClass, ResourceSpec resourceSpec)
   {
-    super(baseUriTemplate, resourceSpec);
+    this(baseUriTemplate, valueClass, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
+  }
+
+  public PartialUpdateRequestBuilder(String baseUriTemplate,
+                                     Class<V> valueClass,
+                                     ResourceSpec resourceSpec,
+                                     RestliRequestOptions requestOptions)
+  {
+    super(baseUriTemplate, resourceSpec, requestOptions);
   }
 
   public PartialUpdateRequestBuilder<K, V> id(K id)
@@ -146,6 +155,7 @@ public class PartialUpdateRequestBuilder<K, V extends RecordTemplate> extends
                                        _queryParams,
                                        _baseURITemplate,
                                        _pathKeys,
+                                       _requestOptions,
                                        _id);
   }
 

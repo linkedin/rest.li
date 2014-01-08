@@ -38,11 +38,19 @@ public class GetAllRequestBuilder<K, V extends RecordTemplate> extends
 
   private final Class<V> _elementClass;
 
+  @Deprecated
   public GetAllRequestBuilder(String baseUriTemplate, Class<V> elementClass, ResourceSpec resourceSpec)
   {
-    super(baseUriTemplate, resourceSpec);
-    _elementClass = elementClass;
+    this(baseUriTemplate, elementClass, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
+  }
 
+  public GetAllRequestBuilder(String baseUriTemplate,
+                              Class<V> elementClass,
+                              ResourceSpec resourceSpec,
+                              RestliRequestOptions requestOptions)
+  {
+    super(baseUriTemplate, resourceSpec, requestOptions);
+    _elementClass = elementClass;
   }
 
   public GetAllRequestBuilder<K, V> paginate(int start, int count)
@@ -159,6 +167,7 @@ public class GetAllRequestBuilder<K, V extends RecordTemplate> extends
                                 _queryParams,
                                 _baseURITemplate,
                                 _pathKeys,
+                                _requestOptions,
                                 _assocKey);
   }
 }

@@ -78,6 +78,7 @@ public class Request<T>
   private final String                 _methodName; // needed to identify finders and actions. null for everything else
   private final String                 _baseUriTemplate;
   private final Map<String, Object>    _pathKeys;
+  private final RestliRequestOptions   _requestOptions;
 
   @Deprecated
   public Request(URI uri,
@@ -149,6 +150,7 @@ public class Request<T>
     _pathKeys = null;
     _uri = uri;
     _hasUri = true;
+    _requestOptions = RestliRequestOptions.DEFAULT_OPTIONS;
   }
 
   Request(ResourceMethod method,
@@ -159,7 +161,8 @@ public class Request<T>
           Map<String, Object> queryParams,
           String methodName,
           String baseUriTemplate,
-          Map<String, Object> pathKeys)
+          Map<String, Object> pathKeys,
+          RestliRequestOptions requestOptions)
   {
     _method = method;
     _inputRecord = inputRecord;
@@ -189,6 +192,8 @@ public class Request<T>
     {
       validatePathKeys();
     }
+
+    _requestOptions = (requestOptions == null) ? RestliRequestOptions.DEFAULT_OPTIONS : requestOptions;
   }
 
   /**
@@ -464,6 +469,11 @@ public class Request<T>
     return _queryParams;
   }
 
+  public RestliRequestOptions getRequestOptions()
+  {
+    return _requestOptions;
+  }
+
   /**
    * This method is to be exposed in the extending classes when appropriate
    */
@@ -549,6 +559,10 @@ public class Request<T>
     {
       return false;
     }
+    if (_requestOptions != null? !_requestOptions.equals(request._requestOptions) : request._requestOptions != null)
+    {
+      return false;
+    }
 
     return true;
   }
@@ -564,6 +578,7 @@ public class Request<T>
     result = 31 * result + (_resourceSpec != null ? _resourceSpec.hashCode() : 0);
     result = 31 * result + (_queryParams != null ? _queryParams.hashCode() : 0);
     result = 31 * result + (_methodName != null ? _methodName.hashCode() : 0);
+    result = 31 * result + (_requestOptions != null ? _requestOptions.hashCode() : 0);
     return result;
   }
 
@@ -576,6 +591,7 @@ public class Request<T>
     sb.append(", _input=").append(_inputRecord);
     sb.append(", _method=").append(_method);
     sb.append(", _queryParams=").append(_queryParams);
+    sb.append(", _requestOptions=").append(_requestOptions);
     sb.append('}');
     return sb.toString();
   }

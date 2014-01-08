@@ -44,6 +44,7 @@ public class UpdateRequest<T extends RecordTemplate>
                 Map<String, Object> queryParams,
                 String baseUriTemplate,
                 Map<String, Object> pathKeys,
+                RestliRequestOptions requestOptions,
                 Object id)
   {
     super(ResourceMethod.UPDATE,
@@ -54,7 +55,8 @@ public class UpdateRequest<T extends RecordTemplate>
           queryParams,
           null,
           baseUriTemplate,
-          pathKeys);
+          pathKeys,
+          requestOptions);
     _id = id;
     validateKeyPresence(_id);
   }

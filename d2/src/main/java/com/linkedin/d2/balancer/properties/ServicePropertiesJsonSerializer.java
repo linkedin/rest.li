@@ -129,6 +129,11 @@ public class ServicePropertiesJsonSerializer implements
     {
       metadataProperties.put(PropertyKeys.IS_DEFAULT_SERVICE, isDefaultService);
     }
+    Map<String, Object> publishedMetadataProperties = mapGet(map, PropertyKeys.SERVICE_METADATA_PROPERTIES);
+    if (publishedMetadataProperties != null)
+    {
+      metadataProperties.putAll(publishedMetadataProperties);
+    }
 
     return new ServiceProperties((String) map.get(PropertyKeys.SERVICE_NAME),
                                  (String) map.get(PropertyKeys.CLUSTER_NAME),

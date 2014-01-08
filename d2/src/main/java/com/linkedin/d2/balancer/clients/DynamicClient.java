@@ -16,12 +16,15 @@
 
 package com.linkedin.d2.balancer.clients;
 
+
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.D2Client;
 import com.linkedin.d2.balancer.Facilities;
 import com.linkedin.d2.balancer.LoadBalancer;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
+import com.linkedin.d2.balancer.properties.ServiceProperties;
+import com.linkedin.d2.balancer.util.LoadBalancerUtil;
 import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -31,10 +34,14 @@ import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.AbstractClient;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
+import java.net.URI;
+import java.util.Collections;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.linkedin.d2.discovery.util.LogUtil.debug;
+import static com.linkedin.d2.discovery.util.LogUtil.error;
 import static com.linkedin.d2.discovery.util.LogUtil.info;
 import static com.linkedin.d2.discovery.util.LogUtil.trace;
 import static com.linkedin.d2.discovery.util.LogUtil.warn;
@@ -139,5 +146,27 @@ public class DynamicClient extends AbstractClient implements D2Client
   public Facilities getFacilities()
   {
     return _facilities;
+  }
+
+  @Override
+  public Map<String, Object> getMetadata(URI uri)
+  {
+    if (_balancer != null)
+    {
+      try
+      {
+        String serviceName = LoadBalancerUtil.getServiceNameFromUri(uri);
+        ServiceProperties serviceProperties = _balancer.getLoadBalancedServiceProperties(serviceName);
+        if (serviceProperties != null)
+        {
+          return Collections.unmodifiableMap(serviceProperties.getServiceMetadataProperties());
+        }
+      }
+      catch (ServiceUnavailableException e)
+      {
+        error(_log, e);
+      }
+    }
+    return Collections.emptyMap();
   }
 }

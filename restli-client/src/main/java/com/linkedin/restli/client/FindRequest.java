@@ -45,6 +45,7 @@ public class FindRequest<T extends RecordTemplate>
               String name,
               String baseUriTemplate,
               Map<String, Object> pathKeys,
+              RestliRequestOptions requestOptions,
               CompoundKey assocKey)
   {
     super(ResourceMethod.FINDER,
@@ -55,7 +56,8 @@ public class FindRequest<T extends RecordTemplate>
           queryParams,
           name,
           baseUriTemplate,
-          pathKeys);
+          pathKeys,
+          requestOptions);
     _assocKey = assocKey;
   }
 

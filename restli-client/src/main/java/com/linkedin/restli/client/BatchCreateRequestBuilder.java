@@ -41,9 +41,18 @@ public class BatchCreateRequestBuilder<K, V extends RecordTemplate> extends
 {
   private final CollectionRequest<V> _input;
 
+  @Deprecated
   public BatchCreateRequestBuilder(String baseUriTemplate, Class<V> valueClass, ResourceSpec resourceSpec)
   {
-    super(baseUriTemplate, resourceSpec);
+    this(baseUriTemplate, valueClass, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
+  }
+
+  public BatchCreateRequestBuilder(String baseUriTemplate,
+                                   Class<V> valueClass,
+                                   ResourceSpec resourceSpec,
+                                   RestliRequestOptions requestOptions)
+  {
+    super(baseUriTemplate, resourceSpec, requestOptions);
     _input = new CollectionRequest<V>(new DataMap(), valueClass);
   }
 
@@ -147,7 +156,8 @@ public class BatchCreateRequestBuilder<K, V extends RecordTemplate> extends
                                      _resourceSpec,
                                      _queryParams,
                                      _baseURITemplate,
-                                     _pathKeys);
+                                     _pathKeys,
+                                     _requestOptions);
   }
 
 }

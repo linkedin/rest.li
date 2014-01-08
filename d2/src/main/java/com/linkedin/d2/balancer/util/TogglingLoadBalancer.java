@@ -25,6 +25,7 @@ import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.LoadBalancer;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
+import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.util.hashing.HashRingProvider;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.d2.discovery.event.PropertyEventThread;
@@ -83,6 +84,13 @@ public class TogglingLoadBalancer implements LoadBalancer, HashRingProvider, Cli
   public void shutdown(PropertyEventThread.PropertyEventShutdownCallback shutdown)
   {
     _balancer.shutdown(shutdown);
+  }
+
+  @Override
+  public ServiceProperties getLoadBalancedServiceProperties(String serviceName)
+      throws ServiceUnavailableException
+  {
+    return _balancer.getLoadBalancedServiceProperties(serviceName);
   }
 
   @Override

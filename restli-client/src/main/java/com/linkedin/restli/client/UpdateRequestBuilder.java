@@ -39,9 +39,18 @@ public class UpdateRequestBuilder<K, V extends RecordTemplate> extends
   private V _input;
   private K _id;
 
+  @Deprecated
   public UpdateRequestBuilder(String baseUriTemplate, Class<V> valueClass, ResourceSpec resourceSpec)
   {
-    super(baseUriTemplate, resourceSpec);
+    this(baseUriTemplate, valueClass, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
+  }
+
+  public UpdateRequestBuilder(String baseUriTemplate,
+                              Class<V> valueClass,
+                              ResourceSpec resourceSpec,
+                              RestliRequestOptions requestOptions)
+  {
+    super(baseUriTemplate, resourceSpec, requestOptions);
   }
 
   public UpdateRequestBuilder<K, V> id(K id)
@@ -139,7 +148,14 @@ public class UpdateRequestBuilder<K, V extends RecordTemplate> extends
   @Override
   public UpdateRequest<V> build()
   {
-    return new UpdateRequest<V>(_input, _headers, _resourceSpec, _queryParams, _baseURITemplate, _pathKeys, _id);
+    return new UpdateRequest<V>(_input,
+                                _headers,
+                                _resourceSpec,
+                                _queryParams,
+                                _baseURITemplate,
+                                _pathKeys,
+                                _requestOptions,
+                                _id);
   }
 
 }

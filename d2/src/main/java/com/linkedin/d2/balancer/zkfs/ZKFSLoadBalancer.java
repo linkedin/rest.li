@@ -28,6 +28,7 @@ import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.LoadBalancer;
 import com.linkedin.d2.balancer.LoadBalancerWithFacilities;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
+import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.DirectoryProvider;
 import com.linkedin.d2.balancer.util.KeyMapperProvider;
@@ -208,6 +209,13 @@ public class ZKFSLoadBalancer
         }
       }
     });
+  }
+
+  @Override
+  public ServiceProperties getLoadBalancedServiceProperties(String serviceName)
+      throws ServiceUnavailableException
+  {
+    return _currentLoadBalancer.getLoadBalancedServiceProperties(serviceName);
   }
 
   @Override

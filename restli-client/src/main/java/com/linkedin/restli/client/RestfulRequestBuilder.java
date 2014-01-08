@@ -33,9 +33,15 @@ import java.util.Map;
 public abstract class RestfulRequestBuilder<K, V extends RecordTemplate, R extends Request<?>> extends
     AbstractRequestBuilder<K, V, R>
 {
+  @Deprecated
   protected RestfulRequestBuilder(String baseURITemplate, ResourceSpec resourceSpec)
   {
-    super(baseURITemplate, resourceSpec);
+    this(baseURITemplate, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
+  }
+
+  protected RestfulRequestBuilder(String baseURITemplate, ResourceSpec resourceSpec, RestliRequestOptions requestOptions)
+  {
+    super(baseURITemplate, resourceSpec, requestOptions);
   }
 
   /**

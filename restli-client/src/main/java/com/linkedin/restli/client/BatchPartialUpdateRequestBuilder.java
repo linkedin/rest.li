@@ -41,12 +41,21 @@ public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> exten
   private final CollectionRequest<KeyValueRecord<K, PatchRequest>> _entities;
   private final KeyValueRecordFactory<K, PatchRequest> _keyValueRecordFactory;
 
-  @SuppressWarnings("unchecked")
+  @Deprecated
   public BatchPartialUpdateRequestBuilder(String baseUriTemplate,
                                           Class<V> valueClass,
                                           ResourceSpec resourceSpec)
   {
-    super(baseUriTemplate, resourceSpec);
+    this(baseUriTemplate, valueClass, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
+  }
+
+  @SuppressWarnings("unchecked")
+  public BatchPartialUpdateRequestBuilder(String baseUriTemplate,
+                                          Class<V> valueClass,
+                                          ResourceSpec resourceSpec,
+                                          RestliRequestOptions requestOptions)
+  {
+    super(baseUriTemplate, resourceSpec, requestOptions);
     _entities = new CollectionRequest(KeyValueRecord.class);
     _keyValueRecordFactory
         = new KeyValueRecordFactory(_resourceSpec.getKeyClass(),
@@ -164,7 +173,8 @@ public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> exten
                                                _queryParams,
                                                _resourceSpec,
                                                _baseURITemplate,
-                                               _pathKeys);
+                                               _pathKeys,
+                                               _requestOptions);
   }
 
 }

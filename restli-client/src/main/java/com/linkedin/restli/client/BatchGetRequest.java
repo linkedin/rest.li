@@ -43,7 +43,8 @@ public class BatchGetRequest<T extends RecordTemplate> extends BatchRequest<Batc
                   Map<String, Object> queryParams,
                   ResourceSpec resourceSpec,
                   String baseUriTemplate,
-                  Map<String, Object> pathKeys)
+                  Map<String, Object> pathKeys,
+                  RestliRequestOptions requestOptions)
   {
     super(ResourceMethod.BATCH_GET,
           null,
@@ -52,7 +53,8 @@ public class BatchGetRequest<T extends RecordTemplate> extends BatchRequest<Batc
           resourceSpec,
           queryParams,
           baseUriTemplate,
-          pathKeys);
+          pathKeys,
+          requestOptions);
   }
 
   @Override

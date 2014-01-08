@@ -52,6 +52,7 @@ public class BatchUpdateRequest<K, V extends RecordTemplate>
                      ResourceSpec resourceSpec,
                      String baseUriTemplate,
                      Map<String, Object> pathKeys,
+                     RestliRequestOptions requestOptions,
                      Map<K, V> updateInputMap)
   {
     super(ResourceMethod.BATCH_UPDATE,
@@ -65,7 +66,8 @@ public class BatchUpdateRequest<K, V extends RecordTemplate>
           resourceSpec,
           queryParams,
           baseUriTemplate,
-          pathKeys);
+          pathKeys,
+          requestOptions);
     _updateInputMap = Collections.unmodifiableMap(updateInputMap);
   }
 

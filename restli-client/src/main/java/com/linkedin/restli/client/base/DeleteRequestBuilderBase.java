@@ -22,6 +22,7 @@ package com.linkedin.restli.client.base;
 
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.client.DeleteRequestBuilder;
+import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.common.ResourceSpec;
 
 
@@ -36,9 +37,18 @@ public abstract class DeleteRequestBuilderBase<
         RB extends DeleteRequestBuilderBase<K, V, RB>>
         extends DeleteRequestBuilder<K, V>
 {
+  @Deprecated
   protected DeleteRequestBuilderBase(String baseUriTemplate, Class<V> valueClass, ResourceSpec resourceSpec)
   {
-    super(baseUriTemplate, valueClass, resourceSpec);
+    this(baseUriTemplate, valueClass, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
+  }
+
+  protected DeleteRequestBuilderBase(String baseUriTemplate,
+                                     Class<V> valueClass,
+                                     ResourceSpec resourceSpec,
+                                     RestliRequestOptions requestOptions)
+  {
+    super(baseUriTemplate, valueClass, resourceSpec, requestOptions);
   }
 
   @SuppressWarnings({"unchecked"})

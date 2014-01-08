@@ -22,6 +22,7 @@ package com.linkedin.restli.client.base;
 
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.client.CreateRequestBuilder;
+import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.common.ResourceSpec;
 
 
@@ -35,9 +36,18 @@ public abstract class CreateRequestBuilderBase<K,
         RB extends CreateRequestBuilderBase<K, V, RB>>
         extends CreateRequestBuilder<K, V>
 {
+  @Deprecated
   protected CreateRequestBuilderBase(String baseUriTemplate, Class<V> valueClass, ResourceSpec resourceSpec)
   {
-    super(baseUriTemplate, valueClass, resourceSpec);
+    this(baseUriTemplate, valueClass, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
+  }
+
+  protected CreateRequestBuilderBase(String baseUriTemplate,
+                                     Class<V> valueClass,
+                                     ResourceSpec resourceSpec,
+                                     RestliRequestOptions requestOptions)
+  {
+    super(baseUriTemplate, valueClass, resourceSpec, requestOptions);
   }
 
   @SuppressWarnings({"unchecked"})

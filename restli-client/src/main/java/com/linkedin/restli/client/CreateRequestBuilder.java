@@ -38,9 +38,18 @@ public class CreateRequestBuilder<K, V extends RecordTemplate>
 {
   private V _input;
 
+  @Deprecated
   public CreateRequestBuilder(String baseUriTemplate, Class<V> valueClass, ResourceSpec resourceSpec)
   {
-    super(baseUriTemplate, resourceSpec);
+    this(baseUriTemplate, valueClass, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
+  }
+
+  public CreateRequestBuilder(String baseUriTemplate,
+                              Class<V> valueClass,
+                              ResourceSpec resourceSpec,
+                              RestliRequestOptions requestOptions)
+  {
+    super(baseUriTemplate, resourceSpec, requestOptions);
   }
 
   public CreateRequestBuilder<K, V> input(V entity)
@@ -137,7 +146,13 @@ public class CreateRequestBuilder<K, V extends RecordTemplate>
   @Override
   public CreateRequest<V> build()
   {
-    return new CreateRequest<V>(_input, _headers, _resourceSpec, _queryParams, _baseURITemplate, _pathKeys);
+    return new CreateRequest<V>(_input,
+                                _headers,
+                                _resourceSpec,
+                                _queryParams,
+                                _baseURITemplate,
+                                _pathKeys,
+                                _requestOptions);
   }
 
 }

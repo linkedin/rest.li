@@ -20,7 +20,6 @@
 
 package com.linkedin.restli.client;
 
-import java.util.concurrent.CountDownLatch;
 
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.clients.DynamicClient;
@@ -28,6 +27,7 @@ import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
 import com.linkedin.d2.discovery.event.PropertyEventThread;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.transport.common.Client;
+import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.examples.RestLiIntegrationTest;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
@@ -35,7 +35,7 @@ import com.linkedin.restli.examples.groups.api.Group;
 import com.linkedin.restli.examples.groups.api.GroupMembership;
 import com.linkedin.restli.examples.groups.client.GroupMembershipsBuilders;
 import com.linkedin.restli.examples.groups.client.GroupsBuilders;
-
+import java.util.concurrent.CountDownLatch;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterTest;
@@ -97,6 +97,8 @@ public class TestRestLiD2Integration extends RestLiIntegrationTest
     Greeting g = future.getResponse().getEntity();
     Assert.assertEquals(g.getId().longValue(), 1L);
     Assert.assertNotNull(g.getMessage());
+    Assert.assertEquals(future.getResponse().getHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION),
+                        RestConstants.DEFAULT_PROTOCOL_VERSION.toString());
   }
 
   @Test

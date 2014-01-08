@@ -44,6 +44,7 @@ public class PartialUpdateRequest<T>
                        Map<String, Object> queryParams,
                        String baseUriTemplate,
                        Map<String, Object> pathKeys,
+                       RestliRequestOptions requestOptions,
                        Object id)
   {
     super(ResourceMethod.PARTIAL_UPDATE,
@@ -54,7 +55,8 @@ public class PartialUpdateRequest<T>
           queryParams,
           null,
           baseUriTemplate,
-          pathKeys);
+          pathKeys,
+          requestOptions);
     _id = id;
     validateKeyPresence(_id);
   }

@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.examples;
 
+import com.linkedin.restli.client.RestliRequestOptions;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -104,7 +105,10 @@ public class TestAllPartitionsRequestBuilder extends RestLiIntegrationTest {
     ConsistentHashKeyMapper mapper = getKeyToHostMapper(PARTITION_NUM);
 
     AllPartitionsRequestBuilder<CollectionResponse<Greeting>> searchRB = new AllPartitionsRequestBuilder<CollectionResponse<Greeting>>(mapper);
-    FindRequestBuilder<Long, Greeting> findRB = new FindRequestBuilder<Long, Greeting>(TEST_URI, Greeting.class, _COLL_SPEC);
+    FindRequestBuilder<Long, Greeting> findRB = new FindRequestBuilder<Long, Greeting>(TEST_URI,
+                                                                                       Greeting.class,
+                                                                                       _COLL_SPEC,
+                                                                                       RestliRequestOptions.DEFAULT_OPTIONS);
     Collection<RequestContext> requestContexts =
         (searchRB.buildRequestContexts(findRB.fields(Greeting.fields().message()).build(), new RequestContext())).getPartitionInfo();
 
@@ -134,8 +138,10 @@ public class TestAllPartitionsRequestBuilder extends RestLiIntegrationTest {
     final int PARTITION_NUM = 10;
     ConsistentHashKeyMapper mapper = getKeyToHostMapper(PARTITION_NUM);
     AllPartitionsRequestBuilder<Greeting> searchRB = new AllPartitionsRequestBuilder<Greeting>(mapper);
-    ActionRequestBuilder<Long, Greeting> builder = new ActionRequestBuilder<Long, Greeting>(TEST_URI, Greeting.class,
-        _COLL_SPEC);
+    ActionRequestBuilder<Long, Greeting> builder = new ActionRequestBuilder<Long, Greeting>(TEST_URI,
+                                                                                            Greeting.class,
+                                                                                            _COLL_SPEC,
+                                                                                            RestliRequestOptions.DEFAULT_OPTIONS);
     ActionRequest<Greeting> request = builder.name("updateTone").id(1L).
         setParam(new FieldDef<Tone>("newTone", Tone.class, DataTemplateUtil.getSchema(Tone.class)), Tone.FRIENDLY).build();
 

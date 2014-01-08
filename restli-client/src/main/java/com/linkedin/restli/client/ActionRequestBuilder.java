@@ -32,7 +32,6 @@ import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.data.template.DynamicRecordTemplate;
 import com.linkedin.data.template.FieldDef;
-import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.restli.common.ActionResponse;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
@@ -52,9 +51,18 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
   private String                         _name;
   private final Map<FieldDef<?>, Object> _actionParams = new HashMap<FieldDef<?>, Object>();
 
+  @Deprecated
   public ActionRequestBuilder(String baseUriTemplate, Class<V> elementClass, ResourceSpec resourceSpec)
   {
-    super(baseUriTemplate, resourceSpec);
+    this(baseUriTemplate, elementClass, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
+  }
+
+  public ActionRequestBuilder(String baseUriTemplate,
+                              Class<V> elementClass,
+                              ResourceSpec resourceSpec,
+                              RestliRequestOptions requestOptions)
+  {
+    super(baseUriTemplate, resourceSpec, requestOptions);
     _elementClass = elementClass;
   }
 
@@ -215,6 +223,7 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
                                 _name,
                                 _baseURITemplate,
                                 _pathKeys,
+                                _requestOptions,
                                 _id);
 
   }

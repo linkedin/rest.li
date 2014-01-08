@@ -37,6 +37,7 @@ import com.linkedin.jersey.api.uri.UriTemplate;
 import com.linkedin.pegasus.generator.DataTemplateGenerator;
 import com.linkedin.pegasus.generator.GeneratorResult;
 import com.linkedin.restli.client.OptionsRequestBuilder;
+import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.client.base.ActionRequestBuilderBase;
 import com.linkedin.restli.client.base.BatchCreateRequestBuilderBase;
 import com.linkedin.restli.client.base.BatchDeleteRequestBuilderBase;
@@ -79,9 +80,11 @@ import com.linkedin.util.FileUtil;
 import com.sun.codemodel.JBlock;
 import com.sun.codemodel.JClass;
 import com.sun.codemodel.JClassAlreadyExistsException;
+import com.sun.codemodel.JConditional;
 import com.sun.codemodel.JDefinedClass;
 import com.sun.codemodel.JExpr;
 import com.sun.codemodel.JExpression;
+import com.sun.codemodel.JFieldRef;
 import com.sun.codemodel.JFieldVar;
 import com.sun.codemodel.JInvocation;
 import com.sun.codemodel.JMethod;
@@ -89,9 +92,6 @@ import com.sun.codemodel.JMod;
 import com.sun.codemodel.JPackage;
 import com.sun.codemodel.JVar;
 import com.sun.codemodel.writer.FileCodeWriter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -104,6 +104,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Generates Java request builders from Rest.li idl.
@@ -357,6 +359,11 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
 
     JFieldVar baseUriField = facadeClass.field(JMod.PRIVATE | JMod.FINAL, String.class,
                                                "_baseUriTemplate");
+    JFieldVar requestOptionsField = facadeClass.field(JMod.PRIVATE,
+                                                      RestliRequestOptions.class,
+                                                      "_requestOptions");
+
+    final JClass restliRequestOptionsClass = getCodeModel().ref(RestliRequestOptions.class);
 
     String resourcePath = getResourcePath(resource.getPath());
 
@@ -366,20 +373,54 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
 
     originalResourceField.init(JExpr.lit(resourcePath));
 
-    JMethod constructor = facadeClass.constructor(JMod.PUBLIC);
-    constructor.body().assign(baseUriField, JExpr.lit(resourcePath));
+    /*
+    There will be 4 constructors:
+      ()
+      (String)
+      (RestliRequestOptions)
+      (String, RestliRequestOptions)
+    */
+    JMethod noArgConstructor = facadeClass.constructor(JMod.PUBLIC);
+    JMethod resourceNameOverrideConstructor = facadeClass.constructor(JMod.PUBLIC);
+    JMethod requestOptionsOverrideConstructor = facadeClass.constructor(JMod.PUBLIC);
+    JMethod mainConstructor = facadeClass.constructor(JMod.PUBLIC);
 
-    JMethod overrideConstructor = facadeClass.constructor(JMod.PUBLIC);
-    JVar resourceNameParam = overrideConstructor.param(_stringClass, "primaryResourceName");
+    JFieldRef defaultOptionsField = restliRequestOptionsClass.staticRef("DEFAULT_OPTIONS");
+
+    // method that expresses the following logic
+    //   (requestOptions == null) ? return RestliRequestOptions.DEFAULT_OPTIONS : requestOptions;
+    JMethod requestOptionsAssigner = facadeClass.method(JMod.PRIVATE, RestliRequestOptions.class, "assignRequestOptions");
+    JVar requestOptionsAssignerParam = requestOptionsAssigner.param(RestliRequestOptions.class, "requestOptions");
+    JConditional requestNullCheck = requestOptionsAssigner.body()._if(requestOptionsAssignerParam.eq(JExpr._null()));
+    requestNullCheck._then().block()._return(defaultOptionsField);
+    requestNullCheck._else().block()._return(requestOptionsAssignerParam);
+
+    noArgConstructor.body().assign(baseUriField, originalResourceField);
+    noArgConstructor.body().assign(requestOptionsField, defaultOptionsField);
+
+    JVar resourceNameParam = resourceNameOverrideConstructor.param(_stringClass, "primaryResourceName");
+    resourceNameOverrideConstructor.body().invoke(THIS).arg(resourceNameParam).arg(defaultOptionsField);
+
+    JVar optionsParam = requestOptionsOverrideConstructor.param(RestliRequestOptions.class, "requestOptions");
+    requestOptionsOverrideConstructor.body().assign(baseUriField, originalResourceField);
+    requestOptionsOverrideConstructor.body().assign(requestOptionsField,
+                                                    new JBlock().invoke(requestOptionsAssigner).arg(optionsParam));
+
+
+    JVar mainConsResourceNameParam = mainConstructor.param(_stringClass, "primaryResourceName");
+    JVar mainConsOptionsParam = mainConstructor.param(RestliRequestOptions.class, "requestOptions");
+
     if (resourcePath.contains("/"))
     {
-      overrideConstructor.body().assign(baseUriField, JExpr.lit(resourcePath)
-              .invoke("replaceFirst").arg(JExpr.lit("[^/]*/")).arg(resourceNameParam.plus(JExpr.lit("/"))));
+      mainConstructor.body().assign(baseUriField, JExpr.lit(resourcePath)
+              .invoke("replaceFirst").arg(JExpr.lit("[^/]*/")).arg(mainConsResourceNameParam.plus(JExpr.lit("/"))));
     }
     else
     {
-      overrideConstructor.body().assign(baseUriField, resourceNameParam);
+      mainConstructor.body().assign(baseUriField, mainConsResourceNameParam);
     }
+    mainConstructor.body().assign(requestOptionsField,
+                                  new JBlock().invoke(requestOptionsAssigner).arg(mainConsOptionsParam));
 
     JMethod primaryResourceGetter = facadeClass.method(JMod.PUBLIC | JMod.STATIC, String.class, "getPrimaryResource");
     primaryResourceGetter.body()._return(originalResourceField);
@@ -472,7 +513,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
       throw new IllegalArgumentException("unsupported resource type for resource: '" + resourceName + '\'');
     }
 
-    generateOptions(facadeClass, baseUriField);
+    generateOptions(facadeClass, baseUriField, requestOptionsField);
 
     JFieldVar resourceSpecField = facadeClass.field(JMod.PRIVATE | JMod.STATIC | JMod.FINAL, _resourceSpecClass, "_resourceSpec");
     if (resourceSchemaClass == CollectionSchema.class ||
@@ -549,7 +590,8 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
                           resourceSpecField,
                           resourceName,
                           pathKeys,
-                          pathKeyTypes);
+                          pathKeyTypes,
+                          requestOptionsField);
 
       if (resourceSchemaClass == CollectionSchema.class ||
           resourceSchemaClass == AssociationSchema.class)
@@ -563,7 +605,8 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
                         resourceSpecField,
                         resourceName,
                         pathKeys,
-                        pathKeyTypes);
+                        pathKeyTypes,
+                        requestOptionsField);
       }
 
       generateSubResources(sourceFile, subresources, pathKeyTypes);
@@ -597,7 +640,8 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
                     resourceSpecField,
                     resourceName,
                     pathKeys,
-                    pathKeyTypes);
+                    pathKeyTypes,
+                    requestOptionsField);
 
 
     generateClassJavadoc(facadeClass, resource);
@@ -739,11 +783,11 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
   }
 
 
-  private void generateOptions(JDefinedClass facadeClass, JFieldVar baseUriField)
+  private void generateOptions(JDefinedClass facadeClass, JFieldVar baseUriField, JVar requestOptionsField)
   {
     JClass builderClass = getCodeModel().ref(OptionsRequestBuilder.class);
     JMethod finderMethod = facadeClass.method(JMod.PUBLIC, OptionsRequestBuilder.class, "options");
-    finderMethod.body()._return(JExpr._new(builderClass).arg(baseUriField));
+    finderMethod.body()._return(JExpr._new(builderClass).arg(baseUriField).arg(requestOptionsField));
   }
 
   private void generateSubResources(String sourceFile,
@@ -771,7 +815,8 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
                                JVar resourceSpecField,
                                String resourceName,
                                List<String> pathKeys,
-                               Map<String, JClass> pathKeyTypes)
+                               Map<String, JClass> pathKeyTypes,
+                               JFieldVar requestOptionsField)
           throws JClassAlreadyExistsException
   {
     if (finderSchemas != null)
@@ -791,7 +836,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
         JMethod finderMethod = facadeClass.method(JMod.PUBLIC, finderBuilderClass,
                                                 "findBy" + capitalize(finderName));
 
-        finderMethod.body()._return(JExpr._new(finderBuilderClass).arg(baseUriField).arg(resourceSpecField));
+        finderMethod.body()._return(JExpr._new(finderBuilderClass).arg(baseUriField).arg(resourceSpecField).arg(requestOptionsField));
 
         Set<String> finderKeys = new HashSet<String>();
         if (finder.getAssocKey() != null)
@@ -875,7 +920,8 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     JMethod derivedBuilderConstructor = derivedBuilderClass.constructor(JMod.PUBLIC);
     JVar uriParam = derivedBuilderConstructor.param(_stringClass, "baseUriTemplate");
     JVar resourceSpecParam = derivedBuilderConstructor.param(_resourceSpecClass, "resourceSpec");
-    derivedBuilderConstructor.body().invoke(SUPER).arg(uriParam).arg(valueClass.dotclass()).arg(resourceSpecParam);
+    JVar requestOptionsParam = derivedBuilderConstructor.param(RestliRequestOptions.class, "requestOptions");
+    derivedBuilderConstructor.body().invoke(SUPER).arg(uriParam).arg(valueClass.dotclass()).arg(resourceSpecParam).arg(requestOptionsParam);
     if (finderName != null)
     {
       derivedBuilderConstructor.body().add(JExpr._super().invoke("name").arg(finderName));
@@ -932,15 +978,23 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
                                JVar resourceSpecField,
                                String resourceName,
                                List<String> pathKeys,
-                               Map<String, JClass> pathKeyTypes)
+                               Map<String, JClass> pathKeyTypes,
+                               JFieldVar requestOptionsField)
           throws JClassAlreadyExistsException
   {
     if (resourceActions != null)
     {
       for (ActionSchema action : resourceActions)
       {
-        generateActionMethod(facadeClass, baseUriField, _voidClass, action, resourceSpecField, resourceName, pathKeys,
-                             pathKeyTypes);
+        generateActionMethod(facadeClass,
+                             baseUriField,
+                             _voidClass,
+                             action,
+                             resourceSpecField,
+                             resourceName,
+                             pathKeys,
+                             pathKeyTypes,
+                             requestOptionsField);
       }
     }
 
@@ -948,8 +1002,15 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     {
       for (ActionSchema action : entityActions)
       {
-        generateActionMethod(facadeClass, baseUriField, keyClass, action, resourceSpecField, resourceName, pathKeys,
-                             pathKeyTypes);
+        generateActionMethod(facadeClass,
+                             baseUriField,
+                             keyClass,
+                             action,
+                             resourceSpecField,
+                             resourceName,
+                             pathKeys,
+                             pathKeyTypes,
+                             requestOptionsField);
       }
     }
   }
@@ -960,7 +1021,8 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
                                     ActionSchema action,
                                     JVar resourceSpecField,
                                     String resourceName, List<String> pathKeys,
-                                    Map<String, JClass> pathKeyTypes)
+                                    Map<String, JClass> pathKeyTypes,
+                                    JFieldVar requestOptionsField)
           throws JClassAlreadyExistsException
   {
     JClass returnType = getActionReturnType(facadeClass, action.getReturns());
@@ -976,12 +1038,13 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     JVar uriParam = actionBuilderConstructor.param(_stringClass, "baseUriTemplate");
     JVar classParam = actionBuilderConstructor.param(getCodeModel().ref(Class.class).narrow(returnType), "returnClass");
     JVar resourceSpecParam = actionBuilderConstructor.param(_resourceSpecClass, "resourceSpec");
+    JVar actionsRequestOptionsParam = actionBuilderConstructor.param(RestliRequestOptions.class, "requestOptions");
     actionBuilderConstructor.body().invoke(SUPER).arg(uriParam).arg(classParam).arg(
-            resourceSpecParam);
+            resourceSpecParam).arg(actionsRequestOptionsParam);
     actionBuilderConstructor.body().add(JExpr._super().invoke("name").arg(actionName));
 
     JMethod actionMethod = facadeClass.method(JMod.PUBLIC, actionBuilderClass, "action" + capitalize(actionName));
-    actionMethod.body()._return(JExpr._new(actionBuilderClass).arg(baseUriField).arg(returnType.dotclass()).arg(resourceSpecField));
+    actionMethod.body()._return(JExpr._new(actionBuilderClass).arg(baseUriField).arg(returnType.dotclass()).arg(resourceSpecField).arg(requestOptionsField));
 
     if (action.getParameters() != null)
     {
@@ -1022,7 +1085,8 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
                                     JVar resourceSpecField,
                                     String resourceName,
                                     List<String> pathKeys,
-                                    Map<String, JClass> pathKeyTypes)
+                                    Map<String, JClass> pathKeyTypes,
+                                    JFieldVar requestOptionsField)
           throws JClassAlreadyExistsException
   {
     final Map<ResourceMethod, RestMethodSchema> schemaMap = new HashMap<ResourceMethod, RestMethodSchema>();
@@ -1060,7 +1124,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
         generatePathKeyBindingMethods(pathKeys, derivedBuilder, pathKeyTypes);
 
         JMethod factoryMethod = facadeClass.method(JMod.PUBLIC, derivedBuilder, nameCamelCase(methodName));
-        factoryMethod.body()._return(JExpr._new(derivedBuilder).arg(baseUriField).arg(resourceSpecField));
+        factoryMethod.body()._return(JExpr._new(derivedBuilder).arg(baseUriField).arg(resourceSpecField).arg(requestOptionsField));
 
         final RestMethodSchema schema = schemaMap.get(method);
         if (schema != null)

@@ -41,9 +41,18 @@ public class GetRequestBuilder<K, V extends RecordTemplate> extends
   private final Class<V> _elementClass;
   private K              _id;
 
+  @Deprecated
   public GetRequestBuilder(String baseUriTemplate, Class<V> elementClass, ResourceSpec resourceSpec)
   {
-    super(baseUriTemplate, resourceSpec);
+    this(baseUriTemplate, elementClass, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
+  }
+
+  public GetRequestBuilder(String baseUriTemplate,
+                           Class<V> elementClass,
+                           ResourceSpec resourceSpec,
+                           RestliRequestOptions requestOptions)
+  {
+    super(baseUriTemplate, resourceSpec, requestOptions);
     _elementClass = elementClass;
   }
 
@@ -142,7 +151,8 @@ public class GetRequestBuilder<K, V extends RecordTemplate> extends
                              _queryParams,
                              _resourceSpec,
                              _baseURITemplate,
-                             _pathKeys);
+                             _pathKeys,
+                             _requestOptions);
   }
 
   public GetRequestBuilder<K, V> fields(PathSpec... fieldPaths)

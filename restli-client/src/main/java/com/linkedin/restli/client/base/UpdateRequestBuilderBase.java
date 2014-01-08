@@ -21,6 +21,7 @@
 package com.linkedin.restli.client.base;
 
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.client.UpdateRequestBuilder;
 import com.linkedin.restli.common.ResourceSpec;
 
@@ -36,9 +37,18 @@ public abstract class UpdateRequestBuilderBase<
         RB extends UpdateRequestBuilderBase<K, V, RB>>
         extends UpdateRequestBuilder<K, V>
 {
+  @Deprecated
   protected UpdateRequestBuilderBase(String baseUriTemplate, Class<V> valueClass, ResourceSpec resourceSpec)
   {
-    super(baseUriTemplate, valueClass, resourceSpec);
+    this(baseUriTemplate, valueClass, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
+  }
+
+  protected UpdateRequestBuilderBase(String baseUriTemplate,
+                                     Class<V> valueClass,
+                                     ResourceSpec resourceSpec,
+                                     RestliRequestOptions requestOptions)
+  {
+    super(baseUriTemplate, valueClass, resourceSpec, requestOptions);
   }
 
   @SuppressWarnings({"unchecked"})

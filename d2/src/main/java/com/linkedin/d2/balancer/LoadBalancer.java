@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer;
 
+import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.r2.message.Request;
@@ -35,4 +36,6 @@ public interface LoadBalancer
   void start(Callback<None> callback);
 
   void shutdown(PropertyEventShutdownCallback shutdown);
+
+  ServiceProperties getLoadBalancedServiceProperties(String serviceName) throws ServiceUnavailableException;
 }

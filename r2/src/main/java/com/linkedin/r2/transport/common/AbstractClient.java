@@ -25,6 +25,9 @@ import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rpc.RpcRequest;
 import com.linkedin.r2.message.rpc.RpcResponse;
 
+import java.net.URI;
+import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.Future;
 
 /**
@@ -86,5 +89,11 @@ public abstract class AbstractClient implements Client
   public void rpcRequest(RpcRequest request, Callback<RpcResponse> callback)
   {
     rpcRequest(request, _EMPTY_CONTEXT, callback);
+  }
+
+  @Override
+  public Map<String, Object> getMetadata(URI uri)
+  {
+    return Collections.emptyMap();
   }
 }

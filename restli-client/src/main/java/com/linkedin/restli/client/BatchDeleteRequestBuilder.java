@@ -39,11 +39,20 @@ public class BatchDeleteRequestBuilder<K, V extends RecordTemplate> extends
     RestfulRequestBuilder<K, V, BatchDeleteRequest<K, V>>
 {
 
+  @Deprecated
   public BatchDeleteRequestBuilder(String baseUriTemplate,
                                    Class<V> valueClass,
                                    ResourceSpec resourceSpec)
   {
-    super(baseUriTemplate, resourceSpec);
+    this(baseUriTemplate, valueClass, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
+  }
+
+  public BatchDeleteRequestBuilder(String baseUriTemplate,
+                                   Class<V> valueClass,
+                                   ResourceSpec resourceSpec,
+                                   RestliRequestOptions requestOptions)
+  {
+    super(baseUriTemplate, resourceSpec, requestOptions);
   }
 
   @SuppressWarnings("unchecked")
@@ -145,6 +154,7 @@ public class BatchDeleteRequestBuilder<K, V extends RecordTemplate> extends
                                         _queryParams,
                                         _resourceSpec,
                                         _baseURITemplate,
-                                        _pathKeys);
+                                        _pathKeys,
+                                        _requestOptions);
   }
 }

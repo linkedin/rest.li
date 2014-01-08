@@ -17,6 +17,7 @@
 package com.linkedin.restli.test;
 
 
+import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
 import java.io.IOException;
 import java.util.Collections;
@@ -71,7 +72,8 @@ public class TestCharacterEncoding
                                            null,
                                            null,
                                            QueryParamMockCollection.DummyRecord.class,
-                                           Collections.<String, CompoundKey.TypeInfo> emptyMap()))
+                                           Collections.<String, CompoundKey.TypeInfo> emptyMap()),
+                      RestliRequestOptions.DEFAULT_OPTIONS)
                       .id("dummy")
                       .setParam(QueryParamMockCollection.VALUE_KEY, testValue).build();
       RestRequest restRequest = new RestRequestBuilder(RestliUriBuilderUtil.createUriBuilder(req).build())

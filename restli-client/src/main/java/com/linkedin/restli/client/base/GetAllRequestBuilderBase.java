@@ -23,6 +23,7 @@ package com.linkedin.restli.client.base;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.client.GetAllRequestBuilder;
+import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.common.ResourceSpec;
 
 
@@ -37,9 +38,18 @@ public abstract class GetAllRequestBuilderBase<
         RB extends GetAllRequestBuilderBase<K, V, RB>>
         extends GetAllRequestBuilder<K, V>
 {
+  @Deprecated
   protected GetAllRequestBuilderBase(String baseUriTemplate, Class<V> elementClass, ResourceSpec resourceSpec)
   {
-    super(baseUriTemplate, elementClass, resourceSpec);
+    this(baseUriTemplate, elementClass, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
+  }
+
+  protected GetAllRequestBuilderBase(String baseUriTemplate,
+                                     Class<V> elementClass,
+                                     ResourceSpec resourceSpec,
+                                     RestliRequestOptions requestOptions)
+  {
+    super(baseUriTemplate, elementClass, resourceSpec, requestOptions);
   }
 
   @SuppressWarnings({"unchecked"})

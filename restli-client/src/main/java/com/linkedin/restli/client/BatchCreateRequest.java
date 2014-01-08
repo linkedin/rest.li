@@ -46,7 +46,8 @@ public class BatchCreateRequest<T extends RecordTemplate> extends Request<Collec
                      ResourceSpec resourceSpec,
                      Map<String, Object> queryParams,
                      String baseUriTemplate,
-                     Map<String, Object> pathKeys)
+                     Map<String, Object> pathKeys,
+                     RestliRequestOptions requestOptions)
   {
     super(ResourceMethod.BATCH_CREATE,
           input,
@@ -56,7 +57,8 @@ public class BatchCreateRequest<T extends RecordTemplate> extends Request<Collec
           queryParams,
           null,
           baseUriTemplate,
-          pathKeys);
+          pathKeys,
+          requestOptions);
   }
 
   /**

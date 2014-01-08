@@ -25,6 +25,8 @@ import com.linkedin.r2.message.rpc.RpcRequest;
 import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.common.util.None;
 
+import java.net.URI;
+import java.util.Map;
 import java.util.concurrent.Future;
 
 /**
@@ -124,4 +126,17 @@ public interface Client
    * @param callback a callback to invoke when the shutdown is complete
    */
   void shutdown(Callback<None> callback);
+
+  /**
+   * Returns metadata about the server running at {@code uri}.
+   *
+   * This metadata could be the data returned from the server by making an HTTP OPTIONS request to it, metadata about
+   * the {@code uri} stored in a static config file, metadata about the {@code uri} stored in a key-value store etc.
+   *
+   * THE MAP RETURNED FROM THIS METHOD MUST NOT BE NULL!
+   *
+   * @param uri the URI to get metadata for
+   * @return metadata for the URI
+   */
+  Map<String, Object> getMetadata(URI uri);
 }

@@ -178,7 +178,8 @@ public class ParSeqRestClientTest
                              new DataMap(),
                              new ResourceSpecImpl(),
                              "/foo",
-                             Collections.<String, Object>emptyMap());
+                             Collections.<String, Object>emptyMap(),
+                             RestliRequestOptions.DEFAULT_OPTIONS);
   }
 
   /**

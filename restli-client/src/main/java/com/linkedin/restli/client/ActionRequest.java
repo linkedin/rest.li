@@ -20,12 +20,12 @@
 
 package com.linkedin.restli.client;
 
-import java.util.Map;
 
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.internal.client.ActionResponseDecoder;
+import java.util.Map;
 
 /**
  * A request to perform an action.
@@ -46,6 +46,7 @@ public class ActionRequest<T> extends Request<T>
                 String name,
                 String baseUriTemplate,
                 Map<String, Object> pathKeys,
+                RestliRequestOptions requestOptions,
                 Object id)
   {
     super(ResourceMethod.ACTION,
@@ -56,7 +57,8 @@ public class ActionRequest<T> extends Request<T>
           queryParams,
           name,
           baseUriTemplate,
-          pathKeys);
+          pathKeys,
+          requestOptions);
     _id = id;
   }
 

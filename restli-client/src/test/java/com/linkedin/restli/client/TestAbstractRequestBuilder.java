@@ -203,7 +203,7 @@ public class TestAbstractRequestBuilder
   {
     public DummyAbstractRequestBuilder()
     {
-      super(null, null);
+      super(null, null, RestliRequestOptions.DEFAULT_OPTIONS);
     }
 
     @Override

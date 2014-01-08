@@ -110,9 +110,6 @@ public class RestClient
   private final String _uriPrefix;
   private final List<AcceptType> _acceptTypes;
   private final ContentType _contentType;
-  // Maps service names to the version of Rest.li running on that service. This is used to decide which wire protocol
-  // to use while communicating with the service.
-  private final Map<String, String> _serviceToVersionMapping;
 
   public RestClient(Client client, String uriPrefix)
   {
@@ -126,25 +123,10 @@ public class RestClient
 
   public RestClient(Client client, String uriPrefix, ContentType contentType, List<AcceptType> acceptTypes)
   {
-    this(client,
-         uriPrefix,
-         contentType,
-         acceptTypes,
-         Collections.<String, String>emptyMap());
-  }
-
-  RestClient(Client client,
-                    String uriPrefix,
-                    ContentType contentType,
-                    List<AcceptType> acceptTypes,
-                    Map<String, String> serviceToVersionMapping)
-  {
     _client = client;
     _uriPrefix = (uriPrefix == null) ? null : uriPrefix.trim();
     _acceptTypes = acceptTypes;
     _contentType = contentType;
-    _serviceToVersionMapping = (serviceToVersionMapping == null)
-        ? Collections.<String, String>emptyMap() : Collections.unmodifiableMap(serviceToVersionMapping);
   }
 
   /**
@@ -252,8 +234,7 @@ public class RestClient
                                   Callback<RestResponse> callback)
   {
     RecordTemplate input = request.getInputRecord();
-    String serviceName = request.getServiceName();
-    ProtocolVersion protocolVersion = getProtocolVersionForService(serviceName);
+    ProtocolVersion protocolVersion = getProtocolVersionForService(request);
 
     URI requestUri;
     boolean hasPrefix;
@@ -284,17 +265,74 @@ public class RestClient
   }
 
   /**
-   * @param serviceName the service to get the version number for
-   * @return If the service name is present in {@link #_serviceToVersionMapping} return that.
-   *         Otherwise, {@link RestConstants#DEFAULT_PROTOCOL_VERSION} is returned.
+   * @param request
+   * @return
    */
-  private ProtocolVersion getProtocolVersionForService(final String serviceName)
+  private ProtocolVersion getProtocolVersionForService(final Request request)
   {
-    if (_serviceToVersionMapping.containsKey(serviceName))
+    try
     {
-      return new ProtocolVersion(_serviceToVersionMapping.get(serviceName));
+      Map<String, Object> properties = _client.getMetadata(new URI(_uriPrefix + request.getServiceName()));
+      Object potentialAnnouncedVersion = properties.get(RestConstants.RESTLI_PROTOCOL_VERSION_PROPERTY);
+      if (potentialAnnouncedVersion != null)
+      {
+        ProtocolVersion announcedVersion = new ProtocolVersion((String)potentialAnnouncedVersion);
+        return getProtocolVersion(RestConstants.DEFAULT_PROTOCOL_VERSION,
+                                  RestConstants.LATEST_PROTOCOL_VERSION,
+                                  announcedVersion,
+                                  request.getRequestOptions().getProtocolVersionOption());
+      }
+      return RestConstants.DEFAULT_PROTOCOL_VERSION;
     }
-    return RestConstants.DEFAULT_PROTOCOL_VERSION;
+    catch (URISyntaxException e)
+    {
+      throw new RuntimeException("Failed to create a valid URI to fetch properties for!");
+    }
+  }
+
+  /**
+   *
+   * @param defaultVersion default version on the client
+   * @param latestVersion latest version on the client
+   * @param announcedVersion version announced by the service
+   * @param versionOption options present on the request
+   * @return the {@link ProtocolVersion} that should be used to build the request
+   */
+  /*package private*/static ProtocolVersion getProtocolVersion(ProtocolVersion defaultVersion,
+                                                               ProtocolVersion latestVersion,
+                                                               ProtocolVersion announcedVersion,
+                                                               ProtocolVersionOption versionOption)
+  {
+    if (versionOption == null)
+    {
+      throw new IllegalArgumentException("versionOptions cannot be null!");
+    }
+    switch (versionOption)
+    {
+      case FORCE_USE_LATEST:
+        return latestVersion;
+      case USE_LATEST_IF_AVAILABLE:
+        if (announcedVersion.compareTo(defaultVersion) == -1)
+        {
+          // throw an exception as the announced version is less than the default version
+          throw new RuntimeException("Announced version is less than the default version!" +
+            "Announced version: " + announcedVersion + ", default version: " + defaultVersion);
+        }
+        else if (announcedVersion.compareTo(defaultVersion) == 0)
+        {
+          // server is running the default version
+          return defaultVersion;
+        }
+        else if (announcedVersion.compareTo(latestVersion) == -1)
+        {
+          // use the server announced version if it is less than the latest version
+          return announcedVersion;
+        }
+        // server is either running the latest version or something newer. Use the latest version in this case.
+        return latestVersion;
+      default:
+        return defaultVersion;
+    }
   }
 
   /**

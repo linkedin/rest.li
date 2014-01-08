@@ -23,6 +23,7 @@ package com.linkedin.restli.client.base;
 
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.client.BatchCreateRequestBuilder;
+import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.common.ResourceSpec;
 
 import java.util.List;
@@ -38,10 +39,19 @@ public abstract class BatchCreateRequestBuilderBase<
         RB extends BatchCreateRequestBuilderBase<K, V, RB>>
         extends BatchCreateRequestBuilder<K, V>
 {
+  @Deprecated
   public BatchCreateRequestBuilderBase(String baseUriTemplate, Class<V> valueClass,
                                        ResourceSpec resourceSpec)
   {
-    super(baseUriTemplate, valueClass, resourceSpec);
+    this(baseUriTemplate, valueClass, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
+  }
+
+  public BatchCreateRequestBuilderBase(String baseUriTemplate,
+                                       Class<V> valueClass,
+                                       ResourceSpec resourceSpec,
+                                       RestliRequestOptions requestOptions)
+  {
+    super(baseUriTemplate, valueClass, resourceSpec, requestOptions);
   }
 
   @SuppressWarnings({"unchecked"})

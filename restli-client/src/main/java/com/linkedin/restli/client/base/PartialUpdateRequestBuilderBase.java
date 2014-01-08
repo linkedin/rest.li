@@ -22,6 +22,7 @@ package com.linkedin.restli.client.base;
 
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.client.PartialUpdateRequestBuilder;
+import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceSpec;
 
@@ -37,9 +38,18 @@ public abstract class PartialUpdateRequestBuilderBase<
         RB extends PartialUpdateRequestBuilderBase<K, V, RB>>
         extends PartialUpdateRequestBuilder<K, V>
 {
+  @Deprecated
   protected PartialUpdateRequestBuilderBase(String baseUriTemplate, Class<V> valueClass, ResourceSpec resourceSpec)
   {
-    super(baseUriTemplate, valueClass, resourceSpec);
+    this(baseUriTemplate, valueClass, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
+  }
+
+  protected PartialUpdateRequestBuilderBase(String baseUriTemplate,
+                                            Class<V> valueClass,
+                                            ResourceSpec resourceSpec,
+                                            RestliRequestOptions requestOptions)
+  {
+    super(baseUriTemplate, valueClass, resourceSpec, requestOptions);
   }
 
   /**

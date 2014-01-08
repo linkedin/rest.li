@@ -72,7 +72,8 @@ public class BatchGetRequestBuilderTest
                                                                         null,
                                                                         int.class,
                                                                         TestRecord.class,
-                                                                        Collections.<String, Object>emptyMap()));
+                                                                        Collections.<String, Object>emptyMap()),
+                                                   RestliRequestOptions.DEFAULT_OPTIONS);
     requestBuilder.id(1)
                   .fields(FIELDS.id(), FIELDS.message())
                   .setParam("param", "paramValue");
@@ -94,7 +95,8 @@ public class BatchGetRequestBuilderTest
     GetRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> requestBuilder =
         new GetRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord>("/",
                                                                                       TestRecord.class,
-                                                                                      _complexResourceSpec);
+                                                                                      _complexResourceSpec,
+                                                                                      RestliRequestOptions.DEFAULT_OPTIONS);
     ComplexResourceKey<TestRecord, TestRecord> complexKey1 =
         buildComplexKey(1L, "keyMessage1", 1L, "paramMessage1");
     requestBuilder.id(complexKey1)
@@ -118,7 +120,8 @@ public class BatchGetRequestBuilderTest
     BatchGetRequestBuilder<Integer, TestRecord> batchRequestBuilder1 =
         new BatchGetRequestBuilder<Integer, TestRecord>("/",
                                                         TestRecord.class,
-                                                        new ResourceSpecImpl());
+                                                        new ResourceSpecImpl(),
+                                                        RestliRequestOptions.DEFAULT_OPTIONS);
     batchRequestBuilder1.ids(1, 2)
                         .fields(FIELDS.id())
                         .setParam("param2", "value2")
@@ -127,7 +130,8 @@ public class BatchGetRequestBuilderTest
     BatchGetRequestBuilder<Integer, TestRecord> batchRequestBuilder2 =
         new BatchGetRequestBuilder<Integer, TestRecord>("/",
                                                         TestRecord.class,
-                                                        new ResourceSpecImpl());
+                                                        new ResourceSpecImpl(),
+                                                        RestliRequestOptions.DEFAULT_OPTIONS);
     batchRequestBuilder2.ids(2, 3)
                         .fields(FIELDS.id(), FIELDS.message())
                         .setParam("param1", "value1")
@@ -163,7 +167,8 @@ public class BatchGetRequestBuilderTest
     BatchGetRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> batchRequestBuilder1 =
         new BatchGetRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord>("/",
                                                                                            TestRecord.class,
-                                                                                           _complexResourceSpec);
+                                                                                           _complexResourceSpec,
+                                                                                           RestliRequestOptions.DEFAULT_OPTIONS);
     @SuppressWarnings("unchecked")
     ComplexResourceKey<TestRecord, TestRecord>[] complexKeys1 =
         (ComplexResourceKey<TestRecord, TestRecord>[]) Arrays.asList(complexKey1,
@@ -177,7 +182,8 @@ public class BatchGetRequestBuilderTest
     BatchGetRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> batchRequestBuilder2 =
         new BatchGetRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord>("/",
                                                                                            TestRecord.class,
-                                                                                           _complexResourceSpec);
+                                                                                           _complexResourceSpec,
+                                                                                           RestliRequestOptions.DEFAULT_OPTIONS);
     @SuppressWarnings("unchecked")
     ComplexResourceKey<TestRecord, TestRecord>[] complexKeys2 =
         (ComplexResourceKey<TestRecord, TestRecord>[]) Arrays.asList(complexKey2,
@@ -248,13 +254,15 @@ public class BatchGetRequestBuilderTest
     BatchGetRequestBuilder<Integer, TestRecord> batchRequestBuilder1 =
         new BatchGetRequestBuilder<Integer, TestRecord>("/",
                                                         TestRecord.class,
-                                                        new ResourceSpecImpl());
+                                                        new ResourceSpecImpl(),
+                                                        RestliRequestOptions.DEFAULT_OPTIONS);
     batchRequestBuilder1.ids(1, 2).fields(FIELDS.id()).setParam("param1", "value1");
 
     BatchGetRequestBuilder<Integer, TestRecord> batchRequestBuilder2 =
         new BatchGetRequestBuilder<Integer, TestRecord>("/",
                                                         TestRecord.class,
-                                                        new ResourceSpecImpl());
+                                                        new ResourceSpecImpl(),
+                                                        RestliRequestOptions.DEFAULT_OPTIONS);
     batchRequestBuilder2.ids(2, 3)
                         .fields(FIELDS.id(), FIELDS.message())
                         .setParam("param1", "value1")
@@ -282,11 +290,13 @@ public class BatchGetRequestBuilderTest
     BatchGetRequestBuilder<Integer, TestRecord> batchRequestBuilder1 =
         new BatchGetRequestBuilder<Integer, TestRecord>("/",
                                                         TestRecord.class,
-                                                        new ResourceSpecImpl());
+                                                        new ResourceSpecImpl(),
+                                                        RestliRequestOptions.DEFAULT_OPTIONS);
     BatchGetRequestBuilder<Integer, TestRecord> batchRequestBuilder2 =
         new BatchGetRequestBuilder<Integer, TestRecord>("/a/",
                                                         TestRecord.class,
-                                                        new ResourceSpecImpl());
+                                                        new ResourceSpecImpl(),
+                                                        RestliRequestOptions.DEFAULT_OPTIONS);
 
     @SuppressWarnings("unchecked")
     List<BatchGetRequest<TestRecord>> requests =
@@ -308,14 +318,16 @@ public class BatchGetRequestBuilderTest
     BatchGetRequestBuilder<Integer, TestRecord> batchRequestBuilder1 =
         new BatchGetRequestBuilder<Integer, TestRecord>("/",
                                                         TestRecord.class,
-                                                        new ResourceSpecImpl());
+                                                        new ResourceSpecImpl(),
+                                                        RestliRequestOptions.DEFAULT_OPTIONS);
     batchRequestBuilder1.ids(1);
     batchRequestBuilder1.fields(FIELDS.id());
 
     BatchGetRequestBuilder<Integer, TestRecord> batchRequestBuilder2 =
         new BatchGetRequestBuilder<Integer, TestRecord>("/",
                                                         TestRecord.class,
-                                                        new ResourceSpecImpl());
+                                                        new ResourceSpecImpl(),
+                                                        RestliRequestOptions.DEFAULT_OPTIONS);
     batchRequestBuilder2.ids(2, 3);
     batchRequestBuilder2.fields(FIELDS.id());
 
@@ -338,14 +350,16 @@ public class BatchGetRequestBuilderTest
     BatchGetRequestBuilder<Integer, TestRecord> batchRequestBuilder1 =
         new BatchGetRequestBuilder<Integer, TestRecord>("/",
                                                         TestRecord.class,
-                                                        new ResourceSpecImpl());
+                                                        new ResourceSpecImpl(),
+                                                        RestliRequestOptions.DEFAULT_OPTIONS);
     batchRequestBuilder1.ids(1);
     batchRequestBuilder1.fields(FIELDS.id());
 
     BatchGetRequestBuilder<Integer, TestRecord> batchRequestBuilder2 =
         new BatchGetRequestBuilder<Integer, TestRecord>("/",
                                                         TestRecord.class,
-                                                        new ResourceSpecImpl());
+                                                        new ResourceSpecImpl(),
+                                                        RestliRequestOptions.DEFAULT_OPTIONS);
     batchRequestBuilder2.ids(2, 3);
     batchRequestBuilder2.fields(FIELDS.message());
 
@@ -364,19 +378,54 @@ public class BatchGetRequestBuilderTest
   }
 
   @Test
+  public void testBatchingWithDifferentRequestOptionsFailure()
+  {
+    BatchGetRequestBuilder<Integer, TestRecord> batchRequestBuilder1 =
+        new BatchGetRequestBuilder<Integer, TestRecord>("/",
+                                                        TestRecord.class,
+                                                        new ResourceSpecImpl(),
+                                                        RestliRequestOptions.DEFAULT_OPTIONS);
+    batchRequestBuilder1.ids(1);
+
+    RestliRequestOptions customOptions =
+        new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.FORCE_USE_LATEST).build();
+    BatchGetRequestBuilder<Integer, TestRecord> batchRequestBuilder2 =
+        new BatchGetRequestBuilder<Integer, TestRecord>("/",
+                                                        TestRecord.class,
+                                                        new ResourceSpecImpl(),
+                                                        customOptions);
+    batchRequestBuilder2.ids(2, 3);
+
+    try
+    {
+      @SuppressWarnings("unchecked")
+      List<BatchGetRequest<TestRecord>> requests =
+          Arrays.asList(batchRequestBuilder1.build(), batchRequestBuilder2.build());
+      BatchGetRequestBuilder.batch(requests, false);
+      Assert.fail("expected IllegalArgumentException");
+    }
+    catch (IllegalArgumentException ignored)
+    {
+      Assert.assertTrue(ignored.getMessage().contains("Requests must have the same RestliRequestOptions to batch!"));
+    }
+  }
+
+  @Test
   public void testBatchingWithNoFields()
   {
     BatchGetRequestBuilder<Integer, TestRecord> batchRequestBuilder1 =
         new BatchGetRequestBuilder<Integer, TestRecord>("/",
                                                         TestRecord.class,
-                                                        new ResourceSpecImpl());
+                                                        new ResourceSpecImpl(),
+                                                        RestliRequestOptions.DEFAULT_OPTIONS);
     batchRequestBuilder1.ids(1);
     batchRequestBuilder1.fields();
 
     BatchGetRequestBuilder<Integer, TestRecord> batchRequestBuilder2 =
         new BatchGetRequestBuilder<Integer, TestRecord>("/",
                                                         TestRecord.class,
-                                                        new ResourceSpecImpl());
+                                                        new ResourceSpecImpl(),
+                                                        RestliRequestOptions.DEFAULT_OPTIONS);
     batchRequestBuilder2.ids(2, 3);
     batchRequestBuilder2.fields();
 
@@ -397,13 +446,15 @@ public class BatchGetRequestBuilderTest
     BatchGetRequestBuilder<Integer, TestRecord> batchRequestBuilder1 =
         new BatchGetRequestBuilder<Integer, TestRecord>("/",
                                                         TestRecord.class,
-                                                        new ResourceSpecImpl());
+                                                        new ResourceSpecImpl(),
+                                                        RestliRequestOptions.DEFAULT_OPTIONS);
     batchRequestBuilder1.ids(1);
 
     BatchGetRequestBuilder<Integer, TestRecord> batchRequestBuilder2 =
         new BatchGetRequestBuilder<Integer, TestRecord>("/",
                                                         TestRecord.class,
-                                                        new ResourceSpecImpl());
+                                                        new ResourceSpecImpl(),
+                                                        RestliRequestOptions.DEFAULT_OPTIONS);
     batchRequestBuilder2.ids(2, 3);
     batchRequestBuilder2.fields(FIELDS.message());
 
@@ -424,14 +475,16 @@ public class BatchGetRequestBuilderTest
     BatchGetRequestBuilder<Integer, TestRecord> batchRequestBuilder1 =
         new BatchGetRequestBuilder<Integer, TestRecord>("/",
                                                         TestRecord.class,
-                                                        new ResourceSpecImpl());
+                                                        new ResourceSpecImpl(),
+                                                        RestliRequestOptions.DEFAULT_OPTIONS);
     batchRequestBuilder1.ids(1);
     batchRequestBuilder1.fields(FIELDS.message());
 
     BatchGetRequestBuilder<Integer, TestRecord> batchRequestBuilder2 =
         new BatchGetRequestBuilder<Integer, TestRecord>("/",
                                                         TestRecord.class,
-                                                        new ResourceSpecImpl());
+                                                        new ResourceSpecImpl(),
+                                                        RestliRequestOptions.DEFAULT_OPTIONS);
     batchRequestBuilder2.ids(2, 3);
 
     BatchGetRequest<TestRecord> batchRequest1 = batchRequestBuilder1.build();

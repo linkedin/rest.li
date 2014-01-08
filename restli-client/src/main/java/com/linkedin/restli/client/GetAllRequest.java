@@ -36,6 +36,7 @@ public class GetAllRequest<T extends RecordTemplate> extends
                 Map<String, Object> queryParams,
                 String baseUriTemplate,
                 Map<String, Object> pathKeys,
+                RestliRequestOptions requestOptions,
                 CompoundKey assocKey)
   {
     super(ResourceMethod.GET_ALL,
@@ -46,7 +47,8 @@ public class GetAllRequest<T extends RecordTemplate> extends
           queryParams,
           null,
           baseUriTemplate,
-          pathKeys);
+          pathKeys,
+          requestOptions);
     _assocKey = assocKey;
   }
 

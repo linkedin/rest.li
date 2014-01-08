@@ -80,7 +80,8 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
     {
       BatchGetRequestBuilder<Object, T> builder = new BatchGetRequestBuilder<Object, T>(request.getBaseUriTemplate(),
                                                                                         request.getResponseDecoder(),
-                                                                                        request.getResourceSpec());
+                                                                                        request.getResourceSpec(),
+                                                                                        request.getRequestOptions());
       builder.ids(batch.getValue());
       builder.fields(request.getFields().toArray(new PathSpec[0]));
       for (Map.Entry<String,String> header : request.getHeaders().entrySet())
@@ -121,7 +122,8 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
       BatchUpdateRequestBuilder<K, T> builder =
         new BatchUpdateRequestBuilder<K, T>(request.getBaseUriTemplate(),
                                             tClass,
-                                            request.getResourceSpec());
+                                            request.getResourceSpec(),
+                                            request.getRequestOptions());
       builder.inputs(batch.getValue());
       for (Map.Entry<String,String> header : request.getHeaders().entrySet())
       {
@@ -221,7 +223,8 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
       BatchDeleteRequestBuilder<K, T> builder =
         new BatchDeleteRequestBuilder<K, T>(request.getBaseUriTemplate(),
                                             keyClass,
-                                            request.getResourceSpec());
+                                            request.getResourceSpec(),
+                                            request.getRequestOptions());
       builder.ids(batch.getValue());
       for (Map.Entry<String,String> header : request.getHeaders().entrySet())
       {

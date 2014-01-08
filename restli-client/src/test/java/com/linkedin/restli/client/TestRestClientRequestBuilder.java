@@ -31,6 +31,7 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.ResourceSpecImpl;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -56,6 +57,9 @@ public class TestRestClientRequestBuilder
   private static final String PSON_ENTITIES_BODY = "#!PSON1\n" + "!\u0081entities\u0000 \u0080";
   private static final String  CONTENT_TYPE_HEADER = "Content-Type";
   private static final String  ACCEPT_TYPE_HEADER = "Accept";
+  private static final String HOST = "host";
+  private static final String SERVICE_NAME = "foo";
+  private static final String BASE_URI_TEMPLATE = "/foo";
 
   static
   {
@@ -380,10 +384,11 @@ public class TestRestClientRequestBuilder
     EasyMock.expect(mockRequest.hasUri()).andReturn(false).once();
     EasyMock.expect(mockRequest.getPathKeys()).andReturn(Collections.<String, String>emptyMap()).once();
     EasyMock.expect(mockRequest.getQueryParamsObjects()).andReturn(Collections.emptyMap()).once();
-    EasyMock.expect(mockRequest.getBaseUriTemplate()).andReturn("/foo").times(2);
-    EasyMock.expect(mockRequest.getServiceName()).andReturn("foo").once();
+    EasyMock.expect(mockRequest.getBaseUriTemplate()).andReturn(BASE_URI_TEMPLATE).times(2);
+    EasyMock.expect(mockRequest.getServiceName()).andReturn(SERVICE_NAME).once();
     EasyMock.expect(mockRequest.getResponseDecoder()).andReturn(mockResponseDecoder).once();
     EasyMock.expect(mockRequest.getHeaders()).andReturn(Collections.<String, String>emptyMap()).once();
+    EasyMock.expect(mockRequest.getRequestOptions()).andReturn(RestliRequestOptions.DEFAULT_OPTIONS).once();
   }
 
   private void buildInputForBatchPathAndUpdate(Request mockRequest)
@@ -413,6 +418,7 @@ public class TestRestClientRequestBuilder
   {
     // massive setup...
     Client mockClient = EasyMock.createMock(Client.class);
+
     @SuppressWarnings({"rawtypes"})
     Request<?> mockRequest = EasyMock.createMock(requestClass);
     RecordTemplate mockRecordTemplate = EasyMock.createMock(RecordTemplate.class);
@@ -483,6 +489,9 @@ public class TestRestClientRequestBuilder
 
     Capture<RestRequest> restRequestCapture = new Capture<RestRequest>();
 
+    EasyMock.expect(mockClient.getMetadata(new URI(HOST + SERVICE_NAME)))
+        .andReturn(Collections.<String, Object>emptyMap()).once();
+
     mockClient.restRequest(EasyMock.capture(restRequestCapture),
                            (RequestContext) EasyMock.anyObject(),
                            (Callback<RestResponse>) EasyMock.anyObject());
@@ -491,19 +500,18 @@ public class TestRestClientRequestBuilder
     EasyMock.replay(mockClient, mockRequest, mockRecordTemplate);
 
     // do work!
-    String host = "host";
     RestClient restClient;
     if (acceptTypes == null)
     {
-      restClient = new RestClient(mockClient, host);
+      restClient = new RestClient(mockClient, HOST);
     }
     else if (contentType == null)
     {
-      restClient = new RestClient(mockClient, host, acceptTypes);
+      restClient = new RestClient(mockClient, HOST, acceptTypes);
     }
     else
     {
-      restClient = new RestClient(mockClient, host, contentType, acceptTypes);
+      restClient = new RestClient(mockClient, HOST, contentType, acceptTypes);
     }
 
     restClient.sendRequest(mockRequest);

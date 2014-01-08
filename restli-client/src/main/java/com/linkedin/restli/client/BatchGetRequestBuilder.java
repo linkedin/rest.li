@@ -17,14 +17,9 @@
 package com.linkedin.restli.client;
 
 
-import com.linkedin.data.DataList;
-import com.linkedin.data.DataMap;
-import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.restli.common.BatchResponse;
-import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
@@ -32,13 +27,9 @@ import com.linkedin.restli.internal.client.BatchKVResponseDecoder;
 import com.linkedin.restli.internal.client.BatchResponseDecoder;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
 import com.linkedin.restli.internal.client.URIUtil;
-import com.linkedin.restli.internal.common.QueryParamsDataMap;
-
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -145,6 +136,11 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
         throw new IllegalArgumentException("Requests must be for the same resource to batch");
       }
 
+      if (!request.getRequestOptions().equals(firstRequest.getRequestOptions()))
+      {
+        throw new IllegalArgumentException("Requests must have the same RestliRequestOptions to batch!");
+      }
+
       Set<Object> requestIds = request.getObjectIds();
       Set<PathSpec> requestFields = request.getFields();
       // Defensive shallow copy
@@ -195,7 +191,8 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
                                    firstQueryParams,
                                    firstResourceSpec,
                                    firstRequest.getBaseUriTemplate(),
-                                   firstRequest.getPathKeys());
+                                   firstRequest.getPathKeys(),
+                                   firstRequest.getRequestOptions());
   }
 
   /**
@@ -223,19 +220,38 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
                                    queryParams,
                                    request.getResourceSpec(),
                                    request.getBaseUriTemplate(),
-                                   request.getPathKeys());
+                                   request.getPathKeys(),
+                                   request.getRequestOptions());
   }
 
+  @Deprecated
   public BatchGetRequestBuilder(String baseUriTemplate, Class<V> modelClass, ResourceSpec resourceSpec)
   {
-    this(baseUriTemplate, new BatchResponseDecoder<V>(modelClass), resourceSpec);
+    this(baseUriTemplate, new BatchResponseDecoder<V>(modelClass), resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
   }
 
+  public BatchGetRequestBuilder(String baseUriTemplate,
+                                Class<V> modelClass,
+                                ResourceSpec resourceSpec,
+                                RestliRequestOptions requestOptions)
+  {
+    this(baseUriTemplate, new BatchResponseDecoder<V>(modelClass), resourceSpec, requestOptions);
+  }
+
+  @Deprecated
   public BatchGetRequestBuilder(String baseUriTemplate,
                                 RestResponseDecoder<BatchResponse<V>> decoder,
                                 ResourceSpec resourceSpec)
   {
-    super(baseUriTemplate, resourceSpec);
+    this(baseUriTemplate, decoder, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
+  }
+
+  public BatchGetRequestBuilder(String baseUriTemplate,
+                                RestResponseDecoder<BatchResponse<V>> decoder,
+                                ResourceSpec resourceSpec,
+                                RestliRequestOptions requestOptions)
+  {
+    super(baseUriTemplate, resourceSpec, requestOptions);
     _decoder = decoder;
   }
 
@@ -344,7 +360,8 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
                                   _queryParams,
                                   _resourceSpec,
                                   _baseURITemplate,
-                                  _pathKeys);
+                                  _pathKeys,
+                                  _requestOptions);
   }
 
   public BatchGetKVRequest<K, V> buildKV()
@@ -364,7 +381,8 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
                                   _queryParams,
                                   _resourceSpec,
                                   _baseURITemplate,
-                                  _pathKeys);
+                                  _pathKeys,
+                                  _requestOptions);
   }
 
   public BatchGetRequestBuilder<K, V> fields(PathSpec... fieldPaths)

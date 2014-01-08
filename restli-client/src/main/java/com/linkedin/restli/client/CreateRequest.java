@@ -17,7 +17,6 @@
 package com.linkedin.restli.client;
 
 
-import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.ResourceMethod;
@@ -39,7 +38,8 @@ public class CreateRequest<T extends RecordTemplate>
                 ResourceSpec resourceSpec,
                 Map<String, Object> queryParams,
                 String baseUriTemplate,
-                Map<String, Object> pathKeys)
+                Map<String, Object> pathKeys,
+                RestliRequestOptions requestOptions)
   {
     super(ResourceMethod.CREATE,
           input,
@@ -49,6 +49,7 @@ public class CreateRequest<T extends RecordTemplate>
           queryParams,
           null,
           baseUriTemplate,
-          pathKeys);
+          pathKeys,
+          requestOptions);
   }
 }

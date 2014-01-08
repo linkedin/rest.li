@@ -41,12 +41,21 @@ public class BatchUpdateRequestBuilder<K, V extends RecordTemplate> extends
   private final KeyValueRecordFactory<K, V> _keyValueRecordFactory;
   private final Map<K, V> _updateInputMap;
 
-  @SuppressWarnings("unchecked")
+  @Deprecated
   public BatchUpdateRequestBuilder(String baseUriTemplate,
                                    Class<V> valueClass,
                                    ResourceSpec resourceSpec)
   {
-    super(baseUriTemplate, resourceSpec);
+    this(baseUriTemplate, valueClass, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
+  }
+
+  @SuppressWarnings("unchecked")
+  public BatchUpdateRequestBuilder(String baseUriTemplate,
+                                   Class<V> valueClass,
+                                   ResourceSpec resourceSpec,
+                                   RestliRequestOptions requestOptions)
+  {
+    super(baseUriTemplate, resourceSpec, requestOptions);
     _entities = new CollectionRequest(KeyValueRecord.class);
     _keyValueRecordFactory
         = new KeyValueRecordFactory(_resourceSpec.getKeyClass(),
@@ -167,6 +176,7 @@ public class BatchUpdateRequestBuilder<K, V extends RecordTemplate> extends
                                         _resourceSpec,
                                         _baseURITemplate,
                                         _pathKeys,
+                                        _requestOptions,
                                         _updateInputMap);
   }
 

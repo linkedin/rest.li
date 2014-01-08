@@ -24,6 +24,7 @@ package com.linkedin.restli.client.base;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.client.FindRequestBuilder;
+import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.common.ResourceSpec;
 
 
@@ -38,9 +39,18 @@ public abstract class FindRequestBuilderBase<
         RB extends FindRequestBuilderBase<K, V, RB>>
         extends FindRequestBuilder<K, V>
 {
+  @Deprecated
   protected FindRequestBuilderBase(String baseUriTemplate, Class<V> elementClass, ResourceSpec resourceSpec)
   {
-    super(baseUriTemplate, elementClass, resourceSpec);
+    this(baseUriTemplate, elementClass, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
+  }
+
+  protected FindRequestBuilderBase(String baseUriTemplate,
+                                   Class<V> elementClass,
+                                   ResourceSpec resourceSpec,
+                                   RestliRequestOptions requestOptions)
+  {
+    super(baseUriTemplate, elementClass, resourceSpec, requestOptions);
   }
 
   @SuppressWarnings({"unchecked"})

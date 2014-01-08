@@ -379,8 +379,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     // get the service for this uri
     String serviceName = LoadBalancerUtil.getServiceNameFromUri(uri);
 
-    listenToService(serviceName);
-    ServiceProperties service = getServiceProperties(serviceName);
+    ServiceProperties service = getLoadBalancedServiceProperties(serviceName);
 
     String clusterName = service.getClusterName();
 
@@ -438,9 +437,11 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     return partitionAccessorItem.getProperty();
   }
 
-  private ServiceProperties getServiceProperties(String serviceName)
+  @Override
+  public ServiceProperties getLoadBalancedServiceProperties(String serviceName)
           throws ServiceUnavailableException
   {
+    listenToService(serviceName);
     LoadBalancerStateItem<ServiceProperties> serviceItem =
         _state.getServiceProperties(serviceName);
 

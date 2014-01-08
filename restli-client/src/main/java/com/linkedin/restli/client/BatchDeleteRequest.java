@@ -43,7 +43,8 @@ public class BatchDeleteRequest<K, V extends RecordTemplate> extends BatchReques
                      Map<String, Object> queryParams,
                      ResourceSpec resourceSpec,
                      String baseUriTemplate,
-                     Map<String, Object> pathKeys)
+                     Map<String, Object> pathKeys,
+                     RestliRequestOptions requestOptions)
   {
     super(ResourceMethod.BATCH_DELETE,
           null,
@@ -56,7 +57,8 @@ public class BatchDeleteRequest<K, V extends RecordTemplate> extends BatchReques
           resourceSpec,
           queryParams,
           baseUriTemplate,
-          pathKeys);
+          pathKeys,
+          requestOptions);
   }
 
   /**

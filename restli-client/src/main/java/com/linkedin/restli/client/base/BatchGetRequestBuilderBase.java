@@ -24,8 +24,9 @@ package com.linkedin.restli.client.base;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.client.BatchGetRequestBuilder;
+import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.common.ResourceSpec;
-
+import com.linkedin.restli.internal.client.BatchResponseDecoder;
 import java.util.Collection;
 
 /**
@@ -39,10 +40,18 @@ public abstract class BatchGetRequestBuilderBase<
         RB extends BatchGetRequestBuilderBase<K, V, RB>>
         extends BatchGetRequestBuilder<K, V>
 {
-
+  @Deprecated
   protected BatchGetRequestBuilderBase(String baseUriTemplate, Class<V> modelClass, ResourceSpec resourceSpec)
   {
-    super(baseUriTemplate, modelClass, resourceSpec);
+    this(baseUriTemplate, modelClass, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
+  }
+
+  protected BatchGetRequestBuilderBase(String baseUriTemplate,
+                                       Class<V> modelClass,
+                                       ResourceSpec resourceSpec,
+                                       RestliRequestOptions requestOptions)
+  {
+    super(baseUriTemplate, new BatchResponseDecoder<V>(modelClass), resourceSpec, requestOptions);
   }
 
   @SuppressWarnings({"unchecked"})

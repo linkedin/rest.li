@@ -29,14 +29,15 @@ import com.linkedin.r2.message.rpc.RpcRequest;
 import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLParameters;
+import java.net.URI;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
 
 
 /**
@@ -272,6 +273,12 @@ public class D2ClientBuilder
       {
         clientFactory.shutdown(new FutureCallback<None>());
       }
+    }
+
+    @Override
+    public Map<String, Object> getMetadata(URI uri)
+    {
+      return _d2Client.getMetadata(uri);
     }
 
     private D2Client _d2Client;

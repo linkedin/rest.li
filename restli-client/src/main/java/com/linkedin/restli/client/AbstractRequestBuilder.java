@@ -54,11 +54,19 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
   protected final Map<String, Object> _pathKeys    = new HashMap<String, Object>();
   protected final Map<String, Object> _queryParams = new HashMap<String, Object>();
   protected Map<String, String>       _headers     = new HashMap<String, String>();
+  protected RestliRequestOptions      _requestOptions;
 
+  @Deprecated
   protected AbstractRequestBuilder(String baseURITemplate, ResourceSpec resourceSpec)
+  {
+    this(baseURITemplate, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
+  }
+
+  protected AbstractRequestBuilder(String baseURITemplate, ResourceSpec resourceSpec, RestliRequestOptions requestOptions)
   {
     _baseURITemplate = baseURITemplate;
     _resourceSpec = resourceSpec;
+    _requestOptions = requestOptions;
   }
 
   /**
@@ -176,6 +184,29 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
   {
     _pathKeys.put(name, value);
     return this;
+  }
+
+  /**
+   * Sets {@link RestliRequestOptions} for this {@link Request}.
+   * This method overrides any {@link RestliRequestOptions} that have already been set for this {@link Request}.
+   * The recommended way to use this method would be to get the original {@link RestliRequestOptions} using the
+   * {@link #getRequestOptions()} method, creating a new {@link RestliRequestOptionsBuilder} using the
+   * {@link RestliRequestOptionsBuilder#RestliRequestOptionsBuilder(RestliRequestOptions)} constructor, modifying
+   * the option you want to change, calling the {@link com.linkedin.restli.client.RestliRequestOptionsBuilder#build()}
+   * method and setting that as the {@link RestliRequestOptions} for this method.
+   *
+   * @param options
+   * @return
+   */
+  public AbstractRequestBuilder<K, V, R> setRequestOptions(RestliRequestOptions options)
+  {
+    _requestOptions = options;
+    return this;
+  }
+
+  public RestliRequestOptions getRequestOptions()
+  {
+    return _requestOptions;
   }
 
   /**

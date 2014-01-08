@@ -22,6 +22,7 @@ package com.linkedin.restli.client.base;
 
 import com.linkedin.data.template.FieldDef;
 import com.linkedin.restli.client.ActionRequestBuilder;
+import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.common.ResourceSpec;
 
 
@@ -33,9 +34,18 @@ import com.linkedin.restli.common.ResourceSpec;
 public abstract class ActionRequestBuilderBase<K, V, RB extends ActionRequestBuilderBase<K, V, RB>>
         extends ActionRequestBuilder<K, V>
 {
+  @Deprecated
   protected ActionRequestBuilderBase(String baseUriTemplate, Class<V> elementClass, ResourceSpec resourceSpec)
   {
-    super(baseUriTemplate, elementClass, resourceSpec);
+    this(baseUriTemplate, elementClass, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
+  }
+
+  protected ActionRequestBuilderBase(String baseUriTemplate,
+                                     Class<V> elementClass,
+                                     ResourceSpec resourceSpec,
+                                     RestliRequestOptions requestOptions)
+  {
+    super(baseUriTemplate, elementClass, resourceSpec, requestOptions);
   }
 
   @SuppressWarnings({"unchecked"})

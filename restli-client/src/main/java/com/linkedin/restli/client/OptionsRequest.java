@@ -19,10 +19,7 @@ package com.linkedin.restli.client;
 import com.linkedin.restli.common.OptionsResponse;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
-import com.linkedin.restli.internal.client.EntityResponseDecoder;
 import com.linkedin.restli.internal.client.OptionsResponseDecoder;
-import java.net.URI;
-import java.util.List;
 import java.util.Map;
 
 
@@ -37,7 +34,8 @@ public class OptionsRequest extends Request<OptionsResponse>
                         Map<String, Object> queryParams,
                         ResourceSpec resourceSpec,
                         String baseUriTemplate,
-                        Map<String, Object> pathKeys)
+                        Map<String, Object> pathKeys,
+                        RestliRequestOptions requestOptions)
   {
     super(ResourceMethod.OPTIONS,
           null,
@@ -47,6 +45,7 @@ public class OptionsRequest extends Request<OptionsResponse>
           queryParams,
           null,
           baseUriTemplate,
-          pathKeys);
+          pathKeys,
+          requestOptions);
   }
 }

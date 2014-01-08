@@ -46,7 +46,6 @@ public interface RestConstants
   String HEADER_VALUE_ACCEPT_ANY = "*/*";
   String HEADER_RESTLI_PROTOCOL_VERSION = "X-Restli-Protocol-Version";
 
-
   List<String> SUPPORTED_MIME_TYPES = Arrays.asList(HEADER_VALUE_APPLICATION_PSON, HEADER_VALUE_APPLICATION_JSON);
 
   String START_PARAM = "start";
@@ -76,4 +75,7 @@ public interface RestConstants
             ResourceMethod.UPDATE)));
 
   ProtocolVersion DEFAULT_PROTOCOL_VERSION = new ProtocolVersion(1, 0, 0);
+  ProtocolVersion LATEST_PROTOCOL_VERSION = new ProtocolVersion(2, 0, 0);
+
+  String RESTLI_PROTOCOL_VERSION_PROPERTY = "restli.protocol";
 }

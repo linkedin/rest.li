@@ -25,6 +25,7 @@ import com.linkedin.d2.balancer.LoadBalancer;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.clients.TrackerClientTest.TestCallback;
 import com.linkedin.d2.balancer.clients.TrackerClientTest.TestClient;
+import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.util.AllPartitionsResult;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.DelegatingFacilities;
@@ -174,6 +175,13 @@ public class DynamicClientTest
     {
       this.shutdown = true;
       shutdown.done();
+    }
+
+    @Override
+    public ServiceProperties getLoadBalancedServiceProperties(String serviceName)
+        throws ServiceUnavailableException
+    {
+      return null;
     }
   }
 

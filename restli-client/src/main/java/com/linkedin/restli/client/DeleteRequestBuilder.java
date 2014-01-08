@@ -37,9 +37,18 @@ public class DeleteRequestBuilder<K, V extends RecordTemplate>
 {
   private K _id;
 
+  @Deprecated
   public DeleteRequestBuilder(String baseUriTemplate, Class<V> valueClass, ResourceSpec resourceSpec)
   {
-    super(baseUriTemplate, resourceSpec);
+    this(baseUriTemplate, valueClass, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
+  }
+
+  public DeleteRequestBuilder(String baseUriTemplate,
+                              Class<V> valueClass,
+                              ResourceSpec resourceSpec,
+                              RestliRequestOptions requestOptions)
+  {
+    super(baseUriTemplate, resourceSpec, requestOptions);
   }
 
   public DeleteRequestBuilder<K, V> id(K id)
@@ -131,7 +140,13 @@ public class DeleteRequestBuilder<K, V extends RecordTemplate>
   @Override
   public DeleteRequest<V> build()
   {
-    return new DeleteRequest<V>(_headers, _resourceSpec, _queryParams, _baseURITemplate, _pathKeys, _id);
+    return new DeleteRequest<V>(_headers,
+                                _resourceSpec,
+                                _queryParams,
+                                _baseURITemplate,
+                                _pathKeys,
+                                _requestOptions,
+                                _id);
   }
 
 }

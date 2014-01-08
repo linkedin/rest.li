@@ -25,7 +25,6 @@ import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.ResourceSpecImpl;
 import java.io.IOException;
-import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -593,7 +592,8 @@ public class RestClientTest
                              new DataMap(),
                              new ResourceSpecImpl(),
                              "/foo",
-                             Collections.<String, Object>emptyMap());
+                             Collections.<String, Object>emptyMap(),
+                             RestliRequestOptions.DEFAULT_OPTIONS);
   }
 
   private static class MyMockClient extends MockClient

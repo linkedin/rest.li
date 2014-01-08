@@ -16,13 +16,16 @@
 
 package com.linkedin.d2.balancer.properties;
 
-import static org.testng.Assert.assertEquals;
-
-import java.net.URISyntaxException;
-import java.util.Collections;
 
 import com.linkedin.d2.discovery.PropertySerializationException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import org.testng.annotations.Test;
+
+import static org.testng.Assert.assertEquals;
 
 public class ServicePropertiesSerializerTest
 {
@@ -42,6 +45,21 @@ public class ServicePropertiesSerializerTest
     assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
 
     property = new ServiceProperties("servicename2", "clustername2", "/path2", "strategy2", Collections.<String,Object>singletonMap("foo", "bar"));
+    assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
+
+    Map<String, Object> arbitraryProperties = new HashMap<String, Object>();
+    arbitraryProperties.put("foo", "bar");
+    property = new ServiceProperties("serviceName",
+                                     "clusterName",
+                                     "/service",
+                                     "strategyName",
+                                     Collections.<String>emptyList(),
+                                     arbitraryProperties,
+                                     arbitraryProperties,
+                                     Collections.<String, String>emptyMap(),
+                                     Collections.<String>emptyList(),
+                                     Collections.<URI>emptySet(),
+                                     arbitraryProperties);
     assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
 
 /*

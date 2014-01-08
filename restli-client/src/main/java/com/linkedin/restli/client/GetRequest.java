@@ -47,7 +47,8 @@ public class GetRequest<T extends RecordTemplate> extends Request<T>
              Map<String, Object> queryParams,
              ResourceSpec resourceSpec,
              String baseUriTemplate,
-             Map<String, Object> pathKeys)
+             Map<String, Object> pathKeys,
+             RestliRequestOptions requestOptions)
   {
     super(ResourceMethod.GET,
           null,
@@ -57,7 +58,8 @@ public class GetRequest<T extends RecordTemplate> extends Request<T>
           queryParams,
           null,
           baseUriTemplate,
-          pathKeys);
+          pathKeys,
+          requestOptions);
 
     _templateClass = templateClass;
     _id = id;
