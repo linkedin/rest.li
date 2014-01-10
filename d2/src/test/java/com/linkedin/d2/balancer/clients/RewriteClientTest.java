@@ -112,8 +112,33 @@ public class RewriteClientTest
   @Test
   public void testWithQueryEscaping()
   {
-    URI uri = URI.create("http://test.linkedin.com/test");
+    String hostUri = "http://test.linkedin.com/test";
     String serviceName = "HistoryService";
+    String pathWithQueryEscaping = "/getCube?ids=foo%3D1%26bar%3D1&ids=foo%3D2%26bar%3D2";
+    testEscapingHelper(hostUri, serviceName, pathWithQueryEscaping);
+  }
+
+  @Test
+  public void testEscapingWithoutQuery()
+  {
+    String hostUri = "http://test.linkedin.com/test";
+    String serviceName = "socialActivitiesStats";
+    String escapedPath = "/http%3A%2F%2Fwww.techmeme.com%2F131223%2Fp13";
+    testEscapingHelper(hostUri, serviceName, escapedPath);
+  }
+
+  @Test
+  public void testEscapingInFragment()
+  {
+    String hostUri = "http://test.linkedin.com/test";
+    String serviceName = "socialActivitiesStats";
+    String escapedPathWithFragment = "/http%3A%2F%2Fwww.techmeme.com%2F131223%2Fp13#http%3A%2F%2F55";
+    testEscapingHelper(hostUri, serviceName, escapedPathWithFragment);
+  }
+
+  private void testEscapingHelper(String hostUri, String serviceName, String path)
+  {
+    URI uri = URI.create(hostUri);
     TestClient wrappedClient = new TestClient();
     RewriteClient client = new RewriteClient(serviceName, uri, wrappedClient);
 
@@ -121,10 +146,10 @@ public class RewriteClientTest
     assertEquals(client.getServiceName(), serviceName);
     assertEquals(client.getWrappedClient(), wrappedClient);
 
-    RestRequest restRequest = new RestRequestBuilder(URI.create("d2://HistoryService/getCube?ids=foo%3D1%26bar%3D1&ids=foo%3D2%26bar%3D2")).build();
+    RestRequest restRequest = new RestRequestBuilder(URI.create("d2://" + serviceName + path)).build();
     Map<String, String> restWireAttrs = new HashMap<String, String>();
     TestTransportCallback<RestResponse> restCallback =
-            new TestTransportCallback<RestResponse>();
+        new TestTransportCallback<RestResponse>();
 
     client.restRequest(restRequest, new RequestContext(), restWireAttrs, restCallback);
 
@@ -132,7 +157,7 @@ public class RewriteClientTest
     assertEquals(wrappedClient.restRequest.getHeaders(), restRequest.getHeaders());
     assertEquals(wrappedClient.restRequest.getEntity(), restRequest.getEntity());
     assertEquals(wrappedClient.restRequest.getMethod(), restRequest.getMethod());
-    assertEquals(wrappedClient.restRequest.getURI(), URI.create("http://test.linkedin.com/test/getCube?ids=foo%3D1%26bar%3D1&ids=foo%3D2%26bar%3D2"));
+    assertEquals(wrappedClient.restRequest.getURI(), URI.create(hostUri + path));
 
   }
 

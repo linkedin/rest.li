@@ -100,7 +100,7 @@ public class RewriteClient implements LoadBalancerClient
   {
     assert _serviceName.equals(LoadBalancerUtil.getServiceNameFromUri(uri));
 
-    String path = LoadBalancerUtil.getPathFromUri(uri);
+    String path = LoadBalancerUtil.getRawPathFromUri(uri);
 
     UriBuilder builder = UriBuilder.fromUri(_uri);
     if (path != null)
@@ -108,7 +108,7 @@ public class RewriteClient implements LoadBalancerClient
       builder.path(path);
     }
     builder.replaceQuery(uri.getRawQuery());
-    builder.fragment(uri.getFragment());
+    builder.fragment(uri.getRawFragment());
     URI rewrittenUri = builder.build();
 
     debug(_log, "rewrite uri ", uri, " -> ", rewrittenUri);

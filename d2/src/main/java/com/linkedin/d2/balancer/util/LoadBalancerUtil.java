@@ -90,6 +90,11 @@ public class LoadBalancerUtil
     return uri.getPath();
   }
 
+  public static String getRawPathFromUri(URI uri)
+  {
+    return uri.getRawPath();
+  }
+
   private static final Pattern DOT_PATTERN = Pattern.compile(Pattern.quote("."));
 
   public static Map<String, Map<String, String>> getSubProperties(String prefix,
