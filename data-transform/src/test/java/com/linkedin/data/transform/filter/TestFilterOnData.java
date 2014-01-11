@@ -22,7 +22,7 @@ package com.linkedin.data.transform.filter;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.linkedin.data.DataMap;
-import com.linkedin.data.transform.DataMapProcessor;
+import com.linkedin.data.transform.DataComplexProcessor;
 import com.linkedin.data.transform.DataProcessingException;
 import org.testng.annotations.Test;
 
@@ -341,10 +341,10 @@ public class TestFilterOnData
   };
 
 
-  private void genericFilterTest(DataMap data, DataMap filter,
+  protected void genericFilterTest(DataMap data, DataMap filter,
                                         DataMap expected, String description) throws DataProcessingException {
     String dataBefore = data.toString();
-    DataMapProcessor processor = new DataMapProcessor(new Filter(), filter, data);
+    DataComplexProcessor processor = new DataComplexProcessor(new Filter(), filter, data);
     processor.run(false);
     assertEquals(data, expected, "The following test failed: \n" + description  +
                  "\nData: " + dataBefore + "\nFilter: " + filter +

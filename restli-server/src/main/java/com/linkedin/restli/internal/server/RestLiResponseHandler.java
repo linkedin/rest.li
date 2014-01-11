@@ -16,9 +16,6 @@
 
 package com.linkedin.restli.internal.server;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -41,6 +38,10 @@ import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.resources.CollectionResource;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Interprets the method response to generate a {@link RestResponse}. Per methods on

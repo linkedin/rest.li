@@ -20,17 +20,10 @@
 
 package com.linkedin.restli.examples.groups;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-
-import java.util.Arrays;
-import java.util.List;
-
-import org.testng.annotations.Test;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.PathSpec;
-import com.linkedin.data.transform.DataMapProcessor;
+import com.linkedin.data.transform.DataComplexProcessor;
 import com.linkedin.data.transform.filter.request.MaskCreator;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.data.transform.patch.Patch;
@@ -41,6 +34,13 @@ import com.linkedin.restli.TestConstants;
 import com.linkedin.restli.examples.groups.api.Group;
 import com.linkedin.restli.examples.groups.api.Location;
 import com.linkedin.restli.internal.common.URIMaskUtil;
+import org.testng.annotations.Test;
+
+import java.util.Arrays;
+import java.util.List;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 
 /**
  * @author Josh Walker
@@ -184,7 +184,7 @@ public class TestPatchGeneration
     assertEquals(update.toString(), "{$delete=[description]}");
     assertFalse(g1.equals(g2));
 
-    DataMapProcessor processor = new DataMapProcessor(new Patch(), update.getDataMap(), g1.data());
+    DataComplexProcessor processor = new DataComplexProcessor(new Patch(), update.getDataMap(), g1.data());
     processor.run(false);
 
     assertEquals(g1, g2);
@@ -204,7 +204,7 @@ public class TestPatchGeneration
     assertEquals(update.toString(), "{$set={id=42, name=Some Group}}");
     assertFalse(g1.equals(g2));
 
-    DataMapProcessor processor = new DataMapProcessor(new Patch(), update.getDataMap(), g1.data());
+    DataComplexProcessor processor = new DataComplexProcessor(new Patch(), update.getDataMap(), g1.data());
     processor.run(false);
 
     assertEquals(g1, g2);
@@ -223,7 +223,7 @@ public class TestPatchGeneration
     assertEquals(update.toString(), "{$set={$foo=value}}");
     assertFalse(g1.equals(g2));
 
-    DataMapProcessor processor = new DataMapProcessor(new Patch(), update.getDataMap(), g1.data());
+    DataComplexProcessor processor = new DataComplexProcessor(new Patch(), update.getDataMap(), g1.data());
     processor.run(false);
 
     assertEquals(g1, g2);
@@ -241,7 +241,7 @@ public class TestPatchGeneration
     assertEquals(update.toString(), "{$$foo={$set={bar=42}}}");
     assertFalse(g1.equals(g2));
 
-    DataMapProcessor processor = new DataMapProcessor(new Patch(), update.getDataMap(), g1.data());
+    DataComplexProcessor processor = new DataComplexProcessor(new Patch(), update.getDataMap(), g1.data());
     processor.run(false);
 
     assertEquals(g1, g2);

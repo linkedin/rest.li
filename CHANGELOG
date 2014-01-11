@@ -1,6 +1,8 @@
 1.11.2
 ------
-
+(RB=248629)
+Improve Rest.li projection performance, especially in sparse use cases.
+Rename DataMapProcessor to DataComplexProcessor. The old DataMapProcessor is deprecated.
 
 1.11.1
 ------

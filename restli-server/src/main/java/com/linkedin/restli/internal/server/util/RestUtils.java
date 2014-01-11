@@ -16,20 +16,9 @@
 
 package com.linkedin.restli.internal.server.util;
 
-import com.linkedin.restli.server.ProjectionMode;
-import java.net.URI;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
-import com.linkedin.r2.message.rest.RestRequest;
-import org.apache.commons.lang.StringUtils;
 
 import com.linkedin.data.DataMap;
-import com.linkedin.data.collections.CommonUtil;
-import com.linkedin.data.transform.DataMapProcessor;
-import com.linkedin.data.transform.DataProcessingException;
-import com.linkedin.data.transform.filter.Filter;
+import com.linkedin.data.transform.filter.CopyFilter;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.restli.common.CollectionMetadata;
@@ -41,8 +30,13 @@ import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.server.CollectionResult.PageIncrement;
 import com.linkedin.restli.server.PagingContext;
+import com.linkedin.restli.server.ProjectionMode;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RoutingException;
+import org.apache.commons.lang.StringUtils;
+
+import java.net.URI;
+import java.util.List;
 
 
 /**
@@ -205,12 +199,6 @@ public class RestUtils
     }
   }
 
-  private static final DataMap EMPTY_DATAMAP = new DataMap();
-  static
-  {
-    EMPTY_DATAMAP.makeReadOnly();
-  }
-
   public static String pickBestEncoding(String acceptHeader)
   {
     if (acceptHeader == null || acceptHeader.isEmpty())
@@ -229,31 +217,37 @@ public class RestUtils
   public static DataMap projectFields(final DataMap dataMap,
                                       final ResourceContext resourceContext)
   {
-    if(resourceContext.getProjectionMode() == ProjectionMode.MANUAL)
+    if (resourceContext.getProjectionMode() == ProjectionMode.MANUAL)
     {
       return dataMap;
     }
 
-    MaskTree filter = resourceContext.getProjectionMask();
+    final MaskTree filter = resourceContext.getProjectionMask();
     if (filter == null)
     {
       return dataMap;
     }
+
+    final DataMap filterMap = filter.getDataMap();
     //Special-case: when present, an empty filter should not return any fields.
-    else if (filter.getDataMap().isEmpty())
+    if (filter.getDataMap().isEmpty())
     {
       return EMPTY_DATAMAP;
     }
 
     try
     {
-      DataMap data = dataMap.copy();
-      new DataMapProcessor(new Filter(), filter.getDataMap(), data).run(false);
-      return data;
+      return (DataMap) CopyFilter.INSTANCE.filter(dataMap, filterMap);
     }
     catch (Exception e)
     {
       throw new RestLiInternalException("Error projecting fields", e);
     }
+  }
+
+  private static final DataMap EMPTY_DATAMAP = new DataMap();
+  static
+  {
+    EMPTY_DATAMAP.makeReadOnly();
   }
 }

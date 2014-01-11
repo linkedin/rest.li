@@ -22,7 +22,7 @@ package com.linkedin.data.transform.filter.request;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.PathSpec;
-import com.linkedin.data.transform.DataMapProcessor;
+import com.linkedin.data.transform.DataComplexProcessor;
 import com.linkedin.data.transform.DataProcessingException;
 import com.linkedin.data.transform.Escaper;
 import com.linkedin.data.transform.filter.MaskComposition;
@@ -41,7 +41,7 @@ import java.util.Map;
  * Internally, a MaskTree is represented as a DataMap, with PositiveMaskOp represented as the Integer 1,
  * and NegativeMaskOp represented as the Integer 0.
  *
- * The semantics of applying a MaskTree to a DataMap are documented in {@link com.linkedin.data.transform.DataMapProcessor}
+ * The semantics of applying a MaskTree to a DataMap are documented in {@link com.linkedin.data.transform.DataComplexProcessor}
  */
 
 public class MaskTree
@@ -90,7 +90,7 @@ public class MaskTree
     //compose existing tree with mask for specific field
     try
     {
-      new DataMapProcessor(new MaskComposition(), fieldMask, _representation).run(false);
+      new DataComplexProcessor(new MaskComposition(), fieldMask, _representation).run(false);
     }
     catch (DataProcessingException e)
     {

@@ -16,8 +16,6 @@
 
 package com.linkedin.restli.common;
 
-import java.util.Arrays;
-import java.util.List;
 
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
@@ -28,6 +26,9 @@ import com.linkedin.data.template.GetMode;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.WrappingArrayTemplate;
 
+import java.util.Arrays;
+import java.util.List;
+
 
 /**
  * A Collection of records. Used for returning an ordered, variable-length, navigable collection of resources.
@@ -36,10 +37,11 @@ public class CollectionResponse<T extends RecordTemplate> extends RecordTemplate
 {
   public static final String ELEMENTS = "elements";
   public static final String METADATA = "metadata";
+  public static final String PAGING = "paging";
   private static final RecordDataSchema.Field PAGING_FIELD = new RecordDataSchema.Field(CollectionMetadata.SCHEMA);
   static
   {
-    PAGING_FIELD.setName("paging", new StringBuilder(10));
+    PAGING_FIELD.setName(PAGING, new StringBuilder(10));
   }
 
   private final Class<T> _elementClass;

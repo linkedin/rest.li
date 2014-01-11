@@ -22,7 +22,7 @@ package com.linkedin.data.transform.patch;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.linkedin.data.DataMap;
-import com.linkedin.data.transform.DataMapProcessor;
+import com.linkedin.data.transform.DataComplexProcessor;
 import com.linkedin.data.transform.DataProcessingException;
 import org.testng.annotations.Test;
 
@@ -134,7 +134,7 @@ public class TestPatchOnData
   private void genericPatchTest(DataMap data, DataMap patch,
                                         DataMap expected, String description) throws DataProcessingException {
     String dataBefore = data.toString();
-    DataMapProcessor processor = new DataMapProcessor(new Patch(), patch, data);
+    DataComplexProcessor processor = new DataComplexProcessor(new Patch(), patch, data);
     processor.run(false);
     assertEquals(data, expected, "The following test failed: \n" + description  +
                  "\nData: " + dataBefore + "\nPatch: " + patch +
@@ -156,7 +156,7 @@ public class TestPatchOnData
 
   @Test
   public void testImplicitSetOperationInPatchIsNotSupported() throws JsonParseException, IOException, DataProcessingException {
-    DataMapProcessor processor = new DataMapProcessor(new Patch(),
+    DataComplexProcessor processor = new DataComplexProcessor(new Patch(),
                                                       dataMapFromString("{ \"a\": 1 }"),  //command $set should be used
                                                       dataMapFromString("{}"));
     boolean thrown = false;
@@ -175,7 +175,7 @@ public class TestPatchOnData
 
   @Test
   public void testMergingSimpleTypeValueWithComplexPatchNotSupported() throws JsonParseException, IOException, DataProcessingException {
-    DataMapProcessor processor = new DataMapProcessor(new Patch(),
+    DataComplexProcessor processor = new DataComplexProcessor(new Patch(),
                                                       dataMapFromString("{ \"a\": { \"b\": 1} }"),  //command $set should be used
                                                       dataMapFromString("{\"a\": 1}"));
     boolean thrown = false;
@@ -193,7 +193,7 @@ public class TestPatchOnData
 
   @Test
   public void testDeleteAndSetSameField() throws JsonParseException, IOException, DataProcessingException {
-    DataMapProcessor processor = new DataMapProcessor(new Patch(),
+    DataComplexProcessor processor = new DataComplexProcessor(new Patch(),
                                                       dataMapFromString(
                                                         "{ \"$set\": { \"b\": 1}, \"$delete\": [\"b\"] }"),  //command $set should be used
                                                       dataMapFromString("{\"a\": 1}"));
@@ -212,7 +212,7 @@ public class TestPatchOnData
 
   @Test
   public void testDeleteAndBeBranchAtSameTime() throws JsonParseException, IOException, DataProcessingException {
-    DataMapProcessor processor = new DataMapProcessor(new Patch(),
+    DataComplexProcessor processor = new DataComplexProcessor(new Patch(),
                                                       dataMapFromString(
                                                         "{ \"b\": { \"$set\": { \"b\": 1} }, \"$delete\": [\"b\"] }"),  //command $set should be used
                                                       dataMapFromString("{\"a\": 1}"));
@@ -231,7 +231,7 @@ public class TestPatchOnData
 
   @Test
   public void testSetAndBeBranchAtSameTime() throws JsonParseException, IOException, DataProcessingException {
-    DataMapProcessor processor = new DataMapProcessor(new Patch(),
+    DataComplexProcessor processor = new DataComplexProcessor(new Patch(),
                                                       dataMapFromString(
                                                         "{ \"b\": { \"$set\": { \"b\": 1} }, \"$set\": {\"b\": 1} }"),  //command $set should be used
                                                       dataMapFromString("{\"a\": 1}"));

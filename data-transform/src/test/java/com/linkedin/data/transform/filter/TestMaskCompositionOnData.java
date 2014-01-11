@@ -22,7 +22,7 @@ package com.linkedin.data.transform.filter;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.linkedin.data.DataMap;
-import com.linkedin.data.transform.DataMapProcessor;
+import com.linkedin.data.transform.DataComplexProcessor;
 import com.linkedin.data.transform.DataProcessingException;
 import org.testng.annotations.Test;
 
@@ -339,7 +339,7 @@ public class TestMaskCompositionOnData
                                         DataMap expected, String description) throws DataProcessingException, CloneNotSupportedException {
     String dataBefore = data1.toString();
     String data2Clone = data2.toString();
-    DataMapProcessor processor = new DataMapProcessor(new MaskComposition(), data2, data1);
+    DataComplexProcessor processor = new DataComplexProcessor(new MaskComposition(), data2, data1);
     processor.run(false);
     assertEquals(data1, expected, "The following test failed: \n" + description  +
                  "\nData1: " + dataBefore + "\nData2: " + data2 +

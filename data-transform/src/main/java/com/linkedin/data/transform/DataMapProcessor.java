@@ -19,99 +19,26 @@
  */
 package com.linkedin.data.transform;
 
+
 import com.linkedin.data.DataMap;
 
+
 /**
- * DataMapProcessor abstracts DataMap processing when it can be described as an
- * object with layout similar to data object it operates on with additional information
- * how data should be modified. Examples of data processing that fit this description are:
- * patch, projections.
+ * Deprecated copy of {@link com.linkedin.data.transform.DataComplexProcessor}.
  *
  * @author jodzga
  *
  */
-public class DataMapProcessor
+@Deprecated
+public class DataMapProcessor extends DataComplexProcessor
 {
-
-  public static final String DATA_PROCESSING_FAILED = "data processing failed";
-
-  private final InstructionScheduler         _instructionScheduler;
-  private final Interpreter                  _interpreter;
-  private final DataMap                      _program;
-  private final DataMap                      _data;
-  private static final ImmutableList<Object> _rootPath              = ImmutableList.empty();
-
-  /**
-   * Creates new DataMapProcessor.
-   */
-  public DataMapProcessor(final InstructionScheduler instructionScheduler,
-                          final Interpreter interpreter,
-                          final DataMap program,
-                          final DataMap data)
+  public DataMapProcessor(InstructionScheduler instructionScheduler, Interpreter interpreter, DataMap program, DataMap data)
   {
-    this._instructionScheduler = instructionScheduler;
-    this._interpreter = interpreter;
-    this._program = program;
-    this._data = data;
+    super(instructionScheduler, interpreter, program, data);
   }
 
-  /**
-   * Constructor which uses default (FILO) InstructionScheduler.
-   *
-   * @param interpreter the interpreter
-   * @param program the program
-   * @param data the data
-   */
-  public DataMapProcessor(final Interpreter interpreter, final DataMap program, final DataMap data)
+  public DataMapProcessor(Interpreter interpreter, DataMap program, DataMap data)
   {
-    this(new FILOScheduler(), interpreter, program, data);
+    super(interpreter, program, data);
   }
-
-  /**
-   * Runs data processing and throws {@link DataProcessingException} if there were any errors.
-   * <p>If Interpreter was created with fast-fail flag, then processing is stopped
-   * immediately after occurrence of first error. Otherwise, if possible, data processing is continued
-   * and all errors are gathered and accessible through DataProcessingException thrown
-   * by this method.
-   *
-   * @param fastFail if true, stop immediately after the first error,
-   *                 otherwise gather as many errors as possible.
-   * @throws DataProcessingException
-   */
-  public void run(boolean fastFail) throws DataProcessingException
-  {
-    if (_program != null)
-    {
-
-      InterpreterContext ic = new InterpreterContext(fastFail, _instructionScheduler);
-
-      // create first instruction and schedule it for execution
-      final Instruction firstInstruction = new Instruction(_program, _data, _rootPath);
-      _instructionScheduler.scheduleInstruction(firstInstruction);
-
-      // main loop
-      while (_instructionScheduler.hasNext())
-      {
-        final Instruction next = _instructionScheduler.next();
-        try
-        {
-          ic.setCurrentInstruction(next);
-          _interpreter.interpret(ic);
-        }
-        catch (FastFailException ff)
-        {
-          //in case of fast fail exception, the behavior is to immediately stop processing,
-          //don't generate child instructions, exception containing details is thrown below
-          throw new DataProcessingException(DATA_PROCESSING_FAILED,
-                                            ic.getErrorMessages());
-        }
-      }
-
-      //check for errors and throw exception if processing failed
-      if (ic.failed())
-        throw new DataProcessingException(DATA_PROCESSING_FAILED,
-                                          ic.getErrorMessages());
-    }
-  }
-
 }

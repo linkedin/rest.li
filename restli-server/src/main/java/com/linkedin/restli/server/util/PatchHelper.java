@@ -19,19 +19,20 @@
  */
 package com.linkedin.restli.server.util;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
 
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.data.transform.DataMapProcessor;
+import com.linkedin.data.transform.DataComplexProcessor;
 import com.linkedin.data.transform.filter.Filter;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.data.transform.patch.PatchConstants;
 import com.linkedin.restli.common.PatchRequest;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * This class provides methods useful for manipulation on patches.
@@ -174,7 +175,7 @@ public class PatchHelper
     }
     try
     {
-      new DataMapProcessor(new Filter(), projection.getDataMap(), forProjection).run(false);
+      new DataComplexProcessor(new Filter(), projection.getDataMap(), forProjection).run(false);
       return forProjection;
     }
     catch (Exception e)

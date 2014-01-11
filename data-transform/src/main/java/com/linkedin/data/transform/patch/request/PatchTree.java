@@ -40,7 +40,7 @@ import java.util.List;
  * Internally, a PatchTree is represented as a DataMap.
  *
  * The semantics of applying a PatchTree to a DataMap are
- * documented in {@link com.linkedin.data.transform.DataMapProcessor}
+ * documented in {@link com.linkedin.data.transform.DataComplexProcessor}
  */
 
 public class PatchTree

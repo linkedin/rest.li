@@ -19,7 +19,7 @@ package com.linkedin.data.transform.filter;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.linkedin.data.DataMap;
-import com.linkedin.data.transform.DataMapProcessor;
+import com.linkedin.data.transform.DataComplexProcessor;
 import com.linkedin.data.transform.DataProcessingException;
 import org.testng.annotations.Test;
 
@@ -38,7 +38,7 @@ public class TestMaskComposition
   {
     DataMap f1 = dataMapFromString("{ 'a': { '$start': -2, '$count': -3}}".replace('\'', '"'));
     DataMap f2 = dataMapFromString("{ 'a': { '$start': 0}}".replace('\'', '"'));
-    DataMapProcessor processor = new DataMapProcessor(new MaskComposition(), f2, f1);
+    DataComplexProcessor processor = new DataComplexProcessor(new MaskComposition(), f2, f1);
     boolean thrown = false;
     try {
       processor.run(false);

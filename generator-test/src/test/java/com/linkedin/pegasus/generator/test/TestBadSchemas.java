@@ -19,10 +19,11 @@ package com.linkedin.pegasus.generator.test;
 
 import com.linkedin.data.TestUtil;
 import com.linkedin.pegasus.generator.PegasusDataTemplateGenerator;
+import org.testng.annotations.Test;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
-import org.testng.annotations.Test;
 
 import static com.linkedin.data.TestUtil.asMap;
 import static com.linkedin.data.TestUtil.ensureEmptyOutputDir;

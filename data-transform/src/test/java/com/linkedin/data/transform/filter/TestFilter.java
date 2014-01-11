@@ -20,7 +20,7 @@ package com.linkedin.data.transform.filter;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.message.Message;
-import com.linkedin.data.transform.DataMapProcessor;
+import com.linkedin.data.transform.DataComplexProcessor;
 import com.linkedin.data.transform.DataProcessingException;
 import org.testng.annotations.Test;
 
@@ -40,7 +40,7 @@ public class TestFilter
   {
     DataMap data = dataMapFromString("{ 'a': { 'x': 'a'}}".replace('\'', '"'));
     DataMap filter = dataMapFromString("{ 'a': { 'x': { 'y': 1}}}".replace('\'', '"'));
-    DataMapProcessor processor = new DataMapProcessor(new Filter(), filter, data);
+    DataComplexProcessor processor = new DataComplexProcessor(new Filter(), filter, data);
     boolean thrown = false;
     try {
       processor.run(true);
@@ -61,7 +61,7 @@ public class TestFilter
   {
     DataMap data = dataMapFromString("{ 'a': { 'x': 'a'}, 'b': 'b'}".replace('\'', '"'));
     DataMap filter = dataMapFromString("{ 'a': { 'x': { 'y': 1}}, 'b': { 'z': 1}}".replace('\'', '"'));
-    DataMapProcessor processor = new DataMapProcessor(new Filter(), filter, data);
+    DataComplexProcessor processor = new DataComplexProcessor(new Filter(), filter, data);
     boolean thrown = false;
     try {
       processor.run(true);
@@ -79,7 +79,7 @@ public class TestFilter
   {
     DataMap data = dataMapFromString("{ 'a': { 'x': 'a'}, 'b': 'b'}".replace('\'', '"'));
     DataMap filter = dataMapFromString("{ 'a': { 'x': { 'y': 1}}, 'b': { 'z': 1}}".replace('\'', '"'));
-    DataMapProcessor processor = new DataMapProcessor(new Filter(), filter, data);
+    DataComplexProcessor processor = new DataComplexProcessor(new Filter(), filter, data);
     boolean thrown = false;
     try {
       processor.run(false);
@@ -97,7 +97,7 @@ public class TestFilter
   {
     DataMap data = dataMapFromString("{ 'a': [1, 2, 3, 4, 5]}".replace('\'', '"'));
     DataMap filter = dataMapFromString("{ 'a': { '$*': { 'y': 1}}}".replace('\'', '"'));
-    DataMapProcessor processor = new DataMapProcessor(new Filter(), filter, data);
+    DataComplexProcessor processor = new DataComplexProcessor(new Filter(), filter, data);
     boolean thrown = false;
     try {
       processor.run(false);
@@ -115,7 +115,7 @@ public class TestFilter
   {
     DataMap data = dataMapFromString("{ 'a': [1, 2, 3, 4, 5]}".replace('\'', '"'));
     DataMap filter = dataMapFromString("{ 'a': { '$*': { 'y': 1}}}".replace('\'', '"'));
-    DataMapProcessor processor = new DataMapProcessor(new Filter(), filter, data);
+    DataComplexProcessor processor = new DataComplexProcessor(new Filter(), filter, data);
     boolean thrown = false;
     try {
       processor.run(true);
@@ -133,7 +133,7 @@ public class TestFilter
   {
     DataMap data = dataMapFromString("{ 'a': [1, 2, 3, 4, 5]}".replace('\'', '"'));
     DataMap filter = dataMapFromString("{ 'a': { '$*': 'hola'}}".replace('\'', '"'));
-    DataMapProcessor processor = new DataMapProcessor(new Filter(), filter, data);
+    DataComplexProcessor processor = new DataComplexProcessor(new Filter(), filter, data);
     boolean thrown = false;
     try {
       processor.run(false);
@@ -152,7 +152,7 @@ public class TestFilter
     DataMap data = dataMapFromString("{ 'a': { 'b': 'b'}}".replace('\'', '"'));
     DataMap filter = dataMapFromString("{ '$*': { 'c': { 'd': 0}}, 'a': 1}".replace('\'', '"'));
     String originalFilter = filter.toString();
-    DataMapProcessor processor = new DataMapProcessor(new Filter(), filter, data);
+    DataComplexProcessor processor = new DataComplexProcessor(new Filter(), filter, data);
     processor.run(false);
     assertEquals(filter.toString(), originalFilter, "filter should not be modified");
   }
@@ -164,7 +164,7 @@ public class TestFilter
   {
     DataMap data = dataMapFromString("{ 'a': [1, 2, 3, 4, 5]}".replace('\'', '"'));
     DataMap filter = dataMapFromString("{ 'a': { '$start': -2, '$count': -1}}".replace('\'', '"'));
-    DataMapProcessor processor = new DataMapProcessor(new Filter(), filter, data);
+    DataComplexProcessor processor = new DataComplexProcessor(new Filter(), filter, data);
     boolean thrown = false;
     try {
       processor.run(false);

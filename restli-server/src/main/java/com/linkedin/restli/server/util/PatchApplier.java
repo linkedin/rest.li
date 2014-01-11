@@ -21,7 +21,7 @@
 package com.linkedin.restli.server.util;
 
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.data.transform.DataMapProcessor;
+import com.linkedin.data.transform.DataComplexProcessor;
 import com.linkedin.data.transform.DataProcessingException;
 import com.linkedin.data.transform.patch.Patch;
 import com.linkedin.restli.common.PatchRequest;
@@ -36,8 +36,8 @@ public class PatchApplier
   public static <T extends RecordTemplate> void applyPatch(T original,
                                                            PatchRequest<T> patch) throws DataProcessingException
   {
-    DataMapProcessor processor =
-        new DataMapProcessor(new Patch(), patch.getPatchDocument(), original.data());
+    DataComplexProcessor processor =
+        new DataComplexProcessor(new Patch(), patch.getPatchDocument(), original.data());
     processor.run(false);
   }
 }
