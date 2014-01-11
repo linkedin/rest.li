@@ -22,10 +22,8 @@ package com.linkedin.restli.client;
 
 
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.restli.common.ResourceSpec;
 
-import java.net.URI;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;

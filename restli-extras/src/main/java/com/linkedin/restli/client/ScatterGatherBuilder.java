@@ -30,6 +30,7 @@ import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.common.BatchResponse;
+import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.common.UpdateStatus;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -113,15 +114,15 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
     MapKeyResult<URI, K> mapKeyResult = mapKeys(request, ids);
 
     @SuppressWarnings("unchecked")
-    Class<T> tClass = (Class<T>) request.getResourceSpec().getValueClass();
-    Map<URI, Map<K, T>> batches = keyMapToInput(mapKeyResult, request, tClass);
+    TypeSpec<T> valueType = (TypeSpec<T>) request.getResourceSpec().getValueType();
+    Map<URI, Map<K, T>> batches = keyMapToInput(mapKeyResult, request);
     Collection<KVRequestInfo<K, UpdateStatus>> scatterGatherRequests = new ArrayList<KVRequestInfo<K, UpdateStatus>>(batches.size());
 
     for (Map.Entry<URI, Map<K, T>> batch : batches.entrySet())
     {
       BatchUpdateRequestBuilder<K, T> builder =
         new BatchUpdateRequestBuilder<K, T>(request.getBaseUriTemplate(),
-                                            tClass,
+                                            valueType.getType(),
                                             request.getResourceSpec(),
                                             request.getRequestOptions());
       builder.inputs(batch.getValue());
@@ -166,12 +167,11 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
    *
    * @param mapKeyResult {@link MapKeyResult} of mapping U to keys.
    * @param batchRequest the {@link BatchRequest}.
-   * @param tClass the {@link RecordTemplate} type of the entities in the input of the request.
    * @param <U> the service that will handle each set of inputs; Generally {@link URI}, for a host that will handle the request.
    * @param <K> the key type.
    * @return a map from U to request input, where request input is a map from keys to {@link RecordTemplate}s.
    */
-  private <U, K> Map<U, Map<K, T>> keyMapToInput(MapKeyResult<U, K> mapKeyResult, BatchUpdateRequest<K, T> batchRequest, Class<T> tClass)
+  private <U, K> Map<U, Map<K, T>> keyMapToInput(MapKeyResult<U, K> mapKeyResult, BatchUpdateRequest<K, T> batchRequest)
   {
     Map<K, T> updateInput = batchRequest.getUpdateInputMap();
 
@@ -218,11 +218,12 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
 
     for (Map.Entry<URI, Collection<K>> batch : batches.entrySet())
     {
+      TypeSpec<? extends RecordTemplate> value = request.getResourceSpec().getValueType();
       @SuppressWarnings("unchecked")
-      Class<T> keyClass = (Class<T>) request.getResourceSpec().getValueClass();
+      Class<T> valueClass = (Class<T>) ((value == null) ? null : value.getType());
       BatchDeleteRequestBuilder<K, T> builder =
         new BatchDeleteRequestBuilder<K, T>(request.getBaseUriTemplate(),
-                                            keyClass,
+                                            valueClass,
                                             request.getResourceSpec(),
                                             request.getRequestOptions());
       builder.ids(batch.getValue());

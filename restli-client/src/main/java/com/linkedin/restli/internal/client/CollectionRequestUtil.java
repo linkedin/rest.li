@@ -22,8 +22,10 @@ import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.client.util.RestliBuilderUtils;
 import com.linkedin.restli.common.BatchRequest;
 import com.linkedin.restli.common.CollectionRequest;
+import com.linkedin.restli.common.ComplexKeySpec;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
+import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.common.KeyValueRecord;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
@@ -37,18 +39,14 @@ import java.util.Map;
 public class CollectionRequestUtil
 {
   public static <V extends RecordTemplate> BatchRequest<V> convertToBatchRequest(CollectionRequest<KeyValueRecord> elementList,
-                                                                                 Class<?> keyClass,
-                                                                                 Class<? extends RecordTemplate> keyKeyClass,
-                                                                                 Class<? extends RecordTemplate> keyParamsClass,
+                                                                                 TypeSpec<?> keyType,
+                                                                                 ComplexKeySpec complexKeyType,
                                                                                  Map<String, CompoundKey.TypeInfo> keyParts,
-                                                                                 Class<V> valueClass)
+                                                                                 TypeSpec<V> valueType)
   {
     return convertToBatchRequest(elementList,
-                                 keyClass,
-                                 keyKeyClass,
-                                 keyParamsClass,
-                                 keyParts,
-                                 valueClass,
+                                 keyType, complexKeyType,
+                                 keyParts, valueType,
                                  RestConstants.DEFAULT_PROTOCOL_VERSION);
   }
 
@@ -61,41 +59,69 @@ public class CollectionRequestUtil
    * @param keyParamsClass
    * @param keyParts
    * @param valueClass
+   * @param <V>
+   * @return a data map with one key, "entities". "entities" maps to another data map (as in the old body encoding)
+   */
+  @SuppressWarnings("unchecked")
+  public static <V extends RecordTemplate> BatchRequest<V> convertToBatchRequest(CollectionRequest<KeyValueRecord> elementList,
+                                                                                 Class<?> keyClass,
+                                                                                 Class<? extends RecordTemplate> keyKeyClass,
+                                                                                 Class<? extends RecordTemplate> keyParamsClass,
+                                                                                 Map<String, CompoundKey.TypeInfo> keyParts,
+                                                                                 Class<V> valueClass)
+  {
+    return convertToBatchRequest(elementList,
+                                 TypeSpec.forClassMaybeNull(keyClass),
+                                 ComplexKeySpec.forClassesMaybeNull(keyKeyClass, keyParamsClass),
+                                 keyParts,
+                                 TypeSpec.forClassMaybeNull(valueClass));
+  }
+
+  /**
+   * Converts the new way of representing {@link com.linkedin.restli.client.BatchUpdateRequest}s and
+   * {@link com.linkedin.restli.client.BatchPartialUpdateRequest}s bodies into the old way
+   * @param elementList new style encoding
+   * @param keyType
+   * @param complexKeyType
+   * @param keyParts
+   * @param valueType
    * @param version protocol version to use for encoding
    * @param <V>
    * @return a data map with one key, "entities". "entities" maps to another data map (as in the old body encoding)
    */
   @SuppressWarnings("unchecked")
   public static <V extends RecordTemplate> BatchRequest<V> convertToBatchRequest(CollectionRequest<KeyValueRecord> elementList,
-                                                                                Class<?> keyClass,
-                                                                                Class<? extends RecordTemplate> keyKeyClass,
-                                                                                Class<? extends RecordTemplate> keyParamsClass,
+                                                                                TypeSpec<?> keyType,
+                                                                                ComplexKeySpec<?, ?> complexKeyType,
                                                                                 Map<String, CompoundKey.TypeInfo> keyParts,
-                                                                                Class<V> valueClass,
+                                                                                TypeSpec<V> valueType,
                                                                                 ProtocolVersion version)
   {
-    BatchRequest<V> batchRequest = new BatchRequest<V>(new DataMap(), valueClass);
+    BatchRequest<V> batchRequest = new BatchRequest<V>(new DataMap(), valueType);
 
     for (KeyValueRecord keyValueRecord: elementList.getElements())
     {
-      V value = (V) keyValueRecord.getValue(valueClass);
-      Object key;
+      V value = (V) keyValueRecord.getValue(valueType);
+      Object key = null;
 
-      if (keyClass.equals(ComplexResourceKey.class))
+      if(keyType != null)
       {
-        // complex keys
-        key = keyValueRecord.getComplexKey(keyKeyClass, keyParamsClass);
-      }
+        if (keyType.getType().equals(ComplexResourceKey.class))
+        {
+          // complex keys
+          key = keyValueRecord.getComplexKey(complexKeyType);
+        }
 
-      else if (CompoundKey.class.isAssignableFrom(keyClass))
-      {
-        key = keyValueRecord.getCompoundKey(keyParts);
-      }
+        else if (CompoundKey.class.isAssignableFrom(keyType.getType()))
+        {
+          key = keyValueRecord.getCompoundKey(keyParts);
+        }
 
-      else
-      {
-        // primitive keys
-        key = keyValueRecord.getPrimitiveKey(keyClass);
+        else
+        {
+          // primitive keys
+          key = keyValueRecord.getPrimitiveKey(keyType);
+        }
       }
 
       batchRequest.getEntities().put(RestliBuilderUtils.keyToString(key, URLEscaper.Escaping.NO_ESCAPING, version), value);

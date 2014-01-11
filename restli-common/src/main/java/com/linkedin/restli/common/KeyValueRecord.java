@@ -20,7 +20,6 @@ package com.linkedin.restli.common;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaUtil;
-import com.linkedin.data.schema.EnumDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
@@ -44,7 +43,7 @@ public class KeyValueRecord<K, V extends RecordTemplate> extends RecordTemplate
 
   /**
    * Needed by {@link DataTemplateUtil#templateConstructor(Class)}
-   * @param dataMap
+   * @param dataMap provides the contents of the key
    */
   public KeyValueRecord(DataMap dataMap)
   {
@@ -60,15 +59,15 @@ public class KeyValueRecord<K, V extends RecordTemplate> extends RecordTemplate
    * Sets a primitive key. If the key is a typeref the typeref is followed and the primitive value is stored.
    * @param keyField key field
    * @param key the primitive key to set
-   * @param keyClass the class of the key
+   * @param keyType the type of the key
    */
   @SuppressWarnings("unchecked")
-  void setPrimitiveKey(RecordDataSchema.Field keyField, K key, Class<K> keyClass)
+  void setPrimitiveKey(RecordDataSchema.Field keyField, K key, TypeSpec<K> keyType)
   {
-    DataSchema keySchema = DataTemplateUtil.getSchema(keyClass);
+    DataSchema keySchema = keyType.getSchema();
     if (keySchema.isPrimitive())
     {
-      putDirect(keyField, keyClass, keyClass, key, SetMode.IGNORE_NULL);
+      putDirect(keyField, keyType.getType(), keyType.getType(), key, SetMode.IGNORE_NULL);
       return;
     }
     switch (keySchema.getType())
@@ -80,7 +79,7 @@ public class KeyValueRecord<K, V extends RecordTemplate> extends RecordTemplate
         if (javaClassForSchema == null)
         {
           // typeref to a primitive. In this case the keyClass is a primitive, and so is the key.
-          putDirect(keyField, keyClass, keyClass, key, SetMode.IGNORE_NULL);
+          putDirect(keyField, keyType.getType(), keyType.getType(), key, SetMode.IGNORE_NULL);
         }
         else
         {
@@ -91,7 +90,7 @@ public class KeyValueRecord<K, V extends RecordTemplate> extends RecordTemplate
         }
         break;
       case ENUM:
-        putDirect(keyField, keyClass, String.class, key, SetMode.IGNORE_NULL);
+        putDirect(keyField, keyType.getType(), String.class, key, SetMode.IGNORE_NULL);
         break;
       default:
         throw new IllegalArgumentException("key is not a primitive, typeref, or an enum!");
@@ -103,16 +102,14 @@ public class KeyValueRecord<K, V extends RecordTemplate> extends RecordTemplate
    * @param keyField key field
    * @param paramsField params field
    * @param key the complex key to set
-   * @param keyKeyClass the key class of the {@link ComplexResourceKey}
-   * @param keyParamsClass the params class of the {@link ComplexResourceKey}
-   * @param <KK>
-   * @param <KP>
+   * @param complexKeyType the type of the {@link ComplexResourceKey}
+   * @param <KK> type of keyKeyClass
+   * @param <KP> type of keyParamsClass
    */
   <KK extends RecordTemplate, KP extends RecordTemplate> void setComplexKey(RecordDataSchema.Field keyField,
                                                                             RecordDataSchema.Field paramsField,
                                                                             K key,
-                                                                            Class<KK> keyKeyClass,
-                                                                            Class<KP> keyParamsClass)
+                                                                            ComplexKeySpec<KK, KP> complexKeyType)
   {
     if (!(key instanceof ComplexResourceKey))
     {
@@ -123,8 +120,8 @@ public class KeyValueRecord<K, V extends RecordTemplate> extends RecordTemplate
     KK keyKey = complexResourceKey.getKey();
     KP keyParams = complexResourceKey.getParams();
 
-    putWrapped(keyField, keyKeyClass, keyKey, SetMode.IGNORE_NULL);
-    putWrapped(paramsField, keyParamsClass, keyParams, SetMode.IGNORE_NULL);
+    putWrapped(keyField, complexKeyType.getKeyType().getType(), keyKey, SetMode.IGNORE_NULL);
+    putWrapped(paramsField, complexKeyType.getParamsType().getType(), keyParams, SetMode.IGNORE_NULL);
   }
 
   /**
@@ -146,7 +143,7 @@ public class KeyValueRecord<K, V extends RecordTemplate> extends RecordTemplate
     for (String partKey: compoundKey.getPartKeys())
     {
       Object keyValue = compoundKey.getPart(partKey);
-      DataSchema schema = DataTemplateUtil.getSchema(fieldTypes.get(partKey).getDeclaredType());
+      DataSchema schema = fieldTypes.get(partKey).getDeclared().getSchema();
       DataSchema dereferencedSchema = schema.getDereferencedDataSchema();
       Class<?> dereferencedClass = DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchemaClass(dereferencedSchema.getType());
 
@@ -172,22 +169,27 @@ public class KeyValueRecord<K, V extends RecordTemplate> extends RecordTemplate
 
   /**
    * Get the stored primitive key
-   * @param keyClass
+   * @param keyClass class of the key
    * @return the stored key as an object of {@code keyClass}
    */
-  @SuppressWarnings("unchecked")
   public K getPrimitiveKey(Class<K> keyClass)
+  {
+    return getPrimitiveKey(TypeSpec.forClassMaybeNull(keyClass));
+  }
+
+  @SuppressWarnings("unchecked")
+  public K getPrimitiveKey(TypeSpec<K> keyType)
   {
     StringBuilder sb = new StringBuilder(10);
 
-    DataSchema keySchema = DataTemplateUtil.getSchema(keyClass);
+    DataSchema keySchema = keyType.getSchema();
 
     RecordDataSchema.Field keyField = new RecordDataSchema.Field(keySchema);
     keyField.setName(KEY_FIELD_NAME, sb);
 
     if (keySchema.isPrimitive() || keySchema.getType() == DataSchema.Type.ENUM)
     {
-      return obtainDirect(keyField, keyClass, GetMode.DEFAULT);
+      return obtainDirect(keyField, keyType.getType(), GetMode.DEFAULT);
     }
     else if (keySchema.getType() == DataSchema.Type.TYPEREF)
     {
@@ -196,7 +198,7 @@ public class KeyValueRecord<K, V extends RecordTemplate> extends RecordTemplate
       if (javaClass == null)
       {
         // typeref to a primitive. keyClass is a primitive
-        return obtainDirect(keyField, keyClass, GetMode.DEFAULT);
+        return obtainDirect(keyField, keyType.getType(), GetMode.DEFAULT);
       }
       else
       {
@@ -214,23 +216,36 @@ public class KeyValueRecord<K, V extends RecordTemplate> extends RecordTemplate
    * Get the stored {@link ComplexResourceKey}
    * @param keyKeyClass the class of the key in the {@link ComplexResourceKey}
    * @param keyParamsClass the class of the params in the {@link ComplexResourceKey}
-   * @param <KK>
-   * @param <KP>
-   * @return
+   * @param <KK> type of keyKeyClass
+   * @param <KP> type of keyParamsClass
+   * @return a key
    */
   public <KK extends RecordTemplate,
       KP extends RecordTemplate> ComplexResourceKey<KK, KP> getComplexKey(Class<KK> keyKeyClass,
                                                                           Class<KP> keyParamsClass)
   {
+    return getComplexKey(ComplexKeySpec.forClassesMaybeNull(keyKeyClass, keyParamsClass));
+  }
+
+  /**
+   * Get the stored {@link ComplexResourceKey}
+   * @param complexKeyType the type of the {@link ComplexResourceKey}
+   * @param <KK> type of keyKeyClass
+   * @param <KP> type of keyParamsClass
+   * @return a key
+   */
+  public <KK extends RecordTemplate,
+      KP extends RecordTemplate> ComplexResourceKey<KK, KP> getComplexKey(ComplexKeySpec<KK, KP> complexKeyType)
+  {
     StringBuilder sb = new StringBuilder(10);
 
-    RecordDataSchema.Field keyField = new RecordDataSchema.Field(DataTemplateUtil.getSchema(keyKeyClass));
+    RecordDataSchema.Field keyField = new RecordDataSchema.Field(complexKeyType.getKeyType().getSchema());
     keyField.setName(KEY_FIELD_NAME, sb);
-    RecordDataSchema.Field paramsField = new RecordDataSchema.Field(DataTemplateUtil.getSchema(keyParamsClass));
+    RecordDataSchema.Field paramsField = new RecordDataSchema.Field(complexKeyType.getParamsType().getSchema());
     paramsField.setName(PARAMS_FIELD_NAME, sb);
 
-    KK keyKey = obtainWrapped(keyField, keyKeyClass, GetMode.DEFAULT);
-    KP keyParams = obtainWrapped(paramsField, keyParamsClass, GetMode.DEFAULT);
+    KK keyKey = obtainWrapped(keyField, complexKeyType.getKeyType().getType(), GetMode.DEFAULT);
+    KP keyParams = obtainWrapped(paramsField, complexKeyType.getParamsType().getType(), GetMode.DEFAULT);
 
     return new ComplexResourceKey<KK, KP>(keyKey, keyParams);
   }
@@ -257,18 +272,23 @@ public class KeyValueRecord<K, V extends RecordTemplate> extends RecordTemplate
     return CompoundKey.fromValues(compoundKeyData, fieldTypes);
   }
 
+  public V getValue(Class<V> valueClass)
+  {
+    return getValue(new TypeSpec<V>(valueClass));
+  }
+
   /**
    * Get the stored value
-   * @param valueClass the expected class of the stored value
+   * @param valueTypeSpec the expected class of the stored value
    * @return the stored value as an object of {@code valueClass}
    */
-  public V getValue(Class<V> valueClass)
+  public V getValue(TypeSpec<V> valueTypeSpec)
   {
     StringBuilder sb = new StringBuilder(10);
 
-    RecordDataSchema.Field valueField = new RecordDataSchema.Field(DataTemplateUtil.getSchema(valueClass));
+    RecordDataSchema.Field valueField = new RecordDataSchema.Field(valueTypeSpec.getSchema());
     valueField.setName(VALUE_FIELD_NAME, sb);
 
-    return obtainWrapped(valueField, valueClass, GetMode.DEFAULT);
+    return obtainWrapped(valueField, valueTypeSpec.getType(), GetMode.DEFAULT);
   }
 }

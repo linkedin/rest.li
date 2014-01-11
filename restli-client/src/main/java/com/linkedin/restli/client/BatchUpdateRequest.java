@@ -29,6 +29,7 @@ import com.linkedin.restli.common.CollectionRequest;
 import com.linkedin.restli.common.KeyValueRecord;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
+import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.internal.client.BatchKVResponseDecoder;
 import java.net.URI;
@@ -58,11 +59,10 @@ public class BatchUpdateRequest<K, V extends RecordTemplate>
     super(ResourceMethod.BATCH_UPDATE,
           entities,
           headers,
-          new BatchKVResponseDecoder<K, UpdateStatus>(UpdateStatus.class,
-                                                      (Class<K>) resourceSpec.getKeyClass(),
+          new BatchKVResponseDecoder<K, UpdateStatus>(new TypeSpec<UpdateStatus>(UpdateStatus.class),
+                                                      (TypeSpec<K>) resourceSpec.getKeyType(),
                                                       resourceSpec.getKeyParts(),
-                                                      resourceSpec.getKeyKeyClass(),
-                                                      resourceSpec.getKeyParamsClass()),
+                                                      resourceSpec.getComplexKeyType()),
           resourceSpec,
           queryParams,
           baseUriTemplate,
@@ -80,11 +80,10 @@ public class BatchUpdateRequest<K, V extends RecordTemplate>
   public RecordTemplate getInput()
   {
     return CollectionRequestUtil.convertToBatchRequest((CollectionRequest<KeyValueRecord>) getInputRecord(),
-                                                       getResourceSpec().getKeyClass(),
-                                                       getResourceSpec().getKeyKeyClass(),
-                                                       getResourceSpec().getKeyParamsClass(),
+                                                       getResourceSpec().getKeyType(),
+                                                       getResourceSpec().getComplexKeyType(),
                                                        getResourceSpec().getKeyParts(),
-                                                       getResourceSpec().getValueClass());
+                                                       getResourceSpec().getValueType());
   }
 
   /**

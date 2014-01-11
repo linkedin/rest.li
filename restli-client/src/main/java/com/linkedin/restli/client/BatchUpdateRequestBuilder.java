@@ -58,11 +58,10 @@ public class BatchUpdateRequestBuilder<K, V extends RecordTemplate> extends
     super(baseUriTemplate, resourceSpec, requestOptions);
     _entities = new CollectionRequest(KeyValueRecord.class);
     _keyValueRecordFactory
-        = new KeyValueRecordFactory(_resourceSpec.getKeyClass(),
-                                    _resourceSpec.getKeyKeyClass(),
-                                    _resourceSpec.getKeyParamsClass(),
+        = new KeyValueRecordFactory(_resourceSpec.getKeyType(),
+                                    _resourceSpec.getComplexKeyType(),
                                     _resourceSpec.getKeyParts(),
-                                    _resourceSpec.getValueClass());
+                                    _resourceSpec.getValueType());
     _updateInputMap = new HashMap<K, V>();
   }
 

@@ -17,6 +17,7 @@
 package com.linkedin.restli.internal.server;
 
 import com.linkedin.r2.filter.R2Constants;
+import com.linkedin.restli.common.ComplexKeySpec;
 import com.linkedin.restli.common.OperationNameGenerator;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -389,8 +390,8 @@ public class RestLiRouter
     {
       ComplexResourceKey<RecordTemplate, RecordTemplate> complexKey =
           ComplexResourceKey.parseFromPathSegment(currentPathSegment,
-                                                  resource.getKeyKeyClass(),
-                                                  resource.getKeyParamsClass());
+                                                  ComplexKeySpec.forClassesMaybeNull(resource.getKeyKeyClass(),
+                                                                                     resource.getKeyParamsClass()));
 
       context.getPathKeys().append(resource.getKeyName(), complexKey);
     }
@@ -428,8 +429,8 @@ public class RestLiRouter
         }
         context.getPathKeys()
                .appendBatchValue(ComplexResourceKey.buildFromDataMap((DataMap) complexKey,
-                                                                     resource.getKeyKeyClass(),
-                                                                     resource.getKeyParamsClass()));
+                                                                     ComplexKeySpec.forClassesMaybeNull(resource.getKeyKeyClass(),
+                                                                                                        resource.getKeyParamsClass())));
       }
     }
     // collection batch get

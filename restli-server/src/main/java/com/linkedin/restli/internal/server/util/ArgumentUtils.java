@@ -20,6 +20,8 @@
 
 package com.linkedin.restli.internal.server.util;
 
+import com.linkedin.restli.common.ComplexKeySpec;
+import com.linkedin.restli.common.TypeSpec;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -133,12 +135,11 @@ public class ArgumentUtils
    * @param ids - the parsed batch ids from the request URI
    * @return a map using appropriate key and value classes
    */
-  @SuppressWarnings({ "unchecked" })
   public static <R extends RecordTemplate> Map<Object, R> buildBatchRequestMap(final DataMap data,
                                          final Class<R> valueClass,
                                          final Set<?> ids)
   {
-    BatchRequest<R> batchRequest = new BatchRequest<R>(data, valueClass);
+    BatchRequest<R> batchRequest = new BatchRequest<R>(data, new TypeSpec<R>(valueClass));
 
     Map<String, Object> parsedKeyMap = new HashMap<String, Object>();
     for (Object o : ids)
@@ -481,8 +482,8 @@ public class ArgumentUtils
     else if (ComplexResourceKey.class.isAssignableFrom(resource.getKeyClass()))
     {
       return ComplexResourceKey.parseFromPathSegment(value,
-                                                     resource.getKeyKeyClass(),
-                                                     resource.getKeyParamsClass());
+                                                     ComplexKeySpec.forClassesMaybeNull(resource.getKeyKeyClass(),
+                                                                                        resource.getKeyParamsClass()));
     }
     else
     {

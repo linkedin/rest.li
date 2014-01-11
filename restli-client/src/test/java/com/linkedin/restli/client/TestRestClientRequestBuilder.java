@@ -27,6 +27,7 @@ import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.restli.common.CollectionRequest;
 import com.linkedin.restli.common.CompoundKey;
+import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.ResourceSpecImpl;
@@ -403,7 +404,7 @@ public class TestRestClientRequestBuilder
                                                      null,
                                                      null,
                                                      null,
-                                                     RecordTemplate.class,
+                                                     EmptyRecord.class,
                                                      Collections.<String, CompoundKey.TypeInfo> emptyMap());
     EasyMock.expect(mockRequest.getResourceSpec()).andReturn(resourceSpec).once();
   }

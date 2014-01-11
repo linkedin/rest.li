@@ -20,12 +20,14 @@ package com.linkedin.restli.client;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.BatchResponse;
+import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.client.BatchKVResponseDecoder;
 import com.linkedin.restli.internal.client.BatchResponseDecoder;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -368,11 +370,10 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
     //Framework code should ensure that the ResourceSpec matches the static types of these parameters
     @SuppressWarnings("unchecked")
     BatchKVResponseDecoder<K, V> decoder =
-        new BatchKVResponseDecoder<K, V>((Class<V>) _resourceSpec.getValueClass(),
-                                         (Class<K>) _resourceSpec.getKeyClass(),
+        new BatchKVResponseDecoder<K, V>((TypeSpec<V>) _resourceSpec.getValueType(),
+                                         (TypeSpec<K>) _resourceSpec.getKeyType(),
                                          _resourceSpec.getKeyParts(),
-                                         _resourceSpec.getKeyKeyClass(),
-                                         _resourceSpec.getKeyParamsClass());
+                                         _resourceSpec.getComplexKeyType());
 
     return new BatchGetKVRequest<K, V>(ResourceMethod.BATCH_GET,
                                   _headers,

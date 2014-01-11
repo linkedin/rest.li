@@ -27,7 +27,7 @@ import com.linkedin.restli.common.KeyValueRecord;
 import com.linkedin.restli.common.KeyValueRecordFactory;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceSpec;
-
+import com.linkedin.restli.common.TypeSpec;
 import java.util.Map;
 
 /**
@@ -58,11 +58,10 @@ public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> exten
     super(baseUriTemplate, resourceSpec, requestOptions);
     _entities = new CollectionRequest(KeyValueRecord.class);
     _keyValueRecordFactory
-        = new KeyValueRecordFactory(_resourceSpec.getKeyClass(),
-                                    _resourceSpec.getKeyKeyClass(),
-                                    _resourceSpec.getKeyParamsClass(),
+        = new KeyValueRecordFactory(_resourceSpec.getKeyType(),
+                                    _resourceSpec.getComplexKeyType(),
                                     _resourceSpec.getKeyParts(),
-                                    PatchRequest.class);
+                                    new TypeSpec<PatchRequest>(PatchRequest.class));
   }
 
   public BatchPartialUpdateRequestBuilder<K, V> input(K id, PatchRequest<V> patch)

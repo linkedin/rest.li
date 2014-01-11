@@ -241,11 +241,10 @@ public class TestScatterGather extends RestLiIntegrationTest
         CollectionRequest inputRecord = (CollectionRequest)request.getInputRecord();
 
         inputRecordTemplate = CollectionRequestUtil.convertToBatchRequest(inputRecord,
-                                                                          resourceSpec.getKeyClass(),
-                                                                          resourceSpec.getKeyKeyClass(),
-                                                                          resourceSpec.getKeyParamsClass(),
+                                                                          resourceSpec.getKeyType(),
+                                                                          resourceSpec.getComplexKeyType(),
                                                                           resourceSpec.getKeyParts(),
-                                                                          resourceSpec.getValueClass());
+                                                                          resourceSpec.getValueType());
       }
       else
       {

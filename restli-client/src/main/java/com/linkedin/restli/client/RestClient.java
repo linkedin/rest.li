@@ -41,6 +41,7 @@ import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.internal.client.CollectionRequestUtil;
 import com.linkedin.restli.internal.client.ExceptionUtil;
 import com.linkedin.restli.internal.client.ResponseFutureImpl;
@@ -357,20 +358,18 @@ public class RestClient
       case BATCH_UPDATE:
         return CollectionRequestUtil.
             convertToBatchRequest((CollectionRequest<KeyValueRecord>) request.getInputRecord(),
-                                  resourceSpec.getKeyClass(),
-                                  resourceSpec.getKeyKeyClass(),
-                                  resourceSpec.getKeyParamsClass(),
+                                  resourceSpec.getKeyType(),
+                                  resourceSpec.getComplexKeyType(),
                                   resourceSpec.getKeyParts(),
-                                  resourceSpec.getValueClass(),
+                                  resourceSpec.getValueType(),
                                   version).data();
       case BATCH_PARTIAL_UPDATE:
         return CollectionRequestUtil.
             convertToBatchRequest((CollectionRequest<KeyValueRecord>) request.getInputRecord(),
-                                  resourceSpec.getKeyClass(),
-                                  resourceSpec.getKeyKeyClass(),
-                                  resourceSpec.getKeyParamsClass(),
+                                  resourceSpec.getKeyType(),
+                                  resourceSpec.getComplexKeyType(),
                                   resourceSpec.getKeyParts(),
-                                  PatchRequest.class,
+                                  new TypeSpec<PatchRequest>(PatchRequest.class),
                                   version).data();
       default:
         return request.getInputRecord().data();

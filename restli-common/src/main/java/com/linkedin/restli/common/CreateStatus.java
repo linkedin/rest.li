@@ -41,6 +41,8 @@ public class CreateStatus extends RecordTemplate
   private static final String _ID = "id";
   private static final String _ERROR = "error";
 
+  private final static RecordDataSchema SCHEMA = ((RecordDataSchema) DataTemplateUtil.parseSchema("{\"type\":\"record\",\"name\":\"CreateStatus\",\"namespace\":\"com.linkedin.restli.common\",\"doc\":\"A rest.li create status.\",\"fields\":[{\"name\":\"status\",\"type\":\"int\"},{\"name\":\"id\",\"type\":\"string\", \"optional\":true},{\"name\":\"error\",\"optional\":true,\"type\":{\"type\":\"record\",\"name\":\"ErrorResponse\",\"namespace\":\"com.linkedin.common.rest\",\"doc\":\"A generic ErrorResponse\",\"fields\":[{\"name\":\"status\",\"type\":\"int\",\"doc\":\"The HTTP status code\"},{\"name\":\"serviceErrorCode\",\"type\":\"int\",\"optional\":true,\"doc\":\"An service-specific error code (documented in prose)\"},{\"name\":\"message\",\"type\":\"string\",\"optional\":true,\"doc\":\"A human-readable explanation of the error\"},{\"name\":\"exceptionClass\",\"type\":\"string\",\"doc\":\"The FQCN of the exception thrown by the server (included the case of a server fault)\"},{\"name\":\"stackTrace\",\"type\":\"string\",\"doc\":\"The full (??) stack trace (included the case of a server fault)\"}]}}]}"));
+
   /**
    * Initialize an empty CreateStatus.
    */

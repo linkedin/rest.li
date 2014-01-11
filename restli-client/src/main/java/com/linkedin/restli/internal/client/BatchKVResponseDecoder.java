@@ -25,9 +25,11 @@ import java.util.Map;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.client.response.BatchKVResponse;
+import com.linkedin.restli.common.ComplexKeySpec;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.CompoundKey.TypeInfo;
+import com.linkedin.restli.common.TypeSpec;
 
 /**
  * Converts a raw RestResponse into a type-bound batch response.
@@ -37,11 +39,10 @@ import com.linkedin.restli.common.CompoundKey.TypeInfo;
 
 public class BatchKVResponseDecoder<K, V extends RecordTemplate> extends RestResponseDecoder<BatchKVResponse<K, V>>
 {
-  private final Class<V> _elementClass;
-  private final Class<K> _keyClass;
+  private final TypeSpec<V> _elementType;
+  private final TypeSpec<K> _keyType;
   private final Map<String, CompoundKey.TypeInfo> _keyParts;
-  private final Class<? extends RecordTemplate> _keyKeyClass;
-  private final Class<? extends RecordTemplate> _keyParamsClass;
+  private final ComplexKeySpec<?, ?> _complexKeyType;
 
   /**
    *
@@ -63,17 +64,40 @@ public class BatchKVResponseDecoder<K, V extends RecordTemplate> extends RestRes
                                 Class<? extends RecordTemplate> keyKeyClass,
                                 Class<? extends RecordTemplate> keyParamsClass)
   {
-    _elementClass = elementClass;
-    _keyClass = keyClass;
+    this(TypeSpec.forClassMaybeNull(elementClass),
+         TypeSpec.forClassMaybeNull(keyClass),
+         keyParts,
+         ComplexKeySpec.forClassesMaybeNull(keyKeyClass, keyParamsClass));
+  }
+
+  /**
+   *
+   * @param elementType provides the entity type of the collection.
+   *
+   * @param keyType provides the class identifying the key type.
+   *   <ul>
+   *     <li>For collection resources must be a primitive or a typeref to a primitive.</li>
+   *     <li>For an association resources must be {@link CompoundKey} and keyParts must contain an entry for each association key field.</li>
+   *     <li>For complex resources must be {@link ComplexResourceKey}, keyKeyClass must contain the
+   *           key's record template class and if the resource has a key params their record template type keyParamsClass must be provided.</li>
+   * @param keyParts provides a map for association keys of each key name to {@link TypeInfo}, for non-association resources must be an empty map.
+   * @param complexKeyType provides the type of the key for complex key resources, otherwise null.
+   */
+  public BatchKVResponseDecoder(TypeSpec<V> elementType,
+                                TypeSpec<K> keyType,
+                                Map<String, CompoundKey.TypeInfo> keyParts,
+                                ComplexKeySpec<?, ?> complexKeyType)
+  {
+    _elementType = elementType;
+    _keyType = keyType;
     _keyParts = keyParts;
-    _keyKeyClass = keyKeyClass;
-    _keyParamsClass = keyParamsClass;
+    _complexKeyType = complexKeyType;
   }
 
   @Override
   public Class<?> getEntityClass()
   {
-    return _elementClass;
+    return _elementType.getType();
   }
 
   @Override
@@ -81,10 +105,9 @@ public class BatchKVResponseDecoder<K, V extends RecordTemplate> extends RestRes
   public BatchKVResponse<K, V> wrapResponse(DataMap dataMap)
   {
      return new BatchKVResponse<K, V>(dataMap,
-                                     _keyClass,
-                                     _elementClass,
-                                     _keyParts,
-                                     _keyKeyClass,
-                                     _keyParamsClass);
+                                      _keyType,
+                                      _elementType,
+                                      _keyParts,
+                                      _complexKeyType);
   }
 }

@@ -28,13 +28,13 @@ import java.util.Map;
 
 import com.linkedin.data.DataList;
 import com.linkedin.data.schema.RecordDataSchema;
-import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.data.template.DynamicRecordTemplate;
 import com.linkedin.data.template.FieldDef;
 import com.linkedin.restli.common.ActionResponse;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.internal.client.ActionResponseDecoder;
 import com.linkedin.util.ArgumentUtil;
 
@@ -46,7 +46,7 @@ import com.linkedin.util.ArgumentUtil;
 
 public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, ActionRequest<V>>
 {
-  private final Class<V>                 _elementClass;
+  private final TypeSpec<V>              _elementType;
   private K                              _id;
   private String                         _name;
   private final Map<FieldDef<?>, Object> _actionParams = new HashMap<FieldDef<?>, Object>();
@@ -54,16 +54,18 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
   @Deprecated
   public ActionRequestBuilder(String baseUriTemplate, Class<V> elementClass, ResourceSpec resourceSpec)
   {
-    this(baseUriTemplate, elementClass, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
+    this(baseUriTemplate, new TypeSpec<V>(elementClass), resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
   }
 
-  public ActionRequestBuilder(String baseUriTemplate,
-                              Class<V> elementClass,
-                              ResourceSpec resourceSpec,
-                              RestliRequestOptions requestOptions)
+  public ActionRequestBuilder(String baseUriTemplate, Class<V> elementClass, ResourceSpec resourceSpec, RestliRequestOptions requestOptions)
+  {
+    this(baseUriTemplate, new TypeSpec<V>(elementClass), resourceSpec, requestOptions);
+  }
+
+  public ActionRequestBuilder(String baseUriTemplate, TypeSpec<V> elementType, ResourceSpec resourceSpec, RestliRequestOptions requestOptions)
   {
     super(baseUriTemplate, resourceSpec, requestOptions);
-    _elementClass = elementClass;
+    _elementType = elementType;
   }
 
   public ActionRequestBuilder<K, V> name(String name)
@@ -193,14 +195,14 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
       requestDataSchema = DynamicRecordMetadata.buildSchema(_name, _actionParams.keySet());
 
       Collection<FieldDef<?>> responseFieldDefCollection;
-      if (_elementClass == Void.class)
+      if (_elementType.getType() == Void.class)
       {
         responseFieldDef = null;
         responseFieldDefCollection = Collections.emptyList();
       }
       else
       {
-        responseFieldDef = new FieldDef<V>(ActionResponse.VALUE_NAME, _elementClass, DataTemplateUtil.getSchema(_elementClass));
+        responseFieldDef = new FieldDef<V>(ActionResponse.VALUE_NAME, _elementType.getType(), _elementType.getSchema());
         responseFieldDefCollection = Collections.<FieldDef<?>>singleton(responseFieldDef);
       }
       actionResponseDataSchema = DynamicRecordMetadata.buildSchema(_name,responseFieldDefCollection);

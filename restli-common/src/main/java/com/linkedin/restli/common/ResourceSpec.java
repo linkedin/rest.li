@@ -40,15 +40,21 @@ public interface ResourceSpec
    */
   Class<?> getKeyClass();
 
+  TypeSpec getKeyType();
+
   /**
    * @return the RecordTemplate that the Resource Manages
    */
   Class<? extends RecordTemplate> getValueClass();
 
+  TypeSpec<? extends RecordTemplate> getValueType();
+
   /**
    * @return the map of key names to key classes, if the keyClass is a CompoundKey
    */
   Map<String, CompoundKey.TypeInfo> getKeyParts();
+
+  ComplexKeySpec<? extends RecordTemplate, ? extends RecordTemplate> getComplexKeyType();
 
   /**
    * @return the key of the key, if the keyClass is a ComplexResourceKey

@@ -24,3 +24,7 @@ dependencies {
   testCompile project(path: project.path, configuration: 'testRestClient')
   testCompile project(path: ':d2', configuration: 'testArtifacts')
 }
+
+test {
+  systemProperties['test.projectDir'] = project.projectDir.path
+}

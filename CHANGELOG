@@ -6,6 +6,9 @@ Refactor when projections are encoded in the URI.  Move encoding back to the nor
 (RB=255178)
 Include schemas referenced inline when generating OPTIONS responses.
 
+(RB=253628)
+Add support for dynamically constructing example URIs and requests.
+
 1.13.1
 ------
 (RB=252070)

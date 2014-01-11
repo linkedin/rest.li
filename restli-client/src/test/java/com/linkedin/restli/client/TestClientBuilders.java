@@ -1073,7 +1073,7 @@ public class TestClientBuilders
     
     Request request;
     String[] expectedResourcePath = new String[] {"foo", "bar", "baz"};
-    
+
     request = new ActionRequestBuilder<Void, TestRecord>(SUBRESOURCE_URI, TestRecord.class, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS)
         .name("action").pathKey("key1", 1).pathKey("key2", 2).build();
     testUriGeneration(request, "foo/1/bar/2/baz?action=action");

@@ -153,6 +153,21 @@ public final class ComplexResourceKey<K extends RecordTemplate, P extends Record
                                                                                     Class<? extends RecordTemplate> keyKeyClass,
                                                                                     Class<? extends RecordTemplate> keyParamsClass)
   {
+    return buildFromDataMap(keyDataMap, ComplexKeySpec.forClassesMaybeNull(keyKeyClass, keyParamsClass));
+  }
+
+  /**
+   * Build complex key instance from an untyped datamap representing a complex key as
+   * defined in {@link QueryParamsDataMap}
+   *
+   * @param keyDataMap untyped DataMap - all primitive values are represented as strings.
+   * @param complexKeyType type of {@link ComplexResourceKey}
+   * @return {@link ComplexResourceKey} initialized with id and param values specified in
+   *         the input DataMap
+   */
+  public static ComplexResourceKey<RecordTemplate, RecordTemplate> buildFromDataMap(DataMap keyDataMap,
+                                                                                    ComplexKeySpec<?, ?> complexKeyType)
+  {
     // Copy in case the original is immutable
     keyDataMap = new DataMap(keyDataMap);
 
@@ -162,8 +177,8 @@ public final class ComplexResourceKey<K extends RecordTemplate, P extends Record
     {
       paramsDataMap = new DataMap();
     }
-    RecordTemplate key = validateDataMap(keyDataMap, keyKeyClass);
-    RecordTemplate params = validateDataMap(paramsDataMap, keyParamsClass);
+    RecordTemplate key = validateDataMap(keyDataMap, complexKeyType.getKeyType().getType());
+    RecordTemplate params = validateDataMap(paramsDataMap, complexKeyType.getParamsType().getType());
 
     return new ComplexResourceKey<RecordTemplate, RecordTemplate>(key, params);
   }
@@ -172,10 +187,16 @@ public final class ComplexResourceKey<K extends RecordTemplate, P extends Record
                                                                                         Class<? extends RecordTemplate> keyKeyClass,
                                                                                         Class<? extends RecordTemplate> keyParamsClass) throws PathSegmentSyntaxException
   {
+    return parseFromPathSegment(currentPathSegment, ComplexKeySpec.forClassesMaybeNull(keyKeyClass, keyParamsClass));
+  }
+
+  public static ComplexResourceKey<RecordTemplate, RecordTemplate> parseFromPathSegment(String currentPathSegment,
+                                                                                        ComplexKeySpec<?, ?> complexKeyType) throws PathSegmentSyntaxException
+  {
     Map<String, List<String>> queryParameters =
         UriComponent.decodeQuery(URI.create("?" + currentPathSegment), true);
     DataMap allParametersDataMap = QueryParamsDataMap.parseDataMapKeys(queryParameters);
-    return buildFromDataMap(allParametersDataMap, keyKeyClass, keyParamsClass);
+    return buildFromDataMap(allParametersDataMap, complexKeyType);
   }
 
   private static RecordTemplate validateDataMap(DataMap dataMap,

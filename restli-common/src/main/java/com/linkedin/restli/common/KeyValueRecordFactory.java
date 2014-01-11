@@ -39,18 +39,16 @@ public class KeyValueRecordFactory<K, V extends RecordTemplate>
       "}";
   static final DataSchema COMPOUND_KEY_SCHEMA = DataTemplateUtil.parseSchema(COMPOUND_KEY_SCHEMA_STRING);
 
-  private final Class<K> _keyClass;
-  private final Class<? extends RecordTemplate> _keyKeyClass;
-  private final Class<? extends RecordTemplate> _keyParamsClass;
+  private final TypeSpec<K> _keyType;
+  private final ComplexKeySpec<?, ?> _complexKeyType;
   private final Map<String, CompoundKey.TypeInfo> _fieldTypes;
-  private final Class<V> _valueClass;
+  private final TypeSpec<V> _valueType;
 
-  private final KeyType _keyType;
+  private final ResourceKeyType _resourceKeyType;
 
   RecordDataSchema.Field _keyField;
   RecordDataSchema.Field _paramsField;
   RecordDataSchema.Field _valueField;
-
 
   public KeyValueRecordFactory(final Class<K> keyClass,
                                final Class<? extends RecordTemplate> keyKeyClass,
@@ -58,26 +56,35 @@ public class KeyValueRecordFactory<K, V extends RecordTemplate>
                                final Map<String, CompoundKey.TypeInfo> fieldTypes,
                                final Class<V> valueClass)
   {
-    _keyClass = keyClass;
-    _keyKeyClass = keyKeyClass;
-    _keyParamsClass = keyParamsClass;
-    _valueClass = valueClass;
-    _fieldTypes = fieldTypes;
+    this(TypeSpec.forClassMaybeNull(keyClass),
+         ComplexKeySpec.forClassesMaybeNull(keyKeyClass, keyParamsClass),
+         fieldTypes,
+         TypeSpec.forClassMaybeNull(valueClass));
+  }
 
-    _keyType = getKeyType(keyClass);
+  public KeyValueRecordFactory(final TypeSpec<K> keyType,
+                               final ComplexKeySpec<?, ?> complexKeyType,
+                               final Map<String, CompoundKey.TypeInfo> fieldTypes,
+                               final TypeSpec<V> valueType)
+  {
+    _keyType = keyType;
+    _complexKeyType = complexKeyType;
+    _valueType = valueType;
+    _fieldTypes = fieldTypes;
+    _resourceKeyType = getResourceKeyType(_keyType.getType());
 
     StringBuilder sb = new StringBuilder(10);
 
-    switch (_keyType)
+    switch (_resourceKeyType)
     {
       case PRIMITIVE:
-        _keyField = new RecordDataSchema.Field(DataTemplateUtil.getSchema(_keyClass));
+        _keyField = new RecordDataSchema.Field(_keyType.getSchema());
         _keyField.setName(KeyValueRecord.KEY_FIELD_NAME, sb);
         break;
       case COMPLEX:
-        _keyField = new RecordDataSchema.Field(DataTemplateUtil.getSchema(_keyKeyClass));
+        _keyField = new RecordDataSchema.Field(_complexKeyType.getKeyType().getSchema());
         _keyField.setName(KeyValueRecord.KEY_FIELD_NAME, sb);
-        _paramsField = new RecordDataSchema.Field(DataTemplateUtil.getSchema(_keyParamsClass));
+        _paramsField = new RecordDataSchema.Field(_complexKeyType.getParamsType().getSchema());
         _paramsField.setName(KeyValueRecord.PARAMS_FIELD_NAME, sb);
         break;
       case COMPOUND:
@@ -90,25 +97,24 @@ public class KeyValueRecordFactory<K, V extends RecordTemplate>
         break;
     }
 
-    _valueField = new RecordDataSchema.Field(DataTemplateUtil.getSchema(_valueClass));
+    _valueField = new RecordDataSchema.Field(_valueType.getSchema());
     _valueField.setName(KeyValueRecord.VALUE_FIELD_NAME, sb);
   }
 
-  /**
-   * @param keyClass the class of the key
-   * @return the type of the {@code keyClass}
-   */
-  private static KeyType getKeyType(Class<?> keyClass)
+  private ResourceKeyType getResourceKeyType(Class<?> type)
   {
-    if (CompoundKey.class.isAssignableFrom(keyClass))
+    if (CompoundKey.class.isAssignableFrom(type))
     {
-      return KeyType.COMPOUND;
+      return ResourceKeyType.COMPOUND;
     }
-    if (keyClass.equals(ComplexResourceKey.class))
+    else if (type.equals(ComplexResourceKey.class))
     {
-      return KeyType.COMPLEX;
+      return ResourceKeyType.COMPLEX;
     }
-    return KeyType.PRIMITIVE;
+    else
+    {
+      return ResourceKeyType.PRIMITIVE;
+    }
   }
 
   /**
@@ -120,25 +126,26 @@ public class KeyValueRecordFactory<K, V extends RecordTemplate>
   public KeyValueRecord<K, V> create(final K key, final V value)
   {
     final KeyValueRecord<K, V> keyValueRecord = new KeyValueRecord<K, V>();
-    switch (_keyType)
+
+    switch (_resourceKeyType)
     {
       case PRIMITIVE:
-        keyValueRecord.setPrimitiveKey(_keyField, key, _keyClass);
+        keyValueRecord.setPrimitiveKey(_keyField, key, _keyType);
         break;
       case COMPLEX:
-        keyValueRecord.setComplexKey(_keyField, _paramsField, key, _keyKeyClass, _keyParamsClass);
+        keyValueRecord.setComplexKey(_keyField, _paramsField, key, _complexKeyType);
         break;
       case COMPOUND:
         keyValueRecord.setCompoundKey(_keyField, key, _fieldTypes);
         break;
     }
 
-    keyValueRecord.setValue(_valueField, value, _valueClass);
+    keyValueRecord.setValue(_valueField, value, _valueType.getType());
 
     return keyValueRecord;
   }
 
-  private static enum KeyType
+  private static enum ResourceKeyType
   {
     PRIMITIVE,
     COMPLEX,

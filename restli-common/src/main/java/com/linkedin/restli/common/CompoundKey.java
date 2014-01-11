@@ -51,11 +51,18 @@ public class CompoundKey
   public static final class TypeInfo
   {
     // binding type could be any type (primitive or custom)
-    private final Class<?> _bindingType;
-    // declared type is potentially a typeref to a primitive, otherwise it is a primitive
-    private final Class<?> _declaredType;
+    private final TypeSpec<?> _bindingType;
 
-    public TypeInfo(Class<?> bindingType, Class<?> declaredType)
+    // declared type is potentially a typeref to a primitive, otherwise it is a primitive
+    private final TypeSpec<?> _declaredType;
+
+    @SuppressWarnings("unchecked")
+    public TypeInfo(Class<?> bindingClass, Class<?> declaredClass)
+    {
+      this(new TypeSpec(bindingClass), new TypeSpec(declaredClass));
+    }
+
+    public TypeInfo(TypeSpec<?> bindingType, TypeSpec<?> declaredType)
     {
       _bindingType = bindingType;
       _declaredType = declaredType;
@@ -63,10 +70,20 @@ public class CompoundKey
 
     public Class<?> getBindingType()
     {
-      return _bindingType;
+      return _bindingType.getType();
     }
 
     public Class<?> getDeclaredType()
+    {
+      return _declaredType.getType();
+    }
+
+    public TypeSpec<?> getBinding()
+    {
+      return _bindingType;
+    }
+
+    public TypeSpec<?> getDeclared()
     {
       return _declaredType;
     }
@@ -86,7 +103,7 @@ public class CompoundKey
     {
       Object fieldType = fieldTypes.get(entry.getKey());
       TypeInfo typeInfo = (TypeInfo)fieldType;
-      DataSchema schema = DataTemplateUtil.getSchema(typeInfo._declaredType);
+      DataSchema schema = typeInfo._declaredType.getSchema();
       DataSchema.Type dereferencedType = schema.getDereferencedType();
       if (!schema.getDereferencedDataSchema().isPrimitive())
       {
@@ -110,7 +127,7 @@ public class CompoundKey
                                                  dereferencedClass.getSimpleName());
         }
       }
-      value = DataTemplateUtil.coerceOutput(value, typeInfo._bindingType);
+      value = DataTemplateUtil.coerceOutput(value, typeInfo._bindingType.getType());
       result.append(entry.getKey(), value);
     }
     return result;

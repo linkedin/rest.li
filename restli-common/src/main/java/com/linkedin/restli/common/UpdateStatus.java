@@ -21,7 +21,12 @@
 package com.linkedin.restli.common;
 
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.PathSpec;
+import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
+import java.util.List;
+
 
 /**
  * @author Josh Walker
@@ -30,6 +35,7 @@ import com.linkedin.data.template.RecordTemplate;
 
 public class UpdateStatus extends RecordTemplate
 {
+  private final static RecordDataSchema SCHEMA = ((RecordDataSchema) DataTemplateUtil.parseSchema("{\"type\":\"record\",\"name\":\"UpdateStatus\",\"namespace\":\"com.linkedin.restli.common\",\"doc\":\"A rest.li update status.\",\"fields\":[{\"name\":\"status\",\"type\":\"int\"}]}"));
   private static final String STATUS = "status";
 
   /**
@@ -66,5 +72,20 @@ public class UpdateStatus extends RecordTemplate
   public void setStatus(Integer status)
   {
     data().put(STATUS, status);
+  }
+
+  public static class Fields extends PathSpec
+  {
+    public Fields(List<String> path, String name) {
+      super(path, name);
+    }
+
+    public Fields() {
+      super();
+    }
+
+    public PathSpec status() {
+      return new PathSpec(getPathComponents(), "status");
+    }
   }
 }

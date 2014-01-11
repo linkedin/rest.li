@@ -86,14 +86,13 @@ public class BatchRequest<T> extends Request<T>
 
     Set<Object> result = new HashSet<Object>(idsList.size());
 
-    if (getResourceSpec().getKeyClass() == ComplexResourceKey.class)
+    if (getResourceSpec().getKeyType() != null && getResourceSpec().getKeyType().getType() == ComplexResourceKey.class)
     {
       for (Object key : idsList)
       {
         assert (key instanceof DataMap);
         result.add(ComplexResourceKey.buildFromDataMap((DataMap) key,
-                                                       getResourceSpec().getKeyKeyClass(),
-                                                       getResourceSpec().getKeyParamsClass()));
+                                                       getResourceSpec().getComplexKeyType()));
 
       }
     }

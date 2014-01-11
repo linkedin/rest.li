@@ -39,7 +39,7 @@ public class BatchRequest<T extends RecordTemplate> extends RecordTemplate
 {
   public static final String ENTITIES = "entities";
 
-  private final Class<T> _valueClass;
+  private final TypeSpec<T> _valueType;
   private final MapDataSchema _entitiesSchema;
   private final RecordDataSchema.Field _entitiesField;
 
@@ -63,15 +63,32 @@ public class BatchRequest<T extends RecordTemplate> extends RecordTemplate
    */
   public BatchRequest(DataMap data, Class<T> valueClass)
   {
-    this(data, valueClass, 0);
+    this(data, new TypeSpec<T>(valueClass));
   }
 
   private BatchRequest(DataMap data, Class<T> valueClass, int capacity)
   {
+    this(data, new TypeSpec<T>(valueClass), capacity);
+  }
+
+  /**
+   * Initialize a BatchRequest off of the given data and valueClass.
+   *
+   * @param data a DataMap
+   * @param valueType the class of items that will be returned when this
+   *                   request is fulfilled.
+   */
+  public BatchRequest(DataMap data, TypeSpec<T> valueType)
+  {
+    this(data, valueType, 0);
+  }
+
+  private BatchRequest(DataMap data, TypeSpec<T> valueType, int capacity)
+  {
     super(data, null);
-    _valueClass = valueClass;
+    _valueType = valueType;
     StringBuilder errorMessageBuilder = new StringBuilder(10);
-    Name elementSchemaName = new Name(valueClass.getSimpleName());
+    Name elementSchemaName = new Name(valueType.getType().getSimpleName());
     _entitiesSchema = new MapDataSchema(new RecordDataSchema(elementSchemaName, RecordDataSchema.RecordType.RECORD));
     _entitiesField = new RecordDataSchema.Field(_entitiesSchema);
     _entitiesField.setName(ENTITIES, errorMessageBuilder);
@@ -102,6 +119,6 @@ public class BatchRequest<T extends RecordTemplate> extends RecordTemplate
   {
     DataMap value = (DataMap) data().get(ENTITIES);
 
-    return new DynamicRecordMap<T>(value, _entitiesSchema, _valueClass);
+    return new DynamicRecordMap<T>(value, _entitiesSchema, _valueType.getType());
   }
 }
