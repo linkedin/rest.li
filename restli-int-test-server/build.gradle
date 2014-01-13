@@ -112,7 +112,7 @@ project.tasks.test.dependsOn(project.sourceSets.test.getTaskName('generate', 're
 
 test {
   systemProperties['test.projectDir'] = project.projectDir.path
-  systemProperties['test.idlDir'] = project.file(project.plugins.getPlugin('pegasus').getGeneratedSourceDirName(project, project.sourceSets.test, 'Rest') + File.separatorChar + 'idl').path
+  systemProperties['test.idlDir'] = project.file(project.plugins.getPlugin('pegasus').getGeneratedDirPath(project, project.sourceSets.test, 'Rest') + File.separatorChar + 'idl').path
 }
 
 // TODO When using spawn: true, the server process seems to exit after when gradle exits

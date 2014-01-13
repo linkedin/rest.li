@@ -770,7 +770,7 @@ class PegasusPlugin implements Plugin<Project>
 
   private static void deleteGeneratedDir(Project project, SourceSet sourceSet, String dirType)
   {
-    project.delete(getGeneratedSourceDirName(project, sourceSet, dirType))
+    project.delete(getGeneratedDirPath(project, sourceSet, dirType))
   }
 
   private static Class<? extends Enum> getCompatibilityLevelClass(Project project)
@@ -815,7 +815,33 @@ class PegasusPlugin implements Plugin<Project>
     }
   }
 
-  private static String getDataSchemaRelativePath(Project project, SourceSet sourceSet)
+  // Compute the name of the source set that will contain a type of an input generated code.
+  // e.g. genType may be 'DataTemplate' or 'Rest'
+  private static String getGeneratedSourceSetName(SourceSet sourceSet, String genType)
+  {
+    return "${sourceSet.name}Generated${genType}"
+  }
+
+  // Compute the directory name that will contain a type generated code of an input source set.
+  // e.g. genType may be 'DataTemplate' or 'Rest'
+  private static String getGeneratedDirPath(Project project, SourceSet sourceSet, String genType)
+  {
+    final String override = getOverridePath(project, sourceSet, 'overrideGeneratedDir')
+    final String sourceSetName = getGeneratedSourceSetName(sourceSet, genType)
+    final String base
+    if (override == null)
+    {
+      base = 'src'
+    }
+    else
+    {
+      base = override
+    }
+
+    return "${base}${File.separatorChar}${sourceSetName}"
+  }
+
+  private static String getDataSchemaPath(Project project, SourceSet sourceSet)
   {
     final String override = getOverridePath(project, sourceSet, 'overridePegasusDir')
     if (override == null)
@@ -828,7 +854,7 @@ class PegasusPlugin implements Plugin<Project>
     }
   }
 
-  private static String getSnapshotRelativePath(Project project, SourceSet sourceSet)
+  private static String getSnapshotPath(Project project, SourceSet sourceSet)
   {
     final String override = getOverridePath(project, sourceSet, 'overrideSnapshotDir')
     if (override == null)
@@ -841,7 +867,7 @@ class PegasusPlugin implements Plugin<Project>
     }
   }
 
-  private static String getIdlRelativePath(Project project, SourceSet sourceSet)
+  private static String getIdlPath(Project project, SourceSet sourceSet)
   {
     final String override = getOverridePath(project, sourceSet, 'overrideIdlDir')
     if (override == null)
@@ -884,7 +910,6 @@ class PegasusPlugin implements Plugin<Project>
 
   protected void configureRestModelGeneration(Project project, SourceSet sourceSet)
   {
-
     if (sourceSet.allSource.empty)
     {
       project.logger.info("No source files found for sourceSet " + sourceSet.name + ".  Skipping idl generation.")
@@ -921,8 +946,8 @@ class PegasusPlugin implements Plugin<Project>
       }
 
       // generate the rest model
-      final String destinationDirPrefix = getGeneratedSourceDirName(project, sourceSet, REST_GEN_TYPE) + File.separatorChar
-      final FileCollection restModelResolverPath = apiProject.files(getDataSchemaRelativePath(project, sourceSet)) + getDataModelConfig(apiProject, sourceSet)
+      final String destinationDirPrefix = getGeneratedDirPath(project, sourceSet, REST_GEN_TYPE) + File.separatorChar
+      final FileCollection restModelResolverPath = apiProject.files(getDataSchemaPath(project, sourceSet)) + getDataModelConfig(apiProject, sourceSet)
 
       final Task generateRestModelTask = project.task(sourceSet.getTaskName('generate', 'restModel'),
                                                       type: GenerateRestModel,
@@ -942,8 +967,8 @@ class PegasusPlugin implements Plugin<Project>
         }
       }
 
-      final File apiSnapshotDir = apiProject.file(getSnapshotRelativePath(apiProject, sourceSet))
-      final File apiIdlDir = apiProject.file(getIdlRelativePath(apiProject, sourceSet))
+      final File apiSnapshotDir = apiProject.file(getSnapshotPath(apiProject, sourceSet))
+      final File apiIdlDir = apiProject.file(getIdlPath(apiProject, sourceSet))
       apiSnapshotDir.mkdirs()
       if (!isPropertyTrue(project, SKIP_IDL_CHECK))
       {
@@ -1095,7 +1120,7 @@ class PegasusPlugin implements Plugin<Project>
 
   protected void configureAvroSchemaGeneration(Project project, SourceSet sourceSet)
   {
-    final File dataSchemaDir = project.file(getDataSchemaRelativePath(project, sourceSet))
+    final File dataSchemaDir = project.file(getDataSchemaPath(project, sourceSet))
     final FileTree dataSchemaFiles = getSuffixedFiles(project, dataSchemaDir, DATA_TEMPLATE_FILE_SUFFIX)
 
     if (dataSchemaFiles.empty)
@@ -1104,8 +1129,9 @@ class PegasusPlugin implements Plugin<Project>
       return
     }
 
+    final File avroDir = project.file(getGeneratedDirPath(project, sourceSet, AVRO_SCHEMA_GEN_TYPE) + File.separatorChar + 'avro')
+
     // generate avro schema files from data schema
-    File avroDir = project.file(getGeneratedSourceDirName(project, sourceSet, AVRO_SCHEMA_GEN_TYPE) + File.separatorChar + 'avro')
     final Task generateAvroSchemaTask = project.task(sourceSet.getTaskName('generate', 'avroSchema'), type: GenerateAvroSchema) {
       inputDir = dataSchemaDir
       destinationDir = avroDir
@@ -1153,17 +1179,19 @@ class PegasusPlugin implements Plugin<Project>
 
   protected void configureDataTemplateGeneration(Project project, SourceSet sourceSet)
   {
-    final File dataSchemaDir = project.file(getDataSchemaRelativePath(project, sourceSet))
+    final File dataSchemaDir = project.file(getDataSchemaPath(project, sourceSet))
     final FileTree dataSchemaFiles = getSuffixedFiles(project, dataSchemaDir, DATA_TEMPLATE_FILE_SUFFIX)
     if (dataSchemaFiles.empty)
     {
       return
     }
 
+    final File generatedDataTemplateDir = project.file(getGeneratedDirPath(project, sourceSet, DATA_TEMPLATE_GEN_TYPE) + File.separatorChar + 'java')
+
     // generate data template source files from data schema
     final Task generateDataTemplatesTask = project.task(sourceSet.getTaskName('generate', 'dataTemplate'), type: GenerateDataTemplate) {
       inputDir = dataSchemaDir
-      destinationDir = project.file(getGeneratedSourceDirName(project, sourceSet, DATA_TEMPLATE_GEN_TYPE) + File.separatorChar + 'java')
+      destinationDir = generatedDataTemplateDir
       inputDataSchemaFiles = dataSchemaFiles
       resolverPath = getDataModelConfig(project, sourceSet)
 
@@ -1187,7 +1215,7 @@ class PegasusPlugin implements Plugin<Project>
     String targetSourceSetName = getGeneratedSourceSetName(sourceSet, DATA_TEMPLATE_GEN_TYPE)
     SourceSet targetSourceSet = project.sourceSets.create(targetSourceSetName) {
       java {
-        srcDir "src${File.separatorChar}${targetSourceSetName}${File.separatorChar}java"
+        srcDir generatedDataTemplateDir
       }
       compileClasspath = getDataModelConfig(project, sourceSet) + project.configurations.dataTemplateCompile
     }
@@ -1259,11 +1287,13 @@ class PegasusPlugin implements Plugin<Project>
   protected void configureRestClientGeneration(Project project, SourceSet sourceSet)
   {
     // idl directory for api project
-    final File idlDir = project.file(getIdlRelativePath(project, sourceSet))
+    final File idlDir = project.file(getIdlPath(project, sourceSet))
     if (getSuffixedFiles(project, idlDir, IDL_FILE_SUFFIX).empty)
     {
       return
     }
+
+    final File generatedRestClientDir = project.file(getGeneratedDirPath(project, sourceSet, REST_GEN_TYPE) + File.separatorChar + 'java')
 
     // always include imported data template jars in compileClasspath of rest client
     FileCollection dataModels = getDataModelConfig(project, sourceSet)
@@ -1283,7 +1313,7 @@ class PegasusPlugin implements Plugin<Project>
     String targetSourceSetName = getGeneratedSourceSetName(sourceSet, REST_GEN_TYPE)
     SourceSet targetSourceSet = project.sourceSets.create(targetSourceSetName) {
       java {
-        srcDir "src${File.separatorChar}${targetSourceSetName}${File.separatorChar}java"
+        srcDir generatedRestClientDir
       }
       compileClasspath = dataModels + project.configurations.restClientCompile
     }
@@ -1298,7 +1328,7 @@ class PegasusPlugin implements Plugin<Project>
     Task generateRestClientTask = project.task(targetSourceSet.getTaskName('generate', 'restClient'), type: GenerateRestClient) {
       inputDir = idlDir
       resolverPath = dataModels
-      destinationDir = project.file(getGeneratedSourceDirName(project, sourceSet, REST_GEN_TYPE) + File.separatorChar + 'java')
+      destinationDir = generatedRestClientDir
     }
 
     if (dataTemplateJarTask != null)
@@ -1346,21 +1376,6 @@ class PegasusPlugin implements Plugin<Project>
         testRestClient restClientJarTask
       }
     }
-  }
-
-  // Compute the name of the source set that will contain a type of an input generated code.
-  // e.g. genType may be 'DataTemplate' or 'Rest'
-  private static String getGeneratedSourceSetName(SourceSet sourceSet, String genType)
-  {
-    return "${sourceSet.name}Generated${genType}"
-  }
-
-  // Compute the directory name that will contain a type generated code of an input source set.
-  // e.g. genType may be 'DataTemplate' or 'Rest'
-  private static String getGeneratedSourceDirName(Project project, SourceSet sourceSet, String genType)
-  {
-    final String sourceSetName = getGeneratedSourceSetName(sourceSet, genType)
-    return "${project.projectDir}${File.separatorChar}src${File.separatorChar}${sourceSetName}"
   }
 
   // Return the appendix for generated jar files.

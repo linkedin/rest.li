@@ -46,8 +46,8 @@ class PegasusPluginLoader implements Plugin<Project>
     }
   }
 
-  private static String getGeneratedSourceDirName(Project project, SourceSet sourceSet, String genType)
+  private static String getGeneratedDirPath(Project project, SourceSet sourceSet, String genType)
   {
-    PegasusPlugin.getGeneratedSourceDirName(project, sourceSet, genType)
+    PegasusPlugin.getGeneratedDirPath(project, sourceSet, genType)
   }
 }

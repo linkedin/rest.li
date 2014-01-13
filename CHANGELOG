@@ -1,5 +1,11 @@
+1.12.4
+------
+
+
 1.12.3
 ------
+(RB=250488)
+pegasus plugin: Add "overrideGeneratedDir" property to override per-module generated directory.
 
 1.12.2
 ------
