@@ -1,6 +1,12 @@
-1.11.3
+1.12.1
 ------
 
+1.12.0
+------
+(RB=248588)
+RestClient now fetches properties for the URI the request is going to before sending the request.
+Added RequestOptions at the top level client builders as well as each generated RequestBuilder.
+Added Rest.li protocol version negotiation.
 
 1.11.2
 ------
