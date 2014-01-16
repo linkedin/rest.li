@@ -141,7 +141,68 @@ public class ZooKeeperConnectionManager
     {
       server.shutdown(multiCallback);
     }
+  }
 
+  public void markDownAllServers(final Callback<None> callback)
+  {
+    Callback<None> markDownCallback;
+    if (callback != null)
+    {
+      markDownCallback = callback;
+    }
+    else
+    {
+      markDownCallback = new Callback<None>()
+      {
+        @Override
+        public void onError(Throwable e)
+        {
+          LOG.error("failed to mark down servers", e);
+        }
+
+        @Override
+        public void onSuccess(None result)
+        {
+          LOG.info("mark down all servers successful");
+        }
+      };
+    }
+    Callback<None> multiCallback = Callbacks.countDown(markDownCallback, _servers.length);
+    for (ZooKeeperAnnouncer server : _servers)
+    {
+      server.markDown(multiCallback);
+    }
+  }
+
+  public void markUpAllServers(final Callback<None> callback)
+  {
+    Callback<None> markUpCallback;
+    if (callback != null)
+    {
+      markUpCallback = callback;
+    }
+    else
+    {
+      markUpCallback = new Callback<None>()
+      {
+        @Override
+        public void onError(Throwable e)
+        {
+          LOG.error("failed to mark up servers", e);
+        }
+
+        @Override
+        public void onSuccess(None result)
+        {
+          LOG.info("mark up all servers successful");
+        }
+      };
+    }
+    Callback<None> multiCallback = Callbacks.countDown(markUpCallback, _servers.length);
+    for (ZooKeeperAnnouncer server : _servers)
+    {
+      server.markUp(multiCallback);
+    }
   }
 
   private class Listener implements ZKConnection.StateListener
