@@ -99,4 +99,27 @@ public class TestComplexResourceKey
 
     }
   }
+
+  @Test
+  public void testReadOnlyWithNullParams()
+  {
+    DataMap keyDataMap = new DataMap();
+    keyDataMap.put("key", "key-value");
+    EmptyRecord key = new EmptyRecord(keyDataMap);
+
+    ComplexResourceKey<EmptyRecord, EmptyRecord> complexResourceKey =
+        new ComplexResourceKey<EmptyRecord, EmptyRecord>(key, null);
+
+    complexResourceKey.makeReadOnly();
+
+    try
+    {
+      key.data().put("key", "new key value");
+      Assert.fail("Should not be able to update the key after the ComplexResourceKey has been made read only!");
+    }
+    catch (UnsupportedOperationException e)
+    {
+
+    }
+  }
 }

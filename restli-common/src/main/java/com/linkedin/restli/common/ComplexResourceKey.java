@@ -124,8 +124,14 @@ public final class ComplexResourceKey<K extends RecordTemplate, P extends Record
    */
   public void makeReadOnly()
   {
-    key.data().makeReadOnly();
-    params.data().makeReadOnly();
+    if (key.data() != null)
+    {
+      key.data().makeReadOnly();
+    }
+    if (params != null && params.data() != null)
+    {
+      params.data().makeReadOnly();
+    }
   }
 
   protected final K           key;
