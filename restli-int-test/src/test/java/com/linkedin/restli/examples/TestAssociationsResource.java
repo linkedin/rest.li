@@ -21,13 +21,12 @@ import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.client.BatchGetKVRequest;
-import com.linkedin.restli.client.BatchGetRequest;
+import com.linkedin.restli.client.GetRequest;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
 import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.client.response.BatchKVResponse;
-import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.UpdateStatus;
@@ -41,6 +40,7 @@ import com.linkedin.restli.examples.greetings.client.AssociationsFindByAssocKeyF
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -49,6 +49,8 @@ import org.testng.annotations.Test;
 import static com.linkedin.restli.examples.AssociationResourceHelpers.DB;
 import static com.linkedin.restli.examples.AssociationResourceHelpers.SIMPLE_COMPOUND_KEY;
 import static com.linkedin.restli.examples.AssociationResourceHelpers.URL_COMPOUND_KEY;
+import com.linkedin.restli.examples.greetings.client.AssociationsSubBuilders;
+
 
 public class TestAssociationsResource extends RestLiIntegrationTest
 {
@@ -120,6 +122,24 @@ public class TestAssociationsResource extends RestLiIntegrationTest
       Assert.assertTrue(entity.getResults().containsKey(id));
       Assert.assertEquals(entity.getResults().get(id), DB.get(id));
     }
+  }
+
+  @Test
+  public void testSubresourceGet() throws RemoteInvocationException
+  {
+    GetRequest<Message> request = new AssociationsSubBuilders().get().destKey("dest").srcKey("src").id("id").build();
+    Message message = REST_CLIENT.sendRequest(request).getResponse().getEntity();
+    Assert.assertEquals(message.getId(), "src");
+    Assert.assertEquals(message.getMessage(), "dest");
+  }
+
+  @Test
+  public void testSubresourceGetForbiddenCharacters() throws RemoteInvocationException
+  {
+    GetRequest<Message> request = new AssociationsSubBuilders().get().destKey("d&est").srcKey("s&rc").id("id").build();
+    Message message = REST_CLIENT.sendRequest(request).getResponse().getEntity();
+    Assert.assertEquals(message.getId(), "s&rc");
+    Assert.assertEquals(message.getMessage(), "d&est");
   }
 
   @Test

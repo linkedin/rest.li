@@ -1,6 +1,7 @@
 1.12.4
 ------
-
+(RB=252372)
+Fix d2 rewrite bug and fix related pathKeys incorrect encoding issue.
 
 1.12.3
 ------

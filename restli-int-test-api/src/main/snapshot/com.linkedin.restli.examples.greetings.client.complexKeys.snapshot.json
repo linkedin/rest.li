@@ -54,6 +54,26 @@
         "method" : "batch_delete"
       } ],
       "entity" : {
+        "subresources" : [ {
+          "schema" : "com.linkedin.restli.examples.greetings.api.TwoPartKey",
+          "name" : "complexKeysSub",
+          "doc" : "generated from: com.linkedin.restli.examples.greetings.server.ComplexKeysSubResource",
+          "path" : "/complexKeys/{keys}/complexKeysSub",
+          "collection" : {
+            "methods" : [ {
+              "method" : "get"
+            } ],
+            "entity" : {
+              "path" : "/complexKeys/{keys}/complexKeysSub/{subKey}"
+            },
+            "supports" : [ "get" ],
+            "identifier" : {
+              "name" : "subKey",
+              "type" : "string"
+            }
+          },
+          "namespace" : "com.linkedin.restli.examples.greetings.client"
+        } ],
         "path" : "/complexKeys/{keys}"
       },
       "finders" : [ {

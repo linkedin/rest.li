@@ -30,7 +30,27 @@
       "assocKeys" : [ "src" ]
     } ],
     "entity" : {
-      "path" : "/associations/src={src}&dest={dest}"
+      "path" : "/associations/src={src}&dest={dest}",
+      "subresources" : [ {
+        "name" : "associationsSub",
+        "namespace" : "com.linkedin.restli.examples.greetings.client",
+        "path" : "/associations/src={src}&dest={dest}/associationsSub",
+        "schema" : "com.linkedin.restli.examples.greetings.api.Message",
+        "doc" : "generated from: com.linkedin.restli.examples.greetings.server.AssociationsSubResource",
+        "collection" : {
+          "identifier" : {
+            "name" : "subKey",
+            "type" : "string"
+          },
+          "supports" : [ "get" ],
+          "methods" : [ {
+            "method" : "get"
+          } ],
+          "entity" : {
+            "path" : "/associations/src={src}&dest={dest}/associationsSub/{subKey}"
+          }
+        }
+      } ]
     }
   }
 }

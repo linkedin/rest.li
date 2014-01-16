@@ -34,7 +34,27 @@
       } ]
     } ],
     "entity" : {
-      "path" : "/complexKeys/{keys}"
+      "path" : "/complexKeys/{keys}",
+      "subresources" : [ {
+        "name" : "complexKeysSub",
+        "namespace" : "com.linkedin.restli.examples.greetings.client",
+        "path" : "/complexKeys/{keys}/complexKeysSub",
+        "schema" : "com.linkedin.restli.examples.greetings.api.TwoPartKey",
+        "doc" : "generated from: com.linkedin.restli.examples.greetings.server.ComplexKeysSubResource",
+        "collection" : {
+          "identifier" : {
+            "name" : "subKey",
+            "type" : "string"
+          },
+          "supports" : [ "get" ],
+          "methods" : [ {
+            "method" : "get"
+          } ],
+          "entity" : {
+            "path" : "/complexKeys/{keys}/complexKeysSub/{subKey}"
+          }
+        }
+      } ]
     }
   }
 }

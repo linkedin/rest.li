@@ -95,12 +95,12 @@ abstract class AbstractRestliRequestUriBuilder<R extends Request> implements Res
 
     for(Map.Entry<String, Object> entry : pathKeys.entrySet())
     {
-      String value = RestliBuilderUtils.keyToString(entry.getValue(), URLEscaper.Escaping.NO_ESCAPING, _version);
+      String value = RestliBuilderUtils.keyToString(entry.getValue(), URLEscaper.Escaping.URL_ESCAPING, _version);
       if (value == null)
       {
         throw new IllegalArgumentException("Missing value for path key " + entry.getKey());
       }
-      escapedKeys.put(entry.getKey(), URLEscaper.escape(value, URLEscaper.Escaping.URL_ESCAPING));
+      escapedKeys.put(entry.getKey(), value);
     }
 
     return template.createURI(escapedKeys);

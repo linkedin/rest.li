@@ -33,6 +33,7 @@ import com.linkedin.restli.client.CreateRequest;
 import com.linkedin.restli.client.CreateRequestBuilder;
 import com.linkedin.restli.client.FindRequest;
 import com.linkedin.restli.client.FindRequestBuilder;
+import com.linkedin.restli.client.GetRequest;
 import com.linkedin.restli.client.GetRequestBuilder;
 import com.linkedin.restli.client.PartialUpdateRequest;
 import com.linkedin.restli.client.PartialUpdateRequestBuilder;
@@ -52,6 +53,7 @@ import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.api.TwoPartKey;
 import com.linkedin.restli.examples.greetings.client.AnnotatedComplexKeysBuilders;
 import com.linkedin.restli.examples.greetings.client.ComplexKeysBuilders;
+import com.linkedin.restli.examples.greetings.client.ComplexKeysSubBuilders;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -62,6 +64,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 
 public class TestComplexKeysResource extends RestLiIntegrationTest
@@ -71,6 +74,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
   private static final RestClient REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
 
   private final ComplexKeysBuilders COMPLEX_KEYS_BUILDERS = new ComplexKeysBuilders();
+  private final ComplexKeysSubBuilders COMPLEX_KEYS_SUB_BUILDERS = new ComplexKeysSubBuilders();
   private final AnnotatedComplexKeysBuilders ANNOTATED_COMPLEX_KEYS_BUILDERS = new AnnotatedComplexKeysBuilders();
 
   @BeforeClass
@@ -89,6 +93,40 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
   public void testGet() throws RemoteInvocationException
   {
     testGetMain(COMPLEX_KEYS_BUILDERS.get());
+  }
+
+  @Test
+  public void testSubGet() throws ExecutionException, InterruptedException
+  {
+    TwoPartKey key = new TwoPartKey();
+    key.setMajor("a");
+    key.setMinor("b");
+    TwoPartKey param = new TwoPartKey();
+    param.setMajor("c");
+    param.setMinor("d");
+    ComplexResourceKey<TwoPartKey, TwoPartKey> complexKey = new ComplexResourceKey<TwoPartKey, TwoPartKey>(key, param);
+    GetRequest<TwoPartKey> request = COMPLEX_KEYS_SUB_BUILDERS.get().keysKey(complexKey).id(
+      "stringKey").build();
+    TwoPartKey response = REST_CLIENT.sendRequest(request).get().getEntity();
+    Assert.assertEquals(response.getMajor(), "aANDc");
+    Assert.assertEquals(response.getMinor(), "bANDd");
+  }
+
+  @Test
+  public void testSubGetWithReservedChars() throws ExecutionException, InterruptedException
+  {
+    TwoPartKey key = new TwoPartKey();
+    key.setMajor("a&1");
+    key.setMinor("b&2");
+    TwoPartKey param = new TwoPartKey();
+    param.setMajor("c&3");
+    param.setMinor("d&4");
+    ComplexResourceKey<TwoPartKey, TwoPartKey> complexKey = new ComplexResourceKey<TwoPartKey, TwoPartKey>(key, param);
+    GetRequest<TwoPartKey> request = COMPLEX_KEYS_SUB_BUILDERS.get().keysKey(complexKey).id(
+      "stringKey").build();
+    TwoPartKey response = REST_CLIENT.sendRequest(request).get().getEntity();
+    Assert.assertEquals(response.getMajor(), "a&1ANDc&3");
+    Assert.assertEquals(response.getMinor(), "b&2ANDd&4");
   }
 
   @Test
