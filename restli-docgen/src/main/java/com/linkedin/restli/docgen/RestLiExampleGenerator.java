@@ -17,7 +17,6 @@
 package com.linkedin.restli.docgen;
 
 
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.DataSchema;
@@ -49,9 +48,11 @@ import com.linkedin.restli.internal.server.ResourceContextImpl;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.internal.server.RestLiResponseHandler;
 import com.linkedin.restli.internal.server.RoutingResult;
+import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
+import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.restspec.ActionSchema;
 import com.linkedin.restli.restspec.AssocKeySchema;
 import com.linkedin.restli.restspec.AssociationSchema;
@@ -82,6 +83,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 
 /**
  * Generates a example requests for a given Resource IDL. Uses
@@ -653,7 +656,9 @@ public class RestLiExampleGenerator
     final RestResponse response;
     try
     {
-      final RoutingResult routingResult = new RoutingResult(new ResourceContextImpl(), method);
+      ServerResourceContext context = new ResourceContextImpl();
+      RestUtils.validateRequestHeadersAndUpdateResourceContext(new HashMap<String, String>(), context);
+      final RoutingResult routingResult = new RoutingResult(context, method);
       response = _responseHandler.buildResponse(request, routingResult, responseEntity);
     }
     catch (RestLiSyntaxException e)

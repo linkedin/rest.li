@@ -16,6 +16,15 @@
 
 package com.linkedin.restli.server.test;
 
+import static com.linkedin.restli.server.test.RestLiTestHelper.buildResourceModel;
+import static com.linkedin.restli.server.test.RestLiTestHelper.doubleQuote;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
+
+import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.DataCodec;
 import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.codec.PsonDataCodec;
@@ -23,10 +32,48 @@ import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.data.template.FieldDef;
-import com.linkedin.restli.internal.server.model.Parameter;
+import com.linkedin.data.template.StringMap;
 import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestRequestBuilder;
+import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.restli.common.ActionResponse;
+import com.linkedin.restli.common.BatchResponse;
+import com.linkedin.restli.common.CollectionMetadata;
+import com.linkedin.restli.common.CollectionResponse;
+import com.linkedin.restli.common.CreateStatus;
+import com.linkedin.restli.common.ErrorResponse;
+import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.common.Link;
+import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.common.UpdateStatus;
+import com.linkedin.restli.internal.server.PathKeysImpl;
+import com.linkedin.restli.internal.server.ResourceContextImpl;
+import com.linkedin.restli.internal.server.RestLiResponseHandler;
+import com.linkedin.restli.internal.server.RoutingResult;
+import com.linkedin.restli.internal.server.ServerResourceContext;
+import com.linkedin.restli.internal.server.model.Parameter;
+import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
+import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor.InterfaceType;
+import com.linkedin.restli.internal.server.model.ResourceModel;
+import com.linkedin.restli.internal.server.util.DataMapUtils;
+import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
+import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.ActionResult;
+import com.linkedin.restli.server.BasicCollectionResult;
+import com.linkedin.restli.server.BatchCreateResult;
+import com.linkedin.restli.server.BatchUpdateResult;
+import com.linkedin.restli.server.CollectionResult;
+import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.GetResult;
+import com.linkedin.restli.server.ResourceLevel;
+import com.linkedin.restli.server.RestLiServiceException;
+import com.linkedin.restli.server.UpdateResponse;
+import com.linkedin.restli.server.annotations.RestLiCollection;
+import com.linkedin.restli.server.resources.CollectionResourceTemplate;
+import com.linkedin.restli.server.twitter.StatusCollectionResource;
+import com.linkedin.restli.server.twitter.TwitterTestDataModels.Status;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -40,53 +87,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.linkedin.restli.common.ActionResponse;
-import com.linkedin.restli.common.BatchResponse;
-import com.linkedin.restli.common.CollectionMetadata;
-import com.linkedin.restli.common.CollectionResponse;
-import com.linkedin.restli.common.CreateStatus;
-import com.linkedin.restli.common.ErrorResponse;
-import com.linkedin.restli.common.Link;
-import com.linkedin.restli.common.ResourceMethod;
-import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.common.RestConstants;
-import com.linkedin.restli.common.UpdateStatus;
-import com.linkedin.restli.internal.server.PathKeysImpl;
-import com.linkedin.restli.internal.server.ResourceContextImpl;
-import com.linkedin.restli.internal.server.RestLiResponseHandler;
-import com.linkedin.restli.internal.server.RoutingResult;
-import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
-import com.linkedin.restli.server.BasicCollectionResult;
-import com.linkedin.restli.server.BatchCreateResult;
-import com.linkedin.restli.server.BatchUpdateResult;
-import com.linkedin.restli.server.ResourceLevel;
-import com.linkedin.restli.server.RestLiServiceException;
-import com.linkedin.restli.server.CollectionResult;
-import com.linkedin.restli.server.CreateResponse;
-import com.linkedin.restli.server.RoutingException;
-import com.linkedin.restli.server.UpdateResponse;
-import com.linkedin.restli.server.annotations.RestLiCollection;
-import com.linkedin.restli.server.resources.CollectionResourceTemplate;
-
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-
-import com.linkedin.data.DataMap;
-import com.linkedin.data.template.StringMap;
-import com.linkedin.r2.message.rest.RestRequest;
-import com.linkedin.r2.message.rest.RestRequestBuilder;
-import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor.InterfaceType;
-import com.linkedin.restli.internal.server.model.ResourceModel;
-import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
-import com.linkedin.restli.internal.server.util.DataMapUtils;
-import com.linkedin.restli.server.twitter.StatusCollectionResource;
-import com.linkedin.restli.server.twitter.TwitterTestDataModels.Status;
-
-import static com.linkedin.restli.server.test.RestLiTestHelper.buildResourceModel;
-import static com.linkedin.restli.server.test.RestLiTestHelper.doubleQuote;
-import static org.testng.Assert.*;
 
 
 /**
@@ -118,7 +121,7 @@ public class TestRestLiResponseHandler
                                              Map<String, String> headers) throws Exception
   {
     RestRequest req = buildRequest(path, headers);
-    RoutingResult routing = buildRoutingResult(method, req);
+    RoutingResult routing = buildRoutingResult(method, req, headers);
     return _responseHandler.buildResponse(req, routing, body);
   }
 
@@ -153,14 +156,20 @@ public class TestRestLiResponseHandler
                                                     badAcceptHeaders);
       Assert.fail();
     }
-    catch (RoutingException e)
+    catch (RestLiServiceException e)
     {
-      Assert.assertEquals(e.getStatus(), 406);
+      Assert.assertEquals(e.getStatus().getCode(), 406);
     }
-
-    // check response without body (expect no error)
-    RestResponse response = invokeResponseHandler("/test", new CreateResponse(HttpStatus.S_201_CREATED), ResourceMethod.CREATE, badAcceptHeaders);
-    checkResponse(response, 201, 1, null, null, null, false, false);
+    // check response without body (expect 406 error)
+    try
+    {
+      RestResponse response = invokeResponseHandler("/test", new CreateResponse(HttpStatus.S_201_CREATED), ResourceMethod.CREATE, badAcceptHeaders);
+      Assert.fail();
+    }
+    catch (RestLiServiceException e)
+    {
+      Assert.assertEquals(e.getStatus().getCode(), 406);
+    }
   }
 
   @DataProvider(name="statusData")
@@ -270,10 +279,12 @@ public class TestRestLiResponseHandler
 
     RestResponse response;
     // #1 check datamap/entity structure
-    response = _responseHandler.buildResponse(buildRequest(acceptTypeData.acceptHeaders),
-                                              new RoutingResult(new ResourceContextImpl(), methodDescriptor),
-                                              buildStatusList(3));
 
+    ServerResourceContext context = new ResourceContextImpl();
+    RestUtils.validateRequestHeadersAndUpdateResourceContext(acceptTypeData.acceptHeaders, context);
+    response = _responseHandler.buildResponse(buildRequest(acceptTypeData.acceptHeaders),
+                                              new RoutingResult(context, methodDescriptor),
+                                              buildStatusList(3));
     checkResponse(response, 200, 4, acceptTypeData.responseContentType, CollectionResponse.class.getName(), Status.class.getName(), true);
 
     String baseUri = "/test?someParam=foo";
@@ -356,8 +367,9 @@ public class TestRestLiResponseHandler
           throws IOException, URISyntaxException, RestLiSyntaxException
   {
     RestRequest request = buildRequest(uri, headers);
-    RoutingResult routingResult = new RoutingResult(new ResourceContextImpl(new PathKeysImpl(), request,
-                                                                            new RequestContext()), methodDescriptor);
+    ServerResourceContext context = new ResourceContextImpl(new PathKeysImpl(), request, new RequestContext());
+    RestUtils.validateRequestHeadersAndUpdateResourceContext(headers, context);
+    RoutingResult routingResult = new RoutingResult(context, methodDescriptor);
     RestResponse response;
     response = _responseHandler.buildResponse(request,
                                               routingResult,
@@ -406,7 +418,7 @@ public class TestRestLiResponseHandler
 
     // #1 simple record template
     response = _responseHandler.buildResponse(buildRequest(acceptTypeData.acceptHeaders),
-                                              buildRoutingResultAction(Status.class),
+                                              buildRoutingResultAction(Status.class, acceptTypeData.acceptHeaders),
                                               buildStatusRecord());
 
     checkResponse(response, 200, 4, acceptTypeData.responseContentType, ActionResponse.class.getName(), Status.class.getName(), true);
@@ -417,7 +429,7 @@ public class TestRestLiResponseHandler
     map.put("key1", "value1");
     map.put("key2", "value2");
     response = _responseHandler.buildResponse(buildRequest(acceptTypeData.acceptHeaders),
-                                              buildRoutingResultAction(StringMap.class),
+                                              buildRoutingResultAction(StringMap.class, acceptTypeData.acceptHeaders),
                                               map);
 
     checkResponse(response, 200, 4, acceptTypeData.responseContentType, ActionResponse.class.getName(), StringMap.class.getName(), true);
@@ -426,7 +438,7 @@ public class TestRestLiResponseHandler
 
     // #3 empty response
     response = _responseHandler.buildResponse(buildRequest(acceptTypeData.acceptHeaders),
-                                              buildRoutingResultAction(Void.TYPE),
+                                              buildRoutingResultAction(Void.TYPE, acceptTypeData.acceptHeaders),
                                               null);
 
     checkResponse(response, 200, 1, null, null, null, false);
@@ -442,7 +454,7 @@ public class TestRestLiResponseHandler
     // #1
     ex = new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, "missing fields");
     response = _responseHandler.buildResponse(buildRequest(acceptTypeData.acceptHeaders),
-                                              buildRoutingResult(),
+                                              buildRoutingResult(acceptTypeData.acceptHeaders),
                                               ex);
 
     checkResponse(response, 400, 4, acceptTypeData.responseContentType, ErrorResponse.class.getName(), null, true, true);
@@ -454,7 +466,7 @@ public class TestRestLiResponseHandler
     // #2
     ex = new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, "missing fields").setServiceErrorCode(11);
     response = _responseHandler.buildResponse(buildRequest(acceptTypeData.acceptHeaders),
-                                              buildRoutingResult(),
+                                              buildRoutingResult(acceptTypeData.acceptHeaders),
                                               ex);
 
     checkResponse(response, 400, 4, acceptTypeData.responseContentType, ErrorResponse.class.getName(), null, true, true);
@@ -475,7 +487,7 @@ public class TestRestLiResponseHandler
     RestRequest request1 = buildRequest("/test?fields=f1,f2,f3", acceptTypeData.acceptHeaders);
     Status status = buildStatusWithFields("f1", "f2", "f3");
     response = _responseHandler.buildResponse(request1,
-                                              buildRoutingResult(request1),
+                                              buildRoutingResult(request1, acceptTypeData.acceptHeaders),
                                               status);
 
     checkResponse(response, 200, 3, acceptTypeData.responseContentType, Status.class.getName(), null, true);
@@ -484,7 +496,7 @@ public class TestRestLiResponseHandler
     // #2 some fields
     RestRequest request2 = buildRequest("/test?fields=f1,f3", acceptTypeData.acceptHeaders);
     response = _responseHandler.buildResponse(request2,
-                                              buildRoutingResult(request2),
+                                              buildRoutingResult(request2, acceptTypeData.acceptHeaders),
                                               status);
     assertTrue(status.data().containsKey("f2"));
 
@@ -494,7 +506,7 @@ public class TestRestLiResponseHandler
     // #3 no fields
     RestRequest request3 = buildRequest("/test?fields=", acceptTypeData.acceptHeaders);
     response = _responseHandler.buildResponse(request3,
-                                              buildRoutingResult(request3),
+                                              buildRoutingResult(request3, acceptTypeData.acceptHeaders),
                                               status);
 
     checkResponse(response, 200, 3, acceptTypeData.responseContentType, Status.class.getName(), null, true);
@@ -506,7 +518,7 @@ public class TestRestLiResponseHandler
     // #4 fields not in schema
     RestRequest request4 = buildRequest("/test?fields=f1,f99", acceptTypeData.acceptHeaders);
     response = _responseHandler.buildResponse(request4,
-                                              buildRoutingResult(request4),
+                                              buildRoutingResult(request4, acceptTypeData.acceptHeaders),
                                               status);
 
     checkResponse(response, 200, 3, acceptTypeData.responseContentType, Status.class.getName(), null, true);
@@ -533,7 +545,7 @@ public class TestRestLiResponseHandler
 
     RestRequest request1 = buildRequest("/test?fields=f1,f2:(f3,f4)", acceptTypeData.acceptHeaders);
     response = _responseHandler.buildResponse(request1,
-                                              buildRoutingResult(request1),
+                                              buildRoutingResult(request1, acceptTypeData.acceptHeaders),
                                               status);
 
     checkResponse(response, 200, 3, acceptTypeData.responseContentType, Status.class.getName(), null, true);
@@ -542,7 +554,7 @@ public class TestRestLiResponseHandler
     // #2 some fields
     RestRequest request2 = buildRequest("/test?fields=f1,f2:(f3)", acceptTypeData.acceptHeaders);
     response = _responseHandler.buildResponse(request2,
-                                              buildRoutingResult(request2),
+                                              buildRoutingResult(request2, acceptTypeData.acceptHeaders),
                                               status);
     assertTrue(status.data().containsKey("f2"));
 
@@ -552,7 +564,7 @@ public class TestRestLiResponseHandler
     // #3 no fields
     RestRequest request3 = buildRequest("/test?fields=", acceptTypeData.acceptHeaders);
     response = _responseHandler.buildResponse(request3,
-                                              buildRoutingResult(request3),
+                                              buildRoutingResult(request3, acceptTypeData.acceptHeaders),
                                               status);
 
     checkResponse(response, 200, 3, acceptTypeData.responseContentType, Status.class.getName(), null, true);
@@ -563,7 +575,7 @@ public class TestRestLiResponseHandler
     // #4 fields not in schema
     RestRequest request4 = buildRequest("/test?fields=f2:(f99)", acceptTypeData.acceptHeaders);
     response = _responseHandler.buildResponse(request4,
-                                              buildRoutingResult(request4),
+                                              buildRoutingResult(request4, acceptTypeData.acceptHeaders),
                                               status);
 
     checkResponse(response, 200, 3, acceptTypeData.responseContentType, Status.class.getName(), null, true);
@@ -581,7 +593,7 @@ public class TestRestLiResponseHandler
                                                                                  "f3");
     RestRequest request = buildRequest("/test?fields=f1,f2", acceptTypeData.acceptHeaders);
     response = _responseHandler.buildResponse(request,
-                                              buildRoutingResultFinder(request),
+                                              buildRoutingResultFinder(request, acceptTypeData.acceptHeaders),
                                               statusCollection);
 
     checkResponse(response, 200, 4, acceptTypeData.responseContentType, CollectionResponse.class.getName(), null, true);
@@ -610,7 +622,7 @@ public class TestRestLiResponseHandler
     List<Status> statusCollection = buildStatusListResult(10, "f1", "f2", "f3");
     RestRequest request = buildRequest("/test?fields=f1,f2", acceptTypeData.acceptHeaders);
     response = _responseHandler.buildResponse(request,
-                                              buildRoutingResultFinder(request),
+                                              buildRoutingResultFinder(request, acceptTypeData.acceptHeaders),
                                               statusCollection);
 
     checkResponse(response, 200, 4, acceptTypeData.responseContentType, CollectionResponse.class.getName(), null, true);
@@ -639,7 +651,7 @@ public class TestRestLiResponseHandler
     Map<Integer, Status> statusBatch = buildStatusBatchResponse(10, "f1", "f2", "f3");
     RestRequest request = buildRequest("/test?ids=1,2,3&fields=f1,f2", acceptTypeData.acceptHeaders);
     response = _responseHandler.buildResponse(request,
-                                              buildRoutingResult(ResourceMethod.BATCH_GET, request),
+                                              buildRoutingResult(ResourceMethod.BATCH_GET, request, acceptTypeData.acceptHeaders),
                                               statusBatch);
 
     checkResponse(response, 200, 4, acceptTypeData.responseContentType, BatchResponse.class.getName(), Status.class.getName(), true);
@@ -670,6 +682,7 @@ public class TestRestLiResponseHandler
     ResourceMethodDescriptor methodDescriptor = resourceModel.findNamedMethod("search");
     ResourceContextImpl context = new ResourceContextImpl();
     context.setResponseHeader(testHeaderName, testHeaderValue);
+    RestUtils.validateRequestHeadersAndUpdateResourceContext(acceptTypeData.acceptHeaders, context);
     RoutingResult routingResult = new RoutingResult(context, methodDescriptor);
 
     RestResponse response;
@@ -705,7 +718,7 @@ public class TestRestLiResponseHandler
 
     final ActionResult<Status> actionResult = new ActionResult<Status>(status, HttpStatus.S_500_INTERNAL_SERVER_ERROR);
     response = _responseHandler.buildResponse(buildRequest(acceptTypeData.acceptHeaders),
-                                              buildRoutingResultAction(Status.class),
+                                              buildRoutingResultAction(Status.class, acceptTypeData.acceptHeaders),
                                               actionResult);
     checkResponse(response,
                   HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode(),
@@ -731,10 +744,10 @@ public class TestRestLiResponseHandler
     return new RestRequestBuilder(new URI(uri)).setMethod("DONT_CARE").setHeaders(headers).build();
   }
 
-  private final RoutingResult buildRoutingResult()
+  private final RoutingResult buildRoutingResult(Map<String, String> acceptHeaders)
           throws SecurityException, NoSuchMethodException, RestLiSyntaxException
   {
-    return buildRoutingResult(null);
+    return buildRoutingResult(null, acceptHeaders);
   }
 
   /**
@@ -743,7 +756,7 @@ public class TestRestLiResponseHandler
    * @param actionReturnType the return type of the action.
    * @return a RoutingResult
    */
-  private final RoutingResult buildRoutingResultAction(Class<?> actionReturnType)
+  private final RoutingResult buildRoutingResultAction(Class<?> actionReturnType, Map<String, String> headers)
           throws NoSuchMethodException, RestLiSyntaxException
   {
 
@@ -790,18 +803,18 @@ public class TestRestLiResponseHandler
                                                      new DataMap());
 
     model.addResourceMethodDescriptor(methodDescriptor);
-
-    return new RoutingResult(new ResourceContextImpl(new PathKeysImpl(), null, new RequestContext()),
-                             methodDescriptor);
+    ServerResourceContext resourceContext = new ResourceContextImpl(new PathKeysImpl(), null, new RequestContext());
+    RestUtils.validateRequestHeadersAndUpdateResourceContext(headers, resourceContext);
+    return new RoutingResult(resourceContext, methodDescriptor);
   }
 
-  private final RoutingResult buildRoutingResult(RestRequest request)
+  private final RoutingResult buildRoutingResult(RestRequest request, Map<String, String> acceptHeaders)
           throws SecurityException, NoSuchMethodException, RestLiSyntaxException
   {
-    return buildRoutingResult(ResourceMethod.GET, request);
+    return buildRoutingResult(ResourceMethod.GET, request, acceptHeaders);
   }
 
-  private final RoutingResult buildRoutingResult(ResourceMethod resourceMethod, RestRequest request)
+  private final RoutingResult buildRoutingResult(ResourceMethod resourceMethod, RestRequest request, Map<String, String> acceptHeaders)
           throws SecurityException, NoSuchMethodException, RestLiSyntaxException
   {
     Method method = ProjectionTestFixture.class.getMethod("batchGet", Set.class);
@@ -809,28 +822,31 @@ public class TestRestLiResponseHandler
     ResourceMethodDescriptor methodDescriptor =
         ResourceMethodDescriptor.createForRestful(resourceMethod, method, InterfaceType.SYNC);
     model.addResourceMethodDescriptor(methodDescriptor);
-
-    return new RoutingResult(new ResourceContextImpl(new PathKeysImpl(), request,
-                                                     new RequestContext()), methodDescriptor);
+    ServerResourceContext context =  new ResourceContextImpl(new PathKeysImpl(), request,
+                            new RequestContext());
+    RestUtils.validateRequestHeadersAndUpdateResourceContext(acceptHeaders, context);
+    return new RoutingResult(context, methodDescriptor);
   }
 
 
-  private final RoutingResult buildRoutingResultFinder(RestRequest request)
-          throws SecurityException, NoSuchMethodException, RestLiSyntaxException
+  private final RoutingResult buildRoutingResultFinder(RestRequest request, Map<String, String> acceptHeaders) throws SecurityException,
+      NoSuchMethodException,
+      RestLiSyntaxException
   {
     Method method = ProjectionTestFixture.class.getMethod("find");
     ResourceModel model = RestLiTestHelper.buildResourceModel(StatusCollectionResource.class);
     ResourceMethodDescriptor methodDescriptor =
         ResourceMethodDescriptor.createForRestful(ResourceMethod.FINDER, method, InterfaceType.SYNC);
     model.addResourceMethodDescriptor(methodDescriptor);
-
-    return new RoutingResult(new ResourceContextImpl(new PathKeysImpl(), request,
-                                                     new RequestContext()), methodDescriptor);
+    ServerResourceContext context = new ResourceContextImpl(new PathKeysImpl(), request, new RequestContext());
+    RestUtils.validateRequestHeadersAndUpdateResourceContext(acceptHeaders, context);
+    return new RoutingResult(context, methodDescriptor);
   }
 
   @RestLiCollection(name="test")
   private static class ProjectionTestFixture extends CollectionResourceTemplate<Integer, Status>
   {
+    @Override
     public Map<Integer, Status> batchGet(Set<Integer> ids)
     {
       return null;

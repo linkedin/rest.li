@@ -17,8 +17,13 @@
 package com.linkedin.restli.server.test;
 
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
+import static com.linkedin.restli.server.test.RestLiTestHelper.buildResourceModel;
+import static com.linkedin.restli.server.test.RestLiTestHelper.buildResourceModels;
+import static org.easymock.EasyMock.eq;
+import static org.easymock.EasyMock.reset;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.fail;
+
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
@@ -34,21 +39,24 @@ import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.EngineBuilder;
 import com.linkedin.parseq.promise.Promises;
 import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.server.MutablePathKeys;
 import com.linkedin.restli.internal.server.PathKeysImpl;
 import com.linkedin.restli.internal.server.ResourceContextImpl;
+import com.linkedin.restli.internal.server.RestLiCallback;
 import com.linkedin.restli.internal.server.RestLiMethodInvoker;
 import com.linkedin.restli.internal.server.RestLiResponseHandler;
 import com.linkedin.restli.internal.server.RoutingResult;
-import com.linkedin.restli.internal.server.methods.MethodAdapterRegistry;
+import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
@@ -65,7 +73,6 @@ import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.ResourceLevel;
-import com.linkedin.restli.internal.server.RestLiCallback;
 import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.TestRecord;
 import com.linkedin.restli.server.UpdateResponse;
@@ -91,20 +98,13 @@ import com.linkedin.restli.server.twitter.PromiseStatusCollectionResource;
 import com.linkedin.restli.server.twitter.RepliesCollectionResource;
 import com.linkedin.restli.server.twitter.StatusCollectionResource;
 import com.linkedin.restli.server.twitter.TwitterAccountsResource;
+import com.linkedin.restli.server.twitter.TwitterTestDataModels.DiscoveredItem;
+import com.linkedin.restli.server.twitter.TwitterTestDataModels.DiscoveredItemKey;
+import com.linkedin.restli.server.twitter.TwitterTestDataModels.DiscoveredItemKeyParams;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Followed;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Location;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Status;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.StatusType;
-import com.linkedin.restli.server.twitter.TwitterTestDataModels.DiscoveredItem;
-import com.linkedin.restli.server.twitter.TwitterTestDataModels.DiscoveredItemKey;
-import com.linkedin.restli.server.twitter.TwitterTestDataModels.DiscoveredItemKeyParams;
-
-import org.easymock.IAnswer;
-import org.easymock.EasyMock;
-import org.testng.Assert;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -117,12 +117,15 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-import static com.linkedin.restli.server.test.RestLiTestHelper.buildResourceModel;
-import static com.linkedin.restli.server.test.RestLiTestHelper.buildResourceModels;
-import static org.easymock.EasyMock.eq;
-import static org.easymock.EasyMock.reset;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.fail;
+import org.easymock.EasyMock;
+import org.easymock.IAnswer;
+import org.testng.Assert;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 
 /**
@@ -3094,6 +3097,84 @@ public class TestRestLiMethodInvocation
   }
 
   @Test
+  public void testInvokeWithUnsupportedAcceptMimeType() throws Exception
+  {
+    RestRequestBuilder builder = new RestRequestBuilder(new URI("")).addHeaderValue("Accept", "text/plain");
+    RestRequest request = builder.build();
+    final CountDownLatch latch = new CountDownLatch(1);
+    final RestLiCallback<Object> callback =
+        new RestLiCallback<Object>(request,
+                                   null,
+                                   new RestLiResponseHandler.Builder().build(),
+                                   new Callback<RestResponse>()
+                                   {
+                                     @Override
+                                     public void onError(final Throwable e)
+                                     {
+                                       latch.countDown();
+                                       Assert.assertTrue(e instanceof RestException);
+                                       RestException ex = (RestException) e;
+                                       Assert.assertEquals(ex.getResponse().getStatus(),
+                                                           HttpStatus.S_406_NOT_ACCEPTABLE.getCode());
+                                     }
+                                     @Override
+                                     public void onSuccess(RestResponse result)
+                                     {
+                                     }
+                                   });
+    ServerResourceContext context = new ResourceContextImpl();
+    _invoker.invoke(new RoutingResult(context, null), request, callback);
+    try
+    {
+      latch.await();
+    }
+    catch (InterruptedException e)
+    {
+      // Ignore
+    }
+    Assert.assertNull(context.getResponseMimeType());
+  }
+
+  @Test
+  public void testInvokeWithInvalidAcceptMimeType() throws Exception
+  {
+    RestRequestBuilder builder = new RestRequestBuilder(new URI("")).addHeaderValue("Accept", "foo");
+    RestRequest request = builder.build();
+    final CountDownLatch latch = new CountDownLatch(1);
+    final RestLiCallback<Object> callback =
+        new RestLiCallback<Object>(request,
+                                   null,
+                                   new RestLiResponseHandler.Builder().build(),
+                                   new Callback<RestResponse>()
+                                   {
+                                     @Override
+                                     public void onError(final Throwable e)
+                                     {
+                                       latch.countDown();
+                                       Assert.assertTrue(e instanceof RestException);
+                                       RestException ex = (RestException) e;
+                                       Assert.assertEquals(ex.getResponse().getStatus(),
+                                                           HttpStatus.S_400_BAD_REQUEST.getCode());
+                                     }
+                                     @Override
+                                     public void onSuccess(RestResponse result)
+                                     {
+                                     }
+                                   });
+    ServerResourceContext context = new ResourceContextImpl();
+    _invoker.invoke(new RoutingResult(context, null), request, callback);
+    try
+    {
+      latch.await();
+    }
+    catch (InterruptedException e)
+    {
+      // Ignore
+    }
+    Assert.assertNull(context.getResponseMimeType());
+  }
+
+  @Test
   public void testAsyncGetAllComplexKeyResource() throws Exception
   {
     ResourceModel discoveredResourceModel = buildResourceModel(AsyncDiscoveredItemsResource.class);
@@ -3244,7 +3325,8 @@ public class TestRestLiMethodInvocation
     {
       EasyMock.replay(resource);
 
-      RestRequestBuilder builder = new RestRequestBuilder(new URI(uri)).setMethod(httpMethod);
+      RestRequestBuilder builder =
+          new RestRequestBuilder(new URI(uri)).setMethod(httpMethod).addHeaderValue("Accept", "application/json");
       if (entityBody != null)
       {
         builder.setEntity(entityBody.getBytes(Data.UTF_8_CHARSET));
@@ -3277,6 +3359,8 @@ public class TestRestLiMethodInvocation
         // Ignore
       }
       EasyMock.verify(resource);
+      Assert.assertEquals(((ServerResourceContext) routingResult.getContext()).getResponseMimeType(),
+                          "application/json");
     }
     catch (RestLiSyntaxException e)
     {
@@ -3292,7 +3376,7 @@ public class TestRestLiMethodInvocation
   private RestLiCallback<Object> getCallback()
   {
     @SuppressWarnings("unchecked")
-    RestLiCallback<Object> callback = (RestLiCallback<Object>)EasyMock.createMock(RestLiCallback.class);
+    RestLiCallback<Object> callback = EasyMock.createMock(RestLiCallback.class);
     callback.onSuccess(EasyMock.anyObject());
     EasyMock.expectLastCall().once();
     EasyMock.replay(callback);
@@ -3330,7 +3414,7 @@ public class TestRestLiMethodInvocation
     {
 
       RestRequestBuilder builder =
-          new RestRequestBuilder(new URI(uri)).setMethod(httpMethod);
+          new RestRequestBuilder(new URI(uri)).setMethod(httpMethod).addHeaderValue("Accept", "application/x-pson");
       if (entityBody != null)
       {
         builder.setEntity(entityBody.getBytes(Data.UTF_8_CHARSET));
@@ -3343,6 +3427,9 @@ public class TestRestLiMethodInvocation
       _invoker.invoke(routingResult, request, callback);
       EasyMock.verify(resource);
       EasyMock.verify(callback);
+      Assert.assertEquals(((ServerResourceContext) routingResult.getContext()).getResponseMimeType(),
+          "application/x-pson");
+
     }
     catch (RestLiSyntaxException e)
     {
@@ -3407,5 +3494,4 @@ public class TestRestLiMethodInvocation
            "&asyncDiscoveredItemId.type=" + type +
            "&asyncDiscoveredItemId.itemId=" + itemId;
   }
-
 }

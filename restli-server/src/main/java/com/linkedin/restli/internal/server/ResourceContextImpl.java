@@ -60,6 +60,8 @@ public class ResourceContextImpl implements ServerResourceContext
 
   private ProjectionMode                      _projectionMode;
 
+  private String                                    _mimeType;
+
   /**
    * Default constructor.
    *
@@ -298,5 +300,17 @@ public class ResourceContextImpl implements ServerResourceContext
   public void setProjectionMode(ProjectionMode projectionMode)
   {
     _projectionMode = projectionMode;
+  }
+
+  @Override
+  public void setResponseMimeType(String type)
+  {
+    _mimeType = type;
+  }
+
+  @Override
+  public String getResponseMimeType()
+  {
+    return _mimeType;
   }
 }

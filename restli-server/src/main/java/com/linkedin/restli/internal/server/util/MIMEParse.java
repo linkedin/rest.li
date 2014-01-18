@@ -1,5 +1,7 @@
 package com.linkedin.restli.internal.server.util;
 
+import com.linkedin.restli.server.InvalidMimeTypeException;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -101,6 +103,10 @@ public final class MIMEParse
     if (fullType.equals("*"))
       fullType = "*/*";
     String[] types = StringUtils.split(fullType, "/");
+    if (types.length != 2)
+    {
+      throw new InvalidMimeTypeException(mimeType);
+    }
     results.type = types[0].trim();
     results.subType = types[1].trim();
     return results;
@@ -145,6 +151,7 @@ public final class MIMEParse
       this.quality = quality;
     }
 
+    @Override
     public int compareTo(FitnessAndQuality o)
     {
       if (fitness == o.fitness)

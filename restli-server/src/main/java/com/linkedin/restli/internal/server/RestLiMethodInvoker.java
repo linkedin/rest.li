@@ -16,10 +16,6 @@
 
 package com.linkedin.restli.internal.server;
 
-import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-
 import com.linkedin.common.callback.Callback;
 import com.linkedin.parseq.BaseTask;
 import com.linkedin.parseq.Context;
@@ -32,11 +28,16 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.internal.server.methods.MethodAdapterRegistry;
 import com.linkedin.restli.internal.server.methods.arguments.RestLiArgumentBuilder;
+import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.model.Parameter.ParamType;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
+import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.resources.BaseResource;
 import com.linkedin.restli.server.resources.ResourceFactory;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 /**
  * Invokes a resource method, binding contextual and URI-derived arguments to method
@@ -88,6 +89,18 @@ public class RestLiMethodInvoker
                      final RestRequest request,
                      final RestLiCallback<Object> callback)
   {
+    // Fast fail if the request headers are invalid.
+    try
+    {
+      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
+                                                               (ServerResourceContext) invocableMethod.getContext());
+    }
+    catch (RestLiServiceException e)
+    {
+      callback.onErrorPre(e);
+      return;
+    }
+    // Request headers are valid. Proceed with the invocation....
     ResourceMethodDescriptor resourceMethodDescriptor =
         invocableMethod.getResourceMethod();
 

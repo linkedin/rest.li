@@ -22,21 +22,27 @@ import com.linkedin.data.transform.filter.CopyFilter;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.restli.common.CollectionMetadata;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.Link;
 import com.linkedin.restli.common.LinkArray;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.server.RestLiInternalException;
+import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.server.CollectionResult.PageIncrement;
+import com.linkedin.restli.server.InvalidMimeTypeException;
 import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.ProjectionMode;
 import com.linkedin.restli.server.ResourceContext;
+import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.RoutingException;
-import org.apache.commons.lang.StringUtils;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang.StringUtils;
 
 
 /**
@@ -203,7 +209,18 @@ public class RestUtils
   {
     if (acceptHeader == null || acceptHeader.isEmpty())
       return RestConstants.HEADER_VALUE_APPLICATION_JSON;
-    return MIMEParse.bestMatch(RestConstants.SUPPORTED_MIME_TYPES, acceptHeader);
+    try
+    {
+      return MIMEParse.bestMatch(RestConstants.SUPPORTED_MIME_TYPES, acceptHeader);
+    }
+    // Handle the case when an accept MIME type that was passed in along with the
+    // request is invalid.
+    catch (InvalidMimeTypeException e)
+    {
+      throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST,
+                                       String.format("Encountered invalid MIME type '%s' in accept header.",
+                                                     e.getType()));
+    }
   }
 
   /**
@@ -243,6 +260,33 @@ public class RestUtils
     {
       throw new RestLiInternalException("Error projecting fields", e);
     }
+  }
+
+  /**
+   * Validate request headers.
+   *
+   * @param headers
+   *          Request headers.
+   * @throws RestLiServiceException
+   *           if any of the headers are invalid.
+   */
+  public static void validateRequestHeadersAndUpdateResourceContext(final Map<String, String> headers,
+                                                                    ServerResourceContext resourceContext)
+  {
+    // Validate whether the accept headers have at least one type that we support.
+    // Fail the validation if we will be unable to support the requested accept type.
+    String mimeType = pickBestEncoding(headers.get(RestConstants.HEADER_ACCEPT));
+    if (StringUtils.isEmpty(mimeType))
+    {
+      throw new RestLiServiceException(HttpStatus.S_406_NOT_ACCEPTABLE,
+                                       "None of the types in the request's 'Accept' header are supported. Supported MIME types are: "
+                                           + RestConstants.SUPPORTED_MIME_TYPES);
+    }
+    else
+    {
+      resourceContext.setResponseMimeType(mimeType);
+    }
+    // Do other header validation here....
   }
 
   private static final DataMap EMPTY_DATAMAP = new DataMap();

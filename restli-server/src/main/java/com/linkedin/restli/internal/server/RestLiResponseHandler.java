@@ -31,7 +31,6 @@ import com.linkedin.restli.internal.server.methods.response.PartialRestResponse;
 import com.linkedin.restli.internal.server.methods.response.RestLiResponseBuilder;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
-import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.RestLiServiceException;
@@ -165,8 +164,8 @@ public class RestLiResponseHandler
     if (partialResponse.hasData())
     {
       DataMap dataMap = partialResponse.getDataMap();
-      String acceptTypes = request.getHeader(RestConstants.HEADER_ACCEPT);
-      builder = encodeResult(builder, dataMap, acceptTypes);
+      String mimeType = ((ServerResourceContext) routingResult.getContext()).getResponseMimeType();
+      builder = encodeResult(mimeType, builder, dataMap);
     }
 
     return builder.build();
@@ -180,16 +179,14 @@ public class RestLiResponseHandler
     return _errorResponseBuilder.buildResponse(request, routingResult, object, headers);
   }
 
-  private RestResponseBuilder encodeResult(RestResponseBuilder builder, DataMap dataMap, String acceptTypes)
+  private RestResponseBuilder encodeResult(String mimeType, RestResponseBuilder builder, DataMap dataMap)
   {
-    String bestType = RestUtils.pickBestEncoding(acceptTypes);
-
-    if (RestConstants.HEADER_VALUE_APPLICATION_PSON.equalsIgnoreCase(bestType))
+    if (RestConstants.HEADER_VALUE_APPLICATION_PSON.equalsIgnoreCase(mimeType))
     {
       builder.setHeader(RestConstants.HEADER_CONTENT_TYPE, RestConstants.HEADER_VALUE_APPLICATION_PSON);
       builder.setEntity(DataMapUtils.mapToPsonBytes(dataMap));
     }
-    else if (RestConstants.HEADER_VALUE_APPLICATION_JSON.equalsIgnoreCase(bestType))
+    else if (RestConstants.HEADER_VALUE_APPLICATION_JSON.equalsIgnoreCase(mimeType))
     {
       builder.setHeader(RestConstants.HEADER_CONTENT_TYPE, RestConstants.HEADER_VALUE_APPLICATION_JSON);
       builder.setEntity(DataMapUtils.mapToBytes(dataMap, _permissiveEncoding));

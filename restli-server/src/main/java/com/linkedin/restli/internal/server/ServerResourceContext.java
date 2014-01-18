@@ -25,6 +25,7 @@ import com.linkedin.data.DataMap;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiServiceException;
+
 import java.net.URI;
 import java.util.Map;
 
@@ -79,4 +80,15 @@ public interface ServerResourceContext extends ResourceContext
    * @return Rest.li protocol version used by the client sending the request
    */
   ProtocolVersion getRestliProtocolVersion();
+
+  /**
+   * Set the MIME type that that has been chosen as the response MIME type.
+   * @param type Selected MIME type.
+   */
+  void setResponseMimeType(String type);
+
+  /**
+   * @return response MIME type.
+   */
+  String getResponseMimeType();
 }
