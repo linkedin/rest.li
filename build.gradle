@@ -267,6 +267,10 @@ subprojects {
                  id 'karanparikh'
                  name 'Karan Parikh'
                }
+               developer {
+                 id 'nishanthshankaran'
+                 name 'Nishanth Shankaran'
+               }
             }
           }
         }
