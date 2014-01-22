@@ -45,7 +45,8 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
                                     createLoadBalancerFactory(config),
                                     config.flagFile,
                                     config.basePath,
-                                    config.shutdownAsynchronously);
+                                    config.shutdownAsynchronously,
+                                    config.isSymlinkAware);
   }
 
 

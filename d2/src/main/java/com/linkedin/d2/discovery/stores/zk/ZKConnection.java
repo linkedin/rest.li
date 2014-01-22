@@ -34,17 +34,18 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.util.None;
+import com.linkedin.d2.discovery.PropertySerializer;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 /**
  * Very very lightweight holder for a ZK connection which allows monitoring of the connection state.
@@ -68,6 +69,8 @@ public class ZKConnection
   private final ScheduledExecutorService _scheduler;
   private final long _initInterval;
   private final boolean _shutdownAsynchronously;
+  private final boolean _isSymlinkAware;
+  private PropertySerializer<String> _symlinkSerializer = new SymlinkAwareZooKeeper.DefaultSerializer();;
 
   // _countDownLatch signals when _zkRef is ready to be used
   private final CountDownLatch _zkRefLatch = new CountDownLatch(1);
@@ -93,6 +96,11 @@ public class ZKConnection
     this(connectString, timeout, 0, shutdownAsynchronously);
   }
 
+  public ZKConnection(String connectString, int timeout, boolean shutdownAsynchronously, boolean isSymlinkAware)
+  {
+    this(connectString, timeout, 0, shutdownAsynchronously, isSymlinkAware);
+  }
+
   public ZKConnection(String connectString, int timeout, int retryLimit)
   {
     this(connectString, timeout, retryLimit, false);
@@ -101,6 +109,12 @@ public class ZKConnection
   public ZKConnection(String connectString, int timeout, int retryLimit, boolean shutdownAsynchronously)
   {
     this(connectString, timeout, retryLimit, false, null, 0, shutdownAsynchronously);
+  }
+
+  public ZKConnection(String connectString, int timeout, int retryLimit, boolean shutdownAsynchronously,
+                      boolean isSymlinkAware)
+  {
+    this(connectString, timeout, retryLimit, false, null, 0, shutdownAsynchronously, isSymlinkAware);
   }
 
   public ZKConnection(String connectString, int timeout, int retryLimit, boolean exponentialBackoff,
@@ -112,6 +126,13 @@ public class ZKConnection
   public ZKConnection(String connectString, int timeout, int retryLimit, boolean exponentialBackoff,
                       ScheduledExecutorService scheduler, long initInterval, boolean shutdownAsynchronously)
   {
+    this(connectString, timeout, retryLimit, exponentialBackoff, scheduler, initInterval, shutdownAsynchronously, false);
+  }
+
+  public ZKConnection(String connectString, int timeout, int retryLimit, boolean exponentialBackoff,
+                      ScheduledExecutorService scheduler, long initInterval, boolean shutdownAsynchronously,
+                      boolean isSymlinkAware)
+  {
     _connectString = connectString;
     _timeout = timeout;
     _retryLimit = retryLimit;
@@ -119,6 +140,8 @@ public class ZKConnection
     _scheduler = scheduler;
     _initInterval = initInterval;
     _shutdownAsynchronously = shutdownAsynchronously;
+    _isSymlinkAware = isSymlinkAware;
+
   }
 
   public void start() throws IOException
@@ -131,21 +154,33 @@ public class ZKConnection
     // We take advantage of the fact that the default watcher is always
     // notified of connection state changes (without having to explicitly register)
     // and never notified of anything else.
-    ZooKeeper  zk;
+    Watcher defaultWatcher = new DefaultWatcher();
+    ZooKeeper  zk = new VanillaZooKeeperAdapter(_connectString, _timeout, defaultWatcher);
     if (_retryLimit <= 0)
     {
-      zk = new ZooKeeper(_connectString, _timeout, new DefaultWatcher());
-      LOG.info("Using vanilla ZooKeeper without retry.");
+      if (_isSymlinkAware)
+      {
+        zk = new SymlinkAwareZooKeeper(zk, defaultWatcher, _symlinkSerializer);
+        LOG.info("Using symlink aware ZooKeeper without retry");
+      }
+      else
+      {
+        // do nothing
+        LOG.info("Using vanilla ZooKeeper without retry.");
+      }
     }
     else
     {
-      zk = new RetryZooKeeper(_connectString,
-                              _timeout,
-                              new DefaultWatcher(), _retryLimit,
-                              _exponentialBackoff,
-                              _scheduler,
-                              _initInterval);
-      LOG.info("Using RetryZooKeeper with retry limit set to " + _retryLimit);
+      zk = new RetryZooKeeper(zk, _retryLimit, _exponentialBackoff, _scheduler, _initInterval);
+      if (_isSymlinkAware)
+      {
+        zk = new SymlinkAwareRetryZooKeeper((RetryZooKeeper)zk, defaultWatcher, _symlinkSerializer);
+        LOG.info("Using symlink aware RetryZooKeeper with retry limit set to " + _retryLimit);
+      }
+      else
+      {
+        LOG.info("Using RetryZooKeeper with retry limit set to " + _retryLimit);
+      }
       if (_exponentialBackoff)
       {
         LOG.info("Exponential backoff enabled. Initial retry interval set to " + _initInterval + " ms.");
@@ -398,7 +433,17 @@ public class ZKConnection
     };
     try
     {
-      zk.exists(path, false, statCallback, null);
+      // Note that in the case where the path is a symlink, we want to call exists() directly on the
+      // symlink znode rather than the znode the symlink points to. To avoid such unnecessary re-routing,
+      // we should explicitly call zk.rawExists() if the underlying zookeeper client is SymlinkAwareZooKeeper.
+      if (zk instanceof SymlinkAwareZooKeeper)
+      {
+        ((SymlinkAwareZooKeeper) zk).rawExists(path, false, statCallback, null);
+      }
+      else
+      {
+        zk.exists(path, false, statCallback, null);
+      }
     }
     catch (Exception e)
     {
@@ -477,7 +522,17 @@ public class ZKConnection
 
     try
     {
-      zk.exists(path, false, existsCallback, null);
+      // Note that in the case where the path is a symlink, we want to call exists() directly on the
+      // symlink znode rather than the znode the symlink points to. To avoid such unnecessary re-routing,
+      // we should explicitly call zk.rawExists() if the underlying zookeeper client is SymlinkAwareZooKeeper.
+      if (zk instanceof SymlinkAwareZooKeeper)
+      {
+        ((SymlinkAwareZooKeeper) zk).rawExists(path, false, existsCallback, null);
+      }
+      else
+      {
+        zk.exists(path, false, existsCallback, null);
+      }
     }
     catch (Exception e)
     {
@@ -537,7 +592,147 @@ public class ZKConnection
 
     try
     {
-      zk.getChildren(path, false, childCallback, null);
+      // Note that in the case where the path is a symlink, we want to call getChildren() directly on the
+      // symlink znode rather than the znode the symlink points to. To avoid such unnecessary re-routing,
+      // we should explicitly call zk.rawGetChildren() if the underlying zookeeper client is SymlinkAwareZooKeeper.
+      if (zk instanceof SymlinkAwareZooKeeper)
+      {
+        ((SymlinkAwareZooKeeper) zk).rawGetChildren(path, false, childCallback, null);
+      }
+      else
+      {
+        zk.getChildren(path, false, childCallback, null);
+      }
+    }
+    catch (Exception e)
+    {
+      callback.onError(e);
+    }
+  }
+
+  /**
+   * create a symbolic link in zookeeper.
+   *
+   * @param symlinkPath absolute path of symbolic link in zookeeper.
+   * @param realPath    the real path that the symbolic link points to.
+   * @param callback
+   */
+  public void createSymlink(final String symlinkPath, final String realPath, final Callback<None> callback)
+  {
+    if (!SymlinkUtil.containsSymlink(symlinkPath) ||
+        SymlinkUtil.firstSymlinkIndex(symlinkPath) < symlinkPath.length())
+    {
+      callback.onError(new IllegalArgumentException("Cannot create symbolic link for path " + symlinkPath));
+      return;
+    }
+
+    final ZooKeeper zk = zk();
+    final AsyncCallback.StringCallback createCallback = new AsyncCallback.StringCallback()
+    {
+      @Override
+      public void processResult(int rc, String path, Object ctx, String name)
+      {
+        KeeperException.Code code = KeeperException.Code.get(rc);
+        switch (code)
+        {
+          case OK:
+            callback.onSuccess(None.none());
+            break;
+          default:
+            callback.onError(KeeperException.create(code));
+            break;
+        }
+      }
+    };
+    try
+    {
+      zk.create(symlinkPath, _symlinkSerializer.toBytes(realPath), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, createCallback, null);
+    }
+    catch (Exception e)
+    {
+      callback.onError(e);
+    }
+  }
+
+  /**
+   * set the realPath data associated with a symbolic link.
+   *
+   * If the symbolic link doesn't exist, it will create one.
+   *
+   * @param symlinkPath absolute path of symbolic link in zookeeper.
+   * @param realPath    the real path that the symbolic link points to.
+   * @param callback
+   */
+  public void setSymlinkData(String symlinkPath, String realPath, Callback<None> callback)
+  {
+    if (!SymlinkUtil.containsSymlink(symlinkPath) ||
+        SymlinkUtil.firstSymlinkIndex(symlinkPath) < symlinkPath.length())
+    {
+      callback.onError(new IllegalArgumentException("Cannot set data to symbolic link " + symlinkPath));
+      return;
+    }
+    setSymlinkData(symlinkPath, realPath, callback, 0);
+  }
+
+  private void setSymlinkData(final String symlinkPath, final String realPath, final Callback<None> callback, final int count)
+  {
+    final ZooKeeper zk = zk();
+    final AsyncCallback.StatCallback dataCallback = new AsyncCallback.StatCallback()
+    {
+      @Override
+      public void processResult(int rc, String path, Object ctx, Stat stat)
+      {
+        KeeperException.Code code = KeeperException.Code.get(rc);
+        switch (code)
+        {
+          case OK:
+            callback.onSuccess(None.none());
+            break;
+          case BADVERSION:
+            if (count < MAX_RETRIES)
+            {
+              setSymlinkData(symlinkPath, realPath, callback, count+1);
+            }
+            break;
+          default:
+            callback.onError(KeeperException.create(code));
+            break;
+        }
+      }
+    };
+    final AsyncCallback.StatCallback existsCallback = new AsyncCallback.StatCallback()
+    {
+      @Override
+      public void processResult(int rc, String path, Object ctx, Stat stat)
+      {
+        KeeperException.Code code = KeeperException.Code.get(rc);
+        switch (code)
+        {
+          case OK:
+            zk.setData(symlinkPath, _symlinkSerializer.toBytes(realPath), stat.getVersion(), dataCallback, null);
+            break;
+          case NONODE:
+            createSymlink(symlinkPath, realPath, callback);
+            break;
+          default:
+            callback.onError(KeeperException.create(code));
+            break;
+        }
+      }
+    };
+    try
+    {
+      // Note that we want to call exists() directly on the symlink znode rather than the znode the symlink points to.
+      // To avoid such unnecessary re-routing, we should explicitly call zk.rawExists() if the underlying zookeeper client
+      // is SymlinkAwareZooKeeper.
+      if (zk instanceof SymlinkAwareZooKeeper)
+      {
+        ((SymlinkAwareZooKeeper) zk).rawExists(symlinkPath, null, existsCallback, null);
+      }
+      else
+      {
+        zk.exists(symlinkPath, null, existsCallback, null);
+      }
     }
     catch (Exception e)
     {

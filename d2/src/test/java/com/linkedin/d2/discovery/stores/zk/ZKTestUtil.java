@@ -24,7 +24,6 @@ import static org.testng.Assert.fail;
 
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZooKeeper;
 
 import java.io.File;
 import java.io.IOException;
@@ -106,7 +105,7 @@ public class ZKTestUtil
           throws IOException, TimeoutException, InterruptedException
   {
     WaiterWatcher w = new WaiterWatcher();
-    ZooKeeper zk = new ZooKeeper(connectString, sessionTimeout, w, sessionId, sessionPasswd);
+    ZooKeeper zk = new VanillaZooKeeperAdapter(connectString, sessionTimeout, w, sessionId, sessionPasswd);
 
     // NB, we must wait for SyncConnected before calling close(), otherwise it may not actually kill the session
     w.waitForConnected(timeout, timeoutUnit);

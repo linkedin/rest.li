@@ -21,7 +21,6 @@
 package com.linkedin.d2.discovery.stores.zk;
 
 import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZooKeeper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

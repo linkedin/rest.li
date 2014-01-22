@@ -105,9 +105,9 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
           }
         };
 
-        if (_zk instanceof  RetryZooKeeper)
+        if (_zk instanceof Retryable)
         {
-          ((RetryZooKeeper) _zk).createUniqueSequential(ephemeralPath, _serializer.toBytes(value), ZooDefs.Ids.OPEN_ACL_UNSAFE,
+          ((Retryable) _zk).createUniqueSequential(ephemeralPath, _serializer.toBytes(value), ZooDefs.Ids.OPEN_ACL_UNSAFE,
               CreateMode.EPHEMERAL_SEQUENTIAL, stringCallback, null);
         }
         else

@@ -19,7 +19,6 @@ package com.linkedin.d2.discovery.stores.zk;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
@@ -60,7 +59,7 @@ import java.util.concurrent.TimeUnit;
  *  </p>
  */
 
-public class RetryZooKeeper extends ZooKeeper
+public class RetryZooKeeper extends AbstractZooKeeper implements Retryable
 {
   private static final Logger               _log = LoggerFactory.getLogger( RetryZooKeeper.class);
   // retry limit
@@ -73,17 +72,17 @@ public class RetryZooKeeper extends ZooKeeper
   // so that we can quickly identify the ephemeral nodes owned itself
   private final UUID                        _uuid = UUID.randomUUID();
 
-  public  RetryZooKeeper(String connectString, int sessionTimeout, Watcher watcher, int limit)
+  public RetryZooKeeper(String connectionString, int sessionTimeout, Watcher watcher, int limit)
       throws IOException
   {
-    this(connectString, sessionTimeout, watcher, limit, false, null, 0);
+    this(connectionString, sessionTimeout, watcher, limit, false, null, 0);
   }
 
-  public  RetryZooKeeper(String connectString, int sessionTimeout, Watcher watcher, int limit,
-                         boolean exponentialBackoff, ScheduledExecutorService scheduler, long initInterval)
+  public RetryZooKeeper(String connectionString, int sessionTimeout, Watcher watcher, int limit,
+                        boolean exponentialBackoff, ScheduledExecutorService scheduler, long initInterval)
       throws IOException
   {
-    super(connectString, sessionTimeout, watcher);
+    super(new VanillaZooKeeperAdapter(connectionString, sessionTimeout, watcher));
     _limit = limit;
     _exponentialBackoff = exponentialBackoff;
     _scheduler = scheduler;
@@ -91,19 +90,15 @@ public class RetryZooKeeper extends ZooKeeper
     _interval = _initInterval;
   }
 
-  public  RetryZooKeeper(String connectString, int sessionTimeout, Watcher watcher,
-                         long sessionId, byte[] sessionPasswd, int limit)
-      throws IOException
+  public RetryZooKeeper(ZooKeeper zk, int limit) throws IOException
   {
-    this(connectString, sessionTimeout, watcher, sessionId, sessionPasswd, limit, false,  null, 0);
+    this(zk, limit, false, null, 0);
   }
 
-  public  RetryZooKeeper(String connectString, int sessionTimeout, Watcher watcher,
-                         long sessionId, byte[] sessionPasswd, int limit, boolean exponentialBackoff,
-                         ScheduledExecutorService scheduler, long initInterval)
-      throws IOException
+  public RetryZooKeeper(ZooKeeper zk, int limit, boolean exponentialBackoff, ScheduledExecutorService scheduler,
+                        long initInterval) throws IOException
   {
-    super(connectString, sessionTimeout, watcher, sessionId, sessionPasswd) ;
+    super(zk);
     _limit = limit;
     _exponentialBackoff = exponentialBackoff;
     _scheduler = scheduler;
@@ -126,13 +121,13 @@ public class RetryZooKeeper extends ZooKeeper
   // Create sequential node with retry.
   // To make retry efficient, a uuid of this ZooKeeper will be appended to the path passed in.
   // The appended path will be returned in case the caller need to know the full prefix of the sequential node.
-  public String createUniqueSequential(final String path, final byte[] data, final List<ACL> acl, final CreateMode createMode,
+  @Override
+  public void createUniqueSequential(final String path, final byte[] data, final List<ACL> acl, final CreateMode createMode,
                                        final AsyncCallback.StringCallback cb, final Object ctx)
   {
     if(!createMode.isSequential())
     {
       create(path, data, acl, createMode, cb, ctx);
-      return path;
     }
 
     final String retryPath = path + "-" + _uuid.toString() + "-";
@@ -234,7 +229,6 @@ public class RetryZooKeeper extends ZooKeeper
     };
 
     zkCreate(retryPath, data, acl, createMode, callback, ctx);
-    return retryPath;
   }
 
   @Override
@@ -583,47 +577,47 @@ public class RetryZooKeeper extends ZooKeeper
   public void zkCreate(final String path, byte[] data, List<ACL> acl, CreateMode createMode,
                         AsyncCallback.StringCallback cb, Object ctx )
   {
-    super.create(path, data, acl, createMode, cb, ctx);
+    _zk.create(path, data, acl, createMode, cb, ctx);
   }
 
   public void zkDelete(final String path, int version, AsyncCallback.VoidCallback cb, Object ctx)
   {
-    super.delete(path, version, cb, ctx);
+    _zk.delete(path, version, cb, ctx);
   }
 
   public void zkExists(String path, boolean watch, AsyncCallback.StatCallback cb, Object ctx)
   {
-    super.exists(path, watch, cb, ctx);
+    _zk.exists(path, watch, cb, ctx);
   }
 
   public void zkExists(final String path, Watcher watcher, AsyncCallback.StatCallback cb, Object ctx)
   {
-    super.exists(path, watcher, cb, ctx);
+    _zk.exists(path, watcher, cb, ctx);
   }
 
   public void zkGetChildren(String path, boolean watch, AsyncCallback.ChildrenCallback cb, Object ctx)
   {
-    super.getChildren(path, watch, cb, ctx) ;
+    _zk.getChildren(path, watch, cb, ctx) ;
   }
 
   public void zkGetChildren(final String path, Watcher watcher, AsyncCallback.ChildrenCallback cb, Object ctx)
   {
-    super.getChildren(path, watcher, cb, ctx) ;
+    _zk.getChildren(path, watcher, cb, ctx) ;
   }
 
   public void zkGetData(String path, boolean watch, AsyncCallback.DataCallback cb, Object ctx)
   {
-    super.getData(path, watch, cb, ctx);
+    _zk.getData(path, watch, cb, ctx);
   }
 
   public void zkGetData(String path, Watcher watcher, AsyncCallback.DataCallback cb, Object ctx)
   {
-    super.getData(path, watcher, cb, ctx);
+    _zk.getData(path, watcher, cb, ctx);
   }
 
   public void zkSetData(String path, byte[] data, int version, AsyncCallback.StatCallback cb, Object ctx)
   {
-    super.setData(path, data, version, cb, ctx);
+    _zk.setData(path, data, version, cb, ctx);
   }
 
 }

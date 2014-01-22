@@ -23,9 +23,9 @@ package com.linkedin.d2.balancer.zkfs;
 import com.linkedin.d2.balancer.Directory;
 import com.linkedin.d2.discovery.stores.zk.ZKConnection;
 import com.linkedin.common.callback.Callback;
+import com.linkedin.d2.discovery.stores.zk.ZooKeeper;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 
 import java.util.Collections;
