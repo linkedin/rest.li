@@ -78,13 +78,13 @@ public class TestRestClientRequestBuilder
   {
     RestRequest restRequest = clientGeneratedRequest(GetRequest.class, ResourceMethod.GET, null, contentType, acceptTypes);
     Assert.assertNull(restRequest.getHeader(CONTENT_TYPE_HEADER));
-    Assert.assertEquals(0, restRequest.getEntity().length());
-    Assert.assertEquals(expectedAcceptHeader, restRequest.getHeader(ACCEPT_TYPE_HEADER));
+    Assert.assertEquals(restRequest.getEntity().length(), 0);
+    Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
 
     RestRequest restRequestBatch = clientGeneratedRequest(BatchGetRequest.class, ResourceMethod.BATCH_GET, null, contentType, acceptTypes);
     Assert.assertNull(restRequestBatch.getHeader(CONTENT_TYPE_HEADER));
-    Assert.assertEquals(0, restRequestBatch.getEntity().length());
-    Assert.assertEquals(expectedAcceptHeader, restRequest.getHeader(ACCEPT_TYPE_HEADER));
+    Assert.assertEquals(restRequestBatch.getEntity().length(), 0);
+    Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
 
   }
 
@@ -99,13 +99,13 @@ public class TestRestClientRequestBuilder
   {
     RestRequest restRequest = clientGeneratedRequest(FindRequest.class, ResourceMethod.FINDER, null, contentType, acceptTypes);
     Assert.assertNull(restRequest.getHeader(CONTENT_TYPE_HEADER));
-    Assert.assertEquals(0, restRequest.getEntity().length());
-    Assert.assertEquals(expectedAcceptHeader, restRequest.getHeader(ACCEPT_TYPE_HEADER));
+    Assert.assertEquals(restRequest.getEntity().length(), 0);
+    Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
 
     RestRequest restRequestAll = clientGeneratedRequest(GetAllRequest.class, ResourceMethod.GET_ALL, null, contentType, acceptTypes);
     Assert.assertNull(restRequestAll.getHeader(CONTENT_TYPE_HEADER));
-    Assert.assertEquals(0, restRequestAll.getEntity().length());
-    Assert.assertEquals(expectedAcceptHeader, restRequest.getHeader(ACCEPT_TYPE_HEADER));
+    Assert.assertEquals(restRequestAll.getEntity().length(), 0);
+    Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
   }
 
   @Test(dataProvider = "data")
@@ -118,14 +118,14 @@ public class TestRestClientRequestBuilder
     throws URISyntaxException
   {
     RestRequest restRequest = clientGeneratedRequest(ActionRequest.class, ResourceMethod.ACTION, ENTITY_BODY, contentType, acceptTypes);
-    Assert.assertEquals(expectedContentTypeHeader, restRequest.getHeader(CONTENT_TYPE_HEADER));
-    Assert.assertEquals(expectedRequestBody, restRequest.getEntity().asAvroString());
-    Assert.assertEquals(expectedAcceptHeader, restRequest.getHeader(ACCEPT_TYPE_HEADER));
+    Assert.assertEquals(restRequest.getHeader(CONTENT_TYPE_HEADER), expectedContentTypeHeader);
+    Assert.assertEquals(restRequest.getEntity().asAvroString(), expectedRequestBody);
+    Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
 
     RestRequest restRequestNoEntity = clientGeneratedRequest(ActionRequest.class, ResourceMethod.ACTION, null, contentType, acceptTypes);
     Assert.assertNull(restRequestNoEntity.getHeader(CONTENT_TYPE_HEADER));
-    Assert.assertEquals(0, restRequestNoEntity.getEntity().length());
-    Assert.assertEquals(expectedAcceptHeader, restRequest.getHeader(ACCEPT_TYPE_HEADER));
+    Assert.assertEquals(restRequestNoEntity.getEntity().length(), 0);
+    Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
   }
 
   @Test(dataProvider = "data")
@@ -138,24 +138,24 @@ public class TestRestClientRequestBuilder
     throws URISyntaxException
   {
     RestRequest restRequest = clientGeneratedRequest(UpdateRequest.class, ResourceMethod.UPDATE, ENTITY_BODY, contentType, acceptTypes);
-    Assert.assertEquals(expectedContentTypeHeader, restRequest.getHeader(CONTENT_TYPE_HEADER));
-    Assert.assertEquals(expectedRequestBody, restRequest.getEntity().asAvroString());
-    Assert.assertEquals(expectedAcceptHeader, restRequest.getHeader(ACCEPT_TYPE_HEADER));
+    Assert.assertEquals(restRequest.getHeader(CONTENT_TYPE_HEADER), expectedContentTypeHeader);
+    Assert.assertEquals(restRequest.getEntity().asAvroString(), expectedRequestBody);
+    Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
 
     RestRequest restRequestBatch = clientGeneratedRequest(BatchUpdateRequest.class, ResourceMethod.BATCH_UPDATE, ENTITY_BODY, contentType, acceptTypes);
-    Assert.assertEquals(expectedContentTypeHeader, restRequestBatch.getHeader(CONTENT_TYPE_HEADER));
+    Assert.assertEquals(restRequestBatch.getHeader(CONTENT_TYPE_HEADER), expectedContentTypeHeader);
     Assert.assertEquals(restRequestBatch.getEntity().asAvroString(), expectedEntitiesBody);
-    Assert.assertEquals(expectedAcceptHeader, restRequestBatch.getHeader(ACCEPT_TYPE_HEADER));
+    Assert.assertEquals(restRequestBatch.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
 
     RestRequest restRequestPartial = clientGeneratedRequest(PartialUpdateRequest.class, ResourceMethod.PARTIAL_UPDATE, ENTITY_BODY, contentType, acceptTypes);
-    Assert.assertEquals(expectedContentTypeHeader, restRequestPartial.getHeader(CONTENT_TYPE_HEADER));
-    Assert.assertEquals(expectedRequestBody, restRequestPartial.getEntity().asAvroString());
-    Assert.assertEquals(expectedAcceptHeader, restRequestPartial.getHeader(ACCEPT_TYPE_HEADER));
+    Assert.assertEquals(restRequestPartial.getHeader(CONTENT_TYPE_HEADER), expectedContentTypeHeader);
+    Assert.assertEquals(restRequestPartial.getEntity().asAvroString(), expectedRequestBody);
+    Assert.assertEquals(restRequestPartial.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
 
     RestRequest restRequestBatchPartial = clientGeneratedRequest(BatchPartialUpdateRequest.class, ResourceMethod.BATCH_PARTIAL_UPDATE, ENTITY_BODY, contentType, acceptTypes);
-    Assert.assertEquals(expectedContentTypeHeader, restRequestBatchPartial.getHeader(CONTENT_TYPE_HEADER));
-    Assert.assertEquals(expectedEntitiesBody, restRequestBatchPartial.getEntity().asAvroString());
-    Assert.assertEquals(expectedAcceptHeader, restRequestBatchPartial.getHeader(ACCEPT_TYPE_HEADER));
+    Assert.assertEquals(restRequestBatchPartial.getHeader(CONTENT_TYPE_HEADER), expectedContentTypeHeader);
+    Assert.assertEquals(restRequestBatchPartial.getEntity().asAvroString(), expectedEntitiesBody);
+    Assert.assertEquals(restRequestBatchPartial.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
   }
 
   @Test(dataProvider = "data")
@@ -168,14 +168,14 @@ public class TestRestClientRequestBuilder
     throws URISyntaxException
   {
     RestRequest restRequest = clientGeneratedRequest(CreateRequest.class, ResourceMethod.CREATE, ENTITY_BODY, contentType, acceptTypes);
-    Assert.assertEquals(expectedContentTypeHeader, restRequest.getHeader(CONTENT_TYPE_HEADER));
-    Assert.assertEquals(expectedRequestBody, restRequest.getEntity().asAvroString());
-    Assert.assertEquals(expectedAcceptHeader, restRequest.getHeader(ACCEPT_TYPE_HEADER));
+    Assert.assertEquals(restRequest.getHeader(CONTENT_TYPE_HEADER), expectedContentTypeHeader);
+    Assert.assertEquals(restRequest.getEntity().asAvroString(), expectedRequestBody);
+    Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
 
     RestRequest restRequestBatch = clientGeneratedRequest(BatchCreateRequest.class, ResourceMethod.BATCH_CREATE, ENTITY_BODY, contentType, acceptTypes);
-    Assert.assertEquals(expectedContentTypeHeader, restRequestBatch.getHeader(CONTENT_TYPE_HEADER));
-    Assert.assertEquals(expectedRequestBody, restRequestBatch.getEntity().asAvroString());
-    Assert.assertEquals(expectedAcceptHeader, restRequest.getHeader(ACCEPT_TYPE_HEADER));
+    Assert.assertEquals(restRequestBatch.getHeader(CONTENT_TYPE_HEADER), expectedContentTypeHeader);
+    Assert.assertEquals(restRequestBatch.getEntity().asAvroString(), expectedRequestBody);
+    Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
   }
 
   @Test(dataProvider = "data")
@@ -189,13 +189,13 @@ public class TestRestClientRequestBuilder
   {
     RestRequest restRequest = clientGeneratedRequest(DeleteRequest.class, ResourceMethod.DELETE, null, contentType, acceptTypes);
     Assert.assertNull(restRequest.getHeader(CONTENT_TYPE_HEADER));
-    Assert.assertEquals(0, restRequest.getEntity().length());
-    Assert.assertEquals(expectedAcceptHeader, restRequest.getHeader(ACCEPT_TYPE_HEADER));
+    Assert.assertEquals(restRequest.getEntity().length(), 0);
+    Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
 
     RestRequest restRequestBatch = clientGeneratedRequest(BatchDeleteRequest.class, ResourceMethod.BATCH_DELETE, null, contentType, acceptTypes);
     Assert.assertNull(restRequestBatch.getHeader(CONTENT_TYPE_HEADER));
-    Assert.assertEquals(0, restRequestBatch.getEntity().length());
-    Assert.assertEquals(expectedAcceptHeader, restRequest.getHeader(ACCEPT_TYPE_HEADER));
+    Assert.assertEquals(restRequestBatch.getEntity().length(), 0);
+    Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
   }
 
   @DataProvider(name = "data")
