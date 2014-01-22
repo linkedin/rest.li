@@ -3,6 +3,9 @@
 (RB=252372)
 Fix d2 rewrite bug and fix related pathKeys incorrect encoding issue.
 
+(RB=251668)
+Fix for handling invalid MIME types in accept header. Now, if a request has one or more invalid MIME types in the accept header of the request, the request is rejected with a 400. If the no supported MIME type is found in the specified accept header, a 406 is returned BEFORE the request is processed.
+
 1.12.3
 ------
 (RB=250488)
