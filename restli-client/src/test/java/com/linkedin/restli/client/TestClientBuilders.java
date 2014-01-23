@@ -692,7 +692,7 @@ public class TestClientBuilders
                                                                                           _COLL_SPEC,
                                                                                           RestliRequestOptions.DEFAULT_OPTIONS);
     RestliRequestOptions overrideOptions =
-        new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.FORCE_USE_LATEST).build();
+        new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.FORCE_USE_NEXT).build();
     Assert.assertEquals(builder.id(1L).setRequestOptions(overrideOptions).build().getRequestOptions(), overrideOptions);
   }
 

@@ -279,6 +279,7 @@ public class RestClient
         ProtocolVersion announcedVersion = new ProtocolVersion((String)potentialAnnouncedVersion);
         return getProtocolVersion(RestConstants.DEFAULT_PROTOCOL_VERSION,
                                   RestConstants.LATEST_PROTOCOL_VERSION,
+                                  RestConstants.NEXT_PROTOCOL_VERSION,
                                   announcedVersion,
                                   request.getRequestOptions().getProtocolVersionOption());
       }
@@ -294,12 +295,14 @@ public class RestClient
    *
    * @param defaultVersion default version on the client
    * @param latestVersion latest version on the client
+   * @param nextVersion the next version on the client
    * @param announcedVersion version announced by the service
    * @param versionOption options present on the request
    * @return the {@link ProtocolVersion} that should be used to build the request
    */
   /*package private*/static ProtocolVersion getProtocolVersion(ProtocolVersion defaultVersion,
                                                                ProtocolVersion latestVersion,
+                                                               ProtocolVersion nextVersion,
                                                                ProtocolVersion announcedVersion,
                                                                ProtocolVersionOption versionOption)
   {
@@ -309,6 +312,8 @@ public class RestClient
     }
     switch (versionOption)
     {
+      case FORCE_USE_NEXT:
+        return nextVersion;
       case FORCE_USE_LATEST:
         return latestVersion;
       case USE_LATEST_IF_AVAILABLE:

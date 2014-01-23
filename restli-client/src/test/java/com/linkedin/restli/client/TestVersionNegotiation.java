@@ -32,6 +32,7 @@ public class TestVersionNegotiation
 {
   private static final ProtocolVersion _DEFAULT_VERSION = new ProtocolVersion(1, 0, 0);
   private static final ProtocolVersion _LATEST_VERSION = new ProtocolVersion(2, 0, 0);
+  private static final ProtocolVersion _NEXT_VERSION = new ProtocolVersion(3, 0, 0);
   
   @DataProvider(name = "data")
   public Object[][] getProtocolVersionClient()
@@ -39,11 +40,13 @@ public class TestVersionNegotiation
     ProtocolVersion lessThanDefaultVersion = new ProtocolVersion(0, 5, 0);
     ProtocolVersion betweenDefaultAndLatestVersion = new ProtocolVersion(1, 5, 0);
     ProtocolVersion greaterThanLatestVersion = new ProtocolVersion(2, 5, 0);
+    ProtocolVersion greaterThanNextVersion = new ProtocolVersion(3, 5, 0);
 
     /*
     Generate data to test the following function:
       getProtocolVersion(ProtocolVersion defaultVersion,
                          ProtocolVersion latestVersion,
+                         ProtocolVersion nextVersion,
                          ProtocolVersion announcedVersion,
                          ProtocolVersionOption versionOption)
     */
@@ -64,6 +67,10 @@ public class TestVersionNegotiation
             // use the version "advertised" by the server as it is less than the latest protocol version
             { betweenDefaultAndLatestVersion, ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, betweenDefaultAndLatestVersion},
 
+            // version greater than the next version "advertised" + graceful option => latest protocol version as
+            // servers should support it as well.
+            { greaterThanNextVersion, ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, _LATEST_VERSION },
+
             // force latest option => latest protocol version 
             { betweenDefaultAndLatestVersion, ProtocolVersionOption.FORCE_USE_LATEST, _LATEST_VERSION },
 
@@ -75,6 +82,21 @@ public class TestVersionNegotiation
 
             // if servers "advertise" a version that is greater than the latest version we always use the latest version
             { greaterThanLatestVersion, ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, _LATEST_VERSION },
+
+            // default version "advertised" + force next => next
+            { _DEFAULT_VERSION, ProtocolVersionOption.FORCE_USE_NEXT, _NEXT_VERSION },
+
+            // latest version "advertised" + force next => next
+            { _LATEST_VERSION, ProtocolVersionOption.FORCE_USE_NEXT, _NEXT_VERSION },
+
+            // next "advertised" + force next => next
+            { _NEXT_VERSION, ProtocolVersionOption.FORCE_USE_NEXT, _NEXT_VERSION },
+
+            // version between default and latest "advertised" + force next => next
+            { betweenDefaultAndLatestVersion, ProtocolVersionOption.FORCE_USE_NEXT, _NEXT_VERSION },
+
+            // version greater than latest "advertised" + force next => next
+            { greaterThanLatestVersion, ProtocolVersionOption.FORCE_USE_NEXT, _NEXT_VERSION }
         };
   }
 
@@ -85,6 +107,7 @@ public class TestVersionNegotiation
   {
     Assert.assertEquals(RestClient.getProtocolVersion(_DEFAULT_VERSION,
                                                       _LATEST_VERSION,
+                                                      _NEXT_VERSION,
                                                       announcedVersion,
                                                       versionOption),
                         expectedProtocolVersion);
@@ -97,6 +120,7 @@ public class TestVersionNegotiation
     {
       RestClient.getProtocolVersion(_DEFAULT_VERSION,
                                     _LATEST_VERSION,
+                                    _NEXT_VERSION,
                                     new ProtocolVersion(0, 0, 0),
                                     ProtocolVersionOption.USE_LATEST_IF_AVAILABLE);
       Assert.fail("Expected a RuntimeException as the announced version is less than the default!");

@@ -19,7 +19,6 @@ package com.linkedin.restli.client;
 import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
 import java.net.URI;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -388,7 +387,7 @@ public class BatchGetRequestBuilderTest
     batchRequestBuilder1.ids(1);
 
     RestliRequestOptions customOptions =
-        new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.FORCE_USE_LATEST).build();
+        new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.FORCE_USE_NEXT).build();
     BatchGetRequestBuilder<Integer, TestRecord> batchRequestBuilder2 =
         new BatchGetRequestBuilder<Integer, TestRecord>("/",
                                                         TestRecord.class,

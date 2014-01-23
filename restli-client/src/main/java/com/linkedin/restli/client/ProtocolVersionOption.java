@@ -23,18 +23,30 @@ package com.linkedin.restli.client;
 public enum ProtocolVersionOption
 {
   /**
-   * Use the latest version of the Rest.li protocol, regardless of what the server supports.
-   * Be careful when using this option as it might cause the request to fail if the server does not support the latest
-   * Rest.li protocol.
-   * The latest protocol version is defined as {@link com.linkedin.restli.common.RestConstants#LATEST_PROTOCOL_VERSION}.
+   * Use the next version of the Rest.li protocol to encode requests, regardless of the version running on the server.
+   * The next version of the Rest.li protocol is the version currently under development. This option should typically
+   * NOT be used for production services.
+   * CAUTION: this can cause requests to fail if the server does not understand the next version of the protocol.
+   * "Next version" is defined as {@link com.linkedin.restli.common.RestConstants#NEXT_PROTOCOL_VERSION}.
+   */
+  FORCE_USE_NEXT,
+
+  /**
+   * Use the latest version of the Rest.li protocol to encode requests, regardless of the version running on the server.
+   * CAUTION: this can cause requests to fail if the server does not understand the latest version of the protocol.
+   * "Latest version" is defined as {@link com.linkedin.restli.common.RestConstants#LATEST_PROTOCOL_VERSION}.
    */
   FORCE_USE_LATEST,
 
   /**
-   * Use the latest version of the Rest.li protocol if the server supports it. Use the default version otherwise.
-   * The latest protocol version is defined as {@link com.linkedin.restli.common.RestConstants#LATEST_PROTOCOL_VERSION}.
-   * The default protocol version is defined as
-   * {@link com.linkedin.restli.common.RestConstants#DEFAULT_PROTOCOL_VERSION}.
+   * Use the latest version of the Rest.li protocol if the server supports it.
+   * If the server version is less than the default Rest.li protocol version then fail the request.
+   * If the server version is greater then the next Rest.li protocol version then fail the request.
+   * If the server is between the default and the latest version then use the server version to encode the request.
+   * If the server version is greater than or equal to the latest protocol version then use that to encode the request.
+   * "Default version" is defined as {@link com.linkedin.restli.common.RestConstants#DEFAULT_PROTOCOL_VERSION}.
+   * "Latest version" is defined as {@link com.linkedin.restli.common.RestConstants#LATEST_PROTOCOL_VERSION}.
+   * "Next version" is defined as {@link com.linkedin.restli.common.RestConstants#NEXT_PROTOCOL_VERSION}.
    */
   USE_LATEST_IF_AVAILABLE
 }
