@@ -1,3 +1,11 @@
+1.13.1
+------
+
+1.13.0
+------
+(RB=253633)
+Added next protocol version. Set the latest protocol version to 1. Added a FORCE_USE_NEXT ProtocolVersionOption. Updated negotiation code.
+
 1.12.4
 ------
 (RB=252372)
