@@ -113,8 +113,40 @@ public class QueryParamsDataMap
    */
   public static Map<String, List<String>> queryString(DataMap dataMap){
     Map<String, List<String>> result = new HashMap<String, List<String>>();
-    iterate("", dataMap, result);
+    DataMap processedDataMap = processProjections(dataMap, result);
+    iterate("", processedDataMap, result);
     return result;
+  }
+
+  /**
+   * Encode "fields" query param, if it exists, and put the result into result.
+   * @return a dataMap that will not have the "fields" query param, to ensure it does not
+   * get encoded twice
+   */
+  public static DataMap processProjections(DataMap dataMap, Map<String, List<String>> result)
+  {
+    if (dataMap.containsKey(RestConstants.FIELDS_PARAM))
+    {
+      DataMap projectionsMap = dataMap.getDataMap(RestConstants.FIELDS_PARAM);
+      String encodedFields = URIMaskUtil.encodeMaskForURI(projectionsMap);
+      result.put(RestConstants.FIELDS_PARAM, Collections.singletonList(encodedFields));
+      DataMap dataMapClone;
+      try
+      {
+        dataMapClone = dataMap.clone();
+        dataMapClone.remove(RestConstants.FIELDS_PARAM);
+      }
+      catch (CloneNotSupportedException e)
+      {
+        // should never be reached
+        throw new AssertionError(e);
+      }
+      return dataMapClone;
+    }
+    else
+    {
+      return dataMap;
+    }
   }
 
 

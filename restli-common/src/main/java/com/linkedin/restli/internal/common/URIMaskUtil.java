@@ -49,6 +49,10 @@ public class URIMaskUtil
     return URIMaskUtil.encodeMaskForURIImpl(maskTree.getDataMap(), false);
   }
 
+  public static String encodeMaskForURI(DataMap simplifiedMask)
+  {
+    return URIMaskUtil.encodeMaskForURIImpl(simplifiedMask, false);
+  }
 
   private static String encodeMaskForURIImpl(DataMap simplifiedMask, boolean parenthesize)
   {

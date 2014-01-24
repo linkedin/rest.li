@@ -32,12 +32,11 @@ import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.client.QueryParamsUtil;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
-import com.linkedin.restli.internal.common.IllegalMaskException;
-import com.linkedin.restli.internal.common.URIMaskUtil;
 import java.lang.reflect.Array;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -479,24 +478,13 @@ public class Request<T>
    */
   protected Set<PathSpec> getFields()
   {
-    String fieldsString = (String) _queryParams.get(RestConstants.FIELDS_PARAM);
-    if (fieldsString == null || fieldsString.trim().isEmpty())
+    @SuppressWarnings("unchecked")
+    List<PathSpec> fieldsList = (List<PathSpec>) _queryParams.get(RestConstants.FIELDS_PARAM);
+    if (fieldsList == null)
     {
       return Collections.emptySet();
     }
-
-    try
-    {
-      return URIMaskUtil.decodeMaskUriFormat(new StringBuilder(fieldsString))
-                        .getOperations()
-                        .keySet();
-    }
-    catch (IllegalMaskException e)
-    {
-      // Should never happen as the field value is formed by the framework code.
-      throw new IllegalArgumentException("Invalid fields parameter value: "
-          + fieldsString);
-    }
+    return new HashSet<PathSpec>(fieldsList);
   }
 
   /**

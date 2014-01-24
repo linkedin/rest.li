@@ -26,7 +26,6 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.client.BatchKVResponseDecoder;
 import com.linkedin.restli.internal.client.BatchResponseDecoder;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
-import com.linkedin.restli.internal.client.URIUtil;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -183,7 +182,7 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
     if (fields != null && !fields.isEmpty())
     {
       firstQueryParams.put(RestConstants.FIELDS_PARAM,
-                           URIUtil.encodeFields(fields.toArray(new PathSpec[0])));
+                           fields.toArray(new PathSpec[fields.size()]));
     }
 
     return new BatchGetRequest<RT>(firstRequest.getHeaders(),

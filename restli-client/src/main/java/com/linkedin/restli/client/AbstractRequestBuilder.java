@@ -26,7 +26,6 @@ import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
-import com.linkedin.restli.internal.client.URIUtil;
 import com.linkedin.util.ArgumentUtil;
 
 import java.util.ArrayList;
@@ -284,8 +283,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
       throw new IllegalStateException("Fields already set on this request: "
                                           + _queryParams.get(RestConstants.FIELDS_PARAM));
     }
-
-    setParam(RestConstants.FIELDS_PARAM, URIUtil.encodeFields(fieldPaths));
+    setParam(RestConstants.FIELDS_PARAM, fieldPaths);
   }
 
   @Override

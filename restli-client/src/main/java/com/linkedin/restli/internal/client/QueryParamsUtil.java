@@ -1,18 +1,33 @@
+/*
+   Copyright (c) 2012 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package com.linkedin.restli.internal.client;
 
 
-import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.data.transform.filter.request.MaskCreator;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -40,7 +55,17 @@ public class QueryParamsUtil
     {
       String key = entry.getKey();
       Object value = entry.getValue();
-      result.put(key, paramToDataObject(value));
+
+      if (key.equals(RestConstants.FIELDS_PARAM))
+      {
+        @SuppressWarnings("unchecked")
+        List<PathSpec> pathSpecs = (List<PathSpec>)value;
+        result.put(key, MaskCreator.createPositiveMask(pathSpecs).getDataMap());
+      }
+      else
+      {
+        result.put(key, paramToDataObject(value));
+      }
     }
     result.makeReadOnly();
     return result;
@@ -56,24 +81,15 @@ public class QueryParamsUtil
     {
       return ((ComplexResourceKey) param).toDataMap();
     }
-    else if (param instanceof Object[])
-    {
-      return new DataList(coerceIterable(Arrays.asList((Object[]) param)));
-    }
-    else if (param.getClass().isArray())
-    {
-      // not an array of objects but still an array - must be an array of primitives
-      return new DataList(stringifyArray(param));
-    }
     else if (param instanceof DataTemplate)
     {
       @SuppressWarnings("rawtypes")
       final DataTemplate dataTemplate = (DataTemplate)param;
       return dataTemplate.data();
     }
-    else if (param instanceof Iterable)
+    else if (param instanceof List)
     {
-      return new DataList(coerceIterable((Iterable<?>) param));
+      return coerceList((List) param);
     }
     else
     {
@@ -82,23 +98,21 @@ public class QueryParamsUtil
   }
 
   /**
-   * given an iterable of objects returns a list of (non-null) Objects,
-   * which can be Strings or DataMap
-   *
+   * given a list of objects returns the objects either in a DataList, or, if
+   * they are PathSpecs (projections), encode them and return a String.
    */
-  private static List<Object> coerceIterable(Iterable<?> values)
+  private static Object coerceList(List<?> values)
   {
     assert values != null;
-    List<Object> objects =
-        new ArrayList<Object>(values instanceof Collection ? ((Collection<?>) values).size() : 10);
+    DataList dataList = new DataList();
     for (Object value : values)
     {
       if (value != null)
       {
-        objects.add(paramToDataObject(value));
+        dataList.add(paramToDataObject(value));
       }
     }
-    return objects;
+    return dataList;
   }
 
   /**
