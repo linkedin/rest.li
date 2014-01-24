@@ -1,5 +1,11 @@
+1.13.2
+------
+
 1.13.1
 ------
+(RB=252070)
+Added add markdown and markup to ZKConnectionManager
+
 
 1.13.0
 ------
