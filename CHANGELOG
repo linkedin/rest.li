@@ -6,8 +6,8 @@ Refactor when projections are encoded in the URI.  Move encoding back to the nor
 (RB=255178)
 Include schemas referenced inline when generating OPTIONS responses.
 
-(RB=253628)
-Add support for dynamically constructing example URIs and requests.
+(RB=255203)
+Disallow typeref as key type in annotation reader. This fixes the inconsistency between annotation reader and resource model.
 
 1.13.1
 ------

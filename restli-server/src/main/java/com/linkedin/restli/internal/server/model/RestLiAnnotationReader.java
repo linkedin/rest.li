@@ -230,6 +230,11 @@ public final class RestLiAnnotationReader
                                               "' should implement 'ComplexKeyResource' as a complex key '" +
                                               keyClass.getName() + "' is being used.");
       }
+      else if (TyperefInfo.class.isAssignableFrom(keyClass))
+      {
+        throw new ResourceConfigException("Typeref '" + keyClass.getName() + "' cannot be key type for class '" +
+                                              collectionResourceClass.getName() + "'.");
+      }
 
       if (keyClass.equals(ComplexResourceKey.class))
       {

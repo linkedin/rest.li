@@ -19,6 +19,7 @@ package com.linkedin.restli.server.test;
 
 import com.google.common.collect.Sets;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.pegasus.generator.test.LongRef;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ResourceMethod;
@@ -574,6 +575,14 @@ public class TestRestLiResourceModels
     assertNotNull(asyncDiscoveredModel.findMethod(ResourceMethod.BATCH_UPDATE));
     assertNotNull(asyncDiscoveredModel.findMethod(ResourceMethod.BATCH_PARTIAL_UPDATE));
     assertNotNull(asyncDiscoveredModel.findMethod(ResourceMethod.GET_ALL));
+  }
+
+  @Test
+  public void testTyperefKey()
+  {
+    expectConfigException(InvalidResources.TyperefKeyResource.class, "Typeref '" + LongRef.class.getName() + "' cannot be key type for class '" + InvalidResources.TyperefKeyResource.class.getName() + "'.");
+    expectConfigException(InvalidResources.TyperefKeyCollection.class, "Typeref '" + LongRef.class.getName() + "' cannot be key type for class '" + InvalidResources.TyperefKeyCollection.class.getName() + "'.");
+
   }
 
   // ************************

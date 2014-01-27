@@ -18,11 +18,13 @@ package com.linkedin.restli.server.invalid;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.pegasus.generator.test.LongRef;
 import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.CustomLongRef;
 import com.linkedin.restli.server.CustomStringRef;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.annotations.RestLiSimpleResource;
+import com.linkedin.restli.server.custom.types.CustomLong;
 import com.linkedin.restli.server.custom.types.CustomString;
 import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.Finder;
@@ -152,6 +154,16 @@ public class InvalidResources
     {
       return null;
     }
+  }
+
+  @RestLiCollection(name="typeref")
+  public static class TyperefKeyResource implements KeyValueResource<LongRef, Status>
+  {
+  }
+
+  @RestLiCollection(name="typeref")
+  public static class TyperefKeyCollection extends CollectionResourceTemplate<LongRef, Status>
+  {
   }
 
   public static class Record extends RecordTemplate
