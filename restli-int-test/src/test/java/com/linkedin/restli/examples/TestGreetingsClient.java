@@ -40,6 +40,7 @@ import com.linkedin.restli.client.DeleteRequest;
 import com.linkedin.restli.client.FindRequest;
 import com.linkedin.restli.client.GetAllRequest;
 import com.linkedin.restli.client.GetRequest;
+import com.linkedin.restli.client.OptionsRequestBuilder;
 import com.linkedin.restli.client.ProtocolVersionOption;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
@@ -62,8 +63,10 @@ import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.examples.greetings.api.Empty;
 import com.linkedin.restli.examples.greetings.api.Greeting;
+import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.examples.greetings.api.SearchMetadata;
 import com.linkedin.restli.examples.greetings.api.Tone;
+import com.linkedin.restli.examples.greetings.client.ActionsBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
 import com.linkedin.restli.examples.groups.api.TransferOwnershipRequest;
 import com.linkedin.restli.restspec.ResourceSchema;
@@ -78,6 +81,7 @@ import java.util.Map;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 /**
@@ -315,8 +319,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
   @Test
   public void testSearch() throws RemoteInvocationException
   {
-    Request<CollectionResponse<Greeting>> findRequest = DEFAULT_GREETINGS_BUILDERS.findBySearch().toneParam(
-            Tone.FRIENDLY).build();
+    Request<CollectionResponse<Greeting>> findRequest = DEFAULT_GREETINGS_BUILDERS.findBySearch().toneParam(Tone.FRIENDLY).build();
     List<Greeting> greetings = REST_CLIENT.sendRequest(findRequest).getResponse().getEntity().getElements();
     for (Greeting g : greetings)
     {
@@ -813,22 +816,6 @@ public class TestGreetingsClient extends RestLiIntegrationTest
   {
     Request<OptionsResponse> optionsRequest = DEFAULT_GREETINGS_BUILDERS.options().build();
     OptionsResponse optionsResponse = REST_CLIENT.sendRequest(optionsRequest).getResponse().getEntity();
-    Map<String, DataSchema> rawDataSchemas = optionsResponse.getDataSchemas();
-
-    NamedDataSchema[] schemas = new NamedDataSchema[] {
-      new Greeting().schema(),
-      new TransferOwnershipRequest().schema(),
-      new SearchMetadata().schema(),
-      new Empty().schema(),
-      (NamedDataSchema)DataTemplateUtil.getSchema(Tone.class)
-    };
-
-    for(NamedDataSchema dataSchema: schemas)
-    {
-      DataSchema optionsDataSchema = rawDataSchemas.get(dataSchema.getFullName());
-      Assert.assertEquals(optionsDataSchema, dataSchema);
-    }
-
     Map<String, ResourceSchema> resources = optionsResponse.getResourceSchemas();
     Assert.assertEquals(resources.size(), 1);
     ResourceSchema resourceSchema = resources.get("com.linkedin.restli.examples.greetings.client.greetings");
@@ -837,4 +824,36 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     Assert.assertTrue(resourceSchema.hasCollection());
   }
 
+  @DataProvider
+  public Object[][] optionsData()
+  {
+    return new Object[][] {
+        new Object[] { DEFAULT_GREETINGS_BUILDERS.options(), new NamedDataSchema[] {
+            new Greeting().schema(),
+            new TransferOwnershipRequest().schema(),
+            new SearchMetadata().schema(),
+            new Empty().schema(),
+            (NamedDataSchema)DataTemplateUtil.getSchema(Tone.class)
+        }},
+        new Object[] { new ActionsBuilders().options(), new NamedDataSchema[] {
+            new Message().schema(),
+            (NamedDataSchema)DataTemplateUtil.getSchema(Tone.class)
+        }}
+    };
+  }
+
+  @Test(dataProvider = "optionsData")
+  public void testModelsForOptionsRequest(OptionsRequestBuilder request, NamedDataSchema[] schemas)
+      throws RemoteInvocationException, URISyntaxException, IOException
+  {
+    Request<OptionsResponse> optionsRequest = request.build();
+    OptionsResponse optionsResponse = REST_CLIENT.sendRequest(optionsRequest).getResponse().getEntity();
+    Map<String, DataSchema> rawDataSchemas = optionsResponse.getDataSchemas();
+
+    for(NamedDataSchema dataSchema: schemas)
+    {
+      DataSchema optionsDataSchema = rawDataSchemas.get(dataSchema.getFullName());
+      Assert.assertEquals(optionsDataSchema, dataSchema);
+    }
+  }
 }

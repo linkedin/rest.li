@@ -17,12 +17,15 @@
 package com.linkedin.restli.docgen;
 
 
+import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.DataSchemaTraverse;
+import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.SchemaParser;
+import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.restli.restspec.ActionSchema;
@@ -181,19 +184,30 @@ public class RestLiResourceRelationship
                                  Object parentMethodSchema,
                                  ParameterSchema parameterSchema)
       {
-        final NamedDataSchema schema;
-        if (parameterSchema.hasItems())
+        String parameterTypeString = parameterSchema.getType();
+        if (isInlineSchema(parameterTypeString)) // the parameter type field contains a inline schema, so we traverse into it
         {
-          schema = extractSchema(parameterSchema.getItems());
+          visitInlineSchema(visitContext, parameterTypeString);
         }
         else
         {
-          schema = extractSchema(parameterSchema.getType());
-        }
+          final NamedDataSchema schema;
 
-        if (schema != null)
-        {
-          connectSchemaToResource(visitContext, schema);
+          // else if the parameter is using the legacy format or representing maps and lists with a separate "items" field,
+          // grab the schema name from it
+          if (parameterSchema.hasItems())
+          {
+            schema = extractSchema(parameterSchema.getItems());
+          }
+          else // the only remaining possibility is that the type field contains the name of a data schema
+          {
+            schema = extractSchema(parameterTypeString);
+          }
+
+          if (schema != null)
+          {
+            connectSchemaToResource(visitContext, schema);
+          }
         }
       }
 
@@ -222,10 +236,17 @@ public class RestLiResourceRelationship
         final String returns = actionSchema.getReturns();
         if (returns != null)
         {
-          final NamedDataSchema returnsSchema = extractSchema(returns);
-          if (returnsSchema != null)
+          if (isInlineSchema(returns)) // the parameter type field contains a inline schema, so we traverse into it
           {
-            connectSchemaToResource(visitContext, returnsSchema);
+            visitInlineSchema(visitContext, returns);
+          }
+          else // otherwise the type field contains the name of a data schema
+          {
+            final NamedDataSchema returnsSchema = extractSchema(returns);
+            if (returnsSchema != null)
+            {
+              connectSchemaToResource(visitContext, returnsSchema);
+            }
           }
         }
 
@@ -239,6 +260,32 @@ public class RestLiResourceRelationship
             {
               connectSchemaToResource(visitContext, errorSchema);
             }
+          }
+        }
+      }
+
+      private boolean isInlineSchema(String schemaString)
+      {
+        return schemaString.startsWith("{");
+      }
+
+      private void visitInlineSchema(VisitContext visitContext, String schemaString)
+      {
+        DataSchema schema = DataTemplateUtil.parseSchema(schemaString, _schemaResolver);
+        if (schema instanceof ArrayDataSchema)
+        {
+          DataSchema itemSchema = ((ArrayDataSchema)schema).getItems();
+          if (itemSchema instanceof NamedDataSchema)
+          {
+            connectSchemaToResource(visitContext, (NamedDataSchema)itemSchema);
+          }
+        }
+        if (schema instanceof MapDataSchema)
+        {
+          DataSchema valueSchema = ((MapDataSchema)schema).getValues();
+          if (valueSchema instanceof NamedDataSchema)
+          {
+            connectSchemaToResource(visitContext, (NamedDataSchema)valueSchema);
           }
         }
       }
