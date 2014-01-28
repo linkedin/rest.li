@@ -1,5 +1,7 @@
 1.13.2
 ------
+(RB=254542)
+Refactor when projections are encoded in the URI.  Move encoding back to the normal URI encoding process.
 
 1.13.1
 ------
