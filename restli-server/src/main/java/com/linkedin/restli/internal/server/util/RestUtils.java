@@ -254,7 +254,7 @@ public class RestUtils
 
     try
     {
-      return (DataMap) CopyFilter.INSTANCE.filter(dataMap, filterMap);
+      return (DataMap) new CopyFilter().filter(dataMap, filterMap);
     }
     catch (Exception e)
     {

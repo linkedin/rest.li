@@ -32,7 +32,7 @@ public class TestCopyFilter extends TestFilterOnData
   protected void genericFilterTest(DataMap data, DataMap filter, DataMap expected, String description) throws DataProcessingException
   {
     final String dataBefore = data.toString();
-    final Object filtered = CopyFilter.INSTANCE.filter(data, filter);
+    final Object filtered = new CopyFilter().filter(data, filter);
     assertEquals(filtered, expected, "The following test failed: \n" + description  +
         "\nData: " + dataBefore + "\nFilter: " + filter +
         "\nExpected: " + expected + "\nActual result: " + filtered);

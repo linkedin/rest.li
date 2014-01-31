@@ -29,7 +29,7 @@ import java.util.Map;
  * Filter that creates filtered data object by copying non-negative masked items from original to new.
  * Different algorithm is used according to how sparse the projection is.
  *
- * @author kjin
+ * @author Keren Jin
  */
 public class CopyFilter extends AbstractFilter
 {
@@ -59,7 +59,7 @@ public class CopyFilter extends AbstractFilter
       {
         assert(operationClass == DataMap.class);
         assert(original instanceof DataComplex);
-        value = INSTANCE.filter(original, (DataMap) operation);
+        value = filter(original, (DataMap) operation);
       }
 
       CheckedUtil.addWithoutChecking(resultList, value);
@@ -87,7 +87,7 @@ public class CopyFilter extends AbstractFilter
       {
         assert(operation.getClass() == DataMap.class);
         assert(original instanceof DataComplex);
-        value = INSTANCE.filter(original, (DataMap) operation);
+        value = filter(original, (DataMap) operation);
       }
 
       CheckedUtil.putWithoutChecking(resultMap, entry.getKey(), value);
@@ -107,8 +107,6 @@ public class CopyFilter extends AbstractFilter
   {
     return operation != FilterConstants.NEGATIVE;
   }
-
-  public static final AbstractFilter INSTANCE = new CopyFilter();
 
   private static final DataList EMPTY_DATALIST = new DataList();
   static
