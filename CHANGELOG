@@ -1,6 +1,10 @@
+1.13.5
+------
+
+
 1.13.4
 ------
-(RB=?)
+(RB=257238)
 Fix memory leaks from CopyFilter.
 
 1.13.3
@@ -29,7 +33,6 @@ Add scaladoc support to Rest.li IDL generation.
 ------
 (RB=252070)
 Added add markdown and markup to ZKConnectionManager
-
 
 1.13.0
 ------
