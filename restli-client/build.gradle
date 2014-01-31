@@ -9,6 +9,7 @@ dependencies {
   compile externalDependency.commonsLang
   compile externalDependency.jacksonCore
   compile externalDependency.parseq
+  testCompile project(path: ':restli-common', configuration: 'testArtifacts')
   testCompile externalDependency.testng
   testCompile externalDependency.easymock
   testCompile externalDependency.commonsHttpClient
