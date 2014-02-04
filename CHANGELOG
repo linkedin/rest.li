@@ -1,6 +1,10 @@
-1.13.5
+1.13.6
 ------
 
+1.13.5
+------
+(RB=257823)
+Fix for getting the uri in ScatterGatherBuilder and GetAllPartitionsRequestBuilder if the legacy constructor is used.
 
 1.13.4
 ------
