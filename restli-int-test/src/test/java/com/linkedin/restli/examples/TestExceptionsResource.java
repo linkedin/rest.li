@@ -203,11 +203,11 @@ public class TestExceptionsResource extends RestLiIntegrationTest
     Assert.assertEquals(status.getStatus().intValue(), HttpStatus.S_406_NOT_ACCEPTABLE.getCode());
     Assert.assertTrue(status.hasError());
     ErrorResponse error = status.getError();
-    Assert.assertEquals(error.getStatus(), HttpStatus.S_406_NOT_ACCEPTABLE.getCode());
+    Assert.assertEquals(error.getStatus().intValue(), HttpStatus.S_406_NOT_ACCEPTABLE.getCode());
     Assert.assertEquals(error.getMessage(), "I will not tolerate your insolence!");
-    Assert.assertEquals(error.getServiceErrorCode(), 999);
+    Assert.assertEquals(error.getServiceErrorCode().intValue(), 999);
     Assert.assertEquals(error.getExceptionClass(), "com.linkedin.restli.server.RestLiServiceException");
-    Assert.assertEquals(error.getErrorDetails().getString("reason"), "insultingGreeting");
+    Assert.assertEquals(error.getErrorDetails().data().getString("reason"), "insultingGreeting");
     Assert.assertTrue(error.getStackTrace().startsWith(
         "com.linkedin.restli.server.RestLiServiceException [HTTP Status:406, serviceErrorCode:999]: I will not tolerate your insolence!"),
                       "stacktrace mismatch:" + error.getStackTrace());

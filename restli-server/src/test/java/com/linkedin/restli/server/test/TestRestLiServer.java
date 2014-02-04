@@ -22,6 +22,7 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
+import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
 import com.linkedin.restli.server.ErrorResponseFormat;
 import java.net.URI;
@@ -43,7 +44,6 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
@@ -264,7 +264,7 @@ public class TestRestLiServer
           assertEquals(responseBody.getExceptionClass(), "com.linkedin.restli.server.RestLiServiceException");
           assertTrue(responseBody.getStackTrace().startsWith(
               "com.linkedin.restli.server.RestLiServiceException [HTTP Status:500]: Mock Exception"));
-          assertEquals(responseBody.getStatus(), 500);
+          assertEquals(responseBody.getStatus().intValue(), 500);
 
           EasyMock.verify(statusResource);
           EasyMock.reset(statusResource);
@@ -397,7 +397,7 @@ public class TestRestLiServer
           // in this test, we're using the _serverWithCustomErrorResponseConfig (see below), which has been configure to use the
           // MESSAGE_AND_DETAILS ErrorResponseFormat, so stack trace and other error response parts should be absent
           assertEquals(responseBody.getMessage(), "Mock Exception");
-          assertEquals(responseBody.getErrorDetails().getString("errorKey"), "errorDetail");
+          assertEquals(responseBody.getErrorDetails().data().getString("errorKey"), "errorDetail");
           assertFalse(responseBody.hasExceptionClass());
           assertFalse(responseBody.hasStackTrace());
           assertFalse(responseBody.hasStatus());

@@ -22,7 +22,6 @@ import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
-import com.linkedin.restli.client.ActionRequest;
 import com.linkedin.restli.client.BatchCreateRequest;
 import com.linkedin.restli.client.BatchGetKVRequest;
 import com.linkedin.restli.client.BatchGetRequest;
@@ -31,7 +30,6 @@ import com.linkedin.restli.client.CreateRequest;
 import com.linkedin.restli.client.DeleteRequest;
 import com.linkedin.restli.client.GetAllRequest;
 import com.linkedin.restli.client.GetRequest;
-import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
 import com.linkedin.restli.client.RestClient;
@@ -47,11 +45,9 @@ import com.linkedin.restli.common.CreateStatus;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.UpdateStatus;
-import com.linkedin.restli.examples.groups.api.Badge;
 import com.linkedin.restli.examples.groups.api.ComplexKeyGroupMembership;
 import com.linkedin.restli.examples.groups.api.EmailDigestFrequency;
 import com.linkedin.restli.examples.groups.api.Group;
-import com.linkedin.restli.examples.groups.api.GroupContact;
 import com.linkedin.restli.examples.groups.api.GroupMembership;
 import com.linkedin.restli.examples.groups.api.GroupMembershipKey;
 import com.linkedin.restli.examples.groups.api.GroupMembershipParam;
@@ -59,17 +55,11 @@ import com.linkedin.restli.examples.groups.api.GroupMembershipParamArray;
 import com.linkedin.restli.examples.groups.api.GroupMembershipQueryParam;
 import com.linkedin.restli.examples.groups.api.GroupMembershipQueryParamArray;
 import com.linkedin.restli.examples.groups.api.MembershipLevel;
-import com.linkedin.restli.examples.groups.api.State;
-import com.linkedin.restli.examples.groups.api.TransferOwnershipRequest;
 import com.linkedin.restli.examples.groups.api.WriteLevel;
 import com.linkedin.restli.examples.groups.client.ContactsBuilders;
-import com.linkedin.restli.examples.groups.client.GroupMembershipsBatchPartialUpdateBuilder;
 import com.linkedin.restli.examples.groups.client.GroupMembershipsBuilders;
 import com.linkedin.restli.examples.groups.client.GroupMembershipsComplexBuilders;
-import com.linkedin.restli.examples.groups.client.GroupMembershipsFindByMemberBuilder;
-import com.linkedin.restli.examples.groups.client.GroupsBatchGetBuilder;
 import com.linkedin.restli.examples.groups.client.GroupsBuilders;
-import com.linkedin.restli.examples.groups.client.GroupsFindByEmailDomainBuilder;
 import java.util.HashMap;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -336,8 +326,8 @@ public class TestGroupsClient extends RestLiIntegrationTest
     Assert.assertTrue(getResponse.getResults().isEmpty());
     Assert.assertTrue(getResponse.getErrors().containsKey(key1.toString())); // Why .toString() here?
     Assert.assertTrue(getResponse.getErrors().containsKey(key2.toString()));
-    Assert.assertEquals(getResponse.getErrors().get(key1.toString()).getStatus(), 404);
-    Assert.assertEquals(getResponse.getErrors().get(key2.toString()).getStatus(), 404);
+    Assert.assertEquals(getResponse.getErrors().get(key1.toString()).getStatus().intValue(), 404);
+    Assert.assertEquals(getResponse.getErrors().get(key2.toString()).getStatus().intValue(), 404);
   }
 
   @Test

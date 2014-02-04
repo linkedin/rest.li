@@ -365,8 +365,8 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     Request<CollectionResponse<Greeting>> findRequest = DEFAULT_GREETINGS_BUILDERS.findBySearchWithPostFilter().paginate(0, 5).build();
     CollectionResponse<Greeting> entity = REST_CLIENT.sendRequest(findRequest).getResponse().getEntity();
     CollectionMetadata paging = entity.getPaging();
-    Assert.assertEquals(paging.getStart(), 0);
-    Assert.assertEquals(paging.getCount(), 5);
+    Assert.assertEquals(paging.getStart().intValue(), 0);
+    Assert.assertEquals(paging.getCount().intValue(), 5);
     Assert.assertEquals(entity.getElements().size(), 4); // expected to be 4 instead of 5 because of post filter
 
     // to accommodate post filtering, even though 4 are returned, next page should be 5-10.
@@ -381,15 +381,15 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     Request<CollectionResponse<Greeting>> findRequest = DEFAULT_GREETINGS_BUILDERS.findBySearchWithPostFilter().paginateStart(1).build();
     CollectionResponse<Greeting> entity = REST_CLIENT.sendRequest(findRequest).getResponse().getEntity();
     CollectionMetadata paging = entity.getPaging();
-    Assert.assertEquals(paging.getStart(), 1);
-    Assert.assertEquals(paging.getCount(), 10);
+    Assert.assertEquals(paging.getStart().intValue(), 1);
+    Assert.assertEquals(paging.getCount().intValue(), 10);
     Assert.assertEquals(entity.getElements().size(), 9); // expected to be 9 instead of 10 because of post filter
 
     findRequest = DEFAULT_GREETINGS_BUILDERS.findBySearchWithPostFilter().paginateCount(5).build();
     entity = REST_CLIENT.sendRequest(findRequest).getResponse().getEntity();
     paging = entity.getPaging();
-    Assert.assertEquals(paging.getStart(), 0);
-    Assert.assertEquals(paging.getCount(), 5);
+    Assert.assertEquals(paging.getStart().intValue(), 0);
+    Assert.assertEquals(paging.getCount().intValue(), 5);
     Assert.assertEquals(entity.getElements().size(), 4); // expected to be 4 instead of 5 because of post filter
   }
 

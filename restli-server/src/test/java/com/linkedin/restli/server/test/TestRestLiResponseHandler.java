@@ -979,8 +979,8 @@ public class TestRestLiResponseHandler
     CollectionResponse<Status> collectionResponse = new CollectionResponse<Status>(dataMap, Status.class);
 
     assertEquals(collectionResponse.getElements().size(), numElements);
-    assertEquals(collectionResponse.getPaging().getStart(), start);
-    assertEquals(collectionResponse.getPaging().getCount(), count);
+    assertEquals(collectionResponse.getPaging().getStart().intValue(), start);
+    assertEquals(collectionResponse.getPaging().getCount().intValue(), count);
     assertEquals(collectionResponse.getPaging().getLinks().size(), numLinks);
     if (total == null)
     {
@@ -988,7 +988,7 @@ public class TestRestLiResponseHandler
     }
     else
     {
-      assertEquals(collectionResponse.getPaging().getTotal(), total.intValue());
+      assertEquals(collectionResponse.getPaging().getTotal().intValue(), total.intValue());
     }
     if (prevLink != null)
     {

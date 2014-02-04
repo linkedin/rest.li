@@ -26,6 +26,7 @@ import com.linkedin.parseq.Task;
 import com.linkedin.parseq.promise.Promise;
 import com.linkedin.restli.client.test.TestRecord;
 import com.linkedin.restli.common.EmptyRecord;
+import com.linkedin.restli.common.ErrorDetails;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.ResourceSpecImpl;
 import com.linkedin.restli.common.RestConstants;
@@ -195,7 +196,7 @@ public class ParSeqRestClientTest
 
     final DataMap errMap = new DataMap();
     errMap.put(errKey, errValue);
-    er.setErrorDetails(errMap);
+    er.setErrorDetails(new ErrorDetails(errMap));
     er.setStatus(httpCode);
     er.setMessage(errMsg);
     er.setServiceErrorCode(appCode);

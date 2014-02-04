@@ -20,16 +20,17 @@
 
 package com.linkedin.restli.internal.server.methods.response;
 
-import com.linkedin.restli.server.ErrorResponseFormat;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.Map;
 
 import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.restli.common.ErrorDetails;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.server.RoutingResult;
+import com.linkedin.restli.server.ErrorResponseFormat;
 import com.linkedin.restli.server.RestLiServiceException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.Map;
 
 /**
 * @author Josh Walker
@@ -98,7 +99,7 @@ public final class ErrorResponseBuilder implements RestLiResponseBuilder
     }
     if (_errorResponseFormat.showDetails() && result.hasErrorDetails())
     {
-      er.setErrorDetails(result.getErrorDetails());
+      er.setErrorDetails(new ErrorDetails(result.getErrorDetails()));
     }
 
     if(_errorResponseFormat.showStacktrace())

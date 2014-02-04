@@ -1,0 +1,22 @@
+{
+  "type": "record",
+  "name": "CreateStatus",
+  "namespace": "com.linkedin.restli.common",
+  "doc": "A rest.li create status.",
+  "fields": [
+    {
+      "name": "status",
+      "type": "int"
+    },
+    {
+      "name": "id",
+      "type": "string",
+      "optional": true
+    },
+    {
+      "name": "error",
+      "optional": true,
+      "type": "ErrorResponse"
+    }
+  ]
+}

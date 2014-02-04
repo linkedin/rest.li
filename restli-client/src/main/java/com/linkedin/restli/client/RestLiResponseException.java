@@ -148,7 +148,14 @@ public class RestLiResponseException extends RestException
 
   public DataMap getErrorDetails()
   {
-    return _errorResponse.getErrorDetails();
+    if (hasErrorDetails())
+    {
+      return _errorResponse.getErrorDetails().data();
+    }
+    else
+    {
+      return null;
+    }
   }
   
   public String getErrorSource()

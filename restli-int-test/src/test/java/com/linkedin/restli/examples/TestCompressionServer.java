@@ -16,25 +16,6 @@
 
 package com.linkedin.restli.examples;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpException;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
 
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
@@ -78,6 +59,24 @@ import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
 import com.linkedin.restli.examples.greetings.server.CompressionResource;
 import com.linkedin.restli.examples.groups.api.TransferOwnershipRequest;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpException;
+import org.apache.commons.httpclient.methods.GetMethod;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 /**
  * Same as TestGreetingsClient, but uses compression
@@ -580,8 +579,8 @@ public class TestCompressionServer extends RestLiIntegrationTest
     checkHeaderForCompression(response, operationsForCompression, "finder:" + findRequest.getMethodName());
     CollectionResponse<Greeting> entity = response.getEntity();
     CollectionMetadata paging = entity.getPaging();
-    Assert.assertEquals(paging.getStart(), 0);
-    Assert.assertEquals(paging.getCount(), 5);
+    Assert.assertEquals(paging.getStart().intValue(), 0);
+    Assert.assertEquals(paging.getCount().intValue(), 5);
     Assert.assertEquals(entity.getElements().size(), 4); // expected to be 4 instead of 5 because of post filter
 
     // to accommodate post filtering, even though 4 are returned, next page should be 5-10.

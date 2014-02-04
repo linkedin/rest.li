@@ -22,6 +22,7 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.Name;
 import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.GetMode;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.WrappingArrayTemplate;
@@ -38,7 +39,9 @@ public class CollectionResponse<T extends RecordTemplate> extends RecordTemplate
   public static final String ELEMENTS = "elements";
   public static final String METADATA = "metadata";
   public static final String PAGING = "paging";
-  private static final RecordDataSchema.Field PAGING_FIELD = new RecordDataSchema.Field(CollectionMetadata.SCHEMA);
+  private static final RecordDataSchema.Field PAGING_FIELD =
+      new RecordDataSchema.Field(DataTemplateUtil.getSchema(CollectionMetadata.class));
+
   static
   {
     PAGING_FIELD.setName(PAGING, new StringBuilder(10));

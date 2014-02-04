@@ -23,6 +23,8 @@ package com.linkedin.restli.client;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.restli.common.ErrorDetails;
+import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.ResourceSpecImpl;
 import java.io.IOException;
 import java.util.Collections;
@@ -50,7 +52,6 @@ import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.restli.common.EmptyRecord;
-import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.client.EntityResponseDecoder;
 
@@ -242,8 +243,8 @@ public class RestClientTest
     Assert.assertNull(response.getError());
     Assert.assertFalse(response.hasError());
     Assert.assertEquals(HTTP_CODE, response.getStatus());
-    Assert.assertEquals(ERR_VALUE, e.getErrorDetails().get(ERR_KEY));
-    Assert.assertEquals(APP_CODE, e.getServiceErrorCode());
+    Assert.assertEquals(ERR_VALUE, e.getErrorDetails().data().getString(ERR_KEY));
+    Assert.assertEquals(APP_CODE, e.getServiceErrorCode().intValue());
     Assert.assertEquals(ERR_MSG, e.getMessage());
     verifyResponseHeader(sendRequestOption, response.getHeaders());
   }
@@ -366,8 +367,8 @@ public class RestClientTest
       ErrorResponse er = new EntityResponseDecoder<ErrorResponse>(ErrorResponse.class).decodeResponse(r).getEntity();
 
       Assert.assertEquals(HTTP_CODE, r.getStatus());
-      Assert.assertEquals(ERR_VALUE, er.getErrorDetails().get(ERR_KEY));
-      Assert.assertEquals(APP_CODE, er.getServiceErrorCode());
+      Assert.assertEquals(ERR_VALUE, er.getErrorDetails().data().getString(ERR_KEY));
+      Assert.assertEquals(APP_CODE, er.getServiceErrorCode().intValue());
       Assert.assertEquals(ERR_MSG, er.getMessage());
       verifyResponseHeader(option, re.getResponse().getHeaders());
     }
@@ -636,7 +637,7 @@ public class RestClientTest
 
     DataMap errMap = new DataMap();
     errMap.put(errKey, errValue);
-    er.setErrorDetails(errMap);
+    er.setErrorDetails(new ErrorDetails(errMap));
     er.setStatus(httpCode);
     er.setMessage(errMsg);
     er.setServiceErrorCode(appCode);

@@ -16,10 +16,6 @@
 
 package com.linkedin.restli.client.response;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
@@ -34,16 +30,20 @@ import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.TyperefInfo;
 import com.linkedin.jersey.api.uri.UriComponent;
+import com.linkedin.restli.common.ComplexKeySpec;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.CompoundKey.TypeInfo;
-import com.linkedin.restli.common.ComplexKeySpec;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.internal.common.PathSegment.PathSegmentSyntaxException;
 import com.linkedin.restli.internal.common.QueryParamsDataMap;
 import com.linkedin.restli.internal.common.TyperefUtils;
 import com.linkedin.restli.internal.common.ValueConverter;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A Batch of records. Used to return a fixed-size, unordered, complete collection of records, keyed on resource ID. Used
