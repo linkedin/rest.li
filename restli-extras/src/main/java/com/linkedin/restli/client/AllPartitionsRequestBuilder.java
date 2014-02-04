@@ -52,6 +52,7 @@ public class AllPartitionsRequestBuilder <T>
    * partitions, an int of total partition number and a collection of available partitions
    * @throws ServiceUnavailableException
    */
+  @SuppressWarnings("deprecation")
   public AllPartitionsResult<RequestContext>
   buildRequestContexts(Request<T> request, RequestContext requestContext)
       throws ServiceUnavailableException
@@ -59,7 +60,15 @@ public class AllPartitionsRequestBuilder <T>
     URI serviceUri;
     try
     {
-      serviceUri = new URI(D2_URI_PREFIX + request.getServiceName());
+      if (request.hasUri())
+      {
+        // legacy constructor used to construct the request
+        serviceUri = new URI(D2_URI_PREFIX + request.getUri().toString());
+      }
+      else
+      {
+        serviceUri = new URI(D2_URI_PREFIX + request.getServiceName());
+      }
     }
     catch(URISyntaxException e)
     {

@@ -140,13 +140,22 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
     return new KVScatterGatherResult<K, UpdateStatus>(scatterGatherRequests, mapKeyResult.getUnmappedKeys());
   }
 
+  @SuppressWarnings("deprecation")
   private <K> MapKeyResult<URI, K> mapKeys(BatchRequest<?> request, Collection<K> ids)
     throws ServiceUnavailableException
   {
     URI serviceUri;
     try
     {
-      serviceUri = new URI(D2_URI_PREFIX + request.getServiceName());
+      if (request.hasUri())
+      {
+        // legacy constructor used to construct the request
+        serviceUri = new URI(D2_URI_PREFIX + request.getUri().toString());
+      }
+      else
+      {
+        serviceUri = new URI(D2_URI_PREFIX + request.getServiceName());
+      }
     }
     catch (URISyntaxException e)
     {
