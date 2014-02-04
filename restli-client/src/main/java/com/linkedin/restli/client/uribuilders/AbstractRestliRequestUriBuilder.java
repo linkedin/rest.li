@@ -50,12 +50,12 @@ abstract class AbstractRestliRequestUriBuilder<R extends Request> implements Res
 
   AbstractRestliRequestUriBuilder(R request)
   {
-    this(request, "", AllProtocolVersions.DEFAULT_PROTOCOL_VERSION, null);
+    this(request, "", AllProtocolVersions.BASELINE_PROTOCOL_VERSION, null);
   }
 
   AbstractRestliRequestUriBuilder(R request, String uriPrefix)
   {
-    this(request, uriPrefix, AllProtocolVersions.DEFAULT_PROTOCOL_VERSION, null);
+    this(request, uriPrefix, AllProtocolVersions.BASELINE_PROTOCOL_VERSION, null);
   }
 
   AbstractRestliRequestUriBuilder(R request, String uriPrefix, ProtocolVersion version)
@@ -77,7 +77,7 @@ abstract class AbstractRestliRequestUriBuilder<R extends Request> implements Res
       throw new IllegalArgumentException("Request cannot be null");
     }
     _request = request;
-    _version = (version == null ? AllProtocolVersions.DEFAULT_PROTOCOL_VERSION : version);
+    _version = (version == null ? AllProtocolVersions.BASELINE_PROTOCOL_VERSION : version);
     _assocKey = assocKey;
     _uriPrefix = (uriPrefix == null) ? "" : uriPrefix;
   }

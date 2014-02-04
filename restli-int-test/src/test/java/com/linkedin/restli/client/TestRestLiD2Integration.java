@@ -112,7 +112,7 @@ public class TestRestLiD2Integration extends RestLiIntegrationTest
     Assert.assertEquals(g.getId().longValue(), 1L);
     Assert.assertNotNull(g.getMessage());
     Assert.assertEquals(future.getResponse().getHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION),
-                        AllProtocolVersions.DEFAULT_PROTOCOL_VERSION.toString());
+                        AllProtocolVersions.BASELINE_PROTOCOL_VERSION.toString());
   }
 
   @Test
@@ -170,6 +170,6 @@ public class TestRestLiD2Integration extends RestLiIntegrationTest
     Greeting entity = responseFuture.getResponse().getEntity();
     Assert.assertEquals(entity.getId(), new Long(1L));
     Assert.assertEquals(responseFuture.getResponse().getHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION),
-                        AllProtocolVersions.DEFAULT_PROTOCOL_VERSION.toString());
+                        AllProtocolVersions.BASELINE_PROTOCOL_VERSION.toString());
   }
 }

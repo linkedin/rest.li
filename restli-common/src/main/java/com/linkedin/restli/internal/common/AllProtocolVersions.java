@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2013 LinkedIn Corp.
+   Copyright (c) 2014 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -25,12 +25,12 @@ import com.linkedin.restli.common.ProtocolVersion;
  */
 public enum AllProtocolVersions
 {
-  RESTLI_PROTOCOL_100(new ProtocolVersion(1, 0, 0)),
-  RESTLI_PROTOCOL_200(new ProtocolVersion(2, 0, 0));
+  RESTLI_PROTOCOL_1_0_0(new ProtocolVersion(1, 0, 0)),
+  RESTLI_PROTOCOL_2_0_0(new ProtocolVersion(2, 0, 0));
 
-  public static final ProtocolVersion DEFAULT_PROTOCOL_VERSION = RESTLI_PROTOCOL_100.getProtocolVersion();
-  public static final ProtocolVersion LATEST_PROTOCOL_VERSION = RESTLI_PROTOCOL_100.getProtocolVersion();
-  public static final ProtocolVersion NEXT_PROTOCOL_VERSION = RESTLI_PROTOCOL_200.getProtocolVersion();
+  public static final ProtocolVersion BASELINE_PROTOCOL_VERSION = RESTLI_PROTOCOL_1_0_0.getProtocolVersion();
+  public static final ProtocolVersion LATEST_PROTOCOL_VERSION = RESTLI_PROTOCOL_1_0_0.getProtocolVersion();
+  public static final ProtocolVersion NEXT_PROTOCOL_VERSION = RESTLI_PROTOCOL_2_0_0.getProtocolVersion();
 
   private final ProtocolVersion _protocolVersion;
 

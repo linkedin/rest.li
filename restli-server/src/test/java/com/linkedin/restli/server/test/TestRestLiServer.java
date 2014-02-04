@@ -16,37 +16,23 @@
 
 package com.linkedin.restli.server.test;
 
-import static org.easymock.EasyMock.eq;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
 
-import com.linkedin.restli.common.ErrorResponse;
-import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
-import com.linkedin.restli.server.ErrorResponseFormat;
-import java.net.URI;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-
+import com.linkedin.common.callback.Callback;
+import com.linkedin.data.DataMap;
 import com.linkedin.parseq.Engine;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestException;
-import org.easymock.EasyMock;
-import org.easymock.IAnswer;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
-
-import com.linkedin.data.DataMap;
-import com.linkedin.common.callback.Callback;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
+import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
+import com.linkedin.restli.server.ErrorResponseFormat;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiConfig;
 import com.linkedin.restli.server.RestLiServer;
@@ -55,6 +41,23 @@ import com.linkedin.restli.server.resources.BaseResource;
 import com.linkedin.restli.server.twitter.AsyncStatusCollectionResource;
 import com.linkedin.restli.server.twitter.StatusCollectionResource;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Status;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import org.easymock.EasyMock;
+import org.easymock.IAnswer;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
+
+import static org.easymock.EasyMock.eq;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 /**
  * "Integration" test that exercises a couple end-to-end use cases
@@ -64,6 +67,7 @@ import com.linkedin.restli.server.twitter.TwitterTestDataModels.Status;
 public class TestRestLiServer
 {
   private RestLiServer _server;
+  private RestLiServer _serverWithStrictProtocolCheck;
   private RestLiServer _serverWithCustomErrorResponseConfig; // configured different than server
   private EasyMockResourceFactory _resourceFactory;
 
@@ -72,6 +76,7 @@ public class TestRestLiServer
   {
     RestLiConfig config = new RestLiConfig();
     config.addResourcePackageNames("com.linkedin.restli.server.twitter");
+    config.setRestliProtocolCheck(RestLiConfig.RestliProtocolCheck.RELAXED);
     _resourceFactory  = new EasyMockResourceFactory();
     // silence null engine warning and get EasyMock failure if engine is used
     Engine fakeEngine = EasyMock.createMock(Engine.class);
@@ -82,8 +87,13 @@ public class TestRestLiServer
     customErrorResponseConfig.addResourcePackageNames("com.linkedin.restli.server.twitter");
     customErrorResponseConfig.setErrorResponseFormat(ErrorResponseFormat.MESSAGE_AND_DETAILS);
     customErrorResponseConfig.setInternalErrorMessage("kthxbye.");
+    customErrorResponseConfig.setRestliProtocolCheck(RestLiConfig.RestliProtocolCheck.RELAXED);
 
     _serverWithCustomErrorResponseConfig = new RestLiServer(customErrorResponseConfig, _resourceFactory, fakeEngine);
+
+    RestLiConfig strictConfig = new RestLiConfig(); // default is to use STRICT checking
+    strictConfig.addResourcePackageNames("com.linkedin.restli.server.twitter");
+    _serverWithStrictProtocolCheck = new RestLiServer(strictConfig, _resourceFactory, fakeEngine);
   }
 
   @AfterTest
@@ -93,10 +103,67 @@ public class TestRestLiServer
     _server = null;
   }
 
+  @DataProvider(name = "validClientProtocolVersionData")
+  public Object[][] provideValidClientProtocolVersionData()
+  {
+    return new Object[][]
+        {
+            // strict checking
+            { _serverWithStrictProtocolCheck, AllProtocolVersions.BASELINE_PROTOCOL_VERSION },
+            { _serverWithStrictProtocolCheck, AllProtocolVersions.LATEST_PROTOCOL_VERSION },
+
+            // relaxed checking
+            { _server, AllProtocolVersions.BASELINE_PROTOCOL_VERSION },
+            { _server, AllProtocolVersions.LATEST_PROTOCOL_VERSION },
+            { _server, AllProtocolVersions.NEXT_PROTOCOL_VERSION }
+        };
+  }
+
+  @DataProvider(name = "invalidClientProtcolVersionData")
+  public Object[][] provideInvalidClientProtocolVersionData()
+  {
+    ProtocolVersion greaterThanNext = new ProtocolVersion(AllProtocolVersions.NEXT_PROTOCOL_VERSION.getMajor() + 1,
+                                                          0,
+                                                          0);
+
+    return new Object[][]
+        {
+            // strict checking
+            { _serverWithStrictProtocolCheck, AllProtocolVersions.NEXT_PROTOCOL_VERSION },
+            { _serverWithStrictProtocolCheck, new ProtocolVersion(0, 0, 0) },
+
+            // relaxed checking
+            { _server, greaterThanNext },
+            { _server, new ProtocolVersion(0, 0, 0) }
+        };
+  }
+
   @Test
   public void testServer() throws Exception
   {
-    RestRequest request = new RestRequestBuilder(new URI("/statuses/1")).build();
+    testValidRequest(_server, null);
+  }
+
+  @Test(dataProvider = "validClientProtocolVersionData")
+  public void testValidClientProtocolVersion(RestLiServer server, ProtocolVersion clientProtocolVersion)
+      throws URISyntaxException
+  {
+    testValidRequest(server, clientProtocolVersion);
+  }
+
+  private void testValidRequest(RestLiServer restLiServer, final ProtocolVersion clientProtocolVersion)
+      throws URISyntaxException
+  {
+    RestRequest request;
+    if (clientProtocolVersion != null)
+    {
+      request = new RestRequestBuilder(new URI("/statuses/1")).
+          setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, clientProtocolVersion.toString()).build();
+    }
+    else
+    {
+      request = new RestRequestBuilder(new URI("/statuses/1")).build();
+    }
 
     final StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
     EasyMock.expect(statusResource.get(eq(1L))).andReturn(buildStatusRecord()).once();
@@ -120,8 +187,40 @@ public class TestRestLiServer
         fail();
       }
     };
+    restLiServer.handleRequest(request, new RequestContext(), callback);
+  }
 
-    _server.handleRequest(request, new RequestContext(), callback);
+  @Test(dataProvider = "invalidClientProtcolVersionData")
+  public void testInvalidClientProtocolVersion(RestLiServer server, ProtocolVersion clientProtocolVersion)
+      throws URISyntaxException
+  {
+    testBadRequest(server, clientProtocolVersion);
+  }
+
+  private void testBadRequest(RestLiServer restLiServer, final ProtocolVersion clientProtocolVersion)
+      throws URISyntaxException
+  {
+    RestRequest request = new RestRequestBuilder(new URI("/statuses/1")).
+        setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, clientProtocolVersion.toString()).build();
+
+    Callback<RestResponse> callback = new Callback<RestResponse>()
+    {
+      @Override
+      public void onSuccess(RestResponse restResponse)
+      {
+        fail("The request should have failed!");
+      }
+
+      @Override
+      public void onError(Throwable e)
+      {
+        assertEquals(((RestException)e).getResponse().getStatus(), 400);
+        String expectedErrorMessage =
+            "Rest.li protocol version " + clientProtocolVersion + " used by the client is not supported!";
+        assertEquals(e.getCause().getMessage(), expectedErrorMessage);
+      }
+    };
+    restLiServer.handleRequest(request, new RequestContext(), callback);
   }
 
   @SuppressWarnings({"unchecked"})

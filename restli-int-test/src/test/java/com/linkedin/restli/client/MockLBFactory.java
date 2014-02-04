@@ -88,7 +88,7 @@ public class MockLBFactory
     schemes.add("http");
     Map<String, Object> metadataProperties = new HashMap<String, Object>();
     metadataProperties.put(RestConstants.RESTLI_PROTOCOL_VERSION_PROPERTY,
-                           AllProtocolVersions.DEFAULT_PROTOCOL_VERSION.toString());
+                           AllProtocolVersions.BASELINE_PROTOCOL_VERSION.toString());
     serviceRegistry.put("greetings", new ServiceProperties("greetings", "testcluster", "/greetings", "degrader",
                                                            Collections.<String>emptyList(),
                                                            Collections.<String, Object>emptyMap(),

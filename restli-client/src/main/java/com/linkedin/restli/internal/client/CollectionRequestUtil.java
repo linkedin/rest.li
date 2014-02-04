@@ -48,7 +48,7 @@ public class CollectionRequestUtil
     return convertToBatchRequest(elementList,
                                  keyType, complexKeyType,
                                  keyParts, valueType,
-                                 AllProtocolVersions.DEFAULT_PROTOCOL_VERSION);
+                                 AllProtocolVersions.BASELINE_PROTOCOL_VERSION);
   }
 
   /**

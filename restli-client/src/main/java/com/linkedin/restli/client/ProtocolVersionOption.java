@@ -40,12 +40,12 @@ public enum ProtocolVersionOption
 
   /**
    * Use the latest version of the Rest.li protocol if the server supports it.
-   * If the server version is less than the default Rest.li protocol version then fail the request.
+   * If the server version is less than the baseline Rest.li protocol version then fail the request.
    * If the server version is greater then the next Rest.li protocol version then fail the request.
-   * If the server is between the default and the latest version then use the server version to encode the request.
+   * If the server is between the baseline and the latest version then use the server version to encode the request.
    * If the server version is greater than or equal to the latest protocol version then use that to encode the request.
-   * "Default version" is defined as {@link com.linkedin.restli.internal.common.AllProtocolVersions#DEFAULT_PROTOCOL_VERSION}.
-   * "Latest version" is defined as {@link com.linkedin.restli.internal.common.AllProtocolVersions#LATEST_PROTOCOL_VERSION}.
+   * "Baseline version" is defined as {@link com.linkedin.restli.internal.common.AllProtocolVersions#BASELINE_PROTOCOL_VERSION}.
+   * "Latest version" is defined as {@link com.linkedin.restli.internal.common.AllProtocolVersions#LATEST_PROTOCOL_VERSION}
    * "Next version" is defined as {@link com.linkedin.restli.internal.common.AllProtocolVersions#NEXT_PROTOCOL_VERSION}.
    */
   USE_LATEST_IF_AVAILABLE

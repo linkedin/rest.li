@@ -22,6 +22,10 @@ import com.linkedin.parseq.Engine;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.internal.common.ProtocolVersionUtil;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.server.RestLiCallback;
 import com.linkedin.restli.internal.server.RestLiMethodInvoker;
 import com.linkedin.restli.internal.server.RestLiResponseHandler;
@@ -144,9 +148,65 @@ public class RestLiServer extends BaseRestServer
     }
   }
 
-  private void handleResourceRequest(final RestRequest request, final RequestContext requestContext,
+  private boolean isSupportedProtocolVersion(ProtocolVersion clientProtocolVersion,
+                                             ProtocolVersion lowerBound,
+                                             ProtocolVersion upperBound)
+  {
+    int lowerCheck = clientProtocolVersion.compareTo(lowerBound);
+    int upperCheck = clientProtocolVersion.compareTo(upperBound);
+    return lowerCheck >= 0 && upperCheck <= 0;
+  }
+
+  /**
+   * Ensures that the Rest.li protocol version used by the client is valid based on the config.
+   *
+   * (assume the protocol version used by the client is "v")
+   *
+   * If we are using {@link com.linkedin.restli.server.RestLiConfig.RestliProtocolCheck#STRICT} then
+   * {@link AllProtocolVersions#BASELINE_PROTOCOL_VERSION} <= v <= {@link AllProtocolVersions#LATEST_PROTOCOL_VERSION}
+   *
+   * If we are using {@link com.linkedin.restli.server.RestLiConfig.RestliProtocolCheck#RELAXED} then
+   * {@link AllProtocolVersions#BASELINE_PROTOCOL_VERSION} <= v <= {@link AllProtocolVersions#NEXT_PROTOCOL_VERSION}
+   *
+   * @param request the incoming request from the client
+   * @throws RestLiServiceException if the protocol version used by the client is not valid based on the rules described
+   *                                above
+   */
+  private void ensureRequestUsesValidRestliProtocol(final RestRequest request) throws RestLiServiceException
+  {
+    if (request != null)
+    {
+      ProtocolVersion clientProtocolVersion = ProtocolVersionUtil.extractProtocolVersion(request);
+      ProtocolVersion lowerBound = AllProtocolVersions.BASELINE_PROTOCOL_VERSION;
+      ProtocolVersion upperBound = AllProtocolVersions.LATEST_PROTOCOL_VERSION;
+      if (_config.getRestliProtocolCheck() == RestLiConfig.RestliProtocolCheck.RELAXED)
+      {
+        upperBound = AllProtocolVersions.NEXT_PROTOCOL_VERSION;
+      }
+      if (!isSupportedProtocolVersion(clientProtocolVersion, lowerBound, upperBound))
+      {
+        throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, "Rest.li protocol version " +
+            clientProtocolVersion + " used by the client is not supported!");
+      }
+    }
+  }
+
+  private void handleResourceRequest(final RestRequest request,
+                                     final RequestContext requestContext,
                                      final Callback<RestResponse> callback)
   {
+    try
+    {
+      ensureRequestUsesValidRestliProtocol(request);
+    }
+    catch (RestLiServiceException e)
+    {
+      final RestLiCallback<Object> restLiCallback =
+          new RestLiCallback<Object>(request, null, _responseHandler, callback);
+      restLiCallback.onErrorPre(e);
+      return;
+    }
+
     final RoutingResult method;
     try
     {

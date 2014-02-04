@@ -175,6 +175,7 @@ public class TestInjectMockResourceFactory
                                                   .add("mySpecialBean", new SpecialBean()));
     RestLiConfig config = new RestLiConfig();
     config.addResourcePackageNames("com.linkedin.restli.server.mock");
+    config.setRestliProtocolCheck(RestLiConfig.RestliProtocolCheck.RELAXED);
     RestLiServer server = new RestLiServer(config, factory);
     server.handleRequest(new MockRequest(), new RequestContext(), new Callback<RestResponse>()
     {

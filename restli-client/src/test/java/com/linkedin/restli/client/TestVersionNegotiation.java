@@ -30,7 +30,7 @@ import org.testng.annotations.Test;
  */
 public class TestVersionNegotiation
 {
-  private static final ProtocolVersion _DEFAULT_VERSION = new ProtocolVersion(1, 0, 0);
+  private static final ProtocolVersion _BASELINE_VERSION = new ProtocolVersion(1, 0, 0);
   private static final ProtocolVersion _LATEST_VERSION = new ProtocolVersion(2, 0, 0);
   private static final ProtocolVersion _NEXT_VERSION = new ProtocolVersion(3, 0, 0);
   
@@ -52,14 +52,14 @@ public class TestVersionNegotiation
     */
     return new Object[][]
         {
-            // default protocol "advertised" + graceful option => default protocol version
-            { _DEFAULT_VERSION, ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, _DEFAULT_VERSION },
+            // baseline protocol "advertised" + graceful option => baseline protocol version
+            {_BASELINE_VERSION, ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, _BASELINE_VERSION},
 
             // latest protocol "advertised" + force latest option => latest protocol version
             { _LATEST_VERSION, ProtocolVersionOption.FORCE_USE_LATEST, _LATEST_VERSION },
 
-            // default protocol "advertised" + force latest option => latest protocol version 
-            { _DEFAULT_VERSION, ProtocolVersionOption.FORCE_USE_LATEST, _LATEST_VERSION },
+            // baseline protocol "advertised" + force latest option => latest protocol version 
+            {_BASELINE_VERSION, ProtocolVersionOption.FORCE_USE_LATEST, _LATEST_VERSION },
 
             // latest protocol "advertised" + graceful option => latest protocol version 
             { _LATEST_VERSION, ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, _LATEST_VERSION },
@@ -84,7 +84,7 @@ public class TestVersionNegotiation
             { greaterThanLatestVersion, ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, _LATEST_VERSION },
 
             // default version "advertised" + force next => next
-            { _DEFAULT_VERSION, ProtocolVersionOption.FORCE_USE_NEXT, _NEXT_VERSION },
+            {_BASELINE_VERSION, ProtocolVersionOption.FORCE_USE_NEXT, _NEXT_VERSION },
 
             // latest version "advertised" + force next => next
             { _LATEST_VERSION, ProtocolVersionOption.FORCE_USE_NEXT, _NEXT_VERSION },
@@ -105,7 +105,7 @@ public class TestVersionNegotiation
                                              ProtocolVersionOption versionOption,
                                              ProtocolVersion expectedProtocolVersion)
   {
-    Assert.assertEquals(RestClient.getProtocolVersion(_DEFAULT_VERSION,
+    Assert.assertEquals(RestClient.getProtocolVersion(_BASELINE_VERSION,
                                                       _LATEST_VERSION,
                                                       _NEXT_VERSION,
                                                       announcedVersion,
@@ -114,11 +114,11 @@ public class TestVersionNegotiation
   }
 
   @Test
-  public void testAnnouncedVersionLessThanDefault()
+  public void testAnnouncedVersionLessThanBaseline()
   {
     try
     {
-      RestClient.getProtocolVersion(_DEFAULT_VERSION,
+      RestClient.getProtocolVersion(_BASELINE_VERSION,
                                     _LATEST_VERSION,
                                     _NEXT_VERSION,
                                     new ProtocolVersion(0, 0, 0),

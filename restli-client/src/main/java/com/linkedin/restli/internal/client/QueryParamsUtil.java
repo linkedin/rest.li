@@ -41,7 +41,7 @@ public class QueryParamsUtil
 {
   public static DataMap convertToDataMap(Map<String, Object> queryParams)
   {
-    return convertToDataMap(queryParams, AllProtocolVersions.DEFAULT_PROTOCOL_VERSION);
+    return convertToDataMap(queryParams, AllProtocolVersions.BASELINE_PROTOCOL_VERSION);
   }
 
   /**

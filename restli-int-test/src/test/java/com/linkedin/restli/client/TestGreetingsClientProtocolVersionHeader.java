@@ -58,7 +58,7 @@ public class TestGreetingsClientProtocolVersionHeader extends RestLiIntegrationT
 
   static
   {
-    _REST_CLIENT = new RestClient(new PropertyProviderClient(AllProtocolVersions.DEFAULT_PROTOCOL_VERSION.toString()),
+    _REST_CLIENT = new RestClient(new PropertyProviderClient(AllProtocolVersions.BASELINE_PROTOCOL_VERSION.toString()),
                                   "http://localhost:1338/");
   }
 
@@ -117,7 +117,7 @@ public class TestGreetingsClientProtocolVersionHeader extends RestLiIntegrationT
   {
     GreetingsBuilders defaultBuilder = new GreetingsBuilders();
     GetRequest<Greeting> getRequest = defaultBuilder.get().id(1L).build();
-    checkProtocolVersionHeader(getRequest, AllProtocolVersions.DEFAULT_PROTOCOL_VERSION);
+    checkProtocolVersionHeader(getRequest, AllProtocolVersions.BASELINE_PROTOCOL_VERSION);
 
     GreetingsBuilders forceBuilders =
         new GreetingsBuilders(new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.FORCE_USE_LATEST).build());

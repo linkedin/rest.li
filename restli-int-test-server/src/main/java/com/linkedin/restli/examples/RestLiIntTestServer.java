@@ -98,6 +98,7 @@ public class RestLiIntTestServer
     config.addResourcePackageNames(RESOURCE_PACKAGE_NAMES);
     config.setServerNodeUri(URI.create("http://localhost:" + port));
     config.setDocumentationRequestHandler(new DefaultDocumentationRequestHandler());
+    config.setRestliProtocolCheck(RestLiConfig.RestliProtocolCheck.RELAXED); // use relaxed checking in all tests
 
     GroupMembershipMgr membershipMgr = new HashGroupMembershipMgr();
     GroupMgr groupMgr = new HashMapGroupMgr(membershipMgr);

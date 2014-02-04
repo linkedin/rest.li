@@ -29,6 +29,7 @@ import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.PathSegment.PathSegmentSyntaxException;
 import com.linkedin.restli.internal.common.QueryParamsDataMap;
@@ -82,13 +83,22 @@ public class ResourceContextImpl implements ServerResourceContext
    * @throws RestLiSyntaxException if the syntax of query parameters in the request is
    *           incorrect
    */
-  public ResourceContextImpl(final MutablePathKeys pathKeys, final RestRequest request,
-                             final RequestContext requestContext) throws
-          RestLiSyntaxException
+  public ResourceContextImpl(final MutablePathKeys pathKeys,
+                             final RestRequest request,
+                             final RequestContext requestContext) throws RestLiSyntaxException
   {
     _pathKeys = pathKeys;
     _request = request;
     _requestContext = requestContext;
+
+    if (_request != null)
+    {
+      _protocolVersion = ProtocolVersionUtil.extractProtocolVersion(request);
+    }
+    else
+    {
+      _protocolVersion = AllProtocolVersions.LATEST_PROTOCOL_VERSION;
+    }
 
     Map<String, List<String>> queryParameters =
         ArgumentUtils.getQueryParameters(_request != null ? _request.getURI()
@@ -117,26 +127,7 @@ public class ResourceContextImpl implements ServerResourceContext
     _batchKeyErrors = new HashMap<String, RestLiServiceException>();
 
     _projectionMode = ProjectionMode.getDefault();
-
-    if (request != null)
-    {
-      String protocolVersionString = request.getHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION);
-      if (protocolVersionString != null)
-      {
-        _protocolVersion = new ProtocolVersion(protocolVersionString);
-      }
-      else
-      {
-        _protocolVersion = AllProtocolVersions.DEFAULT_PROTOCOL_VERSION;
-      }
-    }
-    else
-    {
-      _protocolVersion = AllProtocolVersions.DEFAULT_PROTOCOL_VERSION;
-    }
-
   }
-
 
   @Override
   public DataMap getParameters()

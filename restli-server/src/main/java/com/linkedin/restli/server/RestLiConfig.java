@@ -32,6 +32,23 @@ import java.util.Set;
  */
 public class RestLiConfig
 {
+  public static enum RestliProtocolCheck
+  {
+    /**
+     * Check that the client supplied protocol version lies between
+     * {@link com.linkedin.restli.internal.common.AllProtocolVersions#BASELINE_PROTOCOL_VERSION} and
+     * {@link com.linkedin.restli.internal.common.AllProtocolVersions#NEXT_PROTOCOL_VERSION}.
+     */
+    RELAXED,
+
+    /**
+     * Check that the client supplied protocol version lies between
+     * {@link com.linkedin.restli.internal.common.AllProtocolVersions#BASELINE_PROTOCOL_VERSION} and
+     * {@link com.linkedin.restli.internal.common.AllProtocolVersions#LATEST_PROTOCOL_VERSION}.
+     */
+    STRICT;
+  }
+
   private final Set<String> _resourcePackageNames = new HashSet<String>();
   private final Set<String> _resourceClassNames = new HashSet<String>();
   private URI _serverNodeUri = URI.create("");
@@ -39,6 +56,7 @@ public class RestLiConfig
   private ErrorResponseFormat _errorResponseFormat = ErrorResponseFormat.FULL;
   private String _internalErrorMessage = ErrorResponseBuilder.DEFAULT_INTERNAL_ERROR_MESSAGE;
   private boolean _permissiveEncoding = false;
+  private RestliProtocolCheck _restliProtocolCheck = RestliProtocolCheck.STRICT;
 
   /**
    * Constructor.
@@ -182,5 +200,19 @@ public class RestLiConfig
   public void setPermissiveEncoding(boolean permissiveEncoding)
   {
     _permissiveEncoding = permissiveEncoding;
+  }
+
+  public void setRestliProtocolCheck(RestliProtocolCheck restliProtocolCheck)
+  {
+    if (restliProtocolCheck == null)
+    {
+      throw new IllegalArgumentException("Cannot be null!");
+    }
+    _restliProtocolCheck = restliProtocolCheck;
+  }
+
+  public RestliProtocolCheck getRestliProtocolCheck()
+  {
+    return _restliProtocolCheck;
   }
 }

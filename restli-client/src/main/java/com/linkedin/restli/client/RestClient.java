@@ -246,8 +246,8 @@ public class RestClient
     {
       // if someone has manually crafted a request with a URI we want to use that. This if check will be removed when
       // we remove the getUri() method. In this case hasPrefix is false because the old constructor assumed no prefix
-      // and prepended a prefix in this class. In this case we use the default protocol version.
-      protocolVersion = AllProtocolVersions.DEFAULT_PROTOCOL_VERSION;
+      // and prepended a prefix in this class. In this case we use the baseline protocol version.
+      protocolVersion = AllProtocolVersions.BASELINE_PROTOCOL_VERSION;
       requestUri = request.getUri();
       hasPrefix = false;
     }
@@ -282,13 +282,13 @@ public class RestClient
       if (potentialAnnouncedVersion != null)
       {
         ProtocolVersion announcedVersion = new ProtocolVersion((String)potentialAnnouncedVersion);
-        return getProtocolVersion(AllProtocolVersions.DEFAULT_PROTOCOL_VERSION,
+        return getProtocolVersion(AllProtocolVersions.BASELINE_PROTOCOL_VERSION,
                                   AllProtocolVersions.LATEST_PROTOCOL_VERSION,
                                   AllProtocolVersions.NEXT_PROTOCOL_VERSION,
                                   announcedVersion,
                                   request.getRequestOptions().getProtocolVersionOption());
       }
-      return AllProtocolVersions.DEFAULT_PROTOCOL_VERSION;
+      return AllProtocolVersions.BASELINE_PROTOCOL_VERSION;
     }
     catch (URISyntaxException e)
     {

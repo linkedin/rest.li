@@ -32,13 +32,13 @@ public class ProtocolVersion implements Comparable<ProtocolVersion>
   private static final String PRE_RELEASE_VERSION_SEPARATOR = "\\-";
 
   /**
-   * @param protcolVersion a String representing a protocol version
+   * @param protocolVersion a String representing a protocol version
    *
    * @throws IllegalArgumentException if the input String does not represent a protocol version
    */
-  public ProtocolVersion(String protcolVersion)
+  public ProtocolVersion(String protocolVersion)
   {
-    String[] parts = protcolVersion.split(VERSION_NUMBER_SEPARATOR);
+    String[] parts = protocolVersion.split(VERSION_NUMBER_SEPARATOR);
     if (parts.length == 3)
     {
       try
@@ -49,12 +49,12 @@ public class ProtocolVersion implements Comparable<ProtocolVersion>
       }
       catch (NumberFormatException e)
       {
-        throw new IllegalArgumentException("Illegal protocol version " + protcolVersion + " specified.");
+        throw new IllegalArgumentException("Illegal protocol version " + protocolVersion + " specified.");
       }
     }
     else
     {
-      throw new IllegalArgumentException("Illegal protocol version " + protcolVersion + " specified.");
+      throw new IllegalArgumentException("Illegal protocol version " + protocolVersion + " specified.");
     }
   }
 
