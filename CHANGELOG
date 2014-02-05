@@ -3,6 +3,9 @@
 (RB=258481)
 Create enum for Rest.li protocol versions.
 
+(RB=258219)
+Replace hand written data templates with generated ones.
+
 1.13.5
 ------
 (RB=257823)
