@@ -25,10 +25,11 @@ import com.linkedin.restli.client.util.RestliBuilderUtils;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ProtocolVersion;
-import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.common.internal.AllProtocolVersions;
 import com.linkedin.restli.internal.client.QueryParamsUtil;
 import com.linkedin.restli.internal.common.QueryParamsDataMap;
 import com.linkedin.restli.internal.common.URLEscaper;
+
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
@@ -49,12 +50,12 @@ abstract class AbstractRestliRequestUriBuilder<R extends Request> implements Res
 
   AbstractRestliRequestUriBuilder(R request)
   {
-    this(request, "", RestConstants.DEFAULT_PROTOCOL_VERSION, null);
+    this(request, "", AllProtocolVersions.DEFAULT_PROTOCOL_VERSION, null);
   }
 
   AbstractRestliRequestUriBuilder(R request, String uriPrefix)
   {
-    this(request, uriPrefix, RestConstants.DEFAULT_PROTOCOL_VERSION, null);
+    this(request, uriPrefix, AllProtocolVersions.DEFAULT_PROTOCOL_VERSION, null);
   }
 
   AbstractRestliRequestUriBuilder(R request, String uriPrefix, ProtocolVersion version)
@@ -76,7 +77,7 @@ abstract class AbstractRestliRequestUriBuilder<R extends Request> implements Res
       throw new IllegalArgumentException("Request cannot be null");
     }
     _request = request;
-    _version = (version == null ? RestConstants.DEFAULT_PROTOCOL_VERSION : version);
+    _version = (version == null ? AllProtocolVersions.DEFAULT_PROTOCOL_VERSION : version);
     _assocKey = assocKey;
     _uriPrefix = (uriPrefix == null) ? "" : uriPrefix;
   }

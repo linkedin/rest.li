@@ -35,7 +35,9 @@ import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.d2.discovery.event.SynchronousExecutorService;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import com.linkedin.restli.common.internal.AllProtocolVersions;
 import com.linkedin.restli.common.RestConstants;
+
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -86,7 +88,7 @@ public class MockLBFactory
     schemes.add("http");
     Map<String, Object> metadataProperties = new HashMap<String, Object>();
     metadataProperties.put(RestConstants.RESTLI_PROTOCOL_VERSION_PROPERTY,
-                           RestConstants.DEFAULT_PROTOCOL_VERSION.toString());
+                           AllProtocolVersions.DEFAULT_PROTOCOL_VERSION.toString());
     serviceRegistry.put("greetings", new ServiceProperties("greetings", "testcluster", "/greetings", "degrader",
                                                            Collections.<String>emptyList(),
                                                            Collections.<String, Object>emptyMap(),

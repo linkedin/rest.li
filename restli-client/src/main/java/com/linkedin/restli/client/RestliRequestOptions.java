@@ -29,6 +29,7 @@ public class RestliRequestOptions
   public static final RestliRequestOptions DEFAULT_OPTIONS
       = new RestliRequestOptions(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE);
 
+  // use {@link RestliRequestOptionsBuilder} to construct new instance.
   RestliRequestOptions(ProtocolVersionOption protocolVersionOption)
   {
     _protocolVersionOption =

@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.client;
 
+
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.RemoteInvocationException;
@@ -29,14 +30,17 @@ import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.common.internal.AllProtocolVersions;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.examples.RestLiIntegrationTest;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
+
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -54,7 +58,7 @@ public class TestGreetingsClientProtocolVersionHeader extends RestLiIntegrationT
 
   static
   {
-    _REST_CLIENT = new RestClient(new PropertyProviderClient(RestConstants.DEFAULT_PROTOCOL_VERSION.toString()),
+    _REST_CLIENT = new RestClient(new PropertyProviderClient(AllProtocolVersions.DEFAULT_PROTOCOL_VERSION.toString()),
                                   "http://localhost:1338/");
   }
 
@@ -113,12 +117,12 @@ public class TestGreetingsClientProtocolVersionHeader extends RestLiIntegrationT
   {
     GreetingsBuilders defaultBuilder = new GreetingsBuilders();
     GetRequest<Greeting> getRequest = defaultBuilder.get().id(1L).build();
-    checkProtocolVersionHeader(getRequest, RestConstants.DEFAULT_PROTOCOL_VERSION);
+    checkProtocolVersionHeader(getRequest, AllProtocolVersions.DEFAULT_PROTOCOL_VERSION);
 
     GreetingsBuilders forceBuilders =
         new GreetingsBuilders(new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.FORCE_USE_LATEST).build());
     getRequest = forceBuilders.get().id(1L).build();
-    checkProtocolVersionHeader(getRequest, RestConstants.LATEST_PROTOCOL_VERSION);
+    checkProtocolVersionHeader(getRequest, AllProtocolVersions.LATEST_PROTOCOL_VERSION);
   }
 
   private void checkProtocolVersionHeader(GetRequest<Greeting> request,

@@ -38,6 +38,7 @@ import com.linkedin.restli.common.KeyValueRecord;
 import com.linkedin.restli.common.OperationNameGenerator;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.common.internal.AllProtocolVersions;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
@@ -46,6 +47,8 @@ import com.linkedin.restli.internal.client.CollectionRequestUtil;
 import com.linkedin.restli.internal.client.ExceptionUtil;
 import com.linkedin.restli.internal.client.ResponseFutureImpl;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
+
+import javax.mail.internet.ParseException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -53,7 +56,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import javax.mail.internet.ParseException;
 
 /**
  * Subset of Jersey's REST client, omitting things we probably won't use for internal API calls +
@@ -245,7 +247,7 @@ public class RestClient
       // if someone has manually crafted a request with a URI we want to use that. This if check will be removed when
       // we remove the getUri() method. In this case hasPrefix is false because the old constructor assumed no prefix
       // and prepended a prefix in this class. In this case we use the default protocol version.
-      protocolVersion = RestConstants.DEFAULT_PROTOCOL_VERSION;
+      protocolVersion = AllProtocolVersions.DEFAULT_PROTOCOL_VERSION;
       requestUri = request.getUri();
       hasPrefix = false;
     }
@@ -280,13 +282,13 @@ public class RestClient
       if (potentialAnnouncedVersion != null)
       {
         ProtocolVersion announcedVersion = new ProtocolVersion((String)potentialAnnouncedVersion);
-        return getProtocolVersion(RestConstants.DEFAULT_PROTOCOL_VERSION,
-                                  RestConstants.LATEST_PROTOCOL_VERSION,
-                                  RestConstants.NEXT_PROTOCOL_VERSION,
+        return getProtocolVersion(AllProtocolVersions.DEFAULT_PROTOCOL_VERSION,
+                                  AllProtocolVersions.LATEST_PROTOCOL_VERSION,
+                                  AllProtocolVersions.NEXT_PROTOCOL_VERSION,
                                   announcedVersion,
                                   request.getRequestOptions().getProtocolVersionOption());
       }
-      return RestConstants.DEFAULT_PROTOCOL_VERSION;
+      return AllProtocolVersions.DEFAULT_PROTOCOL_VERSION;
     }
     catch (URISyntaxException e)
     {

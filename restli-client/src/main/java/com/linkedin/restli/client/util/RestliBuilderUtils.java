@@ -4,12 +4,14 @@
 
 package com.linkedin.restli.client.util;
 
+
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ProtocolVersion;
-import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.common.internal.AllProtocolVersions;
 import com.linkedin.restli.internal.common.URLEscaper;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -60,7 +62,7 @@ public class RestliBuilderUtils
   public static String keyToString(Object key, URLEscaper.Escaping escaping, ProtocolVersion version)
   {
     String result;
-    version = (version == null) ? RestConstants.DEFAULT_PROTOCOL_VERSION : version;
+    version = (version == null) ? AllProtocolVersions.DEFAULT_PROTOCOL_VERSION : version;
     if (key == null)
     {
       result = null;

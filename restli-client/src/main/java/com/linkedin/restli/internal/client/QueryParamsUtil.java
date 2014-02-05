@@ -25,7 +25,9 @@ import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.transform.filter.request.MaskCreator;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.common.internal.AllProtocolVersions;
 import com.linkedin.restli.common.RestConstants;
+
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +41,7 @@ public class QueryParamsUtil
 {
   public static DataMap convertToDataMap(Map<String, Object> queryParams)
   {
-    return convertToDataMap(queryParams, RestConstants.DEFAULT_PROTOCOL_VERSION);
+    return convertToDataMap(queryParams, AllProtocolVersions.DEFAULT_PROTOCOL_VERSION);
   }
 
   /**

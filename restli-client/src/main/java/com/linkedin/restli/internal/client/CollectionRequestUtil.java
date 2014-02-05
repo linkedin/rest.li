@@ -25,11 +25,12 @@ import com.linkedin.restli.common.CollectionRequest;
 import com.linkedin.restli.common.ComplexKeySpec;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
-import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.common.KeyValueRecord;
 import com.linkedin.restli.common.ProtocolVersion;
-import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.common.internal.AllProtocolVersions;
+import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.internal.common.URLEscaper;
+
 import java.util.Map;
 
 
@@ -47,7 +48,7 @@ public class CollectionRequestUtil
     return convertToBatchRequest(elementList,
                                  keyType, complexKeyType,
                                  keyParts, valueType,
-                                 RestConstants.DEFAULT_PROTOCOL_VERSION);
+                                 AllProtocolVersions.DEFAULT_PROTOCOL_VERSION);
   }
 
   /**

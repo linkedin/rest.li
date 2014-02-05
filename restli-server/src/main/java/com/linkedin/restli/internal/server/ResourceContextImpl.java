@@ -28,6 +28,7 @@ import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.common.internal.AllProtocolVersions;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.PathSegment.PathSegmentSyntaxException;
 import com.linkedin.restli.internal.common.QueryParamsDataMap;
@@ -126,12 +127,12 @@ public class ResourceContextImpl implements ServerResourceContext
       }
       else
       {
-        _protocolVersion = RestConstants.DEFAULT_PROTOCOL_VERSION;
+        _protocolVersion = AllProtocolVersions.DEFAULT_PROTOCOL_VERSION;
       }
     }
     else
     {
-      _protocolVersion = RestConstants.DEFAULT_PROTOCOL_VERSION;
+      _protocolVersion = AllProtocolVersions.DEFAULT_PROTOCOL_VERSION;
     }
 
   }

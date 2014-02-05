@@ -173,8 +173,7 @@ public class RestUtils
                                                final PagingContext defaultContext)
   {
     String startString =
-        ArgumentUtils.argumentAsString(context.getParameter(RestConstants.START_PARAM),
-                                       RestConstants.START_PARAM);
+        ArgumentUtils.argumentAsString(context.getParameter(RestConstants.START_PARAM), RestConstants.START_PARAM);
     String countString =
         ArgumentUtils.argumentAsString(context.getParameter(RestConstants.COUNT_PARAM),
                                        RestConstants.COUNT_PARAM);

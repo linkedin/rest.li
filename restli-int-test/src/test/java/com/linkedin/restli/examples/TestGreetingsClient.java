@@ -61,6 +61,7 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.Link;
 import com.linkedin.restli.common.OptionsResponse;
 import com.linkedin.restli.common.PatchRequest;
+import com.linkedin.restli.common.internal.AllProtocolVersions;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.ResourceSpecImpl;
@@ -77,6 +78,7 @@ import com.linkedin.restli.examples.groups.api.TransferOwnershipRequest;
 import com.linkedin.restli.internal.client.EntityResponseDecoder;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
 import com.linkedin.restli.restspec.ResourceSchema;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -87,6 +89,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -186,7 +189,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     Greeting entity = responseFuture.getResponse().getEntity();
     Assert.assertEquals(entity.getId(), new Long(1L));
     Assert.assertEquals(responseFuture.getResponse().getHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION),
-                        RestConstants.DEFAULT_PROTOCOL_VERSION.toString());
+                        AllProtocolVersions.DEFAULT_PROTOCOL_VERSION.toString());
   }
 
   @Test

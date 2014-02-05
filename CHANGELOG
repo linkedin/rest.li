@@ -1,5 +1,7 @@
 1.13.6
 ------
+(RB=258481)
+Create enum for Rest.li protocol versions.
 
 1.13.5
 ------

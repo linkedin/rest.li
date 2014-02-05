@@ -34,7 +34,7 @@ import com.linkedin.restli.client.PartialUpdateRequest;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.UpdateRequest;
 import com.linkedin.restli.common.ProtocolVersion;
-import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.common.internal.AllProtocolVersions;
 
 
 /**
@@ -44,12 +44,12 @@ public class RestliUriBuilderUtil
 {
   public static RestliUriBuilder createUriBuilder(Request request)
   {
-    return createUriBuilder(request, "", RestConstants.DEFAULT_PROTOCOL_VERSION);
+    return createUriBuilder(request, "", AllProtocolVersions.DEFAULT_PROTOCOL_VERSION);
   }
 
   public static RestliUriBuilder createUriBuilder(Request request, String uriPrefix)
   {
-    return createUriBuilder(request, uriPrefix, RestConstants.DEFAULT_PROTOCOL_VERSION);
+    return createUriBuilder(request, uriPrefix, AllProtocolVersions.DEFAULT_PROTOCOL_VERSION);
   }
 
   /**

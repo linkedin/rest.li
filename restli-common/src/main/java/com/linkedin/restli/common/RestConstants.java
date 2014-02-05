@@ -74,9 +74,5 @@ public interface RestConstants
             ResourceMethod.PARTIAL_UPDATE,
             ResourceMethod.UPDATE)));
 
-  ProtocolVersion DEFAULT_PROTOCOL_VERSION = new ProtocolVersion(1, 0, 0);
-  ProtocolVersion LATEST_PROTOCOL_VERSION = new ProtocolVersion(1, 0, 0);
-  ProtocolVersion NEXT_PROTOCOL_VERSION = new ProtocolVersion(2, 0, 0);
-
   String RESTLI_PROTOCOL_VERSION_PROPERTY = "restli.protocol";
 }

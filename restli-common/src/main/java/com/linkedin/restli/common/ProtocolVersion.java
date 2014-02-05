@@ -19,7 +19,7 @@ package com.linkedin.restli.common;
 
 /**
  * Represents a Rest.li protocol version.
- * Internally uses a minimal semantic version ((http://semver.org/).
+ * Internally uses a minimal semantic version (http://semver.org/).
  * @author kparikh
  */
 public class ProtocolVersion implements Comparable<ProtocolVersion>
