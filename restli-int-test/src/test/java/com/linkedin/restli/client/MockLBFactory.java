@@ -35,8 +35,8 @@ import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.d2.discovery.event.SynchronousExecutorService;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
-import com.linkedin.restli.common.internal.AllProtocolVersions;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
 
 import java.net.URI;
 import java.util.ArrayList;

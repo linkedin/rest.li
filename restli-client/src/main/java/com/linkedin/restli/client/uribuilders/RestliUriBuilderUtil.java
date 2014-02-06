@@ -34,7 +34,7 @@ import com.linkedin.restli.client.PartialUpdateRequest;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.UpdateRequest;
 import com.linkedin.restli.common.ProtocolVersion;
-import com.linkedin.restli.common.internal.AllProtocolVersions;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
 
 
 /**

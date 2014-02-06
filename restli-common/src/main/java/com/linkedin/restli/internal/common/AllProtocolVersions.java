@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-package com.linkedin.restli.common.internal;
+package com.linkedin.restli.internal.common;
 
 
 import com.linkedin.restli.common.ProtocolVersion;

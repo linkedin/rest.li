@@ -38,7 +38,6 @@ import com.linkedin.restli.common.KeyValueRecord;
 import com.linkedin.restli.common.OperationNameGenerator;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ProtocolVersion;
-import com.linkedin.restli.common.internal.AllProtocolVersions;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
@@ -47,6 +46,7 @@ import com.linkedin.restli.internal.client.CollectionRequestUtil;
 import com.linkedin.restli.internal.client.ExceptionUtil;
 import com.linkedin.restli.internal.client.ResponseFutureImpl;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
 
 import javax.mail.internet.ParseException;
 import java.io.IOException;

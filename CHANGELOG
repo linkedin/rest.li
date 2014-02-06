@@ -6,6 +6,9 @@ Create enum for Rest.li protocol versions.
 (RB=258219)
 Replace hand written data templates with generated ones.
 
+(RB=259104)
+Move AllProtocolVersions from com.linkedin.restli.common.internal to com.linkedin.restli.internal.common.
+
 1.13.5
 ------
 (RB=257823)

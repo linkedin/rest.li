@@ -27,8 +27,8 @@ import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.KeyValueRecord;
 import com.linkedin.restli.common.ProtocolVersion;
-import com.linkedin.restli.common.internal.AllProtocolVersions;
 import com.linkedin.restli.common.TypeSpec;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.URLEscaper;
 
 import java.util.Map;

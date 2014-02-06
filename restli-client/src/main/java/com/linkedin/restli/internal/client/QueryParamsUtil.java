@@ -25,8 +25,8 @@ import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.transform.filter.request.MaskCreator;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.ProtocolVersion;
-import com.linkedin.restli.common.internal.AllProtocolVersions;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;

@@ -28,7 +28,6 @@ import com.linkedin.d2.discovery.event.PropertyEventThread;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.transport.common.Client;
-import com.linkedin.restli.common.internal.AllProtocolVersions;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.ResourceSpecImpl;
@@ -42,6 +41,7 @@ import com.linkedin.restli.examples.groups.client.GroupMembershipsBuilders;
 import com.linkedin.restli.examples.groups.client.GroupsBuilders;
 import com.linkedin.restli.internal.client.EntityResponseDecoder;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
 
 import java.net.URI;
 import java.net.URISyntaxException;

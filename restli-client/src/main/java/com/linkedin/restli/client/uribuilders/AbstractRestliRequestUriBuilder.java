@@ -25,8 +25,8 @@ import com.linkedin.restli.client.util.RestliBuilderUtils;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ProtocolVersion;
-import com.linkedin.restli.common.internal.AllProtocolVersions;
 import com.linkedin.restli.internal.client.QueryParamsUtil;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.QueryParamsDataMap;
 import com.linkedin.restli.internal.common.URLEscaper;
 
