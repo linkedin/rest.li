@@ -9,6 +9,9 @@ Replace hand written data templates with generated ones.
 (RB=259104)
 Move AllProtocolVersions from com.linkedin.restli.common.internal to com.linkedin.restli.internal.common.
 
+(RB=258733)
+Fail fast when a server receives a request from a client that is encoding using a Rest.li protocol that the server does not support.
+
 1.13.5
 ------
 (RB=257823)
