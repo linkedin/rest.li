@@ -26,12 +26,13 @@ import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.restli.common.HttpMethod;
 import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.server.RestLiConfig;
 import com.linkedin.restli.server.RestLiDocumentationRequestHandler;
 import com.linkedin.restli.server.RoutingException;
+
 import java.io.ByteArrayOutputStream;
-import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -181,7 +182,7 @@ public class DefaultDocumentationRequestHandler implements RestLiDocumentationRe
 
     return new RestResponseBuilder().
            setStatus(HttpStatus.S_200_OK.getCode()).
-           setHeader(HTTP_CONTENT_TYPE_HEADER, renderer.getMIMEType()).
+           setHeader(RestConstants.HEADER_CONTENT_TYPE, renderer.getMIMEType()).
            setEntity(out.toByteArray()).
            build();
   }

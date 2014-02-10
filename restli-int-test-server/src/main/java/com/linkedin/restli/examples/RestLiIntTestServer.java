@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.examples;
 
+
 import java.io.IOException;
 import java.net.URI;
 import java.util.Properties;
@@ -40,6 +41,7 @@ import com.linkedin.restli.examples.groups.server.impl.HashGroupMembershipMgr;
 import com.linkedin.restli.examples.groups.server.impl.HashMapGroupMgr;
 import com.linkedin.restli.examples.groups.server.rest.impl.GroupsRestApplication;
 import com.linkedin.restli.server.DelegatingTransportDispatcher;
+import com.linkedin.restli.server.ParseqTraceDebugRequestHandler;
 import com.linkedin.restli.server.RestLiConfig;
 import com.linkedin.restli.server.RestLiServer;
 import com.linkedin.restli.server.mock.InjectMockResourceFactory;
@@ -99,6 +101,7 @@ public class RestLiIntTestServer
     config.setServerNodeUri(URI.create("http://localhost:" + port));
     config.setDocumentationRequestHandler(new DefaultDocumentationRequestHandler());
     config.setRestliProtocolCheck(RestLiConfig.RestliProtocolCheck.RELAXED); // use relaxed checking in all tests
+    config.addDebugRequestHandlers(new ParseqTraceDebugRequestHandler());
 
     GroupMembershipMgr membershipMgr = new HashGroupMembershipMgr();
     GroupMgr groupMgr = new HashMapGroupMgr(membershipMgr);

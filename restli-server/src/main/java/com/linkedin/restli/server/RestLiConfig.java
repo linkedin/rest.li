@@ -16,14 +16,19 @@
 
 package com.linkedin.restli.server;
 
+
 import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
+
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 
 /**
  * Configuration for rest.li servers.
@@ -57,6 +62,7 @@ public class RestLiConfig
   private String _internalErrorMessage = ErrorResponseBuilder.DEFAULT_INTERNAL_ERROR_MESSAGE;
   private boolean _permissiveEncoding = false;
   private RestliProtocolCheck _restliProtocolCheck = RestliProtocolCheck.STRICT;
+  private List<RestLiDebugRequestHandler> _debugRequestHandlers;
 
   /**
    * Constructor.
@@ -71,6 +77,7 @@ public class RestLiConfig
    */
   public RestLiConfig(final Map<String, Object> mapConfig)
   {
+    _debugRequestHandlers = new ArrayList<RestLiDebugRequestHandler>();
   }
 
   public Set<String> getResourcePackageNamesSet()
@@ -170,6 +177,33 @@ public class RestLiConfig
   public void setDocumentationRequestHandler(final RestLiDocumentationRequestHandler handler)
   {
     _documentationRequestHandler = handler;
+  }
+
+  /**
+   * Gets the list of debug request handlers in this Rest.li config.
+   * @return the list of debug request handlers.
+   */
+  public List<RestLiDebugRequestHandler> getDebugRequestHandlers()
+  {
+    return _debugRequestHandlers;
+  }
+
+  /**
+   * Adds a number of debug request handlers to this Rest.li config.
+   * @param handlers The debug request handlers to add.
+   */
+  public void addDebugRequestHandlers(final RestLiDebugRequestHandler... handlers)
+  {
+    _debugRequestHandlers.addAll(Arrays.asList(handlers));
+  }
+
+  /**
+   * Adds a number of debug request handlers to this Rest.li config.
+   * @param handlers The debug request handlers to add.
+   */
+  public void addDebugRequestHandlers(final Collection<RestLiDebugRequestHandler> handlers)
+  {
+    _debugRequestHandlers.addAll(handlers);
   }
 
   public ErrorResponseFormat getErrorResponseFormat()

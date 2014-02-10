@@ -17,7 +17,6 @@
 package com.linkedin.restli.internal.server;
 
 
-import com.linkedin.common.callback.Callback;
 import com.linkedin.data.DataMap;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -28,6 +27,8 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.server.methods.response.PartialRestResponse;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
+import com.linkedin.restli.server.RequestExecutionCallback;
+import com.linkedin.restli.server.RequestExecutionReport;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.RoutingException;
 
@@ -36,17 +37,18 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public class RestLiCallback<T> implements Callback<T>
+
+public class RestLiCallback<T> implements RequestExecutionCallback<T>
 {
   private final RoutingResult          _method;
   private final RestLiResponseHandler  _responseHandler;
-  private final Callback<RestResponse> _callback;
+  private final RequestExecutionCallback<RestResponse> _callback;
   private final RestRequest            _request;
 
   public RestLiCallback(final RestRequest request,
                         final RoutingResult method,
                         final RestLiResponseHandler responseHandler,
-                        final Callback<RestResponse> callback)
+                        final RequestExecutionCallback<RestResponse> callback)
   {
     _request = request;
     _method = method;
@@ -55,54 +57,55 @@ public class RestLiCallback<T> implements Callback<T>
   }
 
   @Override
-  public void onSuccess(final T result)
+  public void onSuccess(final T result, RequestExecutionReport executionReport)
   {
     try
     {
       RestResponse response = _responseHandler.buildResponse(_request, _method, result);
-      _callback.onSuccess(response);
+      _callback.onSuccess(response, executionReport);
     }
     catch (Exception e)
     {
       // safe to assume it is a post processing error.
-      onErrorPost(e);
+      onErrorPost(e, executionReport);
     }
   }
 
   @Override
-  public void onError(final Throwable e)
+  public void onError(final Throwable e, RequestExecutionReport executionReport)
   {
     // "generic" error (atm looks the same as an app error)
     Map<String, String> headers = Collections.emptyMap();
-    onErrorWithHeaders(e, headers);
+    onErrorWithHeaders(e, headers, executionReport);
   }
 
-  public void onErrorPre(final Throwable e)
+  public void onErrorPre(final Throwable e, RequestExecutionReport executionReport)
   {
     Map<String, String> headers =
         Collections.singletonMap(HeaderUtil.getErrorResponseHeaderName(_request.getHeaders()),
                                  RestConstants.HEADER_VALUE_ERROR_PREPROCESSING);
-    onErrorWithHeaders(e, headers);
+    onErrorWithHeaders(e, headers, executionReport);
   }
 
-  public void onErrorApp(final Throwable e)
+  public void onErrorApp(final Throwable e, RequestExecutionReport executionReport)
   {
     Map<String, String> headers =
         Collections.singletonMap(HeaderUtil.getErrorResponseHeaderName(_request.getHeaders()),
                                  RestConstants.HEADER_VALUE_ERROR_APPLICATION);
-    onErrorWithHeaders(e, headers);
+    onErrorWithHeaders(e, headers, executionReport);
   }
 
-  public void onErrorPost(final Throwable e)
+  public void onErrorPost(final Throwable e, RequestExecutionReport executionReport)
   {
     Map<String, String> headers =
         Collections.singletonMap(HeaderUtil.getErrorResponseHeaderName(_request.getHeaders()),
                                  RestConstants.HEADER_VALUE_ERROR_POSTPROCESSING);
-    onErrorWithHeaders(e, headers);
+    onErrorWithHeaders(e, headers, executionReport);
   }
 
   private void onErrorWithHeaders(final Throwable e,
-                                  final Map<String, String> givenHeaders)
+                                  final Map<String, String> givenHeaders,
+                                  final RequestExecutionReport executionReport)
   {
     RestLiServiceException restLiServiceException;
     Map<String, String> headers = new HashMap<String, String>();
@@ -110,7 +113,7 @@ public class RestLiCallback<T> implements Callback<T>
     if (e instanceof RestException)
     {
       // assuming we don't need to do anything...
-      _callback.onError(e);
+      _callback.onError(e, executionReport);
       return;
     }
     else if (e instanceof RestLiServiceException)
@@ -158,8 +161,6 @@ public class RestLiCallback<T> implements Callback<T>
     // TODO: pass message?  I'm not sure what's happened to it after all this.
     RestException restException = new RestException(restResponse, e);
 
-    _callback.onError(restException);
-
+    _callback.onError(restException, executionReport);
   }
-
 }

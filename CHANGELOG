@@ -1,5 +1,7 @@
 1.14.1
 ------
+(RB=260228)
+Adding debug request handler support to Rest.Li. Introducing a new debug request handler: Parseq Trace Debug Request Handler.
 
 1.14.0
 ------

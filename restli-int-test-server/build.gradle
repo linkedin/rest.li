@@ -12,6 +12,7 @@ dependencies {
   compile project(':data-transform')
   compile project(':restli-docgen')
   compile project(':restli-server')
+  compile project(':restli-server-extras')
   compile project(':restli-common')
   compile externalDependency.log4j
   compile externalDependency.googleCollections

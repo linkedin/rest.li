@@ -1,0 +1,27 @@
+configurations {
+  tracevis
+}
+
+dependencies {
+  compile project(':data')
+  compile project(':r2')
+  compile project(':li-jersey-uri')
+  compile project(':restli-common')
+  compile project(':restli-server')
+  compile project(':pegasus-common')
+  compile externalDependency.commonsLang
+  compile externalDependency.commonsIo
+  compile externalDependency.parseq
+  testCompile externalDependency.testng
+  testCompile externalDependency.easymock
+  testRuntime project(':restli-server-extras')
+  tracevis externalDependency.parseq_tracevis
+}
+
+jar {
+  from {
+    configurations.tracevis.collect {
+      return tarTree(it)
+    }
+  }
+}

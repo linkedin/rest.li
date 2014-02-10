@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.internal.server;
 
+
 import com.linkedin.common.callback.Callback;
 import com.linkedin.parseq.BaseTask;
 import com.linkedin.parseq.Context;
@@ -32,12 +33,15 @@ import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder
 import com.linkedin.restli.internal.server.model.Parameter.ParamType;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.util.RestUtils;
+import com.linkedin.restli.server.RequestExecutionReport;
+import com.linkedin.restli.server.RequestExecutionReportBuilder;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.resources.BaseResource;
 import com.linkedin.restli.server.resources.ResourceFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+
 
 /**
  * Invokes a resource method, binding contextual and URI-derived arguments to method
@@ -97,7 +101,7 @@ public class RestLiMethodInvoker
     }
     catch (RestLiServiceException e)
     {
-      callback.onErrorPre(e);
+      callback.onErrorPre(e, new RequestExecutionReportBuilder().build());
       return;
     }
     // Request headers are valid. Proceed with the invocation....
@@ -139,24 +143,43 @@ public class RestLiMethodInvoker
                         final Object... arguments) throws IllegalAccessException
   {
     Method method = descriptor.getMethod();
+    RequestExecutionReportBuilder executionReportBuilder = new RequestExecutionReportBuilder();
+
     try
     {
       switch (descriptor.getInterfaceType())
       {
       case CALLBACK:
         int callbackIndex = descriptor.indexOfParameterType(ParamType.CALLBACK);
-        arguments[callbackIndex] = callback;
+        final RequestExecutionReport executionReport = executionReportBuilder.build();
+
+        //Delegate the callback call to the request execution callback along with the
+        //request execution report.
+        arguments[callbackIndex] = new Callback<Object>(){
+          @Override
+          public void onError(Throwable e)
+          {
+            callback.onError(e, executionReport);
+          }
+
+          @Override
+          public void onSuccess(Object result)
+          {
+            callback.onSuccess(result, executionReport);
+          }
+        };
+
         method.invoke(resource, arguments);
         // App code should use the callback
         break;
 
       case SYNC:
         Object applicationResult = method.invoke(resource, arguments);
-        callback.onSuccess(applicationResult);
+        callback.onSuccess(applicationResult, executionReportBuilder.build());
         break;
 
       case PROMISE:
-        if (!checkEngine(callback, descriptor))
+        if (!checkEngine(callback, descriptor, executionReportBuilder))
         {
           break;
         }
@@ -167,12 +190,12 @@ public class RestLiMethodInvoker
             new RestLiParSeqTask(arguments, contextIndex, method, resource);
 
         // propagate the result to the callback
-        restliTask.addListener(new CallbackPromiseAdapter<Object>(callback));
+        restliTask.addListener(new CallbackPromiseAdapter<Object>(callback, restliTask, executionReportBuilder));
         _engine.run(restliTask);
         break;
 
       case TASK:
-        if (!checkEngine(callback, descriptor))
+        if (!checkEngine(callback, descriptor, executionReportBuilder))
         {
           break;
         }
@@ -182,12 +205,13 @@ public class RestLiMethodInvoker
         Task<Object> task = (Task<Object>) method.invoke(resource, arguments);
         if (task == null)
         {
-            callback.onErrorApp(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
-                                                           "Error in application code: null Task"));
+          callback.onErrorApp(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
+                                                           "Error in application code: null Task"),
+                              executionReportBuilder.build());
         }
         else
         {
-          task.addListener(new CallbackPromiseAdapter<Object>(callback));
+          task.addListener(new CallbackPromiseAdapter<Object>(callback, task, executionReportBuilder));
           _engine.run(task);
         }
         break;
@@ -203,19 +227,21 @@ public class RestLiMethodInvoker
       {
         RestLiServiceException restLiServiceException =
             (RestLiServiceException) e.getCause();
-        callback.onErrorApp(restLiServiceException);
+        callback.onErrorApp(restLiServiceException, executionReportBuilder.build());
       }
       else
       {
         callback.onErrorApp(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
                                                        _errorResponseBuilder.getInternalErrorMessage(),
-                                                       e.getCause()));
+                                                       e.getCause()),
+                            executionReportBuilder.build());
       }
     }
   }
 
-  private boolean checkEngine(final Callback<Object> callback,
-                              final ResourceMethodDescriptor desc)
+  private boolean checkEngine(final RestLiCallback<Object> callback,
+                              final ResourceMethodDescriptor desc,
+                              final RequestExecutionReportBuilder executionReportBuilder)
   {
     if (_engine == null)
     {
@@ -227,7 +253,8 @@ public class RestLiMethodInvoker
       final String method = desc.getMethod().getName();
       final String msg = String.format(fmt, clazz, method);
       callback.onError(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
-                                                  msg));
+                                                  msg),
+                       executionReportBuilder.build());
       return false;
     }
     else
@@ -290,24 +317,34 @@ public class RestLiMethodInvoker
    *
    * @author jnwang
    */
-  private static class CallbackPromiseAdapter<T> implements PromiseListener<T> {
-    private final Callback<T> _callback;
+  private static class CallbackPromiseAdapter<T> implements PromiseListener<T>
+  {
+    private final RestLiCallback<T> _callback;
+    private final RequestExecutionReportBuilder _executionReportBuilder;
+    private final Task<T> _associatedTask;
 
-    public CallbackPromiseAdapter(final Callback<T> callback)
+    public CallbackPromiseAdapter(final RestLiCallback<T> callback,
+                                  final Task<T> associatedTask,
+                                  final RequestExecutionReportBuilder executionReportBuilder)
     {
       _callback = callback;
+      _associatedTask = associatedTask;
+      _executionReportBuilder = executionReportBuilder;
     }
 
     @Override
     public void onResolved(final Promise<T> promise)
     {
+      _executionReportBuilder.setParseqTrace(_associatedTask.getTrace());
+      RequestExecutionReport executionReport = _executionReportBuilder.build();
+
       if (promise.isFailed())
       {
-        _callback.onError(promise.getError());
+        _callback.onError(promise.getError(), executionReport);
       }
       else
       {
-        _callback.onSuccess(promise.get());
+        _callback.onSuccess(promise.get(), executionReport);
       }
     }
   }
