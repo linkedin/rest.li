@@ -22,6 +22,8 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
 
+import java.util.Map;
+
 
 /**
  * @author kparikh
@@ -31,18 +33,19 @@ public class ProtocolVersionUtil
   /**
    * Extracts a {@link ProtocolVersion} from a {@link RestRequest}
    *
-   * @param request the {@link RestRequest} we want to extract the {@link ProtocolVersion} from
+   * @param headers the {@link Map} we want to extract the {@link ProtocolVersion} from
    *
    * @return {@link AllProtocolVersions#RESTLI_PROTOCOL_1_0_0} if a protocol version is not present in the request header,
    *         {@link ProtocolVersion#ProtocolVersion(String)} otherwise
    */
-  public static ProtocolVersion extractProtocolVersion(RestRequest request)
+  public static ProtocolVersion extractProtocolVersion(Map<String, String> headers)
   {
-    if (request == null)
+    if (headers == null)
     {
-      throw new IllegalArgumentException("Request cannot be null!");
+      return AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion();
     }
-    String protocolVersion = request.getHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION);
+
+    final String protocolVersion = headers.get(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION);
     if (protocolVersion == null)
     {
       // if no protocol version is present we assume that the 1.0.0 protocol was used in the request.

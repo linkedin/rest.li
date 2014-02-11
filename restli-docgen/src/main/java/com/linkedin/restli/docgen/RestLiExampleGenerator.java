@@ -31,6 +31,7 @@ import com.linkedin.data.transform.patch.request.PatchCreator;
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.jersey.api.uri.UriTemplate;
 import com.linkedin.r2.message.MessageBuilder;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
@@ -44,6 +45,7 @@ import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.QueryParamsDataMap;
+import com.linkedin.restli.internal.server.PathKeysImpl;
 import com.linkedin.restli.internal.server.ResourceContextImpl;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.internal.server.RestLiResponseHandler;
@@ -656,7 +658,7 @@ public class RestLiExampleGenerator
     final RestResponse response;
     try
     {
-      ServerResourceContext context = new ResourceContextImpl();
+      ServerResourceContext context = new ResourceContextImpl(new PathKeysImpl(), request, new RequestContext());
       RestUtils.validateRequestHeadersAndUpdateResourceContext(new HashMap<String, String>(), context);
       final RoutingResult routingResult = new RoutingResult(context, method);
       response = _responseHandler.buildResponse(request, routingResult, responseEntity);

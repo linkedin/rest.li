@@ -27,7 +27,8 @@ import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestLiDecodingException;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.common.ErrorResponse;
-import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.common.HeaderUtil;
+
 
 /**
  * @author Steven Ihde
@@ -37,7 +38,7 @@ import com.linkedin.restli.common.RestConstants;
 public class ExceptionUtil
 {
   private static final EntityResponseDecoder<ErrorResponse> ERROR_DECODER =
-                                                                              new EntityResponseDecoder<ErrorResponse>(ErrorResponse.class);
+      new EntityResponseDecoder<ErrorResponse>(ErrorResponse.class);
 
   private ExceptionUtil()
   {
@@ -61,7 +62,7 @@ public class ExceptionUtil
       }
 
       Response<?> decodedResponse = null;
-      String header = getErrorResponseHeaderValue(response);
+      final String header = HeaderUtil.getErrorResponseHeaderValue(response.getHeaders());
 
       if (header == null)
       {
@@ -115,7 +116,7 @@ public class ExceptionUtil
   {
     ErrorResponse errorResponse = null;
 
-    String header = getErrorResponseHeaderValue(response);
+    final String header = HeaderUtil.getErrorResponseHeaderValue(response.getHeaders());
 
     if (header != null)
     {
@@ -128,13 +129,5 @@ public class ExceptionUtil
     }
 
     return errorResponse;
-  }
-
-  public static String getErrorResponseHeaderValue(RestResponse response)
-  {
-    // we are deprecating all X-Linkedin header prefixes and replacing them with X-RestLi
-    String newHeader = response.getHeader(RestConstants.HEADER_RESTLI_ERROR_RESPONSE);
-    String oldHeader = response.getHeader(RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE);
-    return (newHeader != null) ? newHeader : oldHeader;
   }
 }

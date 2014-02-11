@@ -24,13 +24,17 @@ package com.linkedin.restli.internal.server.methods.response;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.ErrorDetails;
 import com.linkedin.restli.common.ErrorResponse;
+import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.server.ErrorResponseFormat;
 import com.linkedin.restli.server.RestLiServiceException;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Map;
+
 
 /**
 * @author Josh Walker
@@ -74,9 +78,9 @@ public final class ErrorResponseBuilder implements RestLiResponseBuilder
 
     if(_errorResponseFormat.showHeaders())
     {
+      final ProtocolVersion protocolVersion = new ProtocolVersion(headers.get(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION));
       headers.put(RestConstants.HEADER_RESTLI_TYPE, er.getClass().getName());
-      headers.put(RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE,
-              RestConstants.HEADER_VALUE_ERROR_APPLICATION);
+      headers.put(HeaderUtil.getErrorResponseHeaderName(protocolVersion), RestConstants.HEADER_VALUE_ERROR_APPLICATION);
     }
     return new PartialRestResponse(result.getStatus(), er);
   }

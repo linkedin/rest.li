@@ -28,17 +28,23 @@ import com.linkedin.restli.client.test.TestRecord;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.ErrorDetails;
 import com.linkedin.restli.common.ErrorResponse;
+import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceSpecImpl;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
+import com.linkedin.restli.internal.common.TestConstants;
+
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 /**
@@ -72,14 +78,16 @@ public class ParSeqRestClientTest
   /**
    * Request that should succeed, using promise
    */
-  @Test
-  public void testRestLiResponsePromise() throws InterruptedException
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "protocolVersions")
+  public void testRestLiResponsePromise(ProtocolVersionOption versionOption,
+                                        ProtocolVersion protocolVersion,
+                                        String errorResponseHeaderName) throws InterruptedException
   {
     final long id = 123456789; // arbitrary test id
     final int httpCode = 200;
 
-    final ParSeqRestClient client = mockClient(id, httpCode);
-    final Request<TestRecord> req = mockRequest(TestRecord.class);
+    final ParSeqRestClient client = mockClient(id, httpCode, protocolVersion);
+    final Request<TestRecord> req = mockRequest(TestRecord.class, versionOption);
 
     final Promise<Response<TestRecord>> promise = client.sendRequest(req);
     promise.await();
@@ -91,14 +99,16 @@ public class ParSeqRestClientTest
   /**
    * Request that should succeed, using task
    */
-  @Test
-  public void testRestLiResponseTask() throws InterruptedException
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "protocolVersions")
+  public void testRestLiResponseTask(ProtocolVersionOption versionOption,
+                                     ProtocolVersion protocolVersion,
+                                     String errorResponseHeaderName) throws InterruptedException
   {
     final long id = 123456789; // arbitrary test id
     final int httpCode = 200;
 
-    final ParSeqRestClient client = mockClient(id, httpCode);
-    final Request<TestRecord> req = mockRequest(TestRecord.class);
+    final ParSeqRestClient client = mockClient(id, httpCode, protocolVersion);
+    final Request<TestRecord> req = mockRequest(TestRecord.class, versionOption);
 
     final Task<Response<TestRecord>> task = client.createTask(req);
 
@@ -113,8 +123,10 @@ public class ParSeqRestClientTest
   /**
    * Request that should fail, using promise
    */
-  @Test
-  public void testRestLiResponseExceptionPromise() throws InterruptedException
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "protocolVersions")
+  public void testRestLiResponseExceptionPromise(ProtocolVersionOption versionOption,
+                                                 ProtocolVersion protocolVersion,
+                                                 String errorResponseHeaderName) throws InterruptedException
   {
     final String ERR_KEY = "someErr";
     final String ERR_VALUE = "WHOOPS!";
@@ -122,8 +134,8 @@ public class ParSeqRestClientTest
     final int HTTP_CODE = 400;
     final int APP_CODE = 666;
 
-    final ParSeqRestClient client = mockClient(ERR_KEY, ERR_VALUE, ERR_MSG, HTTP_CODE, APP_CODE);
-    final Request<EmptyRecord> req = mockRequest(EmptyRecord.class);
+    final ParSeqRestClient client = mockClient(ERR_KEY, ERR_VALUE, ERR_MSG, HTTP_CODE, APP_CODE, protocolVersion, errorResponseHeaderName);
+    final Request<EmptyRecord> req = mockRequest(EmptyRecord.class, versionOption);
 
     final Promise<Response<EmptyRecord>> promise = client.sendRequest(req);
     promise.await();
@@ -140,8 +152,10 @@ public class ParSeqRestClientTest
   /**
    * Request that should fail, using task
    */
-  @Test
-  public void testRestLiResponseExceptionTask() throws InterruptedException
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "protocolVersions")
+  public void testRestLiResponseExceptionTask(ProtocolVersionOption versionOption,
+                                              ProtocolVersion protocolVersion,
+                                              String errorResponseHeaderName) throws InterruptedException
   {
     final String ERR_KEY = "someErr";
     final String ERR_VALUE = "WHOOPS!";
@@ -149,8 +163,8 @@ public class ParSeqRestClientTest
     final int HTTP_CODE = 400;
     final int APP_CODE = 666;
 
-    final ParSeqRestClient client = mockClient(ERR_KEY, ERR_VALUE, ERR_MSG, HTTP_CODE, APP_CODE);
-    final Request<EmptyRecord> req = mockRequest(EmptyRecord.class);
+    final ParSeqRestClient client = mockClient(ERR_KEY, ERR_VALUE, ERR_MSG, HTTP_CODE, APP_CODE, protocolVersion, errorResponseHeaderName);
+    final Request<EmptyRecord> req = mockRequest(EmptyRecord.class, versionOption);
 
     final Task<Response<EmptyRecord>> task = client.createTask(req);
 
@@ -171,7 +185,7 @@ public class ParSeqRestClientTest
   /**
    * @return a mock Request&lt;T&gt; of the given type.
    */
-  private <T extends RecordTemplate> Request<T> mockRequest(final Class<T> clazz)
+  private <T extends RecordTemplate> Request<T> mockRequest(final Class<T> clazz, ProtocolVersionOption versionOption)
   {
     return new GetRequest<T>(Collections.<String, String> emptyMap(),
                              clazz,
@@ -180,7 +194,7 @@ public class ParSeqRestClientTest
                              new ResourceSpecImpl(),
                              "/foo",
                              Collections.<String, Object>emptyMap(),
-                             RestliRequestOptions.DEFAULT_OPTIONS);
+                             new RestliRequestOptionsBuilder().setProtocolVersionOption(versionOption).build());
   }
 
   /**
@@ -190,7 +204,9 @@ public class ParSeqRestClientTest
                                       final String errValue,
                                       final String errMsg,
                                       final int httpCode,
-                                      final int appCode)
+                                      final int appCode,
+                                      final ProtocolVersion protocolVersion,
+                                      final String errorResponseHeaderName)
   {
     final ErrorResponse er = new ErrorResponse();
 
@@ -213,8 +229,8 @@ public class ParSeqRestClientTest
 
     final Map<String, String> headers = new HashMap<String, String>();
     headers.put(RestConstants.HEADER_RESTLI_TYPE, er.getClass().getName());
-    headers.put(RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE,
-                RestConstants.HEADER_VALUE_ERROR_APPLICATION);
+    headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString());
+    headers.put(errorResponseHeaderName, RestConstants.HEADER_VALUE_ERROR_APPLICATION);
 
     return new ParSeqRestClient(new RestClient(new MockClient(httpCode, headers, mapBytes),
                                                "http://localhost"));
@@ -223,7 +239,9 @@ public class ParSeqRestClientTest
   /**
    * @return a mock ParSeqRestClient that returns a TestRecord with the given id.
    */
-  private ParSeqRestClient mockClient(final long id, final int httpCode)
+  private ParSeqRestClient mockClient(final long id,
+                                      final int httpCode,
+                                      final ProtocolVersion protocolVersion)
   {
     final TestRecord record = new TestRecord().setId(id);
 
@@ -239,8 +257,26 @@ public class ParSeqRestClientTest
 
     final Map<String, String> headers = new HashMap<String, String>();
     headers.put(RestConstants.HEADER_RESTLI_TYPE, record.getClass().getName());
+    headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString());
 
     return new ParSeqRestClient(new RestClient(new MockClient(httpCode, headers, mapBytes),
                                                "http://localhost"));
+  }
+
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "protocolVersions")
+  private Object[][] protocolVersions1And2DataProvider()
+  {
+    return new Object[][] {
+        {
+          ProtocolVersionOption.USE_LATEST_IF_AVAILABLE,
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE
+        },
+        {
+          ProtocolVersionOption.FORCE_USE_NEXT,
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          RestConstants.HEADER_RESTLI_ERROR_RESPONSE
+        }
+    };
   }
 }

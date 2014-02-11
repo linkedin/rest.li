@@ -16,14 +16,18 @@
 
 package com.linkedin.restli.internal.server.methods.response;
 
-import java.io.IOException;
-import java.util.Map;
 
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.server.RoutingResult;
+import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.server.CreateResponse;
+
+import java.io.IOException;
+import java.util.Map;
 
 public class CreateResponseBuilder implements RestLiResponseBuilder
 {
@@ -38,7 +42,9 @@ public class CreateResponseBuilder implements RestLiResponseBuilder
     CreateResponse createResponse = (CreateResponse) object;
     if (createResponse.hasId())
     {
-      headers.put(RestConstants.HEADER_ID, createResponse.getId().toString());
+
+      final ProtocolVersion protocolVersion = ((ServerResourceContext) routingResult.getContext()).getRestliProtocolVersion();
+      headers.put(HeaderUtil.getIdHeaderName(protocolVersion), createResponse.getId().toString());
       UriBuilder uribuilder = UriBuilder.fromUri(request.getURI());
       uribuilder.path(createResponse.getId().toString());
       headers.put(RestConstants.HEADER_LOCATION, uribuilder.build((Object) null)

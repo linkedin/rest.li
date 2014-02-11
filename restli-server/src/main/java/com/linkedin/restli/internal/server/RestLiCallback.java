@@ -16,10 +16,6 @@
 
 package com.linkedin.restli.internal.server;
 
-import java.io.ByteArrayOutputStream;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.DataMap;
@@ -29,13 +25,16 @@ import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
-import com.linkedin.restli.internal.server.RestLiResponseHandler;
-import com.linkedin.restli.internal.server.RoutingResult;
-import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
+import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.server.methods.response.PartialRestResponse;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.RoutingException;
+
+import java.io.ByteArrayOutputStream;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 public class RestLiCallback<T> implements Callback<T>
 {
@@ -81,7 +80,7 @@ public class RestLiCallback<T> implements Callback<T>
   public void onErrorPre(final Throwable e)
   {
     Map<String, String> headers =
-        Collections.singletonMap(RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE,
+        Collections.singletonMap(HeaderUtil.getErrorResponseHeaderName(_request.getHeaders()),
                                  RestConstants.HEADER_VALUE_ERROR_PREPROCESSING);
     onErrorWithHeaders(e, headers);
   }
@@ -89,7 +88,7 @@ public class RestLiCallback<T> implements Callback<T>
   public void onErrorApp(final Throwable e)
   {
     Map<String, String> headers =
-        Collections.singletonMap(RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE,
+        Collections.singletonMap(HeaderUtil.getErrorResponseHeaderName(_request.getHeaders()),
                                  RestConstants.HEADER_VALUE_ERROR_APPLICATION);
     onErrorWithHeaders(e, headers);
   }
@@ -97,7 +96,7 @@ public class RestLiCallback<T> implements Callback<T>
   public void onErrorPost(final Throwable e)
   {
     Map<String, String> headers =
-        Collections.singletonMap(RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE,
+        Collections.singletonMap(HeaderUtil.getErrorResponseHeaderName(_request.getHeaders()),
                                  RestConstants.HEADER_VALUE_ERROR_POSTPROCESSING);
     onErrorWithHeaders(e, headers);
   }
@@ -136,7 +135,7 @@ public class RestLiCallback<T> implements Callback<T>
                                      e);
     }
 
-
+    headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, _request.getHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION));
     PartialRestResponse partialResponse =
         _responseHandler.buildErrorResponse(null, null, restLiServiceException, headers);
 

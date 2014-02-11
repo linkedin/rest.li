@@ -27,11 +27,12 @@ import com.linkedin.data.template.StringArray;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
-import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.PathSegment.PathSegmentSyntaxException;
+import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.common.QueryParamsDataMap;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
 import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
@@ -60,7 +61,7 @@ public class ResourceContextImpl implements ServerResourceContext
   private final RequestContext                      _requestContext;
   private final ProtocolVersion                     _protocolVersion;
 
-  private ProjectionMode                      _projectionMode;
+  private ProjectionMode                            _projectionMode;
 
   private String                                    _mimeType;
 
@@ -71,7 +72,11 @@ public class ResourceContextImpl implements ServerResourceContext
    */
   public ResourceContextImpl() throws RestLiSyntaxException
   {
-    this(new PathKeysImpl(), null, new RequestContext());
+    this(new PathKeysImpl(),
+         new RestRequestBuilder(URI.create(""))
+             .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, AllProtocolVersions.LATEST_PROTOCOL_VERSION.toString())
+             .build(),
+         new RequestContext());
   }
 
   /**
@@ -91,18 +96,9 @@ public class ResourceContextImpl implements ServerResourceContext
     _request = request;
     _requestContext = requestContext;
 
-    if (_request != null)
-    {
-      _protocolVersion = ProtocolVersionUtil.extractProtocolVersion(request);
-    }
-    else
-    {
-      _protocolVersion = AllProtocolVersions.LATEST_PROTOCOL_VERSION;
-    }
+    _protocolVersion = ProtocolVersionUtil.extractProtocolVersion(request.getHeaders());
 
-    Map<String, List<String>> queryParameters =
-        ArgumentUtils.getQueryParameters(_request != null ? _request.getURI()
-            : URI.create(""));
+    Map<String, List<String>> queryParameters = ArgumentUtils.getQueryParameters(_request.getURI());
     try
     {
       _parameters = QueryParamsDataMap.parseDataMapKeys(queryParameters);

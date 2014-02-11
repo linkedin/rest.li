@@ -30,6 +30,7 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
+import com.linkedin.restli.internal.common.TestConstants;
 import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.server.ErrorResponseFormat;
@@ -41,11 +42,13 @@ import com.linkedin.restli.server.resources.BaseResource;
 import com.linkedin.restli.server.twitter.AsyncStatusCollectionResource;
 import com.linkedin.restli.server.twitter.StatusCollectionResource;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Status;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
 import org.testng.annotations.AfterTest;
@@ -227,7 +230,9 @@ public class TestRestLiServer
   @Test
   public void testAsyncServer() throws Exception
   {
-    RestRequest request = new RestRequestBuilder(new URI("/asyncstatuses/1")).build();
+    RestRequest request = new RestRequestBuilder(new URI("/asyncstatuses/1"))
+        .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, AllProtocolVersions.BASELINE_PROTOCOL_VERSION.toString())
+        .build();
 
     final AsyncStatusCollectionResource statusResource = getMockResource(AsyncStatusCollectionResource.class);
 
@@ -267,7 +272,9 @@ public class TestRestLiServer
   @Test
   public void testSyncNullObject404() throws Exception
   {
-    RestRequest request = new RestRequestBuilder(new URI("/statuses/1")).build();
+    RestRequest request = new RestRequestBuilder(new URI("/statuses/1"))
+        .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, AllProtocolVersions.BASELINE_PROTOCOL_VERSION.toString())
+        .build();
 
     final StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
     EasyMock.expect(statusResource.get(eq(1L))).andReturn(null).once();
@@ -294,11 +301,13 @@ public class TestRestLiServer
     _server.handleRequest(request, new RequestContext(), callback);
   }
 
-  @Test
-  public void testPreprocessingError() throws Exception
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "protocolVersions")
+  public void testPreprocessingError(final ProtocolVersion protocolVersion, final String errorResponseHeaderName) throws Exception
   {
     //Bad key type will generate a routing error
-    RestRequest request = new RestRequestBuilder(new URI("/statuses/abcd")).build();
+    RestRequest request = new RestRequestBuilder(new URI("/statuses/abcd"))
+        .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString())
+        .build();
     final StatusCollectionResource statusResource = _resourceFactory.getMock(StatusCollectionResource.class);
     EasyMock.replay(statusResource);
 
@@ -319,7 +328,7 @@ public class TestRestLiServer
 
         assertEquals(restResponse.getStatus(), 400);
         assertTrue(restResponse.getEntity().length() > 0);
-        assertEquals(restResponse.getHeader(RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE), RestConstants.HEADER_VALUE_ERROR_PREPROCESSING);
+        assertEquals(restResponse.getHeader(errorResponseHeaderName), RestConstants.HEADER_VALUE_ERROR_PREPROCESSING);
 
         EasyMock.verify(statusResource);
         EasyMock.reset(statusResource);
@@ -329,10 +338,12 @@ public class TestRestLiServer
     _server.handleRequest(request, new RequestContext(), callback);
   }
 
-  @Test
-  public void testApplicationException() throws Exception
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "protocolVersions")
+  public void testApplicationException(final ProtocolVersion protocolVersion, final String errorResponseHeaderName) throws Exception
   {
-    RestRequest request = new RestRequestBuilder(new URI("/statuses/1")).build();
+    RestRequest request = new RestRequestBuilder(new URI("/statuses/1"))
+        .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString())
+        .build();
     final StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
     EasyMock.expect(statusResource.get(eq(1L))).andThrow(new RestLiServiceException(
             HttpStatus.S_500_INTERNAL_SERVER_ERROR, "Mock Exception")).once();
@@ -357,7 +368,7 @@ public class TestRestLiServer
         {
           assertEquals(restResponse.getStatus(), 500);
           assertTrue(restResponse.getEntity().length() > 0);
-          assertEquals(restResponse.getHeader(RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE), RestConstants.HEADER_VALUE_ERROR_APPLICATION);
+          assertEquals(restResponse.getHeader(errorResponseHeaderName), RestConstants.HEADER_VALUE_ERROR_APPLICATION);
           ErrorResponse responseBody = DataMapUtils.read(restResponse.getEntity().asInputStream(), ErrorResponse.class);
           assertEquals(responseBody.getMessage(), "Mock Exception");
           assertEquals(responseBody.getExceptionClass(), "com.linkedin.restli.server.RestLiServiceException");
@@ -381,7 +392,9 @@ public class TestRestLiServer
   @Test
   public void testInternalErrorMessage() throws Exception
   {
-    RestRequest request = new RestRequestBuilder(new URI("/statuses/1")).build();
+    RestRequest request = new RestRequestBuilder(new URI("/statuses/1"))
+        .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, AllProtocolVersions.BASELINE_PROTOCOL_VERSION.toString())
+        .build();
     final StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
     EasyMock.expect(statusResource.get(eq(1L))).andThrow(new IllegalArgumentException("oops")).once();
     EasyMock.replay(statusResource);
@@ -422,7 +435,9 @@ public class TestRestLiServer
   @Test
   public void testCustomizedInternalErrorMessage() throws Exception
   {
-    RestRequest request = new RestRequestBuilder(new URI("/statuses/1")).build();
+    RestRequest request = new RestRequestBuilder(new URI("/statuses/1"))
+        .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, AllProtocolVersions.BASELINE_PROTOCOL_VERSION.toString())
+        .build();
     final StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
     EasyMock.expect(statusResource.get(eq(1L))).andThrow(new IllegalArgumentException("oops")).once();
     EasyMock.replay(statusResource);
@@ -460,10 +475,12 @@ public class TestRestLiServer
     _serverWithCustomErrorResponseConfig.handleRequest(request, new RequestContext(), callback);
   }
 
-  @Test
-  public void testMessageAndDetailsErrorFormat() throws Exception
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "protocolVersions")
+  public void testMessageAndDetailsErrorFormat(final ProtocolVersion protocolVersion, final String errorResponseHeaderName) throws Exception
   {
-    RestRequest request = new RestRequestBuilder(new URI("/statuses/1")).build();
+    RestRequest request = new RestRequestBuilder(new URI("/statuses/1"))
+        .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString())
+        .build();
     final StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
     final DataMap details = new DataMap();
     details.put("errorKey", "errorDetail");
@@ -490,7 +507,7 @@ public class TestRestLiServer
         {
           assertEquals(restResponse.getStatus(), 500);
           assertTrue(restResponse.getEntity().length() > 0);
-          assertEquals(restResponse.getHeader(RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE), RestConstants.HEADER_VALUE_ERROR_APPLICATION);
+          assertEquals(restResponse.getHeader(errorResponseHeaderName), RestConstants.HEADER_VALUE_ERROR_APPLICATION);
           ErrorResponse responseBody = DataMapUtils.read(restResponse.getEntity().asInputStream(), ErrorResponse.class);
 
           // in this test, we're using the _serverWithCustomErrorResponseConfig (see below), which has been configure to use the
@@ -514,11 +531,13 @@ public class TestRestLiServer
     _serverWithCustomErrorResponseConfig.handleRequest(request, new RequestContext(), callback);
   }
 
-  @Test
-  public void testPostProcessingException() throws Exception
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "protocolVersions")
+  public void testPostProcessingException(final ProtocolVersion protocolVersion, final String errorResponseHeaderName) throws Exception
   {
     //request for nested projection within string field will generate error
-    RestRequest request = new RestRequestBuilder(new URI("/statuses/1?fields=text:(invalid)")).build();
+    RestRequest request = new RestRequestBuilder(new URI("/statuses/1?fields=text:(invalid)"))
+        .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString())
+        .build();
     final StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
     EasyMock.expect(statusResource.get(eq(1L))).andReturn(buildStatusRecord()).once();
     EasyMock.replay(statusResource);
@@ -542,7 +561,7 @@ public class TestRestLiServer
         {
           assertEquals(restResponse.getStatus(), 500);
           assertTrue(restResponse.getEntity().length() > 0);
-          assertEquals(restResponse.getHeader(RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE), RestConstants.HEADER_VALUE_ERROR_POSTPROCESSING);
+          assertEquals(restResponse.getHeader(errorResponseHeaderName), RestConstants.HEADER_VALUE_ERROR_POSTPROCESSING);
 
           EasyMock.verify(statusResource);
           EasyMock.reset(statusResource);
@@ -611,5 +630,20 @@ public class TestRestLiServer
     map.put("text", "test status");
     Status status = new Status(map);
     return status;
+  }
+
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "protocolVersions")
+  private Object[][] protocolVersions1And2DataProvider()
+  {
+    return new Object[][] {
+        {
+            AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+            RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE
+        },
+        {
+            AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+            RestConstants.HEADER_RESTLI_ERROR_RESPONSE
+        }
+    };
   }
 }

@@ -24,8 +24,8 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
-import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
+import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.server.RestLiCallback;
 import com.linkedin.restli.internal.server.RestLiMethodInvoker;
 import com.linkedin.restli.internal.server.RestLiResponseHandler;
@@ -38,10 +38,12 @@ import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.model.RestLiApiBuilder;
 import com.linkedin.restli.server.resources.PrototypeResourceFactory;
 import com.linkedin.restli.server.resources.ResourceFactory;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -176,7 +178,7 @@ public class RestLiServer extends BaseRestServer
   {
     if (request != null)
     {
-      ProtocolVersion clientProtocolVersion = ProtocolVersionUtil.extractProtocolVersion(request);
+      ProtocolVersion clientProtocolVersion = ProtocolVersionUtil.extractProtocolVersion(request.getHeaders());
       ProtocolVersion lowerBound = AllProtocolVersions.BASELINE_PROTOCOL_VERSION;
       ProtocolVersion upperBound = AllProtocolVersions.LATEST_PROTOCOL_VERSION;
       if (_config.getRestliProtocolCheck() == RestLiConfig.RestliProtocolCheck.RELAXED)

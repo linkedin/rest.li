@@ -12,6 +12,9 @@ Move AllProtocolVersions from com.linkedin.restli.common.internal to com.linkedi
 (RB=258733)
 Fail fast when a server receives a request from a client that is encoding using a Rest.li protocol that the server does not support.
 
+(RB=256518)
+Rename X-Linkedin headers (ID and ErrorResponse) to X-RestLi headers.
+
 1.13.5
 ------
 (RB=257823)

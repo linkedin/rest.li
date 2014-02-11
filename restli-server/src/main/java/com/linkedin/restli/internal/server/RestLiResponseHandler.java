@@ -23,8 +23,10 @@ import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.restli.common.ActionResponse;
 import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.server.methods.MethodAdapterRegistry;
 import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.methods.response.PartialRestResponse;
@@ -119,11 +121,10 @@ public class RestLiResponseHandler
                                     final RoutingResult routingResult,
                                     final Object responseObject) throws IOException
   {
+    final ProtocolVersion protocolVersion = ((ServerResourceContext) routingResult.getContext()).getRestliProtocolVersion();
     Map<String, String> headers = new HashMap<String, String>();
     headers.putAll(((ServerResourceContext) routingResult.getContext()).getResponseHeaders());
-
-    headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION,
-                ((ServerResourceContext) routingResult.getContext()).getRestliProtocolVersion().toString());
+    headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString());
 
     if (responseObject == null)
     {
@@ -135,8 +136,7 @@ public class RestLiResponseHandler
       builder.setHeaders(headers);
       if (!isAction)
       {
-        builder.setHeader(RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE,
-                          RestConstants.HEADER_VALUE_ERROR_APPLICATION);
+        builder.setHeader(HeaderUtil.getErrorResponseHeaderName(protocolVersion), RestConstants.HEADER_VALUE_ERROR_APPLICATION);
       }
       return builder.build();
     }

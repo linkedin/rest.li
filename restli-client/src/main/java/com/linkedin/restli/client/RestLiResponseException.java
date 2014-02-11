@@ -25,7 +25,7 @@ import com.linkedin.data.template.GetMode;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.restli.common.ErrorResponse;
-import com.linkedin.restli.internal.client.ExceptionUtil;
+import com.linkedin.restli.internal.common.HeaderUtil;
 
 /**
  * @author Josh Walker
@@ -157,11 +157,11 @@ public class RestLiResponseException extends RestException
       return null;
     }
   }
-  
+
   public String getErrorSource()
   {
     RestResponse response = getResponse();
-    return ExceptionUtil.getErrorResponseHeaderValue(response);
+    return HeaderUtil.getErrorResponseHeaderValue(response.getHeaders());
   }
 
   @Override

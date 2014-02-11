@@ -17,13 +17,6 @@
 package com.linkedin.restli.server.test;
 
 
-import static com.linkedin.restli.server.test.RestLiTestHelper.buildResourceModel;
-import static com.linkedin.restli.server.test.RestLiTestHelper.buildResourceModels;
-import static org.easymock.EasyMock.eq;
-import static org.easymock.EasyMock.reset;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.fail;
-
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
@@ -49,6 +42,7 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.server.MutablePathKeys;
 import com.linkedin.restli.internal.server.PathKeysImpl;
 import com.linkedin.restli.internal.server.ResourceContextImpl;
@@ -117,6 +111,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
 import org.testng.Assert;
@@ -124,8 +120,12 @@ import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
+import static com.linkedin.restli.server.test.RestLiTestHelper.buildResourceModel;
+import static com.linkedin.restli.server.test.RestLiTestHelper.buildResourceModels;
+import static org.easymock.EasyMock.eq;
+import static org.easymock.EasyMock.reset;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.fail;
 
 
 /**
@@ -2156,6 +2156,7 @@ public class TestRestLiMethodInvocation
     RestRequest request =
             new RestRequestBuilder(new URI("/accounts?action=register"))
                     .setMethod("POST").setEntity(jsonEntityBody.getBytes(Data.UTF_8_CHARSET))
+                    .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, AllProtocolVersions.LATEST_PROTOCOL_VERSION.toString())
                     .build();
 
     RoutingResult routingResult = new RoutingResult(new ResourceContextImpl(null, request,
@@ -2186,6 +2187,7 @@ public class TestRestLiMethodInvocation
     RestRequest request =
             new RestRequestBuilder(new URI("/accounts?action=spamTweets"))
                     .setMethod("POST").setEntity(jsonEntityBody.getBytes(Data.UTF_8_CHARSET))
+                    .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, AllProtocolVersions.LATEST_PROTOCOL_VERSION.toString())
                     .build();
 
     RoutingResult routingResult = new RoutingResult(new ResourceContextImpl(null, request,
@@ -2230,6 +2232,7 @@ public class TestRestLiMethodInvocation
     RestRequest request =
             new RestRequestBuilder(new URI("/statuses/1/replies?query=noCoercerCustomString&s=foo"))
                     .setMethod("GET")
+                    .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, AllProtocolVersions.LATEST_PROTOCOL_VERSION.toString())
                     .build();
 
     RoutingResult routingResult = new RoutingResult(new ResourceContextImpl(null, request,
@@ -2256,6 +2259,7 @@ public class TestRestLiMethodInvocation
     RestRequest request =
             new RestRequestBuilder(new URI("/statuses/1/replies?query=customLong&l=foo"))
                     .setMethod("GET")
+                    .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, AllProtocolVersions.LATEST_PROTOCOL_VERSION.toString())
                     .build();
 
     RoutingResult routingResult = new RoutingResult(new ResourceContextImpl(null, request,
@@ -3099,7 +3103,9 @@ public class TestRestLiMethodInvocation
   @Test
   public void testInvokeWithUnsupportedAcceptMimeType() throws Exception
   {
-    RestRequestBuilder builder = new RestRequestBuilder(new URI("")).addHeaderValue("Accept", "text/plain");
+    RestRequestBuilder builder = new RestRequestBuilder(new URI(""))
+        .addHeaderValue("Accept", "text/plain")
+        .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, AllProtocolVersions.LATEST_PROTOCOL_VERSION.toString());
     RestRequest request = builder.build();
     final CountDownLatch latch = new CountDownLatch(1);
     final RestLiCallback<Object> callback =
@@ -3138,7 +3144,9 @@ public class TestRestLiMethodInvocation
   @Test
   public void testInvokeWithInvalidAcceptMimeType() throws Exception
   {
-    RestRequestBuilder builder = new RestRequestBuilder(new URI("")).addHeaderValue("Accept", "foo");
+    RestRequestBuilder builder = new RestRequestBuilder(new URI(""))
+        .addHeaderValue("Accept", "foo")
+        .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, AllProtocolVersions.LATEST_PROTOCOL_VERSION.toString());
     RestRequest request = builder.build();
     final CountDownLatch latch = new CountDownLatch(1);
     final RestLiCallback<Object> callback =
@@ -3326,7 +3334,8 @@ public class TestRestLiMethodInvocation
       EasyMock.replay(resource);
 
       RestRequestBuilder builder =
-          new RestRequestBuilder(new URI(uri)).setMethod(httpMethod).addHeaderValue("Accept", "application/json");
+          new RestRequestBuilder(new URI(uri)).setMethod(httpMethod).addHeaderValue("Accept", "application/json")
+              .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, AllProtocolVersions.LATEST_PROTOCOL_VERSION.toString());
       if (entityBody != null)
       {
         builder.setEntity(entityBody.getBytes(Data.UTF_8_CHARSET));
@@ -3414,7 +3423,8 @@ public class TestRestLiMethodInvocation
     {
 
       RestRequestBuilder builder =
-          new RestRequestBuilder(new URI(uri)).setMethod(httpMethod).addHeaderValue("Accept", "application/x-pson");
+          new RestRequestBuilder(new URI(uri)).setMethod(httpMethod).addHeaderValue("Accept", "application/x-pson")
+              .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, AllProtocolVersions.LATEST_PROTOCOL_VERSION.toString());
       if (entityBody != null)
       {
         builder.setEntity(entityBody.getBytes(Data.UTF_8_CHARSET));
