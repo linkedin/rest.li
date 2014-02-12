@@ -32,6 +32,9 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 /**
  * ZooKeeperAnnouncer combines a ZooKeeperServer with a configured "desired state", and
@@ -44,11 +47,11 @@ import java.util.Map;
 public class ZooKeeperAnnouncer
 {
   private final ZooKeeperServer _server;
-
+  private static final Logger _log = LoggerFactory.getLogger(ZooKeeperAnnouncer.class);
   private String _cluster;
   private URI _uri;
   private Map<Integer, PartitionData> _partitionDataMap;
-  private volatile boolean _isServerMarkedDown;
+  private boolean _isServerMarkedDownThroughOverride;
 
   public ZooKeeperAnnouncer(ZooKeeperServer server)
   {
@@ -88,21 +91,42 @@ public class ZooKeeperAnnouncer
     });
   }
 
-  public boolean isServerMarkedDown()
+  public synchronized boolean isServerMarkedDownThroughOverride()
   {
-    return _isServerMarkedDown;
+    return _isServerMarkedDownThroughOverride;
   }
 
-  public void markUp(Callback<None> callback)
+  public synchronized void overrideMarkUp(Callback<None> callback)
   {
     _server.markUp(_cluster, _uri, _partitionDataMap, callback);
-    _isServerMarkedDown = false;
+    _isServerMarkedDownThroughOverride = false;
+    _log.info("overrideMarkUp is called for uri = " + _uri );
   }
 
-  public void markDown(Callback<None> callback)
+  public synchronized void overrideMarkDown(Callback<None> callback)
   {
     _server.markDown(_cluster, _uri, callback);
-    _isServerMarkedDown = true;
+    _isServerMarkedDownThroughOverride = true;
+    _log.info("overrideMarkDown is called for uri = " + _uri );
+  }
+
+  public synchronized void markUp(Callback<None> callback)
+  {
+    if (!_isServerMarkedDownThroughOverride)
+    {
+      _server.markUp(_cluster, _uri, _partitionDataMap, callback);
+    }
+    else
+    {
+      callback.onSuccess(None.none());
+      _log.warn("{} is not marked up because the server is manually marked-down through override", _uri);
+    }
+  }
+
+  public synchronized void markDown(Callback<None> callback)
+  {
+    //it doesn't matter if the server is already marked down (through override or not) because this is commutative
+    _server.markDown(_cluster, _uri, callback);
   }
 
   public String getCluster()

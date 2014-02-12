@@ -15,6 +15,9 @@ Fail fast when a server receives a request from a client that is encoding using 
 (RB=256518)
 Rename X-Linkedin headers (ID and ErrorResponse) to X-RestLi headers.
 
+(RB=261288)
+Change zookeeperAnnouncer's markdown() name and implementation so its action is easier to understand
+
 1.13.5
 ------
 (RB=257823)
