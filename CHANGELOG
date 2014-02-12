@@ -18,6 +18,9 @@ Rename X-Linkedin headers (ID and ErrorResponse) to X-RestLi headers.
 (RB=261288)
 Change zookeeperAnnouncer's markdown() name and implementation so its action is easier to understand
 
+(RB=261502)
+Shorten the logging in d2 state to be more readable + changed the interface of D2 strategy Jmx
+
 1.13.5
 ------
 (RB=257823)

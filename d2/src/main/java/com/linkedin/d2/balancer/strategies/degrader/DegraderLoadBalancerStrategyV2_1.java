@@ -310,17 +310,41 @@ public class DegraderLoadBalancerStrategyV2_1 implements LoadBalancerStrategy
   {
     if (_log.isDebugEnabled())
     {
-      _log.debug("Strategy updated: newState=" + newState + ", config=" + config +
+      _log.debug("Strategy updated: newState=" + newState + ", unhealthyClients = "
+                     + getUnhealthyTrackerClients(trackerClientUpdaters,
+                                                  newState._pointsMap,
+                                                  config) + ", config=" + config +
                      ", HashRing coverage=" + newState.getRing());
     }
     else
     {
       if (!isOldStateTheSameAsNewState(oldState, newState) || !isNewStateHealthy(newState, config, trackerClientUpdaters))
       {
-        _log.info("Strategy updated: newState=" + newState + ", oldState =" +
-                      oldState + ", new state's config=" + config);
+        _log.info("Strategy updated: newState=" + newState + ", unhealthyClients = "
+                      + getUnhealthyTrackerClients(trackerClientUpdaters,
+                                                   newState._pointsMap,
+                                                   config) + ", oldState =" +
+                      oldState + ", new state's config=" + config);;
       }
     }
+  }
+
+  private static List<String> getUnhealthyTrackerClients(List<TrackerClientUpdater> trackerClientUpdaters,
+                                                         Map<URI, Integer> pointsMap,
+                                                         DegraderLoadBalancerStrategyConfig config)
+  {
+    List<String> unhealthyClients = new ArrayList<String>();
+    for (TrackerClientUpdater clientUpdater : trackerClientUpdaters)
+    {
+      TrackerClient client = clientUpdater.getTrackerClient();
+      int perfectHealth = (int) (client.getPartitionWeight(DEFAULT_PARTITION_ID) * config.getPointsPerWeight());
+      Integer point = pointsMap.get(client.getUri());
+      if (point < perfectHealth)
+      {
+        unhealthyClients.add(client.getUri() + ":" + point + "/" + perfectHealth);
+      }
+    }
+    return unhealthyClients;
   }
 
 
@@ -1094,7 +1118,6 @@ public class DegraderLoadBalancerStrategyV2_1 implements LoadBalancerStrategy
           + ", _updateIntervalMs=" + _updateIntervalMs
           + ", _lastUpdated=" + _lastUpdated
           + ", _strategy=" + _strategy
-          + ", _pointsMap=" + _pointsMap
           + ", _recoveryMap=" + _recoveryMap
           + "]";
     }

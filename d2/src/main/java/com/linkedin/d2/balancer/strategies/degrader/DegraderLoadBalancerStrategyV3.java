@@ -303,7 +303,12 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
   {
     if (_log.isDebugEnabled())
     {
-      _log.debug("Strategy updated: partitionId= " + partitionId + ", newState=" + newState + ", config=" + config +
+      _log.debug("Strategy updated: partitionId= " + partitionId + ", newState=" + newState +
+                     ", unhealthyClients = "
+                     + getUnhealthyTrackerClients(trackerClientUpdaters,
+                                                  newState._pointsMap,
+                                                  config,
+                                                  partitionId) + ", config=" + config +
                      ", HashRing coverage=" + newState.getRing());
     }
     else
@@ -311,10 +316,35 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       if (!isNewStateHealthy(newState, config, trackerClientUpdaters, partitionId) ||
           !isOldStateTheSameAsNewState(oldState, newState))
       {
-        _log.info("Strategy updated: partitionId= " + partitionId + ", newState=" + newState + ", oldState =" +
+        _log.info("Strategy updated: partitionId= " + partitionId + ", newState=" + newState +
+                      ", unhealthyClients = "
+                      + getUnhealthyTrackerClients(trackerClientUpdaters,
+                                                   newState._pointsMap,
+                                                   config,
+                                                   partitionId) +
+                      ", oldState =" +
                       oldState + ", new state's config=" + config);
       }
     }
+  }
+
+  private static List<String> getUnhealthyTrackerClients(List<TrackerClientUpdater> trackerClientUpdaters,
+                                                         Map<URI, Integer> pointsMap,
+                                                         DegraderLoadBalancerStrategyConfig config,
+                                                         int partitionId)
+  {
+    List<String> unhealthyClients = new ArrayList<String>();
+    for (TrackerClientUpdater clientUpdater : trackerClientUpdaters)
+    {
+      TrackerClient client = clientUpdater.getTrackerClient();
+      int perfectHealth = (int) (client.getPartitionWeight(partitionId) * config.getPointsPerWeight());
+      Integer point = pointsMap.get(client.getUri());
+      if (point < perfectHealth)
+      {
+        unhealthyClients.add(client.getUri() + ":" + point + "/" + perfectHealth);
+      }
+    }
+    return unhealthyClients;
   }
 
   /**
@@ -1169,7 +1199,6 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
           + ", _clusterGenerationId=" + _clusterGenerationId
           + ", _lastUpdated=" + _lastUpdated
           + ", _strategy=" + _strategy
-          + ", _pointsMap=" + _pointsMap
           + ", _recoveryMap=" + _recoveryMap
           + "]";
     }

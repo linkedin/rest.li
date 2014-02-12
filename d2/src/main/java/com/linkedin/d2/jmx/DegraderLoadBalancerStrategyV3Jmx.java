@@ -23,6 +23,8 @@ package com.linkedin.d2.jmx;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 
@@ -60,5 +62,26 @@ public class DegraderLoadBalancerStrategyV3Jmx implements DegraderLoadBalancerSt
       total += entry.getValue();
     }
     return total;
+  }
+
+  @Override
+  public String getPointsMap(int partitionId)
+  {
+    return _strategy.getState().getPartitionState(partitionId).getPointsMap().toString();
+  }
+
+  @Override
+  public String getUnhealthyClientsPoints(int partitionId)
+  {
+    int pointsPerWeight = _strategy.getConfig().getPointsPerWeight();
+    List<String> result = new ArrayList<String>();
+    for (Map.Entry<URI, Integer> entry : _strategy.getState().getPartitionState(partitionId).getPointsMap().entrySet())
+    {
+      if (entry.getValue() < pointsPerWeight)
+      {
+        result.add(entry.getKey().toString() + ":" + entry.getValue() + "/" + pointsPerWeight);
+      }
+    }
+    return result.toString();
   }
 }
