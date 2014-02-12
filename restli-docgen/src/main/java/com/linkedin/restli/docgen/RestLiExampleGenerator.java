@@ -44,6 +44,7 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.QueryParamsDataMap;
 import com.linkedin.restli.internal.server.PathKeysImpl;
 import com.linkedin.restli.internal.server.ResourceContextImpl;
@@ -652,6 +653,7 @@ public class RestLiExampleGenerator
   {
     final RestRequestBuilder requestBuilder = new RestRequestBuilder(uriBuilder.build());
     requestBuilder.setMethod(httpMethod.name());
+    requestBuilder.setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, AllProtocolVersions.LATEST_PROTOCOL_VERSION.toString());
     writeEntity(requestEntity, requestBuilder);
     final RestRequest request = requestBuilder.build();
 

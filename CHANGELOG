@@ -6,6 +6,9 @@ Adding a temporary fix to ignore the unused folders in the parseq-tracevis artif
 (RB=260228)
 Adding debug request handler support to Rest.Li. Introducing a new debug request handler: Parseq Trace Debug Request Handler.
 
+(RB=261581)
+Fix header display bug in docgen resource page.
+
 1.14.0
 ------
 (RB=258481)

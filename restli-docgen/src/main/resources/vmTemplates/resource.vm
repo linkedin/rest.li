@@ -152,7 +152,7 @@ GET $serverNodeUri$finder.capture.request.URI HTTP/1.1
 
 HTTP/1.1 $finder.capture.response.status OK
 #foreach ($headerName in $finder.capture.response.headers.keySet())
-$headerName: $finder.capture.response.headers[$headerName]
+$headerName: $finder.capture.response.headers.get($headerName)
 #end
 
 $finder.prettyPrintResponseEntity
@@ -238,7 +238,7 @@ GET $serverNodeUri$action.capture.request.URI HTTP/1.1
 
 HTTP/1.1 $action.capture.response.status OK
 #foreach ($headerName in $action.capture.response.headers.keySet())
-$headerName: $action.capture.response.headers[$headerName]
+$headerName: $action.capture.response.headers.get($headerName)
 #end
 #if ($action.prettyPrintResponseEntity)
 

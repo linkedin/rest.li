@@ -199,20 +199,17 @@ public class RestLiServer extends BaseRestServer
    */
   private void ensureRequestUsesValidRestliProtocol(final RestRequest request) throws RestLiServiceException
   {
-    if (request != null)
+    ProtocolVersion clientProtocolVersion = ProtocolVersionUtil.extractProtocolVersion(request.getHeaders());
+    ProtocolVersion lowerBound = AllProtocolVersions.BASELINE_PROTOCOL_VERSION;
+    ProtocolVersion upperBound = AllProtocolVersions.LATEST_PROTOCOL_VERSION;
+    if (_config.getRestliProtocolCheck() == RestLiConfig.RestliProtocolCheck.RELAXED)
     {
-      ProtocolVersion clientProtocolVersion = ProtocolVersionUtil.extractProtocolVersion(request.getHeaders());
-      ProtocolVersion lowerBound = AllProtocolVersions.BASELINE_PROTOCOL_VERSION;
-      ProtocolVersion upperBound = AllProtocolVersions.LATEST_PROTOCOL_VERSION;
-      if (_config.getRestliProtocolCheck() == RestLiConfig.RestliProtocolCheck.RELAXED)
-      {
-        upperBound = AllProtocolVersions.NEXT_PROTOCOL_VERSION;
-      }
-      if (!isSupportedProtocolVersion(clientProtocolVersion, lowerBound, upperBound))
-      {
-        throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, "Rest.li protocol version " +
-            clientProtocolVersion + " used by the client is not supported!");
-      }
+      upperBound = AllProtocolVersions.NEXT_PROTOCOL_VERSION;
+    }
+    if (!isSupportedProtocolVersion(clientProtocolVersion, lowerBound, upperBound))
+    {
+      throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, "Rest.li protocol version " +
+          clientProtocolVersion + " used by the client is not supported!");
     }
   }
 
