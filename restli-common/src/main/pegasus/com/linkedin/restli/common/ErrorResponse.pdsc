@@ -38,7 +38,8 @@
         "type": "record",
         "name": "ErrorDetails",
         "fields": []
-      }
+      },
+      "optional": true
     }
   ]
 }
