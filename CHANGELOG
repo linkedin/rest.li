@@ -1,4 +1,7 @@
-1.13.6
+1.14.1
+------
+
+1.14.0
 ------
 (RB=258481)
 Create enum for Rest.li protocol versions.
@@ -20,6 +23,9 @@ Change zookeeperAnnouncer's markdown() name and implementation so its action is 
 
 (RB=261502)
 Shorten the logging in d2 state to be more readable + changed the interface of D2 strategy Jmx
+
+(RB=261855)
+Make the error details optional in an ErrorResponse to be consistent with previous behavior
 
 1.13.5
 ------
