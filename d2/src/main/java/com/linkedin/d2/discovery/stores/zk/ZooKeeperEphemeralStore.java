@@ -339,6 +339,12 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
         return inputPath;
       }
       String parentPath = getParentPath(inputPath);
+      // it is possible that parent path equals to base path. Here we check this in advance
+      // to avoid IllegalArgumentException when calling getPropertyForPath().
+      if (_path.equals(parentPath))
+      {
+        return null;
+      }
       if (parentPath != null && containsWatch(getPropertyForPath(parentPath)))
       {
         return parentPath;
