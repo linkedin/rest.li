@@ -66,6 +66,8 @@ public class TestParseqTraceDebugRequestHandler
       "}";
   private static final List<String> KNOWN_METADATA_FILES =
       Arrays.asList("tracevis/Makefile", "tracevis/package.json", "tracevis/README.md");
+  private static final List<String> KNOWN_UNUSED_FOLDERS =
+      Arrays.asList("tracevis/dist/", "tracevis/node_modules/");
   private static final String HEADER_VALUE_TEXT_HTML = "text/html";
   private static final String HEADER_VALUE_TEXT_CSS = "text/css";
   private static final String HEADER_VALUE_APPLICATION_JS = "application/javascript";
@@ -158,7 +160,7 @@ public class TestParseqTraceDebugRequestHandler
           if (!currentEntry.isDirectory())
           {
             String entry = currentEntry.getName();
-            if (entry.startsWith("tracevis/"))
+            if (entry.startsWith("tracevis/") && !isInUnusedFolder(entry))
             {
               files.add(entry);
             }
@@ -199,6 +201,19 @@ public class TestParseqTraceDebugRequestHandler
             }
           });
     }
+  }
+
+  private boolean isInUnusedFolder(String filePath)
+  {
+    for (String unusedFolder : KNOWN_UNUSED_FOLDERS)
+    {
+      if (filePath.startsWith(unusedFolder))
+      {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   private void executeRequestThroughParseqDebugHandler(URI uri, Callback<RestResponse> callback)
