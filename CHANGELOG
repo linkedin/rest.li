@@ -1,5 +1,11 @@
+1.14.2
+------
+
 1.14.1
 ------
+(RB=262805)
+Adding set method for Rest.li debug request handlers on Rest.li server config.
+
 (RB=262459)
 Adding a temporary fix to ignore the unused folders in the parseq-tracevis artifact in maven central.
 

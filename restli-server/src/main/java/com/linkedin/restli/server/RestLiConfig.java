@@ -206,6 +206,15 @@ public class RestLiConfig
     _debugRequestHandlers.addAll(handlers);
   }
 
+  /**
+   * Sets the list of debug request handlers on this Rest.li config.
+   * @param handlers The debug request handlers to set.
+   */
+  public void setDebugRequestHandlers(final List<RestLiDebugRequestHandler> handlers)
+  {
+    _debugRequestHandlers = new ArrayList<RestLiDebugRequestHandler>(handlers);
+  }
+
   public ErrorResponseFormat getErrorResponseFormat()
   {
     return _errorResponseFormat;
