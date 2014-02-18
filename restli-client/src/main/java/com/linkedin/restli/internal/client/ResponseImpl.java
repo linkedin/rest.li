@@ -57,6 +57,16 @@ public class ResponseImpl<T> implements Response<T>
     _entity = entity;
   }
 
+  public ResponseImpl(int status,
+                      Map<String, String> headers,
+                      T entity,
+                      RestLiResponseException error)
+  {
+    this(status, headers);
+    _entity = entity;
+    _error = error;
+  }
+
   ResponseImpl(int status, Map<String, String> headers)	{
     _status = status;
     _headers = headers;

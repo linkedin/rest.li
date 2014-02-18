@@ -1,0 +1,12 @@
+dependencies {
+  compile project (':data')
+  compile project (':r2')
+  compile project (':restli-client')
+  compile project (':restli-common')
+
+  testCompile externalDependency.testng
+  testCompile externalDependency.easymock
+  testCompile project(path: ':restli-example-api', configuration: 'dataTemplate')
+  testCompile project(path: ':restli-int-test-api', configuration: 'dataTemplate')
+  testCompile project(path: ':restli-common', configuration: 'testArtifacts')
+}

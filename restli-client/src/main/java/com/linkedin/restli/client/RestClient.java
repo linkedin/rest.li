@@ -298,14 +298,14 @@ public class RestClient
 
   /**
    *
-   * @param defaultVersion default version on the client
+   * @param baselineProtocolVersion baseline version on the client
    * @param latestVersion latest version on the client
    * @param nextVersion the next version on the client
    * @param announcedVersion version announced by the service
    * @param versionOption options present on the request
    * @return the {@link ProtocolVersion} that should be used to build the request
    */
-  /*package private*/static ProtocolVersion getProtocolVersion(ProtocolVersion defaultVersion,
+  /*package private*/static ProtocolVersion getProtocolVersion(ProtocolVersion baselineProtocolVersion,
                                                                ProtocolVersion latestVersion,
                                                                ProtocolVersion nextVersion,
                                                                ProtocolVersion announcedVersion,
@@ -322,16 +322,16 @@ public class RestClient
       case FORCE_USE_LATEST:
         return latestVersion;
       case USE_LATEST_IF_AVAILABLE:
-        if (announcedVersion.compareTo(defaultVersion) == -1)
+        if (announcedVersion.compareTo(baselineProtocolVersion) == -1)
         {
           // throw an exception as the announced version is less than the default version
           throw new RuntimeException("Announced version is less than the default version!" +
-            "Announced version: " + announcedVersion + ", default version: " + defaultVersion);
+            "Announced version: " + announcedVersion + ", default version: " + baselineProtocolVersion);
         }
-        else if (announcedVersion.compareTo(defaultVersion) == 0)
+        else if (announcedVersion.compareTo(baselineProtocolVersion) == 0)
         {
           // server is running the default version
-          return defaultVersion;
+          return baselineProtocolVersion;
         }
         else if (announcedVersion.compareTo(latestVersion) == -1)
         {
@@ -341,7 +341,7 @@ public class RestClient
         // server is either running the latest version or something newer. Use the latest version in this case.
         return latestVersion;
       default:
-        return defaultVersion;
+        return baselineProtocolVersion;
     }
   }
 

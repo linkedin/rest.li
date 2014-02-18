@@ -39,6 +39,9 @@ public interface Response<T>
 
   Map<String, String> getHeaders();
 
+  /**
+   * @return the ID. This ID is stored in the header of the {@link Response}.
+   */
   String getId();
 
   URI getLocation();

@@ -1,0 +1,14 @@
+apply plugin: 'pegasus'
+
+dependencies {
+  compile project (':r2')
+  compile project (':r2-jetty')
+  compile project (':restli-server')
+  compile externalDependency.parseq
+
+  testCompile project(':restli-example-server')
+  testCompile project(':restli-client')
+  testCompile project(path: ':restli-example-api', configuration: 'dataTemplate')
+  testCompile project(path: ':restli-example-api', configuration: 'restClient')
+  testCompile externalDependency.testng
+}

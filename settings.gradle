@@ -39,6 +39,9 @@ include 'gradle-plugins'
 include 'log-test-config'
 include 'restli-guice-bridge'
 include 'restli-spring-bridge'
+include 'restli-server-testutils'
+include 'restli-common-testutils'
+include 'restli-client-testutils'
 
 // see restli-tools-scala/build.gradle for more information about this rename:
 project(':restli-tools-scala').name = 'restli-tools-scala_2.10'

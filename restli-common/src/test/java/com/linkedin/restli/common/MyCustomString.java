@@ -82,4 +82,10 @@ public class MyCustomString
     MyCustomString that = (MyCustomString)obj;
     return that._string.equals(_string);
   }
+
+  @Override
+  public int hashCode()
+  {
+    return _string.hashCode();
+  }
 }
