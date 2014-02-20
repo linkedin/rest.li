@@ -27,6 +27,7 @@ import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.HeaderUtil;
+import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.server.ErrorResponseFormat;
 import com.linkedin.restli.server.RestLiServiceException;
@@ -78,7 +79,7 @@ public final class ErrorResponseBuilder implements RestLiResponseBuilder
 
     if(_errorResponseFormat.showHeaders())
     {
-      final ProtocolVersion protocolVersion = new ProtocolVersion(headers.get(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION));
+      final ProtocolVersion protocolVersion = ProtocolVersionUtil.extractProtocolVersion(headers);
       headers.put(RestConstants.HEADER_RESTLI_TYPE, er.getClass().getName());
       headers.put(HeaderUtil.getErrorResponseHeaderName(protocolVersion), RestConstants.HEADER_VALUE_ERROR_APPLICATION);
     }

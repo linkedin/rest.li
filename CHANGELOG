@@ -1,5 +1,7 @@
 1.14.2
 ------
+(RB=264173)
+Use ProtocolVersionUtil to get protocol version in ErrorResponseBuilder.
 
 1.14.1
 ------
