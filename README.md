@@ -41,7 +41,7 @@ class GreetingsResource extends CollectionResourceTemplate<Long, Greeting> {
 And then write clients:
 
 ```java
-Response<Greeting> response = restClient.sendRequest(new GreetingsBuilders.get().id(1L).build()).get();
+Response<Greeting> response = restClient.sendRequest(new GreetingsBuilders.get().id(1L)).get();
 System.out.println(response.getEntity().getMessage());
 ```
 
@@ -50,6 +50,14 @@ And get all the benefits of a robust, scalable REST+JSON framework.
 # Full Documentation
 
 See our [wiki](https://github.com/linkedin/rest.li/wiki) for full documentation and examples.
+
+Twitter Account
+---------------
+Follow us [@rest_li](https://twitter.com/rest_li)
+
+Discussion Group
+----------------
+[Linkedin Rest.li Group](http://www.linkedin.com/groups/Restli-4855943)
 
 Quickstart Guides and Examples
 ------------------------------

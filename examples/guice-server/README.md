@@ -2,7 +2,7 @@ This is an example of using Guice 3 dependency injection with rest.li.
 
 Please execute all commands below in the examples/guice-server folder
 
-To build, use gradle 1.6 or greater.  If you need, you can run `../../gradlew wrapper` to generate a ./gradlew wrapper in this sample directory that will use gradle 1.6.  If you do
+To build, use gradle 1.8 or greater.  If you need, you can run `../../gradlew wrapper` to generate a ./gradlew wrapper in this sample directory that will use gradle 1.8.  If you do
 this, use `./gradlew` instead of `gradle` for the remainder of this README.
 
 Next, execute the following at the top level:
