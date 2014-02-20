@@ -578,6 +578,9 @@ public class TestGroupsClient extends RestLiIntegrationTest
     REST_CLIENT.sendRequest(GROUPS_BUILDERS.findByComplexCircuit().recordsParam(Arrays.asList(elem)).build()).getResponse();
     REST_CLIENT.sendRequest(GROUPS_BUILDERS.findByComplexCircuit().recordsParam(array).build()).getResponse();
     REST_CLIENT.sendRequest(GROUPS_BUILDERS.findByComplexCircuit().recordsParam(new GroupMembershipParamArray(array)).build()).getResponse();
+
+    REST_CLIENT.sendRequest(GROUPS_BUILDERS.findByComplexCircuit().addRecordsParam(elem).build()).getResponse();
+    REST_CLIENT.sendRequest(GROUPS_BUILDERS.findByComplexCircuit().addRecordsParam(elem).addRecordsParam(elem).build()).getResponse();
   }
 
   private static ComplexResourceKey<GroupMembershipKey, GroupMembershipParam> buildComplexKey(int memberID,

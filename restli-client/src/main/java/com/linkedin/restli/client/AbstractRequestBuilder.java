@@ -160,22 +160,29 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
     final Object existingData = _queryParams.get(key);
     if (existingData == null)
     {
-      setParam(key, value);
+      final Collection<Object> newData = new ArrayList<Object>();
+      newData.add(value);
+      setParam(key, newData);
+    }
+    else if (existingData instanceof Collection)
+    {
+      ((Collection<Object>) existingData).add(value);
+    }
+    else if (existingData instanceof Iterable)
+    {
+      final Collection<Object> newData = new ArrayList<Object>();
+      for (Object d : (Iterable) existingData)
+      {
+        newData.add(d);
+      }
+      newData.add(value);
+      setParam(key, newData);
     }
     else
     {
-      Collection newCollection;
-      if (existingData instanceof Collection)
-      {
-        newCollection = (Collection)existingData;
-        newCollection.add(value);
-      }
-      else
-      {
-        newCollection = new ArrayList(Arrays.asList(existingData, value));
-      }
-      _queryParams.put(key, newCollection);
+      throw new IllegalStateException("Query parameter is already set to non-iterable value. Reset with null value then add new query parameter.");
     }
+
     return this;
   }
 

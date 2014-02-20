@@ -2,10 +2,16 @@ package com.linkedin.restli.client;
 
 
 import com.linkedin.data.DataList;
+import com.linkedin.restli.common.test.MyComplexKey;
+
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 
@@ -115,18 +121,18 @@ public class TestAbstractRequestBuilder
     final AbstractRequestBuilder<?, ?, ?> builder = new DummyAbstractRequestBuilder();
 
     builder.addParam("a", "b");
-    Assert.assertEquals(builder._queryParams.get("a"), "b");
+    Assert.assertEquals(builder._queryParams.get("a"), Arrays.asList("b"));
   }
 
-  @Test
-  public void testAddParamSameKeyMultipleValues()
+  @Test(dataProvider = "testQueryParam")
+  public void testAddParamSameKeyMultipleValues(Object value1, Object value2, Object value3)
   {
     final AbstractRequestBuilder<?, ?, ?> builder = new DummyAbstractRequestBuilder();
 
-    builder.addParam("a", "b1");
-    Assert.assertEquals(builder._queryParams.get("a"), "b1");
-    builder.addParam("a", "b2");
-    Assert.assertEquals(builder._queryParams.get("a"), new DataList(Arrays.asList("b1", "b2")));
+    builder.addParam("a", value1);
+    Assert.assertEquals(builder._queryParams.get("a"), Arrays.asList(value1));
+    builder.addParam("a", value2);
+    Assert.assertEquals(builder._queryParams.get("a"), Arrays.asList(value1, value2));
   }
 
   @Test
@@ -138,6 +144,58 @@ public class TestAbstractRequestBuilder
     Assert.assertFalse(builder._queryParams.containsKey("a"));
   }
 
+  @Test(expectedExceptions = IllegalStateException.class)
+  public void testSetNonIterableThenAddParam()
+  {
+    final AbstractRequestBuilder<?, ?, ?> builder = new DummyAbstractRequestBuilder();
+
+    builder.setParam("a", "b");
+    builder.addParam("a", "c");
+  }
+
+  @Test(dataProvider = "testQueryParam")
+  public void testSetIterableThenAddParam(final Object value1, final Object value2, Object value3)
+  {
+    final AbstractRequestBuilder<?, ?, ?> builder = new DummyAbstractRequestBuilder();
+
+    final Iterable<Object> iter = new Iterable<Object>()
+    {
+      private final Collection<Object> _coll = Arrays.asList(value1, value2);
+      @Override
+      public Iterator<Object> iterator()
+      {
+        return _coll.iterator();
+      }
+    };
+    builder.setParam("a", iter);
+    builder.addParam("a", value3);
+    Assert.assertEquals(builder._queryParams.get("a"), Arrays.asList(value1, value2, value3));
+  }
+
+  @Test(dataProvider = "testQueryParam")
+  public void testSetCollectionThenAddParam(Object value1, Object value2, Object value3)
+  {
+    final AbstractRequestBuilder<?, ?, ?> builder = new DummyAbstractRequestBuilder();
+
+    // AbstractList returned by Arrays.asList() does not support add()
+    // need to wrap it with ArrayList
+    final Collection<Object> testData = new ArrayList<Object>(Arrays.asList(value1, value2));
+    builder.setParam("a", testData);
+    builder.addParam("a", value3);
+    Assert.assertEquals(builder._queryParams.get("a"), Arrays.asList(value1, value2, value3));
+  }
+
+  @Test(dataProvider = "testQueryParam")
+  public void testAddThenSetParam(Object value1, Object value2, Object value3)
+  {
+    final AbstractRequestBuilder<?, ?, ?> builder = new DummyAbstractRequestBuilder();
+
+    builder.addParam("a", value1).addParam("a", value2);
+    builder.setParam("a", value3);
+
+    Assert.assertEquals(builder._queryParams.get("a"), value3);
+  }
+
   @Test
   public void testSetReqParamWithNonNullValue()
   {
@@ -147,20 +205,11 @@ public class TestAbstractRequestBuilder
     Assert.assertEquals(builder._queryParams.get("a"), "b");
   }
 
-  @Test
+  @Test(expectedExceptions = NullPointerException.class)
   public void testSetReqParamWithNullValue()
   {
     final AbstractRequestBuilder<?, ?, ?> builder = new DummyAbstractRequestBuilder();
-
-    try
-    {
-      builder.setReqParam("a", null);
-      Assert.fail("setReqParam should not allow null values");
-    }
-    catch (NullPointerException e)
-    {
-
-    }
+    builder.setReqParam("a", null);
   }
 
   @Test
@@ -169,7 +218,7 @@ public class TestAbstractRequestBuilder
     final AbstractRequestBuilder<?, ?, ?> builder = new DummyAbstractRequestBuilder();
 
     builder.addReqParam("a", "b");
-    Assert.assertEquals(builder._queryParams.get("a"), "b");
+    Assert.assertEquals(builder._queryParams.get("a"), Arrays.asList("b"));
   }
 
   @Test
@@ -178,9 +227,23 @@ public class TestAbstractRequestBuilder
     final AbstractRequestBuilder<?, ?, ?> builder = new DummyAbstractRequestBuilder();
 
     builder.addReqParam("a", "b1");
-    Assert.assertEquals(builder._queryParams.get("a"), "b1");
+    Assert.assertEquals(builder._queryParams.get("a"), Arrays.asList("b1"));
     builder.addReqParam("a", "b2");
-    Assert.assertEquals(builder._queryParams.get("a"), new DataList(Arrays.asList("b1", "b2")));
+    Assert.assertEquals(builder._queryParams.get("a"), Arrays.asList("b1", "b2"));
+  }
+
+  @DataProvider(name = "testQueryParam")
+  public static Object[][] testQueryParamDataProvider()
+  {
+    final Object value3 = new ArrayList<String>(Arrays.asList("x", "y"));
+    return new Object[][] {
+      { "a", "b", "z" },
+      { "a", "b", value3 },
+      { new String[] { "a", "b" }, new String[] { "c", "d" }, "z" },
+      { new String[] { "a", "b" }, new String[] { "c", "d" }, value3 },
+      { new ArrayList<String>(Arrays.asList("a", "b")), new ArrayList<String>(Arrays.asList("c", "d")), "z" },
+      { new ArrayList<String>(Arrays.asList("a", "b")), new ArrayList<String>(Arrays.asList("c", "d")), value3 }
+    };
   }
 
   @Test
