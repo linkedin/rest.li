@@ -177,6 +177,12 @@ public class ArgumentBuilder
       for (Object paramData: itemsList)
       {
         final DataTemplate<?> itemsElem = DataTemplateUtil.wrap(paramData, param.getItemType().asSubclass(DataTemplate.class));
+
+        ValidateDataAgainstSchema.validate(itemsElem.data(),
+                                           itemsElem.schema(),
+                                           new ValidationOptions(RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT,
+                                                                 CoercionMode.STRING_TO_PRIMITIVE));
+
         Array.set(convertedValue, j++, itemsElem);
       }
     }

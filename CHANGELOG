@@ -1,5 +1,7 @@
 1.14.3
 ------
+(RB=264806)
+Fix a bug where RecordTemplates in Array parameters were not validated.
 
 1.14.2
 ------
