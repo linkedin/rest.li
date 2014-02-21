@@ -36,6 +36,8 @@ import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.restli.common.ActionResponse;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.docgen.examplegen.ExampleRequestResponse;
+import com.linkedin.restli.docgen.examplegen.ExampleRequestResponseGenerator;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.server.ActionsResource;
 import com.linkedin.restli.examples.greetings.server.CollectionUnderSimpleResource;
@@ -75,7 +77,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**
- * Test suite for {@link com.linkedin.restli.docgen.RestLiExampleGenerator}.
+ * Test suite for {@link com.linkedin.restli.docgen.examplegen.ExampleRequestResponseGenerator}.
  *
  * @author Keren Jin
  */
@@ -93,118 +95,110 @@ public class TestExamplesGenerator
                                                                      CollectionUnderSimpleResource.class,
                                                                      SimpleResourceUnderCollectionResource.class);
     final ResourceSchemaCollection resourceSchemas = ResourceSchemaCollection.loadOrCreateResourceSchema(resources);
-    final RestLiExampleGenerator.RequestGenerationSpec spec = new RestLiExampleGenerator.RequestGenerationSpec();
     final DataSchemaResolver schemaResolver = new ClassNameDataSchemaResolver();
-    final RestLiExampleGenerator generator = new RestLiExampleGenerator(resourceSchemas,
-                                                                        resources,
-                                                                        schemaResolver);
     final ValidationOptions valOptions = new ValidationOptions(RequiredMode.MUST_BE_PRESENT);
-    RequestResponsePair capture;
+    ExampleRequestResponse capture;
     ValidationResult valRet;
 
     final ResourceSchema greetings = resourceSchemas.getResource("greetings");
+    ExampleRequestResponseGenerator greetingsGenerator = new ExampleRequestResponseGenerator(greetings, schemaResolver);
+
     final ResourceSchema groups = resourceSchemas.getResource("groups");
+    ExampleRequestResponseGenerator groupsGenerator = new ExampleRequestResponseGenerator(groups, schemaResolver);
+
     final ResourceSchema groupsContacts = resourceSchemas.getResource("groups.contacts");
+    ExampleRequestResponseGenerator groupsContactsGenerator = new ExampleRequestResponseGenerator(Collections.singletonList(groups), groupsContacts, schemaResolver);
+
     final ResourceSchema greeting = resourceSchemas.getResource("greeting");
+    ExampleRequestResponseGenerator greetingGenerator = new ExampleRequestResponseGenerator(greeting, schemaResolver);
+
     final ResourceSchema actions = resourceSchemas.getResource("actions");
+    ExampleRequestResponseGenerator actionsGenerator = new ExampleRequestResponseGenerator(actions, schemaResolver);
 
     List<ResourceSchema> subResources = resourceSchemas.getSubResources(greeting);
     final ResourceSchema subgreetings = subResources.get(0);
+    ExampleRequestResponseGenerator subgreetingsGenerator = new ExampleRequestResponseGenerator(Collections.singletonList(greeting), subgreetings, schemaResolver);
+
     subResources = resourceSchemas.getSubResources(subgreetings);
     final ResourceSchema subsubgreeting = subResources.get(0);
+    ExampleRequestResponseGenerator subsubgreetingGenerator = new ExampleRequestResponseGenerator(Arrays.asList(greeting, subgreetings), subsubgreeting, schemaResolver);
 
-    final RestMethodSchema greetingsGet = findRestMethod(greetings, ResourceMethod.GET);
-    capture = generator.generateRestMethodExample(greetings, greetingsGet, spec);
+    capture = greetingsGenerator.method(ResourceMethod.GET);
     valRet = validateSingleResponse(capture.getResponse(), Greeting.class, valOptions);
     Assert.assertTrue(valRet.isValid(), valRet.getMessages().toString());
 
-    final RestMethodSchema greetingsCreate = findRestMethod(greetings, ResourceMethod.CREATE);
-    capture = generator.generateRestMethodExample(greetings, greetingsCreate, spec);
+    capture = greetingsGenerator.method(ResourceMethod.CREATE);
     Assert.assertSame(capture.getResponse().getEntity().length(), 0);
 
-    final FinderSchema greetingsSearch = findFinder(greetings, "search");
-    capture = generator.generateFinderExample(greetings, greetingsSearch, spec);
+    capture = greetingsGenerator.finder("search");
     valRet = validateCollectionResponse(capture.getResponse(), Greeting.class, valOptions);
     Assert.assertNull(valRet, (valRet == null ? null : valRet.getMessages().toString()));
 
-    final RestMethodSchema groupsContactsGet = findRestMethod(groupsContacts, ResourceMethod.GET);
-    capture = generator.generateRestMethodExample(groupsContacts, groupsContactsGet, spec);
+    capture = groupsContactsGenerator.method(ResourceMethod.GET);
     valRet = validateSingleResponse(capture.getResponse(), GroupContact.class, valOptions);
     Assert.assertTrue(valRet.isValid(), valRet.getMessages().toString());
 
-    final FinderSchema groupsSearch = findFinder(groups, "search");
-    capture = generator.generateFinderExample(groups, groupsSearch, spec);
+    capture = groupsGenerator.finder("search");
     valRet = validateCollectionResponse(capture.getResponse(), Group.class, valOptions);
     Assert.assertNull(valRet, (valRet == null ? null : valRet.getMessages().toString()));
 
-    final ActionSchema greetingsPurge = findCollectionAction(greetings, "purge");
-    capture = generator.generateActionExample(greetings, greetingsPurge, ResourceLevel.COLLECTION, spec);
+    capture = greetingsGenerator.action("purge", ResourceLevel.COLLECTION);
     final DataMap purgeResponse = DataMapUtils.readMap(capture.getResponse());
     Assert.assertTrue(purgeResponse.containsKey("value"));
 
-    final ActionSchema greetingsUpdateTone = findEntityAction(greetings, "updateTone");
-    capture = generator.generateActionExample(greetings, greetingsUpdateTone, ResourceLevel.ENTITY, spec);
+    capture = greetingsGenerator.action("updateTone", ResourceLevel.ENTITY);
     valRet = validateCollectionResponse(capture.getResponse(), Greeting.class, valOptions);
     Assert.assertNull(valRet, (valRet == null ? null : valRet.getMessages().toString()));
 
-    final ActionSchema groupsSendTestAnnouncement = findEntityAction(groups, "sendTestAnnouncement");
-    capture = generator.generateActionExample(groups, groupsSendTestAnnouncement, ResourceLevel.ENTITY, spec);
+    capture = groupsGenerator.action("sendTestAnnouncement", ResourceLevel.ENTITY);
     Assert.assertSame(capture.getResponse().getEntity().length(), 0);
 
-    final RestMethodSchema greetingGet = findRestMethod(greeting, ResourceMethod.GET);
-    capture = generator.generateRestMethodExample(greeting, greetingGet, spec);
+    capture = greetingGenerator.method(ResourceMethod.GET);
     valRet = validateSingleResponse(capture.getResponse(), Greeting.class, valOptions);
     Assert.assertTrue(valRet.isValid(), valRet.getMessages().toString());
     RestRequest request = capture.getRequest();
     Assert.assertEquals(request.getURI(), URI.create("/greeting"));
 
-    final RestMethodSchema greetingUpdate = findRestMethod(greeting, ResourceMethod.UPDATE);
-    capture = generator.generateRestMethodExample(greeting, greetingUpdate, spec);
+    capture = greetingGenerator.method(ResourceMethod.UPDATE);
     Assert.assertSame(capture.getResponse().getEntity().length(), 0);
     request = capture.getRequest();
     Assert.assertEquals(request.getURI(), URI.create("/greeting"));
     valRet = validateSingleRequest(capture.getRequest(), Greeting.class, valOptions);
     Assert.assertTrue(valRet.isValid(), valRet.getMessages().toString());
 
-    final RestMethodSchema greetingPartialUpdate = findRestMethod(greeting, ResourceMethod.PARTIAL_UPDATE);
-    capture = generator.generateRestMethodExample(greeting, greetingPartialUpdate, spec);
+    capture = greetingGenerator.method(ResourceMethod.PARTIAL_UPDATE);
     Assert.assertSame(capture.getResponse().getEntity().length(), 0);
     request = capture.getRequest();
     Assert.assertEquals(request.getURI(), URI.create("/greeting"));
     DataMap patchMap = _codec.bytesToMap(capture.getRequest().getEntity().copyBytes());
     checkPatchMap(patchMap);
 
-    final RestMethodSchema greetingDelete = findRestMethod(greeting, ResourceMethod.DELETE);
-    capture = generator.generateRestMethodExample(greeting, greetingUpdate, spec);
+    capture = greetingGenerator.method(ResourceMethod.DELETE);
     Assert.assertSame(capture.getResponse().getEntity().length(), 0);
     request = capture.getRequest();
     Assert.assertEquals(request.getURI(), URI.create("/greeting"));
 
-    final ActionSchema greetingExampleAction = findSimpleResourceAction(greeting, "exampleAction");
-    capture = generator.generateActionExample(greeting, greetingExampleAction, ResourceLevel.ENTITY, spec);
+    capture = greetingGenerator.action("exampleAction", ResourceLevel.ENTITY);
     DataMap exampleActionResponse = DataMapUtils.readMap(capture.getResponse());
     Assert.assertTrue(exampleActionResponse.containsKey("value"));
     request = capture.getRequest();
     Assert.assertTrue(validateUrlPath(request.getURI(), new String[]{ "greeting" }));
 
-    final RestMethodSchema subgreetingsCreate = findRestMethod(subgreetings, ResourceMethod.CREATE);
-    capture = generator.generateRestMethodExample(subgreetings, subgreetingsCreate, spec);
+    capture = subgreetingsGenerator.method(ResourceMethod.CREATE);
     Assert.assertSame(capture.getResponse().getEntity().length(), 0);
     request = capture.getRequest();
     Assert.assertEquals(request.getURI(), URI.create("/greeting/subgreetings"));
     valRet = validateSingleRequest(capture.getRequest(), Greeting.class, valOptions);
     Assert.assertTrue(valRet.isValid(), valRet.getMessages().toString());
 
-    final RestMethodSchema subsubgreetingGet = findRestMethod(subsubgreeting, ResourceMethod.GET);
-    capture = generator.generateRestMethodExample(subsubgreeting, subsubgreetingGet, spec);
+    capture = subsubgreetingGenerator.method(ResourceMethod.GET);
     valRet = validateSingleResponse(capture.getResponse(), Greeting.class, valOptions);
     Assert.assertTrue(valRet.isValid(), valRet.getMessages().toString());
     request = capture.getRequest();
     Assert.assertTrue(validateUrlPath(request.getURI(),
                                       new String[]{"greeting", "subgreetings", null, "subsubgreeting"}));
 
-    final RestMethodSchema subsubgreetingUpdate = findRestMethod(subsubgreeting, ResourceMethod.UPDATE);
-    capture = generator.generateRestMethodExample(subsubgreeting, subsubgreetingUpdate, spec);
+    capture = subsubgreetingGenerator.method(ResourceMethod.UPDATE);
     Assert.assertSame(capture.getResponse().getEntity().length(), 0);
     request = capture.getRequest();
     Assert.assertTrue(validateUrlPath(request.getURI(),
@@ -212,8 +206,7 @@ public class TestExamplesGenerator
     valRet = validateSingleRequest(capture.getRequest(), Greeting.class, valOptions);
     Assert.assertTrue(valRet.isValid(), valRet.getMessages().toString());
 
-    final RestMethodSchema subsubgreetingPartialUpdate = findRestMethod(subsubgreeting, ResourceMethod.PARTIAL_UPDATE);
-    capture = generator.generateRestMethodExample(subsubgreeting, subsubgreetingPartialUpdate, spec);
+    capture = subsubgreetingGenerator.method(ResourceMethod.PARTIAL_UPDATE);
     Assert.assertSame(capture.getResponse().getEntity().length(), 0);
     request = capture.getRequest();
     Assert.assertTrue(validateUrlPath(request.getURI(),
@@ -222,33 +215,28 @@ public class TestExamplesGenerator
     patchMap = _codec.bytesToMap(capture.getRequest().getEntity().copyBytes());
     checkPatchMap(patchMap);
 
-    final RestMethodSchema subsubgreetingDelete = findRestMethod(subsubgreeting, ResourceMethod.DELETE);
-    capture = generator.generateRestMethodExample(subsubgreeting, subsubgreetingDelete, spec);
+    capture = subsubgreetingGenerator.method(ResourceMethod.DELETE);
     Assert.assertSame(capture.getResponse().getEntity().length(), 0);
     request = capture.getRequest();
     Assert.assertTrue(validateUrlPath(request.getURI(),
                                       new String[]{"greeting", "subgreetings", null, "subsubgreeting"}));
 
-    final ActionSchema subsubgreetingExampleAction = findSimpleResourceAction(subsubgreeting, "exampleAction");
-    capture = generator.generateActionExample(subsubgreeting, subsubgreetingExampleAction, ResourceLevel.ENTITY, spec);
+    capture = subsubgreetingGenerator.action("exampleAction", ResourceLevel.ENTITY);
     exampleActionResponse = DataMapUtils.readMap(capture.getResponse());
     Assert.assertTrue(exampleActionResponse.containsKey("value"));
     request = capture.getRequest();
     Assert.assertTrue(validateUrlPath(request.getURI(),
                                       new String[]{"greeting", "subgreetings", null, "subsubgreeting"}));
 
-    final ActionSchema actionsEchoMessageArray = findActionsSetAction(actions, "echoMessageArray");
-    capture = generator.generateActionExample(actions, actionsEchoMessageArray, ResourceLevel.COLLECTION, spec);
+    capture = actionsGenerator.action("echoMessageArray", ResourceLevel.COLLECTION);
     final DataMap echoMessageArrayResponse = DataMapUtils.readMap(capture.getResponse());
     Assert.assertTrue(echoMessageArrayResponse.containsKey("value"));
 
-    final ActionSchema actionsEchoToneArray = findActionsSetAction(actions, "echoToneArray");
-    capture = generator.generateActionExample(actions, actionsEchoToneArray, ResourceLevel.COLLECTION, spec);
+    capture = actionsGenerator.action("echoToneArray", ResourceLevel.COLLECTION);
     final DataMap echoToneArrayResponse = DataMapUtils.readMap(capture.getResponse());
     Assert.assertTrue(echoToneArrayResponse.containsKey("value"));
 
-    final ActionSchema actionsEchoStringArray = findActionsSetAction(actions, "echoStringArray");
-    capture = generator.generateActionExample(actions, actionsEchoStringArray, ResourceLevel.COLLECTION, spec);
+    capture = actionsGenerator.action("echoStringArray", ResourceLevel.COLLECTION);
     final DataMap echoStringArrayResponse = DataMapUtils.readMap(capture.getResponse());
     Assert.assertTrue(echoStringArrayResponse.containsKey("value"));
   }

@@ -214,11 +214,11 @@ public class ResourceSchemaToResourceSpecTranslator
 
   private ResourceSpec simpleToResourceSpec(ResourceSchema resourceSchema, SimpleSchema simple)
   {
-    ActionSchemaArray actions = null;
+    ActionSchemaArray entityActions = null;
     StringArray supports = simple.getSupports();
     if(simple.hasActions())
     {
-      actions = simple.getActions();
+      entityActions = simple.getActions();
     }
     String schema = resourceSchema.getSchema();
 
@@ -227,8 +227,8 @@ public class ResourceSchemaToResourceSpecTranslator
                              null,
                              Collections.<String, Object>emptyMap(),
                              schema,
-                             actions,
-                             null);
+                             null,
+                             entityActions);
   }
 
   private ResourceSpec buildResourceSpec(StringArray supports,

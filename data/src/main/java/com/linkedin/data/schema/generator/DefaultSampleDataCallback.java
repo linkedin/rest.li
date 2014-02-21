@@ -23,6 +23,7 @@ import com.linkedin.data.schema.EnumDataSchema;
 import com.linkedin.data.schema.FixedDataSchema;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -49,6 +50,16 @@ public class DefaultSampleDataCallback implements SampleDataCallback
     compilePatterns(_stringPool.keySet());
   }
 
+  private int nonNegative(int max)
+  {
+    return Math.abs(_random.nextInt(max)) + 1;
+  }
+
+  private <T> T valueFromArray(T[] array)
+  {
+    return array[nonNegative(array.length - 1)];
+  }
+
   @Override
   public boolean getBoolean(String fieldName)
   {
@@ -58,25 +69,27 @@ public class DefaultSampleDataCallback implements SampleDataCallback
   @Override
   public int getInteger(String fieldName)
   {
-    return _random.nextInt();
+    return nonNegative(10);
   }
 
   @Override
   public long getLong(String fieldName)
   {
-    return _random.nextLong();
+    return nonNegative(10);
   }
+
+  private final Float[] _floats = { 3.14f, 2.71f, 1.41f, 1.61f };
 
   @Override
   public float getFloat(String fieldName)
   {
-    return _random.nextFloat();
+    return valueFromArray(_floats);
   }
 
   @Override
   public double getDouble(String fieldName)
   {
-    return _random.nextDouble();
+    return valueFromArray(_floats);
   }
 
   @Override
@@ -107,8 +120,7 @@ public class DefaultSampleDataCallback implements SampleDataCallback
       candidateStrings = _defaultStrings;
     }
 
-    final int candidateIndex = (int)(Math.random() * candidateStrings.length);
-    return candidateStrings[candidateIndex];
+    return valueFromArray(candidateStrings);
   }
 
   @Override
@@ -120,10 +132,10 @@ public class DefaultSampleDataCallback implements SampleDataCallback
   }
 
   @Override
-  public String getEnum(String fieldName, EnumDataSchema schema)
+  public String getEnum(String fieldName, EnumDataSchema enumDataSchema)
   {
-    final int index = _random.nextInt(schema.getSymbols().size());
-    return schema.getSymbols().get(index);
+    List<String> symbols = enumDataSchema.getSymbols();
+    return symbols.get(nonNegative(symbols.size() - 1));
   }
 
   private DefaultSampleDataCallback()

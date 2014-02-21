@@ -5,6 +5,7 @@ dependencies {
   compile project(':li-jersey-uri')
   compile project(':restli-common')
   compile project(':restli-server')
+  compile project(':restli-client')
   compile externalDependency.commonsLang
   compile externalDependency.jacksonCore
   compile externalDependency.velocity

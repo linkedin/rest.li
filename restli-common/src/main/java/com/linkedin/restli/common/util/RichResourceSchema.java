@@ -117,7 +117,7 @@ public class RichResourceSchema
       _supports = simple.getSupports();
       _methods = simple.hasMethods() ? simple.getMethods() : new RestMethodSchemaArray(0);
       _finders = new FinderSchemaArray(0);
-      _actions = simple.hasActions() ? simple.getActions() : new ActionSchemaArray(0);
+      _actions = new ActionSchemaArray(0);
       _entity = simple.getEntity();
     }
     else if(resourceSchema.hasActionsSet())
@@ -135,14 +135,26 @@ public class RichResourceSchema
       throw new IllegalArgumentException("Invalid resourceSchema, must be one of: " + EnumSet.allOf(ResourceType.class));
     }
 
-    if(_entity != null)
+    if(resourceSchema.hasSimple())
+    {
+      SimpleSchema simple = resourceSchema.getSimple();
+      _entityActions = simple.hasActions() ? simple.getActions() : new ActionSchemaArray(0);
+    }
+    else if(_entity != null)
     {
       _entityActions = _entity.hasActions() ? _entity.getActions() : new ActionSchemaArray(0);
-      _subresources = _entity.hasSubresources() ? toRichResourceSchemas(_entity.getSubresources()) : Collections.<RichResourceSchema>emptyList();
     }
     else
     {
       _entityActions = new ActionSchemaArray(0);
+    }
+
+    if(_entity != null)
+    {
+      _subresources = _entity.hasSubresources() ? toRichResourceSchemas(_entity.getSubresources()) : Collections.<RichResourceSchema>emptyList();
+    }
+    else
+    {
       _subresources = Collections.emptyList();
     }
 

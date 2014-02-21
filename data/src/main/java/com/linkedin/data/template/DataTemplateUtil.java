@@ -472,6 +472,38 @@ public class DataTemplateUtil
     }
   }
 
+  /**
+   * Pass through coercer for strings.
+   *
+   * This is used by _classToCoercerMap to add support for dynamically setting enums using their string symbol.
+   */
+  private static class StringCoercer extends NativeCoercer<String>
+  {
+    StringCoercer()
+    {
+      super(String.class);
+    }
+
+    @Override
+    public Object coerceInput(String object) throws ClassCastException
+    {
+      return object;
+    }
+
+    @Override
+    public String coerceOutput(Object object) throws TemplateOutputCastException
+    {
+      if (object instanceof String)
+      {
+        return (String)object;
+      }
+      else
+      {
+        throw new TemplateOutputCastException("Output " + object + " is not a valid string.");
+      }
+    }
+  }
+
   private static class BytesCoercer extends NativeCoercer<ByteString>
   {
     BytesCoercer()
@@ -563,6 +595,7 @@ public class DataTemplateUtil
   private static final DirectCoercer<Double> DOUBLE_COERCER = new DoubleCoercer();
   private static final DirectCoercer<ByteString> BYTES_COERCER = new BytesCoercer();
   private static final BooleanCoercer BOOLEAN_COERCER = new BooleanCoercer();
+  private static final StringCoercer STRING_COERCER = new StringCoercer();
 
   static
   {
@@ -577,6 +610,28 @@ public class DataTemplateUtil
     map.put(Double.class, DOUBLE_COERCER);
     map.put(ByteString.class, BYTES_COERCER);
     map.put(Boolean.TYPE, BOOLEAN_COERCER);
+
+    /* This coercer provides a safe way to set a enum value on a record template using a plain string.  This is
+     * required in cases where The concrete enum class is unavailable, such as when dynamically generating requests
+     * as runtime for arbitrary resource schemas like is done by our example generator.
+     *
+     * The usual approach of setting an enum is to do this (usually indirectly via RecordTemplate.putDirect):
+     *
+     * DataTemplateUtil.coerceInput(SomeEnumClass.ENUM_SYMBOL, SomeEnumClass.class, String.class)
+     *
+     * But making this call requires that SomeEnumClass be known (and in the classpath), which is not always the case.
+     *
+     * So for such cases, we offer an alternative way to set an enum:
+     *
+     * DataTemplateUtil.coerceInput("ENUM_SYMBOL", Enum.class, String.class)
+     *
+     * Where Enum.class is a marker.  It makes the intent clear here and prevents this coercer from being used except
+     * when intended.
+     *
+     * Because enums are always coerced to strings, the implementation is just passthrough.  The important part of this
+     * coercer is that it is keyed in _classToCoercerMap by Enum.class.
+     */
+    map.put(Enum.class, STRING_COERCER);
     _classToCoercerMap = Collections.unmodifiableMap(map);
   }
 

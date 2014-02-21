@@ -27,8 +27,9 @@ import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.docgen.examplegen.ExampleRequestResponse;
+import com.linkedin.restli.docgen.examplegen.ExampleRequestResponseGenerator;
 import com.linkedin.restli.internal.server.RestLiInternalException;
-import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.restspec.ActionSchema;
 import com.linkedin.restli.restspec.FinderSchema;
@@ -62,13 +63,11 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
   /**
    * @param serverNodeUri URI prefix of the rendered pages
    * @param relationships relationship of all the resources and data models to be rendered
-   * @param rootResources root resources from its resource path. subresource models will be discovered
    * @param templatingEngine templating engine used to render HTML page
    * @param schemaResolver resolver that resolves related {@link ResourceSchema}
    */
   public RestLiHTMLDocumentationRenderer(URI serverNodeUri,
                                          RestLiResourceRelationship relationships,
-                                         Map<String, ResourceModel> rootResources,
                                          TemplatingEngine templatingEngine,
                                          DataSchemaResolver schemaResolver)
   {
@@ -77,10 +76,7 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
     _relationships = relationships;
     _resourceSchemas = _relationships.getResourceSchemaCollection();
     _templatingEngine = templatingEngine;
-
-    _restliExampleGenerator = new RestLiExampleGenerator(relationships.getResourceSchemaCollection(),
-                                                         rootResources,
-                                                         schemaResolver);
+    _schemaResolver = schemaResolver;
   }
 
   @Override
@@ -105,6 +101,8 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
   public void renderResource(String resourceName, OutputStream out)
   {
     final ResourceSchema resourceSchema = _resourceSchemas.getResource(resourceName);
+    final List<ResourceSchema> parentResources = _resourceSchemas.getParentResources(resourceSchema);
+    ExampleRequestResponseGenerator generator = new ExampleRequestResponseGenerator(parentResources, resourceSchema, _schemaResolver);
     if (resourceSchema == null)
     {
       throw new RoutingException(String.format("Resource \"%s\" does not exist", resourceName), HttpStatus.S_404_NOT_FOUND.getCode()) ;
@@ -124,24 +122,26 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
     final MethodGatheringResourceSchemaVisitor visitor = new MethodGatheringResourceSchemaVisitor(resourceName);
     ResourceSchemaCollection.visitResources(_resourceSchemas.getResources().values(), visitor);
 
-    final RestLiExampleGenerator.RequestGenerationSpec spec = new RestLiExampleGenerator.RequestGenerationSpec();
     for (RecordTemplate methodSchema : visitor.getAllMethods())
     {
-      final RequestResponsePair capture;
+      final ExampleRequestResponse capture;
       if (methodSchema instanceof RestMethodSchema)
       {
-        capture = _restliExampleGenerator.generateRestMethodExample(resourceSchema, (RestMethodSchema) methodSchema, spec);
+        RestMethodSchema restMethodSchema = (RestMethodSchema)methodSchema;
+        capture = generator.method(ResourceMethod.valueOf(restMethodSchema.getMethod().toUpperCase()));
       }
       else if (methodSchema instanceof FinderSchema)
       {
-        capture = _restliExampleGenerator.generateFinderExample(resourceSchema, (FinderSchema) methodSchema, spec);
+        FinderSchema finderMethodSchema = (FinderSchema)methodSchema;
+        capture = generator.finder(finderMethodSchema.getName());
       }
       else if (methodSchema instanceof ActionSchema)
       {
+        ActionSchema actionMethodSchema = (ActionSchema)methodSchema;
         final ResourceLevel resourceLevel = (visitor.getCollectionActions().contains(methodSchema) ?
                                              ResourceLevel.COLLECTION :
                                              ResourceLevel.ENTITY);
-        capture = _restliExampleGenerator.generateActionExample(resourceSchema, (ActionSchema) methodSchema, resourceLevel, spec);
+        capture = generator.action(actionMethodSchema.getName(), resourceLevel);
       }
       else
       {
@@ -365,8 +365,7 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
   private final RestLiResourceRelationship _relationships;
   private final ResourceSchemaCollection _resourceSchemas;
   private final TemplatingEngine _templatingEngine;
-
-  private final RestLiExampleGenerator _restliExampleGenerator;
+  private final DataSchemaResolver _schemaResolver;
 
   private final Map<Object, Map<String, ResourceSchema>> _relatedResourceCache =
       new HashMap<Object, Map<String, ResourceSchema>>();

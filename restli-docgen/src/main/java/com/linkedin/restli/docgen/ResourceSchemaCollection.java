@@ -45,6 +45,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -144,6 +145,7 @@ public class ResourceSchemaCollection
   {
     _allResources = new TreeMap<String, ResourceSchema>(rootResources);
     _subResources = new IdentityHashMap<ResourceSchema, List<ResourceSchema>>();
+    _parentResources = new IdentityHashMap<ResourceSchema, List<ResourceSchema>>();
     final Map<String, ResourceSchema> flattenSubResources = new TreeMap<String, ResourceSchema>();
 
     final ResourceSchemaVisitior visitor = new BaseResourceSchemaVisitor()
@@ -158,12 +160,17 @@ public class ResourceSchemaCollection
           flattenSubResources.put(qualifiedResourceName, resourceSchema);
 
           final List<ResourceSchema> hierarchy = context.getResourceSchemaHierarchy();
-          final ResourceSchema parent = hierarchy.get(hierarchy.size() - 2);
-          List<ResourceSchema> subList = _subResources.get(parent);
+
+          ArrayList<ResourceSchema> parents = new ArrayList<ResourceSchema>(hierarchy);
+          parents.remove(parents.size()-1);
+          _parentResources.put(resourceSchema, parents);
+
+          final ResourceSchema directParent = parents.get(parents.size() - 1);
+          List<ResourceSchema> subList = _subResources.get(directParent);
           if (subList == null)
           {
             subList = new ArrayList<ResourceSchema>();
-            _subResources.put(parent, subList);
+            _subResources.put(directParent, subList);
           }
           subList.add(resourceSchema);
         }
@@ -201,6 +208,19 @@ public class ResourceSchemaCollection
   public List<ResourceSchema> getSubResources(ResourceSchema parentSchema)
   {
     return _subResources.get(parentSchema);
+  }
+
+  public List<ResourceSchema> getParentResources(ResourceSchema parentSchema)
+  {
+    List<ResourceSchema> parents = _parentResources.get(parentSchema);
+    if(parents == null)
+    {
+      return Collections.emptyList();
+    }
+    else
+    {
+      return parents;
+    }
   }
 
   /**
@@ -395,4 +415,5 @@ public class ResourceSchemaCollection
 
   private final Map<String, ResourceSchema> _allResources;
   private final Map<ResourceSchema, List<ResourceSchema>> _subResources;
+  private final Map<ResourceSchema, List<ResourceSchema>> _parentResources;
 }

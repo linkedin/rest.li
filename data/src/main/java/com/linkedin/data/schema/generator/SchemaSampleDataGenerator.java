@@ -47,7 +47,7 @@ import java.util.Set;
  *
  * @author dellamag, Keren Jin
  */
-public class SchemaSampleDataGenerator
+public class SchemaSampleDataGenerator implements DataGenerator
 {
   private static final int MAX_ALLOWED_SCHEMA_RECURSION = 5;
 
@@ -362,9 +362,16 @@ public class SchemaSampleDataGenerator
     return data;
   }
 
-  public SchemaSampleDataGenerator(DataSchemaResolver resolver)
+  public SchemaSampleDataGenerator(DataSchemaResolver resolver, DataGenerationOptions spec)
   {
     _schemaParser = new SchemaParser(resolver);
+    _spec = spec;
+  }
+
+  @Override
+  public Object buildData(String fieldName, DataSchema dataSchema)
+  {
+    return SchemaSampleDataGenerator.buildData(dataSchema, fieldName, _spec);
   }
 
   private DataMap buildDataMap(ParentSchemas parentSchemas, String pegasusDataSchemaName, DataGenerationOptions spec)
@@ -403,6 +410,7 @@ public class SchemaSampleDataGenerator
     else return copy;
   }
 
+  private final DataGenerationOptions _spec;
   private final SchemaParser _schemaParser;
 
   // TODO this Main function will be used in offline documentation generation, which is not ready yet

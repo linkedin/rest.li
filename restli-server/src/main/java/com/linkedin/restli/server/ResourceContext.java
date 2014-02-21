@@ -59,7 +59,7 @@ public interface ResourceContext
   MaskTree getProjectionMask();
 
   /**
-   * check whether a given parameter was present in the request.
+   * check whether a given query parameter was present in the request.
    *
    * @param key - the name of the parameter
    * @return true if the request contains the specified parameter
@@ -67,30 +67,30 @@ public interface ResourceContext
   boolean hasParameter(String key);
 
   /**
-   * get the value of a given parameter from the request. If multiple values were
+   * get the value of a given query parameter from the request. If multiple values were
    * specified in the request, only the first will be returned.
    *
-   * @param key - the name of the parameter
-   * @return value of the parameter from the request, or null if the parameter was not
+   * @param key - the name of the query parameter
+   * @return value of the query parameter from the request, or null if the query parameter was not
    *         present in the request
    */
   String getParameter(String key);
 
   /**
-   * Get the value a given parameter from the request as Object. Supports structured
-   * DataTemplate-backed parameters.
+   * Get the value a given query parameter from the request as Object. Supports structured
+   * DataTemplate-backed query parameters.
    *
-   * @param key - the name of the parameter
-   * @return value of the parameter from the request, or null if the parameter was not
+   * @param key - the name of the query parameter
+   * @return value of the query parameter from the request, or null if the query parameter was not
    *         present in the request
    */
   Object getStructuredParameter(String key);
 
   /**
-   * get all values for a given parameter from the request.
+   * get all values for a given query parameter from the request.
    *
-   * @param key - the name of the parameter
-   * @return list of values for the parameter in the request, or null if the parameter was
+   * @param key - the name of the query parameter
+   * @return list of values for the query parameter in the request, or null if the query parameter was
    *         not present in the request
    */
   List<String> getParameterValues(String key);

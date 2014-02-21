@@ -17,6 +17,7 @@
 package com.linkedin.restli.docgen;
 
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.docgen.examplegen.ExampleRequestResponse;
 import com.linkedin.restli.restspec.ActionSchema;
 import com.linkedin.restli.restspec.FinderSchema;
 import com.linkedin.restli.restspec.RestMethodSchema;
@@ -36,7 +37,7 @@ public class ResourceMethodDocView
    * @param prettyPrintResponseEntity response entity data in pretty printed format
    */
   public ResourceMethodDocView(RecordTemplate methodSchema,
-                               RequestResponsePair capture,
+                               ExampleRequestResponse capture,
                                String doc,
                                String prettyPrintRequestEntity,
                                String prettyPrintResponseEntity)
@@ -83,7 +84,7 @@ public class ResourceMethodDocView
   /**
    * @return example data of request and response
    */
-  public RequestResponsePair getCapture()
+  public ExampleRequestResponse getCapture()
   {
     return _capture;
   }
@@ -113,7 +114,7 @@ public class ResourceMethodDocView
   }
 
   private final RecordTemplate _methodSchema;
-  private final RequestResponsePair _capture;
+  private final ExampleRequestResponse _capture;
   private final String _doc;
   private final String _prettyPrintRequestEntity;
   private final String _prettyPrintResponseEntity;
