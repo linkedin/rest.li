@@ -10,6 +10,9 @@ Fix a bug where RecordTemplates in Array parameters were not validated.
 (RB=253429)
 Add support of reading symbolic link in Zookeeper.
 
+(RB=264751)
+Fix bug that single element is added to query param.
+
 1.14.2
 ------
 (RB=264174)
