@@ -97,7 +97,7 @@ class RAPResponseHandler extends UpstreamHandlerWithAttachment<TransportCallback
     }
     else
     {
-      LOG.debug(e.getChannel().getRemoteAddress() + ": exception on idle channel", e.getCause());
+      LOG.error(e.getChannel().getRemoteAddress() + ": exception on idle channel or during handling of response", e.getCause());
     }
     super.exceptionCaught(ctx, e);
   }
