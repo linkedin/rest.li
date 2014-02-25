@@ -21,6 +21,7 @@ import com.sun.javadoc.ClassDoc;
 import com.sun.javadoc.MethodDoc;
 import com.sun.javadoc.Parameter;
 import com.sun.javadoc.RootDoc;
+import com.sun.javadoc.Type;
 import com.sun.tools.javadoc.Main;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
@@ -198,7 +199,8 @@ public class RestLiDoclet
       final List<String> parameterTypeNames = new ArrayList<String>();
       for (Parameter param: method.parameters())
       {
-        parameterTypeNames.add(param.type().qualifiedTypeName());
+        Type type = param.type();
+        parameterTypeNames.add(type.qualifiedTypeName() + type.dimension());
       }
 
       return new MethodIdentity(method.qualifiedName(), parameterTypeNames);

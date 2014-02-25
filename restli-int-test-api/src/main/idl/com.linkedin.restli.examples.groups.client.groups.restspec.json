@@ -23,6 +23,7 @@
     } ],
     "finders" : [ {
       "name" : "complexCircuit",
+      "doc" : "Test the default value for various types",
       "parameters" : [ {
         "name" : "nativeArray",
         "type" : "{ \"type\" : \"array\", \"items\" : \"double\" }",

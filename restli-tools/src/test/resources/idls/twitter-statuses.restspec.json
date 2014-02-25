@@ -51,6 +51,7 @@
     } ],
     "actions" : [ {
       "name" : "intArrayAction",
+      "doc" : "Action array return type test case",
       "parameters" : [ {
         "name" : "ints",
         "type" : "{ \"type\" : \"array\", \"items\" : \"int\" }"
@@ -58,6 +59,7 @@
       "returns" : "{ \"type\" : \"array\", \"items\" : \"int\" }"
     }, {
       "name" : "statusArrayAction",
+      "doc" : "Action data template array return type and input type test case",
       "parameters" : [ {
         "name" : "statuses",
         "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.tools.twitter.Status\" }"

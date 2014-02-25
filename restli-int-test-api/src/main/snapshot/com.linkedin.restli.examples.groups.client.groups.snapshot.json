@@ -488,6 +488,7 @@
       },
       "finders" : [ {
         "name" : "complexCircuit",
+        "doc" : "Test the default value for various types",
         "parameters" : [ {
           "default" : "[1.1, 2.2, 3.3]",
           "name" : "nativeArray",

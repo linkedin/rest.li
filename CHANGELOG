@@ -1,6 +1,7 @@
 1.14.4
 ------
-
+(RB=265900)
+Fix a bug where documentation strings would not show up in idls/snapshots when a method parameter was an array.
 
 1.14.3
 ------
