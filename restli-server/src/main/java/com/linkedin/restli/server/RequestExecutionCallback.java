@@ -27,7 +27,8 @@ public interface RequestExecutionCallback<T>
    * Called if the asynchronous operation failed with an error.
    *
    * @param e the error
-   * @param executionReport contains data about the request execution process.
+   * @param executionReport contains data about the request execution process. This parameter will contain a value
+   *                        only if the request was a debug request.
    */
   void onError(Throwable e, RequestExecutionReport executionReport);
 
@@ -35,7 +36,8 @@ public interface RequestExecutionCallback<T>
    * Called if the asynchronous operation completed with a successful result.
    *
    * @param result the result of the asynchronous operation
-   * @param executionReport contains data about the request execution process.
+   * @param executionReport contains data about the request execution process. This parameter will contain a value
+   *                        only if the request was a debug request.
    */
   void onSuccess(T result, RequestExecutionReport executionReport);
 }

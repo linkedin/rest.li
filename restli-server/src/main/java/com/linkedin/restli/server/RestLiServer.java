@@ -164,7 +164,10 @@ public class RestLiServer extends BaseRestServer
       }
       else
       {
-        handleResourceRequest(request, requestContext, new RequestExecutionCallbackAdapter<RestResponse>(callback));
+        handleResourceRequest(request,
+                              requestContext,
+                              new RequestExecutionCallbackAdapter<RestResponse>(callback),
+                              false);
       }
     }
     else
@@ -237,14 +240,15 @@ public class RestLiServer extends BaseRestServer
             uriBuilder.replacePath(request.getURI().getPath().substring(0, debugSegmentIndex - 1));
             requestBuilder.setURI(uriBuilder.build());
 
-            handleResourceRequest(requestBuilder.build(), requestContext, callback);
+            handleResourceRequest(requestBuilder.build(), requestContext, callback, true);
           }
         },
         callback);
   }
 
   private void handleResourceRequest(final RestRequest request, final RequestContext requestContext,
-                                     final RequestExecutionCallback<RestResponse> callback)
+                                     final RequestExecutionCallback<RestResponse> callback,
+                                     final boolean isDebugMode)
   {
     try
     {
@@ -278,7 +282,7 @@ public class RestLiServer extends BaseRestServer
 
     try
     {
-      _methodInvoker.invoke(method, request, restLiCallback);
+      _methodInvoker.invoke(method, request, restLiCallback, isDebugMode);
     }
     catch (Exception e)
     {

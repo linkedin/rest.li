@@ -88,11 +88,20 @@ public class RestLiMethodInvoker
    * @param invocableMethod {@link RoutingResult}
    * @param request {@link RestRequest}
    * @param callback {@link RestLiCallback}
+   * @param isDebugMode whether the invocation will be done as part of a debug request.
    */
   public void invoke(final RoutingResult invocableMethod,
                      final RestRequest request,
-                     final RestLiCallback<Object> callback)
+                     final RestLiCallback<Object> callback,
+                     final boolean isDebugMode)
   {
+    RequestExecutionReportBuilder requestExecutionReportBuilder = null;
+
+    if (isDebugMode)
+    {
+      requestExecutionReportBuilder = new RequestExecutionReportBuilder();
+    }
+
     // Fast fail if the request headers are invalid.
     try
     {
@@ -101,7 +110,7 @@ public class RestLiMethodInvoker
     }
     catch (RestLiServiceException e)
     {
-      callback.onErrorPre(e, new RequestExecutionReportBuilder().build());
+      callback.onErrorPre(e, getRequestExecutionReport(requestExecutionReportBuilder));
       return;
     }
     // Request headers are valid. Proceed with the invocation....
@@ -129,7 +138,7 @@ public class RestLiMethodInvoker
 
     try
     {
-      doInvoke(resourceMethodDescriptor, callback, resource, args);
+      doInvoke(resourceMethodDescriptor, callback, requestExecutionReportBuilder, resource, args);
     }
     catch (IllegalAccessException e)
     {
@@ -139,11 +148,11 @@ public class RestLiMethodInvoker
 
   private void doInvoke(final ResourceMethodDescriptor descriptor,
                         final RestLiCallback<Object> callback,
+                        final RequestExecutionReportBuilder requestExecutionReportBuilder,
                         final Object resource,
                         final Object... arguments) throws IllegalAccessException
   {
     Method method = descriptor.getMethod();
-    RequestExecutionReportBuilder executionReportBuilder = new RequestExecutionReportBuilder();
 
     try
     {
@@ -151,7 +160,7 @@ public class RestLiMethodInvoker
       {
       case CALLBACK:
         int callbackIndex = descriptor.indexOfParameterType(ParamType.CALLBACK);
-        final RequestExecutionReport executionReport = executionReportBuilder.build();
+        final RequestExecutionReport executionReport = getRequestExecutionReport(requestExecutionReportBuilder);
 
         //Delegate the callback call to the request execution callback along with the
         //request execution report.
@@ -175,11 +184,11 @@ public class RestLiMethodInvoker
 
       case SYNC:
         Object applicationResult = method.invoke(resource, arguments);
-        callback.onSuccess(applicationResult, executionReportBuilder.build());
+        callback.onSuccess(applicationResult, getRequestExecutionReport(requestExecutionReportBuilder));
         break;
 
       case PROMISE:
-        if (!checkEngine(callback, descriptor, executionReportBuilder))
+        if (!checkEngine(callback, descriptor, requestExecutionReportBuilder))
         {
           break;
         }
@@ -190,12 +199,12 @@ public class RestLiMethodInvoker
             new RestLiParSeqTask(arguments, contextIndex, method, resource);
 
         // propagate the result to the callback
-        restliTask.addListener(new CallbackPromiseAdapter<Object>(callback, restliTask, executionReportBuilder));
+        restliTask.addListener(new CallbackPromiseAdapter<Object>(callback, restliTask, requestExecutionReportBuilder));
         _engine.run(restliTask);
         break;
 
       case TASK:
-        if (!checkEngine(callback, descriptor, executionReportBuilder))
+        if (!checkEngine(callback, descriptor, requestExecutionReportBuilder))
         {
           break;
         }
@@ -207,11 +216,11 @@ public class RestLiMethodInvoker
         {
           callback.onErrorApp(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
                                                            "Error in application code: null Task"),
-                              executionReportBuilder.build());
+                              getRequestExecutionReport(requestExecutionReportBuilder));
         }
         else
         {
-          task.addListener(new CallbackPromiseAdapter<Object>(callback, task, executionReportBuilder));
+          task.addListener(new CallbackPromiseAdapter<Object>(callback, task, requestExecutionReportBuilder));
           _engine.run(task);
         }
         break;
@@ -227,14 +236,14 @@ public class RestLiMethodInvoker
       {
         RestLiServiceException restLiServiceException =
             (RestLiServiceException) e.getCause();
-        callback.onErrorApp(restLiServiceException, executionReportBuilder.build());
+        callback.onErrorApp(restLiServiceException, getRequestExecutionReport(requestExecutionReportBuilder));
       }
       else
       {
         callback.onErrorApp(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
                                                        _errorResponseBuilder.getInternalErrorMessage(),
                                                        e.getCause()),
-                            executionReportBuilder.build());
+                            getRequestExecutionReport(requestExecutionReportBuilder));
       }
     }
   }
@@ -254,13 +263,19 @@ public class RestLiMethodInvoker
       final String msg = String.format(fmt, clazz, method);
       callback.onError(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
                                                   msg),
-                       executionReportBuilder.build());
+                       getRequestExecutionReport(executionReportBuilder));
       return false;
     }
     else
     {
       return true;
     }
+  }
+
+  private static RequestExecutionReport getRequestExecutionReport(
+      RequestExecutionReportBuilder requestExecutionReportBuilder)
+  {
+    return requestExecutionReportBuilder == null ? null : requestExecutionReportBuilder.build();
   }
 
   /**
@@ -335,8 +350,12 @@ public class RestLiMethodInvoker
     @Override
     public void onResolved(final Promise<T> promise)
     {
-      _executionReportBuilder.setParseqTrace(_associatedTask.getTrace());
-      RequestExecutionReport executionReport = _executionReportBuilder.build();
+      if (_executionReportBuilder != null)
+      {
+        _executionReportBuilder.setParseqTrace(_associatedTask.getTrace());
+      }
+
+      RequestExecutionReport executionReport = getRequestExecutionReport(_executionReportBuilder);
 
       if (promise.isFailed())
       {

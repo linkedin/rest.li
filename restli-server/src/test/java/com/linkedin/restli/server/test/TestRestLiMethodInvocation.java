@@ -2179,7 +2179,7 @@ public class TestRestLiMethodInvocation
                                                                             new RequestContext()), methodDescriptor);
 
     try {
-      _invoker.invoke(routingResult, request, null);
+      _invoker.invoke(routingResult, request, null, false);
       Assert.fail("expected routing exception");
     }
     catch (RoutingException e)
@@ -2210,7 +2210,7 @@ public class TestRestLiMethodInvocation
                                                                             new RequestContext()), methodDescriptor);
 
     try {
-      _invoker.invoke(routingResult, request, null);
+      _invoker.invoke(routingResult, request, null, false);
       Assert.fail("expected routing exception");
     }
     catch (RoutingException e)
@@ -2256,7 +2256,7 @@ public class TestRestLiMethodInvocation
 
     try
     {
-      _invoker.invoke(routingResult, request, null);
+      _invoker.invoke(routingResult, request, null, false);
       Assert.fail("expected template output cast exception");
     }
     catch (TemplateOutputCastException e)
@@ -2283,7 +2283,7 @@ public class TestRestLiMethodInvocation
 
     try
     {
-      _invoker.invoke(routingResult, request, null);
+      _invoker.invoke(routingResult, request, null, false);
       Assert.fail("expected routing exception");
     }
     catch (RoutingException e)
@@ -2508,7 +2508,7 @@ public class TestRestLiMethodInvocation
                       {
                         Assert.assertNull(executionReport.getParseqTrace());
                       }
-                    });
+                    }, true);
 
     // #2: Callback based Async Method Execution
     Capture<RequestExecutionReport> requestExecutionReportCapture = new Capture<RequestExecutionReport>();
@@ -2527,8 +2527,7 @@ public class TestRestLiMethodInvocation
     });
     EasyMock.replay(asyncStatusResource);
     checkAsyncInvocation(asyncStatusResource, callback, methodDescriptor, "GET", "/asyncstatuses/1",
-                         buildPathKeys(
-                             "statusID", 1L));
+                         null, buildPathKeys("statusID", 1L), true);
     Assert.assertNull(requestExecutionReportCapture.getValue().getParseqTrace());
 
     // #3: Promise based Async Method Execution
@@ -2554,7 +2553,7 @@ public class TestRestLiMethodInvocation
                       {
                         Assert.assertNotNull(executionReport.getParseqTrace());
                       }
-                    });
+                    }, true);
 
     // #4: Task based Async Method Execution
     methodDescriptor = taskStatusResourceModel.findMethod(ResourceMethod.GET);
@@ -2590,7 +2589,7 @@ public class TestRestLiMethodInvocation
                       {
                         Assert.assertNotNull(executionReport.getParseqTrace());
                       }
-                    });
+                    }, true);
   }
 
   @Test
@@ -3268,7 +3267,7 @@ public class TestRestLiMethodInvocation
                                      }
                                    });
     ServerResourceContext context = new ResourceContextImpl();
-    _invoker.invoke(new RoutingResult(context, null), request, callback);
+    _invoker.invoke(new RoutingResult(context, null), request, callback, false);
     try
     {
       latch.await();
@@ -3309,7 +3308,7 @@ public class TestRestLiMethodInvocation
                                      }
                                    });
     ServerResourceContext context = new ResourceContextImpl();
-    _invoker.invoke(new RoutingResult(context, null), request, callback);
+    _invoker.invoke(new RoutingResult(context, null), request, callback, false);
     try
     {
       latch.await();
@@ -3433,7 +3432,7 @@ public class TestRestLiMethodInvocation
                                String uri)
                                    throws URISyntaxException, RestLiSyntaxException
   {
-    checkInvocation(resource, resourceMethodDescriptor, httpMethod, uri, null, null, null);
+    checkInvocation(resource, resourceMethodDescriptor, httpMethod, uri, null, null, null, false);
   }
 
   private void checkInvocation(Object resource,
@@ -3443,7 +3442,7 @@ public class TestRestLiMethodInvocation
                                String entityBody)
                                    throws URISyntaxException, RestLiSyntaxException
   {
-    checkInvocation(resource, resourceMethodDescriptor, httpMethod, uri, entityBody, null, null);
+    checkInvocation(resource, resourceMethodDescriptor, httpMethod, uri, entityBody, null, null, false);
   }
 
   private void checkInvocation(Object resource,
@@ -3453,7 +3452,7 @@ public class TestRestLiMethodInvocation
                                MutablePathKeys pathkeys)
                                    throws URISyntaxException, RestLiSyntaxException
   {
-    checkInvocation(resource, resourceMethodDescriptor, httpMethod, uri, null, pathkeys, null);
+    checkInvocation(resource, resourceMethodDescriptor, httpMethod, uri, null, pathkeys, null, false);
   }
 
   private void checkInvocation(Object resource,
@@ -3464,7 +3463,7 @@ public class TestRestLiMethodInvocation
                                MutablePathKeys pathkeys)
       throws URISyntaxException, RestLiSyntaxException
   {
-    checkInvocation(resource, resourceMethodDescriptor, httpMethod, uri, entityBody, pathkeys, null);
+    checkInvocation(resource, resourceMethodDescriptor, httpMethod, uri, entityBody, pathkeys, null, false);
   }
 
   private void checkInvocation(Object resource,
@@ -3473,7 +3472,8 @@ public class TestRestLiMethodInvocation
                                String uri,
                                String entityBody,
                                MutablePathKeys pathkeys,
-                               final RequestExecutionCallback<RestResponse> callback)
+                               final RequestExecutionCallback<RestResponse> callback,
+                               final boolean isDebugMode)
       throws URISyntaxException, RestLiSyntaxException
   {
     assertNotNull(resource);
@@ -3502,6 +3502,15 @@ public class TestRestLiMethodInvocation
         @Override
         public void onError(final Throwable e, RequestExecutionReport executionReport)
         {
+          if (isDebugMode)
+          {
+            Assert.assertNotNull(executionReport);
+          }
+          else
+          {
+            Assert.assertNull(executionReport);
+          }
+
           if (callback != null)
           {
             callback.onError(e, executionReport);
@@ -3513,6 +3522,15 @@ public class TestRestLiMethodInvocation
         @Override
         public void onSuccess(final RestResponse result, RequestExecutionReport executionReport)
         {
+          if (isDebugMode)
+          {
+            Assert.assertNotNull(executionReport);
+          }
+          else
+          {
+            Assert.assertNull(executionReport);
+          }
+
           if (callback != null)
           {
             callback.onSuccess(result, executionReport);
@@ -3521,7 +3539,7 @@ public class TestRestLiMethodInvocation
           latch.countDown();
         }
       });
-      _invoker.invoke(routingResult, request, outerCallback);
+      _invoker.invoke(routingResult, request, outerCallback, isDebugMode);
       try
       {
         latch.await();
@@ -3574,8 +3592,27 @@ public class TestRestLiMethodInvocation
                          httpMethod,
                          uri,
                          null,
-                         pathkeys);
+                         pathkeys,
+                         false);
 
+  }
+
+  private void checkAsyncInvocation(BaseResource resource,
+                                    RestLiCallback callback,
+                                    ResourceMethodDescriptor methodDescriptor,
+                                    String httpMethod,
+                                    String uri,
+                                    String entityBody,
+                                    MutablePathKeys pathkeys) throws URISyntaxException
+  {
+    checkAsyncInvocation(resource,
+                         callback,
+                         methodDescriptor,
+                         httpMethod,
+                         uri,
+                         entityBody,
+                         pathkeys,
+                         false);
   }
 
   @SuppressWarnings({"unchecked","rawtypes"})
@@ -3585,7 +3622,8 @@ public class TestRestLiMethodInvocation
                                     String httpMethod,
                                     String uri,
                                     String entityBody,
-                                    MutablePathKeys pathkeys) throws URISyntaxException
+                                    MutablePathKeys pathkeys,
+                                    boolean isDebugMode) throws URISyntaxException
   {
     try
     {
@@ -3602,7 +3640,7 @@ public class TestRestLiMethodInvocation
           new RoutingResult(new ResourceContextImpl(pathkeys, request,
                                                     new RequestContext()), methodDescriptor);
 
-      _invoker.invoke(routingResult, request, callback);
+      _invoker.invoke(routingResult, request, callback, isDebugMode);
       EasyMock.verify(resource);
       EasyMock.verify(callback);
       Assert.assertEquals(((ServerResourceContext) routingResult.getContext()).getResponseMimeType(),
@@ -3616,7 +3654,10 @@ public class TestRestLiMethodInvocation
     finally
     {
       EasyMock.reset(callback, resource);
-      callback.onSuccess(EasyMock.anyObject(), EasyMock.isA(RequestExecutionReport.class));
+      callback.onSuccess(EasyMock.anyObject(),
+                         isDebugMode ?
+                             EasyMock.isA(RequestExecutionReport.class) :
+                             EasyMock.<RequestExecutionReport>isNull());
       EasyMock.expectLastCall().once();
       EasyMock.replay(callback);
     }
