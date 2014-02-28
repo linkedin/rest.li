@@ -523,6 +523,11 @@ public class SchemaTranslator
       return defaultValueProvider;
     }
 
+    protected boolean knownFieldInfo(RecordDataSchema.Field field)
+    {
+      return _fieldInfos.containsKey(field);
+    }
+
     protected void addFieldInfo(RecordDataSchema.Field field, FieldInfo fieldInfo)
     {
       Object existingValue = _fieldInfos.put(field, fieldInfo);
@@ -539,19 +544,22 @@ public class SchemaTranslator
       RecordDataSchema recordSchema = (RecordDataSchema) schema;
       for (RecordDataSchema.Field field : recordSchema.getFields())
       {
-        Object defaultData = field.getDefault();
-        if (defaultData != null)
+        if (knownFieldInfo(field) == false)
         {
-          path.add(DataSchemaConstants.DEFAULT_KEY);
-          _newDefaultSchema = null;
-          Object newDefault = translateField(pathList(path), defaultData, field);
-          addFieldInfo(field, new FieldInfo(_newDefaultSchema, newDefault));
-          path.remove(path.size() - 1);
-        }
-        else if (field.getOptional())
-        {
-          // no default specified and optional
-          addFieldInfo(field, FieldInfo.NULL_FIELD_INFO);
+          Object defaultData = field.getDefault();
+          if (defaultData != null)
+          {
+            path.add(DataSchemaConstants.DEFAULT_KEY);
+            _newDefaultSchema = null;
+            Object newDefault = translateField(pathList(path), defaultData, field);
+            addFieldInfo(field, new FieldInfo(_newDefaultSchema, newDefault));
+            path.remove(path.size() - 1);
+          }
+          else if (field.getOptional())
+          {
+            // no default specified and optional
+            addFieldInfo(field, FieldInfo.NULL_FIELD_INFO);
+          }
         }
       }
     }

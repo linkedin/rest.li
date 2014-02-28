@@ -885,6 +885,37 @@ public class TestSchemaTranslator
         }
       },
       {
+        // include more than once
+        "{ " +
+        "  \"type\" : \"record\", " +
+        "  \"name\" : \"foo\", " +
+        "  \"include\" : [ " +
+        "    ##T_START { " +
+        "      \"type\" : \"record\", " +
+        "      \"name\" : \"bar\", " +
+        "      \"fields\" : [ " +
+        "        { \"name\" : \"b1\", \"type\" : \"int\", \"optional\" : true } " +
+        "      ] " +
+        "    } ##T_END " +
+        "  ], " +
+        "  \"fields\" : [ " +
+        "    { " +
+        "      \"name\" : \"f1\", " +
+        "      \"type\" : { \"type\" : \"record\", \"name\" : \"f1\", \"include\" : [ \"bar\" ], \"fields\" : [] }" +
+        "    }, "+
+        "    { " +
+        "      \"name\" : \"f2\", " +
+        "      \"type\" : { \"type\" : \"record\", \"name\" : \"f2\", \"include\" : [ \"bar\" ], \"fields\" : [] }" +
+        "    } "+
+        "  ] " +
+        "}",
+        new Object[] {
+          allModes,
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"b1\", \"type\" : [ \"null\", \"int\" ], \"default\" : null }, { \"name\" : \"f1\", \"type\" : { \"type\" : \"record\", \"name\" : \"f1\", \"fields\" : [ { \"name\" : \"b1\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] } }, { \"name\" : \"f2\", \"type\" : { \"type\" : \"record\", \"name\" : \"f2\", \"fields\" : [ { \"name\" : \"b1\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] } } ] }"
+        }
+      },
+
+      {
         // inconsistent default,
         // a referenced record has an optional field "frank" with default,
         // but field of referenced record type has default value which does not provide value for "frank"
