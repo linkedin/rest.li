@@ -1325,9 +1325,10 @@ class PegasusPlugin implements Plugin<Project>
     addGeneratedDir(project, targetSourceSet, [ getDataModelConfig(project, sourceSet), project.configurations.restClientCompile ])
 
     // generate the rest client source files
-    Task generateRestClientTask = project.task(targetSourceSet.getTaskName('generate', 'restClient'), type: GenerateRestClient) {
+    Task generateRestClientTask = project.task(targetSourceSet.getTaskName('generate', 'restClient'), type: GenerateRestClient, dependsOn: project.configurations.dataTemplate) {
       inputDir = idlDir
       resolverPath = dataModels
+      runtimeClasspath = project.configurations.dataModel + project.configurations.dataTemplate.artifacts.files
       destinationDir = generatedRestClientDir
     }
 
@@ -2332,6 +2333,7 @@ class PegasusPlugin implements Plugin<Project>
   {
     @InputDirectory File inputDir
     @InputFiles FileCollection resolverPath
+    @InputFiles FileCollection runtimeClasspath
     @OutputDirectory File destinationDir
 
     @TaskAction
@@ -2360,8 +2362,14 @@ class PegasusPlugin implements Plugin<Project>
 
       project.logger.info('Generating REST client builders ...')
 
+      final ClassLoader prevContextClassLoader = Thread.currentThread().contextClassLoader
+      final URL[] classpathUrls = runtimeClasspath.collect { it.toURI().toURL() } as URL[]
+
+      final ClassLoader generatorClassLoader = (ClassLoader) project.property(GENERATOR_CLASSLOADER_NAME)
+      Thread.currentThread().contextClassLoader = new URLClassLoader(classpathUrls, generatorClassLoader)
+
       final String resolverPathStr = resolverPath.collect { it.path }.join(File.pathSeparator)
-      final Class<?> stubGenerator = project.property(GENERATOR_CLASSLOADER_NAME).loadClass('com.linkedin.restli.tools.clientgen.RestRequestBuilderGenerator')
+      final Class<?> stubGenerator = generatorClassLoader.loadClass('com.linkedin.restli.tools.clientgen.RestRequestBuilderGenerator')
       destinationDir.mkdirs()
 
       for (PegasusOptions.ClientItem clientItem: pegasusClientOptions.clientItems)
@@ -2382,6 +2390,8 @@ class PegasusPlugin implements Plugin<Project>
         final String restModelFilePath = "${inputDir}${File.separatorChar}${clientItem.restModelFileName}"
         stubGenerator.run(resolverPathStr, defaultPackage, false, false, destinationDir.path, [restModelFilePath] as String[])
       }
+
+      Thread.currentThread().contextClassLoader = prevContextClassLoader
     }
   }
 }

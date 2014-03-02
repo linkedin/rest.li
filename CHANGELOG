@@ -1,5 +1,7 @@
 1.14.6
 ------
+(RB=268867)
+Add dataTemplate to generateRestClient classpath for smaller Java binding.
 
 1.14.5
 ------
