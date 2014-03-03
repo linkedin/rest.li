@@ -914,7 +914,6 @@ public class TestSchemaTranslator
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"b1\", \"type\" : [ \"null\", \"int\" ], \"default\" : null }, { \"name\" : \"f1\", \"type\" : { \"type\" : \"record\", \"name\" : \"f1\", \"fields\" : [ { \"name\" : \"b1\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] } }, { \"name\" : \"f2\", \"type\" : { \"type\" : \"record\", \"name\" : \"f2\", \"fields\" : [ { \"name\" : \"b1\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] } } ] }"
         }
       },
-
       {
         // inconsistent default,
         // a referenced record has an optional field "frank" with default,
