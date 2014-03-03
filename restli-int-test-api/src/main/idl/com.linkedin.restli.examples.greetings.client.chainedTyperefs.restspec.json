@@ -5,6 +5,7 @@
   "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
   "doc" : "Uses CustomNonNegativeLong which is a typeref to CustomLong, which is a typeref to long\n\n Note that there are no coercers in this typeref chain.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.ChainedTyperefResource",
   "association" : {
+    "identifier" : "chainedTyperefsId",
     "assocKeys" : [ {
       "name" : "age",
       "type" : "com.linkedin.restli.examples.typeref.api.CustomNonNegativeLongRef"
@@ -23,7 +24,7 @@
       "assocKeys" : [ "birthday" ]
     } ],
     "entity" : {
-      "path" : "/chainedTyperefs/birthday={birthday}&age={age}"
+      "path" : "/chainedTyperefs/{chainedTyperefsId}"
     }
   }
 }

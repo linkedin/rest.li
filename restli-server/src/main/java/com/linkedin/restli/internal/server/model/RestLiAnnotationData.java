@@ -77,7 +77,7 @@ public class RestLiAnnotationData
     _name = associationAnno.name();
     _namespace = associationAnno.namespace();
     _keys = associationAnno.assocKeys();
-    _keyName = null;
+    _keyName = RestAnnotations.DEFAULT.equals(associationAnno.keyName()) ? null : associationAnno.keyName();
     _typerefInfoClass = null;
   }
 

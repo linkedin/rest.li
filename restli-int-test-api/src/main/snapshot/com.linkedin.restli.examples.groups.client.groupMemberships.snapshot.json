@@ -114,7 +114,7 @@
         "method" : "get_all"
       } ],
       "entity" : {
-        "path" : "/groupMemberships/memberID={memberID}&groupID={groupID}"
+        "path" : "/groupMemberships/{groupMembershipsId}"
       },
       "finders" : [ {
         "name" : "group",
@@ -151,7 +151,8 @@
       }, {
         "name" : "memberID",
         "type" : "int"
-      } ]
+      } ],
+      "identifier" : "groupMembershipsId"
     },
     "name" : "groupMemberships",
     "doc" : "Association between members and groups\n\ngenerated from: com.linkedin.restli.examples.groups.server.rest.impl.GroupMembershipsResource2",

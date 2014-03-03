@@ -26,7 +26,7 @@
       } ]
     } ],
     "entity" : {
-      "path" : "/greetings/assoc/{id}"
+      "path" : "/greetings/assoc/key1={key1}"
     }
   }
 }

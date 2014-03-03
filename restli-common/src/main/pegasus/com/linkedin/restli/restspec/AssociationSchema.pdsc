@@ -4,6 +4,12 @@
   "namespace" : "com.linkedin.restli.restspec",
   "fields" : [
     {
+      "name" : "identifier",
+      "doc" : "name of the identifier (key) for this collection",
+      "type" : "string",
+      "optional" : true
+    },
+    {
       "name" : "assocKeys",
       "doc" : "list of association keys for this association",
       "type" : { "type" : "array", "items" : "AssocKeySchema" }

@@ -5,6 +5,7 @@
   "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
   "doc" : "generated from: com.linkedin.restli.examples.greetings.server.CustomTypesResource3",
   "association" : {
+    "identifier" : "customTypes3Id",
     "assocKeys" : [ {
       "name" : "dateId",
       "type" : "com.linkedin.restli.examples.typeref.api.DateRef"
@@ -23,7 +24,7 @@
       "assocKeys" : [ "dateId" ]
     } ],
     "entity" : {
-      "path" : "/customTypes3/longId={longId}&dateId={dateId}"
+      "path" : "/customTypes3/{customTypes3Id}"
     }
   }
 }

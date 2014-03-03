@@ -24,7 +24,7 @@
         "method" : "batch_get"
       } ],
       "entity" : {
-        "path" : "/follows/followerID={followerID}&followeeID={followeeID}",
+        "path" : "/follows/{followsId}",
         "actions" : [ {
           "name" : "entityAction",
           "returns" : "com.linkedin.restli.tools.twitter.Status"
@@ -63,7 +63,8 @@
       }, {
         "name" : "followerID",
         "type" : "long"
-      } ]
+      } ],
+      "identifier" : "followsId"
     },
     "name" : "follows",
     "doc" : "Association resource for the 'following' relationship\n\ngenerated from: com.linkedin.restli.tools.twitter.FollowsAssociativeResource",

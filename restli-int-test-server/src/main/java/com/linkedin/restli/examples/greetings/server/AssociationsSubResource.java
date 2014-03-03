@@ -24,8 +24,14 @@ package com.linkedin.restli.examples.greetings.server;
 import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.server.PathKeys;
+import com.linkedin.restli.server.annotations.Action;
+import com.linkedin.restli.server.annotations.Finder;
+import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -51,5 +57,32 @@ public class AssociationsSubResource extends CollectionResourceTemplate<String, 
     message.setTone(Tone.FRIENDLY);
     message.setMessage(destKey);
     return message;
+  }
+
+  @Finder("tone")
+  public List<Message> findByTone(@QueryParam("tone") Tone tone)
+  {
+    List<Message> messages = new ArrayList<Message>(2);
+
+    Message message1 = new Message();
+    message1.setId("one");
+    message1.setMessage("one");
+    message1.setTone(tone);
+
+    Message message2 = new Message();
+    message2.setId("two");
+    message2.setMessage("two");
+    message2.setTone(tone);
+
+    messages.add(message1);
+    messages.add(message2);
+
+    return messages;
+  }
+
+  @Action(name="action")
+  public int action()
+  {
+    return 1;
   }
 }

@@ -32,7 +32,7 @@
         "method" : "batch_get"
       } ],
       "entity" : {
-        "path" : "/albumEntry/photoId={photoId}&albumId={albumId}"
+        "path" : "/albumEntry/{albumEntryId}"
       },
       "finders" : [ {
         "name" : "search",
@@ -57,6 +57,7 @@
         "name" : "photoId",
         "type" : "long"
       } ],
+      "identifier" : "albumEntryId",
       "actions" : [ {
         "name" : "purge",
         "doc" : "Delete all entries in the db with matching album/photo IDs. If either albumId or photoId\n params are not supplied they are treated as a wildcard.",

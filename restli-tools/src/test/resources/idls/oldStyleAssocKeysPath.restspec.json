@@ -1,0 +1,41 @@
+{
+  "name" : "assocKeysPath",
+  "path" : "/assocKeysPath",
+  "schema" : "com.linkedin.greetings.api.Greeting",
+  "doc" : "An idl using old-style association paths.",
+  "association" : {
+    "assocKeys" : [ {
+        "name" : "key1",
+        "type" : "string"
+    }, {
+        "name" : "key2",
+        "type" : "int"
+    } ],
+    "supports": [ "get" ],
+    "methods" : [ {
+      "method" : "get"
+    } ],
+    "entity" : {
+      "path" : "/assocKeysPath/key1={key1}&key2={key2}",
+      "subresources" : [ {
+        "name" : "sub",
+        "path" : "/assocKeysPath/key1={key1}&key2={key2}/sub",
+        "schema" : "com.linkedin.greetings.api.Greeting",
+        "doc" : "the sub resource",
+        "collection" : {
+            "identifier" : {
+                "name" : "subId",
+                "type" : "string"
+            },
+            "supports" : [ "get" ],
+            "methods" : [ {
+                "method" : "get"
+            } ],
+            "entity" : {
+                "path" : "/assocKeysPath/key1={key1}&key2={key2}/sub/{subId}"
+            }
+        }
+      } ]
+    }
+  }
+}

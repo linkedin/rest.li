@@ -20,7 +20,9 @@ import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import com.linkedin.restli.client.ActionRequest;
 import com.linkedin.restli.client.BatchGetKVRequest;
+import com.linkedin.restli.client.FindRequest;
 import com.linkedin.restli.client.GetRequest;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
@@ -31,6 +33,7 @@ import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.examples.greetings.api.Message;
+import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.client.AssociationsBatchGetBuilder;
 import com.linkedin.restli.examples.greetings.client.AssociationsBatchPartialUpdateBuilder;
 import com.linkedin.restli.examples.greetings.client.AssociationsBatchUpdateBuilder;
@@ -39,6 +42,7 @@ import com.linkedin.restli.examples.greetings.client.AssociationsFindByAssocKeyF
 import com.linkedin.restli.examples.greetings.client.AssociationsFindByAssocKeyFinderOptBuilder;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.testng.Assert;
@@ -140,6 +144,27 @@ public class TestAssociationsResource extends RestLiIntegrationTest
     Message message = REST_CLIENT.sendRequest(request).getResponse().getEntity();
     Assert.assertEquals(message.getId(), "s&rc");
     Assert.assertEquals(message.getMessage(), "d&est");
+  }
+
+  @Test
+  public void testSubresourceFinder() throws RemoteInvocationException
+  {
+    FindRequest<Message> request = new AssociationsSubBuilders().findByTone().destKey("dest").srcKey("src").toneParam(Tone.FRIENDLY).build();
+    List<Message> messages = REST_CLIENT.sendRequest(request).getResponse().getEntity().getElements();
+
+    for (Message message : messages)
+    {
+      Assert.assertEquals(message.getTone(), Tone.FRIENDLY);
+    }
+  }
+
+  @Test
+  public void testSubresourceAction() throws RemoteInvocationException
+  {
+    ActionRequest<Integer> request = new AssociationsSubBuilders().actionAction().destKey("dest").srcKey("src").build();
+    Integer integer = REST_CLIENT.sendRequest(request).getResponse().getEntity();
+
+    Assert.assertEquals(integer, new Integer(1));
   }
 
   @Test

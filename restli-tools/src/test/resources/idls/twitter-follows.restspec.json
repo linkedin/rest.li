@@ -4,6 +4,7 @@
   "schema" : "com.linkedin.restli.tools.twitter.Followed",
   "doc" : "Association resource for the 'following' relationship\n\ngenerated from: com.linkedin.restli.tools.twitter.FollowsAssociativeResource",
   "association" : {
+    "identifier" : "followsId",
     "assocKeys" : [ {
       "name" : "followeeID",
       "type" : "long"
@@ -49,7 +50,7 @@
       "assocKeys" : [ "followerID" ]
     } ],
     "entity" : {
-      "path" : "/follows/followerID={followerID}&followeeID={followeeID}",
+      "path" : "/follows/{followsId}",
       "actions" : [ {
         "name" : "entityAction",
         "returns" : "com.linkedin.restli.tools.twitter.Status"

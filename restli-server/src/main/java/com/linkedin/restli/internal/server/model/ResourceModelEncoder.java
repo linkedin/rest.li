@@ -83,6 +83,7 @@ public class ResourceModelEncoder
 {
   public static final String DEPRECATED_ANNOTATION_NAME = "deprecated";
   public static final String DEPRECATED_ANNOTATION_DOC_FIELD = "doc";
+  public static final String COMPOUND_KEY_TYPE_NAME = "CompoundKey";
 
   private final DataCodec codec = new JacksonDataCodec();
 
@@ -374,27 +375,9 @@ public class ResourceModelEncoder
     {
       if (addEntityElement)
       {
-        if (resourceModel.getKeys().size() == 1)
+        if (resourceModel.getKeys().size() >= 1)
         {
           sb.insert(0, "/{" + resourceModel.getKeyName() + "}");
-        }
-        else if(resourceModel.getKeys().size() > 1)
-        {
-          List<Key> sortedKeys = new ArrayList<Key>(resourceModel.getKeys());
-          Collections.sort(sortedKeys, new Comparator<Key>()
-          {
-            @Override
-            public int compare(final Key o1, final Key o2)
-            {
-              return o1.getName().compareTo(o2.getName());
-            }
-          });
-          for (Key key : sortedKeys)
-          {
-            sb.insert(0, key.getName() + "={" + key.getName() + "}");
-            sb.insert(0, "&");
-          }
-          sb.setCharAt(0, '/');
         }
       }
       sb.insert(0, "/" + resourceModel.getName());
@@ -621,6 +604,9 @@ public class ResourceModelEncoder
     }
 
     associationSchema.setAssocKeys(assocKeySchemaArray);
+
+    associationSchema.setIdentifier(collectionModel.getKeyName());
+
   }
 
 

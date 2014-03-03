@@ -721,6 +721,7 @@ public class ExampleRequestResponseGenerator
             builder.pathKey(keyName, generateKey(resourceSpec, resourceSchema, null));
             break;
           case COMPOUND:
+            // old assocKey version
             Map<String, CompoundKey.TypeInfo> keyParts = resourceSpec.getKeyParts();
             for (Map.Entry<String, CompoundKey.TypeInfo> infoEntry : keyParts.entrySet())
             {
@@ -728,6 +729,9 @@ public class ExampleRequestResponseGenerator
               CompoundKey.TypeInfo typeInfo = infoEntry.getValue();
               builder.pathKey(key, _dataGenerator.buildData(key, typeInfo.getBinding().getSchema()));
             }
+            // new key version
+            String assocKeyName = resourceSchema.getAssociation().getIdentifier();
+            builder.pathKey(assocKeyName, generateKey(resourceSpec, resourceSchema, null));
             break;
           case NONE:
             break;

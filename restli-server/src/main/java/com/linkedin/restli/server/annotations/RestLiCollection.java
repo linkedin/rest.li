@@ -43,7 +43,7 @@ public @interface RestLiCollection
   /** The namespace of the resource, used to qualify the IDL name*/
   String namespace() default "";
 
-  /** The symbolic name of the key for this resource e.g. 'groupID'. Optional, defaults to "id" */
+  /** The symbolic name of the key for this resource e.g. 'groupID'. Optional, defaults to "[resourceName]id" */
   String keyName() default RestAnnotations.DEFAULT;
 
   Class<? extends TyperefInfo> keyTyperefClass() default RestAnnotations.NULL_TYPEREF_INFO.class;

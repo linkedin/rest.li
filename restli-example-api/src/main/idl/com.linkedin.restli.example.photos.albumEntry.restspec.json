@@ -5,6 +5,7 @@
   "schema" : "com.linkedin.restli.example.AlbumEntry",
   "doc" : "Many-many association between photos and albums.\n\n <pre>\n   new AlbumEntryBuilders().findBySearch()\n     .albumIdParam(5)\n     .photoIdParam(100)\n     .build();\n </pre>\n\ngenerated from: com.linkedin.restli.example.impl.AlbumEntryResource",
   "association" : {
+    "identifier" : "albumEntryId",
     "assocKeys" : [ {
       "name" : "albumId",
       "type" : "long"
@@ -55,7 +56,7 @@
       "returns" : "int"
     } ],
     "entity" : {
-      "path" : "/albumEntry/photoId={photoId}&albumId={albumId}"
+      "path" : "/albumEntry/{albumEntryId}"
     }
   }
 }

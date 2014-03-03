@@ -5,6 +5,7 @@
   "schema" : "com.linkedin.restli.examples.groups.api.GroupMembership",
   "doc" : "Association between members and groups\n\ngenerated from: com.linkedin.restli.examples.groups.server.rest.impl.GroupMembershipsResource2",
   "association" : {
+    "identifier" : "groupMembershipsId",
     "assocKeys" : [ {
       "name" : "groupID",
       "type" : "int"
@@ -61,7 +62,7 @@
       "assocKeys" : [ "memberID" ]
     } ],
     "entity" : {
-      "path" : "/groupMemberships/memberID={memberID}&groupID={groupID}"
+      "path" : "/groupMemberships/{groupMembershipsId}"
     }
   }
 }

@@ -97,6 +97,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -303,7 +304,11 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
           {
             ResourceSchema resource = _codec.readResourceSchema(new FileInputStream(sourceFile));
             pushCurrentLocation(new FileDataSchemaLocation(sourceFile));
-            generateResourceFacade(resource, sourceFile.getAbsolutePath(), new HashMap<String, JClass>());
+            generateResourceFacade(resource,
+                                   sourceFile.getAbsolutePath(),
+                                   new HashMap<String, JClass>(),
+                                   new HashMap<String, JClass>(),
+                                   new HashMap<String, List<String>>());
             popCurrentLocation();
           }
           catch (JClassAlreadyExistsException e)
@@ -335,7 +340,9 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
 
   private JDefinedClass generateResourceFacade(ResourceSchema resource,
                                                String sourceFile,
-                                               Map<String, JClass> pathKeyTypes)
+                                               Map<String, JClass> pathKeyTypes,
+                                               Map<String, JClass> assocKeyTypes,
+                                               Map<String, List<String>> pathToAssocKeys)
           throws JClassAlreadyExistsException, IOException
   {
     ValidationResult validationResult = ValidateDataAgainstSchema.validate(resource.data(), resource.schema(),
@@ -425,7 +432,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     JMethod primaryResourceGetter = facadeClass.method(JMod.PUBLIC | JMod.STATIC, String.class, "getPrimaryResource");
     primaryResourceGetter.body()._return(originalResourceField);
 
-    List<String> pathKeys = getPathKeys(resourcePath);
+    List<String> pathKeys = getPathKeys(resourcePath, pathToAssocKeys);
 
     JClass keyTyperefClass = null;
     JClass keyClass;
@@ -485,10 +492,16 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
 
       assocKeyTypeInfos = generateAssociationKey(facadeClass, association);
 
+      String keyName = getAssociationKey(resource, association);
+      pathKeyTypes.put(keyName, keyClass);
+
+      List<String> assocKeys = new ArrayList<String>(4);
       for(Map.Entry<String, AssocKeyTypeInfo> entry: assocKeyTypeInfos.entrySet())
       {
-        pathKeyTypes.put(entry.getKey(), entry.getValue().getBindingType());
+        assocKeys.add(entry.getKey());
+        assocKeyTypes.put(entry.getKey(), entry.getValue().getBindingType());
       }
+      pathToAssocKeys.put(keyName, assocKeys);
     }
     else if (resource.getSimple() != null)
     {
@@ -591,6 +604,8 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
                           resourceName,
                           pathKeys,
                           pathKeyTypes,
+                          assocKeyTypes,
+                          pathToAssocKeys,
                           requestOptionsField);
 
       if (resourceSchemaClass == CollectionSchema.class ||
@@ -606,10 +621,12 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
                         resourceName,
                         pathKeys,
                         pathKeyTypes,
+                        assocKeyTypes,
+                        pathToAssocKeys,
                         requestOptionsField);
       }
 
-      generateSubResources(sourceFile, subresources, pathKeyTypes);
+      generateSubResources(sourceFile, subresources, pathKeyTypes, assocKeyTypes, pathToAssocKeys);
     }
     else //action set
     {
@@ -641,6 +658,8 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
                     resourceName,
                     pathKeys,
                     pathKeyTypes,
+                    assocKeyTypes,
+                    pathToAssocKeys,
                     requestOptionsField);
 
 
@@ -648,6 +667,64 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     generateClassAnnotations(facadeClass, resource);
 
     return facadeClass;
+  }
+
+  private String getAssociationKey(ResourceSchema resource, AssociationSchema association)
+  {
+    if (association.getIdentifier() == null)
+    {
+      return resource.getName() + "Id";
+    }
+    else
+    {
+      return association.getIdentifier();
+    }
+  }
+
+  private static List<String> fixOldStylePathKeys(List<String> pathKeys, String resourcePath, Map<String, List<String>> pathToAssocKeys)
+  {
+    if (resourcePath.contains("="))
+    {
+      // this is an old-style IDL.
+      List<String> newPathKeys = new ArrayList<String>(pathKeys.size());
+      Map<String, String> assocToPathKeys = reverseMap(pathToAssocKeys);
+      Set<String> prevRealPathKeys = new HashSet<String>();
+      for (String currKey : pathKeys)
+      {
+        if (assocToPathKeys.containsKey(currKey))
+        {
+          // currKey actually an assocKey
+          if (!prevRealPathKeys.contains(assocToPathKeys.get(currKey)))
+          {
+            // if we already added the real path key, don't add it again.
+            prevRealPathKeys.add(assocToPathKeys.get(currKey));
+            newPathKeys.add(assocToPathKeys.get(currKey));
+          }
+        }
+        else
+        {
+          newPathKeys.add(currKey);
+        }
+      }
+      return newPathKeys;
+    }
+    else
+    {
+      return pathKeys;
+    }
+  }
+
+  private static Map<String, String> reverseMap(Map<String, List<String>> toReverse)
+  {
+    Map<String, String> reversed = new HashMap<String, String>();
+    for (Map.Entry<String, List<String>> entry: toReverse.entrySet())
+    {
+      for (String element : entry.getValue())
+      {
+        reversed.put(element, entry.getKey());
+      }
+    }
+    return reversed;
   }
 
   private void validateResourceMethod(Class<?> resourceSchemaClass, String resourceName, ResourceMethod resourceMethod)
@@ -776,10 +853,10 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     return getCodeModel().ref(ComplexResourceKey.class).narrow(keyClass, paramsClass);
   }
 
-  private static List<String> getPathKeys(String basePath)
+  private static List<String> getPathKeys(String basePath, Map<String, List<String>> pathToAssocKeys)
   {
     UriTemplate template = new UriTemplate(basePath);
-    return template.getTemplateVariables();
+    return fixOldStylePathKeys(template.getTemplateVariables(), basePath, pathToAssocKeys);
   }
 
 
@@ -792,7 +869,9 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
 
   private void generateSubResources(String sourceFile,
                                     ResourceSchemaArray subresources,
-                                    Map<String, JClass> pathKeyTypes)
+                                    Map<String, JClass> pathKeyTypes,
+                                    Map<String, JClass> assocKeyTypes,
+                                    Map<String, List<String>> pathToAssocKeys)
           throws JClassAlreadyExistsException, IOException
   {
     if (subresources == null)
@@ -802,7 +881,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
 
     for (ResourceSchema resource : subresources)
     {
-      generateResourceFacade(resource, sourceFile, pathKeyTypes);
+      generateResourceFacade(resource, sourceFile, pathKeyTypes, assocKeyTypes, pathToAssocKeys);
     }
   }
 
@@ -816,6 +895,8 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
                                String resourceName,
                                List<String> pathKeys,
                                Map<String, JClass> pathKeyTypes,
+                               Map<String, JClass> assocKeyTypes,
+                               Map<String, List<String>> pathToAssocKeys,
                                JFieldVar requestOptionsField)
           throws JClassAlreadyExistsException
   {
@@ -851,7 +932,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
           }
         }
 
-        generatePathKeyBindingMethods(pathKeys, finderBuilderClass, pathKeyTypes);
+        generatePathKeyBindingMethods(pathKeys, finderBuilderClass, pathKeyTypes, assocKeyTypes, pathToAssocKeys);
 
         generateAssocKeyBindingMethods(assocKeys, finderBuilderClass, finderKeys);
 
@@ -959,14 +1040,39 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
 
   private void generatePathKeyBindingMethods(List<String> pathKeys,
                                              JDefinedClass builderClass,
-                                             Map<String, JClass> pathKeyTypes)
+                                             Map<String, JClass> pathKeyTypes,
+                                             Map<String, JClass> assocKeyTypes,
+                                             Map<String, List<String>> pathToAssocKeys)
   {
     for (String pathKey : pathKeys)
     {
-      JMethod keyMethod = builderClass.method(JMod.PUBLIC, builderClass, nameCamelCase(pathKey + "Key"));
-      JVar keyMethodParam = keyMethod.param(pathKeyTypes.get(pathKey), "key");
-      keyMethod.body().add(JExpr._super().invoke("pathKey").arg(pathKey).arg(keyMethodParam));
-      keyMethod.body()._return(JExpr._this());
+      if (pathToAssocKeys.get(pathKey) != null)
+      {
+        JFieldVar compoundKey = builderClass.field(JMod.PRIVATE,
+                                                   CompoundKey.class,
+                                                   nameCamelCase(pathKey),
+                                                   JExpr._new(pathKeyTypes.get(pathKey)));
+
+        for (String assocKeyName : pathToAssocKeys.get(pathKey))
+        {
+          JMethod assocKeyMethod = builderClass.method(JMod.PUBLIC, builderClass, nameCamelCase(assocKeyName + "Key"));
+          JVar assocKeyMethodParam = assocKeyMethod.param(assocKeyTypes.get(assocKeyName), "key");
+
+          // put stuff into CompoundKey
+          assocKeyMethod.body().add(compoundKey.invoke("append").arg(assocKeyName).arg(assocKeyMethodParam));
+          // old and new super.pathKey()s
+          assocKeyMethod.body().add(JExpr._super().invoke("pathKey").arg(assocKeyName).arg(assocKeyMethodParam));
+          assocKeyMethod.body().add(JExpr._super().invoke("pathKey").arg(pathKey).arg(compoundKey)); // new...
+          assocKeyMethod.body()._return(JExpr._this());
+        }
+      }
+      else
+      {
+        JMethod keyMethod = builderClass.method(JMod.PUBLIC, builderClass, nameCamelCase(pathKey + "Key"));
+        JVar keyMethodParam = keyMethod.param(pathKeyTypes.get(pathKey), "key");
+        keyMethod.body().add(JExpr._super().invoke("pathKey").arg(pathKey).arg(keyMethodParam));
+        keyMethod.body()._return(JExpr._this());
+      }
     }
   }
 
@@ -979,6 +1085,8 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
                                String resourceName,
                                List<String> pathKeys,
                                Map<String, JClass> pathKeyTypes,
+                               Map<String, JClass> assocKeyTypes,
+                               Map<String, List<String>> pathToAssocKeys,
                                JFieldVar requestOptionsField)
           throws JClassAlreadyExistsException
   {
@@ -994,6 +1102,8 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
                              resourceName,
                              pathKeys,
                              pathKeyTypes,
+                             assocKeyTypes,
+                             pathToAssocKeys,
                              requestOptionsField);
       }
     }
@@ -1010,6 +1120,8 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
                              resourceName,
                              pathKeys,
                              pathKeyTypes,
+                             assocKeyTypes,
+                             pathToAssocKeys,
                              requestOptionsField);
       }
     }
@@ -1020,8 +1132,11 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
                                     JClass keyClass,
                                     ActionSchema action,
                                     JVar resourceSpecField,
-                                    String resourceName, List<String> pathKeys,
+                                    String resourceName,
+                                    List<String> pathKeys,
                                     Map<String, JClass> pathKeyTypes,
+                                    Map<String, JClass> assocKeysTypes,
+                                    Map<String, List<String>> pathToAssocKeys,
                                     JFieldVar requestOptionsField)
           throws JClassAlreadyExistsException
   {
@@ -1070,7 +1185,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
       }
     }
 
-    generatePathKeyBindingMethods(pathKeys, actionBuilderClass, pathKeyTypes);
+    generatePathKeyBindingMethods(pathKeys, actionBuilderClass, pathKeyTypes, assocKeysTypes, pathToAssocKeys);
 
     generateClassJavadoc(actionBuilderClass, action);
     generateFactoryMethodJavadoc(actionMethod, action);
@@ -1086,6 +1201,8 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
                                     String resourceName,
                                     List<String> pathKeys,
                                     Map<String, JClass> pathKeyTypes,
+                                    Map<String, JClass> assocKeyTypes,
+                                    Map<String, List<String>> pathToAssocKeys,
                                     JFieldVar requestOptionsField)
           throws JClassAlreadyExistsException
   {
@@ -1121,7 +1238,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
         JClass builderClass = getCodeModel().ref(entry.getValue()).narrow(keyClass, valueClass);
         JDefinedClass derivedBuilder = generateDerivedBuilder(builderClass, valueClass, null, resourceName + nameCapsCase(methodName) + "Builder",
                                                               facadeClass.getPackage());
-        generatePathKeyBindingMethods(pathKeys, derivedBuilder, pathKeyTypes);
+        generatePathKeyBindingMethods(pathKeys, derivedBuilder, pathKeyTypes, assocKeyTypes, pathToAssocKeys);
 
         JMethod factoryMethod = facadeClass.method(JMod.PUBLIC, derivedBuilder, nameCamelCase(methodName));
         factoryMethod.body()._return(JExpr._new(derivedBuilder).arg(baseUriField).arg(resourceSpecField).arg(requestOptionsField));

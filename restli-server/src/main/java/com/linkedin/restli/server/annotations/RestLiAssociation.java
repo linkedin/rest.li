@@ -52,6 +52,9 @@ public @interface RestLiAssociation
   /** The namespace of the resource, used to qualify the IDL name*/
   String namespace() default "";
 
+  /** The symbolic name of the key for this resource e.g. 'groupID'. Optional, defaults to "[resourceName]id" */
+  String keyName() default RestAnnotations.DEFAULT;
+
   /** An ordered list of associative keys used in this association (required) */
   Key[] assocKeys();
 }

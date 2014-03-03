@@ -47,7 +47,7 @@
         "method" : "batch_update"
       } ],
       "entity" : {
-        "path" : "/customTypes3/longId={longId}&dateId={dateId}"
+        "path" : "/customTypes3/{customTypes3Id}"
       },
       "finders" : [ {
         "name" : "dateOnly",
@@ -60,7 +60,8 @@
       }, {
         "name" : "longId",
         "type" : "com.linkedin.restli.examples.typeref.api.CustomLongRef"
-      } ]
+      } ],
+      "identifier" : "customTypes3Id"
     },
     "name" : "customTypes3",
     "doc" : "generated from: com.linkedin.restli.examples.greetings.server.CustomTypesResource3",

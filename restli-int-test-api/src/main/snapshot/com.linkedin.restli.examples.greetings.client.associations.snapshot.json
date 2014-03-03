@@ -38,23 +38,34 @@
           "schema" : "com.linkedin.restli.examples.greetings.api.Message",
           "name" : "associationsSub",
           "doc" : "generated from: com.linkedin.restli.examples.greetings.server.AssociationsSubResource",
-          "path" : "/associations/src={src}&dest={dest}/associationsSub",
+          "path" : "/associations/{associationsId}/associationsSub",
           "collection" : {
             "methods" : [ {
               "method" : "get"
             } ],
             "entity" : {
-              "path" : "/associations/src={src}&dest={dest}/associationsSub/{subKey}"
+              "path" : "/associations/{associationsId}/associationsSub/{subKey}"
             },
+            "finders" : [ {
+              "name" : "tone",
+              "parameters" : [ {
+                "name" : "tone",
+                "type" : "com.linkedin.restli.examples.greetings.api.Tone"
+              } ]
+            } ],
             "supports" : [ "get" ],
             "identifier" : {
               "name" : "subKey",
               "type" : "string"
-            }
+            },
+            "actions" : [ {
+              "name" : "action",
+              "returns" : "int"
+            } ]
           },
           "namespace" : "com.linkedin.restli.examples.greetings.client"
         } ],
-        "path" : "/associations/src={src}&dest={dest}"
+        "path" : "/associations/{associationsId}"
       },
       "finders" : [ {
         "name" : "assocKeyFinder",
@@ -70,7 +81,8 @@
       }, {
         "name" : "src",
         "type" : "string"
-      } ]
+      } ],
+      "identifier" : "associationsId"
     },
     "name" : "associations",
     "doc" : "Demonstrates an assocation resource keyed by string.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.AssociationsResource",
