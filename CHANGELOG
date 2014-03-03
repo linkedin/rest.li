@@ -1,5 +1,11 @@
+1.14.6
+------
+
 1.14.5
 ------
+(RB=268683) 
+Fix bug in Data to Avro schema translation in which assertion will be thrown if the same record schema is included
+more than once, and that schema contains fields that either have a default value or is optional.
 
 1.14.4
 ------
