@@ -16,15 +16,6 @@
 
 package com.linkedin.data.template;
 
-import java.io.FileDescriptor;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.util.Collections;
-import java.util.IdentityHashMap;
-import java.util.Map;
 
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataList;
@@ -35,6 +26,17 @@ import com.linkedin.data.schema.DataSchemaUtil;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.SchemaParserFactory;
+
+import java.io.FileDescriptor;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
+import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Map;
 
 public class DataTemplateUtil
 {
@@ -747,6 +749,49 @@ public class DataTemplateUtil
     {
       return (T) coercer.coerceOutput(object);
     }
+  }
+
+  /**
+   * Convert a {@link DataList} to the array of desired target class.
+   *
+   * This conversion is recursive. For example, a {@link DataList} containing collection of
+   * @{link DataList}s can be converted to int[][].
+   *
+   * @param list {@link DataList} that provides the value to be converted
+   * @param arrayItemType provides the item class of the result array.
+   * @return the converted result array.
+   * @throws TemplateOutputCastException if the specified object cannot be coerced to the
+   *                                     specified target class.
+   */
+  public static Object convertDataListToArray(DataList list, Class<?> arrayItemType)
+  {
+    final Object result = Array.newInstance(arrayItemType, list.size());
+
+    for (int i = 0; i < list.size(); ++i)
+    {
+      final Object valueItem = list.get(i);
+      final Object arrayItem;
+      if (arrayItemType.isArray())
+      {
+        final Class<?> componentType = arrayItemType.getComponentType();
+        if (!(valueItem instanceof DataList))
+        {
+          throw new TemplateOutputCastException("Cannot coerce item with type " + valueItem.getClass().getName() + " to array of " + componentType.getName());
+        }
+        arrayItem = convertDataListToArray((DataList) valueItem, componentType);
+      }
+      else if (DataTemplate.class.isAssignableFrom(arrayItemType))
+      {
+        arrayItem = wrap(valueItem, arrayItemType.asSubclass(DataTemplate.class));
+      }
+      else
+      {
+        arrayItem = coerceOutput(valueItem, arrayItemType);
+      }
+      Array.set(result, i, arrayItem);
+    }
+
+    return result;
   }
 
   /* package scope */

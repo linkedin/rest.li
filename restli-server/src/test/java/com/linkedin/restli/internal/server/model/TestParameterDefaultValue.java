@@ -1,3 +1,19 @@
+/*
+   Copyright (c) 2013 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package com.linkedin.restli.internal.server.model;
 
 
@@ -17,20 +33,23 @@ import com.linkedin.data.template.LongArray;
 import com.linkedin.data.template.LongMap;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.data.template.StringMap;
-import com.linkedin.data.template.TemplateOutputCastException;
-import com.linkedin.pegasus.generator.test.Fixed16;
+import com.linkedin.pegasus.generator.test.ArrayTest;
+import com.linkedin.pegasus.generator.test.EnumFruits;
+import com.linkedin.pegasus.generator.test.EnumFruitsArray;
+import com.linkedin.pegasus.generator.test.FixedMD5;
+import com.linkedin.pegasus.generator.test.FixedMD5Array;
 import com.linkedin.pegasus.generator.test.RecordBar;
 import com.linkedin.pegasus.generator.test.RecordBarArray;
 import com.linkedin.pegasus.generator.test.RecordBarMap;
 import com.linkedin.pegasus.generator.test.Union;
-import com.linkedin.restli.internal.common.ValueConverter;
 import com.linkedin.restli.server.ResourceConfigException;
-import org.testng.Assert;
-import org.testng.annotations.Test;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 
 /**
@@ -44,88 +63,18 @@ public class TestParameterDefaultValue
   }
 
   @Test
-  public void testSimpleArray()
-  {
-    Object result;
-
-    Assert.assertEquals(test("[\"A\", \"B\"]", String[].class), new String[]{"A", "B"});
-
-    result = test("[true, false]", boolean[].class);
-    Assert.assertEquals(result, new boolean[] { true, false });
-    Assert.assertSame(result.getClass(), boolean[].class);
-    result = test("[true, false]", Boolean[].class);
-    Assert.assertEquals(result, new Boolean[] { true, false });
-    Assert.assertSame(result.getClass(), Boolean[].class);
-
-    result = test("[1, 2, 3]", int[].class);
-    Assert.assertEquals(result, new int[] { 1, 2, 3 });
-    Assert.assertSame(result.getClass(), int[].class);
-    result = test("[4, 5, 6]", Integer[].class);
-    Assert.assertEquals(result, new Integer[] { 4, 5, 6 });
-    Assert.assertSame(result.getClass(), Integer[].class);
-
-    result = test("[1, 2, 3]", float[].class);
-    Assert.assertEquals(result, new float[] { 1F, 2F, 3F });
-    Assert.assertSame(result.getClass(), float[].class);
-
-    result = test("[1.1, 2.2, 3.3]", double[].class);
-    Assert.assertEquals(result, new double[] { 1.1D, 2.2D, 3.3D });
-    Assert.assertSame(result.getClass(), double[].class);
-    result = test("[1.1, 2.2, 3.3]", Double[].class);
-    Assert.assertEquals(result, new Double[] { 1.1D, 2.2D, 3.3D });
-    Assert.assertSame(result.getClass(), Double[].class);
-
-    result = test("[1.1, 2.2, 3.3]", int[].class);
-    Assert.assertEquals(result, new int[] { 1, 2, 3 });
-    Assert.assertSame(result.getClass(), int[].class);
-
-    Assert.assertEquals(test("[" + _bytes16Quoted + ", " + _bytes16Quoted + "]", ByteString[].class),
-                        new ByteString[] { ByteString.copyAvroString(_bytes16, true), ByteString.copyAvroString(_bytes16, true) });
-  }
-
-  @Test
-  public void testComplexArray()
-  {
-    Object result;
-
-    result = test("[[1.1], [2.2]]", DoubleArray[].class);
-    Assert.assertEquals(result, new DoubleArray[] { new DoubleArray(Arrays.asList(1.1)), new DoubleArray(Arrays.asList(2.2)) });
-    Assert.assertSame(result.getClass(), DoubleArray[].class);
-
-    result = test("[" + _bytes16Quoted + ", " + _bytes16Quoted + "]", Fixed16[].class);
-    Assert.assertEquals(result, new Fixed16[] { new Fixed16(_bytes16), new Fixed16(_bytes16) });
-    Assert.assertSame(result.getClass(), Fixed16[].class);
-
-    result = test("[{\"A\": 3}, {\"B\": 4}]", IntegerMap[].class);
-    final Map<String, Integer> integerFixture1 = new HashMap<String, Integer>();
-    final Map<String, Integer> integerFixture2 = new HashMap<String, Integer>();
-    integerFixture1.put("A", 3);
-    integerFixture2.put("B", 4);
-    Assert.assertEquals(result, new IntegerMap[] { new IntegerMap(integerFixture1), new IntegerMap(integerFixture2) });
-    Assert.assertSame(result.getClass(), IntegerMap[].class);
-
-    result = test("[{\"location\": \"LinkedIn\"}, {\"location\": \"Mountain View\"}]", RecordBar[].class);
-    final DataMap dataFixture1 = new DataMap();
-    final DataMap dataFixture2 = new DataMap();
-    dataFixture1.put("location", "LinkedIn");
-    dataFixture2.put("location", "Mountain View");
-    Assert.assertEquals(result, new RecordBar[]{ new RecordBar(dataFixture1), new RecordBar(dataFixture2) });
-    Assert.assertSame(result.getClass(), RecordBar[].class);
-  }
-
-  @Test
   public void testFixed()
   {
-    final Object result = test(_bytes16, Fixed16.class);
-    Assert.assertEquals(result, new Fixed16(_bytes16));
-    Assert.assertSame(result.getClass(), Fixed16.class);
+    final Object result = test(_bytes16, FixedMD5.class);
+    Assert.assertEquals(result, new FixedMD5(_bytes16));
+    Assert.assertSame(result.getClass(), FixedMD5.class);
   }
 
-  @Test(expectedExceptions = TemplateOutputCastException.class)
+  @Test(expectedExceptions = ResourceConfigException.class)
   public void testFailedFixed()
   {
     // cannot create fixed with mismatched data size
-   test(_bytes16.substring(1), Fixed16.class);
+   test(_bytes16.substring(1), FixedMD5.class);
   }
 
   @Test
@@ -145,6 +94,10 @@ public class TestParameterDefaultValue
     Assert.assertEquals(result, new IntegerArray(Arrays.asList(1, 2, 3)));
     Assert.assertSame(result.getClass(), IntegerArray.class);
 
+    result = test("[1.1, 2.2, 3.3]", IntegerArray.class);
+    Assert.assertEquals(result, new IntegerArray(Arrays.asList(1, 2, 3)));
+    Assert.assertSame(result.getClass(), IntegerArray.class);
+
     result = test("[2, 3, 4]", LongArray.class);
     Assert.assertEquals(result, new LongArray(Arrays.asList(2L, 3L, 4L)));
     Assert.assertSame(result.getClass(), LongArray.class);
@@ -157,9 +110,25 @@ public class TestParameterDefaultValue
     Assert.assertEquals(result, new DoubleArray(Arrays.asList(2.2D, 3.3D, 4.4D)));
     Assert.assertSame(result.getClass(), DoubleArray.class);
 
+    result = test("[\"APPLE\", \"BANANA\"]", EnumFruitsArray.class);
+    Assert.assertEquals(result, new EnumFruitsArray(Arrays.asList(EnumFruits.APPLE, EnumFruits.BANANA)));
+    Assert.assertSame(result.getClass(), EnumFruitsArray.class);
+
     result = test("[" + _bytes16Quoted + ", " + _bytes16Quoted + "]", BytesArray.class);
     Assert.assertEquals(result, new BytesArray(Arrays.asList(ByteString.copyAvroString(_bytes16, true), ByteString.copyAvroString(_bytes16, true))));
     Assert.assertSame(result.getClass(), BytesArray.class);
+
+    result = test("[" + _bytes16Quoted + ", " + _bytes16Quoted + "]", FixedMD5Array.class);
+    Assert.assertEquals(result, new FixedMD5Array(Arrays.asList(new FixedMD5(_bytes16), new FixedMD5(_bytes16))));
+    Assert.assertSame(result.getClass(), FixedMD5Array.class);
+
+    result = test("[{\"string\": \"String in union\"}, {\"int\": 1}]", ArrayTest.UnionArrayArray.class);
+    final ArrayTest.UnionArray fixture1 = new ArrayTest.UnionArray();
+    fixture1.setString("String in union");
+    final ArrayTest.UnionArray fixture2 = new ArrayTest.UnionArray();
+    fixture2.setInt(1);
+    Assert.assertEquals(result, new ArrayTest.UnionArrayArray(Arrays.asList(fixture1, fixture2)));
+    Assert.assertSame(result.getClass(), ArrayTest.UnionArrayArray.class);
 
     result = test("[{\"location\": \"Sunnyvale\"}, {\"location\": \"Mountain View\"}]", RecordBarArray.class);
     final DataMap dataFixture1 = new DataMap();
@@ -174,7 +143,7 @@ public class TestParameterDefaultValue
   public void testFailedWrappedArray()
   {
     // validation should fail
-   test("[\"Hello\", \"World\"]", IntegerArray.class);
+    test("[\"Hello\", \"World\"]", IntegerArray.class);
   }
 
   @Test
@@ -254,7 +223,7 @@ public class TestParameterDefaultValue
   @Test
   public void testRecord()
   {
-    Map<String, Object> fixture;
+    final Map<String, Object> fixture;
 
     fixture = new HashMap<String, Object>();
     fixture.put("location", "LinkedIn");
@@ -270,7 +239,7 @@ public class TestParameterDefaultValue
   @Test
   public void testUnion()
   {
-    Object result;
+    final Object result;
 
     result = test("{\"string\": \"String in union\"}", Union.class);
     final Union fixture = new Union();
