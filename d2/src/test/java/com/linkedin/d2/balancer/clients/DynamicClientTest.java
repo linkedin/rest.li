@@ -63,6 +63,7 @@ import static org.testng.Assert.fail;
 public class DynamicClientTest
 {
   @Test(groups = { "small", "back-end" })
+  @SuppressWarnings("deprecation")
   public void testClient() throws URISyntaxException
   {
     TestLoadBalancer balancer = new TestLoadBalancer(false);

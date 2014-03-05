@@ -36,6 +36,7 @@ public class RpcClientRunnableFactory implements ClientRunnableFactory
   private final RpcEchoClient _echoClient;
   private final RequestGenerator<String> _reqGen;
 
+  @SuppressWarnings("deprecation")
   public RpcClientRunnableFactory(Client client, URI uri, RequestGenerator<String> reqGen)
   {
     _client = client;

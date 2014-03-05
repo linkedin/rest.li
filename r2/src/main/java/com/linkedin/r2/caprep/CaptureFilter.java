@@ -91,6 +91,7 @@ public class CaptureFilter implements RequestFilter, RpcResponseFilter, RestResp
   }
 
   @Override
+  @Deprecated
   public void onRpcResponse(RpcResponse res, RequestContext requestContext,
                             Map<String, String> wireAttrs,
                             NextFilter<RpcRequest, RpcResponse> nextFilter)
@@ -100,6 +101,7 @@ public class CaptureFilter implements RequestFilter, RpcResponseFilter, RestResp
   }
 
   @Override
+  @Deprecated
   public void onRpcError(Throwable ex, RequestContext requestContext, Map<String, String> wireAttrs,
                          NextFilter<RpcRequest, RpcResponse> nextFilter)
   {

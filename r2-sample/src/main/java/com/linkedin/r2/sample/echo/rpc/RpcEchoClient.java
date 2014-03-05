@@ -37,6 +37,7 @@ public class RpcEchoClient implements EchoService
   private final URI _uri;
   private final Client _client;
 
+  @Deprecated
   public RpcEchoClient(URI uri, Client client)
   {
     _uri = uri;
@@ -44,6 +45,8 @@ public class RpcEchoClient implements EchoService
   }
 
   @Override
+  @Deprecated
+  @SuppressWarnings("deprecation")
   public void echo(String msg, final Callback<String> callback)
   {
     final RpcRequest request = new RpcRequestBuilder(_uri)

@@ -56,7 +56,9 @@ public interface TransportClient
    * @param requestContext context for the request
    * @param wireAttrs attributes that should be sent over the wire to the server
    * @param callback the callback to invoke with the response
+   * @deprecated r2 rpc is not supported, use rest instead
    */
+  @Deprecated
   void rpcRequest(RpcRequest request,
                   RequestContext requestContext,
                   Map<String, String> wireAttrs,

@@ -38,12 +38,15 @@ public class RpcEchoServer implements RpcRequestHandler
 
   private final EchoService _service;
 
+  @Deprecated
   public RpcEchoServer(EchoService service)
   {
     _service = service;
   }
 
   @Override
+  @Deprecated
+  @SuppressWarnings("deprecation")
   public void handleRequest(RpcRequest request, Callback<RpcResponse> callback)
   {
     final String msg = request.getEntity().asString(CHARSET);

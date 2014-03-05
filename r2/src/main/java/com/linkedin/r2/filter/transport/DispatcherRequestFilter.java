@@ -55,6 +55,8 @@ public class DispatcherRequestFilter implements RpcRequestFilter, RestRequestFil
   }
 
   @Override
+  @Deprecated
+  @SuppressWarnings("deprecation")
   public void onRpcRequest(RpcRequest req, final RequestContext requestContext,
                            Map<String, String> wireAttrs,
                            final NextFilter<RpcRequest, RpcResponse> nextFilter)

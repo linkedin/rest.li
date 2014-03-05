@@ -132,6 +132,7 @@ public class DefaultMessageSerializer implements MessageSerializer
   }
 
   @Override
+  @Deprecated
   public RpcRequest readRpcRequest(InputStream in) throws IOException
   {
     final RpcRequestBuilder builder = new RpcRequestBuilder(URI.create(""));
@@ -152,6 +153,7 @@ public class DefaultMessageSerializer implements MessageSerializer
   }
 
   @Override
+  @Deprecated
   public RpcResponse readRpcResponse(InputStream in) throws IOException
   {
     final RpcResponseBuilder builder = new RpcResponseBuilder();

@@ -37,12 +37,14 @@ public class TestRpcCaptureFilter extends AbstractCaptureFilterTest
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   protected Request request()
   {
     return FilterUtil.simpleRpcRequest();
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   protected Response response()
   {
     return FilterUtil.simpleRpcResponse();

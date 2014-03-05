@@ -138,6 +138,7 @@ public class ReplaceableFilter implements RestFilter, RpcFilter
   }
 
   @Override
+  @Deprecated
   public void onRpcRequest(RpcRequest req,
                            RequestContext requestContext,
                            Map<String, String> wireAttrs,
@@ -155,6 +156,7 @@ public class ReplaceableFilter implements RestFilter, RpcFilter
   }
 
   @Override
+  @Deprecated
   public void onRpcResponse(RpcResponse res,
                             RequestContext requestContext,
                             Map<String, String> wireAttrs,
@@ -175,6 +177,7 @@ public class ReplaceableFilter implements RestFilter, RpcFilter
   }
 
   @Override
+  @Deprecated
   public void onRpcError(Throwable ex,
                          RequestContext requestContext,
                          Map<String, String> wireAttrs,

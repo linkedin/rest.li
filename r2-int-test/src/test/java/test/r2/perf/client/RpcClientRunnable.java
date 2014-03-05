@@ -41,6 +41,7 @@ import java.util.concurrent.atomic.AtomicReference;
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   protected void sendMessage(String nextMsg, Callback<String> callback)
   {
     _echoClient.echo(nextMsg, callback);

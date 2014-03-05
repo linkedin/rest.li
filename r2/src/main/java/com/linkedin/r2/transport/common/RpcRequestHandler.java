@@ -36,6 +36,8 @@ public interface RpcRequestHandler
    *
    * @param request the request to process
    * @param callback the callback to notify when request processing has completed
+   * @deprecated r2 rpc is not supported, use rest instead
    */
+  @Deprecated
   void handleRequest(RpcRequest request, Callback<RpcResponse> callback);
 }

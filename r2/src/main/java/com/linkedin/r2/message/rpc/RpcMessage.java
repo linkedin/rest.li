@@ -41,6 +41,8 @@ public interface RpcMessage extends Message
    * message instance.
    *
    * @return a builder for this message
+   * @deprecated r2 rpc is not supported, use rest instead
    */
+  @Deprecated
   RpcMessageBuilder<? extends RpcMessageBuilder<?>> rpcBuilder();
 }

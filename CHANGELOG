@@ -1,7 +1,13 @@
+1.14.7
+------
+
 1.14.6
 ------
 (RB=268867)
 Add dataTemplate to generateRestClient classpath for smaller Java binding.
+
+(RB=270034)
+Deprecate R2 RPC.
 
 1.14.5
 ------

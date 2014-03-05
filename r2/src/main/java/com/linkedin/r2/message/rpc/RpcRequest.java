@@ -37,6 +37,8 @@ public interface RpcRequest extends RpcMessage, Request
    * request instance.
    *
    * @return a builder for this request
+   * @deprecated r2 rpc is not supported, use rest instead
    */
+  @Deprecated
   RpcRequestBuilder builder();
 }

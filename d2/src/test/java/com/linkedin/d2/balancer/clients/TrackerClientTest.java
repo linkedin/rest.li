@@ -48,6 +48,7 @@ import static org.testng.Assert.assertTrue;
 public class TrackerClientTest
 {
   @Test(groups = { "small", "back-end" })
+  @SuppressWarnings("deprecation")
   public void testClient() throws URISyntaxException
   {
     URI uri = URI.create("http://test.qa.com:1234/foo");
@@ -118,6 +119,8 @@ public class TrackerClientTest
     }
 
     @Override
+    @Deprecated
+    @SuppressWarnings("deprecation")
     public void rpcRequest(RpcRequest request,
                            RequestContext requestContext,
                            Map<String, String> wireAttrs,

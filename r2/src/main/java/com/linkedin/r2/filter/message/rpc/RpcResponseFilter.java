@@ -41,7 +41,9 @@ public interface RpcResponseFilter extends Filter
    * @param wireAttrs the wire attributes of the response.
    * @param nextFilter the next filter in the chain.  Concrete implementations should invoke
    *                   {@link NextFilter#onResponse} to continue the filter chain.
+   * @deprecated rpc is not supported, use rest instead
    */
+  @Deprecated
   void onRpcResponse(RpcResponse res,
                      RequestContext requestContext,
                      Map<String, String> wireAttrs,
@@ -55,7 +57,10 @@ public interface RpcResponseFilter extends Filter
    * @param wireAttrs the wire attributes of the response (if any).
    * @param nextFilter the next filter in the chain.  Concrete implementations should invoke
    *                   {@link NextFilter#onError} to continue the filter chain.
+   *
+   * @deprecated rpc is not supported, use rest instead
    */
+  @Deprecated
   void onRpcError(Throwable ex,
                   RequestContext requestContext,
                   Map<String, String> wireAttrs,

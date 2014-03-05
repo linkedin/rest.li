@@ -58,6 +58,7 @@ public class TransportClientAdapter extends AbstractClient
   }
 
   @Override
+  @Deprecated
   public void rpcRequest(RpcRequest request,
                          RequestContext requestContext,
                          Callback<RpcResponse> callback)

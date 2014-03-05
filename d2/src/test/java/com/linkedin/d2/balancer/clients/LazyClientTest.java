@@ -38,6 +38,7 @@ import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 public class LazyClientTest
 {
   @Test(groups = { "small", "back-end" })
+  @SuppressWarnings("deprecation")
   public void testClient()
   {
     LazyClientTestFactory factory = new LazyClientTestFactory();
@@ -94,6 +95,8 @@ public class LazyClientTest
         }
 
         @Override
+        @Deprecated
+        @SuppressWarnings("deprecation")
         public void rpcRequest(RpcRequest request,
                                RequestContext requestContext,
                                Map<String, String> wireAttrs,

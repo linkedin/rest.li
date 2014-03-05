@@ -128,6 +128,7 @@ public class R2D2Client
       }
     }
 
+    @SuppressWarnings("deprecation")
     private void rpcFuture()
     {
       try

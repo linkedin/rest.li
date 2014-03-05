@@ -232,6 +232,7 @@ public class TestFilterChainImpl
     assertMessageCounts(0, 0, 1, filter3);
   }
 
+  @SuppressWarnings("deprecation")
   private void fireRpcRequest(FilterChain fc)
   {
     fc.onRpcRequest(new RpcRequestBuilder(URI.create("test")).build(),
@@ -239,6 +240,7 @@ public class TestFilterChainImpl
     );
   }
 
+  @SuppressWarnings("deprecation")
   private void fireRpcResponse(FilterChain fc)
   {
     fc.onRpcResponse(new RpcResponseBuilder().build(),
@@ -246,6 +248,7 @@ public class TestFilterChainImpl
     );
   }
 
+  @SuppressWarnings("deprecation")
   private void fireRpcError(FilterChain fc)
   {
     fc.onRpcError(new Exception(),

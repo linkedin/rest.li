@@ -70,6 +70,7 @@ public interface MessageSerializer
    * @return a {@link RpcRequest} object obtained from the stream.
    * @throws IOException
    */
+  @Deprecated
   RpcRequest readRpcRequest(InputStream in) throws IOException;
 
   /**
@@ -88,5 +89,6 @@ public interface MessageSerializer
    * @return a {@link RpcResponse} object obtained from the stream.
    * @throws IOException
    */
+  @Deprecated
   RpcResponse readRpcResponse(InputStream in) throws IOException;
 }

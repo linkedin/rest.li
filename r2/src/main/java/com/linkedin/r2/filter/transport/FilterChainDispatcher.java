@@ -55,6 +55,8 @@ public class FilterChainDispatcher implements TransportDispatcher
   }
 
   @Override
+  @Deprecated
+  @SuppressWarnings("deprecation")
   public void handleRpcRequest(RpcRequest req, Map<String, String> wireAttrs,
                                TransportCallback<RpcResponse> callback)
   {

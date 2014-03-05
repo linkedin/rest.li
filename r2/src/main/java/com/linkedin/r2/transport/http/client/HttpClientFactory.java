@@ -617,6 +617,8 @@ public class HttpClientFactory implements TransportClientFactory
     }
 
     @Override
+    @Deprecated
+    @SuppressWarnings("deprecation")
     public void rpcRequest(RpcRequest request, RequestContext requestContext,
                            Map<String, String> wireAttrs, TransportCallback<RpcResponse> callback)
     {

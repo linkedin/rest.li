@@ -56,6 +56,7 @@ public class HttpDispatcher
    * @param req the request to be handled.
    * @param callback the callback to be invoked with the response or error.
    */
+  @SuppressWarnings("deprecation")
   public void handleRequest(RestRequest req,
                             TransportCallback<RestResponse> callback)
   {

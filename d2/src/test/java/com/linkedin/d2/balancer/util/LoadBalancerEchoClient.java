@@ -86,6 +86,7 @@ public class LoadBalancerEchoClient
     _random = new Random();
   }
 
+  @SuppressWarnings("deprecation")
   public void startClient() throws URISyntaxException,
       InterruptedException,
       ExecutionException,

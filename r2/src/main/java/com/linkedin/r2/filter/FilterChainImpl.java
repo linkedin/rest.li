@@ -69,6 +69,7 @@ import com.linkedin.r2.message.rpc.RpcResponse;
   }
 
   @Override
+  @Deprecated
   public void onRpcRequest(RpcRequest req, RequestContext requestContext,
                            Map<String, String> wireAttrs)
   {
@@ -77,6 +78,7 @@ import com.linkedin.r2.message.rpc.RpcResponse;
   }
 
   @Override
+  @Deprecated
   public void onRpcResponse(RpcResponse res, RequestContext requestContext,
                             Map<String, String> wireAttrs)
   {
@@ -85,6 +87,7 @@ import com.linkedin.r2.message.rpc.RpcResponse;
   }
 
   @Override
+  @Deprecated
   public void onRpcError(Exception ex,
                          RequestContext requestContext,
                          Map<String, String> wireAttrs)
@@ -127,6 +130,7 @@ import com.linkedin.r2.message.rpc.RpcResponse;
     return doAddFirst(_restFilters, adaptRestFilter(filter));
   }
 
+  @Deprecated
   private List<MessageFilter> addLastRpc(Filter filter)
   {
     return doAddLast(_rpcFilters, adaptRpcFilter(filter));
@@ -261,6 +265,7 @@ import com.linkedin.r2.message.rpc.RpcResponse;
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public void onRequest(Request req,
                           RequestContext requestContext,
                           Map<String, String> wireAttrs,
@@ -283,6 +288,7 @@ import com.linkedin.r2.message.rpc.RpcResponse;
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public void onResponse(Response res, RequestContext requestContext,
                            Map<String, String> wireAttrs,
                            NextFilter<Request, Response> nextFilter)
@@ -294,6 +300,7 @@ import com.linkedin.r2.message.rpc.RpcResponse;
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public void onError(Throwable ex,
                         RequestContext requestContext,
                         Map<String, String> wireAttrs,

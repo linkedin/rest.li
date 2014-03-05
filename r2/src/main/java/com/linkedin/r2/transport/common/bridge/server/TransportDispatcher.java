@@ -41,6 +41,7 @@ public interface TransportDispatcher
    * @param wireAttrs the wire attributes of the request.
    * @param callback a {@link TransportCallback} to be called with the {@link RpcResponse}.
    */
+  @Deprecated
   void handleRpcRequest(RpcRequest req, Map<String, String> wireAttrs,
                         TransportCallback<RpcResponse> callback);
 

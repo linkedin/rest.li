@@ -45,6 +45,8 @@ import java.net.URI;
   }
 
   @Override
+  @Deprecated
+  @SuppressWarnings("deprecation")
   public RpcRequestBuilder builder()
   {
     return new RpcRequestBuilder(this);

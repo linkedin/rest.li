@@ -93,6 +93,8 @@ public class TestGreetingsClientProtocolVersionHeader extends RestLiIntegrationT
     }
 
     @Override
+    @Deprecated
+    @SuppressWarnings("deprecation")
     public void rpcRequest(RpcRequest request, RequestContext requestContext, Callback<RpcResponse> callback)
     {
       __client.rpcRequest(request, requestContext, callback);

@@ -36,7 +36,9 @@ public final class RpcRequestBuilder
    * Constructs a new builder using the given uri.
    *
    * @param uri the URI for the service involved in the request
+   * @deprecated r2 rpc is not supported, use rest instead
    */
+  @Deprecated
   public RpcRequestBuilder(URI uri)
   {
     setURI(uri);
@@ -47,7 +49,9 @@ public final class RpcRequestBuilder
    * in the original message.
    *
    * @param request the request to copy
+   * @deprecated r2 rpc is not supported, use rest instead
    */
+  @Deprecated
   public RpcRequestBuilder(RpcRequest request)
   {
     super(request);
@@ -56,12 +60,14 @@ public final class RpcRequestBuilder
   }
 
   @Override
+  @Deprecated
   public URI getURI()
   {
     return _uri;
   }
 
   @Override
+  @Deprecated
   public RpcRequestBuilder setURI(URI uri)
   {
     ArgumentUtil.notNull(uri, "uri");
@@ -72,12 +78,14 @@ public final class RpcRequestBuilder
   }
 
   @Override
+  @Deprecated
   public RpcRequest build()
   {
     return new RpcRequestImpl(getEntity(), getURI());
   }
 
   @Override
+  @Deprecated
   public RpcRequest buildCanonical()
   {
     return new RpcRequestImpl(getEntity(), getURI().normalize());

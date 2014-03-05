@@ -138,6 +138,8 @@ public class HttpBridge
    * @param req the incoming HTTP request
    * @return the incoming RPC request
    */
+  @Deprecated
+  @SuppressWarnings("deprecation")
   public static RpcRequest toRpcRequest(RestRequest req)
   {
     return new RpcRequestBuilder(req.getURI())
@@ -166,6 +168,7 @@ public class HttpBridge
    * @param callback the callback to receive the outgoing HTTP response
    * @return the callback to receive the outgoing RPC response
    */
+  @Deprecated
   public static TransportCallback<RpcResponse> httpToRpcCallback(final TransportCallback<RestResponse> callback)
   {
     return new TransportCallback<RpcResponse>()
@@ -198,6 +201,8 @@ public class HttpBridge
    * @param request the request, used to provide better context in case an error occurs
    * @return the callback to receive the incoming HTTP response
    */
+  @Deprecated
+  @SuppressWarnings("deprecation")
   public static TransportCallback<RestResponse> rpcToHttpCallback(final TransportCallback<RpcResponse> callback,
                                                                   RpcRequest request)
   {

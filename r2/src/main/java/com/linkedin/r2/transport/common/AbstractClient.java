@@ -72,12 +72,14 @@ public abstract class AbstractClient implements Client
   }
 
   @Override
+  @Deprecated
   public Future<RpcResponse> rpcRequest(RpcRequest request)
   {
     return rpcRequest(request, _EMPTY_CONTEXT);
   }
 
   @Override
+  @Deprecated
   public Future<RpcResponse> rpcRequest(RpcRequest request, RequestContext requestContext)
   {
     final FutureCallback<RpcResponse> future = new FutureCallback<RpcResponse>();
@@ -86,6 +88,7 @@ public abstract class AbstractClient implements Client
   }
 
   @Override
+  @Deprecated
   public void rpcRequest(RpcRequest request, Callback<RpcResponse> callback)
   {
     rpcRequest(request, _EMPTY_CONTEXT, callback);

@@ -37,12 +37,14 @@ public class TestRpcReplayFilter extends AbstractReplayFilterTest
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   protected Request request()
   {
     return FilterUtil.simpleRpcRequest();
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   protected Response response()
   {
     return FilterUtil.simpleRpcResponse();

@@ -31,6 +31,7 @@ public abstract class BaseRpcMessageBuilder<B extends BaseRpcMessageBuilder<B>>
   /**
    * Constructs a new builder with no initial values.
    */
+  @Deprecated
   public BaseRpcMessageBuilder()
   {
   }
@@ -41,6 +42,7 @@ public abstract class BaseRpcMessageBuilder<B extends BaseRpcMessageBuilder<B>>
    *
    * @param message the message to copy
    */
+  @Deprecated
   public BaseRpcMessageBuilder(Message message)
   {
     super(message);

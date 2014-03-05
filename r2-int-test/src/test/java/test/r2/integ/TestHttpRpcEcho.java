@@ -47,6 +47,7 @@ public class TestHttpRpcEcho extends AbstractHttpEchoServiceTest
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   protected EchoService getEchoClient(Client client, URI uri)
   {
     return new RpcEchoClient(Bootstrap.createHttpURI(uri), client);

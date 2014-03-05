@@ -130,6 +130,7 @@ public class CapRepFilter implements RpcFilter, RestFilter, CapRepAdmin
   }
 
   @Override
+  @Deprecated
   public void onRpcRequest(RpcRequest req, RequestContext requestContext,
                            Map<String, String> wireAttrs,
                            NextFilter<RpcRequest, RpcResponse> nextFilter)
@@ -138,6 +139,7 @@ public class CapRepFilter implements RpcFilter, RestFilter, CapRepAdmin
   }
 
   @Override
+  @Deprecated
   public void onRpcResponse(RpcResponse res, RequestContext requestContext,
                             Map<String, String> wireAttrs,
                             NextFilter<RpcRequest, RpcResponse> nextFilter)
@@ -146,6 +148,7 @@ public class CapRepFilter implements RpcFilter, RestFilter, CapRepAdmin
   }
 
   @Override
+  @Deprecated
   public void onRpcError(Throwable ex, RequestContext requestContext, Map<String, String> wireAttrs,
                          NextFilter<RpcRequest, RpcResponse> nextFilter)
   {

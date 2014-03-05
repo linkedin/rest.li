@@ -31,18 +31,24 @@ import com.linkedin.data.ByteString;
   }
 
   @Override
+  @Deprecated
+  @SuppressWarnings("deprecation")
   public RpcResponseBuilder builder()
   {
     return new RpcResponseBuilder(this);
   }
 
   @Override
+  @Deprecated
+  @SuppressWarnings("deprecation")
   public RpcResponseBuilder responseBuilder()
   {
     return builder();
   }
 
   @Override
+  @Deprecated
+  @SuppressWarnings("deprecation")
   public boolean equals(Object o)
   {
     return super.equals(o) && o instanceof RpcResponseImpl;

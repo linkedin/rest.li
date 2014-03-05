@@ -32,15 +32,19 @@ public interface RpcMessageBuilder<B extends RpcMessageBuilder<B>> extends Messa
    * be used to build the appropriate concrete type.
    *
    * @return an RpcMessage from the settings in this builder
+   * @deprecated r2 rpc is not supported, use rest instead
    */
   @Override
+  @Deprecated
   RpcMessage build();
 
   /**
    * Similar to {@link #build}, but the returned Message is in canonical form.
    *
    * @return an RpcMessage from the settings in this builder.
+   * @deprecated r2 rpc is not supported, use rest instead
    */
   @Override
+  @Deprecated
   RpcMessage buildCanonical();
 }

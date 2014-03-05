@@ -43,6 +43,7 @@ import java.util.Map;
  */
 public class ContextDispatcher implements TransportDispatcher
 {
+  @SuppressWarnings("deprecation")
   private static final RpcRequestHandler DEFAULT_RPC_HANDLER = new RpcRequestHandler() {
     @Override
     public void handleRequest(RpcRequest req, Callback<RpcResponse> callback)
@@ -66,6 +67,19 @@ public class ContextDispatcher implements TransportDispatcher
   /**
    * Construct a new instance with the specified dispatcher maps.
    *
+   * @param restDispatcher a map from path to {@link RestRequestHandler}.  REST requests whose first
+   *                       path segment matches the map key will be dispatched to the respective
+   *                       handler.
+   */
+  public ContextDispatcher(Map<String, RestRequestHandler> restDispatcher)
+  {
+    _rpcHandlers = null;
+    _restHandlers = restDispatcher;
+  }
+
+  /**
+   * Construct a new instance with the specified dispatcher maps.
+   *
    * @param rpcDispatcher a map from path to {@link RpcRequestHandler}.  RPC requests whose first
    *                      path segment matches the map key will be dispatched to the respective
    *                      handler.
@@ -73,6 +87,7 @@ public class ContextDispatcher implements TransportDispatcher
    *                       path segment matches the map key will be dispatched to the respective
    *                       handler.
    */
+  @Deprecated
   public ContextDispatcher(Map<String, RpcRequestHandler> rpcDispatcher,
                         Map<String, RestRequestHandler> restDispatcher)
   {
@@ -81,6 +96,8 @@ public class ContextDispatcher implements TransportDispatcher
   }
 
   @Override
+  @Deprecated
+  @SuppressWarnings("deprecation")
   public void handleRpcRequest(RpcRequest req, Map<String, String> wireAttrs,
                                TransportCallback<RpcResponse> callback)
   {

@@ -85,7 +85,9 @@ public interface Client
    *
    * @param request the request to issue
    * @return a future to wait for the response
+   * @deprecated r2 rpc is not supported, use rest instead
    */
+  @Deprecated
   Future<RpcResponse> rpcRequest(RpcRequest request);
 
   /**
@@ -96,7 +98,9 @@ public interface Client
    * @param request the request to issue
    * @param requestContext context for the request
    * @return a future to wait for the response
+   * @deprecated r2 rpc is not supported, use rest instead
    */
+  @Deprecated
   Future<RpcResponse> rpcRequest(RpcRequest request, RequestContext requestContext);
 
   /**
@@ -106,7 +110,9 @@ public interface Client
    *
    * @param request the request to issue
    * @param callback the callback to invoke with the response
+   * @deprecated r2 rpc is not supported, use rest instead
    */
+  @Deprecated
   void rpcRequest(RpcRequest request, Callback<RpcResponse> callback);
 
   /**
@@ -117,7 +123,9 @@ public interface Client
    * @param request the request to issue
    * @param requestContext context for the request
    * @param callback the callback to invoke with the response
+   * @deprecated r2 rpc is not supported, use rest instead
    */
+  @Deprecated
   void rpcRequest(RpcRequest request, RequestContext requestContext, Callback<RpcResponse> callback);
 
   /**

@@ -49,6 +49,8 @@ import java.util.Map;
   }
 
   @Override
+  @Deprecated
+  @SuppressWarnings("deprecation")
   public void handleRpcRequest(RpcRequest req, Map<String, String> wireAttrs,
                                TransportCallback<RpcResponse> callback)
   {

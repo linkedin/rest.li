@@ -42,6 +42,7 @@ public class TransportDispatcherBuilder
    * @param handler the handler to be bound at the specified URI.
    * @return the current Builder object, for fluent interface chaining.
    */
+  @Deprecated
   public TransportDispatcherBuilder addRpcHandler(URI uri, RpcRequestHandler handler)
   {
     _rpcHandlers.put(uri, handler);
@@ -62,6 +63,7 @@ public class TransportDispatcherBuilder
    *          URI prefix and map's keys.
    * @return this.
    */
+  @Deprecated
   public TransportDispatcherBuilder addRpcHandler(URI uriPrefix,
                                                   Map<String, RpcRequestHandler> map)
   {
@@ -85,6 +87,7 @@ public class TransportDispatcherBuilder
    * @return the {@link RpcRequestHandler} which was removed, or null if no handler
    *         exists.
    */
+  @Deprecated
   public RpcRequestHandler removeRpcHandler(URI uri)
   {
     return _rpcHandlers.remove(uri);

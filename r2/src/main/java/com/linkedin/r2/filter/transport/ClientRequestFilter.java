@@ -55,6 +55,7 @@ public class ClientRequestFilter implements RpcRequestFilter, RestRequestFilter
   }
 
   @Override
+  @Deprecated
   public void onRpcRequest(RpcRequest req, final RequestContext requestContext,
                            Map<String, String> wireAttrs,
                            final NextFilter<RpcRequest, RpcResponse> nextFilter)

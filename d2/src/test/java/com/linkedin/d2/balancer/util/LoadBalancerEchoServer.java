@@ -247,6 +247,7 @@ public class LoadBalancerEchoServer
     return _partitionWeight;
   }
 
+  @SuppressWarnings("deprecation")
   public void startServer() throws IOException,
       InterruptedException,
       URISyntaxException
@@ -438,6 +439,8 @@ public class LoadBalancerEchoServer
   public class RpcDispatcher implements RpcRequestHandler
   {
     @Override
+    @Deprecated
+    @SuppressWarnings("deprecation")
     public void handleRequest(RpcRequest request, final Callback<RpcResponse> callback)
     {
       System.out.println("RPC server request: " +

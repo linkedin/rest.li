@@ -103,6 +103,7 @@ public interface FilterChain
    * @param requestContext context for the request
    * @param wireAttrs the initial set of wire attributes
    */
+  @Deprecated
   void onRpcRequest(RpcRequest req,
                     RequestContext requestContext,
                     Map<String, String> wireAttrs);
@@ -116,6 +117,7 @@ public interface FilterChain
    * @param requestContext context for the request
    * @param wireAttrs the initial set of wire attributes
    */
+  @Deprecated
   void onRpcResponse(RpcResponse res,
                      RequestContext requestContext,
                      Map<String, String> wireAttrs);
@@ -129,6 +131,7 @@ public interface FilterChain
    * @param requestContext context for the request
    * @param wireAttrs the initial set of wire attributes
    */
+  @Deprecated
   void onRpcError(Exception ex,
                   RequestContext requestContext,
                   Map<String, String> wireAttrs);

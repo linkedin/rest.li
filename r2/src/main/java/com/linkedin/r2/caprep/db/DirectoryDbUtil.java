@@ -53,6 +53,7 @@ public class DirectoryDbUtil
    * @param id the id of the message.
    * @return the {@link File} object for the request file.
    */
+  @Deprecated
   public static File rpcRequestFileName(File dir, int id)
   {
     return new File(dir.getAbsolutePath() + File.separator + id + RPC_SUFFIX + REQ_SUFFIX);
@@ -89,6 +90,7 @@ public class DirectoryDbUtil
    * @param id the id of the message.
    * @return the {@link File} object for the response file.
    */
+  @Deprecated
   public static File rpcResponseFileName(File dir, int id)
   {
     return new File(dir.getAbsolutePath() + File.separator + id + RPC_SUFFIX + RES_SUFFIX);

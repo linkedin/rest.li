@@ -58,6 +58,7 @@ public class TestDefaultMessageSerializer
   }
 
   @Test
+  @SuppressWarnings("deprecation")
   public void testSimpleRpcReq() throws IOException
   {
     final RpcRequest expected = new RpcRequestBuilder(URI.create("http://localhost:1234"))
@@ -104,6 +105,7 @@ public class TestDefaultMessageSerializer
   }
 
   @Test
+  @SuppressWarnings("deprecation")
   public void testRpcReqWithEntity() throws IOException
   {
     final RpcRequest expected = new RpcRequestBuilder(URI.create("http://localhost:1234"))
@@ -220,6 +222,7 @@ public class TestDefaultMessageSerializer
     expectIOException(new ThrowingRunnable()
     {
       @Override
+      @SuppressWarnings("deprecation")
       public void run() throws Exception
       {
         _serializer.readRpcRequest(getResource("rpc-req-with-get.txt"));
@@ -233,6 +236,7 @@ public class TestDefaultMessageSerializer
     expectIOException(new ThrowingRunnable()
     {
       @Override
+      @SuppressWarnings("deprecation")
       public void run() throws Exception
       {
         _serializer.readRpcRequest(getResource("rpc-req-missing-version.txt"));
@@ -261,6 +265,7 @@ public class TestDefaultMessageSerializer
   }
 
   @Test
+  @SuppressWarnings("deprecation")
   public void testRpcRequestReversible2() throws IOException
   {
     final RpcRequest req = createRpcRequest().builder()
@@ -277,6 +282,7 @@ public class TestDefaultMessageSerializer
   }
 
   @Test
+  @SuppressWarnings("deprecation")
   public void testRpcResponseReversible2() throws IOException
   {
     final RpcResponse res = createRpcResponse().builder()
@@ -374,11 +380,13 @@ public class TestDefaultMessageSerializer
     assertMsgEquals(res, readRestRes(writeRes(res)));
   }
 
+  @SuppressWarnings("deprecation")
   private RpcRequest createRpcRequest()
   {
     return new RpcRequestBuilder(URI.create("http://linkedin.com")).build();
   }
 
+  @SuppressWarnings("deprecation")
   private RpcResponse createRpcResponse()
   {
     return new RpcResponseBuilder().build();
@@ -408,11 +416,13 @@ public class TestDefaultMessageSerializer
     return baos.toByteArray();
   }
 
+  @SuppressWarnings("deprecation")
   private RpcRequest readRpcReq(byte[] bytes) throws IOException
   {
     return _serializer.readRpcRequest(new ByteArrayInputStream(bytes));
   }
 
+  @SuppressWarnings("deprecation")
   private RpcResponse readRpcRes(byte[] bytes) throws IOException
   {
     return _serializer.readRpcResponse(new ByteArrayInputStream(bytes));

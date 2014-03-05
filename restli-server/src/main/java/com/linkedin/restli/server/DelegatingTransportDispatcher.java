@@ -63,6 +63,8 @@ public class DelegatingTransportDispatcher implements TransportDispatcher
   }
 
   @Override
+  @Deprecated
+  @SuppressWarnings("deprecation")
   public void handleRpcRequest(final RpcRequest req,
                                final Map<String, String> wireAttrs,
                                final TransportCallback<RpcResponse> callback)

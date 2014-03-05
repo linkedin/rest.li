@@ -42,7 +42,9 @@ public interface RpcRequestFilter extends Filter
    * @param wireAttrs the wire attributes of the request.
    * @param nextFilter the next filter in the chain.  Concrete implementations should invoke
    *                   {@link NextFilter#onRequest} to continue the filter chain.
+   * @deprecated r2 rpc is not supported, use rest instead
    */
+  @Deprecated
   void onRpcRequest(RpcRequest req,
                     RequestContext requestContext,
                     Map<String, String> wireAttrs,

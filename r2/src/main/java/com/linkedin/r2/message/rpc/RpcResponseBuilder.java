@@ -30,6 +30,7 @@ public final class RpcResponseBuilder
   /**
    * Constructs a new builder with no initial values.
    */
+  @Deprecated
   public RpcResponseBuilder() {}
 
   /**
@@ -38,18 +39,21 @@ public final class RpcResponseBuilder
    *
    * @param response the response to copy
    */
+  @Deprecated
   public RpcResponseBuilder(RpcResponse response)
   {
     super(response);
   }
 
   @Override
+  @Deprecated
   public RpcResponse build()
   {
     return new RpcResponseImpl(getEntity());
   }
 
   @Override
+  @Deprecated
   public RpcResponse buildCanonical()
   {
     return build();

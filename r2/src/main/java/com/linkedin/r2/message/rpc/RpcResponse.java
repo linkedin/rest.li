@@ -39,5 +39,7 @@ public interface RpcResponse extends RpcMessage, Response
    *
    * @return a builder for this response
    */
+  @Deprecated
+  @SuppressWarnings("deprecation")
   RpcResponseBuilder builder();
 }

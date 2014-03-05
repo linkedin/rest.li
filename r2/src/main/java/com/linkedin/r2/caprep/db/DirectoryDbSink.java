@@ -84,6 +84,7 @@ public class DirectoryDbSink implements DbSink
     writeResponse(res, id);
   }
 
+  @SuppressWarnings("deprecation")
  private void writeRequest(Request req, int id) throws IOException
   {
     final File file;
@@ -107,6 +108,7 @@ public class DirectoryDbSink implements DbSink
     }
   }
 
+  @SuppressWarnings("deprecation")
  private void writeResponse(Response res, int id) throws IOException
   {
     final File file;

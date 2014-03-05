@@ -248,24 +248,32 @@ public class D2ClientBuilder
     }
 
     @Override
+    @Deprecated
+    @SuppressWarnings("deprecation")
     public Future<RpcResponse> rpcRequest(RpcRequest request)
     {
       return _d2Client.rpcRequest(request);
     }
 
     @Override
+    @Deprecated
+    @SuppressWarnings("deprecation")
     public Future<RpcResponse> rpcRequest(RpcRequest request, RequestContext requestContext)
     {
       return _d2Client.rpcRequest(request, requestContext);
     }
 
     @Override
+    @Deprecated
+    @SuppressWarnings("deprecation")
     public void rpcRequest(RpcRequest request, Callback<RpcResponse> callback)
     {
       _d2Client.rpcRequest(request, callback);
     }
 
     @Override
+    @Deprecated
+    @SuppressWarnings("deprecation")
     public void rpcRequest(RpcRequest request, RequestContext requestContext, Callback<RpcResponse> callback)
     {
       _d2Client.rpcRequest(request, requestContext, callback);

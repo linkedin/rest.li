@@ -44,6 +44,7 @@ import java.net.URI;
 public class TestBuilders
 {
   @Test
+  @SuppressWarnings("deprecation")
   public void testChainBuildRpcRequestFromRpcRequestBuilder()
   {
     final RpcRequest req = new RpcRequestBuilder(URI.create("test"))
@@ -59,6 +60,7 @@ public class TestBuilders
   }
 
   @Test
+  @SuppressWarnings("deprecation")
   public void testChainBuildRpcRequestFromRequestBuilder()
   {
     final Request req = new RpcRequestBuilder(URI.create("test"))
@@ -74,6 +76,7 @@ public class TestBuilders
   }
 
   @Test
+  @SuppressWarnings("deprecation")
   public void testChainBuildRpcRequestFromRpcBuilder()
   {
     final RpcMessage req = new RpcRequestBuilder(URI.create("test"))
@@ -89,6 +92,7 @@ public class TestBuilders
   }
 
   @Test
+  @SuppressWarnings("deprecation")
   public void testChainBuildRpcRequestFromMessageBuilder()
   {
     final MessageBuilder<?> builder = new RpcRequestBuilder(URI.create("test"))
@@ -105,6 +109,7 @@ public class TestBuilders
   }
 
   @Test
+  @SuppressWarnings("deprecation")
   public void testChainBuildRpcResponseFromRpcResponseBuilder()
   {
     final RpcResponse res = new RpcResponseBuilder()
@@ -118,6 +123,7 @@ public class TestBuilders
   }
 
   @Test
+  @SuppressWarnings("deprecation")
   public void testChainBuildRpcResponseFromResponseBuilder()
   {
     final Response res = new RpcResponseBuilder()
@@ -131,6 +137,7 @@ public class TestBuilders
   }
 
   @Test
+  @SuppressWarnings("deprecation")
   public void testChainBuildRpcResponseFromRpcBuilder()
   {
     final RpcMessage res = new RpcResponseBuilder()
@@ -144,6 +151,7 @@ public class TestBuilders
   }
 
   @Test
+  @SuppressWarnings("deprecation")
   public void testChainBuildRpcResponseFromMessageBuilder()
   {
     final MessageBuilder<?> builder = new RpcResponseBuilder()

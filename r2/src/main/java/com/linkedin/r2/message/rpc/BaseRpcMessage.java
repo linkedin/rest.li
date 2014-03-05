@@ -32,6 +32,8 @@ import com.linkedin.r2.message.BaseMessage;
   }
 
   @Override
+  @Deprecated
+  @SuppressWarnings("deprecation")
   public RpcMessageBuilder<? extends RpcMessageBuilder<?>> rpcBuilder()
   {
     return builder();

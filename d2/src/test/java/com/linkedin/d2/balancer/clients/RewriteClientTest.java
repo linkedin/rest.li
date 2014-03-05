@@ -40,6 +40,7 @@ import com.linkedin.r2.message.rpc.RpcResponse;
 public class RewriteClientTest
 {
   @Test(groups = { "small", "back-end" })
+  @SuppressWarnings("deprecation")
   public void testClient() throws URISyntaxException
   {
     URI uri = URI.create("http://test.linkedin.com/test");

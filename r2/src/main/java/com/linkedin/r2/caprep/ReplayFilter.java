@@ -71,6 +71,7 @@ public class ReplayFilter implements RpcRequestFilter, RestRequestFilter
   }
 
   @Override
+  @Deprecated
   public void onRpcRequest(RpcRequest req, RequestContext requestContext,
                            Map<String, String> wireAttrs,
                            NextFilter<RpcRequest, RpcResponse> nextFilter)

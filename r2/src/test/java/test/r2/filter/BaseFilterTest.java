@@ -45,6 +45,7 @@ public abstract class BaseFilterTest
   }
 
   @Test
+  @SuppressWarnings("deprecation")
   public void testRpcRequestCallsNextFilter()
   {
     FilterUtil.fireSimpleRpcRequest(_fc);
@@ -53,6 +54,7 @@ public abstract class BaseFilterTest
   }
 
   @Test
+  @SuppressWarnings("deprecation")
   public void testRpcResponseCallsNextFilter()
   {
     FilterUtil.fireSimpleRpcResponse(_fc);
@@ -61,6 +63,7 @@ public abstract class BaseFilterTest
   }
 
   @Test
+  @SuppressWarnings("deprecation")
   public void testRpcErrorCallsNextFilter()
   {
     FilterUtil.fireSimpleRpcError(_fc);

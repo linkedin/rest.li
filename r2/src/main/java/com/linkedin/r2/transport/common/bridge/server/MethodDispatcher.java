@@ -70,6 +70,8 @@ public class MethodDispatcher implements RpcRequestHandler
   }
 
   @Override
+  @Deprecated
+  @SuppressWarnings("deprecation")
   public void handleRequest(RpcRequest req, Callback<RpcResponse> callback)
   {
     final String[] pathSegs = URIUtil.tokenizePath(req.getURI().getPath());
