@@ -1,5 +1,8 @@
 1.14.8
 ------
+(RB=271265)
+Add protocol version header to error response.
+Add test for protocol version in error case.
 
 1.14.7
 ------

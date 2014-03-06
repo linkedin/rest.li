@@ -19,27 +19,35 @@ package com.linkedin.restli.client;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
+import com.linkedin.data.DataMap;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rpc.RpcRequest;
 import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.AbstractClient;
 import com.linkedin.r2.transport.common.Client;
+import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.examples.RestLiIntegrationTest;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
+import com.linkedin.restli.internal.server.util.DataMapUtils;
+import com.linkedin.restli.server.RestLiServiceException;
 
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -54,13 +62,10 @@ import org.testng.annotations.Test;
  */
 public class TestGreetingsClientProtocolVersionHeader extends RestLiIntegrationTest
 {
-  private static final RestClient _REST_CLIENT;
-
-  static
-  {
-    _REST_CLIENT = new RestClient(new PropertyProviderClient(AllProtocolVersions.BASELINE_PROTOCOL_VERSION.toString()),
-                                  "http://localhost:1338/");
-  }
+  private static final TransportClientFactory clientFactory = new HttpClientFactory();
+  private static final String uriPrefix = "http://localhost:1338/";
+  private static final RestClient _REST_CLIENT = new RestClient(new PropertyProviderClient(AllProtocolVersions.BASELINE_PROTOCOL_VERSION.toString()),
+                                                                uriPrefix);
 
   @BeforeClass
   public void initClass() throws Exception
@@ -83,7 +88,7 @@ public class TestGreetingsClientProtocolVersionHeader extends RestLiIntegrationT
     {
       __metadata = new HashMap<String, Object>();
       __metadata.put(RestConstants.RESTLI_PROTOCOL_VERSION_PROPERTY, restliProtocolVersion);
-      __client = new TransportClientAdapter(new HttpClientFactory().getClient(Collections.<String, String>emptyMap()));
+      __client = new TransportClientAdapter(clientFactory.getClient(Collections.<String, String>emptyMap()));
     }
 
     @Override
@@ -134,5 +139,44 @@ public class TestGreetingsClientProtocolVersionHeader extends RestLiIntegrationT
     ResponseFuture<Greeting> responseFuture = _REST_CLIENT.sendRequest(request);
     Assert.assertEquals(responseFuture.getResponse().getHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION),
                         expectedProtocolVersion.toString());
+  }
+
+  @Test
+  public void testNoProtocolVersionHeaderSuccess() throws InterruptedException, ExecutionException
+  {
+    final TransportClientAdapter client = new TransportClientAdapter(clientFactory.getClient(Collections.<String, String>emptyMap()));
+    final RestRequestBuilder requestBuilder = new RestRequestBuilder(URI.create(uriPrefix + "greetings/1"));
+    final RestRequest request = requestBuilder.build();
+    Assert.assertTrue(request.getHeaders().isEmpty());
+
+    final RestResponse response = client.restRequest(request).get();
+    Assert.assertEquals(response.getStatus(), HttpStatus.S_200_OK.getCode());
+    Assert.assertEquals(response.getHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION),
+                        AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion().toString());
+  }
+
+  @Test
+  public void testNoProtocolVersionHeaderFail() throws InterruptedException
+  {
+    final TransportClientAdapter client = new TransportClientAdapter(clientFactory.getClient(Collections.<String, String>emptyMap()));
+    final RestRequestBuilder requestBuilder = new RestRequestBuilder(URI.create(uriPrefix));
+    final RestRequest request = requestBuilder.build();
+    Assert.assertTrue(request.getHeaders().isEmpty());
+
+    try
+    {
+      client.restRequest(request).get();
+    }
+    catch (ExecutionException e)
+    {
+      final RestException exception = (RestException) e.getCause();
+      final RestResponse response = exception.getResponse();
+      Assert.assertEquals(response.getStatus(), HttpStatus.S_404_NOT_FOUND.getCode());
+      Assert.assertEquals(response.getHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION),
+                          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion().toString());
+
+      final DataMap exceptionDetail = DataMapUtils.readMap(response.getEntity().asInputStream());
+      Assert.assertEquals(exceptionDetail.getString("exceptionClass"), RestLiServiceException.class.getName());
+    }
   }
 }

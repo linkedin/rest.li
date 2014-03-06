@@ -25,6 +25,7 @@ import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.HeaderUtil;
+import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.server.methods.response.PartialRestResponse;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.server.RequestExecutionCallback;
@@ -138,7 +139,7 @@ public class RestLiCallback<T> implements RequestExecutionCallback<T>
                                      e);
     }
 
-    headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, _request.getHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION));
+    headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, ProtocolVersionUtil.extractProtocolVersion(_request.getHeaders()).toString());
     PartialRestResponse partialResponse =
         _responseHandler.buildErrorResponse(null, null, restLiServiceException, headers);
 
