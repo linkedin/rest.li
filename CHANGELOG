@@ -1,7 +1,13 @@
+1.14.8
+------
+
 1.14.7
 ------
 (RB=266640)
 Add support of enum array in parameter's default value.
+
+(RB=264605)
+Added test utilities that can be used by application developers to test their Rest.li clients and servers.
 
 1.14.6
 ------
