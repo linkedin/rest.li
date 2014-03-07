@@ -397,6 +397,7 @@ public class TestD2Config
                                                              "destinationColo",
                                                              "defaultColo",
                                                              "masterColo",
+                                                             false,
                                                              false);
     assertEquals("clusterName-defaultColo", clusterNameWithRouting);
 
@@ -404,13 +405,23 @@ public class TestD2Config
                                                              "destinationColo",
                                                              "defaultColo",
                                                              "masterColo",
-                                                             true);
+                                                             true,
+                                                             false);
     assertEquals("clusterName-masterColo", clusterNameWithRouting);
+
+    clusterNameWithRouting = D2Config.clusterNameWithRouting("clusterName",
+                                                             "destinationColo",
+                                                             "defaultColo",
+                                                             "masterColo",
+                                                             true,
+                                                             true);
+    assertEquals(D2Utils.getSymlinkNameForMaster("clusterName"), clusterNameWithRouting);
 
     clusterNameWithRouting = D2Config.clusterNameWithRouting("clusterName",
                                                              "",
                                                              "defaultColo",
                                                              "masterColo",
+                                                             false,
                                                              false);
     assertEquals("clusterName", clusterNameWithRouting);
 
@@ -418,7 +429,8 @@ public class TestD2Config
                                                              "",
                                                              "defaultColo",
                                                              "masterColo",
-                                                             true);
+                                                             true,
+                                                             false);
     assertEquals("clusterName", clusterNameWithRouting);
   }
 
@@ -1545,6 +1557,104 @@ public class TestD2Config
     // Verify default routing
     verifyServiceProperties(D2Utils.addSuffixToBaseName(clusterVariantName, defaultColo), service1, "/"+service1, serviceGroupName);
     verifyServiceProperties(D2Utils.addSuffixToBaseName(clusterVariantName, masterColo), service2, "/"+service2, serviceGroupName);
+  }
+
+  @Test
+  public static void testServiceWithDefaultRoutingToMasterAndSymlinkEnabled() throws Exception
+  {
+    final String masterColo = PropertyKeys.MASTER_COLO;
+    final String defaultColo = PropertyKeys.DEFAULT_COLO;
+    final String service1 = "service1";
+    final String service2 = "service2";
+    final String clusterName = "cluster";
+
+    List<String> serviceList = new ArrayList<String>();
+    serviceList.add(service1);
+    serviceList.add(service2);
+
+    Map<String,List<String>> clustersData = new HashMap<String,List<String>>();
+    clustersData.put(clusterName, serviceList);
+
+    Map<String,Object> clusterProperties = new HashMap<String,Object>();
+    List<String> peerColos = new ArrayList<String>();
+    peerColos.add(masterColo);
+    peerColos.add(defaultColo);
+
+    clusterProperties.put(PropertyKeys.COLO_VARIANTS, peerColos);
+    clusterProperties.put(PropertyKeys.MASTER_COLO, masterColo);
+    clusterProperties.put(PropertyKeys.ENABLE_SYMLINK, "true");
+    Map<String,Map<String,Object>> clustersProperties = new HashMap<String,Map<String,Object>>();
+    clustersProperties.put(clusterName, clusterProperties);
+
+    Set<String> servicesWithDefaultRoutingToMaster = Collections.singleton("service2");
+    D2ConfigTestUtil d2Conf = new D2ConfigTestUtil(clustersData, defaultColo, clustersProperties,
+        servicesWithDefaultRoutingToMaster);
+
+    d2Conf.runDiscovery(_zkHosts);
+
+    // verify master routing
+    verifyServiceProperties(D2Utils.getSymlinkNameForMaster(clusterName), D2Utils.addMasterToBaseName(service1), "/"+service1, null);
+    verifyServiceProperties(D2Utils.getSymlinkNameForMaster(clusterName), D2Utils.addMasterToBaseName(service2), "/"+service2, null);
+    // verify default routing
+    verifyServiceProperties(D2Utils.addSuffixToBaseName(clusterName, defaultColo), service1, "/"+service1, null);
+    verifyServiceProperties(D2Utils.getSymlinkNameForMaster(clusterName), service2, "/"+service2, null);
+  }
+
+  @Test
+  public static void testServiceVariantsWithDefaultRoutingToMasterAndSymlinkEnabled() throws Exception {
+    final String masterColo = PropertyKeys.MASTER_COLO;
+    final String defaultColo = PropertyKeys.DEFAULT_COLO;
+    final String service1 = "service1";
+    final String service2 = "service2";
+    final String clusterName = "cluster";
+    final String clusterVariantName = "clusterVariant";
+    final String serviceGroupName = "serviceGroup";
+
+    List<String> serviceList = new ArrayList<String>();
+    serviceList.add(service1);
+    serviceList.add(service2);
+
+    Map<String,List<String>> clustersData = new HashMap<String,List<String>>();
+    clustersData.put(clusterName, serviceList);
+
+    Map<String,Object> clusterProperties = new HashMap<String,Object>();
+    List<String> peerColos = new ArrayList<String>();
+    peerColos.add(masterColo);
+    peerColos.add(defaultColo);
+    @SuppressWarnings("serial")
+    Map<String,Object> clusterVariants = new HashMap<String,Object>()
+    {{
+        put(clusterVariantName,new HashMap<String,Object>());
+      }};
+
+    clusterProperties.put(PropertyKeys.COLO_VARIANTS, peerColos);
+    clusterProperties.put(PropertyKeys.MASTER_COLO, masterColo);
+    clusterProperties.put(PropertyKeys.CLUSTER_VARIANTS, clusterVariants);
+    clusterProperties.put(PropertyKeys.ENABLE_SYMLINK, "true");
+    Map<String,Map<String,Object>> clustersProperties = new HashMap<String,Map<String,Object>>();
+    clustersProperties.put(clusterName, clusterProperties);
+    @SuppressWarnings("serial")
+    Map<String,Object> serviceGroup = new HashMap<String,Object>()
+    {{
+        put(PropertyKeys.TYPE, PropertyKeys.CLUSTER_VARIANTS_LIST);
+        put(PropertyKeys.CLUSTER_LIST, Arrays.asList(new String[]{clusterVariantName}));
+      }};
+    Map<String, Object> serviceVariants = new HashMap<String, Object>();
+    serviceVariants.put(serviceGroupName, serviceGroup);
+
+    Set<String> servicesWithDefaultRoutingToMaster = Collections.singleton(service2);
+    D2ConfigTestUtil d2Conf = new D2ConfigTestUtil(clustersData, defaultColo, clustersProperties,
+        servicesWithDefaultRoutingToMaster);
+    d2Conf.setServiceVariants(serviceVariants);
+
+    d2Conf.runDiscovery(_zkHosts);
+
+    // verify master routing
+    verifyServiceProperties(D2Utils.getSymlinkNameForMaster(clusterVariantName), D2Utils.addMasterToBaseName(service1), "/"+service1, serviceGroupName);
+    verifyServiceProperties(D2Utils.getSymlinkNameForMaster(clusterVariantName), D2Utils.addMasterToBaseName(service2), "/"+service2, serviceGroupName);
+    // verify default routing
+    verifyServiceProperties(D2Utils.addSuffixToBaseName(clusterVariantName, defaultColo), service1, "/"+service1, serviceGroupName);
+    verifyServiceProperties(D2Utils.getSymlinkNameForMaster(clusterVariantName), service2, "/"+service2, serviceGroupName);
   }
 
   private static void verifyColoClusterAndServices(Map<String,List<String>> clustersData,

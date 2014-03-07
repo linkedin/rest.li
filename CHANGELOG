@@ -10,6 +10,8 @@ Change integration tests to test the new request builders.
 (RB=273408)
 Implementation of equals, hashCode, and toString in Request and derived classes.
 
+(RB=273416)
+Add ability in d2Config to produce d2 symlink for single-master services
 
 1.15.0
 ------

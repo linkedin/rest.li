@@ -51,7 +51,7 @@ public class ZKTestUtil
 
   public static ZKConnection getConnection(String connectString, int timeout)
   {
-    ZKConnection conn = new ZKConnection(connectString, timeout);
+    ZKConnection conn = new ZKConnection(connectString, timeout, false, true);
     try
     {
       conn.start();

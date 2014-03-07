@@ -119,5 +119,6 @@ public class PropertyKeys
   public static final String IS_MASTER_SERVICE = "isMasterService";
   // service metadata properties
   public static final String IS_DEFAULT_SERVICE = "isDefaultService";
+  public static final String ENABLE_SYMLINK = "enableSymlink";
 
 }

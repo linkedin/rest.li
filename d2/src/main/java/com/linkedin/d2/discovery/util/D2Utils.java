@@ -5,6 +5,7 @@
 package com.linkedin.d2.discovery.util;
 
 import com.linkedin.d2.balancer.properties.PropertyKeys;
+import com.linkedin.d2.discovery.stores.zk.SymlinkUtil;
 
 /**
  * @author David Hoa
@@ -40,5 +41,10 @@ public class D2Utils
   public static String addMasterToBaseName(String baseName)
   {
     return baseName + PropertyKeys.MASTER_SUFFIX;
+  }
+
+  public static String getSymlinkNameForMaster(String clusterName)
+  {
+    return SymlinkUtil.SYMLINK_PREFIX + clusterName + PropertyKeys.MASTER_SUFFIX;
   }
 }

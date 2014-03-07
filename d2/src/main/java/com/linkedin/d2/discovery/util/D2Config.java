@@ -31,6 +31,7 @@ import com.linkedin.d2.balancer.properties.util.PropertyUtil;
 import com.linkedin.d2.balancer.zkfs.ZKFSUtil;
 import com.linkedin.d2.discovery.PropertyBuilder;
 import com.linkedin.d2.discovery.PropertySerializer;
+import com.linkedin.d2.discovery.stores.zk.SymlinkUtil;
 import com.linkedin.d2.discovery.stores.zk.ZKConnection;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperPermanentStore;
 import org.slf4j.Logger;
@@ -62,7 +63,29 @@ import java.util.concurrent.TimeUnit;
  * cases and multi-master cases that require cross colo communication. In those cases, servers may
  * announce themselves in multiple colos using a colo-specific clustername, and clients will be able
  * to direct requests to those remote clusters through a known combination of the service name and
- * colo name.
+ * colo name, or through the master service alias if they are unaware of the underlying colos. In the
+ * latter case, server can opt to point their master service alias to either a hard-coded master colo
+ * or a d2 symlink in which master colo can be assigned on the fly. If a server has both master colo and
+ * enableSymlink == true set in the config, the latter one will be honored.
+ *
+ * Sample config for a single-master cluster:
+ *
+ * <entry key="FooServer">
+ *   <map>
+ *     <entry key="coloVariants" value="colo1, colo2" />
+ *     <entry key="masterColo" value="colo1" />
+ *     <entry key="enableSymlink" value="false" />
+ *     <entry key="services">
+ *       <map>
+ *         <entry key="fooService">
+ *           <map>
+ *             <entry key="path" value="/foo" />
+ *           </map>
+ *         </entry>
+ *       </map>
+ *     </entry>
+ *   </map>
+ *</entry>
  *
  * @author Steven Ihde, David Hoa
  * @version $Revision: $
@@ -178,6 +201,17 @@ public class D2Config
       @SuppressWarnings("unchecked")
       List<String> coloVariants = (List<String>)clusterConfig.remove(PropertyKeys.COLO_VARIANTS);
       final String masterColo = (String)clusterConfig.remove(PropertyKeys.MASTER_COLO);
+      final String enableSymlinkString = (String)clusterConfig.remove(PropertyKeys.ENABLE_SYMLINK);
+      final boolean enableSymlink;
+
+      if (enableSymlinkString != null && "true".equalsIgnoreCase(enableSymlinkString))
+      {
+        enableSymlink = true;
+      }
+      else
+      {
+        enableSymlink = false;
+      }
 
       // do some sanity check for partitions if any
       // Moving handling of partitionProperties before any coloVariant manipulations
@@ -277,7 +311,15 @@ public class D2Config
               // sent to this service might cross colos, if the master is located in another colo.
               Map<String,Object> masterServiceConfig = new HashMap<String,Object>(serviceConfig);
               String masterServiceName = serviceName + PropertyKeys.MASTER_SUFFIX;
-              String masterClusterName = D2Utils.addSuffixToBaseName(clusterName, masterColo);
+              String masterClusterName;
+              if (enableSymlink)
+              {
+                masterClusterName = D2Utils.getSymlinkNameForMaster(clusterName);
+              }
+              else
+              {
+                masterClusterName = D2Utils.addSuffixToBaseName(clusterName, masterColo);
+              }
               masterServiceConfig.put(PropertyKeys.CLUSTER_NAME, masterClusterName);
               masterServiceConfig.put(PropertyKeys.SERVICE_NAME, masterServiceName);
               masterServiceConfig.put(PropertyKeys.IS_MASTER_SERVICE, "true");
@@ -300,7 +342,8 @@ public class D2Config
                                                                          colo,
                                                                          defaultColo,
                                                                          masterColo,
-                                                                         defaultRoutingToMasterColo);
+                                                                         defaultRoutingToMasterColo,
+                                                                         enableSymlink);
 
             regularServiceConfig.put(PropertyKeys.CLUSTER_NAME, defaultColoClusterName);
             regularServiceConfig.put(PropertyKeys.SERVICE_NAME, serviceName);
@@ -343,7 +386,7 @@ public class D2Config
           Map<String,Map<String,Object>> coloClusterVariantConfig = new HashMap<String,Map<String,Object>>(clusterVariantConfig);
           status = handleClusterVariants(coloClusterVariantConfig, clusterConfig, clusters,
                                      coloServicesConfigs,  clusterToServiceMapping, colo,
-                                     variantToVariantsMapping, masterColo);
+                                     variantToVariantsMapping, masterColo, enableSymlink);
           if (status != 0)
           {
             return status;
@@ -495,26 +538,33 @@ public class D2Config
                                                  final String destinationColo,
                                                  final String defaultColo,
                                                  final String masterColo,
-                                                 final boolean defaultRoutingToMasterColo)
+                                                 final boolean defaultRoutingToMasterColo,
+                                                 final boolean enableSymlink)
   {
-    final String clusterSuffix;
+    final String defaultColoClusterName;
     if ("".matches(destinationColo))
     {
       // If we didn't have an coloVariants for this cluster, make sure to use the original
       // cluster name.
-      clusterSuffix = null;
+      defaultColoClusterName = clusterName;
     }
     else if (defaultRoutingToMasterColo)
     {
       // If this service is configured to route all requests to the master colo by default
       // then we need to configure the service to use the master colo.
-      clusterSuffix = masterColo;
+      if (enableSymlink)
+      {
+        defaultColoClusterName = D2Utils.getSymlinkNameForMaster(clusterName);
+      }
+      else
+      {
+        defaultColoClusterName = D2Utils.addSuffixToBaseName(clusterName, masterColo);
+      }
     }
     else
     {
-      clusterSuffix = defaultColo;
+      defaultColoClusterName = D2Utils.addSuffixToBaseName(clusterName, defaultColo);
     }
-    final String defaultColoClusterName = D2Utils.addSuffixToBaseName(clusterName, clusterSuffix);
     return defaultColoClusterName;
   }
 
@@ -641,13 +691,22 @@ public class D2Config
                                     Map<String,Map<String,Map<String,Object>>> clusterToServiceMapping,
                                     String coloStr,
                                     Map<String,List<String>> variantToVariantsMapping,
-                                    String masterColo)
+                                    String masterColo,
+                                    boolean enableSymlink)
   {
     for (String variant : clusterVariantConfig.keySet())
     {
       Map<String,Object> varConfig = clusterVariantConfig.get(variant);
       String variantColoName = D2Utils.addSuffixToBaseName(variant, coloStr);
-      String masterColoName = D2Utils.addSuffixToBaseName(variant, masterColo);
+      String masterColoName;
+      if (enableSymlink)
+      {
+        masterColoName = D2Utils.getSymlinkNameForMaster(variant);
+      }
+      else
+      {
+        masterColoName = D2Utils.addSuffixToBaseName(variant, masterColo);
+      }
       // clusterConfig is the default cluster's info, and varConfig is this cluster variant's info.
       // We are copying from clusterConfig into varConfig if there is no such property in varConfig.
       varConfig = ConfigWriter.merge(varConfig, clusterConfig);
