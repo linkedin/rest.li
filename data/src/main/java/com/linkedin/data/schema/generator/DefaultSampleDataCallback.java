@@ -52,7 +52,7 @@ public class DefaultSampleDataCallback implements SampleDataCallback
 
   private int nonNegative(int max)
   {
-    return Math.abs(_random.nextInt(max)) + 1;
+    return Math.abs(_random.nextInt(max + 1));
   }
 
   private <T> T valueFromArray(T[] array)
