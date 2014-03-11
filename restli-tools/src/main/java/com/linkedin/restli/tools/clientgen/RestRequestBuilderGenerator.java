@@ -17,8 +17,6 @@
 package com.linkedin.restli.tools.clientgen;
 
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
@@ -77,6 +75,22 @@ import com.linkedin.restli.restspec.RestMethodSchemaArray;
 import com.linkedin.restli.restspec.RestSpecCodec;
 import com.linkedin.restli.restspec.SimpleSchema;
 import com.linkedin.util.FileUtil;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.sun.codemodel.JBlock;
 import com.sun.codemodel.JClass;
 import com.sun.codemodel.JClassAlreadyExistsException;
@@ -92,19 +106,6 @@ import com.sun.codemodel.JMod;
 import com.sun.codemodel.JPackage;
 import com.sun.codemodel.JVar;
 import com.sun.codemodel.writer.FileCodeWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -130,9 +131,15 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
   }
 
   private static final String GENERATOR_REST_GENERATE_DATATEMPLATES = "generator.rest.generate.datatemplates";
+  private static final String GENERATOR_REST_GENERATE_RESTLI2 = "generator.rest.generate.restli2";
   private static final Logger log = LoggerFactory.getLogger(RestRequestBuilderGenerator.class);
   private static final String NAME = "name";
   private static final String NAMESPACE = "namespace";
+  private static final String BUILDER = "Builder";
+  private static final String BUILDERS = "Builders";
+  private static final String REQUEST_BUILDER = "RequestBuilder";
+  private static final String REQUEST_BUILDERS = "RequestBuilders";
+  private static final RestSpecCodec _codec = new RestSpecCodec();
 
   private final JClass _voidClass = getCodeModel().ref(Void.class);
   private final JClass _fieldDefClass = getCodeModel().ref(FieldDef.class);
@@ -146,14 +153,17 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
   private final ClassLoader _classLoader;
   private final Config _config;
 
-  private static final RestSpecCodec _codec = new RestSpecCodec();
-
   protected static class Config extends DataTemplateGenerator.Config
   {
-    public Config(String resolverPath, String defaultPackage, Boolean generateImported, Boolean generateDataTemplates)
+    public Config(String resolverPath,
+                  String defaultPackage,
+                  Boolean generateImported,
+                  Boolean generateDataTemplates,
+                  Boolean isRestli2Format)
     {
       super(resolverPath, defaultPackage, generateImported);
       _generateDataTemplates = generateDataTemplates;
+      _isRestli2Format = isRestli2Format;
     }
 
     /**
@@ -165,7 +175,13 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
       return _generateDataTemplates == null || _generateDataTemplates;
     }
 
+    public boolean isRestli2Format()
+    {
+      return _isRestli2Format;
+    }
+
     private final Boolean _generateDataTemplates;
+    private final Boolean _isRestli2Format;
   }
 
   /**
@@ -182,10 +198,12 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
 
     final String generateImported = System.getProperty(GENERATOR_GENERATE_IMPORTED);
     final String generateDataTemplates = System.getProperty(GENERATOR_REST_GENERATE_DATATEMPLATES);
+    final boolean isRestli2Format = Boolean.getBoolean(GENERATOR_REST_GENERATE_RESTLI2);
     run(System.getProperty(GENERATOR_RESOLVER_PATH),
         System.getProperty(GENERATOR_DEFAULT_PACKAGE),
         generateImported == null ? null : Boolean.parseBoolean(generateImported),
         generateDataTemplates == null ? null : Boolean.parseBoolean(generateDataTemplates),
+        isRestli2Format,
         args[0],
         Arrays.copyOfRange(args, 1, args.length));
   }
@@ -194,10 +212,11 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
                                     String defaultPackage,
                                     Boolean generateImported,
                                     Boolean generateDataTemplates,
+                                    Boolean isRestli2Format,
                                     String targetDirectoryPath,
                                     String[] sources) throws IOException
   {
-    final Config config = new Config(resolverPath, defaultPackage, generateImported, generateDataTemplates);
+    final Config config = new Config(resolverPath, defaultPackage, generateImported, generateDataTemplates, isRestli2Format);
     final RestRequestBuilderGenerator generator = new RestRequestBuilderGenerator(config);
 
     return generator.generate(targetDirectoryPath, sources);
@@ -361,7 +380,15 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     String packageName = resource.getNamespace();
     JPackage clientPackage = (packageName == null || packageName.isEmpty()) ? getPackage() : getPackage(packageName);
 
-    JDefinedClass facadeClass = clientPackage._class(resourceName + "Builders");
+    JDefinedClass facadeClass;
+    if (_config.isRestli2Format())
+    {
+      facadeClass = clientPackage._class(resourceName + REQUEST_BUILDERS);
+    }
+    else
+    {
+      facadeClass = clientPackage._class(resourceName + BUILDERS);
+    }
     annotate(facadeClass, sourceFile);
 
     JFieldVar baseUriField = facadeClass.field(JMod.PRIVATE | JMod.FINAL, String.class,
@@ -907,7 +934,16 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
       for (FinderSchema finder : finderSchemas)
       {
         String finderName = finder.getName();
-        String builderName = capitalize(resourceName) + "FindBy" + capitalize(finderName) + "Builder";
+
+        String builderName;
+        if (_config.isRestli2Format())
+        {
+          builderName = capitalize(resourceName) + "FindBy" + capitalize(finderName) + REQUEST_BUILDER;
+        }
+        else
+        {
+          builderName = capitalize(resourceName) + "FindBy" + capitalize(finderName) + BUILDER;
+        }
         JDefinedClass finderBuilderClass = generateDerivedBuilder(baseBuilderClass,
                                                                   valueClass,
                                                                   finderName,
@@ -1145,7 +1181,15 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
                                                                                 returnType);
     String actionName = action.getName();
 
-    String actionBuilderClassName = capitalize(resourceName) + "Do" + capitalize(actionName) + "Builder";
+    String actionBuilderClassName;
+    if (_config.isRestli2Format())
+    {
+      actionBuilderClassName = capitalize(resourceName) + "Do" + capitalize(actionName) + REQUEST_BUILDER;
+    }
+    else
+    {
+      actionBuilderClassName = capitalize(resourceName) + "Do" + capitalize(actionName) + BUILDER;
+    }
     JDefinedClass actionBuilderClass = facadeClass.getPackage()._class(JMod.PUBLIC, actionBuilderClassName);
     annotate(actionBuilderClass, null);
     actionBuilderClass._extends(vanillaActionBuilderClass.narrow(actionBuilderClass));
@@ -1236,8 +1280,17 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
         String methodName = normalizeUnderscores(method.toString());
 
         JClass builderClass = getCodeModel().ref(entry.getValue()).narrow(keyClass, valueClass);
-        JDefinedClass derivedBuilder = generateDerivedBuilder(builderClass, valueClass, null, resourceName + nameCapsCase(methodName) + "Builder",
+        JDefinedClass derivedBuilder;
+        if (_config.isRestli2Format())
+        {
+          derivedBuilder = generateDerivedBuilder(builderClass, valueClass, null, resourceName + nameCapsCase(methodName) + REQUEST_BUILDER,
                                                               facadeClass.getPackage());
+        }
+        else
+        {
+          derivedBuilder = generateDerivedBuilder(builderClass, valueClass, null, resourceName + nameCapsCase(methodName) + BUILDER,
+                                                  facadeClass.getPackage());
+        }
         generatePathKeyBindingMethods(pathKeys, derivedBuilder, pathKeyTypes, assocKeyTypes, pathToAssocKeys);
 
         JMethod factoryMethod = facadeClass.method(JMod.PUBLIC, derivedBuilder, nameCamelCase(methodName));

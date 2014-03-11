@@ -107,6 +107,9 @@ subprojects {
 
   sourceCompatibility = JavaVersion.VERSION_1_6
 
+  // generate Rest.li 2 request builders
+  it.ext['rest.client.restli2'] = true
+
   afterEvaluate {
     if (project.plugins.hasPlugin('pegasus'))
     {

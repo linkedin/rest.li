@@ -16,13 +16,17 @@
 
 package com.linkedin.restli.examples.greetings;
 
-import org.testng.Assert;
-import org.testng.annotations.Test;
 
-import com.linkedin.restli.client.GetRequest;
+import com.linkedin.restli.client.Request;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
+import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
+import com.linkedin.restli.test.util.RootBuilderWrapper;
+
+import org.testng.Assert;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 
 /**
@@ -30,12 +34,19 @@ import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
  */
 public class TestGreetingsRequestBuilders
 {
-  private static final GreetingsBuilders GREETINGS_BUILDERS = new GreetingsBuilders();
-  
-  @Test
-  public void testBatchable()
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testBatchable(RootBuilderWrapper<Long, Greeting> builders)
   {
-    GetRequest<Greeting> request = GREETINGS_BUILDERS.get().id(1L).build();
+    Request<Greeting> request = builders.get().id(1L).build();
     Assert.assertTrue(request.getResourceSpec().getSupportedMethods().contains(ResourceMethod.BATCH_GET));
+  }
+
+  @DataProvider
+  private static Object[][] requestBuilderDataProvider()
+  {
+    return new Object[][] {
+      { new RootBuilderWrapper(new GreetingsBuilders()) },
+      { new RootBuilderWrapper(new GreetingsRequestBuilders()) }
+    };
   }
 }

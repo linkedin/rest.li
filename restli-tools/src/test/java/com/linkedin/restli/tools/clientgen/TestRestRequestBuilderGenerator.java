@@ -2,16 +2,17 @@ package com.linkedin.restli.tools.clientgen;
 
 
 import com.linkedin.restli.tools.idlgen.TestRestLiResourceModelExporter;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 /**
  * @author Keren Jin
@@ -33,8 +34,8 @@ public class TestRestRequestBuilderGenerator
     TestRestLiResourceModelExporter.rmdir(outdir2);
   }
 
-  @Test
-  public void test() throws Exception
+  @Test(dataProvider = "arrayDuplicateDataProvider")
+  public void test(boolean isRestli2Format, String ABuildersName, String BBuildersName) throws Exception
   {
     final String pegasus_dir = moduleDir + FS + RESOURCES_DIR + FS + "pegasus";
     final String outPath = outdir.getPath();
@@ -42,23 +43,25 @@ public class TestRestRequestBuilderGenerator
                                     null,
                                     null,
                                     false,
+                                    isRestli2Format,
                                     outPath,
                                     new String[] { moduleDir + FS + RESOURCES_DIR + FS + "idls" + FS + "arrayDuplicateA.restspec.json" });
     RestRequestBuilderGenerator.run(pegasus_dir,
                                     null,
                                     null,
                                     false,
+                                    isRestli2Format,
                                     outPath,
                                     new String[] { moduleDir + FS + RESOURCES_DIR + FS + "idls" + FS + "arrayDuplicateB.restspec.json" });
 
-    final File aBuilderFile = new File(outPath + FS + "ArrayDuplicateABuilders.java");
-    final File bBuilderFile = new File(outPath + FS + "ArrayDuplicateBBuilders.java");
+    final File aBuilderFile = new File(outPath + FS + ABuildersName);
+    final File bBuilderFile = new File(outPath + FS + BBuildersName);
     Assert.assertTrue(aBuilderFile.exists());
     Assert.assertTrue(bBuilderFile.exists());
   }
 
-  @Test
-  public void testOldStylePathIDL() throws Exception
+  @Test(dataProvider = "oldNewStyleDataProvider")
+  public void testOldStylePathIDL(boolean isRestli2Format, String AssocKeysPathBuildersName, String SubBuildersName, String SubGetBuilderName) throws Exception
   {
     final String pegasus_dir = moduleDir + FS + RESOURCES_DIR + FS + "pegasus";
     final String outPath = outdir.getPath();
@@ -67,23 +70,25 @@ public class TestRestRequestBuilderGenerator
                                     null,
                                     null,
                                     false,
+                                    isRestli2Format,
                                     outPath,
                                     new String[] { moduleDir + FS + RESOURCES_DIR + FS + "idls" + FS + "oldStyleAssocKeysPath.restspec.json" });
     RestRequestBuilderGenerator.run(pegasus_dir,
                                     null,
                                     null,
                                     false,
+                                    isRestli2Format,
                                     outPath2,
                                     new String[] { moduleDir + FS + RESOURCES_DIR + FS + "idls" + FS + "newStyleAssocKeysPath.restspec.json" });
 
-    final File oldStyleSuperBuilderFile = new File(outPath + FS + "AssocKeysPathBuilders.java");
-    final File oldStyleSubBuilderFile = new File(outPath + FS + "SubBuilders.java");
-    final File oldStyleSubGetBuilderFile = new File(outPath + FS + "SubGetBuilder.java");
+    final File oldStyleSuperBuilderFile = new File(outPath + FS + AssocKeysPathBuildersName);
+    final File oldStyleSubBuilderFile = new File(outPath + FS + SubBuildersName);
+    final File oldStyleSubGetBuilderFile = new File(outPath + FS + SubGetBuilderName);
     Assert.assertTrue(oldStyleSuperBuilderFile.exists());
     Assert.assertTrue(oldStyleSubBuilderFile.exists());
     Assert.assertTrue(oldStyleSubGetBuilderFile.exists());
 
-    final File newStyleSubGetBuilderFile = new File(outPath2 + FS + "SubGetBuilder.java");
+    final File newStyleSubGetBuilderFile = new File(outPath2 + FS + SubGetBuilderName);
     Assert.assertTrue(newStyleSubGetBuilderFile.exists());
 
     BufferedReader oldStyleReader = new BufferedReader(new FileReader(oldStyleSubGetBuilderFile));
@@ -106,6 +111,24 @@ public class TestRestRequestBuilderGenerator
 
     oldStyleReader.close();
     newStyleReader.close();
+  }
+
+  @DataProvider
+  private static Object[][] arrayDuplicateDataProvider()
+  {
+    return new Object[][] {
+      { false, "ArrayDuplicateABuilders.java", "ArrayDuplicateBBuilders.java" },
+      { true, "ArrayDuplicateARequestBuilders.java", "ArrayDuplicateBRequestBuilders.java" }
+    };
+  }
+
+  @DataProvider
+  private static Object[][] oldNewStyleDataProvider()
+  {
+    return new Object[][] {
+      { false, "AssocKeysPathBuilders.java", "SubBuilders.java", "SubGetBuilder.java" },
+      { true, "AssocKeysPathRequestBuilders.java", "SubRequestBuilders.java", "SubGetRequestBuilder.java", }
+    };
   }
 
   private static final String FS = File.separator;

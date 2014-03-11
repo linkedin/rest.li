@@ -31,16 +31,6 @@ import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
-import com.linkedin.restli.client.ActionRequest;
-import com.linkedin.restli.client.BatchCreateRequest;
-import com.linkedin.restli.client.BatchGetRequest;
-import com.linkedin.restli.client.BatchPartialUpdateRequest;
-import com.linkedin.restli.client.BatchUpdateRequest;
-import com.linkedin.restli.client.CreateRequest;
-import com.linkedin.restli.client.DeleteRequest;
-import com.linkedin.restli.client.FindRequest;
-import com.linkedin.restli.client.GetAllRequest;
-import com.linkedin.restli.client.GetRequest;
 import com.linkedin.restli.client.OptionsRequestBuilder;
 import com.linkedin.restli.client.ProtocolVersionOption;
 import com.linkedin.restli.client.Request;
@@ -72,12 +62,23 @@ import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.examples.greetings.api.SearchMetadata;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.client.ActionsBuilders;
+import com.linkedin.restli.examples.greetings.client.ActionsRequestBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
+import com.linkedin.restli.examples.greetings.client.GreetingsCallbackBuilders;
+import com.linkedin.restli.examples.greetings.client.GreetingsCallbackRequestBuilders;
+import com.linkedin.restli.examples.greetings.client.GreetingsPromiseBuilders;
+import com.linkedin.restli.examples.greetings.client.GreetingsPromiseCtxBuilders;
+import com.linkedin.restli.examples.greetings.client.GreetingsPromiseCtxRequestBuilders;
+import com.linkedin.restli.examples.greetings.client.GreetingsPromiseRequestBuilders;
+import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
+import com.linkedin.restli.examples.greetings.client.GreetingsTaskBuilders;
+import com.linkedin.restli.examples.greetings.client.GreetingsTaskRequestBuilders;
 import com.linkedin.restli.examples.groups.api.TransferOwnershipRequest;
 import com.linkedin.restli.internal.client.EntityResponseDecoder;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.restspec.ResourceSchema;
+import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.io.IOException;
 import java.net.URI;
@@ -108,19 +109,6 @@ public class TestGreetingsClient extends RestLiIntegrationTest
   private static final String URI_PREFIX = "http://localhost:1338/";
   private static final RestClient REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
 
-  private final GreetingsBuilders DEFAULT_GREETINGS_BUILDERS;
-  private final GreetingsBuilders CUSTOM_GREETINGS_BUILDERS;
-
-  private final RestliRequestOptions _customRequestOptions;
-
-  public TestGreetingsClient(String resName)
-  {
-    DEFAULT_GREETINGS_BUILDERS = new GreetingsBuilders("greetings");
-    _customRequestOptions =
-        new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.FORCE_USE_NEXT).build();
-    CUSTOM_GREETINGS_BUILDERS = new GreetingsBuilders(_customRequestOptions);
-  }
-
   @BeforeClass
   public void initClass() throws Exception
   {
@@ -133,41 +121,32 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     super.shutdown();
   }
 
-  @Test
-  public void testActionRequestOptionsPropagation()
+  @Test(dataProvider = "requestBuilderWithOptionsDataProvider")
+  public void testActionRequestOptionsPropagation(RootBuilderWrapper<Long, Greeting> builders, RestliRequestOptions options)
   {
-    ActionRequest<Integer> request = DEFAULT_GREETINGS_BUILDERS.actionPurge().build();
-    Assert.assertEquals(request.getRequestOptions(), RestliRequestOptions.DEFAULT_OPTIONS);
-
-    request = CUSTOM_GREETINGS_BUILDERS.actionPurge().build();
-    Assert.assertEquals(request.getRequestOptions(), _customRequestOptions);
+    Request<Integer> request = builders.<Integer>action("Purge").build();
+    Assert.assertEquals(request.getRequestOptions(), options);
   }
 
-  @Test
-  public void testGetRequestOptionsPropagation()
+  @Test(dataProvider = "requestBuilderWithOptionsDataProvider")
+  public void testGetRequestOptionsPropagation(RootBuilderWrapper<Long, Greeting> builders, RestliRequestOptions options)
   {
-    GetRequest<Greeting> request = DEFAULT_GREETINGS_BUILDERS.get().id(1L).build();
-    Assert.assertEquals(request.getRequestOptions(), RestliRequestOptions.DEFAULT_OPTIONS);
-
-    request = CUSTOM_GREETINGS_BUILDERS.get().id(1L).build();
-    Assert.assertEquals(request.getRequestOptions(), _customRequestOptions);
+    Request<Greeting> request = builders.get().id(1L).build();
+    Assert.assertEquals(request.getRequestOptions(), options);
   }
 
-  @Test
-  public void testFinderRequestOptionsPropagation()
+  @Test(dataProvider = "requestBuilderWithOptionsDataProvider")
+  public void testFinderRequestOptionsPropagation(RootBuilderWrapper<Long, Greeting> builders, RestliRequestOptions options)
   {
-    FindRequest<Greeting> findRequest =
-        DEFAULT_GREETINGS_BUILDERS.findBySearch().toneParam(Tone.FRIENDLY).build();
-    Assert.assertEquals(findRequest.getRequestOptions(), RestliRequestOptions.DEFAULT_OPTIONS);
-
-    findRequest = CUSTOM_GREETINGS_BUILDERS.findBySearch().toneParam(Tone.FRIENDLY).build();
-    Assert.assertEquals(findRequest.getRequestOptions(), _customRequestOptions);
+    Request<CollectionResponse<Greeting>> findRequest =
+        builders.findBy("Search").setQueryParam("tone", Tone.FRIENDLY).build();
+    Assert.assertEquals(findRequest.getRequestOptions(), options);
   }
 
-  @Test
-  public void testIntAction() throws RemoteInvocationException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testIntAction(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
-    ActionRequest<Integer> request = DEFAULT_GREETINGS_BUILDERS.actionPurge().build();
+    Request<Integer> request = builders.<Integer>action("Purge").build();
     ResponseFuture<Integer> responseFuture = REST_CLIENT.sendRequest(request);
     Assert.assertEquals(responseFuture.getResponse().getStatus(), 200);
     Assert.assertEquals(responseFuture.getResponse().getEntity().intValue(), 100);
@@ -192,29 +171,29 @@ public class TestGreetingsClient extends RestLiIntegrationTest
                         AllProtocolVersions.BASELINE_PROTOCOL_VERSION.toString());
   }
 
-  @Test
-  public void testRecordAction() throws RemoteInvocationException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testRecordAction(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
-    ActionRequest<Greeting> request = DEFAULT_GREETINGS_BUILDERS.actionSomeAction()
+    Request<Greeting> request = builders.<Greeting>action("SomeAction")
             .id(1L)
-            .paramA(1)
-            .paramB("")
-            .paramC(new TransferOwnershipRequest())
-            .paramD(new TransferOwnershipRequest())
-            .paramE(3)
+            .setActionParam("A", 1)
+            .setActionParam("B", "")
+            .setActionParam("C", new TransferOwnershipRequest())
+            .setActionParam("D", new TransferOwnershipRequest())
+            .setActionParam("E", 3)
             .build();
     ResponseFuture<Greeting> responseFuture = REST_CLIENT.sendRequest(request);
     Assert.assertEquals(responseFuture.getResponse().getStatus(), 200);
     Assert.assertNotNull(responseFuture.getResponse().getEntity());
   }
 
-  @Test
-  public void testUpdateToneAction() throws RemoteInvocationException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testUpdateToneAction(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
-    ActionRequest<Greeting> request = DEFAULT_GREETINGS_BUILDERS.actionUpdateTone()
+    Request<Greeting> request = builders.<Greeting>action("UpdateTone")
             .id(1L)
-            .paramNewTone(Tone.SINCERE)
-            .paramDelOld(false)
+            .setActionParam("NewTone", Tone.SINCERE)
+            .setActionParam("DelOld", false)
             .build();
     ResponseFuture<Greeting> responseFuture = REST_CLIENT.sendRequest(request);
     Assert.assertEquals(responseFuture.getResponse().getStatus(), 200);
@@ -224,13 +203,13 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     Assert.assertEquals(newGreeting.getTone(), Tone.SINCERE);
   }
 
-  @Test
+  @Test(dataProvider = "requestBuilderDataProvider")
   //test update on retrieved entity
-  public void testUpdate() throws RemoteInvocationException, CloneNotSupportedException,
+  public void testUpdate(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException, CloneNotSupportedException,
           URISyntaxException
   {
     // GET
-    Request<Greeting> request = DEFAULT_GREETINGS_BUILDERS.get().id(1L).build();
+    Request<Greeting> request = builders.get().id(1L).build();
     ResponseFuture<Greeting> future = REST_CLIENT.sendRequest(request);
     Response<Greeting> greetingResponse = future.getResponse();
 
@@ -241,22 +220,22 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     Greeting greeting = new Greeting(greetingResponse.getEntity().data().copy());
     greeting.setMessage(response1 + "Again");
 
-    Request<EmptyRecord> writeRequest = DEFAULT_GREETINGS_BUILDERS.update().id(1L).input(greeting).build();
+    Request<EmptyRecord> writeRequest = builders.update().id(1L).input(greeting).build();
     REST_CLIENT.sendRequest(writeRequest).getResponse();
 
     // GET again, to verify that our POST worked.
-    Request<Greeting> request2 = DEFAULT_GREETINGS_BUILDERS.get().id(1L).build();
+    Request<Greeting> request2 = builders.get().id(1L).build();
     ResponseFuture<Greeting> future2 = REST_CLIENT.sendRequest(request2);
     String response2 = future2.getResponse().getEntity().getMessage();
 
     Assert.assertEquals(response2, response1 + "Again");
   }
 
-  @Test
-  public void testPartialUpdate() throws RemoteInvocationException, CloneNotSupportedException, URISyntaxException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testPartialUpdate(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException, CloneNotSupportedException, URISyntaxException
   {
     // GET
-    Request<Greeting> request = DEFAULT_GREETINGS_BUILDERS.get().id(1L).build();
+    Request<Greeting> request = builders.get().id(1L).build();
     ResponseFuture<Greeting> future = REST_CLIENT.sendRequest(request);
     Response<Greeting> greetingResponse = future.getResponse();
 
@@ -268,27 +247,27 @@ public class TestGreetingsClient extends RestLiIntegrationTest
 
     PatchRequest<Greeting> patch = PatchGenerator.diff(original, greeting);
 
-    Request<EmptyRecord> writeRequest = DEFAULT_GREETINGS_BUILDERS.partialUpdate().id(1L).input(patch).build();
+    Request<EmptyRecord> writeRequest = builders.partialUpdate().id(1L).input(patch).build();
     int status = REST_CLIENT.sendRequest(writeRequest).getResponse().getStatus();
     Assert.assertEquals(status, HttpStatus.S_204_NO_CONTENT.getCode());
 
     // GET again, to verify that our POST worked.
-    Request<Greeting> request2 = DEFAULT_GREETINGS_BUILDERS.get().id(1L).build();
+    Request<Greeting> request2 = builders.get().id(1L).build();
     ResponseFuture<Greeting> future2 = REST_CLIENT.sendRequest(request2);
     String response2 = future2.getResponse().getEntity().getMessage();
 
     Assert.assertEquals(response2, greeting.getMessage());
   }
 
-  @Test
+  @Test(dataProvider = "requestBuilderDataProvider")
   //test cookbook example from quickstart wiki
-  public void testCookbook() throws Exception
+  public void testCookbook(RootBuilderWrapper<Long, Greeting> builders) throws Exception
   {
     Client r2Client = new TransportClientAdapter(new HttpClientFactory().getClient(Collections.<String, String>emptyMap()));
     RestClient restClient = new RestClient(r2Client, "http://localhost:1338/");
 
     // GET
-    Request<Greeting> request = DEFAULT_GREETINGS_BUILDERS.get().id(1L).build();
+    Request<Greeting> request = builders.get().id(1L).build();
     ResponseFuture<Greeting> future = restClient.sendRequest(request);
     Response<Greeting> greetingResponse = future.getResponse();
 
@@ -299,11 +278,11 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     final String NEW_MESSAGE = "This is a new message!";
     greeting.setMessage(NEW_MESSAGE);
 
-    Request<EmptyRecord> writeRequest = DEFAULT_GREETINGS_BUILDERS.update().id(1L).input(greeting).build();
+    Request<EmptyRecord> writeRequest = builders.update().id(1L).input(greeting).build();
     restClient.sendRequest(writeRequest).getResponse();
 
     // GET again, to verify that our POST worked.
-    Request<Greeting> request2 = DEFAULT_GREETINGS_BUILDERS.get().id(1L).build();
+    Request<Greeting> request2 = builders.get().id(1L).build();
     ResponseFuture<Greeting> future2 = restClient.sendRequest(request2);
     greetingResponse = future2.get();
 
@@ -315,11 +294,11 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     futureCallback.get();
   }
 
-  @Test
-  public void testCookbookInBatch() throws Exception
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testCookbookInBatch(RootBuilderWrapper<Long, Greeting> builders) throws Exception
   {
     // GET
-    BatchGetRequest<Greeting> request = DEFAULT_GREETINGS_BUILDERS.batchGet().ids(1L).build();
+    Request<BatchResponse<Greeting>> request = builders.batchGet().ids(1L).build();
     ResponseFuture<BatchResponse<Greeting>> future = REST_CLIENT.sendRequest(request);
     Response<BatchResponse<Greeting>> greetingResponse = future.getResponse();
 
@@ -327,18 +306,18 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     Greeting greeting = new Greeting(greetingResponse.getEntity().getResults().get("1").data().copy());
     greeting.setMessage("This is a new message!");
 
-    BatchUpdateRequest<Long, Greeting> writeRequest = DEFAULT_GREETINGS_BUILDERS.batchUpdate().input(1L, greeting).build();
+    Request<BatchKVResponse<Long, UpdateStatus>> writeRequest = builders.batchUpdate().input(1L, greeting).build();
     REST_CLIENT.sendRequest(writeRequest).getResponse();
 
     // GET again, to verify that our POST worked.
-    BatchGetRequest<Greeting> request2 = DEFAULT_GREETINGS_BUILDERS.batchGet().ids(1L).build();
+    Request<BatchResponse<Greeting>> request2 = builders.batchGet().ids(1L).build();
     ResponseFuture<BatchResponse<Greeting>> future2 = REST_CLIENT.sendRequest(request2);
     greetingResponse = future2.get();
 
     Greeting repeatedGreeting = new Greeting();
     repeatedGreeting.setMessage("Hello Hello");
     repeatedGreeting.setTone(Tone.SINCERE);
-    BatchCreateRequest<Greeting> request3 = DEFAULT_GREETINGS_BUILDERS.batchCreate().inputs(Arrays.asList(repeatedGreeting, repeatedGreeting)).build();
+    Request<CollectionResponse<CreateStatus>> request3 = builders.batchCreate().inputs(Arrays.asList(repeatedGreeting, repeatedGreeting)).build();
     CollectionResponse<CreateStatus> statuses = REST_CLIENT.sendRequest(request3).getResponse().getEntity();
     for (CreateStatus status : statuses.getElements())
     {
@@ -347,10 +326,10 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     }
   }
 
-  @Test
-  public void testSearch() throws RemoteInvocationException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testSearch(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
-    Request<CollectionResponse<Greeting>> findRequest = DEFAULT_GREETINGS_BUILDERS.findBySearch().toneParam(Tone.FRIENDLY).build();
+    Request<CollectionResponse<Greeting>> findRequest = builders.findBy("Search").setQueryParam("tone", Tone.FRIENDLY).build();
     List<Greeting> greetings = REST_CLIENT.sendRequest(findRequest).getResponse().getEntity().getElements();
     for (Greeting g : greetings)
     {
@@ -359,10 +338,10 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     }
   }
 
-  @Test
-  public void testSearchWithPostFilter() throws RemoteInvocationException
+  @Test(dataProvider = "requestBuilderWithResourceNameDataProvider")
+  public void testSearchWithPostFilter(RootBuilderWrapper<Long, Greeting> builders, String resourceName) throws RemoteInvocationException
   {
-    Request<CollectionResponse<Greeting>> findRequest = DEFAULT_GREETINGS_BUILDERS.findBySearchWithPostFilter().paginate(0, 5).build();
+    Request<CollectionResponse<Greeting>> findRequest = builders.findBy("SearchWithPostFilter").paginate(0, 5).build();
     CollectionResponse<Greeting> entity = REST_CLIENT.sendRequest(findRequest).getResponse().getEntity();
     CollectionMetadata paging = entity.getPaging();
     Assert.assertEquals(paging.getStart().intValue(), 0);
@@ -372,20 +351,20 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     // to accommodate post filtering, even though 4 are returned, next page should be 5-10.
     Link next = paging.getLinks().get(0);
     Assert.assertEquals(next.getRel(), "next");
-    Assert.assertEquals(next.getHref(), "/greetings?count=5&start=5&q=searchWithPostFilter");
+    Assert.assertEquals(next.getHref(), "/" + resourceName + "?count=5&start=5&q=searchWithPostFilter");
   }
 
-  @Test
-  public void TestPagination() throws RemoteInvocationException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void TestPagination(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
-    Request<CollectionResponse<Greeting>> findRequest = DEFAULT_GREETINGS_BUILDERS.findBySearchWithPostFilter().paginateStart(1).build();
+    Request<CollectionResponse<Greeting>> findRequest = builders.findBy("SearchWithPostFilter").paginateStart(1).build();
     CollectionResponse<Greeting> entity = REST_CLIENT.sendRequest(findRequest).getResponse().getEntity();
     CollectionMetadata paging = entity.getPaging();
     Assert.assertEquals(paging.getStart().intValue(), 1);
     Assert.assertEquals(paging.getCount().intValue(), 10);
     Assert.assertEquals(entity.getElements().size(), 9); // expected to be 9 instead of 10 because of post filter
 
-    findRequest = DEFAULT_GREETINGS_BUILDERS.findBySearchWithPostFilter().paginateCount(5).build();
+    findRequest = builders.findBy("SearchWithPostFilter").paginateCount(5).build();
     entity = REST_CLIENT.sendRequest(findRequest).getResponse().getEntity();
     paging = entity.getPaging();
     Assert.assertEquals(paging.getStart().intValue(), 0);
@@ -393,12 +372,11 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     Assert.assertEquals(entity.getElements().size(), 4); // expected to be 4 instead of 5 because of post filter
   }
 
-  @Test
-  public void testSearchWithTones() throws RemoteInvocationException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testSearchWithTones(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Request<CollectionResponse<Greeting>> req =
-        DEFAULT_GREETINGS_BUILDERS.findBySearchWithTones().tonesParam(
-                Arrays.asList(Tone.SINCERE, Tone.INSULTING)).build();
+        builders.findBy("SearchWithTones").setQueryParam("tones", Arrays.asList(Tone.SINCERE, Tone.INSULTING)).build();
     ResponseFuture<CollectionResponse<Greeting>> future = REST_CLIENT.sendRequest(req);
     Response<CollectionResponse<Greeting>> response = future.getResponse();
     List<Greeting> greetings = response.getEntity().getElements();
@@ -410,11 +388,10 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     }
   }
 
-  @Test
-  public void testSearchFacets() throws RemoteInvocationException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testSearchFacets(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
-    Request<CollectionResponse<Greeting>> req = DEFAULT_GREETINGS_BUILDERS.findBySearchWithFacets().toneParam(
-            Tone.SINCERE).build();
+    Request<CollectionResponse<Greeting>> req = builders.findBy("SearchWithFacets").setQueryParam("tone", Tone.SINCERE).build();
     ResponseFuture<CollectionResponse<Greeting>> future = REST_CLIENT.sendRequest(req);
     Response<CollectionResponse<Greeting>> response = future.getResponse();
     SearchMetadata metadata = new SearchMetadata(response.getEntity().getMetadataRaw());
@@ -422,29 +399,28 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     // "randomly" generated data is guaranteed to have positive number of each tone
   }
 
-  @Test
-  public void testEmptyBatchGetWithProjection() throws RemoteInvocationException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testEmptyBatchGetWithProjection(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
-    Request<BatchResponse<Greeting>> request = DEFAULT_GREETINGS_BUILDERS.batchGet().ids(1000L,
-                                                                                 2000L).fields(Greeting.fields().message()).build();
+    Request<BatchResponse<Greeting>> request = builders.batchGet().ids(1000L, 2000L).fields(Greeting.fields().message()).build();
     BatchResponse<Greeting> response = REST_CLIENT.sendRequest(request).getResponse().getEntity();
     Assert.assertEquals(response.getResults().size(), 0);
   }
 
-  @Test
-  public void testBatchGetUsingCollection() throws RemoteInvocationException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testBatchGetUsingCollection(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     List<Long> ids = Arrays.asList(1L, 2L, 3L, 4L);
-    Request<BatchResponse<Greeting>> request = DEFAULT_GREETINGS_BUILDERS.batchGet().ids(ids).fields(Greeting.fields().id(), Greeting.fields().message()).build();
+    Request<BatchResponse<Greeting>> request = builders.batchGet().ids(ids).fields(Greeting.fields().id(), Greeting.fields().message()).build();
     BatchResponse<Greeting> response = REST_CLIENT.sendRequest(request).getResponse().getEntity();
     Assert.assertEquals(response.getResults().size(), ids.size());
   }
 
-  @Test
-  public void testBatchGetUsingCollectionKV() throws RemoteInvocationException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testBatchGetUsingCollectionKV(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     List<Long> ids = Arrays.asList(1L, 2L, 3L, 4L);
-    Request<BatchKVResponse<Long, Greeting>> request = DEFAULT_GREETINGS_BUILDERS.batchGet().ids(ids).fields(Greeting.fields().id(), Greeting.fields().message()).buildKV();
+    Request<BatchKVResponse<Long, Greeting>> request = builders.batchGet().ids(ids).fields(Greeting.fields().id(), Greeting.fields().message()).buildKV();
     BatchKVResponse<Long, Greeting> response = REST_CLIENT.sendRequest(request).getResponse().getEntity();
     Assert.assertEquals(response.getResults().size(), ids.size());
     for (Map.Entry<Long, Greeting> entry : response.getResults().entrySet())
@@ -480,12 +456,12 @@ public class TestGreetingsClient extends RestLiIntegrationTest
    * @param ids the ids for the Greetings to delete
    * @throws RemoteInvocationException
    */
-  private void deleteAndVerifyBatchTestDataSerially(List<Long> ids)
+  private void deleteAndVerifyBatchTestDataSerially(RootBuilderWrapper<Long, Greeting> builders, List<Long> ids)
       throws RemoteInvocationException
   {
     for (Long id: ids)
     {
-      DeleteRequest<Greeting> request = DEFAULT_GREETINGS_BUILDERS.delete().id(id).build();
+      Request<EmptyRecord> request = builders.delete().id(id).build();
       ResponseFuture<EmptyRecord> future = REST_CLIENT.sendRequest(request);
       Response<EmptyRecord> response = future.getResponse();
 
@@ -501,7 +477,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
    * @return the fetched Greetings
    * @throws RemoteInvocationException
    */
-  private List<Greeting> getBatchTestDataSerially(List<Long> idsToGet)
+  private List<Greeting> getBatchTestDataSerially(RootBuilderWrapper<Long, Greeting> builders, List<Long> idsToGet)
       throws RemoteInvocationException
   {
     List<Greeting> fetchedGreetings = new ArrayList<Greeting>();
@@ -510,7 +486,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
       try
       {
         Long id = idsToGet.get(i);
-        Request<Greeting> request = DEFAULT_GREETINGS_BUILDERS.get().id(id).build();
+        Request<Greeting> request = builders.get().id(id).build();
         ResponseFuture<Greeting> future = REST_CLIENT.sendRequest(request);
         Response<Greeting> greetingResponse = future.getResponse();
 
@@ -544,12 +520,13 @@ public class TestGreetingsClient extends RestLiIntegrationTest
    *
    * @throws RemoteInvocationException
    */
-  private void getAndVerifyBatchTestDataSerially(List<Long> idsToGet,
+  private void getAndVerifyBatchTestDataSerially(RootBuilderWrapper<Long, Greeting> builders,
+                                                 List<Long> idsToGet,
                                                  List<Greeting> expectedGreetings,
                                                  List<String> fieldsToIgnore)
       throws RemoteInvocationException
   {
-    List<Greeting> fetchedGreetings = getBatchTestDataSerially(idsToGet);
+    List<Greeting> fetchedGreetings = getBatchTestDataSerially(builders, idsToGet);
     Assert.assertEquals(fetchedGreetings.size(), expectedGreetings.size());
     for (int i = 0; i < fetchedGreetings.size(); i++)
     {
@@ -606,14 +583,14 @@ public class TestGreetingsClient extends RestLiIntegrationTest
    * @return the ids of the created Greetings
    * @throws RemoteInvocationException
    */
-  private List<Long> createBatchTestDataSerially(List<Greeting> greetings)
+  private List<Long> createBatchTestDataSerially(RootBuilderWrapper<Long, Greeting> builders, List<Greeting> greetings)
       throws RemoteInvocationException
   {
     List<Long> createdIds = new ArrayList<Long>();
 
     for (Greeting greeting: greetings)
     {
-      CreateRequest<Greeting> request = DEFAULT_GREETINGS_BUILDERS.create().input(greeting).build();
+      Request<EmptyRecord> request = builders.create().input(greeting).build();
       String createdId = REST_CLIENT.sendRequest(request).getResponse().getId();
       createdIds.add(Long.parseLong(createdId));
     }
@@ -637,12 +614,12 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     }
   }
 
-  @Test
-  public void testBatchCreate() throws RemoteInvocationException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testBatchCreate(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     List<Greeting> greetings = generateBatchTestData(3, "BatchCreate", Tone.FRIENDLY);
 
-    BatchCreateRequest<Greeting> batchRequest = DEFAULT_GREETINGS_BUILDERS.batchCreate().inputs(greetings).build();
+    Request<CollectionResponse<CreateStatus>> batchRequest = builders.batchCreate().inputs(greetings).build();
     CollectionResponse<CreateStatus> results = REST_CLIENT.sendRequest(batchRequest).getResponse().getEntity();
     List<Long> createdIds = new ArrayList<Long>();
 
@@ -653,20 +630,20 @@ public class TestGreetingsClient extends RestLiIntegrationTest
       createdIds.add(Long.parseLong(status.getId()));
     }
 
-    getAndVerifyBatchTestDataSerially(createdIds, greetings, Arrays.asList(new String[]{"id"}));
-    deleteAndVerifyBatchTestDataSerially(createdIds);
+    getAndVerifyBatchTestDataSerially(builders, createdIds, greetings, Arrays.asList("id"));
+    deleteAndVerifyBatchTestDataSerially(builders, createdIds);
   }
 
-  @Test
-  public void testBatchDelete()
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testBatchDelete(RootBuilderWrapper<Long, Greeting> builders)
       throws RemoteInvocationException
   {
     List<Greeting> greetings = generateBatchTestData(3, "BatchDelete", Tone.FRIENDLY);
-    List<Long> createdIds = createBatchTestDataSerially(greetings);
+    List<Long> createdIds = createBatchTestDataSerially(builders, greetings);
 
     // Batch delete the created Greetings
-    com.linkedin.restli.client.BatchDeleteRequest<Long, Greeting> deleteRequest =
-        DEFAULT_GREETINGS_BUILDERS.batchDelete().ids(createdIds).build();
+    Request<BatchKVResponse<Long, UpdateStatus>> deleteRequest =
+        builders.batchDelete().ids(createdIds).build();
     BatchKVResponse<Long, UpdateStatus> responses = REST_CLIENT.sendRequest(deleteRequest).getResponse().getEntity();
 
     Assert.assertEquals(responses.getResults().size(), createdIds.size()); // we deleted the Messages we created
@@ -675,7 +652,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
       Assert.assertEquals(status.getStatus().intValue(), HttpStatus.S_204_NO_CONTENT.getCode());
     }
 
-    List<Greeting> deletedGreetings = getBatchTestDataSerially(createdIds);
+    List<Greeting> deletedGreetings = getBatchTestDataSerially(builders, createdIds);
     Assert.assertEquals(deletedGreetings.size(), createdIds.size());
     for (Greeting greeting: deletedGreetings)
     {
@@ -683,12 +660,12 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     }
   }
 
-  @Test
-  public void testBatchUpdate()
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testBatchUpdate(RootBuilderWrapper<Long, Greeting> builders)
       throws RemoteInvocationException, CloneNotSupportedException
   {
     List<Greeting> greetings = generateBatchTestData(3, "BatchUpdate", Tone.FRIENDLY);
-    List<Long> createdIds = createBatchTestDataSerially(greetings);
+    List<Long> createdIds = createBatchTestDataSerially(builders, greetings);
     addIdsToGeneratedGreetings(createdIds, greetings);
 
     // Update the created greetings
@@ -705,8 +682,8 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     }
 
     // Batch update
-    BatchUpdateRequest<Long, Greeting> batchUpdateRequest =
-        DEFAULT_GREETINGS_BUILDERS.batchUpdate().inputs(updateGreetingsRequestMap).build();
+    Request<BatchKVResponse<Long, UpdateStatus>> batchUpdateRequest =
+        builders.batchUpdate().inputs(updateGreetingsRequestMap).build();
     Map<Long, UpdateStatus> results =
         REST_CLIENT.sendRequest(batchUpdateRequest).getResponse().getEntity().getResults();
 
@@ -716,15 +693,15 @@ public class TestGreetingsClient extends RestLiIntegrationTest
       Assert.assertEquals(status.getStatus().intValue(), HttpStatus.S_204_NO_CONTENT.getCode());
     }
 
-    getAndVerifyBatchTestDataSerially(createdIds, updatedGreetings, null);
-    deleteAndVerifyBatchTestDataSerially(createdIds);
+    getAndVerifyBatchTestDataSerially(builders, createdIds, updatedGreetings, null);
+    deleteAndVerifyBatchTestDataSerially(builders, createdIds);
   }
 
-  @Test
-  public void testBatchPartialUpdate() throws RemoteInvocationException, CloneNotSupportedException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testBatchPartialUpdate(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException, CloneNotSupportedException
   {
     List<Greeting> greetings = generateBatchTestData(3, "BatchPatch", Tone.FRIENDLY);
-    List<Long> createdIds = createBatchTestDataSerially(greetings);
+    List<Long> createdIds = createBatchTestDataSerially(builders, greetings);
     addIdsToGeneratedGreetings(createdIds, greetings);
 
     // Patch the created Greetings
@@ -742,8 +719,8 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     }
 
     // Batch patch
-    BatchPartialUpdateRequest<Long, Greeting> batchUpdateRequest =
-        DEFAULT_GREETINGS_BUILDERS.batchPartialUpdate().inputs(patchedGreetingsDiffs).build();
+    Request<BatchKVResponse<Long, UpdateStatus>> batchUpdateRequest =
+        builders.batchPartialUpdate().patchInputs(patchedGreetingsDiffs).build();
     Map<Long, UpdateStatus> results =
         REST_CLIENT.sendRequest(batchUpdateRequest).getResponse().getEntity().getResults();
 
@@ -753,19 +730,19 @@ public class TestGreetingsClient extends RestLiIntegrationTest
       Assert.assertEquals(status.getStatus().intValue(), HttpStatus.S_204_NO_CONTENT.getCode());
     }
 
-    getAndVerifyBatchTestDataSerially(createdIds, patchedGreetings, null);
-    deleteAndVerifyBatchTestDataSerially(createdIds);
+    getAndVerifyBatchTestDataSerially(builders, createdIds, patchedGreetings, null);
+    deleteAndVerifyBatchTestDataSerially(builders, createdIds);
   }
 
-  @Test
-  public void testGetAll()
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testGetAll(RootBuilderWrapper<Long, Greeting> builders)
       throws RemoteInvocationException
   {
     List<Greeting> greetings = generateBatchTestData(3, "GetAll", Tone.FRIENDLY);
-    List<Long> createdIds = createBatchTestDataSerially(greetings);
+    List<Long> createdIds = createBatchTestDataSerially(builders, greetings);
     addIdsToGeneratedGreetings(createdIds, greetings);
 
-    GetAllRequest<Greeting> getAllRequest = DEFAULT_GREETINGS_BUILDERS.getAll().build();
+    Request<CollectionResponse<Greeting>> getAllRequest = builders.getAll().build();
     List<Greeting> getAllReturnedGreetings = REST_CLIENT.
         sendRequest(getAllRequest).getResponse().getEntity().getElements();
 
@@ -785,21 +762,21 @@ public class TestGreetingsClient extends RestLiIntegrationTest
       Assert.assertEquals(getAllReturnedGreeting, greeting);
     }
 
-    deleteAndVerifyBatchTestDataSerially(createdIds);
+    deleteAndVerifyBatchTestDataSerially(builders, createdIds);
   }
 
-  @Test
-  public void testMalformedPagination() throws RemoteInvocationException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testMalformedPagination(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
-    expectPaginationError("-1");
-    expectPaginationError("abc");
+    expectPaginationError("-1", builders);
+    expectPaginationError("abc", builders);
   }
 
-  private void expectPaginationError(String count) throws RemoteInvocationException
+  private void expectPaginationError(String count, RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     try
     {
-      FindRequest<Greeting> request = new GreetingsBuilders().findBySearch().name("search").setParam("count", count).build();
+      Request<CollectionResponse<Greeting>> request = builders.findBy("Search").name("search").setParam("count", count).build();
       REST_CLIENT.sendRequest(request).getResponse();
       Assert.fail("expected exception");
     }
@@ -809,12 +786,12 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     }
   }
 
-  @Test
-  public void testException() throws RemoteInvocationException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testException(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     try
     {
-      ActionRequest<Void> request = DEFAULT_GREETINGS_BUILDERS.actionExceptionTest().build();
+      Request<Void> request = builders.<Void>action("ExceptionTest").build();
       REST_CLIENT.sendRequest(request).getResponse().getEntity();
       Assert.fail("expected exception");
     }
@@ -825,10 +802,10 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     }
   }
 
-  @Test
-  public void test404() throws RemoteInvocationException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void test404(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
-    Request<Greeting> request = DEFAULT_GREETINGS_BUILDERS.get().id(999L).build();
+    Request<Greeting> request = builders.get().id(999L).build();
     ResponseFuture<Greeting> future = REST_CLIENT.sendRequest(request);
     try
     {
@@ -841,34 +818,108 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     }
   }
 
-  @Test
-  public void testOptions()
+  @Test(dataProvider = "requestBuilderWithResourceNameDataProvider")
+  public void testOptions(RootBuilderWrapper<Long, Greeting> builders, String resourceName)
       throws RemoteInvocationException, URISyntaxException, IOException
   {
-    Request<OptionsResponse> optionsRequest = DEFAULT_GREETINGS_BUILDERS.options().build();
+    Request<OptionsResponse> optionsRequest = builders.options().build();
     OptionsResponse optionsResponse = REST_CLIENT.sendRequest(optionsRequest).getResponse().getEntity();
     Map<String, ResourceSchema> resources = optionsResponse.getResourceSchemas();
     Assert.assertEquals(resources.size(), 1);
-    ResourceSchema resourceSchema = resources.get("com.linkedin.restli.examples.greetings.client.greetings");
+    ResourceSchema resourceSchema = resources.get("com.linkedin.restli.examples.greetings.client." + resourceName);
     // sanity check the resource schema
-    Assert.assertEquals(resourceSchema.getName(), "greetings");
+    Assert.assertEquals(resourceSchema.getName(), resourceName);
     Assert.assertTrue(resourceSchema.hasCollection());
+  }
+
+  @DataProvider
+  protected Object[][] requestBuilderDataProvider()
+  {
+    return new Object[][] {
+      { new RootBuilderWrapper(new GreetingsBuilders()) },
+      { new RootBuilderWrapper(new GreetingsRequestBuilders()) },
+      { new RootBuilderWrapper(new GreetingsPromiseBuilders()) },
+      { new RootBuilderWrapper(new GreetingsPromiseRequestBuilders()) },
+      { new RootBuilderWrapper(new GreetingsCallbackBuilders()) },
+      { new RootBuilderWrapper(new GreetingsCallbackRequestBuilders()) },
+      { new RootBuilderWrapper(new GreetingsPromiseCtxBuilders()) },
+      { new RootBuilderWrapper(new GreetingsPromiseCtxRequestBuilders()) },
+      { new RootBuilderWrapper(new GreetingsTaskBuilders()) },
+      { new RootBuilderWrapper(new GreetingsTaskRequestBuilders()) }
+    };
+  }
+
+  @DataProvider
+  protected Object[][] requestBuilderWithOptionsDataProvider()
+  {
+    final RestliRequestOptions customRequestOptions =
+      new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.FORCE_USE_NEXT).build();
+    return new Object[][] {
+      { new RootBuilderWrapper(new GreetingsBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
+      { new RootBuilderWrapper(new GreetingsBuilders(customRequestOptions)), customRequestOptions },
+      { new RootBuilderWrapper(new GreetingsRequestBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
+      { new RootBuilderWrapper(new GreetingsRequestBuilders(customRequestOptions)), customRequestOptions },
+      { new RootBuilderWrapper(new GreetingsPromiseBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
+      { new RootBuilderWrapper(new GreetingsPromiseBuilders(customRequestOptions)), customRequestOptions },
+      { new RootBuilderWrapper(new GreetingsPromiseRequestBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
+      { new RootBuilderWrapper(new GreetingsPromiseRequestBuilders(customRequestOptions)), customRequestOptions },
+      { new RootBuilderWrapper(new GreetingsCallbackBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
+      { new RootBuilderWrapper(new GreetingsCallbackBuilders(customRequestOptions)), customRequestOptions },
+      { new RootBuilderWrapper(new GreetingsCallbackRequestBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
+      { new RootBuilderWrapper(new GreetingsCallbackRequestBuilders(customRequestOptions)), customRequestOptions },
+      { new RootBuilderWrapper(new GreetingsPromiseCtxBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
+      { new RootBuilderWrapper(new GreetingsPromiseCtxBuilders(customRequestOptions)), customRequestOptions },
+      { new RootBuilderWrapper(new GreetingsPromiseCtxRequestBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
+      { new RootBuilderWrapper(new GreetingsPromiseCtxRequestBuilders(customRequestOptions)), customRequestOptions },
+      { new RootBuilderWrapper(new GreetingsTaskBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
+      { new RootBuilderWrapper(new GreetingsTaskBuilders(customRequestOptions)), customRequestOptions },
+      { new RootBuilderWrapper(new GreetingsTaskRequestBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
+      { new RootBuilderWrapper(new GreetingsTaskRequestBuilders(customRequestOptions)), customRequestOptions }
+    };
+  }
+
+  @DataProvider
+  protected Object[][] requestBuilderWithResourceNameDataProvider()
+  {
+    return new Object[][] {
+      { new RootBuilderWrapper(new GreetingsBuilders()), "greetings" },
+      { new RootBuilderWrapper(new GreetingsRequestBuilders()), "greetings" },
+      { new RootBuilderWrapper(new GreetingsPromiseBuilders()), "greetingsPromise" },
+      { new RootBuilderWrapper(new GreetingsPromiseRequestBuilders()), "greetingsPromise" },
+      { new RootBuilderWrapper(new GreetingsCallbackBuilders()), "greetingsCallback" },
+      { new RootBuilderWrapper(new GreetingsCallbackRequestBuilders()), "greetingsCallback" },
+      { new RootBuilderWrapper(new GreetingsPromiseCtxBuilders()), "greetingsPromiseCtx" },
+      { new RootBuilderWrapper(new GreetingsPromiseCtxRequestBuilders()), "greetingsPromiseCtx" },
+      { new RootBuilderWrapper(new GreetingsTaskBuilders()), "greetingsTask" },
+      { new RootBuilderWrapper(new GreetingsTaskRequestBuilders()), "greetingsTask" },
+    };
   }
 
   @DataProvider
   public Object[][] optionsData()
   {
     return new Object[][] {
-        new Object[] { DEFAULT_GREETINGS_BUILDERS.options(), new NamedDataSchema[] {
+        new Object[] { new GreetingsBuilders().options(), new NamedDataSchema[] {
             new Greeting().schema(),
             new TransferOwnershipRequest().schema(),
             new SearchMetadata().schema(),
             new Empty().schema(),
             (NamedDataSchema)DataTemplateUtil.getSchema(Tone.class)
         }},
+        new Object[] { new GreetingsRequestBuilders().options(), new NamedDataSchema[] {
+          new Greeting().schema(),
+          new TransferOwnershipRequest().schema(),
+          new SearchMetadata().schema(),
+          new Empty().schema(),
+          (NamedDataSchema)DataTemplateUtil.getSchema(Tone.class)
+        }},
         new Object[] { new ActionsBuilders().options(), new NamedDataSchema[] {
             new Message().schema(),
             (NamedDataSchema)DataTemplateUtil.getSchema(Tone.class)
+        }},
+        new Object[] { new ActionsRequestBuilders().options(), new NamedDataSchema[] {
+          new Message().schema(),
+          (NamedDataSchema)DataTemplateUtil.getSchema(Tone.class)
         }}
     };
   }

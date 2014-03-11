@@ -21,12 +21,6 @@ import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
-import com.linkedin.restli.client.ActionRequest;
-import com.linkedin.restli.client.BatchCreateRequest;
-import com.linkedin.restli.client.BatchGetRequest;
-import com.linkedin.restli.client.CreateRequest;
-import com.linkedin.restli.client.FindRequest;
-import com.linkedin.restli.client.GetRequest;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
@@ -43,16 +37,23 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.client.GreetingBuilders;
+import com.linkedin.restli.examples.greetings.client.GreetingRequestBuilders;
 import com.linkedin.restli.examples.greetings.client.SubgreetingsBuilders;
+import com.linkedin.restli.examples.greetings.client.SubgreetingsRequestBuilders;
 import com.linkedin.restli.examples.greetings.client.SubsubgreetingBuilders;
+import com.linkedin.restli.examples.greetings.client.SubsubgreetingRequestBuilders;
+import com.linkedin.restli.test.util.RootBuilderWrapper;
+
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 
@@ -66,17 +67,6 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
   private static final String URI_PREFIX = "http://localhost:1338/";
   private static final RestClient REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
 
-  private final GreetingBuilders _greetingBuilders;
-  private final SubgreetingsBuilders _subgreetingsBuilders;
-  private final SubsubgreetingBuilders _subsubgreetingBuilders;
-
-  public TestSimpleResourceHierarchy()
-  {
-    _greetingBuilders = new GreetingBuilders();
-    _subgreetingsBuilders = new SubgreetingsBuilders();
-    _subsubgreetingBuilders = new SubsubgreetingBuilders();
-  }
-
   @BeforeClass
   public void initClass() throws Exception
   {
@@ -89,17 +79,17 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
     super.shutdown();
   }
 
-  @Test()
-  public void testRootSimpleResourceGet() throws RemoteInvocationException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testRootSimpleResourceGet(RootBuilderWrapper<Void, Greeting> builders) throws RemoteInvocationException
   {
-    GetRequest<Greeting> request = _greetingBuilders.get().build();
+    Request<Greeting> request = builders.get().build();
     Response<Greeting> response = REST_CLIENT.sendRequest(request).getResponse();
     Greeting greeting = response.getEntity();
     Assert.assertEquals(greeting.getId().longValue(), 12345L);
   }
 
-  @Test()
-  public void testRootSimpleResourceUpdate() throws RemoteInvocationException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testRootSimpleResourceUpdate(RootBuilderWrapper<Void, Greeting> builders) throws RemoteInvocationException
   {
     Greeting greeting = new Greeting();
     greeting.setMessage("Message1");
@@ -107,19 +97,19 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
     greeting.setId(12345L);
 
     // PUT
-    Request<EmptyRecord> writeRequest = _greetingBuilders.update().input(greeting).build();
+    Request<EmptyRecord> writeRequest = builders.update().input(greeting).build();
     REST_CLIENT.sendRequest(writeRequest).getResponse();
 
     // GET again, to verify that our PUT worked.
-    GetRequest<Greeting> request = _greetingBuilders.get().build();
+    Request<Greeting> request = builders.get().build();
     Response<Greeting> response = REST_CLIENT.sendRequest(request).getResponse();
     greeting = response.getEntity();
 
     Assert.assertEquals(greeting.getTone(), Tone.INSULTING);
   }
 
-  @Test()
-  public void testRootSimpleResourcePartialUpdate() throws RemoteInvocationException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testRootSimpleResourcePartialUpdate(RootBuilderWrapper<Void, Greeting> builders) throws RemoteInvocationException
   {
     Greeting greeting = new Greeting();
     greeting.setMessage("Message1");
@@ -128,28 +118,28 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
     PatchRequest<Greeting> patch = PatchGenerator.diffEmpty(greeting);
 
     // PUT
-    Request<EmptyRecord> writeRequest = _greetingBuilders.partialUpdate().input(patch).build();
+    Request<EmptyRecord> writeRequest = builders.partialUpdate().input(patch).build();
     REST_CLIENT.sendRequest(writeRequest).getResponse();
 
     // GET again, to verify that our PUT worked.
-    GetRequest<Greeting> request = _greetingBuilders.get().build();
+    Request<Greeting> request = builders.get().build();
     Response<Greeting> response = REST_CLIENT.sendRequest(request).getResponse();
     greeting = response.getEntity();
 
     Assert.assertEquals(greeting.getTone(), Tone.SINCERE);
   }
 
-  @Test()
-  public void testRootSimpleResourceDelete() throws RemoteInvocationException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testRootSimpleResourceDelete(RootBuilderWrapper<Void, Greeting> builders) throws RemoteInvocationException
   {
     // DELETE
-    Request<EmptyRecord> writeRequest = _greetingBuilders.delete().build();
+    Request<EmptyRecord> writeRequest = builders.delete().build();
     REST_CLIENT.sendRequest(writeRequest).getResponse();
 
     // GET again, to verify that our DELETE worked.
     try
     {
-      GetRequest<Greeting> request = _greetingBuilders.get().build();
+      Request<Greeting> request = builders.get().build();
       Response<Greeting> response = REST_CLIENT.sendRequest(request).getResponse();
       Greeting greeting = response.getEntity();
       Assert.fail("Entity should have been removed.");
@@ -160,24 +150,24 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
     }
 
     //Restore initial state
-    testRootSimpleResourceUpdate();
+    testRootSimpleResourceUpdate(builders);
   }
 
-  @Test
-  public void testRootSimpleResourceIntAction() throws RemoteInvocationException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testRootSimpleResourceIntAction(RootBuilderWrapper<Void, Greeting> builders) throws RemoteInvocationException
   {
-    ActionRequest<Integer> request = _greetingBuilders.actionExampleAction().paramParam1(1).build();
+    Request<Integer> request = builders.<Integer>action("ExampleAction").setActionParam("Param1", 1).build();
     ResponseFuture<Integer> responseFuture = REST_CLIENT.sendRequest(request);
     Assert.assertEquals(responseFuture.getResponse().getStatus(), 200);
     Assert.assertEquals(responseFuture.getResponse().getEntity().intValue(), 10);
   }
 
-  @Test
-  public void testRootSimpleResourceActionException() throws RemoteInvocationException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testRootSimpleResourceActionException(RootBuilderWrapper<Void, Greeting> builders) throws RemoteInvocationException
   {
     try
     {
-      ActionRequest<Void> request = _greetingBuilders.actionExceptionTest().build();
+      Request<Void> request = builders.<Void>action("ExceptionTest").build();
       REST_CLIENT.sendRequest(request).getResponse().getEntity();
       Assert.fail("expected exception");
     }
@@ -188,30 +178,30 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
     }
   }
 
-  @Test
-  public void testSubCollectionGet() throws RemoteInvocationException
+  @Test(dataProvider = "requestSubBuilderDataProvider")
+  public void testSubCollectionGet(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
-    GetRequest<Greeting> request = _subgreetingsBuilders.get().id(1L).build();
+    Request<Greeting> request = builders.get().id(1L).build();
     Response<Greeting> response = REST_CLIENT.sendRequest(request).getResponse();
     Greeting greeting = response.getEntity();
     Assert.assertEquals(greeting.getId().longValue(), 1L);
   }
 
-  @Test
-  public void testSubCollectionBatchGet() throws RemoteInvocationException
+  @Test(dataProvider = "requestSubBuilderDataProvider")
+  public void testSubCollectionBatchGet(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     List<Long> ids = Arrays.asList(1L, 2L, 3L, 4L);
-    BatchGetRequest<Greeting> request = _subgreetingsBuilders.batchGet().ids(ids).build();
+    Request<BatchResponse<Greeting>> request = builders.batchGet().ids(ids).build();
 
     Response<BatchResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
     BatchResponse<Greeting> batchResponse = response.getEntity();
     Assert.assertEquals(batchResponse.getResults().size(), ids.size());
   }
 
-  @Test
-  public void testSubCollectionFinder() throws RemoteInvocationException
+  @Test(dataProvider = "requestSubBuilderDataProvider")
+  public void testSubCollectionFinder(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
-    FindRequest<Greeting> request = _subgreetingsBuilders.findBySearch().toneParam(Tone.SINCERE).paginate(1, 2).build();
+    Request<CollectionResponse<Greeting>> request = builders.findBy("Search").setQueryParam("tone", Tone.SINCERE).paginate(1, 2).build();
 
     Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
 
@@ -224,11 +214,11 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
     }
   }
 
-  @Test
-  public void testSubCollectionUpdate() throws RemoteInvocationException, CloneNotSupportedException, URISyntaxException
+  @Test(dataProvider = "requestSubBuilderDataProvider")
+  public void testSubCollectionUpdate(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException, CloneNotSupportedException, URISyntaxException
   {
     // GET
-    Request<Greeting> request = _subgreetingsBuilders.get().id(1L).build();
+    Request<Greeting> request = builders.get().id(1L).build();
     ResponseFuture<Greeting> future = REST_CLIENT.sendRequest(request);
     Response<Greeting> greetingResponse = future.getResponse();
 
@@ -239,22 +229,22 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
     Greeting greeting = new Greeting(greetingResponse.getEntity().data().copy());
     greeting.setMessage(response1 + "Again");
 
-    Request<EmptyRecord> writeRequest = _subgreetingsBuilders.update().id(1L).input(greeting).build();
+    Request<EmptyRecord> writeRequest = builders.update().id(1L).input(greeting).build();
     REST_CLIENT.sendRequest(writeRequest).getResponse();
 
     // GET again, to verify that our POST worked.
-    Request<Greeting> request2 = _subgreetingsBuilders.get().id(1L).build();
+    Request<Greeting> request2 = builders.get().id(1L).build();
     ResponseFuture<Greeting> future2 = REST_CLIENT.sendRequest(request2);
     String response2 = future2.getResponse().getEntity().getMessage();
 
     Assert.assertEquals(response2, response1 + "Again");
   }
 
-  @Test
-  public void testSubCollectionPartialUpdate() throws RemoteInvocationException, CloneNotSupportedException, URISyntaxException
+  @Test(dataProvider = "requestSubBuilderDataProvider")
+  public void testSubCollectionPartialUpdate(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException, CloneNotSupportedException, URISyntaxException
   {
     // GET
-    Request<Greeting> request = _subgreetingsBuilders.get().id(1L).build();
+    Request<Greeting> request = builders.get().id(1L).build();
     ResponseFuture<Greeting> future = REST_CLIENT.sendRequest(request);
     Response<Greeting> greetingResponse = future.getResponse();
 
@@ -266,33 +256,33 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
 
     PatchRequest<Greeting> patch = PatchGenerator.diff(original, greeting);
 
-    Request<EmptyRecord> writeRequest = _subgreetingsBuilders.partialUpdate().id(1L).input(patch).build();
+    Request<EmptyRecord> writeRequest = builders.partialUpdate().id(1L).input(patch).build();
     int status = REST_CLIENT.sendRequest(writeRequest).getResponse().getStatus();
     Assert.assertEquals(status, HttpStatus.S_204_NO_CONTENT.getCode());
 
     // GET again, to verify that our PUT worked.
-    Request<Greeting> request2 = _subgreetingsBuilders.get().id(1L).build();
+    Request<Greeting> request2 = builders.get().id(1L).build();
     ResponseFuture<Greeting> future2 = REST_CLIENT.sendRequest(request2);
     String response2 = future2.getResponse().getEntity().getMessage();
 
     Assert.assertEquals(response2, greeting.getMessage());
   }
 
-  @Test
-  public void testSubCollectionCreate() throws RemoteInvocationException
+  @Test(dataProvider = "requestSubBuilderDataProvider")
+  public void testSubCollectionCreate(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Greeting greeting = new Greeting();
     greeting.setMessage("Hello there!");
     greeting.setTone(Tone.FRIENDLY);
 
     //POST
-    CreateRequest<Greeting> createRequest = _subgreetingsBuilders.create().input(greeting).build();
+    Request<EmptyRecord> createRequest = builders.create().input(greeting).build();
     Response<EmptyRecord> emptyRecordResponse = REST_CLIENT.sendRequest(createRequest).getResponse();
     Assert.assertNull(emptyRecordResponse.getHeader(RestConstants.HEADER_CONTENT_TYPE));
     long id = Long.parseLong(emptyRecordResponse.getId());
 
     //GET again to verify that the create has worked.
-    GetRequest<Greeting> getRequest = _subgreetingsBuilders.get().id(id).build();
+    Request<Greeting> getRequest = builders.get().id(id).build();
     Response<Greeting> getResponse = REST_CLIENT.sendRequest(getRequest).getResponse();
     Greeting responseGreeting = getResponse.getEntity();
 
@@ -300,8 +290,8 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
     Assert.assertEquals(responseGreeting.getTone(), greeting.getTone());
   }
 
-  @Test
-  public void testSubCollectionBatchCreate() throws RemoteInvocationException
+  @Test(dataProvider = "requestSubBuilderDataProvider")
+  public void testSubCollectionBatchCreate(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Greeting greeting = new Greeting();
     greeting.setMessage("Message1");
@@ -316,7 +306,7 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
     greetings.add(greeting2);
 
     //POST
-    BatchCreateRequest<Greeting> batchCreateRequest = _subgreetingsBuilders.batchCreate().inputs(greetings).build();
+    Request<CollectionResponse<CreateStatus>> batchCreateRequest = builders.batchCreate().inputs(greetings).build();
     Response<CollectionResponse<CreateStatus>> batchCreateResponse = REST_CLIENT.sendRequest(batchCreateRequest).getResponse();
 
     ArrayList<Long> ids = new ArrayList<Long>();
@@ -327,19 +317,19 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
     }
 
     //GET again to verify that the create has worked.
-    BatchGetRequest<Greeting> request = _subgreetingsBuilders.batchGet().ids(ids).build();
+    Request<BatchResponse<Greeting>> request = builders.batchGet().ids(ids).build();
 
     Response<BatchResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
     BatchResponse<Greeting> batchResponse = response.getEntity();
     Assert.assertEquals(batchResponse.getResults().size(), ids.size());
   }
 
-  @Test
-  public void testSubCollectionActionException() throws RemoteInvocationException
+  @Test(dataProvider = "requestSubBuilderDataProvider")
+  public void testSubCollectionActionException(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     try
     {
-      ActionRequest<Void> request = _subgreetingsBuilders.actionExceptionTest().build();
+      Request<Void> request = builders.<Void>action("ExceptionTest").build();
       REST_CLIENT.sendRequest(request).getResponse().getEntity();
       Assert.fail("expected exception");
     }
@@ -350,26 +340,26 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
     }
   }
 
-  @Test
-  public void testSubCollectionIntAction() throws RemoteInvocationException
+  @Test(dataProvider = "requestSubBuilderDataProvider")
+  public void testSubCollectionIntAction(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
-    ActionRequest<Integer> request = _subgreetingsBuilders.actionPurge().build();
+    Request<Integer> request = builders.<Integer>action("Purge").build();
     ResponseFuture<Integer> responseFuture = REST_CLIENT.sendRequest(request);
     Assert.assertEquals(responseFuture.getResponse().getStatus(), 200);
     Assert.assertEquals(responseFuture.getResponse().getEntity().intValue(), 100);
   }
 
-  @Test()
-  public void testSubsubsimpleResourceGet() throws RemoteInvocationException
+  @Test(dataProvider = "requestSubSubBuilderDataProvider")
+  public void testSubsubsimpleResourceGet(RootBuilderWrapper<Void, Greeting> builders) throws RemoteInvocationException
   {
-    GetRequest<Greeting> request = _subsubgreetingBuilders.get().subgreetingsIdKey(1L).build();
+    Request<Greeting> request = builders.get().setPathKey("subgreetingsId", 1L).build();
     Response<Greeting> response = REST_CLIENT.sendRequest(request).getResponse();
     Greeting greeting = response.getEntity();
     Assert.assertEquals(greeting.getId().longValue(), 10L);
   }
 
-  @Test()
-  public void testSubsubsimpleResourceUpdate() throws RemoteInvocationException
+  @Test(dataProvider = "requestSubSubBuilderDataProvider")
+  public void testSubsubsimpleResourceUpdate(RootBuilderWrapper<Void, Greeting> builders) throws RemoteInvocationException
   {
     Greeting greeting = new Greeting();
     greeting.setMessage("Message1");
@@ -377,19 +367,19 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
     greeting.setId(1L);
 
     // PUT
-    Request<EmptyRecord> writeRequest = _subsubgreetingBuilders.update().subgreetingsIdKey(1L).input(greeting).build();
+    Request<EmptyRecord> writeRequest = builders.update().setPathKey("subgreetingsId", 1L).input(greeting).build();
     REST_CLIENT.sendRequest(writeRequest).getResponse();
 
     // GET again, to verify that our POST worked.
-    GetRequest<Greeting> request = _subsubgreetingBuilders.get().subgreetingsIdKey(1L).build();
+    Request<Greeting> request = builders.get().setPathKey("subgreetingsId", 1L).build();
     Response<Greeting> response = REST_CLIENT.sendRequest(request).getResponse();
     greeting = response.getEntity();
 
     Assert.assertEquals(greeting.getTone(), Tone.INSULTING);
   }
 
-  @Test()
-  public void testSubsubsimpleResourcePartialUpdate() throws RemoteInvocationException
+  @Test(dataProvider = "requestSubSubBuilderDataProvider")
+  public void testSubsubsimpleResourcePartialUpdate(RootBuilderWrapper<Void, Greeting> builders) throws RemoteInvocationException
   {
     Greeting greeting = new Greeting();
     greeting.setMessage("Message1");
@@ -399,28 +389,28 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
 
     // PUT
     Request<EmptyRecord> writeRequest =
-        _subsubgreetingBuilders.partialUpdate().subgreetingsIdKey(1L).input(patch).build();
+        builders.partialUpdate().setPathKey("subgreetingsId", 1L).input(patch).build();
     REST_CLIENT.sendRequest(writeRequest).getResponse();
 
     // GET again, to verify that our POST worked.
-    GetRequest<Greeting> request = _subsubgreetingBuilders.get().subgreetingsIdKey(1L).build();
+    Request<Greeting> request = builders.get().setPathKey("subgreetingsId", 1L).build();
     Response<Greeting> response = REST_CLIENT.sendRequest(request).getResponse();
     greeting = response.getEntity();
 
     Assert.assertEquals(greeting.getTone(), Tone.SINCERE);
   }
 
-  @Test()
-  public void testSubsubsimpleResourceDelete() throws RemoteInvocationException
+  @Test(dataProvider = "requestSubSubBuilderDataProvider")
+  public void testSubsubsimpleResourceDelete(RootBuilderWrapper<Void, Greeting> builders) throws RemoteInvocationException
   {
     // DELETE
-    Request<EmptyRecord> writeRequest = _subsubgreetingBuilders.delete().subgreetingsIdKey(1L).build();
+    Request<EmptyRecord> writeRequest = builders.delete().setPathKey("subgreetingsId", 1L).build();
     REST_CLIENT.sendRequest(writeRequest).getResponse();
 
     // GET again, to verify that our DELETE worked.
     try
     {
-      GetRequest<Greeting> request = _subsubgreetingBuilders.get().subgreetingsIdKey(1L).build();
+      Request<Greeting> request = builders.get().setPathKey("subgreetingsId", 1L).build();
       Response<Greeting> response = REST_CLIENT.sendRequest(request).getResponse();
       Greeting greeting = response.getEntity();
       Assert.fail("Entity should have been removed.");
@@ -431,28 +421,28 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
     }
 
     //Restore initial state
-    testSubsubsimpleResourceUpdate();
+    testSubsubsimpleResourceUpdate(builders);
   }
 
-  @Test
-  public void testSubsubsimpleResourceIntAction() throws RemoteInvocationException
+  @Test(dataProvider = "requestSubSubBuilderDataProvider")
+  public void testSubsubsimpleResourceIntAction(RootBuilderWrapper<Void, Greeting> builders) throws RemoteInvocationException
   {
-    ActionRequest<Integer> request = _subsubgreetingBuilders.actionExampleAction()
-                                                            .subgreetingsIdKey(1L)
-                                                            .paramParam1(1)
-                                                            .build();
+    Request<Integer> request = builders.<Integer>action("ExampleAction")
+                                       .setPathKey("subgreetingsId", 1L)
+                                       .setActionParam("Param1", 1)
+                                       .build();
 
     ResponseFuture<Integer> responseFuture = REST_CLIENT.sendRequest(request);
     Assert.assertEquals(responseFuture.getResponse().getStatus(), 200);
     Assert.assertEquals(responseFuture.getResponse().getEntity().intValue(), 10);
   }
 
-  @Test
-  public void testSubsubsimpleResourceActionException() throws RemoteInvocationException
+  @Test(dataProvider = "requestSubSubBuilderDataProvider")
+  public void testSubsubsimpleResourceActionException(RootBuilderWrapper<Void, Greeting> builders) throws RemoteInvocationException
   {
     try
     {
-      ActionRequest<Void> request = _subsubgreetingBuilders.actionExceptionTest().subgreetingsIdKey(1L).build();
+      Request<Void> request = builders.<Void>action("ExceptionTest").setPathKey("subgreetingsId", 1L).build();
       REST_CLIENT.sendRequest(request).getResponse().getEntity();
       Assert.fail("expected exception");
     }
@@ -461,5 +451,32 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
       Assert.assertEquals(e.getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode());
       Assert.assertTrue(e.getServiceErrorMessage().contains("Test Exception"));
     }
+  }
+
+  @DataProvider
+  private static Object[][] requestBuilderDataProvider()
+  {
+    return new Object[][] {
+      { new RootBuilderWrapper(new GreetingBuilders()) },
+      { new RootBuilderWrapper(new GreetingRequestBuilders()) }
+    };
+  }
+
+  @DataProvider
+  private static Object[][] requestSubBuilderDataProvider()
+  {
+    return new Object[][] {
+      { new RootBuilderWrapper(new SubgreetingsBuilders()) },
+      { new RootBuilderWrapper(new SubgreetingsRequestBuilders()) }
+    };
+  }
+
+  @DataProvider
+  private static Object[][] requestSubSubBuilderDataProvider()
+  {
+    return new Object[][] {
+      { new RootBuilderWrapper(new SubsubgreetingBuilders()) },
+      { new RootBuilderWrapper(new SubsubgreetingRequestBuilders()) }
+    };
   }
 }

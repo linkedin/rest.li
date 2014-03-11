@@ -21,6 +21,25 @@
 package com.linkedin.restli.examples;
 
 
+import com.linkedin.data.template.LongArray;
+import com.linkedin.r2.RemoteInvocationException;
+import com.linkedin.r2.transport.common.Client;
+import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
+import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import com.linkedin.restli.client.BatchGetKVRequest;
+import com.linkedin.restli.client.Request;
+import com.linkedin.restli.client.Response;
+import com.linkedin.restli.client.RestClient;
+import com.linkedin.restli.client.response.BatchKVResponse;
+import com.linkedin.restli.common.BatchResponse;
+import com.linkedin.restli.common.CollectionResponse;
+import com.linkedin.restli.common.ComplexResourceKey;
+import com.linkedin.restli.examples.greetings.api.ComplexArray;
+import com.linkedin.restli.examples.greetings.api.Greeting;
+import com.linkedin.restli.examples.greetings.client.ComplexArrayBuilders;
+import com.linkedin.restli.examples.greetings.client.ComplexArrayRequestBuilders;
+import com.linkedin.restli.test.util.RootBuilderWrapper;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -31,26 +50,8 @@ import org.testng.Assert;
 import org.testng.ITestContext;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-
-import com.linkedin.data.template.LongArray;
-import com.linkedin.r2.RemoteInvocationException;
-import com.linkedin.r2.transport.common.Client;
-import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
-import com.linkedin.r2.transport.http.client.HttpClientFactory;
-import com.linkedin.restli.client.ActionRequest;
-import com.linkedin.restli.client.BatchGetKVRequest;
-import com.linkedin.restli.client.BatchGetRequest;
-import com.linkedin.restli.client.FindRequest;
-import com.linkedin.restli.client.GetRequest;
-import com.linkedin.restli.client.Response;
-import com.linkedin.restli.client.RestClient;
-import com.linkedin.restli.client.response.BatchKVResponse;
-import com.linkedin.restli.common.BatchResponse;
-import com.linkedin.restli.common.ComplexResourceKey;
-import com.linkedin.restli.examples.greetings.api.ComplexArray;
-import com.linkedin.restli.examples.greetings.api.Greeting;
-import com.linkedin.restli.examples.greetings.client.ComplexArrayBuilders;
 
 
 /**
@@ -63,7 +64,6 @@ public class TestComplexArrayResource  extends RestLiIntegrationTest
   private static final Client CLIENT = new TransportClientAdapter(new HttpClientFactory().getClient(Collections.<String, String>emptyMap()));
   private static final String URI_PREFIX = "http://localhost:1338/";
   private static final RestClient REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
-  private static final ComplexArrayBuilders BUILDERS = new ComplexArrayBuilders();
 
   @BeforeClass(alwaysRun=true)
   public void initClass(ITestContext ctx) throws Exception
@@ -79,8 +79,8 @@ public class TestComplexArrayResource  extends RestLiIntegrationTest
     super.shutdown();
   }
 
-  @Test
-  public void testGet() throws RemoteInvocationException, CloneNotSupportedException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testGet(RootBuilderWrapper<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting> builders) throws RemoteInvocationException, CloneNotSupportedException
   {
     // all array are singletons with single element
     LongArray singleton = new LongArray();
@@ -91,13 +91,13 @@ public class TestComplexArrayResource  extends RestLiIntegrationTest
     ComplexArray params = new ComplexArray().setArray(singleton).setNext(next);
     ComplexResourceKey<ComplexArray, ComplexArray> complexKey = new ComplexResourceKey<ComplexArray, ComplexArray>(key, params);
 
-    GetRequest<Greeting> request = BUILDERS.get().id(complexKey).build();
+    Request<Greeting> request = builders.get().id(complexKey).build();
 
     REST_CLIENT.sendRequest(request).getResponse().getEntity();
   }
 
   @Test
-  public void testBatchGet() throws RemoteInvocationException
+  public void testBatchGet(RootBuilderWrapper<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting> builders) throws RemoteInvocationException
   {
     LongArray singleton1 = new LongArray();
     singleton1.add(1L);
@@ -120,7 +120,7 @@ public class TestComplexArrayResource  extends RestLiIntegrationTest
     complexKeys.add(complexKey1);
     complexKeys.add(complexKey2);
 
-    BatchGetRequest<Greeting> request = BUILDERS.batchGet().ids(complexKeys).build();
+    Request<BatchResponse<Greeting>> request = builders.batchGet().ids(complexKeys).build();
 
     Response<BatchResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
 
@@ -129,7 +129,7 @@ public class TestComplexArrayResource  extends RestLiIntegrationTest
     Assert.assertNotNull(greeting);
 
     BatchGetKVRequest<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting> request2 =
-        BUILDERS.batchGet().ids(complexKeys).buildKV();
+        builders.batchGet().ids(complexKeys).buildKV();
 
     Response<BatchKVResponse<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting>> response2 =
         REST_CLIENT.sendRequest(request2).getResponse();
@@ -140,26 +140,35 @@ public class TestComplexArrayResource  extends RestLiIntegrationTest
   }
 
   @Test
-  public void testFinder() throws RemoteInvocationException
+  public void testFinder(RootBuilderWrapper<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting> builders) throws RemoteInvocationException
   {
     LongArray singleton = new LongArray();
     singleton.add(1L);
     ComplexArray next = new ComplexArray().setArray(singleton);
     ComplexArray array = new ComplexArray().setArray(singleton).setNext(next);
 
-    FindRequest<Greeting> request = BUILDERS.findByFinder().arrayParam(array).build();
+    Request<CollectionResponse<Greeting>> request = builders.findBy("Finder").setQueryParam("array", array).build();
     REST_CLIENT.sendRequest(request).getResponse().getEntity();
   }
 
   @Test
-  public void testAction() throws RemoteInvocationException
+  public void testAction(RootBuilderWrapper<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting> builders) throws RemoteInvocationException
   {
     LongArray singleton = new LongArray();
     singleton.add(1L);
     ComplexArray next = new ComplexArray().setArray(singleton);
     ComplexArray array = new ComplexArray().setArray(singleton).setNext(next);
 
-    ActionRequest<Integer> request = BUILDERS.actionAction().paramArray(array).build();
+    Request<Integer> request = builders.<Integer>action("Action").setActionParam("Array", array).build();
     REST_CLIENT.sendRequest(request).getResponse().getEntity();
+  }
+
+  @DataProvider
+  private static Object[][] requestBuilderDataProvider()
+  {
+    return new Object[][] {
+      { new RootBuilderWrapper(new ComplexArrayBuilders()) },
+      { new RootBuilderWrapper(new ComplexArrayRequestBuilders()) }
+    };
   }
 }

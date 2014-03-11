@@ -39,9 +39,11 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.examples.RestLiIntegrationTest;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
+import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.server.RestLiServiceException;
+import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.net.URI;
 import java.util.Collections;
@@ -52,6 +54,7 @@ import java.util.concurrent.ExecutionException;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 
@@ -118,27 +121,20 @@ public class TestGreetingsClientProtocolVersionHeader extends RestLiIntegrationT
     }
   }
 
-  @Test
-  public void testProtocolVersionHeaderRoundtrip()
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testProtocolVersionHeaderRoundtrip(RootBuilderWrapper<Long, Greeting> builders, ProtocolVersion version)
       throws RemoteInvocationException
   {
-    GreetingsBuilders defaultBuilder = new GreetingsBuilders();
-    GetRequest<Greeting> getRequest = defaultBuilder.get().id(1L).build();
-    checkProtocolVersionHeader(getRequest, AllProtocolVersions.BASELINE_PROTOCOL_VERSION);
-
-    GreetingsBuilders forceBuilders =
-        new GreetingsBuilders(new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.FORCE_USE_LATEST).build());
-    getRequest = forceBuilders.get().id(1L).build();
-    checkProtocolVersionHeader(getRequest, AllProtocolVersions.LATEST_PROTOCOL_VERSION);
+    final Request<Greeting> getRequest = builders.get().id(1L).build();
+    checkProtocolVersionHeader(getRequest, version);
   }
 
-  private void checkProtocolVersionHeader(GetRequest<Greeting> request,
+  private void checkProtocolVersionHeader(Request<Greeting> request,
                                           ProtocolVersion expectedProtocolVersion)
       throws RemoteInvocationException
   {
     ResponseFuture<Greeting> responseFuture = _REST_CLIENT.sendRequest(request);
-    Assert.assertEquals(responseFuture.getResponse().getHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION),
-                        expectedProtocolVersion.toString());
+    Assert.assertEquals(responseFuture.getResponse().getHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION), expectedProtocolVersion.toString());
   }
 
   @Test
@@ -178,5 +174,16 @@ public class TestGreetingsClientProtocolVersionHeader extends RestLiIntegrationT
       final DataMap exceptionDetail = DataMapUtils.readMap(response.getEntity().asInputStream());
       Assert.assertEquals(exceptionDetail.getString("exceptionClass"), RestLiServiceException.class.getName());
     }
+  }
+
+  @DataProvider
+  private static Object[][] requestBuilderDataProvider()
+  {
+    return new Object[][] {
+      { new RootBuilderWrapper(new GreetingsBuilders(new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE).build())), AllProtocolVersions.BASELINE_PROTOCOL_VERSION },
+      { new RootBuilderWrapper(new GreetingsBuilders(new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.FORCE_USE_LATEST).build())), AllProtocolVersions.LATEST_PROTOCOL_VERSION },
+      { new RootBuilderWrapper(new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE).build())), AllProtocolVersions.BASELINE_PROTOCOL_VERSION },
+      { new RootBuilderWrapper(new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.FORCE_USE_LATEST).build())), AllProtocolVersions.LATEST_PROTOCOL_VERSION }
+    };
   }
 }

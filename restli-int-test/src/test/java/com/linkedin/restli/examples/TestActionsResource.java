@@ -16,12 +16,13 @@
 
 package com.linkedin.restli.examples;
 
+
 import com.linkedin.data.template.StringArray;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
-import com.linkedin.restli.client.ActionRequest;
+import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
 import com.linkedin.restli.client.RestClient;
@@ -32,10 +33,15 @@ import com.linkedin.restli.examples.greetings.api.MessageArray;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.api.ToneArray;
 import com.linkedin.restli.examples.greetings.client.ActionsBuilders;
+import com.linkedin.restli.examples.greetings.client.ActionsRequestBuilders;
+import com.linkedin.restli.test.util.RootBuilderWrapper;
+
 import java.util.Collections;
+
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 public class TestActionsResource extends RestLiIntegrationTest
@@ -43,7 +49,6 @@ public class TestActionsResource extends RestLiIntegrationTest
   private static final Client CLIENT = new TransportClientAdapter(new HttpClientFactory().getClient(Collections.<String, String>emptyMap()));
   private static final String URI_PREFIX = "http://localhost:1338/";
   private static final RestClient REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
-  private static final ActionsBuilders ACTIONS_BUILDERS = new ActionsBuilders();
 
   @BeforeClass
   public void initClass() throws Exception
@@ -57,44 +62,44 @@ public class TestActionsResource extends RestLiIntegrationTest
     super.shutdown();
   }
 
-  @Test
-  public void testPrimitiveReturningActions() throws RemoteInvocationException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testPrimitiveReturningActions(RootBuilderWrapper<?, ?> builders) throws RemoteInvocationException
   {
-    ActionRequest<Integer> intRequest = ACTIONS_BUILDERS.actionReturnInt().build();
+    Request<Integer> intRequest = builders.<Integer>action("ReturnInt").build();
     Integer integer = REST_CLIENT.sendRequest(intRequest).getResponse().getEntity();
     Assert.assertEquals(0, integer.intValue());
 
-    ActionRequest<Boolean> boolRequest = ACTIONS_BUILDERS.actionReturnBool().build();
+    Request<Boolean> boolRequest = builders.<Boolean>action("ReturnBool").build();
     Boolean bool = REST_CLIENT.sendRequest(boolRequest).getResponse().getEntity();
     Assert.assertTrue(bool);
   }
 
-  @Test
-  public void testActionsSet() throws RemoteInvocationException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testActionsSet(RootBuilderWrapper<?, ?> builders) throws RemoteInvocationException
   {
-    ActionRequest<Integer> request = ACTIONS_BUILDERS.actionUltimateAnswer().build();
+    Request<Integer> request = builders.<Integer>action("UltimateAnswer").build();
     Integer answer = REST_CLIENT.sendRequest(request).getResponse().getEntity();
     Assert.assertEquals(answer, Integer.valueOf(42));
   }
 
-  @Test
-  public void testActionNamedGet() throws RemoteInvocationException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testActionNamedGet(RootBuilderWrapper<?, ?> builders) throws RemoteInvocationException
   {
-    ActionRequest<String> request = ACTIONS_BUILDERS.actionGet().build();
+    Request<String> request = builders.<String>action("Get").build();
     String value = REST_CLIENT.sendRequest(request).getResponse().getEntity();
     Assert.assertEquals(value, "Hello, World");
   }
 
-  @Test
-  public void testArrayTypesOnActions() throws RemoteInvocationException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testArrayTypesOnActions(RootBuilderWrapper<?, ?> builders) throws RemoteInvocationException
   {
     //Record template array
     MessageArray inputMessageArray = new MessageArray();
     inputMessageArray.add(new Message().setId("My Message Id").setMessage("My Message"));
     inputMessageArray.add(new Message().setId("My Message Id 2").setMessage("My Message 2"));
-    ActionRequest<MessageArray> messageArrayActionRequest =
-        ACTIONS_BUILDERS.actionEchoMessageArray().paramMessages(inputMessageArray).build();
-    MessageArray messageArray = REST_CLIENT.sendRequest(messageArrayActionRequest).getResponse().getEntity();
+    Request<MessageArray> messageArrayRequest =
+        builders.<MessageArray>action("EchoMessageArray").setActionParam("Messages", inputMessageArray).build();
+    MessageArray messageArray = REST_CLIENT.sendRequest(messageArrayRequest).getResponse().getEntity();
 
     Assert.assertEquals(messageArray.get(0).getId(), "My Message Id");
     Assert.assertEquals(messageArray.get(0).getMessage(), "My Message");
@@ -106,9 +111,9 @@ public class TestActionsResource extends RestLiIntegrationTest
     StringArray inputStringArray = new StringArray();
     inputStringArray.add("message1");
     inputStringArray.add("message2");
-    ActionRequest<StringArray> stringArrayActionRequest =
-        ACTIONS_BUILDERS.actionEchoStringArray().paramStrings(inputStringArray).build();
-    StringArray stringArray = REST_CLIENT.sendRequest(stringArrayActionRequest).getResponse().getEntity();
+    Request<StringArray> stringArrayRequest =
+        builders.<StringArray>action("EchoStringArray").setActionParam("Strings", inputStringArray).build();
+    StringArray stringArray = REST_CLIENT.sendRequest(stringArrayRequest).getResponse().getEntity();
 
     Assert.assertEquals(stringArray.get(0), "message1");
     Assert.assertEquals(stringArray.get(1), "message2");
@@ -118,9 +123,9 @@ public class TestActionsResource extends RestLiIntegrationTest
     inputTonesArray.add(Tone.SINCERE);
     inputTonesArray.add(Tone.FRIENDLY);
 
-    ActionRequest<ToneArray> toneArrayActionRequest =
-        ACTIONS_BUILDERS.actionEchoToneArray().paramTones(inputTonesArray).build();
-    ToneArray tones = REST_CLIENT.sendRequest(toneArrayActionRequest).getResponse().getEntity();
+    Request<ToneArray> toneArrayRequest =
+        builders.<ToneArray>action("EchoToneArray").setActionParam("Tones", inputTonesArray).build();
+    ToneArray tones = REST_CLIENT.sendRequest(toneArrayRequest).getResponse().getEntity();
 
     Assert.assertEquals(tones.get(0), Tone.SINCERE);
     Assert.assertEquals(tones.get(1), Tone.FRIENDLY);
@@ -128,11 +133,11 @@ public class TestActionsResource extends RestLiIntegrationTest
 
   // Not implemented until we switch back to using the "useContinuation" path by default
   // in the AbstractR2Servlet.
-  @Test(groups = TestConstants.TESTNG_GROUP_NOT_IMPLEMENTED)
-  //@Test
-  public void testServerTimeout() throws RemoteInvocationException
+  @Test(groups = TestConstants.TESTNG_GROUP_NOT_IMPLEMENTED, dataProvider = "requestBuilder")
+  //@Test(dataProvider = "requestBuilderDataProvider")
+  public void testServerTimeout(RootBuilderWrapper<?, ?> builders) throws RemoteInvocationException
   {
-    ActionRequest<Void> request = ACTIONS_BUILDERS.actionTimeout().build();
+    Request<Void> request = builders.<Void>action("Timeout").build();
     try
     {
       REST_CLIENT.sendRequest(request).getResponse();
@@ -144,83 +149,92 @@ public class TestActionsResource extends RestLiIntegrationTest
     }
   }
 
-  @Test
-  public void testParSeqAction() throws RemoteInvocationException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testParSeqAction(RootBuilderWrapper<?, ?> builders) throws RemoteInvocationException
   {
     // this version is given a Context and returns a promise
-    ActionRequest<String> req =
-        ACTIONS_BUILDERS.actionParseq().paramA(5).paramB("yay").paramC(false).build();
+    Request<String> req =
+        builders.<String>action("Parseq").setActionParam("A", 5).setActionParam("B", "yay").setActionParam("C", false).build();
     ResponseFuture<String> future = REST_CLIENT.sendRequest(req);
     Response<String> response = future.getResponse();
 
     Assert.assertEquals(response.getEntity(), "101 YAY false");
   }
 
-  @Test
-  public void testParSeqAction2() throws RemoteInvocationException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testParSeqAction2(RootBuilderWrapper<?, ?> builders) throws RemoteInvocationException
   {
     // this version gives a Task that RestLi runs
-    ActionRequest<String> req =
-        ACTIONS_BUILDERS.actionParseq2().paramA(5).paramB("yay").paramC(false).build();
+    Request<String> req =
+        builders.<String>action("Parseq2").setActionParam("A", 5).setActionParam("B", "yay").setActionParam("C", false).build();
     ResponseFuture<String> future = REST_CLIENT.sendRequest(req);
     Response<String> response = future.getResponse();
 
     Assert.assertEquals(response.getEntity(), "101 YAY false");
   }
 
-  @Test(expectedExceptions = RestLiResponseException.class)
-  public void testFailPromiseCall() throws RemoteInvocationException
+  @Test(expectedExceptions = RestLiResponseException.class, dataProvider = "requestBuilder")
+  public void testFailPromiseCall(RootBuilderWrapper<?, ?> builders) throws RemoteInvocationException
   {
     // this version gives a Task that RestLi runs
-    ActionRequest<Void> req = ACTIONS_BUILDERS.actionFailPromiseCall().build();
+    Request<Void> req = builders.<Void>action("FailPromiseCall").build();
     REST_CLIENT.sendRequest(req).getResponse();
   }
 
-  @Test(expectedExceptions = RestLiResponseException.class)
-  public void testFailPromiseThrow() throws RemoteInvocationException
+  @Test(expectedExceptions = RestLiResponseException.class, dataProvider = "requestBuilder")
+  public void testFailPromiseThrow(RootBuilderWrapper<?, ?> builders) throws RemoteInvocationException
   {
     // this version gives a Task that RestLi runs
-    ActionRequest<Void> req = ACTIONS_BUILDERS.actionFailPromiseThrow().build();
+    Request<Void> req = builders.<Void>action("FailPromiseThrow").build();
     REST_CLIENT.sendRequest(req).getResponse();
   }
 
-  @Test(expectedExceptions = RestLiResponseException.class)
-  public void testFailTaskCall() throws RemoteInvocationException
+  @Test(expectedExceptions = RestLiResponseException.class, dataProvider = "requestBuilder")
+  public void testFailTaskCall(RootBuilderWrapper<?, ?> builders) throws RemoteInvocationException
   {
     // this version gives a Task that RestLi runs
-    ActionRequest<Void> req = ACTIONS_BUILDERS.actionFailTaskCall().build();
+    Request<Void> req = builders.<Void>action("FailTaskCall").build();
     REST_CLIENT.sendRequest(req).getResponse();
   }
 
-  @Test(expectedExceptions = RestLiResponseException.class)
-  public void testFailTaskThrow() throws RemoteInvocationException
+  @Test(expectedExceptions = RestLiResponseException.class, dataProvider = "requestBuilder")
+  public void testFailTaskThrow(RootBuilderWrapper<?, ?> builders) throws RemoteInvocationException
   {
     // this version gives a Task that RestLi runs
-    ActionRequest<Void> req = ACTIONS_BUILDERS.actionFailTaskThrow().build();
+    Request<Void> req = builders.<Void>action("FailTaskThrow").build();
     REST_CLIENT.sendRequest(req).getResponse();
   }
 
-  @Test(expectedExceptions = RestLiResponseException.class)
-  public void testFailThrowInTask() throws RemoteInvocationException
+  @Test(expectedExceptions = RestLiResponseException.class, dataProvider = "requestBuilder")
+  public void testFailThrowInTask(RootBuilderWrapper<?, ?> builders) throws RemoteInvocationException
   {
     // this version gives a Task that RestLi runs
-    ActionRequest<Void> req = ACTIONS_BUILDERS.actionFailThrowInTask().build();
+    Request<Void> req = builders.<Void>action("FailThrowInTask").build();
     REST_CLIENT.sendRequest(req).getResponse();
   }
 
-  @Test(expectedExceptions = RestLiResponseException.class)
-  public void testNullPromise() throws RemoteInvocationException
+  @Test(expectedExceptions = RestLiResponseException.class, dataProvider = "requestBuilder")
+  public void testNullPromise(RootBuilderWrapper<?, ?> builders) throws RemoteInvocationException
   {
     // this version gives a Task that RestLi runs
-    ActionRequest<String> req = ACTIONS_BUILDERS.actionNullPromise().build();
+    Request<String> req = builders.<String>action("NullPromise").build();
     REST_CLIENT.sendRequest(req).getResponse();
   }
 
-  @Test(expectedExceptions = RestLiResponseException.class)
-  public void testNullTask() throws RemoteInvocationException
+  @Test(expectedExceptions = RestLiResponseException.class, dataProvider = "requestBuilder")
+  public void testNullTask(RootBuilderWrapper<?, ?> builders) throws RemoteInvocationException
   {
     // this version gives a Task that RestLi runs
-    ActionRequest<String> req = ACTIONS_BUILDERS.actionNullTask().build();
+    Request<String> req = builders.<String>action("NullTask").build();
     REST_CLIENT.sendRequest(req).getResponse();
+  }
+
+  @DataProvider
+  private static Object[][] requestBuilderDataProvider()
+  {
+    return new Object[][] {
+      { new RootBuilderWrapper(new ActionsBuilders()) },
+      { new RootBuilderWrapper(new ActionsRequestBuilders()) }
+    };
   }
 }

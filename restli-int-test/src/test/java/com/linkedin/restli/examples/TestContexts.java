@@ -21,17 +21,22 @@ import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
-import com.linkedin.restli.client.FindRequest;
-import com.linkedin.restli.client.GetRequest;
+import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.RestClient;
+import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.client.WithContextBuilders;
+import com.linkedin.restli.examples.greetings.client.WithContextRequestBuilders;
+import com.linkedin.restli.test.util.RootBuilderWrapper;
+
 import java.util.Collections;
 import java.util.List;
+
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 /**
@@ -45,7 +50,6 @@ public class TestContexts extends RestLiIntegrationTest
   private static final Client CLIENT = new TransportClientAdapter(new HttpClientFactory().getClient(Collections.<String, String>emptyMap()));
   private static final String URI_PREFIX = "http://localhost:1338/";
   private static final RestClient REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
-  private static final WithContextBuilders WITH_CONTEXT_BUILDERS = new WithContextBuilders();
 
   private static final String PROJECTION_MESSAGE = "Projection!";
   private static final String NO_PROJECTION_MESSAGE = "No Projection!";
@@ -66,26 +70,26 @@ public class TestContexts extends RestLiIntegrationTest
     super.shutdown();
   }
 
-  @Test
-  public void testGet() throws RemoteInvocationException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testGet(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
-    GetRequest<Greeting> requestWithProjection =
-      WITH_CONTEXT_BUILDERS.get().id(5L).fields(Greeting.fields().message(), Greeting.fields().tone()).build();
+    Request<Greeting> requestWithProjection =
+      builders.get().id(5L).fields(Greeting.fields().message(), Greeting.fields().tone()).build();
     Greeting projectionGreeting = REST_CLIENT.sendRequest(requestWithProjection).getResponse().getEntity();
     Assert.assertEquals(projectionGreeting.getMessage(), PROJECTION_MESSAGE);
     Assert.assertEquals(projectionGreeting.getTone(), HAS_KEYS);
 
-    GetRequest<Greeting> requestNoProjection = WITH_CONTEXT_BUILDERS.get().id(5L).build();
+    Request<Greeting> requestNoProjection = builders.get().id(5L).build();
     Greeting greeting = REST_CLIENT.sendRequest(requestNoProjection).getResponse().getEntity();
     Assert.assertEquals(greeting.getMessage(), NO_PROJECTION_MESSAGE);
     Assert.assertEquals(greeting.getTone(), HAS_KEYS);
   }
 
-  @Test
-  public void testFinder() throws RemoteInvocationException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testFinder(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
-    FindRequest<Greeting> requestWithProjection =
-      WITH_CONTEXT_BUILDERS.findByFinder()
+    Request<CollectionResponse<Greeting>> requestWithProjection =
+      builders.findBy("Finder")
         .fields(Greeting.fields().message(), Greeting.fields().tone())
         .setHeader("Expected-Header", HEADER_MESSAGE)
         .build();
@@ -100,7 +104,7 @@ public class TestContexts extends RestLiIntegrationTest
     Greeting headerGreeting = projectionGreetings.get(1);
     Assert.assertEquals(headerGreeting.getMessage(), HEADER_MESSAGE);
 
-    FindRequest<Greeting> requestNoProjection = WITH_CONTEXT_BUILDERS.findByFinder().build();
+    Request<CollectionResponse<Greeting>> requestNoProjection = builders.findBy("Finder").build();
     List<Greeting> noProjectionGreetings = REST_CLIENT.sendRequest(requestNoProjection).getResponse().getEntity().getElements();
 
     // test projection and keys
@@ -111,5 +115,14 @@ public class TestContexts extends RestLiIntegrationTest
     // test header
     Greeting noHeaderGreeting = noProjectionGreetings.get(1);
     Assert.assertEquals(noHeaderGreeting.getMessage(), NO_HEADER_MESSAGE);
+  }
+
+  @DataProvider
+  private static Object[][] requestBuilderDataProvider()
+  {
+    return new Object[][] {
+      { new RootBuilderWrapper(new WithContextBuilders()) },
+      { new RootBuilderWrapper(new WithContextRequestBuilders()) }
+    };
   }
 }

@@ -46,7 +46,13 @@ class PegasusPluginLoader implements Plugin<Project>
     }
   }
 
-  private static String getGeneratedDirPath(Project project, SourceSet sourceSet, String genType)
+  /*
+  Since PegasusPlugin is loaded with reflection, any method/variable in PegasusPlugin must be
+  exported by this loader to be accessible to external gradle files.
+
+  This method is needed by restli-int-test-server/build.gradle
+   */
+  public static String getGeneratedDirPath(Project project, SourceSet sourceSet, String genType)
   {
     PegasusPlugin.getGeneratedDirPath(project, sourceSet, genType)
   }

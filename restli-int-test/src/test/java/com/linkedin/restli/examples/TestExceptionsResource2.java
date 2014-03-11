@@ -17,6 +17,24 @@
 package com.linkedin.restli.examples;
 
 
+import com.linkedin.data.DataMap;
+import com.linkedin.r2.RemoteInvocationException;
+import com.linkedin.r2.transport.common.Client;
+import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
+import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import com.linkedin.restli.client.ErrorHandlingBehavior;
+import com.linkedin.restli.client.Request;
+import com.linkedin.restli.client.Response;
+import com.linkedin.restli.client.ResponseFuture;
+import com.linkedin.restli.client.RestClient;
+import com.linkedin.restli.client.RestLiResponseException;
+import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.examples.greetings.api.Greeting;
+import com.linkedin.restli.examples.greetings.client.Exceptions2Builders;
+import com.linkedin.restli.examples.greetings.client.Exceptions2RequestBuilders;
+import com.linkedin.restli.internal.server.util.DataMapUtils;
+import com.linkedin.restli.test.util.RootBuilderWrapper;
+
 import java.util.Collections;
 
 import org.testng.Assert;
@@ -25,30 +43,12 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import com.linkedin.data.DataMap;
-import com.linkedin.r2.RemoteInvocationException;
-import com.linkedin.r2.transport.common.Client;
-import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
-import com.linkedin.r2.transport.http.client.HttpClientFactory;
-import com.linkedin.restli.client.ActionRequest;
-import com.linkedin.restli.client.ErrorHandlingBehavior;
-import com.linkedin.restli.client.GetRequest;
-import com.linkedin.restli.client.Response;
-import com.linkedin.restli.client.ResponseFuture;
-import com.linkedin.restli.client.RestClient;
-import com.linkedin.restli.client.RestLiResponseException;
-import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.examples.greetings.api.Greeting;
-import com.linkedin.restli.examples.greetings.client.Exceptions2Builders;
-import com.linkedin.restli.internal.server.util.DataMapUtils;
-
 
 public class TestExceptionsResource2 extends RestLiIntegrationTest
 {
   private static final Client CLIENT = new TransportClientAdapter(new HttpClientFactory().getClient(Collections.<String, String>emptyMap()));
   private static final String URI_PREFIX = "http://localhost:1338/";
   private static final RestClient REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
-  private static final Exceptions2Builders EXCEPTIONS_2_BUILDERS = new Exceptions2Builders();
 
   @BeforeClass
   public void initClass() throws Exception
@@ -62,15 +62,15 @@ public class TestExceptionsResource2 extends RestLiIntegrationTest
     super.shutdown();
   }
 
-  @Test(dataProvider = "exceptionHandlingModes")
-  public void testGet(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior) throws RemoteInvocationException
+  @Test(dataProvider = "exceptionHandlingModesDataProvider")
+  public void testGet(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior, RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Response<Greeting> response = null;
     RestLiResponseException exception = null;
 
     try
     {
-      final GetRequest<Greeting> req = new Exceptions2Builders().get().id(1L).build();
+      final Request<Greeting> req = builders.get().id(1L).build();
       ResponseFuture<Greeting> future;
 
       if (explicit)
@@ -118,13 +118,13 @@ public class TestExceptionsResource2 extends RestLiIntegrationTest
     Assert.assertEquals(respEntityMap, new Greeting().setMessage("Hello, sorry for the mess").data());
   }
 
-  @Test(dataProvider = "exceptionHandlingModes")
-  public void testExceptionWithValue(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior) throws RemoteInvocationException
+  @Test(dataProvider = "exceptionHandlingModesDataProvider")
+  public void testExceptionWithValue(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior, RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Response<Integer> response = null;
     RestLiResponseException exception = null;
 
-    final ActionRequest<Integer> req = EXCEPTIONS_2_BUILDERS.actionExceptionWithValue().build();
+    final Request<Integer> req = builders.<Integer>action("ExceptionWithValue").build();
     try
     {
       ResponseFuture<Integer> future;
@@ -174,13 +174,13 @@ public class TestExceptionsResource2 extends RestLiIntegrationTest
     Assert.assertSame(respEntityMap.getInteger("value"), 42);
   }
 
-  @Test(dataProvider = "exceptionHandlingModes")
-  public void testExceptionWithoutValue(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior) throws RemoteInvocationException
+  @Test(dataProvider = "exceptionHandlingModesDataProvider")
+  public void testExceptionWithoutValue(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior, RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Response<Void> response = null;
     RestLiResponseException exception = null;
 
-    final ActionRequest<Void> req = EXCEPTIONS_2_BUILDERS.actionExceptionWithoutValue().build();
+    final Request<Void> req = builders.<Void>action("ExceptionWithoutValue").build();
     try
     {
       ResponseFuture<Void> future;
@@ -227,14 +227,14 @@ public class TestExceptionsResource2 extends RestLiIntegrationTest
     Assert.assertEquals(exception.getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode());
   }
 
-  @Test(dataProvider = "exceptionHandlingModes")
-  public void testNonRestException(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior)
+  @Test(dataProvider = "exceptionHandlingModesDataProvider")
+  public void testNonRestException(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior, RootBuilderWrapper<Long, Greeting> builders)
   {
     Response<Greeting> response = null;
     RestClient brokenClient = new RestClient(CLIENT, "http://localhost:8888/");
     try
     {
-      final GetRequest<Greeting> req = new Exceptions2Builders().get().id(1L).build();
+      final Request<Greeting> req = builders.get().id(1L).build();
       ResponseFuture<Greeting> future;
 
       if (explicit)
@@ -256,13 +256,16 @@ public class TestExceptionsResource2 extends RestLiIntegrationTest
     }
   }
 
-  @DataProvider(name = "exceptionHandlingModes")
-  public Object[][] listFactories()
+  @DataProvider
+  public Object[][] exceptionHandlingModesDataProvider()
   {
     return new Object[][] {
-        { true, ErrorHandlingBehavior.FAIL_ON_ERROR},
-        { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS },
-        { false, null }
+        { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper(new Exceptions2Builders()) },
+        { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper(new Exceptions2RequestBuilders()) },
+        { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper(new Exceptions2Builders()) },
+        { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper(new Exceptions2RequestBuilders()) },
+        { false, null, new RootBuilderWrapper(new Exceptions2Builders()) },
+        { false, null, new RootBuilderWrapper(new Exceptions2RequestBuilders()) }
     };
   }
 }

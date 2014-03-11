@@ -16,35 +16,37 @@
 
 package com.linkedin.restli.examples;
 
-import com.linkedin.restli.client.BatchCreateRequest;
-import com.linkedin.restli.client.CreateRequest;
+
+import com.linkedin.r2.RemoteInvocationException;
+import com.linkedin.r2.transport.common.Client;
+import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
+import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.client.ErrorHandlingBehavior;
+import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
+import com.linkedin.restli.client.RestClient;
+import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.CreateStatus;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.ErrorResponse;
+import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
-import java.util.Collections;
+import com.linkedin.restli.examples.greetings.client.ExceptionsBuilders;
+import com.linkedin.restli.examples.greetings.client.ExceptionsRequestBuilders;
+import com.linkedin.restli.test.util.RootBuilderWrapper;
 
+import java.util.Collections;
 import java.util.List;
+
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import com.linkedin.r2.RemoteInvocationException;
-import com.linkedin.r2.transport.common.Client;
-import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
-import com.linkedin.r2.transport.http.client.HttpClientFactory;
-import com.linkedin.restli.client.GetRequest;
-import com.linkedin.restli.client.RestClient;
-import com.linkedin.restli.client.RestLiResponseException;
-import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.examples.greetings.api.Greeting;
-import com.linkedin.restli.examples.greetings.client.ExceptionsBuilders;
 
 public class TestExceptionsResource extends RestLiIntegrationTest
 {
@@ -64,15 +66,15 @@ public class TestExceptionsResource extends RestLiIntegrationTest
     super.shutdown();
   }
 
-  @Test(dataProvider = "exceptionHandlingModes")
-  public void testException(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior) throws RemoteInvocationException
+  @Test(dataProvider = "exceptionHandlingModesDataProvider")
+  public void testException(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior, RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Response<Greeting> response = null;
     RestLiResponseException exception = null;
 
     try
     {
-      GetRequest<Greeting> readRequest = new ExceptionsBuilders().get().id(1L).build();
+      Request<Greeting> readRequest = builders.get().id(1L).build();
       ResponseFuture<Greeting> future;
 
       if (explicit)
@@ -117,19 +119,18 @@ public class TestExceptionsResource extends RestLiIntegrationTest
     Assert.assertEquals(exception.getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode());
     Assert.assertEquals(exception.getServiceErrorCode(), 42);
     Assert.assertEquals(exception.getServiceErrorMessage(), "error processing request");
-    Assert.assertTrue(exception.getServiceErrorStackTrace().contains(
-        "at com.linkedin.restli.examples.greetings.server.ExceptionsResource.get("));
+    Assert.assertTrue(exception.getServiceErrorStackTrace().contains("at com.linkedin.restli.examples.greetings.server.ExceptionsResource.get("));
   }
 
-  @Test(dataProvider = "exceptionHandlingModes")
-  public void testCreateError(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior) throws Exception
+  @Test(dataProvider = "exceptionHandlingModesDataProvider")
+  public void testCreateError(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior, RootBuilderWrapper<Long, Greeting> builders) throws Exception
   {
     Response<EmptyRecord> response = null;
     RestLiResponseException exception = null;
 
     try
     {
-      CreateRequest<Greeting> createRequest = new ExceptionsBuilders().create()
+      Request<EmptyRecord> createRequest = builders.create()
           .input(new Greeting().setId(11L).setMessage("@#$%@!$%").setTone(Tone.INSULTING))
           .build();
       ResponseFuture<EmptyRecord> future;
@@ -178,15 +179,14 @@ public class TestExceptionsResource extends RestLiIntegrationTest
     Assert.assertEquals(exception.getServiceErrorCode(), 999);
     Assert.assertEquals(exception.getErrorSource(), "APP");
     Assert.assertEquals(exception.getErrorDetails().getString("reason"), "insultingGreeting");
-    Assert.assertTrue(exception.getServiceErrorStackTrace().startsWith(
-        "com.linkedin.restli.server.RestLiServiceException [HTTP Status:406, serviceErrorCode:999]: I will not tolerate your insolence!"),
+    Assert.assertTrue(exception.getServiceErrorStackTrace().startsWith("com.linkedin.restli.server.RestLiServiceException [HTTP Status:406, serviceErrorCode:999]: I will not tolerate your insolence!"),
                       "stacktrace mismatch:" + exception.getStackTrace());
   }
 
-  @Test
-  public void testBatchCreateErrors() throws Exception
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testBatchCreateErrors(RootBuilderWrapper<Long, Greeting> builders) throws Exception
   {
-    BatchCreateRequest<Greeting> batchCreateRequest = new ExceptionsBuilders().batchCreate()
+    Request<CollectionResponse<CreateStatus>> batchCreateRequest = builders.batchCreate()
         .input(new Greeting().setId(10L).setMessage("Greetings.").setTone(Tone.SINCERE))
         .input(new Greeting().setId(11L).setMessage("@#$%@!$%").setTone(Tone.INSULTING))
         .build();
@@ -213,13 +213,25 @@ public class TestExceptionsResource extends RestLiIntegrationTest
                       "stacktrace mismatch:" + error.getStackTrace());
   }
 
-  @DataProvider(name = "exceptionHandlingModes")
-  public Object[][] listFactories()
+  @DataProvider
+  public Object[][] exceptionHandlingModesDataProvider()
   {
     return new Object[][] {
-        { true, ErrorHandlingBehavior.FAIL_ON_ERROR},
-        { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS },
-        { false, null }
+      { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper(new ExceptionsBuilders()) },
+      { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper(new ExceptionsRequestBuilders()) },
+      { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper(new ExceptionsBuilders()) },
+      { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper(new ExceptionsRequestBuilders()) },
+      { false, null, new RootBuilderWrapper(new ExceptionsBuilders()) },
+      { false, null, new RootBuilderWrapper(new ExceptionsRequestBuilders()) }
+    };
+  }
+
+  @DataProvider
+  private static Object[][] requestBuilderDataProvider()
+  {
+    return new Object[][] {
+      { new RootBuilderWrapper(new ExceptionsBuilders()) },
+      { new RootBuilderWrapper(new ExceptionsRequestBuilders()) }
     };
   }
 }

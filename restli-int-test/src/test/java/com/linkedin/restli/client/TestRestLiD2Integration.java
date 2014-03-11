@@ -28,6 +28,7 @@ import com.linkedin.d2.discovery.event.PropertyEventThread;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.transport.common.Client;
+import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.ResourceSpecImpl;
@@ -35,13 +36,16 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.examples.RestLiIntegrationTest;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
+import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
 import com.linkedin.restli.examples.groups.api.Group;
 import com.linkedin.restli.examples.groups.api.GroupMembership;
 import com.linkedin.restli.examples.groups.client.GroupMembershipsBuilders;
+import com.linkedin.restli.examples.groups.client.GroupMembershipsRequestBuilders;
 import com.linkedin.restli.examples.groups.client.GroupsBuilders;
 import com.linkedin.restli.internal.client.EntityResponseDecoder;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
+import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -55,6 +59,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeTest;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 /**
@@ -64,9 +69,9 @@ import org.testng.annotations.Test;
 
 public class TestRestLiD2Integration extends RestLiIntegrationTest
 {
-  private SimpleLoadBalancer _loadBalancer = MockLBFactory.createLoadBalancer();
-  private Client _r2Client = new DynamicClient(_loadBalancer, null);
-  private RestClient _restClient = new RestClient(_r2Client, "d2://");
+  private SimpleLoadBalancer _loadBalancer;
+  private Client _r2Client;
+  private RestClient _restClient;
 
   @BeforeClass
   public void initClass() throws Exception
@@ -103,22 +108,21 @@ public class TestRestLiD2Integration extends RestLiIntegrationTest
     latch.await();
   }
 
-  @Test
-  public void testSuccessfulCall() throws RemoteInvocationException
+  @Test(dataProvider = "requestBuilderGreeting")
+  public void testSuccessfulCall(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
-    Request<Greeting> request = new GreetingsBuilders().get().id(1L).build();
+    Request<Greeting> request = builders.get().id(1L).build();
     ResponseFuture<Greeting> future = _restClient.sendRequest(request);
     Greeting g = future.getResponse().getEntity();
     Assert.assertEquals(g.getId().longValue(), 1L);
     Assert.assertNotNull(g.getMessage());
-    Assert.assertEquals(future.getResponse().getHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION),
-                        AllProtocolVersions.BASELINE_PROTOCOL_VERSION.toString());
+    Assert.assertEquals(future.getResponse().getHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION), AllProtocolVersions.BASELINE_PROTOCOL_VERSION.toString());
   }
 
-  @Test
-  public void testRemoteInvocationException()
+  @Test(dataProvider = "requestBuilderGroup")
+  public void testRemoteInvocationException(RootBuilderWrapper<Integer, Group> builders)
   {
-    Request<Group> request = new GroupsBuilders().get().id(1).build();
+    Request<Group> request = builders.get().id(1).build();
     ResponseFuture<Group> future = _restClient.sendRequest(request);
     try
     {
@@ -132,10 +136,10 @@ public class TestRestLiD2Integration extends RestLiIntegrationTest
     }
   }
 
-  @Test
-  public void testServiceUnavailableException()
+  @Test(dataProvider = "requestBuilderGroupMembership")
+  public void testServiceUnavailableException(RootBuilderWrapper<CompoundKey, GroupMembership> builders)
   {
-    Request<GroupMembership> request = new GroupMembershipsBuilders().get().id(new GroupMembershipsBuilders.Key().setMemberId(1).setGroupId(2)).build();
+    Request<GroupMembership> request = builders.get().id(new GroupMembershipsBuilders.Key().setMemberId(1).setGroupId(2)).build();
     ResponseFuture<GroupMembership> future = _restClient.sendRequest(request);
     try
     {
@@ -171,5 +175,32 @@ public class TestRestLiD2Integration extends RestLiIntegrationTest
     Assert.assertEquals(entity.getId(), new Long(1L));
     Assert.assertEquals(responseFuture.getResponse().getHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION),
                         AllProtocolVersions.BASELINE_PROTOCOL_VERSION.toString());
+  }
+
+  @DataProvider
+  private static Object[][] requestBuilderGreetingProvider()
+  {
+    return new Object[][] {
+      { new RootBuilderWrapper(new GreetingsBuilders()) },
+      { new RootBuilderWrapper(new GreetingsRequestBuilders()) }
+    };
+  }
+
+  @DataProvider
+  private static Object[][] requestBuilderGroupProvider()
+  {
+    return new Object[][] {
+      { new RootBuilderWrapper(new GroupsBuilders()) },
+      { new RootBuilderWrapper(new GroupsBuilders()) }
+    };
+  }
+
+  @DataProvider
+  private static Object[][] requestBuilderGroupMembershipProvider()
+  {
+    return new Object[][] {
+      { new RootBuilderWrapper(new GroupMembershipsBuilders()) },
+      { new RootBuilderWrapper(new GroupMembershipsRequestBuilders()) }
+    };
   }
 }

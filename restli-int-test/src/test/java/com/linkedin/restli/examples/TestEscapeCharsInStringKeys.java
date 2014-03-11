@@ -19,24 +19,10 @@
  */
 package com.linkedin.restli.examples;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
 
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
-import com.linkedin.restli.client.ActionRequest;
-import com.linkedin.restli.client.BatchGetRequest;
-import com.linkedin.restli.client.FindRequest;
-import com.linkedin.restli.client.GetRequest;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestClient;
@@ -47,10 +33,29 @@ import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.examples.greetings.api.TwoPartKey;
 import com.linkedin.restli.examples.greetings.client.ActionsBuilders;
+import com.linkedin.restli.examples.greetings.client.ActionsRequestBuilders;
 import com.linkedin.restli.examples.greetings.client.AssociationsBuilders;
+import com.linkedin.restli.examples.greetings.client.AssociationsRequestBuilders;
 import com.linkedin.restli.examples.greetings.client.ComplexKeysBuilders;
+import com.linkedin.restli.examples.greetings.client.ComplexKeysRequestBuilders;
 import com.linkedin.restli.examples.greetings.client.StringKeysBuilders;
+import com.linkedin.restli.examples.greetings.client.StringKeysRequestBuilders;
 import com.linkedin.restli.examples.greetings.client.StringKeysSubBuilders;
+import com.linkedin.restli.examples.greetings.client.StringKeysSubRequestBuilders;
+import com.linkedin.restli.test.util.RootBuilderWrapper;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
+
 
 /**
  * Tests cases where strings can be used as keys with strings containing chars that must be escaped both for URL
@@ -95,43 +100,43 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
     return useStringsRequiringEscaping ? StringTestKeys.URL3 : StringTestKeys.SIMPLEKEY3;
   }
 
-  @Test
-  public void testGetWithSimpleKey() throws Exception
+  @Test(dataProvider = "requestStringKeysBuilderDataProvider")
+  public void testGetWithSimpleKey(RootBuilderWrapper<String, Message> builders) throws Exception
   {
-    Request<Message> req = new StringKeysBuilders().get().id(key1()).build();
+    Request<Message> req = builders.get().id(key1()).build();
     Response<Message> response = REST_CLIENT.sendRequest(req).get();
 
     Assert.assertEquals(response.getEntity().getMessage(), key1(), "Message should match key for key1");
   }
 
-  @Test
-  public void testBatchGetWithSimpleKey() throws Exception
+  @Test(dataProvider = "requestStringKeysBuilderDataProvider")
+  public void testBatchGetWithSimpleKey(RootBuilderWrapper<String, Message> builders) throws Exception
   {
     Set<String> keys = new HashSet<String>();
     keys.add(key1());
     keys.add(key2());
-    BatchGetRequest<Message> req = new StringKeysBuilders().batchGet().ids(keys).build();
+    Request<BatchResponse<Message>> req = builders.batchGet().ids(keys).build();
     BatchResponse<Message> response = REST_CLIENT.sendRequest(req).get().getEntity();
     Map<String, Message> results = response.getResults();
     Assert.assertEquals(results.get(key1()).getMessage(), key1(), "Message should match key for key1");
     Assert.assertEquals(results.get(key2()).getMessage(), key2(), "Message should match key for key2");
   }
 
-  @Test
-  public void testGetWithAssociationKey() throws Exception
+  @Test(dataProvider = "requestAssociationsSubBuilderDataProvider")
+  public void testGetWithAssociationKey(RootBuilderWrapper<CompoundKey, Message> builders) throws Exception
   {
     CompoundKey key = new CompoundKey();
     key.append("src", key1());
     key.append("dest", key2());
 
-    GetRequest<Message> request = new AssociationsBuilders().get().id(key).build();
+    Request<Message> request = builders.get().id(key).build();
     Message response = REST_CLIENT.sendRequest(request).get().getEntity();
     Assert.assertNotNull(response);
     Assert.assertEquals(response.getId(), key.getPart("src") + " " + key.getPart("dest"), "Message should be key1 + ' ' + key2 for associationKey(key1,key2)");
   }
 
-  @Test
-  public void testGetWithComplexKey() throws Exception
+  @Test(dataProvider = "requestComplexKeysBuilderDataProvider")
+  public void testGetWithComplexKey(RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> builders) throws Exception
   {
     TwoPartKey key = new TwoPartKey();
     key.setMajor(key1());
@@ -142,40 +147,85 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
     params.setMinor(key3());
 
     ComplexResourceKey<TwoPartKey, TwoPartKey> complexKey = new ComplexResourceKey<TwoPartKey, TwoPartKey>(key, params);
-    GetRequest<Message> request = new ComplexKeysBuilders().get().id(complexKey).build();
+    Request<Message> request = builders.get().id(complexKey).build();
     Message response = REST_CLIENT.sendRequest(request).get().getEntity();
     Assert.assertNotNull(response);
     Assert.assertEquals(response.getId(), key.getMajor() + " " + key.getMinor(), "Message should be key1 + ' ' + key2 for complexKey(key1,key2)");
   }
 
-  @Test
-  public void testGetSubResourceKeys() throws Exception
+  @Test(dataProvider = "requestStringKeysSubBuilderDataProvider")
+  public void testGetSubResourceKeys(RootBuilderWrapper<String, Message> builders) throws Exception
   {
     String parentKey = key1();
     String subKey = key2();
 
-    GetRequest<Message> request = new StringKeysSubBuilders().get().parentKeyKey(parentKey).id(subKey).build();
+    Request<Message> request = builders.get().setPathKey("parentKey", parentKey).id(subKey).build();
     Message response = REST_CLIENT.sendRequest(request).get().getEntity();
     Assert.assertNotNull(response);
     Assert.assertEquals(response.getId(), parentKey + " " + subKey, "Message should be key1 + ' ' + key2 for subResourceKey(key1,key2)");
   }
 
-  @Test
-  public void testActionWithStringParam() throws Exception
+  @Test(dataProvider = "requestActionBuilderDataProvider")
+  public void testActionWithStringParam(RootBuilderWrapper<?, ?> builders) throws Exception
   {
-    ActionRequest<String> request = new ActionsBuilders().actionEcho().paramInput(key1()).build();
+    Request<String> request = builders.<String>action("Echo").setActionParam("Input", key1()).build();
     String echo = REST_CLIENT.sendRequest(request).get().getEntity();
     Assert.assertEquals(echo, key1(), "Echo response should be key1");
   }
 
-  @Test
-  public void testFinderWithStringParam() throws Exception
+  @Test(dataProvider = "requestStringKeysBuilderDataProvider")
+  public void testFinderWithStringParam(RootBuilderWrapper<String, Message> builders) throws Exception
   {
-    FindRequest<Message> request = new StringKeysBuilders().findBySearch().keywordParam(key1()).build();
+    Request<CollectionResponse<Message>> request = builders.findBy("Search").setQueryParam("keyword", key1()).build();
     CollectionResponse<Message> response = REST_CLIENT.sendRequest(request).get().getEntity();
     List<Message> hits = response.getElements();
     Assert.assertEquals(hits.size(), 1);
     Message hit = hits.get(0);
     Assert.assertEquals(hit.getMessage(), key1(), "Message of matching result should be key1");
+  }
+
+  @DataProvider
+  private static Object[][] requestStringKeysBuilderDataProvider()
+  {
+    return new Object[][] {
+      { new RootBuilderWrapper(new StringKeysBuilders()) },
+      { new RootBuilderWrapper(new StringKeysRequestBuilders()) }
+    };
+  }
+
+  @DataProvider
+  private static Object[][] requestStringKeysSubBuilderDataProvider()
+  {
+    return new Object[][] {
+      { new RootBuilderWrapper(new StringKeysSubBuilders()) },
+      { new RootBuilderWrapper(new StringKeysSubRequestBuilders()) }
+    };
+  }
+
+  @DataProvider
+  private static Object[][] requestAssociationsSubBuilderDataProvider()
+  {
+    return new Object[][] {
+      { new RootBuilderWrapper(new AssociationsBuilders()) },
+      { new RootBuilderWrapper(new AssociationsRequestBuilders()) }
+    };
+  }
+
+  @DataProvider
+  private static Object[][] requestComplexKeysBuilderDataProvider()
+  {
+    return new Object[][] {
+      { new RootBuilderWrapper(new ComplexKeysBuilders()) },
+      { new RootBuilderWrapper(new ComplexKeysRequestBuilders()) }
+    };
+  }
+
+  @DataProvider
+  private static Object[][] requestActionBuilderDataProvider()
+  {
+    return new Object[][] {
+      { new RootBuilderWrapper(new ActionsBuilders()) },
+      { new RootBuilderWrapper(new ActionsRequestBuilders()) }
+    };
   }
 }

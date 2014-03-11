@@ -41,6 +41,7 @@ import org.gradle.api.tasks.javadoc.Javadoc
 import org.gradle.plugins.ide.eclipse.EclipsePlugin
 import org.gradle.plugins.ide.idea.IdeaPlugin
 
+
 /**
  * Pegasus code generation plugin.
  * The supported project layout for this plugin is as follows:
@@ -503,6 +504,7 @@ class PegasusPlugin implements Plugin<Project>
   private static final String IDL_COMPAT_REQUIREMENT = 'rest.idl.compatibility'
   private static final String IDL_NO_PUBLISH = 'rest.idl.noPublish'
   private static final String SKIP_IDL_CHECK = 'rest.idl.skipCheck'
+  private static final String REST_CLIENT_RESTLI_2 = 'rest.client.restli2'
 
   private static final String GENERATOR_CLASSLOADER_NAME = 'pegasusGeneratorClassLoader'
 
@@ -1330,6 +1332,7 @@ class PegasusPlugin implements Plugin<Project>
       resolverPath = dataModels
       runtimeClasspath = project.configurations.dataModel + project.configurations.dataTemplate.artifacts.files
       destinationDir = generatedRestClientDir
+      needRestli2Format = isPropertyTrue(project, REST_CLIENT_RESTLI_2)
     }
 
     if (dataTemplateJarTask != null)
@@ -2335,6 +2338,7 @@ class PegasusPlugin implements Plugin<Project>
     @InputFiles FileCollection resolverPath
     @InputFiles FileCollection runtimeClasspath
     @OutputDirectory File destinationDir
+    boolean needRestli2Format
 
     @TaskAction
     protected void generate()
@@ -2388,7 +2392,12 @@ class PegasusPlugin implements Plugin<Project>
         }
 
         final String restModelFilePath = "${inputDir}${File.separatorChar}${clientItem.restModelFileName}"
-        stubGenerator.run(resolverPathStr, defaultPackage, false, false, destinationDir.path, [restModelFilePath] as String[])
+        stubGenerator.run(resolverPathStr, defaultPackage, false, false, false, destinationDir.path, [restModelFilePath] as String[])
+
+        if (needRestli2Format)
+        {
+          stubGenerator.run(resolverPathStr, defaultPackage, false, false, true, destinationDir.path, [restModelFilePath] as String[])
+        }
       }
 
       Thread.currentThread().contextClassLoader = prevContextClassLoader

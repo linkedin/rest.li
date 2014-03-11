@@ -16,14 +16,6 @@
 
 package com.linkedin.restli.examples;
 
-import java.util.Collections;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
 
 import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.EngineBuilder;
@@ -33,12 +25,25 @@ import com.linkedin.parseq.promise.Promise;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
-import com.linkedin.restli.client.ActionRequest;
 import com.linkedin.restli.client.ParSeqRestClient;
+import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.examples.greetings.client.ActionsBuilders;
+import com.linkedin.restli.examples.greetings.client.ActionsRequestBuilders;
+import com.linkedin.restli.test.util.RootBuilderWrapper;
+
+import java.util.Collections;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
+
 
 /**
  * Integration test with actual usage of {@link ParSeqRestClient}.
@@ -47,13 +52,9 @@ import com.linkedin.restli.examples.greetings.client.ActionsBuilders;
  */
 public class TestParSeqRestClient extends RestLiIntegrationTest
 {
-  private static final Client           CLIENT           =
-                                                             new TransportClientAdapter(new HttpClientFactory().getClient(Collections.<String, String> emptyMap()));
+  private static final Client           CLIENT           = new TransportClientAdapter(new HttpClientFactory().getClient(Collections.<String, String> emptyMap()));
   private static final String           URI_PREFIX       = "http://localhost:1338/";
-  private static final ParSeqRestClient REST_CLIENT      =
-                                                             new ParSeqRestClient(new RestClient(CLIENT,
-                                                                                                 URI_PREFIX));
-  private static final ActionsBuilders  ACTIONS_BUILDERS = new ActionsBuilders();
+  private static final ParSeqRestClient REST_CLIENT      = new ParSeqRestClient(new RestClient(CLIENT, URI_PREFIX));
 
   private Engine                        _engine;
   private ScheduledExecutorService      _scheduler;
@@ -82,11 +83,11 @@ public class TestParSeqRestClient extends RestLiIntegrationTest
   /**
    * Request that should succeed, using promise
    */
-  @Test
-  public void testPromise() throws InterruptedException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testPromise(RootBuilderWrapper<?, ?> builders) throws InterruptedException
   {
-    final ActionRequest<String> req =
-        ACTIONS_BUILDERS.actionParseq().paramA(5).paramB("yay").paramC(false).build();
+    final Request<String> req =
+        builders.<String>action("Parseq").setActionParam("A", 5).setActionParam("B", "yay").setActionParam("C", false).build();
     final Promise<Response<String>> promise = REST_CLIENT.sendRequest(req);
     promise.await();
     Assert.assertFalse(promise.isFailed());
@@ -97,11 +98,11 @@ public class TestParSeqRestClient extends RestLiIntegrationTest
   /**
    * Request that should succeed, using task
    */
-  @Test
-  public void testTask() throws InterruptedException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testTask(RootBuilderWrapper<?, ?> builders) throws InterruptedException
   {
-    final ActionRequest<String> req =
-        ACTIONS_BUILDERS.actionParseq().paramA(5).paramB("yay").paramC(false).build();
+    final Request<String> req =
+        builders.<String>action("Parseq").setActionParam("A", 5).setActionParam("B", "yay").setActionParam("C", false).build();
     final Task<Response<String>> task = REST_CLIENT.createTask(req);
 
     _engine.run(task);
@@ -115,17 +116,17 @@ public class TestParSeqRestClient extends RestLiIntegrationTest
   /**
    * Multiple requests that should succeed, using task
    */
-  @Test
-  public void testMultipleTask() throws InterruptedException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testMultipleTask(RootBuilderWrapper<?, ?> builders) throws InterruptedException
   {
-    final ActionRequest<String> req1 =
-        ACTIONS_BUILDERS.actionParseq().paramA(5).paramB("yay").paramC(false).build();
+    final Request<String> req1 =
+        builders.<String>action("Parseq").setActionParam("A", 5).setActionParam("B", "yay").setActionParam("C", false).build();
     final Task<Response<String>> task1 = REST_CLIENT.createTask(req1);
-    final ActionRequest<String> req2 =
-        ACTIONS_BUILDERS.actionParseq().paramA(6).paramB("wohoo").paramC(true).build();
+    final Request<String> req2 =
+        builders.<String>action("Parseq").setActionParam("A", 6).setActionParam("B", "wohoo").setActionParam("C", true).build();
     final Task<Response<String>> task2 = REST_CLIENT.createTask(req2);
-    final ActionRequest<String> req3 =
-        ACTIONS_BUILDERS.actionParseq().paramA(7).paramB("rawr").paramC(false).build();
+    final Request<String> req3 =
+        builders.<String>action("Parseq").setActionParam("A", 7).setActionParam("B", "rawr").setActionParam("C", false).build();
     final Task<Response<String>> task3 = REST_CLIENT.createTask(req3);
 
     final Task<?> master = Tasks.par(task1, task2, task3);
@@ -141,10 +142,10 @@ public class TestParSeqRestClient extends RestLiIntegrationTest
   /**
    * Request that should fail, using promise
    */
-  @Test
-  public void testFailPromise() throws InterruptedException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testFailPromise(RootBuilderWrapper<?, ?> builders) throws InterruptedException
   {
-    final ActionRequest<Void> req = ACTIONS_BUILDERS.actionFailPromiseCall().build();
+    final Request<Void> req = builders.<Void>action("FailPromiseCall").build();
     final Promise<Response<Void>> promise = REST_CLIENT.sendRequest(req);
     promise.await();
     Assert.assertTrue(promise.isFailed());
@@ -155,10 +156,10 @@ public class TestParSeqRestClient extends RestLiIntegrationTest
   /**
    * Request that should fail, using task
    */
-  @Test
-  public void testFailTask() throws InterruptedException
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testFailTask(RootBuilderWrapper<?, ?> builders) throws InterruptedException
   {
-    final ActionRequest<Void> req = ACTIONS_BUILDERS.actionFailPromiseCall().build();
+    final Request<Void> req = builders.<Void>action("FailPromiseCall").build();
     final Task<Response<Void>> task = REST_CLIENT.createTask(req);
 
     _engine.run(task);
@@ -167,5 +168,14 @@ public class TestParSeqRestClient extends RestLiIntegrationTest
     Assert.assertTrue(task.isFailed());
     final Throwable t = task.getError();
     Assert.assertTrue(t instanceof RestLiResponseException);
+  }
+
+  @DataProvider
+  private static Object[][] requestBuilderDataProvider()
+  {
+    return new Object[][] {
+      { new RootBuilderWrapper(new ActionsBuilders()) },
+      { new RootBuilderWrapper(new ActionsRequestBuilders()) }
+    };
   }
 }

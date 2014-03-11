@@ -17,6 +17,24 @@
 package com.linkedin.restli.examples;
 
 
+import com.linkedin.r2.RemoteInvocationException;
+import com.linkedin.r2.transport.common.Client;
+import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
+import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import com.linkedin.restli.client.ErrorHandlingBehavior;
+import com.linkedin.restli.client.Request;
+import com.linkedin.restli.client.Response;
+import com.linkedin.restli.client.ResponseFuture;
+import com.linkedin.restli.client.RestClient;
+import com.linkedin.restli.client.RestLiResponseException;
+import com.linkedin.restli.common.EmptyRecord;
+import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.examples.greetings.api.Greeting;
+import com.linkedin.restli.examples.greetings.api.Tone;
+import com.linkedin.restli.examples.greetings.client.Exceptions3Builders;
+import com.linkedin.restli.examples.greetings.client.Exceptions3RequestBuilders;
+import com.linkedin.restli.test.util.RootBuilderWrapper;
+
 import java.util.Collections;
 
 import org.testng.Assert;
@@ -24,23 +42,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-
-import com.linkedin.r2.RemoteInvocationException;
-import com.linkedin.r2.transport.common.Client;
-import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
-import com.linkedin.r2.transport.http.client.HttpClientFactory;
-import com.linkedin.restli.client.ErrorHandlingBehavior;
-import com.linkedin.restli.client.GetRequest;
-import com.linkedin.restli.client.Response;
-import com.linkedin.restli.client.ResponseFuture;
-import com.linkedin.restli.client.RestClient;
-import com.linkedin.restli.client.RestLiResponseException;
-import com.linkedin.restli.client.UpdateRequest;
-import com.linkedin.restli.common.EmptyRecord;
-import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.examples.greetings.api.Greeting;
-import com.linkedin.restli.examples.greetings.api.Tone;
-import com.linkedin.restli.examples.greetings.client.Exceptions3Builders;
 
 
 public class TestExceptionsResource3 extends RestLiIntegrationTest
@@ -61,15 +62,15 @@ public class TestExceptionsResource3 extends RestLiIntegrationTest
     super.shutdown();
   }
 
-  @Test(dataProvider = "exceptionHandlingModes")
-  public void testGet404(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior) throws RemoteInvocationException
+  @Test(dataProvider = "exceptionHandlingModesDataProvider")
+  public void testGet404(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior, RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Response<Greeting> response = null;
     RestLiResponseException exception = null;
 
     try
     {
-      GetRequest<Greeting> readRequest = new Exceptions3Builders().get().id(1L).build();
+      Request<Greeting> readRequest = builders.get().id(1L).build();
       ResponseFuture<Greeting> future;
 
       if (explicit)
@@ -114,15 +115,15 @@ public class TestExceptionsResource3 extends RestLiIntegrationTest
     Assert.assertEquals(exception.getStatus(), HttpStatus.S_404_NOT_FOUND.getCode());
   }
 
-  @Test(dataProvider = "exceptionHandlingModes")
-  public void testUpdate(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior) throws Exception
+  @Test(dataProvider = "exceptionHandlingModesDataProvider")
+  public void testUpdate(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior, RootBuilderWrapper<Long, Greeting> builders) throws Exception
   {
     Response<EmptyRecord> response = null;
     RestLiResponseException exception = null;
 
     try
     {
-      UpdateRequest<Greeting> request = new Exceptions3Builders().update().id(11L)
+      Request<EmptyRecord> request = builders.update().id(11L)
           .input(new Greeting().setId(11L).setMessage("@#$%@!$%").setTone(Tone.INSULTING))
           .build();
       ResponseFuture<EmptyRecord> future;
@@ -169,13 +170,16 @@ public class TestExceptionsResource3 extends RestLiIntegrationTest
     Assert.assertEquals(exception.getStatus(), HttpStatus.S_404_NOT_FOUND.getCode());
   }
 
-  @DataProvider(name = "exceptionHandlingModes")
-  public Object[][] listFactories()
+  @DataProvider
+  public Object[][] exceptionHandlingModesDataProvider()
   {
     return new Object[][] {
-        { true, ErrorHandlingBehavior.FAIL_ON_ERROR},
-        { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS },
-        { false, null }
+        { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper(new Exceptions3Builders()) },
+        { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper(new Exceptions3RequestBuilders()) },
+        { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper(new Exceptions3Builders()) },
+        { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper(new Exceptions3RequestBuilders()) },
+        { false, null, new RootBuilderWrapper(new Exceptions3Builders()) },
+        { false, null, new RootBuilderWrapper(new Exceptions3RequestBuilders()) }
     };
   }
 }

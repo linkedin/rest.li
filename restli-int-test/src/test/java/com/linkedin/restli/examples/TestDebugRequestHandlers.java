@@ -26,13 +26,16 @@ import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
-import com.linkedin.restli.client.CreateRequest;
+import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.RestClient;
+import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.client.GreetingsPromiseBuilders;
+import com.linkedin.restli.examples.greetings.client.GreetingsPromiseRequestBuilders;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
+import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,6 +49,7 @@ import java.util.concurrent.Future;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 
@@ -56,13 +60,6 @@ public class TestDebugRequestHandlers extends RestLiIntegrationTest
   private static final RestClient REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
   private static final String HEADER_VALUE_TEXT_HTML = "text/html";
   private static final String HEADER_VALUE_APPLICATION_JSON = "application/json";
-
-  private final GreetingsPromiseBuilders _greetingsBuilders;
-
-  TestDebugRequestHandlers()
-  {
-    _greetingsBuilders = new GreetingsPromiseBuilders();
-  }
 
   @BeforeClass
   public void initClass() throws Exception
@@ -89,11 +86,11 @@ public class TestDebugRequestHandlers extends RestLiIntegrationTest
     sendRequestAndVerifyParseqTracevisResponse(request);
   }
 
-  @Test
-  public void testParseqTraceDebugPutRequestHandlerTracevis()
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testParseqTraceDebugPutRequestHandlerTracevis(RootBuilderWrapper<Long, Greeting> builders)
       throws URISyntaxException, ExecutionException, InterruptedException, RemoteInvocationException
   {
-    Long newId = createNewGreetingOnTheServer();
+    Long newId = createNewGreetingOnTheServer(builders);
 
     RestRequest request =
         new RestRequestBuilder(
@@ -119,11 +116,11 @@ public class TestDebugRequestHandlers extends RestLiIntegrationTest
     sendRequestAndVerifyParseqTracevisResponse(request);
   }
 
-  @Test
-  public void testParseqTraceDebugDeleteRequestHandlerTracevis()
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testParseqTraceDebugDeleteRequestHandlerTracevis(RootBuilderWrapper<Long, Greeting> builders)
       throws URISyntaxException, ExecutionException, InterruptedException, RemoteInvocationException
   {
-    Long newId = createNewGreetingOnTheServer();
+    Long newId = createNewGreetingOnTheServer(builders);
 
     RestRequest request =
         new RestRequestBuilder(
@@ -148,11 +145,11 @@ public class TestDebugRequestHandlers extends RestLiIntegrationTest
     sendRequestAndVerifyParseqTraceRaw(request);
   }
 
-  @Test
-  public void testParseqTraceDebugPutRequestHandlerRaw()
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testParseqTraceDebugPutRequestHandlerRaw(RootBuilderWrapper<Long, Greeting> builders)
       throws URISyntaxException, ExecutionException, InterruptedException, RemoteInvocationException
   {
-    Long newId = createNewGreetingOnTheServer();
+    Long newId = createNewGreetingOnTheServer(builders);
 
     RestRequest request =
         new RestRequestBuilder(
@@ -178,11 +175,11 @@ public class TestDebugRequestHandlers extends RestLiIntegrationTest
     sendRequestAndVerifyParseqTraceRaw(request);
   }
 
-  @Test
-  public void testParseqTraceDebugDeleteRequestHandlerRaw()
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testParseqTraceDebugDeleteRequestHandlerRaw(RootBuilderWrapper<Long, Greeting> builders)
       throws URISyntaxException, ExecutionException, InterruptedException, RemoteInvocationException
   {
-    Long newId = createNewGreetingOnTheServer();
+    Long newId = createNewGreetingOnTheServer(builders);
 
     RestRequest request =
         new RestRequestBuilder(
@@ -239,11 +236,20 @@ public class TestDebugRequestHandlers extends RestLiIntegrationTest
     Assert.assertEquals(contentTypeValues.get(0), HEADER_VALUE_TEXT_HTML);
   }
 
-  private Long createNewGreetingOnTheServer() throws RemoteInvocationException
+  private Long createNewGreetingOnTheServer(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Greeting newGreeting = new Greeting().setMessage("New Greeting!").setTone(Tone.FRIENDLY);
-    CreateRequest<Greeting> request = _greetingsBuilders.create().input(newGreeting).build();
+    Request<EmptyRecord> request = builders.create().input(newGreeting).build();
     String createdId = REST_CLIENT.sendRequest(request).getResponse().getId();
     return Long.parseLong(createdId);
+  }
+
+  @DataProvider
+  private static Object[][] requestBuilderDataProvider()
+  {
+    return new Object[][] {
+      { new RootBuilderWrapper(new GreetingsPromiseBuilders()) },
+      { new RootBuilderWrapper(new GreetingsPromiseRequestBuilders()) }
+    };
   }
 }
