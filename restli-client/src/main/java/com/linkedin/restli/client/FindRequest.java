@@ -65,4 +65,53 @@ public class FindRequest<T extends RecordTemplate>
   {
     return _assocKey;
   }
+
+  @Override
+  public int hashCode()
+  {
+    int hashCode = super.hashCode();
+    if (!hasUri())
+    {
+      hashCode = (31 * hashCode) + (_assocKey != null ? _assocKey.hashCode() : 0);
+    }
+    return hashCode;
+  }
+
+  @Override
+  public boolean equals(Object obj)
+  {
+    boolean superEquals = super.equals(obj);
+
+    if (hasUri())
+    {
+      return superEquals;
+    }
+
+    if (!superEquals)
+    {
+      return false;
+    }
+
+    FindRequest<?> other = (FindRequest<?>)obj;
+
+    if ((_assocKey != null) ? !_assocKey.equals(other._assocKey) : other._assocKey != null)
+    {
+      return false;
+    }
+
+    return true;
+  }
+
+  @Override
+  public String toString()
+  {
+    StringBuilder sb = new StringBuilder(super.toString());
+    if (!hasUri())
+    {
+      sb.append(", {_assocKey=");
+      sb.append(_assocKey);
+      sb.append("}");
+    }
+    return sb.toString();
+  }
 }

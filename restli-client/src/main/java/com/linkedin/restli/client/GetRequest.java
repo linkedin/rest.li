@@ -122,4 +122,55 @@ public class GetRequest<T extends RecordTemplate> extends Request<T>
   {
     return RestliUriBuilderUtil.createUriBuilder(this).buildBaseUri();
   }
+
+  @Override
+  public int hashCode()
+  {
+    int hashCode = super.hashCode();
+    if (!hasUri())
+    {
+      hashCode = (31 * hashCode) + (_id != null ? _id.hashCode() : 0);
+    }
+    return hashCode;
+  }
+
+  @Override
+  public boolean equals(Object obj)
+  {
+    boolean superEquals = super.equals(obj);
+
+    if (hasUri())
+    {
+      return superEquals;
+    }
+
+    if (!superEquals)
+    {
+      return false;
+    }
+
+    GetRequest<?> other = (GetRequest<?>)obj;
+
+    if ((_id != null) ? !_id.equals(other._id) : other._id != null)
+    {
+      return false;
+    }
+
+    return true;
+  }
+
+  @Override
+  public String toString()
+  {
+    StringBuilder sb = new StringBuilder(super.toString());
+    if (!hasUri())
+    {
+      sb.append(", {_id=");
+      sb.append(_id);
+      sb.append(", _templateClass=");
+      sb.append(_templateClass);
+      sb.append("}");
+    }
+    return sb.toString();
+  }
 }

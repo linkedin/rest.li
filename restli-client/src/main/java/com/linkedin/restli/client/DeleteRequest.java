@@ -64,4 +64,53 @@ public class DeleteRequest<T extends RecordTemplate>
   {
     return _id;
   }
+
+  @Override
+  public int hashCode()
+  {
+    int hashCode = super.hashCode();
+    if (!hasUri())
+    {
+      hashCode = (hashCode * 31) + (_id != null ? _id.hashCode() : 0);
+    }
+    return hashCode;
+  }
+
+  @Override
+  public boolean equals(Object obj)
+  {
+    boolean superEquals = super.equals(obj);
+
+    if (hasUri())
+    {
+      return superEquals;
+    }
+
+    if (!superEquals)
+    {
+      return false;
+    }
+
+    DeleteRequest<?> other = (DeleteRequest<?>)obj;
+
+    if ((_id != null) ? !_id.equals(other._id) : other._id != null)
+    {
+      return false;
+    }
+
+    return true;
+  }
+
+  @Override
+  public String toString()
+  {
+    StringBuilder sb = new StringBuilder(super.toString());
+    if (!hasUri())
+    {
+      sb.append(", {_id=");
+      sb.append(_id);
+      sb.append("}");
+    }
+    return sb.toString();
+  }
 }

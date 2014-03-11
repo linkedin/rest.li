@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+import org.apache.commons.lang.StringUtils;
 
 
 /**
@@ -513,41 +514,80 @@ public class Request<T>
       return false;
     }
 
-    Request<?> request = (Request<?>) obj;
+    Request<?> other = (Request<?>) obj;
 
-    if (_headers != null? !_headers.equals(request._headers) : request._headers != null)
+    if (_hasUri && other._hasUri)
+    {
+      // both requests were constructed using the old constructor
+      return areOldFieldsEqual(other) && _uri.equals(other._uri);
+    }
+
+    if (_hasUri || other._hasUri)
+    {
+      // if one of them was constructed using the new while the other was constructed using the old constructor we
+      // assume that they are not equal.
+      return false;
+    }
+
+    return areNewFieldsEqual(other);
+  }
+
+  /**
+   * Checks if the old fields are equal
+   *
+   * @param other
+   * @return
+   */
+  private boolean areOldFieldsEqual(Request<?> other)
+  {
+    if (_headers != null? !_headers.equals(other._headers) : other._headers != null)
     {
       return false;
     }
-    if (_inputRecord != null? !_inputRecord.equals(request._inputRecord) : request._inputRecord != null)
+    if (_inputRecord != null? !_inputRecord.equals(other._inputRecord) : other._inputRecord != null)
     {
       return false;
     }
-    if (_method != request._method)
+    if (_method != other._method)
     {
       return false;
     }
-    if (_baseUriTemplate != null? !_baseUriTemplate.equals(request._baseUriTemplate) : request._baseUriTemplate != null)
+    return true;
+  }
+
+  /**
+   * Checks if the new fields are equal
+   *
+   * @param other
+   * @return
+   */
+  private boolean areNewFieldsEqual(Request<?> other)
+  {
+    if (!areOldFieldsEqual(other))
     {
       return false;
     }
-    if (_pathKeys != null? !_pathKeys.equals(request._pathKeys) : request._pathKeys != null)
+    if (_baseUriTemplate != null? !_baseUriTemplate.equals(other._baseUriTemplate) : other._baseUriTemplate != null)
     {
       return false;
     }
-    if (_resourceSpec != null? !_resourceSpec.equals(request._resourceSpec) : request._resourceSpec != null)
+    if (_pathKeys != null? !_pathKeys.equals(other._pathKeys) : other._pathKeys != null)
     {
       return false;
     }
-    if (_queryParams != null? !_queryParams.equals(request._queryParams) : request._queryParams != null)
+    if (_resourceSpec != null? !_resourceSpec.equals(other._resourceSpec) : other._resourceSpec != null)
     {
       return false;
     }
-    if (_methodName != null? !_methodName.equals(request._methodName) : request._methodName != null)
+    if (_queryParams != null? !_queryParams.equals(other._queryParams) : other._queryParams != null)
     {
       return false;
     }
-    if (_requestOptions != null? !_requestOptions.equals(request._requestOptions) : request._requestOptions != null)
+    if (_methodName != null? !_methodName.equals(other._methodName) : other._methodName != null)
+    {
+      return false;
+    }
+    if (_requestOptions != null? !_requestOptions.equals(other._requestOptions) : other._requestOptions != null)
     {
       return false;
     }
@@ -558,16 +598,46 @@ public class Request<T>
   @Override
   public int hashCode()
   {
+    int hashCode;
+    if (_hasUri)
+    {
+      // request was constructed using an old constructor
+      hashCode = _uri.hashCode();
+      hashCode = (hashCode * 31) + oldHashCode();
+    }
+    else
+    {
+      hashCode = newHashCode();
+    }
+    return hashCode;
+  }
+
+  /**
+   * Computes the hashCode using the old fields
+   * @return
+   */
+  private int oldHashCode()
+  {
     int result = _method.hashCode();
     result = 31 * result + (_inputRecord != null? _inputRecord.hashCode() : 0);
     result = 31 * result + (_headers != null? _headers.hashCode() : 0);
-    result = 31 * result + (_baseUriTemplate != null? _baseUriTemplate.hashCode() : 0);
-    result = 31 * result + (_pathKeys != null? _pathKeys.hashCode() : 0);
-    result = 31 * result + (_resourceSpec != null ? _resourceSpec.hashCode() : 0);
-    result = 31 * result + (_queryParams != null ? _queryParams.hashCode() : 0);
-    result = 31 * result + (_methodName != null ? _methodName.hashCode() : 0);
-    result = 31 * result + (_requestOptions != null ? _requestOptions.hashCode() : 0);
     return result;
+  }
+
+  /**
+   * Computes the hashCode using the new fields
+   * @return
+   */
+  private int newHashCode()
+  {
+    int hashCode = oldHashCode();
+    hashCode = 31 * hashCode + (_baseUriTemplate != null? _baseUriTemplate.hashCode() : 0);
+    hashCode = 31 * hashCode + (_pathKeys != null? _pathKeys.hashCode() : 0);
+    hashCode = 31 * hashCode + (_resourceSpec != null ? _resourceSpec.hashCode() : 0);
+    hashCode = 31 * hashCode + (_queryParams != null ? _queryParams.hashCode() : 0);
+    hashCode = 31 * hashCode + (_methodName != null ? _methodName.hashCode() : 0);
+    hashCode = 31 * hashCode + (_requestOptions != null ? _requestOptions.hashCode() : 0);
+    return hashCode;
   }
 
   @Override
@@ -578,9 +648,18 @@ public class Request<T>
     sb.append("{_headers=").append(_headers);
     sb.append(", _input=").append(_inputRecord);
     sb.append(", _method=").append(_method);
-    sb.append(", _queryParams=").append(_queryParams);
-    sb.append(", _requestOptions=").append(_requestOptions);
-    sb.append('}');
+    if (_hasUri)
+    {
+      // request was constructed using an old constructor
+      sb.append(", _uri=").append(StringUtils.abbreviate(_uri.toString(), 256));
+      sb.append("}");
+    }
+    else
+    {
+      sb.append(", _queryParams=").append(_queryParams);
+      sb.append(", _requestOptions=").append(_requestOptions);
+      sb.append('}');
+    }
     return sb.toString();
   }
 }
