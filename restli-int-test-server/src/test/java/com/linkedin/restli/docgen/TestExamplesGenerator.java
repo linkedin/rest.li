@@ -139,6 +139,11 @@ public class TestExamplesGenerator
     Assert.assertTrue(valRet.isValid(), valRet.getMessages().toString());
 
     capture = groupsGenerator.finder("search");
+    String queryString = capture.getRequest().getURI().getQuery();
+    Assert.assertTrue(queryString.contains("q=search"));
+    Assert.assertTrue(queryString.contains("keywords="));
+    Assert.assertTrue(queryString.contains("nameKeywords="));
+    Assert.assertTrue(queryString.contains("groupID="));
     valRet = validateCollectionResponse(capture.getResponse(), Group.class, valOptions);
     Assert.assertNull(valRet, (valRet == null ? null : valRet.getMessages().toString()));
 

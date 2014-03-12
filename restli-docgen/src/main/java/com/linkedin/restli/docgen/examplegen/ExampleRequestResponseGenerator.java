@@ -228,9 +228,6 @@ public class ExampleRequestResponseGenerator
     {
       throw new IllegalArgumentException("No such finder for resource: " + name);
     }
-
-    DynamicRecordMetadata finderParamsMetadata = _resourceSpec.getRequestMetadata(finderSchema.getName());
-
     RecordDataSchema metadataSchema = null;
     if (finderSchema.hasMetadata())
     {
@@ -238,7 +235,7 @@ public class ExampleRequestResponseGenerator
                                                                      _schemaResolver);
     }
 
-    return buildRequestResponse(buildFinderRequest(finderSchema, finderParamsMetadata),
+    return buildRequestResponse(buildFinderRequest(finderSchema),
         buildFinderResult(metadataSchema),
         buildResourceMethodDescriptorForFinder(name));
   }
@@ -566,8 +563,7 @@ public class ExampleRequestResponseGenerator
     }
   }
 
-  private FindRequest<RecordTemplatePlaceholder> buildFinderRequest(FinderSchema finderSchema,
-                                                                    DynamicRecordMetadata finderParamsMetadata)
+  private FindRequest<RecordTemplatePlaceholder> buildFinderRequest(FinderSchema finderSchema)
   {
 
     FindRequestBuilder<Object, RecordTemplatePlaceholder> finder =
@@ -594,9 +590,9 @@ public class ExampleRequestResponseGenerator
       finder.assocKey(partKey, key.getPart(partKey));
     }
 
-    if (finderParamsMetadata != null)
+    if (finderSchema.hasParameters() && !finderSchema.getParameters().isEmpty())
     {
-      addParams(finder, finderParamsMetadata, finderSchema.getParameters());
+      addParams(finder, finderSchema.getParameters());
     }
     addPathKeys(finder);
     return finder.build();
@@ -706,18 +702,7 @@ public class ExampleRequestResponseGenerator
   {
     RestMethodSchema methodSchema = _resourceSchema.getMethod(method.toString().toLowerCase());
     ParameterSchemaArray parameters = methodSchema.getParameters();
-    if (parameters != null)
-    {
-      for (ParameterSchema parameter : parameters)
-      {
-        if (!parameter.hasItems()) // ignoring legacy case where items was used for arrays
-        {
-          DataSchema dataSchema = RestSpecCodec.textToSchema(parameter.getType(), _schemaResolver);
-          Object value = _dataGenerator.buildData(parameter.getName(), dataSchema);
-          builder.setParam(parameter.getName(), value);
-        }
-      }
-    }
+    addParams(builder, parameters);
   }
 
   private void addPathKeys(AbstractRequestBuilder builder)
@@ -753,15 +738,18 @@ public class ExampleRequestResponseGenerator
     }
   }
 
-  private void addParams(RestfulRequestBuilder request, DynamicRecordMetadata requestMetadata, ParameterSchemaArray parameters)
+  private void addParams(RestfulRequestBuilder builder, ParameterSchemaArray parameters)
   {
     if (parameters != null)
     {
       for (ParameterSchema parameter : parameters)
       {
-        FieldDef<?> fieldDef = requestMetadata.getFieldDef(parameter.getName());
-        Object value = generateFieldDefValue(fieldDef);
-        request.setParam(parameter.getName(), value);
+        if (!parameter.hasItems()) // ignoring legacy case where items was used for arrays
+        {
+          DataSchema dataSchema = RestSpecCodec.textToSchema(parameter.getType(), _schemaResolver);
+          Object value = _dataGenerator.buildData(parameter.getName(), dataSchema);
+          builder.setParam(parameter.getName(), value);
+        }
       }
     }
   }

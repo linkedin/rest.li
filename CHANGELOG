@@ -4,6 +4,9 @@
 Add protocol version header to error response.
 Add test for protocol version in error case.
 
+(RB=274091)
+Fix example generator to include finder params in generated examples, add test.
+
 1.14.7
 ------
 (RB=266640)
