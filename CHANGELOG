@@ -1,6 +1,8 @@
 1.15.1
 ------
-
+(RB=266089)
+Generate alternative version of client request builders.
+Change integration tests to test the new request builders.
 
 1.15.0
 ------
