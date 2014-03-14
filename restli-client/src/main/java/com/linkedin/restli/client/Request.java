@@ -656,6 +656,9 @@ public class Request<T>
     }
     else
     {
+      sb.append(", _baseUriTemplate=").append(_baseUriTemplate);
+      sb.append(", _methodName=").append(_methodName);
+      sb.append(", _pathKeys=").append(_pathKeys);
       sb.append(", _queryParams=").append(_queryParams);
       sb.append(", _requestOptions=").append(_requestOptions);
       sb.append('}');
