@@ -1,8 +1,15 @@
+1.15.2
+------
+
 1.15.1
 ------
 (RB=266089)
 Generate alternative version of client request builders.
 Change integration tests to test the new request builders.
+
+(RB=273408)
+Implementation of equals, hashCode, and toString in Request and derived classes.
+
 
 1.15.0
 ------
