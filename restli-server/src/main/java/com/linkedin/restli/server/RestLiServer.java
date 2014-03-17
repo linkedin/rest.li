@@ -12,10 +12,9 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-*/
+ */
 
 package com.linkedin.restli.server;
-
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.jersey.api.uri.UriBuilder;
@@ -34,11 +33,15 @@ import com.linkedin.restli.internal.server.RestLiMethodInvoker;
 import com.linkedin.restli.internal.server.RestLiResponseHandler;
 import com.linkedin.restli.internal.server.RestLiRouter;
 import com.linkedin.restli.internal.server.RoutingResult;
+import com.linkedin.restli.internal.server.ServerResourceContext;
+import com.linkedin.restli.internal.server.filter.FilterRequestContextInternal;
+import com.linkedin.restli.internal.server.filter.FilterRequestContextInternalImpl;
 import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor.InterfaceType;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.model.RestLiApiBuilder;
+import com.linkedin.restli.server.filter.ResponseFilter;
 import com.linkedin.restli.server.resources.PrototypeResourceFactory;
 import com.linkedin.restli.server.resources.ResourceFactory;
 
@@ -51,10 +54,10 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 /**
  * @author dellamag
  * @author Zhenkai Zhu
+ * @author nshankar
  */
 public class RestLiServer extends BaseRestServer
 {
@@ -69,8 +72,8 @@ public class RestLiServer extends BaseRestServer
   private final RestLiResponseHandler _responseHandler;
   private final RestLiDocumentationRequestHandler _docRequestHandler;
   private final ErrorResponseBuilder _errorResponseBuilder;
-  private final List<InvokeAware> _invokeAwares;
   private final Map<String, RestLiDebugRequestHandler> _debugHandlers;
+  private final List<ResponseFilter> _responseFilters;
 
   private boolean _isDocInitialized = false;
 
@@ -81,39 +84,34 @@ public class RestLiServer extends BaseRestServer
 
   public RestLiServer(final RestLiConfig config, final ResourceFactory resourceFactory)
   {
-    this(config, resourceFactory, null, null);
+    this(config, resourceFactory, null);
   }
 
-  public RestLiServer(final RestLiConfig config,
-                      final ResourceFactory resourceFactory,
-                      final Engine engine)
-  {
-    this(config, resourceFactory, engine, null);
-  }
-
-  public RestLiServer(final RestLiConfig config,
-                      final ResourceFactory resourceFactory,
-                      final Engine engine,
-                      final List<InvokeAware> invokeAwares)
+  public RestLiServer(final RestLiConfig config, final ResourceFactory resourceFactory, final Engine engine)
   {
     super(config);
-
     _config = config;
-    _errorResponseBuilder = new ErrorResponseBuilder(config.getErrorResponseFormat(),
-                                                     config.getInternalErrorMessage());
+    _errorResponseBuilder = new ErrorResponseBuilder(config.getErrorResponseFormat(), config.getInternalErrorMessage());
     _resourceFactory = resourceFactory;
     _rootResources = new RestLiApiBuilder(config).build();
     _resourceFactory.setRootResources(_rootResources);
     _router = new RestLiRouter(_rootResources);
-    _methodInvoker = new RestLiMethodInvoker(_resourceFactory, engine, _errorResponseBuilder);
-    _responseHandler = new RestLiResponseHandler.Builder()
-                                                .setErrorResponseBuilder(_errorResponseBuilder)
-                                                .setPermissiveEncoding(config.getPermissiveEncoding())
-                                                .build();
+    _methodInvoker =
+        new RestLiMethodInvoker(_resourceFactory, engine, _errorResponseBuilder, config.getRequestFilters());
+    _responseHandler =
+        new RestLiResponseHandler.Builder().setErrorResponseBuilder(_errorResponseBuilder)
+                                           .setPermissiveEncoding(config.getPermissiveEncoding())
+                                           .build();
     _docRequestHandler = config.getDocumentationRequestHandler();
-    _invokeAwares = (invokeAwares == null) ? Collections.<InvokeAware>emptyList() : Collections.unmodifiableList(invokeAwares);
     _debugHandlers = new HashMap<String, RestLiDebugRequestHandler>();
-
+    if (config.getResponseFilters() != null)
+    {
+      _responseFilters = config.getResponseFilters();
+    }
+    else
+    {
+      _responseFilters = new ArrayList<ResponseFilter>();
+    }
     for (RestLiDebugRequestHandler debugHandler : config.getDebugRequestHandlers())
     {
       _debugHandlers.put(debugHandler.getHandlerId(), debugHandler);
@@ -133,8 +131,7 @@ public class RestLiServer extends BaseRestServer
                 "ParSeq based method %s.%s, but no engine given. "
                     + "Check your RestLiServer construction, spring wiring, "
                     + "and container-pegasus-restli-server-cmpt version.";
-            log.warn(String.format(fmt, model.getResourceClass().getName(), desc.getMethod()
-                                                                                .getName()));
+            log.warn(String.format(fmt, model.getResourceClass().getName(), desc.getMethod().getName()));
           }
         }
       }
@@ -148,10 +145,11 @@ public class RestLiServer extends BaseRestServer
 
   /**
    * @see BaseRestServer#doHandleRequest(com.linkedin.r2.message.rest.RestRequest,
-   * com.linkedin.r2.message.RequestContext, com.linkedin.common.callback.Callback)
+   *      com.linkedin.r2.message.RequestContext, com.linkedin.common.callback.Callback)
    */
   @Override
-  protected void doHandleRequest(final RestRequest request, final RequestContext requestContext,
+  protected void doHandleRequest(final RestRequest request,
+                                 final RequestContext requestContext,
                                  final Callback<RestResponse> callback)
   {
     if (_docRequestHandler == null || !_docRequestHandler.isDocumentationRequest(request))
@@ -191,14 +189,18 @@ public class RestLiServer extends BaseRestServer
    * (assume the protocol version used by the client is "v")
    *
    * If we are using {@link com.linkedin.restli.server.RestLiConfig.RestliProtocolCheck#STRICT} then
-   * {@link AllProtocolVersions#BASELINE_PROTOCOL_VERSION} <= v <= {@link AllProtocolVersions#LATEST_PROTOCOL_VERSION}
+   * {@link AllProtocolVersions#BASELINE_PROTOCOL_VERSION} <= v <=
+   * {@link AllProtocolVersions#LATEST_PROTOCOL_VERSION}
    *
-   * If we are using {@link com.linkedin.restli.server.RestLiConfig.RestliProtocolCheck#RELAXED} then
-   * {@link AllProtocolVersions#BASELINE_PROTOCOL_VERSION} <= v <= {@link AllProtocolVersions#NEXT_PROTOCOL_VERSION}
+   * If we are using {@link com.linkedin.restli.server.RestLiConfig.RestliProtocolCheck#RELAXED}
+   * then {@link AllProtocolVersions#BASELINE_PROTOCOL_VERSION} <= v <=
+   * {@link AllProtocolVersions#NEXT_PROTOCOL_VERSION}
    *
-   * @param request the incoming request from the client
-   * @throws RestLiServiceException if the protocol version used by the client is not valid based on the rules described
-   *                                above
+   * @param request
+   *          the incoming request from the client
+   * @throws RestLiServiceException
+   *           if the protocol version used by the client is not valid based on the rules described
+   *           above
    */
   private void ensureRequestUsesValidRestliProtocol(final RestRequest request) throws RestLiServiceException
   {
@@ -211,43 +213,41 @@ public class RestLiServer extends BaseRestServer
     }
     if (!isSupportedProtocolVersion(clientProtocolVersion, lowerBound, upperBound))
     {
-      throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, "Rest.li protocol version " +
-          clientProtocolVersion + " used by the client is not supported!");
+      throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, "Rest.li protocol version "
+          + clientProtocolVersion + " used by the client is not supported!");
     }
   }
 
-  private void handleDebugRequest(
-      final RestLiDebugRequestHandler debugHandler,
-      final RestRequest request,
-      final RequestContext requestContext,
-      final Callback<RestResponse> callback)
+  private void handleDebugRequest(final RestLiDebugRequestHandler debugHandler,
+                                  final RestRequest request,
+                                  final RequestContext requestContext,
+                                  final Callback<RestResponse> callback)
   {
-    debugHandler.handleRequest(
-        request,
-        requestContext,
-        new RestLiDebugRequestHandler.ResourceDebugRequestHandler(){
-          @Override
-          public void handleRequest(final RestRequest request, final RequestContext requestContext,
-                                       final RequestExecutionCallback<RestResponse> callback)
-          {
-            //Create a new request at this point from the debug request by removing the path suffix
-            // starting with "__debug".
-            String fullPath = request.getURI().getPath();
-            int debugSegmentIndex = fullPath.indexOf(DEBUG_PATH_SEGMENT);
+    debugHandler.handleRequest(request, requestContext, new RestLiDebugRequestHandler.ResourceDebugRequestHandler()
+    {
+      @Override
+      public void handleRequest(final RestRequest request,
+                                final RequestContext requestContext,
+                                final RequestExecutionCallback<RestResponse> callback)
+      {
+        // Create a new request at this point from the debug request by removing the path suffix
+        // starting with "__debug".
+        String fullPath = request.getURI().getPath();
+        int debugSegmentIndex = fullPath.indexOf(DEBUG_PATH_SEGMENT);
 
-            RestRequestBuilder requestBuilder = new RestRequestBuilder(request);
+        RestRequestBuilder requestBuilder = new RestRequestBuilder(request);
 
-            UriBuilder uriBuilder = UriBuilder.fromUri(request.getURI());
-            uriBuilder.replacePath(request.getURI().getPath().substring(0, debugSegmentIndex - 1));
-            requestBuilder.setURI(uriBuilder.build());
+        UriBuilder uriBuilder = UriBuilder.fromUri(request.getURI());
+        uriBuilder.replacePath(request.getURI().getPath().substring(0, debugSegmentIndex - 1));
+        requestBuilder.setURI(uriBuilder.build());
 
-            handleResourceRequest(requestBuilder.build(), requestContext, callback, true);
-          }
-        },
-        callback);
+        handleResourceRequest(requestBuilder.build(), requestContext, callback, true);
+      }
+    }, callback);
   }
 
-  private void handleResourceRequest(final RestRequest request, final RequestContext requestContext,
+  private void handleResourceRequest(final RestRequest request,
+                                     final RequestContext requestContext,
                                      final RequestExecutionCallback<RestResponse> callback,
                                      final boolean isDebugMode)
   {
@@ -258,11 +258,10 @@ public class RestLiServer extends BaseRestServer
     catch (RestLiServiceException e)
     {
       final RestLiCallback<Object> restLiCallback =
-          new RestLiCallback<Object>(request, null, _responseHandler, callback);
+          new RestLiCallback<Object>(request, null, _responseHandler, callback, null, null);
       restLiCallback.onError(e, createEmptyExecutionReport());
       return;
     }
-
     final RoutingResult method;
     try
     {
@@ -271,19 +270,17 @@ public class RestLiServer extends BaseRestServer
     catch (Exception e)
     {
       final RestLiCallback<Object> restLiCallback =
-          new RestLiCallback<Object>(request, null, _responseHandler, callback);
+          new RestLiCallback<Object>(request, null, _responseHandler, callback, null, null);
       restLiCallback.onError(e, createEmptyExecutionReport());
       return;
     }
-
-    final RequestExecutionCallback<RestResponse> wrappedCallback = notifyInvokeAwares(method, callback);
-
+    final FilterRequestContextInternal filterContext =
+        new FilterRequestContextInternalImpl((ServerResourceContext) method.getContext(), method.getResourceMethod());
     final RestLiCallback<Object> restLiCallback =
-        new RestLiCallback<Object>(request, method, _responseHandler, wrappedCallback);
-
+        new RestLiCallback<Object>(request, method, _responseHandler, callback, _responseFilters, filterContext);
     try
     {
-      _methodInvoker.invoke(method, request, restLiCallback, isDebugMode);
+      _methodInvoker.invoke(method, request, restLiCallback, isDebugMode, filterContext);
     }
     catch (Exception e)
     {
@@ -291,8 +288,7 @@ public class RestLiServer extends BaseRestServer
     }
   }
 
-  private void handleDocumentationRequest(final RestRequest request,
-                                          final Callback<RestResponse> callback)
+  private void handleDocumentationRequest(final RestRequest request, final Callback<RestResponse> callback)
   {
     try
     {
@@ -311,52 +307,14 @@ public class RestLiServer extends BaseRestServer
     catch (Exception e)
     {
       final RestLiCallback<Object> restLiCallback =
-          new RestLiCallback<Object>(request, null, _responseHandler,
-                                     new RequestExecutionCallbackAdapter<RestResponse>(callback));
+          new RestLiCallback<Object>(request,
+                                     null,
+                                     _responseHandler,
+                                     new RequestExecutionCallbackAdapter<RestResponse>(callback),
+                                     null,
+                                     null);
       restLiCallback.onError(e, createEmptyExecutionReport());
     }
-  }
-
-  /**
-   * Invoke {@link InvokeAware#onInvoke(ResourceContext, RestLiMethodContext)} of registered invokeAwares.
-   * @return A new callback that wraps the originalCallback, which invokes desired callbacks of invokeAwares after the method invocation finishes
-   */
-  private RequestExecutionCallback<RestResponse> notifyInvokeAwares(final RoutingResult routingResult,
-                                                                    final RequestExecutionCallback<RestResponse> originalCallback)
-  {
-    if (!_invokeAwares.isEmpty())
-    {
-      final List<Callback<RestResponse>> invokeAwareCallbacks = new ArrayList<Callback<RestResponse>>();
-      for (InvokeAware invokeAware : _invokeAwares)
-      {
-        invokeAwareCallbacks.add(invokeAware.onInvoke(routingResult.getContext(), routingResult.getResourceMethod()));
-      }
-
-      return new RequestExecutionCallback<RestResponse>()
-      {
-        @Override
-        public void onSuccess(RestResponse result, RequestExecutionReport executionReport)
-        {
-          for (Callback<RestResponse> callback : invokeAwareCallbacks)
-          {
-            callback.onSuccess(result);
-          }
-          originalCallback.onSuccess(result, executionReport);
-        }
-
-        @Override
-        public void onError(Throwable error, RequestExecutionReport executionReport)
-        {
-          for (Callback<RestResponse> callback : invokeAwareCallbacks)
-          {
-            callback.onError(error);
-          }
-          originalCallback.onError(error, executionReport);
-        }
-      };
-    }
-
-    return originalCallback;
   }
 
   private RestLiDebugRequestHandler findDebugRequestHandler(RestRequest request)

@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-package com.linkedin.restli.server.test;
+package com.linkedin.restli.server;
 
 
 import com.linkedin.common.callback.Callback;
@@ -34,14 +34,12 @@ import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.TestConstants;
 import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
-import com.linkedin.restli.server.ErrorResponseFormat;
-import com.linkedin.restli.server.RequestExecutionCallback;
-import com.linkedin.restli.server.ResourceContext;
-import com.linkedin.restli.server.RestLiConfig;
-import com.linkedin.restli.server.RestLiDebugRequestHandler;
-import com.linkedin.restli.server.RestLiServer;
-import com.linkedin.restli.server.RestLiServiceException;
+import com.linkedin.restli.server.filter.FilterRequestContext;
+import com.linkedin.restli.server.filter.FilterResponseContext;
+import com.linkedin.restli.server.filter.RequestFilter;
+import com.linkedin.restli.server.filter.ResponseFilter;
 import com.linkedin.restli.server.resources.BaseResource;
+import com.linkedin.restli.server.test.EasyMockResourceFactory;
 import com.linkedin.restli.server.twitter.AsyncStatusCollectionResource;
 import com.linkedin.restli.server.twitter.StatusCollectionResource;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Status;
@@ -59,6 +57,7 @@ import org.apache.commons.io.IOUtils;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
@@ -82,12 +81,56 @@ public class TestRestLiServer
   private static final String DEBUG_HANDLER_RESPONSE_B = "Response B";
 
   private RestLiServer _server;
+  private RestLiServer _serverWithFilters;
   private RestLiServer _serverWithStrictProtocolCheck;
   private RestLiServer _serverWithCustomErrorResponseConfig; // configured different than server
   private EasyMockResourceFactory _resourceFactory;
+  private RequestFilter _mockRequestFilter;
+  private ResponseFilter _mockResponseFilter;
 
   @BeforeTest
   protected void setUp()
+  {
+    // silence null engine warning and get EasyMock failure if engine is used
+    Engine fakeEngine = EasyMock.createMock(Engine.class);
+    _mockRequestFilter = EasyMock.createMock(RequestFilter.class);
+    _mockResponseFilter = EasyMock.createMock(ResponseFilter.class);
+    setUpServer(fakeEngine);
+    setupServerWithFilters(fakeEngine);
+    setupServerWithCustomErrorResponseConfig(fakeEngine);
+    setupServerWithStrictProtocolCheck(fakeEngine);
+    EasyMock.replay(fakeEngine);
+  }
+
+  private void setupServerWithStrictProtocolCheck(Engine fakeEngine)
+  {
+    RestLiConfig strictConfig = new RestLiConfig(); // default is to use STRICT checking
+    strictConfig.addResourcePackageNames("com.linkedin.restli.server.twitter");
+    strictConfig.addRequestFilter(_mockRequestFilter);
+    strictConfig.addResponseFilter(_mockResponseFilter);
+    _serverWithStrictProtocolCheck = new RestLiServer(strictConfig, _resourceFactory, fakeEngine);
+  }
+
+  private void setupServerWithCustomErrorResponseConfig(Engine fakeEngine)
+  {
+    RestLiConfig customErrorResponseConfig = new RestLiConfig();
+    customErrorResponseConfig.addResourcePackageNames("com.linkedin.restli.server.twitter");
+    customErrorResponseConfig.setErrorResponseFormat(ErrorResponseFormat.MESSAGE_AND_DETAILS);
+    customErrorResponseConfig.setInternalErrorMessage("kthxbye.");
+    customErrorResponseConfig.setRestliProtocolCheck(RestLiConfig.RestliProtocolCheck.RELAXED);
+    _serverWithCustomErrorResponseConfig = new RestLiServer(customErrorResponseConfig, _resourceFactory, fakeEngine);
+  }
+
+  private void setupServerWithFilters(Engine fakeEngine)
+  {
+    RestLiConfig config = new RestLiConfig(); // default is to use STRICT checking
+    config.addResourcePackageNames("com.linkedin.restli.server.twitter");
+    config.addRequestFilter(_mockRequestFilter);
+    config.addResponseFilter(_mockResponseFilter);
+    _serverWithFilters = new RestLiServer(config, _resourceFactory, fakeEngine);
+  }
+
+  private void setUpServer(Engine engine)
   {
     RestLiConfig config = new RestLiConfig();
     config.addResourcePackageNames("com.linkedin.restli.server.twitter");
@@ -135,23 +178,9 @@ public class TestRestLiServer
     };
 
     config.addDebugRequestHandlers(debugRequestHandlerA, debugRequestHandlerB);
-
-    // silence null engine warning and get EasyMock failure if engine is used
-    Engine fakeEngine = EasyMock.createMock(Engine.class);
-    EasyMock.replay(fakeEngine);
-    _server = new RestLiServer(config, _resourceFactory, fakeEngine);
-
-    RestLiConfig customErrorResponseConfig = new RestLiConfig();
-    customErrorResponseConfig.addResourcePackageNames("com.linkedin.restli.server.twitter");
-    customErrorResponseConfig.setErrorResponseFormat(ErrorResponseFormat.MESSAGE_AND_DETAILS);
-    customErrorResponseConfig.setInternalErrorMessage("kthxbye.");
-    customErrorResponseConfig.setRestliProtocolCheck(RestLiConfig.RestliProtocolCheck.RELAXED);
-
-    _serverWithCustomErrorResponseConfig = new RestLiServer(customErrorResponseConfig, _resourceFactory, fakeEngine);
-
-    RestLiConfig strictConfig = new RestLiConfig(); // default is to use STRICT checking
-    strictConfig.addResourcePackageNames("com.linkedin.restli.server.twitter");
-    _serverWithStrictProtocolCheck = new RestLiServer(strictConfig, _resourceFactory, fakeEngine);
+    config.addRequestFilter(_mockRequestFilter);
+    config.addResponseFilter(_mockResponseFilter);
+    _server = new RestLiServer(config, _resourceFactory, engine);
   }
 
   private void handleRequestWithCustomResponse(Callback<RestResponse> callback, String response)
@@ -177,6 +206,13 @@ public class TestRestLiServer
   {
     _resourceFactory = null;
     _server = null;
+    EasyMock.reset(_mockRequestFilter, _mockResponseFilter);
+  }
+
+  @AfterMethod
+  protected void afterMethod()
+  {
+    EasyMock.reset(_mockRequestFilter, _mockResponseFilter);
   }
 
   @DataProvider(name = "validClientProtocolVersionData")
@@ -217,24 +253,30 @@ public class TestRestLiServer
   @Test
   public void testServer() throws Exception
   {
-    testValidRequest(_server, null);
+    testValidRequest(_server, null, false);
+  }
+
+  @Test
+  public void testServerWithFilters() throws Exception
+  {
+    testValidRequest(_serverWithFilters, null, true);
   }
 
   @Test(dataProvider = "validClientProtocolVersionData")
   public void testValidClientProtocolVersion(RestLiServer server, ProtocolVersion clientProtocolVersion)
       throws URISyntaxException
   {
-    testValidRequest(server, clientProtocolVersion);
+    testValidRequest(server, clientProtocolVersion, false);
   }
 
-  private void testValidRequest(RestLiServer restLiServer, final ProtocolVersion clientProtocolVersion)
-      throws URISyntaxException
+  private void testValidRequest(RestLiServer restLiServer, final ProtocolVersion clientProtocolVersion, boolean filters) throws URISyntaxException
   {
     RestRequest request;
     if (clientProtocolVersion != null)
     {
-      request = new RestRequestBuilder(new URI("/statuses/1")).
-          setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, clientProtocolVersion.toString()).build();
+      request =
+          new RestRequestBuilder(new URI("/statuses/1")).setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION,
+                                                                   clientProtocolVersion.toString()).build();
     }
     else
     {
@@ -243,8 +285,16 @@ public class TestRestLiServer
 
     final StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
     EasyMock.expect(statusResource.get(eq(1L))).andReturn(buildStatusRecord()).once();
+    if (filters)
+    {
+      _mockRequestFilter.onRequest(EasyMock.anyObject(FilterRequestContext.class));
+      EasyMock.expectLastCall().times(1);
+      _mockResponseFilter.onResponse(EasyMock.anyObject(FilterRequestContext.class),
+                                     EasyMock.anyObject(FilterResponseContext.class));
+      EasyMock.expectLastCall().times(1);
+      EasyMock.replay(_mockRequestFilter, _mockResponseFilter);
+    }
     EasyMock.replay(statusResource);
-
     Callback<RestResponse> callback = new Callback<RestResponse>()
     {
       @Override
@@ -252,7 +302,6 @@ public class TestRestLiServer
       {
         assertEquals(restResponse.getStatus(), 200);
         assertTrue(restResponse.getEntity().length() > 0);
-
         EasyMock.verify(statusResource);
         EasyMock.reset(statusResource);
       }
@@ -264,6 +313,10 @@ public class TestRestLiServer
       }
     };
     restLiServer.handleRequest(request, new RequestContext(), callback);
+    if (filters)
+    {
+      EasyMock.verify(_mockRequestFilter, _mockResponseFilter);
+    }
   }
 
   @Test(dataProvider = "invalidClientProtcolVersionData")
@@ -331,7 +384,6 @@ public class TestRestLiServer
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
-        @SuppressWarnings("unchecked")
         Callback<Status> callback = (Callback<Status>) EasyMock.getCurrentArguments()[1];
         Status stat = buildStatusRecord();
         callback.onSuccess(stat);

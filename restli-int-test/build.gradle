@@ -22,6 +22,7 @@ dependencies {
   runtime externalDependency.log4j
   testCompile project(path: ':restli-common', configuration: 'testArtifacts')
   testCompile externalDependency.testng
+  testCompile externalDependency.mockito
   testDataModel project(path: ':restli-int-test-api', configuration: 'dataTemplate')
   testCompile project(path: ':restli-int-test-api', configuration: 'restClient')
   testCompile project(path: project.path, configuration: 'testRestClient')

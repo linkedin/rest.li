@@ -18,6 +18,7 @@ package com.linkedin.restli.internal.server;
 
 
 import com.linkedin.data.DataMap;
+import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
@@ -40,6 +41,7 @@ import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.resources.CollectionResource;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -59,6 +61,7 @@ import java.util.Map;
  * </ul>
  *
  * @author dellamag
+ * @author nshankar
  */
 public class RestLiResponseHandler
 {
@@ -110,35 +113,86 @@ public class RestLiResponseHandler
       return new RestLiResponseHandler(_methodAdapterRegistry, _errorResponseBuilder, _permissiveEncoding);
     }
   }
+
   /**
-   * @param request {@link RestRequest}
-   * @param routingResult {@link RoutingResult}
-   * @param responseObject response value
+   * Build a RestResponse from response object, incoming RestRequest and RoutingResult.
+   *
+   * TODO: Can zap this method since we have the other two methods.
+   *
+   * @param request
+   *          {@link RestRequest}
+   * @param routingResult
+   *          {@link RoutingResult}
+   * @param responseObject
+   *          response value
    * @return {@link RestResponse}
-   * @throws IOException if cannot build response
+   * @throws IOException
+   *           if cannot build response
    */
   public RestResponse buildResponse(final RestRequest request,
                                     final RoutingResult routingResult,
                                     final Object responseObject) throws IOException
   {
-    final ProtocolVersion protocolVersion = ((ServerResourceContext) routingResult.getContext()).getRestliProtocolVersion();
-    Map<String, String> headers = new HashMap<String, String>();
-    headers.putAll(((ServerResourceContext) routingResult.getContext()).getResponseHeaders());
-    headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString());
+    return buildResponse(routingResult, buildPartialResponse(request, routingResult, responseObject));
+  }
+
+
+  /**
+   * Build a RestResponse from PartialRestResponse and RoutingResult.
+   *
+   * @param routingResult
+   *          {@link RoutingResult}
+   * @param partialResponse
+   *          {@link PartialRestResponse}
+   * @return
+   */
+  public RestResponse buildResponse(final RoutingResult routingResult,
+                                     PartialRestResponse partialResponse)
+  {
+    RestResponseBuilder builder =
+        new RestResponseBuilder().setHeaders(partialResponse.getHeaders()).setStatus(partialResponse.getStatus()
+                                                                                                    .getCode());
+    if (partialResponse.hasData())
+    {
+      DataMap dataMap = partialResponse.getDataMap();
+      String mimeType = ((ServerResourceContext) routingResult.getContext()).getResponseMimeType();
+      builder = encodeResult(mimeType, builder, dataMap);
+    }
+    return builder.build();
+  }
+
+  /**
+   * Build a ParialRestResponse from response object, incoming RestRequest and RoutingResult.
+   *
+   * @param request
+   *          {@link RestRequest}
+   * @param routingResult
+   *          {@link RoutingResult}
+   * @param responseObject
+   *          response value
+   * @return {@link PartialRestResponse}
+   * @throws IOException
+   *           if cannot build response
+   */
+  public PartialRestResponse buildPartialResponse(final RestRequest request,
+                                                  final RoutingResult routingResult,
+                                                  final Object responseObject) throws IOException
+  {
+    ServerResourceContext context = (ServerResourceContext) routingResult.getContext();
+    final ProtocolVersion protocolVersion = context.getRestliProtocolVersion();
+    Map<String, String> responseHeaders = new HashMap<String, String>();
+    responseHeaders.putAll(context.getResponseHeaders());
+    responseHeaders.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString());
 
     if (responseObject == null)
     {
-      boolean isAction =
-          routingResult.getResourceMethod().getType().equals(ResourceMethod.ACTION);
-      RestResponseBuilder builder = new RestResponseBuilder();
-      builder.setStatus(isAction ? HttpStatus.S_200_OK.getCode()
-          : HttpStatus.S_404_NOT_FOUND.getCode());
-      builder.setHeaders(headers);
+      boolean isAction = routingResult.getResourceMethod().getType().equals(ResourceMethod.ACTION);
+      HttpStatus status = isAction ? HttpStatus.S_200_OK : HttpStatus.S_404_NOT_FOUND;
       if (!isAction)
       {
-        builder.setHeader(HeaderUtil.getErrorResponseHeaderName(protocolVersion), RestConstants.HEADER_VALUE_ERROR);
+        responseHeaders.put(HeaderUtil.getErrorResponseHeaderName(protocolVersion), RestConstants.HEADER_VALUE_ERROR);
       }
-      return builder.build();
+      return new PartialRestResponse.Builder().status(status).headers(responseHeaders).build();
     }
 
     RestLiResponseBuilder responseBuilder = chooseResponseBuilder(responseObject, routingResult);
@@ -147,28 +201,13 @@ public class RestLiResponseHandler
     {
       // this should not happen if valid return types are specified
       ResourceMethodDescriptor resourceMethod = routingResult.getResourceMethod();
-      String fqMethodName = resourceMethod.getResourceModel().getResourceClass().getName() + '#' +
-                            routingResult.getResourceMethod().getMethod().getName();
-      throw new RestLiInternalException("Invalid return type '" + responseObject.getClass() + " from method '" +
-                                        fqMethodName + '\'');
+      String fqMethodName =
+          resourceMethod.getResourceModel().getResourceClass().getName() + '#'
+              + routingResult.getResourceMethod().getMethod().getName();
+      throw new RestLiInternalException("Invalid return type '" + responseObject.getClass() + " from method '"
+          + fqMethodName + '\'');
     }
-
-    PartialRestResponse partialResponse =
-        responseBuilder.buildResponse(request, routingResult, responseObject, headers);
-
-
-    RestResponseBuilder builder =
-        new RestResponseBuilder().setHeaders(headers)
-                                 .setStatus(partialResponse.getStatus().getCode());
-
-    if (partialResponse.hasData())
-    {
-      DataMap dataMap = partialResponse.getDataMap();
-      String mimeType = ((ServerResourceContext) routingResult.getContext()).getResponseMimeType();
-      builder = encodeResult(mimeType, builder, dataMap);
-    }
-
-    return builder.build();
+    return responseBuilder.buildResponse(request, routingResult, responseObject, responseHeaders);
   }
 
   public PartialRestResponse buildErrorResponse(final RestRequest request,
@@ -178,6 +217,24 @@ public class RestLiResponseHandler
   {
     return _errorResponseBuilder.buildResponse(request, routingResult, object, headers);
   }
+
+  public RestException buildRestException(final Throwable e, PartialRestResponse partialResponse)
+  {
+    RestResponseBuilder builder =
+        new RestResponseBuilder().setHeaders(partialResponse.getHeaders()).setStatus(partialResponse.getStatus()
+                                                                                                    .getCode());
+    if (partialResponse.hasData())
+    {
+      DataMap dataMap = partialResponse.getDataMap();
+      ByteArrayOutputStream baos = new ByteArrayOutputStream(4096);
+      DataMapUtils.write(dataMap, null, baos, true); // partialResponse.getSchema()
+      builder.setEntity(baos.toByteArray());
+    }
+    RestResponse restResponse = builder.build();
+    RestException restException = new RestException(restResponse, e);
+    return restException;
+  }
+
 
   private RestResponseBuilder encodeResult(String mimeType, RestResponseBuilder builder, DataMap dataMap)
   {

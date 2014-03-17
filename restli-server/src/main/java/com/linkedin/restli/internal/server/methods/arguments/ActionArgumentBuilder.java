@@ -12,15 +12,13 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-*/
+ */
 
 /**
  * $Id: $
  */
 
 package com.linkedin.restli.internal.server.methods.arguments;
-
-import java.util.List;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.validation.CoercionMode;
@@ -36,7 +34,11 @@ import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
+import com.linkedin.restli.server.RestLiRequestData;
+import com.linkedin.restli.server.RestLiRequestDataImpl;
 import com.linkedin.restli.server.RoutingException;
+
+import java.util.List;
 
 /**
  * @author Josh Walker
@@ -46,40 +48,12 @@ import com.linkedin.restli.server.RoutingException;
 public class ActionArgumentBuilder implements RestLiArgumentBuilder
 {
   @Override
-  public Object[] buildArguments(final RoutingResult routingResult,
-                                 final RestRequest request)
+  public Object[] buildArguments(RestLiRequestData requestData, RoutingResult routingResult)
   {
     ResourceMethodDescriptor resourceMethodDescriptor = routingResult.getResourceMethod();
-    DataMap data;
-    if (request.getEntity().length() == 0)
-    {
-      data = new DataMap();
-    }
-    else
-    {
-      data = DataMapUtils.readMap(request);
-    }
-
-    DynamicRecordTemplate template =
-            new DynamicRecordTemplate(data, resourceMethodDescriptor.getRequestDataSchema());
-
-    ValidationResult result =
-            ValidateDataAgainstSchema.validate(data,
-                                               template.schema(),
-                                               new ValidationOptions(RequiredMode.IGNORE,
-                                                                     CoercionMode.NORMAL));
-
-    if (!result.isValid())
-    {
-      throw new RoutingException("Parameters of method '"
-                                         + resourceMethodDescriptor.getActionName()
-                                         + "' failed validation with error '"
-                                         + result.getMessages() + "'",
-                                 HttpStatus.S_400_BAD_REQUEST.getCode());
-    }
-
     List<Parameter<?>> parameters = resourceMethodDescriptor.getParameters();
-
+    DynamicRecordTemplate template = (DynamicRecordTemplate) requestData.getEntity();
+    DataMap data = template.data();
     Object[] arguments = new Object[parameters.size()];
     int i = 0;
     for (Parameter<?> param : parameters)
@@ -106,9 +80,7 @@ public class ActionArgumentBuilder implements RestLiArgumentBuilder
         else
         {
           throw new RoutingException("Parameter '" + param.getName() + "' of method '"
-                                         + resourceMethodDescriptor.getActionName()
-                                         + "' is required",
-                                     HttpStatus.S_400_BAD_REQUEST.getCode());
+              + resourceMethodDescriptor.getActionName() + "' is required", HttpStatus.S_400_BAD_REQUEST.getCode());
         }
       }
       else
@@ -120,13 +92,38 @@ public class ActionArgumentBuilder implements RestLiArgumentBuilder
         catch (TemplateOutputCastException e)
         {
           throw new RoutingException("Parameter '" + param.getName() + "' of method '"
-              + resourceMethodDescriptor.getActionName() + "' must be of type '"
-              + param.getType().getName() + "'", HttpStatus.S_400_BAD_REQUEST.getCode());
+                                         + resourceMethodDescriptor.getActionName() + "' must be of type '"
+                                         + param.getType().getName() + "'",
+                                     HttpStatus.S_400_BAD_REQUEST.getCode());
         }
       }
-
       arguments[i++] = value;
     }
     return arguments;
+  }
+
+  @Override
+  public RestLiRequestData extractRequestData(RoutingResult routingResult, RestRequest request)
+  {
+    ResourceMethodDescriptor resourceMethodDescriptor = routingResult.getResourceMethod();
+    final DataMap data;
+    if (request.getEntity() == null || request.getEntity().length() == 0)
+    {
+      data = new DataMap();
+    }
+    else
+    {
+      data = DataMapUtils.readMap(request);
+    }
+    DynamicRecordTemplate template = new DynamicRecordTemplate(data, resourceMethodDescriptor.getRequestDataSchema());
+    ValidationResult result =
+        ValidateDataAgainstSchema.validate(data, template.schema(), new ValidationOptions(RequiredMode.IGNORE,
+                                                                                          CoercionMode.NORMAL));
+    if (!result.isValid())
+    {
+      throw new RoutingException("Parameters of method '" + resourceMethodDescriptor.getActionName()
+          + "' failed validation with error '" + result.getMessages() + "'", HttpStatus.S_400_BAD_REQUEST.getCode());
+    }
+    return new RestLiRequestDataImpl.Builder().entity(template).build();
   }
 }

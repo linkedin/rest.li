@@ -27,20 +27,26 @@ import com.linkedin.parseq.promise.PromiseListener;
 import com.linkedin.parseq.promise.Promises;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.internal.server.filter.FilterRequestContextInternal;
 import com.linkedin.restli.internal.server.methods.MethodAdapterRegistry;
 import com.linkedin.restli.internal.server.methods.arguments.RestLiArgumentBuilder;
 import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.model.Parameter.ParamType;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.util.RestUtils;
+import com.linkedin.restli.server.RequestExecutionCallback;
 import com.linkedin.restli.server.RequestExecutionReport;
 import com.linkedin.restli.server.RequestExecutionReportBuilder;
+import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RestLiServiceException;
+import com.linkedin.restli.server.filter.RequestFilter;
 import com.linkedin.restli.server.resources.BaseResource;
 import com.linkedin.restli.server.resources.ResourceFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -55,6 +61,7 @@ public class RestLiMethodInvoker
   private final Engine _engine;
   private final ErrorResponseBuilder _errorResponseBuilder;
   private final MethodAdapterRegistry _methodAdapterRegistry;
+  private final List<RequestFilter> _requestFilters;
 
   /**
    * Constructor.
@@ -76,24 +83,69 @@ public class RestLiMethodInvoker
    */
   public RestLiMethodInvoker(final ResourceFactory resourceFactory, final Engine engine, final ErrorResponseBuilder errorResponseBuilder)
   {
+    this(resourceFactory, engine, errorResponseBuilder, new ArrayList<RequestFilter>());
+  }
+
+  /**
+   * Constructor.
+   *
+   * @param resourceFactory {@link ResourceFactory}
+   * @param engine {@link Engine}
+   * @param errorResponseBuilder {@link ErrorResponseBuilder}
+   * @param requestFilters List of {@link RequestFilter}
+   */
+  public RestLiMethodInvoker(final ResourceFactory resourceFactory, final Engine engine, final ErrorResponseBuilder errorResponseBuilder, final List<RequestFilter> requestFilters)
+  {
+    this(resourceFactory, engine, errorResponseBuilder, new MethodAdapterRegistry(errorResponseBuilder), requestFilters);
+  }
+
+  /**
+   * Constructor.
+   * @param resourceFactory {@link ResourceFactory}
+   * @param engine {@link Engine}
+   * @param errorResponseBuilder {@link ErrorResponseBuilder}
+   * @param methodAdapterRegistry {@link MethodAdapterRegistry}
+   * @param requestFilters List of {@link RequestFilter}
+   */
+  public RestLiMethodInvoker(final ResourceFactory resourceFactory,
+                             final Engine engine,
+                             final ErrorResponseBuilder errorResponseBuilder,
+                             final MethodAdapterRegistry methodAdapterRegistry,
+                             final List<RequestFilter> requestFilters)
+  {
     _resourceFactory = resourceFactory;
     _engine = engine;
     _errorResponseBuilder = errorResponseBuilder;
-    _methodAdapterRegistry = new MethodAdapterRegistry(errorResponseBuilder);
+    _methodAdapterRegistry = methodAdapterRegistry;
+    if (requestFilters != null)
+    {
+      _requestFilters = requestFilters;
+    }
+    else
+    {
+      _requestFilters = new ArrayList<RequestFilter>();
+    }
   }
 
   /**
    * Invokes the method with the specified callback and arguments built from the request.
    *
-   * @param invocableMethod {@link RoutingResult}
-   * @param request {@link RestRequest}
-   * @param callback {@link RestLiCallback}
-   * @param isDebugMode whether the invocation will be done as part of a debug request.
+   * @param invocableMethod
+   *          {@link RoutingResult}
+   * @param request
+   *          {@link RestRequest}
+   * @param callback
+   *          {@link RestLiCallback}
+   * @param isDebugMode
+   *          whether the invocation will be done as part of a debug request.
+   * @param filterContext
+   *          {@link FilterRequestContextInternal}
    */
   public void invoke(final RoutingResult invocableMethod,
                      final RestRequest request,
-                     final RestLiCallback<Object> callback,
-                     final boolean isDebugMode)
+                     final RequestExecutionCallback<Object> callback,
+                     final boolean isDebugMode,
+                     final FilterRequestContextInternal filterContext)
   {
     RequestExecutionReportBuilder requestExecutionReportBuilder = null;
 
@@ -134,8 +186,28 @@ public class RestLiMethodInvoker
           + resourceMethodDescriptor.getType());
     }
 
-    Object[] args = adapter.buildArguments(invocableMethod, request);
+    RestLiRequestData requestData = adapter.extractRequestData(invocableMethod, request);
 
+    // First invoke all request filters.
+    if (!_requestFilters.isEmpty())
+    {
+      try
+      {
+        filterContext.setRequestData(requestData);
+        for (RequestFilter filter : _requestFilters)
+        {
+          filter.onRequest(filterContext);
+        }
+        requestData = filterContext.getRequestData();
+      }
+      catch (Exception e)
+      {
+        callback.onError(e, getRequestExecutionReport(requestExecutionReportBuilder));
+        return;
+      }
+    }
+    Object[] args = adapter.buildArguments(requestData, invocableMethod);
+    // Now invoke the resource implementation.
     try
     {
       doInvoke(resourceMethodDescriptor, callback, requestExecutionReportBuilder, resource, args);
@@ -147,7 +219,7 @@ public class RestLiMethodInvoker
   }
 
   private void doInvoke(final ResourceMethodDescriptor descriptor,
-                        final RestLiCallback<Object> callback,
+                        final RequestExecutionCallback<Object> callback,
                         final RequestExecutionReportBuilder requestExecutionReportBuilder,
                         final Object resource,
                         final Object... arguments) throws IllegalAccessException
@@ -248,7 +320,7 @@ public class RestLiMethodInvoker
     }
   }
 
-  private boolean checkEngine(final RestLiCallback<Object> callback,
+  private boolean checkEngine(final RequestExecutionCallback<Object> callback,
                               final ResourceMethodDescriptor desc,
                               final RequestExecutionReportBuilder executionReportBuilder)
   {
@@ -334,11 +406,11 @@ public class RestLiMethodInvoker
    */
   private static class CallbackPromiseAdapter<T> implements PromiseListener<T>
   {
-    private final RestLiCallback<T> _callback;
+    private final RequestExecutionCallback<T> _callback;
     private final RequestExecutionReportBuilder _executionReportBuilder;
     private final Task<T> _associatedTask;
 
-    public CallbackPromiseAdapter(final RestLiCallback<T> callback,
+    public CallbackPromiseAdapter(final RequestExecutionCallback<T> callback,
                                   final Task<T> associatedTask,
                                   final RequestExecutionReportBuilder executionReportBuilder)
     {

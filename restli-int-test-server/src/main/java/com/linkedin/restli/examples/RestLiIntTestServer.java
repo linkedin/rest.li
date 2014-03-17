@@ -17,15 +17,6 @@
 package com.linkedin.restli.examples;
 
 
-import java.io.IOException;
-import java.net.URI;
-import java.util.Properties;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-
-import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.PropertyConfigurator;
-
 import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.EngineBuilder;
 import com.linkedin.r2.filter.FilterChain;
@@ -44,9 +35,21 @@ import com.linkedin.restli.server.DelegatingTransportDispatcher;
 import com.linkedin.restli.server.ParseqTraceDebugRequestHandler;
 import com.linkedin.restli.server.RestLiConfig;
 import com.linkedin.restli.server.RestLiServer;
+import com.linkedin.restli.server.filter.RequestFilter;
+import com.linkedin.restli.server.filter.ResponseFilter;
 import com.linkedin.restli.server.mock.InjectMockResourceFactory;
 import com.linkedin.restli.server.mock.SimpleBeanProvider;
 import com.linkedin.restli.server.resources.ResourceFactory;
+
+import java.io.IOException;
+import java.net.URI;
+import java.util.List;
+import java.util.Properties;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.PropertyConfigurator;
 
 /**
  * @author dellamag
@@ -91,6 +94,17 @@ public class RestLiIntTestServer
                                         boolean useAsyncServletApi,
                                         int asyncTimeOut)
   {
+    return createServer(engine, port, supportedCompression, useAsyncServletApi, asyncTimeOut, null, null);
+  }
+
+  public static HttpServer createServer(final Engine engine,
+                                        int port,
+                                        String supportedCompression,
+                                        boolean useAsyncServletApi,
+                                        int asyncTimeOut,
+                                        List<? extends RequestFilter> requestFilters,
+                                        List<? extends ResponseFilter> responseFilters)
+  {
     Properties properties = new Properties();
     properties.put("log4j.rootLogger", "INFO");
     PropertyConfigurator.configure(properties);
@@ -102,6 +116,8 @@ public class RestLiIntTestServer
     config.setDocumentationRequestHandler(new DefaultDocumentationRequestHandler());
     config.setRestliProtocolCheck(RestLiConfig.RestliProtocolCheck.RELAXED); // use relaxed checking in all tests
     config.addDebugRequestHandlers(new ParseqTraceDebugRequestHandler());
+    config.setRequestFilters(requestFilters);
+    config.setResponseFilters(responseFilters);
 
     GroupMembershipMgr membershipMgr = new HashGroupMembershipMgr();
     GroupMgr groupMgr = new HashMapGroupMgr(membershipMgr);

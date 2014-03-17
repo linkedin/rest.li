@@ -24,47 +24,66 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.HttpStatus;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * @author Josh Walker
+ * @author nshankar
  * @version $Revision: $
  */
 public class PartialRestResponse
 {
   private final HttpStatus _status;
-  private final DataMap    _data;
+  private final RecordTemplate _record;
+  private final Map<String, String> _headers;
 
   /**
-   * @param record response data. The status is set to 200.
+   * Constructor is made private intentionally. Use builder to construct a new object of
+   * PartialRestResponse.
+   *
+   * @param status
+   *          http response status
+   * @param record
+   *          response data
+   * @param headers
+   *          Response headers.
    */
-  public PartialRestResponse(final RecordTemplate record)
+  private PartialRestResponse(final HttpStatus status, final RecordTemplate record, final Map<String, String> headers)
   {
-    this(HttpStatus.S_200_OK, record);
-  }
-
-  /**
-   * @param status http response status
-   */
-  public PartialRestResponse(final HttpStatus status)
-  {
-    this(status, null);
-  }
-
-  /**
-   * @param status http response status
-   * @param record response data
-   */
-  public PartialRestResponse(final HttpStatus status, final RecordTemplate record)
-  {
-    if (record != null)
+    _record = record;
+    _status = status;
+    if (headers != null)
     {
-      _data = record.data();
+      _headers = new HashMap<String, String>(headers);
     }
     else
     {
-      _data = null;
+      _headers = new HashMap<String, String>();
     }
+  }
 
-    _status = status;
+  /**
+   * Obtain a mutable reference to the response headers.
+   *
+   * @return Reference to response header map.
+   */
+  public Map<String, String> getHeaders()
+  {
+    return _headers;
+  }
+
+  /**
+   * Get value of a specific header.
+   *
+   * @param headerName
+   *          Name of the header for which value is requested.
+   * @return Value corresponding to the given header name. Null if no value is defined for the given
+   *         header name.
+   */
+  public String getHeader(String headerName)
+  {
+    return _headers.get(headerName);
   }
 
   /**
@@ -72,16 +91,93 @@ public class PartialRestResponse
    */
   public boolean hasData()
   {
-    return _data != null;
+    return _record != null && _record.data() != null;
   }
 
+  /**
+   * Obtain a reference to the underlying {@link DataMap} corresponding to the entity.
+   *
+   * @return Reference to the {@link DataMap} corresponding to the entity is entity is not null;
+   *         else null.
+   */
   public DataMap getDataMap()
   {
-    return _data;
+    return _record == null ? null : _record.data();
   }
 
+  /**
+   * Obtain the {@link HttpStatus}.
+   *
+   * @return {@link HttpStatus}.
+   */
   public HttpStatus getStatus()
   {
     return _status;
+  }
+
+  /**
+   * Obtain the record template.
+   *
+   * @return record template.
+   */
+  public RecordTemplate getEntity()
+  {
+    return _record;
+  }
+
+  public static class Builder
+  {
+    private HttpStatus _status = HttpStatus.S_200_OK;
+    private RecordTemplate _record;
+    private Map<String, String> _headers;
+
+    /**
+     * Build with status.
+     *
+     * @param status
+     *          HttpStatus
+     * @return Reference to this object.
+     */
+    public Builder status(HttpStatus status)
+    {
+      _status = status;
+      return this;
+    }
+
+    /**
+     * Build with entity.
+     *
+     * @param entity
+     *          Entity in the form of a {@link RecordTemplate}/
+     * @return Reference to this object.
+     */
+    public Builder entity(RecordTemplate record)
+    {
+      _record = record;
+      return this;
+    }
+
+    /**
+     * Build with header map.
+     *
+     * @param headers
+     *          Response headers in the form of a Map.
+     * @return Reference to this object.
+     */
+    public Builder headers(Map<String, String> headers)
+    {
+      _headers = headers;
+      return this;
+    }
+
+    /**
+     * Construct a {@link PartialRestResponse} based on the builder configuration.
+     *
+     * @return reference to the newly minted {@link PartialRestResponse} object.
+     */
+    public PartialRestResponse build()
+    {
+      return new PartialRestResponse(_status, _record, _headers);
+    }
   }
 }

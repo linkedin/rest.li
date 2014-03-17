@@ -57,6 +57,6 @@ public class CreateResponseBuilder implements RestLiResponseBuilder
                                                            .toString());
     }
 
-    return new PartialRestResponse(createResponse.getStatus());
+    return new PartialRestResponse.Builder().headers(headers).status(createResponse.getStatus()).build();
   }
 }

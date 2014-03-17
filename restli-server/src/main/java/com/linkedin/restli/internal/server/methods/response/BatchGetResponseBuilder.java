@@ -16,10 +16,6 @@
 
 package com.linkedin.restli.internal.server.methods.response;
 
-import java.io.IOException;
-import java.util.Collections;
-import java.util.Map;
-
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -31,6 +27,10 @@ import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.BatchResult;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiServiceException;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
 
 public class BatchGetResponseBuilder extends AbstractBatchResponseBuilder<RecordTemplate> implements
     RestLiResponseBuilder
@@ -84,7 +84,7 @@ public class BatchGetResponseBuilder extends AbstractBatchResponseBuilder<Record
                    headers,
                    batchResponse);
 
-    return new PartialRestResponse(batchResponse);
+    return new PartialRestResponse.Builder().entity(batchResponse).headers(headers).build();
   }
 
   @Override

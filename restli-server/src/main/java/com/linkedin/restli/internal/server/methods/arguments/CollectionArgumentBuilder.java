@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-*/
+ */
 
 /**
  * $Id: $
@@ -22,19 +22,26 @@ package com.linkedin.restli.internal.server.methods.arguments;
 
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.internal.server.RoutingResult;
+import com.linkedin.restli.server.RestLiRequestData;
+import com.linkedin.restli.server.RestLiRequestDataImpl;
 
 /**
-* @author Josh Walker
-* @version $Revision: $
-*/
+ * @author Josh Walker
+ * @version $Revision: $
+ */
 public class CollectionArgumentBuilder implements RestLiArgumentBuilder
 {
   @Override
-  public Object[] buildArguments(final RoutingResult routingResult,
-                                 final RestRequest request)
+  public Object[] buildArguments(RestLiRequestData requestData, RoutingResult routingResult)
   {
     return ArgumentBuilder.buildArgs(new Object[0],
                                      routingResult.getResourceMethod().getParameters(),
                                      routingResult.getContext());
+  }
+
+  @Override
+  public RestLiRequestData extractRequestData(RoutingResult routingResult, RestRequest request)
+  {
+    return new RestLiRequestDataImpl.Builder().build();
   }
 }

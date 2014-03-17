@@ -20,9 +20,6 @@
 
 package com.linkedin.restli.internal.server.methods.response;
 
-import java.io.IOException;
-import java.util.Map;
-
 import com.linkedin.data.DataMap;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.BatchResponse;
@@ -32,6 +29,9 @@ import com.linkedin.restli.server.BatchUpdateResult;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
+
+import java.io.IOException;
+import java.util.Map;
 
 /**
  * @author Josh Walker
@@ -77,7 +77,7 @@ public final class BatchUpdateResponseBuilder extends
                     routingResult.getContext());
 
 
-    return new PartialRestResponse(batchResponse);
+    return new PartialRestResponse.Builder().headers(headers).entity(batchResponse).build();
   }
 
   @Override

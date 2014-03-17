@@ -16,9 +16,6 @@
 
 package com.linkedin.restli.internal.server.methods.response;
 
-import java.io.IOException;
-import java.util.Map;
-
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.FieldDef;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -27,6 +24,9 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.server.ActionResult;
+
+import java.io.IOException;
+import java.util.Map;
 
 public class ActionResponseBuilder implements RestLiResponseBuilder
 {
@@ -57,6 +57,6 @@ public class ActionResponseBuilder implements RestLiResponseBuilder
     FieldDef<Object> actionReturnFieldDef = (FieldDef<Object>)routingResult.getResourceMethod().getActionReturnFieldDef();
     final ActionResponse<?> actionResponse = new ActionResponse<Object>(value, actionReturnFieldDef, actionReturnRecordDataSchema);
 
-    return new PartialRestResponse(status, actionResponse);
+    return new PartialRestResponse.Builder().status(status).entity(actionResponse).headers(headers).build();
   }
 }

@@ -20,8 +20,15 @@
 
 package com.linkedin.restli.examples;
 
+import com.linkedin.parseq.Engine;
+import com.linkedin.parseq.EngineBuilder;
+import com.linkedin.r2.transport.http.server.HttpServer;
+import com.linkedin.restli.server.filter.RequestFilter;
+import com.linkedin.restli.server.filter.ResponseFilter;
+
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -29,10 +36,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.spi.LoggerRepository;
-
-import com.linkedin.parseq.Engine;
-import com.linkedin.parseq.EngineBuilder;
-import com.linkedin.r2.transport.http.server.HttpServer;
 
 /**
  * @author Josh Walker
@@ -49,6 +52,7 @@ public class RestLiIntegrationTest
   private Engine                   _engine;
   private HttpServer               _server;
   private HttpServer               _serverWithoutCompression;
+  private HttpServer               _serverWithFilters;
   private final Map<String, Level> _originalLevels     = new HashMap<String, Level>();
 
   // By default start a single synchronous server with compression.
@@ -98,6 +102,25 @@ public class RestLiIntegrationTest
     }
   }
 
+
+  public void init(List<? extends RequestFilter> requestFilters, List<? extends ResponseFilter> responseFilters) throws IOException
+  {
+    int asyncTimeout = 5000;
+    _scheduler = Executors.newScheduledThreadPool(numCores + 1);
+    _engine = new EngineBuilder().setTaskExecutor(_scheduler).setTimerScheduler(_scheduler).build();
+    reduceLogging(NETTY_CLIENT_LOGGER, Level.ERROR);
+    reduceLogging(ASYNC_POOL_LOGGER, Level.FATAL);
+    _serverWithFilters =
+        RestLiIntTestServer.createServer(_engine,
+                                         RestLiIntTestServer.DEFAULT_PORT,
+                                         RestLiIntTestServer.supportedCompression,
+                                         false,
+                                         asyncTimeout,
+                                         requestFilters,
+                                         responseFilters);
+    _serverWithFilters.start();
+  }
+
   private void reduceLogging(String logName, Level newLevel)
   {
     LoggerRepository repo = Logger.getLogger(logName).getLoggerRepository();
@@ -122,8 +145,18 @@ public class RestLiIntegrationTest
     {
       _serverWithoutCompression.stop();
     }
-    _engine.shutdown();
-    _scheduler.shutdownNow();
+    if (_serverWithFilters != null)
+    {
+      _serverWithFilters.stop();
+    }
+    if (_engine != null)
+    {
+      _engine.shutdown();
+    }
+    if (_scheduler != null)
+    {
+      _scheduler.shutdownNow();
+    }
 
     restoreLogging(NETTY_CLIENT_LOGGER);
     restoreLogging(ASYNC_POOL_LOGGER);

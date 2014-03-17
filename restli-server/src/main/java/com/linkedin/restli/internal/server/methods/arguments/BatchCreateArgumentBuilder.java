@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-*/
+ */
 
 /**
  * $Id: $
@@ -28,31 +28,34 @@ import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.server.BatchCreateRequest;
+import com.linkedin.restli.server.RestLiRequestData;
+import com.linkedin.restli.server.RestLiRequestDataImpl;
 
 /**
  * @author Josh Walker
  * @version $Revision: $
  */
 
-public class BatchCreateArgumentBuilder
-          implements RestLiArgumentBuilder
+public class BatchCreateArgumentBuilder implements RestLiArgumentBuilder
 {
   @Override
-  public Object[] buildArguments(final RoutingResult routingResult,
-                                 final RestRequest request)
+  public Object[] buildArguments(RestLiRequestData requestData, RoutingResult routingResult)
   {
-    Class<? extends RecordTemplate> valueClass =
-        ArgumentUtils.getValueClass(routingResult);
-    DataMap dataMap = DataMapUtils.readMap(request);
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    CollectionRequest collectionRequest = new CollectionRequest(dataMap, valueClass);
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    BatchCreateRequest batchRequest =
-        new BatchCreateRequest(collectionRequest.getElements());
-
+    BatchCreateRequest batchRequest = new BatchCreateRequest(requestData.getBatchEntities());
     Object[] positionalArguments = { batchRequest };
     return ArgumentBuilder.buildArgs(positionalArguments,
                                      routingResult.getResourceMethod().getParameters(),
                                      routingResult.getContext());
+  }
+
+  @Override
+  public RestLiRequestData extractRequestData(RoutingResult routingResult, RestRequest request)
+  {
+    Class<? extends RecordTemplate> valueClass = ArgumentUtils.getValueClass(routingResult);
+    DataMap dataMap = DataMapUtils.readMap(request);
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    CollectionRequest<RecordTemplate> collectionRequest = new CollectionRequest(dataMap, valueClass);
+    return new RestLiRequestDataImpl.Builder().batchEntities(collectionRequest.getElements()).build();
   }
 }

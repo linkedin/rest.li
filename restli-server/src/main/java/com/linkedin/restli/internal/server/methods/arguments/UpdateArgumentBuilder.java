@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-*/
+ */
 
 /**
  * $Id: $
@@ -20,37 +20,48 @@
 
 package com.linkedin.restli.internal.server.methods.arguments;
 
+
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
+import com.linkedin.restli.server.RestLiRequestData;
+import com.linkedin.restli.server.RestLiRequestDataImpl;
+
 
 /**
-* @author Josh Walker
-* @version $Revision: $
-*/
+ * @author Josh Walker
+ * @version $Revision: $
+ */
 public class UpdateArgumentBuilder implements RestLiArgumentBuilder
 {
   @Override
-  public Object[] buildArguments(final RoutingResult routingResult,
-                                 final RestRequest request)
+  public Object[] buildArguments(RestLiRequestData requestData, RoutingResult routingResult)
   {
-    Object[] positionalArgs;
-    RecordTemplate record = ArgumentBuilder.extractEntity(request,
-                                                        ArgumentUtils.getValueClass(routingResult));
-
-    if (ArgumentUtils.hasResourceKey(routingResult))
+    final Object[] positionalArgs;
+    if (requestData.hasKey())
     {
-      Object keyValue = ArgumentUtils.getResourceKey(routingResult);
-      positionalArgs = new Object[] { keyValue, record };
+      positionalArgs = new Object[] { requestData.getKey(), requestData.getEntity() };
     }
     else
     {
-      positionalArgs = new Object[] { record };
+      positionalArgs = new Object[] { requestData.getEntity() };
     }
-
     return ArgumentBuilder.buildArgs(positionalArgs,
                                      routingResult.getResourceMethod().getParameters(),
                                      routingResult.getContext());
+  }
+
+  @Override
+  public RestLiRequestData extractRequestData(RoutingResult routingResult, RestRequest request)
+  {
+    RecordTemplate record = ArgumentBuilder.extractEntity(request, ArgumentUtils.getValueClass(routingResult));
+    RestLiRequestDataImpl.Builder builder = new RestLiRequestDataImpl.Builder().entity(record);
+    if (ArgumentUtils.hasResourceKey(routingResult))
+    {
+      Object keyValue = ArgumentUtils.getResourceKey(routingResult);
+      builder.key(keyValue);
+    }
+    return builder.build();
   }
 }

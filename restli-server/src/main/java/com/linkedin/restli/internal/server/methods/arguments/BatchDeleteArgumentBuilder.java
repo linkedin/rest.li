@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-*/
+ */
 
 /**
  * $Id: $
@@ -20,11 +20,14 @@
 
 package com.linkedin.restli.internal.server.methods.arguments;
 
-import java.util.Set;
-
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.server.BatchDeleteRequest;
+import com.linkedin.restli.server.RestLiRequestData;
+import com.linkedin.restli.server.RestLiRequestDataImpl;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Josh Walker
@@ -34,15 +37,20 @@ import com.linkedin.restli.server.BatchDeleteRequest;
 public class BatchDeleteArgumentBuilder implements RestLiArgumentBuilder
 {
   @Override
-  public Object[] buildArguments(final RoutingResult routingResult,
-                                 final RestRequest request)
+  public Object[] buildArguments(RestLiRequestData requestData, RoutingResult routingResult)
   {
-    Set<?> ids = routingResult.getContext().getPathKeys().getBatchKeys();
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    BatchDeleteRequest batchRequest = new BatchDeleteRequest(ids);
-    Object[] positionalArgs =  { batchRequest };
+    BatchDeleteRequest batchRequest = new BatchDeleteRequest(new HashSet(requestData.getBatchKeys()));
+    Object[] positionalArgs = { batchRequest };
     return ArgumentBuilder.buildArgs(positionalArgs,
                                      routingResult.getResourceMethod().getParameters(),
                                      routingResult.getContext());
+  }
+
+  @Override
+  public RestLiRequestData extractRequestData(RoutingResult routingResult, RestRequest request)
+  {
+    Set<?> ids = routingResult.getContext().getPathKeys().getBatchKeys();
+    return new RestLiRequestDataImpl.Builder().batchKeys(ids).build();
   }
 }

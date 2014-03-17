@@ -20,10 +20,13 @@
 
 package com.linkedin.restli.internal.server.methods.arguments;
 
-import java.util.Set;
-
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.internal.server.RoutingResult;
+import com.linkedin.restli.server.RestLiRequestData;
+import com.linkedin.restli.server.RestLiRequestDataImpl;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Josh Walker
@@ -32,14 +35,18 @@ import com.linkedin.restli.internal.server.RoutingResult;
 public class BatchGetArgumentBuilder implements RestLiArgumentBuilder
 {
   @Override
-  public Object[] buildArguments(final RoutingResult routingResult,
-                                 final RestRequest request)
+  public Object[] buildArguments(RestLiRequestData requestData, RoutingResult routingResult)
   {
-    Set<?> ids = routingResult.getContext().getPathKeys().getBatchKeys();
-
-    Object[] positionalArgs = { ids };
+    Object[] positionalArgs = { new HashSet<Object>(requestData.getBatchKeys()) };
     return ArgumentBuilder.buildArgs(positionalArgs,
                                      routingResult.getResourceMethod().getParameters(),
                                      routingResult.getContext());
+  }
+
+  @Override
+  public RestLiRequestData extractRequestData(RoutingResult routingResult, RestRequest request)
+  {
+    Set<?> ids = routingResult.getContext().getPathKeys().getBatchKeys();
+    return new RestLiRequestDataImpl.Builder().batchKeys(ids).build();
   }
 }

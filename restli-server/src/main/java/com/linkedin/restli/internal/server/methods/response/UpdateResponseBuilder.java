@@ -16,12 +16,12 @@
 
 package com.linkedin.restli.internal.server.methods.response;
 
-import java.io.IOException;
-import java.util.Map;
-
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.server.UpdateResponse;
+
+import java.io.IOException;
+import java.util.Map;
 
 public class UpdateResponseBuilder implements RestLiResponseBuilder
 {
@@ -33,6 +33,6 @@ public class UpdateResponseBuilder implements RestLiResponseBuilder
       throws IOException
   {
     UpdateResponse updateResponse = (UpdateResponse)object;
-    return new PartialRestResponse(updateResponse.getStatus());
+    return new PartialRestResponse.Builder().headers(headers).status(updateResponse.getStatus()).build();
   }
 }

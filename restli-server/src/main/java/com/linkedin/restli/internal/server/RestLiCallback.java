@@ -12,48 +12,60 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-*/
-
+ */
 package com.linkedin.restli.internal.server;
 
-
-import com.linkedin.data.DataMap;
+import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.server.methods.response.PartialRestResponse;
-import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.server.RequestExecutionCallback;
 import com.linkedin.restli.server.RequestExecutionReport;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.RoutingException;
+import com.linkedin.restli.server.filter.FilterRequestContext;
+import com.linkedin.restli.server.filter.FilterResponseContext;
+import com.linkedin.restli.server.filter.ResponseFilter;
 
-import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-
 
 public class RestLiCallback<T> implements RequestExecutionCallback<T>
 {
-  private final RoutingResult          _method;
-  private final RestLiResponseHandler  _responseHandler;
+  private final RoutingResult _method;
+  private final RestLiResponseHandler _responseHandler;
   private final RequestExecutionCallback<RestResponse> _callback;
-  private final RestRequest            _request;
+  private final RestRequest _request;
+  private final List<ResponseFilter> _responseFilters;
+  private final FilterRequestContext _filterRequestContext;
 
   public RestLiCallback(final RestRequest request,
                         final RoutingResult method,
                         final RestLiResponseHandler responseHandler,
-                        final RequestExecutionCallback<RestResponse> callback)
+                        final RequestExecutionCallback<RestResponse> callback,
+                        final List<ResponseFilter> responseFilters,
+                        final FilterRequestContext filterRequestContext)
   {
     _request = request;
     _method = method;
     _responseHandler = responseHandler;
     _callback = callback;
+    if (responseFilters != null)
+    {
+      _responseFilters = responseFilters;
+    }
+    else
+    {
+      _responseFilters = new ArrayList<ResponseFilter>();
+    }
+    _filterRequestContext = filterRequestContext;
   }
 
   @Override
@@ -61,29 +73,97 @@ public class RestLiCallback<T> implements RequestExecutionCallback<T>
   {
     try
     {
-      RestResponse response = _responseHandler.buildResponse(_request, _method, result);
-      _callback.onSuccess(response, executionReport);
+      // Convert the result to a partial rest response.
+      PartialRestResponse response = _responseHandler.buildPartialResponse(_request, _method, result);
+      Exception exceptionFromFilters = null;
+      // Invoke the response filters.
+      if (_responseFilters != null && !_responseFilters.isEmpty())
+      {
+        // Construct the filter response context from the partial response.
+        FilterResponseContext responseContext = new FilterResponseContextAdapter(response);
+        // Now invoke ResponseFilters.
+        try
+        {
+          invokeResponseFilters(responseContext);
+        }
+        catch (Exception e)
+        {
+          // Save the exception thrown from the filter.
+          exceptionFromFilters = e;
+        }
+        // Build the updated partial response with data that was returned from
+        // invoking all the filters.
+        response =
+            new PartialRestResponse.Builder().entity(responseContext.getResponseEntity())
+                                             .status(responseContext.getHttpStatus())
+                                             .headers(responseContext.getResponseHeaders())
+                                             .build();
+        if (exceptionFromFilters != null)
+        {
+          // Convert the caught exception to a rest exception and invoke the callback.
+          _callback.onError(_responseHandler.buildRestException(exceptionFromFilters, response), executionReport);
+          return;
+        }
+      }
+      // Invoke the callback.
+      _callback.onSuccess(_responseHandler.buildResponse(_method, response), executionReport);
     }
     catch (Exception e)
     {
-      // safe to assume it is a post processing error.
-      onError(e, executionReport);
+      // Convert the caught exception to a rest exception and invoke the callback.
+      _callback.onError(toRestException(e), executionReport);
     }
   }
 
   @Override
   public void onError(final Throwable e, RequestExecutionReport executionReport)
   {
-    RestLiServiceException restLiServiceException;
-    Map<String, String> headers = new HashMap<String, String>();
-
     if (e instanceof RestException)
     {
       // assuming we don't need to do anything...
+      // NOTE: If we receive a rest exception, the exception is handed off to the underlying
+      // callback without invoking any of the response filters!
       _callback.onError(e, executionReport);
       return;
     }
-    else if (e instanceof RestLiServiceException)
+    Throwable exception = e;
+    PartialRestResponse partialResponse = convertExceptionToPartialResponse(exception);
+    // Invoke the response filters.
+    if (_responseFilters != null && !_responseFilters.isEmpty())
+    {
+      // Construct the filter response context from the partial response.
+      FilterResponseContext responseContext = new FilterResponseContextAdapter(partialResponse);
+      try
+      {
+        // Invoke response filters.
+        invokeResponseFilters(responseContext);
+      }
+      catch (RuntimeException ex)
+      {
+        // Update the exception that we are processing to the one thrown by the filter.
+        exception = ex;
+      }
+      // Build the updated partial response with data that was returned from
+      // invoking all the filters.
+      partialResponse =
+          new PartialRestResponse.Builder().entity(responseContext.getResponseEntity())
+                                           .status(responseContext.getHttpStatus())
+                                           .headers(responseContext.getResponseHeaders())
+                                           .build();
+    }
+    // Invoke the callback.
+    _callback.onError(_responseHandler.buildRestException(exception, partialResponse), executionReport);
+  }
+
+  private RestException toRestException(final Throwable e)
+  {
+    return _responseHandler.buildRestException(e, convertExceptionToPartialResponse(e));
+  }
+
+  private PartialRestResponse convertExceptionToPartialResponse(Throwable e)
+  {
+    RestLiServiceException restLiServiceException;
+    if (e instanceof RestLiServiceException)
     {
       restLiServiceException = (RestLiServiceException) e;
     }
@@ -98,28 +178,96 @@ public class RestLiCallback<T> implements RequestExecutionCallback<T>
     }
     else
     {
-      restLiServiceException =
-          new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
-                                     e.getMessage(),
-                                     e);
+      restLiServiceException = new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, e.getMessage(), e);
     }
-    headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, ProtocolVersionUtil.extractProtocolVersion(_request.getHeaders()).toString());
-    PartialRestResponse partialResponse =
-        _responseHandler.buildErrorResponse(null, null, restLiServiceException, headers);
-    headers.put(HeaderUtil.getErrorResponseHeaderName(_request.getHeaders()),
-                RestConstants.HEADER_VALUE_ERROR);
-    RestResponseBuilder builder = new RestResponseBuilder().setHeaders(headers)
-            .setStatus(partialResponse.getStatus().getCode());
-    if (partialResponse.hasData())
+    Map<String, String> headers = new HashMap<String, String>();
+    headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION,
+                ProtocolVersionUtil.extractProtocolVersion(_request.getHeaders()).toString());
+    headers.put(HeaderUtil.getErrorResponseHeaderName(_request.getHeaders()), RestConstants.HEADER_VALUE_ERROR);
+    return _responseHandler.buildErrorResponse(null, null, restLiServiceException, headers);
+  }
+
+  private void invokeResponseFilters(final FilterResponseContext responseContext)
+  {
+    // Reference to the last exception thrown from the filter chain.
+    RuntimeException lastException = null;
+    for (ResponseFilter filter : _responseFilters)
     {
-      DataMap dataMap = partialResponse.getDataMap();
-      ByteArrayOutputStream baos = new ByteArrayOutputStream(4096);
-      DataMapUtils.write(dataMap, null, baos, true); //partialResponse.getSchema()
-      builder.setEntity(baos.toByteArray());
+      try
+      {
+        filter.onResponse(_filterRequestContext, responseContext);
+        // This filter has successfully handled the exception that was thrown earlier by the
+        // previous filter, if any. Therefore, clear the last exception.
+        lastException = null;
+      }
+      catch (RuntimeException ex)
+      {
+        // Save the latest exception that's thrown from the filter.
+        lastException = ex;
+        PartialRestResponse partial = convertExceptionToPartialResponse(ex);
+        // Update the response context with info regarding the exception that we just caught.
+        responseContext.setHttpStatus(partial.getStatus());
+        responseContext.setResponseEntity(partial.getEntity());
+        if (partial.getHeaders() != null)
+        {
+          responseContext.getResponseHeaders().clear();
+          responseContext.getResponseHeaders().putAll(partial.getHeaders());
+        }
+      }
     }
-    RestResponse restResponse = builder.build();
-    // TODO: pass message?  I'm not sure what's happened to it after all this.
-    RestException restException = new RestException(restResponse, e);
-    _callback.onError(restException, executionReport);
+    // If an exception was thrown by the last filter in the filter chain, rethrow it.
+    if (lastException != null)
+    {
+      throw lastException;
+    }
+  }
+
+  /* Package private for testing purposes */
+  static class FilterResponseContextAdapter implements FilterResponseContext
+  {
+    private RecordTemplate _entity;
+    private HttpStatus _status;
+    private final Map<String, String> _headers;
+
+    public FilterResponseContextAdapter(final PartialRestResponse response)
+    {
+      _entity = response.getEntity();
+      _status = response.getStatus();
+      _headers = new HashMap<String, String>();
+      if (response.getHeaders() != null)
+      {
+        _headers.putAll(response.getHeaders());
+      }
+    }
+
+    @Override
+    public void setResponseEntity(RecordTemplate entity)
+    {
+      _entity = entity;
+    }
+
+    @Override
+    public void setHttpStatus(HttpStatus status)
+    {
+      _status = status;
+    }
+
+    @Override
+    public Map<String, String> getResponseHeaders()
+    {
+      return _headers;
+    }
+
+    @Override
+    public RecordTemplate getResponseEntity()
+    {
+      return _entity;
+    }
+
+    @Override
+    public HttpStatus getHttpStatus()
+    {
+      return _status;
+    }
   }
 }

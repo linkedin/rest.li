@@ -31,6 +31,7 @@ import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.server.BatchCreateResult;
 import com.linkedin.restli.server.CreateResponse;
+
 import java.io.IOException;
 import java.util.Map;
 
@@ -49,7 +50,6 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
                                            final Object object,
                                            final Map<String, String> headers) throws IOException
   {
-    @SuppressWarnings({ "unchecked" })
     /** constrained by the signature of {@link CollectionResource#batchCreate} */
     BatchCreateResult<?, ?> list = (BatchCreateResult<?, ?>) object;
 
@@ -72,6 +72,6 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
       batchResponse.getElements().add(s);
     }
 
-    return new PartialRestResponse(batchResponse);
+    return new PartialRestResponse.Builder().entity(batchResponse).headers(headers).build();
   }
 }

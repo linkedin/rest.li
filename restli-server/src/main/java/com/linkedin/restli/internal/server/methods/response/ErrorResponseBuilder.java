@@ -82,7 +82,7 @@ public final class ErrorResponseBuilder implements RestLiResponseBuilder
       final ProtocolVersion protocolVersion = ProtocolVersionUtil.extractProtocolVersion(headers);
       headers.put(HeaderUtil.getErrorResponseHeaderName(protocolVersion), RestConstants.HEADER_VALUE_ERROR);
     }
-    return new PartialRestResponse(result.getStatus(), er);
+    return new PartialRestResponse.Builder().headers(headers).status(result.getStatus()).entity(er).build();
   }
 
   public ErrorResponse buildErrorResponse(RestLiServiceException result)

@@ -16,10 +16,6 @@
 
 package com.linkedin.restli.internal.server.methods.response;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.collections.CheckedUtil;
@@ -33,6 +29,10 @@ import com.linkedin.restli.internal.server.methods.AnyRecord;
 import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.CollectionResult.PageIncrement;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 public class CollectionResponseBuilder implements RestLiResponseBuilder
 {
@@ -114,7 +114,7 @@ public class CollectionResponseBuilder implements RestLiResponseBuilder
       collectionResponse.setMetadataRaw(customMetadata.data());
     }
 
-    return new PartialRestResponse(collectionResponse);
+    return new PartialRestResponse.Builder().headers(headers).entity(collectionResponse).build();
   }
 
 

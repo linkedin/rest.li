@@ -34,7 +34,6 @@ import com.linkedin.restli.server.resources.BaseResource;
 import com.linkedin.restli.server.resources.KeyValueResource;
 import com.linkedin.restli.server.resources.ResourceContextHolder;
 
-import javax.annotation.Generated;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.lang.annotation.Annotation;
@@ -52,6 +51,8 @@ import java.util.TreeSet;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import javax.annotation.Generated;
 
 /**
  * Generate concrete implementations of the greetings resource, {@link GreetingsResourceImpl}, with

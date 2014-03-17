@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2012 LinkedIn Corp.
+   Copyright (c) 2014 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -14,18 +14,20 @@
    limitations under the License.
  */
 
-package com.linkedin.restli.examples;
+package com.linkedin.restli.server.filter;
 
-
-import com.linkedin.restli.client.ProtocolVersionOption;
-import com.linkedin.restli.client.RestliRequestOptions;
-import com.linkedin.restli.client.RestliRequestOptionsBuilder;
-
-
-public interface TestConstants
+/**
+ * A filter that processes incoming requests to RestLi resources.
+ *
+ * @author nshankar
+ */
+public interface RequestFilter
 {
-  String TESTNG_GROUP_NOT_IMPLEMENTED = "not_implemented";
-
-  static final RestliRequestOptions FORCE_USE_NEXT_OPTIONS =
-      new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.FORCE_USE_NEXT).build();
+  /**
+   * Request filter method to be invoked before the execution of the resource.
+   *
+   * @param requestContext
+   *          Reference to {@link FilterRequestContext}.
+   */
+  void onRequest(final FilterRequestContext requestContext);
 }

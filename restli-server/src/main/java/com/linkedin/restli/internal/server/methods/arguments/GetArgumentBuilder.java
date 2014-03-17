@@ -23,6 +23,8 @@ package com.linkedin.restli.internal.server.methods.arguments;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
+import com.linkedin.restli.server.RestLiRequestData;
+import com.linkedin.restli.server.RestLiRequestDataImpl;
 
 /**
  * @author Josh Walker
@@ -31,24 +33,35 @@ import com.linkedin.restli.internal.server.util.ArgumentUtils;
 public class GetArgumentBuilder implements RestLiArgumentBuilder
 {
   @Override
-  public Object[] buildArguments(final RoutingResult routingResult,
-                                 final RestRequest request)
+  public Object[] buildArguments(final RestLiRequestData requestData, final RoutingResult routingResult)
   {
-    Object[] positionalArgs;
-
-    if (ArgumentUtils.hasResourceKey(routingResult))
+    final Object[] positionalArgs;
+    if (requestData.hasKey())
     {
-      Object keyValue = ArgumentUtils.getResourceKey(routingResult);
-      positionalArgs = new Object[] { keyValue };
+      positionalArgs = new Object[] { requestData.getKey() };
     }
     else
     {
-      positionalArgs = new Object[] { };
+      positionalArgs = new Object[] {};
     }
-
     return ArgumentBuilder.buildArgs(positionalArgs,
                                      routingResult.getResourceMethod().getParameters(),
                                      routingResult.getContext());
   }
 
+  @Override
+  public RestLiRequestData extractRequestData(RoutingResult routingResult, RestRequest request)
+  {
+    final RestLiRequestData reqData;
+    if (ArgumentUtils.hasResourceKey(routingResult))
+    {
+      Object keyValue = ArgumentUtils.getResourceKey(routingResult);
+      reqData = new RestLiRequestDataImpl.Builder().key(keyValue).build();
+    }
+    else
+    {
+      reqData = new RestLiRequestDataImpl.Builder().build();
+    }
+    return reqData;
+  }
 }

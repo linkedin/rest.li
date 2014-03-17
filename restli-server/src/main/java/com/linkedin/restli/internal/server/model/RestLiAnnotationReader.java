@@ -38,11 +38,11 @@ import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.common.ReflectionUtils;
 import com.linkedin.restli.internal.common.TyperefUtils;
 import com.linkedin.restli.internal.server.PathKeysImpl;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor.InterfaceType;
-import com.linkedin.restli.internal.common.ReflectionUtils;
 import com.linkedin.restli.server.ActionResult;
 import com.linkedin.restli.server.BatchCreateRequest;
 import com.linkedin.restli.server.BatchDeleteRequest;
@@ -78,11 +78,9 @@ import com.linkedin.restli.server.resources.ComplexKeyResource;
 import com.linkedin.restli.server.resources.ComplexKeyResourceAsync;
 import com.linkedin.restli.server.resources.KeyValueResource;
 import com.linkedin.restli.server.resources.SingleObjectResource;
-import java.lang.reflect.AccessibleObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
@@ -96,6 +94,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *

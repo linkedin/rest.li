@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-*/
+ */
 
 /**
  * $Id: $
@@ -20,45 +20,52 @@
 
 package com.linkedin.restli.internal.server.methods.arguments;
 
-import java.util.Map;
-import java.util.Set;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.rest.RestRequest;
-import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.server.BatchUpdateRequest;
+import com.linkedin.restli.server.RestLiRequestData;
+import com.linkedin.restli.server.RestLiRequestDataImpl;
+
+import java.util.Map;
+import java.util.Set;
+
 
 /**
  * @author Josh Walker
  * @version $Revision: $
  */
-
 public class BatchUpdateArgumentBuilder implements RestLiArgumentBuilder
 {
   @Override
-  public Object[] buildArguments(final RoutingResult routingResult,
-                                 final RestRequest request)
+  public Object[] buildArguments(RestLiRequestData requestData, RoutingResult routingResult)
   {
-    Class<? extends RecordTemplate> valueClass =
-        ArgumentUtils.getValueClass(routingResult);
-
-    DataMap dataMap = DataMapUtils.readMap(request);
-    Set<?> ids = routingResult.getContext().getPathKeys().getBatchKeys();
-    @SuppressWarnings({"rawtypes"})
-    Map inputMap = ArgumentBuilder.buildBatchRequestMap(dataMap,
-                                                        valueClass,
-                                                        ids,
-                                                        ProtocolVersionUtil.extractProtocolVersion(request.getHeaders()));
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    BatchUpdateRequest batchRequest = new BatchUpdateRequest(inputMap);
+    BatchUpdateRequest batchRequest = new BatchUpdateRequest(requestData.getBatchKeyEntityMap());
     Object[] positionalArgs = { batchRequest };
     return ArgumentBuilder.buildArgs(positionalArgs,
                                      routingResult.getResourceMethod().getParameters(),
                                      routingResult.getContext());
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public RestLiRequestData extractRequestData(RoutingResult routingResult, RestRequest request)
+  {
+    Class<? extends RecordTemplate> valueClass = ArgumentUtils.getValueClass(routingResult);
+    DataMap dataMap = DataMapUtils.readMap(request);
+    Set<?> ids = routingResult.getContext().getPathKeys().getBatchKeys();
+    @SuppressWarnings({ "rawtypes" })
+    Map inputMap =
+        ArgumentBuilder.buildBatchRequestMap(dataMap,
+                                             valueClass,
+                                             ids,
+                                             ProtocolVersionUtil.extractProtocolVersion(request.getHeaders()));
+    return new RestLiRequestDataImpl.Builder().batchKeyEntityMap(inputMap).build();
   }
 }

@@ -18,6 +18,8 @@ package com.linkedin.restli.server;
 
 
 import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
+import com.linkedin.restli.server.filter.RequestFilter;
+import com.linkedin.restli.server.filter.ResponseFilter;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -63,6 +65,8 @@ public class RestLiConfig
   private boolean _permissiveEncoding = false;
   private RestliProtocolCheck _restliProtocolCheck = RestliProtocolCheck.STRICT;
   private List<RestLiDebugRequestHandler> _debugRequestHandlers;
+  private final List<RequestFilter> _requestFilters = new ArrayList<RequestFilter>();
+  private final List<ResponseFilter> _responseFilters = new ArrayList<ResponseFilter>();
 
   /**
    * Constructor.
@@ -257,5 +261,75 @@ public class RestLiConfig
   public RestliProtocolCheck getRestliProtocolCheck()
   {
     return _restliProtocolCheck;
+  }
+
+  /**
+   * Add request filters to the filter chain.
+   *
+   * @param filters
+   *          Ordered list of filters to be added to the filter chain.
+   */
+  public void addRequestFilter(RequestFilter...filters)
+  {
+    _requestFilters.addAll(Arrays.asList(filters));
+  }
+
+  /**
+   * Get a mutable reference to the request filter chain.
+   *
+   * @return Mutable reference to the request filter chain.
+   */
+  public List<RequestFilter> getRequestFilters()
+  {
+    return _requestFilters;
+  }
+
+  /**
+   * Set the request filter chain.
+   *
+   * @param requestFilters
+   *          Ordered list of request filters.
+   */
+  public void setRequestFilters(List<? extends RequestFilter> requestFilters)
+  {
+    if (requestFilters != null) {
+      _requestFilters.clear();
+      _requestFilters.addAll(requestFilters);
+    }
+  }
+
+  /**
+   * Add response filters to the filter chain.
+   *
+   * @param filters
+   *          Ordered list of filters to be added to the filter chain.
+   */
+  public void addResponseFilter(ResponseFilter...filters)
+  {
+    _responseFilters.addAll(Arrays.asList(filters));
+  }
+
+  /**
+   * Get a mutable reference to the response filter chain.
+   *
+   * @return Mutable reference to the response filter chain.
+   */
+  public List<ResponseFilter> getResponseFilters()
+  {
+    return _responseFilters;
+  }
+
+  /**
+   * Set the response filter chain.
+   *
+   * @param responseFilters
+   *          Ordered list of response filters.
+   */
+  public void setResponseFilters(List<? extends ResponseFilter> responseFilters)
+  {
+    if (responseFilters != null) {
+      _responseFilters.clear();
+      _responseFilters.addAll(responseFilters);
+    }
   }
 }

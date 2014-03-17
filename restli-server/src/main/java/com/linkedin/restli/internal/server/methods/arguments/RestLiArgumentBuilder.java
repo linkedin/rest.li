@@ -12,22 +12,35 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-*/
+ */
 
 package com.linkedin.restli.internal.server.methods.arguments;
 
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.internal.server.RoutingResult;
+import com.linkedin.restli.server.RestLiRequestData;
 
 public interface RestLiArgumentBuilder
 {
   /**
    * Build an array of resource method arguments for a request.
    *
-   * @param routingResult {@link RoutingResult}
-   * @param request {@link RestRequest}
-   * @return array of resource method arguments
+   * @param requestData
+   *          {@link RestLiRequestData}
+   * @param routingResult
+   *          {@link RoutingResult}
+   * @return
    */
-  Object[] buildArguments(RoutingResult routingResult,
-                          RestRequest request);
+  Object[] buildArguments(RestLiRequestData requestData, RoutingResult routingResult);
+
+  /**
+   * Extract request data from the incoming request into a {@link RestLiRequestData}.
+   *
+   * @param routingResult
+   *          {@link RoutingResult}
+   * @param request
+   *          Incoming {@link RestRequest}.
+   * @return {@link RestLiRequestData} structure representing the data from the incoming request.
+   */
+  RestLiRequestData extractRequestData(RoutingResult routingResult, RestRequest request);
 }

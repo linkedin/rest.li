@@ -17,8 +17,6 @@
 package com.linkedin.restli.server.test;
 
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
@@ -58,6 +56,9 @@ import com.linkedin.restli.internal.server.RestLiMethodInvoker;
 import com.linkedin.restli.internal.server.RestLiResponseHandler;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
+import com.linkedin.restli.internal.server.filter.FilterRequestContextInternal;
+import com.linkedin.restli.internal.server.methods.MethodAdapterRegistry;
+import com.linkedin.restli.internal.server.methods.arguments.RestLiArgumentBuilder;
 import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
@@ -76,6 +77,8 @@ import com.linkedin.restli.server.RequestExecutionCallback;
 import com.linkedin.restli.server.RequestExecutionReport;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.ResourceLevel;
+import com.linkedin.restli.server.RestLiRequestData;
+import com.linkedin.restli.server.RestLiRequestDataImpl;
 import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.TestRecord;
 import com.linkedin.restli.server.UpdateResponse;
@@ -83,6 +86,8 @@ import com.linkedin.restli.server.combined.CombinedResources;
 import com.linkedin.restli.server.combined.CombinedTestDataModels;
 import com.linkedin.restli.server.custom.types.CustomLong;
 import com.linkedin.restli.server.custom.types.CustomString;
+import com.linkedin.restli.server.filter.FilterRequestContext;
+import com.linkedin.restli.server.filter.RequestFilter;
 import com.linkedin.restli.server.resources.BaseResource;
 import com.linkedin.restli.server.test.EasyMockUtils.Matchers;
 import com.linkedin.restli.server.twitter.AsyncDiscoveredItemsResource;
@@ -109,14 +114,6 @@ import com.linkedin.restli.server.twitter.TwitterTestDataModels.Followed;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Location;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Status;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.StatusType;
-import org.easymock.Capture;
-import org.easymock.EasyMock;
-import org.easymock.IAnswer;
-import org.testng.Assert;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -130,10 +127,31 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
+import org.easymock.Capture;
+import org.easymock.EasyMock;
+import org.easymock.IAnswer;
+import org.testng.Assert;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+
 import static com.linkedin.restli.server.test.RestLiTestHelper.buildResourceModel;
 import static com.linkedin.restli.server.test.RestLiTestHelper.buildResourceModels;
+
+import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.eq;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.expectLastCall;
+import static org.easymock.EasyMock.getCurrentArguments;
+import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.reset;
+import static org.easymock.EasyMock.verify;
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.fail;
 
@@ -159,6 +177,8 @@ public class TestRestLiMethodInvocation
         .build();
 
     _resourceFactory  = new EasyMockResourceFactory();
+
+    // Add filters to the invoker.
     _invoker = new RestLiMethodInvoker(_resourceFactory, _engine, new ErrorResponseBuilder());
   }
 
@@ -171,6 +191,105 @@ public class TestRestLiMethodInvocation
     _engine = null;
     _scheduler.shutdownNow();
     _scheduler = null;
+  }
+
+  @DataProvider(name = "provideFilterConfig")
+  private Object[][] provideFilterConfig()
+  {
+    return new Object[][] { { true }, { false } };
+  }
+
+  @Test(dataProvider = "provideFilterConfig")
+  public void testInvokerWithFilters(final boolean throwExceptionFromFirstFilter) throws Exception
+  {
+    MethodAdapterRegistry mockRegistry = createMock(MethodAdapterRegistry.class);
+    RestLiArgumentBuilder mockBuilder = createMock(RestLiArgumentBuilder.class);
+    RequestFilter mockFilter = createMock(RequestFilter.class);
+    @SuppressWarnings("unchecked")
+    RequestExecutionCallback<Object> mockCallback = createMock(RequestExecutionCallback.class);
+    FilterRequestContextInternal mockFilterContext = createMock(FilterRequestContextInternal.class);
+    RestLiRequestData requestData = new RestLiRequestDataImpl.Builder().key("Key").build();
+    RestLiMethodInvoker invokerWithFilters =
+        new RestLiMethodInvoker(_resourceFactory,
+                                _engine,
+                                new ErrorResponseBuilder(),
+                                mockRegistry,
+                                Arrays.asList(mockFilter, mockFilter));
+    Map<String, ResourceModel> resourceModelMap =
+        buildResourceModels(StatusCollectionResource.class, LocationResource.class, DiscoveredItemsResource.class);
+    ResourceModel statusResourceModel = resourceModelMap.get("/statuses");
+    ResourceMethodDescriptor resourceMethodDescriptor = statusResourceModel.findMethod(ResourceMethod.GET);
+    final StatusCollectionResource resource = getMockResource(StatusCollectionResource.class);
+    RestRequestBuilder builder =
+        new RestRequestBuilder(new URI("/statuses/1")).setMethod("GET")
+                                                      .addHeaderValue("Accept", "application/json")
+                                                      .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION,
+                                                                 AllProtocolVersions.LATEST_PROTOCOL_VERSION.toString());
+    RestRequest request = builder.build();
+    RoutingResult routingResult =
+        new RoutingResult(new ResourceContextImpl(buildPathKeys("statusID", 1L), request, new RequestContext()),
+                          resourceMethodDescriptor);
+    expect(mockRegistry.getArgumentBuilder(resourceMethodDescriptor.getType())).andReturn(mockBuilder);
+    expect(mockBuilder.extractRequestData(routingResult, request)).andReturn(requestData);
+    mockFilterContext.setRequestData(requestData);
+    final Exception exFromFilter = new RuntimeException("Exception from filter!");
+    if (throwExceptionFromFirstFilter)
+    {
+      mockFilter.onRequest(mockFilterContext);
+      expectLastCall().andThrow(exFromFilter);
+      mockCallback.onError(eq(exFromFilter), anyObject(RequestExecutionReport.class));
+    }
+    else
+    {
+      expect(mockFilterContext.getRequestData()).andReturn(requestData).times(3);
+      mockFilter.onRequest(mockFilterContext);
+      expectLastCall().andAnswer(new IAnswer<Object>()
+      {
+        @Override
+        public Object answer() throws Throwable
+        {
+          FilterRequestContext filterContext = (FilterRequestContext) getCurrentArguments()[0];
+          RestLiRequestData data = filterContext.getRequestData();
+          // Verify incoming data.
+          assertEquals(data.getKey(), "Key");
+
+          // Update data.
+          data.setKey("Key-Filter1");
+          return null;
+        }
+      }).andAnswer(new IAnswer<Object>()
+      {
+        @Override
+        public Object answer() throws Throwable
+        {
+          FilterRequestContext filterContext = (FilterRequestContext) getCurrentArguments()[0];
+          RestLiRequestData data = filterContext.getRequestData();
+          // Verify incoming data.
+          assertEquals(data.getKey(), "Key-Filter1");
+
+          // Update data.
+          data.setKey("Key-Filter2");
+          return null;
+        }
+      });
+      Long[] argsArray = { 1L };
+      expect(mockBuilder.buildArguments(requestData, routingResult)).andReturn(argsArray);
+      expect(resource.get(eq(1L))).andReturn(null).once();
+      mockCallback.onSuccess(eq(null), anyObject(RequestExecutionReport.class));
+    }
+    replay(resource, mockRegistry, mockBuilder, mockFilterContext, mockFilter, mockCallback);
+    invokerWithFilters.invoke(routingResult, request, mockCallback, false, mockFilterContext);
+    verify(resource, mockRegistry, mockBuilder, mockFilterContext, mockFilter);
+    if (throwExceptionFromFirstFilter)
+    {
+      assertEquals(requestData.getKey(), "Key");
+    }
+    else
+    {
+      assertEquals(requestData.getKey(), "Key-Filter2");
+    }
+    EasyMock.reset(resource);
+    EasyMock.makeThreadSafe(resource, true);
   }
 
   @SuppressWarnings("unchecked")
@@ -2617,7 +2736,7 @@ public class TestRestLiMethodInvocation
                                                                             new RequestContext()), methodDescriptor);
 
     try {
-      _invoker.invoke(routingResult, request, null, false);
+      _invoker.invoke(routingResult, request, null, false, null);
       Assert.fail("expected routing exception");
     }
     catch (RoutingException e)
@@ -2648,7 +2767,7 @@ public class TestRestLiMethodInvocation
                                                                             new RequestContext()), methodDescriptor);
 
     try {
-      _invoker.invoke(routingResult, request, null, false);
+      _invoker.invoke(routingResult, request, null, false, null);
       Assert.fail("expected routing exception");
     }
     catch (RoutingException e)
@@ -2709,7 +2828,7 @@ public class TestRestLiMethodInvocation
 
     try
     {
-      _invoker.invoke(routingResult, request, null, false);
+      _invoker.invoke(routingResult, request, null, false, null);
       Assert.fail("expected template output cast exception");
     }
     catch (TemplateOutputCastException e)
@@ -2746,7 +2865,7 @@ public class TestRestLiMethodInvocation
 
     try
     {
-      _invoker.invoke(routingResult, request, null, false);
+      _invoker.invoke(routingResult, request, null, false, null);
       Assert.fail("expected routing exception");
     }
     catch (RoutingException e)
@@ -4027,9 +4146,9 @@ public class TestRestLiMethodInvocation
                                      public void onSuccess(RestResponse result, RequestExecutionReport executionReport)
                                      {
                                      }
-                                   });
+                                   }, null, null);
     ServerResourceContext context = new ResourceContextImpl();
-    _invoker.invoke(new RoutingResult(context, null), request, callback, false);
+    _invoker.invoke(new RoutingResult(context, null), request, callback, false, null);
     try
     {
       latch.await();
@@ -4068,9 +4187,9 @@ public class TestRestLiMethodInvocation
                                      public void onSuccess(RestResponse result, RequestExecutionReport executionReport)
                                      {
                                      }
-                                   });
+                                   }, null, null);
     ServerResourceContext context = new ResourceContextImpl();
-    _invoker.invoke(new RoutingResult(context, null), request, callback, false);
+    _invoker.invoke(new RoutingResult(context, null), request, callback, false, null);
     try
     {
       latch.await();
@@ -4451,8 +4570,8 @@ public class TestRestLiMethodInvocation
 
           latch.countDown();
         }
-      });
-      _invoker.invoke(routingResult, request, outerCallback, isDebugMode);
+      }, null, null);
+      _invoker.invoke(routingResult, request, outerCallback, isDebugMode, null);
       try
       {
         latch.await();
@@ -4559,7 +4678,7 @@ public class TestRestLiMethodInvocation
           new RoutingResult(new ResourceContextImpl(pathkeys, request,
                                                     new RequestContext()), methodDescriptor);
 
-      _invoker.invoke(routingResult, request, callback, isDebugMode);
+      _invoker.invoke(routingResult, request, callback, isDebugMode, null);
       EasyMock.verify(resource);
       EasyMock.verify(callback);
       Assert.assertEquals(((ServerResourceContext) routingResult.getContext()).getResponseMimeType(),

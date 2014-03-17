@@ -20,8 +20,6 @@
 
 package com.linkedin.restli.internal.server.methods.response;
 
-import java.util.Map;
-
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -31,6 +29,8 @@ import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.methods.AnyRecord;
 import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.GetResult;
+
+import java.util.Map;
 
 public class GetResponseBuilder implements RestLiResponseBuilder
 {
@@ -58,6 +58,6 @@ public class GetResponseBuilder implements RestLiResponseBuilder
 
     final DataMap data =
         RestUtils.projectFields(record.data(), routingResult.getContext());
-    return new PartialRestResponse(status, new AnyRecord(data));
+    return new PartialRestResponse.Builder().headers(headers).status(status).entity(new AnyRecord(data)).build();
   }
 }

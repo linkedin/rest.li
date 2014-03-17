@@ -49,6 +49,7 @@ import com.linkedin.restli.internal.server.ResourceContextImpl;
 import com.linkedin.restli.internal.server.RestLiResponseHandler;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
+import com.linkedin.restli.internal.server.methods.response.PartialRestResponse;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor.InterfaceType;
@@ -117,6 +118,7 @@ public class TestRestLiResponseHandler
 
   private static final String EXPECTED_STATUS_JSON = doubleQuote("{'text':'test status'}");
   private static final String EXPECTED_STATUS_ACTION_RESPONSE_JSON = doubleQuote("{'value':") + EXPECTED_STATUS_JSON + '}';
+  private static final String EXPECTED_STATUS_ACTION_RESPONSE_STRING = "{value={text=test status}}";
   private static final String EXPECTED_STATUS_PSON = "#!PSON1\n!\u0081text\u0000\n\f\u0000\u0000\u0000test status\u0000\u0080";
   private static final String EXPECTED_STATUS_ACTION_RESPONSE_PSON = "#!PSON1\n!\u0081value\u0000!\u0083text\u0000\n\f\u0000\u0000\u0000test status\u0000\u0080\u0080";
 
@@ -518,6 +520,83 @@ public class TestRestLiResponseHandler
 
     checkResponse(response, 200, 1, null, null, null, false, errorResponseHeaderName);
     assertEquals(response.getEntity().asAvroString(), "");
+  }
+
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "statusActionDataPartial")
+  public Object[][] statusActionDataPartial()
+  {
+    return new Object[][]
+      {
+        {
+          AcceptTypeData.ANY,
+          EXPECTED_STATUS_ACTION_RESPONSE_STRING,
+          "{value={key2=value2, key1=value1}}",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE
+        },
+        {
+            AcceptTypeData.ANY,
+            EXPECTED_STATUS_ACTION_RESPONSE_STRING,
+            "{value={key2=value2, key1=value1}}",
+            AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+            RestConstants.HEADER_RESTLI_ERROR_RESPONSE
+        }
+      };
+  }
+
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "statusActionDataPartial")
+  public void testPartialRestResponse(AcceptTypeData acceptTypeData,
+                                      String response1,
+                                      String response2,
+                                      ProtocolVersion protocolVersion,
+                                      String errorResponseHeaderName) throws Exception
+  {
+    final RestRequest request = buildRequest(acceptTypeData.acceptHeaders, protocolVersion);
+    PartialRestResponse response;
+    // #1 simple record template
+    response =
+        _responseHandler.buildPartialResponse(request,
+                                              buildRoutingResultAction(Status.class,
+                                                                       request,
+                                                                       acceptTypeData.acceptHeaders),
+                                              buildStatusRecord());
+    checkResponse(response,
+                  HttpStatus.S_200_OK,
+                  1,
+                  false,
+                  true,
+                  errorResponseHeaderName);
+    assertEquals(response.getEntity().toString(), response1);
+    // #2 DataTemplate response
+    StringMap map = new StringMap();
+    map.put("key1", "value1");
+    map.put("key2", "value2");
+    response =
+        _responseHandler.buildPartialResponse(request,
+                                              buildRoutingResultAction(StringMap.class,
+                                                                       request,
+                                                                       acceptTypeData.acceptHeaders),
+                                              map);
+    checkResponse(response,
+                  HttpStatus.S_200_OK,
+                  1,
+                  false,
+                  true,
+                  errorResponseHeaderName);
+    String actual = response.getEntity().toString();
+    assertEquals(actual, response2);
+    // #3 empty response
+    response =
+        _responseHandler.buildPartialResponse(request,
+                                              buildRoutingResultAction(Void.TYPE, request, acceptTypeData.acceptHeaders),
+                                              null);
+    checkResponse(response,
+                  HttpStatus.S_200_OK,
+                  1,
+                  false,
+                  false,
+                  errorResponseHeaderName);
+    assertEquals(response.getEntity(), null);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "basicData")
@@ -1026,6 +1105,27 @@ public class TestRestLiResponseHandler
     {
       return null;
     }
+  }
+
+  private void checkResponse(PartialRestResponse response,
+                             HttpStatus status,
+                             int numHeaders,
+                             boolean hasError,
+                             boolean hasEntity,
+                             String errorResponseHeaderName)
+  {
+    assertEquals(response.getStatus(), status);
+    assertEquals(response.getHeaders().size(), numHeaders);
+    if (hasError)
+    {
+      assertEquals(response.getHeader(errorResponseHeaderName), RestConstants.HEADER_VALUE_ERROR);
+    }
+    else
+    {
+      assertNull(response.getHeader(errorResponseHeaderName));
+    }
+
+    assertEquals(response.getEntity() != null, hasEntity);
   }
 
   private void checkResponse(RestResponse response,

@@ -39,6 +39,7 @@ project.ext.externalDependency = [
   'commonsIo': 'commons-io:commons-io:1.4',
   'commonsLang': 'commons-lang:commons-lang:2.4',
   'easymock': 'org.easymock:easymock:3.1',
+  'mockito': 'org.mockito:mockito-all:1.9.5',
   'guava': 'com.google.guava:guava:10.0',
   'jacksonCore': 'com.fasterxml.jackson.core:jackson-core:2.2.2',
   'jacksonDataBind': 'com.fasterxml.jackson.core:jackson-databind:2.2.2',
