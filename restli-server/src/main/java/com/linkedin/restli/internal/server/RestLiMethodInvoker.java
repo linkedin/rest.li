@@ -110,7 +110,7 @@ public class RestLiMethodInvoker
     }
     catch (RestLiServiceException e)
     {
-      callback.onErrorPre(e, getRequestExecutionReport(requestExecutionReportBuilder));
+      callback.onError(e, getRequestExecutionReport(requestExecutionReportBuilder));
       return;
     }
     // Request headers are valid. Proceed with the invocation....
@@ -214,7 +214,7 @@ public class RestLiMethodInvoker
         Task<Object> task = (Task<Object>) method.invoke(resource, arguments);
         if (task == null)
         {
-          callback.onErrorApp(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
+          callback.onError(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
                                                            "Error in application code: null Task"),
                               getRequestExecutionReport(requestExecutionReportBuilder));
         }
@@ -236,11 +236,11 @@ public class RestLiMethodInvoker
       {
         RestLiServiceException restLiServiceException =
             (RestLiServiceException) e.getCause();
-        callback.onErrorApp(restLiServiceException, getRequestExecutionReport(requestExecutionReportBuilder));
+        callback.onError(restLiServiceException, getRequestExecutionReport(requestExecutionReportBuilder));
       }
       else
       {
-        callback.onErrorApp(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
+        callback.onError(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
                                                        _errorResponseBuilder.getInternalErrorMessage(),
                                                        e.getCause()),
                             getRequestExecutionReport(requestExecutionReportBuilder));

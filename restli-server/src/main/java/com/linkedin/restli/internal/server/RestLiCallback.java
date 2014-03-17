@@ -34,7 +34,6 @@ import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.RoutingException;
 
 import java.io.ByteArrayOutputStream;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -68,45 +67,12 @@ public class RestLiCallback<T> implements RequestExecutionCallback<T>
     catch (Exception e)
     {
       // safe to assume it is a post processing error.
-      onErrorPost(e, executionReport);
+      onError(e, executionReport);
     }
   }
 
   @Override
   public void onError(final Throwable e, RequestExecutionReport executionReport)
-  {
-    // "generic" error (atm looks the same as an app error)
-    Map<String, String> headers = Collections.emptyMap();
-    onErrorWithHeaders(e, headers, executionReport);
-  }
-
-  public void onErrorPre(final Throwable e, RequestExecutionReport executionReport)
-  {
-    Map<String, String> headers =
-        Collections.singletonMap(HeaderUtil.getErrorResponseHeaderName(_request.getHeaders()),
-                                 RestConstants.HEADER_VALUE_ERROR_PREPROCESSING);
-    onErrorWithHeaders(e, headers, executionReport);
-  }
-
-  public void onErrorApp(final Throwable e, RequestExecutionReport executionReport)
-  {
-    Map<String, String> headers =
-        Collections.singletonMap(HeaderUtil.getErrorResponseHeaderName(_request.getHeaders()),
-                                 RestConstants.HEADER_VALUE_ERROR_APPLICATION);
-    onErrorWithHeaders(e, headers, executionReport);
-  }
-
-  public void onErrorPost(final Throwable e, RequestExecutionReport executionReport)
-  {
-    Map<String, String> headers =
-        Collections.singletonMap(HeaderUtil.getErrorResponseHeaderName(_request.getHeaders()),
-                                 RestConstants.HEADER_VALUE_ERROR_POSTPROCESSING);
-    onErrorWithHeaders(e, headers, executionReport);
-  }
-
-  private void onErrorWithHeaders(final Throwable e,
-                                  final Map<String, String> givenHeaders,
-                                  final RequestExecutionReport executionReport)
   {
     RestLiServiceException restLiServiceException;
     Map<String, String> headers = new HashMap<String, String>();
@@ -129,7 +95,6 @@ public class RestLiCallback<T> implements RequestExecutionCallback<T>
           new RestLiServiceException(HttpStatus.fromCode(routingException.getStatus()),
                                      routingException.getMessage(),
                                      routingException);
-
     }
     else
     {
@@ -138,30 +103,23 @@ public class RestLiCallback<T> implements RequestExecutionCallback<T>
                                      e.getMessage(),
                                      e);
     }
-
     headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, ProtocolVersionUtil.extractProtocolVersion(_request.getHeaders()).toString());
     PartialRestResponse partialResponse =
         _responseHandler.buildErrorResponse(null, null, restLiServiceException, headers);
-
-    headers.putAll(givenHeaders); // should overwrite app error with correct error
-
+    headers.put(HeaderUtil.getErrorResponseHeaderName(_request.getHeaders()),
+                RestConstants.HEADER_VALUE_ERROR);
     RestResponseBuilder builder = new RestResponseBuilder().setHeaders(headers)
             .setStatus(partialResponse.getStatus().getCode());
-
     if (partialResponse.hasData())
     {
       DataMap dataMap = partialResponse.getDataMap();
-
       ByteArrayOutputStream baos = new ByteArrayOutputStream(4096);
       DataMapUtils.write(dataMap, null, baos, true); //partialResponse.getSchema()
       builder.setEntity(baos.toByteArray());
     }
-
     RestResponse restResponse = builder.build();
-
     // TODO: pass message?  I'm not sure what's happened to it after all this.
     RestException restException = new RestException(restResponse, e);
-
     _callback.onError(restException, executionReport);
   }
 }

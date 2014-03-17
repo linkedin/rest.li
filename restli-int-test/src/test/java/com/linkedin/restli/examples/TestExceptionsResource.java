@@ -32,6 +32,7 @@ import com.linkedin.restli.common.CreateStatus;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.client.ExceptionsBuilders;
@@ -177,7 +178,7 @@ public class TestExceptionsResource extends RestLiIntegrationTest
     Assert.assertEquals(exception.getStatus(), HttpStatus.S_406_NOT_ACCEPTABLE.getCode());
     Assert.assertEquals(exception.getServiceErrorMessage(), "I will not tolerate your insolence!");
     Assert.assertEquals(exception.getServiceErrorCode(), 999);
-    Assert.assertEquals(exception.getErrorSource(), "APP");
+    Assert.assertEquals(exception.getErrorSource(), RestConstants.HEADER_VALUE_ERROR);
     Assert.assertEquals(exception.getErrorDetails().getString("reason"), "insultingGreeting");
     Assert.assertTrue(exception.getServiceErrorStackTrace().startsWith("com.linkedin.restli.server.RestLiServiceException [HTTP Status:406, serviceErrorCode:999]: I will not tolerate your insolence!"),
                       "stacktrace mismatch:" + exception.getStackTrace());

@@ -226,6 +226,7 @@ public class RestLiServer extends BaseRestServer
         request,
         requestContext,
         new RestLiDebugRequestHandler.ResourceDebugRequestHandler(){
+          @Override
           public void handleRequest(final RestRequest request, final RequestContext requestContext,
                                        final RequestExecutionCallback<RestResponse> callback)
           {
@@ -258,7 +259,7 @@ public class RestLiServer extends BaseRestServer
     {
       final RestLiCallback<Object> restLiCallback =
           new RestLiCallback<Object>(request, null, _responseHandler, callback);
-      restLiCallback.onErrorPre(e, createEmptyExecutionReport());
+      restLiCallback.onError(e, createEmptyExecutionReport());
       return;
     }
 
@@ -271,7 +272,7 @@ public class RestLiServer extends BaseRestServer
     {
       final RestLiCallback<Object> restLiCallback =
           new RestLiCallback<Object>(request, null, _responseHandler, callback);
-      restLiCallback.onErrorPre(e, createEmptyExecutionReport());
+      restLiCallback.onError(e, createEmptyExecutionReport());
       return;
     }
 
@@ -286,7 +287,7 @@ public class RestLiServer extends BaseRestServer
     }
     catch (Exception e)
     {
-      restLiCallback.onErrorPre(e, createEmptyExecutionReport());
+      restLiCallback.onError(e, createEmptyExecutionReport());
     }
   }
 
@@ -312,7 +313,7 @@ public class RestLiServer extends BaseRestServer
       final RestLiCallback<Object> restLiCallback =
           new RestLiCallback<Object>(request, null, _responseHandler,
                                      new RequestExecutionCallbackAdapter<RestResponse>(callback));
-      restLiCallback.onErrorPre(e, createEmptyExecutionReport());
+      restLiCallback.onError(e, createEmptyExecutionReport());
     }
   }
 

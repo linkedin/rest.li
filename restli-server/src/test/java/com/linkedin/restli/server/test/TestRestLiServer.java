@@ -17,8 +17,8 @@
 package com.linkedin.restli.server.test;
 
 
-import com.linkedin.data.DataMap;
 import com.linkedin.common.callback.Callback;
+import com.linkedin.data.DataMap;
 import com.linkedin.parseq.Engine;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestException;
@@ -401,7 +401,7 @@ public class TestRestLiServer
 
         assertEquals(restResponse.getStatus(), 400);
         assertTrue(restResponse.getEntity().length() > 0);
-        assertEquals(restResponse.getHeader(errorResponseHeaderName), RestConstants.HEADER_VALUE_ERROR_PREPROCESSING);
+        assertEquals(restResponse.getHeader(errorResponseHeaderName), RestConstants.HEADER_VALUE_ERROR);
 
         EasyMock.verify(statusResource);
         EasyMock.reset(statusResource);
@@ -441,7 +441,7 @@ public class TestRestLiServer
         {
           assertEquals(restResponse.getStatus(), 500);
           assertTrue(restResponse.getEntity().length() > 0);
-          assertEquals(restResponse.getHeader(errorResponseHeaderName), RestConstants.HEADER_VALUE_ERROR_APPLICATION);
+          assertEquals(restResponse.getHeader(errorResponseHeaderName), RestConstants.HEADER_VALUE_ERROR);
           ErrorResponse responseBody = DataMapUtils.read(restResponse.getEntity().asInputStream(), ErrorResponse.class);
           assertEquals(responseBody.getMessage(), "Mock Exception");
           assertEquals(responseBody.getExceptionClass(), "com.linkedin.restli.server.RestLiServiceException");
@@ -580,7 +580,7 @@ public class TestRestLiServer
         {
           assertEquals(restResponse.getStatus(), 500);
           assertTrue(restResponse.getEntity().length() > 0);
-          assertEquals(restResponse.getHeader(errorResponseHeaderName), RestConstants.HEADER_VALUE_ERROR_APPLICATION);
+          assertEquals(restResponse.getHeader(errorResponseHeaderName), RestConstants.HEADER_VALUE_ERROR);
           ErrorResponse responseBody = DataMapUtils.read(restResponse.getEntity().asInputStream(), ErrorResponse.class);
 
           // in this test, we're using the _serverWithCustomErrorResponseConfig (see below), which has been configure to use the
@@ -634,7 +634,7 @@ public class TestRestLiServer
         {
           assertEquals(restResponse.getStatus(), 500);
           assertTrue(restResponse.getEntity().length() > 0);
-          assertEquals(restResponse.getHeader(errorResponseHeaderName), RestConstants.HEADER_VALUE_ERROR_POSTPROCESSING);
+          assertEquals(restResponse.getHeader(errorResponseHeaderName), RestConstants.HEADER_VALUE_ERROR);
 
           EasyMock.verify(statusResource);
           EasyMock.reset(statusResource);
@@ -660,17 +660,17 @@ public class TestRestLiServer
     assertEquals(1, config.getResourcePackageNamesSet().size());
     config.setResourcePackageNames("foo,bar,baz");
     assertEquals(3, config.getResourcePackageNamesSet().size());
-    
+
     Set<String> packageSet = new HashSet<String>();
     packageSet.add("a");
     packageSet.add("b");
     config.setResourcePackageNamesSet(packageSet);
     assertEquals(2, config.getResourcePackageNamesSet().size());
-    
+
     // #2 'add' method doesn't replace set, of course
     config.addResourcePackageNames("c", "d");
     assertEquals(4, config.getResourcePackageNamesSet().size());
-    
+
     // #3 test that 'empty' values are ignored
     config.setResourcePackageNames("");
     assertEquals(4, config.getResourcePackageNamesSet().size());
@@ -736,7 +736,7 @@ public class TestRestLiServer
 
     _server.handleRequest(request, new RequestContext(), callback);
   }
-  
+
   private <R extends BaseResource> R getMockResource(Class<R> resourceClass)
   {
     R resource = _resourceFactory.getMock(resourceClass);

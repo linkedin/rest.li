@@ -89,7 +89,12 @@ import org.testng.annotations.Test;
 
 import static com.linkedin.restli.server.test.RestLiTestHelper.buildResourceModel;
 import static com.linkedin.restli.server.test.RestLiTestHelper.doubleQuote;
-import static org.testng.Assert.*;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 
 /**
@@ -1028,7 +1033,7 @@ public class TestRestLiResponseHandler
 
     if (hasError)
     {
-      assertEquals(response.getHeader(errorResponseHeaderName), RestConstants.HEADER_VALUE_ERROR_APPLICATION);
+      assertEquals(response.getHeader(errorResponseHeaderName), RestConstants.HEADER_VALUE_ERROR);
     }
     else
     {

@@ -33,9 +33,7 @@ public interface RestConstants
   String HEADER_RESTLI_REQUEST_METHOD = "X-RestLi-Method";
   String HEADER_LINKEDIN_ERROR_RESPONSE = "X-LinkedIn-Error-Response"; // we are deprecating all X-Linkedin header prefixes and replacing them with X-RestLi
   String HEADER_RESTLI_ERROR_RESPONSE = "X-RestLi-Error-Response"; // replacement for X-LinkedIn-Error-Response for when it is removed
-  String HEADER_VALUE_ERROR_PREPROCESSING = "FWK-PRE";
-  String HEADER_VALUE_ERROR_POSTPROCESSING = "FWK-POST";
-  String HEADER_VALUE_ERROR_APPLICATION = "APP";
+  String HEADER_VALUE_ERROR = "true";
   String HEADER_ID = "X-LinkedIn-Id"; // we are deprecating all X-Linkedin header prefixes and replacing them with X-RestLi
   String HEADER_RESTLI_ID = "X-RestLi-Id"; // replacement for X-LinkedIn-Id for when it is removed
   String HEADER_LOCATION = "Location";

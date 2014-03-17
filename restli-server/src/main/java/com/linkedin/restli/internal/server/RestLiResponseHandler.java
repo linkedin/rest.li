@@ -136,7 +136,7 @@ public class RestLiResponseHandler
       builder.setHeaders(headers);
       if (!isAction)
       {
-        builder.setHeader(HeaderUtil.getErrorResponseHeaderName(protocolVersion), RestConstants.HEADER_VALUE_ERROR_APPLICATION);
+        builder.setHeader(HeaderUtil.getErrorResponseHeaderName(protocolVersion), RestConstants.HEADER_VALUE_ERROR);
       }
       return builder.build();
     }
