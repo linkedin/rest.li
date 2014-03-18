@@ -1,0 +1,58 @@
+{
+  "type": "record",
+  "name": "D2TransportClientProperties",
+  "namespace": "com.linkedin.d2",
+  "doc": "The properties that is applied when creating transport client to talk to this particular D2 service",
+  "fields": [
+    {
+      "name": "queryPostThreshold",
+      "type": "int",
+      "doc": "The minimum size of GET requests parameters before we start converting it to POST request.",
+      "optional": true
+    },
+    {
+      "name": "requestTimeout",
+      "type": "long",
+      "doc": "Timeout in ms for this transport client",
+      "optional": true
+    },
+    {
+      "name": "maxResponseSize",
+      "type": "int",
+      "doc": "Max payload that this transport client can carry in bytes",
+      "optional": true
+    },
+    {
+      "name": "poolSize",
+      "type": "int",
+      "doc": "Maximum size of the underlying HTTP connection pool",
+      "optional": true
+    },
+    {
+      "name": "poolWaiterSize",
+      "type": "int",
+      "doc": "Maximum waiters waiting on the HTTP connection pool.",
+      "optional": true
+    },
+    {
+      "name": "idleTimeout",
+      "type": "long",
+      "doc": "interval after which idle connections will be automatically closed.",
+      "optional": true
+    },
+    {
+      "name": "shutdownTimeout",
+      "type": "long",
+      "doc": "timeout, in ms, the client should wait after shutdown is initiated before terminating outstanding requests.",
+      "optional": true
+    },
+    {
+      "name": "responseCompressionOperations",
+      "type": {
+        "type": "map", "values": "string"
+      },
+      "doc": "response compression configurations.",
+      "optional": true
+    }
+  ]
+}

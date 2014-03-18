@@ -1,0 +1,38 @@
+{
+  "type": "record",
+  "name": "D2Cluster",
+  "namespace": "com.linkedin.d2",
+  "include": ["com.linkedin.d2.D2ChangeTimeStamps"],
+  "doc": "A cluster as represented in D2",
+  "fields": [
+    {
+      "name": "name",
+      "type": "string",
+      "doc": "The name of the cluster"
+    },
+    {
+      "name": "services",
+      "type": {
+        "type": "array",
+        "items": "string"
+      },
+      "default": [],
+      "doc": "The services that this cluster can provide"
+    },
+    {
+      "name": "uris",
+      "type": {
+        "type": "array",
+        "items": "D2Uri"
+      },
+      "default": [],
+      "doc": "The URIs of machines that belong to this cluster"
+    },
+    {
+      "name": "partitionConfiguration",
+      "type": "D2ClusterPartitionConfiguration",
+      "optional": true,
+      "doc": "If this cluster has partitioning, then this is the partition config of this cluster"
+    }
+  ]
+}

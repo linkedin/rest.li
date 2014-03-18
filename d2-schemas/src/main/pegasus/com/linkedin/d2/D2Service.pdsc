@@ -1,0 +1,83 @@
+{
+  "type": "record",
+  "name": "D2Service",
+  "namespace": "com.linkedin.d2",
+  "doc": "A service as represented in D2",
+  "include": ["com.linkedin.d2.D2ChangeTimeStamps"],
+  "fields": [
+    {
+      "name": "name",
+      "type": "string",
+      "doc": "The name of the service"
+    },
+    {
+      "name": "path",
+      "type": "string",
+      "doc": "The path to reach the resource/service"
+    },
+    {
+      "name": "loadBalancerStrategyList",
+      "type": {
+        "type": "array",
+        "items":
+        {
+          "type" : "enum",
+          "name" : "loadBalancerStrategyType",
+          "doc" : "There are 3 types of strategy: DEGRADERV2, DEGRADERV3, RANDOM",
+          "symbols" : [ "DEGRADERV2","DEGRADERV3", "RANDOM" ]
+        }
+      },
+      "doc": "Prioritized order of strategy that this service should use."
+    },
+    {
+      "name": "prioritizedSchemes",
+      "type": {
+        "type": "array",
+        "items":
+        {
+          "type" : "enum",
+          "name" : "scheme",
+          "doc" : "There are 2 types of scheme: HTTP, HTTPS",
+          "symbols" : [ "HTTP","HTTPS" ]
+        }
+      },
+      "doc": "List of schemes that this service supports ordered by priority"
+    },
+    {
+      "name": "bannedUris",
+      "type": {
+        "type": "array",
+        "items": "string"
+      },
+      "doc": "banned Uris for this service"
+    },
+    {
+      "name": "serviceMetadataProperties",
+      "type": {
+        "type": "map",
+        "values": "string"
+      },
+      "doc": "Metadata properties about the service e.g. multi colo routing, service variants, etc"
+    },
+    {
+      "name": "cluster",
+      "type": "string",
+      "doc": "The cluster where this service belongs"
+    },
+    {
+      "name": "loadBalancerStrategyProperties",
+      "type": "D2LoadBalancerStrategyProperties",
+      "doc": "The load balancer strategy properties for this service"
+    },
+    {
+      "name": "degraderProperties",
+      "type": "D2DegraderProperties",
+      "doc": "The degrader properties for this service"
+    },
+    {
+      "name": "transportClientProperties",
+      "type": "D2TransportClientProperties",
+      "doc": "The transport client properties for this service"
+    }
+  ]
+}

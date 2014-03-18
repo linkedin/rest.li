@@ -1,0 +1,85 @@
+{
+  "type": "record",
+  "name": "D2LoadBalancerStrategyProperties",
+  "namespace": "com.linkedin.d2",
+  "doc": "Load balancer properties for a particular D2 service",
+  "fields": [
+    {
+      "name": "globalStepDown",
+      "type": "double",
+      "doc": "The step down function's delta size when adjusting the drop rate. Should be between 0.0 - 1.0.",
+      "optional": true
+    },
+    {
+      "name": "globalStepUp",
+      "type": "double",
+      "doc": "The step up function's delta size when adjusting the drop rate. Should be between 0.0 - 1.0.",
+      "optional": true
+    },
+    {
+      "name": "initialRecoveryLevel",
+      "type": "double",
+      "doc": "When a node is completely degraded, this config is used to determine the starting recovery weight for that node. Should be between 0.0 - 1.0.",
+      "optional": true
+    },
+    {
+      "name": "ringRampFactor",
+      "type": "int",
+      "doc": "How fast should load balancer ramp up node that has been 100% degraded and is being recovered. This is used with initialRecoveryLevel to recover the traffic of a node.",
+      "optional": true
+    },
+    {
+      "name": "highWaterMark",
+      "type": "int",
+      "doc": "If average ms latency for the entire service is over this number then we consider the service is in a bad state.",
+      "optional": true
+    },
+    {
+      "name": "lowWaterMark",
+      "type": "int",
+      "doc": "If average ms latency for the entire service is lower than this number then we consider the service is in a good state.",
+      "optional": true
+    },
+    {
+      "name": "pointsPerWeight",
+      "type": "int",
+      "doc": "The number of points per weight given for a particular node in a hash ring. Default is 100",
+      "optional": true
+    },
+    {
+      "name": "updateIntervalMs",
+      "type": "long",
+      "doc": "Interval in ms between each round of load balancer calculation",
+      "optional": true
+    },
+    {
+      "name": "minCallCountHighWaterMark",
+      "type": "int",
+      "doc": "If call count for the cluster for this service is over this number then we can use the statistics to calculate drop rate.",
+      "optional": true
+    },
+    {
+      "name": "minCallCountLowWaterMark",
+      "type": "int",
+      "doc": "If call count for the cluster for this service is below this number then we will not use the statistics to calculate drop rate.",
+      "optional": true
+    },
+    {
+      "name": "hashMethod",
+      "type" : {
+        "name" : "hashMethodEnum",
+        "type" : "enum",
+        "symbols" : ["RANDOM", "URI_REGEX"]
+      },
+      "doc": "What hashing method used to hash incoming request. Used to determine which node should serve the request. Choices are Random, UriRegex",
+      "symbolDocs": {"RANDOM":"The default fall back value", "URI_REGEX":"Extract a key from URI and use it to hash"},
+      "optional": true
+    },
+    {
+      "name": "hashConfig",
+      "type": { "type" : "map", "values" : "string" },
+      "doc": "Configuration used to supplement the hash method. This will be a map of string to toString() representation of the object",
+      "optional": true
+    }
+  ]
+}

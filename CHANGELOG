@@ -1,5 +1,7 @@
 1.15.3
 ------
+(RB=276699)
+Added .pdscs for D2 related information into newly created d2-schemas module.
 
 1.15.2
 ------
