@@ -64,7 +64,7 @@ import static org.testng.Assert.assertEquals;
 public class TestCustomTypesRequestBuilders
 {
   // test correct request is built for customLong
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = "request1BuilderDataProvider")
   public void testFinderCustomLong(RootBuilderWrapper<Long, Greeting> builders) throws IOException, RestException
   {
     // curl -v GET http://localhost:1338/customTypes?l=20&q=customLong
@@ -76,7 +76,7 @@ public class TestCustomTypesRequestBuilders
   }
 
   // test correct request is built for customLongArray
-  @Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = "request1BuilderDataProvider")
   public void testFinderCustomLongArray(RootBuilderWrapper<Long, Greeting> builders) throws IOException, RestException
   {
     // curl -v GET http://localhost:1338/customTypes?ls=2&ls=4&q=customLongArray

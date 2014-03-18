@@ -71,11 +71,11 @@ public class TestRestSpecAnnotation
   private static final String PROJECT_DIR_PROP = "test.projectDir";
   private static final String IDL_DIR_PROP = "test.idlDir";
 
-  @DataProvider(name="annotationFiles")
-  private String[] createAnnotationFiles() {
-    return new String[] {
-      "com.linkedin.restli.restspec.testAnnotation.restspec.json",
-      "com.linkedin.restli.restspec.testDeprecationAnnotation.restspec.json"
+  @DataProvider
+  private Object[][] annotationFiles() {
+    return new Object[][] {
+      { "com.linkedin.restli.restspec.testAnnotation.restspec.json" },
+      { "com.linkedin.restli.restspec.testDeprecationAnnotation.restspec.json" }
     };
   }
 

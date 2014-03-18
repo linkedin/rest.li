@@ -1,6 +1,3 @@
-apply plugin: 'idea'
-apply plugin: 'eclipse'
-
 // add rest.li's gradle plugins so they can be used throughout project
 buildscript {
   repositories {
@@ -8,45 +5,53 @@ buildscript {
     mavenCentral()
   }
   dependencies {
-    classpath "com.linkedin.pegasus:gradle-plugins:1.13.4"
+    classpath 'com.linkedin.pegasus:gradle-plugins:1.13.4'
   }
 }
 
 task wrapper(type: Wrapper) {
-  gradleVersion = '1.8'
+  gradleVersion = '1.11'
 }
 
-pegasusVersion = "1.13.4"
-spec = [
-  "product" : [
-    "pegasus" : [
-      "data" : "com.linkedin.pegasus:data:"+pegasusVersion,
-      "generator" : "com.linkedin.pegasus:generator:"+pegasusVersion,
-      "restliClient" : "com.linkedin.pegasus:restli-client:"+pegasusVersion,
-      "restliServer" : "com.linkedin.pegasus:restli-server:"+pegasusVersion,
-      "restliTools" : "com.linkedin.pegasus:restli-tools:"+pegasusVersion,
-      "gradlePlugins" : "com.linkedin.pegasus:gradle-plugins:"+pegasusVersion,
-      "r2Jetty" : "com.linkedin.pegasus:r2-jetty:"+pegasusVersion,
-      "restliNettyStandalone" : "com.linkedin.pegasus:restli-netty-standalone:"+pegasusVersion,
-      "restliServerStandalone" : "com.linkedin.pegasus:restli-server-standalone:"+pegasusVersion
+final pegasusVersion = '1.13.4'
+ext.spec = [
+  'product' : [
+    'pegasus' : [
+      'data' : 'com.linkedin.pegasus:data:' + pegasusVersion,
+      'generator' : 'com.linkedin.pegasus:generator:' + pegasusVersion,
+      'restliCommon' : 'com.linkedin.pegasus:restli-common:' + pegasusVersion,
+      'restliClient' : 'com.linkedin.pegasus:restli-client:' + pegasusVersion,
+      'restliServer' : 'com.linkedin.pegasus:restli-server:' + pegasusVersion,
+      'restliTools' : 'com.linkedin.pegasus:restli-tools:' + pegasusVersion,
+      'gradlePlugins' : 'com.linkedin.pegasus:gradle-plugins:' + pegasusVersion,
+      'r2Jetty' : 'com.linkedin.pegasus:r2-jetty:' + pegasusVersion,
+      'restliNettyStandalone' : 'com.linkedin.pegasus:restli-netty-standalone:' + pegasusVersion,
+      'restliServerStandalone' : 'com.linkedin.pegasus:restli-server-standalone:' + pegasusVersion
     ]
   ]
 ]
 
-subprojects {
-  apply plugin: 'eclipse'
-  apply plugin: 'maven'
+allprojects {
   apply plugin: 'idea'
   apply plugin: 'eclipse'
+}
 
-  sourceCompatibility = JavaVersion.VERSION_1_6
+subprojects {
+  apply plugin: 'maven'
 
   afterEvaluate {
+    if (project.plugins.hasPlugin('java')) {
+      sourceCompatibility = JavaVersion.VERSION_1_6
+    }
+
     // add the standard pegasus dependencies wherever the plugin is used
     if (project.plugins.hasPlugin('pegasus')) {
       dependencies {
         dataTemplateCompile spec.product.pegasus.data
         restClientCompile spec.product.pegasus.restliClient
+
+        // needed for Gradle 1.9+
+        restClientCompile spec.product.pegasus.restliCommon
       }
     }
   }
@@ -56,4 +61,3 @@ subprojects {
     mavenCentral()
   }
 }
-

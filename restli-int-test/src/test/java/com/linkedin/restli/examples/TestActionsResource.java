@@ -173,7 +173,7 @@ public class TestActionsResource extends RestLiIntegrationTest
     Assert.assertEquals(response.getEntity(), "101 YAY false");
   }
 
-  @Test(expectedExceptions = RestLiResponseException.class, dataProvider = "requestBuilder")
+  @Test(expectedExceptions = RestLiResponseException.class, dataProvider = "requestBuilderDataProvider")
   public void testFailPromiseCall(RootBuilderWrapper<?, ?> builders) throws RemoteInvocationException
   {
     // this version gives a Task that RestLi runs
@@ -181,7 +181,7 @@ public class TestActionsResource extends RestLiIntegrationTest
     REST_CLIENT.sendRequest(req).getResponse();
   }
 
-  @Test(expectedExceptions = RestLiResponseException.class, dataProvider = "requestBuilder")
+  @Test(expectedExceptions = RestLiResponseException.class, dataProvider = "requestBuilderDataProvider")
   public void testFailPromiseThrow(RootBuilderWrapper<?, ?> builders) throws RemoteInvocationException
   {
     // this version gives a Task that RestLi runs
@@ -189,7 +189,7 @@ public class TestActionsResource extends RestLiIntegrationTest
     REST_CLIENT.sendRequest(req).getResponse();
   }
 
-  @Test(expectedExceptions = RestLiResponseException.class, dataProvider = "requestBuilder")
+  @Test(expectedExceptions = RestLiResponseException.class, dataProvider = "requestBuilderDataProvider")
   public void testFailTaskCall(RootBuilderWrapper<?, ?> builders) throws RemoteInvocationException
   {
     // this version gives a Task that RestLi runs
@@ -197,7 +197,7 @@ public class TestActionsResource extends RestLiIntegrationTest
     REST_CLIENT.sendRequest(req).getResponse();
   }
 
-  @Test(expectedExceptions = RestLiResponseException.class, dataProvider = "requestBuilder")
+  @Test(expectedExceptions = RestLiResponseException.class, dataProvider = "requestBuilderDataProvider")
   public void testFailTaskThrow(RootBuilderWrapper<?, ?> builders) throws RemoteInvocationException
   {
     // this version gives a Task that RestLi runs
@@ -205,7 +205,7 @@ public class TestActionsResource extends RestLiIntegrationTest
     REST_CLIENT.sendRequest(req).getResponse();
   }
 
-  @Test(expectedExceptions = RestLiResponseException.class, dataProvider = "requestBuilder")
+  @Test(expectedExceptions = RestLiResponseException.class, dataProvider = "requestBuilderDataProvider")
   public void testFailThrowInTask(RootBuilderWrapper<?, ?> builders) throws RemoteInvocationException
   {
     // this version gives a Task that RestLi runs
@@ -213,7 +213,7 @@ public class TestActionsResource extends RestLiIntegrationTest
     REST_CLIENT.sendRequest(req).getResponse();
   }
 
-  @Test(expectedExceptions = RestLiResponseException.class, dataProvider = "requestBuilder")
+  @Test(expectedExceptions = RestLiResponseException.class, dataProvider = "requestBuilderDataProvider")
   public void testNullPromise(RootBuilderWrapper<?, ?> builders) throws RemoteInvocationException
   {
     // this version gives a Task that RestLi runs
@@ -221,7 +221,7 @@ public class TestActionsResource extends RestLiIntegrationTest
     REST_CLIENT.sendRequest(req).getResponse();
   }
 
-  @Test(expectedExceptions = RestLiResponseException.class, dataProvider = "requestBuilder")
+  @Test(expectedExceptions = RestLiResponseException.class, dataProvider = "requestBuilderDataProvider")
   public void testNullTask(RootBuilderWrapper<?, ?> builders) throws RemoteInvocationException
   {
     // this version gives a Task that RestLi runs

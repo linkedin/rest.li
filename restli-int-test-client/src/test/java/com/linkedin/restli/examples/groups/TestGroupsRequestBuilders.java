@@ -223,19 +223,19 @@ public class TestGroupsRequestBuilders
     checkRequestBuilder(request, ResourceMethod.FINDER, CollectionResponseDecoder.class, Group.class, expectedUri, null);
   }
 
-  @Test(dataProvider = "requestGroupsBuilder", expectedExceptions = NullPointerException.class)
+  @Test(dataProvider = "requestGroupsBuilderDataProvider", expectedExceptions = NullPointerException.class)
   public void testCollectionFinderOmittingRequiredParams(RootBuilderWrapper<Integer, Group> builders) throws IOException, RestException
   {
     builders.findBy("Manager").setQueryParam("managerMemberId", null);
   }
 
-  @Test(dataProvider = "requestContactsBuilder", expectedExceptions = IllegalStateException.class)
+  @Test(dataProvider = "requestContactsBuilderDataProvider", expectedExceptions = IllegalStateException.class)
   public void testCollectionEntityOmittingRequiredIdParam(RootBuilderWrapper<Integer, GroupContact> builders) throws IOException, RestException
   {
     builders.get().id(1).build();
   }
 
-  @Test(dataProvider = "requestContactsBuilder", expectedExceptions = IllegalStateException.class)
+  @Test(dataProvider = "requestContactsBuilderDataProvider", expectedExceptions = IllegalStateException.class)
   public void testCollectionEntityNullIdParam(RootBuilderWrapper<Integer, GroupContact> builders) throws IOException, RestException
   {
     builders.get().setPathKey("groupId", null).id(1).build();
@@ -254,7 +254,7 @@ public class TestGroupsRequestBuilders
     checkRequestBuilder(request, ResourceMethod.BATCH_GET, BatchResponseDecoder.class, Group.class, expectedUri, null);
   }
 
-  @Test(dataProvider = "requestGroupsBuilder", expectedExceptions = IllegalArgumentException.class)
+  @Test(dataProvider = "requestGroupsBuilderDataProvider", expectedExceptions = IllegalArgumentException.class)
   public void testBatchGetWithSelectedNullValues(RootBuilderWrapper<Integer, Group> builders) throws IOException, RestException
   {
     // curl -v -X GET http://localhost:1338/groups/?fields=approvalModes&ids=1&ids&ids=3
@@ -314,7 +314,7 @@ public class TestGroupsRequestBuilders
     checkRequestBuilder(request, ResourceMethod.BATCH_GET, BatchResponseDecoder.class, GroupContact.class, expectedUri, null);
   }
 
-  @Test(dataProvider = "requestContactsBuilder", expectedExceptions = IllegalArgumentException.class)
+  @Test(dataProvider = "requestContactsBuilderDataProvider", expectedExceptions = IllegalArgumentException.class)
   public void testSubResourceBatchGetWithSelectedNullValues(RootBuilderWrapper<Integer, GroupContact> builders) throws IOException, RestException
   {
     // curl -v -X GET http://localhost:1338/groups/1/contacts/?ids=1&ids&ids=3

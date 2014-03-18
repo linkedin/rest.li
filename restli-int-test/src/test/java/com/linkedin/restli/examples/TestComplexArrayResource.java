@@ -96,7 +96,7 @@ public class TestComplexArrayResource  extends RestLiIntegrationTest
     REST_CLIENT.sendRequest(request).getResponse().getEntity();
   }
 
-  @Test
+  @Test(dataProvider = "requestBuilderDataProvider")
   public void testBatchGet(RootBuilderWrapper<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting> builders) throws RemoteInvocationException
   {
     LongArray singleton1 = new LongArray();
@@ -139,7 +139,7 @@ public class TestComplexArrayResource  extends RestLiIntegrationTest
     Assert.assertNotNull(greeting2);
   }
 
-  @Test
+  @Test(dataProvider = "requestBuilderDataProvider")
   public void testFinder(RootBuilderWrapper<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting> builders) throws RemoteInvocationException
   {
     LongArray singleton = new LongArray();
@@ -151,7 +151,7 @@ public class TestComplexArrayResource  extends RestLiIntegrationTest
     REST_CLIENT.sendRequest(request).getResponse().getEntity();
   }
 
-  @Test
+  @Test(dataProvider = "requestBuilderDataProvider")
   public void testAction(RootBuilderWrapper<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting> builders) throws RemoteInvocationException
   {
     LongArray singleton = new LongArray();

@@ -395,7 +395,7 @@ subprojects {
     workingDir = file(rootDir.toString())
   }
 
-  task makedir(type:Exec){
+  task makedir(type:Exec) {
     // gradle mkdir does not create dir with "-p" flag on so this is a generic task that takes -Ddirpath=..... parameter
     // Usage examples:
     // gradle makedir -Ddirpath=abc/xyz
@@ -410,4 +410,34 @@ subprojects {
     project.sourceCompatibility = 1.6
   }
 
+}
+
+final skippedTests = [:].withDefault {[]}
+project.gradle.addListener(new TestListener() {
+  @Override
+  void beforeSuite(TestDescriptor suite) {}
+
+  @Override
+  void afterSuite(TestDescriptor suite, TestResult result) {}
+
+  @Override
+  void beforeTest(TestDescriptor testDescriptor) {}
+
+  @Override
+  void afterTest(TestDescriptor testDescriptor, TestResult result) {
+    if (result.skippedTestCount > 0)
+    {
+      skippedTests[testDescriptor.className] << testDescriptor.name
+    }}
+})
+
+project.gradle.buildFinished { BuildResult result ->
+  if (skippedTests.size() > 0)
+  {
+    final StringBuilder msgBuilder = new StringBuilder("\nThe following tests should be executed but actually skipped. Please fix and try again.");
+    skippedTests.each { className, methods ->
+      msgBuilder.append("\nClass: ${className} , Methods: ${methods}")
+    }
+    throw new GradleException(msgBuilder.toString())
+  }
 }

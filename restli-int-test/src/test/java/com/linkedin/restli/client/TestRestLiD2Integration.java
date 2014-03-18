@@ -108,7 +108,7 @@ public class TestRestLiD2Integration extends RestLiIntegrationTest
     latch.await();
   }
 
-  @Test(dataProvider = "requestBuilderGreeting")
+  @Test(dataProvider = "requestGreetingBuilderDataProvider")
   public void testSuccessfulCall(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Request<Greeting> request = builders.get().id(1L).build();
@@ -119,7 +119,7 @@ public class TestRestLiD2Integration extends RestLiIntegrationTest
     Assert.assertEquals(future.getResponse().getHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION), AllProtocolVersions.BASELINE_PROTOCOL_VERSION.toString());
   }
 
-  @Test(dataProvider = "requestBuilderGroup")
+  @Test(dataProvider = "requestGroupBuilderDataProvider")
   public void testRemoteInvocationException(RootBuilderWrapper<Integer, Group> builders)
   {
     Request<Group> request = builders.get().id(1).build();
@@ -136,7 +136,7 @@ public class TestRestLiD2Integration extends RestLiIntegrationTest
     }
   }
 
-  @Test(dataProvider = "requestBuilderGroupMembership")
+  @Test(dataProvider = "requestGroupMembershipBuilderDataProvider")
   public void testServiceUnavailableException(RootBuilderWrapper<CompoundKey, GroupMembership> builders)
   {
     Request<GroupMembership> request = builders.get().id(new GroupMembershipsBuilders.Key().setMemberId(1).setGroupId(2)).build();
@@ -178,7 +178,7 @@ public class TestRestLiD2Integration extends RestLiIntegrationTest
   }
 
   @DataProvider
-  private static Object[][] requestBuilderGreetingProvider()
+  private static Object[][] requestGreetingBuilderDataProvider()
   {
     return new Object[][] {
       { new RootBuilderWrapper(new GreetingsBuilders()) },
@@ -187,7 +187,7 @@ public class TestRestLiD2Integration extends RestLiIntegrationTest
   }
 
   @DataProvider
-  private static Object[][] requestBuilderGroupProvider()
+  private static Object[][] requestGroupBuilderDataProvider()
   {
     return new Object[][] {
       { new RootBuilderWrapper(new GroupsBuilders()) },
@@ -196,7 +196,7 @@ public class TestRestLiD2Integration extends RestLiIntegrationTest
   }
 
   @DataProvider
-  private static Object[][] requestBuilderGroupMembershipProvider()
+  private static Object[][] requestGroupMembershipBuilderDataProvider()
   {
     return new Object[][] {
       { new RootBuilderWrapper(new GroupMembershipsBuilders()) },

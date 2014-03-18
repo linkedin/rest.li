@@ -1,6 +1,8 @@
 1.15.5
 ------
-
+(RB=276294)
+Use TestNG listener to fail skipped tests rather than ignoring them.
+Upgrade quickstart example to support Gradle 1.9+.
 
 1.15.4
 ------
