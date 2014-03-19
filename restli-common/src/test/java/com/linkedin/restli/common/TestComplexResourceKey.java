@@ -16,6 +16,9 @@
 
 package com.linkedin.restli.common;
 
+import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.data.template.RecordTemplate;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -120,6 +123,34 @@ public class TestComplexResourceKey
     catch (UnsupportedOperationException e)
     {
 
+    }
+  }
+
+  @Test
+  public void testKeySchema()
+  {
+    RecordDataSchema schema = (RecordDataSchema) DataTemplateUtil.parseSchema
+        (
+            "{ \"type\" : \"record\", \"name\" : \"omni\", \"fields\" : [ { \"name\" : \"int\", \"type\" : \"int\" } ] }"
+        );
+
+    TypeSpec<OmniRecord> keyType = new TypeSpec<OmniRecord>(OmniRecord.class, schema);
+    TypeSpec<OmniRecord> paramsType = new TypeSpec<OmniRecord>(OmniRecord.class, schema);
+    ComplexKeySpec<OmniRecord, OmniRecord> keySpec = new ComplexKeySpec<OmniRecord, OmniRecord>(keyType, paramsType);
+
+    DataMap data = new DataMap();
+    data.put("int", 1);
+
+    ComplexResourceKey<RecordTemplate, RecordTemplate> key = ComplexResourceKey.buildFromDataMap(data, keySpec);
+
+    Assert.assertEquals(key.getKey().schema(), schema);
+    Assert.assertEquals(key.getParams().schema(), schema);
+  }
+
+  public static class OmniRecord extends RecordTemplate {
+    public OmniRecord(DataMap map, RecordDataSchema schema)
+    {
+      super(map, schema);
     }
   }
 }

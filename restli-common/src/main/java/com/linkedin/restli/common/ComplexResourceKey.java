@@ -16,11 +16,9 @@
 
 package com.linkedin.restli.common;
 
-import java.net.URI;
-import java.util.List;
-import java.util.Map;
-
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.validation.CoercionMode;
 import com.linkedin.data.schema.validation.RequiredMode;
 import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
@@ -31,6 +29,12 @@ import com.linkedin.jersey.api.uri.UriComponent;
 import com.linkedin.restli.internal.common.PathSegment.PathSegmentSyntaxException;
 import com.linkedin.restli.internal.common.QueryParamsDataMap;
 import com.linkedin.restli.internal.common.URLEscaper.Escaping;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.net.URI;
+import java.util.List;
+import java.util.Map;
 
 /**
  * The class represents a resource key consisting of a RecordTemplate-derived
@@ -177,8 +181,8 @@ public final class ComplexResourceKey<K extends RecordTemplate, P extends Record
     {
       paramsDataMap = new DataMap();
     }
-    RecordTemplate key = validateDataMap(keyDataMap, complexKeyType.getKeyType().getType());
-    RecordTemplate params = validateDataMap(paramsDataMap, complexKeyType.getParamsType().getType());
+    RecordTemplate key = validateDataMap(keyDataMap, complexKeyType.getKeyType());
+    RecordTemplate params = validateDataMap(paramsDataMap, complexKeyType.getParamsType());
 
     return new ComplexResourceKey<RecordTemplate, RecordTemplate>(key, params);
   }
@@ -200,9 +204,9 @@ public final class ComplexResourceKey<K extends RecordTemplate, P extends Record
   }
 
   private static RecordTemplate validateDataMap(DataMap dataMap,
-                                                Class<? extends RecordTemplate> clazz)
+                                                TypeSpec<? extends RecordTemplate> spec)
   {
-    RecordTemplate recordTemplate = DataTemplateUtil.wrap(dataMap, clazz);
+    RecordTemplate recordTemplate = wrapWithSchema(dataMap, spec);
     // Validate against the class schema with FixupMode.STRING_TO_PRIMITIVE to parse the
     // strings into the
     // corresponding primitive types.
@@ -211,6 +215,35 @@ public final class ComplexResourceKey<K extends RecordTemplate, P extends Record
                                        new ValidationOptions(RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT,
                                                              CoercionMode.STRING_TO_PRIMITIVE));
     return recordTemplate;
+  }
+
+  private static RecordTemplate wrapWithSchema(DataMap dataMap, TypeSpec<? extends RecordTemplate> spec)
+  {
+    Class<? extends RecordTemplate> clazz = spec.getType();
+    DataSchema schema = spec.getSchema();
+
+    if (schema.getDereferencedType() == DataSchema.Type.RECORD)
+    {
+      try
+      {
+        Constructor<? extends RecordTemplate> constructor = clazz.getConstructor(DataMap.class, RecordDataSchema.class);
+        return constructor.newInstance(dataMap, (RecordDataSchema) schema);
+      }
+      catch (NoSuchMethodException ignored)
+      {
+      }
+      catch (InstantiationException ignored)
+      {
+      }
+      catch (IllegalAccessException ignored)
+      {
+      }
+      catch (InvocationTargetException ignored)
+      {
+      }
+    }
+
+    return DataTemplateUtil.wrap(dataMap, clazz);
   }
 
   /** @see java.lang.Object#hashCode() */
