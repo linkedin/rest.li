@@ -91,6 +91,7 @@ public class TestKeyValueRecord
   }
 
   @Test
+  @SuppressWarnings("rawtypes")
   public void testComplex()
   {
     KeyValueRecordFactory<ComplexResourceKey, RecordTemplateWithPrimitiveKey> factory =
@@ -164,6 +165,7 @@ public class TestKeyValueRecord
     testCompoundKey(compoundKey, fieldTypes);
   }
 
+  @SuppressWarnings("rawtypes")
   private void testCompoundKey(CompoundKey compoundKey, Map<String, CompoundKey.TypeInfo> fieldTypes)
   {
     RecordTemplateWithPrimitiveKey mockRecord = new RecordTemplateWithPrimitiveKey().setId(7L).setBody("foo");
@@ -182,7 +184,7 @@ public class TestKeyValueRecord
   }
 
   @Test
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   public void testTyperefToCustomType()
   {
     KeyValueRecordFactory factory = new KeyValueRecordFactory(MyCustomStringRef.class,

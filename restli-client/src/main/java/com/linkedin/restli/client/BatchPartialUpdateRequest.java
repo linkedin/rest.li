@@ -44,9 +44,9 @@ import java.util.Map;
 public class BatchPartialUpdateRequest<K, V extends RecordTemplate> extends
     com.linkedin.restli.client.BatchRequest<BatchKVResponse<K, UpdateStatus>>
 {
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   BatchPartialUpdateRequest(Map<String, String> headers,
-                            CollectionRequest<KeyValueRecord<K, PatchRequest>> entities,
+                            CollectionRequest<KeyValueRecord<K, PatchRequest<V>>> entities,
                             Map<String, Object> queryParams,
                             ResourceSpec resourceSpec,
                             String baseUriTemplate,
@@ -70,7 +70,7 @@ public class BatchPartialUpdateRequest<K, V extends RecordTemplate> extends
   /**
    * @deprecated Please use {@link #getInputRecord()} instead
    */
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   @Deprecated
   @Override
   public RecordTemplate getInput()

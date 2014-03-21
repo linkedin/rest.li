@@ -16,7 +16,7 @@
 
 package com.linkedin.d2.discovery.stores.zk;
 
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**

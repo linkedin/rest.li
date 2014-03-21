@@ -454,6 +454,7 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
@@ -463,6 +464,7 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   private static Object[][] requestSubBuilderDataProvider()
   {
     return new Object[][] {
@@ -472,6 +474,7 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   private static Object[][] requestSubSubBuilderDataProvider()
   {
     return new Object[][] {

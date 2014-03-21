@@ -42,17 +42,17 @@ public class TestDeprecated
   @Test
   public void testDeprecatedMethods() throws Exception
   {
-    Map<String, Class> fields = new HashMap<String, Class>();
+    Map<String, Class<?>> fields = new HashMap<String, Class<?>>();
     fields.put("DeprecatedInt", int.class);
     fields.put("Sample", int.class);
     fields.put("SampleTyperef", Double.class);
     fields.put("SampleEnum", DeprecatedEnum.class);
     fields.put("SampleFixed", DeprecatedFixed.class);
 
-    for(Map.Entry<String, Class> field: fields.entrySet())
+    for(Map.Entry<String, Class<?>> field: fields.entrySet())
     {
       String name = field.getKey();
-      Class type = field.getValue();
+      Class<?> type = field.getValue();
       Assert.assertNotNull(Deprecated.class.getMethod("get" + name).getAnnotation(java.lang.Deprecated.class));
       Assert.assertNotNull(Deprecated.class.getMethod("set" + name, type).getAnnotation(java.lang.Deprecated.class));
       Assert.assertNotNull(Deprecated.class.getMethod("has" + name).getAnnotation(java.lang.Deprecated.class));

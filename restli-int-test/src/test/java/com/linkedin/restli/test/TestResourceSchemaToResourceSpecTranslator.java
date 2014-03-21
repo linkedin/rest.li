@@ -224,7 +224,7 @@ public class TestResourceSchemaToResourceSpecTranslator
 
   }
 
-  public void compareTypes(TypeSpec actual, TypeSpec expected)
+  public void compareTypes(TypeSpec<?> actual, TypeSpec<?> expected)
   {
     if (expected != null)
     {
@@ -294,7 +294,7 @@ public class TestResourceSchemaToResourceSpecTranslator
     }
   }
 
-  public void compareComplexKey(ComplexKeySpec actualComplexKeyType, ComplexKeySpec expectedComplexKeyType)
+  public void compareComplexKey(ComplexKeySpec<?, ?> actualComplexKeyType, ComplexKeySpec<?, ?> expectedComplexKeyType)
   {
     if (expectedComplexKeyType == null && actualComplexKeyType == null) return;
     Assert.assertNotNull(expectedComplexKeyType);
@@ -333,6 +333,7 @@ public class TestResourceSchemaToResourceSpecTranslator
 
   private static class ExampleGeneratorClassBindingResolver implements ClassBindingResolver
   {
+    @SuppressWarnings("rawtypes")
     public Class<? extends DataTemplate> resolveTemplateClass(DataSchema schema)
     {
       switch(schema.getDereferencedType()) {
@@ -353,6 +354,7 @@ public class TestResourceSchemaToResourceSpecTranslator
       }
     }
 
+    @SuppressWarnings("rawtypes")
     public Class<? extends Enum> resolveEnumClass(EnumDataSchema enumDataSchema)
     {
       // placeholder for enum mapping, just hard coding the ones we care about for testing

@@ -78,7 +78,6 @@ public interface SimpleLoadBalancerStateJmxMBean
   /**
    * get what services are mapped to this cluster according to the state's internal mapping. Useful for debugging.
    * @param clusterName
-   * @return
    */
   String getInternalMappingServicesForClusterName(String clusterName);
 

@@ -833,6 +833,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   protected Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
@@ -850,6 +851,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   protected Object[][] requestBuilderWithOptionsDataProvider()
   {
     final RestliRequestOptions customRequestOptions =
@@ -879,6 +881,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   protected Object[][] requestBuilderWithResourceNameDataProvider()
   {
     return new Object[][] {

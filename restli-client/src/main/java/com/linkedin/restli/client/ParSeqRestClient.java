@@ -131,7 +131,7 @@ public class ParSeqRestClient
    * @param request the outgoing request
    * @return a task name
    */
-  private String generateTaskName(final Request request)
+  private String generateTaskName(final Request<?> request)
   {
     StringBuilder sb = new StringBuilder(request.getBaseUriTemplate());
     sb.append(" ");

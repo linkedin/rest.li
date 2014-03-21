@@ -325,6 +325,7 @@ public class TestClientBuilders
                                                            null,
                                                            getCompoundKeyFieldTypes(),
                                                            TestRecord.class);
+    @SuppressWarnings({"unchecked","rawtypes"})
     CollectionRequest<KeyValueRecord> collectionRequest = buildCollectionRequest(factory,
                                                                                  new CompoundKey[]{key1, key2},
                                                                                  new TestRecord[]{t1, t2});
@@ -366,12 +367,14 @@ public class TestClientBuilders
     expectedRequest.getEntities().put(key1.toString(), patch1);
     expectedRequest.getEntities().put(key2.toString(), patch2);
 
+    @SuppressWarnings({"unchecked","rawtypes"})
     KeyValueRecordFactory<CompoundKey, PatchRequest> factory =
         new KeyValueRecordFactory<CompoundKey, PatchRequest>(CompoundKey.class,
                                                              null,
                                                              null,
                                                              getCompoundKeyFieldTypes(),
                                                              PatchRequest.class);
+    @SuppressWarnings({"unchecked","rawtypes"})
     CollectionRequest<KeyValueRecord> collectionRequest = buildCollectionRequest(factory,
                                                                                  new CompoundKey[]{key1, key2},
                                                                                  new PatchRequest[]{patch1, patch2});
@@ -424,12 +427,14 @@ public class TestClientBuilders
     expectedRequest.getEntities().put("2", new TestRecord());
     expectedRequest.getEntities().put("3", new TestRecord());
 
+    @SuppressWarnings({"unchecked","rawtypes"})
     KeyValueRecordFactory<Long, TestRecord> factory =
         new KeyValueRecordFactory<Long, TestRecord>(Long.class,
                                                     null,
                                                     null,
                                                     null,
                                                     TestRecord.class);
+    @SuppressWarnings({"unchecked","rawtypes"})
     CollectionRequest<KeyValueRecord> collectionRequest =
         buildCollectionRequest(factory,
                                new Long[]{1L, 2L, 3L},
@@ -920,12 +925,14 @@ public class TestClientBuilders
     Assert.assertTrue(request.isIdempotent());
     Assert.assertFalse(request.isSafe());
 
+    @SuppressWarnings({"unchecked","rawtypes"})
     KeyValueRecordFactory<ComplexResourceKey, TestRecord> factory =
         new KeyValueRecordFactory<ComplexResourceKey, TestRecord>(ComplexResourceKey.class,
                                                                   TestRecord.class,
                                                                   TestRecord.class,
                                                                   null,
                                                                   TestRecord.class);
+    @SuppressWarnings({"unchecked","rawtypes"})
     CollectionRequest<KeyValueRecord> collectionRequest = buildCollectionRequest(factory,
                                                                                  new ComplexResourceKey[]{id1, id2},
                                                                                  new TestRecord[]{t1, t2});
@@ -1012,12 +1019,14 @@ public class TestClientBuilders
     batchRequest.getEntities().put(key1.toStringFull(), patch1);
     batchRequest.getEntities().put(key2.toStringFull(), patch2);
 
+    @SuppressWarnings({"unchecked","rawtypes"})
     KeyValueRecordFactory<ComplexResourceKey, PatchRequest> factory =
         new KeyValueRecordFactory<ComplexResourceKey, PatchRequest>(ComplexResourceKey.class,
                                                                     TestRecord.class,
                                                                     TestRecord.class,
                                                                     null,
                                                                     PatchRequest.class);
+    @SuppressWarnings({"unchecked","rawtypes"})
     CollectionRequest<KeyValueRecord> collectionRequest = buildCollectionRequest(factory,
                                                                                  new ComplexResourceKey[]{key1, key2},
                                                                                  new PatchRequest[]{patch1, patch2});
@@ -1071,7 +1080,7 @@ public class TestClientBuilders
     ResourceSpec resourceSpec = new ResourceSpecImpl(Collections.<ResourceMethod>emptySet(), requestMetadataMap, responseMetadataMap);
 
     
-    Request request;
+    Request<?> request;
     String[] expectedResourcePath = new String[] {"foo", "bar", "baz"};
 
     request = new ActionRequestBuilder<Void, TestRecord>(SUBRESOURCE_URI, TestRecord.class, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS)
@@ -1214,7 +1223,7 @@ public class TestClientBuilders
   @Test
   public void testCrudBuilderParams()
   {
-    Request request;
+    Request<?> request;
 
     request = new CreateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .setParam("foo", "bar").build();
@@ -1277,7 +1286,7 @@ public class TestClientBuilders
   @Test
   public void testParamEncoding()
   {
-    GetRequest request = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+    GetRequest<?> request = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .id(3L).setParam("foo", "bar&baz=qux").build();
     testUriGeneration(request, "test/3?foo=bar%26baz%3Dqux");
 
@@ -1371,7 +1380,7 @@ public class TestClientBuilders
    * template.
    */
   @SuppressWarnings("deprecation")
-  private void testPathKeys(Request request,
+  private void testPathKeys(Request<?> request,
                             String[] expectedResourcePath,
                             String expectedBaseUriTemplate,
                             Map<String, ?> expectedPathKeys)
@@ -1388,14 +1397,14 @@ public class TestClientBuilders
    * @param expectedUri
    */
   @SuppressWarnings("deprecation")
-  private void testUriGeneration(Request request, String expectedUri)
+  private void testUriGeneration(Request<?> request, String expectedUri)
   {
     Assert.assertEquals(RestliUriBuilderUtil.createUriBuilder(request).build(), URI.create(expectedUri));
     Assert.assertEquals(request.getUri().toString(), expectedUri);
   }
 
   @SuppressWarnings("deprecation")
-  private void testBaseUriGeneration(Request request)
+  private void testBaseUriGeneration(Request<?> request)
   {
     URI expectedBaseUri = URI.create(TEST_URI);
     Assert.assertEquals(RestliUriBuilderUtil.createUriBuilder(request).buildBaseUri(), expectedBaseUri);
@@ -1442,8 +1451,8 @@ public class TestClientBuilders
   private void checkBasicRequest(Request<?> request,
                                  String expectedUri,
                                  ResourceMethod expectedMethod,
-                                 CollectionRequest expectedInput,
-                                 BatchRequest expectedBatchInput,
+                                 CollectionRequest<?> expectedInput,
+                                 BatchRequest<?> expectedBatchInput,
                                  Map<String, String> expectedHeaders)
   {
     checkBasicRequest(request, expectedUri, expectedMethod, expectedInput, expectedHeaders);
@@ -1478,8 +1487,8 @@ public class TestClientBuilders
    * @param request
    * @param expectedInput
    */
-  @SuppressWarnings("unchecked")
-  private void checkInputForBatchUpdateAndPatch(Request request, RecordTemplate expectedInput)
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  private void checkInputForBatchUpdateAndPatch(Request<?> request, RecordTemplate expectedInput)
   {
     Assert.assertEquals(CollectionRequestUtil.convertToBatchRequest((CollectionRequest<KeyValueRecord>) request.getInputRecord(),
                                                                     request.getResourceSpec().getKeyClass(),
@@ -1496,7 +1505,7 @@ public class TestClientBuilders
    * @param objectIds the ids as objects
    */
   @SuppressWarnings("deprecation")
-  private void testIdsForBatchRequest(com.linkedin.restli.client.BatchRequest batchRequest, Set<?> objectIds)
+  private void testIdsForBatchRequest(com.linkedin.restli.client.BatchRequest<?> batchRequest, Set<?> objectIds)
   {
     Assert.assertEquals(batchRequest.getObjectIds(), objectIds);
 
@@ -1515,7 +1524,7 @@ public class TestClientBuilders
    * @param expectedId
    */
   @SuppressWarnings("deprecation")
-  private void testIdForGetRequest(GetRequest request, Object expectedId)
+  private void testIdForGetRequest(GetRequest<?> request, Object expectedId)
   {
     Assert.assertEquals(request.getObjectId(), expectedId);
     if (expectedId == null)
@@ -1534,7 +1543,7 @@ public class TestClientBuilders
    * @param expectedInput
    */
   @SuppressWarnings("deprecation")
-  private void testInput(Request request, RecordTemplate expectedInput)
+  private void testInput(Request<?> request, RecordTemplate expectedInput)
   {
     Assert.assertEquals(request.getInputRecord(), expectedInput);
     Assert.assertEquals(request.getInput(), expectedInput);
@@ -1547,8 +1556,8 @@ public class TestClientBuilders
    * @param values
    * @param <K>
    * @param <V>
-   * @return
    */
+  @SuppressWarnings({"unchecked", "rawtypes"})
   private <K, V extends RecordTemplate> CollectionRequest<KeyValueRecord> buildCollectionRequest(KeyValueRecordFactory<K, V> factory,
                                                                                                  K[] keys,
                                                                                                  V[] values)

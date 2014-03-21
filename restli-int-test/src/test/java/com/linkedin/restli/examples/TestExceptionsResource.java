@@ -215,6 +215,7 @@ public class TestExceptionsResource extends RestLiIntegrationTest
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   public Object[][] exceptionHandlingModesDataProvider()
   {
     return new Object[][] {
@@ -228,6 +229,7 @@ public class TestExceptionsResource extends RestLiIntegrationTest
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {

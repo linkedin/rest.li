@@ -559,13 +559,14 @@ public class TestGroupsRequestBuilders
   }
 
   @SuppressWarnings("deprecation")
-  private static void testInput(Request request, RecordTemplate expectedInput)
+  private static void testInput(Request<?> request, RecordTemplate expectedInput)
   {
     assertEquals(request.getInputRecord(), expectedInput);
     assertEquals(request.getInput(), expectedInput);
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   private static Object[][] requestGroupsBuilderDataProvider()
   {
     return new Object[][] {
@@ -575,6 +576,7 @@ public class TestGroupsRequestBuilders
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   private static Object[][] requestContactsBuilderDataProvider()
   {
     return new Object[][] {
@@ -584,6 +586,7 @@ public class TestGroupsRequestBuilders
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   private static Object[][] requestMembershipsBuilderDataProvider()
   {
     return new Object[][] {
@@ -593,6 +596,7 @@ public class TestGroupsRequestBuilders
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   private static Object[][] requestSpecialBuilderDataProvider()
   {
     return new Object[][] {

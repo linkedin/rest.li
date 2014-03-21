@@ -586,6 +586,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   private static Object[][] requestGroupsBuilderDataProvider()
   {
     return new Object[][] {
@@ -595,6 +596,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   private static Object[][] requestMembershipsBuilderDataProvider()
   {
     return new Object[][] {
@@ -604,6 +606,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   private static Object[][] requestGroupsAndMembershipsBuilderDataProvider()
   {
     return new Object[][] {
@@ -615,6 +618,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   private static Object[][] requestComplexBuilderDataProvider()
   {
     return new Object[][] {

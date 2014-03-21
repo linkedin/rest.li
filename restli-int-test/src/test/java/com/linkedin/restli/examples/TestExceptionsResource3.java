@@ -171,6 +171,7 @@ public class TestExceptionsResource3 extends RestLiIntegrationTest
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   public Object[][] exceptionHandlingModesDataProvider()
   {
     return new Object[][] {

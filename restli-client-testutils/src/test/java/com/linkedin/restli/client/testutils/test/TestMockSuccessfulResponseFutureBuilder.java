@@ -44,6 +44,7 @@ public class TestMockSuccessfulResponseFutureBuilder
   }
 
   @Test
+  @SuppressWarnings("rawtypes")
   public void testBuildIllegalStatus()
   {
     MockSuccessfulResponseFutureBuilder builder = new MockSuccessfulResponseFutureBuilder();

@@ -81,11 +81,12 @@ public class ComplexKeySpec<KK extends RecordTemplate, KP extends RecordTemplate
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public boolean equals(Object o)
   {
     if (this == o) return true;
     if (!(o instanceof ComplexKeySpec)) return false;
-    ComplexKeySpec that = (ComplexKeySpec) o;
+    ComplexKeySpec<KK, KP> that = (ComplexKeySpec<KK, KP>) o;
     if (!_keyType.equals(that._keyType)) return false;
     if (_paramsType != null ? !_paramsType.equals(that._paramsType) : that._paramsType != null) return false;
 

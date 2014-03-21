@@ -78,7 +78,10 @@ public class ResourceSchemaToResourceSpecTranslator
    */
   public interface ClassBindingResolver
   {
+    @SuppressWarnings("rawtypes")
     Class<? extends DataTemplate> resolveTemplateClass(DataSchema dataSchema);
+
+    @SuppressWarnings("rawtypes")
     Class<? extends Enum> resolveEnumClass(EnumDataSchema dataSchema);
   }
 
@@ -126,6 +129,7 @@ public class ResourceSchemaToResourceSpecTranslator
     }
   }
 
+  @SuppressWarnings({"unchecked", "rawtypes"})
   private ResourceSpec collectionToResourceSpec(ResourceSchema resourceSchema, CollectionSchema collection)
   {
     ActionSchemaArray actions = null, entityActions = null;
@@ -155,7 +159,7 @@ public class ResourceSchemaToResourceSpecTranslator
     {
       DataSchema keyKeyType = RestSpecCodec.textToSchema(identifier.getType(), _schemaResolver);
       DataSchema keyParamsType = RestSpecCodec.textToSchema(identifier.getParams(), _schemaResolver);
-      ComplexKeySpec complexKeyType = toComplexKey(keyKeyType, keyParamsType);
+      ComplexKeySpec<?, ?> complexKeyType = toComplexKey(keyKeyType, keyParamsType);
       return buildResourceSpec(supports,
                                new TypeSpec<ComplexResourceKey>(ComplexResourceKey.class, null),
                                complexKeyType,
@@ -233,7 +237,7 @@ public class ResourceSchemaToResourceSpecTranslator
 
   private ResourceSpec buildResourceSpec(StringArray supports,
                                          TypeSpec<?> key,
-                                         ComplexKeySpec complexKeyType,
+                                         ComplexKeySpec<?, ?> complexKeyType,
                                          Map<String, ?> keyParts,
                                          String entitySchemaString,
                                          ActionSchemaArray actions,
@@ -316,7 +320,7 @@ public class ResourceSchemaToResourceSpecTranslator
     return new ActionCollectionMetadata(request, response);
   }
 
-  @SuppressWarnings("unchecked") // this is dynamic, don't have concrete classes for the FieldDef
+  @SuppressWarnings({"unchecked", "rawtypes"}) // this is dynamic, don't have concrete classes for the FieldDef
   private ActionMetadata toActionMetadata(ActionSchema action)
   {
     ArrayList<FieldDef<?>> fieldDefs = new ArrayList<FieldDef<?>>();
@@ -349,7 +353,7 @@ public class ResourceSchemaToResourceSpecTranslator
                               new DynamicRecordMetadata(action.getName(), response));
   }
 
-  @SuppressWarnings("unchecked") // this is dynamic, don't have concrete classes for the TypeSpec
+  @SuppressWarnings({"unchecked", "rawtypes"}) // this is dynamic, don't have concrete classes for the TypeSpec
   private TypeSpec<?> toTypeSpec(DataSchema schema)
   {
     return new TypeSpec(toType(schema), schema.getDereferencedDataSchema());
@@ -373,8 +377,8 @@ public class ResourceSchemaToResourceSpecTranslator
     }
   }
 
-  @SuppressWarnings("unchecked") // this is dynamic, don't have concrete classes for the TypeSpec
-  public ComplexKeySpec toComplexKey(DataSchema keyDataSchema, DataSchema paramsDataSchema)
+  @SuppressWarnings({"unchecked", "rawtypes"}) // this is dynamic, don't have concrete classes for the TypeSpec
+  public ComplexKeySpec<?, ?> toComplexKey(DataSchema keyDataSchema, DataSchema paramsDataSchema)
   {
     TypeSpec<? extends RecordTemplate> complexKeyKey = toRecordTemplateType(keyDataSchema);
     TypeSpec<? extends RecordTemplate> complexKeyParams = toRecordTemplateType(paramsDataSchema);
@@ -386,7 +390,7 @@ public class ResourceSchemaToResourceSpecTranslator
     return toRecordTemplateType(schema);
   }
 
-  @SuppressWarnings("unchecked") // this is dynamic, don't have concrete classes for the TypeSpec
+  @SuppressWarnings({"unchecked", "rawtypes"}) // this is dynamic, don't have concrete classes for the TypeSpec
   private TypeSpec<? extends RecordTemplate> toRecordTemplateType(DataSchema schema)
   {
     if(schema == null) return null;

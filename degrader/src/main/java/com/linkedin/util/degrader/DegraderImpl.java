@@ -470,8 +470,6 @@ public class DegraderImpl implements Degrader
    * We only consider this type of exception for degrading trackerClient. Other errors maybe legitimate
    * so we don't want to punish the server for exceptions that the server is not responsible for e.g.
    * bad user input, frameTooLongException, etc.
-   *
-   * @return
    */
   private double getErrorRateToDegrade()
   {

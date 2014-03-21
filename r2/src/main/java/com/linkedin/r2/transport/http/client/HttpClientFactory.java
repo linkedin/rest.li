@@ -445,7 +445,6 @@ public class HttpClientFactory implements TransportClientFactory
    *
    * @param newValue
    * @param defaultValue
-   * @return
    */
   private <T> T chooseNewOverDefault(T newValue, T defaultValue)
   {

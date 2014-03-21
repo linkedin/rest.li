@@ -40,7 +40,7 @@ public interface ResourceSpec
    */
   Class<?> getKeyClass();
 
-  TypeSpec getKeyType();
+  TypeSpec<?> getKeyType();
 
   /**
    * @return the RecordTemplate that the Resource Manages

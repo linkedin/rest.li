@@ -271,9 +271,8 @@ public class RestClient
 
   /**
    * @param request
-   * @return
    */
-  private ProtocolVersion getProtocolVersionForService(final Request request)
+  private ProtocolVersion getProtocolVersionForService(final Request<?> request)
   {
     try
     {
@@ -351,9 +350,8 @@ public class RestClient
    * @param request
    * @param version
    * @param <T>
-   * @return
    */
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   private <T> DataMap getInputData(Request<T> request, ProtocolVersion version)
   {
     ResourceSpec resourceSpec = request.getResourceSpec();

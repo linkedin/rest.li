@@ -47,6 +47,7 @@ public class TestCollectionRequestUtil
     TestRecord testRecord = buildTestRecord(1L, "message");
     KeyValueRecord<Long, TestRecord> kvRecord = factory.create(1L, testRecord);
 
+    @SuppressWarnings("rawtypes")
     CollectionRequest<KeyValueRecord> collectionRequest = new CollectionRequest<KeyValueRecord>(KeyValueRecord.class);
     collectionRequest.getElements().add(kvRecord);
 
@@ -68,11 +69,13 @@ public class TestCollectionRequestUtil
   @Test
   public void testPrimitiveKeyMultipleEntities()
   {
+    @SuppressWarnings("rawtypes")
     KeyValueRecordFactory<Long, TestRecord> factory = new KeyValueRecordFactory<Long, TestRecord>(Long.class,
                                                                                                   null,
                                                                                                   null,
                                                                                                   null,
                                                                                                   TestRecord.class);
+    @SuppressWarnings("rawtypes")
     CollectionRequest<KeyValueRecord> collectionRequest = new CollectionRequest<KeyValueRecord>(KeyValueRecord.class);
 
     Map<Long, TestRecord> inputs = new HashMap<Long, TestRecord>();
@@ -115,12 +118,14 @@ public class TestCollectionRequestUtil
     fieldTypes.put(key1, new CompoundKey.TypeInfo(Long.class, Long.class));
     fieldTypes.put(key2, new CompoundKey.TypeInfo(Long.class, Long.class));
 
+    @SuppressWarnings("rawtypes")
     KeyValueRecordFactory<CompoundKey, TestRecord> factory =
         new KeyValueRecordFactory<CompoundKey, TestRecord>(CompoundKey.class,
                                                            null,
                                                            null,
                                                            fieldTypes,
                                                            TestRecord.class);
+    @SuppressWarnings("rawtypes")
     CollectionRequest<KeyValueRecord> collectionRequest = new CollectionRequest<KeyValueRecord>(KeyValueRecord.class);
 
     Map<CompoundKey, TestRecord> inputs = new HashMap<CompoundKey, TestRecord>();
@@ -150,7 +155,7 @@ public class TestCollectionRequestUtil
   }
 
   @Test
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   public void testComplexKeyMultipleEntities()
   {
     // TestRecord is not keyed by a ComplexResourceKey, but for this test we pretend that it is.
@@ -179,7 +184,7 @@ public class TestCollectionRequestUtil
       collectionRequest.getElements().add(factory.create(key, testRecord));
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     BatchRequest<TestRecord> batchRequest =
         CollectionRequestUtil.convertToBatchRequest(collectionRequest,
                                                     ComplexResourceKey.class,

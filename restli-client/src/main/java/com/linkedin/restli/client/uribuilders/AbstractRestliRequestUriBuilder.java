@@ -40,7 +40,7 @@ import java.util.Map;
  *
  * @author kparikh
  */
-abstract class AbstractRestliRequestUriBuilder<R extends Request> implements RestliUriBuilder
+abstract class AbstractRestliRequestUriBuilder<R extends Request<?>> implements RestliUriBuilder
 {
   protected final R _request;
   protected final ProtocolVersion _version;

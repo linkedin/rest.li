@@ -26,9 +26,9 @@ import java.net.URI;
 /**
  * @author kparikh
  */
-class BatchDeleteRequestUriBuilder extends AbstractRestliRequestUriBuilder<BatchDeleteRequest>
+class BatchDeleteRequestUriBuilder extends AbstractRestliRequestUriBuilder<BatchDeleteRequest<?, ?>>
 {
-  BatchDeleteRequestUriBuilder(BatchDeleteRequest request, String uriPrefix, ProtocolVersion version)
+  BatchDeleteRequestUriBuilder(BatchDeleteRequest<?, ?> request, String uriPrefix, ProtocolVersion version)
   {
     super(request, uriPrefix, version);
   }

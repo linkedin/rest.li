@@ -26,9 +26,9 @@ import java.net.URI;
 /**
  * @author kparikh
  */
-class FindRequestUriBuilder extends AbstractRestliRequestUriBuilder<FindRequest>
+class FindRequestUriBuilder extends AbstractRestliRequestUriBuilder<FindRequest<?>>
 {
-  FindRequestUriBuilder(FindRequest request, String uriPrefix, ProtocolVersion version)
+  FindRequestUriBuilder(FindRequest<?> request, String uriPrefix, ProtocolVersion version)
   {
     super(request, uriPrefix, version, request.getAssocKey());
   }

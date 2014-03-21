@@ -26,9 +26,9 @@ import java.net.URI;
 /**
  * @author kparikh
  */
-class BatchPartialUpdateRequestUriBuilder extends AbstractRestliRequestUriBuilder<BatchPartialUpdateRequest>
+class BatchPartialUpdateRequestUriBuilder extends AbstractRestliRequestUriBuilder<BatchPartialUpdateRequest<?, ?>>
 {
-  BatchPartialUpdateRequestUriBuilder(BatchPartialUpdateRequest request, String uriPrefix, ProtocolVersion version)
+  BatchPartialUpdateRequestUriBuilder(BatchPartialUpdateRequest<?, ?> request, String uriPrefix, ProtocolVersion version)
   {
     super(request, uriPrefix, version);
   }

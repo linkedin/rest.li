@@ -136,7 +136,6 @@ public class ClientCompressionFilter implements Filter, RestFilter
    * Converts a comma separated list of operations into a set of Strings representing the operations for which we want
    * response compression to be turned on
    * @param responseCompressionOperations
-   * @return
    */
   private void buildResponseCompressionMethodsAndFamiliesSet(List<String> responseCompressionOperations)
   {
@@ -232,7 +231,6 @@ public class ClientCompressionFilter implements Filter, RestFilter
   /**
    * Check if the operation should be compressed
    * @param operation
-   * @return
    */
   private boolean shouldCompress(String operation)
   {
@@ -244,7 +242,6 @@ public class ClientCompressionFilter implements Filter, RestFilter
   /**
    * Checks if the operation is a member of a family for which we have turned response compression on.
    * @param operation
-   * @return
    */
   private boolean isMemberOfCompressionFamily(String operation)
   {

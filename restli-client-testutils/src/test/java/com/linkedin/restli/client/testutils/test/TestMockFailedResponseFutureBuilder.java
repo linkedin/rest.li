@@ -35,6 +35,7 @@ import org.testng.annotations.Test;
 public class TestMockFailedResponseFutureBuilder
 {
   @Test
+  @SuppressWarnings("rawtypes")
   public void testBuildIllegalStatus()
   {
     MockFailedResponseFutureBuilder builder = new MockFailedResponseFutureBuilder();

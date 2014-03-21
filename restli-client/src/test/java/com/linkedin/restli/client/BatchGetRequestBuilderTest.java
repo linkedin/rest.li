@@ -498,14 +498,14 @@ public class BatchGetRequestBuilderTest
   }
 
   @SuppressWarnings("deprecation")
-  private void testUriGeneration(BatchGetRequest request, String expectedUri)
+  private void testUriGeneration(BatchGetRequest<?> request, String expectedUri)
   {
     Assert.assertEquals(RestliUriBuilderUtil.createUriBuilder(request).build().toString(), expectedUri);
     Assert.assertEquals(request.getUri().toString(), expectedUri);
   }
 
   @SuppressWarnings("deprecation")
-  private void checkObjectIds(BatchRequest request, Set<?> expectedIds, boolean isComplexKey)
+  private void checkObjectIds(BatchRequest<?> request, Set<?> expectedIds, boolean isComplexKey)
   {
     Assert.assertEquals(request.getObjectIds(), expectedIds);
     if (isComplexKey)

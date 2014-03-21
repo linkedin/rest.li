@@ -98,6 +98,7 @@ public class TestCompressionServer extends RestLiIntegrationTest
 
   //Returns a combination of all possible request/response compression combinations
   @DataProvider
+  @SuppressWarnings("rawtypes")
   public Object[][] ClientsCompressedResponsesDataProvider()
   {
     // sample compression operation config
@@ -128,6 +129,7 @@ public class TestCompressionServer extends RestLiIntegrationTest
    * Provides clients with no response compression
    */
   @DataProvider
+  @SuppressWarnings("rawtypes")
   public Object[][] clientsNoCompressedResponsesDataProvider()
   {
     // need separate TransportClientAdapter for shutdown test

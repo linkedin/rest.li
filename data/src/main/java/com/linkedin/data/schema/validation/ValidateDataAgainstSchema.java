@@ -76,12 +76,12 @@ public final class ValidateDataAgainstSchema
     }
   };
 
-  public static ValidationResult validate(DataTemplate dataTemplate, ValidationOptions options)
+  public static ValidationResult validate(DataTemplate<?> dataTemplate, ValidationOptions options)
   {
     return validate(dataTemplate, options, null);
   }
 
-  public static ValidationResult validate(DataTemplate dataTemplate, ValidationOptions options, Validator validator)
+  public static ValidationResult validate(DataTemplate<?> dataTemplate, ValidationOptions options, Validator validator)
   {
     if(dataTemplate.schema() == null)
     {

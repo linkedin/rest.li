@@ -42,12 +42,12 @@ import com.linkedin.restli.internal.common.AllProtocolVersions;
  */
 public class RestliUriBuilderUtil
 {
-  public static RestliUriBuilder createUriBuilder(Request request)
+  public static RestliUriBuilder createUriBuilder(Request<?> request)
   {
     return createUriBuilder(request, "", AllProtocolVersions.BASELINE_PROTOCOL_VERSION);
   }
 
-  public static RestliUriBuilder createUriBuilder(Request request, String uriPrefix)
+  public static RestliUriBuilder createUriBuilder(Request<?> request, String uriPrefix)
   {
     return createUriBuilder(request, uriPrefix, AllProtocolVersions.BASELINE_PROTOCOL_VERSION);
   }
@@ -59,7 +59,7 @@ public class RestliUriBuilderUtil
    * @param version which version of the Rest.li protocol to use when building the URI
    * @return a {@link RestliUriBuilder} for the input {@code request}
    */
-  public static RestliUriBuilder createUriBuilder(Request request, String uriPrefix, ProtocolVersion version)
+  public static RestliUriBuilder createUriBuilder(Request<?> request, String uriPrefix, ProtocolVersion version)
   {
     switch (request.getMethod())
     {

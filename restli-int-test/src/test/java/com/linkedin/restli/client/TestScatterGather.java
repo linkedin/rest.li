@@ -209,7 +209,7 @@ public class TestScatterGather extends RestLiIntegrationTest
     Assert.assertEquals(requestIds.size(), ids.length);
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   private static void testRequest(BatchRequest<?> request,
                                   Set<String> expectedParams,
                                   Set<String> expectedFields,
@@ -631,6 +631,7 @@ public class TestScatterGather extends RestLiIntegrationTest
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {

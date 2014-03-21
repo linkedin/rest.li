@@ -58,6 +58,7 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   public Object[][] clientDataDataProvider()
   {
     return new Object[][]
@@ -72,6 +73,7 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {

@@ -376,6 +376,7 @@ public class TestRestClientRequestBuilder
       };
   }
 
+  @SuppressWarnings("rawtypes")
   private void setCommonExpectations(Request mockRequest,
                                      ResourceMethod method,
                                      RecordTemplate mockRecordTemplate,
@@ -392,6 +393,7 @@ public class TestRestClientRequestBuilder
     EasyMock.expect(mockRequest.getRequestOptions()).andReturn(RestliRequestOptions.DEFAULT_OPTIONS).once();
   }
 
+  @SuppressWarnings("rawtypes")
   private void buildInputForBatchPathAndUpdate(Request mockRequest)
   {
     CollectionRequest mockCollectionRequest = EasyMock.createMock(CollectionRequest.class);
@@ -409,7 +411,7 @@ public class TestRestClientRequestBuilder
     EasyMock.expect(mockRequest.getResourceSpec()).andReturn(resourceSpec).once();
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   private <T extends Request> RestRequest clientGeneratedRequest(Class<T> requestClass,
                                                                  ResourceMethod method,
                                                                  DataMap entityBody,

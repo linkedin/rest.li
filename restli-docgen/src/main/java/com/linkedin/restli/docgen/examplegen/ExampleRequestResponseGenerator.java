@@ -475,7 +475,7 @@ public class ExampleRequestResponseGenerator
     return buildRequestResponse(request, result, buildResourceMethodDescriptorForRestMethod(request));
   }
 
-  private ExampleRequestResponse buildRequestResponse(Request request, Object responseEntity, ResourceMethodDescriptor method)
+  private ExampleRequestResponse buildRequestResponse(Request<?> request, Object responseEntity, ResourceMethodDescriptor method)
   {
     RestRequest restRequest = buildRequest(request);
     RestResponse restResponse = buildResponse(responseEntity, method, restRequest);
@@ -483,7 +483,7 @@ public class ExampleRequestResponseGenerator
   }
 
   @SuppressWarnings("unchecked")
-  private RestRequest buildRequest(Request request)
+  private RestRequest buildRequest(Request<?> request)
   {
     ProtocolVersion protocolVersion;
     switch(_requestOptions.getProtocolVersionOption())
@@ -617,7 +617,7 @@ public class ExampleRequestResponseGenerator
   }
 
   @SuppressWarnings("unchecked")
-  private ActionRequest buildActionRequest(ActionSchema action, ResourceLevel resourceLevel)
+  private ActionRequest<?> buildActionRequest(ActionSchema action, ResourceLevel resourceLevel)
   {
     DynamicRecordMetadata requestParamsMetadata = _resourceSpec.getRequestMetadata(action.getName());
     DynamicRecordMetadata responseMetadata = _resourceSpec.getActionResponseMetadata(action.getName());
@@ -655,7 +655,7 @@ public class ExampleRequestResponseGenerator
     return request.build();
   }
 
-  private ActionResult buildActionResult(ActionSchema actionSchema)
+  private ActionResult<?> buildActionResult(ActionSchema actionSchema)
   {
     DynamicRecordMetadata returnsMetadata = _resourceSpec.getActionResponseMetadata(actionSchema.getName());
     if (actionSchema.hasReturns())
@@ -683,7 +683,7 @@ public class ExampleRequestResponseGenerator
                                                     null);
   }
 
-  private static ResourceMethodDescriptor buildResourceMethodDescriptorForRestMethod(Request request)
+  private static ResourceMethodDescriptor buildResourceMethodDescriptorForRestMethod(Request<?> request)
   {
     return ResourceMethodDescriptor.createForRestful(request.getMethod(), null, null);
   }
@@ -698,14 +698,14 @@ public class ExampleRequestResponseGenerator
                                                     null);
   }
 
-  private void addParams(RestfulRequestBuilder builder, ResourceMethod method)
+  private void addParams(RestfulRequestBuilder<?, ?, ?> builder, ResourceMethod method)
   {
     RestMethodSchema methodSchema = _resourceSchema.getMethod(method.toString().toLowerCase());
     ParameterSchemaArray parameters = methodSchema.getParameters();
     addParams(builder, parameters);
   }
 
-  private void addPathKeys(AbstractRequestBuilder builder)
+  private void addPathKeys(AbstractRequestBuilder<?, ?, ?> builder)
   {
     for (Map.Entry<ResourceSchema, ResourceSpec> entry : _parentResources.entrySet())
     {
@@ -742,7 +742,7 @@ public class ExampleRequestResponseGenerator
     }
   }
 
-  private void addParams(RestfulRequestBuilder builder, ParameterSchemaArray parameters)
+  private void addParams(RestfulRequestBuilder<?, ?, ?> builder, ParameterSchemaArray parameters)
   {
     if (parameters != null)
     {
@@ -902,6 +902,7 @@ public class ExampleRequestResponseGenerator
 
   private static class ExampleGeneratorClassBindingResolver implements ClassBindingResolver
   {
+    @SuppressWarnings("rawtypes")
     public Class<? extends DataTemplate> resolveTemplateClass(DataSchema schema)
     {
       switch(schema.getDereferencedType())
@@ -923,6 +924,7 @@ public class ExampleRequestResponseGenerator
       }
     }
 
+    @SuppressWarnings("rawtypes")
     public Class<? extends Enum> resolveEnumClass(EnumDataSchema enumDataSchema)
     {
       // Using Enum.class here triggers dynamic coercion of strings to enums.

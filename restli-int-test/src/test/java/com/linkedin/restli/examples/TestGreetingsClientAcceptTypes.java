@@ -57,6 +57,7 @@ public class TestGreetingsClientAcceptTypes extends RestLiIntegrationTest
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   public Object[][] clientDataDataProvider()
   {
     return new Object[][]

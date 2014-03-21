@@ -596,7 +596,6 @@ public class ZKFSLoadBalancer
 
   /**
    * Only for testing
-   * @return
    */
   ZKConnection zkConnection()
   {

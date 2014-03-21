@@ -39,9 +39,10 @@ import java.util.Map;
  */
 public class CollectionRequestUtil
 {
+  @SuppressWarnings({"unchecked", "rawtypes"})
   public static <V extends RecordTemplate> BatchRequest<V> convertToBatchRequest(CollectionRequest<KeyValueRecord> elementList,
                                                                                  TypeSpec<?> keyType,
-                                                                                 ComplexKeySpec complexKeyType,
+                                                                                 ComplexKeySpec<?, ?> complexKeyType,
                                                                                  Map<String, CompoundKey.TypeInfo> keyParts,
                                                                                  TypeSpec<V> valueType)
   {
@@ -63,7 +64,7 @@ public class CollectionRequestUtil
    * @param <V>
    * @return a data map with one key, "entities". "entities" maps to another data map (as in the old body encoding)
    */
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   public static <V extends RecordTemplate> BatchRequest<V> convertToBatchRequest(CollectionRequest<KeyValueRecord> elementList,
                                                                                  Class<?> keyClass,
                                                                                  Class<? extends RecordTemplate> keyKeyClass,
@@ -90,7 +91,7 @@ public class CollectionRequestUtil
    * @param <V>
    * @return a data map with one key, "entities". "entities" maps to another data map (as in the old body encoding)
    */
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   public static <V extends RecordTemplate> BatchRequest<V> convertToBatchRequest(CollectionRequest<KeyValueRecord> elementList,
                                                                                 TypeSpec<?> keyType,
                                                                                 ComplexKeySpec<?, ?> complexKeyType,

@@ -75,6 +75,7 @@ public class MockBatchKVResponseFactory
    * @param <V>
    * @return
    */
+  @SuppressWarnings("rawtypes")
   public static <KK extends RecordTemplate, KP extends RecordTemplate, V extends RecordTemplate> BatchKVResponse<ComplexResourceKey, V> createWithComplexKey
       (Class<V> valueClass,
        Class<KK> keyKeyClass,
@@ -124,7 +125,7 @@ public class MockBatchKVResponseFactory
    * @param <V>
    * @return
    */
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   public static <K, TK, V extends RecordTemplate> BatchKVResponse<K, V> createWithCustomTyperefKey(Class<K> keyClass,
                                                                                                    Class<TK> typerefClass,
                                                                                                    Class<V> valueClass,

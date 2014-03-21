@@ -26,9 +26,9 @@ import java.net.URI;
 /**
  * @author kparikh
  */
-public class UpdateRequestUriBuilder extends AbstractRestliRequestUriBuilder<UpdateRequest>
+public class UpdateRequestUriBuilder extends AbstractRestliRequestUriBuilder<UpdateRequest<?>>
 {
-  UpdateRequestUriBuilder(UpdateRequest request, String uriPrefix, ProtocolVersion version)
+  UpdateRequestUriBuilder(UpdateRequest<?> request, String uriPrefix, ProtocolVersion version)
   {
     super(request, uriPrefix, version);
   }
@@ -36,7 +36,7 @@ public class UpdateRequestUriBuilder extends AbstractRestliRequestUriBuilder<Upd
   @Override
   public URI build()
   {
-    UpdateRequest updateRequest = getRequest();
+    UpdateRequest<?> updateRequest = getRequest();
     UriBuilder b = UriBuilder.fromUri(buildBaseUriWithPrefix());
     appendKeyToPath(b, updateRequest.getId());
     appendQueryParams(b);

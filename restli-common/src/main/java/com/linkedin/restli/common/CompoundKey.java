@@ -56,7 +56,7 @@ public class CompoundKey
     // declared type is potentially a typeref to a primitive, otherwise it is a primitive
     private final TypeSpec<?> _declaredType;
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public TypeInfo(Class<?> bindingClass, Class<?> declaredClass)
     {
       this(new TypeSpec(bindingClass), new TypeSpec(declaredClass));

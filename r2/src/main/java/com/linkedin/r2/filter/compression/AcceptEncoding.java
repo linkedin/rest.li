@@ -64,7 +64,6 @@ public class AcceptEncoding implements Comparable<AcceptEncoding>
    * the parsed string. Throws IllegalArgumentException
    * if something not supported or not recognized shows up.
    * @param acceptCompression
-   * @return
    */
   public static EncodingType[] parseAcceptEncoding(String acceptCompression)
   {

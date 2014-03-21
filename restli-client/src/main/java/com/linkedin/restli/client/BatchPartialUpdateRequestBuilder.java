@@ -38,8 +38,8 @@ import java.util.Map;
 public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> extends
     RestfulRequestBuilder<K, V, BatchPartialUpdateRequest<K, V>>
 {
-  private final CollectionRequest<KeyValueRecord<K, PatchRequest>> _entities;
-  private final KeyValueRecordFactory<K, PatchRequest> _keyValueRecordFactory;
+  private final CollectionRequest<KeyValueRecord<K, PatchRequest<V>>> _entities;
+  private final KeyValueRecordFactory<K, PatchRequest<V>> _keyValueRecordFactory;
 
   @Deprecated
   public BatchPartialUpdateRequestBuilder(String baseUriTemplate,
@@ -49,7 +49,7 @@ public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> exten
     this(baseUriTemplate, valueClass, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   public BatchPartialUpdateRequestBuilder(String baseUriTemplate,
                                           Class<V> valueClass,
                                           ResourceSpec resourceSpec,
@@ -78,7 +78,7 @@ public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> exten
     for (Map.Entry<K, PatchRequest<V>> entry : patches.entrySet())
     {
       K key = entry.getKey();
-      PatchRequest value = entry.getValue();
+      PatchRequest<V> value = entry.getValue();
       _entities.getElements().add(_keyValueRecordFactory.create(key, value));
     }
     return this;

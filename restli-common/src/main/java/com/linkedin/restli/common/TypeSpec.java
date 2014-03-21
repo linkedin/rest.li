@@ -109,12 +109,13 @@ public class TypeSpec<T>
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public boolean equals(Object o)
   {
     if (this == o) return true;
 
     if (!(o instanceof TypeSpec)) return false;
-    TypeSpec typeSpec = (TypeSpec) o;
+    TypeSpec<T> typeSpec = (TypeSpec<T>) o;
     if (!_type.equals(typeSpec._type)) return false;
     if (_schema != null ? !_schema.equals(typeSpec._schema) : typeSpec._schema != null) return false;
 

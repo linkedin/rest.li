@@ -26,9 +26,9 @@ import java.net.URI;
 /**
  * @author kparikh
  */
-public class BatchGetKVRequestUriBuilder extends AbstractRestliRequestUriBuilder<BatchGetKVRequest>
+public class BatchGetKVRequestUriBuilder extends AbstractRestliRequestUriBuilder<BatchGetKVRequest<?, ?>>
 {
-  public BatchGetKVRequestUriBuilder(BatchGetKVRequest request, String uriPrefix, ProtocolVersion version)
+  public BatchGetKVRequestUriBuilder(BatchGetKVRequest<?, ?> request, String uriPrefix, ProtocolVersion version)
   {
     super(request, uriPrefix, version);
   }

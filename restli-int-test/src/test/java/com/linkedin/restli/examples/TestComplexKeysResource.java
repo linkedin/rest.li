@@ -470,6 +470,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
@@ -479,6 +480,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   private static Object[][] requestSubBuilderDataProvider()
   {
     return new Object[][] {
@@ -488,6 +490,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   private static Object[][] requestAnnotatedBuilderDataProvider()
   {
     return new Object[][] {

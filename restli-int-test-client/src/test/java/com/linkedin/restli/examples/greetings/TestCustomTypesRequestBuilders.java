@@ -172,6 +172,7 @@ public class TestCustomTypesRequestBuilders
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   private static Object[][] request1BuilderDataProvider()
   {
     return new Object[][] {
@@ -181,6 +182,7 @@ public class TestCustomTypesRequestBuilders
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   private static Object[][] request2BuilderDataProvider()
   {
     return new Object[][] {
@@ -190,6 +192,7 @@ public class TestCustomTypesRequestBuilders
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   private static Object[][] request3BuilderDataProvider()
   {
     return new Object[][] {
@@ -199,6 +202,7 @@ public class TestCustomTypesRequestBuilders
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   private static Object[][] request4BuilderDataProvider()
   {
     return new Object[][] {

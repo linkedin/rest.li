@@ -42,6 +42,7 @@ public class TestGreetingsRequestBuilders
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {

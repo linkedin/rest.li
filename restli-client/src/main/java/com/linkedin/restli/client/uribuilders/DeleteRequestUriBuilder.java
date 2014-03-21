@@ -26,9 +26,9 @@ import java.net.URI;
 /**
  * @author kparikh
  */
-class DeleteRequestUriBuilder extends AbstractRestliRequestUriBuilder<DeleteRequest>
+class DeleteRequestUriBuilder extends AbstractRestliRequestUriBuilder<DeleteRequest<?>>
 {
-  DeleteRequestUriBuilder(DeleteRequest request, String uriPrefix, ProtocolVersion version)
+  DeleteRequestUriBuilder(DeleteRequest<?> request, String uriPrefix, ProtocolVersion version)
   {
     super(request, uriPrefix, version);
   }
@@ -36,7 +36,7 @@ class DeleteRequestUriBuilder extends AbstractRestliRequestUriBuilder<DeleteRequ
   @Override
   public URI build()
   {
-    DeleteRequest deleteRequest = getRequest();
+    DeleteRequest<?> deleteRequest = getRequest();
     UriBuilder b = UriBuilder.fromUri(buildBaseUriWithPrefix());
     appendKeyToPath(b, deleteRequest.getId());
     appendQueryParams(b);

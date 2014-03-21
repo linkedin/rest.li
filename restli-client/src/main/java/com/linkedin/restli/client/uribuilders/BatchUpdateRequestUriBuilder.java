@@ -26,9 +26,9 @@ import java.net.URI;
 /**
  * @author kparikh
  */
-class BatchUpdateRequestUriBuilder extends AbstractRestliRequestUriBuilder<BatchUpdateRequest>
+class BatchUpdateRequestUriBuilder extends AbstractRestliRequestUriBuilder<BatchUpdateRequest<?, ?>>
 {
-  BatchUpdateRequestUriBuilder(BatchUpdateRequest request, String uriPrefix, ProtocolVersion version)
+  BatchUpdateRequestUriBuilder(BatchUpdateRequest<?, ?> request, String uriPrefix, ProtocolVersion version)
   {
     super(request, uriPrefix, version);
   }

@@ -119,6 +119,7 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
       return invoke(getMethod("ids", Collection.class), ids);
     }
 
+    @SuppressWarnings("unchecked")
     public MethodBuilderWrapper<K, V, R> ids(K... ids)
     {
       return invoke(getMethod("ids", Object[].class), (Object) ids);

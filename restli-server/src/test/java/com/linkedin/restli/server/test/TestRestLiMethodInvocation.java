@@ -3578,7 +3578,7 @@ public class TestRestLiMethodInvocation
     return callback;
   }
 
-  @SuppressWarnings({"rawtypes"})
+  @SuppressWarnings("rawtypes")
   private void checkAsyncInvocation(BaseResource resource,
                                     RestLiCallback callback,
                                     ResourceMethodDescriptor methodDescriptor,
@@ -3597,6 +3597,7 @@ public class TestRestLiMethodInvocation
 
   }
 
+  @SuppressWarnings("rawtypes")
   private void checkAsyncInvocation(BaseResource resource,
                                     RestLiCallback callback,
                                     ResourceMethodDescriptor methodDescriptor,

@@ -26,9 +26,9 @@ import java.net.URI;
 /**
  * @author kparikh
  */
-class PartialUpdateRequestUriBuilder extends AbstractRestliRequestUriBuilder<PartialUpdateRequest>
+class PartialUpdateRequestUriBuilder extends AbstractRestliRequestUriBuilder<PartialUpdateRequest<?>>
 {
-  PartialUpdateRequestUriBuilder(PartialUpdateRequest request, String uriPrefix, ProtocolVersion version)
+  PartialUpdateRequestUriBuilder(PartialUpdateRequest<?> request, String uriPrefix, ProtocolVersion version)
   {
     super(request, uriPrefix, version);
   }
@@ -36,7 +36,7 @@ class PartialUpdateRequestUriBuilder extends AbstractRestliRequestUriBuilder<Par
   @Override
   public URI build()
   {
-    PartialUpdateRequest partialUpdateRequest = getRequest();
+    PartialUpdateRequest<?> partialUpdateRequest = getRequest();
     UriBuilder b = UriBuilder.fromUri(buildBaseUriWithPrefix());
     appendKeyToPath(b, partialUpdateRequest.getId());
     appendQueryParams(b);

@@ -116,6 +116,7 @@ public class TestRequestObjectOverrides
   }
   
   @Test(dataProvider = "data")
+  @SuppressWarnings({"rawtypes"})
   public void testEqualsAndHashCode(Request request1, Request request2, boolean areEqual)
   {
     if (areEqual)
@@ -518,7 +519,7 @@ public class TestRequestObjectOverrides
     data.add(Arrays.asList(newConsRequest1, request1, false));
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   private void addPartialUpdateRequestData(List<List<Object>> data)
       throws URISyntaxException
   {
@@ -694,7 +695,7 @@ public class TestRequestObjectOverrides
     data.add(Arrays.asList(request1, newConsRequest1, false));
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   private void addRequestData(List<List<Object>> data)
   {
     // NOTE: the arguments to the Request constructor here might not make sense. The point is to verify that the equals

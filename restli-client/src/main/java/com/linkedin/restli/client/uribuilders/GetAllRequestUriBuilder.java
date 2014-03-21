@@ -26,9 +26,9 @@ import java.net.URI;
 /**
  * @author kparikh
  */
-class GetAllRequestUriBuilder extends AbstractRestliRequestUriBuilder<GetAllRequest>
+class GetAllRequestUriBuilder extends AbstractRestliRequestUriBuilder<GetAllRequest<?>>
 {
-  GetAllRequestUriBuilder(GetAllRequest request, String uriPrefix, ProtocolVersion version)
+  GetAllRequestUriBuilder(GetAllRequest<?> request, String uriPrefix, ProtocolVersion version)
   {
     super(request, uriPrefix, version, request.getAssocKey());
   }

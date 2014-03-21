@@ -108,7 +108,6 @@ public interface PoolStats
 
   /**
    * Return a string which represents the pool stats
-   * @return
    */
   String toString();
 }

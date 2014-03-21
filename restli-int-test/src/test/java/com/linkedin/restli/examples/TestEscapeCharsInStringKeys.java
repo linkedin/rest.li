@@ -185,6 +185,7 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   private static Object[][] requestStringKeysBuilderDataProvider()
   {
     return new Object[][] {
@@ -194,6 +195,7 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   private static Object[][] requestStringKeysSubBuilderDataProvider()
   {
     return new Object[][] {
@@ -203,6 +205,7 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   private static Object[][] requestAssociationsSubBuilderDataProvider()
   {
     return new Object[][] {
@@ -212,6 +215,7 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   private static Object[][] requestComplexKeysBuilderDataProvider()
   {
     return new Object[][] {
@@ -221,6 +225,7 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   private static Object[][] requestActionBuilderDataProvider()
   {
     return new Object[][] {

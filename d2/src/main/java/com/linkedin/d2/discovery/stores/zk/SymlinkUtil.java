@@ -25,7 +25,7 @@ public class SymlinkUtil
   public static final char SYMLINK_PREFIX = '$';
 
   /**
-   * return the index to split the first symlink out of {@param path}.
+   * return the index to split the first symlink out of param path.
    *
    * If no symlink is found, -1 is returned.
    *

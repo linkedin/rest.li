@@ -308,7 +308,7 @@ public class ResourceSpecImpl implements ResourceSpec
   }
 
   @Override
-  public TypeSpec getKeyType()
+  public TypeSpec<?> getKeyType()
   {
     return _keyType;
   }

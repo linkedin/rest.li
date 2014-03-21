@@ -178,6 +178,7 @@ public class TestRestLiD2Integration extends RestLiIntegrationTest
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   private static Object[][] requestGreetingBuilderDataProvider()
   {
     return new Object[][] {
@@ -187,6 +188,7 @@ public class TestRestLiD2Integration extends RestLiIntegrationTest
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   private static Object[][] requestGroupBuilderDataProvider()
   {
     return new Object[][] {
@@ -196,6 +198,7 @@ public class TestRestLiD2Integration extends RestLiIntegrationTest
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   private static Object[][] requestGroupMembershipBuilderDataProvider()
   {
     return new Object[][] {

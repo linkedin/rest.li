@@ -120,6 +120,7 @@ public class TestMockBatchKVResponseFactory
   }
 
   @Test
+  @SuppressWarnings("rawtypes")
   public void testComplexKey()
   {
     Map<ComplexResourceKey<Greeting, Greeting>, Greeting> recordTemplates =

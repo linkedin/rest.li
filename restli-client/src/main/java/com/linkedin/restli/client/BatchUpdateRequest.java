@@ -46,7 +46,7 @@ public class BatchUpdateRequest<K, V extends RecordTemplate>
 {
   private final Map<K, V> _updateInputMap;
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   BatchUpdateRequest(Map<String, String> headers,
                      CollectionRequest<KeyValueRecord<K, V>> entities,
                      Map<String, Object> queryParams,
@@ -74,7 +74,7 @@ public class BatchUpdateRequest<K, V extends RecordTemplate>
   /**
    * @deprecated Please use {@link #getInputRecord()} instead
    */
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   @Deprecated
   @Override
   public RecordTemplate getInput()
@@ -97,7 +97,6 @@ public class BatchUpdateRequest<K, V extends RecordTemplate>
 
   /**
    * @deprecated Please use {@link com.linkedin.restli.client.uribuilders.RestliUriBuilder#buildBaseUri()} instead
-   * @return
    */
   @Deprecated
   public URI getBaseURI()

@@ -923,7 +923,7 @@ public final class RestLiAnnotationReader
     }
     Optional optional = annotations.get(Optional.class);
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     Parameter<?> param = new Parameter("",
                                        paramType,
                                        null,
@@ -945,7 +945,7 @@ public final class RestLiAnnotationReader
 
     Optional optional = annotations.get(Optional.class);
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     Parameter<?> param = new Parameter("",
                                        paramType,
                                        null,
@@ -966,7 +966,7 @@ public final class RestLiAnnotationReader
     }
     Optional optional = annotations.get(Optional.class);
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     Parameter<?> param = new Parameter("",
                                        paramType,
                                        null,
@@ -990,7 +990,7 @@ public final class RestLiAnnotationReader
     Optional optional = annotations.get(Optional.class);
     PagingContext defaultContext =
         new PagingContext(context.defaultStart(), context.defaultCount(), false, false);
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     Parameter<?> param =
         new Parameter("",
                       paramType,
@@ -1012,7 +1012,7 @@ public final class RestLiAnnotationReader
     Class<? extends TyperefInfo> typerefInfoClass = assocKey.typeref();
     try
     {
-      @SuppressWarnings("unchecked")
+      @SuppressWarnings({"unchecked", "rawtypes"})
       Parameter<?> param =
           new Parameter(assocKey.value(),
                         paramType,
@@ -1036,6 +1036,7 @@ public final class RestLiAnnotationReader
     }
   }
 
+  @SuppressWarnings({"unchecked", "rawtypes"})
   private static Parameter buildActionParam(final Method method,
                                             final AnnotationSet annotations,
                                             final Class<?> paramType)
@@ -1046,7 +1047,6 @@ public final class RestLiAnnotationReader
     Class<? extends TyperefInfo> typerefInfoClass = actionParam.typeref();
     try
     {
-      @SuppressWarnings("unchecked")
       Parameter param =
           new Parameter(paramName,
                         paramType,
@@ -1128,7 +1128,7 @@ public final class RestLiAnnotationReader
     Class<? extends TyperefInfo> typerefInfoClass = queryParam.typeref();
     try
     {
-      @SuppressWarnings("unchecked")
+      @SuppressWarnings({"unchecked", "rawtypes"})
       Parameter<?> param =
           new Parameter(queryParam.value(),
                         paramType,

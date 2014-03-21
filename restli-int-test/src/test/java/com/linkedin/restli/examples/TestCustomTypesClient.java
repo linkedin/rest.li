@@ -300,6 +300,7 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
@@ -309,6 +310,7 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   private static Object[][] request2BuilderDataProvider()
   {
     return new Object[][] {
@@ -318,6 +320,7 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   private static Object[][] request3BuilderDataProvider()
   {
     return new Object[][] {
@@ -327,6 +330,7 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   private static Object[][] request4BuilderDataProvider()
   {
     return new Object[][] {
@@ -336,6 +340,7 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
   }
 
   @DataProvider
+  @SuppressWarnings("rawtypes")
   private static Object[][] requestChainedTyperefsBuilderDataProvider()
   {
     return new Object[][] {
