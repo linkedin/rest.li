@@ -93,7 +93,21 @@ allprojects {
   apply plugin: 'idea'
 
   tasks.withType(Compile).all { Compile compile ->
-    compile.options.compilerArgs = ['-Xlint', '-Xlint:-path', '-Xlint:-static', '-Werror' ]
+
+    if(!project.sourceCompatibility.isJava6Compatible()) // lower bound of java versions we support.
+    {
+      throw new GradleScriptException("Pegasus required Java 6 or later to build, current version: ${JavaVersion.current()}", null)
+    }
+    else if(project.sourceCompatibility.isJava8Compatible()) // upper bound of java versions we test build against.  We still want to support them, but we don't fail on warnings.
+    {
+      // '-Werror' intentionally removed for these java versions since we don't yet test build them.
+      compile.options.compilerArgs = ['-Xlint', '-Xlint:-path', '-Xlint:-static']
+    }
+    else
+    {
+      // for all supported versions that we test build, fail the build if any compilation warnings are reported
+      compile.options.compilerArgs = ['-Xlint', '-Xlint:-path', '-Xlint:-static', '-Werror' ]
+    }
   }
 }
 
@@ -104,8 +118,6 @@ task wrapper(type: Wrapper) {
 subprojects {
   apply plugin: 'java'
   apply plugin: 'eclipse'
-
-  sourceCompatibility = JavaVersion.VERSION_1_6
 
   // generate Rest.li 2 request builders
   it.ext['rest.client.restli2'] = true
@@ -405,11 +417,6 @@ subprojects {
       workingDir = file(rootDir.toString())
     }
   }
-
-  plugins.withType(JavaPlugin) {
-    project.sourceCompatibility = 1.6
-  }
-
 }
 
 final skippedTests = [:].withDefault {[]}
