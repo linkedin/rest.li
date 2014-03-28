@@ -28,8 +28,6 @@ public interface RestConstants
   int DEFAULT_START = 0;
   int DEFAULT_COUNT = 10;
 
-  String HEADER_RESTLI_TYPE = "X-RestLi-Type"; // replacement for X-LinkedIn-Type, which has been removed
-  String HEADER_RESTLI_SUB_TYPE = "X-RestLi-Sub-Type"; // replacment for X-LinkedIn-Sub-Type, which has been removed
   String HEADER_RESTLI_REQUEST_METHOD = "X-RestLi-Method";
   String HEADER_LINKEDIN_ERROR_RESPONSE = "X-LinkedIn-Error-Response"; // we are deprecating all X-Linkedin header prefixes and replacing them with X-RestLi
   String HEADER_RESTLI_ERROR_RESPONSE = "X-RestLi-Error-Response"; // replacement for X-LinkedIn-Error-Response for when it is removed

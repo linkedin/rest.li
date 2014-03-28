@@ -52,9 +52,6 @@ public class ActionResponseBuilder implements RestLiResponseBuilder
       status = HttpStatus.S_200_OK;
     }
 
-    headers.put(RestConstants.HEADER_RESTLI_TYPE, ActionResponse.class.getName());
-    headers.put(RestConstants.HEADER_RESTLI_SUB_TYPE, value.getClass().getName());
-
     RecordDataSchema actionReturnRecordDataSchema = routingResult.getResourceMethod().getActionReturnRecordDataSchema();
     @SuppressWarnings("unchecked")
     FieldDef<Object> actionReturnFieldDef = (FieldDef<Object>)routingResult.getResourceMethod().getActionReturnFieldDef();

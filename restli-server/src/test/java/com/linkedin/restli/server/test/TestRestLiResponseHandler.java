@@ -206,7 +206,7 @@ public class TestRestLiResponseHandler
     // #1 simple record template
     response = invokeResponseHandler("/test", buildStatusRecord(), ResourceMethod.GET, acceptTypeData.acceptHeaders, protocolVersion);
 
-    checkResponse(response, 200, 3, acceptTypeData.responseContentType, Status.class.getName(), null, true, errorResponseHeaderName);
+    checkResponse(response, 200, 2, acceptTypeData.responseContentType, Status.class.getName(), null, true, errorResponseHeaderName);
     assertEquals(response.getEntity().asAvroString(), expectedStatus);
 
     // #2 create (with id)
@@ -269,7 +269,7 @@ public class TestRestLiResponseHandler
     map.put(2L, buildStatusRecord());
     map.put(3L, buildStatusRecord());
     response = invokeResponseHandler("/test", map, ResourceMethod.BATCH_GET, acceptTypeData.acceptHeaders, protocolVersion);
-    checkResponse(response, 200, 4, acceptTypeData.responseContentType, BatchResponse.class.getName(), Status.class.getName(), true, errorResponseHeaderName);
+    checkResponse(response, 200, 2, acceptTypeData.responseContentType, BatchResponse.class.getName(), Status.class.getName(), true, errorResponseHeaderName);
 
     Map<Long, UpdateResponse> updateStatusMap = new HashMap<Long, UpdateResponse>();
     updateStatusMap.put(1L, new UpdateResponse(HttpStatus.S_204_NO_CONTENT));
@@ -277,13 +277,13 @@ public class TestRestLiResponseHandler
     updateStatusMap.put(3L, new UpdateResponse(HttpStatus.S_204_NO_CONTENT));
     BatchUpdateResult<Long, Status> batchUpdateResult = new BatchUpdateResult<Long, Status>(updateStatusMap);
     response = invokeResponseHandler("/test", batchUpdateResult, ResourceMethod.BATCH_UPDATE, acceptTypeData.acceptHeaders, protocolVersion);
-    checkResponse(response, 200, 4, acceptTypeData.responseContentType, BatchResponse.class.getName(), UpdateStatus.class.getName(), true, errorResponseHeaderName);
+    checkResponse(response, 200, 2, acceptTypeData.responseContentType, BatchResponse.class.getName(), UpdateStatus.class.getName(), true, errorResponseHeaderName);
 
     response = invokeResponseHandler("/test", batchUpdateResult, ResourceMethod.BATCH_PARTIAL_UPDATE, acceptTypeData.acceptHeaders, protocolVersion);
-    checkResponse(response, 200, 4, acceptTypeData.responseContentType, BatchResponse.class.getName(), UpdateStatus.class.getName(), true, errorResponseHeaderName);
+    checkResponse(response, 200, 2, acceptTypeData.responseContentType, BatchResponse.class.getName(), UpdateStatus.class.getName(), true, errorResponseHeaderName);
 
     response = invokeResponseHandler("/test", batchUpdateResult, ResourceMethod.BATCH_DELETE, acceptTypeData.acceptHeaders, protocolVersion);
-    checkResponse(response, 200, 4, acceptTypeData.responseContentType, BatchResponse.class.getName(), UpdateStatus.class.getName(), true, errorResponseHeaderName);
+    checkResponse(response, 200, 2, acceptTypeData.responseContentType, BatchResponse.class.getName(), UpdateStatus.class.getName(), true, errorResponseHeaderName);
 
     List<CreateResponse> createResponses = new ArrayList<CreateResponse>();
     createResponses.add(new CreateResponse("42", HttpStatus.S_204_NO_CONTENT));
@@ -292,7 +292,7 @@ public class TestRestLiResponseHandler
     BatchCreateResult<Long, Status> batchCreateResult = new BatchCreateResult<Long, Status>(createResponses);
 
     response = invokeResponseHandler("/test", batchCreateResult, ResourceMethod.BATCH_CREATE, acceptTypeData.acceptHeaders, protocolVersion); // here
-    checkResponse(response, 200, 4, acceptTypeData.responseContentType, CollectionResponse.class.getName(), CreateStatus.class.getName(), true, errorResponseHeaderName);
+    checkResponse(response, 200, 2, acceptTypeData.responseContentType, CollectionResponse.class.getName(), CreateStatus.class.getName(), true, errorResponseHeaderName);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "basicData")
@@ -311,7 +311,7 @@ public class TestRestLiResponseHandler
     response = _responseHandler.buildResponse(buildRequest(acceptTypeData.acceptHeaders, protocolVersion),
                                               new RoutingResult(context, methodDescriptor),
                                               buildStatusList(3));
-    checkResponse(response, 200, 4, acceptTypeData.responseContentType, CollectionResponse.class.getName(), Status.class.getName(), true, errorResponseHeaderName);
+    checkResponse(response, 200, 2, acceptTypeData.responseContentType, CollectionResponse.class.getName(), Status.class.getName(), true, errorResponseHeaderName);
 
     String baseUri = "/test?someParam=foo";
 
@@ -496,7 +496,7 @@ public class TestRestLiResponseHandler
                                               buildRoutingResultAction(Status.class, request, acceptTypeData.acceptHeaders),
                                               buildStatusRecord());
 
-    checkResponse(response, 200, 4, acceptTypeData.responseContentType, ActionResponse.class.getName(), Status.class.getName(), true, errorResponseHeaderName);
+    checkResponse(response, 200, 2, acceptTypeData.responseContentType, ActionResponse.class.getName(), Status.class.getName(), true, errorResponseHeaderName);
     assertEquals(response.getEntity().asAvroString(), response1);
 
     // #2 DataTemplate response
@@ -507,7 +507,7 @@ public class TestRestLiResponseHandler
                                               buildRoutingResultAction(StringMap.class, request, acceptTypeData.acceptHeaders),
                                               map);
 
-    checkResponse(response, 200, 4, acceptTypeData.responseContentType, ActionResponse.class.getName(), StringMap.class.getName(), true, errorResponseHeaderName);
+    checkResponse(response, 200, 2, acceptTypeData.responseContentType, ActionResponse.class.getName(), StringMap.class.getName(), true, errorResponseHeaderName);
     String actual = response.getEntity().asAvroString();
     assertEquals(actual, response2);
 
@@ -535,7 +535,7 @@ public class TestRestLiResponseHandler
                                               buildRoutingResult(request, acceptTypeData.acceptHeaders),
                                               ex);
 
-    checkResponse(response, 400, 4, acceptTypeData.responseContentType, ErrorResponse.class.getName(), null, true, true, errorResponseHeaderName);
+    checkResponse(response, 400, 3, acceptTypeData.responseContentType, ErrorResponse.class.getName(), null, true, true, errorResponseHeaderName);
     DataMap dataMap = acceptTypeData.dataCodec.readMap(response.getEntity().asInputStream());
 
     assertEquals(dataMap.getInteger("status"), Integer.valueOf(400));
@@ -547,7 +547,7 @@ public class TestRestLiResponseHandler
                                               buildRoutingResult(request, acceptTypeData.acceptHeaders),
                                               ex);
 
-    checkResponse(response, 400, 4, acceptTypeData.responseContentType, ErrorResponse.class.getName(), null, true, true, errorResponseHeaderName);
+    checkResponse(response, 400, 3, acceptTypeData.responseContentType, ErrorResponse.class.getName(), null, true, true, errorResponseHeaderName);
     dataMap = acceptTypeData.dataCodec.readMap(response.getEntity().asInputStream());
 
     assertEquals(dataMap.getInteger("status"), Integer.valueOf(400));
@@ -570,7 +570,7 @@ public class TestRestLiResponseHandler
                                               buildRoutingResult(request1, acceptTypeData.acceptHeaders),
                                               status);
 
-    checkResponse(response, 200, 3, acceptTypeData.responseContentType, Status.class.getName(), null, true, errorResponseHeaderName);
+    checkResponse(response, 200, 2, acceptTypeData.responseContentType, Status.class.getName(), null, true, errorResponseHeaderName);
     checkProjectedFields(response, new String[] {"f1", "f2", "f3"}, new String[0]);
 
     // #2 some fields
@@ -580,7 +580,7 @@ public class TestRestLiResponseHandler
                                               status);
     assertTrue(status.data().containsKey("f2"));
 
-    checkResponse(response, 200, 3, acceptTypeData.responseContentType, Status.class.getName(), null, true, errorResponseHeaderName);
+    checkResponse(response, 200, 2, acceptTypeData.responseContentType, Status.class.getName(), null, true, errorResponseHeaderName);
     checkProjectedFields(response, new String[] {"f1", "f3"}, new String[] {"f2"});
 
     // #3 no fields
@@ -589,7 +589,7 @@ public class TestRestLiResponseHandler
                                               buildRoutingResult(request3, acceptTypeData.acceptHeaders),
                                               status);
 
-    checkResponse(response, 200, 3, acceptTypeData.responseContentType, Status.class.getName(), null, true, errorResponseHeaderName);
+    checkResponse(response, 200, 2, acceptTypeData.responseContentType, Status.class.getName(), null, true, errorResponseHeaderName);
     checkProjectedFields(response, new String[]{}, new String[]{"f1", "f2", "f3"});
     assertTrue(status.data().containsKey("f1"));
     assertTrue(status.data().containsKey("f2"));
@@ -601,7 +601,7 @@ public class TestRestLiResponseHandler
                                               buildRoutingResult(request4, acceptTypeData.acceptHeaders),
                                               status);
 
-    checkResponse(response, 200, 3, acceptTypeData.responseContentType, Status.class.getName(), null, true, errorResponseHeaderName);
+    checkResponse(response, 200, 2, acceptTypeData.responseContentType, Status.class.getName(), null, true, errorResponseHeaderName);
     checkProjectedFields(response, new String[] {"f1"}, new String[] {"f2", "f3", "f99"});
     assertTrue(status.data().containsKey("f2"));
     assertTrue(status.data().containsKey("f3"));
@@ -630,7 +630,7 @@ public class TestRestLiResponseHandler
                                               buildRoutingResult(request1, acceptTypeData.acceptHeaders),
                                               status);
 
-    checkResponse(response, 200, 3, acceptTypeData.responseContentType, Status.class.getName(), null, true, errorResponseHeaderName);
+    checkResponse(response, 200, 2, acceptTypeData.responseContentType, Status.class.getName(), null, true, errorResponseHeaderName);
     checkProjectedFields(response, new String[] {"f1", "f2", "f3"}, new String[0]);
 
     // #2 some fields
@@ -640,7 +640,7 @@ public class TestRestLiResponseHandler
                                               status);
     assertTrue(status.data().containsKey("f2"));
 
-    checkResponse(response, 200, 3, acceptTypeData.responseContentType, Status.class.getName(), null, true, errorResponseHeaderName);
+    checkResponse(response, 200, 2, acceptTypeData.responseContentType, Status.class.getName(), null, true, errorResponseHeaderName);
     checkProjectedFields(response, new String[] {"f1", "f2", "f3"}, new String[] {"f4"});
 
     // #3 no fields
@@ -649,7 +649,7 @@ public class TestRestLiResponseHandler
                                               buildRoutingResult(request3, acceptTypeData.acceptHeaders),
                                               status);
 
-    checkResponse(response, 200, 3, acceptTypeData.responseContentType, Status.class.getName(), null, true, errorResponseHeaderName);
+    checkResponse(response, 200, 2, acceptTypeData.responseContentType, Status.class.getName(), null, true, errorResponseHeaderName);
     checkProjectedFields(response, new String[]{}, new String[]{"f1", "f2", "f3", "f4"});
     assertTrue(status.data().containsKey("f1"));
     assertTrue(status.data().containsKey("f2"));
@@ -660,7 +660,7 @@ public class TestRestLiResponseHandler
                                               buildRoutingResult(request4, acceptTypeData.acceptHeaders),
                                               status);
 
-    checkResponse(response, 200, 3, acceptTypeData.responseContentType, Status.class.getName(), null, true, errorResponseHeaderName);
+    checkResponse(response, 200, 2, acceptTypeData.responseContentType, Status.class.getName(), null, true, errorResponseHeaderName);
     checkProjectedFields(response, new String[] {"f2"}, new String[] {"f1", "f3", "f99"});
     assertTrue(status.data().containsKey("f2"));
   }
@@ -680,7 +680,8 @@ public class TestRestLiResponseHandler
                                               buildRoutingResultFinder(request, acceptTypeData.acceptHeaders),
                                               statusCollection);
 
-    checkResponse(response, 200, 4, acceptTypeData.responseContentType, CollectionResponse.class.getName(), null, true, errorResponseHeaderName);
+    checkResponse(response, 200, 2, acceptTypeData.responseContentType,
+                  CollectionResponse.class.getName(), null, true, errorResponseHeaderName);
 
     DataMap dataMap = acceptTypeData.dataCodec.readMap(response.getEntity().asInputStream());
     CollectionResponse<Status> collectionResponse = new CollectionResponse<Status>(dataMap, Status.class);
@@ -711,7 +712,7 @@ public class TestRestLiResponseHandler
                                               buildRoutingResultFinder(request, acceptTypeData.acceptHeaders),
                                               statusCollection);
 
-    checkResponse(response, 200, 4, acceptTypeData.responseContentType, CollectionResponse.class.getName(), null, true, errorResponseHeaderName);
+    checkResponse(response, 200, 2, acceptTypeData.responseContentType, CollectionResponse.class.getName(), null, true, errorResponseHeaderName);
 
     DataMap dataMap = acceptTypeData.dataCodec.readMap(response.getEntity().asInputStream());
     CollectionResponse<Status> collectionResponse = new CollectionResponse<Status>(dataMap, Status.class);
@@ -739,10 +740,12 @@ public class TestRestLiResponseHandler
     Map<Integer, Status> statusBatch = buildStatusBatchResponse(10, "f1", "f2", "f3");
     RestRequest request = buildRequest("/test?ids=1,2,3&fields=f1,f2", acceptTypeData.acceptHeaders, protocolVersion);
     response = _responseHandler.buildResponse(request,
-                                              buildRoutingResult(ResourceMethod.BATCH_GET, request, acceptTypeData.acceptHeaders),
+                                              buildRoutingResult(
+                                                  ResourceMethod.BATCH_GET, request, acceptTypeData.acceptHeaders),
                                               statusBatch);
 
-    checkResponse(response, 200, 4, acceptTypeData.responseContentType, BatchResponse.class.getName(), Status.class.getName(), true, errorResponseHeaderName);
+    checkResponse(response, 200, 2, acceptTypeData.responseContentType, BatchResponse.class.getName(),
+                  Status.class.getName(), true, errorResponseHeaderName);
 
     DataMap dataMap = acceptTypeData.dataCodec.readMap(response.getEntity().asInputStream());
     BatchResponse<Status> batchResponse = new BatchResponse<Status>(dataMap, Status.class);
@@ -859,7 +862,7 @@ public class TestRestLiResponseHandler
 
     final GetResult<Status> getResult = new GetResult<Status>(status, HttpStatus.S_500_INTERNAL_SERVER_ERROR);
     response = invokeResponseHandler("/test", getResult, ResourceMethod.GET, acceptTypeData.acceptHeaders, protocolVersion);
-    checkResponse(response, HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode(), 3, acceptTypeData.responseContentType, Status.class.getName(), null, true, errorResponseHeaderName);
+    checkResponse(response, HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode(), 2, acceptTypeData.responseContentType, Status.class.getName(), null, true, errorResponseHeaderName);
     assertEquals(response.getEntity().asAvroString(), expectedStatus);
 
     final RestRequest request = buildRequest(acceptTypeData.acceptHeaders, protocolVersion);
@@ -869,7 +872,7 @@ public class TestRestLiResponseHandler
                                               actionResult);
     checkResponse(response,
                   HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode(),
-                  4,
+                  2,
                   acceptTypeData.responseContentType,
                   ActionResponse.class.getName(),
                   Status.class.getName(),
@@ -1025,11 +1028,6 @@ public class TestRestLiResponseHandler
     assertEquals(response.getStatus(), status);
     assertEquals(response.getHeaders().size(), numHeaders);
     assertEquals(response.getHeader(RestConstants.HEADER_CONTENT_TYPE), contentType);
-    assertEquals(response.getHeader(RestConstants.HEADER_RESTLI_TYPE), type);
-    if (subType != null)
-    {
-      assertEquals(response.getHeader(RestConstants.HEADER_RESTLI_SUB_TYPE), subType);
-    }
 
     if (hasError)
     {

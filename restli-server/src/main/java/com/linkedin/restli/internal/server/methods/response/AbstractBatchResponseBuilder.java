@@ -93,9 +93,6 @@ public abstract class AbstractBatchResponseBuilder<V>
       DataMap data = buildResultRecord(entry.getValue(), resourceContext);
       CheckedUtil.putWithoutChecking(dataMap, keyToString(entry.getKey()), data);
     }
-
-    headers.put(RestConstants.HEADER_RESTLI_TYPE, BatchResponse.class.getName());
-    headers.put(RestConstants.HEADER_RESTLI_SUB_TYPE, valueClass.getName());
   }
 
   protected <T extends RecordTemplate> BatchResponse<T> createBatchResponse(final Class<T> clazz,

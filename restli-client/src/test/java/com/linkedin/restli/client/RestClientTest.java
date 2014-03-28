@@ -729,7 +729,6 @@ public class RestClientTest
     }
 
     Map<String,String> headers = new HashMap<String,String>();
-    headers.put(RestConstants.HEADER_RESTLI_TYPE, er.getClass().getName());
     headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString());
     headers.put(errorResponseHeaderName, RestConstants.HEADER_VALUE_ERROR);
 

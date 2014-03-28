@@ -69,8 +69,6 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
       }
       batchResponse.getElements().add(s);
     }
-    headers.put(RestConstants.HEADER_RESTLI_TYPE, CollectionResponse.class.getName());
-    headers.put(RestConstants.HEADER_RESTLI_SUB_TYPE, CreateStatus.class.getName());
 
     return new PartialRestResponse(batchResponse);
   }
