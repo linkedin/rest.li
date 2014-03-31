@@ -164,12 +164,11 @@ public class TestComplexArrayResource  extends RestLiIntegrationTest
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new ComplexArrayBuilders()) },
-      { new RootBuilderWrapper(new ComplexArrayRequestBuilders()) }
+      { new RootBuilderWrapper<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting>(new ComplexArrayBuilders()) },
+      { new RootBuilderWrapper<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting>(new ComplexArrayRequestBuilders()) }
     };
   }
 }

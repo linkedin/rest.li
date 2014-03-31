@@ -95,12 +95,11 @@ public class TestCustomCrudParams extends RestLiIntegrationTest
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new GreetingsAuthBuilders()) },
-      { new RootBuilderWrapper(new GreetingsAuthRequestBuilders()) }
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsAuthBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsAuthRequestBuilders()) }
     };
   }
 }

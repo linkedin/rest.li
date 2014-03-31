@@ -98,12 +98,11 @@ public class TestManualProjections extends RestLiIntegrationTest
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new ManualProjectionsBuilders()) },
-      { new RootBuilderWrapper(new ManualProjectionsRequestBuilders()) }
+      { new RootBuilderWrapper<Long, Greeting>(new ManualProjectionsBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new ManualProjectionsRequestBuilders()) }
     };
   }
 }

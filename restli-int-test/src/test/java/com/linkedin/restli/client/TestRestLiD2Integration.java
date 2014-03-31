@@ -178,32 +178,29 @@ public class TestRestLiD2Integration extends RestLiIntegrationTest
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] requestGreetingBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new GreetingsBuilders()) },
-      { new RootBuilderWrapper(new GreetingsRequestBuilders()) }
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) }
     };
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] requestGroupBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new GroupsBuilders()) },
-      { new RootBuilderWrapper(new GroupsBuilders()) }
+      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders()) },
+      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders()) }
     };
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] requestGroupMembershipBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new GroupMembershipsBuilders()) },
-      { new RootBuilderWrapper(new GroupMembershipsRequestBuilders()) }
+      { new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsBuilders()) },
+      { new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsRequestBuilders()) }
     };
   }
 }

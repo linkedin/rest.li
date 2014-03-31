@@ -257,16 +257,15 @@ public class TestExceptionsResource2 extends RestLiIntegrationTest
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   public Object[][] exceptionHandlingModesDataProvider()
   {
     return new Object[][] {
-        { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper(new Exceptions2Builders()) },
-        { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper(new Exceptions2RequestBuilders()) },
-        { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper(new Exceptions2Builders()) },
-        { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper(new Exceptions2RequestBuilders()) },
-        { false, null, new RootBuilderWrapper(new Exceptions2Builders()) },
-        { false, null, new RootBuilderWrapper(new Exceptions2RequestBuilders()) }
+        { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper<Long, Greeting>(new Exceptions2Builders()) },
+        { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper<Long, Greeting>(new Exceptions2RequestBuilders()) },
+        { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper<Long, Greeting>(new Exceptions2Builders()) },
+        { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper<Long, Greeting>(new Exceptions2RequestBuilders()) },
+        { false, null, new RootBuilderWrapper<Long, Greeting>(new Exceptions2Builders()) },
+        { false, null, new RootBuilderWrapper<Long, Greeting>(new Exceptions2RequestBuilders()) }
     };
   }
 }

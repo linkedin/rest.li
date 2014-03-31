@@ -566,42 +566,38 @@ public class TestGroupsRequestBuilders
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] requestGroupsBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new GroupsBuilders()) },
-      { new RootBuilderWrapper(new GroupsRequestBuilders()) }
+      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders()) },
+      { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders()) }
     };
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] requestContactsBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new ContactsBuilders()) },
-      { new RootBuilderWrapper(new ContactsRequestBuilders()) }
+      { new RootBuilderWrapper<Integer, GroupContact>(new ContactsBuilders()) },
+      { new RootBuilderWrapper<Integer, GroupContact>(new ContactsRequestBuilders()) }
     };
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] requestMembershipsBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new GroupMembershipsBuilders()) },
-      { new RootBuilderWrapper(new GroupMembershipsRequestBuilders()) }
+      { new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsBuilders()) },
+      { new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsRequestBuilders()) }
     };
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] requestSpecialBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new GroupsBuilders("SpecialGroups")), new RootBuilderWrapper(new ContactsBuilders("SpecialGroups")) },
-      { new RootBuilderWrapper(new GroupsRequestBuilders("SpecialGroups")), new RootBuilderWrapper(new ContactsRequestBuilders("SpecialGroups")) },
+      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders("SpecialGroups")), new RootBuilderWrapper<Integer, GroupContact>(new ContactsBuilders("SpecialGroups")) },
+      { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders("SpecialGroups")), new RootBuilderWrapper<Integer, GroupContact>(new ContactsRequestBuilders("SpecialGroups")) },
     };
   }
 }

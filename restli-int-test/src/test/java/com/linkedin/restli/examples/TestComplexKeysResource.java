@@ -470,32 +470,29 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new ComplexKeysBuilders()) },
-      { new RootBuilderWrapper(new ComplexKeysRequestBuilders()) }
+      { new RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(new ComplexKeysBuilders()) },
+      { new RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(new ComplexKeysRequestBuilders()) }
     };
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] requestSubBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new ComplexKeysSubBuilders()) },
-      { new RootBuilderWrapper(new ComplexKeysSubRequestBuilders()) }
+      { new RootBuilderWrapper<String, TwoPartKey>(new ComplexKeysSubBuilders()) },
+      { new RootBuilderWrapper<String, TwoPartKey>(new ComplexKeysSubRequestBuilders()) }
     };
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] requestAnnotatedBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new AnnotatedComplexKeysBuilders()) },
-      { new RootBuilderWrapper(new AnnotatedComplexKeysRequestBuilders()) }
+      { new RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(new AnnotatedComplexKeysBuilders()) },
+      { new RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(new AnnotatedComplexKeysRequestBuilders()) }
     };
   }
 }

@@ -4,6 +4,9 @@
 Use TestNG listener to fail skipped tests rather than ignoring them.
 Upgrade quickstart example to support Gradle 1.9+.
 
+(RB=202580)
+Update restli-int-test data provider to avoid suppressing the rawtypes warning.
+
 1.15.4
 ------
 (RB=275644)

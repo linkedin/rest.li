@@ -833,68 +833,65 @@ public class TestGreetingsClient extends RestLiIntegrationTest
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   protected Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new GreetingsBuilders()) },
-      { new RootBuilderWrapper(new GreetingsRequestBuilders()) },
-      { new RootBuilderWrapper(new GreetingsPromiseBuilders()) },
-      { new RootBuilderWrapper(new GreetingsPromiseRequestBuilders()) },
-      { new RootBuilderWrapper(new GreetingsCallbackBuilders()) },
-      { new RootBuilderWrapper(new GreetingsCallbackRequestBuilders()) },
-      { new RootBuilderWrapper(new GreetingsPromiseCtxBuilders()) },
-      { new RootBuilderWrapper(new GreetingsPromiseCtxRequestBuilders()) },
-      { new RootBuilderWrapper(new GreetingsTaskBuilders()) },
-      { new RootBuilderWrapper(new GreetingsTaskRequestBuilders()) }
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackRequestBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxRequestBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskRequestBuilders()) }
     };
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   protected Object[][] requestBuilderWithOptionsDataProvider()
   {
     final RestliRequestOptions customRequestOptions =
       new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.FORCE_USE_NEXT).build();
     return new Object[][] {
-      { new RootBuilderWrapper(new GreetingsBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
-      { new RootBuilderWrapper(new GreetingsBuilders(customRequestOptions)), customRequestOptions },
-      { new RootBuilderWrapper(new GreetingsRequestBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
-      { new RootBuilderWrapper(new GreetingsRequestBuilders(customRequestOptions)), customRequestOptions },
-      { new RootBuilderWrapper(new GreetingsPromiseBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
-      { new RootBuilderWrapper(new GreetingsPromiseBuilders(customRequestOptions)), customRequestOptions },
-      { new RootBuilderWrapper(new GreetingsPromiseRequestBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
-      { new RootBuilderWrapper(new GreetingsPromiseRequestBuilders(customRequestOptions)), customRequestOptions },
-      { new RootBuilderWrapper(new GreetingsCallbackBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
-      { new RootBuilderWrapper(new GreetingsCallbackBuilders(customRequestOptions)), customRequestOptions },
-      { new RootBuilderWrapper(new GreetingsCallbackRequestBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
-      { new RootBuilderWrapper(new GreetingsCallbackRequestBuilders(customRequestOptions)), customRequestOptions },
-      { new RootBuilderWrapper(new GreetingsPromiseCtxBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
-      { new RootBuilderWrapper(new GreetingsPromiseCtxBuilders(customRequestOptions)), customRequestOptions },
-      { new RootBuilderWrapper(new GreetingsPromiseCtxRequestBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
-      { new RootBuilderWrapper(new GreetingsPromiseCtxRequestBuilders(customRequestOptions)), customRequestOptions },
-      { new RootBuilderWrapper(new GreetingsTaskBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
-      { new RootBuilderWrapper(new GreetingsTaskBuilders(customRequestOptions)), customRequestOptions },
-      { new RootBuilderWrapper(new GreetingsTaskRequestBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
-      { new RootBuilderWrapper(new GreetingsTaskRequestBuilders(customRequestOptions)), customRequestOptions }
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(customRequestOptions)), customRequestOptions },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(customRequestOptions)), customRequestOptions },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseBuilders(customRequestOptions)), customRequestOptions },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders(customRequestOptions)), customRequestOptions },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackBuilders(customRequestOptions)), customRequestOptions },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackRequestBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackRequestBuilders(customRequestOptions)), customRequestOptions },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxBuilders(customRequestOptions)), customRequestOptions },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxRequestBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxRequestBuilders(customRequestOptions)), customRequestOptions },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskBuilders(customRequestOptions)), customRequestOptions },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskRequestBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskRequestBuilders(customRequestOptions)), customRequestOptions }
     };
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   protected Object[][] requestBuilderWithResourceNameDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new GreetingsBuilders()), "greetings" },
-      { new RootBuilderWrapper(new GreetingsRequestBuilders()), "greetings" },
-      { new RootBuilderWrapper(new GreetingsPromiseBuilders()), "greetingsPromise" },
-      { new RootBuilderWrapper(new GreetingsPromiseRequestBuilders()), "greetingsPromise" },
-      { new RootBuilderWrapper(new GreetingsCallbackBuilders()), "greetingsCallback" },
-      { new RootBuilderWrapper(new GreetingsCallbackRequestBuilders()), "greetingsCallback" },
-      { new RootBuilderWrapper(new GreetingsPromiseCtxBuilders()), "greetingsPromiseCtx" },
-      { new RootBuilderWrapper(new GreetingsPromiseCtxRequestBuilders()), "greetingsPromiseCtx" },
-      { new RootBuilderWrapper(new GreetingsTaskBuilders()), "greetingsTask" },
-      { new RootBuilderWrapper(new GreetingsTaskRequestBuilders()), "greetingsTask" },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()), "greetings" },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()), "greetings" },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseBuilders()), "greetingsPromise" },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders()), "greetingsPromise" },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackBuilders()), "greetingsCallback" },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackRequestBuilders()), "greetingsCallback" },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxBuilders()), "greetingsPromiseCtx" },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxRequestBuilders()), "greetingsPromiseCtx" },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskBuilders()), "greetingsTask" },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskRequestBuilders()), "greetingsTask" },
     };
   }
 

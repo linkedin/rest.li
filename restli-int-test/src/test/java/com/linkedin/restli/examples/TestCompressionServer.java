@@ -98,7 +98,6 @@ public class TestCompressionServer extends RestLiIntegrationTest
 
   //Returns a combination of all possible request/response compression combinations
   @DataProvider
-  @SuppressWarnings("rawtypes")
   public Object[][] ClientsCompressedResponsesDataProvider()
   {
     // sample compression operation config
@@ -118,8 +117,8 @@ public class TestCompressionServer extends RestLiIntegrationTest
       clientProperties.put(HttpClientFactory.HTTP_RESPONSE_COMPRESSION_OPERATIONS, operation);
       TransportClientAdapter clientAdapter = new TransportClientAdapter(new HttpClientFactory(FilterChains.empty()).getClient(clientProperties));
       RestClient client = new RestClient(clientAdapter, URI_PREFIX);
-      result[index--] = new Object[]{client, operation, new RootBuilderWrapper(new GreetingsBuilders())};
-      result[index--] = new Object[]{client, operation, new RootBuilderWrapper(new GreetingsRequestBuilders())};
+      result[index--] = new Object[]{client, operation, new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders())};
+      result[index--] = new Object[]{client, operation, new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders())};
     }
 
     return result;
@@ -129,7 +128,6 @@ public class TestCompressionServer extends RestLiIntegrationTest
    * Provides clients with no response compression
    */
   @DataProvider
-  @SuppressWarnings("rawtypes")
   public Object[][] clientsNoCompressedResponsesDataProvider()
   {
     // need separate TransportClientAdapter for shutdown test
@@ -138,8 +136,8 @@ public class TestCompressionServer extends RestLiIntegrationTest
     TransportClientAdapter clientAdapter2 = new TransportClientAdapter(new HttpClientFactory(FilterChains.empty()).
       getClient(Collections.<String, String>emptyMap()));
     return new Object[][] {
-      { new RestClient(clientAdapter1, URI_PREFIX), new RootBuilderWrapper(new GreetingsBuilders()) },
-      { new RestClient(clientAdapter2, URI_PREFIX), new RootBuilderWrapper(new GreetingsRequestBuilders()) }
+      { new RestClient(clientAdapter1, URI_PREFIX), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
+      { new RestClient(clientAdapter2, URI_PREFIX), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) }
     };
   }
 

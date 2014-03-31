@@ -586,44 +586,40 @@ public class TestGroupsClient extends RestLiIntegrationTest
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] requestGroupsBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new GroupsBuilders()) },
-      { new RootBuilderWrapper(new GroupsRequestBuilders()) }
+      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders()) },
+      { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders()) }
     };
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] requestMembershipsBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new GroupMembershipsBuilders()) },
-      { new RootBuilderWrapper(new GroupMembershipsRequestBuilders()) }
+      { new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsBuilders()) },
+      { new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsRequestBuilders()) }
     };
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] requestGroupsAndMembershipsBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new GroupsBuilders()), new RootBuilderWrapper(new GroupMembershipsBuilders()) },
-      { new RootBuilderWrapper(new GroupsBuilders()), new RootBuilderWrapper(new GroupMembershipsRequestBuilders()) },
-      { new RootBuilderWrapper(new GroupsRequestBuilders()), new RootBuilderWrapper(new GroupMembershipsBuilders()) },
-      { new RootBuilderWrapper(new GroupsRequestBuilders()), new RootBuilderWrapper(new GroupMembershipsRequestBuilders()) }
+      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders()), new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsBuilders()) },
+      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders()), new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsRequestBuilders()) },
+      { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders()), new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsBuilders()) },
+      { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders()), new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsRequestBuilders()) }
     };
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] requestComplexBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new GroupMembershipsComplexBuilders()) },
-      { new RootBuilderWrapper(new GroupMembershipsComplexRequestBuilders()) }
+      { new RootBuilderWrapper<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, ComplexKeyGroupMembership>(new GroupMembershipsComplexBuilders()) },
+      { new RootBuilderWrapper<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, ComplexKeyGroupMembership>(new GroupMembershipsComplexRequestBuilders()) }
     };
   }
 }

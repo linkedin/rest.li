@@ -454,32 +454,29 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new GreetingBuilders()) },
-      { new RootBuilderWrapper(new GreetingRequestBuilders()) }
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingRequestBuilders()) }
     };
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] requestSubBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new SubgreetingsBuilders()) },
-      { new RootBuilderWrapper(new SubgreetingsRequestBuilders()) }
+      { new RootBuilderWrapper<Long, Greeting>(new SubgreetingsBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new SubgreetingsRequestBuilders()) }
     };
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] requestSubSubBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new SubsubgreetingBuilders()) },
-      { new RootBuilderWrapper(new SubsubgreetingRequestBuilders()) }
+      { new RootBuilderWrapper<Void, Greeting>(new SubsubgreetingBuilders()) },
+      { new RootBuilderWrapper<Void, Greeting>(new SubsubgreetingRequestBuilders()) }
     };
   }
 }

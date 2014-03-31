@@ -144,7 +144,7 @@ public class TestAssociationsResource extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = "requestSubBuilderDataProvider")
-  public void testSubresourceFinder(RootBuilderWrapper<CompoundKey, Message> builders) throws RemoteInvocationException
+  public void testSubresourceFinder(RootBuilderWrapper<String, Message> builders) throws RemoteInvocationException
   {
     Request<CollectionResponse<Message>> request = builders.findBy("Tone").setPathKey("dest", "dest").setPathKey("src", "src").setQueryParam("tone", Tone.FRIENDLY).build();
     List<Message> messages = REST_CLIENT.sendRequest(request).getResponse().getEntity().getElements();
@@ -197,22 +197,20 @@ public class TestAssociationsResource extends RestLiIntegrationTest
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new AssociationsBuilders()) },
-      { new RootBuilderWrapper(new AssociationsRequestBuilders()) }
+      { new RootBuilderWrapper<CompoundKey, Message>(new AssociationsBuilders()) },
+      { new RootBuilderWrapper<CompoundKey, Message>(new AssociationsRequestBuilders()) }
     };
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] requestSubBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new AssociationsSubBuilders()) },
-      { new RootBuilderWrapper(new AssociationsSubRequestBuilders()) }
+      { new RootBuilderWrapper<String, Message>(new AssociationsSubBuilders()) },
+      { new RootBuilderWrapper<String, Message>(new AssociationsSubRequestBuilders()) }
     };
   }
 }

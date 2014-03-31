@@ -48,12 +48,11 @@ public class ArrayTest
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new ArrayTestBuilders()) },
-      { new RootBuilderWrapper(new ArrayTestRequestBuilders()) }
+      { new RootBuilderWrapper<Integer, Greeting>(new ArrayTestBuilders()) },
+      { new RootBuilderWrapper<Integer, Greeting>(new ArrayTestRequestBuilders()) }
     };
   }
 }

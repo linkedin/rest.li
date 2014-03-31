@@ -245,12 +245,11 @@ public class TestDebugRequestHandlers extends RestLiIntegrationTest
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new GreetingsPromiseBuilders()) },
-      { new RootBuilderWrapper(new GreetingsPromiseRequestBuilders()) }
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders()) }
     };
   }
 }

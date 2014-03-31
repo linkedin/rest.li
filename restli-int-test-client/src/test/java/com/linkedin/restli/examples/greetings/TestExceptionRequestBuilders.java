@@ -42,12 +42,11 @@ public class TestExceptionRequestBuilders
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new ExceptionsBuilders()) },
-      { new RootBuilderWrapper(new ExceptionsRequestBuilders()) }
+      { new RootBuilderWrapper<Long, Greeting>(new ExceptionsBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new ExceptionsRequestBuilders()) }
     };
   }
 }

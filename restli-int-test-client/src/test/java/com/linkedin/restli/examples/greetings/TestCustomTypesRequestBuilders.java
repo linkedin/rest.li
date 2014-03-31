@@ -172,42 +172,38 @@ public class TestCustomTypesRequestBuilders
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] request1BuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new CustomTypesBuilders()) },
-      { new RootBuilderWrapper(new CustomTypesRequestBuilders()) }
+      { new RootBuilderWrapper<Long, Greeting>(new CustomTypesBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new CustomTypesRequestBuilders()) }
     };
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] request2BuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new CustomTypes2Builders()) },
-      { new RootBuilderWrapper(new CustomTypes2RequestBuilders()) }
+      { new RootBuilderWrapper<CustomLong, Greeting>(new CustomTypes2Builders()) },
+      { new RootBuilderWrapper<CustomLong, Greeting>(new CustomTypes2RequestBuilders()) }
     };
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] request3BuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new CustomTypes3Builders()) },
-      { new RootBuilderWrapper(new CustomTypes3RequestBuilders()) }
+      { new RootBuilderWrapper<CompoundKey, Greeting>(new CustomTypes3Builders()) },
+      { new RootBuilderWrapper<CompoundKey, Greeting>(new CustomTypes3RequestBuilders()) }
     };
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] request4BuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new CustomTypes4Builders()) },
-      { new RootBuilderWrapper(new CustomTypes4RequestBuilders()) }
+      { new RootBuilderWrapper<CustomLong, Greeting>(new CustomTypes4Builders()) },
+      { new RootBuilderWrapper<CustomLong, Greeting>(new CustomTypes4RequestBuilders()) }
     };
   }
 }

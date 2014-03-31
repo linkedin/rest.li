@@ -118,12 +118,11 @@ public class TestContexts extends RestLiIntegrationTest
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new WithContextBuilders()) },
-      { new RootBuilderWrapper(new WithContextRequestBuilders()) }
+      { new RootBuilderWrapper<Long, Greeting>(new WithContextBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new WithContextRequestBuilders()) }
     };
   }
 }

@@ -121,12 +121,11 @@ public class TestMixedClient extends RestLiIntegrationTest
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new MixedBuilders()) },
-      { new RootBuilderWrapper(new MixedRequestBuilders()) }
+      { new RootBuilderWrapper<Long, Greeting>(new MixedBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new MixedRequestBuilders()) }
     };
   }
 }

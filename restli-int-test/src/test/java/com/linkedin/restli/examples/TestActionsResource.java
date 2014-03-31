@@ -17,6 +17,7 @@
 package com.linkedin.restli.examples;
 
 
+import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.transport.common.Client;
@@ -230,12 +231,11 @@ public class TestActionsResource extends RestLiIntegrationTest
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new ActionsBuilders()) },
-      { new RootBuilderWrapper(new ActionsRequestBuilders()) }
+      { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsBuilders()) },
+      { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsRequestBuilders()) }
     };
   }
 }

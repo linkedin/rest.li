@@ -57,138 +57,137 @@ public class TestGreetingsClientAcceptTypes extends RestLiIntegrationTest
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   public Object[][] clientDataDataProvider()
   {
     return new Object[][]
       {
-        { new RestClient(CLIENT, URI_PREFIX), "application/json", new RootBuilderWrapper(new GreetingsBuilders()) }, // default client
-        { new RestClient(CLIENT, URI_PREFIX), "application/json", new RootBuilderWrapper(new GreetingsRequestBuilders()) }, // default client
+        { new RestClient(CLIENT, URI_PREFIX), "application/json", new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) }, // default client
+        { new RestClient(CLIENT, URI_PREFIX), "application/json", new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) }, // default client
         {
           new RestClient(CLIENT,
                          URI_PREFIX,
                          Collections.singletonList(RestClient.AcceptType.PSON)),
           "application/x-pson",
-          new RootBuilderWrapper(new GreetingsBuilders())
+          new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders())
         },
         {
           new RestClient(CLIENT,
                          URI_PREFIX,
                          Collections.singletonList(RestClient.AcceptType.PSON)),
           "application/x-pson",
-          new RootBuilderWrapper(new GreetingsRequestBuilders())
+          new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders())
         },
         {
           new RestClient(CLIENT,
                          URI_PREFIX,
                          Collections.singletonList(RestClient.AcceptType.JSON)),
           "application/json",
-          new RootBuilderWrapper(new GreetingsBuilders())
+          new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders())
         },
         {
           new RestClient(CLIENT,
                          URI_PREFIX,
                          Collections.singletonList(RestClient.AcceptType.JSON)),
           "application/json",
-          new RootBuilderWrapper(new GreetingsRequestBuilders())
+          new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders())
         },
         {
           new RestClient(CLIENT, URI_PREFIX,
                          Collections.singletonList(
                            RestClient.AcceptType.ANY)),
           "application/json",
-          new RootBuilderWrapper(new GreetingsBuilders())
+          new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders())
         },
         {
           new RestClient(CLIENT, URI_PREFIX,
                          Collections.singletonList(
                            RestClient.AcceptType.ANY)),
           "application/json",
-          new RootBuilderWrapper(new GreetingsRequestBuilders())
+          new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders())
         },
         {
           new RestClient(CLIENT,
                          URI_PREFIX,
                          Arrays.asList(RestClient.AcceptType.PSON, RestClient.AcceptType.JSON)),
           "application/x-pson",
-          new RootBuilderWrapper(new GreetingsBuilders())
+          new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders())
         },
         {
           new RestClient(CLIENT,
                          URI_PREFIX,
                          Arrays.asList(RestClient.AcceptType.PSON, RestClient.AcceptType.JSON)),
           "application/x-pson",
-          new RootBuilderWrapper(new GreetingsRequestBuilders())
+          new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders())
         },
         {
           new RestClient(CLIENT,
                          URI_PREFIX,
                          Arrays.asList(RestClient.AcceptType.JSON,RestClient.AcceptType.PSON)),
           "application/json",
-          new RootBuilderWrapper(new GreetingsBuilders())
+          new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders())
         },
         {
           new RestClient(CLIENT,
                          URI_PREFIX,
                          Arrays.asList(RestClient.AcceptType.JSON,RestClient.AcceptType.PSON)),
           "application/json",
-          new RootBuilderWrapper(new GreetingsRequestBuilders())
+          new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders())
         },
         {
           new RestClient(CLIENT,
                          URI_PREFIX,
                          Arrays.asList(RestClient.AcceptType.PSON, RestClient.AcceptType.ANY)),
           "application/x-pson",
-          new RootBuilderWrapper(new GreetingsBuilders())
+          new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders())
         },
         {
           new RestClient(CLIENT,
                          URI_PREFIX,
                          Arrays.asList(RestClient.AcceptType.PSON, RestClient.AcceptType.ANY)),
           "application/x-pson",
-          new RootBuilderWrapper(new GreetingsRequestBuilders())
+          new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders())
         },
         {
           new RestClient(CLIENT,
                          URI_PREFIX,
                          Arrays.asList(RestClient.AcceptType.JSON, RestClient.AcceptType.ANY)),
           "application/json",
-          new RootBuilderWrapper(new GreetingsBuilders())
+          new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders())
         },
         {
           new RestClient(CLIENT,
                          URI_PREFIX,
                          Arrays.asList(RestClient.AcceptType.JSON, RestClient.AcceptType.ANY)),
           "application/json",
-          new RootBuilderWrapper(new GreetingsRequestBuilders())
+          new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders())
         },
         {
           new RestClient(CLIENT,
                          URI_PREFIX,
                          Arrays.asList(RestClient.AcceptType.ANY, RestClient.AcceptType.PSON)),
           "application/x-pson",
-          new RootBuilderWrapper(new GreetingsBuilders())
+          new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders())
         },
         {
           new RestClient(CLIENT,
                          URI_PREFIX,
                          Arrays.asList(RestClient.AcceptType.ANY, RestClient.AcceptType.PSON)),
           "application/x-pson",
-          new RootBuilderWrapper(new GreetingsRequestBuilders())
+          new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders())
         },
         {
           new RestClient(CLIENT,
                          URI_PREFIX,
                          Arrays.asList(RestClient.AcceptType.ANY, RestClient.AcceptType.JSON)),
           "application/json",
-          new RootBuilderWrapper(new GreetingsBuilders())
+          new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders())
         },
         {
           new RestClient(CLIENT,
                          URI_PREFIX,
                          Arrays.asList(RestClient.AcceptType.ANY, RestClient.AcceptType.JSON)),
           "application/json",
-          new RootBuilderWrapper(new GreetingsRequestBuilders())
+          new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders())
         },
         // accept types and content types
         {
@@ -197,7 +196,7 @@ public class TestGreetingsClientAcceptTypes extends RestLiIntegrationTest
                          RestClient.ContentType.JSON, Collections.<RestClient.AcceptType>emptyList()
           ),
           "application/json",
-          new RootBuilderWrapper(new GreetingsBuilders())
+          new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders())
         },
         // accept types and content types
         {
@@ -206,7 +205,7 @@ public class TestGreetingsClientAcceptTypes extends RestLiIntegrationTest
                          RestClient.ContentType.JSON, Collections.<RestClient.AcceptType>emptyList()
           ),
           "application/json",
-          new RootBuilderWrapper(new GreetingsRequestBuilders())
+          new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders())
         },
         {
           new RestClient(CLIENT,
@@ -214,7 +213,7 @@ public class TestGreetingsClientAcceptTypes extends RestLiIntegrationTest
                          RestClient.ContentType.JSON, Collections.singletonList(RestClient.AcceptType.JSON)
           ),
           "application/json",
-          new RootBuilderWrapper(new GreetingsBuilders())
+          new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders())
         },
         {
           new RestClient(CLIENT,
@@ -222,7 +221,7 @@ public class TestGreetingsClientAcceptTypes extends RestLiIntegrationTest
                          RestClient.ContentType.JSON, Collections.singletonList(RestClient.AcceptType.JSON)
           ),
           "application/json",
-          new RootBuilderWrapper(new GreetingsRequestBuilders())
+          new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders())
         },
         {
           new RestClient(CLIENT,
@@ -230,7 +229,7 @@ public class TestGreetingsClientAcceptTypes extends RestLiIntegrationTest
                          RestClient.ContentType.JSON, Collections.singletonList(RestClient.AcceptType.PSON)
           ),
           "application/x-pson",
-          new RootBuilderWrapper(new GreetingsBuilders())
+          new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders())
         },
         {
           new RestClient(CLIENT,
@@ -238,7 +237,7 @@ public class TestGreetingsClientAcceptTypes extends RestLiIntegrationTest
                          RestClient.ContentType.JSON, Collections.singletonList(RestClient.AcceptType.PSON)
           ),
           "application/x-pson",
-          new RootBuilderWrapper(new GreetingsRequestBuilders())
+          new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders())
         },
         {
           new RestClient(CLIENT,
@@ -246,7 +245,7 @@ public class TestGreetingsClientAcceptTypes extends RestLiIntegrationTest
                          RestClient.ContentType.PSON, Collections.<RestClient.AcceptType>emptyList()
           ),
           "application/json",
-          new RootBuilderWrapper(new GreetingsBuilders())
+          new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders())
         },
         {
           new RestClient(CLIENT,
@@ -254,7 +253,7 @@ public class TestGreetingsClientAcceptTypes extends RestLiIntegrationTest
                          RestClient.ContentType.PSON, Collections.<RestClient.AcceptType>emptyList()
           ),
           "application/json",
-          new RootBuilderWrapper(new GreetingsRequestBuilders())
+          new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders())
         },
         {
           new RestClient(CLIENT,
@@ -262,7 +261,7 @@ public class TestGreetingsClientAcceptTypes extends RestLiIntegrationTest
                          RestClient.ContentType.PSON, Collections.singletonList(RestClient.AcceptType.JSON)
           ),
           "application/json",
-          new RootBuilderWrapper(new GreetingsBuilders())
+          new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders())
         },
         {
           new RestClient(CLIENT,
@@ -270,7 +269,7 @@ public class TestGreetingsClientAcceptTypes extends RestLiIntegrationTest
                          RestClient.ContentType.PSON, Collections.singletonList(RestClient.AcceptType.JSON)
           ),
           "application/json",
-          new RootBuilderWrapper(new GreetingsRequestBuilders())
+          new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders())
         },
         {
           new RestClient(CLIENT,
@@ -278,7 +277,7 @@ public class TestGreetingsClientAcceptTypes extends RestLiIntegrationTest
                          RestClient.ContentType.PSON, Collections.singletonList(RestClient.AcceptType.PSON)
           ),
           "application/x-pson",
-          new RootBuilderWrapper(new GreetingsBuilders())
+          new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders())
         },
         {
           new RestClient(CLIENT,
@@ -286,7 +285,7 @@ public class TestGreetingsClientAcceptTypes extends RestLiIntegrationTest
                          RestClient.ContentType.PSON, Collections.singletonList(RestClient.AcceptType.PSON)
           ),
           "application/x-pson",
-          new RootBuilderWrapper(new GreetingsRequestBuilders())
+          new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders())
         }
       };
   }

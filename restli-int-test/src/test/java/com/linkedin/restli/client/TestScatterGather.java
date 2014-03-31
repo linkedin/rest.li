@@ -631,12 +631,11 @@ public class TestScatterGather extends RestLiIntegrationTest
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new GreetingsBuilders()) },
-      { new RootBuilderWrapper(new GreetingsRequestBuilders()) }
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) }
     };
   }
 }

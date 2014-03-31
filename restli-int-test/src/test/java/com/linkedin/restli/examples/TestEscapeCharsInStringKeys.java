@@ -20,6 +20,7 @@
 package com.linkedin.restli.examples;
 
 
+import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
@@ -185,52 +186,47 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] requestStringKeysBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new StringKeysBuilders()) },
-      { new RootBuilderWrapper(new StringKeysRequestBuilders()) }
+      { new RootBuilderWrapper<String, Message>(new StringKeysBuilders()) },
+      { new RootBuilderWrapper<String, Message>(new StringKeysRequestBuilders()) }
     };
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] requestStringKeysSubBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new StringKeysSubBuilders()) },
-      { new RootBuilderWrapper(new StringKeysSubRequestBuilders()) }
+      { new RootBuilderWrapper<String, Message>(new StringKeysSubBuilders()) },
+      { new RootBuilderWrapper<String, Message>(new StringKeysSubRequestBuilders()) }
     };
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] requestAssociationsSubBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new AssociationsBuilders()) },
-      { new RootBuilderWrapper(new AssociationsRequestBuilders()) }
+      { new RootBuilderWrapper<CompoundKey, Message>(new AssociationsBuilders()) },
+      { new RootBuilderWrapper<CompoundKey, Message>(new AssociationsRequestBuilders()) }
     };
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] requestComplexKeysBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new ComplexKeysBuilders()) },
-      { new RootBuilderWrapper(new ComplexKeysRequestBuilders()) }
+      { new RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(new ComplexKeysBuilders()) },
+      { new RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(new ComplexKeysRequestBuilders()) }
     };
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] requestActionBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new ActionsBuilders()) },
-      { new RootBuilderWrapper(new ActionsRequestBuilders()) }
+      { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsBuilders()) },
+      { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsRequestBuilders()) }
     };
   }
 }

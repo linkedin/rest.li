@@ -58,27 +58,25 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   public Object[][] clientDataDataProvider()
   {
     return new Object[][]
       {
-        { new RestClient(CLIENT, URI_PREFIX), new RootBuilderWrapper(new GreetingsBuilders()) }, // default client
-        { new RestClient(CLIENT, URI_PREFIX), new RootBuilderWrapper(new GreetingsRequestBuilders()) }, // default client
-        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.JSON, ACCEPT_TYPES), new RootBuilderWrapper(new GreetingsBuilders()) },
-        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.JSON, ACCEPT_TYPES), new RootBuilderWrapper(new GreetingsRequestBuilders()) },
-        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.PSON, ACCEPT_TYPES), new RootBuilderWrapper(new GreetingsBuilders()) },
-        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.PSON, ACCEPT_TYPES), new RootBuilderWrapper(new GreetingsRequestBuilders()) }
+        { new RestClient(CLIENT, URI_PREFIX), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) }, // default client
+        { new RestClient(CLIENT, URI_PREFIX), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) }, // default client
+        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.JSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
+        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.JSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) },
+        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.PSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
+        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.PSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) }
       };
   }
 
   @DataProvider
-  @SuppressWarnings("rawtypes")
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper(new GreetingsBuilders()) },
-      { new RootBuilderWrapper(new GreetingsRequestBuilders()) }
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) }
     };
   }
 
