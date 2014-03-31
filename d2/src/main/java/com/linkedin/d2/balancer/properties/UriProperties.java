@@ -33,7 +33,17 @@ public class UriProperties
   // for serialization
   private final Map<URI, Map<Integer, PartitionData>> _partitionDesc;
 
+  // Properties specific to a particular machine in the cluster
+  private final Map<URI, Map<String, Object>> _uriSpecificProperties;
+
   public UriProperties(String clusterName, Map<URI, Map<Integer, PartitionData>> partitionDescriptions)
+  {
+    this(clusterName, partitionDescriptions, Collections.<URI, Map<String, Object>>emptyMap());
+  }
+
+  public UriProperties(String clusterName,
+                       Map<URI, Map<Integer, PartitionData>> partitionDescriptions,
+                       Map<URI, Map<String, Object>> uriSpecificProperties)
   {
     _clusterName = clusterName;
     Map<URI, Map<Integer, PartitionData>> partitionDescriptionsMap = new HashMap<URI, Map<Integer, PartitionData>>(partitionDescriptions.size() * 2);
@@ -84,6 +94,9 @@ public class UriProperties
 
     _urisBySchemeAndPartition =
         Collections.unmodifiableMap(urisBySchemeAndPartition);
+
+    _uriSpecificProperties = (uriSpecificProperties == null) ? Collections.<URI, Map<String, Object>>emptyMap() :
+        Collections.unmodifiableMap(uriSpecificProperties);
   }
 
   public String getClusterName()
@@ -106,6 +119,11 @@ public class UriProperties
     return _partitionDesc;
   }
 
+  public Map<URI, Map<String, Object>> getUriSpecificProperties()
+  {
+    return _uriSpecificProperties;
+  }
+
   public Set<URI> getUriBySchemeAndPartition(String scheme, int partitionId)
   {
     Map<Integer, Set<URI>> schemeUris = _urisBySchemeAndPartition.get(scheme);
@@ -123,7 +141,7 @@ public class UriProperties
   public String toString()
   {
     return "UriProperties [_clusterName=" + _clusterName + ", _urisBySchemeAndPartition="
-        + _urisBySchemeAndPartition + "_partitions=" + _partitionDesc + "]";
+        + _urisBySchemeAndPartition + "_partitions=" + _partitionDesc + ", _uriSpecificProperties=" + _uriSpecificProperties + "]";
   }
 
   @Override
@@ -134,6 +152,7 @@ public class UriProperties
     result = prime * result + ((_clusterName == null) ? 0 : _clusterName.hashCode());
     result = prime * result + ((_partitionDesc == null) ? 0 : _partitionDesc.hashCode());
     result = prime * result + ((_urisBySchemeAndPartition == null) ? 0 : _urisBySchemeAndPartition.hashCode());
+    result = prime * result + ((_uriSpecificProperties == null) ? 0 : _uriSpecificProperties.hashCode());
     return result;
   }
 
@@ -169,6 +188,14 @@ public class UriProperties
         return false;
     }
     else if (!_urisBySchemeAndPartition.equals(other._urisBySchemeAndPartition))
+      return false;
+
+    if (_uriSpecificProperties == null)
+    {
+      if (other._uriSpecificProperties != null)
+        return false;
+    }
+    else if (!_uriSpecificProperties.equals(other._uriSpecificProperties))
       return false;
 
     return true;

@@ -30,6 +30,8 @@ public class UriPropertiesMerger implements ZooKeeperPropertyMerger<UriPropertie
   public UriProperties merge(String listenTo, Collection<UriProperties> propertiesToMerge)
   {
     Map<URI, Map<Integer, PartitionData>> partitionData = new HashMap<URI, Map<Integer, PartitionData>>();
+    Map<URI, Map<String, Object>> uriSpecificProperties = new HashMap<URI, Map<String, Object>>();
+
     String clusterName = listenTo;
 
     for (UriProperties property : propertiesToMerge)
@@ -38,9 +40,13 @@ public class UriPropertiesMerger implements ZooKeeperPropertyMerger<UriPropertie
       {
         partitionData.put(entry.getKey(), entry.getValue());
       }
+      for (Map.Entry<URI, Map<String, Object>> entry: property.getUriSpecificProperties().entrySet())
+      {
+        uriSpecificProperties.put(entry.getKey(), entry.getValue());
+      }
     }
 
-    return new UriProperties(clusterName, partitionData);
+    return new UriProperties(clusterName, partitionData, uriSpecificProperties);
   }
 
   @Override

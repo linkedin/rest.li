@@ -23,6 +23,7 @@ import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.d2.discovery.PropertyBuilder;
 import com.linkedin.d2.discovery.PropertySerializationException;
 import com.linkedin.d2.discovery.PropertySerializer;
+import java.util.Collections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +55,7 @@ public class UriPropertiesJsonSerializer implements PropertySerializer<UriProper
         }
         weights.put(entry.getKey(), partitionDataMap.get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight());
       }
-      // for patitioned uri, only write new format
+      // for partitioned uri, only write new format
       if (isPartitioned)
       {
         propertyToSerialize = property;
@@ -64,7 +65,9 @@ public class UriPropertiesJsonSerializer implements PropertySerializer<UriProper
       // Added here a getter method getWeights() to UriProperty so that ObjectMapper can do its job
       else
       {
-        propertyToSerialize = new UriProperties(property.getClusterName(), partitionDesc)
+        propertyToSerialize = new UriProperties(property.getClusterName(),
+                                                partitionDesc,
+                                                property.getUriSpecificProperties())
         {
           public Map<URI, Double> getWeights()
           {
@@ -99,9 +102,31 @@ public class UriPropertiesJsonSerializer implements PropertySerializer<UriProper
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public UriProperties fromMap(Map<String, Object> map)
   {
     String clusterName = PropertyUtil.checkAndGetValue(map, "clusterName", String.class, "UriProperties");
+
+    Map<URI, Map<String, Object>> applicationProperties;
+    final String applicationPropertiesKey = "uriSpecificProperties";
+    if (map.containsKey(applicationPropertiesKey))
+    {
+      // the URI key gets serialized into a String, so we have to convert the String back into an URI
+      applicationProperties = new HashMap<URI, Map<String, Object>>();
+      Map<String, Map<String, Object>> storedApplicationProperties =
+          (Map<String, Map<String, Object>>)PropertyUtil.checkAndGetValue(map,
+                                                                          applicationPropertiesKey,
+                                                                          HashMap.class,
+                                                                          "UriProperties");
+      for (Map.Entry<String, Map<String, Object>> entry: storedApplicationProperties.entrySet())
+      {
+        applicationProperties.put(URI.create(entry.getKey()), entry.getValue());
+      }
+    }
+    else
+    {
+      applicationProperties = Collections.emptyMap();
+    }
 
     Map<URI, Map<Integer, PartitionData>> partitionDesc =
         new HashMap<URI, Map<Integer, PartitionData>>();
@@ -159,6 +184,6 @@ public class UriPropertiesJsonSerializer implements PropertySerializer<UriProper
       partitionDesc = partitionDescFromWeights;
     }
 
-    return new UriProperties(clusterName, partitionDesc);
+    return new UriProperties(clusterName, partitionDesc, applicationProperties);
   }
 }

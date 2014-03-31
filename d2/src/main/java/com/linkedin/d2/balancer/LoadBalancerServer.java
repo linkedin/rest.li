@@ -27,6 +27,12 @@ public interface LoadBalancerServer
 {
   void markUp(String clusterName, URI uri, Map<Integer, PartitionData> partitionDataMap, Callback<None> callback);
 
+  void markUp(String clusterName,
+              URI uri,
+              Map<Integer, PartitionData> partitionDataMap,
+              Map<String, Object> uriSpecificProperties,
+              Callback<None> callback);
+
   void markDown(String clusterName, URI uri, Callback<None> callback);
 
   void start(Callback<None> callback);

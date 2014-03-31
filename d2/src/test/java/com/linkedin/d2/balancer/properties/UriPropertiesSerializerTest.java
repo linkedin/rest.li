@@ -19,6 +19,7 @@ package com.linkedin.d2.balancer.properties;
 import com.linkedin.d2.balancer.util.JacksonUtil;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.d2.discovery.PropertySerializationException;
+import java.util.Collections;
 import org.testng.annotations.Test;
 
 import java.net.URI;
@@ -30,11 +31,6 @@ import static org.testng.Assert.assertEquals;
 
 public class UriPropertiesSerializerTest
 {
-  public static void main(String[] args) throws URISyntaxException, PropertySerializationException
-  {
-    new UriPropertiesSerializerTest().testUriPropertiesSerializer();
-  }
-
   // the old way of constructing uri properties; ideally we would like to keep it as a constructor
   // However, it has the same signature as the new one after type erasure if it is still a constructor
   public static UriProperties getInstanceWithOldArguments(String clusterName, Map<URI, Double> weights)
@@ -53,27 +49,27 @@ public class UriPropertiesSerializerTest
   public void testUriPropertiesSerializer() throws URISyntaxException,
           PropertySerializationException
   {
-    UriPropertiesJsonSerializer foo = new UriPropertiesJsonSerializer();
+    UriPropertiesJsonSerializer jsonSerializer = new UriPropertiesJsonSerializer();
     Map<URI, Double> uriWeights = new HashMap<URI, Double>();
 
-    UriProperties property =getInstanceWithOldArguments("test", uriWeights);
-    assertEquals(foo.fromBytes(foo.toBytes(property)), property);
+    UriProperties property = getInstanceWithOldArguments("test", uriWeights);
+    assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), property);
 
     uriWeights.put(URI.create("http://www.google.com"), 1d);
     //noinspection deprecation
     UriProperties property1 = getInstanceWithOldArguments("test", uriWeights);
-    assertEquals(foo.fromBytes(foo.toBytes(property1)), property1);
+    assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property1)), property1);
 
     uriWeights.put(URI.create("http://www.imdb.com"), 2d);
 
     //noinspection deprecation
     UriProperties property2 = getInstanceWithOldArguments("test2", uriWeights);
-    assertEquals(foo.fromBytes(foo.toBytes(property2)), property2);
+    assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property2)), property2);
 
     // test new way of constructing uri property
     final Map<URI, Map<Integer, PartitionData>> partitionDesc = new HashMap<URI, Map<Integer, PartitionData>>();
     property = new UriProperties("test 3", partitionDesc);
-    assertEquals(foo.fromBytes(foo.toBytes(property)), property);
+    assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), property);
     final Map<Integer, PartitionData> partitions = new HashMap<Integer, PartitionData>();
     partitions.put(0, new PartitionData(0.3d));
     partitions.put(700, new PartitionData(0.3d));
@@ -83,17 +79,17 @@ public class UriPropertiesSerializerTest
     partitionDesc.put(URI.create("http://www.google.com"), partitions);
     partitionDesc.put(URI.create("http://www.imdb.com"), partitions);
     property = new UriProperties("test 3", partitionDesc);
-    assertEquals(foo.fromBytes(foo.toBytes(property)), property);
+    assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), property);
 
     // test compatibility with old UriProperties bytes: client can understand uris published by old servers
     String oldUriJson = "{\"clusterName\": \"test4\", \"weights\":{\"http://www.google.com\": 1.0, \"http://www.imdb.com\": 2.0}}";
-    UriProperties fromOldBytes = foo.fromBytes(oldUriJson.getBytes());
+    UriProperties fromOldBytes = jsonSerializer.fromBytes(oldUriJson.getBytes());
     UriProperties createdNew = getInstanceWithOldArguments("test4", uriWeights);
     assertEquals(fromOldBytes, createdNew);
 
     // test the we include old uri format in the serialization result for unpartitioned services
     // servers publish uris that can be understood by old clients (if it is unpartitioned services)
-    byte[] bytesIncludingWeights = foo.toBytes(createdNew);
+    byte[] bytesIncludingWeights = jsonSerializer.toBytes(createdNew);
     UriProperties result = fromOldFormatBytes(bytesIncludingWeights);
     assertEquals(createdNew, result);
 
@@ -134,5 +130,44 @@ public class UriPropertiesSerializerTest
     }
 
     return new UriProperties(clusterName, partitionDesc);
+  }
+
+  @Test
+  public void testWithApplicationProperties()
+      throws PropertySerializationException
+  {
+    UriPropertiesJsonSerializer jsonSerializer = new UriPropertiesJsonSerializer();
+    URI uri = URI.create("https://www.linkedin.com");
+
+    // new constructor
+
+    Map<String, Object> applicationProperties = new HashMap<String, Object>();
+    applicationProperties.put("foo", "fooValue");
+    applicationProperties.put("bar", "barValue");
+    applicationProperties.put("baz", 1);
+
+    Map<URI, Map<Integer, PartitionData>> partitionDesc = new HashMap<URI, Map<Integer, PartitionData>>();
+    Map<Integer, PartitionData> partitions = new HashMap<Integer, PartitionData>();
+    partitions.put(0, new PartitionData(0.3d));
+    partitions.put(1000, new PartitionData(0.3d));
+
+    partitionDesc.put(uri, partitions);
+
+    UriProperties properties = new UriProperties("test", partitionDesc, Collections.singletonMap(uri, applicationProperties));
+    UriProperties stored = jsonSerializer.fromBytes(jsonSerializer.toBytes(properties));
+    assertEquals(stored, properties);
+
+    // from bytes that were stored using an old constructor
+
+    partitionDesc = new HashMap<URI, Map<Integer, PartitionData>>();
+    partitions = new HashMap<Integer, PartitionData>();
+    partitions.put(0, new PartitionData(0.3d));
+    partitions.put(1000, new PartitionData(0.3d));
+    partitionDesc.put(uri, partitions);
+
+    properties = new UriProperties("test", partitionDesc);
+
+    assertEquals(jsonSerializer.fromBytes("{\"clusterName\":\"test\",\"partitionDesc\":{\"https://www.linkedin.com\":{\"0\":{\"weight\":0.3},\"1000\":{\"weight\":0.3}}}}".getBytes()),
+                 properties);
   }
 }

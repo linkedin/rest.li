@@ -73,8 +73,20 @@ public class
   }
 
   @Override
-  public void markUp(final String clusterName, final URI uri,
-                     final Map<Integer, PartitionData> partitionDataMap, final Callback<None> callback)
+  public void markUp(final String clusterName,
+                     final URI uri,
+                     final Map<Integer, PartitionData> partitionDataMap,
+                     final Callback<None> callback)
+  {
+    markUp(clusterName, uri, partitionDataMap, Collections.<String, Object>emptyMap(), callback);
+  }
+
+  @Override
+  public void markUp(final String clusterName,
+                     final URI uri,
+                     final Map<Integer, PartitionData> partitionDataMap,
+                     final Map<String, Object> uriSpecificProperties,
+                     final Callback<None> callback)
   {
     final Callback<None> doPutCallback = new Callback<None>()
     {
@@ -84,6 +96,17 @@ public class
         Map<URI, Map<Integer, PartitionData>> partitionDesc =
             new HashMap<URI, Map<Integer, PartitionData>>();
         partitionDesc.put(uri, partitionDataMap);
+
+        Map<URI, Map<String, Object>> myUriSpecificProperties;
+        if (uriSpecificProperties != null && !uriSpecificProperties.isEmpty())
+        {
+          myUriSpecificProperties = new HashMap<URI, Map<String, Object>>();
+          myUriSpecificProperties.put(uri, uriSpecificProperties);
+        }
+        else
+        {
+          myUriSpecificProperties = Collections.emptyMap();
+        }
 
         if (_log.isInfoEnabled())
         {
@@ -105,8 +128,7 @@ public class
           sb.append("}");
           info(_log, sb);
         }
-
-        _store.put(clusterName, new UriProperties(clusterName, partitionDesc), callback);
+        _store.put(clusterName, new UriProperties(clusterName, partitionDesc, myUriSpecificProperties), callback);
 
       }
 
@@ -146,7 +168,6 @@ public class
       }
     };
     _store.get(clusterName, getCallback);
-
   }
 
   @Override

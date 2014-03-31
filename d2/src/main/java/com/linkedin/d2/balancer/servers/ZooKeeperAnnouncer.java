@@ -52,6 +52,7 @@ public class ZooKeeperAnnouncer
   private URI _uri;
   private Map<Integer, PartitionData> _partitionDataMap;
   private boolean _isServerMarkedDownThroughOverride;
+  private Map<String, Object> _uriSpecificProperties;
 
   public ZooKeeperAnnouncer(ZooKeeperServer server)
   {
@@ -114,7 +115,7 @@ public class ZooKeeperAnnouncer
   {
     if (!_isServerMarkedDownThroughOverride)
     {
-      _server.markUp(_cluster, _uri, _partitionDataMap, callback);
+      _server.markUp(_cluster, _uri, _partitionDataMap, _uriSpecificProperties, callback);
     }
     else
     {
@@ -147,6 +148,16 @@ public class ZooKeeperAnnouncer
   public void setUri(String uri)
   {
     _uri = URI.create(uri);
+  }
+
+  public void setUriSpecificProperties(Map<String, Object> uriSpecificProperties)
+  {
+    _uriSpecificProperties = Collections.unmodifiableMap(uriSpecificProperties);
+  }
+
+  public Map<String, Object> getUriSpecificProperties()
+  {
+    return (_uriSpecificProperties == null) ? Collections.<String, Object>emptyMap() : _uriSpecificProperties;
   }
 
   /**
