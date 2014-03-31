@@ -194,12 +194,15 @@ public class D2Config
       @SuppressWarnings("unchecked")
       Map<String,Object> clusterConfig = (Map<String,Object>)clusterServiceConfiguration.get(clusterName);
       clusterConfig.put(PropertyKeys.CLUSTER_NAME, clusterName);
+      final Object servicesProperty = clusterConfig.remove(PropertyKeys.SERVICES);
       @SuppressWarnings("unchecked")
-      Map<String,Map<String,Object>> servicesConfigs = (Map<String,Map<String,Object>>)clusterConfig.remove(PropertyKeys.SERVICES);
+      Map<String,Map<String,Object>> servicesConfigs = (Map<String,Map<String,Object>>) servicesProperty;
+      final Object clusterVariantProperty = clusterConfig.remove(PropertyKeys.CLUSTER_VARIANTS);
       @SuppressWarnings("unchecked")
-      Map<String,Map<String,Object>> clusterVariantConfig = (Map<String,Map<String,Object>>)clusterConfig.remove(PropertyKeys.CLUSTER_VARIANTS);
+      Map<String,Map<String,Object>> clusterVariantConfig = (Map<String,Map<String,Object>>) clusterVariantProperty;
+      final Object coloVariantsProperty = clusterConfig.remove(PropertyKeys.COLO_VARIANTS);
       @SuppressWarnings("unchecked")
-      List<String> coloVariants = (List<String>)clusterConfig.remove(PropertyKeys.COLO_VARIANTS);
+      List<String> coloVariants = (List<String>) coloVariantsProperty;
       final String masterColo = (String)clusterConfig.remove(PropertyKeys.MASTER_COLO);
       final String enableSymlinkString = (String)clusterConfig.remove(PropertyKeys.ENABLE_SYMLINK);
       final boolean enableSymlink;
@@ -215,8 +218,9 @@ public class D2Config
 
       // do some sanity check for partitions if any
       // Moving handling of partitionProperties before any coloVariant manipulations
+      final Object partitionPropertiesProperty = clusterConfig.get(PropertyKeys.PARTITION_PROPERTIES);
       @SuppressWarnings("unchecked")
-      Map<String, Object> partitionProperties = (Map<String, Object>)clusterConfig.get(PropertyKeys.PARTITION_PROPERTIES);
+      Map<String, Object> partitionProperties = (Map<String, Object>) partitionPropertiesProperty;
       if (partitionProperties != null)
       {
         status = handlePartitionProperties(partitionProperties, clusterConfig, clusterName);
@@ -288,9 +292,9 @@ public class D2Config
             coloServiceName = D2Utils.addSuffixToBaseName(serviceName, colo);
           }
 
+          final Object transportClientProperty = serviceConfig.get(PropertyKeys.TRANSPORT_CLIENT_PROPERTIES);
           @SuppressWarnings("unchecked")
-          Map<String, Object> transportClientConfig = (Map<String, Object>)serviceConfig.get(PropertyKeys.
-                                                                                           TRANSPORT_CLIENT_PROPERTIES);
+          Map<String, Object> transportClientConfig = (Map<String, Object>) transportClientProperty;
           serviceConfig.put(PropertyKeys.TRANSPORT_CLIENT_PROPERTIES, transportClientConfig);
 
           Map<String,Object> coloServiceConfig = new HashMap<String,Object>(serviceConfig);
@@ -417,8 +421,9 @@ public class D2Config
         @SuppressWarnings("unchecked")
         Map<String,Object> configGroupMap = (Map<String,Object>) _serviceVariants.get(serviceGroup);
         String type = (String)configGroupMap.get(PropertyKeys.TYPE);
+        final Object clusterListProperty = configGroupMap.get(PropertyKeys.CLUSTER_LIST);
         @SuppressWarnings("unchecked")
-        List<String> clusterList = (List<String>)configGroupMap.get(PropertyKeys.CLUSTER_LIST);
+        List<String> clusterList = (List<String>) clusterListProperty;
 
         // create an alternate service table for the services specified by these cluster variants
         for (Iterator<String> iter = clusterList.listIterator(); iter.hasNext();)
