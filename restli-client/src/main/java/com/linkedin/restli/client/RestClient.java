@@ -277,17 +277,17 @@ public class RestClient
     try
     {
       Map<String, Object> properties = _client.getMetadata(new URI(_uriPrefix + request.getServiceName()));
+
       Object potentialAnnouncedVersion = properties.get(RestConstants.RESTLI_PROTOCOL_VERSION_PROPERTY);
-      if (potentialAnnouncedVersion != null)
-      {
-        ProtocolVersion announcedVersion = new ProtocolVersion((String)potentialAnnouncedVersion);
-        return getProtocolVersion(AllProtocolVersions.BASELINE_PROTOCOL_VERSION,
-                                  AllProtocolVersions.LATEST_PROTOCOL_VERSION,
-                                  AllProtocolVersions.NEXT_PROTOCOL_VERSION,
-                                  announcedVersion,
-                                  request.getRequestOptions().getProtocolVersionOption());
-      }
-      return AllProtocolVersions.BASELINE_PROTOCOL_VERSION;
+      // if the server doesn't announce a protocol version we assume it is running the baseline version
+      ProtocolVersion announcedVersion = (potentialAnnouncedVersion == null) ?
+          AllProtocolVersions.BASELINE_PROTOCOL_VERSION : new ProtocolVersion((String)potentialAnnouncedVersion);
+
+      return getProtocolVersion(AllProtocolVersions.BASELINE_PROTOCOL_VERSION,
+                                AllProtocolVersions.LATEST_PROTOCOL_VERSION,
+                                AllProtocolVersions.NEXT_PROTOCOL_VERSION,
+                                announcedVersion,
+                                request.getRequestOptions().getProtocolVersionOption());
     }
     catch (URISyntaxException e)
     {

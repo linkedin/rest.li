@@ -67,8 +67,9 @@ public class TestGreetingsClientProtocolVersionHeader extends RestLiIntegrationT
 {
   private static final TransportClientFactory clientFactory = new HttpClientFactory();
   private static final String uriPrefix = "http://localhost:1338/";
-  private static final RestClient _REST_CLIENT = new RestClient(new PropertyProviderClient(AllProtocolVersions.BASELINE_PROTOCOL_VERSION.toString()),
+  private static final RestClient PROPERTY_PROVIDING_REST_CLIENT = new RestClient(new PropertyProviderClient(AllProtocolVersions.BASELINE_PROTOCOL_VERSION.toString()),
                                                                 uriPrefix);
+  private static final RestClient NO_PROPERTY_REST_CLIENT = new RestClient(new PropertyProviderClient(), uriPrefix);
 
   @BeforeClass
   public void initClass() throws Exception
@@ -87,10 +88,18 @@ public class TestGreetingsClientProtocolVersionHeader extends RestLiIntegrationT
     private final Map<String, Object> __metadata;
     private final Client __client;
 
+    public PropertyProviderClient()
+    {
+      this(null);
+    }
+
     public PropertyProviderClient(String restliProtocolVersion)
     {
       __metadata = new HashMap<String, Object>();
-      __metadata.put(RestConstants.RESTLI_PROTOCOL_VERSION_PROPERTY, restliProtocolVersion);
+      if (restliProtocolVersion != null)
+      {
+        __metadata.put(RestConstants.RESTLI_PROTOCOL_VERSION_PROPERTY, restliProtocolVersion);
+      }
       __client = new TransportClientAdapter(clientFactory.getClient(Collections.<String, String>emptyMap()));
     }
 
@@ -126,14 +135,16 @@ public class TestGreetingsClientProtocolVersionHeader extends RestLiIntegrationT
       throws RemoteInvocationException
   {
     final Request<Greeting> getRequest = builders.get().id(1L).build();
-    checkProtocolVersionHeader(getRequest, version);
+    checkProtocolVersionHeader(PROPERTY_PROVIDING_REST_CLIENT, getRequest, version);
+    checkProtocolVersionHeader(NO_PROPERTY_REST_CLIENT, getRequest, version);
   }
 
-  private void checkProtocolVersionHeader(Request<Greeting> request,
+  private void checkProtocolVersionHeader(RestClient restClient,
+                                          Request<Greeting> request,
                                           ProtocolVersion expectedProtocolVersion)
       throws RemoteInvocationException
   {
-    ResponseFuture<Greeting> responseFuture = _REST_CLIENT.sendRequest(request);
+    ResponseFuture<Greeting> responseFuture = restClient.sendRequest(request);
     Assert.assertEquals(responseFuture.getResponse().getHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION), expectedProtocolVersion.toString());
   }
 
@@ -183,7 +194,8 @@ public class TestGreetingsClientProtocolVersionHeader extends RestLiIntegrationT
       { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE).build())), AllProtocolVersions.BASELINE_PROTOCOL_VERSION },
       { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.FORCE_USE_LATEST).build())), AllProtocolVersions.LATEST_PROTOCOL_VERSION },
       { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE).build())), AllProtocolVersions.BASELINE_PROTOCOL_VERSION },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.FORCE_USE_LATEST).build())), AllProtocolVersions.LATEST_PROTOCOL_VERSION }
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.FORCE_USE_LATEST).build())), AllProtocolVersions.LATEST_PROTOCOL_VERSION },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.FORCE_USE_NEXT).build())), AllProtocolVersions.NEXT_PROTOCOL_VERSION}
     };
   }
 }
