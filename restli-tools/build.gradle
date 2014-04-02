@@ -15,7 +15,7 @@ dependencies {
   compile externalDependency.jdkTools
   runtime externalDependency.log4j
   runtime externalDependency.slf4jLog4j12
-  testCompile externalDependency.googleCollections
+  testCompile externalDependency.guava
   testCompile externalDependency.testng
   testCompile externalDependency.commonsHttpClient
   testRuntime externalDependency.cglib

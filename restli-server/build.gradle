@@ -14,7 +14,7 @@ dependencies {
   compile externalDependency.servletApi
   testCompile project(path: ':generator-test', configuration: 'testArtifacts')
   testCompile project(path: ':restli-common', configuration: 'testArtifacts')
-  testCompile externalDependency.googleCollections
+  testCompile externalDependency.guava
   testCompile externalDependency.testng
   testCompile externalDependency.easymock
   testCompile externalDependency.commonsHttpClient

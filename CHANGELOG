@@ -13,6 +13,10 @@ Assume that the server is using the baseline protocol version.
 (RB=283477)
 Add support for URI specific properties to D2.
 
+(RB=283854)
+Replace dependency of google-collections with guava.
+Remove usage of Gradle internal API.
+
 1.15.4
 ------
 (RB=275644)

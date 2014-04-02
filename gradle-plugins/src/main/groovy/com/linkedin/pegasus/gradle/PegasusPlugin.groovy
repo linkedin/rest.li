@@ -26,7 +26,6 @@ import org.gradle.api.Task
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileTree
-import org.gradle.api.internal.artifacts.dependencies.DefaultSelfResolvingDependency
 import org.gradle.api.invocation.Gradle
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.JavaPlugin
@@ -1266,7 +1265,7 @@ class PegasusPlugin implements Plugin<Project>
         extendsFrom(project.configurations.dataTemplateCompile)
       }
     }
-    project.dependencies.add(compileConfigName, new DefaultSelfResolvingDependency(project.files(dataTemplateJarTask.archivePath)))
+    project.dependencies.add(compileConfigName, project.files(dataTemplateJarTask.archivePath))
 
     if (debug)
     {

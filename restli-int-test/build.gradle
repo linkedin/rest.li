@@ -13,7 +13,7 @@ dependencies {
   compile project(':restli-common')
   compile project(':restli-extras')
   compile project(':d2')
-  compile externalDependency.googleCollections
+  compile externalDependency.guava
   compile externalDependency.commonsLang
   compile externalDependency.javaxInject
   compile externalDependency.parseq
