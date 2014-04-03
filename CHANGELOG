@@ -7,6 +7,12 @@ Upgrade quickstart example to support Gradle 1.9+.
 (RB=202580)
 Update restli-int-test data provider to avoid suppressing the rawtypes warning.
 
+(RB=283790)
+Assume that the server is using the baseline protocol version.
+
+(RB=283477)
+Add support for URI specific properties to D2.
+
 1.15.4
 ------
 (RB=275644)
