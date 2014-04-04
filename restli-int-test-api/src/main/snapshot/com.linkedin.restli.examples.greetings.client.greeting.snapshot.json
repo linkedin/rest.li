@@ -106,6 +106,10 @@
                 "optional" : true,
                 "name" : "tone",
                 "type" : "com.linkedin.restli.examples.greetings.api.Tone"
+              }, {
+                "optional" : true,
+                "name" : "complexQueryParam",
+                "type" : "com.linkedin.restli.examples.greetings.api.Greeting"
               } ]
             } ],
             "supports" : [ "batch_create", "batch_get", "create", "delete", "get", "partial_update", "update" ],

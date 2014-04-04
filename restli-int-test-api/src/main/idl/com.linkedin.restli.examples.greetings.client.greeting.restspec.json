@@ -66,6 +66,10 @@
               "name" : "tone",
               "type" : "com.linkedin.restli.examples.greetings.api.Tone",
               "optional" : true
+            }, {
+              "name" : "complexQueryParam",
+              "type" : "com.linkedin.restli.examples.greetings.api.Greeting",
+              "optional" : true
             } ]
           } ],
           "actions" : [ {

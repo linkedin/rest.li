@@ -1,5 +1,9 @@
 1.15.7
 ------
+(RB=285003)
+Fix bug in example generator where query params of complex types are incorrectly 
+rendered as stringified data maps with { and } instead of the correct URI 
+representation.
 
 1.15.6
 ------

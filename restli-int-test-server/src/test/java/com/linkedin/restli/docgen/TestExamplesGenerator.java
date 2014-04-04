@@ -233,6 +233,13 @@ public class TestExamplesGenerator
     Assert.assertTrue(validateUrlPath(request.getURI(),
                                       new String[]{"greeting", "subgreetings", null, "subsubgreeting"}));
 
+    capture = subgreetingsGenerator.finder("search");
+    queryString = capture.getRequest().getURI().getQuery();
+    Assert.assertTrue(queryString.contains("q=search"));
+    Assert.assertTrue(queryString.contains("complexQueryParam.id="));
+    Assert.assertTrue(queryString.contains("complexQueryParam.message="));
+    Assert.assertTrue(queryString.contains("complexQueryParam.tone="));
+
     capture = actionsGenerator.action("echoMessageArray", ResourceLevel.COLLECTION);
     final DataMap echoMessageArrayResponse = DataMapUtils.readMap(capture.getResponse());
     Assert.assertTrue(echoMessageArrayResponse.containsKey("value"));

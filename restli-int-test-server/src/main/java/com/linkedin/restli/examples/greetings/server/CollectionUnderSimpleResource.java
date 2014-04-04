@@ -90,7 +90,7 @@ public class CollectionUnderSimpleResource extends CollectionResourceTemplate<Lo
   }
 
   @Finder("search")
-  public List<Greeting> search(@Context PagingContext ctx, @QueryParam("tone") @Optional Tone tone)
+  public List<Greeting> search(@Context PagingContext ctx, @QueryParam("tone") @Optional Tone tone, @QueryParam("complexQueryParam") @Optional Greeting complexQueryParam)
   {
     return _impl.search(ctx, tone);
   }

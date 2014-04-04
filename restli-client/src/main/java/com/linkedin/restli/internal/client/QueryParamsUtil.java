@@ -17,6 +17,7 @@
 package com.linkedin.restli.internal.client;
 
 
+import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.PathSpec;
@@ -88,6 +89,10 @@ public class QueryParamsUtil
       @SuppressWarnings("rawtypes")
       final DataTemplate dataTemplate = (DataTemplate)param;
       return dataTemplate.data();
+    }
+    else if (param instanceof DataComplex)
+    {
+      return param;
     }
     else if (param instanceof List)
     {
