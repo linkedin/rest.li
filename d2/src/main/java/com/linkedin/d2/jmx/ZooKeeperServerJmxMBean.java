@@ -30,5 +30,7 @@ public interface ZooKeeperServerJmxMBean
 
   void setMarkup(String clusterName, String uri, Map<Integer, PartitionData> partitionDataMap) throws PropertyStoreException;
 
+  void setMarkup(String clusterName, String uri, Map<Integer, PartitionData> partitionDataMap, Map<String, Object> uriSpecificProperties) throws PropertyStoreException;
+
   void setMarkDown(String clusterName, String uri) throws PropertyStoreException;
 }

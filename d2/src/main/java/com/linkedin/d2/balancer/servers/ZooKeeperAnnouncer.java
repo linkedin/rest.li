@@ -99,7 +99,7 @@ public class ZooKeeperAnnouncer
 
   public synchronized void overrideMarkUp(Callback<None> callback)
   {
-    _server.markUp(_cluster, _uri, _partitionDataMap, callback);
+    _server.markUp(_cluster, _uri, _partitionDataMap, _uriSpecificProperties, callback);
     _isServerMarkedDownThroughOverride = false;
     _log.info("overrideMarkUp is called for uri = " + _uri );
   }

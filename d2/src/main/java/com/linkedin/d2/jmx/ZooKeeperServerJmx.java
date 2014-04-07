@@ -24,6 +24,7 @@ import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.d2.discovery.stores.PropertyStoreException;
 
 import java.net.URI;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -59,14 +60,24 @@ public class ZooKeeperServerJmx implements ZooKeeperServerJmxMBean
   {
     Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>(1);
     partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(weight));
-    setMarkup(clusterName, uri, partitionDataMap);
+    setMarkup(clusterName, uri, partitionDataMap, Collections.<String, Object>emptyMap());
   }
 
   @Override
   public void setMarkup(String clusterName, String uri, Map<Integer, PartitionData> partitionDataMap) throws PropertyStoreException
   {
+    setMarkup(clusterName, uri, partitionDataMap, Collections.<String, Object>emptyMap());
+  }
+
+  @Override
+  public void setMarkup(String clusterName,
+                        String uri,
+                        Map<Integer, PartitionData> partitionDataMap,
+                        Map<String, Object> uriSpecificProperties)
+      throws PropertyStoreException
+  {
     FutureCallback<None> callback = new FutureCallback<None>();
-    _server.markUp(clusterName, URI.create(uri), partitionDataMap, callback);
+    _server.markUp(clusterName, URI.create(uri), partitionDataMap, uriSpecificProperties, callback);
     try
     {
       callback.get(10, TimeUnit.SECONDS);
@@ -75,7 +86,5 @@ public class ZooKeeperServerJmx implements ZooKeeperServerJmxMBean
     {
       throw new PropertyStoreException(e);
     }
-
   }
-
 }
