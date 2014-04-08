@@ -1,5 +1,8 @@
 1.15.6
 ------
+(RB=284603)
+Add the IP address to RequestContext.
+
 (RB=285727)
 Use the correct markUp function for ZooKeeperAnnouncers
 
