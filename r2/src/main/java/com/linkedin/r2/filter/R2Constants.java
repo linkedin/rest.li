@@ -23,4 +23,5 @@ package com.linkedin.r2.filter;
 public class R2Constants
 {
   public static final String OPERATION = "OPERATION";
+  public static final String REMOTE_ADDR = "REMOTE_ADDR";
 }

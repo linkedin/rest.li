@@ -56,8 +56,23 @@ public class HttpDispatcher
    * @param req the request to be handled.
    * @param callback the callback to be invoked with the response or error.
    */
+  public void handleRequest(RestRequest req,
+                            TransportCallback<RestResponse> callback)
+  {
+    handleRequest(req, new RequestContext(), callback);
+  }
+
+  /**
+   * handle a {@link RestRequest} using the given request context.
+   * @see TransportDispatcher#handleRestRequest
+   *
+   * @param req the request to be handled.
+   * @param context the request context.
+   * @param callback the callback to be invoked with the response or error.
+   */
   @SuppressWarnings("deprecation")
   public void handleRequest(RestRequest req,
+                            RequestContext context,
                             TransportCallback<RestResponse> callback)
   {
     final Map<String, String> headers = new HashMap<String, String>(req.getHeaders());
@@ -79,7 +94,7 @@ public class HttpDispatcher
         case REST:
           _dispatcher.handleRestRequest(HttpBridge.toRestRequest(req, headers),
                                         wireAttrs,
-                                        new RequestContext(), HttpBridge.httpToRestCallback(callback)
+                                        context, HttpBridge.httpToRestCallback(callback)
           );
       }
     }

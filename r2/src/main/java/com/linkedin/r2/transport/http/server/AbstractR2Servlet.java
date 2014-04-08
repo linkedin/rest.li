@@ -37,6 +37,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.linkedin.data.ByteString;
+import com.linkedin.r2.filter.R2Constants;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.QueryTunnelUtil;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -103,6 +105,8 @@ public abstract class AbstractR2Servlet extends HttpServlet
       return;
     }
 
+    RequestContext requestContext = readRequestContext(req);
+
     final AtomicReference<TransportResponse<RestResponse>> result =
         new AtomicReference<TransportResponse<RestResponse>>();
     final CountDownLatch latch = new CountDownLatch(1);
@@ -117,7 +121,7 @@ public abstract class AbstractR2Servlet extends HttpServlet
       }
     };
 
-    getDispatcher().handleRequest(restRequest, callback);
+    getDispatcher().handleRequest(restRequest, requestContext, callback);
 
     try
     {
@@ -218,6 +222,19 @@ public abstract class AbstractR2Servlet extends HttpServlet
       rb.setEntity(buf);
     }
     return QueryTunnelUtil.decode(rb.build());
+  }
+
+  /**
+   * Read HTTP-specific properties from the servlet request into the request context. We'll read
+   * properties that many clients might be interested in, such as the caller's IP address.
+   * @param req The HTTP servlet request
+   * @return The request context
+   */
+  private RequestContext readRequestContext(HttpServletRequest req)
+  {
+    RequestContext context = new RequestContext();
+    context.putLocalAttr(R2Constants.REMOTE_ADDR, req.getRemoteAddr());
+    return context;
   }
 
   /**
