@@ -5,6 +5,9 @@ Fix bug in example generator where query params of complex types are incorrectly
 rendered as stringified data maps with { and } instead of the correct URI 
 representation.
 
+(RB=282064)
+Removing X-RestLi-Type and X-RestLi-Sub-Type headers.
+
 1.15.6
 ------
 (RB=284603)
