@@ -2,62 +2,41 @@
   <img src="https://github.com/linkedin/rest.li/wiki/restli-logo-white-small.png"/>
 </p>
 
-What is Rest.li?
-================
-Rest.li is a REST+JSON framework for building robust, scalable service
-architectures using dynamic discovery and simple asynchronous APIs.
+Rest.li is an open source REST framework for building robust, scalable RESTful
+architectures using type-safe bindings and asynchronous, non-blocking IO. Rest.li
+fills a niche for applying RESTful principals at scale with an end-to-end developer
+workflow for buildings REST APIs that promotes clean REST practices, uniform
+interface design and consistent data modeling.
 
-Rest.li fills a niche for building RESTful service architectures at scale,
-offering a developer workflow for defining data and REST APIs that promotes
-uniform interfaces, consistent data modeling, type-safety, and compatibility
-checked API evolution.
+<p align="center"><a href="https://github.com/linkedin/rest.li">Source</a> | <a href="https://github.com/linkedin/rest.li/wiki">Documentation</a> | <a href="http://www.linkedin.com/groups/Restli-4855943">Discussion Group</a></p>
 
-# No, Really.  What is Rest.li?
+Features
+--------
 
-Oh, you want to see some code, don't you?
+* [End-to-end framework](https://github.com/linkedin/rest.li/wiki/Rest.li-User-Guide#development-flow) for building RESTful APIs
+* Approachable APIs for writing non-blocking client and server code using [ParSeq](http://rest.li/github.com/linkedin/parseq)
+* Type-safe development using generated data and client bindings
+* [JAX-RS](http://en.wikipedia.org/wiki/Java_API_for_RESTful_Web_Services) inspired annotation driven server side resource development
+* Engineered and battle tested for high scalability and high availability
+* Optional [Dynamic Discovery](https://github.com/linkedin/rest.li/wiki/Dynamic-Discovery) subsystem adds client side load balancing and fault tolerance
+* Backward compatibility checking to ensure all API changes are safe
+* Support for batch operations, partial updates and projections
+* [Web UI](https://github.com/linkedin/rest.li-api-hub) for for browsing and searching a catelog of rest.li APIs.
 
-Basically, rest.li is a framework where you define schema's for your data:
+Website
+-------
+[http://rest.li](http://rest.li)
 
-```json
-{
-  "name" : "Greeting", "namespace" : "com.example.greetings", "type" : "record",
-  "fields" : [
-    { "name" : "message", "type" : "string" }
-  ]
-}
-```
-
-Write servers:
-
-```java
-@RestLiCollection(name = "greetings")
-class GreetingsResource extends CollectionResourceTemplate<Long, Greeting> {
-  public Greeting get(Long key) {
-    return new Greeting().setMessage("Good morning!");
-  }
-}
-```
-
-And then write clients:
-
-```java
-Response<Greeting> response = restClient.sendRequest(new GreetingsBuilders.get().id(1L)).get();
-System.out.println(response.getEntity().getMessage());
-```
-
-And get all the benefits of a robust, scalable REST+JSON framework.
-
-# Full Documentation
+Documentation
+-------------
 
 See our [wiki](https://github.com/linkedin/rest.li/wiki) for full documentation and examples.
 
-Twitter Account
----------------
-Follow us [@rest_li](https://twitter.com/rest_li)
-
-Discussion Group
-----------------
-[Linkedin Rest.li Group](http://www.linkedin.com/groups/Restli-4855943)
+Community
+---------
+* Discussion Group: [Linkedin Rest.li Group](http://www.linkedin.com/groups/Restli-4855943)
+* Follow us on twitter: [@rest_li](https://twitter.com/rest_li)
+* Issue Tracking: [github issue tracking](https://github.com/linkedin/rest.li/issues)
 
 Quickstart Guides and Examples
 ------------------------------
