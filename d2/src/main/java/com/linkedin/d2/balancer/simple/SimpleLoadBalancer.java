@@ -34,12 +34,15 @@ import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
+import com.linkedin.d2.balancer.util.KeysAndHosts;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
+import com.linkedin.d2.balancer.util.MapKeyHostPartitionResult;
 import com.linkedin.d2.balancer.util.MapKeyResult;
 import com.linkedin.d2.balancer.util.hashing.HashRingProvider;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessException;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
+import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
 import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
 import com.linkedin.d2.discovery.util.Stats;
 import com.linkedin.r2.message.Request;
@@ -67,7 +70,7 @@ import static com.linkedin.d2.discovery.util.LogUtil.debug;
 import static com.linkedin.d2.discovery.util.LogUtil.info;
 import static com.linkedin.d2.discovery.util.LogUtil.warn;
 
-public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, ClientFactoryProvider
+public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, ClientFactoryProvider, PartitionInfoProvider
 {
   private static final Logger     _log =
                                            LoggerFactory.getLogger(SimpleLoadBalancer.class);
@@ -421,6 +424,137 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
 
     return clusterItem.getProperty();
+  }
+
+  @Override
+  public <K> MapKeyHostPartitionResult<K> getPartitionInformation(URI serviceUri, Collection<K> keys,
+                                                                        int limitHostPerPartition,
+                                                                        HashProvider hashProvider)
+      throws ServiceUnavailableException
+  {
+    if (limitHostPerPartition <= 0)
+    {
+      throw new IllegalArgumentException("limitHostPartition cannot be 0 or less");
+    }
+    ServiceProperties service = listenToServiceAndCluster(serviceUri);
+    String serviceName = service.getServiceName();
+    String clusterName = service.getClusterName();
+    ClusterProperties cluster = getClusterProperties(serviceName, clusterName);
+
+    LoadBalancerStateItem<UriProperties> uriItem = getUriItem(serviceName, clusterName, cluster);
+    UriProperties uris = uriItem.getProperty();
+
+    List<LoadBalancerState.SchemeStrategyPair> orderedStrategies =
+        _state.getStrategiesForService(serviceName, service.getPrioritizedSchemes());
+    List<K> unmappedKeys = new ArrayList<K>();
+
+    if (! orderedStrategies.isEmpty())
+    {
+      //DANGER we assume that the first strategy in the list has to support partitioning. If not then,
+      //this function may fail. The reason why we don't check whether the strategy support partitioning
+      //is because the downstream code will check it for us and the user will be notified about
+      //this problem. Plus it doesn't make sense for a user to have partitioning but didn't specify a
+      //strategy that supports partitioning
+      final LoadBalancerState.SchemeStrategyPair pair = orderedStrategies.get(0);
+      final PartitionAccessor accessor = getPartitionAccessor(serviceName, clusterName);
+
+      //get the partitionId -> keys mapping
+      Map<Integer, Set<K>> partitionSet = new HashMap<Integer, Set<K>>();
+      for (final K key : keys)
+      {
+        int partitionId;
+        try
+        {
+          partitionId = accessor.getPartitionId(key.toString());
+        }
+        catch (PartitionAccessException e)
+        {
+          unmappedKeys.add(key);
+          continue;
+        }
+
+        Set<K> set = partitionSet.get(partitionId);
+        if (set == null)
+        {
+          set = new HashSet<K>();
+          partitionSet.put(partitionId, set);
+        }
+        set.add(key);
+      }
+
+      Collection<Integer> partitionWithoutEnoughHost = new HashSet<Integer>();
+
+      //get the partitionId -> host URIs list
+      Map<Integer, List<URI>> hostList = new HashMap<Integer, List<URI>>();
+      for (Integer partitionId : partitionSet.keySet())
+      {
+        Set<URI> possibleUris = uris.getUriBySchemeAndPartition(pair.getScheme(), partitionId);
+        List<TrackerClient> trackerClients = getPotentialClients(serviceName, service, possibleUris);
+        List<URI> rankedUri = new ArrayList<URI>();
+        int size = trackerClients.size() <= limitHostPerPartition ? trackerClients.size() : limitHostPerPartition;
+
+        Ring<URI> ring = pair.getStrategy().getRing(uriItem.getVersion(), partitionId, trackerClients);
+
+        for (int i = 0; i < size; i++)
+        {
+          URI uri = ring.get(hashProvider.nextHash());
+          if (uri == null)
+          {
+            //that means there is no longer valid URI in the ring
+            break;
+          }
+          rankedUri.add(uri);
+          if (rankedUri.size() < trackerClients.size())
+          {
+            //there is a potential problem here although it's very rare and very unlikely depending on
+            //timing, the setup of the cluster membership, and how often the cluster change its membership.
+
+            //the problem is as follows:
+            //we are calling getRing() with set A of trackerClients and we want numHost to be 5. There are 10 hosts
+            //in set A. On the 4th iteration this loop, the membership of A becomes stale because some hosts
+            //leaves and join the partition. So the new set of membership is B. Imagine some other caller calls
+            //getRing with set B and manage to update the state of the strategy. Then the last iteration of with
+            //set A will get a completely different ring than previous iteration.
+
+            //But the rational why we are not bothered here is because there is nothing we can do about it
+            //imagine you receive a notification that you should send a message to foo.com.
+            //when we're about to send the request, foo.com suddenly dies and when you send the message
+            //obviously it will fail but we can't do anything about it. So this is similar to this case.
+            //we are preparing to get a mapping of URL, during this time, some server is changed. Should
+            //we reconstruct the whole request again? No, we should just proceed and send the request. If
+            //it fails then we can retry again on the subsequent request.
+            ring = pair.getStrategy().getRing(uriItem.getVersion(), partitionId, trackerClients, rankedUri);
+          }
+        }
+        hostList.put(partitionId, rankedUri);
+        if (rankedUri.size() < limitHostPerPartition)
+        {
+          partitionWithoutEnoughHost.add(partitionId);
+        }
+      }
+
+      Map<Integer, KeysAndHosts<K>> partitionDataMap = new HashMap<Integer, KeysAndHosts<K>>(hostList.size());
+
+      for (Integer partitionId : hostList.keySet())
+      {
+        partitionDataMap.put(partitionId, new KeysAndHosts<K>(partitionSet.get(partitionId),hostList.get(partitionId)));
+      }
+      return new MapKeyHostPartitionResult<K>(unmappedKeys, partitionDataMap, partitionWithoutEnoughHost);
+    }
+    else
+    {
+      throw new ServiceUnavailableException(serviceName, "Unable to find a load balancer strategy");
+    }
+  }
+
+  @Override
+  public PartitionAccessor getPartitionAccessor(URI serviceUri)
+      throws ServiceUnavailableException
+  {
+    ServiceProperties service = listenToServiceAndCluster(serviceUri);
+    String serviceName = service.getServiceName();
+    String clusterName = service.getClusterName();
+    return getPartitionAccessor(serviceName, clusterName);
   }
 
   private PartitionAccessor getPartitionAccessor(String serviceName, String clusterName)

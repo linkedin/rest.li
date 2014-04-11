@@ -1,6 +1,7 @@
 1.15.20
 -------
-
+(RB=288213)
+Provide methods to map keys to multiple hosts in KeyMapper
 
 1.15.19
 -------

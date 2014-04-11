@@ -21,6 +21,7 @@
 package com.linkedin.d2.balancer;
 
 import com.linkedin.d2.balancer.util.AllPartitionsResult;
+import com.linkedin.d2.balancer.util.HostToKeyMapper;
 import com.linkedin.d2.balancer.util.MapKeyResult;
 import com.linkedin.r2.message.RequestContext;
 
@@ -114,6 +115,51 @@ public interface KeyMapper
    */
   public <K> MapKeyResult<URI, K> mapKeysV2(URI serviceUri, Iterable<K> keys)
       throws ServiceUnavailableException;
+
+  /**
+   * Given a d2 service URI (for example : d2://articles), a collection of keys and a desired number of
+   * hosts per keys, this method returns a mapping of those keys to hosts that the caller can send to. The
+   * reason why we want multiple hosts per key is to give users multiple options to send the request if
+   * the first attempt to send request doesn't return result. This is the main difference between
+   * mapKeysV2 and mapKeysV3.
+   *
+   * The returned hosts are picked semi randomly weighted based on the health of the hosts.
+   * For example if keys 1,2,3 can be sent to host1, host2, host3 and you want us to return 2 hosts
+   * we will return the top 2 "best" host ranked according to d2 load balancer algorithm.
+   *
+   * If there are not enough host in the to fulfill the requested number of hosts,
+   * we will try to return as many as we can.
+   *
+   *
+   * @param serviceUri
+   * @param keys
+   * @param limitNumHostsPerPartition
+   * @param <K>
+   * @return {@link HostToKeyMapper}
+   * @throws ServiceUnavailableException
+   */
+  public <K> HostToKeyMapper<K> mapKeysV3(URI serviceUri, Collection<K> keys, int limitNumHostsPerPartition)
+      throws ServiceUnavailableException;
+
+  /**
+   * Similar to the other mapKeysV3 method but this method will try to return the same order of hosts based on the
+   * sticky key.
+   *
+   * @param serviceUri
+   * @param keys
+   * @param limitNumHostsPerPartition
+   * @param stickyKey
+   * @param <K>
+   * @param <S>
+   * @return
+   * @throws ServiceUnavailableException
+   */
+  public <K, S> HostToKeyMapper<K> mapKeysV3(URI serviceUri,
+                                               Collection<K> keys,
+                                               int limitNumHostsPerPartition,
+                                               S stickyKey)
+      throws ServiceUnavailableException;
+
 
   /**
    * Get host uris that cover all the partitions. The number of uris does not neccessarily equal

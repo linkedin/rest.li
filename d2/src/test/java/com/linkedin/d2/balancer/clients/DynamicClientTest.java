@@ -31,6 +31,7 @@ import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.DelegatingFacilities;
 import com.linkedin.d2.balancer.util.DirectoryProvider;
 import com.linkedin.d2.balancer.util.KeyMapperProvider;
+import com.linkedin.d2.balancer.util.HostToKeyMapper;
 import com.linkedin.d2.balancer.util.MapKeyResult;
 import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
 import com.linkedin.r2.message.Request;
@@ -214,6 +215,23 @@ public class DynamicClientTest
 
     @Override
     public <K> MapKeyResult<URI, K> mapKeysV2(URI serviceUri, Iterable<K> keys)
+        throws ServiceUnavailableException
+    {
+      return null;
+    }
+
+    @Override
+    public <K> HostToKeyMapper<K> mapKeysV3(URI serviceUri, Collection<K> keys, int limitNumHostsPerPartition)
+        throws ServiceUnavailableException
+    {
+      return null;
+    }
+
+    @Override
+    public <K, S> HostToKeyMapper<K> mapKeysV3(URI serviceUri,
+                                                 Collection<K> keys,
+                                                 int limitNumHostsPerPartition,
+                                                 S stickyKey)
         throws ServiceUnavailableException
     {
       return null;

@@ -37,7 +37,7 @@ public class MapKeyResult<T, K>
   public static enum ErrorType
   {
     FAIL_TO_FIND_PARTITION,
-    NO_HOST_AVAILABLE_IN_PARTITION
+    NO_HOST_AVAILABLE_IN_PARTITION,
   }
 
   public static class UnmappedKey<K>
@@ -59,6 +59,27 @@ public class MapKeyResult<T, K>
     public ErrorType getErrorType()
     {
       return _errorType;
+    }
+
+    @Override
+    public int hashCode()
+    {
+      int hashCode = _key == null ? 1 : _key.hashCode() * 31;
+      hashCode = 31 * hashCode * (_errorType == null ? 1 : _errorType.hashCode());
+      return hashCode;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public boolean equals(Object o)
+    {
+      if (o == null || !(o instanceof  UnmappedKey))
+      {
+        return false;
+      }
+      UnmappedKey u = (UnmappedKey) o;
+      return this._errorType.equals(u._errorType) &&
+          this._key.equals(u._key);
     }
   }
 

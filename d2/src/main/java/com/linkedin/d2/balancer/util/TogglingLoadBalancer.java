@@ -28,6 +28,8 @@ import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.util.hashing.HashRingProvider;
 import com.linkedin.d2.balancer.util.hashing.Ring;
+import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
+import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
 import com.linkedin.d2.discovery.event.PropertyEventThread;
 import com.linkedin.d2.discovery.stores.toggling.TogglingPublisher;
 import com.linkedin.r2.message.Request;
@@ -36,6 +38,7 @@ import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 
 import java.net.URI;
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -45,7 +48,7 @@ import java.util.Map;
  * @version $Revision: $
  */
 
-public class TogglingLoadBalancer implements LoadBalancer, HashRingProvider, ClientFactoryProvider
+public class TogglingLoadBalancer implements LoadBalancer, HashRingProvider, ClientFactoryProvider, PartitionInfoProvider
 {
   private final LoadBalancer _balancer;
   private final TogglingPublisher<?>[] _toggles;
@@ -123,6 +126,16 @@ public class TogglingLoadBalancer implements LoadBalancer, HashRingProvider, Cli
     }
   }
 
+  private void checkPartitionInfoProvider()
+  {
+    if (_balancer == null || !(_balancer instanceof PartitionInfoProvider))
+    {
+      throw new IllegalStateException("No PartitionInfoProvider available to TogglingLoadBalancer - this could be because the load balancer " +
+                                          "is not yet initialized, or because it has been configured with strategies that do not support " +
+                                          "consistent hashing.");
+    }
+  }
+
   @Override
   public TransportClientFactory getClientFactory(String scheme)
   {
@@ -135,5 +148,26 @@ public class TogglingLoadBalancer implements LoadBalancer, HashRingProvider, Cli
                                               "support obtaining client factories");
     }
     return ((ClientFactoryProvider)_balancer).getClientFactory(scheme);
+  }
+
+  @Override
+  public <K> MapKeyHostPartitionResult<K> getPartitionInformation(URI serviceUri,
+                                                                        Collection<K> keys,
+                                                                        int limitHostPerPartition,
+                                                                        HashProvider hashProvider)
+      throws ServiceUnavailableException
+  {
+    checkPartitionInfoProvider();
+    return ((PartitionInfoProvider)_balancer).getPartitionInformation(serviceUri, keys,
+                                                                                 limitHostPerPartition,
+                                                                                 hashProvider);
+  }
+
+  @Override
+  public PartitionAccessor getPartitionAccessor(URI serviceUri)
+      throws ServiceUnavailableException
+  {
+    checkPartitionInfoProvider();
+    return ((PartitionInfoProvider)_balancer).getPartitionAccessor(serviceUri);
   }
 }

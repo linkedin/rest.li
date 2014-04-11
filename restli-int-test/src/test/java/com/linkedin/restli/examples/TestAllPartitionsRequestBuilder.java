@@ -16,6 +16,9 @@
 
 package com.linkedin.restli.examples;
 
+import com.linkedin.d2.balancer.util.MapKeyHostPartitionResult;
+import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
+import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
 import com.linkedin.restli.client.RestliRequestOptions;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -84,6 +87,27 @@ public class TestAllPartitionsRequestBuilder extends RestLiIntegrationTest {
           null,
           Greeting.class,
           Collections.<String, Class<?>> emptyMap());
+
+  private static class TestPartitionInfoProvider implements PartitionInfoProvider
+  {
+
+    @Override
+    public <K> MapKeyHostPartitionResult<K> getPartitionInformation(URI serviceUri,
+                                                                          Collection<K> keys,
+                                                                          int limitHostPerPartition,
+                                                                          HashProvider hashProvider)
+        throws ServiceUnavailableException
+    {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public PartitionAccessor getPartitionAccessor(URI serviceUri)
+        throws ServiceUnavailableException
+    {
+      throw new UnsupportedOperationException();
+    }
+  }
 
   @BeforeClass
   public void initClass() throws Exception
@@ -208,7 +232,7 @@ public class TestAllPartitionsRequestBuilder extends RestLiIntegrationTest {
       rings.add(ring);
     }
 
-    return new ConsistentHashKeyMapper(new StaticRingProvider(rings));
+    return new ConsistentHashKeyMapper(new StaticRingProvider(rings), new TestPartitionInfoProvider());
   }
 
   @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "restliRequestOptions")

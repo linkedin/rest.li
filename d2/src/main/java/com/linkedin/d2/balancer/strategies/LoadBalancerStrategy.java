@@ -33,14 +33,59 @@ import java.util.List;
  */
 public interface LoadBalancerStrategy
 {
+
+  /**
+   * Given a list of tracker clients this return one tracker client to use
+   *
+   * @param request
+   * @param requestContext
+   * @param clusterGenerationId
+   * @param partitionId
+   * @param trackerClients
+   * @return TrackerClient
+   */
   TrackerClient getTrackerClient(Request request,
                                  RequestContext requestContext,
                                  long clusterGenerationId,
                                  int partitionId,
                                  List<TrackerClient> trackerClients);
 
+  /**
+   * Returns a ring that can be used to choose a host. The ring will contain all the
+   * tracker clients passed as the argument.
+   * This method is optional hence some implementation may throw UnsupportedOperationException.
+   *
+   * Certain implementation of this interface updates its internal state using the trackerClients
+   * passed in.
+   *
+   * @param clusterGenerationId
+   * @param partitionId
+   * @param trackerClients
+   * @return Ring
+   */
   Ring<URI> getRing(long clusterGenerationId,
                     int partitionId,
                     List<TrackerClient> trackerClients);
 
+  /**
+   * Returns a ring that can be used to choose a host. The ring will contain all the tracker
+   * clients passed the argument minus the ones listed in excludedTrackerClients.
+   *
+   * Certain implementation of this interface updates its internal state using the trackerClients
+   * passed in.The internal state can be uninitialized or out of date.
+   * So the complete list of tracker clients should always be passed in,
+   * and if certain URI's should be excluded, pass that in through the excludedURI's parameter.
+   *
+   * This method is optional hence some implementation may throw UnsupportedOperationException
+   *
+   * @param clusterGenerationId
+   * @param partitionId
+   * @param trackerClients
+   * @param excludedURIs
+   * @return Ring
+   */
+  Ring<URI> getRing(long clusterGenerationId,
+                                 int partitionId,
+                                 List<TrackerClient> trackerClients,
+                                 List<URI> excludedURIs);
 }

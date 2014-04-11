@@ -952,18 +952,34 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public Ring<URI> getRing(long clusterGenerationId,
                     int partitionId,
                     List<TrackerClient> trackerClients)
+  {
+    return getRing(clusterGenerationId, partitionId, trackerClients, Collections.EMPTY_LIST);
+  }
+
+  @Override
+  public Ring<URI> getRing(long clusterGenerationId,
+                                   int partitionId,
+                                   List<TrackerClient> trackerClients,
+                                   List<URI> excludedURIs)
   {
     if (partitionId != DEFAULT_PARTITION_ID)
     {
       throw new UnsupportedOperationException("Trying to access partition: " + partitionId + "on an unpartitioned cluster");
     }
     checkUpdateState(clusterGenerationId, trackerClients);
-    return _state.getRing();
+    Map<URI, Integer> pointsMap = new HashMap<URI,Integer>(_state.getPointsMap());
+    for (URI uri : excludedURIs)
+    {
+      pointsMap.remove(uri);
+    }
+    return new ConsistentHashRing<URI>(pointsMap);
   }
+
 
   /**
    * Whether or not the degrader's view of the cluster is allowed to be updated.

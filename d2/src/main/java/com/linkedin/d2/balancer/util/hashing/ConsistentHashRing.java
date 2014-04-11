@@ -268,5 +268,48 @@ public class ConsistentHashRing<T> implements Ring<T>
     {
       return "Point [_hash=" + _hash + ", _t=" + _t + "]";
     }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public boolean equals(Object o)
+    {
+      if (o == null || !(o instanceof Point))
+      {
+        return false;
+      }
+      Point p = (Point) o;
+      return _t.equals(p._t) && _hash == p._hash;
+    }
+
+    @Override
+    public int hashCode()
+    {
+      int hashCode = _t == null ? 1 : _t.hashCode() * 31;
+      hashCode = 31 * hashCode * _hash;
+      return hashCode;
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public boolean equals(Object o)
+  {
+    if (o == null || !(o instanceof  ConsistentHashRing))
+    {
+      return false;
+    }
+    ConsistentHashRing ring = (ConsistentHashRing) o;
+    return this._points.equals(ring._points) &&
+        Arrays.equals(_objects, ring._objects) &&
+        Arrays.equals(_ring, ring._ring);
+  }
+
+  @Override
+  public int hashCode()
+  {
+    int hashCode = _points == null ? 1 : _points.hashCode() * 31;
+    hashCode = 31 * hashCode * (_objects == null ? 1 : _objects.hashCode());
+    hashCode = 31 * hashCode * (_ring == null ? 1 : _ring.hashCode());
+    return hashCode;
   }
 }

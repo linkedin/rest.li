@@ -43,17 +43,14 @@ import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.SettableClock;
 import com.linkedin.util.clock.SystemClock;
-import com.linkedin.util.clock.Time;
 import com.linkedin.util.degrader.CallCompletion;
 import com.linkedin.util.degrader.DegraderControl;
 import com.linkedin.util.degrader.DegraderImpl;
 import com.linkedin.util.degrader.ErrorType;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Random;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -2402,6 +2399,15 @@ public class DegraderLoadBalancerTest
     public Ring<URI> getRing(long clusterGenerationId, int partitionId, List<TrackerClient> trackerClients)
     {
       return _strategy.getRing(clusterGenerationId, partitionId, trackerClients);
+    }
+
+    @Override
+    public Ring<URI> getRing(long clusterGenerationId,
+                                     int partitionId,
+                                     List<TrackerClient> trackerClients,
+                                     List<URI> excludedURIs)
+    {
+      return _strategy.getRing(clusterGenerationId, partitionId, trackerClients, excludedURIs);
     }
 
     public void setStrategyV3(int partitionID,

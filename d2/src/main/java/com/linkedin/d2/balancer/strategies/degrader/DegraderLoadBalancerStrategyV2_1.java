@@ -38,7 +38,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -865,17 +864,32 @@ public class DegraderLoadBalancerStrategyV2_1 implements LoadBalancerStrategy
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public Ring<URI> getRing(long clusterGenerationId,
-                    int partitionId,
-                    List<TrackerClient> trackerClients)
+                           int partitionId,
+                           List<TrackerClient> trackerClients)
+  {
+    return getRing(clusterGenerationId, partitionId, trackerClients, Collections.EMPTY_LIST);
+  }
+
+  @Override
+  public Ring<URI> getRing(long clusterGenerationId,
+                           int partitionId,
+                           List<TrackerClient> trackerClients,
+                           List<URI> excludedURIs)
   {
     if (partitionId != DEFAULT_PARTITION_ID)
     {
       throw new UnsupportedOperationException("Trying to access partition: " + partitionId + "on an unpartitioned cluster");
     }
     checkUpdateState(clusterGenerationId, trackerClients);
-    return _state.getRing();
+    Map<URI, Integer> pointsMap = new HashMap<URI,Integer>(_state.getPointsMap());
+    for (URI uri : excludedURIs)
+    {
+      pointsMap.remove(uri);
+    }
+    return new ConsistentHashRing<URI>(pointsMap);
   }
 
   /**

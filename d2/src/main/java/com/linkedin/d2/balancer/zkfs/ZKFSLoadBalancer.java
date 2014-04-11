@@ -32,11 +32,14 @@ import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.DirectoryProvider;
 import com.linkedin.d2.balancer.util.KeyMapperProvider;
+import com.linkedin.d2.balancer.util.MapKeyHostPartitionResult;
 import com.linkedin.d2.balancer.util.MapKeyResult;
 import com.linkedin.d2.balancer.util.TogglingLoadBalancer;
 import com.linkedin.d2.balancer.util.hashing.ConsistentHashKeyMapper;
 import com.linkedin.d2.balancer.util.hashing.HashRingProvider;
 import com.linkedin.d2.balancer.util.hashing.Ring;
+import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
+import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
 import com.linkedin.d2.discovery.event.PropertyEventThread;
 import com.linkedin.d2.discovery.stores.zk.ZKConnection;
 import com.linkedin.r2.message.Request;
@@ -44,6 +47,7 @@ import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.util.NamedThreadFactory;
+import java.util.Collection;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Watcher;
 import org.slf4j.Logger;
@@ -67,7 +71,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 
 public class ZKFSLoadBalancer
-        implements LoadBalancerWithFacilities, DirectoryProvider, KeyMapperProvider, HashRingProvider,
+        implements LoadBalancerWithFacilities, DirectoryProvider, KeyMapperProvider, HashRingProvider, PartitionInfoProvider,
         ClientFactoryProvider
 {
   private static final Logger LOG = LoggerFactory.getLogger(ZKFSLoadBalancer.class);
@@ -95,6 +99,25 @@ public class ZKFSLoadBalancer
    * it has been sucessfully started, except the first time.
    */
   private volatile LoadBalancer _currentLoadBalancer;
+
+  public <K> MapKeyHostPartitionResult<K> getPartitionInformation(URI serviceUri, Collection<K> keys,
+                                                                        int limitHostPerPartition,
+                                                                        HashProvider hashProvider)
+      throws ServiceUnavailableException
+  {
+    checkPartitionInfoProvider();
+    return ((PartitionInfoProvider)_currentLoadBalancer).getPartitionInformation(serviceUri, keys,
+                                                                                  limitHostPerPartition,
+                                                                                  hashProvider);
+  }
+
+  @Override
+  public PartitionAccessor getPartitionAccessor(URI serviceUri)
+      throws ServiceUnavailableException
+  {
+    checkPartitionInfoProvider();
+    return ((PartitionInfoProvider)_currentLoadBalancer).getPartitionAccessor(serviceUri);
+  }
 
   public static interface TogglingLoadBalancerFactory
   {
@@ -192,7 +215,7 @@ public class ZKFSLoadBalancer
     _isSymlinkAware = isSymlinkAware;
 
     _executor = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("D2 PropertyEventExecutor"));
-    _keyMapper = new ConsistentHashKeyMapper(this);
+    _keyMapper = new ConsistentHashKeyMapper(this, this);
     _delayedExecution = 1000;
   }
 
@@ -380,6 +403,16 @@ public class ZKFSLoadBalancer
       throw new IllegalStateException("No HashRingProvider available to ZKFSLoadBalancer - this could be because the load balancer " +
           "is not yet initialized, or because it has been configured with strategies that do not support " +
           "consistent hashing.");
+    }
+  }
+
+  private void checkPartitionInfoProvider()
+  {
+    if (_currentLoadBalancer == null || !(_currentLoadBalancer instanceof PartitionInfoProvider))
+    {
+      throw new IllegalStateException("No PartitionInfoProvider available to TogglingLoadBalancer - this could be because the load balancer " +
+                                          "is not yet initialized, or because it has been configured with strategies that do not support " +
+                                          "consistent hashing.");
     }
   }
 

@@ -27,7 +27,6 @@ import com.linkedin.d2.balancer.util.hashing.URIRegexHash;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
-import com.linkedin.util.clock.Clock;
 import com.linkedin.util.degrader.DegraderControl;
 
 import java.util.ArrayList;
@@ -41,7 +40,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -850,11 +848,26 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public Ring<URI> getRing(long clusterGenerationId, int partitionId, List<TrackerClient> trackerClients)
   {
+    return getRing(clusterGenerationId, partitionId, trackerClients, Collections.EMPTY_LIST);
+  }
+
+  @Override
+  public Ring<URI> getRing(long clusterGenerationId,
+                           int partitionId,
+                           List<TrackerClient> trackerClients,
+                           List<URI> excludedURIs)
+  {
     checkUpdatePartitionState(clusterGenerationId, partitionId, trackerClients);
-    return _state.getRing(partitionId);
+    Map<URI, Integer> pointsMap = new HashMap<URI, Integer>(_state.getPartitionState(partitionId).getPointsMap());
+    for (URI uri : excludedURIs)
+    {
+      pointsMap.remove(uri);
+    }
+    return new ConsistentHashRing<URI>(pointsMap);
   }
 
   /**

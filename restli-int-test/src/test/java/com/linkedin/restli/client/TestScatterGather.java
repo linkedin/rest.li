@@ -25,10 +25,13 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
+import com.linkedin.d2.balancer.util.MapKeyHostPartitionResult;
 import com.linkedin.d2.balancer.util.hashing.ConsistentHashKeyMapper;
 import com.linkedin.d2.balancer.util.hashing.ConsistentHashRing;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.d2.balancer.util.hashing.StaticRingProvider;
+import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
+import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.RemoteInvocationException;
@@ -84,6 +87,27 @@ public class TestScatterGather extends RestLiIntegrationTest
             Collections.<String, String>emptyMap()));
   private static final String URI_PREFIX = "http://localhost:1338/";
   private static final RestClient REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
+
+  private static class TestPartitionInfoProvider implements PartitionInfoProvider
+  {
+
+    @Override
+    public <K> MapKeyHostPartitionResult<K> getPartitionInformation(URI serviceUri,
+                                                                          Collection<K> keys,
+                                                                          int limitHostPerPartition,
+                                                                          HashProvider hashProvider)
+        throws ServiceUnavailableException
+    {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public PartitionAccessor getPartitionAccessor(URI serviceUri)
+        throws ServiceUnavailableException
+    {
+      throw new UnsupportedOperationException();
+    }
+  }
 
   @BeforeClass
   public void initClass() throws Exception
@@ -493,7 +517,7 @@ public class TestScatterGather extends RestLiIntegrationTest
   {
     SimpleLoadBalancer loadBalancer = MockLBFactory.createLoadBalancer();
 
-    KeyMapper keyMapper = new ConsistentHashKeyMapper(loadBalancer);
+    KeyMapper keyMapper = new ConsistentHashKeyMapper(loadBalancer, new TestPartitionInfoProvider());
 
     try
     {
@@ -592,7 +616,8 @@ public class TestScatterGather extends RestLiIntegrationTest
     }
 
     ConsistentHashRing<URI> testRing = new ConsistentHashRing<URI>(endpoints);
-    ConsistentHashKeyMapper mapper = new ConsistentHashKeyMapper(new StaticRingProvider(testRing));
+    ConsistentHashKeyMapper mapper = new ConsistentHashKeyMapper(new StaticRingProvider(testRing),
+                                                                 new TestPartitionInfoProvider());
 
     return mapper;
   }
@@ -627,7 +652,8 @@ public class TestScatterGather extends RestLiIntegrationTest
       rings.add(ring);
     }
 
-    return new ConsistentHashKeyMapper(new StaticRingProvider(rings));
+    return new ConsistentHashKeyMapper(new StaticRingProvider(rings),
+                                       new TestPartitionInfoProvider());
   }
 
   @DataProvider

@@ -16,42 +16,11 @@
 
 package com.linkedin.d2.balancer.simple;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
-
-import com.linkedin.d2.balancer.KeyMapper;
-import com.linkedin.d2.discovery.event.SynchronousExecutorService;
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-
-import org.apache.commons.io.FileUtils;
-import org.testng.Assert;
-import org.testng.annotations.AfterSuite;
-import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.Test;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
+import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.LoadBalancerTestState;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.clients.RewriteClient;
@@ -80,6 +49,7 @@ import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.d2.discovery.PropertySerializer;
 import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
+import com.linkedin.d2.discovery.event.SynchronousExecutorService;
 import com.linkedin.d2.discovery.stores.PropertyStore;
 import com.linkedin.d2.discovery.stores.file.FileStore;
 import com.linkedin.d2.discovery.stores.mock.MockStore;
@@ -91,6 +61,34 @@ import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import org.apache.commons.io.FileUtils;
+import org.testng.Assert;
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.Test;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 public class SimpleLoadBalancerTest
 {
@@ -511,6 +509,7 @@ public class SimpleLoadBalancerTest
       assertTrue(executorService.isShutdown(), "ExecutorService should have shut down!");
     }
   }
+
 
   @Test(groups = { "small", "back-end" })
   public void testLoadBalancerWithWait() throws URISyntaxException,
