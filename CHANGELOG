@@ -1,11 +1,22 @@
+1.15.9
+------
+
 1.15.8
 ------
+(RB=288441)
+Relax master colo check in D2Config if enableSymlink is set.
+
+(RB=288471)
+Fix a bug where an exists watch gets incorrectly disabled when it's still valid.
+
+(RB=288481)
+Add symlinkAware option in ZKPersistentConnection.
 
 1.15.7
 ------
 (RB=285003)
-Fix bug in example generator where query params of complex types are incorrectly 
-rendered as stringified data maps with { and } instead of the correct URI 
+Fix bug in example generator where query params of complex types are incorrectly
+rendered as stringified data maps with { and } instead of the correct URI
 representation.
 
 (RB=282064)
