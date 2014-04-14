@@ -1581,7 +1581,7 @@ public class TestD2Config
     peerColos.add(defaultColo);
 
     clusterProperties.put(PropertyKeys.COLO_VARIANTS, peerColos);
-    clusterProperties.put(PropertyKeys.MASTER_COLO, masterColo);
+    clusterProperties.put(PropertyKeys.MASTER_COLO, "MASTER_MANAGED_EXTERNALLY");
     clusterProperties.put(PropertyKeys.ENABLE_SYMLINK, "true");
     Map<String,Map<String,Object>> clustersProperties = new HashMap<String,Map<String,Object>>();
     clustersProperties.put(clusterName, clusterProperties);
@@ -1628,7 +1628,7 @@ public class TestD2Config
       }};
 
     clusterProperties.put(PropertyKeys.COLO_VARIANTS, peerColos);
-    clusterProperties.put(PropertyKeys.MASTER_COLO, masterColo);
+    clusterProperties.put(PropertyKeys.MASTER_COLO, "MASTER_MANAGED_EXTERNALLY");
     clusterProperties.put(PropertyKeys.CLUSTER_VARIANTS, clusterVariants);
     clusterProperties.put(PropertyKeys.ENABLE_SYMLINK, "true");
     Map<String,Map<String,Object>> clustersProperties = new HashMap<String,Map<String,Object>>();
