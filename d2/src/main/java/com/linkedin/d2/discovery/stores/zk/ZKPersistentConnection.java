@@ -92,7 +92,13 @@ public class ZKPersistentConnection
 
   public ZKPersistentConnection(String connect, int timeout, Collection<? extends EventListener> listeners, boolean shutdownAsynchronously)
   {
-    _zkConnection = new ZKConnection(connect, timeout, shutdownAsynchronously);
+    this(connect, timeout, listeners, shutdownAsynchronously, false);
+  }
+
+  public ZKPersistentConnection(String connect, int timeout, Collection<? extends EventListener> listeners,
+                                boolean shutdownAsynchronously, boolean isSymlinkAware)
+  {
+    _zkConnection = new ZKConnection(connect, timeout, shutdownAsynchronously, isSymlinkAware);
     _zkConnection.addStateListener(new Listener());
     _listeners = new HashSet<EventListener>(listeners);
 
