@@ -86,7 +86,12 @@ class ScalaDocsProvider(classpath: Array[String]) extends DocsProvider {
 
   }
 
-  private def filterDocTemplates(templates:List[TemplateEntity with MemberEntity]):List[DocTemplateEntity] = templates.filter(_.isDocTemplate).map(_.asInstanceOf[DocTemplateEntity])
+  private def filterDocTemplates(templates:List[TemplateEntity with MemberEntity]):List[DocTemplateEntity] = {
+    val matches = templates filter { template =>
+      template.isDocTemplate && template.isClass
+    }
+    matches.map(_.asInstanceOf[DocTemplateEntity])
+  }
 
   /**
    * Searches the AST starting at "root" for the given class.  E.g. "com.example.Foo.class" is searched for
@@ -102,8 +107,7 @@ class ScalaDocsProvider(classpath: Array[String]) extends DocsProvider {
         case namespacePart :: remainingNamespaceParts => {
           docTemplate.templates.find(_.name == namespacePart) match {
             case Some(childDocTemplate: DocTemplateEntity) => findAtPath(childDocTemplate, remainingNamespaceParts)
-            case Some(templateEntity: TemplateEntity) => None
-            case None => None
+            case _ => None
           }
         }
       }

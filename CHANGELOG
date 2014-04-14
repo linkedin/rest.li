@@ -1,5 +1,7 @@
 1.15.9
 ------
+(RB=288605)
+Fix bug in scaladoc provider where class and object of same were not disambiguated between correctly.
 
 1.15.8
 ------

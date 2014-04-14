@@ -66,3 +66,6 @@ class ScalaGreetingsResource extends CollectionResourceTemplate[java.lang.Long, 
     "Hello"
   }
 }
+
+// To make sure we don't accidentally confuse objects and classes, add an object of the same name as the above class
+object ScalaGreetingsResource {}
