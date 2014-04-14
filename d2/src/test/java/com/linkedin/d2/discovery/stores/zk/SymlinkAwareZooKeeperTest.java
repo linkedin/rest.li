@@ -498,4 +498,40 @@ public class SymlinkAwareZooKeeperTest
     fcb.get();
   }
 
+  @Test
+  public void testInvalidSymlinkWithExists() throws ExecutionException, InterruptedException
+  {
+    final CountDownLatch latch1 = new CountDownLatch(1);
+    final CountDownLatch latch2 = new CountDownLatch(1);
+    final AsyncCallback.StatCallback callback = new AsyncCallback.StatCallback()
+    {
+      @Override
+      public void processResult(int rc, String path, Object ctx, Stat stat)
+      {
+        Assert.assertEquals(path, "/foo/$link");
+        KeeperException.Code result = KeeperException.Code.get(rc);
+        Assert.assertEquals(result, KeeperException.Code.NONODE);
+        latch1.countDown();
+      }
+    };
+    final Watcher watcher = new Watcher()
+    {
+      @Override
+      public void process(WatchedEvent event)
+      {
+        Assert.assertEquals(event.getType(), Event.EventType.NodeDataChanged);
+        latch2.countDown();
+      }
+    };
+    FutureCallback<None> fcb = new FutureCallback<None>();
+    _zkClient.setSymlinkData("/foo/$link", "INVALID", fcb);
+    fcb.get();
+    _zkClient.getZooKeeper().exists("/foo/$link", watcher, callback, null);
+    latch1.await(30, TimeUnit.SECONDS);
+    _zkClient.setSymlinkData("/foo/$link", "/foo/bar", fcb);
+    if (!latch2.await(30, TimeUnit.SECONDS))
+    {
+      Assert.fail("Exists Watch is not triggered");
+    }
+  }
 }

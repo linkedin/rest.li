@@ -25,6 +25,8 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -54,6 +56,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class SymlinkAwareZooKeeper extends AbstractZooKeeper
 {
+  private static final Logger LOG = LoggerFactory.getLogger(SymlinkAwareZooKeeper.class);
   private final PropertySerializer<String>  _serializer;
   private final Watcher                     _defaultWatcher;
 
@@ -214,6 +217,7 @@ public class SymlinkAwareZooKeeper extends AbstractZooKeeper
               {
                 if (watcher != null) watcher.disable();
                 cb.processResult(KeeperException.Code.NONODE.intValue(), path, ctx, null, null);
+                LOG.warn("Exception when resolving symlink: " + path, e);
               }
               break;
 
@@ -255,8 +259,10 @@ public class SymlinkAwareZooKeeper extends AbstractZooKeeper
               }
               catch (Exception e)
               {
-                if (watcher != null) watcher.disable();
+                // we don't want to disable watch here because NONODE is not an exception
+                // in exists() call, so the watch is still valid.
                 cb.processResult(KeeperException.Code.NONODE.intValue(), path, ctx, null);
+                LOG.warn("Exception when resolving symlink: " + path, e);
               }
               break;
 
@@ -336,6 +342,7 @@ public class SymlinkAwareZooKeeper extends AbstractZooKeeper
               {
                 if (watcher != null) watcher.disable();
                 cb.processResult(KeeperException.Code.NONODE.intValue(), path, ctx, Collections.<String>emptyList());
+                LOG.warn("Exception when resolving symlink: " + path, e);
               }
               break;
 
