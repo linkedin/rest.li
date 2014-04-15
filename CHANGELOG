@@ -3,6 +3,9 @@
 (RB=290169)
 PegasusPlugin: Deprecate compatibility level OFF and short-circuit to IGNORE.
 
+(RB=288855)
+Changing the action parameter setting method name in new client builders to "<parameter name>Param".
+
 1.15.10
 -------
 (RB=289792)

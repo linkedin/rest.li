@@ -30,7 +30,11 @@ import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.OptionsResponse;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.UpdateStatus;
+import com.linkedin.restli.internal.tools.RestLiToolsUtils;
 
+import java.lang.Character;
+import java.lang.Class;
+import java.lang.String;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
@@ -62,10 +66,12 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
   public static class MethodBuilderWrapper<K, V extends RecordTemplate, R>
   {
     private final RequestBuilder<? extends Request<R>> _methodBuilder;
+    private final boolean _isRestLi2Builder;
 
-    public MethodBuilderWrapper(RequestBuilder<? extends Request<R>> builder)
+    public MethodBuilderWrapper(RequestBuilder<? extends Request<R>> builder, boolean isRestLi2Builder)
     {
       _methodBuilder = builder;
+      _isRestLi2Builder = isRestLi2Builder;
     }
 
     public Request<R> build()
@@ -202,7 +208,7 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
 
     public MethodBuilderWrapper<K, V, R> setQueryParam(String name, Object value)
     {
-      final String methodName = name + "Param";
+      final String methodName = RestLiToolsUtils.nameCamelCase(name + "Param");
       final Method method;
       if (value instanceof Iterable)
       {
@@ -218,17 +224,31 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
 
     public MethodBuilderWrapper<K, V, R> addQueryParam(String name, Object value)
     {
-      return invoke(findMethod("add" + name + "Param", value), value);
+      return invoke(
+          findMethod(
+              RestLiToolsUtils.nameCamelCase("add" + RestLiToolsUtils.normalizeCaps(name) + "Param"), value), value);
     }
 
     public MethodBuilderWrapper<K, V, R> setActionParam(String name, Object value)
     {
-      return invoke(findMethod("param" + name, value), value);
+      if (isRestLi2Builder())
+      {
+        return invoke(findMethod(RestLiToolsUtils.nameCamelCase(name + "Param"), value), value);
+      }
+      else
+      {
+        return invoke(findMethod("param" + Character.toUpperCase(name.charAt(0)) + name.substring(1), value), value);
+      }
     }
 
     public MethodBuilderWrapper<K, V, R> setPathKey(String name, Object value)
     {
-      return invoke(findMethod(name + "Key", value), value);
+      return invoke(findMethod(RestLiToolsUtils.nameCamelCase(name + "Key"), value), value);
+    }
+
+    boolean isRestLi2Builder()
+    {
+      return _isRestLi2Builder;
     }
 
     private MethodBuilderWrapper<K, V, R> invoke(Method method, Object... args)
@@ -236,8 +256,9 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
       try
       {
         @SuppressWarnings("unchecked")
-        final RequestBuilder<? extends Request<R>> builder = (RequestBuilder<? extends Request<R>>) method.invoke(_methodBuilder, args);
-        return new MethodBuilderWrapper<K, V, R>(builder);
+        final RequestBuilder<? extends Request<R>> builder =
+            (RequestBuilder<? extends Request<R>>) method.invoke(_methodBuilder, args);
+        return new MethodBuilderWrapper<K, V, R>(builder, _isRestLi2Builder);
       }
       catch (IllegalAccessException e)
       {
@@ -354,12 +375,19 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
 
   public MethodBuilderWrapper<K, V, CollectionResponse<V>> findBy(String name)
   {
-    return invoke("findBy" + name);
+    return invoke("findBy" + capitalize(name));
   }
 
   public <R> MethodBuilderWrapper<K, V, R> action(String name)
   {
-    return invoke("action" + name);
+    return invoke("action" + capitalize(name));
+  }
+
+  boolean areRestLi2Builders()
+  {
+    String buildersClassName = _rootBuilder.getClass().getSimpleName();
+
+    return buildersClassName.substring(getResourceName().length()).equals("RequestBuilders");
   }
 
   private <R> MethodBuilderWrapper<K, V, R> invoke(String methodName)
@@ -367,8 +395,11 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
     try
     {
       @SuppressWarnings("unchecked")
-      final RequestBuilder<? extends Request<R>> builder = (RequestBuilder<? extends Request<R>>) _rootBuilder.getClass().getMethod(methodName).invoke(_rootBuilder);
-      return new MethodBuilderWrapper<K, V, R>(builder);
+      final RequestBuilder<? extends Request<R>> builder =
+          (RequestBuilder<? extends Request<R>>) _rootBuilder.getClass().getMethod(methodName).invoke(_rootBuilder);
+      return new MethodBuilderWrapper<K, V, R>(
+          builder,
+          areRestLi2Builders());
     }
     catch (NoSuchMethodException e)
     {
@@ -395,5 +426,32 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
     {
       return new RuntimeException(e.getTargetException());
     }
+  }
+
+  private String getResourceName()
+  {
+    try
+    {
+      String resourceName = (String)_rootBuilder.getClass().getMethod("getPrimaryResource").invoke(_rootBuilder);
+      int lastSlashIndex = resourceName.lastIndexOf('/');
+      return resourceName.substring(lastSlashIndex + 1);
+    }
+    catch (NoSuchMethodException e)
+    {
+      throw new RuntimeException(e);
+    }
+    catch (IllegalAccessException e)
+    {
+      throw new RuntimeException(e);
+    }
+    catch (InvocationTargetException e)
+    {
+      throw handleInvocationTargetException(e);
+    }
+  }
+
+  private static String capitalize(String name)
+  {
+    return Character.toUpperCase(name.charAt(0)) + name.substring(1);
   }
 }

@@ -12,6 +12,7 @@ dependencies {
   compile project(':restli-server')
   compile project(':restli-common')
   compile project(':restli-extras')
+  compile project(':restli-tools')
   compile project(':d2')
   compile externalDependency.guava
   compile externalDependency.commonsLang

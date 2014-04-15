@@ -58,6 +58,7 @@ import com.linkedin.restli.common.ResourceSpecImpl;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.TyperefUtils;
 import com.linkedin.restli.internal.server.model.ResourceModelEncoder;
+import com.linkedin.restli.internal.tools.RestLiToolsUtils;
 import com.linkedin.restli.restspec.ActionSchema;
 import com.linkedin.restli.restspec.ActionSchemaArray;
 import com.linkedin.restli.restspec.ActionsSetSchema;
@@ -1062,7 +1063,8 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
         continue;
       }
 
-      JMethod keyMethod = finderBuilderClass.method(JMod.PUBLIC, finderBuilderClass, nameCamelCase(assocKey + "Key"));
+      JMethod keyMethod = finderBuilderClass.method(JMod.PUBLIC, finderBuilderClass, RestLiToolsUtils.nameCamelCase(
+          assocKey + "Key"));
       JVar keyMethodParam = keyMethod.param(assocKeyClass, "key");
       keyMethod.body().add(JExpr._super().invoke("assocKey").arg(assocKey).arg(keyMethodParam));
       keyMethod.body()._return(JExpr._this());
@@ -1086,12 +1088,13 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
       {
         JFieldVar compoundKey = builderClass.field(JMod.PRIVATE,
                                                    CompoundKey.class,
-                                                   nameCamelCase(pathKey),
+                                                   RestLiToolsUtils.nameCamelCase(pathKey),
                                                    JExpr._new(pathKeyTypes.get(pathKey)));
 
         for (String assocKeyName : pathToAssocKeys.get(pathKey))
         {
-          JMethod assocKeyMethod = builderClass.method(JMod.PUBLIC, builderClass, nameCamelCase(assocKeyName + "Key"));
+          JMethod assocKeyMethod = builderClass.method(JMod.PUBLIC, builderClass, RestLiToolsUtils.nameCamelCase(
+              assocKeyName + "Key"));
           JVar assocKeyMethodParam = assocKeyMethod.param(assocKeyTypes.get(assocKeyName), "key");
 
           // put stuff into CompoundKey
@@ -1104,7 +1107,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
       }
       else
       {
-        JMethod keyMethod = builderClass.method(JMod.PUBLIC, builderClass, nameCamelCase(pathKey + "Key"));
+        JMethod keyMethod = builderClass.method(JMod.PUBLIC, builderClass, RestLiToolsUtils.nameCamelCase(pathKey + "Key"));
         JVar keyMethodParam = keyMethod.param(pathKeyTypes.get(pathKey), "key");
         keyMethod.body().add(JExpr._super().invoke("pathKey").arg(pathKey).arg(keyMethodParam));
         keyMethod.body()._return(JExpr._this());
@@ -1213,8 +1216,9 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
         boolean isOptional = param.isOptional() == null ? false : param.isOptional();
         JavaBinding binding = getJavaBindingType(param.getType(), facadeClass);
 
-        JMethod typesafeMethod = actionBuilderClass.method(JMod.PUBLIC, actionBuilderClass,
-                                                           "param" + capitalize(paramName));
+        JMethod typesafeMethod = _config.isRestli2Format() ?
+            actionBuilderClass.method(JMod.PUBLIC, actionBuilderClass, RestLiToolsUtils.nameCamelCase(paramName + "Param")) :
+            actionBuilderClass.method(JMod.PUBLIC, actionBuilderClass, "param" + capitalize(paramName));
         JVar typesafeMethodParam = typesafeMethod.param(binding.valueClass, "value");
 
         JClass dataTemplateUtil = getCodeModel().ref(DataTemplateUtil.class);
@@ -1277,23 +1281,26 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
       ResourceMethod method = entry.getKey();
       if (supportedMethods.contains(method))
       {
-        String methodName = normalizeUnderscores(method.toString());
+        String methodName = RestLiToolsUtils.normalizeUnderscores(method.toString());
 
         JClass builderClass = getCodeModel().ref(entry.getValue()).narrow(keyClass, valueClass);
         JDefinedClass derivedBuilder;
         if (_config.isRestli2Format())
         {
-          derivedBuilder = generateDerivedBuilder(builderClass, valueClass, null, resourceName + nameCapsCase(methodName) + REQUEST_BUILDER,
+          derivedBuilder = generateDerivedBuilder(builderClass, valueClass, null, resourceName + RestLiToolsUtils.nameCapsCase(
+              methodName) + REQUEST_BUILDER,
                                                               facadeClass.getPackage());
         }
         else
         {
-          derivedBuilder = generateDerivedBuilder(builderClass, valueClass, null, resourceName + nameCapsCase(methodName) + BUILDER,
+          derivedBuilder = generateDerivedBuilder(builderClass, valueClass, null, resourceName + RestLiToolsUtils.nameCapsCase(
+              methodName) + BUILDER,
                                                   facadeClass.getPackage());
         }
         generatePathKeyBindingMethods(pathKeys, derivedBuilder, pathKeyTypes, assocKeyTypes, pathToAssocKeys);
 
-        JMethod factoryMethod = facadeClass.method(JMod.PUBLIC, derivedBuilder, nameCamelCase(methodName));
+        JMethod factoryMethod = facadeClass.method(JMod.PUBLIC, derivedBuilder, RestLiToolsUtils.nameCamelCase(
+            methodName));
         factoryMethod.body()._return(JExpr._new(derivedBuilder).arg(baseUriField).arg(resourceSpecField).arg(requestOptionsField));
 
         final RestMethodSchema schema = schemaMap.get(method);
@@ -1345,12 +1352,13 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
       JClass clazz = getJavaBindingType(assocKey.getType(), facadeClass).valueClass;
       JClass declaredClass = getClassRefForSchema(RestSpecCodec.textToSchema(assocKey.getType(), getSchemaResolver()), facadeClass);
 
-      JMethod typesafeSetter = typesafeKeyClass.method(JMod.PUBLIC, typesafeKeyClass, "set" + nameCapsCase(name));
+      JMethod typesafeSetter = typesafeKeyClass.method(JMod.PUBLIC, typesafeKeyClass, "set" + RestLiToolsUtils.nameCapsCase(
+          name));
       JVar setterParam = typesafeSetter.param(clazz, name);
       typesafeSetter.body().add(JExpr.invoke("append").arg(JExpr.lit(name)).arg(setterParam));
       typesafeSetter.body()._return(JExpr._this());
 
-      JMethod typesafeGetter = typesafeKeyClass.method(JMod.PUBLIC, clazz, "get" + nameCapsCase(name));
+      JMethod typesafeGetter = typesafeKeyClass.method(JMod.PUBLIC, clazz, "get" + RestLiToolsUtils.nameCapsCase(name));
       typesafeGetter.body()._return(JExpr.cast(clazz,JExpr.invoke("getPart").arg(name)));
 
       assocKeyTypeInfos.put(name, new AssocKeyTypeInfo(clazz, declaredClass));
@@ -1366,7 +1374,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     final String paramName = param.getName();
     final boolean isOptional = param.isOptional() == null ? false : param.isOptional();
 
-    final String methodName = nameCamelCase(paramName + "Param");
+    final String methodName = RestLiToolsUtils.nameCamelCase(paramName + "Param");
     final JMethod setMethod = derivedBuilderClass.method(JMod.PUBLIC, derivedBuilderClass, methodName);
     final JVar setMethodParam = setMethod.param(paramClass, "value");
     setMethod.body().add(JExpr._super().invoke(isOptional ? "setParam" : "setReqParam")
@@ -1382,7 +1390,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     final String paramName = param.getName();
     final boolean isOptional = param.isOptional() == null ? false : param.isOptional();
 
-    final String methodName = nameCamelCase("add" + normalizeCaps(paramName) + "Param");
+    final String methodName = RestLiToolsUtils.nameCamelCase("add" + RestLiToolsUtils.normalizeCaps(paramName) + "Param");
     final JMethod addMethod = derivedBuilderClass.method(JMod.PUBLIC, derivedBuilderClass, methodName);
     final JVar addMethodParam = addMethod.param(paramClass, "value");
     addMethod.body().add(JExpr._super().invoke(isOptional ? "addParam" : "addReqParam")
@@ -1487,36 +1495,6 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     return rawPath;
   }
 
-  private static String capsUnderscore(String name)
-  {
-    StringBuilder s = new StringBuilder(name.length());
-    boolean appendedUnderscore = false;
-    for (int i =0; i <name.length(); ++i)
-    {
-      char c = name.charAt(i);
-      if (Character.isUpperCase(c))
-      {
-        if (!appendedUnderscore)
-        {
-          s.append('_');
-          appendedUnderscore = true;
-        }
-        else
-        {
-          appendedUnderscore = false;
-        }
-        s.append(c);
-      }
-      else
-      {
-        s.append(Character.toUpperCase(c));
-        appendedUnderscore = false;
-      }
-    }
-    return s.toString();
-  }
-
-
   private static Set<ResourceMethod> getSupportedMethods(StringArray supportsList)
   {
     Set<ResourceMethod> supportedMethods = EnumSet.noneOf(ResourceMethod.class);
@@ -1597,85 +1575,6 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     }
 
     return binding;
-  }
-
-  private static String normalizeUnderscores(String name)
-  {
-    StringBuilder output = new StringBuilder();
-    boolean capitalize = false;
-    for (int i = 0; i < name.length(); ++i)
-    {
-      if (name.charAt(i) == '_')
-      {
-        capitalize = true;
-        continue;
-      }
-      else if (capitalize)
-      {
-        output.append(Character.toUpperCase(name.charAt(i)));
-        capitalize = false;
-      }
-      else
-      {
-        output.append(name.charAt(i));
-      }
-    }
-    return output.toString();
-  }
-
-  private static StringBuilder normalizeCaps(String name)
-  {
-    StringBuilder output = new StringBuilder();
-    boolean boundary = true;
-    for (int i =0; i <name.length(); ++i)
-    {
-      boolean currentUpper = Character.isUpperCase(name.charAt(i));
-      if (currentUpper)
-      {
-        if (i ==0)
-        {
-          boundary = true;
-        }
-        else if (i ==name.length()-1)
-        {
-          boundary = false;
-        }
-        else if (Character.isLowerCase(name.charAt(i -1)) || Character.isLowerCase(name.charAt(i +1)))
-        {
-          boundary = true;
-        }
-      }
-
-      if (boundary)
-      {
-        output.append(Character.toUpperCase(name.charAt(i)));
-      }
-      else
-      {
-        output.append(Character.toLowerCase(name.charAt(i)));
-      }
-
-      boundary = false;
-    }
-    return output;
-  }
-
-  private static StringBuilder normalizeName(String name)
-  {
-    return normalizeCaps(name);
-  }
-
-  private static String nameCamelCase(String name)
-  {
-    StringBuilder builder = normalizeName(name);
-    char firstLower = Character.toLowerCase(builder.charAt(0));
-    builder.setCharAt(0, firstLower);
-    return builder.toString();
-  }
-
-  private static String nameCapsCase(String name)
-  {
-    return normalizeName(name).toString();
   }
 }
 
