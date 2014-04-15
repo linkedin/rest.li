@@ -1,0 +1,27 @@
+//Configures maven plugin in a standard way
+project.plugins.withType(MavenPlugin) {
+  project.afterEvaluate {
+    def installer = install.repositories.mavenInstaller
+    def deployer = uploadArchives.repositories.mavenDeployer
+
+    /*
+    Avoid legit project dependencies being overridden by test dependencies to the same project but with specific configuration.
+    This is a problem with lossy maven model VS gradle model (however, Gradle should be smarter and do that for us).
+    To do that, we'll remove 'test' dependencies that have an equivalent dependency with a different scope
+    e.g. if dependency is listed multiple times, in different scopes, prefer the non-test scope
+    */
+    [installer, deployer]*.pom*.whenConfigured { pom ->
+      //find all puppies for deletion
+      def removeMe = pom.dependencies.findAll { dep ->
+        dep.scope == 'test' &&
+          pom.dependencies.find { it.scope in ['compile', 'runtime', 'provided'] && it.groupId == dep.groupId && it.artifactId == dep.artifactId }
+      }
+      if (removeMe) {
+        //remove them and log some useful debug messages
+        pom.dependencies.removeAll(removeMe)
+        logger.lifecycle "Removed ${removeMe.size()} test dependencies from $project.path pom.xml"
+        logger.info "Removed following test dependencies from $project.path pom.xml: $removeMe"
+      }
+    }
+  }
+}

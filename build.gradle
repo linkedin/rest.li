@@ -176,6 +176,7 @@ subprojects {
   if (isDefaultEnvironment)
   {
     apply plugin: 'maven'
+    apply from: "${buildScriptDirPath}/maven.gradle"
     apply plugin: 'signing'
 
     project.group = 'com.linkedin.pegasus'

@@ -3,6 +3,11 @@
 (RB=288605)
 Fix bug in scaladoc provider where class and object of same were not disambiguated between correctly.
 
+(RB=289001)
+Fix bug where when maven artifacts are not properly depended on using gradle 1.9+.  This was because
+the maven pom contained test and compile scopes for the same artifact.  The fix is to not publish the
+test artifact dependencies into maven poms.
+
 1.15.8
 ------
 (RB=288441)
