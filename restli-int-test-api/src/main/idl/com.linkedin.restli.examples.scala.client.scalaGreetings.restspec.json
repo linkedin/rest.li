@@ -25,7 +25,13 @@
         "name" : "param2",
         "type" : "boolean",
         "doc" : "<p>provides a Boolean</p>"
+      }, {
+        "name" : "undocumentedParam",
+        "type" : "boolean"
       } ],
+      "returns" : "string"
+    }, {
+      "name" : "undocumentedAction",
       "returns" : "string"
     } ],
     "entity" : {

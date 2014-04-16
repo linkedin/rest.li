@@ -1,6 +1,7 @@
 1.15.10
 -------
-
+(RB=289792)
+Fix scaladoc extractor to not throw an exception on a undocumented param.
 
 1.15.9
 ------

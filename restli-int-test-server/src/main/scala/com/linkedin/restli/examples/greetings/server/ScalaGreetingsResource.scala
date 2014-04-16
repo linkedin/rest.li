@@ -62,7 +62,13 @@ class ScalaGreetingsResource extends CollectionResourceTemplate[java.lang.Long, 
    */
   @Action(name="action")
   def action(@ActionParam(value="param1") param1: String,
-             @ActionParam(value="param2") param2: java.lang.Boolean): String = {
+             @ActionParam(value="param2") param2: java.lang.Boolean,
+             @ActionParam(value="undocumentedParam") undocumentedParam: java.lang.Boolean): String = {
+    "Hello"
+  }
+
+  @Action(name="undocumentedAction")
+  def undocumentedAction(): String = {
     "Hello"
   }
 }

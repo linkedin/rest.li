@@ -80,7 +80,7 @@ class ScalaDocsProvider(classpath: Array[String]) extends DocsProvider {
   def getParamDoc(method: Method, name: String): String = {
     findMethod(method)
             .flatMap(_.comment)
-            .map(_.valueParams(name))
+            .flatMap(_.valueParams.get(name))
             .map(toDocString)
             .orNull
 

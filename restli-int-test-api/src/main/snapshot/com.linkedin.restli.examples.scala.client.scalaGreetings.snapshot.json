@@ -51,7 +51,13 @@
           "name" : "param2",
           "doc" : "<p>provides a Boolean</p>",
           "type" : "boolean"
+        }, {
+          "name" : "undocumentedParam",
+          "type" : "boolean"
         } ]
+      }, {
+        "name" : "undocumentedAction",
+        "returns" : "string"
       } ]
     },
     "namespace" : "com.linkedin.restli.examples.scala.client"

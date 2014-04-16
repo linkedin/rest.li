@@ -66,7 +66,7 @@ class TestScalaDocsProvider {
 
     compareDocString("<p>provides the key.</p>", provider.getParamDoc(method, "id"))
 
-    val action = classOf[ScalaGreetingsResource].getMethod("action", classOf[java.lang.String], classOf[java.lang.Boolean])
+    val action = classOf[ScalaGreetingsResource].getMethod("action", classOf[java.lang.String], classOf[java.lang.Boolean], classOf[java.lang.Boolean])
 
     compareDocString("<p>An action.</p>".stripMargin, provider.getMethodDoc(action))
     compareDocString("<p>provides a String</p>", provider.getParamDoc(action, "param1"))
