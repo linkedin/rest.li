@@ -85,7 +85,7 @@ public class DynamicClient extends AbstractClient implements D2Client
     {
       callback.onError(e);
 
-      warn(_log, "unable to find service for: ", request);
+      warn(_log, "unable to find service for: ", extractLogInfo(request));
     }
   }
 
@@ -170,5 +170,13 @@ public class DynamicClient extends AbstractClient implements D2Client
       }
     }
     return Collections.emptyMap();
+  }
+
+  private static String extractLogInfo(RestRequest request)
+  {
+    return "Rest Request: [" +
+        "Service: " + LoadBalancerUtil.getServiceNameFromUri(request.getURI()) + ", " +
+        "Method: " + request.getMethod() +
+        "]";
   }
 }
