@@ -1,7 +1,13 @@
+1.15.11
+-------
+
 1.15.10
 -------
 (RB=289792)
 Fix scaladoc extractor to not throw an exception on a undocumented param.
+
+(RB=290416)
+Fixing D2 client to log only the non-sensitive parts of the request.
 
 1.15.9
 ------
