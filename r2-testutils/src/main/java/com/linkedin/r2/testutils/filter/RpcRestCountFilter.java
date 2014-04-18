@@ -34,6 +34,7 @@ import java.util.Map;
 */
 // This class subclasses MessageCountFilter. Because this class implements RpcFilter and RestFilter
 // the base class methods (onRequest, onResponse, onError) should not be invoked.
+
 public class RpcRestCountFilter extends MessageCountFilter implements RpcFilter, RestFilter
 {
   private int _rpcReqCount;
@@ -109,6 +110,7 @@ public class RpcRestCountFilter extends MessageCountFilter implements RpcFilter,
     nextFilter.onError(ex, requestContext, wireAttrs);
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public void onRpcRequest(RpcRequest req, RequestContext requestContext,
                            Map<String, String> wireAttrs,
@@ -118,6 +120,7 @@ public class RpcRestCountFilter extends MessageCountFilter implements RpcFilter,
     nextFilter.onRequest(req, requestContext, wireAttrs);
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public void onRpcResponse(RpcResponse res, RequestContext requestContext,
                             Map<String, String> wireAttrs,
@@ -127,6 +130,7 @@ public class RpcRestCountFilter extends MessageCountFilter implements RpcFilter,
     nextFilter.onResponse(res, requestContext, wireAttrs);
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public void onRpcError(Throwable ex, RequestContext requestContext, Map<String, String> wireAttrs,
                          NextFilter<RpcRequest, RpcResponse> nextFilter)

@@ -15,7 +15,7 @@
 */
 
 /* $Id$ */
-package com.linkedin.r2unittest.filter;
+package com.linkedin..filter;
 
 import com.linkedin.r2.filter.Filter;
 import com.linkedin.r2.filter.FilterChain;

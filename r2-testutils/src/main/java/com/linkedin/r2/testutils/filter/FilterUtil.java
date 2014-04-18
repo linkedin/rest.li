@@ -47,11 +47,13 @@ public class FilterUtil
     fireRpcRequest(fc, simpleRpcRequest());
   }
 
+  @SuppressWarnings("deprecation")
   public static void fireSimpleRpcResponse(FilterChain fc)
   {
     fc.onRpcResponse(simpleRpcResponse(), emptyRequestContext(), emptyWireAttrs());
   }
 
+  @SuppressWarnings("deprecation")
   public static void fireSimpleRpcError(FilterChain fc)
   {
     fc.onRpcError(simpleError(), emptyRequestContext(), emptyWireAttrs());
@@ -72,6 +74,7 @@ public class FilterUtil
     fc.onRestError(simpleError(), emptyRequestContext(), emptyWireAttrs());
   }
 
+  @SuppressWarnings("deprecation")
   public static void fireRpcRequest(FilterChain fc, RpcRequest req)
   {
     fc.onRpcRequest(req, emptyRequestContext(), emptyWireAttrs());
@@ -100,6 +103,7 @@ public class FilterUtil
 
   // Fires a request, saving the local attributes, and then fires a response with the local
   // attributes.
+  @SuppressWarnings("deprecation")
   public static void fireRpcRequestResponse(FilterChain fc, RpcRequest req, RpcResponse res)
   {
     final RequestContext context = new RequestContext();
@@ -109,6 +113,7 @@ public class FilterUtil
 
   // Fires a request, saving the local attributes, and then fires a response with the local
   // attributes.
+  @SuppressWarnings("deprecation")
   public static void fireRestRequestResponse(FilterChain fc, RestRequest req, RestResponse res)
   {
     final RequestContext context = new RequestContext();
@@ -133,6 +138,7 @@ public class FilterUtil
     }
   }
 
+  @SuppressWarnings("deprecation")
   public static void fireRpcRequestError(FilterChain fc, RpcRequest req, Exception ex)
   {
     final RequestContext context = new RequestContext();
@@ -140,6 +146,7 @@ public class FilterUtil
     fc.onRpcError(ex, context, emptyWireAttrs());
   }
 
+  @SuppressWarnings("deprecation")
   public static void fireRestRequestError(FilterChain fc, RestRequest req, Exception ex)
   {
     final RequestContext context = new RequestContext();
@@ -163,12 +170,14 @@ public class FilterUtil
     }
   }
 
+  @SuppressWarnings("deprecation")
   public static RpcRequest simpleRpcRequest()
   {
     return new RpcRequestBuilder(URI.create("simple_uri"))
             .build();
   }
 
+  @SuppressWarnings("deprecation")
   public static RpcResponse simpleRpcResponse()
   {
     return new RpcResponseBuilder()

@@ -1,6 +1,0 @@
-apply plugin: 'pegasus'
-
-dependencies {
-  compile project(path: ':r2')
-}
-
