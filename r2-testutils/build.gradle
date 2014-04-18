@@ -1,0 +1,11 @@
+apply plugin: 'java'
+
+dependencies {
+  compile project(path: ':r2')
+}
+
+//This module supports only adding test classes (i.e only a test compile of this project should happen anywhere its being referenced).
+//Since test classes at times use deprecated apis we are ignoring the deprecation warning here.
+compileJava.options.compilerArgs += '-Xlint:-deprecation'
+
+
