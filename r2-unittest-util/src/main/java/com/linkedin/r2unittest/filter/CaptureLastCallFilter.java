@@ -15,7 +15,7 @@
 */
 
 /* $Id$ */
-package test.r2.filter;
+package com.linkedin.r2unittest.filter;
 
 import com.linkedin.r2.filter.NextFilter;
 import com.linkedin.r2.filter.message.MessageFilter;
@@ -26,40 +26,20 @@ import com.linkedin.r2.message.Response;
 import java.util.Map;
 
 /**
-* @author Chris Pettitt
-* @version $Revision$
-*/
-class MessageCountFilter implements MessageFilter
+ * @author Chris Pettitt
+ * @version $Revision$
+ */
+public class CaptureLastCallFilter implements MessageFilter
 {
-  private int _reqCount;
-  private int _resCount;
-  private int _errCount;
-
-  public int getReqCount()
-  {
-    return _reqCount;
-  }
-
-  public int getResCount()
-  {
-    return _resCount;
-  }
-
-  public int getErrCount()
-  {
-    return _errCount;
-  }
-
-  public void reset()
-  {
-    _reqCount = _resCount = _errCount = 0;
-  }
+  private volatile Request _lastReq;
+  private volatile Response _lastRes;
+  private volatile Throwable _lastErr;
 
   @Override
   public void onRequest(Request req, RequestContext requestContext, Map<String, String> wireAttrs,
                         NextFilter<Request, Response> nextFilter)
   {
-    _reqCount++;
+    _lastReq = req;
     nextFilter.onRequest(req, requestContext, wireAttrs);
   }
 
@@ -67,7 +47,7 @@ class MessageCountFilter implements MessageFilter
   public void onResponse(Response res, RequestContext requestContext, Map<String, String> wireAttrs,
                          NextFilter<Request, Response> nextFilter)
   {
-    _resCount++;
+    _lastRes = res;
     nextFilter.onResponse(res, requestContext, wireAttrs);
   }
 
@@ -75,7 +55,22 @@ class MessageCountFilter implements MessageFilter
   public void onError(Throwable ex, RequestContext requestContext, Map<String, String> wireAttrs,
                       NextFilter<Request, Response> nextFilter)
   {
-    _errCount++;
+    _lastErr = ex;
     nextFilter.onError(ex, requestContext, wireAttrs);
+  }
+
+  public Request getLastReq()
+  {
+    return _lastReq;
+  }
+
+  public Response getLastRes()
+  {
+    return _lastRes;
+  }
+
+  public Throwable getLastErr()
+  {
+    return _lastErr;
   }
 }

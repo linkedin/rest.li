@@ -15,7 +15,7 @@
 */
 
 /* $Id$ */
-package test.r2.filter;
+package com.linkedin.r2unittest.filter;
 
 import com.linkedin.r2.filter.NextFilter;
 import com.linkedin.r2.filter.message.rest.RestFilter;
@@ -110,8 +110,6 @@ public class RpcRestCountFilter extends MessageCountFilter implements RpcFilter,
   }
 
   @Override
-  @Deprecated
-  @SuppressWarnings("deprecation")
   public void onRpcRequest(RpcRequest req, RequestContext requestContext,
                            Map<String, String> wireAttrs,
                            NextFilter<RpcRequest, RpcResponse> nextFilter)
@@ -121,8 +119,6 @@ public class RpcRestCountFilter extends MessageCountFilter implements RpcFilter,
   }
 
   @Override
-  @Deprecated
-  @SuppressWarnings("deprecation")
   public void onRpcResponse(RpcResponse res, RequestContext requestContext,
                             Map<String, String> wireAttrs,
                             NextFilter<RpcRequest, RpcResponse> nextFilter)
@@ -132,8 +128,6 @@ public class RpcRestCountFilter extends MessageCountFilter implements RpcFilter,
   }
 
   @Override
-  @Deprecated
-  @SuppressWarnings("deprecation")
   public void onRpcError(Throwable ex, RequestContext requestContext, Map<String, String> wireAttrs,
                          NextFilter<RpcRequest, RpcResponse> nextFilter)
   {

@@ -15,7 +15,7 @@
 */
 
 /* $Id$ */
-package test.r2.filter;
+package com.linkedin.r2unittest.filter;
 
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.message.Request;
@@ -42,22 +42,16 @@ public class FilterUtil
 {
   private FilterUtil() {}
 
-  @Deprecated
-  @SuppressWarnings("deprecation")
   public static void fireSimpleRpcRequest(FilterChain fc)
   {
     fireRpcRequest(fc, simpleRpcRequest());
   }
 
-  @Deprecated
-  @SuppressWarnings("deprecation")
   public static void fireSimpleRpcResponse(FilterChain fc)
   {
     fc.onRpcResponse(simpleRpcResponse(), emptyRequestContext(), emptyWireAttrs());
   }
 
-  @Deprecated
-  @SuppressWarnings("deprecation")
   public static void fireSimpleRpcError(FilterChain fc)
   {
     fc.onRpcError(simpleError(), emptyRequestContext(), emptyWireAttrs());
@@ -78,8 +72,6 @@ public class FilterUtil
     fc.onRestError(simpleError(), emptyRequestContext(), emptyWireAttrs());
   }
 
-  @Deprecated
-  @SuppressWarnings("deprecation")
   public static void fireRpcRequest(FilterChain fc, RpcRequest req)
   {
     fc.onRpcRequest(req, emptyRequestContext(), emptyWireAttrs());
@@ -90,7 +82,6 @@ public class FilterUtil
     fc.onRestRequest(req, emptyRequestContext(), emptyWireAttrs());
   }
 
-  @SuppressWarnings("deprecation")
   public static void fireUntypedRequest(FilterChain fc, Request req)
   {
     if (req instanceof RpcRequest)
@@ -109,8 +100,6 @@ public class FilterUtil
 
   // Fires a request, saving the local attributes, and then fires a response with the local
   // attributes.
-  @Deprecated
-  @SuppressWarnings("deprecation")
   public static void fireRpcRequestResponse(FilterChain fc, RpcRequest req, RpcResponse res)
   {
     final RequestContext context = new RequestContext();
@@ -128,8 +117,6 @@ public class FilterUtil
   }
 
   // Determines the type of the request at runtime.
-  @Deprecated
-  @SuppressWarnings("deprecation")
   public static void fireUntypedRequestResponse(FilterChain fc, Request req, Response res)
   {
     if (req instanceof RpcRequest)
@@ -146,8 +133,6 @@ public class FilterUtil
     }
   }
 
-  @Deprecated
-  @SuppressWarnings("deprecation")
   public static void fireRpcRequestError(FilterChain fc, RpcRequest req, Exception ex)
   {
     final RequestContext context = new RequestContext();
@@ -162,7 +147,6 @@ public class FilterUtil
     fc.onRestError(ex, context, emptyWireAttrs());
   }
 
-  @SuppressWarnings("deprecation")
   public static void fireUntypedRequestError(FilterChain fc, Request req, Exception ex)
   {
     if (req instanceof RpcRequest)
@@ -179,16 +163,12 @@ public class FilterUtil
     }
   }
 
-  @Deprecated
-  @SuppressWarnings("deprecation")
   public static RpcRequest simpleRpcRequest()
   {
     return new RpcRequestBuilder(URI.create("simple_uri"))
             .build();
   }
 
-  @Deprecated
-  @SuppressWarnings("deprecation")
   public static RpcResponse simpleRpcResponse()
   {
     return new RpcResponseBuilder()
