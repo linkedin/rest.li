@@ -1,5 +1,7 @@
 1.15.11
 -------
+(RB=290169)
+PegasusPlugin: Deprecate compatibility level OFF and short-circuit to IGNORE.
 
 1.15.10
 -------

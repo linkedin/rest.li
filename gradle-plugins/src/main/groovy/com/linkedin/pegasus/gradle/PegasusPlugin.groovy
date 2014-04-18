@@ -354,8 +354,6 @@ import org.gradle.plugins.ide.idea.IdeaPlugin
  * setting the "rest.model.compatibility" project property, i.e.
  * "gradle -Prest.model.compatibility=<strategy> ..." The following levels are supported:
  * <ul>
- *   <li><b>off</b>: idl compatibility check will not be performed at all. This is only suggested to be
- *   used in test environments.</li>
  *   <li><b>ignore</b>: idl compatibility check will occur but its result will be ignored.
  *   The result will be aggregated and printed at the end of the build.</li>
  *   <li><b>backwards</b>: build fails if there are backwards incompatible changes in idl.
@@ -909,6 +907,13 @@ class PegasusPlugin implements Plugin<Project>
     return (isTestSourceSet(sourceSet) ? project.configurations.testDataModel : project.configurations.dataModel)
   }
 
+  private static boolean isTaskSuccessful(Task task)
+  {
+    return task.state.executed &&
+      !task.state.skipped &&
+      task.state.failure == null
+  }
+
   protected void configureRestModelGeneration(Project project, SourceSet sourceSet)
   {
     if (sourceSet.allSource.empty)
@@ -922,7 +927,7 @@ class PegasusPlugin implements Plugin<Project>
       // find api project here instead of in each project's plugin configuration
       // this allows api project relation options (ext.api*) to be specified anywhere in the build.gradle file
       // alternatively, pass closures to task configuration, and evaluate the closures when task is executed
-      final Project apiProject = getApiProject(project)
+      Project apiProject = getApiProject(project)
 
       // make sure the api project is evaluated. Important for configure-on-demand mode.
       if (apiProject)
@@ -944,6 +949,12 @@ class PegasusPlugin implements Plugin<Project>
       if (jarTask == null || !(jarTask instanceof Jar))
       {
         return
+      }
+
+      final String snapshotCompatPropertyName = findProperty(FileCompatibilityType.SNAPSHOT)
+      if (project.hasProperty(snapshotCompatPropertyName) && 'off'.equalsIgnoreCase((String) project.property(snapshotCompatPropertyName)))
+      {
+        project.logger.lifecycle("Project ${project.path} snapshot compatibility level \"OFF\" is deprecated. Default to \"IGNORE\".")
       }
 
       // generate the rest model
@@ -983,11 +994,9 @@ class PegasusPlugin implements Plugin<Project>
         previousSnapshotDirectory = apiSnapshotDir
         currentIdlFiles = generateRestModelTask.generatedIdlFiles
         previousIdlDirectory = apiIdlDir
-        resolverPath = restModelResolverPath
 
         onlyIf {
-          findCompatLevel(project, FileCompatibilityType.SNAPSHOT) != getCompatibilityLevelClass(project).OFF &&
-                                   !isPropertyTrue(project, SKIP_IDL_CHECK)
+          !isPropertyTrue(project, SKIP_IDL_CHECK)
         }
       }
 
@@ -996,11 +1005,9 @@ class PegasusPlugin implements Plugin<Project>
                                                   dependsOn: generateRestModelTask) {
         currentSnapshotFiles = generateRestModelTask.generatedSnapshotFiles
         previousSnapshotDirectory = apiSnapshotDir
-        resolverPath = restModelResolverPath
 
         onlyIf {
-          findCompatLevel(project, FileCompatibilityType.SNAPSHOT) != getCompatibilityLevelClass(project).OFF &&
-                          isPropertyTrue(project, SKIP_IDL_CHECK)
+          isPropertyTrue(project, SKIP_IDL_CHECK)
         }
       }
 
@@ -1028,8 +1035,7 @@ class PegasusPlugin implements Plugin<Project>
         suffix = SNAPSHOT_FILE_SUFFIX
 
         onlyIf {
-
-          project.logger.info("SKIP_IDL: " + isPropertyTrue(project, SKIP_IDL_CHECK) + "\n" +
+          project.logger.info("IDL_NO_PUBLISH: " + isPropertyTrue(project, IDL_NO_PUBLISH) + "\n" +
                               "SNAPSHOT_NO_PUBLISH: " + isPropertyTrue(project, SNAPSHOT_NO_PUBLISH) + "\n" +
                               "checkRestModelTask:" +
                                       " Executed: " +  checkRestModelTask.state.executed +
@@ -1042,24 +1048,19 @@ class PegasusPlugin implements Plugin<Project>
                                       ", No Failure: " + (checkSnapshotTask.state.failure == null) +
                                       ", Is Not Equivalent: " + !checkSnapshotTask.isEquivalent + "\n")
 
-
-          if (isPropertyTrue(project, SKIP_IDL_CHECK))
-          {
-            return !isPropertyTrue(project, SNAPSHOT_NO_PUBLISH) &&
-              checkSnapshotTask.state.executed &&
-              !checkSnapshotTask.state.skipped &&
-              checkSnapshotTask.state.failure == null &&
+          !isPropertyTrue(project, SNAPSHOT_NO_PUBLISH) &&
+          (
+            (
+              isPropertyTrue(project, SKIP_IDL_CHECK) &&
+              isTaskSuccessful(checkSnapshotTask) &&
               !checkSnapshotTask.isEquivalent
-          }
-          else
-          {
-            return !isPropertyTrue(project, SNAPSHOT_NO_PUBLISH) &&
-              checkRestModelTask.state.executed &&
-              !checkRestModelTask.state.skipped &&
-              checkRestModelTask.state.failure == null &&
+            ) ||
+            (
+              !isPropertyTrue(project, SKIP_IDL_CHECK) &&
+              isTaskSuccessful(checkRestModelTask) &&
               !checkRestModelTask.isEquivalent
-          }
-
+            )
+          )
         }
       }
 
@@ -1071,9 +1072,9 @@ class PegasusPlugin implements Plugin<Project>
         suffix = IDL_FILE_SUFFIX
 
         onlyIf {
-
           project.logger.info("SKIP_IDL: " + isPropertyTrue(project, SKIP_IDL_CHECK) + "\n" +
-                              "SNAPSHOT_NO_PUBLISH: " + isPropertyTrue(project, IDL_NO_PUBLISH) + "\n" +
+                              "IDL_NO_PUBLISH: " + isPropertyTrue(project, IDL_NO_PUBLISH) + "\n" +
+                              "SNAPSHOT_NO_PUBLISH: " + isPropertyTrue(project, SNAPSHOT_NO_PUBLISH) + "\n" +
                               "checkRestModelTask:" +
                                       " Executed: " + checkRestModelTask.state.executed +
                                       ", Not Skipped: " + !checkRestModelTask.state.skipped +
@@ -1088,28 +1089,23 @@ class PegasusPlugin implements Plugin<Project>
                                       " Executed: " + checkSnapshotTask.state.executed +
                                       ", Not Skipped: " + !checkSnapshotTask.state.skipped +
                                       ", No Failure: " + (checkSnapshotTask.state.failure == null) +
-                                      ", Is RestSpec Not Equivalent: " + !checkSnapshotTask.isRestSpecEquivalent + "\n")
+                                ", Is RestSpec Not Equivalent: " + !checkSnapshotTask.isRestSpecEquivalent + "\n")
 
-          if (isPropertyTrue(project, SKIP_IDL_CHECK))
-          {
-            return !isPropertyTrue(project, IDL_NO_PUBLISH) &&
-              checkSnapshotTask.state.executed &&
-              !checkSnapshotTask.state.skipped &&
-              checkSnapshotTask.state.failure == null &&
+          !isPropertyTrue(project, IDL_NO_PUBLISH) &&
+          (
+            (
+              isPropertyTrue(project, SKIP_IDL_CHECK) &&
+              isTaskSuccessful(checkSnapshotTask) &&
               !checkSnapshotTask.isRestSpecEquivalent
-          }
-          else
-          {
-            return !isPropertyTrue(project, IDL_NO_PUBLISH) &&
-              ((checkRestModelTask.state.executed &&
-                !checkRestModelTask.state.skipped &&
-                checkRestModelTask.state.failure == null &&
-                !checkRestModelTask.isRestSpecEquivalent) ||
-               (checkIdlTask.state.executed &&
-                !checkIdlTask.state.skipped &&
-                checkIdlTask.state.failure == null &&
-                !checkIdlTask.isEquivalent))
-          }
+            ) ||
+            (
+              !isPropertyTrue(project, SKIP_IDL_CHECK) &&
+              (
+                (isTaskSuccessful(checkRestModelTask) && !checkRestModelTask.isRestSpecEquivalent) ||
+                (isTaskSuccessful(checkIdlTask) && !checkRestModelTask.isEquivalent)
+              )
+            )
+          )
         }
       }
       project.logger.info("API project selected for $publishRestliIdlTask.path is $apiProject.path")
@@ -1465,13 +1461,18 @@ class PegasusPlugin implements Plugin<Project>
   private static Enum findCompatLevel(Project project, String propertyName)
   {
     final Class<? extends Enum> compatLevelClass = getCompatibilityLevelClass(project)
-    final Enum compatLevel
+    Enum compatLevel
 
     if (project.hasProperty(propertyName))
     {
       try
       {
         compatLevel = Enum.valueOf(compatLevelClass, project.property(propertyName).toString().toUpperCase())
+
+        if (compatLevel == compatLevelClass.OFF)
+        {
+          compatLevel = compatLevelClass.IGNORE
+        }
       }
       catch (IllegalArgumentException e)
       {
@@ -1490,11 +1491,6 @@ class PegasusPlugin implements Plugin<Project>
         // off by default
         compatLevel = compatLevelClass.getEnumConstants().first()
       }
-    }
-
-    if (compatLevel == compatLevelClass.OFF)
-    {
-      project.logger.info('Interface compatibility checking is turned off.');
     }
 
     return compatLevel
@@ -2054,7 +2050,6 @@ class PegasusPlugin implements Plugin<Project>
   {
     @InputFiles Collection<File> currentSnapshotFiles
     @InputDirectory File previousSnapshotDirectory
-    @InputFiles FileCollection resolverPath
     boolean isEquivalent = false
     boolean isRestSpecEquivalent = false
     private static _snapshotFilter = new FileExtensionFilter(SNAPSHOT_FILE_SUFFIX)
@@ -2123,7 +2118,6 @@ class PegasusPlugin implements Plugin<Project>
     @InputDirectory File previousSnapshotDirectory
     @InputFiles Collection<File> currentIdlFiles
     @InputDirectory File previousIdlDirectory
-    @InputFiles FileCollection resolverPath
     boolean isEquivalent = false
     boolean isRestSpecEquivalent = false
     private static _snapshotFilter = new FileExtensionFilter(SNAPSHOT_FILE_SUFFIX)
@@ -2239,13 +2233,12 @@ class PegasusPlugin implements Plugin<Project>
       final String resolverPathStr = resolverPath.collect { it.path }.join(File.pathSeparator)
       idlCompatibilityChecker.setResolverPath(resolverPathStr)
 
-      final CompatibilityResult countResult =
-        checkFileCount(project,
-                       generatorClassLoader.loadClass('com.linkedin.restli.tools.snapshot.check.RestLiSnapshotCompatibilityChecker'),
-                       currentIdlFiles,
-                       previousIdlDirectory,
-                       _idlFilter,
-                       idlCompatLevel)
+      final CompatibilityResult countResult = checkFileCount(project,
+                                                             idlCompatibilityChecker,
+                                                             currentIdlFiles,
+                                                             previousIdlDirectory,
+                                                             _idlFilter,
+                                                             idlCompatLevel)
 
       final StringBuilder allCheckMessage = new StringBuilder(countResult.message)
       boolean isCompatible = countResult.isCompatible
