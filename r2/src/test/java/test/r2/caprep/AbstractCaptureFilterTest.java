@@ -24,7 +24,7 @@ import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.Response;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-import test.r2.filter.FilterUtil;
+import com.linkedin.r2.testutils.filter.FilterUtil;
 
 /**
  * @author Chris Pettitt

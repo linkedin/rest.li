@@ -9,5 +9,7 @@ dependencies {
   compile externalDependency.commonsCompress
   compile externalDependency.snappy
   compile externalDependency.commonsLang
+  testCompile project (':r2-testutils')
   testCompile externalDependency.testng
 }
+

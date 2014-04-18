@@ -15,7 +15,7 @@
 */
 
 /* $Id$ */
-package com.linkedin.r2unittest.filter;
+package com.linkedin.r2.testutils.filter;
 
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.message.Request;
@@ -42,6 +42,7 @@ public class FilterUtil
 {
   private FilterUtil() {}
 
+  @SuppressWarnings("deprecation")
   public static void fireSimpleRpcRequest(FilterChain fc)
   {
     fireRpcRequest(fc, simpleRpcRequest());
@@ -113,7 +114,6 @@ public class FilterUtil
 
   // Fires a request, saving the local attributes, and then fires a response with the local
   // attributes.
-  @SuppressWarnings("deprecation")
   public static void fireRestRequestResponse(FilterChain fc, RestRequest req, RestResponse res)
   {
     final RequestContext context = new RequestContext();
@@ -146,7 +146,6 @@ public class FilterUtil
     fc.onRpcError(ex, context, emptyWireAttrs());
   }
 
-  @SuppressWarnings("deprecation")
   public static void fireRestRequestError(FilterChain fc, RestRequest req, Exception ex)
   {
     final RequestContext context = new RequestContext();

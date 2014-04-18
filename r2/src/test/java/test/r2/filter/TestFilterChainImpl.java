@@ -26,6 +26,8 @@ import com.linkedin.r2.message.rpc.RpcRequestBuilder;
 import com.linkedin.r2.message.rpc.RpcResponseBuilder;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+import com.linkedin.r2.testutils.filter.MessageCountFilter;
+import com.linkedin.r2.testutils.filter.RpcRestCountFilter;
 
 import java.net.URI;
 import java.util.HashMap;

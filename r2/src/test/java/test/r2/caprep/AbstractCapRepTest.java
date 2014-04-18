@@ -22,7 +22,7 @@ import com.linkedin.r2.filter.Filter;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.Response;
 import org.testng.annotations.BeforeMethod;
-import test.r2.filter.BaseFilterTest;
+import com.linkedin.r2.testutils.filter.BaseFilterTest;
 
 /**
  * @author Chris Pettitt

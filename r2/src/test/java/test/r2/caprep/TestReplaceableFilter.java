@@ -22,7 +22,7 @@ import com.linkedin.r2.caprep.ReplaceableFilter;
 import com.linkedin.r2.filter.Filter;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-import test.r2.filter.BaseFilterTest;
+import com.linkedin.r2.testutils.filter.BaseFilterTest;
 
 /**
  * @author Chris Pettitt

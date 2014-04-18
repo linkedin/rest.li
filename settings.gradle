@@ -14,6 +14,7 @@ include 'r2-sample'
 include 'r2-int-test'
 include 'r2-jetty'
 include 'r2-perf-test'
+include 'r2-testutils'
 include 'generator'
 include 'generator-test'
 include 'restli-contrib-spring'
@@ -43,6 +44,7 @@ include 'restli-spring-bridge'
 include 'restli-server-testutils'
 include 'restli-common-testutils'
 include 'restli-client-testutils'
+
 
 // see restli-tools-scala/build.gradle for more information about this rename:
 project(':restli-tools-scala').name = 'restli-tools-scala_2.10'

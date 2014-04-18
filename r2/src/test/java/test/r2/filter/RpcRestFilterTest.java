@@ -23,9 +23,9 @@ import com.linkedin.r2.filter.FilterChains;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-import com.linkedin.r2unittest.filter.BaseFilterTest;
-import com.linkedin.r2unittest.filter.RpcRestCountFilter;
-import com.linkedin.r2unittest.filter.FilterUtil;
+import com.linkedin.r2.testutils.filter.BaseFilterTest;
+import com.linkedin.r2.testutils.filter.RpcRestCountFilter;
+import com.linkedin.r2.testutils.filter.FilterUtil;
 
 /**
  * @author Chris Pettitt

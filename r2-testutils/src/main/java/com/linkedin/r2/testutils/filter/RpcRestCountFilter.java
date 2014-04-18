@@ -15,7 +15,7 @@
 */
 
 /* $Id$ */
-package com.linkedin.r2unittest.filter;
+package com.linkedin.r2.testutils.filter;
 
 import com.linkedin.r2.filter.NextFilter;
 import com.linkedin.r2.filter.message.rest.RestFilter;
@@ -27,6 +27,7 @@ import com.linkedin.r2.message.rpc.RpcRequest;
 import com.linkedin.r2.message.rpc.RpcResponse;
 
 import java.util.Map;
+
 
 /**
 * @author Chris Pettitt
@@ -110,8 +111,9 @@ public class RpcRestCountFilter extends MessageCountFilter implements RpcFilter,
     nextFilter.onError(ex, requestContext, wireAttrs);
   }
 
-  @SuppressWarnings("deprecation")
+
   @Override
+  @SuppressWarnings("deprecation")
   public void onRpcRequest(RpcRequest req, RequestContext requestContext,
                            Map<String, String> wireAttrs,
                            NextFilter<RpcRequest, RpcResponse> nextFilter)
@@ -120,8 +122,9 @@ public class RpcRestCountFilter extends MessageCountFilter implements RpcFilter,
     nextFilter.onRequest(req, requestContext, wireAttrs);
   }
 
-  @SuppressWarnings("deprecation")
+
   @Override
+  @SuppressWarnings("deprecation")
   public void onRpcResponse(RpcResponse res, RequestContext requestContext,
                             Map<String, String> wireAttrs,
                             NextFilter<RpcRequest, RpcResponse> nextFilter)
@@ -130,8 +133,8 @@ public class RpcRestCountFilter extends MessageCountFilter implements RpcFilter,
     nextFilter.onResponse(res, requestContext, wireAttrs);
   }
 
-  @SuppressWarnings("deprecation")
   @Override
+  @SuppressWarnings("deprecation")
   public void onRpcError(Throwable ex, RequestContext requestContext, Map<String, String> wireAttrs,
                          NextFilter<RpcRequest, RpcResponse> nextFilter)
   {

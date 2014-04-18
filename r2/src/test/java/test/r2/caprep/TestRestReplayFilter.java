@@ -26,8 +26,8 @@ import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.r2.message.rest.RestStatus;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-import test.r2.filter.CaptureLastCallFilter;
-import test.r2.filter.FilterUtil;
+import com.linkedin.r2.testutils.filter.CaptureLastCallFilter;
+import com.linkedin.r2.testutils.filter.FilterUtil;
 
 /**
  * @author Chris Pettitt
