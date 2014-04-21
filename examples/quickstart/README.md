@@ -22,7 +22,7 @@ You can then run the server with:
 
 Once running, you can send a GET request to the server with:
 
-`curl -v http://localhost:8080/server/fortunes/1`
+`curl -v http://localhost:8080/fortunes/1`
 
 or run the client with
 

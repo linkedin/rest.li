@@ -48,7 +48,7 @@ public class RestLiFortunesClient
                                       http.getClient(Collections.<String, String>emptyMap()));
 
     // Create a RestClient to talk to localhost:8080
-    RestClient restClient = new RestClient(r2Client, "http://localhost:8080/server/");
+    RestClient restClient = new RestClient(r2Client, "http://localhost:8080/");
 
     // Generate a random ID for a fortune cookie, in the range 0-5
     long fortuneId = (long) (Math.random() * 5);

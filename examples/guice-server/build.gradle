@@ -13,10 +13,10 @@ buildscript {
 }
 
 task wrapper(type: Wrapper) {
-  gradleVersion = '1.6'
+  gradleVersion = '1.8'
 }
 
-pegasusVersion = "1.13.4"
+pegasusVersion = "1.15.9"
 spec = [
   "product" : [
     "pegasus" : [

@@ -1,4 +1,6 @@
-apply plugin: 'jetty'
+// to start a server using a jetty servlet container, run: gradle startJetty (http://localhost:8080/fortunes/1)
+
+apply plugin: 'war'
 apply plugin: 'pegasus'
 
 ext.apiProject = project(':api')
@@ -11,5 +13,17 @@ dependencies {
   compile externalDependency.logbackCore
 }
 
-// to start a server using a jetty servlet container,
-// run: gradle JettyRunWar  (http://localhost:8080/server/fortunes/1)
+// Below is only used for running jetty from within gradle for demo purposes.
+configurations {
+  jetty8
+}
+
+dependencies {
+  jetty8 "org.mortbay.jetty:jetty-runner:8.1.15.v20140411"
+}
+
+task JettyRunWar(type: JavaExec) {
+  main = "org.mortbay.jetty.runner.Runner"
+  args = [war.archivePath]
+  classpath configurations.jetty8
+}

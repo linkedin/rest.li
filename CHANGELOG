@@ -6,6 +6,9 @@ PegasusPlugin: Deprecate compatibility level OFF and short-circuit to IGNORE.
 (RB=288855)
 Changing the action parameter setting method name in new client builders to "<parameter name>Param".
 
+(RB=291596)
+Add support for AsyncR2Servlet in RestliServlet, update examples to use Jetty 8 with async enabled.
+
 1.15.10
 -------
 (RB=289792)
