@@ -1,3 +1,7 @@
+1.15.12
+-------
+
+
 1.15.11
 -------
 (RB=290169)
@@ -8,6 +12,9 @@ Changing the action parameter setting method name in new client builders to "<pa
 
 (RB=291596)
 Add support for AsyncR2Servlet in RestliServlet, update examples to use Jetty 8 with async enabled.
+
+(RB=290827)
+Adding a central place (new module r2-unittest-util) to check in test classes all across r2 and can be used in all r2 tests
 
 1.15.10
 -------
