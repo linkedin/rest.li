@@ -181,6 +181,42 @@ import com.linkedin.r2.util.TimeoutRunnable;
   }
 
   /**
+   * legacy constructor for backward-compatibility purpose.
+   */
+  public HttpNettyClient(ClientSocketChannelFactory factory,
+                         ScheduledExecutorService executor,
+                         int poolSize,
+                         int requestTimeout,
+                         int idleTimeout,
+                         int shutdownTimeout,
+                         int maxResponseSize,
+                         SSLContext sslContext,
+                         SSLParameters sslParameters,
+                         int queryPostThreshold,
+                         ExecutorService callbackExecutor,
+                         int poolWaiterSize,
+                         String name,
+                         AbstractJmxManager jmxManager)
+  {
+    this(factory,
+        executor,
+        poolSize,
+        requestTimeout,
+        idleTimeout,
+        shutdownTimeout,
+        maxResponseSize,
+        sslContext,
+        sslParameters,
+        queryPostThreshold,
+        callbackExecutor,
+        poolWaiterSize,
+        name,
+        jmxManager,
+        AsyncPoolImpl.Strategy.MRU,
+        0);
+  }
+
+  /**
    * Creates a new HttpNettyClient
    *
    * @param factory The ClientSocketChannelFactory; it is the caller's responsibility to
@@ -200,6 +236,9 @@ import com.linkedin.r2.util.TimeoutRunnable;
    * @param name Name of the {@link HttpNettyClient}
    * @param jmxManager A management class that is aware of the creation/shutdown event
    *          of the underlying {@link ChannelPoolManager}
+   * @param strategy The strategy used to return pool objects.
+   * @param minPoolSize Minimum number of objects in the pool. Set to zero for
+   *                no minimum.
    */
   public HttpNettyClient(ClientSocketChannelFactory factory,
                          ScheduledExecutorService executor,
@@ -214,7 +253,9 @@ import com.linkedin.r2.util.TimeoutRunnable;
                          ExecutorService callbackExecutor,
                          int poolWaiterSize,
                          String name,
-                         AbstractJmxManager jmxManager)
+                         AbstractJmxManager jmxManager,
+                         AsyncPoolImpl.Strategy strategy,
+                         int minPoolSize)
   {
     _maxResponseSize = maxResponseSize;
     _name = name;
@@ -224,7 +265,9 @@ import com.linkedin.r2.util.TimeoutRunnable;
             idleTimeout,
             sslContext,
             sslParameters,
-            poolWaiterSize),
+            poolWaiterSize,
+            strategy,
+            minPoolSize),
             name + ChannelPoolManager.BASE_NAME);
     _scheduler = executor;
     _callbackExecutor = callbackExecutor;
@@ -623,13 +666,17 @@ import com.linkedin.r2.util.TimeoutRunnable;
     private final int _maxPoolSize;
     private final int _idleTimeout;
     private final int _maxPoolWaiterSize;
+    private final AsyncPoolImpl.Strategy _strategy;
+    private final int _minPoolSize;
 
     private ChannelPoolFactoryImpl(ClientBootstrap bootstrap,
                                    int maxPoolSize,
                                    int idleTimeout,
                                    SSLContext sslContext,
                                    SSLParameters sslParameters,
-                                   int maxPoolWaiterSize)
+                                   int maxPoolWaiterSize,
+                                   AsyncPoolImpl.Strategy strategy,
+                                   int minPoolSize)
     {
       _bootstrap = bootstrap;
       _bootstrap.setPipelineFactory(new HttpClientPipelineFactory(sslContext,
@@ -637,6 +684,8 @@ import com.linkedin.r2.util.TimeoutRunnable;
       _maxPoolSize = maxPoolSize;
       _idleTimeout = idleTimeout;
       _maxPoolWaiterSize = maxPoolWaiterSize;
+      _strategy = strategy;
+      _minPoolSize = minPoolSize;
     }
 
     @Override
@@ -652,7 +701,9 @@ import com.linkedin.r2.util.TimeoutRunnable;
                                         _idleTimeout,
                                         _scheduler,
                                         _callbackExecutor,
-                                        _maxPoolWaiterSize);
+                                        _maxPoolWaiterSize,
+                                        _strategy,
+                                        _minPoolSize);
     }
   }
 

@@ -93,6 +93,8 @@ public class HttpClientFactory implements TransportClientFactory
   public static final String HTTP_SSL_PARAMS = "http.sslParams";
   public static final String HTTP_RESPONSE_COMPRESSION_OPERATIONS = "http.responseCompressionOperations";
   public static final String HTTP_SERVICE_NAME = "http.serviceName";
+  public static final String HTTP_POOL_STRATEGY = "http.poolStrategy";
+  public static final String HTTP_POOL_MIN_SIZE = "http.poolMinSize";
 
   public static final int DEFAULT_POOL_WAITER_SIZE = Integer.MAX_VALUE;
   public static final int DEFAULT_POOL_SIZE = 200;
@@ -101,6 +103,8 @@ public class HttpClientFactory implements TransportClientFactory
   public static final int DEFAULT_SHUTDOWN_TIMEOUT = 5000;
   public static final int DEFAULT_MAX_RESPONSE_SIZE = 1024 * 1024 * 2;
   public static final String DEFAULT_CLIENT_NAME = "noNameSpecifiedClient";
+  public static final AsyncPoolImpl.Strategy DEFAULT_POOL_STRATEGY = AsyncPoolImpl.Strategy.MRU;
+  public static final int DEFAULT_POOL_MIN_SIZE = 0;
   public static final AbstractJmxManager NULL_JMX_MANAGER = new AbstractJmxManager()
   {
     @Override
@@ -403,6 +407,29 @@ public class HttpClientFactory implements TransportClientFactory
     }
   }
 
+  private AsyncPoolImpl.Strategy getStrategy(Map<String, ? extends Object> properties)
+  {
+    if (properties == null)
+    {
+      LOG.warn("passed a null raw client properties");
+      return null;
+    }
+    if (properties.containsKey(HTTP_POOL_STRATEGY))
+    {
+      String strategyString = (String)properties.get(HTTP_POOL_STRATEGY);
+      if (strategyString.equalsIgnoreCase("LRU"))
+      {
+        return AsyncPoolImpl.Strategy.LRU;
+      }
+      else if (strategyString.equalsIgnoreCase("MRU"))
+      {
+        return AsyncPoolImpl.Strategy.MRU;
+      }
+    }
+    // for all other cases
+    return null;
+  }
+
   /**
    * Testing aid.
    */
@@ -423,6 +450,8 @@ public class HttpClientFactory implements TransportClientFactory
       clientName = (String)properties.get(HTTP_SERVICE_NAME) + "Client";
     }
     clientName = chooseNewOverDefault(clientName, DEFAULT_CLIENT_NAME);
+    AsyncPoolImpl.Strategy strategy = chooseNewOverDefault(getStrategy(properties), DEFAULT_POOL_STRATEGY);
+    Integer poolMinSize = chooseNewOverDefault(getIntValue(properties, HTTP_POOL_MIN_SIZE), DEFAULT_POOL_MIN_SIZE);
 
     return new HttpNettyClient(_channelFactory,
                                _executor,
@@ -437,7 +466,9 @@ public class HttpClientFactory implements TransportClientFactory
                                _callbackExecutor,
                                poolWaiterSize,
                                clientName,
-                               _jmxManager);
+                               _jmxManager,
+                               strategy,
+                               poolMinSize);
   }
 
   /**
