@@ -26,6 +26,7 @@ import com.linkedin.r2.transport.http.client.AsyncPool;
 import com.linkedin.r2.transport.http.client.AsyncPoolImpl;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.transport.http.client.AsyncPoolStats;
+import com.linkedin.r2.transport.http.client.PoolStats;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
@@ -301,7 +302,7 @@ public class TestAsyncPool
     final AsyncPool<AtomicBoolean> pool = new AsyncPoolImpl<AtomicBoolean>(
         "object pool", lifecycle, POOL_SIZE, TIMEOUT, _executor
     );
-    AsyncPoolStats stats;
+    PoolStats stats;
     final List<AtomicBoolean> objects = new ArrayList<AtomicBoolean>();
 
     pool.start();
@@ -439,7 +440,7 @@ public class TestAsyncPool
     final AsyncPool<AtomicBoolean> pool = new AsyncPoolImpl<AtomicBoolean>(
         "object pool", lifecycle, POOL_SIZE, TIMEOUT, _executor
     );
-    AsyncPoolStats stats;
+    PoolStats stats;
     final List<AtomicBoolean> objects = new ArrayList<AtomicBoolean>();
 
     pool.start();
@@ -492,6 +493,36 @@ public class TestAsyncPool
     Assert.assertEquals(stats.getTotalCreateErrors(), 2*CREATE_BAD);
   }
 
+  @Test
+  public void testWaitTimeStats() throws Exception
+  {
+    final int POOL_SIZE = 25;
+    final int CHECKOUT = POOL_SIZE;
+    final long DELAY = 100;
+    final double DELTA = 0.1;
+    DelayedLifecycle lifecycle = new DelayedLifecycle(DELAY);
+    final AsyncPool<Object> pool = new AsyncPoolImpl<Object>("object pool",
+        lifecycle,
+        POOL_SIZE,
+        100,
+        _executor
+    );
+    pool.start();
+
+    PoolStats stats;
+    List<Object> objects = new ArrayList<Object>(CHECKOUT);
+    for (int i = 0; i < CHECKOUT; i++)
+    {
+      FutureCallback<Object> cb = new FutureCallback<Object>();
+      pool.get(cb);
+      Object o = cb.get();
+      objects.add(o);
+    }
+
+    stats = pool.getStats();
+    Assert.assertEquals(stats.getWaitTimeAvg(), DELAY, DELTA * DELAY);
+  }
+
   public static class SynchronousLifecycle implements AsyncPool.Lifecycle<Object>
   {
     private int _live = 0;
@@ -525,6 +556,12 @@ public class TestAsyncPool
     {
       _live--;
       callback.onSuccess(obj);
+    }
+
+    @Override
+    public PoolStats.LifecycleStats getStats()
+    {
+      return null;
     }
 
     public int getHighWaterMark()
@@ -587,9 +624,64 @@ public class TestAsyncPool
       }
     }
 
+    @Override
+    public PoolStats.LifecycleStats getStats()
+    {
+      return null;
+    }
+
     public synchronized void setFail(boolean fail)
     {
       _fail = fail;
+    }
+  }
+
+  public static class DelayedLifecycle implements AsyncPool.Lifecycle<Object>
+  {
+    private final long _delay;
+
+    public DelayedLifecycle(long delay)
+    {
+      _delay = delay;
+    }
+
+    @Override
+    public synchronized void create(Callback<Object> callback)
+    {
+      try
+      {
+        Thread.sleep(_delay);
+        callback.onSuccess(new Object());
+      }
+      catch (InterruptedException e)
+      {
+        callback.onError(e);
+      }
+
+    }
+
+    @Override
+    public boolean validateGet(Object obj)
+    {
+      return true;
+    }
+
+    @Override
+    public boolean validatePut(Object obj)
+    {
+      return true;
+    }
+
+    @Override
+    public synchronized void destroy(Object obj, boolean error, Callback<Object> callback)
+    {
+      callback.onSuccess(obj);
+    }
+
+    @Override
+    public PoolStats.LifecycleStats getStats()
+    {
+      return null;
     }
   }
 }

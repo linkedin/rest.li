@@ -113,7 +113,71 @@ public interface PoolStats
   int getSampleMaxPoolSize();
 
   /**
+   * Get the number of objects that are idle(not checked out)
+   * in the pool.
+   * @return The number of idle objects
+   */
+  int getIdleCount();
+
+  /**
+   * Get the average wait time to get a pooled object.
+   * @return The average wait time.
+   */
+  double getWaitTimeAvg();
+
+  /**
+   * Get the 50 percentage wait time to get a pooled object.
+   * @return 50 percentage wait time.
+   */
+  long getWaitTime50Pct();
+
+  /**
+   * Get the 95 percentage wait time to get a pooled object.
+   * @return 95 percentage wait time.
+   */
+  long getWaitTime95Pct();
+
+  /**
+   * Get the 99 percentage wait time to get a pooled object.
+   * @return 99 percentage wait time.
+   */
+  long getWaitTime99Pct();
+
+  /**
+   * Get stats collected from {@link AsyncPool.Lifecycle}
+   * @return Lifecycle stats
+   */
+  LifecycleStats getLifecycleStats();
+
+  /**
    * Return a string which represents the pool stats
    */
   String toString();
+
+  public interface LifecycleStats
+  {
+    /**
+     * Get the average time to create an object.
+     * @return The average create time.
+     */
+    double getCreateTimeAvg();
+
+    /**
+     * Get the 50 percentage time to create an object.
+     * @return 50 percentage create time.
+     */
+    long getCreateTime50Pct();
+
+    /**
+     * Get the 95 percentage time to create an object.
+     * @return 95 percentage create time.
+     */
+    long getCreateTime95Pct();
+
+    /**
+     * Get the 99 percentage time to create an object.
+     * @return 99 percentage create time.
+     */
+    long getCreateTime99Pct();
+  }
 }

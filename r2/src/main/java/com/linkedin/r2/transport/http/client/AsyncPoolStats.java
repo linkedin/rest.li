@@ -45,6 +45,13 @@ public class AsyncPoolStats implements PoolStats
   private final int _sampleMaxCheckedOut;
   private final int _sampleMaxPoolSize;
 
+  private final int _idleCount;
+  private final double _waitTimeAvg;
+  private final long _waitTime50Pct;
+  private final long _waitTime95Pct;
+  private final long _waitTime99Pct;
+  private final LifecycleStats _lifecycleStats;
+
   /**
    * This class should be instantiated through a call to
    * getStats() on an AsyncPool.
@@ -63,7 +70,14 @@ public class AsyncPoolStats implements PoolStats
       int poolSize,
 
       int sampleMaxCheckedOut,
-      int sampleMaxPoolSize
+      int sampleMaxPoolSize,
+
+      int idleCount,
+      double waitTimeAvg,
+      long waitTime50Pct,
+      long waitTime95Pct,
+      long waitTime99Pct,
+      LifecycleStats lifecycleStats
   )
   {
     _totalCreated = totalCreated;
@@ -80,6 +94,13 @@ public class AsyncPoolStats implements PoolStats
 
     _sampleMaxCheckedOut = sampleMaxCheckedOut;
     _sampleMaxPoolSize = sampleMaxPoolSize;
+
+    _idleCount = idleCount;
+    _waitTimeAvg = waitTimeAvg;
+    _waitTime50Pct = waitTime50Pct;
+    _waitTime95Pct = waitTime95Pct;
+    _waitTime99Pct = waitTime99Pct;
+    _lifecycleStats = lifecycleStats;
   }
 
   /**
@@ -216,6 +237,67 @@ public class AsyncPoolStats implements PoolStats
     return _sampleMaxPoolSize;
   }
 
+  /**
+   * Get the number of objects that are idle(not checked out)
+   * in the pool.
+   * @return The number of idle objects
+   */
+  @Override
+  public int getIdleCount()
+  {
+    return _idleCount;
+  }
+
+  /**
+   * Get the average wait time to get a pooled object.
+   * @return The average wait time.
+   */
+  @Override
+  public double getWaitTimeAvg()
+  {
+    return _waitTimeAvg;
+  }
+
+  /**
+   * Get the 50 percentage wait time to get a pooled object.
+   * @return 50 percentage wait time.
+   */
+  @Override
+  public long getWaitTime50Pct()
+  {
+    return _waitTime50Pct;
+  }
+
+  /**
+   * Get the 95 percentage wait time to get a pooled object.
+   * @return 95 percentage wait time.
+   */
+  @Override
+  public long getWaitTime95Pct()
+  {
+    return _waitTime95Pct;
+  }
+
+  /**
+   * Get the 99 percentage wait time to get a pooled object.
+   * @return 99 percentage wait time.
+   */
+  @Override
+  public long getWaitTime99Pct()
+  {
+    return _waitTime99Pct;
+  }
+
+  /**
+   * Get stats collected from {@link AsyncPool.Lifecycle}
+   * @return Lifecycle stats
+   */
+  @Override
+  public LifecycleStats getLifecycleStats()
+  {
+    return _lifecycleStats;
+  }
+
   @Override
   public String toString()
   {
@@ -229,6 +311,12 @@ public class AsyncPoolStats implements PoolStats
         "\nmaxPoolSize: " + _maxPoolSize +
         "\npoolSize: " + _poolSize +
         "\nsampleMaxCheckedOut: " + _sampleMaxCheckedOut +
-        "\nsampleMaxPoolSize: " + _sampleMaxPoolSize;
+        "\nsampleMaxPoolSize: " + _sampleMaxPoolSize +
+        "\nidleCount: " + _idleCount +
+        "\nwaitTimeAvg: " + _waitTimeAvg +
+        "\nwaitTime50Pct: " + _waitTime50Pct +
+        "\nwaitTime95Pct: " + _waitTime95Pct +
+        "\nwaitTime99Pct: " + _waitTime99Pct +
+        (_lifecycleStats != null ? _lifecycleStats.toString() : "");
   }
 }

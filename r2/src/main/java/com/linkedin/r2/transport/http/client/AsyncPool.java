@@ -113,7 +113,7 @@ public interface AsyncPool<T>
    * @return An {@link AsyncPoolStats} object representing the current pool
    * statistics.
    */
-  AsyncPoolStats getStats();
+  PoolStats getStats();
 
   public interface Lifecycle<T>
   {
@@ -121,5 +121,6 @@ public interface AsyncPool<T>
     boolean validateGet(T obj);
     boolean validatePut(T obj);
     void destroy(T obj, boolean error, Callback<T> callback);
+    PoolStats.LifecycleStats getStats();
   }
 }

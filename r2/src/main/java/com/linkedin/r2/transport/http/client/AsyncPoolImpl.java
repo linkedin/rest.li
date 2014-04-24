@@ -32,6 +32,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import com.linkedin.common.stats.LongStats;
+import com.linkedin.common.stats.LongTracking;
 import com.linkedin.r2.SizeLimitExceededException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,6 +82,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
   private Throwable _lastCreateError = null;
   private State _state = State.NOT_YET_STARTED;
   private Callback<None> _shutdownCallback = null;
+  private final LongTracking _waitTimeTracker = new LongTracking();
 
   // Statistics for each pool, retrieved with getStats()
   // See AsyncPoolStats for details
@@ -299,6 +302,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
     boolean create = false;
     boolean reject = false;
     final LinkedDeque.Node<Callback<T>> node;
+    final Callback<T> callbackWithTracking = new TimeTrackingCallback<T>(callback);
     for (;;)
     {
       TimedObject<T> obj = null;
@@ -321,7 +325,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
             if (_waiters.size() < _maxWaiters)
             {
               // No objects available and the waiter list is not full; add to waiter list and break out of loop
-              node = _waiters.addLastNode(callback);
+              node = _waiters.addLastNode(callbackWithTracking);
               create = shouldCreate();
             }
             else
@@ -336,7 +340,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
       if (state != State.RUNNING)
       {
         // Defer execution of the callback until we are out of the synchronized block
-        callback.onError(new IllegalStateException(_poolName + " is " + _state));
+        callbackWithTracking.onError(new IllegalStateException(_poolName + " is " + _state));
         return null;
       }
       T rawObj = obj.get();
@@ -349,7 +353,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
           _checkedOut++;
           _sampleMaxCheckedOut = Math.max(_checkedOut, _sampleMaxCheckedOut);
         }
-        callback.onSuccess(rawObj);
+        callbackWithTracking.onSuccess(rawObj);
         return null;
       }
       // Invalid object, discard it and keep trying
@@ -359,7 +363,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
     if (reject)
     {
       // This is a recoverable exception. User can simply retry the failed get() operation.
-      callback.onError(new SizeLimitExceededException("AsyncPool " + _poolName + " reached maximum waiter size: " + _maxWaiters));
+      callbackWithTracking.onError(new SizeLimitExceededException("AsyncPool " + _poolName + " reached maximum waiter size: " + _maxWaiters));
       return null;
     }
     trc("enqueued a waiter");
@@ -452,6 +456,8 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
     // get a copy of the stats
     synchronized (_lock)
     {
+      LongStats waitTimeStats = _waitTimeTracker.getStats();
+      PoolStats.LifecycleStats lifecycleStats = _lifecycle.getStats();
       AsyncPoolStats stats = new AsyncPoolStats(
         _totalCreated,
         _totalDestroyed,
@@ -464,10 +470,17 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
         _minSize,
         _poolSize,
         _sampleMaxCheckedOut,
-        _sampleMaxPoolSize
+        _sampleMaxPoolSize,
+        _idle.size(),
+        waitTimeStats.getAverage(),
+        waitTimeStats.get50Pct(),
+        waitTimeStats.get95Pct(),
+        waitTimeStats.get99Pct(),
+        lifecycleStats
       );
       _sampleMaxCheckedOut = _checkedOut;
       _sampleMaxPoolSize = _poolSize;
+      _waitTimeTracker.reset();
       return stats;
     }
   }
@@ -726,6 +739,38 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
     public long getTime()
     {
       return _time;
+    }
+  }
+
+  private class TimeTrackingCallback<T> implements Callback<T>
+  {
+    private final long _startTime;
+    private final Callback<T> _callback;
+
+    public TimeTrackingCallback(Callback<T> callback)
+    {
+      _callback = callback;
+      _startTime = System.currentTimeMillis();
+    }
+
+    @Override
+    public void onError(Throwable e)
+    {
+      synchronized (_lock)
+      {
+        _waitTimeTracker.addValue(System.currentTimeMillis() - _startTime);
+      }
+      _callback.onError(e);
+    }
+
+    @Override
+    public void onSuccess(T result)
+    {
+      synchronized (_lock)
+      {
+        _waitTimeTracker.addValue(System.currentTimeMillis() - _startTime);
+      }
+      _callback.onSuccess(result);
     }
   }
 

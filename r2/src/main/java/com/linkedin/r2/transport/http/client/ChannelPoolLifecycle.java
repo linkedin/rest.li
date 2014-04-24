@@ -21,6 +21,8 @@
 package com.linkedin.r2.transport.http.client;
 
 import com.linkedin.common.callback.Callback;
+import com.linkedin.common.stats.LongStats;
+import com.linkedin.common.stats.LongTracking;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
@@ -40,6 +42,7 @@ class ChannelPoolLifecycle implements AsyncPool.Lifecycle<Channel>
   private final RateLimiter _rateLimiter;
   private final ClientBootstrap _bootstrap;
   private final ChannelGroup _channelGroup;
+  private final LongTracking _createTimeTracker = new LongTracking();
 
   public ChannelPoolLifecycle(SocketAddress address, ClientBootstrap bootstrap, long getTimeout,
                               ScheduledExecutorService executor, ChannelGroup channelGroup)
@@ -58,12 +61,17 @@ class ChannelPoolLifecycle implements AsyncPool.Lifecycle<Channel>
       @Override
       public void run()
       {
+        final long start = System.currentTimeMillis();
         _bootstrap.connect(_remoteAddress).addListener(new ChannelFutureListener()
         {
           public void operationComplete(ChannelFuture channelFuture) throws Exception
           {
             if (channelFuture.isSuccess())
             {
+              synchronized (_createTimeTracker)
+              {
+                _createTimeTracker.addValue(System.currentTimeMillis() - start);
+              }
               Channel c = channelFuture.getChannel();
               _channelGroup.add(c);
               channelCallback.onSuccess(c);
@@ -125,6 +133,20 @@ class ChannelPoolLifecycle implements AsyncPool.Lifecycle<Channel>
     else
     {
       channelCallback.onSuccess(channel);
+    }
+  }
+
+  @Override
+  public PoolStats.LifecycleStats getStats()
+  {
+    synchronized (_createTimeTracker)
+    {
+      LongStats stats = _createTimeTracker.getStats();
+      _createTimeTracker.reset();
+      return new AsyncPoolLifecycleStats(stats.getAverage(),
+                                         stats.get50Pct(),
+                                         stats.get95Pct(),
+                                         stats.get99Pct());
     }
   }
 }

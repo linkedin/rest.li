@@ -606,6 +606,12 @@ public class TestHttpNettyClient
         {
 
         }
+
+        @Override
+        public PoolStats.LifecycleStats getStats()
+        {
+          return null;
+        }
       }, 0, 0, null);
     }
 
