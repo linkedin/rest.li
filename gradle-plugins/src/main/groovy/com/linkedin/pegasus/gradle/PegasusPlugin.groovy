@@ -1705,7 +1705,18 @@ class PegasusPlugin implements Plugin<Project>
 
       final String resolverPathStr = (resolverPath + project.files(inputDir)).collect { it.path }.join(File.pathSeparator)
       final Class<?> avroSchemaGenerator = project.property(GENERATOR_CLASSLOADER_NAME).loadClass('com.linkedin.data.avro.generator.AvroSchemaGenerator')
-      avroSchemaGenerator.run(resolverPathStr, null, destinationDir.path, inputDataSchemaFiles.collect { it.path } as String[])
+
+      final String avroTranslateOptionalDefault
+      if (project.hasProperty(avroSchemaGenerator.GENERATOR_AVRO_TRANSLATE_OPTIONAL_DEFAULT))
+      {
+        avroTranslateOptionalDefault = project.property(avroSchemaGenerator.GENERATOR_AVRO_TRANSLATE_OPTIONAL_DEFAULT)
+      }
+      else
+      {
+        avroTranslateOptionalDefault = null
+      }
+
+      avroSchemaGenerator.run(resolverPathStr, avroTranslateOptionalDefault, destinationDir.path, inputDataSchemaFiles.collect { it.path } as String[])
     }
   }
 

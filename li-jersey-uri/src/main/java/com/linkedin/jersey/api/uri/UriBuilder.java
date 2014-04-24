@@ -354,8 +354,8 @@ public class UriBuilder
     }
 
     /**
-     * Replace or append matrix param to UriBuilder
-     * @param matrix matrix param name
+     * Set or replace the matrix param in the UriBuilder
+     * @param matrix matrix param string
      * @return this
      */
     public UriBuilder replaceMatrix(String matrix) {
@@ -441,8 +441,8 @@ public class UriBuilder
     }
 
     /**
-     * set or replace the query in the UriBuilder
-     * @param query the name of the query
+     * set or replace the query string in the UriBuilder
+     * @param query the query string
      * @return this
      */
     public UriBuilder replaceQuery(String query) {

@@ -1,3 +1,8 @@
+1.15.13
+-------
+(RB=292644)
+Support Avro translation OptionalDefaultMode in PegasusPlugin.
+
 1.15.12
 -------
 (RB=293255)

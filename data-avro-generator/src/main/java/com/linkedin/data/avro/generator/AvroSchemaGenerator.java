@@ -28,9 +28,6 @@ import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.generator.AbstractGenerator;
 import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
-import org.apache.avro.Schema;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -42,6 +39,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -228,7 +228,7 @@ public class AvroSchemaGenerator extends AbstractGenerator
           generatedFiles.add(generatedFile);
 
           String preTranslateSchemaText = recordDataSchema.toString();
-          String avroSchemaText = SchemaTranslator.dataToAvroSchemaJson(recordDataSchema);
+          String avroSchemaText = SchemaTranslator.dataToAvroSchemaJson(recordDataSchema, _options);
           _fileToAvroSchemaMap.put(generatedFile, avroSchemaText);
           String postTranslateSchemaText = recordDataSchema.toString();
           assert(preTranslateSchemaText.equals(postTranslateSchemaText));
