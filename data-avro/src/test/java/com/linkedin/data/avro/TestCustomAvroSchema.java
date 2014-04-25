@@ -109,6 +109,50 @@ public class TestCustomAvroSchema
         {
           ANYRECORD_DATA_SCHEMA_JSON,
           ANYRECORD_AVRO_SCHEMA_JSON
+        },
+        {
+          // Verify that fields are processed, such as default value translation
+          // does not occur when avro override is present
+          "{\n" +
+          "  \"type\" : \"record\",\n" +
+          "  \"name\" : \"Foo\",\n" +
+          "  \"avro\" :\n" +
+          "  {\n" +
+          "    \"schema\" :\n" +
+          "    {\n" +
+          "      \"type\" : \"record\",\n" +
+          "      \"name\" : \"Foo\",\n" +
+          "      \"fields\" : [\n" +
+           "      ]\n" +
+          "    },\n" +
+          "    \"translator\" :\n" +
+          "    {\n" +
+          "      \"class\" : \"FooTranslator\"\n" +
+          "    }\n" +
+          "  },\n" +
+          "  \"fields\" : [\n" +
+          "    {\n" +
+          "      \"name\" : \"f1\",\n" +
+          "      \"type\" : {\n" +
+          "        \"type\" : \"record\",\n" +
+          "        \"name\" : \"Bar\",\n" +
+          "        \"fields\" : [\n" +
+          "          {\n" +
+          "            \"name\" : \"bf1\",\n" +
+          "            \"type\" : \"string\",\n" +
+          "            \"optional\" : true\n" +
+          "          }\n" +
+          "        ]\n" +
+          "      },\n" +
+          "      \"default\" : { \"bf1\" : \"defaultValue\" }\n" +
+          "    }\n" +
+          "  ]\n" +
+          "}\n",
+          "{\n" +
+          "  \"name\" : \"Foo\",\n" +
+          "  \"type\" : \"record\",\n" +
+          "  \"fields\" : []\n" +
+          "}"
         }
       };
 

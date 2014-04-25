@@ -810,7 +810,7 @@ public class DataTemplateUtil
    * Convert a {@link DataList} to the array of desired target class.
    *
    * This conversion is recursive. For example, a {@link DataList} containing collection of
-   * @{link DataList}s can be converted to int[][].
+   * {@link DataList}s can be converted to int[][].
    *
    * @param list {@link DataList} that provides the value to be converted
    * @param arrayItemType provides the item class of the result array.

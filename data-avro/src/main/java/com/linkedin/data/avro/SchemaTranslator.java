@@ -497,7 +497,6 @@ public class SchemaTranslator
       final Object _defaultValue;
 
       private static FieldInfo NULL_FIELD_INFO = new FieldInfo(DataSchemaConstants.NULL_DATA_SCHEMA, Data.NULL);
-      private static FieldInfo ABSENT_FIELD_INFO = new FieldInfo(null, null);
     }
 
     private IdentityHashMap<RecordDataSchema.Field, FieldInfo> _fieldInfos = new IdentityHashMap<RecordDataSchema.Field, FieldInfo>();
@@ -538,6 +537,11 @@ public class SchemaTranslator
     public void callback(List<String> path, DataSchema schema)
     {
       if (schema.getType() != DataSchema.Type.RECORD)
+      {
+        return;
+      }
+      // if schema has avro override, do not translate the record's fields default values
+      if (schema.getProperties().get("avro") != null)
       {
         return;
       }
