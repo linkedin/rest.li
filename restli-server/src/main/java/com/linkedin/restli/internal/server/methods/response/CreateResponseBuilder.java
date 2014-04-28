@@ -20,6 +20,7 @@ package com.linkedin.restli.internal.server.methods.response;
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.jersey.api.uri.UriComponent;
 import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.HeaderUtil;
@@ -27,6 +28,7 @@ import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
+import com.linkedin.restli.internal.server.methods.AnyRecord;
 import com.linkedin.restli.server.CreateResponse;
 
 import java.io.IOException;
@@ -57,6 +59,8 @@ public class CreateResponseBuilder implements RestLiResponseBuilder
                                                            .toString());
     }
 
-    return new PartialRestResponse.Builder().headers(headers).status(createResponse.getStatus()).build();
+    IdResponse<?> idResponse = new IdResponse<Object>(createResponse.getId());
+
+    return new PartialRestResponse.Builder().entity(idResponse).headers(headers).status(createResponse.getStatus()).build();
   }
 }

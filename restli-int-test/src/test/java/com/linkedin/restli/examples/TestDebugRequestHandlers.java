@@ -26,8 +26,13 @@ import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import com.linkedin.restli.client.CreateIdRequest;
+import com.linkedin.restli.client.CreateIdRequestBuilder;
 import com.linkedin.restli.client.Request;
+import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestClient;
+import com.linkedin.restli.client.response.CreateResponse;
+import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.examples.greetings.api.Greeting;
@@ -239,9 +244,26 @@ public class TestDebugRequestHandlers extends RestLiIntegrationTest
   private Long createNewGreetingOnTheServer(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Greeting newGreeting = new Greeting().setMessage("New Greeting!").setTone(Tone.FRIENDLY);
-    Request<EmptyRecord> request = builders.create().input(newGreeting).build();
-    String createdId = REST_CLIENT.sendRequest(request).getResponse().getId();
-    return Long.parseLong(createdId);
+    RootBuilderWrapper.MethodBuilderWrapper<Long, Greeting, EmptyRecord> createBuilderWrapper = builders.create();
+    Long createdId;
+    if (createBuilderWrapper.isRestLi2Builder())
+    {
+      Object objBuilder = createBuilderWrapper.getBuilder();
+      @SuppressWarnings("unchecked")
+      CreateIdRequestBuilder<Long, Greeting> createIdRequestBuilder = (CreateIdRequestBuilder<Long, Greeting>) objBuilder;
+      CreateIdRequest<Long, Greeting> request = createIdRequestBuilder.input(newGreeting).build();
+      Response<IdResponse<Long>> response = REST_CLIENT.sendRequest(request).getResponse();
+      createdId = response.getEntity().getId();
+    }
+    else
+    {
+      Request<EmptyRecord> request = createBuilderWrapper.input(newGreeting).build();
+      Response<EmptyRecord> response = REST_CLIENT.sendRequest(request).getResponse();
+      @SuppressWarnings("unchecked")
+      CreateResponse<Long> createResponse = (CreateResponse<Long>) response.getEntity();
+      createdId= createResponse.getId();
+    }
+    return createdId;
   }
 
   @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")

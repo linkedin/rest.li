@@ -31,6 +31,8 @@ import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import com.linkedin.restli.client.CreateIdRequest;
+import com.linkedin.restli.client.CreateIdRequestBuilder;
 import com.linkedin.restli.client.OptionsRequestBuilder;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
@@ -39,6 +41,8 @@ import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.client.response.BatchKVResponse;
+import com.linkedin.restli.client.response.CreateResponse;
+import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.client.util.PatchGenerator;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionMetadata;
@@ -588,9 +592,26 @@ public class TestGreetingsClient extends RestLiIntegrationTest
 
     for (Greeting greeting: greetings)
     {
-      Request<EmptyRecord> request = builders.create().input(greeting).build();
-      String createdId = REST_CLIENT.sendRequest(request).getResponse().getId();
-      createdIds.add(Long.parseLong(createdId));
+      RootBuilderWrapper.MethodBuilderWrapper<Long, Greeting, EmptyRecord> createBuilder = builders.create();
+      Long createdId;
+      if (createBuilder.isRestLi2Builder())
+      {
+        Object objBuilder = createBuilder.getBuilder();
+        @SuppressWarnings("unchecked")
+        CreateIdRequestBuilder<Long, Greeting> createIdRequestBuilder = (CreateIdRequestBuilder<Long, Greeting>) objBuilder;
+        CreateIdRequest<Long, Greeting> request = createIdRequestBuilder.input(greeting).build();
+        Response<IdResponse<Long>> response = REST_CLIENT.sendRequest(request).getResponse();
+        createdId = response.getEntity().getId();
+      }
+      else
+      {
+        Request<EmptyRecord> request = createBuilder.input(greeting).build();
+        Response<EmptyRecord> response = REST_CLIENT.sendRequest(request).getResponse();
+        @SuppressWarnings("unchecked")
+        CreateResponse<Long> createResponse = (CreateResponse<Long>)response.getEntity();
+        createdId = createResponse.getId();
+      }
+      createdIds.add(createdId);
     }
 
     return createdIds;
@@ -637,6 +658,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
       throws RemoteInvocationException
   {
     List<Greeting> greetings = generateBatchTestData(3, "BatchDelete", Tone.FRIENDLY);
+    @SuppressWarnings("unchecked")
     List<Long> createdIds = createBatchTestDataSerially(builders, greetings);
 
     // Batch delete the created Greetings
@@ -663,6 +685,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
       throws RemoteInvocationException, CloneNotSupportedException
   {
     List<Greeting> greetings = generateBatchTestData(3, "BatchUpdate", Tone.FRIENDLY);
+    @SuppressWarnings("unchecked")
     List<Long> createdIds = createBatchTestDataSerially(builders, greetings);
     addIdsToGeneratedGreetings(createdIds, greetings);
 
@@ -699,6 +722,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
   public void testBatchPartialUpdate(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException, CloneNotSupportedException
   {
     List<Greeting> greetings = generateBatchTestData(3, "BatchPatch", Tone.FRIENDLY);
+    @SuppressWarnings("unchecked")
     List<Long> createdIds = createBatchTestDataSerially(builders, greetings);
     addIdsToGeneratedGreetings(createdIds, greetings);
 
@@ -737,6 +761,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
       throws RemoteInvocationException
   {
     List<Greeting> greetings = generateBatchTestData(3, "GetAll", Tone.FRIENDLY);
+    @SuppressWarnings("unchecked")
     List<Long> createdIds = createBatchTestDataSerially(builders, greetings);
     addIdsToGeneratedGreetings(createdIds, greetings);
 

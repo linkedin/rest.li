@@ -17,19 +17,12 @@
 package com.linkedin.restli.client.response;
 
 
-import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
-import com.linkedin.data.collections.CheckedUtil;
-import com.linkedin.data.schema.DataSchema;
-import com.linkedin.data.schema.DataSchemaUtil;
 import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.schema.Name;
 import com.linkedin.data.schema.RecordDataSchema;
-import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.data.template.TyperefInfo;
-import com.linkedin.jersey.api.uri.UriComponent;
 import com.linkedin.restli.common.ComplexKeySpec;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
@@ -38,15 +31,12 @@ import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
-import com.linkedin.restli.internal.common.PathSegment.PathSegmentSyntaxException;
-import com.linkedin.restli.internal.common.QueryParamsDataMap;
-import com.linkedin.restli.internal.common.TyperefUtils;
-import com.linkedin.restli.internal.common.URIElementParser;
-import com.linkedin.restli.internal.common.ValueConverter;
+import com.linkedin.restli.internal.common.ResponseUtils;
+
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+
 
 /**
  * A Batch of records. Used to return a fixed-size, unordered, complete collection of records, keyed on resource ID. Used
@@ -298,7 +288,7 @@ public class BatchKVResponse<K, V extends RecordTemplate> extends RecordTemplate
     };
     for (Map.Entry<String, Object> entry : resultsRaw.entrySet())
     {
-      K key = convertKey(entry.getKey(), keyType);
+      K key = ResponseUtils.convertKey(entry.getKey(), keyType, _keyParts, _complexKeyType, _version);
       V value = DataTemplateUtil.wrap(entry.getValue(), valueType.getType());
       _results.put(key, value);
     }
@@ -307,7 +297,7 @@ public class BatchKVResponse<K, V extends RecordTemplate> extends RecordTemplate
     _errors = new HashMap<K, ErrorResponse>((int)Math.ceil(errorsRaw.size()/0.75f));
     for (Map.Entry<String, Object> entry : errorsRaw.entrySet())
     {
-      K key = convertKey(entry.getKey(), keyType);
+      K key = ResponseUtils.convertKey(entry.getKey(), keyType, _keyParts, _complexKeyType, _version);
       ErrorResponse value = DataTemplateUtil.wrap(entry.getValue(), ErrorResponse.class);
       _errors.put(key, value);
     }
@@ -322,98 +312,6 @@ public class BatchKVResponse<K, V extends RecordTemplate> extends RecordTemplate
   {
     this(data, keyType, valueType, keyParts, complexKeyType, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion());
   }
-
-  @SuppressWarnings("unchecked")
-  private <T> T convertKey(String rawKey, TypeSpec<T> key)
-  {
-    Class<? extends T> keyBindingClass = key.getType();
-    Object result;
-
-    if (TyperefInfo.class.isAssignableFrom(key.getType()))
-    {
-      TyperefDataSchema schema = (TyperefDataSchema)key.getSchema();
-      DataSchema.Type dereferencedType = schema.getDereferencedType();
-      if (!schema.getDereferencedDataSchema().isPrimitive())
-      {
-        throw new IllegalArgumentException("Compound key type must dereference to a primitive type.");
-      }
-      keyBindingClass = (Class<? extends T>)TyperefUtils.getJavaClassForSchema(schema);
-      if(keyBindingClass == null)
-      {
-        keyBindingClass = (Class<? extends T>)dereferencedType.getClass();
-      }
-      result = ValueConverter.coerceString(rawKey, DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchemaClass(dereferencedType));
-    }
-    else if (CompoundKey.class.isAssignableFrom(key.getType()))
-    {
-      DataMap keyDataMap;
-      if (_version.compareTo(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()) >= 0)
-      {
-        try
-        {
-          keyDataMap =  (DataMap) URIElementParser.parse(rawKey);
-        }
-        catch (PathSegmentSyntaxException e)
-        {
-          throw new IllegalStateException(rawKey + " is not a valid value for the resource key", e);
-        }
-      }
-      else
-      {
-        keyDataMap = parseKey(rawKey);
-      }
-
-      result = CompoundKey.fromValues(keyDataMap, _keyParts);
-    }
-    else if (ComplexResourceKey.class.isAssignableFrom(key.getType()))
-    {
-      try
-      {
-        ComplexResourceKey<RecordTemplate, RecordTemplate> complexResourceKey =
-            ComplexResourceKey.parseString(rawKey, _complexKeyType, _version);
-        result = QueryParamsDataMap.fixUpComplexKeySingletonArray(complexResourceKey);
-      }
-      catch (PathSegmentSyntaxException e)
-      {
-        throw new IllegalStateException(rawKey
-            + " is not a valid value for the resource key", e);
-      }
-    }
-    else
-    {
-      try
-      {
-        result = ValueConverter.coerceString(rawKey, key.getType());
-      }
-      catch (IllegalArgumentException e)
-      {
-        throw new IllegalStateException(key.getType().getName()
-            + " is not supported as a key type for BatchResponseKV", e);
-      }
-    }
-
-    return DataTemplateUtil.coerceOutput(result, keyBindingClass);
-  }
-
-  //TODO: replace with generic QueryParam <=> DataMap codec
-  private DataMap parseKey(String rawKey)
-  {
-    Map<String, List<String>> fields = UriComponent.decodeQuery(rawKey, true);
-    DataMap result = new DataMap((int)Math.ceil(fields.size()/0.75f));
-    for (Map.Entry<String, List<String>> entry : fields.entrySet())
-    {
-      if (entry.getValue().size()==1)
-      {
-        result.put(entry.getKey(), entry.getValue().get(0));
-      }
-      else
-      {
-        CheckedUtil.putWithoutChecking(result, entry.getKey(), new DataList(entry.getValue()));
-      }
-    }
-    return result;
-  }
-
 
   public Map<K, V> getResults()
   {

@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2012 LinkedIn Corp.
+   Copyright (c) 2014 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -18,30 +18,29 @@ package com.linkedin.restli.client;
 
 
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.restli.common.EmptyRecord;
+import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
-import com.linkedin.restli.internal.client.CreateResponseDecoder;
+import com.linkedin.restli.internal.client.RestResponseDecoder;
 
 import java.util.Map;
 
 
 /**
- * A request for writing a resource.
+ * CreateRequest that keeps track of the Key type of the Resource.
  *
- * @author Eran Leshem
+ * @author Moira Tagle
  */
-public class CreateRequest<T extends RecordTemplate>
-        extends Request<EmptyRecord>
+public class CreateIdRequest<K, T extends RecordTemplate> extends Request<IdResponse<K>>
 {
-  CreateRequest(T input,
-                Map<String, String> headers,
-                CreateResponseDecoder<?> decoder,
-                ResourceSpec resourceSpec,
-                Map<String, Object> queryParams,
-                String baseUriTemplate,
-                Map<String, Object> pathKeys,
-                RestliRequestOptions requestOptions)
+  CreateIdRequest(T input,
+                  Map<String, String> headers,
+                  RestResponseDecoder<IdResponse<K>> decoder,
+                  ResourceSpec resourceSpec,
+                  Map<String, Object> queryParams,
+                  String baseUriTemplate,
+                  Map<String, Object> pathKeys,
+                  RestliRequestOptions requestOptions)
   {
     super(ResourceMethod.CREATE,
           input,

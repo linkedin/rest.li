@@ -21,6 +21,7 @@
 package com.linkedin.restli.internal.client;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Map;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
@@ -49,9 +50,9 @@ public class EntityResponseDecoder<T extends RecordTemplate> extends RestRespons
   }
 
   @Override
-  protected T wrapResponse(DataMap dataMap, ProtocolVersion version)
+  protected T wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
                   throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException
   {
-    return _entityClass.getConstructor(DataMap.class).newInstance(dataMap);
+    return dataMap == null ? null : _entityClass.getConstructor(DataMap.class).newInstance(dataMap);
   }
 }

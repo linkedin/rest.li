@@ -14,19 +14,18 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.restli.client;
 
 
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.restli.common.ResourceSpec;
+import com.linkedin.restli.common.TypeSpec;
+import com.linkedin.restli.internal.client.CreateResponseDecoder;
 
 import java.net.URI;
 import java.util.Map;
+
 
 /**
  * @author Josh Walker
@@ -146,8 +145,13 @@ public class CreateRequestBuilder<K, V extends RecordTemplate>
   @Override
   public CreateRequest<V> build()
   {
+    @SuppressWarnings("unchecked")
+    CreateResponseDecoder<K> createResponseDecoder = new CreateResponseDecoder<K>((TypeSpec<K>)_resourceSpec.getKeyType(),
+                                                                                  _resourceSpec.getKeyParts(),
+                                                                                  _resourceSpec.getComplexKeyType());
     return new CreateRequest<V>(_input,
                                 _headers,
+                                createResponseDecoder,
                                 _resourceSpec,
                                 _queryParams,
                                 _baseURITemplate,

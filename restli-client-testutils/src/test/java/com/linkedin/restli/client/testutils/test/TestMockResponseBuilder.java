@@ -66,7 +66,9 @@ public class TestMockResponseBuilder
     Assert.assertEquals(response.getEntity(), greeting);
     Assert.assertEquals(response.getHeaders(), builtHeaders);
     Assert.assertEquals(response.getStatus(), 200);
-    Assert.assertEquals(response.getId(), "1");
+    @SuppressWarnings("deprecation")
+    String id = response.getId();
+    Assert.assertEquals(id, "1");
     Assert.assertEquals(response.getError().getErrorSource(), "foo");
   }
 }

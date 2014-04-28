@@ -42,6 +42,7 @@ import com.linkedin.restli.client.base.BatchDeleteRequestBuilderBase;
 import com.linkedin.restli.client.base.BatchGetRequestBuilderBase;
 import com.linkedin.restli.client.base.BatchPartialUpdateRequestBuilderBase;
 import com.linkedin.restli.client.base.BatchUpdateRequestBuilderBase;
+import com.linkedin.restli.client.base.CreateIdRequestBuilderBase;
 import com.linkedin.restli.client.base.CreateRequestBuilderBase;
 import com.linkedin.restli.client.base.DeleteRequestBuilderBase;
 import com.linkedin.restli.client.base.FindRequestBuilderBase;
@@ -1264,7 +1265,14 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     }
 
     Map<ResourceMethod, Class<?>> crudBuilderClasses = new HashMap<ResourceMethod, Class<?>>();
-    crudBuilderClasses.put(ResourceMethod.CREATE, CreateRequestBuilderBase.class);
+    if (_config.isRestli2Format())
+    {
+      crudBuilderClasses.put(ResourceMethod.CREATE, CreateIdRequestBuilderBase.class);
+    }
+    else
+    {
+      crudBuilderClasses.put(ResourceMethod.CREATE, CreateRequestBuilderBase.class);
+    }
     crudBuilderClasses.put(ResourceMethod.GET, GetRequestBuilderBase.class);
     crudBuilderClasses.put(ResourceMethod.UPDATE, UpdateRequestBuilderBase.class);
     crudBuilderClasses.put(ResourceMethod.PARTIAL_UPDATE, PartialUpdateRequestBuilderBase.class);

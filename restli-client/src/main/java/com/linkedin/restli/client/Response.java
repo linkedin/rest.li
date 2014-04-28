@@ -40,8 +40,21 @@ public interface Response<T>
   Map<String, String> getHeaders();
 
   /**
-   * @return the ID. This ID is stored in the header of the {@link Response}.
+   * @return a serialized form of the ID. This ID is stored in the header of the {@link Response}.
+   *
+   * @deprecated
+   * This should only used in responses from non-batch creates.
+   * This information can be found in a strongly typed format from {@link #getEntity()}
+   *
+   * If you are using old request builders (named ...Builders), cast the {@link com.linkedin.restli.common.EmptyRecord}
+   * you receive from {@link #getEntity()} to {@link com.linkedin.restli.client.response.CreateResponse}&gt;YourKeyType&lt;.
+   * You can then call {@link com.linkedin.restli.client.response.CreateResponse#getId()}
+   *
+   * If you are using new request builders (named ...RequestBuilders), {@link #getEntity()}
+   * will return a {@link com.linkedin.restli.common.IdResponse}.
+   * You can call {@link com.linkedin.restli.common.IdResponse#getId()} to get the key.
    */
+  @Deprecated
   String getId();
 
   URI getLocation();

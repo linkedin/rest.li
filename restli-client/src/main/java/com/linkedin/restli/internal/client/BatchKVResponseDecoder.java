@@ -101,7 +101,7 @@ public class BatchKVResponseDecoder<K, V extends RecordTemplate> extends RestRes
   }
 
   @Override
-  protected BatchKVResponse<K, V> wrapResponse(DataMap dataMap, ProtocolVersion version)
+  protected BatchKVResponse<K, V> wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
   {
     return new BatchKVResponse<K, V>(dataMap,
                                      _keyType,

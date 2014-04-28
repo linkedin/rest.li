@@ -23,6 +23,8 @@ package com.linkedin.restli.internal.client;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collections;
+import java.util.Map;
 
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
@@ -53,26 +55,29 @@ public abstract class RestResponseDecoder<T>
     ResponseImpl<T> response = new ResponseImpl<T>(restResponse.getStatus(), restResponse.getHeaders());
 
     ByteString entity = restResponse.builder().getEntity();
-    if (entity.length() == 0)
-    {
-      return response;
-    }
-
-    InputStream inputStream = entity.asInputStream();
 
     try
     {
       DataMap dataMap;
-      if ((RestConstants.HEADER_VALUE_APPLICATION_PSON)
-              .equalsIgnoreCase(restResponse.getHeader(RestConstants.HEADER_CONTENT_TYPE)))
+      if (entity.length() == 0)
       {
-        dataMap = PSON_DATA_CODEC.readMap(inputStream);
+        dataMap = null;
       }
       else
       {
-        dataMap = JACKSON_DATA_CODEC.readMap(inputStream);
+        InputStream inputStream = entity.asInputStream();
+        if ((RestConstants.HEADER_VALUE_APPLICATION_PSON)
+                .equalsIgnoreCase(restResponse.getHeader(RestConstants.HEADER_CONTENT_TYPE)))
+        {
+          dataMap = PSON_DATA_CODEC.readMap(inputStream);
+        }
+        else
+        {
+          dataMap = JACKSON_DATA_CODEC.readMap(inputStream);
+        }
+        inputStream.close();
       }
-      response.setEntity(wrapResponse(dataMap, ProtocolVersionUtil.extractProtocolVersion(response.getHeaders())));
+      response.setEntity(wrapResponse(dataMap, restResponse.getHeaders(), ProtocolVersionUtil.extractProtocolVersion(response.getHeaders())));
       return response;
     }
     catch (IOException e)
@@ -99,6 +104,16 @@ public abstract class RestResponseDecoder<T>
 
   public abstract Class<?> getEntityClass();
 
-  protected abstract T wrapResponse(DataMap dataMap, ProtocolVersion version)
+  /**
+   * @deprecated use {@link #wrapResponse(com.linkedin.data.DataMap, java.util.Map, com.linkedin.restli.common.ProtocolVersion)}
+   */
+  @Deprecated
+  public T wrapResponse(DataMap dataMap)
+                  throws InvocationTargetException, NoSuchMethodException, InstantiationException, IOException, IllegalAccessException
+  {
+    return wrapResponse(dataMap, Collections.<String, String>emptyMap(), AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion());
+  }
+
+  protected abstract T wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
                   throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, IOException;
 }

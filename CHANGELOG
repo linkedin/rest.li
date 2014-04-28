@@ -1,6 +1,16 @@
 1.15.19
 -------
+(RB=299112)
+Allow for clients to recieve strongly-typed keys returned from creates.
+old builder format:
+CreateResponse<K> entity = (CreateResponse<K>)response.getEntity();
+K key = entity.getId();
+new builder format:
+CreateIdResponse<K> entity = response.getEntity();
+K key = entity.getId();
 
+Additionally, added back in public wrapResponse function RestResponseDecoder that was removed in 1.15.14,
+but it is marked as deprecated.
 
 1.15.18
 -------

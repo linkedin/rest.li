@@ -246,7 +246,7 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
       return invoke(findMethod(RestLiToolsUtils.nameCamelCase(name + "Key"), value), value);
     }
 
-    boolean isRestLi2Builder()
+    public boolean isRestLi2Builder()
     {
       return _isRestLi2Builder;
     }

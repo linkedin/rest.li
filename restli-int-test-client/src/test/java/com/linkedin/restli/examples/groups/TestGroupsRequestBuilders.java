@@ -24,6 +24,7 @@ import com.linkedin.data.template.DynamicRecordTemplate;
 import com.linkedin.data.template.FieldDef;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.rest.RestException;
+import com.linkedin.restli.client.CreateIdRequest;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.RequestBuilder;
 import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
@@ -49,8 +50,10 @@ import com.linkedin.restli.examples.groups.client.GroupsRequestBuilders;
 import com.linkedin.restli.internal.client.ActionResponseDecoder;
 import com.linkedin.restli.internal.client.BatchResponseDecoder;
 import com.linkedin.restli.internal.client.CollectionResponseDecoder;
+import com.linkedin.restli.internal.client.CreateResponseDecoder;
 import com.linkedin.restli.internal.client.EmptyResponseDecoder;
 import com.linkedin.restli.internal.client.EntityResponseDecoder;
+import com.linkedin.restli.internal.client.IdResponseDecoder;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.TestConstants;
@@ -81,25 +84,28 @@ public class TestGroupsRequestBuilders
     throws IOException, RestException
   {
     Request<Group> request = builders.get().id(1).build();
-
     checkRequestBuilder(request, ResourceMethod.GET, EntityResponseDecoder.class, expectedUri, null, version);
-
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestGroupsBuilderDataProviderEntityWithFields")
   public void testEntityGetWithFields(RootBuilderWrapper<Integer, Group> builders, ProtocolVersion version, String expectedUri) throws IOException, RestException
   {
     Request<Group> request = builders.get().id(1).fields(Group.fields().badge()).build();
-
     checkRequestBuilder(request, ResourceMethod.GET, EntityResponseDecoder.class, expectedUri, null, version);
   }
 
-  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestGroupsBuilderDataProviderNonEntity")
-  public void testEntityCreate(RootBuilderWrapper<Integer, Group> builders, ProtocolVersion version, String expectedUri) throws IOException, RestException
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "oldRequestGroupsBuilderDataProviderNonEntity")
+  public void testEntityCreateOld(GroupsBuilders builders, ProtocolVersion version, String expectedUri) throws IOException, RestException
   {
-    Request<EmptyRecord>  request = builders.create().input(new Group()).build();
+    Request<EmptyRecord> request = builders.create().input(new Group()).build();
+    checkRequestBuilder(request, ResourceMethod.CREATE, CreateResponseDecoder.class, expectedUri, new Group(), version);
+  }
 
-    checkRequestBuilder(request, ResourceMethod.CREATE, EmptyResponseDecoder.class, expectedUri, new Group(), version);
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "newRequestGroupsBuilderDataProviderNonEntity")
+  public void testEntityCreateNew(GroupsRequestBuilders builders, ProtocolVersion version, String expectedUri) throws IOException, RestException
+  {
+    CreateIdRequest<Integer, Group> request = builders.create().input(new Group()).build();
+    checkRequestBuilder(request, ResourceMethod.CREATE, IdResponseDecoder.class, expectedUri, new Group(), version);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestGroupsBuilderDataProviderEntity")
@@ -107,7 +113,6 @@ public class TestGroupsRequestBuilders
     throws IOException, RestException
   {
     Request<EmptyRecord>  request = builders.partialUpdate().id(1).input(new PatchRequest<Group>()).build();
-
     checkRequestBuilder(request, ResourceMethod.PARTIAL_UPDATE, EmptyResponseDecoder.class, expectedUri, new Group(), version);
   }
 
@@ -116,7 +121,6 @@ public class TestGroupsRequestBuilders
     throws IOException, RestException
   {
     Request<EmptyRecord>  request = builders.delete().id(1).build();
-
     checkRequestBuilder(request, ResourceMethod.DELETE, EmptyResponseDecoder.class, expectedUri, null, version);
   }
 
@@ -141,9 +145,7 @@ public class TestGroupsRequestBuilders
     throws IOException, RestException
   {
     // Find by email domain with some debug, pagination and projection
-    Request<CollectionResponse<Group>> request =
-       builders.findBy("Manager").setQueryParam("managerMemberId", 1).build();
-
+    Request<CollectionResponse<Group>> request = builders.findBy("Manager").setQueryParam("managerMemberId", 1).build();
     checkRequestBuilder(request, ResourceMethod.FINDER, CollectionResponseDecoder.class, expectedUri, null, version);
   }
 
@@ -157,7 +159,6 @@ public class TestGroupsRequestBuilders
                        .setQueryParam("nameKeywords", "test")
                        .setQueryParam("groupId", 1).getBuilder();
     Request<CollectionResponse<Group>> request = findRequestBuilder.build();
-
     checkRequestBuilder(request, ResourceMethod.FINDER, CollectionResponseDecoder.class, expectedUri, null, version);
   }
 
@@ -166,7 +167,6 @@ public class TestGroupsRequestBuilders
     throws IOException, RestException, URISyntaxException
   {
     Request<CollectionResponse<Group>> request = builders.findBy("Search").setQueryParam("keywords", "linkedin").build();
-
     checkRequestBuilder(request, ResourceMethod.FINDER, CollectionResponseDecoder.class, expectedUri, null, version);
   }
 
@@ -178,7 +178,6 @@ public class TestGroupsRequestBuilders
       .setQueryParam("keywords", "linkedin")
       .setQueryParam("nameKeywords", "test")
       .build();
-
     checkRequestBuilder(request, ResourceMethod.FINDER, CollectionResponseDecoder.class, expectedUri, null, version);
   }
 
@@ -187,7 +186,6 @@ public class TestGroupsRequestBuilders
     throws IOException, RestException
   {
     Request<CollectionResponse<Group>> request = builders.findBy("Search").setQueryParam("groupId", 1).build();
-
     checkRequestBuilder(request, ResourceMethod.FINDER, CollectionResponseDecoder.class, expectedUri, null, version);
   }
 
@@ -213,9 +211,7 @@ public class TestGroupsRequestBuilders
   public void testBatchGet(RootBuilderWrapper<Integer, Group> builders, ProtocolVersion version, String expectedUri)
     throws IOException, RestException
   {
-    Request<BatchResponse<Group>> request =
-            builders.batchGet().ids(1, 3).fields(Group.fields().approvalModes()).build();
-
+    Request<BatchResponse<Group>> request = builders.batchGet().ids(1, 3).fields(Group.fields().approvalModes()).build();
     checkRequestBuilder(request, ResourceMethod.BATCH_GET, BatchResponseDecoder.class, expectedUri, null, version);
   }
 
@@ -230,7 +226,6 @@ public class TestGroupsRequestBuilders
     throws IOException, RestException
   {
     Request<GroupContact> request = builders.get().setPathKey("groupId", 1).id(1).build();
-
     checkRequestBuilder(request, ResourceMethod.GET, EntityResponseDecoder.class, expectedUri, null, version);
   }
 
@@ -239,7 +234,6 @@ public class TestGroupsRequestBuilders
     throws IOException, RestException
   {
     Request<GroupContact> request = builders.get().id(1).setPathKey("groupId", 1).build();
-
     checkRequestBuilder(request, ResourceMethod.GET, EntityResponseDecoder.class, expectedUri, null, version);
   }
 
@@ -261,7 +255,6 @@ public class TestGroupsRequestBuilders
     throws IOException, RestException
   {
     Request<BatchResponse<GroupContact>> request = builders.batchGet().setPathKey("groupId", 1).ids(1, 3).build();
-
     checkRequestBuilder(request, ResourceMethod.BATCH_GET, BatchResponseDecoder.class, expectedUri, null, version);
   }
 
@@ -271,8 +264,8 @@ public class TestGroupsRequestBuilders
     builders.batchGet().setPathKey("groupId", 1).ids(1, null, 3).build();
   }
 
-  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestContactsBuilderDataProviderNonEntity")
-  public void testSubResourceCreate(RootBuilderWrapper<Integer, GroupContact> builders, ProtocolVersion version, String expectedUri)
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "oldRequestContactsBuilderDataProviderNonEntity")
+  public void testSubResourceCreateOld(ContactsBuilders builders, ProtocolVersion version, String expectedUri)
     throws IOException, RestException
   {
     GroupContact contact = new GroupContact();
@@ -284,10 +277,25 @@ public class TestGroupsRequestBuilders
     contact.setIsPreapproved(true);
     contact.setIsInvited(true);
 
-    Request<EmptyRecord>  request = builders.create().setPathKey("groupId", 1).input(contact).build();
+    Request<EmptyRecord> request = builders.create().groupIdKey(1).input(contact).build();
+    checkRequestBuilder(request, ResourceMethod.CREATE, CreateResponseDecoder.class, expectedUri, contact, version);
+  }
 
-    checkRequestBuilder(request, ResourceMethod.CREATE, EmptyResponseDecoder.class, expectedUri, contact,
-                        version);
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "newRequestContactsBuilderDataProviderNonEntity")
+  public void testSubResourceCreateNew(ContactsRequestBuilders builders, ProtocolVersion version, String expectedUri)
+          throws IOException, RestException
+  {
+    GroupContact contact = new GroupContact();
+    contact.setContactID(3);
+    contact.setGroupID(1);
+    contact.setMemberID(3);
+    contact.setFirstName("Laura");
+    contact.setLastName("Smith");
+    contact.setIsPreapproved(true);
+    contact.setIsInvited(true);
+
+    CreateIdRequest<Integer, GroupContact> request = builders.create().groupIdKey(1).input(contact).build();
+    checkRequestBuilder(request, ResourceMethod.CREATE, IdResponseDecoder.class, expectedUri, contact, version);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestContactsBuilderDataProviderEntity")
@@ -299,7 +307,6 @@ public class TestGroupsRequestBuilders
     PatchRequest<GroupContact> patch = PatchGenerator.diffEmpty(contact);
 
     Request<EmptyRecord>  request = builders.partialUpdate().setPathKey("groupId", 1).id(1).input(patch).build();
-
     checkRequestBuilder(request, ResourceMethod.PARTIAL_UPDATE, EmptyResponseDecoder.class, expectedUri, patch, version);
   }
 
@@ -346,7 +353,6 @@ public class TestGroupsRequestBuilders
   {
     GroupMembershipsBuilders.Key key = new GroupMembershipsBuilders.Key().setGroupId(7).setMemberId(1);
     Request<GroupMembership> request = builders.get().id(key).build();
-
     checkRequestBuilder(request, ResourceMethod.GET, EntityResponseDecoder.class, expectedUri, null, version);
   }
 
@@ -359,7 +365,6 @@ public class TestGroupsRequestBuilders
     GroupMembershipsBuilders.Key key3 = new GroupMembershipsBuilders.Key().setGroupId(2).setMemberId(2);
 
     Request<BatchResponse<GroupMembership>> request = builders.batchGet().ids(key1, key2, key3).build();
-
     checkRequestBuilder(request, ResourceMethod.BATCH_GET, BatchResponseDecoder.class, expectedUri, null, version);
 
   }
@@ -370,11 +375,9 @@ public class TestGroupsRequestBuilders
     GroupMembership membership = new GroupMembership();
     membership.setLastName("Anderson");
     PatchRequest<GroupMembership> patch = PatchGenerator.diffEmpty(membership);
-
     GroupMembershipsBuilders.Key key = new GroupMembershipsBuilders.Key().setGroupId(7).setMemberId(1);
 
     Request<EmptyRecord>  request = builders.partialUpdate().id(key).input(patch).build();
-
     checkRequestBuilder(request, ResourceMethod.PARTIAL_UPDATE, EmptyResponseDecoder.class, expectedUri, patch, version);
   }
 
@@ -383,9 +386,7 @@ public class TestGroupsRequestBuilders
     throws IOException, RestException
   {
     GroupMembershipsBuilders.Key key = new GroupMembershipsBuilders.Key().setGroupId(7).setMemberId(1);
-
     Request<EmptyRecord>  request = builders.delete().id(key).build();
-
     checkRequestBuilder(request, ResourceMethod.DELETE, EmptyResponseDecoder.class, expectedUri, null, version);
   }
 
@@ -394,7 +395,6 @@ public class TestGroupsRequestBuilders
     throws IOException, RestException
   {
     Request<CollectionResponse<GroupMembership>> request = builders.findBy("Member").setPathKey("memberId", 1).build();
-
     checkRequestBuilder(request, ResourceMethod.FINDER, CollectionResponseDecoder.class, expectedUri, null, version);
   }
 
@@ -420,7 +420,6 @@ public class TestGroupsRequestBuilders
   {
     Request<CollectionResponse<GroupMembership>> request =
                     builders.findBy("Group").setPathKey("groupId", 1).setQueryParam("firstName", "Bruce").build();
-
     checkRequestBuilder(request, ResourceMethod.FINDER, CollectionResponseDecoder.class, expectedUri, null, version);
   }
 
@@ -443,12 +442,10 @@ public class TestGroupsRequestBuilders
                                         String expectedUri2)
   {
     Request<Group> groupRequest = groupsBuilders.get().id(42).build();
-
     checkRequestBuilder(groupRequest, ResourceMethod.GET, EntityResponseDecoder.class,
                         expectedUri1, null, version);
 
     Request<GroupContact> contactRequest = contactsBuilders.get().id(42).setPathKey("groupId", 1).build();
-
     checkRequestBuilder(contactRequest, ResourceMethod.GET, EntityResponseDecoder.class,
                         expectedUri2, null, version);
   }
@@ -461,7 +458,6 @@ public class TestGroupsRequestBuilders
 
     Map<FieldDef<?> , Object> parameters = new HashMap<FieldDef<?> , Object>(1);
     DynamicRecordTemplate requestInput = createDynamicRecordTemplate("spamContacts", parameters);
-
     checkRequestBuilder(request, ResourceMethod.ACTION, ActionResponseDecoder.class, expectedUri, requestInput, version);
   }
 
@@ -518,16 +514,25 @@ public class TestGroupsRequestBuilders
     };
   }
 
-  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestGroupsBuilderDataProviderNonEntity")
-  private static Object[][] requestGroupsBuilderDataProviderNonEntity()
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "oldRequestGroupsBuilderDataProviderNonEntity")
+  private static Object[][] oldRequestGroupsBuilderDataProviderNonEntity()
   {
     String uriV1 = "groups";
     String uriV2 = "groups";
     return new Object[][] {
-      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders()), AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1 },
-      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders()), AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2 },
-      { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders()), AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1 },
-      { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders()), AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2 }
+      { new GroupsBuilders(), AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1 },
+      { new GroupsBuilders(), AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2 },
+    };
+  }
+
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "newRequestGroupsBuilderDataProviderNonEntity")
+  private static Object[][] newRequestGroupsBuilderDataProviderNonEntity()
+  {
+    String uriV1 = "groups";
+    String uriV2 = "groups";
+    return new Object[][] {
+            { new GroupsRequestBuilders(), AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1 },
+            { new GroupsRequestBuilders(), AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2 }
     };
   }
 
@@ -661,16 +666,25 @@ public class TestGroupsRequestBuilders
     };
   }
 
-  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestContactsBuilderDataProviderNonEntity")
-  private static Object[][] requestContactsBuilderDataProviderNonEntity()
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "oldRequestContactsBuilderDataProviderNonEntity")
+  private static Object[][] oldRequestContactsBuilderDataProviderNonEntity()
   {
     String uriV1 = "groups/1/contacts";
     String uriV2 = "groups/1/contacts";
     return new Object[][] {
-      { new RootBuilderWrapper<Integer, GroupContact>(new ContactsBuilders()), AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1 },
-      { new RootBuilderWrapper<Integer, GroupContact>(new ContactsBuilders()), AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2 },
-      { new RootBuilderWrapper<Integer, GroupContact>(new ContactsRequestBuilders()), AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1 },
-      { new RootBuilderWrapper<Integer, GroupContact>(new ContactsRequestBuilders()), AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2 }
+            { new ContactsBuilders(), AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1 },
+            { new ContactsBuilders(), AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2 },
+    };
+  }
+
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "newRequestContactsBuilderDataProviderNonEntity")
+  private static Object[][] newRequestContactsBuilderDataProviderNonEntity()
+  {
+    String uriV1 = "groups/1/contacts";
+    String uriV2 = "groups/1/contacts";
+    return new Object[][] {
+      { new ContactsRequestBuilders(), AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1 },
+      { new ContactsRequestBuilders(), AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2 }
     };
   }
 

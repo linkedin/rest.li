@@ -111,8 +111,12 @@ public class ResponseImpl<T> implements Response<T>
 
   /**
    * Specific getter for the 'X-LinkedIn-Id' header
+   *
+   * @deprecated
+   * @see {@link com.linkedin.restli.client.Response#getId()}
    */
   @Override
+  @Deprecated
   public String getId()
   {
     return HeaderUtil.getIdHeaderValue(_headers);

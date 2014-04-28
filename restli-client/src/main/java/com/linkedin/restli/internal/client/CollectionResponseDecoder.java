@@ -26,6 +26,9 @@ import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
 
+import java.util.Map;
+
+
 /**
  * Converts a raw RestResponse into a type-bound Collection response.
  * @author Steven Ihde
@@ -48,7 +51,7 @@ public class CollectionResponseDecoder<T extends RecordTemplate> extends RestRes
   }
 
   @Override
-  protected CollectionResponse<T> wrapResponse(DataMap dataMap, ProtocolVersion version)
+  protected CollectionResponse<T> wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
   {
     return new CollectionResponse<T>(dataMap, _elementClass);
   }

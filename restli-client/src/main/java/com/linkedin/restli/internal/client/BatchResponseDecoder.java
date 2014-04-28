@@ -26,6 +26,9 @@ import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
 
+import java.util.Map;
+
+
 /**
  * Converts a raw RestResponse into a type-bound batch response.
  * @author Steven Ihde
@@ -48,7 +51,7 @@ public class BatchResponseDecoder<T extends RecordTemplate> extends RestResponse
   }
 
   @Override
-  protected BatchResponse<T> wrapResponse(DataMap dataMap, ProtocolVersion version)
+  protected BatchResponse<T> wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
   {
     return new BatchResponse<T>(dataMap, _elementClass);
   }

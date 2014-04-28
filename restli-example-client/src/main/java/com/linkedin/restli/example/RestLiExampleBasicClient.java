@@ -30,6 +30,7 @@ import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
 import com.linkedin.restli.client.RestClient;
+import com.linkedin.restli.client.response.CreateResponse;
 import com.linkedin.restli.client.util.PatchGenerator;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.EmptyRecord;
@@ -167,9 +168,11 @@ public class RestLiExampleBasicClient
     final ResponseFuture<EmptyRecord> createFuture1 = _restClient.sendRequest(createReq1);
     // Future.getResource() blocks until server responds
     final Response<EmptyRecord> createResp1 = createFuture1.getResponse();
+    EmptyRecord entity1 = createResp1.getEntity();
 
-    // HTTP header Location also shows the relative URI of the created resource
-    final long newPhotoId = Long.parseLong(createResp1.getId());
+    @SuppressWarnings("unchecked")
+    final CreateResponse<Long> entity = (CreateResponse<Long>)createResp1.getEntity();
+    final long newPhotoId = entity.getId();
     respWriter.println("New photo ID: " + newPhotoId);
 
     return newPhotoId;

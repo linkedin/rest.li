@@ -39,7 +39,9 @@ public class TestMockSuccessfulResponseFutureBuilder
     ResponseFuture<Greeting> future = builder.setEntity(greeting).setId("1").setStatus(200).build();
 
     Assert.assertEquals(future.getResponseEntity(), greeting);
-    Assert.assertEquals(future.getResponse().getId(), "1");
+    @SuppressWarnings("deprecation")
+    String id = future.getResponse().getId();
+    Assert.assertEquals(id, "1");
     Assert.assertEquals(future.getResponse().getStatus(), 200);
   }
 

@@ -22,6 +22,8 @@ import com.linkedin.data.template.FieldDef;
 import com.linkedin.restli.common.ActionResponse;
 import com.linkedin.restli.common.ProtocolVersion;
 
+import java.util.Map;
+
 
 /**
  * Converts a raw RestResponse to a type-bound action response.
@@ -57,7 +59,7 @@ public class ActionResponseDecoder<T> extends RestResponseDecoder<T>
   }
 
   @Override
-  protected T wrapResponse(DataMap dataMap, ProtocolVersion version)
+  protected T wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
   {
     return new ActionResponse<T>(dataMap, _returnFieldDef, _recordDataSchema).getValue();
   }

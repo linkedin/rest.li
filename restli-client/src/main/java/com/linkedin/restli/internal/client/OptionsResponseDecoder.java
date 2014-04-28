@@ -19,14 +19,12 @@ package com.linkedin.restli.internal.client;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.schema.DataSchema;
-import com.linkedin.data.schema.DataSchemaUtil;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.restli.common.OptionsResponse;
 import com.linkedin.restli.common.ProtocolVersion;
-import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.restspec.ResourceSchema;
+
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,7 +42,7 @@ public class OptionsResponseDecoder extends RestResponseDecoder<OptionsResponse>
   private static final JacksonDataCodec CODEC = new JacksonDataCodec();
 
   @Override
-  protected OptionsResponse wrapResponse(DataMap dataMap, ProtocolVersion version)
+  protected OptionsResponse wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
     throws IOException
   {
     DataMap resources = dataMap.getDataMap(RESOURCES);

@@ -24,6 +24,7 @@ import com.linkedin.restli.client.BatchGetKVRequest;
 import com.linkedin.restli.client.BatchGetRequest;
 import com.linkedin.restli.client.BatchPartialUpdateRequest;
 import com.linkedin.restli.client.BatchUpdateRequest;
+import com.linkedin.restli.client.CreateIdRequest;
 import com.linkedin.restli.client.CreateRequest;
 import com.linkedin.restli.client.DeleteRequest;
 import com.linkedin.restli.client.FindRequest;
@@ -84,7 +85,18 @@ public class RestliUriBuilderUtil
       case FINDER:
         return new FindRequestUriBuilder((FindRequest)request, uriPrefix, version);
       case CREATE:
-        return new CreateRequestUriBuilder((CreateRequest)request, uriPrefix, version);
+        if (request instanceof CreateRequest)
+        {
+          return new CreateRequestUriBuilder((CreateRequest)request, uriPrefix, version);
+        }
+        else if (request instanceof CreateIdRequest)
+        {
+          return new CreateIdRequestUriBuilder((CreateIdRequest)request, uriPrefix, version);
+        }
+        else
+        {
+          throw new IllegalArgumentException("create request of unknown type: " + request.getClass());
+        }
       case BATCH_CREATE:
         return new BatchCreateRequestUriBuilder((BatchCreateRequest)request, uriPrefix, version);
       case PARTIAL_UPDATE:

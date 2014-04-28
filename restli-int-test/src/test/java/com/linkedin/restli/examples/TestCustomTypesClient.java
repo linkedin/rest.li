@@ -23,11 +23,15 @@ import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.client.BatchGetKVRequest;
+import com.linkedin.restli.client.CreateRequest;
+import com.linkedin.restli.client.CreateIdRequest;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.RequestBuilder;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.response.BatchKVResponse;
+import com.linkedin.restli.client.response.CreateResponse;
+import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.CompoundKey;
@@ -216,14 +220,27 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
     Assert.assertEquals(statuses.get(new CustomLong(2L)).getStatus().intValue(), HttpStatus.S_204_NO_CONTENT.getCode());
   }
 
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "request2BuilderDataProvider")
-  public void testCollectionCreate(RootBuilderWrapper<CustomLong, Greeting> builders) throws RemoteInvocationException
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "oldRequest2BuilderDataProvider")
+  public void testCollectionCreateOld(CustomTypes2Builders builders) throws RemoteInvocationException
   {
-    RequestBuilder<? extends Request<EmptyRecord>> request = builders.create().input(new Greeting().setId(10)).getBuilder();
-    Response<EmptyRecord> entity = REST_CLIENT.sendRequest(request).getResponse();
+    CreateRequest<Greeting> request = builders.create().input(new Greeting().setId(10)).build();
+    Response<EmptyRecord> response = REST_CLIENT.sendRequest(request).getResponse();
 
-    Assert.assertEquals(entity.getStatus(), HttpStatus.S_201_CREATED.getCode());
-    Assert.assertEquals(entity.getId(), "10");
+    Assert.assertEquals(response.getStatus(), HttpStatus.S_201_CREATED.getCode());
+
+    @SuppressWarnings("unchecked")
+    CreateResponse<CustomLong> createResponse = (CreateResponse<CustomLong>)response.getEntity();
+    Assert.assertEquals(createResponse.getId(), new CustomLong(10L));
+  }
+
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "newRequest2BuilderDataProvider")
+  public void testCollectionCreateNew(CustomTypes2RequestBuilders builders) throws RemoteInvocationException
+  {
+    CreateIdRequest<CustomLong, Greeting> request = builders.create().input(new Greeting().setId(10)).build();
+    Response<IdResponse<CustomLong>> response = REST_CLIENT.sendRequest(request).getResponse();
+
+    Assert.assertEquals(response.getStatus(), HttpStatus.S_201_CREATED.getCode());
+    Assert.assertEquals(response.getEntity().getId(), new CustomLong(10L));
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "request2BuilderDataProvider")
@@ -327,6 +344,24 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
       { new RootBuilderWrapper<CustomLong, Greeting>(new CustomTypes2Builders(com.linkedin.restli.examples.TestConstants.FORCE_USE_NEXT_OPTIONS)) },
       { new RootBuilderWrapper<CustomLong, Greeting>(new CustomTypes2RequestBuilders()) },
       { new RootBuilderWrapper<CustomLong, Greeting>(new CustomTypes2RequestBuilders(com.linkedin.restli.examples.TestConstants.FORCE_USE_NEXT_OPTIONS)) }
+    };
+  }
+
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "oldRequest2BuilderDataProvider")
+  private static Object[][] oldRequest2BuilderDataProvider()
+  {
+    return new Object[][] {
+            { new CustomTypes2Builders() },
+            { new CustomTypes2Builders(com.linkedin.restli.examples.TestConstants.FORCE_USE_NEXT_OPTIONS) },
+    };
+  }
+
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "newRequest2BuilderDataProvider")
+  private static Object[][] newRequest2BuilderDataProvider()
+  {
+    return new Object[][] {
+            { new CustomTypes2RequestBuilders() },
+            { new CustomTypes2RequestBuilders(com.linkedin.restli.examples.TestConstants.FORCE_USE_NEXT_OPTIONS) }
     };
   }
 

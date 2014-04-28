@@ -14,16 +14,16 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.restli.internal.client;
+
 
 import com.linkedin.data.DataMap;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
+
+import java.util.Map;
+
 
 /**
  * Converts a raw RestResponse into a status-only response by ensuring the RestResponse
@@ -41,8 +41,8 @@ public class EmptyResponseDecoder extends RestResponseDecoder<EmptyRecord>
   }
 
   @Override
-  protected EmptyRecord wrapResponse(DataMap dataMap, ProtocolVersion version)
+  protected EmptyRecord wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
   {
-    throw new UnsupportedOperationException("Empty response should have no entity");
+    return null;
   }
 }

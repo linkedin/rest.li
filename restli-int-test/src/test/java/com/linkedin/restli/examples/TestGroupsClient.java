@@ -29,6 +29,8 @@ import com.linkedin.restli.client.ResponseFuture;
 import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.client.response.BatchKVResponse;
+import com.linkedin.restli.client.response.CreateResponse;
+import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.client.util.PatchGenerator;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionResponse;
@@ -57,7 +59,6 @@ import com.linkedin.restli.examples.groups.client.GroupMembershipsRequestBuilder
 import com.linkedin.restli.examples.groups.client.GroupsBuilders;
 import com.linkedin.restli.examples.groups.client.GroupsRequestBuilders;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
-import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.util.Arrays;
@@ -117,9 +118,9 @@ public class TestGroupsClient extends RestLiIntegrationTest
     super.shutdown();
   }
 
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestGroupsAndMembershipsBuilderDataProvider")
-  public void testCollectionCreateGetUpdateDelete(RootBuilderWrapper<Integer, Group> groupBuilders,
-                                                  RootBuilderWrapper<CompoundKey, GroupMembership> membershipBuilders)
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "oldRequestGroupsAndMembershipsBuilderDataProvider")
+  public void testCollectionCreateGetUpdateDeleteOld(GroupsBuilders groupBuilders,
+                                                     GroupMembershipsBuilders membershipBuilders)
     throws RemoteInvocationException
   {
     // find with optional params
@@ -136,12 +137,17 @@ public class TestGroupsClient extends RestLiIntegrationTest
                                                                .input(group)
                                                                .build()).getResponse();
     Assert.assertEquals(response.getStatus(), 201);
-    Assert.assertNotNull(response.getId());
+    @SuppressWarnings("unchecked")
+    CreateResponse<Integer> createResponse = (CreateResponse<Integer>) response.getEntity();
+    Assert.assertNotNull(createResponse.getId());
+    @SuppressWarnings("deprecation")
+    String stringId = response.getId();
+    Assert.assertEquals(createResponse.getId().intValue(), Integer.parseInt(stringId));
 
     // Get newly created group and verify name
-    Integer createdId = Integer.valueOf(response.getId());
+    Integer createdId = createResponse.getId();
     Assert.assertEquals(REST_CLIENT.sendRequest(groupBuilders.get()
-                                                  .id(createdId)
+                                                  .id(createResponse.getId())
                                                   .build())
                           .getResponse()
                           .getEntity()
@@ -187,6 +193,83 @@ public class TestGroupsClient extends RestLiIntegrationTest
         REST_CLIENT.sendRequest(membershipBuilders.delete()
                                   .id(buildCompoundKey(memberID, createdId))
                                   .build());
+    Assert.assertEquals(204, responseFuture.getResponse().getStatus());
+  }
+
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "newRequestGroupsAndMembershipsBuilderDataProvider")
+  public void testCollectionCreateGetUpdateDeleteNew(GroupsRequestBuilders groupBuilders,
+                                                     GroupMembershipsRequestBuilders membershipBuilders)
+    throws RemoteInvocationException
+  {
+    // find with optional params
+    Group group = new Group();
+    String name = "test";
+    int memberID = 1;
+    group.setName(name);
+    group.setOwner(buildGroupMembership(memberID, "a@a.a", "f", "l"));
+    GroupMembershipParam param = new GroupMembershipParam();
+    param.setIntParameter(1);
+    param.setStringParameter("String");
+    // Create
+    Response<IdResponse<Integer>> response = REST_CLIENT.sendRequest(groupBuilders.create()
+                                                                 .input(group)
+                                                                 .build()).getResponse();
+    Assert.assertEquals(response.getStatus(), 201);
+    Integer createdId = response.getEntity().getId();
+    Assert.assertNotNull(createdId);
+    @SuppressWarnings("deprecation")
+    String stringId = response.getId();
+    Assert.assertEquals(createdId.intValue(), Integer.parseInt(stringId));
+
+    // Get newly created group and verify name
+
+    Assert.assertEquals(REST_CLIENT.sendRequest(groupBuilders.get()
+                                                  .id(createdId)
+                                                  .build())
+                          .getResponse()
+                          .getEntity()
+                          .getName(),
+                        name);
+
+    // Partial update - change name
+    String newName = "new name";
+    group.setName(newName);
+    PatchRequest<Group> patch = PatchGenerator.diffEmpty(group);
+    ResponseFuture<EmptyRecord> responseFuture = REST_CLIENT.sendRequest(groupBuilders.partialUpdate()
+                                                                           .id(createdId)
+                                                                           .input(patch)
+                                                                           .build());
+    Assert.assertEquals(204, responseFuture.getResponse().getStatus());
+
+    // Get updated group and verify name
+    Assert.assertEquals(REST_CLIENT.sendRequest(groupBuilders.get()
+                                                  .id(createdId)
+                                                  .build())
+                          .getResponse()
+                          .getEntity()
+                          .getName(),
+                        newName);
+
+    // Delete
+    responseFuture = REST_CLIENT.sendRequest(groupBuilders.delete().id(createdId).build());
+    Assert.assertEquals(204, responseFuture.getResponse().getStatus());
+
+    // Verify deleted
+    try
+    {
+      REST_CLIENT.sendRequest(groupBuilders.get().id(createdId).build()).getResponse();
+      Assert.fail("Expected RestLiResponseException");
+    }
+    catch (RestLiResponseException e)
+    {
+      Assert.assertEquals(e.getStatus(), 404);
+    }
+
+    // Cleanup - delete the owner's membership that was created along with the group
+    responseFuture =
+      REST_CLIENT.sendRequest(membershipBuilders.delete()
+                                .id(buildCompoundKey(memberID, createdId))
+                                .build());
     Assert.assertEquals(204, responseFuture.getResponse().getStatus());
   }
 
@@ -477,7 +560,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
     ComplexKeyGroupMembership groupMembership2_ =
         results.get(BatchResponse.keyToString(complexKey2, version));
     ComplexKeyGroupMembership groupMembership3_ =
-        results.get(BatchResponse.keyToString(complexKey3,version));
+        results.get(BatchResponse.keyToString(complexKey3, version));
     Assert.assertNotNull(groupMembership1_);
     Assert.assertEquals(groupMembership1_.getContactEmail(), "alfred@test.linkedin.com");
     Assert.assertNotNull(groupMembership2_);
@@ -615,14 +698,21 @@ public class TestGroupsClient extends RestLiIntegrationTest
     };
   }
 
-  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestGroupsAndMembershipsBuilderDataProvider")
-  private static Object[][] requestGroupsAndMembershipsBuilderDataProvider()
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "oldRequestGroupsAndMembershipsBuilderDataProvider")
+  private static Object[][] oldRequestGroupsAndMembershipsBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders()), new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsBuilders()) },
-      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
-      { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders()), new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsBuilders()) },
-      { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
+      { new GroupsBuilders(), new GroupMembershipsBuilders() },
+      { new GroupsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS), new GroupMembershipsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS) },
+    };
+  }
+
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "newRequestGroupsAndMembershipsBuilderDataProvider")
+  private static Object[][] newRequestGroupsAndMembershipsBuilderDataProvider()
+  {
+    return new Object[][] {
+      { new GroupsRequestBuilders(), new GroupMembershipsRequestBuilders() },
+      { new GroupsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS), new GroupMembershipsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS) }
     };
   }
 

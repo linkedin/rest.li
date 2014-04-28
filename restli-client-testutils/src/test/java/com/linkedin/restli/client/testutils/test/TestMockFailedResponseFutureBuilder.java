@@ -207,7 +207,9 @@ public class TestMockFailedResponseFutureBuilder
     {
       Response<Greeting> response = future.getResponse();
       Assert.assertNull(response.getEntity());
-      Assert.assertEquals(response.getId(), "1");
+      @SuppressWarnings("deprecation")
+      String id = response.getId();
+      Assert.assertEquals(id, "1");
       Assert.assertEquals(response.getStatus(), 409);
       Assert.assertEquals(response.getError().getStatus(), 409);
     }

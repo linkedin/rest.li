@@ -77,7 +77,8 @@ public class MockSuccessfulResponseFutureBuilder<T extends RecordTemplate> exten
 
   /**
    * Set the ID. This will be returned by
-   * {@link com.linkedin.restli.client.Response#getId()}
+   * {@link com.linkedin.restli.client.response.CreateResponse#getId()}
+   * and also by {@link com.linkedin.restli.common.IdResponse#getId()}
    *
    * This ID is stored in the header of the {@link Response}.
    *
