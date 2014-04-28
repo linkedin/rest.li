@@ -1,5 +1,7 @@
 1.15.16
 -------
+(RB=295065)
+PegasusPlugin: Generate list of input pdsc files for generateDataTemplate task at execution time.
 
 1.15.15
 -------

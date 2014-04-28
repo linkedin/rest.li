@@ -15,8 +15,6 @@
 */
 
 package com.linkedin.pegasus.gradle
-
-
 import org.gradle.BuildResult
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
@@ -34,13 +32,12 @@ import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.SourceSet
+import org.gradle.api.tasks.StopExecutionException
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.javadoc.Javadoc
 import org.gradle.plugins.ide.eclipse.EclipsePlugin
 import org.gradle.plugins.ide.idea.IdeaPlugin
-
-
 /**
  * Pegasus code generation plugin.
  * The supported project layout for this plugin is as follows:
@@ -1118,26 +1115,18 @@ class PegasusPlugin implements Plugin<Project>
   protected void configureAvroSchemaGeneration(Project project, SourceSet sourceSet)
   {
     final File dataSchemaDir = project.file(getDataSchemaPath(project, sourceSet))
-    final FileTree dataSchemaFiles = getSuffixedFiles(project, dataSchemaDir, DATA_TEMPLATE_FILE_SUFFIX)
-
-    if (dataSchemaFiles.empty)
-    {
-      project.logger.info("Skipping configuration of avro schema generation in $project because there are no data schema files.")
-      return
-    }
-
     final File avroDir = project.file(getGeneratedDirPath(project, sourceSet, AVRO_SCHEMA_GEN_TYPE) + File.separatorChar + 'avro')
 
     // generate avro schema files from data schema
     final Task generateAvroSchemaTask = project.task(sourceSet.getTaskName('generate', 'avroSchema'), type: GenerateAvroSchema) {
       inputDir = dataSchemaDir
       destinationDir = avroDir
-      inputDataSchemaFiles = dataSchemaFiles
       resolverPath = getDataModelConfig(project, sourceSet)
 
       onlyIf {
-        project.pegasus[sourceSet.name].hasGenerationMode(PegasusOptions.GenerationMode.AVRO) ||
-        !project.configurations.avroSchemaGenerator.empty
+        inputDir.exists() &&
+        (project.pegasus[sourceSet.name].hasGenerationMode(PegasusOptions.GenerationMode.AVRO) ||
+        !project.configurations.avroSchemaGenerator.empty)
       }
 
       doFirst {
@@ -1177,22 +1166,16 @@ class PegasusPlugin implements Plugin<Project>
   protected void configureDataTemplateGeneration(Project project, SourceSet sourceSet)
   {
     final File dataSchemaDir = project.file(getDataSchemaPath(project, sourceSet))
-    final FileTree dataSchemaFiles = getSuffixedFiles(project, dataSchemaDir, DATA_TEMPLATE_FILE_SUFFIX)
-    if (dataSchemaFiles.empty)
-    {
-      return
-    }
-
     final File generatedDataTemplateDir = project.file(getGeneratedDirPath(project, sourceSet, DATA_TEMPLATE_GEN_TYPE) + File.separatorChar + 'java')
 
     // generate data template source files from data schema
     final Task generateDataTemplatesTask = project.task(sourceSet.getTaskName('generate', 'dataTemplate'), type: GenerateDataTemplate) {
       inputDir = dataSchemaDir
       destinationDir = generatedDataTemplateDir
-      inputDataSchemaFiles = dataSchemaFiles
       resolverPath = getDataModelConfig(project, sourceSet)
 
       onlyIf {
+        inputDir.exists() &&
         project.pegasus[sourceSet.name].hasGenerationMode(PegasusOptions.GenerationMode.PEGASUS)
       }
 
@@ -1645,10 +1628,6 @@ class PegasusPlugin implements Plugin<Project>
      */
     @InputDirectory File inputDir
     /**
-     * The input arguments to PegasusDataTemplateGenerator class (excludes the destination directory).
-     */
-    @InputFiles FileTree inputDataSchemaFiles
-    /**
      * The resolver path.
      */
     @InputFiles FileCollection resolverPath
@@ -1656,13 +1635,20 @@ class PegasusPlugin implements Plugin<Project>
     @TaskAction
     protected void generate()
     {
+      final FileTree inputDataSchemaFiles = getSuffixedFiles(project, inputDir, DATA_TEMPLATE_FILE_SUFFIX)
+      final String[] inputDataSchemaFilenames = inputDataSchemaFiles.collect { it.path } as String[]
+      if (inputDataSchemaFilenames.length == 0)
+      {
+        throw new StopExecutionException("There are no data schema input files. Skip generating data template.")
+      }
+
       project.logger.info('Generating data templates ...')
+      project.logger.lifecycle("There are ${inputDataSchemaFilenames.length} data schema input files. Using input root folder: ${inputDir}")
       destinationDir.mkdirs()
-      project.logger.lifecycle("There are ${inputDataSchemaFiles.files.size()} data schema input files. Using input root folder: ${inputDir}")
 
       final String resolverPathStr = (resolverPath + project.files(inputDir)).collect { it.path }.join(File.pathSeparator)
       final Class<?> dataTemplateGenerator = project.property(GENERATOR_CLASSLOADER_NAME).loadClass('com.linkedin.pegasus.generator.PegasusDataTemplateGenerator')
-      dataTemplateGenerator.run(resolverPathStr, null, null, destinationDir.path, inputDataSchemaFiles.collect { it.path } as String[])
+      dataTemplateGenerator.run(resolverPathStr, null, null, destinationDir.path, inputDataSchemaFilenames)
     }
   }
 
@@ -1688,10 +1674,6 @@ class PegasusPlugin implements Plugin<Project>
      */
     @InputDirectory File inputDir
     /**
-     * The input arguments to AvroSchemaGenerator class (excludes the destination directory).
-     */
-    @InputFiles FileTree inputDataSchemaFiles
-    /**
      * The resolver path.
      */
     @InputFiles FileCollection resolverPath
@@ -1699,9 +1681,16 @@ class PegasusPlugin implements Plugin<Project>
     @TaskAction
     protected void generate()
     {
+      final FileTree inputDataSchemaFiles = getSuffixedFiles(project, inputDir, DATA_TEMPLATE_FILE_SUFFIX)
+      final String[] inputDataSchemaFilenames = inputDataSchemaFiles.collect { it.path } as String[]
+      if (inputDataSchemaFilenames.length == 0)
+      {
+        throw new StopExecutionException("There are no data schema input files. Skip generating avro schema.")
+      }
+
       project.logger.info('Generating Avro schemas ...')
+      project.logger.lifecycle("There are ${inputDataSchemaFilenames.length} data schema input files. Using input root folder: ${inputDir}")
       destinationDir.mkdirs()
-      project.logger.lifecycle("There are ${inputDataSchemaFiles.files.size()} data schema input files. Using input root folder: ${inputDir}")
 
       final String resolverPathStr = (resolverPath + project.files(inputDir)).collect { it.path }.join(File.pathSeparator)
       final Class<?> avroSchemaGenerator = project.property(GENERATOR_CLASSLOADER_NAME).loadClass('com.linkedin.data.avro.generator.AvroSchemaGenerator')
@@ -1716,7 +1705,7 @@ class PegasusPlugin implements Plugin<Project>
         avroTranslateOptionalDefault = null
       }
 
-      avroSchemaGenerator.run(resolverPathStr, avroTranslateOptionalDefault, destinationDir.path, inputDataSchemaFiles.collect { it.path } as String[])
+      avroSchemaGenerator.run(resolverPathStr, avroTranslateOptionalDefault, destinationDir.path, inputDataSchemaFilenames)
     }
   }
 
