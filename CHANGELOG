@@ -1,5 +1,10 @@
 1.15.14
 -------
+(RB=247966)
+Changes to allow 2.0 URI format.
+2.0 URI format will be publicly documented shortly.
+Related refactoring of key encoding.
+Added many tests to cover both 1.0 and 2.0 URI format.
 
 1.15.13
 -------

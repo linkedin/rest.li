@@ -231,7 +231,7 @@ public class URIParamUtils
     if (key instanceof ComplexResourceKey)
     {
       Object convertedKey;
-      ComplexResourceKey complexResourceKey = (ComplexResourceKey) key;
+      ComplexResourceKey<?, ?> complexResourceKey = (ComplexResourceKey<?, ?>) key;
       if (full)
       {
         convertedKey = complexResourceKey.toDataMap();
