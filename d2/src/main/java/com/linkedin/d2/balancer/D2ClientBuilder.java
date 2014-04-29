@@ -177,6 +177,12 @@ public class D2ClientBuilder
     return this;
   }
 
+  public D2ClientBuilder setD2ServicePath(String d2ServicePath)
+  {
+    _config.d2ServicePath = d2ServicePath;
+    return this;
+  }
+
   /**
    * Specify {@link TransportClientFactory} to generate the client for specific protocol.
    * Caller is responsible to maintain the life cycle of the factories.

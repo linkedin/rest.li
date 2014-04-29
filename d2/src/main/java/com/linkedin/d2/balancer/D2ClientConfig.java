@@ -173,6 +173,44 @@ public class D2ClientConfig
                         boolean isSymlinkAware,
                         Map<String, Map<String, Object>> clientServicesConfig)
   {
+    this(zkHosts,
+         zkSessionTimeoutInMs,
+         zkStartupTimeoutInMs,
+         lbWaitTimeout,
+         lbWaitUnit,
+         flagFile,
+         basePath,
+         fsBasePath,
+         componentFactory,
+         clientFactories,
+         lbWithFacilitiesFactory,
+         sslContext,
+         sslParameters,
+         isSSLEnabled,
+         shutdownAsynchronously,
+         isSymlinkAware,
+         clientServicesConfig, null);
+  }
+
+  public D2ClientConfig(String zkHosts,
+                        long zkSessionTimeoutInMs,
+                        long zkStartupTimeoutInMs,
+                        long lbWaitTimeout,
+                        TimeUnit lbWaitUnit,
+                        String flagFile,
+                        String basePath,
+                        String fsBasePath,
+                        ComponentFactory componentFactory,
+                        Map<String, TransportClientFactory> clientFactories,
+                        LoadBalancerWithFacilitiesFactory lbWithFacilitiesFactory,
+                        SSLContext sslContext,
+                        SSLParameters sslParameters,
+                        boolean isSSLEnabled,
+                        boolean shutdownAsynchronously,
+                        boolean isSymlinkAware,
+                        Map<String, Map<String, Object>> clientServicesConfig,
+                        String d2ServicePath)
+  {
     this.zkHosts = zkHosts;
     this.zkSessionTimeoutInMs = zkSessionTimeoutInMs;
     this.zkStartupTimeoutInMs = zkStartupTimeoutInMs;
@@ -190,6 +228,7 @@ public class D2ClientConfig
     this.shutdownAsynchronously = shutdownAsynchronously;
     this.isSymlinkAware = isSymlinkAware;
     this.clientServicesConfig = clientServicesConfig;
+    this.d2ServicePath = d2ServicePath;
   }
 
 }
