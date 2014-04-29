@@ -1,3 +1,6 @@
+1.15.14
+-------
+
 1.15.13
 -------
 (RB=292644)
@@ -5,6 +8,9 @@ Support Avro translation OptionalDefaultMode in PegasusPlugin.
 
 (RB=294234)
 Fix avro schema translator to not translate default values (that will not be used) when avro override is present.
+
+(RB=295035)
+Added a PegasusSchema pdsc.
 
 1.15.12
 -------
