@@ -62,4 +62,16 @@ public class TestProtocolVersion
     Assert.assertEquals(new ProtocolVersion("0.9.1").compareTo(new ProtocolVersion("0.9.2")), -1);
     Assert.assertEquals(new ProtocolVersion("4.5.6").compareTo(new ProtocolVersion("4.5.6")), 0);
   }
+
+  @Test
+  public void testHashCodeAndEquals()
+  {
+    ProtocolVersion p1 = new ProtocolVersion("1.0.0");
+    ProtocolVersion p2 = new ProtocolVersion("2.0.0");
+    ProtocolVersion p3 = new ProtocolVersion("1.0.0");
+
+    Assert.assertEquals(p1, p3);
+    Assert.assertEquals(p1.hashCode(), p3.hashCode());
+    Assert.assertTrue(!p1.equals(p2));
+  }
 }

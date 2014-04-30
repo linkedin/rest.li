@@ -17,6 +17,7 @@
 package com.linkedin.restli.server.testutils;
 
 
+import com.linkedin.parseq.AsyncCallableTask;
 import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.EngineBuilder;
 import com.linkedin.r2.filter.FilterChain;
@@ -24,16 +25,19 @@ import com.linkedin.r2.filter.FilterChains;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.http.server.HttpServer;
 import com.linkedin.r2.transport.http.server.HttpServerFactory;
+import com.linkedin.restli.docgen.DefaultDocumentationRequestHandler;
 import com.linkedin.restli.server.DelegatingTransportDispatcher;
 import com.linkedin.restli.server.RestLiConfig;
 import com.linkedin.restli.server.RestLiServer;
 import com.linkedin.restli.server.mock.InjectMockResourceFactory;
 import com.linkedin.restli.server.mock.SimpleBeanProvider;
 import com.linkedin.restli.server.resources.ResourceFactory;
+import java.io.IOException;
 import java.net.URI;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -51,21 +55,6 @@ public class MockHttpServerFactory
   private static final int ASYNC_TIMEOUT = 5000;
 
   /**
-   * Creates a {@link Engine}
-   *
-   * @return
-   */
-  private static Engine createEngine()
-  {
-    final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(NUM_THREADS);
-    final Engine engine = new EngineBuilder()
-        .setTaskExecutor(scheduler)
-        .setTimerScheduler(scheduler)
-        .build();
-    return engine;
-  }
-
-  /**
    * Creates {@link RestLiConfig} to be used by a {@link RestLiServer}
    *
    * @param port the port the server will run on
@@ -76,6 +65,7 @@ public class MockHttpServerFactory
     RestLiConfig restLiConfig = new RestLiConfig();
     restLiConfig.setServerNodeUri(URI.create(LOCALHOST + port));
     restLiConfig.setRestliProtocolCheck(RestLiConfig.RestliProtocolCheck.RELAXED);
+    restLiConfig.setDocumentationRequestHandler(new DefaultDocumentationRequestHandler());
     return restLiConfig;
   }
 
@@ -179,7 +169,12 @@ public class MockHttpServerFactory
    */
   private static HttpServer create(int port, RestLiConfig config, Map<String, ?> beans, boolean enableAsync)
   {
-    Engine engine = createEngine();
+    final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(NUM_THREADS);
+    final ExecutorService executor = Executors.newFixedThreadPool(NUM_THREADS);
+    EngineBuilder engineBuilder = new EngineBuilder().setTaskExecutor(scheduler).setTimerScheduler(scheduler);
+    AsyncCallableTask.register(engineBuilder, executor);
+
+    final Engine engine = engineBuilder.build();
     ResourceFactory resourceFactory = createResourceFactory(beans);
 
     TransportDispatcher dispatcher = new DelegatingTransportDispatcher(new RestLiServer(config,
@@ -188,11 +183,37 @@ public class MockHttpServerFactory
 
     FilterChain fc = FilterChains.empty();
 
-    return new HttpServerFactory(fc).createServer(port,
-                                                  HttpServerFactory.DEFAULT_CONTEXT_PATH,
-                                                  NUM_THREADS,
-                                                  dispatcher,
-                                                  enableAsync,
-                                                  enableAsync ? ASYNC_TIMEOUT : -1);
+    final HttpServer server = new HttpServerFactory(fc).createServer(port,
+                                                               HttpServerFactory.DEFAULT_CONTEXT_PATH,
+                                                               NUM_THREADS,
+                                                               dispatcher,
+                                                               enableAsync,
+                                                               enableAsync ? ASYNC_TIMEOUT : -1);
+    return new HttpServer()
+    {
+      @Override
+      public void start()
+          throws IOException
+      {
+        server.start();
+      }
+
+      @Override
+      public void stop()
+          throws IOException
+      {
+        server.stop();
+        engine.shutdown();
+        executor.shutdown();
+        scheduler.shutdown();
+      }
+
+      @Override
+      public void waitForStop()
+          throws InterruptedException
+      {
+        server.waitForStop();
+      }
+    };
   }
 }

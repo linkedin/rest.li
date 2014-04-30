@@ -91,10 +91,9 @@ public class ProtocolVersion implements Comparable<ProtocolVersion>
   @Override
   public int hashCode()
   {
-    int result = super.hashCode();
-    result = 31 * result + new Integer(_major).hashCode();
-    result = 31 * result + new Integer(_minor).hashCode();
-    result = 31 * result + new Integer(_patch).hashCode();
+    int result = _major;
+    result = 31 * result + _minor;
+    result = 31 * result + _patch;
     return result;
   }
 
