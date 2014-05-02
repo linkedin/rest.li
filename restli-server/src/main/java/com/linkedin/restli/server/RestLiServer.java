@@ -59,6 +59,8 @@ import org.slf4j.LoggerFactory;
  * @author Zhenkai Zhu
  * @author nshankar
  */
+//TODO: Remove this once use of InvokeAware has been discontinued.
+@SuppressWarnings("deprecation")
 public class RestLiServer extends BaseRestServer
 {
   public static final String DEBUG_PATH_SEGMENT = "__debug";
@@ -74,7 +76,7 @@ public class RestLiServer extends BaseRestServer
   private final ErrorResponseBuilder _errorResponseBuilder;
   private final Map<String, RestLiDebugRequestHandler> _debugHandlers;
   private final List<ResponseFilter> _responseFilters;
-
+  private final List<InvokeAware> _invokeAwares;
   private boolean _isDocInitialized = false;
 
   public RestLiServer(final RestLiConfig config)
@@ -88,6 +90,15 @@ public class RestLiServer extends BaseRestServer
   }
 
   public RestLiServer(final RestLiConfig config, final ResourceFactory resourceFactory, final Engine engine)
+  {
+    this(config, resourceFactory, engine, null);
+  }
+
+  @Deprecated
+  public RestLiServer(final RestLiConfig config,
+                      final ResourceFactory resourceFactory,
+                      final Engine engine,
+                      final List<InvokeAware> invokeAwares)
   {
     super(config);
     _config = config;
@@ -136,6 +147,8 @@ public class RestLiServer extends BaseRestServer
         }
       }
     }
+    _invokeAwares =
+        (invokeAwares == null) ? Collections.<InvokeAware> emptyList() : Collections.unmodifiableList(invokeAwares);
   }
 
   public Map<String, ResourceModel> getRootResources()
@@ -274,10 +287,12 @@ public class RestLiServer extends BaseRestServer
       restLiCallback.onError(e, createEmptyExecutionReport());
       return;
     }
+    final RequestExecutionCallback<RestResponse> wrappedCallback = notifyInvokeAwares(method, callback);
+
     final FilterRequestContextInternal filterContext =
         new FilterRequestContextInternalImpl((ServerResourceContext) method.getContext(), method.getResourceMethod());
     final RestLiCallback<Object> restLiCallback =
-        new RestLiCallback<Object>(request, method, _responseHandler, callback, _responseFilters, filterContext);
+        new RestLiCallback<Object>(request, method, _responseHandler, wrappedCallback, _responseFilters, filterContext);
     try
     {
       _methodInvoker.invoke(method, request, restLiCallback, isDebugMode, filterContext);
@@ -286,6 +301,48 @@ public class RestLiServer extends BaseRestServer
     {
       restLiCallback.onError(e, createEmptyExecutionReport());
     }
+  }
+
+  /**
+   * Invoke {@link InvokeAware#onInvoke(ResourceContext, RestLiMethodContext)} of registered invokeAwares.
+   * @return A new callback that wraps the originalCallback, which invokes desired callbacks of invokeAwares after the method invocation finishes
+   */
+  private RequestExecutionCallback<RestResponse> notifyInvokeAwares(final RoutingResult routingResult,
+                                                                    final RequestExecutionCallback<RestResponse> originalCallback)
+  {
+    if (!_invokeAwares.isEmpty())
+    {
+      final List<Callback<RestResponse>> invokeAwareCallbacks = new ArrayList<Callback<RestResponse>>();
+      for (InvokeAware invokeAware : _invokeAwares)
+      {
+        invokeAwareCallbacks.add(invokeAware.onInvoke(routingResult.getContext(), routingResult.getResourceMethod()));
+      }
+
+      return new RequestExecutionCallback<RestResponse>()
+      {
+        @Override
+        public void onSuccess(RestResponse result, RequestExecutionReport executionReport)
+        {
+          for (Callback<RestResponse> callback : invokeAwareCallbacks)
+          {
+            callback.onSuccess(result);
+          }
+          originalCallback.onSuccess(result, executionReport);
+        }
+
+        @Override
+        public void onError(Throwable error, RequestExecutionReport executionReport)
+        {
+          for (Callback<RestResponse> callback : invokeAwareCallbacks)
+          {
+            callback.onError(error);
+          }
+          originalCallback.onError(error, executionReport);
+        }
+      };
+    }
+
+    return originalCallback;
   }
 
   private void handleDocumentationRequest(final RestRequest request, final Callback<RestResponse> callback)

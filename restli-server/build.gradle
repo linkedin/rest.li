@@ -28,3 +28,9 @@ apply from: "${buildScriptDirPath}/dataTemplate.gradle"
 test {
   systemProperties['test.projectDir'] = projectDir.toString()
 }
+
+// TODO: Remove this once use of InvokeAware has been discontinued.
+// We are directing the compiler to not fail the build on warnings as we expect deprecation warnings.
+// The reason we have this here is 'coz of a bug in java 6. See http://bugs.java.com/view_bug.do?bug_id=6460147
+// for more info.
+tasks[sourceSets.main.getCompileTaskName('java')].options.compilerArgs = ['-Xlint', '-Xlint:-path', '-Xlint:-static' ]
