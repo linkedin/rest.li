@@ -1,5 +1,14 @@
+1.15.16
+-------
+
 1.15.15
 -------
+(RB=297875)
+Resurrecting InvokeAwares.
+
+(RB=276851)
+Checking in support for RestLi filters.
+Checking in RestLi filters integration test.
 
 1.15.14
 -------
