@@ -27,6 +27,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestStatus;
@@ -79,6 +80,7 @@ public abstract class AbstractAsyncR2Servlet extends AbstractR2Servlet
       return;
     }
 
+    RequestContext requestContext = readRequestContext(req);
     final AsyncContext ctx = req.startAsync(req, resp);
 
     ctx.setTimeout(_timeout);
@@ -138,7 +140,7 @@ public abstract class AbstractAsyncR2Servlet extends AbstractR2Servlet
       }
     };
 
-    getDispatcher().handleRequest(restRequest, callback);
+    getDispatcher().handleRequest(restRequest, requestContext, callback);
   }
 
   public long getTimeout()

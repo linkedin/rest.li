@@ -230,10 +230,25 @@ public abstract class AbstractR2Servlet extends HttpServlet
    * @param req The HTTP servlet request
    * @return The request context
    */
-  private RequestContext readRequestContext(HttpServletRequest req)
+  protected RequestContext readRequestContext(HttpServletRequest req)
   {
     RequestContext context = new RequestContext();
     context.putLocalAttr(R2Constants.REMOTE_ADDR, req.getRemoteAddr());
+    if (req.isSecure())
+    {
+      // attribute name documented in ServletRequest API:
+      // http://docs.oracle.com/javaee/6/api/javax/servlet/ServletRequest.html#getAttribute%28java.lang.String%29
+      Object[] certs = (Object[]) req.getAttribute("javax.servlet.request.X509Certificate");
+      if (certs != null && certs.length > 0)
+      {
+        context.putLocalAttr(R2Constants.CLIENT_CERT, certs[0]);
+      }
+      context.putLocalAttr(R2Constants.IS_SECURE, true);
+    }
+    else
+    {
+      context.putLocalAttr(R2Constants.IS_SECURE, false);
+    }
     return context;
   }
 

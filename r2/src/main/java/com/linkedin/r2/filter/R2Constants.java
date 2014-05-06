@@ -24,4 +24,6 @@ public class R2Constants
 {
   public static final String OPERATION = "OPERATION";
   public static final String REMOTE_ADDR = "REMOTE_ADDR";
+  public static final String IS_SECURE = "IS_SECURE";
+  public static final String CLIENT_CERT = "CLIENT_CERT";
 }

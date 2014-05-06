@@ -3,6 +3,9 @@
 (RB=295065)
 PegasusPlugin: Generate list of input pdsc files for generateDataTemplate task at execution time.
 
+(RB=297096)
+Extract client cert from https request and save it in the RequestContext.
+
 1.15.15
 -------
 (RB=297875)
