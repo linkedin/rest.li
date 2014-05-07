@@ -75,7 +75,8 @@ public class D2ClientBuilder
                   _config.isSSLEnabled,
                   _config.shutdownAsynchronously,
                   _config.isSymlinkAware,
-                  _config.clientServicesConfig);
+                  _config.clientServicesConfig,
+                  _config.d2ServicePath);
 
     final LoadBalancerWithFacilities loadBalancer = loadBalancerFactory.create(cfg);
 
