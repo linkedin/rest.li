@@ -61,7 +61,8 @@ public class DefaultDocumentationRequestHandler implements RestLiDocumentationRe
   @Override
   public boolean isDocumentationRequest(RestRequest request)
   {
-    return request.getURI().getRawPath().startsWith("/" + DOC_PREFIX) || HttpMethod.valueOf(request.getMethod()) == HttpMethod.OPTIONS;
+    return request.getURI().getRawPath().startsWith(DOC_PREFIX_AND_VIEW_ACTION_PREFIX) ||
+        HttpMethod.valueOf(request.getMethod()) == HttpMethod.OPTIONS;
   }
 
   @Override
@@ -193,10 +194,10 @@ public class DefaultDocumentationRequestHandler implements RestLiDocumentationRe
 
   private static final String DOC_PREFIX = "restli";
   private static final String DOC_VIEW_DOCS_ACTION = "docs";
+  private static final String DOC_PREFIX_AND_VIEW_ACTION_PREFIX = "/" + DOC_PREFIX + "/" + DOC_VIEW_DOCS_ACTION + "/";
   private static final String DOC_RESOURCE_TYPE = "rest";
   private static final String DOC_DATA_TYPE = "data";
   private static final String DOC_JSON_FORMAT = "json";
-  private static final String HTTP_CONTENT_TYPE_HEADER = "Content-Type";
   private static final int BAOS_BUFFER_SIZE = 8192;
 
   private RestLiHTMLDocumentationRenderer _htmlRenderer;

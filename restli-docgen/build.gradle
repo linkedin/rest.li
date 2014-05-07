@@ -9,4 +9,6 @@ dependencies {
   compile externalDependency.commonsLang
   compile externalDependency.jacksonCore
   compile externalDependency.velocity
+
+  testCompile externalDependency.testng
 }
