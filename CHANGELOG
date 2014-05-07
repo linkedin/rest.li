@@ -1,5 +1,7 @@
 1.15.17
 -------
+(RB=299453)
+Fixed bug where any request with the word restli in it is treated as a documentation request
 
 1.15.16
 -------
