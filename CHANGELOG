@@ -6,6 +6,9 @@ PegasusPlugin: Generate list of input pdsc files for generateDataTemplate task a
 (RB=297096)
 Extract client cert from https request and save it in the RequestContext.
 
+(RB=296391)
+Support AsyncCallableTasks and documentation requests in the mock http server. Clean up mock http server threadpools. Fix hashCode in ProtocolVersion.
+
 1.15.15
 -------
 (RB=297875)
