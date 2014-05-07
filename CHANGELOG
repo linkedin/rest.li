@@ -1,5 +1,11 @@
+1.15.17
+-------
+
 1.15.16
 -------
+(RB=298904)
+Update D2ClientBuilder to honor d2ServicePath
+
 (RB=295065)
 PegasusPlugin: Generate list of input pdsc files for generateDataTemplate task at execution time.
 
