@@ -14,7 +14,6 @@
    limitations under the License.
  */
 
-
 package com.linkedin.restli.internal.server.filter;
 
 
@@ -27,6 +26,7 @@ import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.server.PathKeys;
 import com.linkedin.restli.server.ProjectionMode;
 import com.linkedin.restli.server.RestLiRequestData;
+import com.linkedin.restli.server.filter.FilterResourceModel;
 
 import java.net.URI;
 import java.util.HashMap;
@@ -42,6 +42,7 @@ public class FilterRequestContextInternalImpl implements FilterRequestContextInt
   private final ServerResourceContext _context;
   private final ResourceMethodDescriptor _resourceMethod;
   private final Map<String, Object> _scratchPad;
+  private final FilterResourceModel _resourceModel;
 
   public FilterRequestContextInternalImpl(final ServerResourceContext context,
                                           final ResourceMethodDescriptor resourceMethod)
@@ -49,12 +50,13 @@ public class FilterRequestContextInternalImpl implements FilterRequestContextInt
     _context = context;
     _resourceMethod = resourceMethod;
     _scratchPad = new HashMap<String, Object>();
+    _resourceModel = new FilterResourceModelImpl(resourceMethod.getResourceModel());
   }
 
   @Override
   public String getResourceName()
   {
-    return _resourceMethod.getResourceName();
+    return getFilterResourceModel().getResourceName();
   }
 
   @Override
@@ -78,7 +80,7 @@ public class FilterRequestContextInternalImpl implements FilterRequestContextInt
   @Override
   public String getResourceNamespace()
   {
-    return _resourceMethod.getNamespace();
+    return getFilterResourceModel().getResourceNamespace();
   }
 
   @Override
@@ -145,5 +147,11 @@ public class FilterRequestContextInternalImpl implements FilterRequestContextInt
   public String getActionName()
   {
     return _resourceMethod.getActionName();
+  }
+
+  @Override
+  public FilterResourceModel getFilterResourceModel()
+  {
+    return _resourceModel;
   }
 }

@@ -26,6 +26,7 @@ import com.linkedin.restli.internal.server.MutablePathKeys;
 import com.linkedin.restli.internal.server.PathKeysImpl;
 import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
+import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.server.ProjectionMode;
 
 import java.net.URI;
@@ -52,6 +53,8 @@ public class TestFilterRequestContextInternalImpl
   private ServerResourceContext context;
   @Mock
   private ResourceMethodDescriptor resourceMethod;
+  @Mock
+  private ResourceModel resourceModel;
 
   @BeforeTest
   protected void setUp() throws Exception
@@ -62,7 +65,6 @@ public class TestFilterRequestContextInternalImpl
   @Test
   public void testFilterRequestContextAdapter() throws Exception
   {
-    FilterRequestContextInternalImpl filterContext = new FilterRequestContextInternalImpl(context, resourceMethod);
     final String resourceName = "resourceName";
     final String resourceNamespace = "resourceNamespace";
     final ResourceMethod methodType = ResourceMethod.GET;
@@ -81,12 +83,9 @@ public class TestFilterRequestContextInternalImpl
     final String finderName = UUID.randomUUID().toString();
     final String actionName = UUID.randomUUID().toString();
 
-    Object spValue = new Object();
-    String spKey = UUID.randomUUID().toString();
-    filterContext.getFilterScratchpad().put(spKey, spValue);
-
-    when(resourceMethod.getResourceName()).thenReturn(resourceName);
-    when(resourceMethod.getNamespace()).thenReturn(resourceNamespace);
+    when(resourceModel.getName()).thenReturn(resourceName);
+    when(resourceModel.getNamespace()).thenReturn(resourceNamespace);
+    when(resourceMethod.getResourceModel()).thenReturn(resourceModel);
     when(resourceMethod.getMethodType()).thenReturn(methodType);
     when(resourceMethod.getFinderName()).thenReturn(finderName);
     when(resourceMethod.getActionName()).thenReturn(actionName);
@@ -99,8 +98,13 @@ public class TestFilterRequestContextInternalImpl
     when(context.getRestliProtocolVersion()).thenReturn(protoVersion);
     when(context.getParameters()).thenReturn(queryParams);
 
-    assertEquals(filterContext.getResourceName(), resourceName);
-    assertEquals(filterContext.getResourceNamespace(), resourceNamespace);
+    FilterRequestContextInternalImpl filterContext = new FilterRequestContextInternalImpl(context, resourceMethod);
+    Object spValue = new Object();
+    String spKey = UUID.randomUUID().toString();
+    filterContext.getFilterScratchpad().put(spKey, spValue);
+
+    assertEquals(filterContext.getFilterResourceModel().getResourceName(), resourceName);
+    assertEquals(filterContext.getFilterResourceModel().getResourceNamespace(), resourceNamespace);
     assertEquals(filterContext.getMethodType(), methodType);
     assertEquals(filterContext.getCustomAnnotations(), customAnnotations);
     assertEquals(filterContext.getProjectionMode(), projectionMode);
@@ -116,9 +120,10 @@ public class TestFilterRequestContextInternalImpl
     filterContext.getRequestHeaders().put("header2", "value2");
     assertEquals(requestHeaders.get("header2"), "value2");
 
-    verify(resourceMethod).getResourceName();
-    verify(resourceMethod).getNamespace();
+    verify(resourceModel).getName();
+    verify(resourceModel).getNamespace();
     verify(resourceMethod).getMethodType();
+    verify(resourceMethod).getResourceModel();
     verify(resourceMethod).getCustomAnnotationData();
     verify(resourceMethod).getFinderName();
     verify(resourceMethod).getActionName();
@@ -129,6 +134,6 @@ public class TestFilterRequestContextInternalImpl
     verify(context).getRequestURI();
     verify(context).getRestliProtocolVersion();
     verify(context).getParameters();
-    verifyNoMoreInteractions(context, resourceMethod);
+    verifyNoMoreInteractions(context, resourceMethod, resourceModel);
   }
 }

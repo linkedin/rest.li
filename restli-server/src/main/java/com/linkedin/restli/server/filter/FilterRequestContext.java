@@ -84,14 +84,18 @@ public interface FilterRequestContext
    * Get the name of the target resource.
    *
    * @return Name of the resource.
+   * @deprecated Use getResourceModel().getResourceName() instead.
    */
+  @Deprecated
   String getResourceName();
 
   /**
    * Get the namespace of the target resource.
    *
    * @return Namespace of the resource.
+   * @deprecated Use getResourceModel().getResourceNamespace() instead.
    */
+  @Deprecated
   String getResourceNamespace();
 
   /**
@@ -135,4 +139,11 @@ public interface FilterRequestContext
    * @return a scratch pad in the form of a Map.
    */
   Map<String, Object> getFilterScratchpad();
+
+  /**
+   * Obtain the {@link FilterResourceModel} corresponding to the resource.
+   *
+   * @return ResourceModel corresponding to the resource.
+   */
+  FilterResourceModel getFilterResourceModel();
 }
