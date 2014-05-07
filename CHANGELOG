@@ -3,8 +3,12 @@
 (RB=299453)
 Fixed bug where any request with the word restli in it is treated as a documentation request
 
+(RB=299380)
+Expose hash ring information through jmx
+
 1.15.16
 -------
+
 (RB=298904)
 Update D2ClientBuilder to honor d2ServicePath
 

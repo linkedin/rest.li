@@ -62,4 +62,11 @@ public interface DegraderLoadBalancerStrategyV3JmxMBean
    */
   String getUnhealthyClientsPoints(int partitionId);
 
+  /**
+   *
+   * @param partitionId
+   * @return a string that tells us the information about the hash ring for this service
+   */
+  String getRingInformation(int partitionId);
+
 }

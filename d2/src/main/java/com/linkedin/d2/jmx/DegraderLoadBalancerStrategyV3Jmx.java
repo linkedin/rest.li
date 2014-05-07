@@ -21,6 +21,7 @@
 package com.linkedin.d2.jmx;
 
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
+import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import java.net.URI;
 import java.util.ArrayList;
@@ -83,5 +84,16 @@ public class DegraderLoadBalancerStrategyV3Jmx implements DegraderLoadBalancerSt
       }
     }
     return result.toString();
+  }
+
+  @Override
+  public String getRingInformation(int partitionId)
+  {
+    Ring<URI> ring = _strategy.getRing(partitionId);
+    if (ring == null)
+    {
+      return "Ring for that partition is null";
+    }
+    return ring.toString();
   }
 }

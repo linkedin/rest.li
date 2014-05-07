@@ -61,4 +61,10 @@ public interface DegraderLoadBalancerStrategyV2JmxMBean
    */
   String getUnhealthyClientsPoints();
 
+  /**
+   *
+   * @return a string that tells us the information about the hash ring for this service
+   */
+  String getRingInformation();
+
 }

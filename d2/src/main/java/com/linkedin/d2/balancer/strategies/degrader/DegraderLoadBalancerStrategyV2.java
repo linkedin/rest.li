@@ -70,6 +70,14 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
   // this controls access to updateState: only one thread should update the state at any one time.
   private volatile Object                             _lock;
 
+  /**
+   * this call returns the ring. Ring can be null depending whether the state has been initialized or not
+   * @return
+   */
+  public Ring<URI> getRing()
+  {
+    return _state.getRing();
+  }
 
   public DegraderLoadBalancerStrategyV2(DegraderLoadBalancerStrategyConfig config, String serviceName,
                                         Map<String, String> degraderProperties)

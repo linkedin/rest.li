@@ -858,6 +858,16 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
   }
 
   /**
+   * this call returns the ring. Ring can be null depending whether the state has been initialized or not
+   * @param partitionId
+   * @return
+   */
+  public Ring<URI> getRing(int partitionId)
+  {
+    return _state.getRing(partitionId);
+  }
+
+  /**
    * Whether or not the degrader's view of the cluster is allowed to be updated.
    */
   public boolean getUpdateEnabled()
@@ -1000,8 +1010,15 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
 
     private Ring<URI> getRing(int partitionId)
     {
-      PartitionDegraderLoadBalancerState state = _partitions.get(partitionId).getState();
-      return state.getRing();
+      if (_partitions.get(partitionId) != null)
+      {
+        PartitionDegraderLoadBalancerState state = _partitions.get(partitionId).getState();
+        return state.getRing();
+      }
+      else
+      {
+        return null;
+      }
     }
 
     // this method never returns null
