@@ -63,9 +63,33 @@ public class DynamicClient extends AbstractClient implements D2Client
   @Override
   public void restRequest(RestRequest request,
                           RequestContext requestContext,
-                          Callback<RestResponse> callback)
+                          final Callback<RestResponse> callback)
   {
-    trace(_log, "rest request: ", request);
+    Callback<RestResponse> transportCallback;
+    if (_log.isTraceEnabled())
+    {
+      trace(_log, "rest request: ", request);
+      transportCallback = new Callback<RestResponse>()
+      {
+        @Override
+        public void onError(Throwable e)
+        {
+          callback.onError(e);
+          trace(_log, "rest response error: ", e);
+        }
+
+        @Override
+        public void onSuccess(RestResponse result)
+        {
+          callback.onSuccess(result);
+          trace(_log, "rest response success: ", result);
+        }
+      };
+    }
+    else
+    {
+      transportCallback = callback;
+    }
 
     try
     {
@@ -73,7 +97,7 @@ public class DynamicClient extends AbstractClient implements D2Client
 
       if (client != null)
       {
-        new TransportClientAdapter(client).restRequest(request, requestContext, callback);
+        new TransportClientAdapter(client).restRequest(request, requestContext, transportCallback);
       }
       else
       {

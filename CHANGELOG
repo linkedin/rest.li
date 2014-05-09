@@ -1,5 +1,7 @@
 1.15.18
 -------
+(RB=300929)
+Add trace level logging of response to DynamicClient
 
 1.15.17
 -------
