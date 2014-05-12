@@ -6,6 +6,9 @@ Add trace level logging of response to DynamicClient
 (RB=301656)
 Make ScatterGatherResult.getRequestInfo() and .getUnmappedKeys() public. KVScatterGatherResult also.
 
+(RB=301492)
+Clean up caprep so it can be better leveraged for language independent test suite.
+
 1.15.17
 -------
 (RB=299453)
