@@ -335,12 +335,12 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
       _unmappedKeys = Collections.unmodifiableCollection(unmappedKeys);
     }
 
-    Collection<RequestInfo<T>> getRequestInfo()
+    public Collection<RequestInfo<T>> getRequestInfo()
     {
       return _requestInfos;
     }
 
-    Collection<MapKeyResult.UnmappedKey<Object>> getUnmappedKeys()
+    public Collection<MapKeyResult.UnmappedKey<Object>> getUnmappedKeys()
     {
       return _unmappedKeys;
     }
@@ -379,12 +379,12 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
       _unmappedKeys = Collections.unmodifiableCollection(unmappedKeys);
     }
 
-    Collection<KVRequestInfo<K, T>> getRequestInfo()
+    public Collection<KVRequestInfo<K, T>> getRequestInfo()
     {
       return _requestInfos;
     }
 
-    Collection<MapKeyResult.UnmappedKey<K>> getUnmappedKeys()
+    public Collection<MapKeyResult.UnmappedKey<K>> getUnmappedKeys()
     {
       return _unmappedKeys;
     }
