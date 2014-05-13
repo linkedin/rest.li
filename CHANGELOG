@@ -3,6 +3,9 @@
 (RB=300929)
 Add trace level logging of response to DynamicClient
 
+(RB=301656)
+Make ScatterGatherResult.getRequestInfo() and .getUnmappedKeys() public. KVScatterGatherResult also.
+
 1.15.17
 -------
 (RB=299453)
