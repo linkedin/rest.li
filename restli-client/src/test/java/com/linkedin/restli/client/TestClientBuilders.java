@@ -25,14 +25,19 @@ import com.linkedin.data.template.DynamicRecordTemplate;
 import com.linkedin.data.template.FieldDef;
 import com.linkedin.data.template.IntegerArray;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.client.test.TestRecord;
 import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
 import com.linkedin.restli.client.util.PatchGenerator;
 import com.linkedin.restli.client.util.PatchRequestRecorder;
 import com.linkedin.restli.common.BatchRequest;
+import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionRequest;
+import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
+import com.linkedin.restli.common.CreateStatus;
+import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.KeyValueRecord;
 import com.linkedin.restli.common.KeyValueRecordFactory;
 import com.linkedin.restli.common.PatchRequest;
@@ -41,6 +46,7 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.ResourceSpecImpl;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.internal.client.CollectionRequestUtil;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.TestConstants;
@@ -1332,7 +1338,7 @@ public class TestClientBuilders
     expectedPathKeys.put("key1", 1);
     expectedPathKeys.put("key2", 2);
 
-    Request request = new ActionRequestBuilder<Void, TestRecord>(SUBRESOURCE_URI, TestRecord.class, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<TestRecord> request = new ActionRequestBuilder<Void, TestRecord>(SUBRESOURCE_URI, TestRecord.class, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS)
       .name("action").pathKey("key1", 1).pathKey("key2", 2).build();
     testUriGeneration(request, expectedUri, version);
     testPathKeys(request, expectedResourcePath, SUBRESOURCE_URI, expectedPathKeys);
@@ -1356,7 +1362,7 @@ public class TestClientBuilders
     String[] expectedResourcePath = new String[] {"foo", "bar", "baz"};
 
     // test with keys containing URL escaped chars
-    Request request = new ActionRequestBuilder<Void, TestRecord>(SUBRESOURCE_URI, TestRecord.class, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<TestRecord> request = new ActionRequestBuilder<Void, TestRecord>(SUBRESOURCE_URI, TestRecord.class, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS)
       .name("action").pathKey("key1", "http://example.com/images/1.png").pathKey("key2", "http://example.com/images/2.png").build();
     testUriGeneration(request,
                       expectedUri,
@@ -1384,7 +1390,7 @@ public class TestClientBuilders
     expectedPathKeys.put("key1", 1);
     expectedPathKeys.put("key2", 2);
 
-    Request request = new BatchGetRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<BatchResponse<TestRecord>> request = new BatchGetRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
       .ids(1L, 2L).pathKey("key1", 1).pathKey("key2", 2).build();
     testUriGeneration(request, expectedUri, version);
     testPathKeys(request, expectedResourcePath, SUBRESOURCE_URI, expectedPathKeys);
@@ -1407,7 +1413,7 @@ public class TestClientBuilders
     expectedPathKeys.put("key1", 1);
     expectedPathKeys.put("key2", 2);
 
-    Request request = new CreateRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<EmptyRecord> request = new CreateRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
       .pathKey("key1", 1).pathKey("key2", 2).build();
     testUriGeneration(request, expectedUri, version);
     testPathKeys(request, expectedResourcePath, SUBRESOURCE_URI, expectedPathKeys);
@@ -1430,7 +1436,7 @@ public class TestClientBuilders
     expectedPathKeys.put("key1", 1);
     expectedPathKeys.put("key2", 2);
 
-    Request request = new DeleteRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<EmptyRecord> request = new DeleteRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
       .id(3L).pathKey("key1", 1).pathKey("key2", 2).build();
     testUriGeneration(request, expectedUri, version);
     testPathKeys(request, expectedResourcePath, SUBRESOURCE_URI, expectedPathKeys);
@@ -1444,7 +1450,7 @@ public class TestClientBuilders
     expectedPathKeys.put("key1", 1);
     expectedPathKeys.put("key2", 2);
 
-    Request request = new FindRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<CollectionResponse<TestRecord>> request = new FindRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
       .pathKey("key1", 1).pathKey("key2", 2).build();
     testUriGeneration(request, expectedUri, version);
     testPathKeys(request, expectedResourcePath, SUBRESOURCE_URI, expectedPathKeys);
@@ -1458,7 +1464,7 @@ public class TestClientBuilders
     expectedPathKeys.put("key1", 1);
     expectedPathKeys.put("key2", 2);
 
-    Request request = new GetRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<TestRecord> request = new GetRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
       .id(3L).pathKey("key1", 1).pathKey("key2", 2).build();
     testUriGeneration(request, expectedUri, version);
     testPathKeys(request, expectedResourcePath, SUBRESOURCE_URI, expectedPathKeys);
@@ -1472,7 +1478,7 @@ public class TestClientBuilders
     expectedPathKeys.put("key1", 1);
     expectedPathKeys.put("key2", 2);
 
-    Request request = new PartialUpdateRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<EmptyRecord> request = new PartialUpdateRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
       .id(3L).pathKey("key1", 1).pathKey("key2", 2).build();
     testUriGeneration(request, expectedUri, version);
     testPathKeys(request, expectedResourcePath, SUBRESOURCE_URI, expectedPathKeys);
@@ -1486,7 +1492,7 @@ public class TestClientBuilders
     expectedPathKeys.put("key1", 1);
     expectedPathKeys.put("key2", 2);
 
-    Request request = new UpdateRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<EmptyRecord> request = new UpdateRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
       .id(3L).pathKey("key1", 1).pathKey("key2", 2).build();
     testUriGeneration(request, expectedUri, version);
     testPathKeys(request, expectedResourcePath, SUBRESOURCE_URI, expectedPathKeys);
@@ -1508,7 +1514,7 @@ public class TestClientBuilders
     String[] expectedResourcePath = new String[] {"foo", "bar", "baz"};
 
     // simple resource & sub resources tests
-    Request request = new ActionRequestBuilder<Void, TestRecord>(SUBRESOURCE_SIMPLE_ROOT_URI, TestRecord.class, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<TestRecord> request = new ActionRequestBuilder<Void, TestRecord>(SUBRESOURCE_SIMPLE_ROOT_URI, TestRecord.class, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS)
       .name("action").pathKey("key1", 1).build();
     testUriGeneration(request, expectedUri, version);
     testPathKeys(request, expectedResourcePath, SUBRESOURCE_SIMPLE_ROOT_URI, Collections.singletonMap("key1", 1));
@@ -1529,7 +1535,7 @@ public class TestClientBuilders
     ResourceSpec resourceSpec = getResourceSpecForBuilderPathKeys();
     String[] expectedResourcePath = new String[] {"foo", "bar", "baz"};
 
-    Request request = new ActionRequestBuilder<Void, TestRecord>(
+    Request<TestRecord> request = new ActionRequestBuilder<Void, TestRecord>(
       SUBRESOURCE_SIMPLE_ROOT_URI, TestRecord.class, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS).name("action")
       .pathKey("key1", "http://example.com/images/1.png")
       .build();
@@ -1554,7 +1560,7 @@ public class TestClientBuilders
   {
     String[] expectedResourcePath = new String[] {"foo", "bar", "baz"};
 
-    Request request = new BatchGetRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_ROOT_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<BatchResponse<TestRecord>> request = new BatchGetRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_ROOT_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
       .ids(1L, 2L).pathKey("key1", 1).build();
     testUriGeneration(request, expectedUri, version);
     testPathKeys(request, expectedResourcePath, SUBRESOURCE_SIMPLE_ROOT_URI, Collections.singletonMap("key1", 1));
@@ -1574,7 +1580,7 @@ public class TestClientBuilders
   {
     String[] expectedResourcePath = new String[] {"foo", "bar", "baz"};
 
-    Request request = new CreateRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_ROOT_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<EmptyRecord> request = new CreateRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_ROOT_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
       .pathKey("key1", 1).build();
     testUriGeneration(request, expectedUri, version);
     testPathKeys(request, expectedResourcePath, SUBRESOURCE_SIMPLE_ROOT_URI, Collections.singletonMap("key1", 1));
@@ -1594,7 +1600,7 @@ public class TestClientBuilders
   {
     String[] expectedResourcePath = new String[] {"foo", "bar", "baz"};
 
-    Request request = new DeleteRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_ROOT_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<EmptyRecord> request = new DeleteRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_ROOT_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
       .id(2L).pathKey("key1", 1).build();
     testUriGeneration(request, expectedUri, version);
     testPathKeys(request, expectedResourcePath, SUBRESOURCE_SIMPLE_ROOT_URI, Collections.singletonMap("key1", 1));
@@ -1605,7 +1611,7 @@ public class TestClientBuilders
   {
     String[] expectedResourcePath = new String[] {"foo", "bar", "baz"};
 
-    Request request = new FindRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_ROOT_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<CollectionResponse<TestRecord>> request = new FindRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_ROOT_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
       .pathKey("key1", 1).build();
     testUriGeneration(request, expectedUri, version);
     testPathKeys(request, expectedResourcePath, SUBRESOURCE_SIMPLE_ROOT_URI, Collections.singletonMap("key1", 1));
@@ -1616,7 +1622,7 @@ public class TestClientBuilders
   {
     String[] expectedResourcePath = new String[] {"foo", "bar", "baz"};
 
-    Request request = new GetRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_ROOT_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<TestRecord> request = new GetRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_ROOT_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
       .id(2L).pathKey("key1", 1).build();
     testUriGeneration(request, expectedUri, version);
     testPathKeys(request, expectedResourcePath, SUBRESOURCE_SIMPLE_ROOT_URI, Collections.singletonMap("key1", 1));
@@ -1627,7 +1633,7 @@ public class TestClientBuilders
   {
     String[] expectedResourcePath = new String[] {"foo", "bar", "baz"};
 
-    Request request = new PartialUpdateRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_ROOT_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<EmptyRecord> request = new PartialUpdateRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_ROOT_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
       .id(2L).pathKey("key1", 1).build();
     testUriGeneration(request, expectedUri, version);
     testPathKeys(request, expectedResourcePath, SUBRESOURCE_SIMPLE_ROOT_URI, Collections.singletonMap("key1", 1));
@@ -1638,7 +1644,7 @@ public class TestClientBuilders
   {
     String[] expectedResourcePath = new String[] {"foo", "bar", "baz"};
 
-    Request request = new UpdateRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_ROOT_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<EmptyRecord> request = new UpdateRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_ROOT_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
       .id(2L).pathKey("key1", 1).build();
     testUriGeneration(request, expectedUri, version);
     testPathKeys(request, expectedResourcePath, SUBRESOURCE_SIMPLE_ROOT_URI, Collections.singletonMap("key1", 1));
@@ -1659,7 +1665,7 @@ public class TestClientBuilders
     ResourceSpec resourceSpec = getResourceSpecForBuilderPathKeys();
     String[] expectedResourcePath = new String[] {"foo", "bar"};
 
-    Request request = new ActionRequestBuilder<Void, TestRecord>(SUBRESOURCE_SIMPLE_SUB_URI, TestRecord.class, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<TestRecord> request = new ActionRequestBuilder<Void, TestRecord>(SUBRESOURCE_SIMPLE_SUB_URI, TestRecord.class, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS)
       .name("action").pathKey("key1", 1).build();
     testUriGeneration(request, expectedUri, version);
     testPathKeys(request, expectedResourcePath, SUBRESOURCE_SIMPLE_SUB_URI, Collections.singletonMap("key1", 1));
@@ -1680,7 +1686,7 @@ public class TestClientBuilders
     ResourceSpec resourceSpec = getResourceSpecForBuilderPathKeys();
     String[] expectedResourcePath = new String[] {"foo", "bar"};
 
-    Request request = new ActionRequestBuilder<Void, TestRecord>(
+    Request<TestRecord> request = new ActionRequestBuilder<Void, TestRecord>(
       SUBRESOURCE_SIMPLE_SUB_URI, TestRecord.class, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS).name("action")
       .pathKey("key1", "http://example.com/images/1.png")
       .build();
@@ -1705,7 +1711,7 @@ public class TestClientBuilders
   {
     String[] expectedResourcePath = new String[] {"foo", "bar"};
 
-    Request request = new DeleteRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_SUB_URI, TestRecord.class,
+    Request<EmptyRecord> request = new DeleteRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_SUB_URI, TestRecord.class,
                                                          _SIMPLE_RESOURCE_SPEC, RestliRequestOptions.DEFAULT_OPTIONS).pathKey("key1", 1).build();
     testUriGeneration(request, expectedUri, version);
     testPathKeys(request, expectedResourcePath, SUBRESOURCE_SIMPLE_SUB_URI, Collections.singletonMap("key1", 1));
@@ -1716,7 +1722,7 @@ public class TestClientBuilders
   {
     String[] expectedResourcePath = new String[] {"foo", "bar"};
 
-    Request request = new GetRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_SUB_URI, TestRecord.class, _SIMPLE_RESOURCE_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<TestRecord> request = new GetRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_SUB_URI, TestRecord.class, _SIMPLE_RESOURCE_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
       .pathKey("key1", 1).build();
     testUriGeneration(request, expectedUri, version);
     testPathKeys(request, expectedResourcePath, SUBRESOURCE_SIMPLE_SUB_URI, Collections.singletonMap("key1", 1));
@@ -1727,7 +1733,7 @@ public class TestClientBuilders
   {
     String[] expectedResourcePath = new String[] {"foo", "bar"};
 
-    Request request = new UpdateRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_SUB_URI, TestRecord.class,
+    Request<EmptyRecord> request = new UpdateRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_SUB_URI, TestRecord.class,
                                                          _SIMPLE_RESOURCE_SPEC, RestliRequestOptions.DEFAULT_OPTIONS).pathKey("key1", 1).build();
     testUriGeneration(request, expectedUri, version);
     testPathKeys(request, expectedResourcePath, SUBRESOURCE_SIMPLE_SUB_URI, Collections.singletonMap("key1", 1));
@@ -1760,7 +1766,7 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "noEntityWithParam")
   public void testCrudBuilderParams1(ProtocolVersion version, String expectedUri)
   {
-    Request request = new CreateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<EmptyRecord> request = new CreateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .setParam("foo", "bar").build();
     testUriGeneration(request, expectedUri, version);
   }
@@ -1777,7 +1783,7 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "entityWithParam")
   public void testCrudBuilderParams2(ProtocolVersion version, String expectedUri)
   {
-    Request request = new DeleteRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<EmptyRecord> request = new DeleteRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .id(3L).setParam("foo", "bar").build();
     testUriGeneration(request, expectedUri, version);
   }
@@ -1785,7 +1791,7 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "noEntityWithParam")
   public void testCrudBuilderParams3(ProtocolVersion version, String expectedUri)
   {
-    Request request = new FindRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<CollectionResponse<TestRecord>> request = new FindRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .setParam("foo", "bar").build();
     testUriGeneration(request, expectedUri, version);
   }
@@ -1793,7 +1799,7 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "entityWithParam")
   public void testCrudBuilderParams4(ProtocolVersion version, String expectedUri)
   {
-    Request request = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<TestRecord> request = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .id(3L).setParam("foo", "bar").build();
     testUriGeneration(request, expectedUri, version);
   }
@@ -1801,7 +1807,7 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "entityWithParam")
   public void testCrudBuilderParams5(ProtocolVersion version, String expectedUri)
   {
-    Request request = new PartialUpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<EmptyRecord> request = new PartialUpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .id(3L).setParam("foo", "bar").build();
     testUriGeneration(request, expectedUri, version);
   }
@@ -1809,7 +1815,7 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "entityWithParam")
   public void testCrudBuilderParams6(ProtocolVersion version, String expectedUri)
   {
-    Request request = new UpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<EmptyRecord> request = new UpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .id(3L).setParam("foo", "bar").build();
     testUriGeneration(request, expectedUri, version);
   }
@@ -1826,7 +1832,7 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchWithParam")
   public void testCrudBuilderParams7(ProtocolVersion version, String expectedUri)
   {
-    Request request = new BatchGetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<BatchResponse<TestRecord>> request = new BatchGetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .ids(1L, 2L).setParam("foo", "bar").build();
     testUriGeneration(request, expectedUri, version);
   }
@@ -1834,7 +1840,7 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "noEntityWithParam")
   public void testCrudBuilderParams8(ProtocolVersion version, String expectedUri)
   {
-    Request request = new BatchCreateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<CollectionResponse<CreateStatus>> request = new BatchCreateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .input(new TestRecord()).setParam("foo", "bar").build();
     testUriGeneration(request, expectedUri, version);
   }
@@ -1842,7 +1848,7 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchWithParam")
   public void testCrudBuilderParams9(ProtocolVersion version, String expectedUri)
   {
-    Request request = new BatchDeleteRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<BatchKVResponse<Long, UpdateStatus>>  request = new BatchDeleteRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .ids(1L, 2L).setParam("foo", "bar").build();
     testUriGeneration(request, expectedUri, version);
   }
@@ -1859,7 +1865,7 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchSingleWithParam")
   public void testCrudBuilderParams10(ProtocolVersion version, String expectedUri)
   {
-    Request request = new BatchUpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<BatchKVResponse<Long, UpdateStatus>> request = new BatchUpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .input(1L, new TestRecord()).setParam("foo", "bar").build();
     testUriGeneration(request, expectedUri, version);
   }
@@ -1867,7 +1873,7 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchSingleWithParam")
   public void testCrudBuilderParams11(ProtocolVersion version, String expectedUri)
   {
-    Request request = new BatchPartialUpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<BatchKVResponse<Long, UpdateStatus>> request = new BatchPartialUpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .input(1L, new PatchRequest<TestRecord>()).setParam("foo", "bar").build();
     testUriGeneration(request, expectedUri, version);
   }
@@ -1876,7 +1882,7 @@ public class TestClientBuilders
   public void testCrudBuilderParams12(ProtocolVersion version, String expectedUri)
   {
     //Simple resource tests
-    Request request = new DeleteRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _SIMPLE_RESOURCE_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<EmptyRecord> request = new DeleteRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _SIMPLE_RESOURCE_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .setParam("foo", "bar").build();
     testUriGeneration(request, expectedUri, version);
   }
@@ -1884,7 +1890,7 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "noEntityWithParam")
   public void testCrudBuilderParams13(ProtocolVersion version, String expectedUri)
   {
-    Request request = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _SIMPLE_RESOURCE_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<TestRecord> request = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _SIMPLE_RESOURCE_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .setParam("foo", "bar").build();
     testUriGeneration(request, expectedUri, version);
   }
@@ -1892,7 +1898,7 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "noEntityWithParam")
   public void testCrudBuilderParams14(ProtocolVersion version, String expectedUri)
   {
-    Request request = new UpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _SIMPLE_RESOURCE_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<EmptyRecord> request = new UpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _SIMPLE_RESOURCE_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .setParam("foo", "bar").build();
     testUriGeneration(request, expectedUri, version);
   }
@@ -1926,7 +1932,7 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "encodingEqualsAndKey")
   public void testParamEncodingEqualsAndKey(ProtocolVersion version, String expectedUri)
   {
-    GetRequest request = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<TestRecord> request = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .id(3L).setParam("foo&bar=baz", "qux").build();
     testUriGeneration(request, expectedUri, version);
   }
@@ -1943,7 +1949,7 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "encodingSlash")
   public void testParamEncodingSlash(ProtocolVersion version, String expectedUri)
   {
-    GetRequest request = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<TestRecord> request = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .id(3L).setParam("foo/bar", "baz/qux").build();
     testUriGeneration(request, expectedUri, version);
   }
@@ -1960,7 +1966,7 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "encodingColon")
   public void testParamEncodingColon(ProtocolVersion version, String expectedUri)
   {
-    GetRequest request = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<TestRecord> request = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .id(3L).setParam("foo:bar", "baz:qux").build();
     testUriGeneration(request, expectedUri, version);
   }
@@ -1977,7 +1983,7 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "encodingQuestionMark")
   public void testParamEncodingQuestionMark(ProtocolVersion version, String expectedUri)
   {
-    GetRequest request = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+    Request<TestRecord> request = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .id(3L).setParam("foo?bar", "baz?qux").build();
     testUriGeneration(request, expectedUri, version);
   }
@@ -2099,7 +2105,7 @@ public class TestClientBuilders
    * @param version
    */
   @SuppressWarnings("deprecation")
-  private void testUriGeneration(Request request, String expectedUri, ProtocolVersion version)
+  private void testUriGeneration(Request<?> request, String expectedUri, ProtocolVersion version)
   {
     Assert.assertEquals(RestliUriBuilderUtil.createUriBuilder(request, version).build(), URI.create(expectedUri));
     if (version.compareTo(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion()) <= 0)

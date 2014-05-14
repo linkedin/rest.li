@@ -1,5 +1,8 @@
 1.15.19
 -------
+(RB=302891)
+Fix java 7 warnings.
+
 (RB=299112)
 Allow for clients to recieve strongly-typed keys returned from creates.
 old builder format:

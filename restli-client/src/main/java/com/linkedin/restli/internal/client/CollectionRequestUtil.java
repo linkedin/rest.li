@@ -29,7 +29,6 @@ import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.URIParamUtils;
-import com.linkedin.restli.internal.common.URLEscaper;
 
 import java.util.Map;
 
@@ -65,6 +64,7 @@ public class CollectionRequestUtil
    * @param version
    * @return a data map with one key, "entities". "entities" maps to another data map (as in the old body encoding)
    */
+  @SuppressWarnings({"unchecked", "rawtypes"})
   public static <V extends RecordTemplate> BatchRequest<V> convertToBatchRequest(CollectionRequest<KeyValueRecord> elementList,
                                                                                  Class<?> keyClass,
                                                                                  Class<? extends RecordTemplate> keyKeyClass,

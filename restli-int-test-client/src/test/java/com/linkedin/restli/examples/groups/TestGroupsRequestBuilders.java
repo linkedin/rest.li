@@ -461,7 +461,7 @@ public class TestGroupsRequestBuilders
     checkRequestBuilder(request, ResourceMethod.ACTION, ActionResponseDecoder.class, expectedUri, requestInput, version);
   }
 
-  @SuppressWarnings("deprecation")
+  @SuppressWarnings({"deprecation", "rawtypes"})
   private static void checkRequestBuilder(Request<?> request,
                                           ResourceMethod resourceMethod,
                                           Class<? extends RestResponseDecoder> responseDecoderClass,

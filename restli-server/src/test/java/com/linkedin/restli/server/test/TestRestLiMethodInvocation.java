@@ -1897,7 +1897,7 @@ public class TestRestLiMethodInvocation
     ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams> keyB =
       getDiscoveredItemComplexKey(4L, 5, 6L);
 
-    BatchUpdateRequest batchUpdateRequest =(BatchUpdateRequest)EasyMock.anyObject();
+    BatchUpdateRequest<ComplexResourceKey<DiscoveredItemKey,DiscoveredItemKeyParams>,DiscoveredItem> batchUpdateRequest = EasyMock.anyObject();
     @SuppressWarnings("unchecked")
     Promise<BatchUpdateResult<ComplexResourceKey<DiscoveredItemKey,DiscoveredItemKeyParams>,DiscoveredItem>> batchUpdateResult =
       discoveredItemsResource.batchUpdate(batchUpdateRequest);
@@ -1956,7 +1956,7 @@ public class TestRestLiMethodInvocation
     ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams> keyB =
       getDiscoveredItemComplexKey(4L, 5, 6L);
 
-    BatchPatchRequest batchPatchRequest =(BatchPatchRequest)EasyMock.anyObject();
+    BatchPatchRequest<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem> batchPatchRequest = EasyMock.anyObject();
     EasyMock.expect(discoveredItemsResource.batchUpdate(batchPatchRequest)).andReturn(
       Promises.<BatchUpdateResult<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem>>value(null)).once();
     checkInvocation(discoveredItemsResource,
@@ -3340,7 +3340,7 @@ public class TestRestLiMethodInvocation
     ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams> keyB =
       getDiscoveredItemComplexKey(4L, 5, 6L);
 
-    BatchUpdateRequest batchUpdateRequest =(BatchUpdateRequest)EasyMock.anyObject();
+    BatchUpdateRequest<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem> batchUpdateRequest = EasyMock.anyObject();
     @SuppressWarnings("unchecked")
     BatchUpdateResult<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem> batchUpdateResult =
       discoveredItemsResource.batchUpdate(batchUpdateRequest);
@@ -3380,7 +3380,7 @@ public class TestRestLiMethodInvocation
     ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams> keyB =
       getDiscoveredItemComplexKey(4L, 5, 6L);
 
-    BatchPatchRequest batchPatchRequest =(BatchPatchRequest)EasyMock.anyObject();
+    BatchPatchRequest<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem> batchPatchRequest = EasyMock.anyObject();
     @SuppressWarnings("unchecked")
     BatchUpdateResult<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem> batchUpdateResult =
       discoveredItemsResource.batchUpdate(batchPatchRequest);

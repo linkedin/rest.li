@@ -53,7 +53,7 @@ public class RestliUriBuilderUtil
     return createUriBuilder(request, uriPrefix, AllProtocolVersions.BASELINE_PROTOCOL_VERSION);
   }
 
-  public static RestliUriBuilder createUriBuilder(Request request, ProtocolVersion version)
+  public static RestliUriBuilder createUriBuilder(Request<?> request, ProtocolVersion version)
   {
     return createUriBuilder(request, "", version);
   }
