@@ -11,7 +11,8 @@
     {
       "name": "id",
       "type": "string",
-      "optional": true
+      "optional": true,
+      "deprecated" : "The serialized form of the returned key. You can get a strongly-typed form of the key by casting CreateStatus to CreateIdStatus and calling .getKey()"
     },
     {
       "name": "error",

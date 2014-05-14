@@ -31,6 +31,10 @@ import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import com.linkedin.restli.client.BatchCreateIdRequest;
+import com.linkedin.restli.client.BatchCreateIdRequestBuilder;
+import com.linkedin.restli.client.BatchCreateRequest;
+import com.linkedin.restli.client.BatchCreateRequestBuilder;
 import com.linkedin.restli.client.CreateIdRequest;
 import com.linkedin.restli.client.CreateIdRequestBuilder;
 import com.linkedin.restli.client.OptionsRequestBuilder;
@@ -42,6 +46,8 @@ import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.client.response.CreateResponse;
+import com.linkedin.restli.common.BatchCreateIdResponse;
+import com.linkedin.restli.common.CreateIdStatus;
 import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.client.util.PatchGenerator;
 import com.linkedin.restli.common.BatchResponse;
@@ -80,6 +86,7 @@ import com.linkedin.restli.internal.client.EntityResponseDecoder;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.restspec.ResourceSchema;
+import com.linkedin.restli.test.util.BatchCreateHelper;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.io.IOException;
@@ -98,6 +105,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+
 
 /**
  * Base class for greetings testers. This is an integration test, requiring that you have
@@ -319,12 +327,15 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     Greeting repeatedGreeting = new Greeting();
     repeatedGreeting.setMessage("Hello Hello");
     repeatedGreeting.setTone(Tone.SINCERE);
-    Request<CollectionResponse<CreateStatus>> request3 = builders.batchCreate().inputs(Arrays.asList(repeatedGreeting, repeatedGreeting)).build();
-    CollectionResponse<CreateStatus> statuses = REST_CLIENT.sendRequest(request3).getResponse().getEntity();
-    for (CreateStatus status : statuses.getElements())
+    List<Greeting> entities = Arrays.asList(repeatedGreeting, repeatedGreeting);
+    List<CreateIdStatus<Long>> statuses = BatchCreateHelper.batchCreate(REST_CLIENT, builders, entities);
+    for (CreateIdStatus<Long> status : statuses)
     {
       Assert.assertEquals(status.getStatus().intValue(), HttpStatus.S_201_CREATED.getCode());
-      Assert.assertNotNull(status.getId());
+      @SuppressWarnings("deprecation")
+      String id = status.getId();
+      Assert.assertEquals(status.getKey().longValue(), Long.parseLong(id));
+      Assert.assertNotNull(status.getKey());
     }
   }
 
@@ -638,15 +649,16 @@ public class TestGreetingsClient extends RestLiIntegrationTest
   {
     List<Greeting> greetings = generateBatchTestData(3, "BatchCreate", Tone.FRIENDLY);
 
-    Request<CollectionResponse<CreateStatus>> batchRequest = builders.batchCreate().inputs(greetings).build();
-    CollectionResponse<CreateStatus> results = REST_CLIENT.sendRequest(batchRequest).getResponse().getEntity();
-    List<Long> createdIds = new ArrayList<Long>();
+    List<CreateIdStatus<Long>> statuses = BatchCreateHelper.batchCreate(REST_CLIENT, builders, greetings);
+    List<Long> createdIds = new ArrayList<Long>(statuses.size());
 
-    Assert.assertEquals(results.getElements().size(), greetings.size());
-    for (CreateStatus status: results.getElements())
+    for (CreateIdStatus<Long> status: statuses)
     {
       Assert.assertEquals(status.getStatus().intValue(), HttpStatus.S_201_CREATED.getCode());
-      createdIds.add(Long.parseLong(status.getId()));
+      @SuppressWarnings("deprecation")
+      String id = status.getId();
+      Assert.assertEquals(status.getKey().longValue(), Long.parseLong(id));
+      createdIds.add(status.getKey());
     }
 
     getAndVerifyBatchTestDataSerially(builders, createdIds, greetings, Arrays.asList("id"));

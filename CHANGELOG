@@ -1,5 +1,9 @@
 1.15.23
 -------
+(RB=303020)
+Allow for clients to recieve strongly-typed keys returned from batch creates.
+old builders can cast CreateStatus to CreateIdStatus and then call .getKey
+new builders simply return CreateIdsStatuses.
 
 1.15.22
 -------

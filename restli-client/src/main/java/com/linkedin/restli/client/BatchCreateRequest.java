@@ -28,9 +28,10 @@ import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.CreateStatus;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
-import com.linkedin.restli.internal.client.CollectionResponseDecoder;
+import com.linkedin.restli.internal.client.BatchCreateDecoder;
 import java.net.URI;
 import java.util.Map;
+
 
 /**
  * @author Josh Walker
@@ -42,6 +43,7 @@ public class BatchCreateRequest<T extends RecordTemplate> extends Request<Collec
   private URI _baseUri = null;
 
   BatchCreateRequest(Map<String, String> headers,
+                     BatchCreateDecoder<?> decoder,
                      CollectionRequest<T> input,
                      ResourceSpec resourceSpec,
                      Map<String, Object> queryParams,
@@ -52,7 +54,7 @@ public class BatchCreateRequest<T extends RecordTemplate> extends Request<Collec
     super(ResourceMethod.BATCH_CREATE,
           input,
           headers,
-          new CollectionResponseDecoder<CreateStatus>(CreateStatus.class),
+          decoder,
           resourceSpec,
           queryParams,
           null,

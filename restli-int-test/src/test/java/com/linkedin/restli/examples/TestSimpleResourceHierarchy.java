@@ -28,11 +28,11 @@ import com.linkedin.restli.client.ResponseFuture;
 import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.client.response.CreateResponse;
+import com.linkedin.restli.common.CreateIdStatus;
 import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.client.util.PatchGenerator;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionResponse;
-import com.linkedin.restli.common.CreateStatus;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.PatchRequest;
@@ -45,6 +45,7 @@ import com.linkedin.restli.examples.greetings.client.SubgreetingsBuilders;
 import com.linkedin.restli.examples.greetings.client.SubgreetingsRequestBuilders;
 import com.linkedin.restli.examples.greetings.client.SubsubgreetingBuilders;
 import com.linkedin.restli.examples.greetings.client.SubsubgreetingRequestBuilders;
+import com.linkedin.restli.test.util.BatchCreateHelper;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.net.URISyntaxException;
@@ -339,14 +340,16 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
     greetings.add(greeting2);
 
     //POST
-    Request<CollectionResponse<CreateStatus>> batchCreateRequest = builders.batchCreate().inputs(greetings).build();
-    Response<CollectionResponse<CreateStatus>> batchCreateResponse = REST_CLIENT.sendRequest(batchCreateRequest).getResponse();
+    List<CreateIdStatus<Long>> statuses = BatchCreateHelper.batchCreate(REST_CLIENT, builders, greetings);
 
     ArrayList<Long> ids = new ArrayList<Long>();
 
-    for(CreateStatus status : batchCreateResponse.getEntity().getElements())
+    for(CreateIdStatus<Long> status : statuses)
     {
-      ids.add(Long.parseLong(status.getId()));
+      @SuppressWarnings("deprecation")
+      String id = status.getId();
+      Assert.assertEquals(status.getKey().longValue(), Long.parseLong(id));
+      ids.add(status.getKey());
     }
 
     //GET again to verify that the create has worked.

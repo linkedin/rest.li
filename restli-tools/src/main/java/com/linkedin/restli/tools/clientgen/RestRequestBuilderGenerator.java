@@ -37,6 +37,7 @@ import com.linkedin.pegasus.generator.GeneratorResult;
 import com.linkedin.restli.client.OptionsRequestBuilder;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.client.base.ActionRequestBuilderBase;
+import com.linkedin.restli.client.base.BatchCreateIdRequestBuilderBase;
 import com.linkedin.restli.client.base.BatchCreateRequestBuilderBase;
 import com.linkedin.restli.client.base.BatchDeleteRequestBuilderBase;
 import com.linkedin.restli.client.base.BatchGetRequestBuilderBase;
@@ -1277,7 +1278,14 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     crudBuilderClasses.put(ResourceMethod.UPDATE, UpdateRequestBuilderBase.class);
     crudBuilderClasses.put(ResourceMethod.PARTIAL_UPDATE, PartialUpdateRequestBuilderBase.class);
     crudBuilderClasses.put(ResourceMethod.DELETE, DeleteRequestBuilderBase.class);
-    crudBuilderClasses.put(ResourceMethod.BATCH_CREATE, BatchCreateRequestBuilderBase.class);
+    if (_config.isRestli2Format())
+    {
+      crudBuilderClasses.put(ResourceMethod.BATCH_CREATE, BatchCreateIdRequestBuilderBase.class);
+    }
+    else
+    {
+      crudBuilderClasses.put(ResourceMethod.BATCH_CREATE, BatchCreateRequestBuilderBase.class);
+    }
     crudBuilderClasses.put(ResourceMethod.BATCH_GET, BatchGetRequestBuilderBase.class);
     crudBuilderClasses.put(ResourceMethod.BATCH_UPDATE, BatchUpdateRequestBuilderBase.class);
     crudBuilderClasses.put(ResourceMethod.BATCH_PARTIAL_UPDATE, BatchPartialUpdateRequestBuilderBase.class);

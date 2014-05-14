@@ -44,6 +44,7 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
     _errorResponseBuilder = errorResponseBuilder;
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public PartialRestResponse buildResponse(final RestRequest request,
                                            final RoutingResult routingResult,

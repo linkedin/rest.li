@@ -42,13 +42,14 @@ import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
+import com.linkedin.restli.common.BatchCreateIdResponse;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionRequest;
-import com.linkedin.restli.common.CollectionResponse;
-import com.linkedin.restli.common.CreateStatus;
+import com.linkedin.restli.common.CreateIdStatus;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.examples.RestLiIntegrationTest;
+import com.linkedin.restli.examples.TestConstants;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
@@ -90,7 +91,6 @@ public class TestScatterGather extends RestLiIntegrationTest
 
   private static class TestPartitionInfoProvider implements PartitionInfoProvider
   {
-
     @Override
     public <K> MapKeyHostPartitionResult<K> getPartitionInformation(URI serviceUri,
                                                                           Collection<K> keys,
@@ -122,14 +122,14 @@ public class TestScatterGather extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = "requestBuilderDataProvider")
-  public static void testBuildSGRequests(RootBuilderWrapper<Long, Greeting> builders)
+  public static void testBuildSGRequests(RootBuilderWrapper<Long, Greeting> builders, RestliRequestOptions options)
     throws URISyntaxException, RestException, ServiceUnavailableException
   {
     testBuildSGRequests(10, 0, builders);
   }
 
   @Test(dataProvider = "requestBuilderDataProvider")
-  public static void testBuildSGRequestsWithPartitions(RootBuilderWrapper<Long, Greeting> builders)
+  public static void testBuildSGRequestsWithPartitions(RootBuilderWrapper<Long, Greeting> builders, RestliRequestOptions options)
     throws URISyntaxException, RestException, ServiceUnavailableException
   {
     testBuildSGRequests(12, 3, builders);
@@ -326,7 +326,7 @@ public class TestScatterGather extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = "requestBuilderDataProvider")
-  public static void testSendSGRequests(RootBuilderWrapper<Long, Greeting> builders)
+  public static void testSendSGRequests(RootBuilderWrapper<Long, Greeting> builders, RestliRequestOptions options)
     throws URISyntaxException, InterruptedException, RemoteInvocationException
   {
     final int NUM_ENDPOINTS = 4;
@@ -336,7 +336,7 @@ public class TestScatterGather extends RestLiIntegrationTest
     final int NUM_IDS = 20;
 
     List<Greeting> entities = generateCreate(NUM_IDS);
-    Long[] requestIds = prepareData(entities, builders);
+    Long[] requestIds = prepareData(entities, options);
     testSendGetSGRequests(sg, requestIds, builders);
 
     Map<Long, Greeting> input = generateUpdates(requestIds);
@@ -345,16 +345,19 @@ public class TestScatterGather extends RestLiIntegrationTest
     testSendSGDeleteRequests(sg, requestIds, builders);
   }
 
-  private static Long[] prepareData(List<Greeting> entities, RootBuilderWrapper<Long, Greeting> builders)
+  private static Long[] prepareData(List<Greeting> entities, RestliRequestOptions options)
     throws RemoteInvocationException
   {
+    GreetingsRequestBuilders builders = new GreetingsRequestBuilders(options);
+    BatchCreateIdRequest<Long, Greeting> request = builders.batchCreate().inputs(entities).build();
+    Response<BatchCreateIdResponse<Long>> response = REST_CLIENT.sendRequest(request).getResponse();
+    List<CreateIdStatus<Long>> statuses = response.getEntity().getElements();
     final Long[] requestIds = new Long[entities.size()];
-    final Request<CollectionResponse<CreateStatus>> request = builders.batchCreate().inputs(entities).build();
-    final List<CreateStatus> statuses = REST_CLIENT.sendRequest(request).getResponse().getEntity().getElements();
     for (int i = 0; i < statuses.size(); ++i)
     {
-      Assert.assertFalse(statuses.get(i).hasError());
-      requestIds[i] = Long.valueOf(statuses.get(i).getId());
+      CreateIdStatus<Long> status = statuses.get(i);
+      Assert.assertFalse(status.hasError());
+      requestIds[i] = status.getKey();
     }
     return requestIds;
   }
@@ -513,7 +516,7 @@ public class TestScatterGather extends RestLiIntegrationTest
   }
 
   //@Test(dataProvider = "requestBuilderDataProvider")
-  public static void testScatterGatherLoadBalancerIntegration(RootBuilderWrapper<Long, Greeting> builders) throws Exception
+  public static void testScatterGatherLoadBalancerIntegration(RootBuilderWrapper<Long, Greeting> builders, RestliRequestOptions options) throws Exception
   {
     SimpleLoadBalancer loadBalancer = MockLBFactory.createLoadBalancer();
 
@@ -660,8 +663,10 @@ public class TestScatterGather extends RestLiIntegrationTest
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) }
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), TestConstants.FORCE_USE_NEXT_OPTIONS },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), TestConstants.FORCE_USE_NEXT_OPTIONS }
     };
   }
 }

@@ -43,7 +43,7 @@ import com.linkedin.restli.client.util.PatchGenerator;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionMetadata;
 import com.linkedin.restli.common.CollectionResponse;
-import com.linkedin.restli.common.CreateStatus;
+import com.linkedin.restli.common.CreateIdStatus;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.Link;
@@ -56,6 +56,7 @@ import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
 import com.linkedin.restli.examples.greetings.server.CompressionResource;
 import com.linkedin.restli.examples.groups.api.TransferOwnershipRequest;
+import com.linkedin.restli.test.util.BatchCreateHelper;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.io.ByteArrayInputStream;
@@ -551,15 +552,19 @@ public class TestCompressionServer extends RestLiIntegrationTest
     greetingResponse = future2.get();
     checkContentEncodingHeaderIsAbsent(greetingResponse);
 
+    // batch Create
     Greeting repeatedGreeting = new Greeting();
     repeatedGreeting.setMessage("Hello Hello");
     repeatedGreeting.setTone(Tone.SINCERE);
-    Request<CollectionResponse<CreateStatus>> request3 = builders.batchCreate().inputs(Arrays.asList(repeatedGreeting, repeatedGreeting)).build();
-    CollectionResponse<CreateStatus> statuses = client.sendRequest(request3).getResponse().getEntity();
-    for (CreateStatus status : statuses.getElements())
+    List<Greeting> entities = Arrays.asList(repeatedGreeting, repeatedGreeting);
+    List<CreateIdStatus<Long>> statuses = BatchCreateHelper.batchCreate(client, builders, entities);
+    for (CreateIdStatus<Long> status : statuses)
     {
       Assert.assertEquals(status.getStatus().intValue(), HttpStatus.S_201_CREATED.getCode());
-      Assert.assertNotNull(status.getId());
+      @SuppressWarnings("deprecation")
+      String id = status.getId();
+      Assert.assertEquals(status.getKey().longValue(), Long.parseLong(id));
+      Assert.assertNotNull(status.getKey());
     }
   }
 

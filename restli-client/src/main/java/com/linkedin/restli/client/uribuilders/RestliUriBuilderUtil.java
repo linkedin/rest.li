@@ -18,6 +18,7 @@ package com.linkedin.restli.client.uribuilders;
 
 
 import com.linkedin.restli.client.ActionRequest;
+import com.linkedin.restli.client.BatchCreateIdRequest;
 import com.linkedin.restli.client.BatchCreateRequest;
 import com.linkedin.restli.client.BatchDeleteRequest;
 import com.linkedin.restli.client.BatchGetKVRequest;
@@ -98,7 +99,18 @@ public class RestliUriBuilderUtil
           throw new IllegalArgumentException("create request of unknown type: " + request.getClass());
         }
       case BATCH_CREATE:
-        return new BatchCreateRequestUriBuilder((BatchCreateRequest)request, uriPrefix, version);
+        if(request instanceof BatchCreateRequest)
+        {
+          return new BatchCreateRequestUriBuilder((BatchCreateRequest)request, uriPrefix, version);
+        }
+        else if (request instanceof BatchCreateIdRequest)
+        {
+          return new BatchCreateIdRequestUriBuilder((BatchCreateIdRequest)request, uriPrefix, version);
+        }
+        else
+        {
+          throw new IllegalArgumentException("batch create request of unknown type: " + request.getClass());
+        }
       case PARTIAL_UPDATE:
         return new PartialUpdateRequestUriBuilder((PartialUpdateRequest)request, uriPrefix, version);
       case UPDATE:

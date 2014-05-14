@@ -26,6 +26,8 @@ import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.restli.common.CollectionRequest;
 import com.linkedin.restli.common.ResourceSpec;
+import com.linkedin.restli.common.TypeSpec;
+import com.linkedin.restli.internal.client.BatchCreateDecoder;
 
 import java.net.URI;
 import java.util.List;
@@ -151,7 +153,13 @@ public class BatchCreateRequestBuilder<K, V extends RecordTemplate> extends
   @Override
   public BatchCreateRequest<V> build()
   {
+    @SuppressWarnings("unchecked")
+    BatchCreateDecoder<K> decoder = new BatchCreateDecoder<K>((TypeSpec<K>)_resourceSpec.getKeyType(),
+                                                              _resourceSpec.getKeyParts(),
+                                                              _resourceSpec.getComplexKeyType());
+
     return new BatchCreateRequest<V>(_headers,
+                                     decoder,
                                      _input,
                                      _resourceSpec,
                                      _queryParams,

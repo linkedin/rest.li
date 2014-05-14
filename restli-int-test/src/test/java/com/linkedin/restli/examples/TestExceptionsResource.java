@@ -21,13 +21,18 @@ import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import com.linkedin.restli.client.BatchCreateIdRequest;
 import com.linkedin.restli.client.ErrorHandlingBehavior;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
 import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.RestLiResponseException;
+import com.linkedin.restli.client.RestliRequestOptions;
+import com.linkedin.restli.common.BatchCreateIdResponse;
+import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionResponse;
+import com.linkedin.restli.common.CreateIdStatus;
 import com.linkedin.restli.common.CreateStatus;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.ErrorResponse;
@@ -37,6 +42,8 @@ import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.client.ExceptionsBuilders;
 import com.linkedin.restli.examples.greetings.client.ExceptionsRequestBuilders;
+import com.linkedin.restli.internal.common.ProtocolVersionUtil;
+import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.util.Collections;
@@ -184,33 +191,79 @@ public class TestExceptionsResource extends RestLiIntegrationTest
                       "stacktrace mismatch:" + exception.getStackTrace());
   }
 
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testBatchCreateErrors(RootBuilderWrapper<Long, Greeting> builders) throws Exception
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "options")
+  public void testBatchCreateErrors(RestliRequestOptions options) throws Exception
   {
-    Request<CollectionResponse<CreateStatus>> batchCreateRequest = builders.batchCreate()
-        .input(new Greeting().setId(10L).setMessage("Greetings.").setTone(Tone.SINCERE))
-        .input(new Greeting().setId(11L).setMessage("@#$%@!$%").setTone(Tone.INSULTING))
-        .build();
+    ExceptionsBuilders builders = new ExceptionsBuilders(options);
 
-    CollectionResponse<CreateStatus> response = REST_CLIENT.sendRequest(batchCreateRequest).getResponse().getEntity();
-    List<CreateStatus> createStatuses = response.getElements();
+    Request<CollectionResponse<CreateStatus>> batchCreateRequest = builders.batchCreate()
+      .input(new Greeting().setId(10L).setMessage("Greetings.").setTone(Tone.SINCERE))
+      .input(new Greeting().setId(11L).setMessage("@#$%@!$%").setTone(Tone.INSULTING))
+      .build();
+
+    Response<CollectionResponse<CreateStatus>> response = REST_CLIENT.sendRequest(batchCreateRequest).getResponse();
+    List<CreateStatus> createStatuses = response.getEntity().getElements();
     Assert.assertEquals(createStatuses.size(), 2);
 
-    Assert.assertEquals(createStatuses.get(0).getStatus().intValue(), HttpStatus.S_201_CREATED.getCode());
-    Assert.assertEquals(createStatuses.get(0).getId(), "10");
-    Assert.assertFalse(createStatuses.get(0).hasError());
+    @SuppressWarnings("unchecked")
+    CreateIdStatus<Long> status0 =  (CreateIdStatus<Long>)createStatuses.get(0);
+    Assert.assertEquals(status0.getStatus().intValue(), HttpStatus.S_201_CREATED.getCode());
+    Assert.assertEquals(status0.getKey(), new Long(10));
+    @SuppressWarnings("deprecation")
+    String id = status0.getId();
+    Assert.assertEquals(BatchResponse.keyToString(status0.getKey(), ProtocolVersionUtil.extractProtocolVersion(response.getHeaders())),
+                        id);
+    Assert.assertFalse(status0.hasError());
 
-    CreateStatus status = createStatuses.get(1);
-    Assert.assertEquals(status.getStatus().intValue(), HttpStatus.S_406_NOT_ACCEPTABLE.getCode());
-    Assert.assertTrue(status.hasError());
-    ErrorResponse error = status.getError();
+    CreateStatus status1 = createStatuses.get(1);
+    Assert.assertEquals(status1.getStatus().intValue(), HttpStatus.S_406_NOT_ACCEPTABLE.getCode());
+    Assert.assertTrue(status1.hasError());
+    ErrorResponse error = status1.getError();
     Assert.assertEquals(error.getStatus().intValue(), HttpStatus.S_406_NOT_ACCEPTABLE.getCode());
     Assert.assertEquals(error.getMessage(), "I will not tolerate your insolence!");
     Assert.assertEquals(error.getServiceErrorCode().intValue(), 999);
     Assert.assertEquals(error.getExceptionClass(), "com.linkedin.restli.server.RestLiServiceException");
     Assert.assertEquals(error.getErrorDetails().data().getString("reason"), "insultingGreeting");
     Assert.assertTrue(error.getStackTrace().startsWith(
-        "com.linkedin.restli.server.RestLiServiceException [HTTP Status:406, serviceErrorCode:999]: I will not tolerate your insolence!"),
+      "com.linkedin.restli.server.RestLiServiceException [HTTP Status:406, serviceErrorCode:999]: I will not tolerate your insolence!"),
+                      "stacktrace mismatch:" + error.getStackTrace());
+  }
+
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "options")
+  public void testBatchCreateIdErrors(RestliRequestOptions options) throws Exception
+  {
+    ExceptionsRequestBuilders builders = new ExceptionsRequestBuilders(options);
+
+    BatchCreateIdRequest<Long, Greeting> batchCreateRequest = builders.batchCreate()
+      .input(new Greeting().setId(10L).setMessage("Greetings.").setTone(Tone.SINCERE))
+      .input(new Greeting().setId(11L).setMessage("@#$%@!$%").setTone(Tone.INSULTING))
+      .build();
+
+    Response<BatchCreateIdResponse<Long>> response = REST_CLIENT.sendRequest(batchCreateRequest).getResponse();
+    List<CreateIdStatus<Long>> createStatuses = response.getEntity().getElements();
+    Assert.assertEquals(createStatuses.size(), 2);
+
+    @SuppressWarnings("unchecked")
+    CreateIdStatus<Long> status0 =  createStatuses.get(0);
+    Assert.assertEquals(status0.getStatus().intValue(), HttpStatus.S_201_CREATED.getCode());
+    Assert.assertEquals(status0.getKey(), new Long(10));
+    @SuppressWarnings("deprecation")
+    String id = status0.getId();
+    Assert.assertEquals(BatchResponse.keyToString(status0.getKey(), ProtocolVersionUtil.extractProtocolVersion(response.getHeaders())),
+                        id);
+    Assert.assertFalse(status0.hasError());
+
+    CreateIdStatus<Long> status1 = createStatuses.get(1);
+    Assert.assertEquals(status1.getStatus().intValue(), HttpStatus.S_406_NOT_ACCEPTABLE.getCode());
+    Assert.assertTrue(status1.hasError());
+    ErrorResponse error = status1.getError();
+    Assert.assertEquals(error.getStatus().intValue(), HttpStatus.S_406_NOT_ACCEPTABLE.getCode());
+    Assert.assertEquals(error.getMessage(), "I will not tolerate your insolence!");
+    Assert.assertEquals(error.getServiceErrorCode().intValue(), 999);
+    Assert.assertEquals(error.getExceptionClass(), "com.linkedin.restli.server.RestLiServiceException");
+    Assert.assertEquals(error.getErrorDetails().data().getString("reason"), "insultingGreeting");
+    Assert.assertTrue(error.getStackTrace().startsWith(
+      "com.linkedin.restli.server.RestLiServiceException [HTTP Status:406, serviceErrorCode:999]: I will not tolerate your insolence!"),
                       "stacktrace mismatch:" + error.getStackTrace());
   }
 
@@ -233,14 +286,13 @@ public class TestExceptionsResource extends RestLiIntegrationTest
     };
   }
 
-  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  private static Object[][] requestBuilderDataProvider()
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "options")
+  private static Object[][] options()
   {
-    return new Object[][] {
-      { new RootBuilderWrapper<Long, Greeting>(new ExceptionsBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new ExceptionsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
-      { new RootBuilderWrapper<Long, Greeting>(new ExceptionsRequestBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new ExceptionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
-    };
+    return new Object[][]
+      {
+        { RestliRequestOptions.DEFAULT_OPTIONS },
+        { TestConstants.FORCE_USE_NEXT_OPTIONS }
+      };
   }
 }
