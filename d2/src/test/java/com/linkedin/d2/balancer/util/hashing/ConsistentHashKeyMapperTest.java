@@ -357,26 +357,6 @@ public class ConsistentHashKeyMapperTest
     }
     Assert.assertEquals(100, numOfMatch);
 
-    //test non-stickiness
-    //this is random so there's super low probability that all 100 iterations return the same ordering of hosts. But
-    //given 3 hosts for partition 1 and 2 hosts for partition 2. we have 1/12 chance per iteration that we get the
-    //same ordering of host. Given we will retry this 100 time, that means the chance become 1/12 ^ 100. Which is
-    //super unlikely to happen.
-    result = mapper.mapKeysV3(serviceURI, keys, numHost);
-    originalOrderingOfHost = getOrderingOfHostsForEachKey(result, numHost);
-    numOfMatch = 0;
-    for (int i = 0; i < 100; i++)
-    {
-      result = mapper.mapKeysV3(serviceURI, keys, numHost, myStickyKey);
-      Map<Integer, List<URI>> newOrderingOfHost = getOrderingOfHostsForEachKey(result, numHost);
-      if (newOrderingOfHost.equals(originalOrderingOfHost))
-      {
-        numOfMatch++;
-      }
-    }
-    //the following line may fail 1/12 ^ 100 of the time.
-    Assert.assertNotEquals(100, numOfMatch);
-
     //TODO we haven't implemented maxNumKeys a host can serve, so we don't have that test yet
   }
 
@@ -782,23 +762,6 @@ public class ConsistentHashKeyMapperTest
       Assert.assertEquals(newPartition1, originalPartition1);
     }
 
-    //test non stickiness  the chance of failing this test is 1/12 ^ 100
-    int numMatch = 0;
-    result = mapper.getPartitionInfo(serviceURI, keys, numHost);
-    originalPartition0 = result.getPartitionInfoMap().get(new Integer(0)).getHosts();
-    originalPartition1 = result.getPartitionInfoMap().get(new Integer(1)).getHosts();
-    for (int i = 0; i < 100; i++)
-    {
-      result = mapper.getPartitionInfo(serviceURI, keys, numHost);
-      List<URI> newPartition0 = result.getPartitionInfoMap().get(new Integer(0)).getHosts();
-      List<URI> newPartition1 = result.getPartitionInfoMap().get(new Integer(1)).getHosts();
-      if (newPartition0.equals(originalPartition0) && newPartition1.equals(originalPartition1))
-      {
-        numMatch++;
-      }
-    }
-    //the following line may fail 1/12 ^ 100 of the time.
-    Assert.assertNotEquals(100, numMatch);
   }
 
   private void verifyPartitionResult(MapKeyHostPartitionResult<Integer> result,
