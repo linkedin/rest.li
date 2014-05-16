@@ -58,11 +58,11 @@ public class HostToKeyResult<T, K>
     @Override
     public boolean equals(Object o)
     {
-      if (o == null || !(o instanceof  UnmappedKey))
+      if (o == null || !(o instanceof UnmappedKey))
       {
         return false;
       }
-      UnmappedKey u = (UnmappedKey) o;
+      UnmappedKey<K> u = (UnmappedKey<K>) o;
       return this._errorType.equals(u._errorType) &&
           this._key.equals(u._key);
     }

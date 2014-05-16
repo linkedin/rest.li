@@ -277,7 +277,7 @@ public class ConsistentHashRing<T> implements Ring<T>
       {
         return false;
       }
-      Point p = (Point) o;
+      Point<T> p = (Point<T>) o;
       return _t.equals(p._t) && _hash == p._hash;
     }
 
@@ -298,7 +298,7 @@ public class ConsistentHashRing<T> implements Ring<T>
     {
       return false;
     }
-    ConsistentHashRing ring = (ConsistentHashRing) o;
+    ConsistentHashRing<T> ring = (ConsistentHashRing<T>) o;
     return this._points.equals(ring._points) &&
         Arrays.equals(_objects, ring._objects) &&
         Arrays.equals(_ring, ring._ring);

@@ -77,7 +77,7 @@ public class MapKeyResult<T, K>
       {
         return false;
       }
-      UnmappedKey u = (UnmappedKey) o;
+      UnmappedKey<K> u = (UnmappedKey<K>) o;
       return this._errorType.equals(u._errorType) &&
           this._key.equals(u._key);
     }
