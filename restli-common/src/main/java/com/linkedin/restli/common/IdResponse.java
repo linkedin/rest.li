@@ -18,13 +18,6 @@ package com.linkedin.restli.common;
 
 
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.restli.common.ComplexKeySpec;
-import com.linkedin.restli.common.CompoundKey;
-import com.linkedin.restli.common.ProtocolVersion;
-import com.linkedin.restli.common.TypeSpec;
-import com.linkedin.restli.internal.common.ResponseUtils;
-
-import java.util.Map;
 
 
 /**
@@ -55,5 +48,33 @@ public class IdResponse<K> extends RecordTemplate
   public K getId()
   {
     return _key;
+  }
+
+  // need to override toString, equals, and hashCode because that is normally done through the dataMap, which is null.
+
+  @Override
+  public String toString()
+  {
+    return (this._key == null)? "" : this._key.toString();
+  }
+
+  @Override
+  public boolean equals(Object that)
+  {
+    if (that instanceof IdResponse)
+    {
+      IdResponse<?> thatIdResponse = (IdResponse<?>) that;
+      return (this._key == null)? thatIdResponse._key == null : this._key.equals(thatIdResponse._key);
+    }
+    else
+    {
+      return false;
+    }
+  }
+
+  @Override
+  public int hashCode()
+  {
+    return _key == null? 0 : _key.hashCode();
   }
 }

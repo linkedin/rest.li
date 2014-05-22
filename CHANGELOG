@@ -1,5 +1,7 @@
 1.15.21
 -------
+(RB=306535)
+Fix toString, equals and hashCode on idResponse
 
 1.15.20
 -------
