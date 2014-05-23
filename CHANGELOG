@@ -1,6 +1,10 @@
-1.15.22
+1.15.23
 -------
 
+1.15.22
+-------
+(RB=307113)
+changed rangePartition properties to long because in the actual property, it's long not int
 
 1.15.21
 -------
@@ -12,6 +16,8 @@ Add ability to suppress regex matching failure warning via service properties, f
 
 (RB=299700)
 Adding a read only view of ResourceModel for filters
+
+
 1.15.20
 -------
 (RB=288213)

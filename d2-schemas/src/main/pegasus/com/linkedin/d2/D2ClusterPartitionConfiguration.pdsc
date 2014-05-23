@@ -34,12 +34,12 @@
           "fields": [
             {
               "name": "partitionSize",
-              "type": "int",
+              "type": "long",
               "doc": "The size of each partition. Used only for RANGE based partition. Not used for HASH based partition"
             },
             {
               "name": "keyRangeStart",
-              "type": "int",
+              "type": "long",
               "doc": "The starting point for RANGE partitioning. Not used for HASH based partition."
             }
           ]
