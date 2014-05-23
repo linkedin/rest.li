@@ -1,3 +1,7 @@
+1.15.22
+-------
+
+
 1.15.21
 -------
 (RB=306535)
@@ -6,6 +10,8 @@ Fix toString, equals and hashCode on idResponse
 (RB=306516)
 Add ability to suppress regex matching failure warning via service properties, for cases where stickiness is desired only some of the time.
 
+(RB=299700)
+Adding a read only view of ResourceModel for filters
 1.15.20
 -------
 (RB=288213)
