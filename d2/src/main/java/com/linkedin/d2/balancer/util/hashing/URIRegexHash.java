@@ -51,10 +51,16 @@ public class URIRegexHash implements HashFunction<Request>
   /** optional config value; if true, fail if no regex matches, otherwise fall back to random */
   public static final String KEY_FAIL_ON_NO_MATCH = "failOnNoMatch";
 
+  /** optional config value; if false, don't warn on falling back to random if the uri doesn't match
+   *  the regex.
+   */
+  public static final String KEY_WARN_ON_NO_MATCH = "warnOnNoMatch";
+
   private static final Logger LOG = LoggerFactory.getLogger(URIRegexHash.class);
 
   private final List<Pattern> _patterns;
   private final boolean _failOnNoMatch;
+  private final boolean _warnOnNoMatch;
   private final Random _random = new Random();
   private final MD5Hash _md5 = new MD5Hash();
 
@@ -63,15 +69,22 @@ public class URIRegexHash implements HashFunction<Request>
    * @param config The config must contain the following keys:
    * {@link #KEY_REGEXES}.  The following are optional:
    * {@link #KEY_FAIL_ON_NO_MATCH}
+   * {@link #KEY_WARN_ON_NO_MATCH}
    */
   @SuppressWarnings("unchecked")
   public URIRegexHash(Map<String,Object> config)
   {
     this((List<String>)config.get(KEY_REGEXES),
-         MapUtil.getWithDefault(config, KEY_FAIL_ON_NO_MATCH, false));
+         MapUtil.getWithDefault(config, KEY_FAIL_ON_NO_MATCH, false),
+         MapUtil.getWithDefault(config, KEY_WARN_ON_NO_MATCH, true));
   }
 
   public URIRegexHash(List<String> patterns, boolean failOnNoMatch)
+  {
+    this(patterns, failOnNoMatch, true);
+  }
+
+  public URIRegexHash(List<String> patterns, boolean failOnNoMatch, boolean warnOnNoMatch)
   {
     List<Pattern> compiledPatterns = new ArrayList<Pattern>(patterns.size());
     for (String p : patterns)
@@ -80,6 +93,7 @@ public class URIRegexHash implements HashFunction<Request>
     }
     _patterns = Collections.unmodifiableList(compiledPatterns);
     _failOnNoMatch = failOnNoMatch;
+    _warnOnNoMatch = warnOnNoMatch;
   }
 
   @Override
@@ -123,7 +137,14 @@ public class URIRegexHash implements HashFunction<Request>
       throw new RuntimeException("No expression matched URI " + uriString);
     }
 
-    LOG.warn("No expression matched URI {}, falling back to random", uriString);
+    if (_warnOnNoMatch)
+    {
+      LOG.warn("No expression matched URI {}, falling back to random", uriString);
+    }
+    else
+    {
+      LOG.debug("No expression matched URI {}, falling back to random", uriString);
+    }
     return _random.nextInt();
   }
 }
