@@ -37,13 +37,30 @@ import java.util.List;
  */
 public class BatchCreateIdResponse<K> extends RecordTemplate
 {
-  private final CreateIdStatusDecoder<K> _entityDecoder;
-  private List<CreateIdStatus<K>> _collection;
+  private final List<CreateIdStatus<K>> _collection;
 
   public BatchCreateIdResponse(DataMap map, CreateIdStatusDecoder<K> entityDecoder)
   {
     super(map, generateSchema());
-    _entityDecoder = entityDecoder;
+    _collection = createCollectionFromDecoder(entityDecoder);
+  }
+
+  public BatchCreateIdResponse(List<CreateIdStatus<K>> elements)
+  {
+    super(generateDataMap(elements), generateSchema());
+    _collection = elements;
+  }
+
+  private static DataMap generateDataMap(List<? extends RecordTemplate> elements)
+  {
+    DataMap dataMap = new DataMap();
+    DataList listElements = new DataList();
+    for (RecordTemplate recordTemplate : elements)
+    {
+      listElements.add(recordTemplate.data());
+    }
+    dataMap.put(CollectionResponse.ELEMENTS, listElements);
+    return dataMap;
   }
 
   private static RecordDataSchema generateSchema()
@@ -57,29 +74,25 @@ public class BatchCreateIdResponse<K> extends RecordTemplate
     return schema;
   }
 
-  private CreateIdStatus<K> decodeValue(DataMap dataMap)
+  private CreateIdStatus<K> decodeValue(DataMap dataMap, CreateIdStatusDecoder<K> decoder)
   {
-    return _entityDecoder.makeValue(dataMap);
+    return decoder.makeValue(dataMap);
   }
 
-  private void setCollection()
+  private List<CreateIdStatus<K>> createCollectionFromDecoder(CreateIdStatusDecoder<K> decoder)
   {
     DataList elements = this.data().getDataList(CollectionResponse.ELEMENTS);
     List<CreateIdStatus<K>> collection = new ArrayList<CreateIdStatus<K>>(elements.size());
     for (Object obj : elements)
     {
       DataMap dataMap = (DataMap) obj;
-      collection.add(decodeValue(dataMap));
+      collection.add(decodeValue(dataMap, decoder));
     }
-    _collection = collection;
+    return collection;
   }
 
   public List<CreateIdStatus<K>> getElements()
   {
-    if (_collection == null)
-    {
-      setCollection();
-    }
     return _collection;
   }
 }

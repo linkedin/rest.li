@@ -3,6 +3,9 @@
 (RB=311122)
 Decoders for responses that require a non-null dataMap will now return null if passed a null dataMap in wrapResponse.
 
+(RB=310817)
+Allow filters access to strongly typed Ids in batch create responses.
+
 1.15.24
 -------
 add new method to set partitionData in ZKAnnouncerJMX

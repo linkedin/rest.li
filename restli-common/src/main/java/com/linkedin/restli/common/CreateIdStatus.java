@@ -66,17 +66,18 @@ public class CreateIdStatus<K> extends CreateStatus
    */
   private static DataMap createDataMap(int status, Object key, ErrorResponse error, ProtocolVersion version)
   {
-    DataMap dataMap = new DataMap();
-    dataMap.put("status", status);
+    CreateStatus createStatus = new CreateStatus();
+    createStatus.setStatus(status);
     if (key != null)
     {
-      dataMap.put("id", URIParamUtils.encodeKeyForBody(key, false, version));
+      @SuppressWarnings("deprecation")
+      CreateStatus c = createStatus.setId(URIParamUtils.encodeKeyForBody(key, false, version));
     }
     if (error != null)
     {
-      dataMap.put("error", error);
+      createStatus.setError(error);
     }
-    return dataMap;
+    return createStatus.data();
   }
 
   /**
