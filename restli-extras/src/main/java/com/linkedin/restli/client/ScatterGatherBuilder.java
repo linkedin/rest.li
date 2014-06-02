@@ -25,13 +25,14 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.util.MapKeyResult;
-import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.common.BatchResponse;
+import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.common.UpdateStatus;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -60,7 +61,7 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
   // for those who do not care about trouble keys.
   @Deprecated
   public Collection<RequestInfo<T>> buildRequests(BatchGetRequest<T> request, RequestContext requestContext) throws
-      ServiceUnavailableException
+    ServiceUnavailableException
   {
     return buildRequestsV2(request, requestContext).getRequestInfo();
   }
@@ -68,7 +69,7 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
   // return value contains the request info and the unmapped keys (also the cause)
   // V2 is here to differentiate it from the older API
   public ScatterGatherResult<T> buildRequestsV2(BatchGetRequest<T> request, RequestContext requestContext) throws
-          ServiceUnavailableException
+    ServiceUnavailableException
   {
     Set<Object> idObjects = request.getObjectIds();
 
@@ -84,8 +85,15 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
                                                                                         request.getResourceSpec(),
                                                                                         request.getRequestOptions());
       builder.ids(batch.getValue());
-      builder.fields(request.getFields().toArray(new PathSpec[0]));
-      for (Map.Entry<String,String> header : request.getHeaders().entrySet())
+      for (Map.Entry<String, Object> param : request.getQueryParamsObjects().entrySet())
+      {
+        if (!param.getKey().equals(RestConstants.QUERY_BATCH_IDS_PARAM))
+        {
+          // keep all non-batch query parameters since they could be request specific
+          builder.setParam(param.getKey(), param.getValue());
+        }
+      }
+      for (Map.Entry<String, String> header : request.getHeaders().entrySet())
       {
         builder.setHeader(header.getKey(), header.getValue());
       }
@@ -120,12 +128,18 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
 
     for (Map.Entry<URI, Map<K, T>> batch : batches.entrySet())
     {
-      BatchUpdateRequestBuilder<K, T> builder =
-        new BatchUpdateRequestBuilder<K, T>(request.getBaseUriTemplate(),
-                                            valueType.getType(),
-                                            request.getResourceSpec(),
-                                            request.getRequestOptions());
+      BatchUpdateRequestBuilder<K, T> builder = new BatchUpdateRequestBuilder<K, T>(request.getBaseUriTemplate(),
+                                                                                    valueType.getType(),
+                                                                                    request.getResourceSpec(),
+                                                                                    request.getRequestOptions());
       builder.inputs(batch.getValue());
+      for (Map.Entry<String, Object> param : request.getQueryParamsObjects().entrySet())
+      {
+        if (!param.getKey().equals(RestConstants.QUERY_BATCH_IDS_PARAM))
+        {
+          builder.setParam(param.getKey(), param.getValue());
+        }
+      }
       for (Map.Entry<String,String> header : request.getHeaders().entrySet())
       {
         builder.setHeader(header.getKey(), header.getValue());
@@ -230,12 +244,18 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
       TypeSpec<? extends RecordTemplate> value = request.getResourceSpec().getValueType();
       @SuppressWarnings("unchecked")
       Class<T> valueClass = (Class<T>) ((value == null) ? null : value.getType());
-      BatchDeleteRequestBuilder<K, T> builder =
-        new BatchDeleteRequestBuilder<K, T>(request.getBaseUriTemplate(),
-                                            valueClass,
-                                            request.getResourceSpec(),
-                                            request.getRequestOptions());
+      BatchDeleteRequestBuilder<K, T> builder = new BatchDeleteRequestBuilder<K, T>(request.getBaseUriTemplate(),
+                                                                                    valueClass,
+                                                                                    request.getResourceSpec(),
+                                                                                    request.getRequestOptions());
       builder.ids(batch.getValue());
+      for (Map.Entry<String, Object> param : request.getQueryParamsObjects().entrySet())
+      {
+        if (!param.getKey().equals(RestConstants.QUERY_BATCH_IDS_PARAM))
+        {
+          builder.setParam(param.getKey(), param.getValue());
+        }
+      }
       for (Map.Entry<String,String> header : request.getHeaders().entrySet())
       {
         builder.setHeader(header.getKey(), header.getValue());
@@ -262,7 +282,7 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
    * @throws ServiceUnavailableException
    */
   public void sendRequests(RestClient client, BatchGetRequest<T> request, RequestContext requestContext, Callback<Response<BatchResponse<T>>> callback)
-      throws ServiceUnavailableException
+    throws ServiceUnavailableException
   {
     ScatterGatherResult<T> scatterGatherResult = buildRequestsV2(request, requestContext);
     for (RequestInfo<T> requestInfo : scatterGatherResult.getRequestInfo())

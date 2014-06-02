@@ -47,6 +47,7 @@ import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionRequest;
 import com.linkedin.restli.common.CreateIdStatus;
 import com.linkedin.restli.common.ResourceSpec;
+import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.examples.RestLiIntegrationTest;
 import com.linkedin.restli.examples.TestConstants;
@@ -166,7 +167,7 @@ public class TestScatterGather extends RestLiIntegrationTest
                                                 RootBuilderWrapper<Long, Greeting> builders)
     throws ServiceUnavailableException
   {
-    Collection<ScatterGatherBuilder.KVRequestInfo<Long ,UpdateStatus>> requests = buildScatterGatherDeleteRequests(sg, ids, builders);
+    Collection<ScatterGatherBuilder.KVRequestInfo<Long, UpdateStatus>> requests = buildScatterGatherDeleteRequests(sg, ids, builders);
     Assert.assertEquals(requests.size(), numEndpoints);
 
     Set<Set<String>> requestIdSets = new HashSet<Set<String>>();
@@ -175,7 +176,8 @@ public class TestScatterGather extends RestLiIntegrationTest
     {
       BatchRequest<BatchKVResponse<Long, UpdateStatus>> request = requestInfo.getRequest();
       Set<String> expectedParams = new HashSet<String>();
-      expectedParams.add("ids");
+      expectedParams.add(RestConstants.QUERY_BATCH_IDS_PARAM);
+      expectedParams.add("foo");
 
       testRequest(request, expectedParams, null, null, requestIdSets, requestIds);
     }
@@ -198,7 +200,8 @@ public class TestScatterGather extends RestLiIntegrationTest
     {
       BatchRequest<BatchKVResponse<Long,UpdateStatus>> request = requestInfo.getRequest();
       Set<String> expectedParams = new HashSet<String>();
-      expectedParams.add("ids");
+      expectedParams.add(RestConstants.QUERY_BATCH_IDS_PARAM);
+      expectedParams.add("foo");
 
       testRequest(request, expectedParams, null, greetingMap, requestIdSets, requestIds);
     }
@@ -211,7 +214,7 @@ public class TestScatterGather extends RestLiIntegrationTest
                                              ScatterGatherBuilder<Greeting> sg,
                                              Long[] ids,
                                              RootBuilderWrapper<Long, Greeting> builders)
-            throws ServiceUnavailableException
+    throws ServiceUnavailableException
   {
     Collection<ScatterGatherBuilder.RequestInfo<Greeting>> requests = buildScatterGatherGetRequests(sg, ids, builders);
     Assert.assertEquals(requests.size(), numEndpoints);
@@ -220,11 +223,12 @@ public class TestScatterGather extends RestLiIntegrationTest
     Set<Long> requestIds = new HashSet<Long>();
     for (ScatterGatherBuilder.RequestInfo<Greeting> requestInfo : requests)
     {
-      //URI will be something like "greetings/?ids=21&ids=4&ids=53&ids=60&ids=66&ids=88&ids=93"
+      //URI will be something like "greetings/?ids=21&ids=4&ids=53&ids=60&ids=66&ids=88&ids=93&foo=bar"
       BatchRequest<BatchResponse<Greeting>> request = requestInfo.getBatchRequest();
       Set<String> expectedParams = new HashSet<String>();
-      expectedParams.add("ids");
-      expectedParams.add("fields");
+      expectedParams.add(RestConstants.QUERY_BATCH_IDS_PARAM);
+      expectedParams.add("foo");
+      expectedParams.add(RestConstants.FIELDS_PARAM);
       Set<String> expectedFields = Collections.singleton("message");
 
       testRequest(request, expectedParams, expectedFields, null, requestIdSets, requestIds);
@@ -257,11 +261,11 @@ public class TestScatterGather extends RestLiIntegrationTest
 
     if (expectedFields != null)
     {
-      Assert.assertTrue(params.get("fields").containsAll(expectedFields));
+      Assert.assertTrue(params.get(RestConstants.FIELDS_PARAM).containsAll(expectedFields));
     }
 
     Set<String> uriIds = new HashSet<String>();
-    for (String value : params.get("ids"))
+    for (String value : params.get(RestConstants.QUERY_BATCH_IDS_PARAM))
     {
       uriIds.addAll(Arrays.asList(value.split(",")));
     }
@@ -515,7 +519,7 @@ public class TestScatterGather extends RestLiIntegrationTest
     Assert.assertEquals(responseIds.size(), requestIds.length);
   }
 
-  //@Test(dataProvider = "requestBuilderDataProvider")
+  @Test(dataProvider = "requestBuilderDataProvider")
   public static void testScatterGatherLoadBalancerIntegration(RootBuilderWrapper<Long, Greeting> builders, RestliRequestOptions options) throws Exception
   {
     SimpleLoadBalancer loadBalancer = MockLBFactory.createLoadBalancer();
@@ -545,9 +549,9 @@ public class TestScatterGather extends RestLiIntegrationTest
     ScatterGatherBuilder<Greeting> sg,
     Long[] ids,
     RootBuilderWrapper<Long, Greeting> builders)
-          throws ServiceUnavailableException
+    throws ServiceUnavailableException
   {
-    Request<BatchResponse<Greeting>> request = builders.batchGet().ids(ids).fields(Greeting.fields().message()).build();
+    Request<BatchResponse<Greeting>> request = new GreetingsBuilders().batchGet().ids(ids).fields(Greeting.fields().message()).setParam("foo", "bar").build();
 
     return sg.buildRequestsV2((BatchGetRequest<Greeting>) request, new RequestContext()).getRequestInfo();
   }
@@ -556,10 +560,10 @@ public class TestScatterGather extends RestLiIntegrationTest
     ScatterGatherBuilder<Greeting> sg,
     Map<Long, Greeting> inputs,
     RootBuilderWrapper<Long, Greeting> builders)
-          throws ServiceUnavailableException
+    throws ServiceUnavailableException
   {
     @SuppressWarnings("unchecked")
-    BatchUpdateRequest<Long, Greeting> request = (BatchUpdateRequest<Long, Greeting>) builders.batchUpdate().inputs(inputs).build();
+    BatchUpdateRequest<Long, Greeting> request = (BatchUpdateRequest<Long, Greeting>) builders.batchUpdate().inputs(inputs).setParam("foo", "bar").build();
 
     return sg.buildRequests(request, new RequestContext()).getRequestInfo();
   }
@@ -568,10 +572,10 @@ public class TestScatterGather extends RestLiIntegrationTest
     ScatterGatherBuilder<Greeting> sg,
     Long[] ids,
     RootBuilderWrapper<Long, Greeting> builders)
-          throws ServiceUnavailableException
+    throws ServiceUnavailableException
   {
     @SuppressWarnings("unchecked")
-    BatchDeleteRequest<Long, Greeting> request = (BatchDeleteRequest<Long, Greeting>) builders.batchDelete().ids(ids).build();
+    BatchDeleteRequest<Long, Greeting> request = (BatchDeleteRequest<Long, Greeting>) builders.batchDelete().ids(ids).setParam("foo", "bar").build();
 
     return sg.buildRequests(request, new RequestContext()).getRequestInfo();
   }

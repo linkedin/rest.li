@@ -6,11 +6,14 @@ Decoders for responses that require a non-null dataMap will now return null if p
 (RB=310817)
 Allow filters access to strongly typed Ids in batch create responses.
 
+(RB=310721)
+Keep non-batch query parameters in ScatterGatherBuilder.
+
 1.15.24
 -------
+(RB=310960)
 add new method to set partitionData in ZKAnnouncerJMX
 expose method to access zkannouncer from ZooKeeperConnectionManager
-(RB=310960)
 
 1.15.23
 -------
@@ -47,7 +50,7 @@ Provide methods to map keys to multiple hosts in KeyMapper
 Fix java 7 warnings.
 
 (RB=299112)
-Allow for clients to recieve strongly-typed keys returned from creates.
+Allow for clients to receive strongly-typed keys returned from creates.
 old builder format:
 CreateResponse<K> entity = (CreateResponse<K>)response.getEntity();
 K key = entity.getId();
