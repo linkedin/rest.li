@@ -55,6 +55,6 @@ public class BatchCreateDecoder<K> extends CollectionResponseDecoder<CreateStatu
   protected BatchCreateResponse<K> wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
   {
     CreateIdStatusDecoder<K> decoder = new CreateIdStatusDecoder<K>(_keyType, _keyParts, _complexKeyType, version);
-    return new BatchCreateResponse<K>(dataMap, decoder);
+    return dataMap == null ? null : new BatchCreateResponse<K>(dataMap, decoder);
   }
 }

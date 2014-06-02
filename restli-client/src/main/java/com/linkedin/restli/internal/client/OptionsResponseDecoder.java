@@ -45,6 +45,11 @@ public class OptionsResponseDecoder extends RestResponseDecoder<OptionsResponse>
   protected OptionsResponse wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
     throws IOException
   {
+    if (dataMap == null)
+    {
+      return null;
+    }
+
     DataMap resources = dataMap.getDataMap(RESOURCES);
     if(resources == null) resources = new DataMap();
 

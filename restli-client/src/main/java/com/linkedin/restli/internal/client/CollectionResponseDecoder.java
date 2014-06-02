@@ -53,6 +53,6 @@ public class CollectionResponseDecoder<T extends RecordTemplate> extends RestRes
   @Override
   protected CollectionResponse<T> wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
   {
-    return new CollectionResponse<T>(dataMap, _elementClass);
+    return dataMap == null ? null : new CollectionResponse<T>(dataMap, _elementClass);
   }
 }

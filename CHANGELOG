@@ -1,5 +1,7 @@
 1.15.25
 ------
+(RB=311122)
+Decoders for responses that require a non-null dataMap will now return null if passed a null dataMap in wrapResponse.
 
 1.15.24
 -------

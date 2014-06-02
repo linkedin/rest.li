@@ -60,6 +60,6 @@ public class BatchCreateIdDecoder<K> extends RestResponseDecoder<BatchCreateIdRe
   protected BatchCreateIdResponse<K> wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
   {
     CreateIdStatusDecoder<K> decoder = new CreateIdStatusDecoder<K>(_keyType, _keyParts, _complexKeyType, version);
-    return new BatchCreateIdResponse<K>(dataMap, decoder);
+    return dataMap == null ? null : new BatchCreateIdResponse<K>(dataMap, decoder);
   }
 }
