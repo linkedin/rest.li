@@ -18,17 +18,18 @@
 package com.linkedin.d2.balancer.util;
 
 
+import com.linkedin.d2.balancer.util.HostToKeyResult.ErrorType;
+import com.linkedin.d2.balancer.util.HostToKeyResult.UnmappedKey;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessException;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
-import com.linkedin.d2.balancer.util.HostToKeyResult.UnmappedKey;
-import com.linkedin.d2.balancer.util.HostToKeyResult.ErrorType;
+
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -95,39 +96,6 @@ import java.util.Map;
  *
  * Note that host2 appears twice and it appears on different key depending on which try you're on.
  *
- * -------------------
- *
- * Another consideration is a service may specify a limit on the number of keys it can process PER REQUEST. Maybe due
- * to SLA requirement, a host is capped to serve only N number of keys. In this case we will honor this requirements
- * and only map keys up to that limit.
- *
- * For example: We have keys 1,2,3.
- * keys 1 is served by host 2,1
- * keys 2 is served by host 2
- * keys 3 is served by host 1,3
- * we want to get 2 hosts per key because we want to try a backup retry
- *
- * In the above example if host1, host2 and host3 has a limit of 1 key then the result
- * will change to this.
- *
- * For first try it should be
- * {
- *   list:
- *   0 -> [key1] [host2]
- *   1 -> [key2] [host2]
- *   2 -> [key3] [host1]
- * }
- *
- * As you can see from the result above, we will send 2 request to host2 because the max key we can
- * send PER REQUEST is only 1.
- *
- * For the second try we would return the following
- * {
- *   list:
- *   0 -> [key1] host 1
- *   1 -> [key2] no host
- *   2 -> [key3] host 3
- * }
  *
  * @author Oby Sumampouw (osumampouw@linkedin.com)
  */
@@ -210,51 +178,6 @@ public class HostToKeyMapper<K>
     }
   }
 
-  /* utility method to split host -> keys according to the max limit of keys per server
-   example: given hostToKeyMerge that looks like
-   {
-     URI1 -> [1,2,3]
-     URI2 -> [4]
-   }
-   if maxNumOfKeysPerHost is 2 then the return result it
-   {
-     URI1 -> [1,2]
-     URI1 -> [3]
-     URI2 -> [4]
-   }
-  */
-  private List<KeysAndHosts<K>> apportionKeys(Map<URI, Collection<K>> hostToKeysMerge)
-  {
-    List<KeysAndHosts<K>> result = new ArrayList<KeysAndHosts<K>>();
-    int maxNumOfKeysPerHost = _mapResult.getMaxNumOfKeysPerHost();
-    for (Map.Entry<URI, Collection<K>> entry : hostToKeysMerge.entrySet())
-    {
-      int counter = 0;
-      List<URI> currHost = new ArrayList<URI>();
-      currHost.add(entry.getKey());
-      Collection<K> currKeys = new HashSet<K>();
-      KeysAndHosts<K> currKeysAndHosts = new KeysAndHosts<K>(currKeys, currHost);
-      for (K key : entry.getValue())
-      {
-        currKeys.add(key);
-        if (counter >= maxNumOfKeysPerHost)
-        {
-          result.add(currKeysAndHosts);
-          currKeys = new HashSet<K>();
-          currKeysAndHosts = new KeysAndHosts<K>(currKeys, currHost);
-          counter = 0;
-        }
-        counter++;
-      }
-
-      if (!currKeys.isEmpty())
-      {
-        result.add(currKeysAndHosts);
-      }
-    }
-    return result;
-  }
-
 
   /**
    * This is used usually in conjunction with getFirstResult() in a sequential scatter gather. Typical use case is as
@@ -313,7 +236,11 @@ public class HostToKeyMapper<K>
         mergeKeys(hosts, keysForThisPartition, unmappedKeys, whichIteration, hostToKeysMerge);
       }
     }
-    List<KeysAndHosts<K>> mapResult = apportionKeys(hostToKeysMerge);
+    List<KeysAndHosts<K>> mapResult = new ArrayList<KeysAndHosts<K>>();
+    for (Map.Entry<URI, Collection<K>> entry: hostToKeysMerge.entrySet())
+    {
+      mapResult.add(new KeysAndHosts<K>(entry.getValue(), Arrays.asList(entry.getKey())));
+    }
     return new HostToKeyResult<URI, K>(mapResult, unmappedKeys);
   }
 }

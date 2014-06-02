@@ -506,23 +506,6 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
           rankedUri.add(uri);
           if (rankedUri.size() < trackerClients.size())
           {
-            //there is a potential problem here although it's very rare and very unlikely depending on
-            //timing, the setup of the cluster membership, and how often the cluster change its membership.
-
-            //the problem is as follows:
-            //we are calling getRing() with set A of trackerClients and we want numHost to be 5. There are 10 hosts
-            //in set A. On the 4th iteration this loop, the membership of A becomes stale because some hosts
-            //leaves and join the partition. So the new set of membership is B. Imagine some other caller calls
-            //getRing with set B and manage to update the state of the strategy. Then the last iteration of with
-            //set A will get a completely different ring than previous iteration.
-
-            //But the rational why we are not bothered here is because there is nothing we can do about it
-            //imagine you receive a notification that you should send a message to foo.com.
-            //when we're about to send the request, foo.com suddenly dies and when you send the message
-            //obviously it will fail but we can't do anything about it. So this is similar to this case.
-            //we are preparing to get a mapping of URL, during this time, some server is changed. Should
-            //we reconstruct the whole request again? No, we should just proceed and send the request. If
-            //it fails then we can retry again on the subsequent request.
             ring = pair.getStrategy().getRing(uriItem.getVersion(), partitionId, trackerClients, rankedUri);
           }
         }

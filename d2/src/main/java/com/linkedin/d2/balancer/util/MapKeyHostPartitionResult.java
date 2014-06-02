@@ -34,23 +34,6 @@ public class MapKeyHostPartitionResult<K>
   private final Collection<K> _unmappedKeys;
   private final Map<Integer, KeysAndHosts<K>> _partitionInfoMap;
   private final Collection<Integer> _partitionWithoutEnoughHost;
-  private final int _maxNumOfKeysPerHost;
-
-  public static final int UNLIMITED_CAPACITY = Integer.MAX_VALUE;
-
-  public MapKeyHostPartitionResult(Collection<K> unmappedKeys, Map<Integer, KeysAndHosts<K>> partitionInfoMap,
-                                   Collection<Integer> partitionWithoutEnoughHost,
-                                   int maxNumOfKeysPerHost)
-  {
-    _unmappedKeys = Collections.unmodifiableCollection(unmappedKeys);
-    _partitionInfoMap = Collections.unmodifiableMap(partitionInfoMap);
-    _partitionWithoutEnoughHost = Collections.unmodifiableCollection(partitionWithoutEnoughHost);
-    if (maxNumOfKeysPerHost <= 0)
-    {
-      throw new IllegalArgumentException("Cannot set maxNumOfKeysPerHost that is less than 1");
-    }
-    _maxNumOfKeysPerHost = maxNumOfKeysPerHost;
-  }
 
   public MapKeyHostPartitionResult(Collection<K> unmappedKeys, Map<Integer, KeysAndHosts<K>> partitionInfoMap,
                                    Collection<Integer> partitionWithoutEnoughHost)
@@ -58,7 +41,6 @@ public class MapKeyHostPartitionResult<K>
     _unmappedKeys = Collections.unmodifiableCollection(unmappedKeys);
     _partitionInfoMap = Collections.unmodifiableMap(partitionInfoMap);
     _partitionWithoutEnoughHost = Collections.unmodifiableCollection(partitionWithoutEnoughHost);
-    _maxNumOfKeysPerHost = UNLIMITED_CAPACITY;
   }
 
   public Collection<K> getUnmappedKeys()
@@ -76,8 +58,4 @@ public class MapKeyHostPartitionResult<K>
     return _partitionWithoutEnoughHost;
   }
 
-  public int getMaxNumOfKeysPerHost()
-  {
-    return _maxNumOfKeysPerHost;
-  }
 }

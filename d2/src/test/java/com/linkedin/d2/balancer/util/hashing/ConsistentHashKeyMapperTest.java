@@ -356,8 +356,6 @@ public class ConsistentHashKeyMapperTest
       }
     }
     Assert.assertEquals(100, numOfMatch);
-
-    //TODO we haven't implemented maxNumKeys a host can serve, so we don't have that test yet
   }
 
   private Map<Integer, List<URI>> getOrderingOfHostsForEachKey(HostToKeyMapper<Integer> result, int numHost)
