@@ -89,6 +89,7 @@ import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.common.util.ResourceSchemaToResourceSpecTranslator;
 import com.linkedin.restli.common.util.ResourceSchemaToResourceSpecTranslator.ClassBindingResolver;
 import com.linkedin.restli.common.util.RichResourceSchema;
+import com.linkedin.restli.internal.client.RequestBodyTransformer;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.server.ResourceContextImpl;
 import com.linkedin.restli.internal.server.RestLiResponseHandler;
@@ -517,17 +518,18 @@ public class ExampleRequestResponseGenerator
     if (request.getInputRecord() != null)
     {
       requestBuilder.setHeader(RestConstants.HEADER_CONTENT_TYPE, RestConstants.HEADER_VALUE_APPLICATION_JSON);
-      writeEntity(request.getInputRecord(), requestBuilder);
+      writeEntity(request, protocolVersion, requestBuilder);
     }
 
     return requestBuilder.build();
   }
 
-  private static void writeEntity(RecordTemplate entity, MessageBuilder<?> messageBuilder)
+  private static void writeEntity(Request<?> request, ProtocolVersion protocolVersion, MessageBuilder<?> messageBuilder)
   {
     try
     {
-      messageBuilder.setEntity(CODEC.dataTemplateToBytes(entity, true));
+      DataMap dataMap = RequestBodyTransformer.transform(request, protocolVersion);
+      messageBuilder.setEntity(CODEC.mapToBytes(dataMap));
     }
     catch (IOException e)
     {
@@ -949,16 +951,20 @@ public class ExampleRequestResponseGenerator
     return result;
   }
 
-  /* --------------------------------------------------------------------------------------------------------------
+  /* ---------------------------------------------------------------------------------------------------------------
    * The following classes are used by the example generator to dynamically construct rest.li client builder classes.
    * They are needed as substitutes for concrete DataTemplate classes (e.g. Greetings.class) to satisfy all the
    * 'instanceof' and 'isAssignableFrom' checks within the builder implementations.  They are also used in the
-   * above code as generic type placeholders.
-   *
-   * THESE CLASSES MUST REMAIN PRIVATE.  They should never be used outside this example generator.
+   * above code as generic type placeholders. They should never be used outside this example generator. They are
+   * declared as "public" as we need to access their constructors from RecordTemplate#obtainWrapped while generating
+   * example requests and responses. These classes can be made private once RequestBodyTransformer is removed.
+   * ---------------------------------------------------------------------------------------------------------------
    */
 
-  private static class RecordTemplatePlaceholder extends RecordTemplate
+  /**
+   * SHOULD NEVER BE INSTANTIATED DIRECTLY!
+   */
+  public static class RecordTemplatePlaceholder extends RecordTemplate
   {
     public RecordTemplatePlaceholder(DataMap object)
         throws TemplateOutputCastException
@@ -973,7 +979,10 @@ public class ExampleRequestResponseGenerator
     }
   }
 
-  private static class UnionTemplatePlaceholder extends UnionTemplate
+  /**
+   * SHOULD NEVER BE INSTANTIATED DIRECTLY!
+   */
+  public static class UnionTemplatePlaceholder extends UnionTemplate
   {
     public UnionTemplatePlaceholder(Object object)
         throws TemplateOutputCastException
@@ -988,7 +997,10 @@ public class ExampleRequestResponseGenerator
     }
   }
 
-  private static class ArrayTemplatePlaceholder<E> extends DirectArrayTemplate<E>
+  /**
+   * SHOULD NEVER BE INSTANTIATED DIRECTLY!
+   */
+  public static class ArrayTemplatePlaceholder<E> extends DirectArrayTemplate<E>
   {
     public ArrayTemplatePlaceholder(DataList list)
     {
@@ -1001,7 +1013,10 @@ public class ExampleRequestResponseGenerator
     }
   }
 
-  private static class MapTemplatePlaceholder<V> extends DirectMapTemplate<V>
+  /**
+   * SHOULD NEVER BE INSTANTIATED DIRECTLY!
+   */
+  public static class MapTemplatePlaceholder<V> extends DirectMapTemplate<V>
   {
     public MapTemplatePlaceholder(DataMap map)
     {
@@ -1014,7 +1029,10 @@ public class ExampleRequestResponseGenerator
     }
   }
 
-  private static class FixedTemplatePlaceholder extends FixedTemplate
+  /**
+   * SHOULD NEVER BE INSTANTIATED DIRECTLY!
+   */
+  public static class FixedTemplatePlaceholder extends FixedTemplate
   {
     public FixedTemplatePlaceholder(Object object)
         throws TemplateOutputCastException

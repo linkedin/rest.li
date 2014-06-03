@@ -32,18 +32,13 @@ import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
-import com.linkedin.restli.common.CollectionRequest;
 import com.linkedin.restli.common.HttpMethod;
-import com.linkedin.restli.common.KeyValueRecord;
 import com.linkedin.restli.common.OperationNameGenerator;
-import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
-import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
-import com.linkedin.restli.common.TypeSpec;
-import com.linkedin.restli.internal.client.CollectionRequestUtil;
 import com.linkedin.restli.internal.client.ExceptionUtil;
+import com.linkedin.restli.internal.client.RequestBodyTransformer;
 import com.linkedin.restli.internal.client.ResponseFutureImpl;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
@@ -262,7 +257,7 @@ public class RestClient
                     requestUri,
                     hasPrefix,
                     request.getMethod(),
-                    input != null ? getInputData(request, protocolVersion) : null,
+                    input != null ? RequestBodyTransformer.transform(request, protocolVersion) : null,
                     request.getHeaders(),
                     request.getMethodName(),
                     protocolVersion,
@@ -341,40 +336,6 @@ public class RestClient
         return latestVersion;
       default:
         return baselineProtocolVersion;
-    }
-  }
-
-  /**
-   * For {@link BatchUpdateRequest}s and {@link BatchPartialUpdateRequest}s convert the body to the old style body
-   * encoding. For any other {@link Request} simply return the {@link DataMap} of the underlying {@link RecordTemplate}
-   * @param request
-   * @param version
-   * @param <T>
-   */
-  @SuppressWarnings({"unchecked", "rawtypes"})
-  private <T> DataMap getInputData(Request<T> request, ProtocolVersion version)
-  {
-    ResourceSpec resourceSpec = request.getResourceSpec();
-    switch (request.getMethod())
-    {
-      case BATCH_UPDATE:
-        return CollectionRequestUtil.
-            convertToBatchRequest((CollectionRequest<KeyValueRecord>) request.getInputRecord(),
-                                  resourceSpec.getKeyType(),
-                                  resourceSpec.getComplexKeyType(),
-                                  resourceSpec.getKeyParts(),
-                                  resourceSpec.getValueType(),
-                                  version).data();
-      case BATCH_PARTIAL_UPDATE:
-        return CollectionRequestUtil.
-            convertToBatchRequest((CollectionRequest<KeyValueRecord>) request.getInputRecord(),
-                                  resourceSpec.getKeyType(),
-                                  resourceSpec.getComplexKeyType(),
-                                  resourceSpec.getKeyParts(),
-                                  new TypeSpec<PatchRequest>(PatchRequest.class),
-                                  version).data();
-      default:
-        return request.getInputRecord().data();
     }
   }
 
