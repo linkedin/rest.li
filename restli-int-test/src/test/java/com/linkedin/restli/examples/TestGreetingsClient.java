@@ -347,9 +347,9 @@ public class TestGreetingsClient extends RestLiIntegrationTest
 
     // GET
     final BatchGetEntityRequestBuilder<Long, Greeting> batchGetBuilder = builders.batchGet();
-    Request<BatchEntityResponse<Long, Greeting>> request = batchGetBuilder.ids(1L).build();
-    ResponseFuture<BatchEntityResponse<Long, Greeting>> future = REST_CLIENT.sendRequest(request);
-    Response<BatchEntityResponse<Long, Greeting>> greetingResponse = future.getResponse();
+    Request<BatchKVResponse<Long, EntityResponse<Greeting>>> request = batchGetBuilder.ids(1L).build();
+    ResponseFuture<BatchKVResponse<Long, EntityResponse<Greeting>>> future = REST_CLIENT.sendRequest(request);
+    Response<BatchKVResponse<Long, EntityResponse<Greeting>>> greetingResponse = future.getResponse();
 
     // PUT
     Greeting greeting = new Greeting(greetingResponse.getEntity().getResults().get(1L).getEntity().data().copy());
@@ -359,8 +359,8 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     REST_CLIENT.sendRequest(writeRequest).getResponse();
 
     // GET again, to verify that our POST worked.
-    Request<BatchEntityResponse<Long, Greeting>> request2 = batchGetBuilder.ids(1L).build();
-    ResponseFuture<BatchEntityResponse<Long, Greeting>> future2 = REST_CLIENT.sendRequest(request2);
+    Request<BatchKVResponse<Long, EntityResponse<Greeting>>> request2 = batchGetBuilder.ids(1L).build();
+    ResponseFuture<BatchKVResponse<Long, EntityResponse<Greeting>>> future2 = REST_CLIENT.sendRequest(request2);
     greetingResponse = future2.get();
 
     Greeting repeatedGreeting = new Greeting();
@@ -483,8 +483,8 @@ public class TestGreetingsClient extends RestLiIntegrationTest
                                  List<Long> ids,
                                  int expectedSuccessSize) throws RemoteInvocationException
   {
-    Request<BatchEntityResponse<Long, Greeting>> request = builder.ids(ids).fields(Greeting.fields().id(), Greeting.fields().message()).build();
-    BatchEntityResponse<Long, Greeting> response = REST_CLIENT.sendRequest(request).getResponse().getEntity();
+    Request<BatchKVResponse<Long, EntityResponse<Greeting>>> request = builder.ids(ids).fields(Greeting.fields().id(), Greeting.fields().message()).build();
+    BatchKVResponse<Long, EntityResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse().getEntity();
     Assert.assertEquals(response.getResults().size() - response.getErrors().size(), expectedSuccessSize);
 
     for (Map.Entry<Long, EntityResponse<Greeting>> entry : response.getResults().entrySet())

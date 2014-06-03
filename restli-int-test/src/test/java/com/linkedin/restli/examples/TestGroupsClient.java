@@ -58,7 +58,6 @@ import com.linkedin.restli.examples.groups.client.GroupMembershipsComplexRequest
 import com.linkedin.restli.examples.groups.client.GroupMembershipsRequestBuilders;
 import com.linkedin.restli.examples.groups.client.GroupsBuilders;
 import com.linkedin.restli.examples.groups.client.GroupsRequestBuilders;
-import com.linkedin.restli.internal.client.response.BatchEntityResponse;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
@@ -349,7 +348,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
 
     // BatchGet memberships
     final RestliRequestOptions requestOptions = membershipBuilders.getRequestOptions();
-    Request<BatchEntityResponse<CompoundKey, GroupMembership>> request = new GroupMembershipsRequestBuilders(requestOptions).batchGet()
+    Request<BatchKVResponse<CompoundKey, EntityResponse<GroupMembership>>> request = new GroupMembershipsRequestBuilders(requestOptions).batchGet()
                                   .ids(key1, key2)
                                   .fields(GroupMembership.fields().contactEmail())
                                   .build();
@@ -377,12 +376,12 @@ public class TestGroupsClient extends RestLiIntegrationTest
     Assert.assertEquals(patchResults.get(key2).getStatus().intValue(), 204);
 
     // Batch get to make sure our patch applied
-    Request<BatchEntityResponse<CompoundKey, GroupMembership>> batchGetRequest =
+    Request<BatchKVResponse<CompoundKey, EntityResponse<GroupMembership>>> batchGetRequest =
         new GroupMembershipsRequestBuilders(requestOptions).batchGet()
             .ids(key1, key2)
             .fields(GroupMembership.fields().contactEmail(), GroupMembership.fields().firstName())
             .build();
-    BatchEntityResponse<CompoundKey, GroupMembership> entity =
+    BatchKVResponse<CompoundKey, EntityResponse<GroupMembership>> entity =
         REST_CLIENT.sendRequest(batchGetRequest).getResponse().getEntity();
     Assert.assertEquals(entity.getErrors().size(), 0);
     Assert.assertEquals(entity.getResults().size(), 2);
@@ -411,7 +410,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
     Assert.assertEquals(deleteResult.get(key2).getStatus().intValue(), 204);
 
     // Make sure they are gone
-    BatchEntityResponse<CompoundKey, GroupMembership> getResponse = REST_CLIENT.sendRequest(request).getResponse().getEntity();
+    BatchKVResponse<CompoundKey, EntityResponse<GroupMembership>> getResponse = REST_CLIENT.sendRequest(request).getResponse().getEntity();
     Assert.assertEquals(getResponse.getResults().size(), getResponse.getErrors().size());
     Assert.assertTrue(getResponse.getErrors().containsKey(key1));
     Assert.assertTrue(getResponse.getErrors().containsKey(key2));
@@ -557,12 +556,12 @@ public class TestGroupsClient extends RestLiIntegrationTest
 
     final RestliRequestOptions requestOptions = builders.getRequestOptions();
     @SuppressWarnings("unchecked")
-    Request<BatchEntityResponse<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, ComplexKeyGroupMembership>> request =
+    Request<BatchKVResponse<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, EntityResponse<ComplexKeyGroupMembership>>> request =
       new GroupMembershipsComplexRequestBuilders(requestOptions).batchGet()
         .ids(complexKey1, complexKey2, complexKey3)
         .fields(GroupMembership.fields().contactEmail())
         .build();
-    BatchEntityResponse<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, ComplexKeyGroupMembership> groupMemberships =
+    BatchKVResponse<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, EntityResponse<ComplexKeyGroupMembership>> groupMemberships =
         REST_CLIENT.sendRequest(request).getResponse().getEntity();
     Map<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, EntityResponse<ComplexKeyGroupMembership>> results = groupMemberships.getResults();
     ComplexKeyGroupMembership groupMembership1_ = results.get(complexKey1).getEntity();
@@ -617,11 +616,11 @@ public class TestGroupsClient extends RestLiIntegrationTest
     CompoundKey key2 = buildCompoundKey(2, 1);
     Set<CompoundKey> allRequestedKeys = new HashSet<CompoundKey>(Arrays.asList(key1, key2));
 
-    Request<BatchEntityResponse<CompoundKey, GroupMembership>> request = new GroupMembershipsRequestBuilders(requestOptions).batchGet()
+    Request<BatchKVResponse<CompoundKey, EntityResponse<GroupMembership>>> request = new GroupMembershipsRequestBuilders(requestOptions).batchGet()
       .ids(key1, key2)
       .fields(GroupMembership.fields().contactEmail())
       .build();
-    BatchEntityResponse<CompoundKey, GroupMembership> groupMemberships = REST_CLIENT.sendRequest(request).getResponse().getEntity();
+    BatchKVResponse<CompoundKey, EntityResponse<GroupMembership>> groupMemberships = REST_CLIENT.sendRequest(request).getResponse().getEntity();
 
     Assert.assertTrue(allRequestedKeys.containsAll(groupMemberships.getResults().keySet()));
     Assert.assertTrue(allRequestedKeys.containsAll(groupMemberships.getErrors().keySet()));

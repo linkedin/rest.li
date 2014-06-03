@@ -21,10 +21,12 @@ package com.linkedin.restli.examples.greetings;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.restli.client.Request;
+import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.CompoundKey;
+import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.examples.custom.types.CustomLong;
@@ -43,7 +45,6 @@ import com.linkedin.restli.internal.client.BatchResponseDecoder;
 import com.linkedin.restli.internal.client.CollectionResponseDecoder;
 import com.linkedin.restli.internal.client.EntityResponseDecoder;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
-import com.linkedin.restli.internal.client.response.BatchEntityResponse;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.TestConstants;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
@@ -107,7 +108,8 @@ public class TestCustomTypesRequestBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "request2BatchDataProvider")
   public void testCollectionBatchGetEntityKey(ProtocolVersion version, String expectedUri) throws IOException, RestException
   {
-    Request<BatchEntityResponse<CustomLong, Greeting>> request = new CustomTypes2RequestBuilders().batchGet().ids(new CustomLong(1L), new CustomLong(2L), new CustomLong(3L)).build();
+    Request<BatchKVResponse<CustomLong, EntityResponse<Greeting>>> request =
+      new CustomTypes2RequestBuilders().batchGet().ids(new CustomLong(1L), new CustomLong(2L), new CustomLong(3L)).build();
 
     checkRequestBuilder(request, ResourceMethod.BATCH_GET, BatchEntityResponseDecoder.class, expectedUri, null, version);
   }

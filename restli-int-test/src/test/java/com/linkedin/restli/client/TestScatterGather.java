@@ -46,6 +46,7 @@ import com.linkedin.restli.common.BatchCreateIdResponse;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionRequest;
 import com.linkedin.restli.common.CreateIdStatus;
+import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.UpdateStatus;
@@ -78,6 +79,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+
 /**
  * @author Josh Walker
  * @version $Revision: $
@@ -86,7 +88,7 @@ import org.testng.annotations.Test;
 public class TestScatterGather extends RestLiIntegrationTest
 {
   private static final Client CLIENT = new TransportClientAdapter(new HttpClientFactory().getClient(
-            Collections.<String, String>emptyMap()));
+    Collections.<String, String>emptyMap()));
   private static final String URI_PREFIX = "http://localhost:1338/";
   private static final RestClient REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
 
@@ -94,17 +96,17 @@ public class TestScatterGather extends RestLiIntegrationTest
   {
     @Override
     public <K> MapKeyHostPartitionResult<K> getPartitionInformation(URI serviceUri,
-                                                                          Collection<K> keys,
-                                                                          int limitHostPerPartition,
-                                                                          HashProvider hashProvider)
-        throws ServiceUnavailableException
+                                                                    Collection<K> keys,
+                                                                    int limitHostPerPartition,
+                                                                    HashProvider hashProvider)
+      throws ServiceUnavailableException
     {
       throw new UnsupportedOperationException();
     }
 
     @Override
     public PartitionAccessor getPartitionAccessor(URI serviceUri)
-        throws ServiceUnavailableException
+      throws ServiceUnavailableException
     {
       throw new UnsupportedOperationException();
     }
@@ -130,10 +132,24 @@ public class TestScatterGather extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = "requestBuilderDataProvider")
+  public static void testBuildSGEntityRequests(RootBuilderWrapper<Long, Greeting> builders)
+    throws URISyntaxException, RestException, ServiceUnavailableException
+  {
+    testBuildSGEntityRequests(10, 0, builders);
+  }
+
+  @Test(dataProvider = "requestBuilderDataProvider")
   public static void testBuildSGRequestsWithPartitions(RootBuilderWrapper<Long, Greeting> builders)
     throws URISyntaxException, RestException, ServiceUnavailableException
   {
     testBuildSGRequests(12, 3, builders);
+  }
+
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public static void testBuildSGEntityRequestsWithPartitions(RootBuilderWrapper<Long, Greeting> builders)
+    throws URISyntaxException, RestException, ServiceUnavailableException
+  {
+    testBuildSGEntityRequests(12, 3, builders);
   }
 
   public static void testBuildSGRequests(int endPointsNum,
@@ -157,6 +173,31 @@ public class TestScatterGather extends RestLiIntegrationTest
     Long[] ids = generateIds(NUM_IDS);
     Map<Long, Greeting> updates = generateUpdates(ids);
     testBuildSGGetRequests(NUM_ENDPOINTS, sg, ids);
+    testBuildSGDeleteRequests(NUM_ENDPOINTS, sg, ids, builders);
+    testBuildSGUpdateRequests(NUM_ENDPOINTS, sg, updates, builders);
+  }
+
+  public static void testBuildSGEntityRequests(int endPointsNum,
+                                               int partitionNum,
+                                               RootBuilderWrapper<Long, Greeting> builders)
+    throws URISyntaxException, RestException, ServiceUnavailableException
+  {
+    final int NUM_ENDPOINTS = endPointsNum;
+    ConsistentHashKeyMapper mapper;
+    if (partitionNum > 0)
+    {
+      mapper = getKeyToHostMapper(endPointsNum, partitionNum);
+    }
+    else
+    {
+      mapper = getKeyToHostMapper(endPointsNum);
+    }
+    ScatterGatherBuilder<Greeting> sg = new ScatterGatherBuilder<Greeting>(mapper);
+
+    final int NUM_IDS = 100;
+    Long[] ids = generateIds(NUM_IDS);
+    Map<Long, Greeting> updates = generateUpdates(ids);
+    testBuildSGGetEntityRequests(NUM_ENDPOINTS, sg, ids);
     testBuildSGDeleteRequests(NUM_ENDPOINTS, sg, ids, builders);
     testBuildSGUpdateRequests(NUM_ENDPOINTS, sg, updates, builders);
   }
@@ -236,6 +277,32 @@ public class TestScatterGather extends RestLiIntegrationTest
     Assert.assertEquals(requestIds.size(), ids.length);
   }
 
+  private static void testBuildSGGetEntityRequests(int numEndpoints,
+                                                   ScatterGatherBuilder<Greeting> sg,
+                                                   Long[] ids)
+    throws ServiceUnavailableException
+  {
+    Collection<ScatterGatherBuilder.KVRequestInfo<Long, EntityResponse<Greeting>>> requests = buildScatterGatherGetEntityRequests(sg, ids);
+    Assert.assertEquals(requests.size(), numEndpoints);
+
+    Set<Set<String>> requestIdSets = new HashSet<Set<String>>();
+    Set<Long> requestIds = new HashSet<Long>();
+    for (ScatterGatherBuilder.KVRequestInfo<Long, EntityResponse<Greeting>> requestInfo : requests)
+    {
+      //URI will be something like "greetings/?ids=21&ids=4&ids=53&ids=60&ids=66&ids=88&ids=93&foo=bar"
+      BatchRequest<BatchKVResponse<Long, EntityResponse<Greeting>>> request = requestInfo.getRequest();
+      Set<String> expectedParams = new HashSet<String>();
+      expectedParams.add(RestConstants.QUERY_BATCH_IDS_PARAM);
+      expectedParams.add("foo");
+      expectedParams.add(RestConstants.FIELDS_PARAM);
+      Set<String> expectedFields = Collections.singleton("message");
+
+      testGetEntityRequest(request, expectedParams, expectedFields, null, requestIdSets, requestIds);
+    }
+    Assert.assertTrue(requestIds.containsAll(Arrays.asList(ids)));
+    Assert.assertEquals(requestIds.size(), ids.length);
+  }
+
   @SuppressWarnings({"unchecked", "rawtypes"})
   private static void testRequest(BatchRequest<?> request,
                                   Set<String> expectedParams,
@@ -293,7 +360,81 @@ public class TestScatterGather extends RestLiIntegrationTest
                  uriIds);
     }
 
-    @SuppressWarnings("unchecked")
+    Set<Object> idObjects = request.getObjectIds();
+    Set<String> theseIds = new HashSet<String>(idObjects.size());
+    for (Object o : idObjects)
+    {
+      theseIds.add(o.toString());
+    }
+
+    Assert.assertEquals(uriIds, theseIds);
+
+    Assert.assertFalse(requestIdSets.contains(theseIds)); //no duplicate requests
+    for (String id : theseIds)
+    {
+      Assert.assertFalse(requestIds.contains(Long.parseLong(id))); //no duplicate ids
+      requestIds.add(Long.parseLong(id));
+    }
+    requestIdSets.add(theseIds);
+  }
+
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  private static void testGetEntityRequest(BatchRequest<BatchKVResponse<Long, EntityResponse<Greeting>>> request,
+                                           Set<String> expectedParams,
+                                           Set<String> expectedFields,
+                                           Map<Long, Greeting> expectedInput,
+                                           Set<Set<String>> requestIdSets,
+                                           Set<Long> requestIds)
+  {
+    String[] queryParams = RestliUriBuilderUtil.createUriBuilder(request).build().getQuery().split("&");
+    Map<String, List<String>> params = new HashMap<String, List<String>>();
+    for (String paramString : queryParams)
+    {
+      String[] keyValue = paramString.split("=");
+      Assert.assertEquals(keyValue.length, 2);
+      if (! params.containsKey(keyValue[0]))
+      {
+        params.put(keyValue[0], new ArrayList<String>());
+      }
+      params.get(keyValue[0]).add(keyValue[1]);
+    }
+    Assert.assertEquals(params.keySet(), expectedParams);
+
+    if (expectedFields != null)
+    {
+      Assert.assertTrue(params.get(RestConstants.FIELDS_PARAM).containsAll(expectedFields));
+    }
+
+    Set<String> uriIds = new HashSet<String>();
+    for (String value : params.get(RestConstants.QUERY_BATCH_IDS_PARAM))
+    {
+      uriIds.addAll(Arrays.asList(value.split(",")));
+    }
+
+    if (expectedInput != null)
+    {
+      RecordTemplate inputRecordTemplate;
+      if (request instanceof BatchUpdateRequest)
+      {
+        ResourceSpec resourceSpec = request.getResourceSpec();
+
+        CollectionRequest inputRecord = (CollectionRequest)request.getInputRecord();
+
+        inputRecordTemplate = CollectionRequestUtil.convertToBatchRequest(inputRecord,
+                                                                          resourceSpec.getKeyType(),
+                                                                          resourceSpec.getComplexKeyType(),
+                                                                          resourceSpec.getKeyParts(),
+                                                                          resourceSpec.getValueType());
+      }
+      else
+      {
+        inputRecordTemplate = request.getInputRecord();
+      }
+      checkInput(inputRecordTemplate.data().getDataMap(com.linkedin.restli.common.BatchRequest.ENTITIES),
+                 expectedInput,
+                 uriIds);
+    }
+
     Set<Object> idObjects = request.getObjectIds();
     Set<String> theseIds = new HashSet<String>(idObjects.size());
     for (Object o : idObjects)
@@ -324,6 +465,23 @@ public class TestScatterGather extends RestLiIntegrationTest
       DataMap inputDM = dataMap.getDataMap(key);
       Greeting expectedGreeting = inputMap.get(Long.parseLong(key));
       Assert.assertTrue(uriIds.contains(key));
+      Assert.assertTrue(inputDM.equals(expectedGreeting.data()));
+    }
+  }
+
+  // TODO modify this method to accept a CollectionRequest as it's first parameter once our server code has been
+  //      updated to work with the new representation of BatchUpdateRequests and BatchPartialUpdateRequests. As of now
+  //      we are still converting to the old representation using CollectionRequestUtil.convertToBatchRequest
+  private static void checkEntityInput(DataMap dataMap, Map<Long, Greeting> inputMap, Collection<Long> uriIds)
+  {
+    Assert.assertEquals(dataMap.size(), uriIds.size());
+
+    for(String key : dataMap.keySet())
+    {
+      DataMap inputDM = dataMap.getDataMap(key);
+      Long longKey = Long.parseLong(key);
+      Greeting expectedGreeting = inputMap.get(longKey);
+      Assert.assertTrue(uriIds.contains(longKey));
       Assert.assertTrue(inputDM.equals(expectedGreeting.data()));
     }
   }
@@ -551,6 +709,17 @@ public class TestScatterGather extends RestLiIntegrationTest
     Request<BatchResponse<Greeting>> request = new GreetingsBuilders().batchGet().ids(ids).fields(Greeting.fields().message()).setParam("foo", "bar").build();
 
     return sg.buildRequestsV2((BatchGetRequest<Greeting>) request, new RequestContext()).getRequestInfo();
+  }
+
+  private static Collection<ScatterGatherBuilder.KVRequestInfo<Long, EntityResponse<Greeting>>> buildScatterGatherGetEntityRequests(
+    ScatterGatherBuilder<Greeting> sg,
+    Long[] ids)
+    throws ServiceUnavailableException
+  {
+    BatchRequest<BatchKVResponse<Long, EntityResponse<Greeting>>> request =
+      new GreetingsRequestBuilders().batchGet().ids(ids).fields(Greeting.fields().message()).setParam("foo", "bar").build();
+
+    return sg.buildRequests(request, new RequestContext()).getRequestInfo();
   }
 
   private static Collection<ScatterGatherBuilder.KVRequestInfo<Long, UpdateStatus>> buildScatterGatherUpdateRequests(

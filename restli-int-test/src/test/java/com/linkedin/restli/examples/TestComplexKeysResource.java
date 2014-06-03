@@ -59,7 +59,6 @@ import com.linkedin.restli.examples.greetings.client.ComplexKeysBuilders;
 import com.linkedin.restli.examples.greetings.client.ComplexKeysRequestBuilders;
 import com.linkedin.restli.examples.greetings.client.ComplexKeysSubBuilders;
 import com.linkedin.restli.examples.greetings.client.ComplexKeysSubRequestBuilders;
-import com.linkedin.restli.internal.client.response.BatchEntityResponse;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
@@ -440,9 +439,9 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     List<ComplexResourceKey<TwoPartKey, TwoPartKey>> createdKeys = new ArrayList<ComplexResourceKey<TwoPartKey, TwoPartKey>>(2);
     createdKeys.add(expectedComplexKey1);
     createdKeys.add(expectedComplexKey2);
-    Request<BatchEntityResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>> getRequest = batchGetRequestBuilder.ids(createdKeys).build();
-    ResponseFuture<BatchEntityResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>> getFuture = REST_CLIENT.sendRequest(getRequest);
-    Response<BatchEntityResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>> getResponse = getFuture.getResponse();
+    Request<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>>> getRequest = batchGetRequestBuilder.ids(createdKeys).build();
+    ResponseFuture<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>>> getFuture = REST_CLIENT.sendRequest(getRequest);
+    Response<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>>> getResponse = getFuture.getResponse();
     Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>> getResults = getResponse.getEntity().getResults();
     Assert.assertEquals(getResults.get(expectedComplexKey1).getEntity(), message1);
     Assert.assertEquals(getResults.get(expectedComplexKey2).getEntity(), message2);
@@ -513,10 +512,10 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
   public void testBatchGetEntityMain(BatchGetEntityRequestBuilder<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> builder) throws RemoteInvocationException
   {
     List<ComplexResourceKey<TwoPartKey, TwoPartKey>> ids = getBatchComplexKeys();
-    Request<BatchEntityResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>> request = builder.ids(ids).build();
-    ResponseFuture<BatchEntityResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>> future =
+    Request<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>>> request = builder.ids(ids).build();
+    ResponseFuture<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>>> future =
       REST_CLIENT.sendRequest(request);
-    BatchEntityResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> response =
+    BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>> response =
       future.getResponse().getEntity();
 
     Assert.assertEquals(response.getResults().size(), 3);
@@ -575,9 +574,9 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     ids.add(key2);
     BatchGetEntityRequest<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> batchGetRequest =
         batchGetRequestBuilder.ids(ids).build();
-    ResponseFuture<BatchEntityResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>> batchGetFuture =
+    ResponseFuture<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>>> batchGetFuture =
         REST_CLIENT.sendRequest(batchGetRequest);
-    BatchEntityResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> batchGetResponse =
+    BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>> batchGetResponse =
         batchGetFuture.getResponse().getEntity();
 
     Assert.assertEquals(batchGetResponse.getResults().get(key1).getEntity().getTone(), Tone.INSULTING);
@@ -622,11 +621,11 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     ArrayList<ComplexResourceKey<TwoPartKey, TwoPartKey>> ids = new ArrayList<ComplexResourceKey<TwoPartKey, TwoPartKey>>();
     ids.add(key1);
     ids.add(key2);
-    Request<BatchEntityResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>> batchGetRequest =
+    Request<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>>> batchGetRequest =
         batchGetRequestBuilder.ids(ids).build();
-    ResponseFuture<BatchEntityResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>> batchGetFuture =
+    ResponseFuture<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>>> batchGetFuture =
         REST_CLIENT.sendRequest(batchGetRequest);
-    BatchEntityResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> batchGetResponse =
+    BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>> batchGetResponse =
         batchGetFuture.getResponse().getEntity();
 
     Assert.assertEquals(batchGetResponse.getResults().get(key1).getEntity().getTone(), Tone.FRIENDLY);
@@ -678,11 +677,11 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     Assert.assertNotNull(response.getResults().get(key1));
     Assert.assertNotNull(response.getResults().get(key2));
 
-    Request<BatchEntityResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>> batchGetRequest =
+    Request<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>>> batchGetRequest =
         batchGetRequestBuilder.ids(ids).build();
-    ResponseFuture<BatchEntityResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>> batchGetFuture =
+    ResponseFuture<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>>> batchGetFuture =
         REST_CLIENT.sendRequest(batchGetRequest);
-    BatchEntityResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> batchGetResponse =
+    BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>> batchGetResponse =
         batchGetFuture.getResponse().getEntity();
 
     Assert.assertEquals(batchGetResponse.getResults().size(), batchGetResponse.getErrors().size());

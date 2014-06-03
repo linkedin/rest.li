@@ -3,6 +3,9 @@
 (RB=313174)
 Re-apply "Re-design Rest.li response API for various batch operations" with performance issue solved.
 
+(RB=312225)
+Support BatchGetEntity and EntityResponse for ScatterGatherBuilder.
+
 1.17.0
 ------
 (RB=314186)

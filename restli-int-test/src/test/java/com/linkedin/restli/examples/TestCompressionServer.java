@@ -60,7 +60,6 @@ import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
 import com.linkedin.restli.examples.greetings.server.CompressionResource;
 import com.linkedin.restli.examples.groups.api.TransferOwnershipRequest;
-import com.linkedin.restli.internal.client.response.BatchEntityResponse;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.io.ByteArrayInputStream;
@@ -755,7 +754,7 @@ public class TestCompressionServer extends RestLiIntegrationTest
   {
     final Request<?> request = new GreetingsRequestBuilders(requestOptions).batchGet().ids(ids).fields(Greeting.fields().id(), Greeting.fields().message()).build();
     @SuppressWarnings("unchecked")
-    final BatchEntityResponse<Long, Greeting> response = (BatchEntityResponse<Long, Greeting>) getBatchGetResponse(client, operationsForCompression, request);
+    final BatchKVResponse<Long, EntityResponse<Greeting>> response = (BatchKVResponse<Long, EntityResponse<Greeting>>) getBatchGetResponse(client, operationsForCompression, request);
     Assert.assertEquals(response.getResults().size() - response.getErrors().size(), expectedSuccessSize);
 
     for (Map.Entry<Long, EntityResponse<Greeting>> entry : response.getResults().entrySet())
@@ -778,9 +777,9 @@ public class TestCompressionServer extends RestLiIntegrationTest
 
   private Greeting getNewCookbookBatchGetResult(RestClient client, RestliRequestOptions requestOptions) throws RemoteInvocationException
   {
-    Request<BatchEntityResponse<Long, Greeting>> request = new GreetingsRequestBuilders(requestOptions).batchGet().ids(1L).build();
-    ResponseFuture<BatchEntityResponse<Long, Greeting>> future = client.sendRequest(request);
-    Response<BatchEntityResponse<Long, Greeting>> greetingResponse = future.getResponse();
+    Request<BatchKVResponse<Long, EntityResponse<Greeting>>> request = new GreetingsRequestBuilders(requestOptions).batchGet().ids(1L).build();
+    ResponseFuture<BatchKVResponse<Long, EntityResponse<Greeting>>> future = client.sendRequest(request);
+    Response<BatchKVResponse<Long, EntityResponse<Greeting>>> greetingResponse = future.getResponse();
     checkContentEncodingHeaderIsAbsent(greetingResponse);
     return greetingResponse.getEntity().getResults().get(1L).getEntity();
   }

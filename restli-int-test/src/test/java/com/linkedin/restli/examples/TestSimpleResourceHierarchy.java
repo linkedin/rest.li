@@ -35,6 +35,7 @@ import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.CreateIdStatus;
 import com.linkedin.restli.common.EmptyRecord;
+import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.PatchRequest;
@@ -47,7 +48,6 @@ import com.linkedin.restli.examples.greetings.client.SubgreetingsBuilders;
 import com.linkedin.restli.examples.greetings.client.SubgreetingsRequestBuilders;
 import com.linkedin.restli.examples.greetings.client.SubsubgreetingBuilders;
 import com.linkedin.restli.examples.greetings.client.SubsubgreetingRequestBuilders;
-import com.linkedin.restli.internal.client.response.BatchEntityResponse;
 import com.linkedin.restli.test.util.BatchCreateHelper;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
@@ -220,10 +220,10 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
   public void testSubCollectionBatchGetEntity(RestliRequestOptions requestOptions) throws RemoteInvocationException
   {
     List<Long> ids = Arrays.asList(1L, 2L, 3L, 4L);
-    Request<BatchEntityResponse<Long, Greeting>> request = new SubgreetingsRequestBuilders(requestOptions).batchGet().ids(ids).build();
+    Request<BatchKVResponse<Long, EntityResponse<Greeting>>> request = new SubgreetingsRequestBuilders(requestOptions).batchGet().ids(ids).build();
 
-    Response<BatchEntityResponse<Long, Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
-    BatchEntityResponse<Long, Greeting> batchResponse = response.getEntity();
+    Response<BatchKVResponse<Long, EntityResponse<Greeting>>> response = REST_CLIENT.sendRequest(request).getResponse();
+    BatchKVResponse<Long, EntityResponse<Greeting>> batchResponse = response.getEntity();
     Assert.assertEquals(batchResponse.getResults().size(), ids.size());
   }
 
@@ -385,10 +385,10 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
 
     //GET again to verify that the create has worked.
     final RestliRequestOptions requestOptions = builders.getRequestOptions();
-    Request<BatchEntityResponse<Long, Greeting>> request = new SubgreetingsRequestBuilders(requestOptions).batchGet().ids(ids).build();
+    Request<BatchKVResponse<Long, EntityResponse<Greeting>>> request = new SubgreetingsRequestBuilders(requestOptions).batchGet().ids(ids).build();
 
-    Response<BatchEntityResponse<Long, Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
-    BatchEntityResponse<Long, Greeting> batchResponse = response.getEntity();
+    Response<BatchKVResponse<Long, EntityResponse<Greeting>>> response = REST_CLIENT.sendRequest(request).getResponse();
+    BatchKVResponse<Long, EntityResponse<Greeting>> batchResponse = response.getEntity();
     Assert.assertEquals(batchResponse.getResults().size(), ids.size());
   }
 

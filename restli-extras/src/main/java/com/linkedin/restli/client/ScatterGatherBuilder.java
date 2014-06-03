@@ -29,6 +29,7 @@ import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.common.BatchResponse;
+import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.common.UpdateStatus;
@@ -60,16 +61,16 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
 
   // for those who do not care about trouble keys.
   @Deprecated
-  public Collection<RequestInfo<T>> buildRequests(BatchGetRequest<T> request, RequestContext requestContext) throws
-    ServiceUnavailableException
+  public Collection<RequestInfo<T>> buildRequests(BatchGetRequest<T> request, RequestContext requestContext)
+    throws ServiceUnavailableException
   {
     return buildRequestsV2(request, requestContext).getRequestInfo();
   }
 
   // return value contains the request info and the unmapped keys (also the cause)
   // V2 is here to differentiate it from the older API
-  public ScatterGatherResult<T> buildRequestsV2(BatchGetRequest<T> request, RequestContext requestContext) throws
-    ServiceUnavailableException
+  public ScatterGatherResult<T> buildRequestsV2(BatchGetRequest<T> request, RequestContext requestContext)
+    throws ServiceUnavailableException
   {
     Set<Object> idObjects = request.getObjectIds();
 
@@ -107,8 +108,48 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
     return new ScatterGatherResult<T>(scatterGatherRequests, mapKeyResult.getUnmappedKeys());
   }
 
-  public <K> KVScatterGatherResult<K, UpdateStatus> buildRequests(BatchUpdateRequest<K, T> request, RequestContext requestContext) throws
-    ServiceUnavailableException
+  public <K> KVScatterGatherResult<K, EntityResponse<T>> buildRequests(BatchRequest<BatchKVResponse<K, EntityResponse<T>>> request, RequestContext requestContext)
+    throws ServiceUnavailableException
+  {
+    @SuppressWarnings("unchecked")
+    final Set<K> idObjects = (Set<K>) request.getObjectIds();
+
+    final MapKeyResult<URI, K> mapKeyResult = mapKeys(request, idObjects);
+
+    final Map<URI, Collection<K>> batches = mapKeyResult.getMapResult();
+    final Collection<KVRequestInfo<K, EntityResponse<T>>> scatterGatherRequests = new ArrayList<KVRequestInfo<K, EntityResponse<T>>>(batches.size());
+
+    for (Map.Entry<URI, Collection<K>> batch : batches.entrySet())
+    {
+      final BatchGetEntityRequestBuilder<K, T> builder = new BatchGetEntityRequestBuilder<K, T>(request.getBaseUriTemplate(),
+                                                                                                request.getResponseDecoder(),
+                                                                                                request.getResourceSpec(),
+                                                                                                request.getRequestOptions());
+      builder.ids(batch.getValue());
+      for (Map.Entry<String, Object> param : request.getQueryParamsObjects().entrySet())
+      {
+        if (!param.getKey().equals(RestConstants.QUERY_BATCH_IDS_PARAM))
+        {
+          // keep all non-batch query parameters since they could be request specific
+          builder.setParam(param.getKey(), param.getValue());
+        }
+      }
+      for (Map.Entry<String, String> header : request.getHeaders().entrySet())
+      {
+        builder.setHeader(header.getKey(), header.getValue());
+      }
+
+      final RequestContext context = requestContext.clone();
+      KeyMapper.TargetHostHints.setRequestContextTargetHost(context, batch.getKey());
+
+      scatterGatherRequests.add(new KVRequestInfo<K, EntityResponse<T>>(builder.build(), context));
+    }
+
+    return new KVScatterGatherResult<K, EntityResponse<T>>(scatterGatherRequests, mapKeyResult.getUnmappedKeys());
+  }
+
+  public <K> KVScatterGatherResult<K, UpdateStatus> buildRequests(BatchUpdateRequest<K, T> request, RequestContext requestContext)
+    throws ServiceUnavailableException
   {
     Set<Object> idObjects = request.getObjectIds();
     Collection<K> ids = new HashSet<K>(idObjects.size());
@@ -140,7 +181,7 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
           builder.setParam(param.getKey(), param.getValue());
         }
       }
-      for (Map.Entry<String,String> header : request.getHeaders().entrySet())
+      for (Map.Entry<String, String> header : request.getHeaders().entrySet())
       {
         builder.setHeader(header.getKey(), header.getValue());
       }
@@ -223,8 +264,8 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
     return result;
   }
 
-  public <K> KVScatterGatherResult<K, UpdateStatus> buildRequests(BatchDeleteRequest<K, T> request, RequestContext requestContext) throws
-    ServiceUnavailableException
+  public <K> KVScatterGatherResult<K, UpdateStatus> buildRequests(BatchDeleteRequest<K, T> request, RequestContext requestContext)
+    throws ServiceUnavailableException
   {
     Set<Object> idObjects = request.getObjectIds();
     Collection<K> ids = new HashSet<K>(idObjects.size());
@@ -366,7 +407,7 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
     }
   }
 
-  public static class KVRequestInfo<K,T extends RecordTemplate>
+  public static class KVRequestInfo<K, T extends RecordTemplate>
   {
     private final BatchRequest<BatchKVResponse<K, T>> _request;
     private final RequestContext _requestContext;
@@ -409,5 +450,4 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
       return _unmappedKeys;
     }
   }
-
 }

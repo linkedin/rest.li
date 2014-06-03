@@ -19,9 +19,10 @@ package com.linkedin.restli.client;
 
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.client.response.BatchKVResponse;
+import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
-import com.linkedin.restli.internal.client.response.BatchEntityResponse;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -40,7 +41,7 @@ import java.util.Map;
 public class BatchGetEntityRequestBuilder<K, V extends RecordTemplate> extends
     RestfulRequestBuilder<K, V, BatchGetEntityRequest<K, V>>
 {
-  private final RestResponseDecoder<BatchEntityResponse<K, V>> _decoder;
+  private final RestResponseDecoder<BatchKVResponse<K, EntityResponse<V>>> _decoder;
 
   /**
    * Batches multiple requests into a single batch request.
@@ -105,7 +106,10 @@ public class BatchGetEntityRequestBuilder<K, V extends RecordTemplate> extends
                                            firstRequest.getRequestOptions());
   }
 
-  public BatchGetEntityRequestBuilder(String baseUriTemplate, RestResponseDecoder<BatchEntityResponse<K, V>> decoder, ResourceSpec resourceSpec, RestliRequestOptions requestOptions)
+  public BatchGetEntityRequestBuilder(String baseUriTemplate,
+                                      RestResponseDecoder<BatchKVResponse<K, EntityResponse<V>>> decoder,
+                                      ResourceSpec resourceSpec,
+                                      RestliRequestOptions requestOptions)
   {
     super(baseUriTemplate, resourceSpec, requestOptions);
     _decoder = decoder;
@@ -188,12 +192,12 @@ public class BatchGetEntityRequestBuilder<K, V extends RecordTemplate> extends
   public BatchGetEntityRequest<K, V> build()
   {
     return new BatchGetEntityRequest<K, V>(_headers,
-                                        _decoder,
-                                        _queryParams,
-                                        _resourceSpec,
-                                        getBaseUriTemplate(),
-                                        _pathKeys,
-                                        getRequestOptions());
+                                           _decoder,
+                                           _queryParams,
+                                           _resourceSpec,
+                                           getBaseUriTemplate(),
+                                           _pathKeys,
+                                           getRequestOptions());
   }
 
   public BatchGetEntityRequestBuilder<K, V> fields(PathSpec... fieldPaths)

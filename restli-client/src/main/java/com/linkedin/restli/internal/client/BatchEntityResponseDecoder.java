@@ -41,7 +41,7 @@ import java.util.Set;
  *
  * @author Keren Jin
  */
-public class BatchEntityResponseDecoder<K, V extends RecordTemplate> extends RestResponseDecoder<BatchEntityResponse<K, V>>
+public class BatchEntityResponseDecoder<K, V extends RecordTemplate> extends RestResponseDecoder<BatchKVResponse<K, EntityResponse<V>>>
 {
   private final TypeSpec<V> _entityType;
   private final TypeSpec<K> _keyType;
@@ -73,7 +73,7 @@ public class BatchEntityResponseDecoder<K, V extends RecordTemplate> extends Res
   }
 
   @Override
-  protected BatchEntityResponse<K, V> wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
+  protected BatchKVResponse<K, EntityResponse<V>> wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
     throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, IOException
   {
     final DataMap mergedResults = new DataMap();

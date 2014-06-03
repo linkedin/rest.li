@@ -18,6 +18,7 @@ package com.linkedin.restli.internal.client;
 
 
 import com.linkedin.data.DataMap;
+import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.client.test.TestRecord;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CompoundKey;
@@ -26,7 +27,6 @@ import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.TypeSpec;
-import com.linkedin.restli.internal.client.response.BatchEntityResponse;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.TestConstants;
 
@@ -96,7 +96,7 @@ public class TestBatchEntityResponseDecoder
                                                          Collections.<String, CompoundKey.TypeInfo>emptyMap(),
                                                          null);
 
-    final BatchEntityResponse<String, TestRecord> response = decoder.wrapResponse(data, Collections.<String, String>emptyMap(), protocolVersion);
+    final BatchKVResponse<String, EntityResponse<TestRecord>> response = decoder.wrapResponse(data, Collections.<String, String>emptyMap(), protocolVersion);
     final Map<String, EntityResponse<TestRecord>> results = response.getResults();
     final Map<String, ErrorResponse> errors = response.getErrors();
 

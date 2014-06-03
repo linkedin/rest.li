@@ -40,7 +40,6 @@ import com.linkedin.restli.examples.greetings.api.ComplexArray;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.client.ComplexArrayBuilders;
 import com.linkedin.restli.examples.greetings.client.ComplexArrayRequestBuilders;
-import com.linkedin.restli.internal.client.response.BatchEntityResponse;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
@@ -148,10 +147,10 @@ public class TestComplexArrayResource extends RestLiIntegrationTest
     List<ComplexResourceKey<ComplexArray, ComplexArray>> complexKeys = getBatchCompleKeys();
 
     ComplexArrayRequestBuilders builders = new ComplexArrayRequestBuilders(options);
-    Request<BatchEntityResponse<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting>> request2 =
+    Request<BatchKVResponse<ComplexResourceKey<ComplexArray, ComplexArray>, EntityResponse<Greeting>>> request2 =
       builders.batchGet().ids(complexKeys).build();
 
-    Response<BatchEntityResponse<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting>> response2 =
+    Response<BatchKVResponse<ComplexResourceKey<ComplexArray, ComplexArray>, EntityResponse<Greeting>>> response2 =
       REST_CLIENT.sendRequest(request2).getResponse();
 
     EntityResponse<Greeting> greeting1 = response2.getEntity().getResults().get(complexKeys.get(0));

@@ -31,6 +31,7 @@ import com.linkedin.restli.client.response.CreateResponse;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.EmptyRecord;
+import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.examples.greetings.api.Greeting;
@@ -38,7 +39,6 @@ import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
 import com.linkedin.restli.examples.groups.api.TransferOwnershipRequest;
-import com.linkedin.restli.internal.client.response.BatchEntityResponse;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.util.Arrays;
@@ -114,10 +114,10 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
     throws RemoteInvocationException
   {
     List<Long> ids = Arrays.asList(1L, 2L, 3L, 4L);
-    Request<BatchEntityResponse<Long, Greeting>> request = new GreetingsRequestBuilders(requestOptions).batchGet().ids(ids).build();
+    Request<BatchKVResponse<Long, EntityResponse<Greeting>>> request = new GreetingsRequestBuilders(requestOptions).batchGet().ids(ids).build();
 
-    Response<BatchEntityResponse<Long, Greeting>> response = restClient.sendRequest(request).getResponse();
-    BatchEntityResponse<Long, Greeting> batchResponse = response.getEntity();
+    Response<BatchKVResponse<Long, EntityResponse<Greeting>>> response = restClient.sendRequest(request).getResponse();
+    BatchKVResponse<Long, EntityResponse<Greeting>> batchResponse = response.getEntity();
     Assert.assertEquals(batchResponse.getResults().size(), ids.size());
   }
 

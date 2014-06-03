@@ -25,10 +25,12 @@ import com.linkedin.restli.client.CreateIdRequest;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestClient;
+import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.client.response.CreateResponse;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.EmptyRecord;
+import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.Link;
 import com.linkedin.restli.common.RestConstants;
@@ -37,7 +39,6 @@ import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
 import com.linkedin.restli.examples.groups.api.TransferOwnershipRequest;
-import com.linkedin.restli.internal.client.response.BatchEntityResponse;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.util.Arrays;
@@ -102,11 +103,11 @@ public class TestGreetingsClientAcceptTypes extends RestLiIntegrationTest
     throws RemoteInvocationException
   {
     List<Long> ids = Arrays.asList(1L, 2L, 3L, 4L);
-    Request<BatchEntityResponse<Long, Greeting>> request = builders.batchGet().ids(ids).build();
+    Request<BatchKVResponse<Long, EntityResponse<Greeting>>> request = builders.batchGet().ids(ids).build();
 
-    Response<BatchEntityResponse<Long, Greeting>> response = restClient.sendRequest(request).getResponse();
+    Response<BatchKVResponse<Long, EntityResponse<Greeting>>> response = restClient.sendRequest(request).getResponse();
     Assert.assertEquals(response.getHeader(RestConstants.HEADER_CONTENT_TYPE), expectedContentType);
-    BatchEntityResponse<Long, Greeting> batchResponse = response.getEntity();
+    BatchKVResponse<Long, EntityResponse<Greeting>> batchResponse = response.getEntity();
     Assert.assertEquals(batchResponse.getResults().size(), ids.size());
   }
 

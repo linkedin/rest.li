@@ -39,7 +39,6 @@ import com.linkedin.restli.examples.greetings.client.AssociationsBuilders;
 import com.linkedin.restli.examples.greetings.client.AssociationsRequestBuilders;
 import com.linkedin.restli.examples.greetings.client.AssociationsSubBuilders;
 import com.linkedin.restli.examples.greetings.client.AssociationsSubRequestBuilders;
-import com.linkedin.restli.internal.client.response.BatchEntityResponse;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.util.Collections;
@@ -129,11 +128,11 @@ public class TestAssociationsResource extends RestLiIntegrationTest
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
   public void testBatchGetEntity(RestliRequestOptions requestOptions) throws RemoteInvocationException
   {
-    Request<BatchEntityResponse<CompoundKey, Message>> request = new AssociationsRequestBuilders(requestOptions).batchGet().ids(DB.keySet()).build();
-    ResponseFuture<BatchEntityResponse<CompoundKey, Message>> responseFuture = REST_CLIENT.sendRequest(request);
-    Response<BatchEntityResponse<CompoundKey, Message>> response = responseFuture.getResponse();
+    Request<BatchKVResponse<CompoundKey, EntityResponse<Message>>> request = new AssociationsRequestBuilders(requestOptions).batchGet().ids(DB.keySet()).build();
+    ResponseFuture<BatchKVResponse<CompoundKey, EntityResponse<Message>>> responseFuture = REST_CLIENT.sendRequest(request);
+    Response<BatchKVResponse<CompoundKey, EntityResponse<Message>>> response = responseFuture.getResponse();
 
-    BatchEntityResponse<CompoundKey, Message> entityResponse = response.getEntity();
+    BatchKVResponse<CompoundKey, EntityResponse<Message>> entityResponse = response.getEntity();
 
     Assert.assertEquals(entityResponse.getErrors().size(), 0);
     Assert.assertEquals(entityResponse.getResults().size(), 2);

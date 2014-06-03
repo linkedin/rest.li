@@ -143,8 +143,8 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
     Set<String> keys = new HashSet<String>();
     keys.add(key1());
     keys.add(key2());
-    Request<BatchEntityResponse<String, Message>> req = new StringKeysRequestBuilders(requestOptions).batchGet().ids(keys).build();
-    BatchEntityResponse<String, Message> response = REST_CLIENT.sendRequest(req).get().getEntity();
+    Request<BatchKVResponse<String, EntityResponse<Message>>> req = new StringKeysRequestBuilders(requestOptions).batchGet().ids(keys).build();
+    BatchKVResponse<String, EntityResponse<Message>> response = REST_CLIENT.sendRequest(req).get().getEntity();
     Map<String, EntityResponse<Message>> results = response.getResults();
     Assert.assertEquals(results.get(key1()).getEntity().getMessage(), key1(), "Message should match key for key1");
     Assert.assertEquals(results.get(key2()).getEntity().getMessage(), key2(), "Message should match key for key2");

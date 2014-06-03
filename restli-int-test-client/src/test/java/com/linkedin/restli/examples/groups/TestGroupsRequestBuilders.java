@@ -34,6 +34,7 @@ import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.EmptyRecord;
+import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
@@ -58,7 +59,6 @@ import com.linkedin.restli.internal.client.EmptyResponseDecoder;
 import com.linkedin.restli.internal.client.EntityResponseDecoder;
 import com.linkedin.restli.internal.client.IdResponseDecoder;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
-import com.linkedin.restli.internal.client.response.BatchEntityResponse;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.TestConstants;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
@@ -228,7 +228,7 @@ public class TestGroupsRequestBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestGroupsBatchDataProvider")
   public void testBatchGetEntity(ProtocolVersion version, String expectedUri) throws IOException, RestException
   {
-    Request<BatchEntityResponse<Integer, Group>> request = new GroupsRequestBuilders().batchGet().ids(1, 3).fields(Group.fields().approvalModes()).build();
+    Request<BatchKVResponse<Integer, EntityResponse<Group>>> request = new GroupsRequestBuilders().batchGet().ids(1, 3).fields(Group.fields().approvalModes()).build();
     checkRequestBuilder(request, ResourceMethod.BATCH_GET, BatchEntityResponseDecoder.class, expectedUri, null, version);
   }
 
@@ -293,7 +293,7 @@ public class TestGroupsRequestBuilders
   public void testSubResourceBatchGetEntity(ProtocolVersion version, String expectedUri)
     throws IOException, RestException
   {
-    Request<BatchEntityResponse<Integer, GroupContact>> request = new ContactsRequestBuilders().batchGet().groupIdKey(1).ids(1, 3).build();
+    Request<BatchKVResponse<Integer, EntityResponse<GroupContact>>> request = new ContactsRequestBuilders().batchGet().groupIdKey(1).ids(1, 3).build();
     checkRequestBuilder(request, ResourceMethod.BATCH_GET, BatchEntityResponseDecoder.class, expectedUri, null, version);
   }
 
@@ -427,7 +427,7 @@ public class TestGroupsRequestBuilders
     GroupMembershipsBuilders.Key key2 = new GroupMembershipsBuilders.Key().setGroupId(2).setMemberId(1);
     GroupMembershipsBuilders.Key key3 = new GroupMembershipsBuilders.Key().setGroupId(2).setMemberId(2);
 
-    Request<BatchEntityResponse<CompoundKey, GroupMembership>> request = new GroupMembershipsRequestBuilders().batchGet().ids(key1, key2, key3).build();
+    Request<BatchKVResponse<CompoundKey, EntityResponse<GroupMembership>>> request = new GroupMembershipsRequestBuilders().batchGet().ids(key1, key2, key3).build();
 
     checkRequestBuilder(request, ResourceMethod.BATCH_GET, BatchEntityResponseDecoder.class, expectedUri, null, version);
   }

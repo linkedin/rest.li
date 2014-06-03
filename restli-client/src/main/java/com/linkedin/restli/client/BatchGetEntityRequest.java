@@ -19,10 +19,11 @@ package com.linkedin.restli.client;
 
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.client.response.BatchKVResponse;
+import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
-import com.linkedin.restli.internal.client.response.BatchEntityResponse;
 
 import java.util.Map;
 import java.util.Set;
@@ -36,10 +37,10 @@ import java.util.Set;
  *
  * @author Keren Jin
  */
-public class BatchGetEntityRequest<K, V extends RecordTemplate> extends BatchRequest<BatchEntityResponse<K, V>>
+public class BatchGetEntityRequest<K, V extends RecordTemplate> extends BatchRequest<BatchKVResponse<K, EntityResponse<V>>>
 {
   BatchGetEntityRequest(Map<String, String> headers,
-                        RestResponseDecoder<BatchEntityResponse<K, V>> decoder,
+                        RestResponseDecoder<BatchKVResponse<K, EntityResponse<V>>> decoder,
                         Map<String, Object> queryParams,
                         ResourceSpec resourceSpec,
                         String baseUriTemplate,

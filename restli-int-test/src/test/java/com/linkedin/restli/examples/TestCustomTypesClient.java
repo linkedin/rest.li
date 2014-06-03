@@ -200,7 +200,7 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
   public void testCollectionBatchGetEntity(RestliRequestOptions requestOptions) throws RemoteInvocationException
   {
-    Request<BatchEntityResponse<CustomLong, Greeting>> request =
+    Request<BatchKVResponse<CustomLong, EntityResponse<Greeting>>> request =
       new CustomTypes2RequestBuilders(requestOptions).batchGet().ids(new CustomLong(1L), new CustomLong(2L), new CustomLong(3L)).build();
     Map<CustomLong, EntityResponse<Greeting>> greetings = REST_CLIENT.sendRequest(request).getResponse().getEntity().getResults();
 
