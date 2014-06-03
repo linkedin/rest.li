@@ -1,6 +1,11 @@
+1.15.25
+------
+
 1.15.24
 -------
-
+add new method to set partitionData in ZKAnnouncerJMX
+expose method to access zkannouncer from ZooKeeperConnectionManager
+(RB=310960)
 
 1.15.23
 -------

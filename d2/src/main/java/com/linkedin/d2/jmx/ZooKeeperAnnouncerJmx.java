@@ -24,8 +24,11 @@ import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.servers.ZooKeeperAnnouncer;
+import com.linkedin.d2.balancer.util.JacksonUtil;
 import com.linkedin.d2.discovery.stores.PropertyStoreException;
 
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -116,6 +119,22 @@ public class ZooKeeperAnnouncerJmx implements ZooKeeperAnnouncerJmxMBean
   public void setWeight(double weight)
   {
     _announcer.setWeight(weight);
+  }
+
+  @Override
+  public void setPartitionData(String partitionDataJson)
+      throws IOException
+  {
+    @SuppressWarnings("unchecked")
+    Map<Integer, Double> rawObject =
+        JacksonUtil.getObjectMapper().readValue(partitionDataJson, HashMap.class);
+    Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>();
+    for (Map.Entry<Integer, Double> entry : rawObject.entrySet())
+    {
+      PartitionData data = new PartitionData(entry.getValue());
+      partitionDataMap.put(entry.getKey(), data);
+    }
+    _announcer.setPartitionData(partitionDataMap);
   }
 
   @Override

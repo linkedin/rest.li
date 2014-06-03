@@ -285,4 +285,9 @@ public class ZooKeeperConnectionManager
   {
     Z createStore(ZKConnection connection, String path);
   }
+
+  public ZooKeeperAnnouncer[] getAnnouncers()
+  {
+    return _servers;
+  }
 }

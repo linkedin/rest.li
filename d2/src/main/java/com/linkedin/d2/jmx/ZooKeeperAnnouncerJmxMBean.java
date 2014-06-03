@@ -23,6 +23,7 @@ package com.linkedin.d2.jmx;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.discovery.stores.PropertyStoreException;
 
+import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -50,6 +51,9 @@ public interface ZooKeeperAnnouncerJmxMBean
   void setWeight(double weight);
 
   Map<Integer, PartitionData> getPartitionData();
+
+  void setPartitionData(String partitionDataJson)
+      throws IOException;
 
   void setPartitionData(Map<Integer, PartitionData> partitionData);
 }
