@@ -151,8 +151,8 @@ public class BatchDeleteRequestBuilder<K, V extends RecordTemplate> extends
     return new BatchDeleteRequest<K, V>(_headers,
                                         _queryParams,
                                         _resourceSpec,
-                                        _baseURITemplate,
+                                        getBaseUriTemplate(),
                                         _pathKeys,
-                                        _requestOptions);
+                                        getRequestOptions());
   }
 }

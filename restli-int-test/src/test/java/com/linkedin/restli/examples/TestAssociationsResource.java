@@ -20,16 +20,17 @@ import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
-import com.linkedin.restli.client.BatchGetKVRequest;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.RequestBuilder;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
 import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.RestLiResponseException;
+import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.CompoundKey;
+import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.examples.greetings.api.Message;
@@ -38,18 +39,19 @@ import com.linkedin.restli.examples.greetings.client.AssociationsBuilders;
 import com.linkedin.restli.examples.greetings.client.AssociationsRequestBuilders;
 import com.linkedin.restli.examples.greetings.client.AssociationsSubBuilders;
 import com.linkedin.restli.examples.greetings.client.AssociationsSubRequestBuilders;
-import com.linkedin.restli.internal.common.AllProtocolVersions;
+import com.linkedin.restli.internal.client.response.BatchEntityResponse;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 import static com.linkedin.restli.examples.AssociationResourceHelpers.DB;
 import static com.linkedin.restli.examples.AssociationResourceHelpers.SIMPLE_COMPOUND_KEY;
@@ -106,11 +108,10 @@ public class TestAssociationsResource extends RestLiIntegrationTest
     }
   }
 
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testBatchGet(RootBuilderWrapper<CompoundKey, Message> builders)
-      throws RemoteInvocationException
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
+  public void testBatchGet(RestliRequestOptions requestOptions) throws RemoteInvocationException
   {
-    BatchGetKVRequest<CompoundKey, Message> request = builders.batchGet().ids(DB.keySet()).buildKV();
+    Request<BatchKVResponse<CompoundKey, Message>> request = new AssociationsBuilders(requestOptions).batchGet().ids(DB.keySet()).buildKV();
     ResponseFuture<BatchKVResponse<CompoundKey, Message>> responseFuture = REST_CLIENT.sendRequest(request);
     Response<BatchKVResponse<CompoundKey, Message>> response = responseFuture.getResponse();
 
@@ -122,6 +123,25 @@ public class TestAssociationsResource extends RestLiIntegrationTest
     {
       Assert.assertTrue(entity.getResults().containsKey(id));
       Assert.assertEquals(entity.getResults().get(id), DB.get(id));
+    }
+  }
+
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
+  public void testBatchGetEntity(RestliRequestOptions requestOptions) throws RemoteInvocationException
+  {
+    Request<BatchEntityResponse<CompoundKey, Message>> request = new AssociationsRequestBuilders(requestOptions).batchGet().ids(DB.keySet()).build();
+    ResponseFuture<BatchEntityResponse<CompoundKey, Message>> responseFuture = REST_CLIENT.sendRequest(request);
+    Response<BatchEntityResponse<CompoundKey, Message>> response = responseFuture.getResponse();
+
+    BatchEntityResponse<CompoundKey, Message> entityResponse = response.getEntity();
+
+    Assert.assertEquals(entityResponse.getErrors().size(), 0);
+    Assert.assertEquals(entityResponse.getResults().size(), 2);
+    for (CompoundKey id: DB.keySet())
+    {
+      EntityResponse single = entityResponse.getResults().get(id);
+      Assert.assertTrue(entityResponse.getResults().containsKey(id));
+      Assert.assertEquals(single.getEntity(), DB.get(id));
     }
   }
 
@@ -204,6 +224,15 @@ public class TestAssociationsResource extends RestLiIntegrationTest
       { new RootBuilderWrapper<CompoundKey, Message>(new AssociationsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
       { new RootBuilderWrapper<CompoundKey, Message>(new AssociationsRequestBuilders()) },
       { new RootBuilderWrapper<CompoundKey, Message>(new AssociationsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
+    };
+  }
+
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
+  private static Object[][] requestOptionsDataProvider()
+  {
+    return new Object[][] {
+      { RestliRequestOptions.DEFAULT_OPTIONS },
+      { TestConstants.FORCE_USE_NEXT_OPTIONS }
     };
   }
 

@@ -107,7 +107,7 @@ allprojects {
     else
     {
       // for all supported versions that we test build, fail the build if any compilation warnings are reported
-      compile.options.compilerArgs = ['-Xlint', '-Xlint:-path', '-Xlint:-static', '-Werror' ]
+      compile.options.compilerArgs = ['-Xlint', '-Xlint:-path', '-Xlint:-static', '-Werror']
     }
   }
 }

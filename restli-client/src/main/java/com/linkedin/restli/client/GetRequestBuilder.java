@@ -23,10 +23,8 @@ package com.linkedin.restli.client;
 
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.restli.common.ResourceSpec;
 
-import java.net.URI;
 import java.util.Map;
 
 /**
@@ -150,9 +148,9 @@ public class GetRequestBuilder<K, V extends RecordTemplate> extends
                              _id,
                              _queryParams,
                              _resourceSpec,
-                             _baseURITemplate,
+                             getBaseUriTemplate(),
                              _pathKeys,
-                             _requestOptions);
+                             getRequestOptions());
   }
 
   public GetRequestBuilder<K, V> fields(PathSpec... fieldPaths)

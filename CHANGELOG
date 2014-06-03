@@ -1,4 +1,8 @@
-1.15.25
+1.16.1
+------
+
+
+1.16.0
 ------
 (RB=311122)
 Decoders for responses that require a non-null dataMap will now return null if passed a null dataMap in wrapResponse.
@@ -8,6 +12,11 @@ Allow filters access to strongly typed Ids in batch create responses.
 
 (RB=310721)
 Keep non-batch query parameters in ScatterGatherBuilder.
+
+(RB=272198)
+Re-design Rest.li response API for various batch operations. These changes does not include any change in
+wire protocols. Changes in the APIs are mainly reflected in the new generated *RequestBuilder classes.
+For more information, please refer to https://github.com/linkedin/rest.li/wiki/Rest.li-2.0-response-API
 
 1.15.24
 -------

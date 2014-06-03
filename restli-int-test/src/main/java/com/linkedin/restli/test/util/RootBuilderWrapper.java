@@ -19,11 +19,10 @@ package com.linkedin.restli.test.util;
 
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.restli.client.BatchGetKVRequest;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.RequestBuilder;
+import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.client.response.BatchKVResponse;
-import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.CreateStatus;
 import com.linkedin.restli.common.EmptyRecord;
@@ -32,9 +31,6 @@ import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.internal.tools.RestLiToolsUtils;
 
-import java.lang.Character;
-import java.lang.Class;
-import java.lang.String;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
@@ -80,24 +76,6 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
       {
         @SuppressWarnings("unchecked")
         final Request<R> request = (Request<R>) getMethod("build").invoke(_methodBuilder);
-        return request;
-      }
-      catch (IllegalAccessException e)
-      {
-        throw new RuntimeException(e);
-      }
-      catch (InvocationTargetException e)
-      {
-        throw handleInvocationTargetException(e);
-      }
-    }
-
-    public BatchGetKVRequest<K, V> buildKV()
-    {
-      try
-      {
-        @SuppressWarnings("unchecked")
-        final BatchGetKVRequest<K, V> request = (BatchGetKVRequest<K, V>) getMethod("buildKV").invoke(_methodBuilder);
         return request;
       }
       catch (IllegalAccessException e)
@@ -338,11 +316,6 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
     return invoke("partialUpdate");
   }
 
-  public MethodBuilderWrapper<K, V, BatchResponse<V>> batchGet()
-  {
-    return invoke("batchGet");
-  }
-
   public MethodBuilderWrapper<K, V, CollectionResponse<CreateStatus>> batchCreate()
   {
     return invoke("batchCreate");
@@ -381,6 +354,26 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
   public <R> MethodBuilderWrapper<K, V, R> action(String name)
   {
     return invoke("action" + capitalize(name));
+  }
+
+  public RestliRequestOptions getRequestOptions()
+  {
+    try
+    {
+      return (RestliRequestOptions) _rootBuilder.getClass().getMethod("getRequestOptions").invoke(_rootBuilder);
+    }
+    catch (NoSuchMethodException e)
+    {
+      throw new RuntimeException(e);
+    }
+    catch (IllegalAccessException e)
+    {
+      throw new RuntimeException(e);
+    }
+    catch (InvocationTargetException e)
+    {
+      throw handleInvocationTargetException(e);
+    }
   }
 
   boolean areRestLi2Builders()
@@ -432,9 +425,8 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
   {
     try
     {
-      String resourceName = (String)_rootBuilder.getClass().getMethod("getPrimaryResource").invoke(_rootBuilder);
-      int lastSlashIndex = resourceName.lastIndexOf('/');
-      return resourceName.substring(lastSlashIndex + 1);
+      final String[] pathComponents = (String[]) _rootBuilder.getClass().getMethod("getPathComponents").invoke(_rootBuilder);
+      return pathComponents[pathComponents.length - 1];
     }
     catch (NoSuchMethodException e)
     {

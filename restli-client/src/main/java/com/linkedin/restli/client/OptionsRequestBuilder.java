@@ -40,6 +40,11 @@ public class OptionsRequestBuilder extends AbstractRequestBuilder<Void, OptionsR
   @Override
   public OptionsRequest build()
   {
-    return new OptionsRequest(_headers, _queryParams, _resourceSpec, _baseURITemplate, _pathKeys, _requestOptions);
+    return new OptionsRequest(_headers,
+                              _queryParams,
+                              _resourceSpec,
+                              getBaseUriTemplate(),
+                              _pathKeys,
+                              getRequestOptions());
   }
 }

@@ -766,7 +766,9 @@ class PegasusPlugin implements Plugin<Project>
 
   private static void deleteGeneratedDir(Project project, SourceSet sourceSet, String dirType)
   {
-    project.delete(getGeneratedDirPath(project, sourceSet, dirType))
+    final String generatedDirPath = getGeneratedDirPath(project, sourceSet, dirType)
+    project.logger.info("Delete generated directory ${generatedDirPath}")
+    project.delete(generatedDirPath)
   }
 
   private static Class<? extends Enum> getCompatibilityLevelClass(Project project)

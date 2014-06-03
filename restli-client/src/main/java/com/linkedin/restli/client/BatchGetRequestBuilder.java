@@ -20,10 +20,10 @@ package com.linkedin.restli.client;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.BatchResponse;
-import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.internal.client.BatchKVResponseDecoder;
 import com.linkedin.restli.internal.client.BatchResponseDecoder;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
@@ -32,10 +32,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 
 /**
@@ -100,96 +98,13 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
   public static <RT extends RecordTemplate> BatchGetRequest<RT> batch(List<BatchGetRequest<RT>> requests,
                                                                       boolean batchFields)
   {
-    if (requests.size() < 2)
-    {
-      throw new IllegalArgumentException("Must have at least two requests to batch");
-    }
-
-    BatchGetRequest<RT> firstRequest = requests.get(0);
-    ResourceSpec firstResourceSpec = firstRequest.getResourceSpec();
-    String firstRequestBaseUriTemplate = firstRequest.getBaseUriTemplate();
-    Map<String, Object> firstRequestPathKeys = firstRequest.getPathKeys();
-    Set<PathSpec> firstFields = firstRequest.getFields();
-    Set<Object> ids = new HashSet<Object>();
-
-    // Default to no fields or to first request's fields, depending on batchFields flag
-    Set<PathSpec> fields =
-        batchFields ? new HashSet<PathSpec>() : firstFields;
-
-    // Defensive shallow copy
-    Map<String, Object> firstQueryParams = new HashMap<String, Object>(firstRequest.getQueryParamsObjects());
-
-    firstQueryParams.remove(RestConstants.QUERY_BATCH_IDS_PARAM);
-    firstQueryParams.remove(RestConstants.FIELDS_PARAM);
-
-    for (BatchGetRequest<RT> request : requests)
-    {
-      String currentRequestBaseUriTemplate = request.getBaseUriTemplate();
-      Map<String, Object> currentRequestPathKeys = request.getPathKeys();
-      if (!currentRequestBaseUriTemplate.equals(firstRequestBaseUriTemplate) ||
-          !currentRequestPathKeys.equals(firstRequestPathKeys))
-      {
-        throw new IllegalArgumentException("Requests must have same base URI template and path keys to batch");
-      }
-
-      if (!request.getResourceSpec().equals(firstResourceSpec))
-      {
-        throw new IllegalArgumentException("Requests must be for the same resource to batch");
-      }
-
-      if (!request.getRequestOptions().equals(firstRequest.getRequestOptions()))
-      {
-        throw new IllegalArgumentException("Requests must have the same RestliRequestOptions to batch!");
-      }
-
-      Set<Object> requestIds = request.getObjectIds();
-      Set<PathSpec> requestFields = request.getFields();
-      // Defensive shallow copy
-      Map<String, Object> queryParams = new HashMap<String, Object>(request.getQueryParamsObjects());
-
-      queryParams.remove(RestConstants.FIELDS_PARAM);
-      queryParams.remove(RestConstants.QUERY_BATCH_IDS_PARAM);
-
-      // Enforce uniformity of query params excluding ids and fields
-      if (!firstQueryParams.equals(queryParams))
-      {
-        throw new IllegalArgumentException("Requests must have same parameters to batch");
-      }
-
-      if (requestIds != null && !requestIds.isEmpty())
-      {
-        ids.addAll(requestIds);
-      }
-
-      if (batchFields)
-      {
-        if (requestFields == null || requestFields.isEmpty())
-        {
-          // Need all fields
-          fields = null;
-        }
-        else if (fields != null)
-        {
-          fields.addAll(requestFields);
-        }
-      }
-      else if (!requestFields.equals(firstFields))
-      {
-        throw new IllegalArgumentException("Requests must have same fields to batch");
-      }
-    }
-
-    firstQueryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM, ids);
-
-    if (fields != null && !fields.isEmpty())
-    {
-      firstQueryParams.put(RestConstants.FIELDS_PARAM,
-                           fields.toArray(new PathSpec[fields.size()]));
-    }
+    final BatchGetRequest<RT> firstRequest = requests.get(0);
+    final ResourceSpec firstResourceSpec = firstRequest.getResourceSpec();
+    final Map<String, Object> batchQueryParams = BatchGetRequestUtil.getBatchQueryParam(requests, batchFields);
 
     return new BatchGetRequest<RT>(firstRequest.getHeaders(),
                                    firstRequest.getResponseDecoder(),
-                                   firstQueryParams,
+                                   batchQueryParams,
                                    firstResourceSpec,
                                    firstRequest.getBaseUriTemplate(),
                                    firstRequest.getPathKeys(),
@@ -360,9 +275,9 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
                                   _decoder,
                                   _queryParams,
                                   _resourceSpec,
-                                  _baseURITemplate,
+                                  getBaseUriTemplate(),
                                   _pathKeys,
-                                  _requestOptions);
+                                  getRequestOptions());
   }
 
   public BatchGetKVRequest<K, V> buildKV()
@@ -380,9 +295,9 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
                                   decoder,
                                   _queryParams,
                                   _resourceSpec,
-                                  _baseURITemplate,
+                                  getBaseUriTemplate(),
                                   _pathKeys,
-                                  _requestOptions);
+                                  getRequestOptions());
   }
 
   public BatchGetRequestBuilder<K, V> fields(PathSpec... fieldPaths)

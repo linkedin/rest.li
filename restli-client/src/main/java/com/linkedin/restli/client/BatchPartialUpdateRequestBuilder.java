@@ -28,6 +28,7 @@ import com.linkedin.restli.common.KeyValueRecordFactory;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.TypeSpec;
+
 import java.util.Map;
 
 /**
@@ -171,9 +172,9 @@ public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> exten
                                                _entities,
                                                _queryParams,
                                                _resourceSpec,
-                                               _baseURITemplate,
+                                               getBaseUriTemplate(),
                                                _pathKeys,
-                                               _requestOptions);
+                                               getRequestOptions());
   }
 
 }

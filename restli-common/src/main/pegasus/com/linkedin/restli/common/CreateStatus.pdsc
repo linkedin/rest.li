@@ -16,8 +16,8 @@
     },
     {
       "name": "error",
-      "optional": true,
-      "type": "ErrorResponse"
+      "type": "ErrorResponse",
+      "optional": true
     }
   ]
 }

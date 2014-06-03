@@ -26,6 +26,7 @@ import com.linkedin.restli.common.CollectionRequest;
 import com.linkedin.restli.common.KeyValueRecord;
 import com.linkedin.restli.common.KeyValueRecordFactory;
 import com.linkedin.restli.common.ResourceSpec;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -173,9 +174,9 @@ public class BatchUpdateRequestBuilder<K, V extends RecordTemplate> extends
                                         _entities,
                                         _queryParams,
                                         _resourceSpec,
-                                        _baseURITemplate,
+                                        getBaseUriTemplate(),
                                         _pathKeys,
-                                        _requestOptions,
+                                        getRequestOptions(),
                                         _updateInputMap);
   }
 

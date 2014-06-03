@@ -28,7 +28,8 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.common.UpdateStatus;
-import com.linkedin.restli.internal.client.BatchKVResponseDecoder;
+import com.linkedin.restli.internal.client.BatchUpdateResponseDecoder;
+
 import java.net.URI;
 import java.util.Map;
 
@@ -50,10 +51,9 @@ public class BatchDeleteRequest<K, V extends RecordTemplate> extends BatchReques
     super(ResourceMethod.BATCH_DELETE,
           null,
           headers,
-          new BatchKVResponseDecoder<K, UpdateStatus>(new TypeSpec<UpdateStatus>(UpdateStatus.class),
-                                                      (TypeSpec<K>) resourceSpec.getKeyType(),
-                                                      resourceSpec.getKeyParts(),
-                                                      resourceSpec.getComplexKeyType()),
+          new BatchUpdateResponseDecoder<K>((TypeSpec<K>) resourceSpec.getKeyType(),
+                                            resourceSpec.getKeyParts(),
+                                            resourceSpec.getComplexKeyType()),
           resourceSpec,
           queryParams,
           baseUriTemplate,

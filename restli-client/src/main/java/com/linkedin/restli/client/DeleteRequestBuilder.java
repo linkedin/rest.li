@@ -21,7 +21,6 @@
 package com.linkedin.restli.client;
 
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.restli.common.ResourceSpec;
 
 import java.util.Map;
@@ -143,9 +142,9 @@ public class DeleteRequestBuilder<K, V extends RecordTemplate>
     return new DeleteRequest<V>(_headers,
                                 _resourceSpec,
                                 _queryParams,
-                                _baseURITemplate,
+                                getBaseUriTemplate(),
                                 _pathKeys,
-                                _requestOptions,
+                                getRequestOptions(),
                                 _id);
   }
 

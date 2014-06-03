@@ -23,13 +23,13 @@ package com.linkedin.restli.client;
 
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.restli.client.base.BuilderBase;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.util.ArgumentUtil;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -43,17 +43,15 @@ import java.util.Set;
  * @version $Revision: $
  */
 
-public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> implements RequestBuilder<R>
+public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends BuilderBase implements RequestBuilder<R>
 {
   protected static final char HEADER_DELIMITER = ',';
 
-  protected final String              _baseURITemplate;
   protected final ResourceSpec        _resourceSpec;
   protected final CompoundKey         _assocKey    = new CompoundKey();
   protected final Map<String, Object> _pathKeys    = new HashMap<String, Object>();
   protected final Map<String, Object> _queryParams = new HashMap<String, Object>();
   protected Map<String, String>       _headers     = new HashMap<String, String>();
-  protected RestliRequestOptions      _requestOptions;
 
   @Deprecated
   protected AbstractRequestBuilder(String baseURITemplate, ResourceSpec resourceSpec)
@@ -61,9 +59,9 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
     this(baseURITemplate, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
   }
 
-  protected AbstractRequestBuilder(String baseURITemplate, ResourceSpec resourceSpec, RestliRequestOptions requestOptions)
+  protected AbstractRequestBuilder(String baseUriTemplate, ResourceSpec resourceSpec, RestliRequestOptions requestOptions)
   {
-    _baseURITemplate = baseURITemplate;
+    super(baseUriTemplate, requestOptions);
     _resourceSpec = resourceSpec;
     _requestOptions = requestOptions;
   }
@@ -210,11 +208,6 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
     return this;
   }
 
-  public RestliRequestOptions getRequestOptions()
-  {
-    return _requestOptions;
-  }
-
   /**
    * To be called from the extending BatchXXXRequestBuilder classes that implement
    * ids(K...) or inputs()
@@ -299,7 +292,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> impleme
     final StringBuilder sb = new StringBuilder();
     sb.append(getClass().getName());
     sb.append("{_assocKey=").append(_assocKey);
-    sb.append(", _baseURITemplate='").append(_baseURITemplate).append('\'');
+    sb.append(", _baseURITemplate='").append(getBaseUriTemplate()).append('\'');
     sb.append(", _headers=").append(_headers);
     sb.append(", _pathKeys=").append(_pathKeys);
     sb.append(", _resourceSpec=").append(_resourceSpec);
