@@ -139,7 +139,7 @@ public class TestAssociationsResource extends RestLiIntegrationTest
     Assert.assertEquals(entityResponse.getResults().size(), 2);
     for (CompoundKey id: DB.keySet())
     {
-      EntityResponse single = entityResponse.getResults().get(id);
+      EntityResponse<Message> single = entityResponse.getResults().get(id);
       Assert.assertTrue(entityResponse.getResults().containsKey(id));
       Assert.assertEquals(single.getEntity(), DB.get(id));
     }
