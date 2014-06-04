@@ -19,6 +19,7 @@ package com.linkedin.restli.common;
 
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.internal.common.CreateIdStatusDecoder;
 
 import java.util.ArrayList;
@@ -34,8 +35,7 @@ import java.util.List;
  */
 public class BatchCreateResponse<K> extends CollectionResponse<CreateStatus>
 {
-  private final CreateIdStatusDecoder<K> _entityDecoder;
-  private List<CreateStatus> _collection;
+  private final List<CreateStatus> _collection;
 
   public BatchCreateResponse()
   {
@@ -45,24 +45,46 @@ public class BatchCreateResponse<K> extends CollectionResponse<CreateStatus>
   public BatchCreateResponse(DataMap data, CreateIdStatusDecoder<K> entityDecoder)
   {
     super(data, CreateStatus.class);
-    _entityDecoder = entityDecoder;
+    _collection = createCollectionFromDecoder(entityDecoder);
   }
 
-  private CreateStatus decodeValue(DataMap dataMap)
+  public BatchCreateResponse(List<CreateIdStatus<K>> elements)
   {
-    return _entityDecoder.makeValue(dataMap);
+    super(generateDataMap(elements), CreateStatus.class);
+    _collection = new ArrayList<CreateStatus>(elements.size());
+    for (CreateIdStatus<K> element : elements)
+    {
+      _collection.add(element);
+    }
   }
 
-  private void setCollection()
+  private static DataMap generateDataMap(List<? extends RecordTemplate> elements)
+  {
+    DataMap dataMap = new DataMap();
+    DataList listElements = new DataList();
+    for (RecordTemplate recordTemplate : elements)
+    {
+      listElements.add(recordTemplate.data());
+    }
+    dataMap.put(CollectionResponse.ELEMENTS, listElements);
+    return dataMap;
+  }
+
+  private CreateStatus decodeValue(DataMap dataMap, CreateIdStatusDecoder<K> entityDecoder)
+  {
+    return entityDecoder.makeValue(dataMap);
+  }
+
+  private List<CreateStatus> createCollectionFromDecoder(CreateIdStatusDecoder<K> entityDecoder)
   {
     DataList elements = this.data().getDataList(CollectionResponse.ELEMENTS);
     List<CreateStatus> collection = new ArrayList<CreateStatus>(elements.size());
     for (Object obj : elements)
     {
       DataMap dataMap = (DataMap) obj;
-      collection.add(decodeValue(dataMap));
+      collection.add(decodeValue(dataMap, entityDecoder));
     }
-    _collection = collection;
+    return collection;
   }
 
   /**
@@ -70,10 +92,6 @@ public class BatchCreateResponse<K> extends CollectionResponse<CreateStatus>
    */
   public List<CreateStatus> getElements()
   {
-    if (_collection == null)
-    {
-      setCollection();
-    }
     return _collection;
   }
 }

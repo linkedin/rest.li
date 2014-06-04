@@ -1,6 +1,7 @@
 1.16.2
 ------
-
+(RB=312291)
+Match previous changes in BatchCreateIdResponse to BatchCreateResponse
 
 1.16.1
 ------
