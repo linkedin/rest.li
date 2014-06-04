@@ -6,6 +6,8 @@ Update snapshot generator to expand included schemas in the models list instead 
 (RB=322858)
 fix d2TransportClientProperties schema to reflect what's actually being stored
 
+(RB=311710)
+Distinguish BatchGet with empty batch keys and GetAll by passing empty "ids=" query parameter from client and handle in server.
 
 1.18.3
 ------

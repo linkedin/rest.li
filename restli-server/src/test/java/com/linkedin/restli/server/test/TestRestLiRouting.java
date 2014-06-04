@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.server.test;
 
+
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -46,8 +47,6 @@ import com.linkedin.restli.server.twitter.TwitterAccountsResource;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Status;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Trending;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -56,12 +55,12 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
+
 import static com.linkedin.restli.server.test.RestLiTestHelper.buildResourceModels;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+import static org.testng.Assert.*;
+
 
 /**
  * @author dellamag
@@ -245,8 +244,8 @@ public class TestRestLiRouting
     expectedBatchKeys.add(key1);
     expectedBatchKeys.add(key2);
 
-    assertEquals(keys.getBatchKeys().size(), 2);
-    for (CompoundKey batchKey : keys.getBatchKeys(CompoundKey.class))
+    assertEquals(keys.getBatchIds().size(), 2);
+    for (CompoundKey batchKey : keys.getBatchIds(CompoundKey.class))
     {
       assertTrue(expectedBatchKeys.contains(batchKey));
       expectedBatchKeys.remove(batchKey);
@@ -287,7 +286,7 @@ public class TestRestLiRouting
 
     assertNotNull(result.getContext());
     PathKeys keys = result.getContext().getPathKeys();
-    assertEquals(keys.getBatchKeys().size(), 0);
+    assertNull(keys.getBatchIds());
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingDetailsSimple")
@@ -313,7 +312,7 @@ public class TestRestLiRouting
 
     assertNotNull(result.getContext());
     PathKeys keys = result.getContext().getPathKeys();
-    assertEquals(keys.getBatchKeys().size(), 0);
+    assertNull(keys.getBatchIds());
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingDetailsSimple")
@@ -339,7 +338,7 @@ public class TestRestLiRouting
 
     assertNotNull(result.getContext());
     PathKeys keys = result.getContext().getPathKeys();
-    assertEquals(keys.getBatchKeys().size(), 0);
+    assertNull(keys.getBatchIds());
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingDetailsSimple")
@@ -365,7 +364,7 @@ public class TestRestLiRouting
 
     assertNotNull(result.getContext());
     PathKeys keys = result.getContext().getPathKeys();
-    assertEquals(keys.getBatchKeys().size(), 0);
+    assertNull(keys.getBatchIds());
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingCollectionBatch")
@@ -2463,7 +2462,7 @@ public class TestRestLiRouting
     assertEquals(result.getResourceMethod().getResourceModel().getResourceClass(), resourceClass);
     assertEquals(result.getResourceMethod().getMethod().getName(), methodName);
     // If hasBatchKeys, there are batch keys in the context, and if not, there are none.
-    assertTrue(!(hasBatchKeys ^ result.getContext().getPathKeys().getBatchKeys().size() > 0));
+    assertEquals(hasBatchKeys, result.getContext().getPathKeys().getBatchIds() != null);
 
     for (String pathKey : expectedPathKeys)
     {
@@ -2517,7 +2516,7 @@ public class TestRestLiRouting
   {
     RestRequest request = createRequest(uri, httpMethod, version);
     RoutingResult result = _router.process(request, new RequestContext());
-    Set<?> batchKeys = result.getContext().getPathKeys().getBatchKeys();
+    Set<?> batchKeys = result.getContext().getPathKeys().getBatchIds();
     assertEquals(batchKeys, batchCompoundKeys);
   }
 

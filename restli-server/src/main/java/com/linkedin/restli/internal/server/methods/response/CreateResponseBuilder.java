@@ -24,7 +24,6 @@ import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.HeaderUtil;
-import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.internal.server.AugmentedRestLiResponseData;
 import com.linkedin.restli.internal.server.RoutingResult;
@@ -51,13 +50,11 @@ public class CreateResponseBuilder implements RestLiResponseBuilder
     CreateResponse createResponse = (CreateResponse) result;
     if (createResponse.hasId())
     {
-      final ProtocolVersion protocolVersion =
-          ((ServerResourceContext) routingResult.getContext()).getRestliProtocolVersion();
-      headers.put(HeaderUtil.getIdHeaderName(protocolVersion),
-                  URIParamUtils.encodeKeyForBody(createResponse.getId(), false,
-                                                 ProtocolVersionUtil.extractProtocolVersion(headers)));
-      String stringKey =
-          URIParamUtils.encodeKeyForUri(createResponse.getId(), UriComponent.Type.PATH_SEGMENT, protocolVersion);
+      final ProtocolVersion protocolVersion = ((ServerResourceContext) routingResult.getContext()).getRestliProtocolVersion();
+      headers.put(HeaderUtil.getIdHeaderName(protocolVersion), URIParamUtils.encodeKeyForBody(createResponse.getId(),
+                                                                                              false,
+                                                                                              protocolVersion));
+      String stringKey = URIParamUtils.encodeKeyForUri(createResponse.getId(), UriComponent.Type.PATH_SEGMENT, protocolVersion);
       UriBuilder uribuilder = UriBuilder.fromUri(request.getURI());
       uribuilder.path(stringKey);
       headers.put(RestConstants.HEADER_LOCATION, uribuilder.build((Object) null).toString());

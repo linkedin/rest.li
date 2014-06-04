@@ -54,6 +54,8 @@
         "method" : "batch_partial_update"
       }, {
         "method" : "batch_delete"
+      }, {
+        "method" : "get_all"
       } ],
       "entity" : {
         "subresources" : [ {
@@ -85,7 +87,7 @@
           "type" : "string"
         } ]
       } ],
-      "supports" : [ "batch_create", "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "get", "partial_update" ],
+      "supports" : [ "batch_create", "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "get", "get_all", "partial_update" ],
       "identifier" : {
         "name" : "keys",
         "params" : "com.linkedin.restli.examples.greetings.api.TwoPartKey",

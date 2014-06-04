@@ -228,7 +228,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
     }
 
     @SuppressWarnings("unchecked")
-    Collection<K> existingIds = (Collection<K>)_queryParams.get(RestConstants.QUERY_BATCH_IDS_PARAM);
+    Collection<K> existingIds = (Collection<K>) _queryParams.get(RestConstants.QUERY_BATCH_IDS_PARAM);
     if (existingIds != null && !existingIds.isEmpty())
     {
       allIds.addAll(existingIds);

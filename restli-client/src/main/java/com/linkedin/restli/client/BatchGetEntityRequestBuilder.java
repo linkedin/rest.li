@@ -39,7 +39,7 @@ import java.util.Map;
  * @author Keren Jin
  */
 public class BatchGetEntityRequestBuilder<K, V extends RecordTemplate> extends
-    RestfulRequestBuilder<K, V, BatchGetEntityRequest<K, V>>
+    BatchKVRequestBuilder<K, V, BatchGetEntityRequest<K, V>>
 {
   private final RestResponseDecoder<BatchKVResponse<K, EntityResponse<V>>> _decoder;
 
@@ -191,6 +191,8 @@ public class BatchGetEntityRequestBuilder<K, V extends RecordTemplate> extends
   @Override
   public BatchGetEntityRequest<K, V> build()
   {
+    ensureBatchKeys();
+
     return new BatchGetEntityRequest<K, V>(_headers,
                                            _decoder,
                                            _queryParams,

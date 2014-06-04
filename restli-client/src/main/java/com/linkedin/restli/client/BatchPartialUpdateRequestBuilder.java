@@ -37,7 +37,7 @@ import java.util.Map;
  */
 
 public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> extends
-    RestfulRequestBuilder<K, V, BatchPartialUpdateRequest<K, V>>
+    BatchKVRequestBuilder<K, V, BatchPartialUpdateRequest<K, V>>
 {
   private final CollectionRequest<KeyValueRecord<K, PatchRequest<V>>> _entities;
   private final KeyValueRecordFactory<K, PatchRequest<V>> _keyValueRecordFactory;
@@ -168,6 +168,8 @@ public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> exten
   @Override
   public BatchPartialUpdateRequest<K, V> build()
   {
+    ensureBatchKeys();
+
     return new BatchPartialUpdateRequest<K, V>(_headers,
                                                _entities,
                                                _queryParams,
@@ -176,5 +178,4 @@ public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> exten
                                                _pathKeys,
                                                getRequestOptions());
   }
-
 }

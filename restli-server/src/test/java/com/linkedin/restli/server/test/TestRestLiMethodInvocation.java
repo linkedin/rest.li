@@ -127,6 +127,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
@@ -136,21 +138,9 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-
 import static com.linkedin.restli.server.test.RestLiTestHelper.buildResourceModel;
 import static com.linkedin.restli.server.test.RestLiTestHelper.buildResourceModels;
-
-import static org.easymock.EasyMock.anyObject;
-import static org.easymock.EasyMock.createMock;
-import static org.easymock.EasyMock.eq;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.expectLastCall;
-import static org.easymock.EasyMock.getCurrentArguments;
-import static org.easymock.EasyMock.replay;
-import static org.easymock.EasyMock.reset;
-import static org.easymock.EasyMock.verify;
+import static org.easymock.EasyMock.*;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.fail;
@@ -4394,12 +4384,14 @@ public class TestRestLiMethodInvocation
   public MutablePathKeys buildBatchPathKeys(Object... batchKeys) throws RestLiSyntaxException
   {
     MutablePathKeys result = new PathKeysImpl();
+    Set<Object> keys = new HashSet<Object>();
 
     for (Object batchKey : batchKeys)
     {
-      result.appendBatchValue(batchKey);
+      keys.add(batchKey);
     }
 
+    result.setBatchKeys(keys);
     return result;
   }
 

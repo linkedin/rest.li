@@ -28,13 +28,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 
+
 /**
  * @author Josh Walker
  * @version $Revision: $
  */
 
 public class BatchDeleteRequestBuilder<K, V extends RecordTemplate> extends
-    RestfulRequestBuilder<K, V, BatchDeleteRequest<K, V>>
+    BatchKVRequestBuilder<K, V, BatchDeleteRequest<K, V>>
 {
 
   @Deprecated
@@ -148,6 +149,8 @@ public class BatchDeleteRequestBuilder<K, V extends RecordTemplate> extends
   @Override
   public BatchDeleteRequest<K, V> build()
   {
+    ensureBatchKeys();
+
     return new BatchDeleteRequest<K, V>(_headers,
                                         _queryParams,
                                         _resourceSpec,

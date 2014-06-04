@@ -405,20 +405,24 @@ public class ArgumentBuilder
    * @param data - the input DataMap to be converted
    * @param valueClass - the RecordTemplate type of the values
    * @param ids - the parsed batch ids from the request URI
-   * @return a map using appropriate key and value classes
+   * @return a map using appropriate key and value classes, or null if ids is null
    */
   public static <R extends RecordTemplate> Map<Object, R> buildBatchRequestMap(final DataMap data,
                                                                                final Class<R> valueClass,
                                                                                final Set<?> ids,
                                                                                final ProtocolVersion version)
   {
+    if (ids == null)
+    {
+      return null;
+    }
+
     BatchRequest<R> batchRequest = new BatchRequest<R>(data, new TypeSpec<R>(valueClass));
 
     Map<String, Object> parsedKeyMap = new HashMap<String, Object>();
     for (Object o : ids)
     {
-      parsedKeyMap.put(URIParamUtils.encodeKeyForBody(o, true, version),
-                       o);
+      parsedKeyMap.put(URIParamUtils.encodeKeyForBody(o, true, version), o);
     }
 
     Map<Object, R> result =

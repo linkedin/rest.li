@@ -17,7 +17,11 @@
 package com.linkedin.restli.examples;
 
 
+import com.linkedin.common.callback.FutureCallback;
+import com.linkedin.data.DataMap;
 import com.linkedin.r2.RemoteInvocationException;
+import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
@@ -40,7 +44,6 @@ import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.client.response.CreateResponse;
 import com.linkedin.restli.client.util.PatchGenerator;
 import com.linkedin.restli.common.BatchCreateIdResponse;
-import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CreateIdStatus;
@@ -61,6 +64,7 @@ import com.linkedin.restli.examples.greetings.client.ComplexKeysSubBuilders;
 import com.linkedin.restli.examples.greetings.client.ComplexKeysSubRequestBuilders;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.common.URIParamUtils;
+import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.util.ArrayList;
@@ -217,6 +221,13 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
   public void testBatchGetEntity(RestliRequestOptions options) throws RemoteInvocationException
   {
     testBatchGetEntityMain(new ComplexKeysRequestBuilders(options).batchGet());
+  }
+
+  // this test will only pass in Rest.li protocol version 2.0 or above
+  @Test
+  public void testBatchGetEntityEmpty() throws Exception
+  {
+    testBatchGetEntityEmpty(new ComplexKeysRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS).batchGet());
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
@@ -522,6 +533,20 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     Assert.assertNotNull(response.getResults().get(ids.get(0)).getEntity());
     Assert.assertNotNull(response.getResults().get(ids.get(1)).getEntity());
     Assert.assertNotNull(response.getResults().get(ids.get(2)).getError());
+  }
+
+  public void testBatchGetEntityEmpty(BatchGetEntityRequestBuilder<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> builder)
+    throws Exception
+  {
+    final Request<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>>> request = builder.build();
+    final FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
+    REST_CLIENT.sendRestRequest(request, new RequestContext(), callback);
+    final RestResponse result = callback.get();
+
+    final DataMap responseMap = DataMapUtils.readMap(result);
+    final DataMap resultsMap = responseMap.getDataMap(BatchKVResponse.RESULTS);
+    Assert.assertNotNull(resultsMap, "Response does not contain results map");
+    Assert.assertTrue(resultsMap.isEmpty());
   }
 
   private void testBatchUpdateMain(

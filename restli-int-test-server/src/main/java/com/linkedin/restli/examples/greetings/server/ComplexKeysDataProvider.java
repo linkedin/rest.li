@@ -177,6 +177,18 @@ public class ComplexKeysDataProvider
     return new BatchUpdateResult<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(results);
   }
 
+  public List<Message> getAll()
+  {
+    ArrayList<Message> results = new ArrayList<Message>();
+
+    for (Map.Entry<String, Message> entry : _db.entrySet())
+    {
+      results.add(entry.getValue());
+    }
+
+    return results;
+  }
+
   private String keyToString(TwoPartKey key)
   {
     return key.getMajor() + " " + key.getMinor();

@@ -20,7 +20,11 @@
 
 package com.linkedin.restli.internal.server;
 
+
 import com.linkedin.restli.server.PathKeys;
+
+import java.util.Set;
+
 
 /**
  * @author Josh Walker
@@ -40,10 +44,10 @@ public interface MutablePathKeys extends PathKeys
   MutablePathKeys append(String key, Object value);
 
   /**
-   * Append a value to batch keys set.
+   * Set a set of batch keys.
    *
-   * @param value value to be appended
+   * @param batchKeys batch keys to be set
    * @return this
    */
-  PathKeys appendBatchValue(Object value);
+  MutablePathKeys setBatchKeys(Set<Object> batchKeys);
 }

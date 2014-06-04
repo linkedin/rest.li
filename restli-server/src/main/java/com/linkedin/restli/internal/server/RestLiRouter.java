@@ -33,7 +33,6 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.PathSegment.PathSegmentSyntaxException;
-import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
@@ -46,11 +45,14 @@ import com.linkedin.restli.server.RoutingException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
@@ -343,7 +345,7 @@ public class RestLiRouter
                                    context.getRestLiRequestMethod(),
                                    context.getRequestActionName() != null,
                                    context.getRequestFinderName() != null,
-                                   context.getPathKeys().getBatchKeys().size() > 0,
+                                   context.getPathKeys().getBatchIds() != null,
                                    resourceLevel.equals(ResourceLevel.ENTITY));
 
     if (_resourceMethodLookup.containsKey(key))
@@ -439,6 +441,7 @@ public class RestLiRouter
   {
     Class<?> keyClass = resource.getKeyClass();
     ProtocolVersion version = context.getRestliProtocolVersion();
+    final Set<Object> batchKeys;
 
     if (ComplexResourceKey.class.equals(keyClass))
     {
@@ -447,24 +450,29 @@ public class RestLiRouter
 
       // Get the batch request keys from the IDS list at the root of the map.
       DataList batchIds = allParametersDataMap.getDataList(RestConstants.QUERY_BATCH_IDS_PARAM);
-      if (batchIds == null || batchIds.isEmpty())
+      if (batchIds == null)
       {
-        return;
+        batchKeys = null;
       }
-
-      // Validate the complex keys and put them into the context batch keys
-      for (Object complexKey : batchIds)
+      else if (batchIds.isEmpty())
       {
-        if (!(complexKey instanceof DataMap))
+        batchKeys = Collections.emptySet();
+      }
+      else
+      {
+        batchKeys = new HashSet<Object>();
+
+        // Validate the complex keys and put them into the context batch keys
+        for (Object complexKey : batchIds)
         {
-          log.warn("Invalid structure of key '" + complexKey.toString() + "', skipping key.");
-          context.getBatchKeyErrors().put(complexKey, new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST));
-          continue;
+          if (!(complexKey instanceof DataMap))
+          {
+            log.warn("Invalid structure of key '" + complexKey.toString() + "', skipping key.");
+            context.getBatchKeyErrors().put(complexKey, new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST));
+            continue;
+          }
+          batchKeys.add(ComplexResourceKey.buildFromDataMap((DataMap) complexKey, ComplexKeySpec.forClassesMaybeNull(resource.getKeyKeyClass(), resource.getKeyParamsClass())));
         }
-        context.getPathKeys()
-               .appendBatchValue(ComplexResourceKey.buildFromDataMap((DataMap) complexKey,
-                                                                     ComplexKeySpec.forClassesMaybeNull(resource.getKeyKeyClass(),
-                                                                                                        resource.getKeyParamsClass())));
       }
     }
     else if (CompoundKey.class.equals(keyClass)
@@ -474,38 +482,47 @@ public class RestLiRouter
 
       // Get the batch request keys from the IDS list at the root of the map.
       DataList batchIds = allParametersDataMap.getDataList(RestConstants.QUERY_BATCH_IDS_PARAM);
-      if (batchIds == null || batchIds.isEmpty())
+      if (batchIds == null)
       {
-        return;
+        batchKeys = null;
       }
-
-      // Validate the compound keys and put them into the contex batch keys
-      for (Object compoundKey : batchIds)
+      else if (batchIds.isEmpty())
       {
-        if (!(compoundKey instanceof DataMap))
+        batchKeys = Collections.emptySet();
+      }
+      else
+      {
+        batchKeys = new HashSet<Object>();
+
+        // Validate the compound keys and put them into the contex batch keys
+        for (Object compoundKey : batchIds)
         {
-          log.warn("Invalid structure of key '" + compoundKey.toString() + "', skipping key.");
-          context.getBatchKeyErrors().put(compoundKey.toString(), new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST));
-          continue;
+          if (!(compoundKey instanceof DataMap))
+          {
+            log.warn("Invalid structure of key '" + compoundKey.toString() + "', skipping key.");
+            context.getBatchKeyErrors().put(compoundKey.toString(), new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST));
+            continue;
+          }
+          CompoundKey finalKey;
+          try
+          {
+            finalKey = ArgumentUtils.dataMapToCompoundKey((DataMap) compoundKey, resource.getKeys());
+          }
+          catch (IllegalArgumentException e)
+          {
+            log.warn("Invalid structure of key '" + compoundKey.toString() + "', skipping key.");
+            context.getBatchKeyErrors().put(compoundKey.toString(), new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST));
+            continue;
+          }
+          batchKeys.add(finalKey);
         }
-        CompoundKey finalKey;
-        try
-        {
-          finalKey = ArgumentUtils.dataMapToCompoundKey((DataMap) compoundKey,
-                                                        resource.getKeys());
-        }
-        catch (IllegalArgumentException e)
-        {
-          log.warn("Invalid structure of key '" + compoundKey.toString() + "', skipping key.");
-          context.getBatchKeyErrors().put(compoundKey.toString(), new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST));
-          continue;
-        }
-        context.getPathKeys().appendBatchValue(finalKey);
       }
     }
     // collection batch get in v2, collection or association batch get in v1
     else if (context.hasParameter(RestConstants.QUERY_BATCH_IDS_PARAM))
     {
+      batchKeys = new HashSet<Object>();
+
       List<String> ids = context.getParameterValues(RestConstants.QUERY_BATCH_IDS_PARAM);
       if (version.compareTo(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()) >= 0)
       {
@@ -515,7 +532,7 @@ public class RestLiRouter
           Object value;
           // in v2, compound keys have already been converted and dealt with, so all we need to do here is convert simple values.
           value = ArgumentUtils.convertSimpleValue(id, key.getDataSchema(), key.getType());
-          context.getPathKeys().appendBatchValue(value);
+          batchKeys.add(value);
         }
       }
       else
@@ -526,7 +543,7 @@ public class RestLiRouter
           {
             // in v1, compound keys have not been fully parsed or dealt with yet, so we need to take them into account.
             Object value = parseKeyFromBatchV1(id, resource);
-            context.getPathKeys().appendBatchValue(value);
+            batchKeys.add(value);
           }
           catch (NumberFormatException e)
           {
@@ -546,9 +563,14 @@ public class RestLiRouter
                                                                        null, e));
           }
         }
-
       }
     }
+    else
+    {
+      batchKeys = null;
+    }
+
+    context.getPathKeys().setBatchKeys(batchKeys);
   }
 
   private static void parseSimpleKey(final ResourceModel resource,

@@ -18,11 +18,8 @@ package com.linkedin.restli.internal.server;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import com.linkedin.restli.server.PathKeys;
 
 /**
  * @author dellamag
@@ -30,7 +27,7 @@ import com.linkedin.restli.server.PathKeys;
 public class PathKeysImpl implements MutablePathKeys
 {
   private final Map<String, Object> _keyMap;
-  private final Set<Object>         _batchKeys;
+  private Set<Object>               _batchKeys;
 
   /**
    * Default constructor.
@@ -39,7 +36,6 @@ public class PathKeysImpl implements MutablePathKeys
   {
     super();
     _keyMap = new HashMap<String, Object>(4);
-    _batchKeys = new HashSet<Object>();
   }
 
   @Override
@@ -50,9 +46,9 @@ public class PathKeysImpl implements MutablePathKeys
   }
 
   @Override
-  public PathKeys appendBatchValue(final Object value)
+  public MutablePathKeys setBatchKeys(final Set<Object> batchKeys)
   {
-    _batchKeys.add(value);
+    _batchKeys = batchKeys;
     return this;
   }
 
@@ -81,17 +77,38 @@ public class PathKeysImpl implements MutablePathKeys
     return (String) _keyMap.get(key);
   }
 
+  @Deprecated
   @Override
   public Set<?> getBatchKeys()
   {
     return Collections.unmodifiableSet(_batchKeys);
   }
 
+  @Deprecated
   @Override
   @SuppressWarnings("unchecked")
   public <T> Set<T> getBatchKeys(final Class<T> keyClass)
   {
-    return (Set<T>) Collections.unmodifiableSet(_batchKeys);
+    return (Set<T>) getBatchKeys();
   }
 
+  @Override
+  public Set<?> getBatchIds()
+  {
+    if (_batchKeys == null)
+    {
+      return null;
+    }
+    else
+    {
+      return Collections.unmodifiableSet(_batchKeys);
+    }
+  }
+
+  @Override
+  @SuppressWarnings("unchecked")
+  public <T> Set<T> getBatchIds(final Class<T> keyClass)
+  {
+    return (Set<T>) Collections.unmodifiableSet(_batchKeys);
+  }
 }

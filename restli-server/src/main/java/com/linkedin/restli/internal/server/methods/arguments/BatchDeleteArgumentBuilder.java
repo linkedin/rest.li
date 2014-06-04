@@ -50,7 +50,12 @@ public class BatchDeleteArgumentBuilder implements RestLiArgumentBuilder
   @Override
   public RestLiRequestData extractRequestData(RoutingResult routingResult, RestRequest request)
   {
-    Set<?> ids = routingResult.getContext().getPathKeys().getBatchKeys();
-    return new RestLiRequestDataImpl.Builder().batchKeys(ids).build();
+    Set<?> ids = routingResult.getContext().getPathKeys().getBatchIds();
+    final RestLiRequestDataImpl.Builder builder = new RestLiRequestDataImpl.Builder();
+    if (ids != null)
+    {
+      builder.batchKeys(ids);
+    }
+    return builder.build();
   }
 }

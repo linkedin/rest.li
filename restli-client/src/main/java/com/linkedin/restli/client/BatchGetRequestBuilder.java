@@ -43,7 +43,7 @@ import java.util.Map;
  * @author Eran Leshem
  */
 public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
-    RestfulRequestBuilder<K, V, BatchGetRequest<V>>
+    BatchKVRequestBuilder<K, V, BatchGetRequest<V>>
 {
   private final RestResponseDecoder<BatchResponse<V>> _decoder;
 
@@ -370,6 +370,8 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
   @Override
   public BatchGetRequest<V> build()
   {
+    ensureBatchKeys();
+
     Class<?> keyClass = _resourceSpec.getKeyClass();
 
     if (com.linkedin.restli.common.CompoundKey.class.isAssignableFrom(keyClass) ||
@@ -390,6 +392,8 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
 
   public BatchGetKVRequest<K, V> buildKV()
   {
+    ensureBatchKeys();
+
     //Framework code should ensure that the ResourceSpec matches the static types of these parameters
     @SuppressWarnings("unchecked")
     BatchKVResponseDecoder<K, V> decoder =
@@ -412,5 +416,4 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
     addFields(fieldPaths);
     return this;
   }
-
 }

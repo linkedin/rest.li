@@ -66,6 +66,7 @@ public interface PathKeys
    *
    * @return set of batch key values.
    */
+  @Deprecated
   Set<?> getBatchKeys();
 
   /**
@@ -75,5 +76,22 @@ public interface PathKeys
    * @param <T> key value type
    * @return set of batch key values.
    */
+  @Deprecated
   <T> Set<T> getBatchKeys(Class<T> keyClass);
+
+  /**
+   * Get the resource batch keys untyped.
+   *
+   * @return set of batch key values, or null if no batch key is set.
+   */
+  Set<?> getBatchIds();
+
+  /**
+   * Get the resource batch keys typed.
+   *
+   * @param keyClass batch key class
+   * @param <T> key value type
+   * @return set of batch key values, or null if no batch key is set.
+   */
+  <T> Set<T> getBatchIds(Class<T> keyClass);
 }

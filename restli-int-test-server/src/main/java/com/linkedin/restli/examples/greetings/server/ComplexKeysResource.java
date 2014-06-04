@@ -31,7 +31,9 @@ import com.linkedin.restli.server.BatchResult;
 import com.linkedin.restli.server.BatchUpdateRequest;
 import com.linkedin.restli.server.BatchUpdateResult;
 import com.linkedin.restli.server.CreateResponse;
+import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.UpdateResponse;
+import com.linkedin.restli.server.annotations.Context;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
@@ -133,5 +135,11 @@ public class ComplexKeysResource extends ComplexKeyResourceTemplate<TwoPartKey, 
       final BatchDeleteRequest<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> ids)
   {
     return _dataProvider.batchDelete(ids);
+  }
+
+  @Override
+  public List<Message> getAll(@Context PagingContext pagingContext)
+  {
+    return _dataProvider.getAll();
   }
 }
