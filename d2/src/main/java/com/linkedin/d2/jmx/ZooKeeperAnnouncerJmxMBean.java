@@ -52,7 +52,7 @@ public interface ZooKeeperAnnouncerJmxMBean
 
   Map<Integer, PartitionData> getPartitionData();
 
-  void setPartitionData(String partitionDataJson)
+  void setPartitionDataUsingJson(String partitionDataJson)
       throws IOException;
 
   void setPartitionData(Map<Integer, PartitionData> partitionData);

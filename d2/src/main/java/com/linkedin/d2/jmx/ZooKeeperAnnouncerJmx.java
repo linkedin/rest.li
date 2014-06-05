@@ -122,7 +122,7 @@ public class ZooKeeperAnnouncerJmx implements ZooKeeperAnnouncerJmxMBean
   }
 
   @Override
-  public void setPartitionData(String partitionDataJson)
+  public void setPartitionDataUsingJson(String partitionDataJson)
       throws IOException
   {
     @SuppressWarnings("unchecked")
