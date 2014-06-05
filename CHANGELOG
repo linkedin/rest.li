@@ -1,7 +1,14 @@
+1.16.2
+------
+
+
 1.16.1
 ------
 remove smurfing ability in D2 KeyMapper
 (RB=310598)
+
+fix bug in zookeeperAnnouncerJmx
+(RB=312571)
 
 1.16.0
 ------
