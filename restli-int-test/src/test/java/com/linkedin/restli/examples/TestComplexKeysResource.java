@@ -341,10 +341,18 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
       CreateIdStatus<ComplexResourceKey<TwoPartKey, TwoPartKey>> createIdStatus = (CreateIdStatus<ComplexResourceKey<TwoPartKey, TwoPartKey>>) createStatus;
       Assert.assertEquals(createIdStatus.getStatus(), new Integer(201));
       Assert.assertTrue(expectedComplexKeys.contains(createIdStatus.getKey()));
-      @SuppressWarnings("deprecation")
-      String id = createStatus.getId();
-      Assert.assertEquals(BatchResponse.keyToString(createIdStatus.getKey(), ProtocolVersionUtil.extractProtocolVersion(response.getHeaders())),
-                          id);
+
+      try
+      {
+        @SuppressWarnings("deprecation")
+        String id = createIdStatus.getId();
+        Assert.fail("getId should throw an exception on ComplexKeys");
+      }
+      catch (UnsupportedOperationException e)
+      {
+        // expected
+      }
+
       expectedComplexKeys.remove(createIdStatus.getKey());
     }
     Assert.assertTrue(expectedComplexKeys.isEmpty());
@@ -390,10 +398,18 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     {
       Assert.assertEquals(status.getStatus(), new Integer(201));
       Assert.assertTrue(expectedComplexKeys.contains(status.getKey()));
-      @SuppressWarnings("deprecation")
-      String id = status.getId();
-      Assert.assertEquals(BatchResponse.keyToString(status.getKey(), ProtocolVersionUtil.extractProtocolVersion(response.getHeaders())),
-                          id);
+
+      try
+      {
+        @SuppressWarnings("deprecation")
+        String id = status.getId();
+        Assert.fail("getId should throw an exception for ComplexKeys");
+      }
+      catch (UnsupportedOperationException e)
+      {
+        // expected
+      }
+
       expectedComplexKeys.remove(status.getKey());
     }
     Assert.assertTrue(expectedComplexKeys.isEmpty());

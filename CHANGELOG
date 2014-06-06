@@ -1,5 +1,11 @@
-1.16.2
+1.17.1
 ------
+
+1.17.0
+------
+(RB=314186)
+CreateIdResponse.getId() now throws an exception if the requested Id is a Complex or Compound key.
+
 (RB=312291)
 Match previous changes in BatchCreateIdResponse to BatchCreateResponse
 

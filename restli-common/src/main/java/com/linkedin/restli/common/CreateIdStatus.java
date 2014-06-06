@@ -81,6 +81,23 @@ public class CreateIdStatus<K> extends CreateStatus
   }
 
   /**
+   * @return a serialized version of the key of the created record.
+   * @deprecated serialization format may change depending on the used {@link com.linkedin.restli.common.ProtocolVersion}.
+   *             Call {@link #getKey()} instead
+   */
+  @SuppressWarnings("deprecation")
+  @Override
+  @Deprecated
+  public String getId()
+  {
+    if (_key instanceof CompoundKey || _key instanceof ComplexResourceKey)
+    {
+      throw new UnsupportedOperationException("Do not call getId to get a CompoundKey or a ComplexKey, the serialized format may be inconsistent; call getKey instead");
+    }
+    return super.getId();
+  }
+
+  /**
    * @return the strongly typed key associated with this create.
    */
   public K getKey()
