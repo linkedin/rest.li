@@ -24,13 +24,11 @@ import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestClient;
-import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
-import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.examples.greetings.api.TwoPartKey;
 import com.linkedin.restli.examples.greetings.client.ActionsBuilders;
@@ -43,7 +41,6 @@ import com.linkedin.restli.examples.greetings.client.StringKeysBuilders;
 import com.linkedin.restli.examples.greetings.client.StringKeysRequestBuilders;
 import com.linkedin.restli.examples.greetings.client.StringKeysSubBuilders;
 import com.linkedin.restli.examples.greetings.client.StringKeysSubRequestBuilders;
-import com.linkedin.restli.internal.client.response.BatchEntityResponse;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.util.Collections;
@@ -111,43 +108,30 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
     Assert.assertEquals(response.getEntity().getMessage(), key1(), "Message should match key for key1");
   }
 
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestStringKeysOptionsDataProvider")
-  public void testBatchGetWithSimpleKey(RestliRequestOptions requestOptions) throws Exception
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestStringKeysBuilderDataProvider")
+  public void testBatchGetWithSimpleKey(RootBuilderWrapper<String, Message> builders) throws Exception
   {
     Set<String> keys = new HashSet<String>();
     keys.add(key1());
     keys.add(key2());
-    Request<BatchResponse<Message>> req = new StringKeysBuilders(requestOptions).batchGet().ids(keys).build();
+    Request<BatchResponse<Message>> req = builders.batchGet().ids(keys).build();
     BatchResponse<Message> response = REST_CLIENT.sendRequest(req).get().getEntity();
     Map<String, Message> results = response.getResults();
     Assert.assertEquals(results.get(key1()).getMessage(), key1(), "Message should match key for key1");
     Assert.assertEquals(results.get(key2()).getMessage(), key2(), "Message should match key for key2");
   }
 
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestStringKeysOptionsDataProvider")
-  public void testBatchGetKVWithSimpleKey(RestliRequestOptions requestOptions) throws Exception
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestStringKeysBuilderDataProvider")
+  public void testBatchKVGetWithSimpleKey(RootBuilderWrapper<String, Message> builders) throws Exception
   {
     Set<String> keys = new HashSet<String>();
     keys.add(key1());
     keys.add(key2());
-    Request<BatchKVResponse<String, Message>> req = new StringKeysBuilders(requestOptions).batchGet().ids(keys).buildKV();
+    Request<BatchKVResponse<String, Message>> req = builders.batchGet().ids(keys).buildKV();
     BatchKVResponse<String,Message> response = REST_CLIENT.sendRequest(req).get().getEntity();
     Map<String, Message> results = response.getResults();
     Assert.assertEquals(results.get(key1()).getMessage(), key1(), "Message should match key for key1");
     Assert.assertEquals(results.get(key2()).getMessage(), key2(), "Message should match key for key2");
-  }
-
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestStringKeysOptionsDataProvider")
-  public void testBatchGetEntityWithSimpleKey(RestliRequestOptions requestOptions) throws Exception
-  {
-    Set<String> keys = new HashSet<String>();
-    keys.add(key1());
-    keys.add(key2());
-    Request<BatchEntityResponse<String, Message>> req = new StringKeysRequestBuilders(requestOptions).batchGet().ids(keys).build();
-    BatchEntityResponse<String, Message> response = REST_CLIENT.sendRequest(req).get().getEntity();
-    Map<String, EntityResponse<Message>> results = response.getResults();
-    Assert.assertEquals(results.get(key1()).getEntity().getMessage(), key1(), "Message should match key for key1");
-    Assert.assertEquals(results.get(key2()).getEntity().getMessage(), key2(), "Message should match key for key2");
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestAssociationsSubBuilderDataProvider")
@@ -220,15 +204,6 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
       { new RootBuilderWrapper<String, Message>(new StringKeysBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
       { new RootBuilderWrapper<String, Message>(new StringKeysRequestBuilders()) },
       { new RootBuilderWrapper<String, Message>(new StringKeysRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
-    };
-  }
-
-  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestStringKeysOptionsDataProvider")
-  private static Object[][] requestStringKeysOptionsDataProvider()
-  {
-    return new Object[][] {
-      { RestliRequestOptions.DEFAULT_OPTIONS },
-      { TestConstants.FORCE_USE_NEXT_OPTIONS }
     };
   }
 

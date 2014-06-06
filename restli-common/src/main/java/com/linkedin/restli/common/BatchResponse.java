@@ -16,18 +16,16 @@
 
 package com.linkedin.restli.common;
 
+import java.util.Arrays;
+import java.util.Map;
+
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.schema.Name;
 import com.linkedin.data.schema.RecordDataSchema;
-import com.linkedin.data.template.DataTemplateUtil;
-import com.linkedin.data.template.IntegerMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.WrappingMapTemplate;
 import com.linkedin.restli.internal.common.URIParamUtils;
-
-import java.util.Arrays;
-import java.util.Map;
 
 
 /**
@@ -37,7 +35,6 @@ import java.util.Map;
 public class BatchResponse<T extends RecordTemplate> extends RecordTemplate
 {
   public static final String RESULTS = "results";
-  public static final String STATUSES = "statuses";
   public static final String ERRORS = "errors";
 
   private final Class<T> _valueClass;
@@ -125,19 +122,9 @@ public class BatchResponse<T extends RecordTemplate> extends RecordTemplate
    */
   public Map<String, T> getResults()
   {
-    final DataMap value = data().getDataMap(RESULTS);
+    DataMap value = (DataMap) data().get(RESULTS);
 
     return new DynamicRecordMap<T>(value, _resultsSchema, _valueClass);
-  }
-
-  /**
-   * @return a Map of String keys to status integers
-   */
-  public Map<String, Integer> getStatuses()
-  {
-    final DataMap value = data().getDataMap(STATUSES);
-
-    return DataTemplateUtil.wrap(value, IntegerMap.class);
   }
 
   /**
@@ -145,7 +132,7 @@ public class BatchResponse<T extends RecordTemplate> extends RecordTemplate
    */
   public Map<String, ErrorResponse> getErrors()
   {
-    final DataMap value = data().getDataMap(ERRORS);
+    DataMap value = (DataMap) data().get(ERRORS);
 
     return new DynamicRecordMap<ErrorResponse>(value, _errorsSchema, ErrorResponse.class);
   }

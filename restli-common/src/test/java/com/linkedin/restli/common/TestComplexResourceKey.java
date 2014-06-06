@@ -16,13 +16,13 @@
 
 package com.linkedin.restli.common;
 
-import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
-
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import com.linkedin.data.DataMap;
 
 public class TestComplexResourceKey
 {

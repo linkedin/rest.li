@@ -14,43 +14,36 @@
    limitations under the License.
 */
 
+/**
+ * $Id: $
+ */
+
 package com.linkedin.restli.internal.server.methods.response;
 
-
 import com.linkedin.data.DataMap;
-import com.linkedin.data.template.SetMode;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.BatchResponse;
-import com.linkedin.restli.common.ErrorResponse;
-import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.UpdateStatus;
-import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.internal.server.RoutingResult;
-import com.linkedin.restli.internal.server.ServerResourceContext;
-import com.linkedin.restli.internal.server.methods.AnyRecord;
 import com.linkedin.restli.server.BatchUpdateResult;
+import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
-
 
 /**
  * @author Josh Walker
  * @version $Revision: $
  */
 
-public final class BatchUpdateResponseBuilder implements RestLiResponseBuilder
+public final class BatchUpdateResponseBuilder extends
+    AbstractBatchResponseBuilder<UpdateResponse> implements RestLiResponseBuilder
 {
-  private final ErrorResponseBuilder _errorResponseBuilder;
-
   public BatchUpdateResponseBuilder(ErrorResponseBuilder errorResponseBuilder)
   {
-    _errorResponseBuilder = errorResponseBuilder;
+    super(errorResponseBuilder);
   }
 
   @Override
@@ -62,68 +55,39 @@ public final class BatchUpdateResponseBuilder implements RestLiResponseBuilder
   {
     @SuppressWarnings({ "unchecked" })
     /** constrained by signature of {@link com.linkedin.restli.server.resources.CollectionResource#batchUpdate(java.util.Map)} */
-    final BatchUpdateResult<Object, ?> updateResult = (BatchUpdateResult<Object, ?>) object;
+    BatchUpdateResult<?, ?> result = (BatchUpdateResult<?, ?>) object;
 
-    final Map<Object, UpdateResponse> updates = updateResult.getResults();
-    final Map<Object, RestLiServiceException> serviceErrors = updateResult.getErrors();
+    Map<?, UpdateResponse> resultsMap = result.getResults();
+    Map<?, RestLiServiceException> errorMap = result.getErrors();
 
-    final ServerResourceContext context = (ServerResourceContext) routingResult.getContext();
-    final ProtocolVersion protocolVersion = context.getRestliProtocolVersion();
+    BatchResponse<UpdateStatus> batchResponse =
+        createBatchResponse(UpdateStatus.class, resultsMap.size(), errorMap.size());
 
-    final Map<Object, ErrorResponse> errors = BatchResponseUtil.populateErrors(serviceErrors, context, _errorResponseBuilder);
+    populateErrors(request,
+                   routingResult,
+                   errorMap,
+                   headers,
+                   batchResponse);
 
-    final Set<Object> mergedKeys = new HashSet<Object>(updates.keySet());
-    mergedKeys.addAll(errors.keySet());
 
-    final Map<Object, UpdateStatus> results = new HashMap<Object, UpdateStatus>((int) Math.ceil(mergedKeys.size() / 0.75));
+    populateResults(batchResponse,
+                    resultsMap,
+                    headers,
+                    UpdateStatus.class,
+                    routingResult.getContext());
 
-    for (Object key : mergedKeys)
-    {
-      final UpdateStatus status = new UpdateStatus();
 
-      final UpdateResponse update = updates.get(key);
-      if (update != null)
-      {
-        status.setStatus(update.getStatus().getCode());
-      }
-
-      status.setError(errors.get(key), SetMode.IGNORE_NULL);
-
-      results.put(key, status);
-    }
-
-    // filter
-
-    final BatchResponse<AnyRecord> response = toBatchResponse(results, protocolVersion);
-    return new PartialRestResponse.Builder().entity(response).headers(headers).build();
+    return new PartialRestResponse.Builder().headers(headers).entity(batchResponse).build();
   }
 
-  private static <K> BatchResponse<AnyRecord> toBatchResponse(Map<K, UpdateStatus> statuses, ProtocolVersion protocolVersion)
+  @Override
+  protected DataMap buildResultRecord(final UpdateResponse o,
+                                      final ResourceContext resourceContext)
   {
-    final DataMap splitResponseData = new DataMap(2);
-    final DataMap splitStatuses = new DataMap();
-    final DataMap splitErrors = new DataMap();
-
-    for (Map.Entry<K, UpdateStatus> statusEntry : statuses.entrySet())
-    {
-      final UpdateStatus status = statusEntry.getValue();
-      final String stringKey = URIParamUtils.encodeKeyForBody(statusEntry.getKey(), false, protocolVersion);
-
-      final ErrorResponse error = status.getError();
-      if (error == null)
-      {
-        // status and error should be mutually exclusive for now
-        splitStatuses.put(stringKey, status.data());
-      }
-      else
-      {
-        splitErrors.put(stringKey, error.data());
-      }
-    }
-
-    splitResponseData.put(BatchResponse.RESULTS, splitStatuses);
-    splitResponseData.put(BatchResponse.ERRORS, splitErrors);
-
-    return new BatchResponse<AnyRecord>(splitResponseData, AnyRecord.class);
+    UpdateStatus output = new UpdateStatus();
+    output.setStatus(o.getStatus().getCode());
+    return output.data();
   }
+
+
 }

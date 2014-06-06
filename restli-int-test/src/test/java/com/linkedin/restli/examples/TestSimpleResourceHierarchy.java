@@ -27,16 +27,14 @@ import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
 import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.RestLiResponseException;
-import com.linkedin.restli.client.RestliRequestOptions;
-import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.client.response.CreateResponse;
+import com.linkedin.restli.common.CreateIdStatus;
+import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.client.util.PatchGenerator;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionResponse;
-import com.linkedin.restli.common.CreateIdStatus;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.examples.greetings.api.Greeting;
@@ -47,7 +45,6 @@ import com.linkedin.restli.examples.greetings.client.SubgreetingsBuilders;
 import com.linkedin.restli.examples.greetings.client.SubgreetingsRequestBuilders;
 import com.linkedin.restli.examples.greetings.client.SubsubgreetingBuilders;
 import com.linkedin.restli.examples.greetings.client.SubsubgreetingRequestBuilders;
-import com.linkedin.restli.internal.client.response.BatchEntityResponse;
 import com.linkedin.restli.test.util.BatchCreateHelper;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
@@ -194,36 +191,14 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
     Assert.assertEquals(greeting.getId().longValue(), 1L);
   }
 
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
-  public void testSubCollectionBatchGet(RestliRequestOptions requestOptions) throws RemoteInvocationException
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestSubBuilderDataProvider")
+  public void testSubCollectionBatchGet(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     List<Long> ids = Arrays.asList(1L, 2L, 3L, 4L);
-    Request<BatchResponse<Greeting>> request = new SubgreetingsBuilders(requestOptions).batchGet().ids(ids).build();
+    Request<BatchResponse<Greeting>> request = builders.batchGet().ids(ids).build();
 
     Response<BatchResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
     BatchResponse<Greeting> batchResponse = response.getEntity();
-    Assert.assertEquals(batchResponse.getResults().size(), ids.size());
-  }
-
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
-  public void testSubCollectionBatchGetKV(RestliRequestOptions requestOptions) throws RemoteInvocationException
-  {
-    List<Long> ids = Arrays.asList(1L, 2L, 3L, 4L);
-    Request<BatchKVResponse<Long, Greeting>> request = new SubgreetingsBuilders(requestOptions).batchGet().ids(ids).buildKV();
-
-    Response<BatchKVResponse<Long, Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
-    BatchKVResponse<Long, Greeting> batchResponse = response.getEntity();
-    Assert.assertEquals(batchResponse.getResults().size(), ids.size());
-  }
-
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
-  public void testSubCollectionBatchGetEntity(RestliRequestOptions requestOptions) throws RemoteInvocationException
-  {
-    List<Long> ids = Arrays.asList(1L, 2L, 3L, 4L);
-    Request<BatchEntityResponse<Long, Greeting>> request = new SubgreetingsRequestBuilders(requestOptions).batchGet().ids(ids).build();
-
-    Response<BatchEntityResponse<Long, Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
-    BatchEntityResponse<Long, Greeting> batchResponse = response.getEntity();
     Assert.assertEquals(batchResponse.getResults().size(), ids.size());
   }
 
@@ -244,8 +219,7 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestSubBuilderDataProvider")
-  public void testSubCollectionUpdate(RootBuilderWrapper<Long, Greeting> builders)
-    throws RemoteInvocationException, CloneNotSupportedException, URISyntaxException
+  public void testSubCollectionUpdate(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException, CloneNotSupportedException, URISyntaxException
   {
     // GET
     Request<Greeting> request = builders.get().id(1L).build();
@@ -271,8 +245,7 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestSubBuilderDataProvider")
-  public void testSubCollectionPartialUpdate(RootBuilderWrapper<Long, Greeting> builders)
-    throws RemoteInvocationException, CloneNotSupportedException, URISyntaxException
+  public void testSubCollectionPartialUpdate(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException, CloneNotSupportedException, URISyntaxException
   {
     // GET
     Request<Greeting> request = builders.get().id(1L).build();
@@ -299,14 +272,12 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
     Assert.assertEquals(response2, greeting.getMessage());
   }
 
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
-  public void testSubCollectionCreate(RestliRequestOptions requestOptions) throws RemoteInvocationException
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "oldRequestSubBuilderDataProvider")
+  public void testSubCollectionCreateOld(SubgreetingsBuilders builders) throws RemoteInvocationException
   {
     Greeting greeting = new Greeting();
     greeting.setMessage("Hello there!");
     greeting.setTone(Tone.FRIENDLY);
-
-    final SubgreetingsBuilders builders = new SubgreetingsBuilders(requestOptions);
 
     //POST
     Request<EmptyRecord> createRequest = builders.create().input(greeting).build();
@@ -328,14 +299,12 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
     Assert.assertEquals(responseGreeting.getTone(), greeting.getTone());
   }
 
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
-  public void testSubCollectionCreateId(RestliRequestOptions requestOptions) throws RemoteInvocationException
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "newRequestSubBuilderDataProvider")
+  public void testSubCollectionCreateNew(SubgreetingsRequestBuilders builders) throws RemoteInvocationException
   {
     Greeting greeting = new Greeting();
     greeting.setMessage("Hello there!");
     greeting.setTone(Tone.FRIENDLY);
-
-    final SubgreetingsRequestBuilders builders = new SubgreetingsRequestBuilders(requestOptions);
 
     //POST
     CreateIdRequest<Long, Greeting> createRequest = builders.create().input(greeting).build();
@@ -384,11 +353,10 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
     }
 
     //GET again to verify that the create has worked.
-    final RestliRequestOptions requestOptions = builders.getRequestOptions();
-    Request<BatchEntityResponse<Long, Greeting>> request = new SubgreetingsRequestBuilders(requestOptions).batchGet().ids(ids).build();
+    Request<BatchResponse<Greeting>> request = builders.batchGet().ids(ids).build();
 
-    Response<BatchEntityResponse<Long, Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
-    BatchEntityResponse<Long, Greeting> batchResponse = response.getEntity();
+    Response<BatchResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    BatchResponse<Greeting> batchResponse = response.getEntity();
     Assert.assertEquals(batchResponse.getResults().size(), ids.size());
   }
 
@@ -532,15 +500,6 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
     };
   }
 
-  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
-  private static Object[][] requestOptionsDataProvider()
-  {
-    return new Object[][] {
-      { RestliRequestOptions.DEFAULT_OPTIONS },
-      { TestConstants.FORCE_USE_NEXT_OPTIONS }
-    };
-  }
-
   @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestSubBuilderDataProvider")
   private static Object[][] requestSubBuilderDataProvider()
   {
@@ -549,6 +508,24 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
       { new RootBuilderWrapper<Long, Greeting>(new SubgreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
       { new RootBuilderWrapper<Long, Greeting>(new SubgreetingsRequestBuilders()) },
       { new RootBuilderWrapper<Long, Greeting>(new SubgreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
+    };
+  }
+
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "oldRequestSubBuilderDataProvider")
+  private static Object[][] oldRequestSubBuilderDataProvider()
+  {
+    return new Object[][] {
+      { new SubgreetingsBuilders() },
+      { new SubgreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS) },
+    };
+  }
+
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "newRequestSubBuilderDataProvider")
+  private static Object[][] newRequestSubBuilderDataProvider()
+  {
+    return new Object[][] {
+      { new SubgreetingsRequestBuilders() },
+      { new SubgreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS) }
     };
   }
 

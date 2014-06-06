@@ -32,6 +32,12 @@ import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.TypeSpec;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
+import com.linkedin.restli.internal.common.PathSegment;
+import com.linkedin.restli.internal.common.QueryParamsDataMap;
+import com.linkedin.restli.internal.common.TyperefUtils;
+import com.linkedin.restli.internal.common.URIElementParser;
+import com.linkedin.restli.internal.common.ValueConverter;
 
 import java.util.List;
 import java.util.Map;
@@ -109,7 +115,7 @@ public class ResponseUtils
       }
       catch (IllegalArgumentException e)
       {
-        throw new IllegalStateException(key.getType().getName() + " is not supported as a key type for BatchKVResponse", e);
+        throw new IllegalStateException(key.getType().getName() + " is not supported as a key type for BatchResponseKV", e);
       }
     }
 

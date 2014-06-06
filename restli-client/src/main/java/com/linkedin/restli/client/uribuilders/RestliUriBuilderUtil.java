@@ -21,7 +21,6 @@ import com.linkedin.restli.client.ActionRequest;
 import com.linkedin.restli.client.BatchCreateIdRequest;
 import com.linkedin.restli.client.BatchCreateRequest;
 import com.linkedin.restli.client.BatchDeleteRequest;
-import com.linkedin.restli.client.BatchGetEntityRequest;
 import com.linkedin.restli.client.BatchGetKVRequest;
 import com.linkedin.restli.client.BatchGetRequest;
 import com.linkedin.restli.client.BatchPartialUpdateRequest;
@@ -80,17 +79,9 @@ public class RestliUriBuilderUtil
         {
           return new BatchGetRequestUriBuilder((BatchGetRequest)request, uriPrefix, version);
         }
-        else if (request instanceof BatchGetKVRequest)
-        {
-          return new BatchGetKVRequestUriBuilder((BatchGetKVRequest)request, uriPrefix, version);
-        }
-        else if (request instanceof BatchGetEntityRequest)
-        {
-          return new BatchGetEntityRequestUriBuilder((BatchGetEntityRequest)request, uriPrefix, version);
-        }
         else
         {
-          throw new IllegalArgumentException("Batch Get request of unknown type: " + request.getClass());
+          return new BatchGetKVRequestUriBuilder((BatchGetKVRequest)request, uriPrefix, version);
         }
       case FINDER:
         return new FindRequestUriBuilder((FindRequest)request, uriPrefix, version);
@@ -105,7 +96,7 @@ public class RestliUriBuilderUtil
         }
         else
         {
-          throw new IllegalArgumentException("Create request of unknown type: " + request.getClass());
+          throw new IllegalArgumentException("create request of unknown type: " + request.getClass());
         }
       case BATCH_CREATE:
         if(request instanceof BatchCreateRequest)

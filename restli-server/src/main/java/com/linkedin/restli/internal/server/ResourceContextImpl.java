@@ -59,7 +59,7 @@ public class ResourceContextImpl implements ServerResourceContext
   private final DataMap                             _parameters;
   private final MaskTree                            _projectionMask;
   private final Map<String, String>                 _responseHeaders;
-  private final Map<Object, RestLiServiceException> _batchKeyErrors;
+  private final Map<String, RestLiServiceException> _batchKeyErrors;
   private final RequestContext                      _requestContext;
   private final ProtocolVersion                     _protocolVersion;
 
@@ -130,7 +130,7 @@ public class ResourceContextImpl implements ServerResourceContext
       _projectionMask = null;
     }
     _responseHeaders = new HashMap<String, String>();
-    _batchKeyErrors = new HashMap<Object, RestLiServiceException>();
+    _batchKeyErrors = new HashMap<String, RestLiServiceException>();
 
     _projectionMode = ProjectionMode.getDefault();
   }
@@ -270,7 +270,7 @@ public class ResourceContextImpl implements ServerResourceContext
   }
 
   @Override
-  public Map<Object, RestLiServiceException> getBatchKeyErrors()
+  public Map<String, RestLiServiceException> getBatchKeyErrors()
   {
     return _batchKeyErrors;
   }

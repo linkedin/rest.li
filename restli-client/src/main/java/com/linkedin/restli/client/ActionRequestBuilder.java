@@ -20,6 +20,12 @@
 
 package com.linkedin.restli.client;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 import com.linkedin.data.DataList;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.DynamicRecordMetadata;
@@ -31,12 +37,6 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.internal.client.ActionResponseDecoder;
 import com.linkedin.util.ArgumentUtil;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 
 /**
@@ -223,9 +223,9 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
                                 _resourceSpec,
                                 _queryParams,
                                 _name,
-                                getBaseUriTemplate(),
+                                _baseURITemplate,
                                 _pathKeys,
-                                getRequestOptions(),
+                                _requestOptions,
                                 _id);
 
   }

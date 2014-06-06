@@ -23,7 +23,6 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.jersey.api.uri.UriComponent;
-import com.linkedin.jersey.api.uri.UriTemplate;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ProtocolVersion;
@@ -50,8 +49,6 @@ import java.util.Map;
 
 public class URIParamUtils
 {
-  private static final String[] _EMPTY_STRING_ARRAY = new String[0];
-
   private static Map<String, String> dataMapToQueryParams(DataMap dataMap)
   {
     if (dataMap.containsKey(RestConstants.FIELDS_PARAM))
@@ -454,13 +451,5 @@ public class URIParamUtils
       }
     }
     return dataMap;
-  }
-
-  public static String[] extractPathComponentsFromUriTemplate(String uriTemplate)
-  {
-    final String normalizedUriTemplate = uriTemplate.replaceAll("(^/|/$)", "");
-    final UriTemplate template = new UriTemplate(normalizedUriTemplate);
-    final String uri = template.createURI(_EMPTY_STRING_ARRAY);
-    return uri.replaceAll("/+", "/").split("/");
   }
 }

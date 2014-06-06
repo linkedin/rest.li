@@ -32,8 +32,6 @@ import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.client.QueryParamsUtil;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
-import com.linkedin.restli.internal.common.URIParamUtils;
-
 import java.lang.reflect.Array;
 import java.net.URI;
 import java.util.ArrayList;
@@ -43,7 +41,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
-
 import org.apache.commons.lang.StringUtils;
 
 
@@ -499,7 +496,7 @@ public class Request<T>
   {
     if (_baseUriTemplate != null)
     {
-      return URIParamUtils.extractPathComponentsFromUriTemplate(_baseUriTemplate)[0];
+      return _baseUriTemplate.split("/")[0];
     }
     return "";
   }

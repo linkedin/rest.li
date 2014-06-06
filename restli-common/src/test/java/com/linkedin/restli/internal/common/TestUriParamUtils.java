@@ -25,13 +25,12 @@ import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.test.MyComplexKey;
-
-import java.util.HashMap;
-import java.util.Map;
-
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+
+import java.util.HashMap;
+import java.util.Map;
 
 
 /**
@@ -287,50 +286,5 @@ public class TestUriParamUtils
     URIParamUtils.addSortedParams(uriBuilder, queryParams);
     String query = uriBuilder.build().getQuery();
     Assert.assertEquals(query, "aParam=(empty:(),foo:bar,someField:someValue)&bParam=List(x,y,z)");
-  }
-
-  @Test
-  public void testExtractionWithTemplateVariables()
-  {
-    final String[] components1 = URIParamUtils.extractPathComponentsFromUriTemplate("foo");
-    Assert.assertEquals(components1.length, 1);
-    Assert.assertEquals(components1[0], "foo");
-
-    final String[] components2 = URIParamUtils.extractPathComponentsFromUriTemplate("foo/{keys}/bar");
-    Assert.assertEquals(components2.length, 2);
-    Assert.assertEquals(components2[0], "foo");
-    Assert.assertEquals(components2[1], "bar");
-
-    final String[] components3 = URIParamUtils.extractPathComponentsFromUriTemplate("foo/{keys1}/bar/{keys2}/baz");
-    Assert.assertEquals(components3.length, 3);
-    Assert.assertEquals(components3[0], "foo");
-    Assert.assertEquals(components3[1], "bar");
-    Assert.assertEquals(components3[2], "baz");
-
-    final String[] components4 = URIParamUtils.extractPathComponentsFromUriTemplate("foo/{keys1}/{keys2}/bar");
-    Assert.assertEquals(components4.length, 2);
-    Assert.assertEquals(components4[0], "foo");
-    Assert.assertEquals(components4[1], "bar");
-  }
-
-  @Test
-  public void testExtractionWithoutTemplateVariables()
-  {
-    final String[] components = URIParamUtils.extractPathComponentsFromUriTemplate("foo/bar");
-    Assert.assertEquals(components.length, 2);
-    Assert.assertEquals(components[0], "foo");
-    Assert.assertEquals(components[1], "bar");
-  }
-
-  @Test
-  public void testExtractionWithSlashes()
-  {
-    final String[] components1 = URIParamUtils.extractPathComponentsFromUriTemplate("/foo");
-    Assert.assertEquals(components1.length, 1);
-    Assert.assertEquals(components1[0], "foo");
-
-    final String[] components2 = URIParamUtils.extractPathComponentsFromUriTemplate("foo/");
-    Assert.assertEquals(components2.length, 1);
-    Assert.assertEquals(components2[0], "foo");
   }
 }

@@ -8,11 +8,6 @@
     {
       "name": "status",
       "type": "int"
-    },
-    {
-      "name": "error",
-      "type": "ErrorResponse",
-      "optional": true
     }
   ]
 }

@@ -20,10 +20,6 @@
 
 package com.linkedin.restli.server;
 
-
-import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.restli.common.HttpStatus;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -33,23 +29,15 @@ import java.util.Set;
  * @author Josh Walker
  * @version $Revision: $
  */
-public class BatchResult<K, V extends RecordTemplate> implements Map<K, V>
+
+public class BatchResult<K, V> implements Map<K, V>
 {
   private final Map<K, V> _data;
-  private final Map<K, HttpStatus> _statuses;
   private final Map<K, RestLiServiceException> _errors;
 
   public BatchResult(final Map<K, V> data, final Map<K, RestLiServiceException> errors)
   {
     _data = data;
-    _statuses = Collections.emptyMap();
-    _errors = errors;
-  }
-
-  public BatchResult(final Map<K, V> data, final Map<K, HttpStatus> statuses, final Map<K, RestLiServiceException> errors)
-  {
-    _data = data;
-    _statuses = statuses;
     _errors = errors;
   }
 
@@ -123,11 +111,6 @@ public class BatchResult<K, V extends RecordTemplate> implements Map<K, V>
   public Set<Entry<K, V>> entrySet()
   {
     return _data.entrySet();
-  }
-
-  public Map<K, HttpStatus> getStatuses()
-  {
-    return Collections.unmodifiableMap(_statuses);
   }
 
   public Map<K, RestLiServiceException> getErrors()

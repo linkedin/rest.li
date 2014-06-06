@@ -26,10 +26,10 @@ import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.response.CreateResponse;
+import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.EmptyRecord;
-import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.Link;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.examples.greetings.api.Greeting;
@@ -37,7 +37,6 @@ import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
 import com.linkedin.restli.examples.groups.api.TransferOwnershipRequest;
-import com.linkedin.restli.internal.client.response.BatchEntityResponse;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.util.Arrays;
@@ -84,8 +83,8 @@ public class TestGreetingsClientAcceptTypes extends RestLiIntegrationTest
     Assert.assertEquals(greeting.getId(), new Long(1));
   }
 
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "oldBuildersClientDataDataProvider")
-  public void testBatchGet(RestClient restClient, String expectedContentType, GreetingsBuilders builders)
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientDataDataProvider")
+  public void testBatchGet(RestClient restClient, String expectedContentType, RootBuilderWrapper<Long, Greeting> builders)
           throws RemoteInvocationException
   {
     List<Long> ids = Arrays.asList(1L, 2L, 3L, 4L);
@@ -94,19 +93,6 @@ public class TestGreetingsClientAcceptTypes extends RestLiIntegrationTest
     Response<BatchResponse<Greeting>> response = restClient.sendRequest(request).getResponse();
     Assert.assertEquals(response.getHeader(RestConstants.HEADER_CONTENT_TYPE), expectedContentType);
     BatchResponse<Greeting> batchResponse = response.getEntity();
-    Assert.assertEquals(batchResponse.getResults().size(), ids.size());
-  }
-
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "newBuildersClientDataDataProvider")
-  public void testBatchGetEntity(RestClient restClient, String expectedContentType, GreetingsRequestBuilders builders)
-    throws RemoteInvocationException
-  {
-    List<Long> ids = Arrays.asList(1L, 2L, 3L, 4L);
-    Request<BatchEntityResponse<Long, Greeting>> request = builders.batchGet().ids(ids).build();
-
-    Response<BatchEntityResponse<Long, Greeting>> response = restClient.sendRequest(request).getResponse();
-    Assert.assertEquals(response.getHeader(RestConstants.HEADER_CONTENT_TYPE), expectedContentType);
-    BatchEntityResponse<Long, Greeting> batchResponse = response.getEntity();
     Assert.assertEquals(batchResponse.getResults().size(), ids.size());
   }
 
@@ -154,7 +140,7 @@ public class TestGreetingsClientAcceptTypes extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "oldBuildersClientDataDataProvider")
-  public void testCreate(RestClient restClient, String expectedContentType, GreetingsBuilders builders) throws RemoteInvocationException
+  public void testCreateOld(RestClient restClient, String expectedContentType, GreetingsBuilders builders) throws RemoteInvocationException
   {
     Greeting greeting = new Greeting();
     greeting.setMessage("Hello there!");
@@ -180,7 +166,7 @@ public class TestGreetingsClientAcceptTypes extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "newBuildersClientDataDataProvider")
-  public void testCreateId(RestClient restClient, String expectedContentType, GreetingsRequestBuilders builders) throws RemoteInvocationException
+  public void testCreateNew(RestClient restClient, String expectedContentType, GreetingsRequestBuilders builders) throws RemoteInvocationException
   {
     Greeting greeting = new Greeting();
     greeting.setMessage("Hello there!");

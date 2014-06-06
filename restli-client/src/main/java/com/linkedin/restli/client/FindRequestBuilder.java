@@ -19,6 +19,7 @@ package com.linkedin.restli.client;
 
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
 
@@ -180,9 +181,9 @@ public class FindRequestBuilder<K, V extends RecordTemplate> extends
                               _resourceSpec,
                               _queryParams,
                               _name,
-                              getBaseUriTemplate(),
+                              _baseURITemplate,
                               _pathKeys,
-                              getRequestOptions(),
+                              _requestOptions,
                               _assocKey);
   }
 }

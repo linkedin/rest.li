@@ -123,14 +123,14 @@ public class TestScatterGather extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = "requestBuilderDataProvider")
-  public static void testBuildSGRequests(RootBuilderWrapper<Long, Greeting> builders)
+  public static void testBuildSGRequests(RootBuilderWrapper<Long, Greeting> builders, RestliRequestOptions options)
     throws URISyntaxException, RestException, ServiceUnavailableException
   {
     testBuildSGRequests(10, 0, builders);
   }
 
   @Test(dataProvider = "requestBuilderDataProvider")
-  public static void testBuildSGRequestsWithPartitions(RootBuilderWrapper<Long, Greeting> builders)
+  public static void testBuildSGRequestsWithPartitions(RootBuilderWrapper<Long, Greeting> builders, RestliRequestOptions options)
     throws URISyntaxException, RestException, ServiceUnavailableException
   {
     testBuildSGRequests(12, 3, builders);
@@ -156,7 +156,7 @@ public class TestScatterGather extends RestLiIntegrationTest
     final int NUM_IDS = 100;
     Long[] ids = generateIds(NUM_IDS);
     Map<Long, Greeting> updates = generateUpdates(ids);
-    testBuildSGGetRequests(NUM_ENDPOINTS, sg, ids);
+    testBuildSGGetRequests(NUM_ENDPOINTS, sg, ids, builders);
     testBuildSGDeleteRequests(NUM_ENDPOINTS, sg, ids, builders);
     testBuildSGUpdateRequests(NUM_ENDPOINTS, sg, updates, builders);
   }
@@ -212,10 +212,11 @@ public class TestScatterGather extends RestLiIntegrationTest
 
   private static void testBuildSGGetRequests(int numEndpoints,
                                              ScatterGatherBuilder<Greeting> sg,
-                                             Long[] ids)
+                                             Long[] ids,
+                                             RootBuilderWrapper<Long, Greeting> builders)
     throws ServiceUnavailableException
   {
-    Collection<ScatterGatherBuilder.RequestInfo<Greeting>> requests = buildScatterGatherGetRequests(sg, ids);
+    Collection<ScatterGatherBuilder.RequestInfo<Greeting>> requests = buildScatterGatherGetRequests(sg, ids, builders);
     Assert.assertEquals(requests.size(), numEndpoints);
 
     Set<Set<String>> requestIdSets = new HashSet<Set<String>>();
@@ -329,7 +330,7 @@ public class TestScatterGather extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = "requestBuilderDataProvider")
-  public static void testSendSGRequests(RootBuilderWrapper<Long, Greeting> builders)
+  public static void testSendSGRequests(RootBuilderWrapper<Long, Greeting> builders, RestliRequestOptions options)
     throws URISyntaxException, InterruptedException, RemoteInvocationException
   {
     final int NUM_ENDPOINTS = 4;
@@ -339,8 +340,8 @@ public class TestScatterGather extends RestLiIntegrationTest
     final int NUM_IDS = 20;
 
     List<Greeting> entities = generateCreate(NUM_IDS);
-    Long[] requestIds = prepareData(entities, builders.getRequestOptions());
-    testSendGetSGRequests(sg, requestIds);
+    Long[] requestIds = prepareData(entities, options);
+    testSendGetSGRequests(sg, requestIds, builders);
 
     Map<Long, Greeting> input = generateUpdates(requestIds);
     testSendSGUpdateRequests(sg, input, builders);
@@ -348,10 +349,10 @@ public class TestScatterGather extends RestLiIntegrationTest
     testSendSGDeleteRequests(sg, requestIds, builders);
   }
 
-  private static Long[] prepareData(List<Greeting> entities, RestliRequestOptions requestOptions)
+  private static Long[] prepareData(List<Greeting> entities, RestliRequestOptions options)
     throws RemoteInvocationException
   {
-    GreetingsRequestBuilders builders = new GreetingsRequestBuilders(requestOptions);
+    GreetingsRequestBuilders builders = new GreetingsRequestBuilders(options);
     BatchCreateIdRequest<Long, Greeting> request = builders.batchCreate().inputs(entities).build();
     Response<BatchCreateIdResponse<Long>> response = REST_CLIENT.sendRequest(request).getResponse();
     List<CreateIdStatus<Long>> statuses = response.getEntity().getElements();
@@ -366,11 +367,12 @@ public class TestScatterGather extends RestLiIntegrationTest
   }
 
   private static void testSendGetSGRequests(ScatterGatherBuilder<Greeting> sg,
-                                            Long[] requestIds)
+                                            Long[] requestIds,
+                                            RootBuilderWrapper<Long, Greeting> builders)
     throws ServiceUnavailableException, InterruptedException
   {
     Collection<ScatterGatherBuilder.RequestInfo<Greeting>> scatterGatherRequests =
-      buildScatterGatherGetRequests(sg, requestIds);
+      buildScatterGatherGetRequests(sg, requestIds, builders);
 
     final Map<String, Greeting> results = new ConcurrentHashMap<String, Greeting>();
     final CountDownLatch latch = new CountDownLatch(scatterGatherRequests.size());
@@ -518,7 +520,7 @@ public class TestScatterGather extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = "requestBuilderDataProvider")
-  public static void testScatterGatherLoadBalancerIntegration(RootBuilderWrapper<Long, Greeting> builders) throws Exception
+  public static void testScatterGatherLoadBalancerIntegration(RootBuilderWrapper<Long, Greeting> builders, RestliRequestOptions options) throws Exception
   {
     SimpleLoadBalancer loadBalancer = MockLBFactory.createLoadBalancer();
 
@@ -540,12 +542,13 @@ public class TestScatterGather extends RestLiIntegrationTest
     final int NUM_IDS = 20;
     Long[] requestIds = generateIds(NUM_IDS);
     Collection<ScatterGatherBuilder.RequestInfo<Greeting>> scatterGatherRequests =
-      buildScatterGatherGetRequests(sg, requestIds);
+      buildScatterGatherGetRequests(sg, requestIds, builders);
   }
 
   private static Collection<ScatterGatherBuilder.RequestInfo<Greeting>> buildScatterGatherGetRequests(
     ScatterGatherBuilder<Greeting> sg,
-    Long[] ids)
+    Long[] ids,
+    RootBuilderWrapper<Long, Greeting> builders)
     throws ServiceUnavailableException
   {
     Request<BatchResponse<Greeting>> request = new GreetingsBuilders().batchGet().ids(ids).fields(Greeting.fields().message()).setParam("foo", "bar").build();
@@ -664,10 +667,10 @@ public class TestScatterGather extends RestLiIntegrationTest
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), TestConstants.FORCE_USE_NEXT_OPTIONS },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()), RestliRequestOptions.DEFAULT_OPTIONS },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), TestConstants.FORCE_USE_NEXT_OPTIONS }
     };
   }
 }

@@ -23,11 +23,13 @@ package com.linkedin.restli.client;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.restli.common.CollectionRequest;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.internal.client.BatchCreateDecoder;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
@@ -161,9 +163,9 @@ public class BatchCreateRequestBuilder<K, V extends RecordTemplate> extends
                                      _input,
                                      _resourceSpec,
                                      _queryParams,
-                                     getBaseUriTemplate(),
+                                     _baseURITemplate,
                                      _pathKeys,
-                                     getRequestOptions());
+                                     _requestOptions);
   }
 
 }

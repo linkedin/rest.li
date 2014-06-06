@@ -16,15 +16,14 @@
 
 package com.linkedin.restli.common;
 
-
-import com.linkedin.data.schema.RecordDataSchema;
-import com.linkedin.data.template.DynamicRecordMetadata;
-import com.linkedin.data.template.RecordTemplate;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+
+import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.template.DynamicRecordMetadata;
+import com.linkedin.data.template.RecordTemplate;
 
 
 /**
@@ -275,6 +274,27 @@ public class ResourceSpecImpl implements ResourceSpec
     _valueType = value;
   }
 
+  private HashMap<String, CompoundKey.TypeInfo> toTypeInfoKeyParts(Map<String, ?> keyParts)
+  {
+    HashMap<String, CompoundKey.TypeInfo> keyPartTypeInfos = new HashMap<String, CompoundKey.TypeInfo>();
+    for(Map.Entry<String, ?> entry : keyParts.entrySet()) {
+      if(entry.getValue() instanceof Class<?>)
+      {
+        Class<?> entryKeyClass = (Class<?>)entry.getValue();
+        keyPartTypeInfos.put(entry.getKey(), new CompoundKey.TypeInfo(entryKeyClass, entryKeyClass));
+      }
+      else if (entry.getValue() instanceof CompoundKey.TypeInfo)
+      {
+        keyPartTypeInfos.put(entry.getKey(), (CompoundKey.TypeInfo)entry.getValue());
+      }
+      else
+      {
+        throw new IllegalArgumentException("keyParts values must be either Class<?> or CompoundKey.TypeInfo, but was: " + entry.getValue().getClass());
+      }
+    }
+    return keyPartTypeInfos;
+  }
+
   @Override
   public Set<ResourceMethod> getSupportedMethods()
   {
@@ -406,26 +426,5 @@ public class ResourceSpecImpl implements ResourceSpec
     builder.append("\n, actionResponseMetadata: ");
     builder.append(_actionResponseMetadata);
     return builder.toString();
-  }
-
-  private static HashMap<String, CompoundKey.TypeInfo> toTypeInfoKeyParts(Map<String, ?> keyParts)
-  {
-    final HashMap<String, CompoundKey.TypeInfo> keyPartTypeInfos = new HashMap<String, CompoundKey.TypeInfo>();
-    for(Map.Entry<String, ?> entry : keyParts.entrySet()) {
-      if(entry.getValue() instanceof Class<?>)
-      {
-        final Class<?> entryKeyClass = (Class<?>) entry.getValue();
-        keyPartTypeInfos.put(entry.getKey(), new CompoundKey.TypeInfo(entryKeyClass, entryKeyClass));
-      }
-      else if (entry.getValue() instanceof CompoundKey.TypeInfo)
-      {
-        keyPartTypeInfos.put(entry.getKey(), (CompoundKey.TypeInfo) entry.getValue());
-      }
-      else
-      {
-        throw new IllegalArgumentException("keyParts values must be either Class<?> or CompoundKey.TypeInfo, but was: " + entry.getValue().getClass());
-      }
-    }
-    return keyPartTypeInfos;
   }
 }

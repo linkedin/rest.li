@@ -3,6 +3,9 @@
 (RB=312291)
 Match previous changes in BatchCreateIdResponse to BatchCreateResponse
 
+(RB=313446)
+Revert "Re-design Rest.li response API for various batch operations".
+
 1.16.1
 ------
 remove smurfing ability in D2 KeyMapper

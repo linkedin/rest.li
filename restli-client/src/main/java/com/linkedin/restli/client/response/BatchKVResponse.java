@@ -26,6 +26,7 @@ import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.ComplexKeySpec;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
+import com.linkedin.restli.common.CompoundKey.TypeInfo;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.TypeSpec;
@@ -38,20 +39,23 @@ import java.util.Map;
 
 
 /**
- * A batch of records. Used to return a fixed-size, unordered, complete collection of records, keyed on resource ID. Used
+ * A Batch of records. Used to return a fixed-size, unordered, complete collection of records, keyed on resource ID. Used
  * as a response for a get_batch request.
- *
- * @author Keren Jin
  */
 public class BatchKVResponse<K, V extends RecordTemplate> extends RecordTemplate
 {
   public static final String RESULTS = "results";
   public static final String ERRORS = "errors";
 
-  private RecordDataSchema _schema;
-  private Class<V> _valueClass;
-  private Map<K, V> _results;
-  private Map<K, ErrorResponse> _errors;
+  private final Map<String, CompoundKey.TypeInfo> _keyParts;
+  private final ComplexKeySpec<?, ?> _complexKeyType;
+
+  private final RecordDataSchema _schema;
+
+  private final Map<K, V> _results;
+  private final Map<K, ErrorResponse> _errors;
+
+  private final ProtocolVersion _version;
 
   /**
    * Constructor for collection and association resource responses.  For complex key resources
@@ -65,7 +69,7 @@ public class BatchKVResponse<K, V extends RecordTemplate> extends RecordTemplate
    *     <li>For complex resources do not use this constructor, use the one that accepts keyKeyClass and keyParamsClass.</li>
    *   </ul>
    * @param valueClass provides the entity type of the collection.
-   * @param keyParts provides a map for association keys of each key name to {@link CompoundKey.TypeInfo}, for non-association resources must be an empty map.
+   * @param keyParts provides a map for association keys of each key name to {@link TypeInfo}, for non-association resources must be an empty map.
    */
   public BatchKVResponse(DataMap data,
                          Class<K> keyClass,
@@ -103,7 +107,7 @@ public class BatchKVResponse<K, V extends RecordTemplate> extends RecordTemplate
    *     <li>For complex resources do not use this constructor, use the one that accepts keyKeyClass and keyParamsClass.</li>
    *   </ul>
    * @param valueType provides the entity type of the collection.
-   * @param keyParts provides a map for association keys of each key name to {@link CompoundKey.TypeInfo}, for non-association resources must be an empty map.
+   * @param keyParts provides a map for association keys of each key name to {@link TypeInfo}, for non-association resources must be an empty map.
    */
   public BatchKVResponse(DataMap data,
                          TypeSpec<K> keyType,
@@ -134,7 +138,7 @@ public class BatchKVResponse<K, V extends RecordTemplate> extends RecordTemplate
    *     <li>For complex resources must be {@link ComplexResourceKey}, keyKeyClass must contain the
    *           key's record template class and if the resource has a key params their record template type keyParamsClass must be provided.</li>
    * @param valueClass provides the entity type of the collection.
-   * @param keyParts provides a map for association keys of each key name to {@link CompoundKey.TypeInfo}, for non-association resources must be an empty map.
+   * @param keyParts provides a map for association keys of each key name to {@link TypeInfo}, for non-association resources must be an empty map.
    * @param keyKeyClass provides the record template class for the key for complex key resources, otherwise null.
    * @param keyParamsClass provides the record template class for the key params for complex key resources, otherwise null.
    */
@@ -176,20 +180,127 @@ public class BatchKVResponse<K, V extends RecordTemplate> extends RecordTemplate
    *     <li>For complex resources must be {@link ComplexResourceKey}, keyKeyClass must contain the
    *           key's record template class and if the resource has a key params their record template type keyParamsClass must be provided.</li>
    * @param valueType provides the entity type of the collection.
-   * @param keyParts provides a map for association keys of each key name to {@link CompoundKey.TypeInfo}, for non-association resources must be an empty map.
+   * @param keyParts provides a map for association keys of each key name to {@link TypeInfo}, for non-association resources must be an empty map.
    * @param complexKeyType provides the type of the key for complex key resources, otherwise null.
    */
   public BatchKVResponse(DataMap data,
                          TypeSpec<K> keyType,
                          TypeSpec<V> valueType,
                          Map<String, CompoundKey.TypeInfo> keyParts,
-                         ComplexKeySpec<?, ?> complexKeyType,
+                         ComplexKeySpec<?,?> complexKeyType,
                          ProtocolVersion version)
   {
     super(data, null);
+    _keyParts = keyParts;
+    _complexKeyType = complexKeyType;
+    _version = version;
 
-    createSchema(valueType.getType());
-    deserializeData(keyType, keyParts, complexKeyType, version);
+    StringBuilder errorMessageBuilder = new StringBuilder(10);
+    Name elementSchemaName = new Name(valueType.getType().getSimpleName(), errorMessageBuilder);
+    MapDataSchema resultsSchema = new MapDataSchema(new RecordDataSchema(elementSchemaName, RecordDataSchema.RecordType.RECORD));
+    RecordDataSchema.Field resultsField = new RecordDataSchema.Field(resultsSchema);
+    resultsField.setName(RESULTS, errorMessageBuilder);
+
+    Name errorSchemaName = new Name(ErrorResponse.class.getSimpleName(), errorMessageBuilder);
+    MapDataSchema errorsSchema = new MapDataSchema(new RecordDataSchema(errorSchemaName, RecordDataSchema.RecordType.RECORD));
+    RecordDataSchema.Field errorsField = new RecordDataSchema.Field(errorsSchema);
+    errorsField.setName(ERRORS, errorMessageBuilder);
+
+    Name name = new Name(BatchKVResponse.class.getSimpleName(), errorMessageBuilder);
+    _schema = new RecordDataSchema(name, RecordDataSchema.RecordType.RECORD);
+    _schema.setFields(Arrays.asList(resultsField, errorsField), errorMessageBuilder);
+
+    DataMap resultsRaw = (DataMap) data().get(RESULTS);
+    _results = new HashMap<K, V>((int)Math.ceil(resultsRaw.size() / 0.75f)){
+
+      private static final long serialVersionUID = 1L;
+
+      @Override
+      public V get(Object key)
+      {
+        if (key instanceof ComplexResourceKey)
+        {
+          ComplexResourceKey<RecordTemplate, RecordTemplate> paramlessKey =
+              getParameterlessComplexKey((ComplexResourceKey) key);
+          return super.get(paramlessKey);
+        }
+        else
+        {
+          return super.get(key);
+        }
+      }
+
+      @Override
+      public boolean containsKey(Object key)
+      {
+        if (key instanceof ComplexResourceKey)
+        {
+          ComplexResourceKey<RecordTemplate, RecordTemplate> paramlessKey =
+              getParameterlessComplexKey((ComplexResourceKey) key);
+
+          return super.containsKey(paramlessKey);
+        }
+        else
+        {
+          return super.containsKey(key);
+        }
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public V put(K key, V value)
+      {
+        if (key instanceof ComplexResourceKey)
+        {
+          ComplexResourceKey<RecordTemplate, RecordTemplate> paramlessKey =
+              getParameterlessComplexKey((ComplexResourceKey) key);
+
+          return super.put((K) paramlessKey, value);
+        }
+        else
+        {
+          return super.put(key, value);
+        }
+      }
+
+      @Override
+      public V remove(Object key)
+      {
+        if (key instanceof ComplexResourceKey)
+        {
+          ComplexResourceKey<RecordTemplate, RecordTemplate> paramlessKey =
+              getParameterlessComplexKey((ComplexResourceKey) key);
+
+          return super.remove(paramlessKey);
+        }
+        else
+        {
+          return super.remove(key);
+        }
+      }
+
+      private ComplexResourceKey<RecordTemplate, RecordTemplate> getParameterlessComplexKey(ComplexResourceKey key)
+      {
+        return new ComplexResourceKey<RecordTemplate, RecordTemplate>(
+            key.getKey(),
+            DataTemplateUtil.wrap(new DataMap(), _complexKeyType.getParamsType().getType()));
+      }
+    };
+    for (Map.Entry<String, Object> entry : resultsRaw.entrySet())
+    {
+      K key = ResponseUtils.convertKey(entry.getKey(), keyType, _keyParts, _complexKeyType, _version);
+      V value = DataTemplateUtil.wrap(entry.getValue(), valueType.getType());
+      _results.put(key, value);
+    }
+
+    DataMap errorsRaw = (DataMap) data().get(ERRORS);
+    _errors = new HashMap<K, ErrorResponse>((int)Math.ceil(errorsRaw.size()/0.75f));
+    for (Map.Entry<String, Object> entry : errorsRaw.entrySet())
+    {
+      K key = ResponseUtils.convertKey(entry.getKey(), keyType, _keyParts, _complexKeyType, _version);
+      ErrorResponse value = DataTemplateUtil.wrap(entry.getValue(), ErrorResponse.class);
+      _errors.put(key, value);
+    }
   }
 
   @Deprecated
@@ -197,73 +308,9 @@ public class BatchKVResponse<K, V extends RecordTemplate> extends RecordTemplate
                          TypeSpec<K> keyType,
                          TypeSpec<V> valueType,
                          Map<String, CompoundKey.TypeInfo> keyParts,
-                         ComplexKeySpec<?, ?> complexKeyType)
+                         ComplexKeySpec<?,?> complexKeyType)
   {
     this(data, keyType, valueType, keyParts, complexKeyType, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion());
-  }
-
-
-  protected BatchKVResponse(DataMap data)
-  {
-    super(data, null);
-  }
-
-  protected void createSchema(Class<V> valueClass)
-  {
-    _valueClass = valueClass;
-
-    final StringBuilder errorMessageBuilder = new StringBuilder(10);
-    final Name elementSchemaName = new Name(valueClass.getSimpleName(), errorMessageBuilder);
-    final MapDataSchema resultsSchema = new MapDataSchema(new RecordDataSchema(elementSchemaName, RecordDataSchema.RecordType.RECORD));
-    final RecordDataSchema.Field resultsField = new RecordDataSchema.Field(resultsSchema);
-    resultsField.setName(RESULTS, errorMessageBuilder);
-
-    final Name errorSchemaName = new Name(ErrorResponse.class.getSimpleName(), errorMessageBuilder);
-    final MapDataSchema errorsSchema = new MapDataSchema(new RecordDataSchema(errorSchemaName, RecordDataSchema.RecordType.RECORD));
-    final RecordDataSchema.Field errorsField = new RecordDataSchema.Field(errorsSchema);
-    errorsField.setName(ERRORS, errorMessageBuilder);
-
-    final Name name = new Name(BatchKVResponse.class.getSimpleName(), errorMessageBuilder);
-    _schema = new RecordDataSchema(name, RecordDataSchema.RecordType.RECORD);
-    _schema.setFields(Arrays.asList(resultsField, errorsField), errorMessageBuilder);
-  }
-
-  protected void deserializeData(TypeSpec<K> keyType,
-                                 Map<String, CompoundKey.TypeInfo> keyParts,
-                                 ComplexKeySpec<?, ?> complexKeyType,
-                                 ProtocolVersion version)
-  {
-    final DataMap resultsRaw = data().getDataMap(RESULTS);
-    if (resultsRaw == null)
-    {
-      _results = new ParamlessKeyHashMap<V>(complexKeyType);
-    }
-    else
-    {
-      _results = new ParamlessKeyHashMap<V>((int) Math.ceil(resultsRaw.size() / 0.75), complexKeyType);
-      for (Map.Entry<String, Object> entry : resultsRaw.entrySet())
-      {
-        final K key = ResponseUtils.convertKey(entry.getKey(), keyType, keyParts, complexKeyType, version);
-        final V value = deserializeValue(entry.getValue());
-        _results.put(key, value);
-      }
-    }
-
-    final DataMap errorsRaw = data().getDataMap(ERRORS);
-    if (errorsRaw == null)
-    {
-      _errors = new ParamlessKeyHashMap<ErrorResponse>(complexKeyType);
-    }
-    else
-    {
-      _errors = new ParamlessKeyHashMap<ErrorResponse>((int) Math.ceil(errorsRaw.size() / 0.75), complexKeyType);
-      for (Map.Entry<String, Object> entry : errorsRaw.entrySet())
-      {
-        final K key = ResponseUtils.convertKey(entry.getKey(), keyType, keyParts, complexKeyType, version);
-        final ErrorResponse value = DataTemplateUtil.wrap(entry.getValue(), ErrorResponse.class);
-        _errors.put(key, value);
-      }
-    }
   }
 
   public Map<K, V> getResults()
@@ -282,65 +329,4 @@ public class BatchKVResponse<K, V extends RecordTemplate> extends RecordTemplate
     return _schema;
   }
 
-  protected V deserializeValue(Object valueData)
-  {
-    return DataTemplateUtil.wrap(valueData, _valueClass);
-  }
-
-  private class ParamlessKeyHashMap<MV> extends HashMap<K, MV>
-  {
-    private static final long serialVersionUID = 1L;
-    private final ComplexKeySpec<?, ?> _complexKeyType;
-
-    private ParamlessKeyHashMap(ComplexKeySpec<?, ?> complexKeyType)
-    {
-      _complexKeyType = complexKeyType;
-    }
-
-    private ParamlessKeyHashMap(int initialCapacity, ComplexKeySpec<?, ?> complexKeyType)
-    {
-      super(initialCapacity);
-      _complexKeyType = complexKeyType;
-    }
-
-    @Override
-    public MV get(Object key)
-    {
-      return super.get(getProcessedKey(key));
-    }
-
-    @Override
-    public boolean containsKey(Object key)
-    {
-      return super.containsKey(getProcessedKey(key));
-    }
-
-    @Override
-    public MV put(K key, MV value)
-    {
-      return super.put(getProcessedKey(key), value);
-    }
-
-    @Override
-    public MV remove(Object key)
-    {
-      return super.remove(getProcessedKey(key));
-    }
-
-    @SuppressWarnings("unchecked")
-    private <MK> MK getProcessedKey(MK key)
-    {
-      if (key instanceof ComplexResourceKey)
-      {
-        final ComplexResourceKey<RecordTemplate, RecordTemplate> complexKey = (ComplexResourceKey<RecordTemplate, RecordTemplate>) key;
-        return (MK) new ComplexResourceKey<RecordTemplate, RecordTemplate>(
-          complexKey.getKey(),
-          DataTemplateUtil.wrap(new DataMap(), _complexKeyType.getParamsType().getType()));
-      }
-      else
-      {
-        return key;
-      }
-    }
-  }
 }

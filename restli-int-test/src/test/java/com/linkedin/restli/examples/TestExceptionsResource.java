@@ -43,6 +43,7 @@ import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.client.ExceptionsBuilders;
 import com.linkedin.restli.examples.greetings.client.ExceptionsRequestBuilders;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
+import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.util.Collections;
@@ -190,10 +191,10 @@ public class TestExceptionsResource extends RestLiIntegrationTest
                       "stacktrace mismatch:" + exception.getStackTrace());
   }
 
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
-  public void testBatchCreateErrors(RestliRequestOptions requestOptions) throws Exception
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "options")
+  public void testBatchCreateErrors(RestliRequestOptions options) throws Exception
   {
-    ExceptionsBuilders builders = new ExceptionsBuilders(requestOptions);
+    ExceptionsBuilders builders = new ExceptionsBuilders(options);
 
     Request<CollectionResponse<CreateStatus>> batchCreateRequest = builders.batchCreate()
       .input(new Greeting().setId(10L).setMessage("Greetings.").setTone(Tone.SINCERE))
@@ -228,10 +229,10 @@ public class TestExceptionsResource extends RestLiIntegrationTest
                       "stacktrace mismatch:" + error.getStackTrace());
   }
 
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
-  public void testBatchCreateIdErrors(RestliRequestOptions requestOptions) throws Exception
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "options")
+  public void testBatchCreateIdErrors(RestliRequestOptions options) throws Exception
   {
-    ExceptionsRequestBuilders builders = new ExceptionsRequestBuilders(requestOptions);
+    ExceptionsRequestBuilders builders = new ExceptionsRequestBuilders(options);
 
     BatchCreateIdRequest<Long, Greeting> batchCreateRequest = builders.batchCreate()
       .input(new Greeting().setId(10L).setMessage("Greetings.").setTone(Tone.SINCERE))
@@ -285,8 +286,8 @@ public class TestExceptionsResource extends RestLiIntegrationTest
     };
   }
 
-  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
-  private static Object[][] requestOptionsDataProvider()
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "options")
+  private static Object[][] options()
   {
     return new Object[][]
       {

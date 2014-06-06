@@ -21,7 +21,6 @@ import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
-
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -68,8 +67,8 @@ public class TestRootBuilderWrapper
 
   private static class MyRequestBuilders
   {
-    public static String[] getPathComponents() {
-      return new String[] { "MyRequest" };
+    public static String getPrimaryResource() {
+      return "MyRequest";
     }
   }
 }

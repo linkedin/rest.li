@@ -24,6 +24,7 @@ package com.linkedin.restli.client;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
+import com.linkedin.restli.internal.client.CollectionRequestUtil;
 import com.linkedin.restli.common.CollectionRequest;
 import com.linkedin.restli.common.KeyValueRecord;
 import com.linkedin.restli.common.PatchRequest;
@@ -31,9 +32,7 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.common.UpdateStatus;
-import com.linkedin.restli.internal.client.BatchUpdateResponseDecoder;
-import com.linkedin.restli.internal.client.CollectionRequestUtil;
-
+import com.linkedin.restli.internal.client.BatchKVResponseDecoder;
 import java.net.URI;
 import java.util.Map;
 
@@ -57,9 +56,10 @@ public class BatchPartialUpdateRequest<K, V extends RecordTemplate> extends
     super(ResourceMethod.BATCH_PARTIAL_UPDATE,
           entities,
           headers,
-          new BatchUpdateResponseDecoder<K>((TypeSpec<K>) resourceSpec.getKeyType(),
-                                            resourceSpec.getKeyParts(),
-                                            resourceSpec.getComplexKeyType()),
+          new BatchKVResponseDecoder<K, UpdateStatus>(new TypeSpec<UpdateStatus>(UpdateStatus.class),
+                                                      (TypeSpec<K>) resourceSpec.getKeyType(),
+                                                      resourceSpec.getKeyParts(),
+                                                      resourceSpec.getComplexKeyType()),
           resourceSpec,
           queryParams,
           baseUriTemplate,

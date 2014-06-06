@@ -69,7 +69,7 @@ public interface ServerResourceContext extends ResourceContext
   /**
    * @return map of {@link RestLiServiceException}s keyed by batch key values
    */
-  Map<Object, RestLiServiceException> getBatchKeyErrors();
+  Map<String, RestLiServiceException> getBatchKeyErrors();
 
   /**
    * @return rest.li request method
