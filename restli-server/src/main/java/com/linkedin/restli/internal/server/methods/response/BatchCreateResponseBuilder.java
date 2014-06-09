@@ -25,14 +25,15 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.BatchCreateIdResponse;
 import com.linkedin.restli.common.CreateIdStatus;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
+import com.linkedin.restli.internal.server.AugmentedRestLiResponseData;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.server.BatchCreateResult;
 import com.linkedin.restli.server.CreateResponse;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
 
 public class BatchCreateResponseBuilder implements RestLiResponseBuilder
 {
@@ -44,26 +45,29 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
   }
 
   @Override
-  public PartialRestResponse buildResponse(final RestRequest request,
-                                           final RoutingResult routingResult,
-                                           final Object object,
-                                           final Map<String, String> headers) throws IOException
+  public PartialRestResponse buildResponse(RoutingResult routingResult, AugmentedRestLiResponseData responseData)
   {
-    /** constrained by the signature of {@link CollectionResource#batchCreate} */
-    BatchCreateResult<?, ?> list = (BatchCreateResult<?, ?>) object;
+    PartialRestResponse.Builder builder = new PartialRestResponse.Builder();
+    @SuppressWarnings("unchecked")
+    List<CreateIdStatus<Object>> elements = (List<CreateIdStatus<Object>>) responseData.getCollectionResponse();
+    BatchCreateIdResponse<Object> batchCreateIdResponse = new BatchCreateIdResponse<Object>(elements);
+    builder.entity(batchCreateIdResponse);
+    return builder.headers(responseData.getHeaders()).build();
+  }
 
+  @Override
+  public AugmentedRestLiResponseData buildRestLiResponseData(RestRequest request, RoutingResult routingResult,
+                                                             Object result, Map<String, String> headers)
+  {
+    BatchCreateResult<?, ?> list = (BatchCreateResult<?, ?>) result;
     List<CreateIdStatus<Object>> statuses = new ArrayList<CreateIdStatus<Object>>(list.getResults().size());
-
     for (CreateResponse e : list.getResults())
     {
-      statuses.add(new CreateIdStatus<Object>(e.getStatus().getCode(),
-                                              e.getId(),
-                                              e.getError() == null ? null : _errorResponseBuilder.buildErrorResponse(e.getError()),
-                                              ProtocolVersionUtil.extractProtocolVersion(headers)));
+      statuses.add(new CreateIdStatus<Object>(e.getStatus().getCode(), e.getId(), e.getError() == null ? null
+          : _errorResponseBuilder.buildErrorResponse(e.getError()), ProtocolVersionUtil.extractProtocolVersion(headers)));
     }
-
-    BatchCreateIdResponse<Object> batchCreateIdResponse = new BatchCreateIdResponse<Object>(statuses);
-
-    return new PartialRestResponse.Builder().entity(batchCreateIdResponse).headers(headers).build();
+    return new AugmentedRestLiResponseData.Builder(routingResult.getResourceMethod().getMethodType()).headers(headers)
+                                                                                                     .collectionEntities(statuses)
+                                                                                                     .build();
   }
 }

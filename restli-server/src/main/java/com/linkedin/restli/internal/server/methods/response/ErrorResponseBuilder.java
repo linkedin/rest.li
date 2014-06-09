@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-*/
+ */
 
 /**
  * $Id: $
@@ -25,9 +25,11 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.ErrorDetails;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
+import com.linkedin.restli.internal.server.AugmentedRestLiResponseData;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.server.ErrorResponseFormat;
 import com.linkedin.restli.server.RestLiServiceException;
@@ -38,9 +40,9 @@ import java.util.Map;
 
 
 /**
-* @author Josh Walker
-* @version $Revision: $
-*/
+ * @author Josh Walker
+ * @version $Revision: $
+ */
 public final class ErrorResponseBuilder implements RestLiResponseBuilder
 {
   public static final String DEFAULT_INTERNAL_ERROR_MESSAGE = "Error in application code";
@@ -68,27 +70,10 @@ public final class ErrorResponseBuilder implements RestLiResponseBuilder
     return _internalErrorMessage;
   }
 
-  @Override
-  public PartialRestResponse buildResponse(final RestRequest request,
-                                           final RoutingResult routingResult,
-                                           final Object object,
-                                           final Map<String, String> headers)
-  {
-    RestLiServiceException result = (RestLiServiceException) object;
-    ErrorResponse er = buildErrorResponse(result);
-
-    if(_errorResponseFormat.showHeaders())
-    {
-      final ProtocolVersion protocolVersion = ProtocolVersionUtil.extractProtocolVersion(headers);
-      headers.put(HeaderUtil.getErrorResponseHeaderName(protocolVersion), RestConstants.HEADER_VALUE_ERROR);
-    }
-    return new PartialRestResponse.Builder().headers(headers).status(result.getStatus()).entity(er).build();
-  }
-
   public ErrorResponse buildErrorResponse(RestLiServiceException result)
   {
     ErrorResponse er = new ErrorResponse();
-    if(_errorResponseFormat.showStatusCodeInBody())
+    if (_errorResponseFormat.showStatusCodeInBody())
     {
       er.setStatus(result.getStatus().getCode());
     }
@@ -106,7 +91,7 @@ public final class ErrorResponseBuilder implements RestLiResponseBuilder
       er.setErrorDetails(new ErrorDetails(result.getErrorDetails()));
     }
 
-    if(_errorResponseFormat.showStacktrace())
+    if (_errorResponseFormat.showStacktrace())
     {
       StringWriter sw = new StringWriter();
       PrintWriter pw = new PrintWriter(sw);
@@ -117,5 +102,36 @@ public final class ErrorResponseBuilder implements RestLiResponseBuilder
     }
 
     return er;
+  }
+
+  @Override
+  public PartialRestResponse buildResponse(RoutingResult routingResult, AugmentedRestLiResponseData responseData)
+  {
+    return new PartialRestResponse.Builder().headers(responseData.getHeaders()).status(responseData.getStatus())
+                                            .entity(responseData.getErrorResponse()).build();
+  }
+
+  @Override
+  public AugmentedRestLiResponseData buildRestLiResponseData(RestRequest request, RoutingResult routingResult,
+                                                             Object object, Map<String, String> headers)
+  {
+    RestLiServiceException result = (RestLiServiceException) object;
+    ErrorResponse er = buildErrorResponse(result);
+    if (_errorResponseFormat.showHeaders())
+    {
+      final ProtocolVersion protocolVersion = ProtocolVersionUtil.extractProtocolVersion(headers);
+      headers.put(HeaderUtil.getErrorResponseHeaderName(protocolVersion), RestConstants.HEADER_VALUE_ERROR);
+    }
+    final ResourceMethod type;
+    if (routingResult != null && routingResult.getResourceMethod() != null)
+    {
+      type = routingResult.getResourceMethod().getMethodType();
+    }
+    else
+    {
+      type = null;
+    }
+    return new AugmentedRestLiResponseData.Builder(type).headers(headers).status(result.getStatus()).errorResponse(er)
+                                                        .build();
   }
 }

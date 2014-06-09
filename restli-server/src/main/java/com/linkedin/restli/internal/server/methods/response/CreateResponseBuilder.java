@@ -26,41 +26,46 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.common.URIParamUtils;
+import com.linkedin.restli.internal.server.AugmentedRestLiResponseData;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
-import com.linkedin.restli.internal.server.methods.AnyRecord;
 import com.linkedin.restli.server.CreateResponse;
 
-import java.io.IOException;
 import java.util.Map;
 
 
 public class CreateResponseBuilder implements RestLiResponseBuilder
 {
+  @Override
+  public PartialRestResponse buildResponse(RoutingResult routingResult, AugmentedRestLiResponseData responseData)
+  {
+    return new PartialRestResponse.Builder().entity(responseData.getEntityResponse())
+                                            .headers(responseData.getHeaders()).status(responseData.getStatus())
+                                            .build();
+  }
 
   @Override
-  public PartialRestResponse buildResponse(final RestRequest request,
-                                           final RoutingResult routingResult,
-                                           final Object object,
-                                           final Map<String, String> headers)
-      throws IOException
+  public AugmentedRestLiResponseData buildRestLiResponseData(RestRequest request, RoutingResult routingResult,
+                                                             Object result, Map<String, String> headers)
   {
-    CreateResponse createResponse = (CreateResponse) object;
+    CreateResponse createResponse = (CreateResponse) result;
     if (createResponse.hasId())
     {
-      final ProtocolVersion protocolVersion = ((ServerResourceContext) routingResult.getContext()).getRestliProtocolVersion();
-      headers.put(HeaderUtil.getIdHeaderName(protocolVersion), URIParamUtils.encodeKeyForBody(createResponse.getId(),
-                                                                                              false,
-                                                                                              ProtocolVersionUtil.extractProtocolVersion(headers)));
-      String stringKey = URIParamUtils.encodeKeyForUri(createResponse.getId(), UriComponent.Type.PATH_SEGMENT, protocolVersion);
+      final ProtocolVersion protocolVersion =
+          ((ServerResourceContext) routingResult.getContext()).getRestliProtocolVersion();
+      headers.put(HeaderUtil.getIdHeaderName(protocolVersion),
+                  URIParamUtils.encodeKeyForBody(createResponse.getId(), false,
+                                                 ProtocolVersionUtil.extractProtocolVersion(headers)));
+      String stringKey =
+          URIParamUtils.encodeKeyForUri(createResponse.getId(), UriComponent.Type.PATH_SEGMENT, protocolVersion);
       UriBuilder uribuilder = UriBuilder.fromUri(request.getURI());
       uribuilder.path(stringKey);
-      headers.put(RestConstants.HEADER_LOCATION, uribuilder.build((Object) null)
-                                                           .toString());
+      headers.put(RestConstants.HEADER_LOCATION, uribuilder.build((Object) null).toString());
     }
-
     IdResponse<?> idResponse = new IdResponse<Object>(createResponse.getId());
-
-    return new PartialRestResponse.Builder().entity(idResponse).headers(headers).status(createResponse.getStatus()).build();
+    return new AugmentedRestLiResponseData.Builder(routingResult.getResourceMethod().getMethodType()).entity(idResponse)
+                                                                                                     .headers(headers)
+                                                                                                     .status(createResponse.getStatus())
+                                                                                                     .build();
   }
 }

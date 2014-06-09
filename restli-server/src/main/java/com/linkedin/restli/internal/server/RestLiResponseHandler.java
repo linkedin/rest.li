@@ -133,7 +133,9 @@ public class RestLiResponseHandler
                                     final RoutingResult routingResult,
                                     final Object responseObject) throws IOException
   {
-    return buildResponse(routingResult, buildPartialResponse(request, routingResult, responseObject));
+    return buildResponse(routingResult,
+                         buildPartialResponse(routingResult,
+                                              buildRestLiResponseData(request, routingResult, responseObject)));
   }
 
 
@@ -162,7 +164,27 @@ public class RestLiResponseHandler
   }
 
   /**
-   * Build a ParialRestResponse from response object, incoming RestRequest and RoutingResult.
+   * Build a ParialRestResponse from RestLiResponseDataInternal and RoutingResult.
+   *
+   * @param routingResult
+   *          {@link RoutingResult}
+   * @param responseData
+   *          response value
+   * @return {@link RestLiResponseDataInternal}
+   * @throws IOException
+   *           if cannot build response
+   */
+  public PartialRestResponse buildPartialResponse(final RoutingResult routingResult,
+                                                  final AugmentedRestLiResponseData responseData)
+  {
+    if (responseData.isErrorResponse()){
+      return _errorResponseBuilder.buildResponse(routingResult, responseData);
+    }
+    return chooseResponseBuilder(null, routingResult).buildResponse(routingResult, responseData);
+  }
+
+  /**
+   * Build a RestLiResponseDataInternal from response object, incoming RestRequest and RoutingResult.
    *
    * @param request
    *          {@link RestRequest}
@@ -170,13 +192,13 @@ public class RestLiResponseHandler
    *          {@link RoutingResult}
    * @param responseObject
    *          response value
-   * @return {@link PartialRestResponse}
+   * @return {@link AugmentedRestLiResponseData}
    * @throws IOException
    *           if cannot build response
    */
-  public PartialRestResponse buildPartialResponse(final RestRequest request,
-                                                  final RoutingResult routingResult,
-                                                  final Object responseObject) throws IOException
+  public AugmentedRestLiResponseData buildRestLiResponseData(final RestRequest request,
+                                                            final RoutingResult routingResult,
+                                                            final Object responseObject) throws IOException
   {
     ServerResourceContext context = (ServerResourceContext) routingResult.getContext();
     final ProtocolVersion protocolVersion = context.getRestliProtocolVersion();
@@ -192,7 +214,9 @@ public class RestLiResponseHandler
       {
         responseHeaders.put(HeaderUtil.getErrorResponseHeaderName(protocolVersion), RestConstants.HEADER_VALUE_ERROR);
       }
-      return new PartialRestResponse.Builder().status(status).headers(responseHeaders).build();
+      return new AugmentedRestLiResponseData.Builder(routingResult.getResourceMethod().getMethodType()).status(status)
+                                                                                                       .headers(responseHeaders)
+                                                                                                       .build();
     }
 
     RestLiResponseBuilder responseBuilder = chooseResponseBuilder(responseObject, routingResult);
@@ -207,15 +231,15 @@ public class RestLiResponseHandler
       throw new RestLiInternalException("Invalid return type '" + responseObject.getClass() + " from method '"
           + fqMethodName + '\'');
     }
-    return responseBuilder.buildResponse(request, routingResult, responseObject, responseHeaders);
+    return responseBuilder.buildRestLiResponseData(request, routingResult, responseObject, responseHeaders);
   }
 
-  public PartialRestResponse buildErrorResponse(final RestRequest request,
-                                 final RoutingResult routingResult,
-                                 final Object object,
-                                 final Map<String, String> headers)
+  public AugmentedRestLiResponseData buildErrorResponseData(final RestRequest request,
+                                                           final RoutingResult routingResult,
+                                                           final Object object,
+                                                           final Map<String, String> headers)
   {
-    return _errorResponseBuilder.buildResponse(request, routingResult, object, headers);
+    return _errorResponseBuilder.buildRestLiResponseData(request, routingResult, object, headers);
   }
 
   public RestException buildRestException(final Throwable e, PartialRestResponse partialResponse)
@@ -258,7 +282,7 @@ public class RestLiResponseHandler
   private RestLiResponseBuilder chooseResponseBuilder(final Object responseObject,
                                                       final RoutingResult routingResult)
   {
-    if (responseObject instanceof RestLiServiceException)
+    if (responseObject != null && responseObject instanceof RestLiServiceException)
     {
       return _errorResponseBuilder;
     }

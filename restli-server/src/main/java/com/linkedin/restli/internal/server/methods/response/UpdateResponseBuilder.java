@@ -12,27 +12,35 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-*/
+ */
 
 package com.linkedin.restli.internal.server.methods.response;
 
+
 import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.restli.internal.server.AugmentedRestLiResponseData;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.server.UpdateResponse;
 
-import java.io.IOException;
 import java.util.Map;
+
 
 public class UpdateResponseBuilder implements RestLiResponseBuilder
 {
   @Override
-  public PartialRestResponse buildResponse(final RestRequest request,
-                                           final RoutingResult routingResult,
-                                           final Object object,
-                                           final Map<String, String> headers)
-      throws IOException
+  public PartialRestResponse buildResponse(RoutingResult routingResult, AugmentedRestLiResponseData responseData)
   {
-    UpdateResponse updateResponse = (UpdateResponse)object;
-    return new PartialRestResponse.Builder().headers(headers).status(updateResponse.getStatus()).build();
+    return new PartialRestResponse.Builder().headers(responseData.getHeaders()).status(responseData.getStatus())
+                                            .build();
+  }
+
+  @Override
+  public AugmentedRestLiResponseData buildRestLiResponseData(RestRequest request, RoutingResult routingResult,
+                                                             Object result, Map<String, String> headers)
+  {
+    UpdateResponse updateResponse = (UpdateResponse) result;
+    return new AugmentedRestLiResponseData.Builder(routingResult.getResourceMethod().getMethodType()).headers(headers)
+                                                                                                     .status(updateResponse.getStatus())
+                                                                                                     .build();
   }
 }

@@ -44,6 +44,7 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.TestConstants;
+import com.linkedin.restli.internal.server.AugmentedRestLiResponseData;
 import com.linkedin.restli.internal.server.PathKeysImpl;
 import com.linkedin.restli.internal.server.ResourceContextImpl;
 import com.linkedin.restli.internal.server.RestLiResponseHandler;
@@ -160,7 +161,7 @@ public class TestRestLiResponseHandler
     // check response with body (expect 406 error)
     try
     {
-      RestResponse response = invokeResponseHandler("/test", buildStatusRecord(), ResourceMethod.GET,
+      invokeResponseHandler("/test", buildStatusRecord(), ResourceMethod.GET,
                                                     badAcceptHeaders, AllProtocolVersions.LATEST_PROTOCOL_VERSION);
       Assert.fail();
     }
@@ -171,7 +172,7 @@ public class TestRestLiResponseHandler
     // check response without body (expect 406 error)
     try
     {
-      RestResponse response = invokeResponseHandler("/test", new CreateResponse(HttpStatus.S_201_CREATED), ResourceMethod.CREATE,
+      invokeResponseHandler("/test", new CreateResponse(HttpStatus.S_201_CREATED), ResourceMethod.CREATE,
                                                     badAcceptHeaders, AllProtocolVersions.LATEST_PROTOCOL_VERSION);
       Assert.fail();
     }
@@ -553,43 +554,31 @@ public class TestRestLiResponseHandler
   {
     final RestRequest request = buildRequest(acceptTypeData.acceptHeaders, protocolVersion);
     PartialRestResponse response;
+    RoutingResult routingResult1 = buildRoutingResultAction(Status.class, request, acceptTypeData.acceptHeaders);
     // #1 simple record template
     response =
-        _responseHandler.buildPartialResponse(request,
-                                              buildRoutingResultAction(Status.class,
-                                                                       request,
-                                                                       acceptTypeData.acceptHeaders),
-                                              buildStatusRecord());
-    checkResponse(response,
-                  HttpStatus.S_200_OK,
-                  1,
-                  false,
-                  true,
-                  errorResponseHeaderName);
+        _responseHandler.buildPartialResponse(routingResult1,
+                                              _responseHandler.buildRestLiResponseData(request,
+                                                                                       routingResult1,
+                                                                                       buildStatusRecord()));
+    checkResponse(response, HttpStatus.S_200_OK, 1, false, true, errorResponseHeaderName);
     assertEquals(response.getEntity().toString(), response1);
     // #2 DataTemplate response
     StringMap map = new StringMap();
     map.put("key1", "value1");
     map.put("key2", "value2");
+    RoutingResult routingResult2 = buildRoutingResultAction(StringMap.class, request, acceptTypeData.acceptHeaders);
     response =
-        _responseHandler.buildPartialResponse(request,
-                                              buildRoutingResultAction(StringMap.class,
-                                                                       request,
-                                                                       acceptTypeData.acceptHeaders),
-                                              map);
-    checkResponse(response,
-                  HttpStatus.S_200_OK,
-                  1,
-                  false,
-                  true,
-                  errorResponseHeaderName);
+        _responseHandler.buildPartialResponse(routingResult2,
+                                              _responseHandler.buildRestLiResponseData(request, routingResult2, map));
+    checkResponse(response, HttpStatus.S_200_OK, 1, false, true, errorResponseHeaderName);
     String actual = response.getEntity().toString();
     assertEquals(actual, response2);
+    RoutingResult routingResult3 = buildRoutingResultAction(Void.TYPE, request, acceptTypeData.acceptHeaders);
     // #3 empty response
     response =
-        _responseHandler.buildPartialResponse(request,
-                                              buildRoutingResultAction(Void.TYPE, request, acceptTypeData.acceptHeaders),
-                                              null);
+        _responseHandler.buildPartialResponse(routingResult3,
+                                              _responseHandler.buildRestLiResponseData(request, routingResult3, null));
     checkResponse(response,
                   HttpStatus.S_200_OK,
                   1,
@@ -597,6 +586,37 @@ public class TestRestLiResponseHandler
                   false,
                   errorResponseHeaderName);
     assertEquals(response.getEntity(), null);
+  }
+
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "statusActionDataPartial")
+  public void testRestLiResponseData(AcceptTypeData acceptTypeData,
+                                      String response1,
+                                      String response2,
+                                      ProtocolVersion protocolVersion,
+                                      String errorResponseHeaderName) throws Exception
+  {
+    final RestRequest request = buildRequest(acceptTypeData.acceptHeaders, protocolVersion);
+    AugmentedRestLiResponseData responseData;
+    RoutingResult routingResult1 = buildRoutingResultAction(Status.class, request, acceptTypeData.acceptHeaders);
+    // #1 simple record template
+    responseData = _responseHandler.buildRestLiResponseData(request, routingResult1, buildStatusRecord());
+    checkResponseData(responseData, HttpStatus.S_200_OK, 1, false, true, errorResponseHeaderName);
+    assertEquals(responseData.getEntityResponse().toString(), response1);
+    // #2 DataTemplate response
+    StringMap map = new StringMap();
+    map.put("key1", "value1");
+    map.put("key2", "value2");
+    RoutingResult routingResult2 = buildRoutingResultAction(StringMap.class, request, acceptTypeData.acceptHeaders);
+    responseData = _responseHandler.buildRestLiResponseData(request, routingResult2, map);
+    checkResponseData(responseData, HttpStatus.S_200_OK, 1, false, true, errorResponseHeaderName);
+    String actual = responseData.getEntityResponse().toString();
+    assertEquals(actual, response2);
+    RoutingResult routingResult3 = buildRoutingResultAction(Void.TYPE, request, acceptTypeData.acceptHeaders);
+    // #3 empty response
+    responseData =
+    _responseHandler.buildRestLiResponseData(request, routingResult3, null);
+    checkResponseData(responseData, HttpStatus.S_200_OK, 1, false, false, errorResponseHeaderName);
+    assertEquals(responseData.getEntityResponse(), null);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "basicData")
@@ -1101,6 +1121,7 @@ public class TestRestLiResponseHandler
       return null;
     }
 
+    @SuppressWarnings("unused")
     public BasicCollectionResult<Status> find()
     {
       return null;
@@ -1126,6 +1147,23 @@ public class TestRestLiResponseHandler
     }
 
     assertEquals(response.getEntity() != null, hasEntity);
+  }
+
+  private void checkResponseData(AugmentedRestLiResponseData responseData, HttpStatus status, int numHeaders,
+                                 boolean hasError, boolean hasEntity, String errorResponseHeaderName)
+  {
+    assertEquals(responseData.getStatus(), status);
+    assertEquals(responseData.getHeaders().size(), numHeaders);
+    if (hasError)
+    {
+      assertEquals(responseData.getHeaders().get(errorResponseHeaderName), RestConstants.HEADER_VALUE_ERROR);
+    }
+    else
+    {
+      assertNull(responseData.getHeaders().get(errorResponseHeaderName));
+    }
+
+    assertEquals(responseData.getEntityResponse() != null, hasEntity);
   }
 
   private void checkResponse(RestResponse response,

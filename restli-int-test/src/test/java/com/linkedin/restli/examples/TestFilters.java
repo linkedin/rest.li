@@ -32,10 +32,10 @@ import com.linkedin.restli.client.ResponseFuture;
 import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.client.response.CreateResponse;
-import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
@@ -203,8 +203,7 @@ public class TestFilters extends RestLiIntegrationTest
     greeting.setId(createdId);
     Request<Greeting> getRequest = builders.get().id(createdId).build();
     Greeting getReturnedGreeting = REST_CLIENT.sendRequest(getRequest).getResponse().getEntity();
-    ValidateDataAgainstSchema.validate(getReturnedGreeting.data(),
-                                       getReturnedGreeting.schema(),
+    ValidateDataAgainstSchema.validate(getReturnedGreeting.data(), getReturnedGreeting.schema(),
                                        new ValidationOptions());
     assertEquals(getReturnedGreeting, greeting);
     deleteAndVerifyTestData(builders, createdId);
@@ -232,7 +231,8 @@ public class TestFilters extends RestLiIntegrationTest
     {
       Object objBuilder = createBuilderWrapper.getBuilder();
       @SuppressWarnings("unchecked")
-      CreateIdRequestBuilder<Long, Greeting> createIdRequestBuilder = (CreateIdRequestBuilder<Long, Greeting>) objBuilder;
+      CreateIdRequestBuilder<Long, Greeting> createIdRequestBuilder =
+          (CreateIdRequestBuilder<Long, Greeting>) objBuilder;
       CreateIdRequest<Long, Greeting> request = createIdRequestBuilder.input(greeting).build();
       Response<IdResponse<Long>> response = REST_CLIENT.sendRequest(request).getResponse();
       createdId = response.getEntity().getId();
@@ -242,7 +242,7 @@ public class TestFilters extends RestLiIntegrationTest
       Request<EmptyRecord> request = createBuilderWrapper.input(greeting).build();
       Response<EmptyRecord> response = REST_CLIENT.sendRequest(request).getResponse();
       @SuppressWarnings("unchecked")
-      CreateResponse<Long> createResponse = (CreateResponse<Long>)response.getEntity();
+      CreateResponse<Long> createResponse = (CreateResponse<Long>) response.getEntity();
       createdId = createResponse.getId();
     }
     return createdId;
@@ -309,28 +309,25 @@ public class TestFilters extends RestLiIntegrationTest
           Object[] args = invocation.getArguments();
           FilterRequestContext requestContext = (FilterRequestContext) args[0];
           FilterResponseContext responseContext = (FilterResponseContext) args[1];
-          RecordTemplate entity = responseContext.getResponseEntity();
           // Verify the scratch pad value.
           assertTrue(requestContext.getFilterScratchpad().get(spKey) == spValue);
-          if (entity != null)
+          RecordTemplate entity = responseContext.getResponseData().getEntityResponse();
+          if (entity != null && requestContext.getMethodType() == ResourceMethod.GET
+              && responseContext.getHttpStatus() == HttpStatus.S_200_OK)
           {
-            if (requestContext.getMethodType() == ResourceMethod.CREATE && entity instanceof ErrorResponse
-                && responseContext.getHttpStatus() == REQ_FILTER_ERROR_STATUS)
+            Greeting greeting = new Greeting(entity.data());
+            if (greeting.hasTone())
             {
-              ErrorResponse errorResponse = (ErrorResponse) entity;
-              errorResponse.setMessage(RESP_FILTER_ERROR_MESSAGE);
-              responseContext.setHttpStatus(RESP_FILTER_ERROR_STATUS);
+              greeting.setTone(mapToneForOutgoingResponse(greeting.getTone()));
+              responseContext.getResponseData().setEntityResponse(greeting);
             }
-            else if (requestContext.getMethodType() == ResourceMethod.GET
-                && responseContext.getHttpStatus() == HttpStatus.S_200_OK)
-            {
-              Greeting greeting = new Greeting(entity.data());
-              if (greeting.hasTone())
-              {
-                greeting.setTone(mapToneForOutgoingResponse(greeting.getTone()));
-                responseContext.setResponseEntity(greeting);
-              }
-            }
+          }
+          ErrorResponse errorResponse = responseContext.getResponseData().getErrorResponse();
+          if (errorResponse != null && requestContext.getMethodType() == ResourceMethod.CREATE
+              && responseContext.getHttpStatus() == REQ_FILTER_ERROR_STATUS)
+          {
+            errorResponse.setMessage(RESP_FILTER_ERROR_MESSAGE);
+            responseContext.setHttpStatus(RESP_FILTER_ERROR_STATUS);
           }
           return null;
         }
@@ -354,8 +351,6 @@ public class TestFilters extends RestLiIntegrationTest
   private Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()), Tone.FRIENDLY, false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()), Tone.FRIENDLY, false },
         { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseBuilders()), Tone.FRIENDLY, false },
         { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders()), Tone.FRIENDLY, false },
         { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackBuilders()), Tone.FRIENDLY, false },
@@ -469,6 +464,6 @@ public class TestFilters extends RestLiIntegrationTest
         { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskBuilders(FORCE_USE_NEXT_OPTIONS)), Tone.INSULTING,
             true },
         { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskRequestBuilders(FORCE_USE_NEXT_OPTIONS)),
-            Tone.INSULTING, true } };
+            Tone.INSULTING, true }};
   }
 }

@@ -17,8 +17,8 @@
 package com.linkedin.restli.server.filter;
 
 
-import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.server.RestLiResponseData;
 
 import java.util.Map;
 
@@ -29,20 +29,13 @@ import java.util.Map;
  */
 public interface FilterResponseContext
 {
-  /**
-   * Get the entity returned by the resource.
-   *
-   * @return Response Entity.
-   */
-  RecordTemplate getResponseEntity();
 
   /**
-   * Set the response entity.
+   * Get response data returned by the resource.
    *
-   * @param entity
-   *          Response entity.
+   * @return {@link RestLiResponseData}
    */
-  void setResponseEntity(final RecordTemplate entity);
+  RestLiResponseData getResponseData();
 
   /**
    * Obtain the HTTP status.

@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-*/
+ */
 
 /**
  * $Id: $
@@ -20,24 +20,27 @@
 
 package com.linkedin.restli.internal.server.methods.response;
 
-import java.io.IOException;
-import java.util.Map;
 
 import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.restli.internal.server.AugmentedRestLiResponseData;
 import com.linkedin.restli.internal.server.RoutingResult;
 
+import java.util.Map;
+
+
 /**
- * {@link RestLiResponseBuilder} returns a {@link PartialRestResponse} so that
- * rest.li can fill in other response data and metadata (headers, links, field
- * projection, etc).
+ * {@link RestLiResponseBuilder} returns a {@link PartialRestResponse} so that rest.li can fill in
+ * other response data and metadata (headers, links, field projection, etc).
  *
  * @author dellamag
  */
 public interface RestLiResponseBuilder
 {
-  PartialRestResponse buildResponse(RestRequest request,
-                                    RoutingResult routingResult,
-                                    Object result,
-                                    Map<String, String> headers)
-      throws IOException;
+  PartialRestResponse buildResponse(RoutingResult routingResult,
+                                    AugmentedRestLiResponseData responseData);
+
+  AugmentedRestLiResponseData buildRestLiResponseData(RestRequest request,
+                                                     RoutingResult routingResult,
+                                                     Object result,
+                                                     Map<String, String> headers);
 }

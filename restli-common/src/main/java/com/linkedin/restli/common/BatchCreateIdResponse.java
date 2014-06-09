@@ -19,6 +19,7 @@ package com.linkedin.restli.common;
 
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.Name;
 import com.linkedin.data.schema.RecordDataSchema;
@@ -57,9 +58,10 @@ public class BatchCreateIdResponse<K> extends RecordTemplate
     DataList listElements = new DataList();
     for (RecordTemplate recordTemplate : elements)
     {
-      listElements.add(recordTemplate.data());
+      CheckedUtil.addWithoutChecking(listElements, recordTemplate.data());
     }
     dataMap.put(CollectionResponse.ELEMENTS, listElements);
+
     return dataMap;
   }
 

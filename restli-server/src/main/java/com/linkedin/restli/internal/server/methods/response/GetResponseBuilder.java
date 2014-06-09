@@ -20,11 +20,12 @@
 
 package com.linkedin.restli.internal.server.methods.response;
 
+
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.server.AugmentedRestLiResponseData;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.methods.AnyRecord;
 import com.linkedin.restli.internal.server.util.RestUtils;
@@ -32,18 +33,22 @@ import com.linkedin.restli.server.GetResult;
 
 import java.util.Map;
 
+
 public class GetResponseBuilder implements RestLiResponseBuilder
 {
+  @Override
+  public PartialRestResponse buildResponse(RoutingResult routingResult, AugmentedRestLiResponseData responseData)
+  {
+    return new PartialRestResponse.Builder().headers(responseData.getHeaders()).status(responseData.getStatus())
+                                            .entity(responseData.getEntityResponse()).build();
+  }
 
   @Override
-  public PartialRestResponse buildResponse(final RestRequest request,
-                                           final RoutingResult routingResult,
-                                           final Object result,
-                                           final Map<String, String> headers)
+  public AugmentedRestLiResponseData buildRestLiResponseData(RestRequest request, RoutingResult routingResult,
+                                                             Object result, Map<String, String> headers)
   {
     final RecordTemplate record;
     final HttpStatus status;
-
     if (result instanceof GetResult)
     {
       final GetResult<?> getResult = (GetResult<?>) result;
@@ -55,9 +60,10 @@ public class GetResponseBuilder implements RestLiResponseBuilder
       record = (RecordTemplate) result;
       status = HttpStatus.S_200_OK;
     }
-
-    final DataMap data =
-        RestUtils.projectFields(record.data(), routingResult.getContext());
-    return new PartialRestResponse.Builder().headers(headers).status(status).entity(new AnyRecord(data)).build();
+    final DataMap data = RestUtils.projectFields(record.data(), routingResult.getContext());
+    return new AugmentedRestLiResponseData.Builder(routingResult.getResourceMethod().getMethodType()).headers(headers)
+                                                                                                     .status(status)
+                                                                                                     .entity(new AnyRecord(data))
+                                                                                                     .build();
   }
 }

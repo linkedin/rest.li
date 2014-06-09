@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-*/
+ */
 
 package com.linkedin.restli.internal.server.methods.response;
 
@@ -28,6 +28,7 @@ import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.internal.common.URIParamUtils;
+import com.linkedin.restli.internal.server.AugmentedRestLiResponseData;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.methods.AnyRecord;
@@ -35,7 +36,6 @@ import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.BatchResult;
 import com.linkedin.restli.server.RestLiServiceException;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -53,38 +53,49 @@ public class BatchGetResponseBuilder implements RestLiResponseBuilder
   }
 
   @Override
-  public PartialRestResponse buildResponse(final RestRequest request,
-                                           final RoutingResult routingResult,
-                                           final Object object,
-                                           final Map<String, String> headers)
-      throws IOException
+  public PartialRestResponse buildResponse(RoutingResult routingResult, AugmentedRestLiResponseData responseData)
+  {
+    PartialRestResponse.Builder builder = new PartialRestResponse.Builder();
+    final ProtocolVersion protocolVersion =
+        ((ServerResourceContext) routingResult.getContext()).getRestliProtocolVersion();
+    @SuppressWarnings("unchecked")
+    final BatchResponse<AnyRecord> response =
+        toBatchResponse((Map<Object, EntityResponse<RecordTemplate>>) responseData.getBatchResponseMap(),
+                        protocolVersion);
+    builder.entity(response);
+    return builder.headers(responseData.getHeaders()).build();
+  }
+
+  @Override
+  public AugmentedRestLiResponseData buildRestLiResponseData(RestRequest request, RoutingResult routingResult,
+                                                             Object result, Map<String, String> headers)
   {
     @SuppressWarnings({ "unchecked" })
     /** constrained by signature of {@link com.linkedin.restli.server.resources.CollectionResource#batchGet(java.util.Set)} */
-    final Map<Object, RecordTemplate> entities = (Map<Object, RecordTemplate>) object;
+    final Map<Object, RecordTemplate> entities = (Map<Object, RecordTemplate>) result;
     Map<Object, HttpStatus> statuses = Collections.emptyMap();
     Map<Object, RestLiServiceException> serviceErrors = Collections.emptyMap();
 
-    if (object instanceof BatchResult)
+    if (result instanceof BatchResult)
     {
-      @SuppressWarnings({"unchecked"})
+      @SuppressWarnings({ "unchecked" })
       /** constrained by signature of {@link com.linkedin.restli.server.resources.CollectionResource#batchGet(java.util.Set)} */
-      final BatchResult<Object, RecordTemplate> batchResult = (BatchResult<Object, RecordTemplate>) object;
+      final BatchResult<Object, RecordTemplate> batchResult = (BatchResult<Object, RecordTemplate>) result;
       statuses = batchResult.getStatuses();
       serviceErrors = batchResult.getErrors();
     }
 
     final ServerResourceContext context = (ServerResourceContext) routingResult.getContext();
-    final ProtocolVersion protocolVersion = context.getRestliProtocolVersion();
 
-    final Map<Object, ErrorResponse> errors = BatchResponseUtil.populateErrors(serviceErrors, context, _errorResponseBuilder);
+    final Map<Object, ErrorResponse> errors =
+        BatchResponseUtil.populateErrors(serviceErrors, context, _errorResponseBuilder);
 
     final Set<Object> mergedKeys = new HashSet<Object>(entities.keySet());
     mergedKeys.addAll(statuses.keySet());
     mergedKeys.addAll(errors.keySet());
 
     final Map<Object, EntityResponse<RecordTemplate>> results =
-      new HashMap<Object, EntityResponse<RecordTemplate>>((int) Math.ceil(mergedKeys.size() / 0.75));
+        new HashMap<Object, EntityResponse<RecordTemplate>>((int) Math.ceil(mergedKeys.size() / 0.75));
 
     for (Object key : mergedKeys)
     {
@@ -109,14 +120,13 @@ public class BatchGetResponseBuilder implements RestLiResponseBuilder
       entityResponse.setError(errors.get(key), SetMode.IGNORE_NULL);
       results.put(key, entityResponse);
     }
-
-    // filter
-
-    final BatchResponse<AnyRecord> response = toBatchResponse(results, protocolVersion);
-    return new PartialRestResponse.Builder().entity(response).headers(headers).build();
+    return new AugmentedRestLiResponseData.Builder(routingResult.getResourceMethod().getMethodType()).batchKeyEntityMap(results)
+                                                                                                     .headers(headers)
+                                                                                                     .build();
   }
 
-  private static <K, V extends RecordTemplate> BatchResponse<AnyRecord> toBatchResponse(Map<K, EntityResponse<V>> entities, ProtocolVersion protocolVersion)
+  private static <K, V extends RecordTemplate> BatchResponse<AnyRecord> toBatchResponse(Map<K, EntityResponse<V>> entities,
+                                                                                        ProtocolVersion protocolVersion)
   {
     final DataMap splitResponseData = new DataMap();
     final DataMap splitResults = new DataMap();

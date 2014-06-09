@@ -27,6 +27,8 @@ import java.util.Map;
 
 
 /**
+ * Concrete implementation of {@link RestLiRequestData}.
+ *
  * @author nshankar
  *
  */
