@@ -40,7 +40,7 @@ public interface RestConstants
   String HEADER_VALUE_APPLICATION_JSON = "application/json";
   String HEADER_VALUE_APPLICATION_PSON = "application/x-pson";
   String HEADER_VALUE_ACCEPT_ANY = "*/*";
-  String HEADER_RESTLI_PROTOCOL_VERSION = "X-Restli-Protocol-Version";
+  String HEADER_RESTLI_PROTOCOL_VERSION = "X-RestLi-Protocol-Version";
 
   List<String> SUPPORTED_MIME_TYPES = Arrays.asList(HEADER_VALUE_APPLICATION_PSON, HEADER_VALUE_APPLICATION_JSON);
 
