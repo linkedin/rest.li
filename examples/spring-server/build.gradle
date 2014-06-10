@@ -13,11 +13,11 @@ buildscript {
 }
 
 task wrapper(type: Wrapper) {
-  gradleVersion = '1.8'
+  gradleVersion = '1.12'
 }
 
-pegasusVersion = "1.15.9"
-spec = [
+final String pegasusVersion = "1.15.9"
+ext.spec = [
   "product" : [
     "pegasus" : [
       "data" : "com.linkedin.pegasus:data:"+pegasusVersion,
@@ -33,7 +33,7 @@ spec = [
   ]
 ]
 
-externalDependency = [
+ext.externalDependency = [
   'logbackClassic': 'ch.qos.logback:logback-classic:1.0.13',
   'logbackCore': 'ch.qos.logback:logback-core:1.0.13'
 ]
@@ -44,9 +44,11 @@ subprojects {
   apply plugin: 'idea'
   apply plugin: 'eclipse'
 
-  sourceCompatibility = JavaVersion.VERSION_1_6
-
   afterEvaluate {
+    if (project.plugins.hasPlugin('java')) {
+      sourceCompatibility = JavaVersion.VERSION_1_6
+    }
+
     // add the standard pegasus dependencies wherever the plugin is used
     if (project.plugins.hasPlugin('pegasus')) {
       dependencies {
