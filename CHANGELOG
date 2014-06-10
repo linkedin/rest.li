@@ -1,16 +1,20 @@
 1.17.1
 ------
+(RB=313174)
+Re-apply "Re-design Rest.li response API for various batch operations" with performance issue solved.
 
 1.17.0
 ------
 (RB=314186)
 CreateIdResponse.getId() now throws an exception if the requested Id is a Complex or Compound key.
 
+1.16.2
+------
 (RB=312291)
 Match previous changes in BatchCreateIdResponse to BatchCreateResponse
 
 (RB=313446)
-Revert "Re-design Rest.li response API for various batch operations".
+Temproarily revert "Re-design Rest.li response API for various batch operations" due to performance issue.
 
 1.16.1
 ------

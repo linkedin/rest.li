@@ -16,28 +16,40 @@
 
 package com.linkedin.restli.internal.server.methods.response;
 
+
 import com.linkedin.data.DataMap;
+import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.data.template.SetMode;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.BatchResponse;
+import com.linkedin.restli.common.EntityResponse;
+import com.linkedin.restli.common.ErrorResponse;
+import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.methods.AnyRecord;
 import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.BatchResult;
-import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiServiceException;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
-public class BatchGetResponseBuilder extends AbstractBatchResponseBuilder<RecordTemplate> implements
-    RestLiResponseBuilder
+
+public class BatchGetResponseBuilder implements RestLiResponseBuilder
 {
+  private final ErrorResponseBuilder _errorResponseBuilder;
+
   public BatchGetResponseBuilder(ErrorResponseBuilder errorResponseBuilder)
   {
-    super(errorResponseBuilder);
+    _errorResponseBuilder = errorResponseBuilder;
   }
 
   @Override
@@ -49,49 +61,96 @@ public class BatchGetResponseBuilder extends AbstractBatchResponseBuilder<Record
   {
     @SuppressWarnings({ "unchecked" })
     /** constrained by signature of {@link com.linkedin.restli.server.resources.CollectionResource#batchGet(java.util.Set)} */
-    Map<?, ? extends RecordTemplate> map = (Map<?, ? extends RecordTemplate>)object;
-    Map<?, RestLiServiceException> errorMap = Collections.emptyMap();
+    final Map<Object, RecordTemplate> entities = (Map<Object, RecordTemplate>) object;
+    Map<Object, HttpStatus> statuses = Collections.emptyMap();
+    Map<Object, RestLiServiceException> serviceErrors = Collections.emptyMap();
 
     if (object instanceof BatchResult)
     {
       @SuppressWarnings({"unchecked"})
       /** constrained by signature of {@link com.linkedin.restli.server.resources.CollectionResource#batchGet(java.util.Set)} */
-      BatchResult<?, ? extends RecordTemplate> batchResult =
-          (BatchResult<?, ? extends RecordTemplate>) object;
-      errorMap = batchResult.getErrors();
+      final BatchResult<Object, RecordTemplate> batchResult = (BatchResult<Object, RecordTemplate>) object;
+      statuses = batchResult.getStatuses();
+      serviceErrors = batchResult.getErrors();
     }
 
-    int numErrors =
-        errorMap.size()
-            + ((ServerResourceContext) routingResult.getContext()).getBatchKeyErrors()
-                                                                  .size();
+    final ServerResourceContext context = (ServerResourceContext) routingResult.getContext();
+    final ProtocolVersion protocolVersion = context.getRestliProtocolVersion();
 
-    Class<? extends RecordTemplate> valueClass =
-        routingResult.getResourceMethod().getResourceModel().getValueClass();
+    final Map<Object, ErrorResponse> errors = BatchResponseUtil.populateErrors(serviceErrors, context, _errorResponseBuilder);
 
-    BatchResponse<AnyRecord> batchResponse =
-        createBatchResponse(AnyRecord.class, map.size(), numErrors);
+    final Set<Object> mergedKeys = new HashSet<Object>(entities.keySet());
+    mergedKeys.addAll(statuses.keySet());
+    mergedKeys.addAll(errors.keySet());
 
-    populateResults(batchResponse,
-                    map,
-                    headers,
-                    valueClass,
-                    routingResult.getContext());
+    final Map<Object, EntityResponse<RecordTemplate>> results =
+      new HashMap<Object, EntityResponse<RecordTemplate>>((int) Math.ceil(mergedKeys.size() / 0.75));
 
-    populateErrors(request,
-                   routingResult,
-                   errorMap,
-                   headers,
-                   batchResponse);
+    for (Object key : mergedKeys)
+    {
+      final EntityResponse<RecordTemplate> entityResponse;
 
-    return new PartialRestResponse.Builder().entity(batchResponse).headers(headers).build();
+      final RecordTemplate entityTemplate = entities.get(key);
+      if (entityTemplate == null)
+      {
+        entityResponse = new EntityResponse<RecordTemplate>(null);
+      }
+      else
+      {
+        @SuppressWarnings("unchecked")
+        final Class<RecordTemplate> entityClass = (Class<RecordTemplate>) entityTemplate.getClass();
+        entityResponse = new EntityResponse<RecordTemplate>(entityClass);
+
+        final DataMap projectedData = RestUtils.projectFields(entityTemplate.data(), context);
+        CheckedUtil.putWithoutChecking(entityResponse.data(), EntityResponse.ENTITY, projectedData);
+      }
+
+      entityResponse.setStatus(statuses.get(key), SetMode.IGNORE_NULL);
+      entityResponse.setError(errors.get(key), SetMode.IGNORE_NULL);
+      results.put(key, entityResponse);
+    }
+
+    // filter
+
+    final BatchResponse<AnyRecord> response = toBatchResponse(results, protocolVersion);
+    return new PartialRestResponse.Builder().entity(response).headers(headers).build();
   }
 
-  @Override
-  protected DataMap buildResultRecord(final RecordTemplate o,
-                                      final ResourceContext resourceContext)
+  private static <K, V extends RecordTemplate> BatchResponse<AnyRecord> toBatchResponse(Map<K, EntityResponse<V>> entities, ProtocolVersion protocolVersion)
   {
-    DataMap data = RestUtils.projectFields(o.data(), resourceContext);
-    return data;
+    final DataMap splitResponseData = new DataMap();
+    final DataMap splitResults = new DataMap();
+    final DataMap splitStatuses = new DataMap();
+    final DataMap splitErrors = new DataMap();
+
+    for (Map.Entry<K, EntityResponse<V>> resultEntry : entities.entrySet())
+    {
+      final DataMap entityResponseData = resultEntry.getValue().data();
+      final String stringKey = URIParamUtils.encodeKeyForBody(resultEntry.getKey(), false, protocolVersion);
+
+      final DataMap entityData = entityResponseData.getDataMap(EntityResponse.ENTITY);
+      if (entityData != null)
+      {
+        CheckedUtil.putWithoutChecking(splitResults, stringKey, entityData);
+      }
+
+      final Integer status = entityResponseData.getInteger(EntityResponse.STATUS);
+      if (status != null)
+      {
+        CheckedUtil.putWithoutChecking(splitStatuses, stringKey, status);
+      }
+
+      final DataMap error = entityResponseData.getDataMap(EntityResponse.ERROR);
+      if (error != null)
+      {
+        CheckedUtil.putWithoutChecking(splitErrors, stringKey, error);
+      }
+    }
+
+    CheckedUtil.putWithoutChecking(splitResponseData, BatchResponse.RESULTS, splitResults);
+    CheckedUtil.putWithoutChecking(splitResponseData, BatchResponse.STATUSES, splitStatuses);
+    CheckedUtil.putWithoutChecking(splitResponseData, BatchResponse.ERRORS, splitErrors);
+
+    return new BatchResponse<AnyRecord>(splitResponseData, AnyRecord.class);
   }
 }

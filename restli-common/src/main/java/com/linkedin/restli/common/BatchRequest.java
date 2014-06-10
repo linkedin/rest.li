@@ -27,6 +27,7 @@ import com.linkedin.data.schema.Name;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.WrappingMapTemplate;
+
 import java.util.Arrays;
 import java.util.Map;
 
@@ -117,7 +118,7 @@ public class BatchRequest<T extends RecordTemplate> extends RecordTemplate
    */
   public Map<String, T> getEntities()
   {
-    DataMap value = (DataMap) data().get(ENTITIES);
+    DataMap value = data().getDataMap(ENTITIES);
 
     return new DynamicRecordMap<T>(value, _entitiesSchema, _valueType.getType());
   }

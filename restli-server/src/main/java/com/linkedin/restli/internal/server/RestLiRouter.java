@@ -20,7 +20,6 @@ package com.linkedin.restli.internal.server;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.jersey.api.uri.UriComponent;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -42,8 +41,6 @@ import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.RoutingException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -54,6 +51,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.regex.Pattern;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -457,7 +457,7 @@ public class RestLiRouter
         if (!(complexKey instanceof DataMap))
         {
           log.warn("Invalid structure of key '" + complexKey.toString() + "', skipping key.");
-          context.getBatchKeyErrors().put(complexKey.toString(), new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST));
+          context.getBatchKeyErrors().put(complexKey, new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST));
           continue;
         }
         context.getPathKeys()

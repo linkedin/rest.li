@@ -36,7 +36,7 @@ import java.util.Map;
 
 public class BatchCreateResponseBuilder implements RestLiResponseBuilder
 {
-  ErrorResponseBuilder _errorResponseBuilder;
+  private final ErrorResponseBuilder _errorResponseBuilder;
 
   public BatchCreateResponseBuilder(ErrorResponseBuilder errorResponseBuilder)
   {

@@ -25,17 +25,20 @@ import com.linkedin.restli.client.CreateIdRequest;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestClient;
+import com.linkedin.restli.client.RestliRequestOptions;
+import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.client.response.CreateResponse;
-import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.EmptyRecord;
+import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
 import com.linkedin.restli.examples.groups.api.TransferOwnershipRequest;
+import com.linkedin.restli.internal.client.response.BatchEntityResponse;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.util.Arrays;
@@ -82,15 +85,39 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
     Assert.assertEquals(greeting.getId(), new Long(1));
   }
 
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientDataDataProvider")
-  public void testBatchGet(RestClient restClient, RootBuilderWrapper<Long, Greeting> builders)
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientDataBatchDataProvider")
+  public void testBatchGet(RestClient restClient, RestliRequestOptions requestOptions)
     throws RemoteInvocationException
   {
     List<Long> ids = Arrays.asList(1L, 2L, 3L, 4L);
-    Request<BatchResponse<Greeting>> request = builders.batchGet().ids(ids).build();
+    Request<BatchResponse<Greeting>> request = new GreetingsBuilders(requestOptions).batchGet().ids(ids).build();
 
     Response<BatchResponse<Greeting>> response = restClient.sendRequest(request).getResponse();
     BatchResponse<Greeting> batchResponse = response.getEntity();
+    Assert.assertEquals(batchResponse.getResults().size(), ids.size());
+  }
+
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientDataBatchDataProvider")
+  public void testBatchGetKV(RestClient restClient, RestliRequestOptions requestOptions)
+    throws RemoteInvocationException
+  {
+    List<Long> ids = Arrays.asList(1L, 2L, 3L, 4L);
+    Request<BatchKVResponse<Long, Greeting>> request = new GreetingsBuilders(requestOptions).batchGet().ids(ids).buildKV();
+
+    Response<BatchKVResponse<Long, Greeting>> response = restClient.sendRequest(request).getResponse();
+    BatchKVResponse<Long, Greeting> batchResponse = response.getEntity();
+    Assert.assertEquals(batchResponse.getResults().size(), ids.size());
+  }
+
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientDataBatchDataProvider")
+  public void testBatchGetEntity(RestClient restClient, RestliRequestOptions requestOptions)
+    throws RemoteInvocationException
+  {
+    List<Long> ids = Arrays.asList(1L, 2L, 3L, 4L);
+    Request<BatchEntityResponse<Long, Greeting>> request = new GreetingsRequestBuilders(requestOptions).batchGet().ids(ids).build();
+
+    Response<BatchEntityResponse<Long, Greeting>> response = restClient.sendRequest(request).getResponse();
+    BatchEntityResponse<Long, Greeting> batchResponse = response.getEntity();
     Assert.assertEquals(batchResponse.getResults().size(), ids.size());
   }
 
@@ -100,8 +127,7 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
   {
     Request<CollectionResponse<Greeting>> request = builders.findBy("Search").setQueryParam("tone", Tone.SINCERE).paginate(1, 2).build();
 
-    Response<CollectionResponse<Greeting>> response = restClient.sendRequest(
-      request).getResponse();
+    Response<CollectionResponse<Greeting>> response = restClient.sendRequest(request).getResponse();
 
     CollectionResponse<Greeting> collectionResponse = response.getEntity();
     List<Greeting> greetings = collectionResponse.getElements();
@@ -131,12 +157,14 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
     Assert.assertEquals(greeting.getMessage(), "This is a newly created greeting");
   }
 
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "oldBuildersClientDataDataProvider")
-  public void testCreateOld(RestClient restClient, GreetingsBuilders builders) throws RemoteInvocationException
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "buildersClientDataDataProvider")
+  public void testCreate(RestClient restClient, RestliRequestOptions requestOptions) throws RemoteInvocationException
   {
     Greeting greeting = new Greeting();
     greeting.setMessage("Hello there!");
     greeting.setTone(Tone.FRIENDLY);
+
+    final GreetingsBuilders builders = new GreetingsBuilders(requestOptions);
 
     Request<EmptyRecord> createRequest = builders.create().input(greeting).build();
     Response<EmptyRecord> response = restClient.sendRequest(createRequest).getResponse();
@@ -156,12 +184,14 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
     Assert.assertEquals(responseGreeting.getTone(), greeting.getTone());
   }
 
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "newBuildersClientDataDataProvider")
-  public void testCreateNew(RestClient restClient, GreetingsRequestBuilders builders) throws RemoteInvocationException
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "buildersClientDataDataProvider")
+  public void testCreateId(RestClient restClient, RestliRequestOptions requestOptions) throws RemoteInvocationException
   {
     Greeting greeting = new Greeting();
     greeting.setMessage("Hello there!");
     greeting.setTone(Tone.FRIENDLY);
+
+    final GreetingsRequestBuilders builders = new GreetingsRequestBuilders(requestOptions);
 
     CreateIdRequest<Long, Greeting> createRequest = builders.create().input(greeting).build();
     Response<IdResponse<Long>> response = restClient.sendRequest(createRequest).getResponse();
@@ -258,31 +288,31 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
       };
   }
 
-  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "oldBuildersClientDataDataProvider")
-  public Object[][] oldBuildersClientDataDataProvider()
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientDataBatchDataProvider")
+  public Object[][] clientDataBatchDataProvider()
   {
     return new Object[][]
       {
-        { new RestClient(CLIENT, URI_PREFIX), new GreetingsBuilders() }, // default client
-        { new RestClient(CLIENT, URI_PREFIX), new GreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS) }, // default client
-        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.JSON, ACCEPT_TYPES), new GreetingsBuilders() },
-        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.JSON, ACCEPT_TYPES), new GreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS) },
-        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.PSON, ACCEPT_TYPES), new GreetingsBuilders() },
-        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.PSON, ACCEPT_TYPES), new GreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS) }
+        { new RestClient(CLIENT, URI_PREFIX), RestliRequestOptions.DEFAULT_OPTIONS },
+        { new RestClient(CLIENT, URI_PREFIX), TestConstants.FORCE_USE_NEXT_OPTIONS },
+        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.JSON, ACCEPT_TYPES), RestliRequestOptions.DEFAULT_OPTIONS },
+        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.JSON, ACCEPT_TYPES), TestConstants.FORCE_USE_NEXT_OPTIONS },
+        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.PSON, ACCEPT_TYPES), RestliRequestOptions.DEFAULT_OPTIONS },
+        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.PSON, ACCEPT_TYPES), TestConstants.FORCE_USE_NEXT_OPTIONS },
       };
   }
 
-  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "newBuildersClientDataDataProvider")
-  public Object[][] newBuildersClientDataDataProvider()
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "buildersClientDataDataProvider")
+  public Object[][] buildersClientDataDataProvider()
   {
     return new Object[][]
       {
-        { new RestClient(CLIENT, URI_PREFIX), new GreetingsRequestBuilders() }, // default client
-        { new RestClient(CLIENT, URI_PREFIX), new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS) }, // default client
-        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.JSON, ACCEPT_TYPES), new GreetingsRequestBuilders() },
-        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.JSON, ACCEPT_TYPES), new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS) },
-        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.PSON, ACCEPT_TYPES), new GreetingsRequestBuilders() },
-        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.PSON, ACCEPT_TYPES), new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS) }
+        { new RestClient(CLIENT, URI_PREFIX), RestliRequestOptions.DEFAULT_OPTIONS }, // default client
+        { new RestClient(CLIENT, URI_PREFIX), TestConstants.FORCE_USE_NEXT_OPTIONS }, // default client
+        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.JSON, ACCEPT_TYPES), RestliRequestOptions.DEFAULT_OPTIONS },
+        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.JSON, ACCEPT_TYPES), TestConstants.FORCE_USE_NEXT_OPTIONS },
+        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.PSON, ACCEPT_TYPES), RestliRequestOptions.DEFAULT_OPTIONS },
+        { new RestClient(CLIENT, URI_PREFIX, RestClient.ContentType.PSON, ACCEPT_TYPES), TestConstants.FORCE_USE_NEXT_OPTIONS }
       };
   }
 

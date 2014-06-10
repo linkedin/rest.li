@@ -127,8 +127,8 @@ public class BatchCreateIdRequestBuilder<K, V extends RecordTemplate> extends Re
                                           _input,
                                           _resourceSpec,
                                           _queryParams,
-                                          _baseURITemplate,
+                                          getBaseUriTemplate(),
                                           _pathKeys,
-                                          _requestOptions);
+                                          getRequestOptions());
   }
 }

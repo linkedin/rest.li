@@ -26,6 +26,7 @@ import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.client.QueryParamsUtil;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -106,10 +107,10 @@ public class BatchRequest<T> extends Request<T>
   /**
    * @return the IDs of the objects in this request. The IDs are the keys with their original types (non-coerced)
    */
-  @SuppressWarnings({"unchecked", "rawtypes"})
   public Set<Object> getObjectIds()
   {
-    Collection ids = (Collection) getQueryParamsObjects().get(RestConstants.QUERY_BATCH_IDS_PARAM);
+    @SuppressWarnings({"unchecked"})
+    Collection<Object> ids = (Collection<Object>) getQueryParamsObjects().get(RestConstants.QUERY_BATCH_IDS_PARAM);
     if (ids == null || ids.isEmpty())
     {
       return Collections.emptySet();

@@ -24,14 +24,15 @@ package com.linkedin.restli.client;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
-import com.linkedin.restli.internal.client.CollectionRequestUtil;
 import com.linkedin.restli.common.CollectionRequest;
 import com.linkedin.restli.common.KeyValueRecord;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.common.UpdateStatus;
-import com.linkedin.restli.internal.client.BatchKVResponseDecoder;
+import com.linkedin.restli.internal.client.BatchUpdateResponseDecoder;
+import com.linkedin.restli.internal.client.CollectionRequestUtil;
+
 import java.net.URI;
 import java.util.Collections;
 import java.util.Map;
@@ -42,7 +43,7 @@ import java.util.Map;
  */
 
 public class BatchUpdateRequest<K, V extends RecordTemplate>
-        extends com.linkedin.restli.client.BatchRequest<BatchKVResponse<K, UpdateStatus>>
+        extends BatchRequest<BatchKVResponse<K, UpdateStatus>>
 {
   private final Map<K, V> _updateInputMap;
 
@@ -59,10 +60,9 @@ public class BatchUpdateRequest<K, V extends RecordTemplate>
     super(ResourceMethod.BATCH_UPDATE,
           entities,
           headers,
-          new BatchKVResponseDecoder<K, UpdateStatus>(new TypeSpec<UpdateStatus>(UpdateStatus.class),
-                                                      (TypeSpec<K>) resourceSpec.getKeyType(),
-                                                      resourceSpec.getKeyParts(),
-                                                      resourceSpec.getComplexKeyType()),
+          new BatchUpdateResponseDecoder<K>((TypeSpec<K>) resourceSpec.getKeyType(),
+                                            resourceSpec.getKeyParts(),
+                                            resourceSpec.getComplexKeyType()),
           resourceSpec,
           queryParams,
           baseUriTemplate,

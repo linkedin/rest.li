@@ -116,8 +116,8 @@ public class CreateIdRequestBuilder<K, V extends RecordTemplate>
                                      idResponseDecoder,
                                      _resourceSpec,
                                      _queryParams,
-                                     _baseURITemplate,
+                                     getBaseUriTemplate(),
                                      _pathKeys,
-                                     _requestOptions);
+                                     getRequestOptions());
   }
 }

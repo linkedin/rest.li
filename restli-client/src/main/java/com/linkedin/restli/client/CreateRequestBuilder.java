@@ -18,12 +18,10 @@ package com.linkedin.restli.client;
 
 
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.internal.client.CreateResponseDecoder;
 
-import java.net.URI;
 import java.util.Map;
 
 
@@ -154,9 +152,9 @@ public class CreateRequestBuilder<K, V extends RecordTemplate>
                                 createResponseDecoder,
                                 _resourceSpec,
                                 _queryParams,
-                                _baseURITemplate,
+                                getBaseUriTemplate(),
                                 _pathKeys,
-                                _requestOptions);
+                                getRequestOptions());
   }
 
 }
