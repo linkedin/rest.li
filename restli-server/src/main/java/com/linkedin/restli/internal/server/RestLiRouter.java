@@ -33,6 +33,7 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.PathSegment.PathSegmentSyntaxException;
+import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
@@ -557,7 +558,7 @@ public class RestLiRouter
     Object parsedKey;
     try
     {
-      parsedKey = ArgumentUtils.parseSimplePathKey(pathSegment, resource);
+      parsedKey = ArgumentUtils.parseSimplePathKey(pathSegment, resource, context.getRestliProtocolVersion());
     }
     catch (NumberFormatException e)
     {

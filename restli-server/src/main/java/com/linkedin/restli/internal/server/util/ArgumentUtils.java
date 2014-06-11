@@ -33,6 +33,7 @@ import com.linkedin.restli.internal.common.IllegalMaskException;
 import com.linkedin.restli.internal.common.PathSegment.PathSegmentSyntaxException;
 import com.linkedin.restli.internal.common.URIElementParser;
 import com.linkedin.restli.internal.common.URIMaskUtil;
+import com.linkedin.restli.internal.common.URLEscaper;
 import com.linkedin.restli.internal.common.ValueConverter;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.internal.server.RoutingResult;
@@ -364,18 +365,28 @@ public class ArgumentUtils
    *
    * @param value key value string representation to parse
    * @param resource {@link com.linkedin.restli.internal.server.model.ResourceModel} containing the key type
+   * @param version the {@link com.linkedin.restli.common.ProtocolVersion}
    * @return parsed key value in the correct type for the key
    * @throws IllegalArgumentException
    * @throws NumberFormatException
    */
   public static Object parseSimplePathKey(final String value,
-                                          final ResourceModel resource) throws IllegalArgumentException,
-                                                                               NumberFormatException
+                                          final ResourceModel resource,
+                                          final ProtocolVersion version) throws IllegalArgumentException,
+                                                                                NumberFormatException
 
   {
-      Key key = resource.getPrimaryKey();
-      String decodedValue = UriComponent.decode(value, UriComponent.Type.PATH_SEGMENT);
-      return convertSimpleValue(decodedValue, key.getDataSchema(), key.getType());
+    Key key = resource.getPrimaryKey();
+    String decodedValue;
+    if (version.compareTo(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()) >= 0)
+    {
+      decodedValue = UriComponent.decode(value, UriComponent.Type.PATH_SEGMENT);
+    }
+    else
+    {
+      decodedValue = URLEscaper.unescape(value, URLEscaper.Escaping.URL_ESCAPING);
+    }
+    return convertSimpleValue(decodedValue, key.getDataSchema(), key.getType());
   }
 
   /**

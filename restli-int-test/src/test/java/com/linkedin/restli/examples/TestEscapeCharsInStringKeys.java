@@ -109,6 +109,11 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
     Response<Message> response = REST_CLIENT.sendRequest(req).get();
 
     Assert.assertEquals(response.getEntity().getMessage(), key1(), "Message should match key for key1");
+
+    Request<Message> req2 = builders.get().id(StringTestKeys.COMPLICATED_KEY).build();
+    Response<Message> response2 = REST_CLIENT.sendRequest(req2).get();
+
+    Assert.assertEquals(response2.getEntity().getMessage(), StringTestKeys.COMPLICATED_KEY, "Message should match key for COMPLICATED_KEY");
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestStringKeysOptionsDataProvider")

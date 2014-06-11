@@ -1,6 +1,7 @@
 1.17.2
 ------
-
+(RB=315698)
+Fix issue with inconsistent space encoding/decoding in uri paths.
 
 1.17.1
 ------

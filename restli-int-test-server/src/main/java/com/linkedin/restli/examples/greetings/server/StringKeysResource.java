@@ -73,7 +73,8 @@ public class StringKeysResource extends CollectionResourceTemplate<String, Messa
   private static final String[] TEST_KEYS = new String[] {
     StringTestKeys.SIMPLEKEY, StringTestKeys.SIMPLEKEY2, StringTestKeys.SIMPLEKEY3,
     StringTestKeys.URL, StringTestKeys.URL2, StringTestKeys.URL3,
-    StringTestKeys.SINGLE_ENCODED_URL, StringTestKeys.DOUBLE_ENCODED_URL
+    StringTestKeys.SINGLE_ENCODED_URL, StringTestKeys.DOUBLE_ENCODED_URL,
+    StringTestKeys.COMPLICATED_KEY
   };
 
   static {
