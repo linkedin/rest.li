@@ -437,7 +437,8 @@ project.gradle.addListener(new TestListener() {
     if (result.skippedTestCount > 0)
     {
       skippedTests[testDescriptor.className] << testDescriptor.name
-    }}
+    }
+  }
 })
 
 project.gradle.buildFinished { BuildResult result ->

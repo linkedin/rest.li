@@ -1,15 +1,23 @@
-1.17.2
+1.17.3
 ------
 (RB=315698)
 Fix issue with inconsistent space encoding/decoding in uri paths.
 
-1.17.1
+(RB=313443)
+Add cache to RecordTemplate field getter/setter whose type needs to be coerced (custom type).
+Note that RecordTemplate classes need to re-generated from .pdsc files to activate this feature.
+
+1.17.2
 ------
 (RB=313174)
 Re-apply "Re-design Rest.li response API for various batch operations" with performance issue solved.
 
 (RB=312225)
 Support BatchGetEntity and EntityResponse for ScatterGatherBuilder.
+
+1.17.1
+------
+(We skipped this version)
 
 1.17.0
 ------

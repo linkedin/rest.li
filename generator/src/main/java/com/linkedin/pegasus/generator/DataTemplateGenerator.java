@@ -17,24 +17,6 @@
 package com.linkedin.pegasus.generator;
 
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Deque;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
@@ -81,6 +63,22 @@ import com.linkedin.data.template.TyperefInfo;
 import com.linkedin.data.template.UnionTemplate;
 import com.linkedin.data.template.WrappingArrayTemplate;
 import com.linkedin.data.template.WrappingMapTemplate;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayDeque;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.sun.codemodel.ClassType;
 import com.sun.codemodel.JAnnotatable;
 import com.sun.codemodel.JBlock;
@@ -99,6 +97,8 @@ import com.sun.codemodel.JMethod;
 import com.sun.codemodel.JMod;
 import com.sun.codemodel.JPackage;
 import com.sun.codemodel.JVar;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Generates Java data templates.
@@ -1385,8 +1385,17 @@ public abstract class DataTemplateGenerator extends CodeGenerator
                                             JVar schemaField,
                                             RecordDataSchema.Field field)
   {
-    boolean isDirect = isDirectType(field.getType());
-    String wrappedOrDirect = isDirect ? "Direct" : "Wrapped";
+    final DataSchema fieldSchema = field.getType();
+    boolean isDirect = isDirectType(fieldSchema);
+    String wrappedOrDirect;
+    if (isDirect)
+    {
+      wrappedOrDirect = (firstCustomInfo(fieldSchema) == null ? "Direct" : "CustomType");
+    }
+    else
+    {
+      wrappedOrDirect = "Wrapped";
+    }
     String capitalizedName = capitalize(fieldName);
 
     String fieldFieldName = "FIELD_" + capitalizedName;

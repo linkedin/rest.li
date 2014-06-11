@@ -16,10 +16,11 @@
 
 package com.linkedin.pegasus.generator.test;
 
-import java.net.URI;
-import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertEquals;
+import java.net.URI;
+
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 
 public class TestUri
@@ -31,6 +32,10 @@ public class TestUri
     URI input = URI.create("http://www.linkedin.com");
     uc.setRequired(input);
     URI output = uc.getRequired();
-    assertEquals(input, output);
+    Assert.assertEquals(input, output);
+
+    URI outputAgain = uc.getRequired();
+    // test caching for custom types with assumption that each time UriCoercer.coerceOutput() will create new Uri object
+    Assert.assertSame(outputAgain, output);
   }
 }

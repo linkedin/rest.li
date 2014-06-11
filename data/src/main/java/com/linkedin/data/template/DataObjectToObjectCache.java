@@ -79,7 +79,7 @@ class DataObjectToObjectCache<V> implements Cloneable
       }
       else
       {
-        _hashCode = System.identityHashCode(dataObject);
+        _hashCode = dataObject.hashCode();
       }
 
       _dataObject = dataObject;

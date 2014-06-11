@@ -19,7 +19,6 @@ package com.linkedin.data.template;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.RecordDataSchema;
-import com.linkedin.data.template.DataObjectToObjectCache;
 
 
 /**
@@ -91,7 +90,7 @@ public abstract class RecordTemplate implements DataTemplate<DataMap>
   {
     RecordTemplate copy = (RecordTemplate) super.clone();
     copy._map = _map.copy();
-    copy._cache = new DataObjectToObjectCache<DataTemplate<?>>();
+    copy._cache = new DataObjectToObjectCache<Object>();
     return copy;
   }
 
@@ -168,6 +167,34 @@ public abstract class RecordTemplate implements DataTemplate<DataMap>
     if (checkPutNullValue(field, object, mode))
     {
       _map.put(field.getName(), DataTemplateUtil.coerceInput(object, valueClass, dataClass));
+    }
+  }
+
+  /**
+   * Set the value of field whose type has needs to be coerced by {@link DirectCoercer}.
+   *
+   * @see SetMode
+   *
+   * @param field provides the field to set.
+   * @param valueClass provides the expected class of the input value.
+   * @param dataClass provides the class stored in the underlying {@link DataMap}.
+   * @param object provides the value to set.
+   * @param mode determines how should happen if the value provided is null.
+   * @param <T> is the type of the object.
+   * @throws ClassCastException if provided object is not the same as the expected class or
+   *                            it cannot be coerced to the expected class.
+   * @throws NullPointerException if null is not allowed, see {@link SetMode#DISALLOW_NULL}.
+   * @throws IllegalArgumentException if attempting to remove a mandatory field by setting it to null,
+   *                                  see {@link SetMode#REMOVE_OPTIONAL_IF_NULL}.
+   */
+  protected <T> void putCustomType(RecordDataSchema.Field field, Class<T> valueClass, Class<?> dataClass, T object, SetMode mode)
+    throws ClassCastException
+  {
+    if (checkPutNullValue(field, object, mode))
+    {
+      final Object coerced = DataTemplateUtil.coerceInput(object, valueClass, dataClass);
+      _map.put(field.getName(), coerced);
+      _cache.put(coerced, object);
     }
   }
 
@@ -297,6 +324,42 @@ public abstract class RecordTemplate implements DataTemplate<DataMap>
     return DataTemplateUtil.coerceOutput(found, valueClass);
   }
 
+
+  /**
+   * Get the value of field whose type has needs to be coerced by {@link DirectCoercer}.
+   *
+   * @param field provides the field to get.
+   * @param valueClass provides the expected class of the result.
+   * @param mode determines what should happen if the field is not present.
+   * @param <T> is the type of the result object.
+   * @return value of field or null with semantics defined by mode.
+   * @throws RequiredFieldNotPresentException if mode is STRICT and the field is required but not present.
+   * @throws TemplateOutputCastException if the value of the field is not the expected class or
+   *                                     it cannot be coerced to the expected class.
+   */
+  protected <T> T obtainCustomType(RecordDataSchema.Field field, Class<T> valueClass, GetMode mode)
+    throws RequiredFieldNotPresentException, TemplateOutputCastException
+  {
+    T coerced;
+    Object customTypeValue;
+    Object found = obtainValueOrDefault(field, mode);
+    if (found == null)
+    {
+      return null;
+    }
+    // the underlying data type of the custom typed field should be immutable, thus checking class equality suffices
+    else if ((customTypeValue = _cache.get(found)) != null && customTypeValue.getClass() == valueClass)
+    {
+      coerced = valueClass.cast(customTypeValue);
+    }
+    else
+    {
+      coerced = DataTemplateUtil.coerceOutput(found, valueClass);
+      _cache.put(found, coerced);
+    }
+    return coerced;
+  }
+
   /**
    * Get the value of field.
    *
@@ -320,7 +383,7 @@ public abstract class RecordTemplate implements DataTemplate<DataMap>
     {
       wrapped = null;
     }
-    else if ((template = _cache.get(found)) != null && template.data() == found)
+    else if ((template = (DataTemplate<?>) _cache.get(found)) != null && template.data() == found)
     {
       wrapped = valueClass.cast(template);
     }
@@ -420,5 +483,5 @@ public abstract class RecordTemplate implements DataTemplate<DataMap>
 
   private DataMap _map;
   private final RecordDataSchema _schema;
-  private DataObjectToObjectCache<DataTemplate<?>> _cache = new DataObjectToObjectCache<DataTemplate<?>>();
+  private DataObjectToObjectCache<Object> _cache = new DataObjectToObjectCache<Object>();
 }
