@@ -227,7 +227,8 @@ public class TestClientBuilders
     key2.append("equals", "==");
     key2.append("ampersand", "&&");
 
-    BatchGetRequest<TestRecord> request = builder.ids(key1,key2).fields(TestRecord.fields().id(), TestRecord.fields().message()).build();
+    BatchGetKVRequest<CompoundKey, TestRecord> request =
+        builder.ids(key1,key2).fields(TestRecord.fields().id(), TestRecord.fields().message()).buildKV();
 
     testBaseUriGeneration(request);
 
@@ -1130,7 +1131,8 @@ public class TestClientBuilders
     RecordTemplate param = buildComplexParam(123, "ParamMessage");
 
     @SuppressWarnings("unchecked")
-    BatchGetRequest<TestRecord> request = builder.ids(id1, id2).setParam("testParam", param).build();
+    BatchGetKVRequest<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> request =
+        builder.ids(id1, id2).setParam("testParam", param).buildKV();
     Assert.assertTrue(request.isIdempotent());
     Assert.assertTrue(request.isSafe());
     checkBasicRequest(request,
@@ -2135,6 +2137,10 @@ public class TestClientBuilders
     else if (request instanceof BatchGetRequest)
     {
       Assert.assertEquals(((BatchGetRequest) request).getBaseURI(), expectedBaseUri);
+    }
+    else if (request instanceof BatchGetKVRequest)
+    {
+      Assert.assertEquals(((BatchGetKVRequest) request).getBaseUri(), expectedBaseUri);
     }
     else if (request instanceof BatchPartialUpdateRequest)
     {

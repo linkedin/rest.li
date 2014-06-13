@@ -20,7 +20,6 @@ package com.linkedin.restli.client;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.BatchResponse;
-import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.TypeSpec;
@@ -109,6 +108,106 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
                                    firstRequest.getBaseUriTemplate(),
                                    firstRequest.getPathKeys(),
                                    firstRequest.getRequestOptions());
+  }
+
+  /**
+   * Batches multiple requests into a single batch request.
+   *
+   * Requirements:
+   * <ul>
+   *   <li>Base URIs of all requests must be the same</li>
+   * </ul>
+   *
+   * Batching is performed along two dimensions:
+   * <ol>
+   *   <li>entity ids are accumulated</li>
+   *   <li>fields are accumulated. If any of the batched requests has a null projection,
+   *   then the resulting batch request will also have a null projection</li>
+   * </ol>
+   *
+   * @param requests to batch
+   * @param <K> type of the key
+   * @param <RT> type of entity template
+   * @return batching request
+   */
+  public static <K, RT extends RecordTemplate> BatchGetKVRequest<K, RT> batchKV(List<BatchGetKVRequest<K, RT>> requests)
+  {
+    return batchKV(requests, true);
+  }
+
+  /**
+   * Batches multiple requests into a single batch request.
+   *
+   * Requirements:
+   * <ul>
+   *   <li>Base URIs of all requests must be the same</li>
+   *   <li>if {@code batchFields} is {@code false}, then all requests must have the same projection</li>
+   * </ul>
+   *
+   * Batching is performed along one or two dimensions:
+   * <ol>
+   *   <li>entity ids are always accumulated</li>
+   *   <li>if {@code batchFields} is {@code true}, fields are also accumulated. If any of the batched requests has a
+   *   null projection, then the resulting batch request will also have a null projection.</li>
+   * </ol>
+   *
+   *
+   *
+   * @param requests to batch
+   * @param batchFields whether field batching is desired
+   * @param <K> type of the key
+   * @param <RT> type of entity template
+   * @return batching request
+   */
+  public static <K, RT extends RecordTemplate> BatchGetKVRequest<K, RT> batchKV(List<BatchGetKVRequest<K, RT>> requests,
+                                                                      boolean batchFields)
+  {
+    final BatchGetKVRequest<K, RT> firstRequest = requests.get(0);
+    final ResourceSpec firstResourceSpec = firstRequest.getResourceSpec();
+    final Map<String, Object> batchQueryParams = BatchGetRequestUtil.getBatchQueryParam(requests, batchFields);
+
+    return new BatchGetKVRequest<K, RT>(firstRequest.getHeaders(),
+                                   firstRequest.getResponseDecoder(),
+                                   batchQueryParams,
+                                   firstResourceSpec,
+                                   firstRequest.getBaseUriTemplate(),
+                                   firstRequest.getPathKeys(),
+                                   firstRequest.getRequestOptions());
+  }
+
+  /**
+   * Converts an entity request to a batch one, for subsequent batching with other requests.
+   * @param request to convert
+   * @param <RT> type of entity template
+   * @return batch request
+   */
+  @SuppressWarnings("unchecked")
+  public static <K, RT extends RecordTemplate> BatchGetKVRequest<K, RT> batchKV(GetRequest<RT> request)
+  {
+    Object id = request.getObjectId();
+
+    if (id == null)
+    {
+      throw new IllegalArgumentException(
+          "It is not possible to create a batch get request from a get request without an id.");
+    }
+
+    Map<String, Object> queryParams = new HashMap<String, Object>(request.getQueryParamsObjects());
+    queryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM,
+                    new ArrayList<Object>(Arrays.asList(id)));
+
+    return new BatchGetKVRequest<K, RT>(request.getHeaders(),
+                                        new BatchKVResponseDecoder<K, RT>(
+                                            request.getEntityClass(),
+                                            (Class<K>)request.getResourceSpec().getKeyClass(),
+                                            request.getResourceSpec().getKeyParts(),
+                                            request.getResourceSpec().getKeyKeyClass(),
+                                            request.getResourceSpec().getKeyParamsClass()),
+                                        queryParams,
+                                        request.getResourceSpec(),
+                                        request.getBaseUriTemplate(),
+                                        request.getPathKeys(),
+                                        request.getRequestOptions());
   }
 
   /**
@@ -271,6 +370,15 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
   @Override
   public BatchGetRequest<V> build()
   {
+    Class<?> keyClass = _resourceSpec.getKeyClass();
+
+    if (com.linkedin.restli.common.CompoundKey.class.isAssignableFrom(keyClass) ||
+        keyClass == com.linkedin.restli.common.ComplexResourceKey.class)
+    {
+      throw new UnsupportedOperationException("The build method cannot be used with Compound and Complex key types. " +
+                                                  "Please use the buildKV method instead.");
+    }
+
     return new BatchGetRequest<V>(_headers,
                                   _decoder,
                                   _queryParams,
@@ -290,8 +398,7 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
                                          _resourceSpec.getKeyParts(),
                                          _resourceSpec.getComplexKeyType());
 
-    return new BatchGetKVRequest<K, V>(ResourceMethod.BATCH_GET,
-                                  _headers,
+    return new BatchGetKVRequest<K, V>(_headers,
                                   decoder,
                                   _queryParams,
                                   _resourceSpec,

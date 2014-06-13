@@ -247,10 +247,14 @@ public class CompoundKey
     {
       return false;
     }
-    if (getClass() != obj.getClass())
+
+    Class<?> thatClass = obj.getClass();
+
+    if (!CompoundKey.class.isAssignableFrom(thatClass))
     {
       return false;
     }
+
     CompoundKey other = (CompoundKey) obj;
     if (!_keys.equals(other._keys))
     {

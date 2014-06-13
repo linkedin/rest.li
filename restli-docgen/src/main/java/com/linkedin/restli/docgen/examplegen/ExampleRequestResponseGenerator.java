@@ -50,7 +50,7 @@ import com.linkedin.restli.client.BatchCreateRequest;
 import com.linkedin.restli.client.BatchCreateRequestBuilder;
 import com.linkedin.restli.client.BatchDeleteRequest;
 import com.linkedin.restli.client.BatchDeleteRequestBuilder;
-import com.linkedin.restli.client.BatchGetRequest;
+import com.linkedin.restli.client.BatchGetKVRequest;
 import com.linkedin.restli.client.BatchGetRequestBuilder;
 import com.linkedin.restli.client.BatchPartialUpdateRequest;
 import com.linkedin.restli.client.BatchPartialUpdateRequestBuilder;
@@ -384,7 +384,7 @@ public class ExampleRequestResponseGenerator
     batchGet.ids(id1, id2);
     addParams(batchGet, ResourceMethod.BATCH_GET);
     addPathKeys(batchGet);
-    BatchGetRequest<RecordTemplatePlaceholder> request = batchGet.build();
+    BatchGetKVRequest<Object, RecordTemplatePlaceholder> request = batchGet.buildKV();
 
     final Map<Object, RecordTemplatePlaceholder> bgResponseData = new HashMap<Object, RecordTemplatePlaceholder>();
     bgResponseData.put(id1, generateEntity());

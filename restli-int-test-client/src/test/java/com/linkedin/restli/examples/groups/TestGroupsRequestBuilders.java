@@ -415,8 +415,9 @@ public class TestGroupsRequestBuilders
     GroupMembershipsBuilders.Key key2 = new GroupMembershipsBuilders.Key().setGroupId(2).setMemberId(1);
     GroupMembershipsBuilders.Key key3 = new GroupMembershipsBuilders.Key().setGroupId(2).setMemberId(2);
 
-    Request<BatchResponse<GroupMembership>> request = new GroupMembershipsBuilders().batchGet().ids(key1, key2, key3).build();
-    checkRequestBuilder(request, ResourceMethod.BATCH_GET, BatchResponseDecoder.class, expectedUri, null, version);
+    Request<BatchKVResponse<CompoundKey, GroupMembership>> request =
+        new GroupMembershipsBuilders().batchGet().ids(key1, key2, key3).buildKV();
+    checkRequestBuilder(request, ResourceMethod.BATCH_GET, BatchKVResponseDecoder.class, expectedUri, null, version);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestMembershipsBatchDataProvider")

@@ -108,7 +108,7 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
     return new ScatterGatherResult<T>(scatterGatherRequests, mapKeyResult.getUnmappedKeys());
   }
 
-  public <K> KVScatterGatherResult<K, EntityResponse<T>> buildRequests(BatchRequest<BatchKVResponse<K, EntityResponse<T>>> request, RequestContext requestContext)
+  public <K> KVScatterGatherResult<K, EntityResponse<T>> buildRequests(BatchGetEntityRequest<K, T> request, RequestContext requestContext)
     throws ServiceUnavailableException
   {
     @SuppressWarnings("unchecked")
@@ -146,6 +146,47 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
     }
 
     return new KVScatterGatherResult<K, EntityResponse<T>>(scatterGatherRequests, mapKeyResult.getUnmappedKeys());
+  }
+
+  @SuppressWarnings("unchecked")
+  public <K> KVScatterGatherResult<K, T> buildRequestsKV(BatchGetKVRequest<K, T> request, RequestContext requestContext)
+      throws ServiceUnavailableException
+  {
+    Set<K> idObjects = (Set<K>) request.getObjectIds();
+
+    MapKeyResult<URI, K> mapKeyResult = mapKeys(request, idObjects);
+
+    Map<URI, Collection<K>> batches = mapKeyResult.getMapResult();
+    Collection<KVRequestInfo<K, T>> scatterGatherRequests = new ArrayList<KVRequestInfo<K, T>>(batches.size());
+
+    for (Map.Entry<URI, Collection<K>> batch : batches.entrySet())
+    {
+      BatchGetRequestBuilder<K, T> builder = new BatchGetRequestBuilder<K, T>(request.getBaseUriTemplate(),
+                                                                                        (Class<T>)request.getResourceSpec().getValueClass(),
+                                                                                        request.getResourceSpec(),
+                                                                                        request.getRequestOptions());
+
+      builder.ids(batch.getValue());
+      for (Map.Entry<String, Object> param : request.getQueryParamsObjects().entrySet())
+      {
+        if (!param.getKey().equals(RestConstants.QUERY_BATCH_IDS_PARAM))
+        {
+          // keep all non-batch query parameters since they could be request specific
+          builder.setParam(param.getKey(), param.getValue());
+        }
+      }
+      for (Map.Entry<String, String> header : request.getHeaders().entrySet())
+      {
+        builder.setHeader(header.getKey(), header.getValue());
+      }
+
+      RequestContext context = requestContext.clone();
+      KeyMapper.TargetHostHints.setRequestContextTargetHost(context, batch.getKey());
+
+      scatterGatherRequests.add(new KVRequestInfo<K, T>(builder.buildKV(), context));
+    }
+
+    return new KVScatterGatherResult<K, T>(scatterGatherRequests, mapKeyResult.getUnmappedKeys());
   }
 
   public <K> KVScatterGatherResult<K, UpdateStatus> buildRequests(BatchUpdateRequest<K, T> request, RequestContext requestContext)
@@ -327,6 +368,26 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
   {
     ScatterGatherResult<T> scatterGatherResult = buildRequestsV2(request, requestContext);
     for (RequestInfo<T> requestInfo : scatterGatherResult.getRequestInfo())
+    {
+      client.sendRequest(requestInfo.getRequest(), requestInfo.getRequestContext(), callback);
+    }
+  }
+
+  /**
+   * A convenience function for caller to issue batch request with one call.
+   * If finer-grain control is required, users should call buildRequests instead and send requests by themselves
+   *
+   * @param client - the RestClient to use
+   * @param request - the batch get request
+   * @param requestContext - the original request context
+   * @param callback - callback to be used for each request
+   * @throws ServiceUnavailableException
+   */
+  public <K> void sendRequests(RestClient client, BatchGetKVRequest<K, T> request, RequestContext requestContext, Callback<Response<BatchKVResponse<K, T>>> callback)
+      throws ServiceUnavailableException
+  {
+    KVScatterGatherResult<K, T> scatterGatherResult = buildRequestsKV(request, requestContext);
+    for (KVRequestInfo<K, T> requestInfo : scatterGatherResult.getRequestInfo())
     {
       client.sendRequest(requestInfo.getRequest(), requestInfo.getRequestContext(), callback);
     }

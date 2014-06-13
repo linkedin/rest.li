@@ -39,8 +39,7 @@ import java.util.Set;
  */
 public class BatchGetKVRequest<K, V extends RecordTemplate> extends BatchRequest<BatchKVResponse<K, V>>
 {
-  BatchGetKVRequest(ResourceMethod method,
-                    Map<String, String> headers,
+  BatchGetKVRequest(Map<String, String> headers,
                     RestResponseDecoder<BatchKVResponse<K, V>> decoder,
                     Map<String, Object> queryParams,
                     ResourceSpec resourceSpec,
@@ -48,7 +47,7 @@ public class BatchGetKVRequest<K, V extends RecordTemplate> extends BatchRequest
                     Map<String, Object> pathKeys,
                     RestliRequestOptions requestOptions)
   {
-    super(method, null, headers, decoder, resourceSpec, queryParams, baseUriTemplate, pathKeys, requestOptions);
+    super(ResourceMethod.BATCH_GET, null, headers, decoder, resourceSpec, queryParams, baseUriTemplate, pathKeys, requestOptions);
   }
 
   @Override

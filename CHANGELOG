@@ -1,5 +1,10 @@
-1.17.4
+1.18.1
 ------
+
+1.18.0
+------
+(RB=316654)
+Introducing a check inside BatchGetRequestBuilder.build() to fail when the key is CompoundKey or ComplexResourceKey.
 
 1.17.3
 ------

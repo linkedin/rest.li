@@ -107,16 +107,16 @@ public class TestComplexArrayResource extends RestLiIntegrationTest
     List<ComplexResourceKey<ComplexArray, ComplexArray>> complexKeys = getBatchCompleKeys();
 
     ComplexArrayBuilders builders = new ComplexArrayBuilders(options);
-    Request<BatchResponse<Greeting>> request = builders.batchGet().ids(complexKeys).build();
+    Request<BatchKVResponse<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting>> request =
+        builders.batchGet().ids(complexKeys).buildKV();
 
-    Response<BatchResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    Response<BatchKVResponse<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting>> response =
+        REST_CLIENT.sendRequest(request).getResponse();
 
-    String keyString1 = BatchResponse.keyToString(complexKeys.get(0), version);
-    Greeting greeting1 = response.getEntity().getResults().get(keyString1);
+    Greeting greeting1 = response.getEntity().getResults().get(complexKeys.get(0));
     Assert.assertNotNull(greeting1);
 
-    String keyString2 = BatchResponse.keyToString(complexKeys.get(1), version);
-    Greeting greeting2 = response.getEntity().getResults().get(keyString2);
+    Greeting greeting2 = response.getEntity().getResults().get(complexKeys.get(1));
     Assert.assertNotNull(greeting2);
   }
 
