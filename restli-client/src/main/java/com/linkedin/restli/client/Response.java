@@ -47,7 +47,7 @@ public interface Response<T>
    * This information can be found in a strongly typed format from {@link #getEntity()}
    *
    * If you are using old request builders (named ...Builders), cast the {@link com.linkedin.restli.common.EmptyRecord}
-   * you receive from {@link #getEntity()} to {@link com.linkedin.restli.client.response.CreateResponse}&gt;YourKeyType&lt;.
+   * you receive from {@link #getEntity()} to {@link com.linkedin.restli.client.response.CreateResponse}&lt;YourKeyType&gt;.
    * You can then call {@link com.linkedin.restli.client.response.CreateResponse#getId()}
    *
    * If you are using new request builders (named ...RequestBuilders), {@link #getEntity()}
