@@ -86,6 +86,11 @@ public class FilterUtil
     fc.onRestRequest(req, emptyRequestContext(), emptyWireAttrs());
   }
 
+  public static void fireRestRequest(FilterChain fc, RestRequest req, Map<String, String> wireAttrs)
+  {
+    fc.onRestRequest(req, emptyRequestContext(), wireAttrs);
+  }
+
   public static void fireUntypedRequest(FilterChain fc, Request req)
   {
     if (req instanceof RpcRequest)
