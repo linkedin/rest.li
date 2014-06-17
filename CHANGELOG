@@ -1,5 +1,7 @@
 1.18.1
 ------
+(RB=315193)
+Fix typo in protocol version header.
 
 1.18.0
 ------
