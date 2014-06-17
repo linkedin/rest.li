@@ -2,10 +2,10 @@
 
 source $(dirname $0)/gradle.properties
 
-echo Attempting to publish: $version
+echo "Attempting to publish: $version"
 echo
 
-DIRTY="`git status --porcelain || echo FAIL`"
+DIRTY="`git status --porcelain --untracked-files=no || echo FAIL`"
 if test -n "$DIRTY"
 then
     echo "Dirty index or working tree. Use git status to check." 2>&1
