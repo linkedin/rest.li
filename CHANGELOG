@@ -1,3 +1,6 @@
+1.17.4
+------
+
 1.17.3
 ------
 (RB=315698)
@@ -6,6 +9,9 @@ Fix issue with inconsistent space encoding/decoding in uri paths.
 (RB=313443)
 Add cache to RecordTemplate field getter/setter whose type needs to be coerced (custom type).
 Note that RecordTemplate classes need to re-generated from .pdsc files to activate this feature.
+
+(RB=318144)
+Add wire attrs as a param.
 
 1.17.2
 ------
