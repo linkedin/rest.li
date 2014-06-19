@@ -92,10 +92,9 @@ public class BatchGetRequestUtil
    * Creates a map of those queryParams which are required to be the same for all batchable requests.
    *
    * @param request the BatchGetRequest to pull query params from
-   * @param <RT> the record template type of the BatchGetRequest
    * @return Map which contains all query params save for Batch_Ids and Fields
    */
-  public static <RT> Map<String, Object> getQueryParamsForBatchingKey(BatchRequest<RT> request)
+  public static Map<String, Object> getQueryParamsForBatchingKey(BatchRequest<?> request)
   {
     final Map<String, Object> params = new HashMap<String, Object>(request.getQueryParamsObjects());
     params.remove(RestConstants.QUERY_BATCH_IDS_PARAM);
