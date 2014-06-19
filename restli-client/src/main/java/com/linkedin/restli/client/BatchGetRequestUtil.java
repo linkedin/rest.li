@@ -18,7 +18,7 @@ package com.linkedin.restli.client;
 
 
 import com.linkedin.data.schema.PathSpec;
-import com.linkedin.restli.common.ResourceSpec;
+import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.RestConstants;
 
 import java.util.HashMap;
@@ -32,9 +32,9 @@ import java.util.Set;
  * @author Keren Jin
  */
 // need to be place in same package as BatchRequest, since BatchRequest.getFields() is protected
-class BatchGetRequestUtil
+public class BatchGetRequestUtil
 {
-  public static <T> Map<String, Object> getBatchQueryParam(List<? extends BatchRequest<T>> requests, boolean batchFields)
+  public static <T extends RecordTemplate> Map<String, Object> getBatchQueryParam(List<? extends BatchRequest<T>> requests, boolean batchFields)
   {
     if (requests.size() < 2)
     {
@@ -42,54 +42,18 @@ class BatchGetRequestUtil
     }
 
     final BatchRequest<T> firstRequest = requests.get(0);
-    final ResourceSpec firstResourceSpec = firstRequest.getResourceSpec();
-    final String firstRequestBaseUriTemplate = firstRequest.getBaseUriTemplate();
-    final Map<String, Object> firstRequestPathKeys = firstRequest.getPathKeys();
-    final Set<PathSpec> firstFields = firstRequest.getFields();
+    final BatchingKey<T,? extends BatchRequest<T>> batchKey = new BatchingKey<T,BatchRequest<T>>(firstRequest, batchFields);
     final Set<Object> ids = new HashSet<Object>();
 
     // Default to no fields or to first request's fields, depending on batchFields flag
-    Set<PathSpec> fields = batchFields ? new HashSet<PathSpec>() : firstFields;
-
-    // Defensive shallow copy
-    final Map<String, Object> firstQueryParams = new HashMap<String, Object>(firstRequest.getQueryParamsObjects());
-
-    firstQueryParams.remove(RestConstants.QUERY_BATCH_IDS_PARAM);
-    firstQueryParams.remove(RestConstants.FIELDS_PARAM);
+    Set<PathSpec> fields = batchFields ? new HashSet<PathSpec>() : firstRequest.getFields();
 
     for (BatchRequest<T> request : requests)
     {
-      final String currentRequestBaseUriTemplate = request.getBaseUriTemplate();
-      final Map<String, Object> currentRequestPathKeys = request.getPathKeys();
-      if (!currentRequestBaseUriTemplate.equals(firstRequestBaseUriTemplate) ||
-        !currentRequestPathKeys.equals(firstRequestPathKeys))
-      {
-        throw new IllegalArgumentException("Requests must have same base URI template and path keys to batch");
-      }
-
-      if (!request.getResourceSpec().equals(firstResourceSpec))
-      {
-        throw new IllegalArgumentException("Requests must be for the same resource to batch");
-      }
-
-      if (!request.getRequestOptions().equals(firstRequest.getRequestOptions()))
-      {
-        throw new IllegalArgumentException("Requests must have the same RestliRequestOptions to batch!");
-      }
+      batchKey.validate(request);
 
       final Set<Object> requestIds = request.getObjectIds();
       final Set<PathSpec> requestFields = request.getFields();
-      // Defensive shallow copy
-      final Map<String, Object> queryParams = new HashMap<String, Object>(request.getQueryParamsObjects());
-
-      queryParams.remove(RestConstants.FIELDS_PARAM);
-      queryParams.remove(RestConstants.QUERY_BATCH_IDS_PARAM);
-
-      // Enforce uniformity of query params excluding ids and fields
-      if (!firstQueryParams.equals(queryParams))
-      {
-        throw new IllegalArgumentException("Requests must have same parameters to batch");
-      }
 
       if (requestIds != null && !requestIds.isEmpty())
       {
@@ -108,19 +72,34 @@ class BatchGetRequestUtil
           fields.addAll(requestFields);
         }
       }
-      else if (!requestFields.equals(firstFields))
-      {
-        throw new IllegalArgumentException("Requests must have same fields to batch");
-      }
     }
 
-    firstQueryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM, ids);
+    final Map<String, Object> queryParams = getQueryParamsForBatchingKey(firstRequest);
 
+    // add the ids back to the queryParams
+    queryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM, ids);
+
+    // add the fields back to the queryParams
     if (fields != null && !fields.isEmpty())
     {
-      firstQueryParams.put(RestConstants.FIELDS_PARAM, fields.toArray(new PathSpec[fields.size()]));
+      queryParams.put(RestConstants.FIELDS_PARAM, fields.toArray(new PathSpec[fields.size()]));
     }
 
-    return firstQueryParams;
+    return queryParams;
+  }
+
+  /**
+   * Creates a map of those queryParams which are required to be the same for all batchable requests.
+   *
+   * @param request the BatchGetRequest to pull query params from
+   * @param <RT> the record template type of the BatchGetRequest
+   * @return Map which contains all query params save for Batch_Ids and Fields
+   */
+  public static <RT> Map<String, Object> getQueryParamsForBatchingKey(BatchRequest<RT> request)
+  {
+    final Map<String, Object> params = new HashMap<String, Object>(request.getQueryParamsObjects());
+    params.remove(RestConstants.QUERY_BATCH_IDS_PARAM);
+    params.remove(RestConstants.FIELDS_PARAM);
+    return params;
   }
 }
