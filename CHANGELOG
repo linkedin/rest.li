@@ -3,6 +3,9 @@
 (RB=313441)
 Use Gradle 1.12.
 
+(RB=312937)
+Fix bug in how example requests are generated for batch update and batch partial update.
+
 1.18.1
 ------
 (RB=315193)
