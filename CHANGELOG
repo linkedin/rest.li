@@ -1,3 +1,8 @@
+1.18.3
+------
+(RB=313946)
+Introduced new interface called RestLiResponseData to expose response data to filters. 
+
 1.18.2
 ------
 (RB=313441)
