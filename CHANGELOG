@@ -1,7 +1,5 @@
 1.18.3
 ------
-(RB=313946)
-Introduced new interface called RestLiResponseData to expose response data to filters. 
 
 1.18.2
 ------
@@ -10,6 +8,9 @@ Use Gradle 1.12.
 
 (RB=312937)
 Fix bug in how example requests are generated for batch update and batch partial update.
+
+(RB=313946)
+Introduced new interface called RestLiResponseData to expose response data to filters. 
 
 1.18.1
 ------
