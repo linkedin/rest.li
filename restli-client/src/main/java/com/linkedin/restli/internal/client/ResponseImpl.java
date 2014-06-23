@@ -22,6 +22,8 @@ import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.client.response.CreateResponse;
 import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.common.ComplexResourceKey;
+import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.common.URIParamUtils;
@@ -120,6 +122,9 @@ public class ResponseImpl<T> implements Response<T>
   /**
    * Specific getter for the 'X-LinkedIn-Id' header
    *
+   * @throws UnsupportedOperationException if the entity returned is a {@link CreateResponse} or {@link IdResponse}
+   * and the key is a {@link ComplexResourceKey} or {@link CompoundKey}.
+   *
    * @deprecated
    * @see {@link com.linkedin.restli.client.Response#getId()}
    */
@@ -127,24 +132,46 @@ public class ResponseImpl<T> implements Response<T>
   @Deprecated
   public String getId()
   {
-    if (_entity instanceof CreateResponse<?> || _entity instanceof IdResponse<?>)
+    if (_entity != null && (_entity instanceof CreateResponse<?> || _entity instanceof IdResponse<?>))
     {
-      final Object key;
-      if (_entity instanceof CreateResponse<?>)
-      {
-        key = ((CreateResponse<?>) _entity).getId();
-      }
-      else
-      {
-        key = ((IdResponse<?>) _entity).getId();
-      }
+      final Object id = checkAndReturnId();
       final ProtocolVersion protocolVersion = ProtocolVersionUtil.extractProtocolVersion(_headers);
-      return URIParamUtils.encodeKeyForHeader(key, protocolVersion);
+      return URIParamUtils.encodeKeyForHeader(id, protocolVersion);
     }
     else
     {
       return null;
     }
+  }
+
+  /**
+   * Checks if getId() is supported for this type of {@link Response} and returns the ID if it is.
+   *
+   * @return The ID if it is supported.
+   */
+  private Object checkAndReturnId()
+  {
+    final Object id;
+    final String castMessage;
+    if (_entity instanceof CreateResponse)
+    {
+      CreateResponse createResponse = (CreateResponse)_entity;
+      id = createResponse.getId();
+      castMessage = "CreateResponse";
+    }
+    else
+    {
+      IdResponse idResponse = (IdResponse)_entity;
+      id = idResponse.getId();
+      castMessage = "IdResponse";
+    }
+    if (id instanceof CompoundKey || id instanceof ComplexResourceKey)
+    {
+      String baseErrorMessage = "Cannot call getId() for complex or compound keys! Please cast the object returned by" +
+          " getEntity() to a %s and call the getId() method on that.";
+      throw new UnsupportedOperationException(String.format(baseErrorMessage, castMessage));
+    }
+    return id;
   }
 
   /**

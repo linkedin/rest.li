@@ -30,6 +30,7 @@ import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.CompoundKey;
+import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.UpdateStatus;
@@ -73,6 +74,16 @@ public class TestAssociationsResource extends RestLiIntegrationTest
   public void shutDown() throws Exception
   {
     super.shutdown();
+  }
+
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider", expectedExceptions = UnsupportedOperationException.class)
+  @SuppressWarnings("deprecation")
+  public void testCreate(RootBuilderWrapper<CompoundKey, Message> builders) throws Exception
+  {
+    // Associations should never support create operations. This is a bug in Rest.li that will be fixed. For now we want
+    // to make sure that creating and then calling getId() on the response throws an exception.
+    Request<EmptyRecord> request = builders.create().input(new Message().setMessage("foo")).build();
+    REST_CLIENT.sendRequest(request).getResponse().getId();
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")

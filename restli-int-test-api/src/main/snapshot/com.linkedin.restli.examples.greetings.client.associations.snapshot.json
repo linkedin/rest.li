@@ -25,6 +25,8 @@
     "schema" : "com.linkedin.restli.examples.greetings.api.Message",
     "association" : {
       "methods" : [ {
+        "method" : "create"
+      }, {
         "method" : "get"
       }, {
         "method" : "batch_get"
@@ -74,7 +76,7 @@
         "name" : "assocKeyFinderOpt",
         "assocKeys" : [ "src" ]
       } ],
-      "supports" : [ "batch_get", "batch_partial_update", "batch_update", "get" ],
+      "supports" : [ "batch_get", "batch_partial_update", "batch_update", "create", "get" ],
       "assocKeys" : [ {
         "name" : "dest",
         "type" : "string"

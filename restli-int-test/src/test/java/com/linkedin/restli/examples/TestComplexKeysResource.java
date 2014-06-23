@@ -67,7 +67,6 @@ import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -76,7 +75,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -312,9 +310,16 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     Response<EmptyRecord> response = future.getResponse();
     Assert.assertEquals(response.getStatus(), 201);
     ComplexResourceKey<TwoPartKey, TwoPartKey> expectedComplexKey = getComplexKey(messageText, messageText);
-    @SuppressWarnings("deprecation")
-    String stringId = response.getId();
-    Assert.assertEquals(stringId, URIParamUtils.encodeKeyForBody(expectedComplexKey, false, ProtocolVersionUtil.extractProtocolVersion(response.getHeaders())));
+    try
+    {
+      @SuppressWarnings("deprecation")
+      String stringId = response.getId();
+      Assert.fail("getId() should throw an exception for complex resource keys!");
+    }
+    catch (UnsupportedOperationException e)
+    {
+      // expected
+    }
     @SuppressWarnings("unchecked")
     CreateResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>> createResponse = (CreateResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>>) response.getEntity();
     Assert.assertEquals(createResponse.getId(), expectedComplexKey);
@@ -328,6 +333,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     Assert.assertEquals(getResponse.getEntity().getMessage(), messageText);
   }
 
+  @SuppressWarnings("deprecation")
   private void testCreateMainNewBuilders(CreateIdRequestBuilder<ComplexResourceKey<TwoPartKey, TwoPartKey> , Message> createRequestBuilder,
                                          GetRequestBuilder<ComplexResourceKey<TwoPartKey, TwoPartKey> , Message> getRequestBuilder) throws RemoteInvocationException
   {
@@ -338,6 +344,16 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     Request<IdResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>>> request = createRequestBuilder.input(message).build();
     ResponseFuture<IdResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>>> future = REST_CLIENT.sendRequest(request);
     Response<IdResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>>> response = future.getResponse();
+    try
+    {
+      response.getId();
+      Assert.fail("getId() for a complex key is not allowed!");
+    }
+    catch (UnsupportedOperationException e)
+    {
+      // expected
+    }
+
     Assert.assertEquals(response.getStatus(), 201);
     IdResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>> entity = response.getEntity();
     ComplexResourceKey<TwoPartKey, TwoPartKey> id = entity.getId();

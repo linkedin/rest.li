@@ -26,6 +26,7 @@ import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.server.BatchPatchRequest;
 import com.linkedin.restli.server.BatchUpdateRequest;
 import com.linkedin.restli.server.BatchUpdateResult;
+import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.AssocKey;
@@ -41,6 +42,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.linkedin.restli.examples.AssociationResourceHelpers.DB;
+import static com.linkedin.restli.examples.AssociationResourceHelpers.SIMPLE_COMPOUND_KEY;
 
 
 /**
@@ -54,6 +56,13 @@ assocKeys={@Key(name="src", type=String.class),
            @Key(name="dest", type=String.class)})
 public class AssociationsResource extends AssociationResourceTemplate<Message>
 {
+  public CreateResponse create(Message message)
+  {
+    // Associations should never support creates or batch_creates. This is a bug in Rest.li that needs to be fixed.
+    // For now we are implementing this method to make sure that calling getId() on the client throws an exception.
+    return new CreateResponse(SIMPLE_COMPOUND_KEY, HttpStatus.S_201_CREATED);
+  }
+
   @Override
   public Message get(CompoundKey id)
   {

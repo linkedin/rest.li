@@ -17,14 +17,7 @@
 package com.linkedin.restli.client.response;
 
 
-import com.linkedin.restli.common.ComplexKeySpec;
-import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.EmptyRecord;
-import com.linkedin.restli.common.ProtocolVersion;
-import com.linkedin.restli.common.TypeSpec;
-import com.linkedin.restli.internal.common.ResponseUtils;
-
-import java.util.Map;
 
 
 /**
