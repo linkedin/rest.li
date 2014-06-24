@@ -17,16 +17,21 @@
 package com.linkedin.restli.internal.client;
 
 import com.linkedin.data.DataMap;
-import com.linkedin.restli.common.IdResponse;
+import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.restli.client.Response;
+import com.linkedin.restli.client.RestLiDecodingException;
 import com.linkedin.restli.common.ComplexKeySpec;
 import com.linkedin.restli.common.CompoundKey;
+import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.common.ResponseUtils;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -51,6 +56,22 @@ public class IdResponseDecoder<K> extends RestResponseDecoder<IdResponse<K>>
   public Class<IdResponse> getEntityClass()
   {
     return IdResponse.class;
+  }
+
+  @Override
+  public Response<IdResponse<K>> decodeResponse(RestResponse restResponse)
+    throws RestLiDecodingException
+  {
+    final Response<IdResponse<K>> rawResponse = super.decodeResponse(restResponse);
+
+    // ResponseImpl will make the headers unmodifiable
+    final Map<String, String> modifiableHeaders = new HashMap<String, String>(rawResponse.getHeaders());
+
+    // remove ID header to prevent user to access the weakly typed ID
+    modifiableHeaders.remove(RestConstants.HEADER_ID);
+    modifiableHeaders.remove(RestConstants.HEADER_RESTLI_ID);
+
+    return new ResponseImpl<IdResponse<K>>(rawResponse.getStatus(), modifiableHeaders, rawResponse.getEntity(), rawResponse.getError());
   }
 
   @Override

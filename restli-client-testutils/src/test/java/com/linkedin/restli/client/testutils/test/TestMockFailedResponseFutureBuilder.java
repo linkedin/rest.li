@@ -25,6 +25,7 @@ import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.client.testutils.MockFailedResponseFutureBuilder;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.examples.greetings.api.Greeting;
+
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -53,7 +54,7 @@ public class TestMockFailedResponseFutureBuilder
   @Test
   public void testOnlyOneOfErrorResponseOrEntityIsSet()
   {
-    MockFailedResponseFutureBuilder<Greeting> builder = new MockFailedResponseFutureBuilder<Greeting>();
+    MockFailedResponseFutureBuilder<Long, Greeting> builder = new MockFailedResponseFutureBuilder<Long, Greeting>();
     builder.setEntity(new Greeting());
     try
     {
@@ -65,7 +66,7 @@ public class TestMockFailedResponseFutureBuilder
       // expected
     }
 
-    builder = new MockFailedResponseFutureBuilder<Greeting>();
+    builder = new MockFailedResponseFutureBuilder<Long, Greeting>();
     builder.setErrorResponse(new ErrorResponse());
     try
     {
@@ -80,7 +81,7 @@ public class TestMockFailedResponseFutureBuilder
 
   private ResponseFuture<Greeting> buildWithErrorResponse(ErrorHandlingBehavior errorHandlingBehavior)
   {
-    MockFailedResponseFutureBuilder<Greeting> builder = new MockFailedResponseFutureBuilder<Greeting>();
+    MockFailedResponseFutureBuilder<Long, Greeting> builder = new MockFailedResponseFutureBuilder<Long, Greeting>();
     ErrorResponse errorResponse = new ErrorResponse().setStatus(404).setMessage("foo");
 
     builder.setErrorResponse(errorResponse).setErrorHandlingBehavior(errorHandlingBehavior);
@@ -129,7 +130,7 @@ public class TestMockFailedResponseFutureBuilder
 
   private ResponseFuture<Greeting> buildWithEntity(ErrorHandlingBehavior errorHandlingBehavior)
   {
-    MockFailedResponseFutureBuilder<Greeting> builder = new MockFailedResponseFutureBuilder<Greeting>();
+    MockFailedResponseFutureBuilder<Long, Greeting> builder = new MockFailedResponseFutureBuilder<Long, Greeting>();
     Greeting greeting = new Greeting().setId(1L).setMessage("foo");
 
     builder.setEntity(greeting).setErrorHandlingBehavior(errorHandlingBehavior).setStatus(500);
@@ -174,10 +175,9 @@ public class TestMockFailedResponseFutureBuilder
 
   private ResponseFuture<Greeting> buildWithNoEntityOrErrorResponse(ErrorHandlingBehavior errorHandlingBehavior)
   {
-    return new MockFailedResponseFutureBuilder<Greeting>()
+    return new MockFailedResponseFutureBuilder<Long, Greeting>()
         .setErrorHandlingBehavior(errorHandlingBehavior)
         .setStatus(409)
-        .setId("1")
         .build();
   }
 
@@ -207,9 +207,6 @@ public class TestMockFailedResponseFutureBuilder
     {
       Response<Greeting> response = future.getResponse();
       Assert.assertNull(response.getEntity());
-      @SuppressWarnings("deprecation")
-      String id = response.getId();
-      Assert.assertEquals(id, "1");
       Assert.assertEquals(response.getStatus(), 409);
       Assert.assertEquals(response.getError().getStatus(), 409);
     }

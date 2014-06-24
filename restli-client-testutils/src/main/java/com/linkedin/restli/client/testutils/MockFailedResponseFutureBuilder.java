@@ -31,6 +31,7 @@ import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.client.ResponseFutureImpl;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
+
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -102,8 +103,11 @@ import java.util.concurrent.Future;
  * {@link #DEFAULT_HTTP_STATUS} if that method was not called.
  *
  * @author kparikh
+ *
+ * @param <K> key type of the mocked response
+ * @param <V> entity type of the mocked response
  */
-public class MockFailedResponseFutureBuilder<T extends RecordTemplate> extends MockAbstractResponseFutureBuilder<T>
+public class MockFailedResponseFutureBuilder<K, V extends RecordTemplate> extends MockAbstractResponseFutureBuilder<K, V>
 {
   private ErrorResponse _errorResponse;
   private ErrorHandlingBehavior _errorHandlingBehavior;
@@ -129,7 +133,7 @@ public class MockFailedResponseFutureBuilder<T extends RecordTemplate> extends M
    * @return
    */
   @Override
-  public MockFailedResponseFutureBuilder<T> setEntity(T entity)
+  public MockFailedResponseFutureBuilder<K, V> setEntity(V entity)
   {
     if (_errorResponse != null)
     {
@@ -147,34 +151,13 @@ public class MockFailedResponseFutureBuilder<T extends RecordTemplate> extends M
    * @return
    */
   @Override
-  public MockFailedResponseFutureBuilder<T> setStatus(int status)
+  public MockFailedResponseFutureBuilder<K, V> setStatus(int status)
   {
     if (status >= 200 && status < 300)
     {
       throw new IllegalArgumentException("Status must be a non 2xx HTTP status code!");
     }
     super.setStatus(status);
-    return this;
-  }
-
-  /**
-   * Sets the ID for the {@link Response} in the case of a partial result.
-   *
-   * This ID is stored in the header of the {@link Response}.
-   *
-   * If the Rest.li 1.0 protocol is being used the header key is
-   * {@link com.linkedin.restli.common.RestConstants#HEADER_ID}
-   *
-   * If the Rets.li 2.0 protocol is being used the header key is
-   * {@link com.linkedin.restli.common.RestConstants#HEADER_RESTLI_ID}
-   *
-   * @param id the ID
-   * @return
-   */
-  @Override
-  public MockFailedResponseFutureBuilder<T> setId(String id)
-  {
-    super.setId(id);
     return this;
   }
 
@@ -192,7 +175,7 @@ public class MockFailedResponseFutureBuilder<T extends RecordTemplate> extends M
    * @return
    */
   @Override
-  public MockFailedResponseFutureBuilder<T> setHeaders(Map<String, String> headers)
+  public MockFailedResponseFutureBuilder<K, V> setHeaders(Map<String, String> headers)
   {
     super.setHeaders(headers);
     return this;
@@ -205,7 +188,7 @@ public class MockFailedResponseFutureBuilder<T extends RecordTemplate> extends M
    * @return
    */
   @Override
-  public MockFailedResponseFutureBuilder<T> setProtocolVersion(ProtocolVersion protocolVersion)
+  public MockFailedResponseFutureBuilder<K, V> setProtocolVersion(ProtocolVersion protocolVersion)
   {
     super.setProtocolVersion(protocolVersion);
     return this;
@@ -221,7 +204,7 @@ public class MockFailedResponseFutureBuilder<T extends RecordTemplate> extends M
    *
    * @return
    */
-  public MockFailedResponseFutureBuilder<T> setErrorResponse(ErrorResponse errorResponse)
+  public MockFailedResponseFutureBuilder<K, V> setErrorResponse(ErrorResponse errorResponse)
   {
     if (getEntity() != null)
     {
@@ -237,7 +220,7 @@ public class MockFailedResponseFutureBuilder<T extends RecordTemplate> extends M
    * @param errorHandlingBehavior the {@link ErrorHandlingBehavior} we want to set.
    * @return
    */
-  public MockFailedResponseFutureBuilder<T> setErrorHandlingBehavior(ErrorHandlingBehavior errorHandlingBehavior)
+  public MockFailedResponseFutureBuilder<K, V> setErrorHandlingBehavior(ErrorHandlingBehavior errorHandlingBehavior)
   {
     _errorHandlingBehavior = errorHandlingBehavior;
     return this;
@@ -248,7 +231,7 @@ public class MockFailedResponseFutureBuilder<T extends RecordTemplate> extends M
    * @return
    */
   @Override
-  public ResponseFuture<T> build()
+  public ResponseFuture<V> build()
   {
     if (_errorResponse == null && getEntity() == null)
     {
@@ -273,7 +256,7 @@ public class MockFailedResponseFutureBuilder<T extends RecordTemplate> extends M
   }
 
   @SuppressWarnings("unchecked")
-  private ResponseFuture<T> buildWithErrorResponse(ProtocolVersion protocolVersion)
+  private ResponseFuture<V> buildWithErrorResponse(ProtocolVersion protocolVersion)
   {
     int status = (_errorResponse.hasStatus()) ? _errorResponse.getStatus() : DEFAULT_HTTP_STATUS;
     byte[] entity = mapToBytes(_errorResponse.data());
@@ -296,8 +279,7 @@ public class MockFailedResponseFutureBuilder<T extends RecordTemplate> extends M
       headers.putAll(getHeaders());
     }
     headers.put(errorHeaderName, "true");
-
-    MockResponseBuilder.addIdAndProtocolVersionHeaders(headers, getId(), protocolVersion);
+    headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString());
 
     RestResponse restResponse = new RestResponseBuilder()
         .setEntity(entity)
@@ -309,19 +291,18 @@ public class MockFailedResponseFutureBuilder<T extends RecordTemplate> extends M
     RestLiResponseException restLiResponseException = new RestLiResponseException(restResponse, null, _errorResponse);
     ExecutionException executionException = new ExecutionException(restLiResponseException);
 
-    Future<Response<T>> responseFuture = buildFuture(null, executionException);
-    return new ResponseFutureImpl<T>(responseFuture, _errorHandlingBehavior);
+    Future<Response<V>> responseFuture = buildFuture(null, executionException);
+    return new ResponseFutureImpl<V>(responseFuture, _errorHandlingBehavior);
   }
 
-  private ResponseFuture<T> buildWithEntity()
+  private ResponseFuture<V> buildWithEntity()
   {
     int status = getStatus();
     byte[] entity = mapToBytes(getEntity().data());
 
-    Response<T> decodedResponse = new MockResponseBuilder<T>()
+    Response<V> decodedResponse = new MockResponseBuilder<K, V>()
         .setEntity(getEntity())
         .setStatus(status)
-        .setId(getId())
         .setHeaders(getHeaders())
         .setProtocolVersion(getProtocolVersion())
         .build();
@@ -337,8 +318,8 @@ public class MockFailedResponseFutureBuilder<T extends RecordTemplate> extends M
                                                                                   new ErrorResponse());
     ExecutionException executionException = new ExecutionException(restLiResponseException);
 
-    Future<Response<T>> responseFuture = buildFuture(null, executionException);
-    return new ResponseFutureImpl<T>(responseFuture, _errorHandlingBehavior);
+    Future<Response<V>> responseFuture = buildFuture(null, executionException);
+    return new ResponseFutureImpl<V>(responseFuture, _errorHandlingBehavior);
   }
 
   private static byte[] mapToBytes(DataMap dataMap)

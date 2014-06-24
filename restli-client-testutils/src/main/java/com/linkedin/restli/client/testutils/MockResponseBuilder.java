@@ -19,10 +19,15 @@ package com.linkedin.restli.client.testutils;
 
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestLiResponseException;
+import com.linkedin.restli.client.response.CreateResponse;
+import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.client.ResponseImpl;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
+import com.linkedin.restli.internal.common.HeaderUtil;
+import com.linkedin.restli.internal.common.URIParamUtils;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,12 +37,14 @@ import java.util.Map;
  *
  * @author jflorencio
  * @author kparikh
+ *
+ * @param <K> key type of the mocked response
+ * @param <V> entity type of the mocked response
  */
-public class MockResponseBuilder<T>
+public class MockResponseBuilder<K, V>
 {
-  private T _entity;
+  private V _entity;
   private int _status;
-  private String _id;
   private Map<String, String> _headers;
   private RestLiResponseException _restLiResponseException;
   private ProtocolVersion _protocolVersion;
@@ -50,7 +57,7 @@ public class MockResponseBuilder<T>
    * @param entity the entity for the {@link Response}
    * @return
    */
-  public MockResponseBuilder<T> setEntity(T entity)
+  public MockResponseBuilder<K, V> setEntity(V entity)
   {
     _entity = entity;
     return this;
@@ -62,29 +69,9 @@ public class MockResponseBuilder<T>
    * @param status the status code for the {@link Response}
    * @return
    */
-  public MockResponseBuilder<T> setStatus(int status)
+  public MockResponseBuilder<K, V> setStatus(int status)
   {
     _status = status;
-    return this;
-  }
-
-  /**
-   * Set the ID for the {@link Response}
-   *
-   * This ID is stored in the header of the {@link Response}.
-   *
-   * If the Rest.li 1.0 protocol is being used the header key is
-   * {@link com.linkedin.restli.common.RestConstants#HEADER_ID}
-   *
-   * If the Rets.li 2.0 protocol is being used the header key is
-   * {@link com.linkedin.restli.common.RestConstants#HEADER_RESTLI_ID}
-   *
-   * @param id the ID for the {@link Response}
-   * @return
-   */
-  public MockResponseBuilder<T> setId(String id)
-  {
-    _id = id;
     return this;
   }
 
@@ -93,9 +80,15 @@ public class MockResponseBuilder<T>
    *
    * @param headers the headers for the {@link Response}
    * @return
+   * @throws IllegalArgumentException when trying to set {@link RestConstants#HEADER_ID} or {@link RestConstants#HEADER_RESTLI_ID}.
    */
-  public MockResponseBuilder<T> setHeaders(Map<String, String> headers)
+  public MockResponseBuilder<K, V> setHeaders(Map<String, String> headers)
   {
+    if (headers != null && (headers.containsKey(RestConstants.HEADER_ID) || headers.containsKey(RestConstants.HEADER_RESTLI_ID)))
+    {
+      throw new IllegalArgumentException("Illegal to directly access the ID header");
+    }
+
     _headers = headers;
     return this;
   }
@@ -106,7 +99,7 @@ public class MockResponseBuilder<T>
    * @param restLiResponseException the {@link RestLiResponseException} for the {@link Response}
    * @return
    */
-  public MockResponseBuilder<T> setRestLiResponseException(RestLiResponseException restLiResponseException)
+  public MockResponseBuilder<K, V> setRestLiResponseException(RestLiResponseException restLiResponseException)
   {
     _restLiResponseException = restLiResponseException;
     return this;
@@ -118,7 +111,7 @@ public class MockResponseBuilder<T>
    * @param protocolVersion the {@link ProtocolVersion} for the {@link Response}
    * @return
    */
-  public MockResponseBuilder<T> setProtocolVersion(ProtocolVersion protocolVersion)
+  public MockResponseBuilder<K, V> setProtocolVersion(ProtocolVersion protocolVersion)
   {
     _protocolVersion = protocolVersion;
     return this;
@@ -129,7 +122,7 @@ public class MockResponseBuilder<T>
    *
    * @return the constructed {@link Response}
    */
-  public Response<T> build()
+  public Response<V> build()
   {
     Map<String, String> headers = new HashMap<String, String>();
     if (_headers != null)
@@ -139,37 +132,28 @@ public class MockResponseBuilder<T>
 
     ProtocolVersion protocolVersion = (_protocolVersion == null) ?
         AllProtocolVersions.BASELINE_PROTOCOL_VERSION : _protocolVersion;
-
-    addIdAndProtocolVersionHeaders(headers, _id, protocolVersion);
+    headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString());
 
     int status = (_status == 0) ? DEFAULT_HTTP_STATUS : _status;
 
-    return new ResponseImpl<T>(status, headers, _entity, _restLiResponseException);
-  }
-
-  /**
-   * Adds the ID and protocol version to the headers
-   *
-   * @param headers existing headers. The ID and protocol version will be added to this
-   * @param id the ID
-   * @param protocolVersion the protocol version
-   */
-  static void addIdAndProtocolVersionHeaders(Map<String, String> headers, String id, ProtocolVersion protocolVersion)
-  {
-    headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString());
-
-    if (id != null)
+    if (_entity instanceof CreateResponse || _entity instanceof IdResponse)
     {
-      if (protocolVersion.equals(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion()))
+      final K id;
+      if (_entity instanceof CreateResponse)
       {
-        // use protocol 1.0 ID header
-        headers.put(RestConstants.HEADER_ID, id);
+        @SuppressWarnings("unchecked")
+        final CreateResponse<K> createResponse = (CreateResponse<K>) _entity;
+        id = createResponse.getId();
       }
       else
       {
-        // use protocol 2.0 ID header
-        headers.put(RestConstants.HEADER_RESTLI_ID, id);
+        @SuppressWarnings("unchecked")
+        final IdResponse<K> idResponse = (IdResponse<K>) _entity;
+        id = idResponse.getId();
       }
+      headers.put(HeaderUtil.getIdHeaderName(protocolVersion), URIParamUtils.encodeKeyForBody(id, false, protocolVersion));
     }
+
+    return new ResponseImpl<V>(status, headers, _entity, _restLiResponseException);
   }
 }

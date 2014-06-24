@@ -1,6 +1,7 @@
 1.19.3
 -----
-
+(RB=319445)
+Forbid ID header being directly accessed.
 
 1.19.2
 ------

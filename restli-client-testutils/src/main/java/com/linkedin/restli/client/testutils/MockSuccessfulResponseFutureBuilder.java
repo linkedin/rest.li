@@ -22,6 +22,7 @@ import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.internal.client.ResponseFutureImpl;
+
 import java.util.Map;
 
 
@@ -30,8 +31,11 @@ import java.util.Map;
  * {@link Response}.
  *
  * @author kparikh
+ *
+ * @param <K> key type of the mocked response
+ * @param <V> entity type of the mocked response
  */
-public class MockSuccessfulResponseFutureBuilder<T extends RecordTemplate> extends MockAbstractResponseFutureBuilder<T>
+public class MockSuccessfulResponseFutureBuilder<K, V extends RecordTemplate> extends MockAbstractResponseFutureBuilder<K, V>
 {
   private static final int DEFAULT_HTTP_STATUS = 200;
 
@@ -49,7 +53,7 @@ public class MockSuccessfulResponseFutureBuilder<T extends RecordTemplate> exten
    * @return
    */
   @Override
-  public MockSuccessfulResponseFutureBuilder<T> setEntity(T entity)
+  public MockSuccessfulResponseFutureBuilder<K, V> setEntity(V entity)
   {
     super.setEntity(entity);
     return this;
@@ -65,7 +69,7 @@ public class MockSuccessfulResponseFutureBuilder<T extends RecordTemplate> exten
    * @return
    */
   @Override
-  public MockSuccessfulResponseFutureBuilder<T> setStatus(int status)
+  public MockSuccessfulResponseFutureBuilder<K, V> setStatus(int status)
   {
     if (status < 200 || status >= 300)
     {
@@ -76,36 +80,13 @@ public class MockSuccessfulResponseFutureBuilder<T extends RecordTemplate> exten
   }
 
   /**
-   * Set the ID. This will be returned by
-   * {@link com.linkedin.restli.client.response.CreateResponse#getId()}
-   * and also by {@link com.linkedin.restli.common.IdResponse#getId()}
-   *
-   * This ID is stored in the header of the {@link Response}.
-   *
-   * If the Rest.li 1.0 protocol is being used the header key is
-   * {@link com.linkedin.restli.common.RestConstants#HEADER_ID}
-   *
-   * If the Rets.li 2.0 protocol is being used the header key is
-   * {@link com.linkedin.restli.common.RestConstants#HEADER_RESTLI_ID}
-   *
-   * @param id the ID we want to set
-   * @return
-   */
-  @Override
-  public MockSuccessfulResponseFutureBuilder<T> setId(String id)
-  {
-    super.setId(id);
-    return this;
-  }
-
-  /**
    * Sets the headers. This will be returned by {@link com.linkedin.restli.client.Response#getHeaders()}
    *
    * @param headers the headers we want to set
    * @return
    */
   @Override
-  public MockSuccessfulResponseFutureBuilder<T> setHeaders(Map<String, String> headers)
+  public MockSuccessfulResponseFutureBuilder<K, V> setHeaders(Map<String, String> headers)
   {
     super.setHeaders(headers);
     return this;
@@ -118,7 +99,7 @@ public class MockSuccessfulResponseFutureBuilder<T extends RecordTemplate> exten
    * @return
    */
   @Override
-  public MockSuccessfulResponseFutureBuilder<T> setProtocolVersion(ProtocolVersion protocolVersion)
+  public MockSuccessfulResponseFutureBuilder<K, V> setProtocolVersion(ProtocolVersion protocolVersion)
   {
     super.setProtocolVersion(protocolVersion);
     return this;
@@ -131,17 +112,16 @@ public class MockSuccessfulResponseFutureBuilder<T extends RecordTemplate> exten
    * @return a {@link ResponseFuture} that has been constructed using the above setters.
    */
   @Override
-  public ResponseFuture<T> build()
+  public ResponseFuture<V> build()
   {
-    MockResponseBuilder<T> responseBuilder = new MockResponseBuilder<T>();
-    Response<T> response = responseBuilder
+    MockResponseBuilder<K, V> responseBuilder = new MockResponseBuilder<K, V>();
+    Response<V> response = responseBuilder
         .setEntity(getEntity())
         .setStatus(getStatus())
-        .setId(getId())
         .setHeaders(getHeaders())
         .setProtocolVersion(getProtocolVersion())
         .build();
 
-    return new ResponseFutureImpl<T>(buildFuture(response, null));
+    return new ResponseFutureImpl<V>(buildFuture(response, null));
   }
 }

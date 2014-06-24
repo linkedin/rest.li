@@ -251,9 +251,31 @@ public class ResourceContextImpl implements ServerResourceContext
     return _request.getHeaders();
   }
 
+  /**
+   * @throws IllegalArgumentException when trying to set {@link RestConstants#HEADER_ID} or {@link RestConstants#HEADER_RESTLI_ID}.
+   */
   @Override
   public void setResponseHeader(final String name, final String value)
   {
+    final String headerName;
+    if (RestConstants.HEADER_ID.equals(name))
+    {
+      headerName = RestConstants.HEADER_ID;
+    }
+    else if (RestConstants.HEADER_RESTLI_ID.equals(name))
+    {
+      headerName = RestConstants.HEADER_RESTLI_ID;
+    }
+    else
+    {
+      headerName = null;
+    }
+
+    if (headerName != null)
+    {
+      throw new IllegalArgumentException("Illegal to set the \"" + headerName + "\" header. This header is reserved for the ID returned from create method on the resource.");
+    }
+
     _responseHeaders.put(name, value);
   }
 

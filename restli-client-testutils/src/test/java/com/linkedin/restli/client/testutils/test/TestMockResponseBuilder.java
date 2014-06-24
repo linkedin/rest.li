@@ -19,13 +19,17 @@ package com.linkedin.restli.client.testutils.test;
 
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestLiResponseException;
+import com.linkedin.restli.client.response.CreateResponse;
 import com.linkedin.restli.client.testutils.MockResponseBuilder;
+import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -39,7 +43,7 @@ public class TestMockResponseBuilder
   @Test
   public void testBuild()
   {
-    MockResponseBuilder<Greeting> mockResponseBuilder = new MockResponseBuilder<Greeting>();
+    MockResponseBuilder<Long, Greeting> mockResponseBuilder = new MockResponseBuilder<Long, Greeting>();
     Greeting greeting = new Greeting().setId(1L).setMessage("message");
     Map<String, String> headers = Collections.singletonMap("foo", "bar");
     RestLiResponseException restLiResponseException = EasyMock.createMock(RestLiResponseException.class);
@@ -52,7 +56,6 @@ public class TestMockResponseBuilder
     mockResponseBuilder
         .setEntity(greeting)
         .setHeaders(headers)
-        .setId("1")
         .setStatus(200)
         .setRestLiResponseException(restLiResponseException);
 
@@ -60,15 +63,39 @@ public class TestMockResponseBuilder
 
     // when we build the Response the ID is put into the headers
     Map<String, String> builtHeaders = new HashMap<String, String>(headers);
-    builtHeaders.put(RestConstants.HEADER_ID, "1");
     builtHeaders.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, AllProtocolVersions.BASELINE_PROTOCOL_VERSION.toString());
 
     Assert.assertEquals(response.getEntity(), greeting);
     Assert.assertEquals(response.getHeaders(), builtHeaders);
     Assert.assertEquals(response.getStatus(), 200);
+    Assert.assertEquals(response.getError().getErrorSource(), "foo");
+  }
+
+  @Test
+  public void testCreateResponse()
+  {
+    final MockResponseBuilder<Long, CreateResponse<Long>> mockResponseBuilder = new MockResponseBuilder<Long, CreateResponse<Long>>();
+    mockResponseBuilder.setEntity(new CreateResponse<Long>(1L));
+    final Response<CreateResponse<Long>> response = mockResponseBuilder.build();
+
+    final CreateResponse<Long> createResponse = response.getEntity();
+    Assert.assertEquals(createResponse.getId().longValue(), 1L);
     @SuppressWarnings("deprecation")
     String id = response.getId();
     Assert.assertEquals(id, "1");
-    Assert.assertEquals(response.getError().getErrorSource(), "foo");
+  }
+
+  @Test
+  public void testIdResponse()
+  {
+    final MockResponseBuilder<Long, IdResponse<Long>> mockResponseBuilder = new MockResponseBuilder<Long, IdResponse<Long>>();
+    mockResponseBuilder.setEntity(new IdResponse<Long>(1L));
+    final Response<IdResponse<Long>> response = mockResponseBuilder.build();
+
+    final IdResponse<Long> idResponse = response.getEntity();
+    Assert.assertEquals(idResponse.getId().longValue(), 1L);
+    @SuppressWarnings("deprecation")
+    String id = response.getId();
+    Assert.assertEquals(id, "1");
   }
 }

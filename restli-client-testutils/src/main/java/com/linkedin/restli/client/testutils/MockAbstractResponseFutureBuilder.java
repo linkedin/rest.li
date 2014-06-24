@@ -20,7 +20,11 @@ package com.linkedin.restli.client.testutils;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
+import com.linkedin.restli.client.response.CreateResponse;
+import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.common.RestConstants;
+
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -32,16 +36,18 @@ import java.util.concurrent.TimeoutException;
  * Abstract builder class for constructing {@link ResponseFuture}s
  *
  * @author kparikh
+ *
+ * @param <K> key type of the mocked response
+ * @param <V> entity type of the mocked response
  */
-public abstract class MockAbstractResponseFutureBuilder<T extends RecordTemplate>
+public abstract class MockAbstractResponseFutureBuilder<K, V extends RecordTemplate>
 {
-  private T _entity;
+  private V _entity;
   private int _status;
-  private String _id;
   private Map<String, String> _headers;
   private ProtocolVersion _protocolVersion;
 
-  protected T getEntity()
+  protected V getEntity()
   {
     return _entity;
   }
@@ -51,9 +57,24 @@ public abstract class MockAbstractResponseFutureBuilder<T extends RecordTemplate
     return _status;
   }
 
-  protected String getId()
+  protected K getId()
   {
-    return _id;
+    if (_entity instanceof CreateResponse<?>)
+    {
+      @SuppressWarnings("unchecked")
+      final CreateResponse<K> createResponse = (CreateResponse<K>) _entity;
+      return createResponse.getId();
+    }
+    else if (_entity instanceof IdResponse<?>)
+    {
+      @SuppressWarnings("unchecked")
+      final IdResponse<K> idResponse = (IdResponse<K>) _entity;
+      return idResponse.getId();
+    }
+    else
+    {
+      return null;
+    }
   }
 
   protected Map<String, String> getHeaders()
@@ -72,7 +93,7 @@ public abstract class MockAbstractResponseFutureBuilder<T extends RecordTemplate
    * @param entity
    * @return
    */
-  public MockAbstractResponseFutureBuilder<T> setEntity(T entity)
+  public MockAbstractResponseFutureBuilder<K, V> setEntity(V entity)
   {
     _entity = entity;
     return this;
@@ -84,21 +105,9 @@ public abstract class MockAbstractResponseFutureBuilder<T extends RecordTemplate
    * @param status
    * @return
    */
-  public MockAbstractResponseFutureBuilder<T> setStatus(int status)
+  public MockAbstractResponseFutureBuilder<K, V> setStatus(int status)
   {
     _status = status;
-    return this;
-  }
-
-  /**
-   * Set the ID.
-   *
-   * @param id
-   * @return
-   */
-  public MockAbstractResponseFutureBuilder<T> setId(String id)
-  {
-    _id = id;
     return this;
   }
 
@@ -107,9 +116,32 @@ public abstract class MockAbstractResponseFutureBuilder<T extends RecordTemplate
    *
    * @param headers
    * @return
+   * @throws IllegalArgumentException when trying to set {@link RestConstants#HEADER_ID} or {@link RestConstants#HEADER_RESTLI_ID}.
    */
-  public MockAbstractResponseFutureBuilder<T> setHeaders(Map<String, String> headers)
+  public MockAbstractResponseFutureBuilder<K, V> setHeaders(Map<String, String> headers)
   {
+    if (headers != null)
+    {
+      final String headerName;
+      if (headers.containsKey(RestConstants.HEADER_ID))
+      {
+        headerName = RestConstants.HEADER_ID;
+      }
+      else if (headers.containsKey(RestConstants.HEADER_RESTLI_ID))
+      {
+        headerName = RestConstants.HEADER_RESTLI_ID;
+      }
+      else
+      {
+        headerName = null;
+      }
+
+      if (headerName != null)
+      {
+        throw new IllegalArgumentException("Illegal to set the \"" + headerName + "\" header. This header is reserved for the ID returned from create method on the resource.");
+      }
+    }
+
     _headers = headers;
     return this;
   }
@@ -120,7 +152,7 @@ public abstract class MockAbstractResponseFutureBuilder<T extends RecordTemplate
    * @param protocolVersion
    * @return
    */
-  public MockAbstractResponseFutureBuilder<T> setProtocolVersion(ProtocolVersion protocolVersion)
+  public MockAbstractResponseFutureBuilder<K, V> setProtocolVersion(ProtocolVersion protocolVersion)
   {
     _protocolVersion = protocolVersion;
     return this;
@@ -131,7 +163,7 @@ public abstract class MockAbstractResponseFutureBuilder<T extends RecordTemplate
    *
    * @return a {@link ResponseFuture} constructed using the setters
    */
-  public abstract ResponseFuture<T> build();
+  public abstract ResponseFuture<V> build();
 
   /**
    * Wraps a {@link Response} in a {@link Future}

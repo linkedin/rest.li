@@ -19,8 +19,12 @@ package com.linkedin.restli.internal.client;
 
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestLiResponseException;
+import com.linkedin.restli.client.response.CreateResponse;
+import com.linkedin.restli.common.IdResponse;
+import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
-import com.linkedin.restli.internal.common.HeaderUtil;
+import com.linkedin.restli.internal.common.ProtocolVersionUtil;
+import com.linkedin.restli.internal.common.URIParamUtils;
 
 import java.net.URI;
 import java.util.Collections;
@@ -38,21 +42,24 @@ import java.util.Map;
 public class ResponseImpl<T> implements Response<T>
 {
   private int _status = 102;  // SC_PROCESSING
-  private Map<String, String> _headers;
+  private final Map<String, String> _headers;
   private T _entity;
   private RestLiResponseException _error;
 
-  ResponseImpl(Response<T> origin, RestLiResponseException error)	{
+  ResponseImpl(Response<T> origin, RestLiResponseException error)
+  {
     this(origin, origin.getEntity());
     _error = error;
   }
 
-  ResponseImpl(int status, Map<String, String> headers, RestLiResponseException error)	{
+  ResponseImpl(int status, Map<String, String> headers, RestLiResponseException error)
+  {
     this(status, headers);
     _error = error;
   }
 
-  public ResponseImpl(Response<?> origin, T entity)	{
+  public ResponseImpl(Response<?> origin, T entity)
+  {
     this(origin.getStatus(), origin.getHeaders());
     _entity = entity;
   }
@@ -67,7 +74,8 @@ public class ResponseImpl<T> implements Response<T>
     _error = error;
   }
 
-  ResponseImpl(int status, Map<String, String> headers)	{
+  ResponseImpl(int status, Map<String, String> headers)
+  {
     _status = status;
     _headers = headers;
   }
@@ -119,7 +127,24 @@ public class ResponseImpl<T> implements Response<T>
   @Deprecated
   public String getId()
   {
-    return HeaderUtil.getIdHeaderValue(_headers);
+    if (_entity instanceof CreateResponse<?> || _entity instanceof IdResponse<?>)
+    {
+      final Object key;
+      if (_entity instanceof CreateResponse<?>)
+      {
+        key = ((CreateResponse<?>) _entity).getId();
+      }
+      else
+      {
+        key = ((IdResponse<?>) _entity).getId();
+      }
+      final ProtocolVersion protocolVersion = ProtocolVersionUtil.extractProtocolVersion(_headers);
+      return URIParamUtils.encodeKeyForHeader(key, protocolVersion);
+    }
+    else
+    {
+      return null;
+    }
   }
 
   /**

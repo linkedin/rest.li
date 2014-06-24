@@ -20,9 +20,15 @@
 
 package com.linkedin.restli.internal.server.methods.response;
 
+
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.common.IdResponse;
+import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.internal.common.HeaderUtil;
+import com.linkedin.restli.internal.common.ProtocolVersionUtil;
+import com.linkedin.restli.internal.common.URIParamUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -147,8 +153,7 @@ public class PartialRestResponse
     /**
      * Build with entity.
      *
-     * @param entity
-     *          Entity in the form of a {@link RecordTemplate}/
+     * @param record Entity in the form of a {@link RecordTemplate}
      * @return Reference to this object.
      */
     public Builder entity(RecordTemplate record)
@@ -177,6 +182,17 @@ public class PartialRestResponse
      */
     public PartialRestResponse build()
     {
+      if (_record instanceof IdResponse)
+      {
+        final IdResponse<?> idResponse = (IdResponse<?>) _record;
+        final Object key = idResponse.getId();
+        if (key != null)
+        {
+          final ProtocolVersion protocolVersion = ProtocolVersionUtil.extractProtocolVersion(_headers);
+          _headers.put(HeaderUtil.getIdHeaderName(protocolVersion), URIParamUtils.encodeKeyForHeader(key, protocolVersion));
+        }
+      }
+
       return new PartialRestResponse(_status, _record, _headers);
     }
   }

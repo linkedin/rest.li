@@ -107,12 +107,26 @@ public class URIParamUtils
   }
 
   /**
+   * Serialize the given key for use in an header. Params are not included.
+   *
+   *
+   * @param key the key
+   * @param version the {@link com.linkedin.restli.common.ProtocolVersion}
+   * @return the serialized key
+   */
+  public static String encodeKeyForHeader(Object key, ProtocolVersion version)
+  {
+    return encodeKeyForBody(key, false, version);
+  }
+
+  /**
    * Serialize the given key for use in a body, such as in a batch response.
    *
    *
    * @param key the key
    * @param full encode the full key, including params
-   * @param version the {@link com.linkedin.restli.common.ProtocolVersion}  @return the serialized key
+   * @param version the {@link com.linkedin.restli.common.ProtocolVersion}
+   * @return the serialized key
    */
   public static String encodeKeyForBody(Object key, boolean full, ProtocolVersion version)
   {
@@ -132,7 +146,6 @@ public class URIParamUtils
     {
       return keyToString(key, URLEscaper.Escaping.NO_ESCAPING, null, full, version);
     }
-
   }
 
   /**

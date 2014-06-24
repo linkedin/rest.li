@@ -19,8 +19,12 @@ package com.linkedin.restli.client.testutils.test;
 
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.restli.client.ResponseFuture;
+import com.linkedin.restli.client.response.CreateResponse;
 import com.linkedin.restli.client.testutils.MockSuccessfulResponseFutureBuilder;
+import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.examples.greetings.api.Greeting;
+
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -34,14 +38,33 @@ public class TestMockSuccessfulResponseFutureBuilder
   public void testBuild()
       throws RemoteInvocationException
   {
-    MockSuccessfulResponseFutureBuilder<Greeting> builder = new MockSuccessfulResponseFutureBuilder<Greeting>();
+    MockSuccessfulResponseFutureBuilder<Long, Greeting> builder = new MockSuccessfulResponseFutureBuilder<Long, Greeting>();
     Greeting greeting = new Greeting().setId(1L).setMessage("foo");
-    ResponseFuture<Greeting> future = builder.setEntity(greeting).setId("1").setStatus(200).build();
+    ResponseFuture<Greeting> future = builder.setEntity(greeting).setStatus(200).build();
 
     Assert.assertEquals(future.getResponseEntity(), greeting);
-    @SuppressWarnings("deprecation")
-    String id = future.getResponse().getId();
-    Assert.assertEquals(id, "1");
+    Assert.assertEquals(future.getResponse().getStatus(), 200);
+  }
+
+  @Test
+  public void testCreateResponse()
+    throws RemoteInvocationException
+  {
+    MockSuccessfulResponseFutureBuilder<Long, CreateResponse<Long>> builder = new MockSuccessfulResponseFutureBuilder<Long, CreateResponse<Long>>();
+    ResponseFuture<CreateResponse<Long>> future = builder.setEntity(new CreateResponse<Long>(1L)).setStatus(HttpStatus.S_200_OK.getCode()).build();
+
+    Assert.assertEquals(future.getResponseEntity().getId().longValue(), 1L);
+    Assert.assertEquals(future.getResponse().getStatus(), 200);
+  }
+
+  @Test
+  public void testIdResponse()
+    throws RemoteInvocationException
+  {
+    MockSuccessfulResponseFutureBuilder<Long, IdResponse<Long>> builder = new MockSuccessfulResponseFutureBuilder<Long, IdResponse<Long>>();
+    ResponseFuture<IdResponse<Long>> future = builder.setEntity(new IdResponse<Long>(1L)).setStatus(HttpStatus.S_200_OK.getCode()).build();
+
+    Assert.assertEquals(future.getResponseEntity().getId().longValue(), 1L);
     Assert.assertEquals(future.getResponse().getStatus(), 200);
   }
 
