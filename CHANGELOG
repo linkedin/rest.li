@@ -3,6 +3,10 @@
 (RB=322336)
 Update snapshot generator to expand included schemas in the models list instead of inside the include field.
 
+(RB=322858)
+fix d2TransportClientProperties schema to reflect what's actually being stored
+
+
 1.18.3
 ------
 (RB=322445)

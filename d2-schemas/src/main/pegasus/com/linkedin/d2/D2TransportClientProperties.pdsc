@@ -49,9 +49,9 @@
     {
       "name": "responseCompressionOperations",
       "type": {
-        "type": "map", "values": "string"
+        "type": "array", "items": "string"
       },
-      "doc": "response compression configurations.",
+      "doc": "operations where compression should be used",
       "optional": true
     }
   ]
