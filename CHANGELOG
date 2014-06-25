@@ -1,5 +1,10 @@
+1.18.4
+------
+
 1.18.3
 ------
+(RB=322445)
+add NPE check for transport client compression
 
 1.18.2
 ------

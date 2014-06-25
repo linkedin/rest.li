@@ -214,7 +214,7 @@ public class ClientCompressionFilter implements Filter, RestFilter
 
       //Set accepted encoding for compressed response
       String operation = (String)requestContext.getLocalAttr(R2Constants.OPERATION);
-      if (_acceptCompression.length > 0 && shouldCompress(operation))
+      if (operation != null && _acceptCompression.length > 0 && shouldCompress(operation))
       {
         req = req.builder().addHeaderValue(HttpConstants.ACCEPT_ENCODING, _acceptEncodingHeader).build();
       }
