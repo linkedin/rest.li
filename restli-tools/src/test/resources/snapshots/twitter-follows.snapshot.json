@@ -1,13 +1,14 @@
 {
   "models" : [ {
     "type" : "record",
-    "name" : "Followed",
+    "name" : "Status",
     "namespace" : "com.linkedin.restli.tools.twitter",
     "fields" : [ ]
   }, {
     "type" : "record",
-    "name" : "Status",
+    "name" : "Followed",
     "namespace" : "com.linkedin.restli.tools.twitter",
+    "include" : [ "Status" ],
     "fields" : [ ]
   } ],
   "schema" : {

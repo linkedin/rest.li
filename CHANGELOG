@@ -1,5 +1,7 @@
 1.18.4
 ------
+(RB=322336)
+Update snapshot generator to expand included schemas in the models list instead of inside the include field.
 
 1.18.3
 ------
@@ -15,7 +17,7 @@ Use Gradle 1.12.
 Fix bug in how example requests are generated for batch update and batch partial update.
 
 (RB=313946)
-Introduced new interface called RestLiResponseData to expose response data to filters. 
+Introduced new interface called RestLiResponseData to expose response data to filters.
 
 1.18.1
 ------

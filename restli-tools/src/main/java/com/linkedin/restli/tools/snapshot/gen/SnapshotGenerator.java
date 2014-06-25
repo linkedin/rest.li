@@ -76,8 +76,7 @@ public class SnapshotGenerator
     return result;
   }
 
-  public File writeFile(File outdirFile,
-                         String fileName) throws IOException
+  public File writeFile(File outdirFile, String fileName) throws IOException
   {
     fileName += RestConstants.SNAPSHOT_FILENAME_EXTENTION;
     final File file = new File(outdirFile, fileName);
@@ -364,6 +363,10 @@ public class SnapshotGenerator
         if (schema instanceof RecordDataSchema) // recurse into record, record any contained types.
         {
           RecordDataSchema recordDataSchema = (RecordDataSchema)schema;
+          for (NamedDataSchema includedSchema : recordDataSchema.getInclude())
+          {
+            recordType(includedSchema, foundTypes, typeOrder);
+          }
           for(RecordDataSchema.Field field : recordDataSchema.getFields())
           {
             recordType(field.getType(), foundTypes, typeOrder);
@@ -392,5 +395,4 @@ public class SnapshotGenerator
       }
     }
   }
-
 }
