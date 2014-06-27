@@ -47,7 +47,6 @@ import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.util.NamedThreadFactory;
-import java.util.Collection;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Watcher;
 import org.slf4j.Logger;
@@ -55,6 +54,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.net.URI;
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -367,6 +367,12 @@ public class ZKFSLoadBalancer
   public Directory getDirectory()
   {
     return _directory;
+  }
+
+  @Override
+  public PartitionInfoProvider getPartitionInfoProvider ()
+  {
+    return this;
   }
 
   /**

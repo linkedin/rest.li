@@ -23,7 +23,13 @@ package com.linkedin.d2.balancer.util;
 import com.linkedin.d2.balancer.Directory;
 import com.linkedin.d2.balancer.Facilities;
 import com.linkedin.d2.balancer.KeyMapper;
+import com.linkedin.d2.balancer.ServiceUnavailableException;
+import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
+import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
 import com.linkedin.r2.transport.common.TransportClientFactory;
+
+import java.net.URI;
+import java.util.Collection;
 
 /**
  * @author Josh Walker
@@ -35,6 +41,7 @@ public class DelegatingFacilities implements Facilities
   private final DirectoryProvider _directoryProvider;
   private final KeyMapperProvider _keyMapperProvider;
   private final ClientFactoryProvider _clientFactoryProvider;
+  private final PartitionInfoProvider _partitionInfoProvider;
 
   @Deprecated
   public DelegatingFacilities(DirectoryProvider directoryProvider,
@@ -47,22 +54,74 @@ public class DelegatingFacilities implements Facilities
       {
         return null;
       }
+    }, new PartitionInfoProvider()
+    {
+      @Override
+      public <K> MapKeyHostPartitionResult<K> getPartitionInformation (URI serviceUri,
+                                                                       Collection<K> keys,
+                                                                       int limitHostPerPartition,
+                                                                       HashProvider hashProvider)
+          throws ServiceUnavailableException
+      {
+        return null;
+      }
+
+      @Override
+      public PartitionAccessor getPartitionAccessor (URI serviceUri)
+          throws ServiceUnavailableException
+      {
+        return null;
+      }
+    });
+  }
+
+  @Deprecated
+  public DelegatingFacilities(DirectoryProvider directoryProvider,
+                              KeyMapperProvider keyMapperProvider,
+                              ClientFactoryProvider clientFactoryProvider)
+  {
+    this(directoryProvider, keyMapperProvider, clientFactoryProvider, new PartitionInfoProvider()
+    {
+      @Override
+      public <K> MapKeyHostPartitionResult<K> getPartitionInformation (URI serviceUri,
+                                                                       Collection<K> keys,
+                                                                       int limitHostPerPartition,
+                                                                       HashProvider hashProvider)
+          throws ServiceUnavailableException
+      {
+        return null;
+      }
+
+      @Override
+      public PartitionAccessor getPartitionAccessor (URI serviceUri)
+          throws ServiceUnavailableException
+      {
+        return null;
+      }
     });
   }
 
   public DelegatingFacilities(DirectoryProvider directoryProvider,
                               KeyMapperProvider keyMapperProvider,
-                              ClientFactoryProvider clientFactoryProvider)
+                              ClientFactoryProvider clientFactoryProvider,
+                              PartitionInfoProvider partitionInfoProvider)
   {
     _directoryProvider = directoryProvider;
     _keyMapperProvider = keyMapperProvider;
     _clientFactoryProvider = clientFactoryProvider;
+    _partitionInfoProvider = partitionInfoProvider;
   }
 
   @Override
   public Directory getDirectory()
   {
     return _directoryProvider.getDirectory();
+  }
+
+  @Override
+  public PartitionInfoProvider getPartitionInfoProvider ()
+  {
+    return _partitionInfoProvider;
   }
 
   @Override

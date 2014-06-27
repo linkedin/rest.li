@@ -1,5 +1,8 @@
-1.18.4
+1.19.0
 ------
+(RB=323266)
+expose partitionInfoProvider to Facilities (this can break classes that implement Facilities)
+
 (RB=322336)
 Update snapshot generator to expand included schemas in the models list instead of inside the include field.
 
