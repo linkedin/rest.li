@@ -81,7 +81,14 @@ public class PathKeysImpl implements MutablePathKeys
   @Override
   public Set<?> getBatchKeys()
   {
-    return Collections.unmodifiableSet(_batchKeys);
+    if (_batchKeys == null)
+    {
+      return Collections.emptySet();
+    }
+    else
+    {
+      return Collections.unmodifiableSet(_batchKeys);
+    }
   }
 
   @Deprecated
@@ -93,7 +100,8 @@ public class PathKeysImpl implements MutablePathKeys
   }
 
   @Override
-  public Set<?> getBatchIds()
+  @SuppressWarnings("unchecked")
+  public <T> Set<T> getBatchIds()
   {
     if (_batchKeys == null)
     {
@@ -101,14 +109,7 @@ public class PathKeysImpl implements MutablePathKeys
     }
     else
     {
-      return Collections.unmodifiableSet(_batchKeys);
+      return Collections.unmodifiableSet((Set<T>) _batchKeys);
     }
-  }
-
-  @Override
-  @SuppressWarnings("unchecked")
-  public <T> Set<T> getBatchIds(final Class<T> keyClass)
-  {
-    return (Set<T>) Collections.unmodifiableSet(_batchKeys);
   }
 }

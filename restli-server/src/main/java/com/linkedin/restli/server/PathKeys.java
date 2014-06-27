@@ -80,18 +80,10 @@ public interface PathKeys
   <T> Set<T> getBatchKeys(Class<T> keyClass);
 
   /**
-   * Get the resource batch keys untyped.
-   *
-   * @return set of batch key values, or null if no batch key is set.
-   */
-  Set<?> getBatchIds();
-
-  /**
    * Get the resource batch keys typed.
    *
-   * @param keyClass batch key class
    * @param <T> key value type
-   * @return set of batch key values, or null if no batch key is set.
+   * @return set of batch key values, or null if the associated method does not support batch keys.
    */
-  <T> Set<T> getBatchIds(Class<T> keyClass);
+  <T> Set<T> getBatchIds();
 }

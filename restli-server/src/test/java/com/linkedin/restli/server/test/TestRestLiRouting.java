@@ -245,7 +245,7 @@ public class TestRestLiRouting
     expectedBatchKeys.add(key2);
 
     assertEquals(keys.getBatchIds().size(), 2);
-    for (CompoundKey batchKey : keys.getBatchIds(CompoundKey.class))
+    for (CompoundKey batchKey : keys.<CompoundKey>getBatchIds())
     {
       assertTrue(expectedBatchKeys.contains(batchKey));
       expectedBatchKeys.remove(batchKey);
