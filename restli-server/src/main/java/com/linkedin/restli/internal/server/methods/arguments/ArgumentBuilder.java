@@ -33,6 +33,7 @@ import com.linkedin.data.template.AbstractArrayTemplate;
 import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.data.template.TemplateRuntimeException;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.BatchRequest;
@@ -245,7 +246,14 @@ public class ArgumentBuilder
                                                    itemStringValue),
                                      HttpStatus.S_400_BAD_REQUEST.getCode());
         }
-
+        catch (TemplateRuntimeException e)
+        {
+          // thrown from DataTemplateUtil.coerceOutput
+          throw new RoutingException(String.format("Array parameter '%s' value '%s' is invalid. Reason: %s",
+                                                   param.getName(),
+                                                   itemStringValue, e.getMessage()),
+                                     HttpStatus.S_400_BAD_REQUEST.getCode());
+        }
       }
     }
 
@@ -314,7 +322,14 @@ public class ArgumentBuilder
                                                    value),
                                      HttpStatus.S_400_BAD_REQUEST.getCode());
         }
-
+        catch (TemplateRuntimeException e)
+        {
+          // thrown from DataTemplateUtil.coerceOutput
+          throw new RoutingException(String.format("Argument parameter '%s' value '%s' is invalid. Reason: %s",
+                                                   param.getName(),
+                                                   value, e.getMessage()),
+                                     HttpStatus.S_400_BAD_REQUEST.getCode());
+        }
       }
     }
 

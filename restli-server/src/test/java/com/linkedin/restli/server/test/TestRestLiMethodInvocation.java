@@ -25,7 +25,6 @@ import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.data.template.StringMap;
-import com.linkedin.data.template.TemplateOutputCastException;
 import com.linkedin.data.transform.patch.request.PatchOpFactory;
 import com.linkedin.data.transform.patch.request.PatchTree;
 import com.linkedin.parseq.Engine;
@@ -2819,9 +2818,9 @@ public class TestRestLiMethodInvocation
     try
     {
       _invoker.invoke(routingResult, request, null, false, null);
-      Assert.fail("expected template output cast exception");
+      Assert.fail("expected RoutingException");
     }
-    catch (TemplateOutputCastException e)
+    catch (RoutingException e)
     {
       Assert.assertTrue(e.getMessage().contains("cannot be coerced"));
     }

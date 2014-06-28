@@ -1,3 +1,8 @@
+1.19.1
+------
+(RB=317297)
+return 400 status on input coercion failure
+
 1.19.0
 ------
 (RB=323266)
