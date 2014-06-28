@@ -20,8 +20,13 @@
 
 package com.linkedin.restli.client;
 
+
+import com.linkedin.r2.RemoteInvocationException;
+import com.linkedin.r2.message.RequestContext;
+
 import java.net.URI;
 import java.util.Map;
+
 
 /**
  * @author Josh Walker
@@ -30,7 +35,6 @@ import java.util.Map;
 
 public interface Response<T>
 {
-
   int getStatus();
 
   T getEntity();
@@ -59,7 +63,27 @@ public interface Response<T>
 
   URI getLocation();
 
+  /**
+   * Returns the error returned by the server, if any.
+   * <P>
+   * Note: this method can only return a non-null value if {@link ErrorHandlingBehavior#TREAT_SERVER_ERROR_AS_SUCCESS}
+   * is specified when calling {@link RestClient#sendRequest(Request, ErrorHandlingBehavior)},
+   * {@link RestClient#sendRequest(Request, RequestContext, ErrorHandlingBehavior)},
+   * {@link RestClient#sendRequest(RequestBuilder, ErrorHandlingBehavior)}, or
+   * {@link RestClient#sendRequest(RequestBuilder, RequestContext, ErrorHandlingBehavior)}.
+   * Otherwise, a {@link RemoteInvocationException} is thrown from {@link ResponseFuture#getResponse()} on error.
+   */
   RestLiResponseException getError();
 
+  /**
+   * Indicates whether the server returned an error status.
+   * <P>
+   * Note: this method can only return true if {@link ErrorHandlingBehavior#TREAT_SERVER_ERROR_AS_SUCCESS} is
+   * specified when calling {@link RestClient#sendRequest(Request, ErrorHandlingBehavior)},
+   * {@link RestClient#sendRequest(Request, RequestContext, ErrorHandlingBehavior)},
+   * {@link RestClient#sendRequest(RequestBuilder, ErrorHandlingBehavior)}, or
+   * {@link RestClient#sendRequest(RequestBuilder, RequestContext, ErrorHandlingBehavior)}.
+   * Otherwise, a {@link RemoteInvocationException} is thrown from {@link ResponseFuture#getResponse()} on error.
+   */
   boolean hasError();
 }
