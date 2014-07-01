@@ -1,0 +1,12 @@
+{
+  "doc"  : "Test generation of Java bindings for unions",
+  "type" : "record",
+  "name" : "IntUnionRecord",
+  "namespace" : "com.linkedin.pegasus.generator.test",
+  "fields" : [
+    {
+      "name" : "intUnion",
+      "type" : [ "int" ]
+    }
+  ]
+}

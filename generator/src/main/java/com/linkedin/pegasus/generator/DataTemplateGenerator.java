@@ -1104,6 +1104,14 @@ public abstract class DataTemplateGenerator extends CodeGenerator
 
     templateClass._extends(RecordTemplate.class);
 
+    // generate included schemas first, so that unnamed classes will belong to the defining class
+    // instead of the current class
+    List<NamedDataSchema> includes = schema.getInclude();
+    for (NamedDataSchema includedSchema : includes)
+    {
+      handleSchema(includedSchema);
+    }
+
     generatePathSpecMethodsForRecord(templateClass, schema);
 
     JFieldVar schemaField = generateSchemaField(templateClass, schema);
@@ -1125,12 +1133,6 @@ public abstract class DataTemplateGenerator extends CodeGenerator
         customInfoMap.put(customInfo, null);
         generateCustomClassInitialization(templateClass, customInfo);
       }
-    }
-
-    List<NamedDataSchema> includes = schema.getInclude();
-    for (NamedDataSchema includedSchema : includes)
-    {
-      handleSchema(includedSchema);
     }
 
     generateCopierMethods(templateClass);

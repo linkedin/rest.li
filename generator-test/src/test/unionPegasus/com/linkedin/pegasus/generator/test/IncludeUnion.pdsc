@@ -1,0 +1,8 @@
+{
+  "doc"  : "Test generation of Java bindings for including unions",
+  "type" : "record",
+  "name" : "IncludeUnion",
+  "namespace" : "com.linkedin.pegasus.generator.test",
+  "include" : [ "IntUnionRecord", "StringUnionRecord" ],
+  "fields" : []
+}

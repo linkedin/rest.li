@@ -4,6 +4,9 @@
 remove checkPathValue from idl/snapshot backwards compatibility checks.
 Paths are now expected to be identical.
 
+(RB=324987)
+Generated included unnamed union in the defining class.
+
 1.19.1
 ------
 (RB=317297)

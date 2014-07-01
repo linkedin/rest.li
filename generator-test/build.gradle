@@ -12,6 +12,25 @@ apply from: "${buildScriptDirPath}/dataTemplate.gradle"
 apply from: "${buildScriptDirPath}/cleanGenerated.gradle"
 apply from: "${buildScriptDirPath}/avroSchema.gradle"
 
+// generate pdsc files under "unionPegasus" directory with explicit ordering
+project.sourceSets.all { SourceSet sourceSet ->
+  final Task dataTemplateGenerateTask = rootProject.ext.build.dataTemplateGenerateTasks[sourceSet]
+  if (dataTemplateGenerateTask != null)
+  {
+    final String inputDataSchemaDirPath = "src${File.separatorChar}${sourceSet.name}${File.separatorChar}unionPegasus"
+    def getPdscFile = { filename ->
+      project.fileTree(inputDataSchemaDirPath) {
+        include "**/${filename}.pdsc"
+      }.singleFile
+    }
+
+    dataTemplateGenerateTask.args(getPdscFile('IncludeUnion'), getPdscFile('IntUnionRecord'), getPdscFile('StringUnionRecord'))
+
+    final String currentResolverPath = dataTemplateGenerateTask.systemProperties['generator.resolver.path']
+    dataTemplateGenerateTask.systemProperties(['generator.resolver.path': "${currentResolverPath}${File.pathSeparator}${inputDataSchemaDirPath}"])
+  }
+}
+
 // This module tests that deprecated types and fields in "deprecated.pdsc",
 // result in correctly generated classes and methods that are also marked as deprecated.
 // Since the classes are generated, they cannot be marked with @SuppressWarnings("deprecated"), we must disable the 'deprecation' compiler warnings.
