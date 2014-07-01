@@ -1,7 +1,13 @@
+1.19.2
+------
+
 1.19.1
 ------
 (RB=317297)
 return 400 status on input coercion failure
+
+(RB=325317)
+remove autoboxing from ConsistentHashRing.compareTo
 
 1.19.0
 ------

@@ -260,7 +260,7 @@ public class ConsistentHashRing<T> implements Ring<T>
     @Override
     public int compareTo(Point<T> o)
     {
-      return new Integer(_hash).compareTo(o.getHash());
+      return (_hash < o._hash) ? -1 : ((_hash == o._hash) ? 0 : 1);
     }
 
     @Override
