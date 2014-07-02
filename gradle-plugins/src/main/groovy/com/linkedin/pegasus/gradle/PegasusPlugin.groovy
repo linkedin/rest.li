@@ -1300,7 +1300,7 @@ class PegasusPlugin implements Plugin<Project>
       compileClasspath = dataModels + project.configurations.restClientCompile
     }
     project.plugins.withType(EclipsePlugin) {
-      project.eclipse.classpath.plusConfigurations += project.configurations.restClientCompile
+      project.eclipse.classpath.plusConfigurations += [project.configurations.restClientCompile]
     }
 
     // idea plugin needs to know about new rest client source directory and its dependencies
