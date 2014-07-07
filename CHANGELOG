@@ -1,5 +1,8 @@
 1.19.2
 ------
+(RB=327432)
+remove checkPathValue from idl/snapshot backwards compatibility checks.
+Paths are now expected to be identical.
 
 1.19.1
 ------

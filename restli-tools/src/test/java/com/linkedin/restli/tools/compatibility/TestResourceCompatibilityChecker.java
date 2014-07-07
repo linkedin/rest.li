@@ -147,13 +147,6 @@ public class TestResourceCompatibilityChecker
     final Collection<CompatibilityInfo> testDiffs = new HashSet<CompatibilityInfo>();
     testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "association", "methods", "create", "parameters"),
                                         CompatibilityInfo.Type.PARAMETER_NEW_OPTIONAL, "type"));
-    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "association"),
-                                        CompatibilityInfo.Type.OPTIONAL_VALUE,
-                                        "identifier"));
-    testDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "association", "entity", "path"),
-                                        CompatibilityInfo.Type.VALUE_DIFFERENT,
-                                        "/greetings/assoc/key1={key1}",
-                                        "/greetings/assoc/{greetingsId}"));
 
     final ResourceSchema prevResource = idlToResource(IDLS_SUFFIX + PREV_ASSOC_FILE);
     final ResourceSchema currResource = idlToResource(IDLS_SUFFIX + CURR_ASSOC_PASS_FILE);
@@ -354,8 +347,8 @@ public class TestResourceCompatibilityChecker
                                          CompatibilityInfo.Type.ARRAY_MISSING_ELEMENT, "get"));
     testErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "association", "entity", "path"),
                                          CompatibilityInfo.Type.VALUE_NOT_EQUAL,
-                                         "/greetings/assoc/key1={key1}",
-                                         "/greetings/association/key1={key1}&key2={key2}"));
+                                         "/greetings/assoc/{greetingsId}",
+                                         "/greetings/association/{greetingsId}"));
 
     final ResourceSchema prevResource = idlToResource(IDLS_SUFFIX + PREV_ASSOC_FILE);
     final ResourceSchema currResource = idlToResource(IDLS_SUFFIX + CURR_ASSOC_FAIL_FILE);

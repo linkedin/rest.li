@@ -204,27 +204,6 @@ public class ResourceCompatibilityChecker
     return true;
   }
 
-  /**
-   * Previously, the format of association keys was hard-coded into the path.
-   * This is fixed, but we want people's upgrade path to the new IDL version to be as smooth as
-   * possible. This function guesses as best as possible to see if it looks like the path format is
-   * an upgrade.  If so, it allows the change through as Compatible.
-   */
-  private boolean checkPathValue(RecordDataSchema.Field field, String prevPath, String currPath)
-  {
-    if (prevPath.contains("=") && !currPath.contains("="))
-    {
-      _infoMap.addRestSpecInfo(field.getName(), CompatibilityInfo.Type.VALUE_DIFFERENT, _infoPath, prevPath, currPath);
-      return true;
-    }
-    else
-    {
-      return checkEqualSingleValue(field,
-                                   prevPath,
-                                   currPath);
-    }
-  }
-
   private boolean checkDoc(RecordDataSchema.Field field, Object prevData, Object currData)
   {
     assert (field != null);
@@ -649,9 +628,9 @@ public class ResourceCompatibilityChecker
                           prevRec.getNamespace(GetMode.DEFAULT),
                           currRec.getNamespace(GetMode.DEFAULT));
 
-    checkPathValue(prevRec.schema().getField("path"),
-                   prevRec.getPath(GetMode.DEFAULT),
-                   currRec.getPath(GetMode.DEFAULT));
+    checkEqualSingleValue(prevRec.schema().getField("path"),
+                          prevRec.getPath(GetMode.DEFAULT),
+                          currRec.getPath(GetMode.DEFAULT));
 
     checkType("schema",
               prevRec.getSchema(GetMode.DEFAULT),
@@ -905,9 +884,9 @@ public class ResourceCompatibilityChecker
 
   private void checkEntitySchema(EntitySchema prevRec, EntitySchema currRec)
   {
-    checkPathValue(prevRec.schema().getField("path"),
-                   prevRec.getPath(GetMode.DEFAULT),
-                   currRec.getPath(GetMode.DEFAULT));
+    checkEqualSingleValue(prevRec.schema().getField("path"),
+                          prevRec.getPath(GetMode.DEFAULT),
+                          currRec.getPath(GetMode.DEFAULT));
 
     checkComplexArrayField(prevRec.schema().getField("actions"),
                            "name",

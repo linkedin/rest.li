@@ -5,6 +5,7 @@
   "schema" : "com.linkedin.greetings.api.Greeting",
   "doc" : "A richer \"Hello world\" example, demonstrating a full array of methods, finders and actions",
   "association" : {
+    "identifier" : "greetingsId",
     "assocKeys" : [ {
       "name" : "key1",
       "type" : "string"
@@ -26,7 +27,7 @@
       } ]
     } ],
     "entity" : {
-      "path" : "/greetings/assoc/key1={key1}"
+      "path" : "/greetings/assoc/{greetingsId}"
     }
   }
 }
