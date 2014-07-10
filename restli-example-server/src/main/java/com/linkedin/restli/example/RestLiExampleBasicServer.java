@@ -65,6 +65,10 @@ public class RestLiExampleBasicServer
     config.addResourcePackageNames("com.linkedin.restli.example.impl");
     config.setServerNodeUri(URI.create(getServerUrl()));
     config.setDocumentationRequestHandler(new DefaultDocumentationRequestHandler());
+    // Create an instance of the Example Filter and add it to the config.
+    RestLiExampleFilter filter = new RestLiExampleFilter();
+    config.addRequestFilter(filter);
+    config.addResponseFilter(filter);
 
     // demonstrate dynamic dependency injection
     final PhotoDatabase photoDb = new PhotoDatabaseImpl(10);
