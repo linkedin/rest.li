@@ -78,7 +78,11 @@
           },
           "namespace" : "com.linkedin.restli.examples.greetings.client"
         } ],
-        "path" : "/complexKeys/{keys}"
+        "path" : "/complexKeys/{keys}",
+        "actions" : [ {
+          "name" : "entityAction",
+          "returns" : "int"
+        } ]
       },
       "finders" : [ {
         "name" : "prefix",

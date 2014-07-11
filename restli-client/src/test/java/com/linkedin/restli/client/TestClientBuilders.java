@@ -146,7 +146,12 @@ public class TestClientBuilders
     DynamicRecordMetadata responseMetadata = new DynamicRecordMetadata("action", Collections.<FieldDef<?>>emptyList());
     Map<String, DynamicRecordMetadata> responseMetadataMap = new HashMap<String, DynamicRecordMetadata>();
     responseMetadataMap.put("action", responseMetadata);
-    ResourceSpec resourceSpec = new ResourceSpecImpl(Collections.<ResourceMethod>emptySet(), requestMetadataMap, responseMetadataMap);
+    ResourceSpec resourceSpec = new ResourceSpecImpl(Collections.<ResourceMethod>emptySet(),
+                                                     requestMetadataMap,
+                                                     responseMetadataMap,
+                                                     Long.class,
+                                                     TestRecord.class,
+                                                     Collections.<String, CompoundKey.TypeInfo> emptyMap());
 
     ActionRequestBuilder<Long, TestRecord> builder = new ActionRequestBuilder<Long, TestRecord>(TEST_URI,
                                                                                  TestRecord.class,

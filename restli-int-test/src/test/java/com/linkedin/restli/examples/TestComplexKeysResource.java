@@ -25,6 +25,7 @@ import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import com.linkedin.restli.client.ActionRequest;
 import com.linkedin.restli.client.BatchCreateIdRequest;
 import com.linkedin.restli.client.BatchCreateIdRequestBuilder;
 import com.linkedin.restli.client.BatchCreateRequestBuilder;
@@ -278,6 +279,15 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
   public void testPromiseBatchDelete(RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> builders) throws RemoteInvocationException
   {
     testBatchDeleteMain(builders.batchDelete(), builders.create(), new ComplexKeysRequestBuilders(builders.getRequestOptions()).batchGet());
+  }
+
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
+  public void testEntityAction(RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> builders) throws RemoteInvocationException
+  {
+    ComplexResourceKey<TwoPartKey, TwoPartKey> key = getComplexKey("major", "minor");
+    Request<Object> actionRequest = builders.action("entityAction").id(key).build();
+    Integer entity = (Integer)REST_CLIENT.sendRequest(actionRequest).getResponse().getEntity();
+    Assert.assertEquals(entity.longValue(), 1L);
   }
 
   private void testGetMain(RootBuilderWrapper.MethodBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message, Message> requestBuilder) throws RemoteInvocationException

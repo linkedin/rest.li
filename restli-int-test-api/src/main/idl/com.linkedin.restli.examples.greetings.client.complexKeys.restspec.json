@@ -39,6 +39,10 @@
     } ],
     "entity" : {
       "path" : "/complexKeys/{keys}",
+      "actions" : [ {
+        "name" : "entityAction",
+        "returns" : "int"
+      } ],
       "subresources" : [ {
         "name" : "complexKeysSub",
         "namespace" : "com.linkedin.restli.examples.greetings.client",

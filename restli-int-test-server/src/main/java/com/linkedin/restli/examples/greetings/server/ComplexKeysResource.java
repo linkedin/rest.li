@@ -32,7 +32,9 @@ import com.linkedin.restli.server.BatchUpdateRequest;
 import com.linkedin.restli.server.BatchUpdateResult;
 import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.PagingContext;
+import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.UpdateResponse;
+import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.Context;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.QueryParam;
@@ -141,5 +143,11 @@ public class ComplexKeysResource extends ComplexKeyResourceTemplate<TwoPartKey, 
   public List<Message> getAll(@Context PagingContext pagingContext)
   {
     return _dataProvider.getAll();
+  }
+
+  @Action(name = "entityAction", resourceLevel = ResourceLevel.ENTITY)
+  public int entityAction()
+  {
+    return 1;
   }
 }

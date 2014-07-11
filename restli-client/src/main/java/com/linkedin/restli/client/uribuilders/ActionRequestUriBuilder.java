@@ -18,8 +18,11 @@ package com.linkedin.restli.client.uribuilders;
 
 
 import com.linkedin.jersey.api.uri.UriBuilder;
+import com.linkedin.jersey.api.uri.UriComponent;
 import com.linkedin.restli.client.ActionRequest;
 import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.internal.common.URIParamUtils;
+
 import java.net.URI;
 
 
@@ -40,7 +43,7 @@ class ActionRequestUriBuilder extends AbstractRestliRequestUriBuilder<ActionRequ
     UriBuilder b = UriBuilder.fromUri(buildBaseUriWithPrefix());
     if (actionRequest.getId() != null)
     {
-      b.path(actionRequest.getId().toString());
+      appendKeyToPath(b, actionRequest.getId());
     }
     appendQueryParams(b);
     return b.build();

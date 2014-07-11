@@ -25,6 +25,8 @@ import java.util.Map;
 import com.linkedin.restli.examples.StringTestKeys;
 import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.examples.greetings.api.Tone;
+import com.linkedin.restli.server.ResourceLevel;
+import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestMethod.Get;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
