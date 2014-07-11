@@ -441,7 +441,7 @@ public class ArgumentBuilder
     }
 
     Map<Object, R> result =
-      new HashMap<Object, R>(batchRequest.getEntities().size());
+      new HashMap<Object, R>((int)(batchRequest.getEntities().size() / 0.75f) + 1, 0.75f);
     for (Map.Entry<String, R> entry : batchRequest.getEntities().entrySet())
     {
       Object key = parsedKeyMap.get(entry.getKey());
@@ -450,7 +450,7 @@ public class ArgumentBuilder
         throw new RoutingException(
           String.format("Batch request mismatch, URI keys: '%s'  Entity keys: '%s'",
                         ids.toString(),
-                        result.keySet().toString()),
+                        batchRequest.getEntities().keySet().toString()),
           HttpStatus.S_400_BAD_REQUEST.getCode());
       }
       R value = DataTemplateUtil.wrap(entry.getValue().data(), valueClass);

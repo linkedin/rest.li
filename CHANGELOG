@@ -10,6 +10,9 @@ Generated included unnamed union in the defining class.
 (RB=326034)
 Update PathKeys.
 
+(RB=330531)
+Fix bugs in ArgumentBuilder.
+
 1.19.1
 ------
 (RB=317297)
