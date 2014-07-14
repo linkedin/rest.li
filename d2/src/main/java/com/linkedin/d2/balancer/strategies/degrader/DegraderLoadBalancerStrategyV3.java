@@ -862,12 +862,21 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                            List<URI> excludedURIs)
   {
     checkUpdatePartitionState(clusterGenerationId, partitionId, trackerClients);
-    Map<URI, Integer> pointsMap = new HashMap<URI, Integer>(_state.getPartitionState(partitionId).getPointsMap());
-    for (URI uri : excludedURIs)
+
+    if (excludedURIs == null || excludedURIs.isEmpty())
     {
-      pointsMap.remove(uri);
+        return _state.getRing(partitionId);
     }
-    return new ConsistentHashRing<URI>(pointsMap);
+    else
+    {
+      Map<URI, Integer> pointsMap = new HashMap<URI, Integer>(_state.getPartitionState(partitionId).getPointsMap());
+      for (URI uri : excludedURIs)
+      {
+        pointsMap.remove(uri);
+      }
+      return new ConsistentHashRing<URI>(pointsMap);
+    }
+
   }
 
   /**

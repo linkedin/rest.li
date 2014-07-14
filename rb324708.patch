@@ -1,0 +1,45 @@
+diff --git a/d2/src/main/java/com/linkedin/d2/balancer/strategies/degrader/DegraderLoadBalancerStrategyV2.java b/d2/src/main/java/com/linkedin/d2/balancer/strategies/degrader/DegraderLoadBalancerStrategyV2.java
+index f87076d179aca80bd22fc88b77dd398d96c7be64..815686ec000822af081eada074f886c099ce0360 100644
+--- a/d2/src/main/java/com/linkedin/d2/balancer/strategies/degrader/DegraderLoadBalancerStrategyV2.java
++++ b/d2/src/main/java/com/linkedin/d2/balancer/strategies/degrader/DegraderLoadBalancerStrategyV2.java
+@@ -971,13 +971,22 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
+     {
+       throw new UnsupportedOperationException("Trying to access partition: " + partitionId + "on an unpartitioned cluster");
+     }
++
+     checkUpdateState(clusterGenerationId, trackerClients);
+-    Map<URI, Integer> pointsMap = new HashMap<URI,Integer>(_state.getPointsMap());
+-    for (URI uri : excludedURIs)
+-    {
+-      pointsMap.remove(uri);
++
++    if (excludedURIs == null || excludedURIs.isEmpty()) {
++
++      return _state.getRing();
++
++    } else {
++
++      Map<URI, Integer> pointsMap = new HashMap<URI, Integer>(_state.getPointsMap());
++      for (URI uri : excludedURIs) {
++        pointsMap.remove(uri);
++      }
++
++      return new ConsistentHashRing<URI>(pointsMap);
+     }
+-    return new ConsistentHashRing<URI>(pointsMap);
+   }
+ 
+ 
+diff --git a/d2/src/main/java/com/linkedin/d2/balancer/util/hashing/ConsistentHashRing.java b/d2/src/main/java/com/linkedin/d2/balancer/util/hashing/ConsistentHashRing.java
+index e860c918ae4144388997800f39e8b934a894de38..e727f8d85c994b005abc8823ef0938d6a804ad1e 100644
+--- a/d2/src/main/java/com/linkedin/d2/balancer/util/hashing/ConsistentHashRing.java
++++ b/d2/src/main/java/com/linkedin/d2/balancer/util/hashing/ConsistentHashRing.java
+@@ -260,7 +260,7 @@ public class ConsistentHashRing<T> implements Ring<T>
+     @Override
+     public int compareTo(Point<T> o)
+     {
+-      return new Integer(_hash).compareTo(o.getHash());
++      return (_hash < o._hash) ? -1 : ((_hash == o._hash) ? 0 : 1);
+     }
+ 
+     @Override

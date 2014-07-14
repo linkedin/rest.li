@@ -884,12 +884,21 @@ public class DegraderLoadBalancerStrategyV2_1 implements LoadBalancerStrategy
       throw new UnsupportedOperationException("Trying to access partition: " + partitionId + "on an unpartitioned cluster");
     }
     checkUpdateState(clusterGenerationId, trackerClients);
-    Map<URI, Integer> pointsMap = new HashMap<URI,Integer>(_state.getPointsMap());
-    for (URI uri : excludedURIs)
+
+    if (excludedURIs == null || excludedURIs.isEmpty())
     {
-      pointsMap.remove(uri);
+      return _state.getRing();
     }
-    return new ConsistentHashRing<URI>(pointsMap);
+    else
+    {
+      Map<URI, Integer> pointsMap = new HashMap<URI,Integer>(_state.getPointsMap());
+      for (URI uri : excludedURIs)
+      {
+        pointsMap.remove(uri);
+      }
+      return new ConsistentHashRing<URI>(pointsMap);
+    }
+
   }
 
   /**
