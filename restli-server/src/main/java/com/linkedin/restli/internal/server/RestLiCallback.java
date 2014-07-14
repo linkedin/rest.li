@@ -77,39 +77,19 @@ public class RestLiCallback<T> implements RequestExecutionCallback<T>
     try
     {
       // Convert the object returned by the resource to response data.
-      AugmentedRestLiResponseData responseData = _responseHandler.buildRestLiResponseData(_request, _method, result);
-      Exception exceptionFromFilters = null;
+      final AugmentedRestLiResponseData responseData = _responseHandler.buildRestLiResponseData(_request, _method, result);
       // Invoke the response filters.
       if (_responseFilters != null && !_responseFilters.isEmpty())
       {
-        // Construct the filter response context from the partial response.
-        FilterResponseContextInternal responseContext = new FilterResponseContextAdapter(responseData);
-        // Now invoke ResponseFilters.
-        try
-        {
-          invokeResponseFilters(responseContext);
-        }
-        catch (Exception e)
-        {
-          // Save the exception thrown from the filter.
-          exceptionFromFilters = e;
-        }
-        // Update the response data based on what's returned by the filters.
-        responseData = responseContext.getAugmentedRestLiResponseData();
-        if (exceptionFromFilters != null)
-        {
-          // Convert the caught exception to a rest exception and invoke the callback.
-          RestException restEx =
-              _responseHandler.buildRestException(exceptionFromFilters,
-                                                  _responseHandler.buildPartialResponse(_method, responseData));
-          _callback.onError(restEx, executionReport);
-          return;
-        }
+        invokeFiltersAndProcessResults(executionReport, responseData, null);
       }
-      // Convert response data to partial rest response.
-      PartialRestResponse response = _responseHandler.buildPartialResponse(_method, responseData);
-      // Invoke the callback.
-      _callback.onSuccess(_responseHandler.buildResponse(_method, response), executionReport);
+      else
+      {
+        // Convert response data to partial rest response.
+        final PartialRestResponse response = _responseHandler.buildPartialResponse(_method, responseData);
+        // Invoke the callback.
+        _callback.onSuccess(_responseHandler.buildResponse(_method, response), executionReport);
+      }
     }
     catch (Exception e)
     {
@@ -129,30 +109,46 @@ public class RestLiCallback<T> implements RequestExecutionCallback<T>
       _callback.onError(e, executionReport);
       return;
     }
-    Throwable exception = e;
-    AugmentedRestLiResponseData responseData = convertExceptionToRestLiResponseData(exception);
+
+    final AugmentedRestLiResponseData responseData = convertExceptionToRestLiResponseData(e);
     // Invoke the response filters.
     if (_responseFilters != null && !_responseFilters.isEmpty())
     {
-      // Construct the filter response context from the partial response.
-      FilterResponseContextInternal responseContext = new FilterResponseContextAdapter(responseData);
-      try
-      {
-        // Invoke response filters.
-        invokeResponseFilters(responseContext);
-      }
-      catch (RuntimeException ex)
-      {
-        // Update the exception that we are processing to the one thrown by the filter.
-        exception = ex;
-      }
-      // Update the response data based on what's returned by the filters.
-      responseData = responseContext.getAugmentedRestLiResponseData();
+      invokeFiltersAndProcessResults(executionReport, responseData, e);
     }
-    // Invoke the callback.
-    _callback.onError(_responseHandler.buildRestException(exception,
-                                                          _responseHandler.buildPartialResponse(_method, responseData)),
-                      executionReport);
+    else
+    {
+      // Invoke the callback with the exception obtained from the resource.
+      _callback.onError(_responseHandler.buildRestException(e, _responseHandler.buildPartialResponse(_method,
+                                                                                                     responseData)),
+                        executionReport);
+    }
+  }
+
+  private void invokeFiltersAndProcessResults(RequestExecutionReport executionReport,
+                                              final AugmentedRestLiResponseData responseData,
+                                              final Throwable appEx)
+  {
+    // Construct the filter response context from the partial response.
+    final FilterResponseContextInternal responseContext = new FilterResponseContextAdapter(responseData);
+    try
+    {
+      invokeResponseFilters(responseContext, appEx);
+      // Invoke onSuccess on the R2 callback since the response from the resource was
+      // successfully processed by the filters.
+      // Convert response data to partial rest response.
+      final PartialRestResponse response = _responseHandler.buildPartialResponse(_method, responseContext.getAugmentedRestLiResponseData());
+      // Invoke the callback.
+      _callback.onSuccess(_responseHandler.buildResponse(_method, response), executionReport);
+    }
+    catch (Throwable e)
+    {
+      // Invoke onError on the R2 callback since we received an exception from the filters.
+      _callback.onError(_responseHandler.buildRestException(e,
+                                                            _responseHandler.buildPartialResponse(_method,
+                                                                                                  responseContext.getAugmentedRestLiResponseData())),
+                        executionReport);
+    }
   }
 
   private RestException toRestException(final Throwable e)
@@ -189,27 +185,28 @@ public class RestLiCallback<T> implements RequestExecutionCallback<T>
     return _responseHandler.buildErrorResponseData(_request, _method, restLiServiceException, headers);
   }
 
-  private void invokeResponseFilters(final FilterResponseContextInternal responseContext)
+  private void invokeResponseFilters(final FilterResponseContextInternal responseContext, Throwable lastException) throws Throwable
   {
-    // Reference to the last exception thrown from the filter chain.
-    RuntimeException lastException = null;
     for (ResponseFilter filter : _responseFilters)
     {
       try
       {
         filter.onResponse(_filterRequestContext, responseContext);
-        // This filter has successfully handled the exception that was thrown earlier by the
-        // previous filter, if any. Therefore, clear the last exception.
-        lastException = null;
+        // Check whether this filter successfully handled the last exception. If yes, clear the
+        // last exception.
+        if (!responseContext.getAugmentedRestLiResponseData().isErrorResponse())
+        {
+          lastException = null;
+        }
       }
-      catch (RuntimeException ex)
+      catch (Exception ex)
       {
         // Save the latest exception that's thrown from the filter.
         lastException = ex;
         responseContext.setAugmentedRestLiResponseData(convertExceptionToRestLiResponseData(ex));
       }
     }
-    // If an exception was thrown by the last filter in the filter chain, rethrow it.
+    // Rethrow the lastException if it's not null.
     if (lastException != null)
     {
       throw lastException;

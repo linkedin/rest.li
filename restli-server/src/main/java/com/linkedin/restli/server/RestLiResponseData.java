@@ -87,15 +87,6 @@ public interface RestLiResponseData
   ErrorResponse getErrorResponse();
 
   /**
-   * Set the error response. As a side effect of this operation, other responses (collection, batch,
-   * and simple) will be cleared.
-   *
-   * @param errorResponse
-   *          New value of the error response.
-   */
-  void setErrorResponse(ErrorResponse errorResponse);
-
-  /**
    * Obtain a mutable {@link List} of response entities.
    *
    * @return List of response entities if they exists; else null.

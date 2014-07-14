@@ -132,18 +132,6 @@ public class AugmentedRestLiResponseData implements RestLiResponseData
   }
 
   @Override
-  public void setErrorResponse(ErrorResponse errorResponse)
-  {
-    Validate.notNull(errorResponse);
-    _errorResponse = errorResponse;
-    _entity = null;
-    _entities = null;
-    _collectionResponseCustomMetadata = null;
-    _paging = null;
-    _keyEntityMap = null;
-  }
-
-  @Override
   public List<? extends RecordTemplate> getCollectionResponse()
   {
     return _entities;

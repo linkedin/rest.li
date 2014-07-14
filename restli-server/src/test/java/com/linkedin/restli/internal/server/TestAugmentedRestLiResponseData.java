@@ -137,10 +137,6 @@ public class TestAugmentedRestLiResponseData
         throw e;
       }
     }
-    ErrorResponse error = new ErrorResponse(rt.data());
-    responseData.setErrorResponse(error);
-    assertNull(responseData.getEntityResponse());
-    assertEquals(responseData.getErrorResponse(), error);
   }
 
   @Test(dataProvider = "builderDataProvider")
