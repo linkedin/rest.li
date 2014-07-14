@@ -14,7 +14,7 @@ Features
 --------
 
 * [End-to-end framework](https://github.com/linkedin/rest.li/wiki/Rest.li-User-Guide#development-flow) for building RESTful APIs
-* Approachable APIs for writing non-blocking client and server code using [ParSeq](http://rest.li/github.com/linkedin/parseq)
+* Approachable APIs for writing non-blocking client and server code using [ParSeq](https://github.com/linkedin/parseq)
 * Type-safe development using generated data and client bindings
 * [JAX-RS](http://en.wikipedia.org/wiki/Java_API_for_RESTful_Web_Services) inspired annotation driven server side resource development
 * Engineered and battle tested for high scalability and high availability
