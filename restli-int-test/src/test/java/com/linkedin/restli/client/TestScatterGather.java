@@ -25,6 +25,7 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
+import com.linkedin.d2.balancer.util.AllPartitionsMultipleHostsResult;
 import com.linkedin.d2.balancer.util.MapKeyHostPartitionResult;
 import com.linkedin.d2.balancer.util.hashing.ConsistentHashKeyMapper;
 import com.linkedin.d2.balancer.util.hashing.ConsistentHashRing;
@@ -107,6 +108,14 @@ public class TestScatterGather extends RestLiIntegrationTest
     @Override
     public PartitionAccessor getPartitionAccessor(URI serviceUri)
       throws ServiceUnavailableException
+    {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public AllPartitionsMultipleHostsResult<URI> getAllPartitionMultipleHosts(URI serviceUri, int numHostPerPartition,
+        HashProvider hashProvider)
+        throws ServiceUnavailableException
     {
       throw new UnsupportedOperationException();
     }

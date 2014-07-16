@@ -28,6 +28,7 @@ import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
+import com.linkedin.d2.balancer.util.AllPartitionsMultipleHostsResult;
 import com.linkedin.d2.balancer.util.AllPartitionsResult;
 import com.linkedin.d2.balancer.util.HostToKeyMapper;
 import com.linkedin.d2.balancer.util.HostToKeyResult;
@@ -39,6 +40,7 @@ import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
 import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
+import java.util.Arrays;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -174,149 +176,12 @@ public class ConsistentHashKeyMapperTest
 
     //setup strategy which involves tweaking the hash ring to get partitionId -> URI host
     List<LoadBalancerState.SchemeStrategyPair> orderedStrategies = new ArrayList<LoadBalancerState.SchemeStrategyPair>();
-    LoadBalancerStrategy strategy = new LoadBalancerStrategy()
-    {
-      @Override
-      public TrackerClient getTrackerClient(Request request,
-                                            RequestContext requestContext,
-                                            long clusterGenerationId,
-                                            int partitionId,
-                                            List<TrackerClient> trackerClients)
-      {
-        throw new UnsupportedOperationException();
-      }
-
-      //for partition 0
-      Map<URI, Integer> pointsMap1 = new HashMap<URI, Integer>();
-
-      //for partition 1
-      Map<URI, Integer> pointsMap2 = new HashMap<URI, Integer>();
-
-      //for partition 3 and 4
-      Map<URI, Integer> pointsMap3 = new HashMap<URI, Integer>();
-
-      @Override
-      public Ring<URI> getRing(long clusterGenerationId, int partitionId, List<TrackerClient> trackerClients)
-      {
-        //partition 0
-        pointsMap1.put(foo1, 100);
-        pointsMap1.put(foo3, 100);
-
-        //partition 1
-        pointsMap2.put(foo5, 100);
-        pointsMap2.put(foo4, 100);
-        pointsMap2.put(foo6, 100);
-
-        //partition 3 and 4
-        pointsMap3.put(foo2, 100);
-
-        if (partitionId == 0)
-        {
-          return new ConsistentHashRing<URI>(pointsMap1);
-        }
-        else if (partitionId == 1)
-        {
-          return new ConsistentHashRing<URI>(pointsMap2);
-        }
-        else if (partitionId == 3 || partitionId == 4)
-        {
-          return new ConsistentHashRing<URI>(pointsMap3);
-        }
-        else
-        {
-          return new ConsistentHashRing<URI>(new HashMap<URI, Integer>());
-        }
-      }
-
-      @Override
-      public Ring<URI> getRing(long clusterGenerationId,
-                               int partitionId,
-                               List<TrackerClient> trackerClients,
-                               List<URI> excludedURIs)
-      {
-        Map<URI, Integer> map;
-        if (partitionId == 0)
-        {
-          map = new HashMap<URI, Integer>(pointsMap1);
-          for (URI uri : excludedURIs)
-          {
-            map.remove(uri);
-          }
-          return new ConsistentHashRing<URI>(map);
-        }
-        else if (partitionId == 1)
-        {
-          map = new HashMap<URI, Integer>(pointsMap2);
-          for (URI uri : excludedURIs)
-          {
-            map.remove(uri);
-          }
-          return new ConsistentHashRing<URI>(map);
-        }
-        else if (partitionId == 3 || partitionId == 4)
-        {
-          map = new HashMap<URI, Integer>(pointsMap3);
-          for (URI uri : excludedURIs)
-          {
-            map.remove(uri);
-          }
-          return new ConsistentHashRing<URI>(pointsMap3);
-        }
-        else
-        {
-          return new ConsistentHashRing<URI>(new HashMap<URI, Integer>());
-        }
-      }
-    };
+    LoadBalancerStrategy strategy = new TestLoadBalancerStrategy(partitionDescriptions);
 
     orderedStrategies.add(new LoadBalancerState.SchemeStrategyPair("http", strategy));
 
     //setup the partition accessor which is used to get partitionId -> keys
-    PartitionAccessor accessor = new PartitionAccessor()
-    {
-
-      @Override
-      public int getPartitionId(URI uri)
-          throws PartitionAccessException
-      {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public int getPartitionId(String key)
-          throws PartitionAccessException
-      {
-        Integer i = Integer.parseInt(key);
-        if (i >= 1 && i <=3)
-        {
-          return 0;
-        }
-        else if (i >= 4 && i <=6)
-        {
-          return 1;
-        }
-        else if (i >= 7 && i <= 9)
-        {
-          return 2;
-        }
-        else if (i >= 10 && i <= 12)
-        {
-          return 3;
-        }
-        else if (i >= 13 && i <= 15)
-        {
-          return 4;
-        }
-        else
-          throw new PartitionAccessException("No partition for this");
-      }
-
-      @Override
-      public int getMaxPartitionId()
-      {
-        throw new UnsupportedOperationException();
-      }
-    };
+    PartitionAccessor accessor = new TestPartitionAccessor();
 
     URI serviceURI = new URI("d2://" + serviceName);
     SimpleLoadBalancer balancer = new SimpleLoadBalancer(new PartitionedLoadBalancerTestState(
@@ -358,6 +223,173 @@ public class ConsistentHashKeyMapperTest
     Assert.assertEquals(100, numOfMatch);
   }
 
+  /**
+   * Test getAllPartitionsMultipleHosts API
+   * We create a fake d2 service with a set of partitions and replicas for the partitions.
+   * For the test scenario let's assume:
+   * We have a d2 service called "articles". Articles is split into 4 partitions.
+   * Partition 0 is hosted in foo1.com and foo3.com
+   * Partition 1 is hosted in foo5.com, foo6.com and foo4.com.
+   * Partition 2 has no hosts
+   * Partition 3 is hosted in foo2.com
+   * partition 4 is hosted in foo2.com
+   *
+   * Once we have this, we invoke getAllPartitionsMultipleHosts asking for 2 hosts per partition.
+   * We ensure that the total number of available + unavailable partitions is 2 for each partition.
+   * We do a similar thing for getAllPartitionsMultipleHosts with sticky key and additionally ensure
+   * that calling the same API with the same sticky key results in the same ordering of the hosts.
+   *
+   * @throws Exception
+   */
+  @Test
+  public void testAllPartitionsMultipleHost()
+      throws Exception
+  {
+
+    String serviceName = "articles";
+    String clusterName = "cluster";
+    String path = "path";
+    String strategyName = "degrader";
+
+    //setup partition
+    Map<URI,Map<Integer, PartitionData>> partitionDescriptions = new HashMap<URI, Map<Integer, PartitionData>>();
+
+    final URI foo1 = new URI("http://foo1.com");
+    Map<Integer, PartitionData> foo1Data = new HashMap<Integer, PartitionData>();
+    foo1Data.put(0, new PartitionData(1.0));
+    partitionDescriptions.put(foo1, foo1Data);
+
+    final URI foo2 = new URI("http://foo2.com");
+    Map<Integer, PartitionData> foo2Data = new HashMap<Integer, PartitionData>();
+    foo2Data.put(3, new PartitionData(1.0));
+    foo2Data.put(4, new PartitionData(1.0));
+    partitionDescriptions.put(foo2, foo2Data);
+
+    final URI foo3 = new URI("http://foo3.com");
+    Map<Integer, PartitionData> foo3Data = new HashMap<Integer, PartitionData>();
+    foo3Data.put(0, new PartitionData(1.0));
+    partitionDescriptions.put(foo3, foo3Data);
+
+    final URI foo4 = new URI("http://foo4.com");
+    Map<Integer, PartitionData> foo4Data = new HashMap<Integer, PartitionData>();
+    foo4Data.put(1, new PartitionData(1.0));
+    partitionDescriptions.put(foo4, foo4Data);
+
+    final URI foo5 = new URI("http://foo5.com");
+    Map<Integer, PartitionData> foo5Data = new HashMap<Integer, PartitionData>();
+    foo5Data.put(1, new PartitionData(1.0));
+    partitionDescriptions.put(foo5, foo5Data);
+
+    final URI foo6 = new URI("http://foo6.com");
+    Map<Integer, PartitionData> foo6Data = new HashMap<Integer, PartitionData>();
+    foo6Data.put(1, new PartitionData(1.0));
+    partitionDescriptions.put(foo6, foo6Data);
+
+    //setup strategy which involves tweaking the hash ring to get partitionId -> URI host
+    List<LoadBalancerState.SchemeStrategyPair> orderedStrategies = new ArrayList<LoadBalancerState.SchemeStrategyPair>();
+    LoadBalancerStrategy strategy = new TestLoadBalancerStrategy(partitionDescriptions);
+
+    orderedStrategies.add(new LoadBalancerState.SchemeStrategyPair("http", strategy));
+
+    //setup the partition accessor which is used to get partitionId -> keys
+    PartitionAccessor accessor = new TestPartitionAccessor();
+
+    URI serviceURI = new URI("d2://" + serviceName);
+    SimpleLoadBalancer balancer = new SimpleLoadBalancer(new PartitionedLoadBalancerTestState(
+        clusterName, serviceName, path, strategyName, partitionDescriptions, orderedStrategies,
+        accessor
+    ));
+
+    ConsistentHashKeyMapper mapper = new ConsistentHashKeyMapper(balancer, balancer);
+    int numHost = 2;
+    AllPartitionsMultipleHostsResult<URI> result = mapper.getAllPartitionsMultipleHosts(serviceURI, numHost);
+    verifyAllPartitionMultipleHostResult(result, numHost);
+    //test stickiness
+    String myStickyKey = "sticky";
+    AllPartitionsMultipleHostsResult<URI> originalResult = mapper.getAllPartitionsMultipleHosts(serviceURI, numHost, myStickyKey);
+    verifyAllPartitionMultipleHostResult(originalResult, numHost);
+    int numOfMatch = 0;
+    for (int i = 0; i < 100; i++)
+    {
+      result = mapper.getAllPartitionsMultipleHosts(serviceURI, numHost, myStickyKey);
+      verifyAllPartitionMultipleHostResult(result, numHost);
+      if (verifyResultsEqual(originalResult, result))
+      {
+        numOfMatch++;
+      }
+    }
+    Assert.assertEquals(100, numOfMatch);
+  }
+
+  private boolean verifyResultsEqual(AllPartitionsMultipleHostsResult<URI> originalResult,
+      AllPartitionsMultipleHostsResult<URI> result)
+  {
+    if (originalResult.getPartitionCount() != result.getPartitionCount())
+    {
+      return false;
+    }
+    if (!originalResult.getPartitionsWithoutEnoughHosts().equals(result.getPartitionsWithoutEnoughHosts()))
+    {
+      return false;
+    }
+    for (int i = 0; i < originalResult.getPartitionCount(); i++)
+    {
+      if (!originalResult.getPartitionInfo(i).equals(result.getPartitionInfo(i)))
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private void verifyAllPartitionMultipleHostResult(AllPartitionsMultipleHostsResult<URI> result, int numHost) {
+    Assert.assertEquals(5, result.getPartitionCount());
+    Map<Integer, Integer> partitionToHostsCount = new HashMap<Integer, Integer>();
+    for (int i = 0; i < result.getPartitionCount(); i++)
+    {
+      partitionToHostsCount.put(i, result.getPartitionInfo(i).size());
+    }
+
+    for (Map.Entry<Integer, Integer> partitionToUnavailableHostCount : result.getPartitionsWithoutEnoughHosts().entrySet())
+    {
+      if (partitionToHostsCount.containsKey(partitionToUnavailableHostCount.getKey()))
+      {
+        partitionToHostsCount.put(partitionToUnavailableHostCount.getKey(),
+            partitionToHostsCount.get(partitionToUnavailableHostCount.getKey()) + partitionToUnavailableHostCount.getValue());
+      }
+      else
+      {
+        partitionToHostsCount.put(partitionToUnavailableHostCount.getKey(), partitionToUnavailableHostCount.getValue());
+      }
+    }
+
+    for (Map.Entry<Integer, Integer> partitionToHost : partitionToHostsCount.entrySet())
+    {
+      Assert.assertEquals(numHost, partitionToHost.getValue().intValue());
+    }
+
+    /* We have a d2 service called "articles". Articles is split into 4 partitions.
+        * Partition 0 is hosted in foo1.com and foo3.com
+        * Partition 1 is hosted in foo5.com, foo6.com and foo4.com.
+        * Partition 2 has no hosts
+        * Partition 3 is hosted in foo2.com
+        * partition 4 is hosted in foo2.com */
+
+    try {
+      Assert.assertTrue(
+          Arrays.asList(new URI[]{new URI("http://foo1.com"), new URI("http://foo3.com")}).containsAll(result.getPartitionInfo(0)));
+      Assert.assertTrue(
+          Arrays.asList(new URI[]{new URI("http://foo5.com"), new URI("http://foo4.com"), new URI("http://foo6.com")}).containsAll(result.getPartitionInfo(1)));
+      Assert.assertEquals(result.getPartitionInfo(3).toArray(),
+          new URI[]{new URI("http://foo2.com")});
+      Assert.assertEquals(result.getPartitionInfo(4).toArray(),
+          new URI[]{new URI("http://foo2.com")});
+    }
+    catch (URISyntaxException e)
+    {
+    }
+  }
+
   private Map<Integer, List<URI>> getOrderingOfHostsForEachKey(HostToKeyMapper<Integer> result, int numHost)
   {
     Map<Integer, List<URI>> keyToHosts = new HashMap<Integer, List<URI>>();
@@ -383,12 +415,12 @@ public class ConsistentHashKeyMapperTest
   }
 
   private void verifyMapKeyResultWithHost(HostToKeyMapper<Integer> result,
-                                          URI foo1,
-                                          URI foo2,
-                                          URI foo3,
-                                          URI foo4,
-                                          URI foo5,
-                                          URI foo6)
+      URI foo1,
+      URI foo2,
+      URI foo3,
+      URI foo4,
+      URI foo5,
+      URI foo6)
   {
     Assert.assertNotNull(result);
 
@@ -398,7 +430,7 @@ public class ConsistentHashKeyMapperTest
     Assert.assertEquals(firstIteration.getUnmappedKeys().size(), 2);
 
     Assert.assertTrue(firstIteration.getUnmappedKeys().contains(new HostToKeyResult.UnmappedKey<Integer>(9,
-                                                                                                     HostToKeyResult.ErrorType.NO_HOST_AVAILABLE_IN_PARTITION)));
+        HostToKeyResult.ErrorType.NO_HOST_AVAILABLE_IN_PARTITION)));
     Assert.assertTrue(firstIteration.getUnmappedKeys().contains(new HostToKeyResult.UnmappedKey<Integer>(16, HostToKeyResult.ErrorType.FAIL_TO_FIND_PARTITION)));
     Collection<KeysAndHosts<Integer>> mapResult = firstIteration.getMapResult();
     Assert.assertNotNull(mapResult);
@@ -601,10 +633,10 @@ public class ConsistentHashKeyMapperTest
     {
       @Override
       public TrackerClient getTrackerClient(Request request,
-                                            RequestContext requestContext,
-                                            long clusterGenerationId,
-                                            int partitionId,
-                                            List<TrackerClient> trackerClients)
+          RequestContext requestContext,
+          long clusterGenerationId,
+          int partitionId,
+          List<TrackerClient> trackerClients)
       {
         throw new UnsupportedOperationException();
       }
@@ -641,9 +673,9 @@ public class ConsistentHashKeyMapperTest
 
       @Override
       public Ring<URI> getRing(long clusterGenerationId,
-                                       int partitionId,
-                                       List<TrackerClient> trackerClients,
-                                       List<URI> excludedURIs)
+          int partitionId,
+          List<TrackerClient> trackerClients,
+          List<URI> excludedURIs)
       {
         Map<URI, Integer> map;
         if (partitionId == 0)
@@ -763,9 +795,9 @@ public class ConsistentHashKeyMapperTest
   }
 
   private void verifyPartitionResult(MapKeyHostPartitionResult<Integer> result,
-                                     int numHost,
-                                     List<URI> partition0Host,
-                                     List<URI> partition1Host)
+      int numHost,
+      List<URI> partition0Host,
+      List<URI> partition1Host)
   {
     Assert.assertNotNull(result);
     Collection<Integer> unmappedKeys = result.getUnmappedKeys();
@@ -895,7 +927,7 @@ public class ConsistentHashKeyMapperTest
   }
 
   private void checkBatchLoad(Set<Integer> keys, Map<URI, Set<Integer>> batchedKeys,
-                                  double expectedLoad)
+      double expectedLoad)
   {
     for (Set<Integer> batch : batchedKeys.values())
     {
@@ -951,7 +983,7 @@ public class ConsistentHashKeyMapperTest
     Set<Integer> keys = getRandomKeys(100);
     Map<URI, Set<Integer>> batchedKeys = mapKeys(batcher, URI.create("d2://fooservice/"), keys);
     checkBatchCoverage(keys, batchedKeys);
-    checkBatchLoad(keys, batchedKeys, 1.0/1000.0);
+    checkBatchLoad(keys, batchedKeys, 1.0 / 1000.0);
   }
 
   @Test
@@ -1072,9 +1104,9 @@ public class ConsistentHashKeyMapperTest
 
     @Override
     public <K> MapKeyHostPartitionResult<K> getPartitionInformation(URI serviceUri,
-                                                                          Collection<K> keys,
-                                                                          int limitHostPerPartition,
-                                                                          HashProvider hashProvider)
+        Collection<K> keys,
+        int limitHostPerPartition,
+        HashProvider hashProvider)
         throws ServiceUnavailableException
     {
       throw new UnsupportedOperationException();
@@ -1082,6 +1114,14 @@ public class ConsistentHashKeyMapperTest
 
     @Override
     public PartitionAccessor getPartitionAccessor(URI serviceUri)
+        throws ServiceUnavailableException
+    {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public AllPartitionsMultipleHostsResult<URI> getAllPartitionMultipleHosts(URI serviceUri, int numHostPerPartition,
+        HashProvider hashProvider)
         throws ServiceUnavailableException
     {
       throw new UnsupportedOperationException();
@@ -1116,6 +1156,115 @@ public class ConsistentHashKeyMapperTest
     return new ConsistentHashKeyMapper(new StaticRingProvider(rings), new TestPartitionInfoProvider());
   }
 
+  private class TestLoadBalancerStrategy implements LoadBalancerStrategy
+  {
+    Map<Integer, Map<URI, Integer>> _partitionData;
 
+    public TestLoadBalancerStrategy(Map<URI, Map<Integer, PartitionData>> partitionDescriptions) {
+      _partitionData = new HashMap<Integer, Map<URI, Integer>>();
+      for (Map.Entry<URI, Map<Integer, PartitionData>> uriPartitionPair : partitionDescriptions.entrySet())
+      {
+        for (Map.Entry<Integer, PartitionData> partitionData : uriPartitionPair.getValue().entrySet())
+        {
+          if (!_partitionData.containsKey(partitionData.getKey()))
+          {
+            _partitionData.put(partitionData.getKey(), new HashMap<URI, Integer>());
+          }
+          _partitionData.get(partitionData.getKey()).put(uriPartitionPair.getKey(), 100);
+        }
+      }
+    }
 
+    @Override
+    public TrackerClient getTrackerClient(Request request,
+        RequestContext requestContext,
+        long clusterGenerationId,
+        int partitionId,
+        List<TrackerClient> trackerClients)
+    {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Ring<URI> getRing(long clusterGenerationId, int partitionId, List<TrackerClient> trackerClients)
+    {
+      if (_partitionData.containsKey(partitionId))
+      {
+        return new ConsistentHashRing<URI>(_partitionData.get(partitionId));
+      }
+      else
+      {
+        return new ConsistentHashRing<URI>(new HashMap<URI, Integer>());
+      }
+    }
+
+    @Override
+    public Ring<URI> getRing(long clusterGenerationId,
+        int partitionId,
+        List<TrackerClient> trackerClients,
+        List<URI> excludedURIs)
+    {
+      Map<URI, Integer> map;
+      if (_partitionData.containsKey(partitionId))
+      {
+        map = new HashMap<URI, Integer>(_partitionData.get(partitionId));
+        for (URI uri : excludedURIs)
+        {
+          map.remove(uri);
+        }
+        return new ConsistentHashRing<URI>(map);
+      }
+      else
+      {
+        return new ConsistentHashRing<URI>(new HashMap<URI, Integer>());
+      }
+    }
+  }
+
+  private class TestPartitionAccessor implements PartitionAccessor
+  {
+
+    @Override
+    public int getPartitionId(URI uri)
+        throws PartitionAccessException
+    {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public int getPartitionId(String key)
+        throws PartitionAccessException
+    {
+      Integer i = Integer.parseInt(key);
+      if (i >= 1 && i <=3)
+      {
+        return 0;
+      }
+      else if (i >= 4 && i <=6)
+      {
+        return 1;
+      }
+      else if (i >= 7 && i <= 9)
+      {
+        return 2;
+      }
+      else if (i >= 10 && i <= 12)
+      {
+        return 3;
+      }
+      else if (i >= 13 && i <= 15)
+      {
+        return 4;
+      }
+      else
+        throw new PartitionAccessException("No partition for this");
+    }
+
+    @Override
+    public int getMaxPartitionId()
+    {
+      return 4;
+    }
+
+  }
 }

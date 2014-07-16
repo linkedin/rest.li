@@ -29,6 +29,7 @@ import com.linkedin.d2.balancer.LoadBalancer;
 import com.linkedin.d2.balancer.LoadBalancerWithFacilities;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
+import com.linkedin.d2.balancer.util.AllPartitionsMultipleHostsResult;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.DirectoryProvider;
 import com.linkedin.d2.balancer.util.KeyMapperProvider;
@@ -399,6 +400,15 @@ public class ZKFSLoadBalancer
   {
     checkLoadBalancer();
     return ((HashRingProvider)_currentLoadBalancer).getRings(serviceUri);
+  }
+
+  @Override
+  public AllPartitionsMultipleHostsResult<URI> getAllPartitionMultipleHosts(URI serviceUri, int numHostPerPartition,
+      HashProvider hashProvider) throws ServiceUnavailableException
+  {
+    checkPartitionInfoProvider();
+    return ((PartitionInfoProvider)_currentLoadBalancer).getAllPartitionMultipleHosts(serviceUri, numHostPerPartition,
+        hashProvider);
   }
 
   public void checkLoadBalancer()

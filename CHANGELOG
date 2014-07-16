@@ -1,5 +1,12 @@
+1.19.3
+-----
+
+
 1.19.2
 ------
+(RB=330658)
+Add API to get multiple hosts from all partitions
+
 (RB=327432)
 remove checkPathValue from idl/snapshot backwards compatibility checks.
 Paths are now expected to be identical.

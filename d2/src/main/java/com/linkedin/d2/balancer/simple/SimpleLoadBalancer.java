@@ -33,6 +33,7 @@ import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
+import com.linkedin.d2.balancer.util.AllPartitionsMultipleHostsResult;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.KeysAndHosts;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
@@ -424,6 +425,72 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
 
     return clusterItem.getProperty();
+  }
+
+  @Override
+  public AllPartitionsMultipleHostsResult<URI> getAllPartitionMultipleHosts(URI serviceUri, int numHostPerPartition,
+      HashProvider hashProvider)
+      throws ServiceUnavailableException
+  {
+    if (numHostPerPartition <= 0)
+    {
+      throw new IllegalArgumentException("limitHostPartition cannot be 0 or less");
+    }
+    ServiceProperties service = listenToServiceAndCluster(serviceUri);
+    String serviceName = service.getServiceName();
+    String clusterName = service.getClusterName();
+    ClusterProperties cluster = getClusterProperties(serviceName, clusterName);
+
+    LoadBalancerStateItem<UriProperties> uriItem = getUriItem(serviceName, clusterName, cluster);
+    UriProperties uris = uriItem.getProperty();
+
+    List<LoadBalancerState.SchemeStrategyPair> orderedStrategies =
+        _state.getStrategiesForService(serviceName, service.getPrioritizedSchemes());
+    Map<Integer, Integer> partitionWithoutEnoughHost = new HashMap<Integer, Integer>();
+    int maxPartitionId = 0;
+
+    //get the partitionId -> host URIs list
+    Map<Integer, List<URI>> hostList = new HashMap<Integer, List<URI>>();
+    if (! orderedStrategies.isEmpty())
+    {
+      final LoadBalancerState.SchemeStrategyPair pair = orderedStrategies.get(0);
+      final PartitionAccessor accessor = getPartitionAccessor(serviceName, clusterName);
+      maxPartitionId = accessor.getMaxPartitionId();
+      for (int partitionId = 0; partitionId <= maxPartitionId; partitionId++)
+      {
+        Set<URI> possibleUris = uris.getUriBySchemeAndPartition(pair.getScheme(), partitionId);
+        List<TrackerClient> trackerClients = getPotentialClients(serviceName, service, possibleUris);
+        List<URI> rankedUri = new ArrayList<URI>();
+        int size = trackerClients.size() <= numHostPerPartition ? trackerClients.size() : numHostPerPartition;
+
+        Ring<URI> ring = pair.getStrategy().getRing(uriItem.getVersion(), partitionId, trackerClients);
+
+        for (int i = 0; i < size; i++)
+        {
+          URI uri = ring.get(hashProvider.nextHash());
+          if (uri == null)
+          {
+            //that means there is no longer valid URI in the ring
+            break;
+          }
+          rankedUri.add(uri);
+          if (rankedUri.size() < trackerClients.size())
+          {
+            ring = pair.getStrategy().getRing(uriItem.getVersion(), partitionId, trackerClients, rankedUri);
+          }
+        }
+        hostList.put(partitionId, rankedUri);
+        if (rankedUri.size() < numHostPerPartition)
+        {
+          partitionWithoutEnoughHost.put(partitionId, numHostPerPartition - rankedUri.size());
+        }
+      }
+    }
+    else
+    {
+      throw new ServiceUnavailableException(serviceName, "Unable to find a load balancer strategy");
+    }
+    return new AllPartitionsMultipleHostsResult<URI>(hostList, maxPartitionId + 1, partitionWithoutEnoughHost);
   }
 
   @Override

@@ -22,6 +22,7 @@ package com.linkedin.d2.balancer.util.hashing;
 
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
+import com.linkedin.d2.balancer.util.AllPartitionsMultipleHostsResult;
 import com.linkedin.d2.balancer.util.AllPartitionsResult;
 import com.linkedin.d2.balancer.util.HostToKeyMapper;
 import com.linkedin.d2.balancer.util.MapKeyHostPartitionResult;
@@ -108,6 +109,38 @@ public class ConsistentHashKeyMapper implements KeyMapper
     }
 
     return new AllPartitionsResult<URI>(hostUris, ringMap.size(), missingPartitions);
+  }
+
+  @Override
+  public AllPartitionsMultipleHostsResult<URI> getAllPartitionsMultipleHosts(URI serviceUri, int numHostPerPartition)
+      throws ServiceUnavailableException
+  {
+    if (_partitionInfoProvider == null)
+    {
+      throw new UnsupportedOperationException("This method is unavailable if partitionInfoProvider is not provided.");
+    }
+    final Random random = new Random();
+    return _partitionInfoProvider.getAllPartitionMultipleHosts(serviceUri, numHostPerPartition,
+        new PartitionInfoProvider.HashProvider() {
+          @Override
+          public int nextHash() {
+            return random.nextInt();
+          }
+        });
+  }
+
+  @Override
+  public <S> AllPartitionsMultipleHostsResult<URI> getAllPartitionsMultipleHosts(URI serviceUri,
+                                                                                    int limitHostPerPartition,
+                                                                                    final S stickyKey)
+      throws ServiceUnavailableException
+  {
+    if (_partitionInfoProvider == null)
+    {
+      throw new UnsupportedOperationException("This method is unavailable if partitionInfoProvider is not provided.");
+    }
+    return _partitionInfoProvider.getAllPartitionMultipleHosts(serviceUri, limitHostPerPartition,
+        new StickyKeyHashProvider<S>(stickyKey));
   }
 
   /**
@@ -207,43 +240,7 @@ public class ConsistentHashKeyMapper implements KeyMapper
       throw new UnsupportedOperationException("This method is unavailable if partitionInfoProvider is not provided.");
     }
     return _partitionInfoProvider.getPartitionInformation(serviceURI, keys, limitNumHostsPerPartition,
-                  new PartitionInfoProvider.HashProvider()
-                  {
-                    /*
-                    we keep a circular string tokens for md5 hash.
-                    every call to nextHash will update this array index from 0->1->2...->9->0->1
-                    for example we have key = "key".
-                    So at the 1st iteration we have
-                    ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
-                    we insert key
-                    ["key", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
-                    hash it to get 392801752083
-                    then we replace key with 392801752083
-                    ["392801752083","2", "3", "4", "5", "6", "7", "8", "9", "10"]
-
-                    next iteration #2
-                    ["392801752083", "key", "3", "4", "5", "6", "7", "8", "9", "10"]
-                    hash it to get 875872391
-                    then replace key with 875872391
-                    ["392801752083", "875872391", "3", "4", "5", "6", "7", "8", "9", "10"]
-
-                    eventually all the number will be replaced and at 11th iteration, we replace the first element
-                    that is "392801752083" with the next hash and so on.
-                    */
-                    String[] _lastToken = new String[]{ "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"};
-                    int _lastIndex = 0;
-
-                    @Override
-                    public int nextHash()
-                    {
-                      _lastToken[_lastIndex] = stickyKey.toString();
-                      int result = _hashFunction.hash(_lastToken);
-                      _lastToken[_lastIndex] = Integer.toString(result);
-                      _lastIndex ++;
-                      _lastIndex = _lastIndex % _lastToken.length;
-                      return result;
-                    }
-                  });
+        new StickyKeyHashProvider<S>(stickyKey));
   }
 
   @Deprecated
@@ -371,4 +368,47 @@ public class ConsistentHashKeyMapper implements KeyMapper
     return new MapKeyResult<URI, K>(result, unmappedKeys);
   }
 
+  private class StickyKeyHashProvider<S> implements PartitionInfoProvider.HashProvider
+  {
+    private final S _stickyKey;
+    String[] _lastToken = new String[]{ "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"};
+    int _lastIndex = 0;
+
+    public StickyKeyHashProvider(S stickyKey) {
+      _stickyKey = stickyKey;
+    }
+
+    @Override
+    public int nextHash()
+    {
+      /*
+      we keep a circular string tokens for md5 hash.
+      every call to nextHash will update this array index from 0->1->2...->9->0->1
+      for example we have key = "key".
+      So at the 1st iteration we have
+      ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+      we insert key
+      ["key", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+      hash it to get 392801752083
+      then we replace key with 392801752083
+      ["392801752083","2", "3", "4", "5", "6", "7", "8", "9", "10"]
+
+      next iteration #2
+      ["392801752083", "key", "3", "4", "5", "6", "7", "8", "9", "10"]
+      hash it to get 875872391
+      then replace key with 875872391
+      ["392801752083", "875872391", "3", "4", "5", "6", "7", "8", "9", "10"]
+
+      eventually all the number will be replaced and at 11th iteration, we replace the first element
+      that is "392801752083" with the next hash and so on.
+      */
+
+      _lastToken[_lastIndex] = _stickyKey.toString();
+      int result = _hashFunction.hash(_lastToken);
+      _lastToken[_lastIndex] = Integer.toString(result);
+      _lastIndex ++;
+      _lastIndex = _lastIndex % _lastToken.length;
+      return result;
+    }
+  }
 }

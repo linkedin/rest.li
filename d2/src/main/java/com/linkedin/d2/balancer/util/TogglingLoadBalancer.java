@@ -116,6 +116,15 @@ public class TogglingLoadBalancer implements LoadBalancer, HashRingProvider, Cli
     return ((HashRingProvider)_balancer).getRings(serviceUri);
   }
 
+  @Override
+  public AllPartitionsMultipleHostsResult<URI> getAllPartitionMultipleHosts(URI serviceUri, int numHostPerPartition,
+      HashProvider hashProvider) throws ServiceUnavailableException
+  {
+    checkPartitionInfoProvider();
+    return ((PartitionInfoProvider)_balancer).getAllPartitionMultipleHosts(serviceUri, numHostPerPartition,
+        hashProvider);
+  }
+
   private void checkLoadBalancer()
   {
     if (_balancer == null || !(_balancer instanceof HashRingProvider))

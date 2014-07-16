@@ -20,6 +20,7 @@
 
 package com.linkedin.d2.balancer;
 
+import com.linkedin.d2.balancer.util.AllPartitionsMultipleHostsResult;
 import com.linkedin.d2.balancer.util.AllPartitionsResult;
 import com.linkedin.d2.balancer.util.HostToKeyMapper;
 import com.linkedin.d2.balancer.util.MapKeyResult;
@@ -179,6 +180,33 @@ public interface KeyMapper
    * @return {@link AllPartitionsResult}
    */
   public AllPartitionsResult<URI> getAllPartitions(URI serviceUri, int hashCode) throws ServiceUnavailableException;
+
+  /**
+   * Get host uris for each partition that is available. The number of hosts returned per partition is
+   * numHostPerPartition. The returned structure will contain the partitionId -> List of URI for that partitionId.
+   * It will also provide information about partitions that are unaviailable.
+   *
+   * @param serviceUri the service uri
+   * @param numHostPerPartition the number of hosts that we should return for each partition. Must be larger than 0.
+   * @return {@link AllPartitionsMultipleHostsResult}
+   */
+  public AllPartitionsMultipleHostsResult<URI> getAllPartitionsMultipleHosts(URI serviceUri, int numHostPerPartition)
+      throws ServiceUnavailableException;
+
+  /**
+   * Similar to the other getAllPartitionMultipleHost without stickyKey but we try to ensure the ordering of
+   * the hosts are preserved based on the provided stickyKey (provided there's no change in servers' health and membership)
+   *
+   * @param serviceUri the service uri
+   * @param limitHostPerPartition the number of hosts that we should return for each partition. Must be larger than 0.
+   * @param stickyKey used to pick a node in each partition
+   * @param <S> stickyKey type
+   * @return {@link AllPartitionsMultipleHostsResult}
+   */
+  public <S> AllPartitionsMultipleHostsResult<URI> getAllPartitionsMultipleHosts(URI serviceUri,
+                                                                                    int limitHostPerPartition,
+                                                                                    final S stickyKey)
+      throws ServiceUnavailableException;
 
   public static class TargetHostHints
   {

@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.examples;
 
+import com.linkedin.d2.balancer.util.AllPartitionsMultipleHostsResult;
 import com.linkedin.d2.balancer.util.MapKeyHostPartitionResult;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
 import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
@@ -103,6 +104,14 @@ public class TestAllPartitionsRequestBuilder extends RestLiIntegrationTest {
 
     @Override
     public PartitionAccessor getPartitionAccessor(URI serviceUri)
+        throws ServiceUnavailableException
+    {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public AllPartitionsMultipleHostsResult<URI> getAllPartitionMultipleHosts(URI serviceUri, int numHostPerPartition,
+        HashProvider hashProvider)
         throws ServiceUnavailableException
     {
       throw new UnsupportedOperationException();

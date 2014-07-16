@@ -18,6 +18,7 @@ package com.linkedin.d2.balancer.util.partitions;
 
 
 import com.linkedin.d2.balancer.ServiceUnavailableException;
+import com.linkedin.d2.balancer.util.AllPartitionsMultipleHostsResult;
 import com.linkedin.d2.balancer.util.MapKeyHostPartitionResult;
 import java.net.URI;
 import java.util.Collection;
@@ -62,6 +63,18 @@ public interface PartitionInfoProvider
    */
   public PartitionAccessor getPartitionAccessor(URI serviceUri) throws ServiceUnavailableException;
 
+  /**
+   * This method returns a mapping of each partition to the hosts that hold that partition. We return numHostPerPartition
+   * number of hosts for each partition. If so many hosts are not available then we put it into a unavailablePartitions map.
+   * @param serviceUri for example d2://articles
+   * @param numHostPerPartition Number of hosts to be returned for each partition
+   * @param hashProvider Hash provider to access elements of a ring
+   * @return AllPartitionsMultipleHostsResult<URI> that contains the partitionId to hosts mapping
+   */
+  public AllPartitionsMultipleHostsResult<URI> getAllPartitionMultipleHosts(URI serviceUri,
+                                                                                int numHostPerPartition,
+                                                                                HashProvider hashProvider)
+      throws ServiceUnavailableException;
 
   public interface HashProvider
   {

@@ -72,6 +72,15 @@ public class DelegatingFacilities implements Facilities
       {
         return null;
       }
+
+      @Override
+      public AllPartitionsMultipleHostsResult<URI> getAllPartitionMultipleHosts(URI serviceUri,
+                                                                                    int limitHostPerPartition,
+                                                                                    HashProvider hashProvider)
+          throws ServiceUnavailableException
+      {
+        return null;
+      }
     });
   }
 
@@ -94,6 +103,15 @@ public class DelegatingFacilities implements Facilities
 
       @Override
       public PartitionAccessor getPartitionAccessor (URI serviceUri)
+          throws ServiceUnavailableException
+      {
+        return null;
+      }
+
+      @Override
+      public AllPartitionsMultipleHostsResult<URI> getAllPartitionMultipleHosts(URI serviceUri,
+                                                                                    int limitHostPerPartition,
+                                                                                    HashProvider hashProvider)
           throws ServiceUnavailableException
       {
         return null;
