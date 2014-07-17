@@ -27,6 +27,7 @@ import com.linkedin.d2.balancer.properties.AllowedClientPropertyKeys;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderConfigFactory;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
+import com.linkedin.internal.common.util.CollectionUtils;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.util.clock.SystemClock;
 import com.linkedin.util.degrader.DegraderImpl;
@@ -1286,7 +1287,8 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     {
       Set<URI> uris = uriProperties.Uris();
       // clients-by-uri map may be edited later by UriPropertiesListener.handlePut
-      newTrackerClients = new ConcurrentHashMap<URI, TrackerClient>((int)Math.ceil(uris.size() / 0.75f), 0.75f, 1);
+      newTrackerClients = new ConcurrentHashMap<URI, TrackerClient>(
+          CollectionUtils.getMapInitialCapacity(uris.size(), 0.75f), 0.75f, 1);
       long trackerClientInterval = getTrackerClientInterval (serviceProperties);
       for (URI uri : uris)
       {

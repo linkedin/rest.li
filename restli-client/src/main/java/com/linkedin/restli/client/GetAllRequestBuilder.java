@@ -141,13 +141,13 @@ public class GetAllRequestBuilder<K, V extends RecordTemplate> extends
   @Override
   public GetAllRequest<V> build()
   {
-    return new GetAllRequest<V>(_headers,
+    return new GetAllRequest<V>(buildReadOnlyHeaders(),
                                 _elementClass,
                                 _resourceSpec,
-                                _queryParams,
+                                buildReadOnlyQueryParameters(),
                                 getBaseUriTemplate(),
-                                _pathKeys,
+                                buildReadOnlyPathKeys(),
                                 getRequestOptions(),
-                                _assocKey);
+                                buildReadOnlyAssocKey());
   }
 }

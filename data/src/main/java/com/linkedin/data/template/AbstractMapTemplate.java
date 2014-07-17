@@ -291,7 +291,9 @@ public abstract class AbstractMapTemplate<V> extends AbstractMap<String ,V> impl
 
   protected static DataMap newDataMapOfSize(int srcMapSize)
   {
-    return new DataMap((int) Math.ceil(srcMapSize / 0.75));
+    // This is not using the common initial capacity calculation in Pegasus-Common
+    // in order not to depend on an extra jar.
+    return new DataMap((int)(srcMapSize / 0.75f) + 1, 0.75f);
   }
 
   protected DataMap _map;

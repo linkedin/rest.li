@@ -87,7 +87,7 @@ abstract class AbstractRestliRequestUriBuilder<R extends Request<?>> implements 
 
   protected void appendKeyToPath(UriBuilder uriBuilder, Object key)
   {
-    if (!_request.getResourceSpec().isKeylessResource())
+    if (!_request.getResourceProperties().isKeylessResource())
     {
       uriBuilder.path(URIParamUtils.encodeKeyForUri(key, UriComponent.Type.PATH_SEGMENT, _version));
     }

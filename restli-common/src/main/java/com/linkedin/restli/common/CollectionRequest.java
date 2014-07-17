@@ -20,8 +20,6 @@
 
 package com.linkedin.restli.common;
 
-import java.util.Arrays;
-import java.util.List;
 
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
@@ -30,6 +28,10 @@ import com.linkedin.data.schema.Name;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.WrappingArrayTemplate;
+
+import java.util.Arrays;
+import java.util.List;
+
 
 /**
  * @author Josh Walker
@@ -45,8 +47,7 @@ public class CollectionRequest<T extends RecordTemplate> extends RecordTemplate
   private final RecordDataSchema.Field _arrayField;
   private final RecordDataSchema _schema;
   private static final Name _COLLECTION_REQUEST_NAME = new Name(CollectionRequest.class.getSimpleName());
-
-
+  private DynamicRecordArray<T> _templatedCollection;
 
   private static class DynamicRecordArray<R extends RecordTemplate> extends WrappingArrayTemplate<R>
   {
@@ -55,7 +56,6 @@ public class CollectionRequest<T extends RecordTemplate> extends RecordTemplate
       super(list, arraySchema, elementClass);
     }
   }
-
 
   /**
    * Initialize a CollectionRequest based on the given elementClass.
@@ -109,8 +109,12 @@ public class CollectionRequest<T extends RecordTemplate> extends RecordTemplate
    */
   public List<T> getElements()
   {
-    DataList value = (DataList) data().get(ELEMENTS);
+    if (_templatedCollection == null)
+    {
+      DataList value = (DataList) data().get(ELEMENTS);
+      _templatedCollection = new DynamicRecordArray<T>(value, _arraySchema, _elementClass);
+    }
 
-    return new DynamicRecordArray<T>(value, _arraySchema, _elementClass);
+    return _templatedCollection;
   }
 }

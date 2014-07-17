@@ -21,8 +21,8 @@ import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.data.template.RecordTemplate;
 
+import com.linkedin.restli.internal.common.ResourcePropertiesImpl;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -34,18 +34,7 @@ import java.util.Set;
  */
 public class ResourceSpecImpl implements ResourceSpec
 {
-  private final Set<ResourceMethod>                _supportedMethods;
-
-  /*
-   * _keyType is a multi-purpose field.  If it's null, the resource is either an actionSet or a simple resource.  If it is non-null
-   * it contains either a primitive type (for collections with a primitive key type), or it is ComplexResourceKey.class for
-   * complex key collect resources or it is CompoundKey.class for associations.
-   */
-  private final TypeSpec<?> _keyType;
-  private final ComplexKeySpec<? extends RecordTemplate, ? extends RecordTemplate> _complexKeyType; // present for complex key collections
-  private final Map<String, CompoundKey.TypeInfo>  _keyParts; // present for associations
-
-  private final TypeSpec<? extends RecordTemplate> _valueType;
+  private final ResourcePropertiesImpl _resourceProperties;
 
   private final Map<String, DynamicRecordMetadata> _actionRequestMetadata;
   private final Map<String, DynamicRecordMetadata> _actionResponseMetadata;
@@ -188,69 +177,72 @@ public class ResourceSpecImpl implements ResourceSpec
                           TypeSpec<? extends RecordTemplate> value,
                           Map<String, ?> keyParts)
   {
-    _supportedMethods = Collections.unmodifiableSet(supportedMethods);
+    _resourceProperties = new ResourcePropertiesImpl(
+        supportedMethods,
+        key,
+        complexKeyType,
+        value,
+        keyParts);
     _actionRequestMetadata = actionRequestMetadata;
     _actionResponseMetadata = actionResponseMetadata;
-
-    _keyType = key;
-    _complexKeyType = complexKeyType;
-    _keyParts = Collections.unmodifiableMap(toTypeInfoKeyParts(keyParts));
-
-    _valueType = value;
   }
 
   @Override
   public Set<ResourceMethod> getSupportedMethods()
   {
-    return _supportedMethods;
+    return _resourceProperties.getSupportedMethods();
   }
 
   @Override
   public Class<?> getKeyClass()
   {
-    return (_keyType == null) ? null : _keyType.getType();
+    return _resourceProperties.getKeyType() == null ? null : _resourceProperties.getKeyType().getType();
   }
 
   @Override
   public TypeSpec<?> getKeyType()
   {
-    return _keyType;
+    return _resourceProperties.getKeyType();
   }
 
   @Override
   public Class<? extends RecordTemplate> getValueClass()
   {
-    return (_valueType == null) ? null : _valueType.getType();
+    return _resourceProperties.getValueType() == null ? null : _resourceProperties.getValueType().getType();
   }
 
   @Override
   public TypeSpec<? extends RecordTemplate> getValueType()
   {
-    return _valueType;
+    return _resourceProperties.getValueType();
   }
 
   @Override
   public Map<String, CompoundKey.TypeInfo> getKeyParts()
   {
-    return _keyParts;
+    return _resourceProperties.getKeyParts();
   }
 
   @Override
   public Class<? extends RecordTemplate> getKeyKeyClass()
   {
-    return (_complexKeyType == null) ? null : _complexKeyType.getKeyType().getType();
+    return (_resourceProperties.getComplexKeyType() == null) ?
+        null :
+        _resourceProperties.getComplexKeyType().getKeyType().getType();
   }
 
   @Override
   public Class<? extends RecordTemplate> getKeyParamsClass()
   {
-    return (_complexKeyType == null) ? null : _complexKeyType.getParamsType().getType();
+    return (_resourceProperties.getComplexKeyType() == null) ?
+        null :
+        _resourceProperties.getComplexKeyType().getParamsType().getType();
   }
 
   @Override
   public ComplexKeySpec<? extends RecordTemplate, ? extends RecordTemplate> getComplexKeyType()
   {
-    return _complexKeyType;
+    return _resourceProperties.getComplexKeyType();
   }
 
   @Override
@@ -268,7 +260,7 @@ public class ResourceSpecImpl implements ResourceSpec
   @Override
   public boolean isKeylessResource()
   {
-    return _keyType == null;
+    return _resourceProperties.isKeylessResource();
   }
 
   @Override
@@ -282,74 +274,24 @@ public class ResourceSpecImpl implements ResourceSpec
 
     ResourceSpecImpl resourceSpec = (ResourceSpecImpl)other;
 
-    return fieldEquals(_supportedMethods, resourceSpec._supportedMethods)
-        && fieldEquals(_keyType, resourceSpec._keyType)
-        && fieldEquals(_complexKeyType, resourceSpec._complexKeyType)
-        && fieldEquals(_valueType, resourceSpec._valueType)
-        && fieldEquals(_keyParts, resourceSpec._keyParts);
-  }
-
-  private boolean fieldEquals(Object field1, Object field2)
-  {
-    return field1 == null ? field2 == null : field1.equals(field2);
+    return _resourceProperties.equals(resourceSpec._resourceProperties);
   }
 
   @Override
   public int hashCode()
   {
-    int res = 7;
-    res = 11 * res + hashOrNull(_supportedMethods);
-    res = 11 * res + hashOrNull(_keyType);
-    res = 11 * res + hashOrNull(_complexKeyType);
-    res = 11 * res + hashOrNull(_valueType);
-    res = 11 * res + hashOrNull(_keyParts);
-    return res;
-  }
-
-  private int hashOrNull(Object o)
-  {
-    return o == null ? 0 : o.hashCode();
+    return 11 * _resourceProperties.hashCode() + 7;
   }
 
   @Override
   public String toString()
   {
     StringBuilder builder = new StringBuilder();
-    builder.append("supported: ");
-    builder.append(_supportedMethods);
-    builder.append("\n, key: ");
-    builder.append(_keyType);
-    builder.append("\n, complexKey: ");
-    builder.append(_complexKeyType);
-    builder.append("\n, value: ");
-    builder.append(_valueType);
-    builder.append("\n, keyParts: ");
-    builder.append(_keyParts);
+    builder.append(_resourceProperties.toString());
     builder.append("\n, actionRequestMetadata: ");
     builder.append(_actionRequestMetadata);
     builder.append("\n, actionResponseMetadata: ");
     builder.append(_actionResponseMetadata);
     return builder.toString();
-  }
-
-  private static HashMap<String, CompoundKey.TypeInfo> toTypeInfoKeyParts(Map<String, ?> keyParts)
-  {
-    final HashMap<String, CompoundKey.TypeInfo> keyPartTypeInfos = new HashMap<String, CompoundKey.TypeInfo>();
-    for(Map.Entry<String, ?> entry : keyParts.entrySet()) {
-      if(entry.getValue() instanceof Class<?>)
-      {
-        final Class<?> entryKeyClass = (Class<?>) entry.getValue();
-        keyPartTypeInfos.put(entry.getKey(), new CompoundKey.TypeInfo(entryKeyClass, entryKeyClass));
-      }
-      else if (entry.getValue() instanceof CompoundKey.TypeInfo)
-      {
-        keyPartTypeInfos.put(entry.getKey(), (CompoundKey.TypeInfo) entry.getValue());
-      }
-      else
-      {
-        throw new IllegalArgumentException("keyParts values must be either Class<?> or CompoundKey.TypeInfo, but was: " + entry.getValue().getClass());
-      }
-    }
-    return keyPartTypeInfos;
   }
 }

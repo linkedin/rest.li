@@ -38,7 +38,7 @@ public class TestGreetingsRequestBuilders
   public void testBatchable(RootBuilderWrapper<Long, Greeting> builders)
   {
     Request<Greeting> request = builders.get().id(1L).build();
-    Assert.assertTrue(request.getResourceSpec().getSupportedMethods().contains(ResourceMethod.BATCH_GET));
+    Assert.assertTrue(request.getResourceProperties().getSupportedMethods().contains(ResourceMethod.BATCH_GET));
   }
 
   @DataProvider

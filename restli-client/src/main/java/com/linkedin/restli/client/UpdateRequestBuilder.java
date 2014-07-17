@@ -14,11 +14,8 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.restli.client;
+
 
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.ResourceSpec;
@@ -26,35 +23,28 @@ import com.linkedin.restli.common.ResourceSpec;
 import java.util.Map;
 
 
-/**
- * @author Josh Walker
- * @version $Revision: $
- */
-
-
 public class UpdateRequestBuilder<K, V extends RecordTemplate> extends
-    RestfulRequestBuilder<K, V, UpdateRequest<V>>
+    SingleEntityRequestBuilder<K, V, UpdateRequest<V>>
 {
-  private V _input;
-  private K _id;
-
   public UpdateRequestBuilder(String baseUriTemplate,
                               Class<V> valueClass,
                               ResourceSpec resourceSpec,
                               RestliRequestOptions requestOptions)
   {
-    super(baseUriTemplate, resourceSpec, requestOptions);
+    super(baseUriTemplate, valueClass, resourceSpec, requestOptions);
   }
 
+  @Override
   public UpdateRequestBuilder<K, V> id(K id)
   {
-    _id = id;
+    super.id(id);
     return this;
   }
 
+  @Override
   public UpdateRequestBuilder<K, V> input(V entity)
   {
-    _input = entity;
+    super.input(entity);
     return this;
   }
 
@@ -117,13 +107,13 @@ public class UpdateRequestBuilder<K, V extends RecordTemplate> extends
   @Override
   public UpdateRequest<V> build()
   {
-    return new UpdateRequest<V>(_input,
-                                _headers,
+    return new UpdateRequest<V>(buildReadOnlyInput(),
+                                buildReadOnlyHeaders(),
                                 _resourceSpec,
-                                _queryParams,
+                                buildReadOnlyQueryParameters(),
                                 getBaseUriTemplate(),
-                                _pathKeys,
+                                buildReadOnlyPathKeys(),
                                 getRequestOptions(),
-                                _id);
+                                buildReadOnlyId());
   }
 }

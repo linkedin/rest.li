@@ -21,6 +21,7 @@
 package com.linkedin.restli.client;
 
 
+import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.CollectionRequest;
 import com.linkedin.restli.common.KeyValueRecord;
@@ -29,6 +30,7 @@ import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.TypeSpec;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -39,8 +41,8 @@ import java.util.Map;
 public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> extends
     BatchKVRequestBuilder<K, V, BatchPartialUpdateRequest<K, V>>
 {
-  private final CollectionRequest<KeyValueRecord<K, PatchRequest<V>>> _entities;
   private final KeyValueRecordFactory<K, PatchRequest<V>> _keyValueRecordFactory;
+  private final Map<K, PatchRequest<V>> _partialUpdateInputMap;
 
   @SuppressWarnings({"unchecked", "rawtypes"})
   public BatchPartialUpdateRequestBuilder(String baseUriTemplate,
@@ -49,9 +51,8 @@ public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> exten
                                           RestliRequestOptions requestOptions)
   {
     super(baseUriTemplate, resourceSpec, requestOptions);
-    _entities = new CollectionRequest(KeyValueRecord.class);
-    _keyValueRecordFactory
-        = new KeyValueRecordFactory(_resourceSpec.getKeyType(),
+    _partialUpdateInputMap = new HashMap<K, PatchRequest<V>>();
+    _keyValueRecordFactory = new KeyValueRecordFactory(_resourceSpec.getKeyType(),
                                     _resourceSpec.getComplexKeyType(),
                                     _resourceSpec.getKeyParts(),
                                     new TypeSpec<PatchRequest>(PatchRequest.class));
@@ -59,8 +60,7 @@ public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> exten
 
   public BatchPartialUpdateRequestBuilder<K, V> input(K id, PatchRequest<V> patch)
   {
-
-    _entities.getElements().add(_keyValueRecordFactory.create(id, patch));
+    _partialUpdateInputMap.put(id, patch);
     addKey(id);
     return this;
   }
@@ -72,7 +72,7 @@ public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> exten
     {
       K key = entry.getKey();
       PatchRequest<V> value = entry.getValue();
-      _entities.getElements().add(_keyValueRecordFactory.create(key, value));
+      _partialUpdateInputMap.put(key, value);
     }
     return this;
   }
@@ -138,12 +138,38 @@ public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> exten
   {
     ensureBatchKeys();
 
-    return new BatchPartialUpdateRequest<K, V>(_headers,
-                                               _entities,
-                                               _queryParams,
+    return new BatchPartialUpdateRequest<K, V>(buildReadOnlyHeaders(),
+                                               buildReadOnlyInput(),
+                                               buildReadOnlyQueryParameters(),
                                                _resourceSpec,
                                                getBaseUriTemplate(),
-                                               _pathKeys,
+                                               buildReadOnlyPathKeys(),
                                                getRequestOptions());
+  }
+
+  private CollectionRequest<KeyValueRecord<K, PatchRequest<V>>> buildReadOnlyInput()
+  {
+    try
+    {
+      DataMap map = new DataMap();
+      @SuppressWarnings("unchecked")
+      CollectionRequest<KeyValueRecord<K, PatchRequest<V>>> input = new CollectionRequest(map, KeyValueRecord.class);
+
+      for (Map.Entry<K, PatchRequest<V>> inputEntityEntry : _partialUpdateInputMap.entrySet())
+      {
+        K key = getReadOnlyOrCopyKey(inputEntityEntry.getKey());
+        PatchRequest<V> entity = getReadOnlyOrCopyDataTemplate(inputEntityEntry.getValue());
+        KeyValueRecord<K, PatchRequest<V>> keyValueRecord = _keyValueRecordFactory.create(key, entity);
+        keyValueRecord.data().setReadOnly();
+        input.getElements().add(keyValueRecord);
+      }
+
+      map.setReadOnly();
+      return input;
+    }
+    catch (CloneNotSupportedException cloneException)
+    {
+      throw new IllegalArgumentException("Entity cannot be copied.", cloneException);
+    }
   }
 }

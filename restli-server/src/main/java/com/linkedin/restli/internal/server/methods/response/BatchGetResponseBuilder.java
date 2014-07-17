@@ -21,6 +21,7 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.SetMode;
+import com.linkedin.internal.common.util.CollectionUtils;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.EntityResponse;
@@ -105,7 +106,8 @@ public class BatchGetResponseBuilder implements RestLiResponseBuilder
     mergedKeys.addAll(errors.keySet());
 
     final Map<Object, EntityResponse<RecordTemplate>> results =
-        new HashMap<Object, EntityResponse<RecordTemplate>>((int) Math.ceil(mergedKeys.size() / 0.75));
+        new HashMap<Object, EntityResponse<RecordTemplate>>(
+            CollectionUtils.getMapInitialCapacity(mergedKeys.size(), 0.75f), 0.75f);
 
     for (Object key : mergedKeys)
     {

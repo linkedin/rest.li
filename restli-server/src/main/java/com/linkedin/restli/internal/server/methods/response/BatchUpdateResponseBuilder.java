@@ -19,6 +19,7 @@ package com.linkedin.restli.internal.server.methods.response;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.collections.CheckedUtil;
+import com.linkedin.internal.common.util.CollectionUtils;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.ErrorResponse;
@@ -110,7 +111,8 @@ public final class BatchUpdateResponseBuilder implements RestLiResponseBuilder
     mergedKeys.addAll(errors.keySet());
 
     final Map<Object, UpdateStatus> mergedResults =
-        new HashMap<Object, UpdateStatus>((int) Math.ceil(mergedKeys.size() / 0.75));
+        new HashMap<Object, UpdateStatus>(
+            CollectionUtils.getMapInitialCapacity(mergedKeys.size(), 0.75f), 0.75f);
 
     for (Object key : mergedKeys)
     {

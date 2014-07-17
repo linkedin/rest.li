@@ -71,7 +71,9 @@ public class CopyFilter extends AbstractFilter
   @Override
   protected Object onFilterDataMap(DataMap data, Map<String, Object> fieldToOperation)
   {
-    final DataMap resultMap = new DataMap((int)(fieldToOperation.size() / 0.75f + 1));
+    // This is not using the common initial capacity calculation in Pegasus-Common
+    // in order not to depend on an extra jar.
+    final DataMap resultMap = new DataMap((int)(fieldToOperation.size() / 0.75f) + 1);
 
     for (Map.Entry<String, Object> entry : fieldToOperation.entrySet())
     {

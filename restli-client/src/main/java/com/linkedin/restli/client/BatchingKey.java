@@ -44,7 +44,7 @@ public class BatchingKey<T extends RecordTemplate, R extends BatchRequest<?>>
       throw new IllegalArgumentException("Requests must have same base URI template and path keys to batch");
     }
 
-    if( !request.getResourceSpec().equals(_request.getResourceSpec()) ) {
+    if( !request.getResourceProperties().equals(_request.getResourceProperties()) ) {
       throw new IllegalArgumentException("Requests must be for the same resource to batch");
     }
 
@@ -77,7 +77,7 @@ public class BatchingKey<T extends RecordTemplate, R extends BatchRequest<?>>
     EqualsBuilder builder = new EqualsBuilder();
     builder.append(_request.getBaseUriTemplate(), that._request.getBaseUriTemplate());
     builder.append(_request.getPathKeys(), that._request.getPathKeys());
-    builder.append(_request.getResourceSpec(), that._request.getResourceSpec());
+    builder.append(_request.getResourceProperties(), that._request.getResourceProperties());
     builder.append(_request.getRequestOptions(), that._request.getRequestOptions());
     builder.append(_queryParams, that._queryParams);
     builder.append(_batchFields, that._batchFields );
@@ -93,7 +93,7 @@ public class BatchingKey<T extends RecordTemplate, R extends BatchRequest<?>>
     HashCodeBuilder builder = new HashCodeBuilder();
     builder.append( _request.getBaseUriTemplate() )
       .append( _request.getPathKeys() )
-      .append( _request.getResourceSpec() )
+      .append( _request.getResourceProperties() )
       .append( _request.getRequestOptions() )
       .append( _queryParams );
     if(_batchFields && null != _request.getFields())

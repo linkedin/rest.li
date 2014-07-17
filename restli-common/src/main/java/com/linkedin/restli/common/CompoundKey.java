@@ -49,6 +49,11 @@ public class CompoundKey
     _isReadOnly = false;
   }
 
+  private CompoundKey(CompoundKey compoundKey)
+  {
+    _keys = new HashMap<String, Object>(compoundKey._keys);
+  }
+
   public static final class TypeInfo
   {
     // binding type could be any type (primitive or custom)
@@ -221,6 +226,14 @@ public class CompoundKey
   }
 
   /**
+   * Returns whether this key is read only.
+   */
+  public boolean isReadOnly()
+  {
+    return _isReadOnly;
+  }
+
+  /**
    * Makes this key read only. Subsequent calls to {@link #append(String, Object)} will throw an
    * {@link UnsupportedOperationException}
    */
@@ -262,6 +275,11 @@ public class CompoundKey
     }
 
     return true;
+  }
+
+  public CompoundKey copy()
+  {
+    return new CompoundKey(this);
   }
 
   /**

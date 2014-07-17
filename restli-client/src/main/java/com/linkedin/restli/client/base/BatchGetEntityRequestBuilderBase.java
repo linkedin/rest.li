@@ -37,13 +37,9 @@ public abstract class BatchGetEntityRequestBuilderBase<
         RB extends BatchGetEntityRequestBuilderBase<K, V, RB>>
         extends BatchGetEntityRequestBuilder<K, V>
 {
-  @SuppressWarnings("unchecked")
   protected BatchGetEntityRequestBuilderBase(String baseUriTemplate, ResourceSpec resourceSpec, RestliRequestOptions requestOptions)
   {
-    super(baseUriTemplate, new BatchEntityResponseDecoder<K, V>((TypeSpec<V>) resourceSpec.getValueType(),
-                                                                (TypeSpec<K>) resourceSpec.getKeyType(),
-                                                                resourceSpec.getKeyParts(),
-                                                                resourceSpec.getComplexKeyType()), resourceSpec, requestOptions);
+    super(baseUriTemplate, resourceSpec, requestOptions);
   }
 
   @SuppressWarnings({"unchecked"})

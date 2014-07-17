@@ -24,6 +24,7 @@ import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.internal.client.BatchCreateIdDecoder;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -35,7 +36,8 @@ import java.util.Map;
  */
 public class BatchCreateIdRequestBuilder<K, V extends RecordTemplate> extends RestfulRequestBuilder<K, V, BatchCreateIdRequest<K, V>>
 {
-  private final CollectionRequest<V> _input;
+  private final List<V> _entities = new ArrayList<V>();
+  private final Class<V> _valueClass;
 
   protected BatchCreateIdRequestBuilder(String baseURITemplate,
                                         Class<V> valueClass,
@@ -43,18 +45,18 @@ public class BatchCreateIdRequestBuilder<K, V extends RecordTemplate> extends Re
                                         RestliRequestOptions requestOptions)
   {
     super(baseURITemplate, resourceSpec, requestOptions);
-    _input = new CollectionRequest<V>(new DataMap(), valueClass);
+    _valueClass = valueClass;
   }
 
   public BatchCreateIdRequestBuilder<K, V> input(V entity)
   {
-    _input.getElements().add(entity);
+    _entities.add(entity);
     return this;
   }
 
   public BatchCreateIdRequestBuilder<K, V> inputs(List<V> entities)
   {
-    _input.getElements().addAll(entities);
+    _entities.addAll(entities);
     return this;
   }
 
@@ -122,13 +124,34 @@ public class BatchCreateIdRequestBuilder<K, V extends RecordTemplate> extends Re
                                                                   _resourceSpec.getKeyParts(),
                                                                   _resourceSpec.getComplexKeyType());
 
-    return new BatchCreateIdRequest<K, V>(_headers,
+    return new BatchCreateIdRequest<K, V>(buildReadOnlyHeaders(),
                                           decoder,
-                                          _input,
+                                          buildReadOnlyInput(),
                                           _resourceSpec,
-                                          _queryParams,
+                                          buildReadOnlyQueryParameters(),
                                           getBaseUriTemplate(),
-                                          _pathKeys,
+                                          buildReadOnlyPathKeys(),
                                           getRequestOptions());
+  }
+
+  private CollectionRequest<V> buildReadOnlyInput()
+  {
+    try
+    {
+      DataMap map = new DataMap();
+      CollectionRequest<V> input = new CollectionRequest<V>(map, _valueClass);
+
+      for (V entity : _entities)
+      {
+        input.getElements().add(getReadOnlyOrCopyDataTemplate(entity));
+      }
+
+      map.setReadOnly();
+      return input;
+    }
+    catch (CloneNotSupportedException cloneException)
+    {
+      throw new IllegalArgumentException("Entity cannot be copied.", cloneException);
+    }
   }
 }

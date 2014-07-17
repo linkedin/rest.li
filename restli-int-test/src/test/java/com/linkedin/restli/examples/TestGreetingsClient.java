@@ -298,7 +298,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     REST_CLIENT.sendRequest(writeRequest).getResponse();
 
     // GET again, to verify that our POST worked.
-    Request<BatchResponse<Greeting>> request2 = batchGetBuilder.ids(1L).build();
+    Request<BatchResponse<Greeting>> request2 = builders.batchGet().ids(1L).build();
     ResponseFuture<BatchResponse<Greeting>> future2 = REST_CLIENT.sendRequest(request2);
     greetingResponse = future2.get();
 
@@ -335,7 +335,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     REST_CLIENT.sendRequest(writeRequest).getResponse();
 
     // GET again, to verify that our POST worked.
-    Request<BatchKVResponse<Long, EntityResponse<Greeting>>> request2 = batchGetBuilder.ids(1L).build();
+    Request<BatchKVResponse<Long, EntityResponse<Greeting>>> request2 = builders.batchGet().ids(1L).build();
     ResponseFuture<BatchKVResponse<Long, EntityResponse<Greeting>>> future2 = REST_CLIENT.sendRequest(request2);
     greetingResponse = future2.get();
 

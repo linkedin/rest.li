@@ -34,6 +34,7 @@ import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.TemplateRuntimeException;
+import com.linkedin.internal.common.util.CollectionUtils;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.BatchRequest;
 import com.linkedin.restli.common.ComplexResourceKey;
@@ -460,7 +461,7 @@ public class ArgumentBuilder
     }
 
     Map<Object, R> result =
-      new HashMap<Object, R>((int)(batchRequest.getEntities().size() / 0.75f) + 1, 0.75f);
+      new HashMap<Object, R>(CollectionUtils.getMapInitialCapacity(batchRequest.getEntities().size(), 0.75f), 0.75f);
     for (Map.Entry<String, R> entry : batchRequest.getEntities().entrySet())
     {
       Object key = parsedKeyMap.get(entry.getKey());

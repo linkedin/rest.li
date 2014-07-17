@@ -159,12 +159,15 @@ public final class DataMap extends CheckedMap<String,Object> implements DataComp
   @Override
   public void makeReadOnly()
   {
-    for (Map.Entry<String,?> e : entrySet())
+    if (!_madeReadOnly)
     {
-      Data.makeReadOnly(e.getValue());
+      for (Map.Entry<String,?> e : entrySet())
+      {
+        Data.makeReadOnly(e.getValue());
+      }
+      setReadOnly();
+      _madeReadOnly = true;
     }
-    setReadOnly();
-    _madeReadOnly = true;
   }
 
   @Override

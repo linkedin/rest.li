@@ -37,7 +37,7 @@ public abstract class BatchKVRequestBuilder<K, V extends RecordTemplate, R exten
 
   protected void ensureBatchKeys()
   {
-    if (!_queryParams.containsKey(RestConstants.QUERY_BATCH_IDS_PARAM))
+    if (!hasParam(RestConstants.QUERY_BATCH_IDS_PARAM))
     {
       addKeys(Collections.<K>emptyList());
     }

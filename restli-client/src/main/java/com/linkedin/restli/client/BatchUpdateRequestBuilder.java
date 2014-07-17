@@ -21,14 +21,19 @@
 package com.linkedin.restli.client;
 
 
+import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.internal.common.util.CollectionUtils;
 import com.linkedin.restli.common.CollectionRequest;
 import com.linkedin.restli.common.KeyValueRecord;
 import com.linkedin.restli.common.KeyValueRecordFactory;
 import com.linkedin.restli.common.ResourceSpec;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
+
 
 /**
  * @author Josh Walker
@@ -38,7 +43,6 @@ import java.util.Map;
 public class BatchUpdateRequestBuilder<K, V extends RecordTemplate> extends
     BatchKVRequestBuilder<K, V, BatchUpdateRequest<K, V>>
 {
-  private final CollectionRequest<KeyValueRecord<K, V>> _entities;
   private final KeyValueRecordFactory<K, V> _keyValueRecordFactory;
   private final Map<K, V> _updateInputMap;
 
@@ -49,7 +53,6 @@ public class BatchUpdateRequestBuilder<K, V extends RecordTemplate> extends
                                    RestliRequestOptions requestOptions)
   {
     super(baseUriTemplate, resourceSpec, requestOptions);
-    _entities = new CollectionRequest(KeyValueRecord.class);
     _keyValueRecordFactory
         = new KeyValueRecordFactory(_resourceSpec.getKeyType(),
                                     _resourceSpec.getComplexKeyType(),
@@ -60,7 +63,6 @@ public class BatchUpdateRequestBuilder<K, V extends RecordTemplate> extends
 
   public BatchUpdateRequestBuilder<K, V> input(K id, V entity)
   {
-    _entities.getElements().add(_keyValueRecordFactory.create(id, entity));
     addKey(id);
     _updateInputMap.put(id, entity);
     return this;
@@ -73,7 +75,6 @@ public class BatchUpdateRequestBuilder<K, V extends RecordTemplate> extends
     {
       K key = entry.getKey();
       V value = entry.getValue();
-      _entities.getElements().add(_keyValueRecordFactory.create(key, value));
       _updateInputMap.put(key, value);
     }
     return this;
@@ -139,14 +140,44 @@ public class BatchUpdateRequestBuilder<K, V extends RecordTemplate> extends
   public BatchUpdateRequest<K, V> build()
   {
     ensureBatchKeys();
+    Map<K, V> readOnlyUpdateInputMap = new HashMap<K, V>(
+        CollectionUtils.getMapInitialCapacity(_updateInputMap.size(), 0.75f), 0.75f);
+    CollectionRequest<KeyValueRecord<K, V>> readOnlyInput = buildReadOnlyBatchUpdateInput(readOnlyUpdateInputMap);
 
-    return new BatchUpdateRequest<K, V>(_headers,
-                                        _entities,
-                                        _queryParams,
+    return new BatchUpdateRequest<K, V>(buildReadOnlyHeaders(),
+                                        readOnlyInput,
+                                        buildReadOnlyQueryParameters(),
                                         _resourceSpec,
                                         getBaseUriTemplate(),
-                                        _pathKeys,
+                                        buildReadOnlyPathKeys(),
                                         getRequestOptions(),
-                                        _updateInputMap);
+                                        Collections.unmodifiableMap(readOnlyUpdateInputMap));
+  }
+
+  private CollectionRequest<KeyValueRecord<K, V>> buildReadOnlyBatchUpdateInput(Map<K, V> readOnlyInputEntities)
+  {
+    try
+    {
+      DataMap map = new DataMap();
+      @SuppressWarnings("unchecked")
+      CollectionRequest<KeyValueRecord<K, V>> input = new CollectionRequest(map, KeyValueRecord.class);
+
+      for (Map.Entry<K, V> inputEntityEntry : _updateInputMap.entrySet())
+      {
+        K key = getReadOnlyOrCopyKey(inputEntityEntry.getKey());
+        V entity = getReadOnlyOrCopyDataTemplate(inputEntityEntry.getValue());
+        readOnlyInputEntities.put(key, entity);
+        KeyValueRecord<K, V> keyValueRecord = _keyValueRecordFactory.create(key, entity);
+        keyValueRecord.data().setReadOnly();
+        input.getElements().add(keyValueRecord);
+      }
+
+      map.setReadOnly();
+      return input;
+    }
+    catch (CloneNotSupportedException cloneException)
+    {
+      throw new IllegalArgumentException("Entity cannot be copied.", cloneException);
+    }
   }
 }

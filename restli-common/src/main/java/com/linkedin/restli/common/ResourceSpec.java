@@ -16,11 +16,10 @@
 
 package com.linkedin.restli.common;
 
-import java.util.Map;
-import java.util.Set;
 
 import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.data.template.RecordTemplate;
+import java.util.Map;
 
 
 /**
@@ -28,33 +27,22 @@ import com.linkedin.data.template.RecordTemplate;
  *
  * @author Eran Leshem
  */
-public interface ResourceSpec
+public interface ResourceSpec extends ResourceProperties
 {
-  /**
-   * @return the set of ResourceMethods supported by the Resource
-   */
-  Set<ResourceMethod> getSupportedMethods();
-
   /**
    * @return the class of the key
    */
   Class<?> getKeyClass();
-
-  TypeSpec<?> getKeyType();
 
   /**
    * @return the RecordTemplate that the Resource Manages
    */
   Class<? extends RecordTemplate> getValueClass();
 
-  TypeSpec<? extends RecordTemplate> getValueType();
-
   /**
    * @return the map of key names to key classes, if the keyClass is a CompoundKey
    */
   Map<String, CompoundKey.TypeInfo> getKeyParts();
-
-  ComplexKeySpec<? extends RecordTemplate, ? extends RecordTemplate> getComplexKeyType();
 
   /**
    * @return the key of the key, if the keyClass is a ComplexResourceKey
@@ -77,9 +65,4 @@ public interface ResourceSpec
    * @return the {@link DynamicRecordMetadata} of the Response
    */
   public DynamicRecordMetadata getActionResponseMetadata(String methodName);
-
-  /**
-   * @return true if the resource represented by this ResourceSpec doesn't have a key, false otherwise
-   */
-  boolean isKeylessResource();
 }

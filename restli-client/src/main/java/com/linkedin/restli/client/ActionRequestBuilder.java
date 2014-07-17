@@ -22,6 +22,7 @@ package com.linkedin.restli.client;
 
 import com.linkedin.data.DataList;
 import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.data.template.DynamicRecordTemplate;
 import com.linkedin.data.template.FieldDef;
@@ -187,18 +188,80 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
     }
 
     @SuppressWarnings("unchecked")
-    ActionResponseDecoder<V> actionResponseDecoder = new ActionResponseDecoder<V>(responseFieldDef, actionResponseDataSchema);
-
-    return new ActionRequest<V>(new DynamicRecordTemplate(requestDataSchema, _actionParams),
-                                _headers,
+    ActionResponseDecoder<V> actionResponseDecoder =
+        new ActionResponseDecoder<V>(responseFieldDef, actionResponseDataSchema);
+    DynamicRecordTemplate inputParameters =
+        new DynamicRecordTemplate(requestDataSchema, buildReadOnlyActionParameters());
+    inputParameters.data().setReadOnly();
+    return new ActionRequest<V>(inputParameters,
+                                buildReadOnlyHeaders(),
                                 actionResponseDecoder,
                                 _resourceSpec,
-                                _queryParams,
+                                buildReadOnlyQueryParameters(),
                                 _name,
                                 getBaseUriTemplate(),
-                                _pathKeys,
+                                buildReadOnlyPathKeys(),
                                 getRequestOptions(),
-                                _id);
+                                buildReadOnlyId());
 
+  }
+
+  private Map<FieldDef<?>, Object> buildReadOnlyActionParameters()
+  {
+    try
+    {
+      Map<FieldDef<?>, Object> readOnlyParameters = new HashMap<FieldDef<?>, Object>(_actionParams.size());
+
+      for (Map.Entry<FieldDef<?>, Object> originalParameterEntry : _actionParams.entrySet())
+      {
+        readOnlyParameters.put(
+            originalParameterEntry.getKey(),
+            getReadOnlyActionParameter(originalParameterEntry.getValue()));
+      }
+
+      return readOnlyParameters;
+    }
+    catch (CloneNotSupportedException cloneException)
+    {
+      throw new IllegalArgumentException("Action parameters cannot be cloned", cloneException);
+    }
+  }
+
+  private Object getReadOnlyActionParameter(Object original) throws CloneNotSupportedException
+  {
+    Object result = original;
+
+    if (original.getClass().isArray())
+    {
+      //Since the array shell will be replace with a data list internally we do not need to
+      // make the collection immutable.
+      Object[] items = (Object[]) original;
+      Object[] readOnlyItems = new Object[items.length];
+
+      for (int i = 0; i < items.length; i++)
+      {
+        readOnlyItems[i] = getReadOnlyActionParameter(items[i]);
+      }
+
+      result = readOnlyItems;
+    }
+    else if (DataTemplate.class.isAssignableFrom(original.getClass()))
+    {
+      result = getReadOnlyOrCopyDataTemplate((DataTemplate) original);
+    }
+
+    return result;
+  }
+
+  private K buildReadOnlyId()
+  {
+    try
+    {
+      return getReadOnlyOrCopyKey(_id);
+    }
+    catch (CloneNotSupportedException cloneException)
+    {
+      throw new IllegalArgumentException("Key cannot be copied.", cloneException);
+    }
   }
 }

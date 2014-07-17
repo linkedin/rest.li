@@ -12,6 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+<<<<<<< HEAD
  */
 
 package com.linkedin.restli.client;
@@ -19,12 +20,21 @@ package com.linkedin.restli.client;
 
 import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.restli.client.test.TestRecord;
+import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.common.ResourceProperties;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.ResourceSpecImpl;
+import com.linkedin.restli.internal.client.EntityResponseDecoder;
+import com.linkedin.restli.internal.common.ResourcePropertiesImpl;
 
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -54,5 +64,46 @@ public class TestRequest
     Assert.assertEquals(
         request.toSecureString(),
         "com.linkedin.restli.client.GetRequest{_method=get, _baseUriTemplate=abc, _methodName=null, _requestOptions={_protocolVersionOption: USE_LATEST_IF_AVAILABLE}}");
+  }
+
+  @Test
+  public void testResourceProperties()
+  {
+    Set<ResourceMethod> expectedSupportedMethods = new HashSet<ResourceMethod>();
+    expectedSupportedMethods.add(ResourceMethod.GET);
+    expectedSupportedMethods.add(ResourceMethod.BATCH_PARTIAL_UPDATE);
+
+    ResourceSpec expectedResourceSpec = new ResourceSpecImpl(
+                                          expectedSupportedMethods,
+                                          null,
+                                          null,
+                                          ComplexResourceKey.class,
+                                          TestRecord.class,
+                                          TestRecord.class,
+                                          TestRecord.class,
+                                          Collections.<String, Object>emptyMap());
+
+    Map<String, Object> pathKeys = new HashMap<String, Object>();
+    pathKeys.put("id", new ComplexResourceKey<TestRecord, TestRecord>(new TestRecord(), new TestRecord()));
+
+    Request<TestRecord> request = new Request<TestRecord>(ResourceMethod.GET,
+                                                          null,
+                                                          Collections.<String, String>emptyMap(),
+                                                          new EntityResponseDecoder<TestRecord>(TestRecord.class),
+                                                          expectedResourceSpec,
+                                                          Collections.<String, Object>emptyMap(),
+                                                          null,
+                                                          "testRecord",
+                                                          pathKeys,
+                                                          RestliRequestOptions.DEFAULT_OPTIONS);
+
+    ResourceProperties expectedResourceProperties =
+        new ResourcePropertiesImpl(expectedResourceSpec.getSupportedMethods(),
+                                   expectedResourceSpec.getKeyType(),
+                                   expectedResourceSpec.getComplexKeyType(),
+                                   expectedResourceSpec.getValueType(),
+                                   expectedResourceSpec.getKeyParts());
+
+    Assert.assertEquals(request.getResourceProperties(), expectedResourceProperties);
   }
 }

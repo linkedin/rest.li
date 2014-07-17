@@ -402,7 +402,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
       {
         @SuppressWarnings("deprecation")
         String id = createIdStatus.getId();
-        Assert.fail("getId should throw an exception on ComplexKeys");
+        Assert.fail("buildReadOnlyId should throw an exception on ComplexKeys");
       }
       catch (UnsupportedOperationException e)
       {
@@ -459,7 +459,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
       {
         @SuppressWarnings("deprecation")
         String id = status.getId();
-        Assert.fail("getId should throw an exception for ComplexKeys");
+        Assert.fail("buildReadOnlyId should throw an exception for ComplexKeys");
       }
       catch (UnsupportedOperationException e)
       {

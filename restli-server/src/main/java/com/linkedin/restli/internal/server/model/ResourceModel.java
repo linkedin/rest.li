@@ -19,6 +19,7 @@ package com.linkedin.restli.internal.server.model;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.internal.common.util.CollectionUtils;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.server.Key;
@@ -95,7 +96,7 @@ public class ResourceModel
     _keyKeyClass = keyKeyClass;
     _keyParamsClass = keyParamsClass;
     _keys = keys;
-    _keyClasses = new HashMap<String, Class<?>>((int) Math.ceil(_keys.size() / 0.75));
+    _keyClasses = new HashMap<String, Class<?>>(CollectionUtils.getMapInitialCapacity(_keys.size(), 0.75f), 0.75f);
     for (Key key : _keys)
     {
       _keyClasses.put(key.getName(), key.getType());

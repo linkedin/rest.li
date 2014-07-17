@@ -153,6 +153,35 @@ public class BatchGetRequestBuilderTest
   }
 
   @Test
+  public void testBatchKVConversion()
+      throws URISyntaxException
+  {
+    String expectedProtocol1Uri = "/?fields=message,id&ids=1&param=paramValue";
+    String expectedProtocol2Uri = "/?fields=message,id&ids=List(1)&param=paramValue";
+
+    GetRequestBuilder<Integer, TestRecord> requestBuilder =
+        new GetRequestBuilder<Integer, TestRecord>("/",
+                                                   TestRecord.class,
+                                                   new ResourceSpecImpl(Collections.<ResourceMethod>emptySet(),
+                                                                        null,
+                                                                        null,
+                                                                        Integer.class,
+                                                                        TestRecord.class,
+                                                                        Collections.<String, Object>emptyMap()),
+                                                   RestliRequestOptions.DEFAULT_OPTIONS);
+    requestBuilder.id(1)
+        .fields(FIELDS.id(), FIELDS.message())
+        .setParam("param", "paramValue");
+    GetRequest<TestRecord> request = requestBuilder.build();
+    BatchGetKVRequest<Integer, TestRecord> batchRequest = BatchGetRequestBuilder.batchKV(request);
+    Assert.assertEquals(batchRequest.getBaseUriTemplate(), request.getBaseUriTemplate());
+    Assert.assertEquals(batchRequest.getPathKeys(), request.getPathKeys());
+    testUriGeneration(batchRequest, expectedProtocol1Uri, expectedProtocol2Uri);
+    Assert.assertEquals(batchRequest.getFields(), request.getFields());
+    Assert.assertEquals(batchRequest.getObjectIds(), new HashSet<Object>(Arrays.asList(request.getObjectId())));
+  }
+
+  @Test
   public void testComplexKeyBatchConversion()
       throws URISyntaxException
   {

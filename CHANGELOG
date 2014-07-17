@@ -1,10 +1,17 @@
-(RB=405976)
-Populate update status from error status.
-
-2.0.6
+2.1.1
 -----
+
+
+2.1.0
+-----
+(RB=342503)
+Making rest.li requests read-only.
+
 (RB=405110)
 Product sorted snapshot files.
+
+(RB=405976)
+Populate update status from error status.
 
 2.0.5
 -----

@@ -21,18 +21,24 @@
 package com.linkedin.restli.client;
 
 
+import com.linkedin.data.DataComplex;
 import com.linkedin.data.schema.PathSpec;
+import com.linkedin.data.template.DataTemplate;
+import com.linkedin.internal.common.util.CollectionUtils;
 import com.linkedin.restli.client.base.BuilderBase;
+import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.util.ArgumentUtil;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -47,10 +53,11 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
   protected static final char HEADER_DELIMITER = ',';
 
   protected final ResourceSpec        _resourceSpec;
-  protected final CompoundKey         _assocKey    = new CompoundKey();
-  protected final Map<String, Object> _pathKeys    = new HashMap<String, Object>();
-  protected final Map<String, Object> _queryParams = new HashMap<String, Object>();
-  protected Map<String, String>       _headers     = new HashMap<String, String>();
+
+  private Map<String, String>       _headers     = new HashMap<String, String>();
+  private final Map<String, Object> _queryParams = new HashMap<String, Object>();
+  private final Map<String, Object> _pathKeys    = new HashMap<String, Object>();
+  private final CompoundKey         _assocKey    = new CompoundKey();
 
   protected AbstractRequestBuilder(String baseUriTemplate, ResourceSpec resourceSpec, RestliRequestOptions requestOptions)
   {
@@ -90,6 +97,16 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
     _headers.put(name, value);
 
     return this;
+  }
+
+  /**
+   * Retrieves the value of the specified header
+   * @param name The name of the header to return
+   * @return The value of the specified header.
+   */
+  protected String getHeader(String name)
+  {
+    return _headers.get(name);
   }
 
   /**
@@ -200,30 +217,31 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
       throw new IllegalArgumentException("null ids");
     }
 
-    Set<Object> allIds = new HashSet<Object>();
-    for (K id : ids)
-    {
-      addKey(allIds, id);
-    }
-
     @SuppressWarnings("unchecked")
-    Collection<K> existingIds = (Collection<K>) _queryParams.get(RestConstants.QUERY_BATCH_IDS_PARAM);
-    if (existingIds != null && !existingIds.isEmpty())
+    Set<K> existingIds = (Set<K>) _queryParams.get(RestConstants.QUERY_BATCH_IDS_PARAM);
+    if (existingIds == null)
     {
-      allIds.addAll(existingIds);
+      existingIds = new HashSet<K>();
+      _queryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM, existingIds);
     }
-
-    _queryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM, allIds);
+    for (K id: ids)
+    {
+      if (id == null)
+      {
+        throw new IllegalArgumentException("Null key");
+      }
+      existingIds.add(id);
+    }
   }
 
-  private void addKey(Set<Object> ids, Object id)
+  protected boolean hasParam(String parameterName)
   {
-    if (id == null)
-    {
-      throw new IllegalArgumentException("Null key");
-    }
+    return _queryParams.containsKey(parameterName);
+  }
 
-    ids.add(id);
+  protected Object getParam(String parameterName)
+  {
+    return _queryParams.get(parameterName);
   }
 
   /**
@@ -268,6 +286,208 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
           + _queryParams.get(RestConstants.PAGING_FIELDS_PARAM));
     }
     setParam(RestConstants.PAGING_FIELDS_PARAM, fieldPaths);
+  }
+
+  /**
+   * Returns a read-only copy of the query parameters. It uses the original data where it is immutable.
+   * @return a read only version of the query params
+   */
+  protected Map<String, Object> buildReadOnlyQueryParameters()
+  {
+    return getReadOnlyQueryParameters(_queryParams);
+  }
+
+  static protected Map<String, Object> getReadOnlyQueryParameters(Map<String, Object> queryParams)
+  {
+    try
+    {
+      Map<String, Object> readOnlyCopy = new HashMap<String, Object>
+          (CollectionUtils.getMapInitialCapacity(queryParams.size(), 0.75f), 0.75f);
+      for (Map.Entry<String, Object> entry: queryParams.entrySet())
+      {
+        String key = entry.getKey();
+        Object value = entry.getValue();
+        readOnlyCopy.put(key, getReadOnlyJavaObject(value));
+      }
+
+      return Collections.unmodifiableMap(readOnlyCopy);
+    }
+    catch (CloneNotSupportedException cloneException)
+    {
+      throw new IllegalArgumentException("Query parameters cannot be cloned.", cloneException);
+    }
+  }
+
+  /**
+   * Returns a read-only copy of the path keys. It uses the original data where it is immutable.
+   * @return a read only version of the path keys.
+   */
+  protected Map<String, Object> buildReadOnlyPathKeys()
+  {
+    return getReadOnlyPathKeys(_pathKeys);
+  }
+
+  static protected Map<String, Object> getReadOnlyPathKeys(Map<String, Object> pathKeys)
+  {
+    try
+    {
+      Map<String, Object> readOnlyCopy = new HashMap<String, Object>(
+          CollectionUtils.getMapInitialCapacity(pathKeys.size(), 0.75f), 0.75f);
+      for (Map.Entry<String, Object> entry: pathKeys.entrySet())
+      {
+        String key = entry.getKey();
+        Object value = entry.getValue();
+        readOnlyCopy.put(key, getReadOnlyOrCopyKeyObject(value));
+      }
+
+      return Collections.unmodifiableMap(readOnlyCopy);
+    }
+    catch (CloneNotSupportedException cloneException)
+    {
+      throw new IllegalArgumentException("Path keys cannot be cloned.", cloneException);
+    }
+  }
+
+  protected <T extends DataTemplate> T getReadOnlyOrCopyDataTemplate(T value) throws CloneNotSupportedException
+  {
+    return getReadOnlyOrCopyDataTemplateObject(value);
+  }
+
+  @SuppressWarnings("unchecked")
+  static private <D extends DataTemplate> D getReadOnlyOrCopyDataTemplateObject(D value) throws CloneNotSupportedException
+  {
+    if (value == null)
+    {
+      return null;
+    }
+
+    Object data = value.data();
+    if (data instanceof DataComplex)
+    {
+      DataComplex dataComplex = (DataComplex) data;
+      if (!dataComplex.isMadeReadOnly())
+      {
+        value = (D) value.copy();
+        ((DataComplex) value.data()).makeReadOnly();
+      }
+    }
+
+    return value;
+  }
+
+  protected K getReadOnlyOrCopyKey(K key) throws CloneNotSupportedException
+  {
+    return getReadOnlyOrCopyKeyObject(key);
+  }
+
+  @SuppressWarnings("unchecked")
+  static private <Key> Key getReadOnlyOrCopyKeyObject(Key key) throws CloneNotSupportedException
+  {
+    if (key instanceof ComplexResourceKey)
+    {
+      ComplexResourceKey complexKey = ((ComplexResourceKey) key);
+
+      if (!complexKey.isReadOnly())
+      {
+        complexKey = complexKey.copy();
+        complexKey.makeReadOnly();
+        key = (Key) complexKey;
+      }
+    }
+    else if (key instanceof CompoundKey)
+    {
+      CompoundKey compoundKey = ((CompoundKey) key);
+
+      if (!compoundKey.isReadOnly())
+      {
+        compoundKey = compoundKey.copy();
+        compoundKey.makeReadOnly();
+        key = (Key) compoundKey;
+      }
+    }
+
+    return key;
+  }
+
+  /**
+   * Returns a read only version of {@code value}
+   * @param value the object we want to get a read only version of
+   * @return a read only version of {@code value}
+   */
+  @SuppressWarnings("unchecked")
+  private static Object getReadOnlyJavaObject(Object value) throws CloneNotSupportedException
+  {
+    if (value == null)
+    {
+      return null;
+    }
+
+    if (value instanceof Object[])
+    {
+      // array of non-primitives
+      Object[] arr = (Object[]) value;
+      List<Object> list = new ArrayList<Object>(arr.length);
+      for (Object o: arr)
+      {
+        list.add(getReadOnlyJavaObject(o));
+      }
+      return Collections.unmodifiableList(list);
+    }
+    else if (value.getClass().isArray())
+    {
+      // array of primitives
+      int length = Array.getLength(value);
+      List<Object> list = new ArrayList<Object>();
+      for (int i = 0; i < length; i++)
+      {
+        list.add(Array.get(value, i));
+      }
+      return Collections.unmodifiableList(list);
+    }
+    else if (value instanceof ComplexResourceKey || value instanceof CompoundKey)
+    {
+      return getReadOnlyOrCopyKeyObject(value);
+    }
+    else if (value instanceof DataTemplate)
+    {
+      return getReadOnlyOrCopyDataTemplateObject((DataTemplate) value);
+    }
+    else if (value instanceof Iterable)
+    {
+      List<Object> list = new ArrayList<Object>();
+      for (Object o: (Iterable)value)
+      {
+        list.add(getReadOnlyJavaObject(o));
+      }
+      return Collections.unmodifiableList(list);
+    }
+
+    return value;
+  }
+
+  protected CompoundKey buildReadOnlyAssocKey()
+  {
+    try
+    {
+      return getReadOnlyOrCopyKeyObject(_assocKey);
+    }
+    catch (CloneNotSupportedException cloneException)
+    {
+      throw new IllegalArgumentException("Assoc keys cannot be cloned.", cloneException);
+    }
+  }
+
+  protected Map<String, String> buildReadOnlyHeaders()
+  {
+    return getReadOnlyHeaders(_headers);
+  }
+
+  static protected Map<String, String> getReadOnlyHeaders(Map<String, String> headers)
+  {
+    Map<String, String> copyHeaders = new HashMap<String, String>(
+        CollectionUtils.getMapInitialCapacity(headers.size(), 0.75f), 0.75f);
+    copyHeaders.putAll(headers);
+    return Collections.unmodifiableMap(copyHeaders);
   }
 
   @Override

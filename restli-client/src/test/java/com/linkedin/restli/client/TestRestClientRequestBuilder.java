@@ -31,7 +31,9 @@ import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.ResourceSpecImpl;
+import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
+import com.linkedin.restli.internal.common.ResourcePropertiesImpl;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -44,6 +46,7 @@ import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+
 
 /**
  * @author Moira Tagle
@@ -120,7 +123,11 @@ public class TestRestClientRequestBuilder
                          String expectedAcceptHeader)
     throws URISyntaxException
   {
-    RestRequest restRequest = clientGeneratedRequest(ActionRequest.class, ResourceMethod.ACTION, ENTITY_BODY, contentType, acceptTypes);
+    RestRequest restRequest = clientGeneratedRequest(ActionRequest.class,
+                                                     ResourceMethod.ACTION,
+                                                     ENTITY_BODY,
+                                                     contentType,
+                                                     acceptTypes);
     Assert.assertEquals(restRequest.getHeader(CONTENT_TYPE_HEADER), expectedContentTypeHeader);
     Assert.assertEquals(restRequest.getEntity().asAvroString(), expectedRequestBody);
     Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
@@ -393,8 +400,8 @@ public class TestRestClientRequestBuilder
     EasyMock.expect(mockRequest.getRequestOptions()).andReturn(RestliRequestOptions.DEFAULT_OPTIONS).once();
   }
 
-  @SuppressWarnings("rawtypes")
-  private void buildInputForBatchPathAndUpdate(Request mockRequest)
+  @SuppressWarnings({"rawtypes", "deprecation"})
+  private void buildInputForBatchPatchAndUpdate(Request mockRequest)
   {
     CollectionRequest mockCollectionRequest = EasyMock.createMock(CollectionRequest.class);
     EasyMock.expect(mockCollectionRequest.getElements()).andReturn(Collections.emptyList()).once();
@@ -408,10 +415,15 @@ public class TestRestClientRequestBuilder
                                                      null,
                                                      EmptyRecord.class,
                                                      Collections.<String, CompoundKey.TypeInfo> emptyMap());
-    EasyMock.expect(mockRequest.getResourceSpec()).andReturn(resourceSpec).once();
+    EasyMock.expect(mockRequest.getResourceProperties()).andReturn(
+        new ResourcePropertiesImpl(Collections.<ResourceMethod> emptySet(),
+                               null,
+                               null,
+                               TypeSpec.forClassMaybeNull(EmptyRecord.class),
+                               Collections.<String, CompoundKey.TypeInfo> emptyMap())).once();
   }
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
+  @SuppressWarnings({"unchecked", "rawtypes", "deprecation"})
   private <T extends Request> RestRequest clientGeneratedRequest(Class<T> requestClass,
                                                                  ResourceMethod method,
                                                                  DataMap entityBody,
@@ -432,18 +444,22 @@ public class TestRestClientRequestBuilder
 
     if (method == ResourceMethod.BATCH_PARTIAL_UPDATE || method == ResourceMethod.BATCH_UPDATE)
     {
-      buildInputForBatchPathAndUpdate(mockRequest);
+      buildInputForBatchPatchAndUpdate(mockRequest);
     }
     else
     {
       EasyMock.expect(mockRequest.getInputRecord()).andReturn(mockRecordTemplate).times(2);
-      EasyMock.expect(mockRequest.getResourceSpec()).andReturn(new ResourceSpecImpl()).once();
     }
 
     if (method == ResourceMethod.GET)
     {
       EasyMock.expect(((GetRequest)mockRequest).getObjectId()).andReturn(null).once();
-      EasyMock.expect(((GetRequest)mockRequest).getResourceSpec()).andReturn(new ResourceSpecImpl()).once();
+      EasyMock.expect(mockRequest.getResourceProperties()).andReturn(
+          new ResourcePropertiesImpl(Collections.<ResourceMethod> emptySet(),
+                                     null,
+                                     null,
+                                     null,
+                                     Collections.<String, CompoundKey.TypeInfo> emptyMap())).once();
       EasyMock.expect(mockRequest.getMethodName()).andReturn(null);
     }
     else if (method == ResourceMethod.BATCH_GET)
@@ -467,19 +483,34 @@ public class TestRestClientRequestBuilder
     }
     else if (method == ResourceMethod.UPDATE)
     {
-      EasyMock.expect(((UpdateRequest) mockRequest).getResourceSpec()).andReturn(new ResourceSpecImpl()).once();
+      EasyMock.expect(mockRequest.getResourceProperties()).andReturn(
+          new ResourcePropertiesImpl(Collections.<ResourceMethod> emptySet(),
+                                 null,
+                                 null,
+                                 null,
+                                 Collections.<String, CompoundKey.TypeInfo> emptyMap())).once();
       EasyMock.expect(((UpdateRequest)mockRequest).getId()).andReturn(null);
       EasyMock.expect(mockRequest.getMethodName()).andReturn(null);
     }
     else if (method == ResourceMethod.PARTIAL_UPDATE)
     {
-      EasyMock.expect(mockRequest.getResourceSpec()).andReturn(new ResourceSpecImpl()).times(2);
+      EasyMock.expect(mockRequest.getResourceProperties()).andReturn(
+          new ResourcePropertiesImpl(Collections.<ResourceMethod> emptySet(),
+                                     null,
+                                     null,
+                                     null,
+                                     Collections.<String, CompoundKey.TypeInfo> emptyMap())).once();
       EasyMock.expect(((PartialUpdateRequest)mockRequest).getId()).andReturn(null);
       EasyMock.expect(mockRequest.getMethodName()).andReturn(null);
     }
     else if (method == ResourceMethod.DELETE)
     {
-      EasyMock.expect(((DeleteRequest)mockRequest).getResourceSpec()).andReturn(new ResourceSpecImpl()).once();
+      EasyMock.expect(mockRequest.getResourceProperties()).andReturn(
+          new ResourcePropertiesImpl(Collections.<ResourceMethod> emptySet(),
+                                     null,
+                                     null,
+                                     null,
+                                     Collections.<String, CompoundKey.TypeInfo> emptyMap())).once();
       EasyMock.expect(((DeleteRequest)mockRequest).getId()).andReturn(null);
       EasyMock.expect(mockRequest.getMethodName()).andReturn(null);
     }

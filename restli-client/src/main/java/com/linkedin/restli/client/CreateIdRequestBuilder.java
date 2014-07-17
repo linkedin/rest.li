@@ -30,21 +30,20 @@ import java.util.Map;
  * @author Moira Tagle
  */
 public class CreateIdRequestBuilder<K, V extends RecordTemplate>
-  extends RestfulRequestBuilder<K, V, CreateIdRequest<K, V>>
+  extends SingleEntityRequestBuilder<K, V, CreateIdRequest<K, V>>
 {
-  private V _input;
-
   protected CreateIdRequestBuilder(String baseURITemplate,
                                    Class<V> valueClass,
                                    ResourceSpec resourceSpec,
                                    RestliRequestOptions requestOptions)
   {
-    super(baseURITemplate, resourceSpec, requestOptions);
+    super(baseURITemplate, valueClass, resourceSpec, requestOptions);
   }
 
+  @Override
   public CreateIdRequestBuilder<K, V> input(V entity)
   {
-    _input = entity;
+    super.input(entity);
     return this;
   }
 
@@ -111,13 +110,13 @@ public class CreateIdRequestBuilder<K, V extends RecordTemplate>
     IdResponseDecoder<K> idResponseDecoder = new IdResponseDecoder<K>((TypeSpec<K>)_resourceSpec.getKeyType(),
                                                                        _resourceSpec.getKeyParts(),
                                                                        _resourceSpec.getComplexKeyType());
-    return new CreateIdRequest<K, V>(_input,
-                                     _headers,
+    return new CreateIdRequest<K, V>(buildReadOnlyInput(),
+                                     buildReadOnlyHeaders(),
                                      idResponseDecoder,
                                      _resourceSpec,
-                                     _queryParams,
+                                     buildReadOnlyQueryParameters(),
                                      getBaseUriTemplate(),
-                                     _pathKeys,
+                                     buildReadOnlyPathKeys(),
                                      getRequestOptions());
   }
 }

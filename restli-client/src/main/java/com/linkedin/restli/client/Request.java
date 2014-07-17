@@ -20,15 +20,18 @@ package com.linkedin.restli.client;
 import com.linkedin.data.DataComplex;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.DataTemplate;
+import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.jersey.api.uri.UriTemplate;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.HttpMethod;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.common.ResourceProperties;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
+import com.linkedin.restli.internal.common.ResourcePropertiesImpl;
 import com.linkedin.restli.internal.common.URIParamUtils;
 
 import java.lang.reflect.Array;
@@ -57,6 +60,7 @@ public class Request<T>
   private final RestResponseDecoder<T> _decoder;
   private final Map<String, String>    _headers;
   private final ResourceSpec           _resourceSpec;
+  private final ResourceProperties     _resourceProperties;
   private final Map<String, Object>    _queryParams;
   private final String                 _methodName; // needed to identify finders and actions. null for everything else
   private final String                 _baseUriTemplate;
@@ -77,23 +81,26 @@ public class Request<T>
     _method = method;
     _inputRecord = inputRecord;
     _decoder = decoder;
-    _headers = headers == null ? null : Collections.unmodifiableMap(headers);
+    _headers = headers;
     _resourceSpec = resourceSpec;
 
-    if (queryParams == null)
+    if (resourceSpec != null)
     {
-      _queryParams = null;
+      _resourceProperties = new ResourcePropertiesImpl(resourceSpec.getSupportedMethods(),
+                                                       resourceSpec.getKeyType(),
+                                                       resourceSpec.getComplexKeyType(),
+                                                       resourceSpec.getValueType(),
+                                                       resourceSpec.getKeyParts());
     }
     else
     {
-      _queryParams = getReadOnlyQueryParams(queryParams);
+      _resourceProperties = null;
     }
 
+    _queryParams = queryParams;
     _methodName = methodName;
-
     _baseUriTemplate = baseUriTemplate;
-
-    _pathKeys = (pathKeys == null) ? null : Collections.unmodifiableMap(pathKeys);
+    _pathKeys = pathKeys;
 
     if (_baseUriTemplate != null && _pathKeys != null)
     {
@@ -109,7 +116,7 @@ public class Request<T>
    */
   protected void validateKeyPresence(Object key)
   {
-    if (getResourceSpec().isKeylessResource())
+    if (getResourceProperties().isKeylessResource())
     {
       if (key != null)
       {
@@ -123,89 +130,6 @@ public class Request<T>
         throw new IllegalArgumentException("id required to build this request");
       }
     }
-  }
-
-  /**
-   * Converts the query params to read only.
-   * @param queryParams the passed in query params
-   * @return a read only version of the query params
-   */
-  private Map<String, Object> getReadOnlyQueryParams(Map<String, Object> queryParams)
-  {
-    for (Map.Entry<String, Object> entry: queryParams.entrySet())
-    {
-      String key = entry.getKey();
-      Object value = entry.getValue();
-      queryParams.put(key, getReadOnly(value));
-    }
-    return Collections.unmodifiableMap(queryParams);
-  }
-
-  /**
-   * Returns a read only version of {@code value}
-   * @param value the object we want to get a read only version of
-   * @return a read only version of {@code value}
-   */
-  private Object getReadOnly(Object value)
-  {
-    if (value == null)
-    {
-      return null;
-    }
-
-    if (value instanceof Object[])
-    {
-      // array of non-primitives
-      Object[] arr = (Object[])value;
-      List<Object> list = new ArrayList<Object>(arr.length);
-      for (Object o: arr)
-      {
-        list.add(getReadOnly(o));
-      }
-      return Collections.unmodifiableList(list);
-    }
-    else if (value.getClass().isArray())
-    {
-      // array of primitives
-      int length = Array.getLength(value);
-      List<Object> list = new ArrayList<Object>();
-      for (int i = 0; i < length; i++)
-      {
-        list.add(Array.get(value, i));
-      }
-      return Collections.unmodifiableList(list);
-    }
-    else if (value instanceof ComplexResourceKey)
-    {
-      ((ComplexResourceKey) value).makeReadOnly();
-      return value;
-    }
-    else if (value instanceof CompoundKey)
-    {
-      ((CompoundKey) value).makeReadOnly();
-      return value;
-    }
-    else if (value instanceof DataTemplate)
-    {
-      Object data = ((DataTemplate) value).data();
-      if (data instanceof DataComplex)
-      {
-        ((DataComplex) data).makeReadOnly();
-      }
-      // we don't try to make other types of data read only.
-      return value;
-    }
-    else if (value instanceof Iterable)
-    {
-      List<Object> list = new ArrayList<Object>();
-      for (Object o: (Iterable)value)
-      {
-        list.add(getReadOnly(o));
-      }
-      return Collections.unmodifiableList(list);
-    }
-
-    return value;
   }
 
   /**
@@ -249,9 +173,19 @@ public class Request<T>
     return _decoder;
   }
 
+  /**
+   * @deprecated Please use {@link #getResourceProperties()} instead.
+   */
+  @Deprecated
   public ResourceSpec getResourceSpec()
   {
+    // When this method is removed, this class should be constructed solely from resource properties.
     return _resourceSpec;
+  }
+
+  public ResourceProperties getResourceProperties()
+  {
+    return _resourceProperties;
   }
 
   public String getBaseUriTemplate()
@@ -301,7 +235,7 @@ public class Request<T>
     {
       return Collections.emptySet();
     }
-    return new HashSet<PathSpec>(fieldsList);
+    return Collections.unmodifiableSet(new HashSet<PathSpec>(fieldsList));
   }
 
   /**

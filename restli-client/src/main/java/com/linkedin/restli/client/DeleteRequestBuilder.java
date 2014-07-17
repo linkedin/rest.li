@@ -32,21 +32,20 @@ import java.util.Map;
  */
 
 public class DeleteRequestBuilder<K, V extends RecordTemplate>
-  extends RestfulRequestBuilder<K, V, DeleteRequest<V>>
+  extends SingleEntityRequestBuilder<K, V, DeleteRequest<V>>
 {
-  private K _id;
-
   public DeleteRequestBuilder(String baseUriTemplate,
                               Class<V> valueClass,
                               ResourceSpec resourceSpec,
                               RestliRequestOptions requestOptions)
   {
-    super(baseUriTemplate, resourceSpec, requestOptions);
+    super(baseUriTemplate, valueClass, resourceSpec, requestOptions);
   }
 
+  @Override
   public DeleteRequestBuilder<K, V> id(K id)
   {
-    _id = id;
+    super.id(id);
     return this;
   }
 
@@ -109,12 +108,12 @@ public class DeleteRequestBuilder<K, V extends RecordTemplate>
   @Override
   public DeleteRequest<V> build()
   {
-    return new DeleteRequest<V>(_headers,
+    return new DeleteRequest<V>(buildReadOnlyHeaders(),
                                 _resourceSpec,
-                                _queryParams,
+                                buildReadOnlyQueryParameters(),
                                 getBaseUriTemplate(),
-                                _pathKeys,
+                                buildReadOnlyPathKeys(),
                                 getRequestOptions(),
-                                _id);
+                                buildReadOnlyId());
   }
 }

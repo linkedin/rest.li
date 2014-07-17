@@ -50,6 +50,7 @@ import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionRequest;
 import com.linkedin.restli.common.CreateIdStatus;
 import com.linkedin.restli.common.EntityResponse;
+import com.linkedin.restli.common.ResourceProperties;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.UpdateStatus;
@@ -409,15 +410,15 @@ public class TestScatterGather extends RestLiIntegrationTest
       RecordTemplate inputRecordTemplate;
       if (request instanceof BatchUpdateRequest)
       {
-        ResourceSpec resourceSpec = request.getResourceSpec();
+        ResourceProperties resourceProperties = request.getResourceProperties();
 
         CollectionRequest inputRecord = (CollectionRequest)request.getInputRecord();
 
         inputRecordTemplate = CollectionRequestUtil.convertToBatchRequest(inputRecord,
-                                                                          resourceSpec.getKeyType(),
-                                                                          resourceSpec.getComplexKeyType(),
-                                                                          resourceSpec.getKeyParts(),
-                                                                          resourceSpec.getValueType());
+                                                                          resourceProperties.getKeyType(),
+                                                                          resourceProperties.getComplexKeyType(),
+                                                                          resourceProperties.getKeyParts(),
+                                                                          resourceProperties.getValueType());
       }
       else
       {
@@ -476,15 +477,15 @@ public class TestScatterGather extends RestLiIntegrationTest
       RecordTemplate inputRecordTemplate;
       if (request instanceof BatchUpdateRequest)
       {
-        ResourceSpec resourceSpec = request.getResourceSpec();
+        ResourceProperties resourceProperties = request.getResourceProperties();
 
         CollectionRequest inputRecord = (CollectionRequest)request.getInputRecord();
 
         inputRecordTemplate = CollectionRequestUtil.convertToBatchRequest(inputRecord,
-                                                                          resourceSpec.getKeyType(),
-                                                                          resourceSpec.getComplexKeyType(),
-                                                                          resourceSpec.getKeyParts(),
-                                                                          resourceSpec.getValueType());
+                                                                          resourceProperties.getKeyType(),
+                                                                          resourceProperties.getComplexKeyType(),
+                                                                          resourceProperties.getKeyParts(),
+                                                                          resourceProperties.getValueType());
       }
       else
       {

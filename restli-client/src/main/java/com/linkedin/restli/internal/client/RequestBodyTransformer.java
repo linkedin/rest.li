@@ -23,7 +23,7 @@ import com.linkedin.restli.common.CollectionRequest;
 import com.linkedin.restli.common.KeyValueRecord;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ProtocolVersion;
-import com.linkedin.restli.common.ResourceSpec;
+import com.linkedin.restli.common.ResourceProperties;
 import com.linkedin.restli.common.TypeSpec;
 
 
@@ -51,23 +51,27 @@ public class RequestBodyTransformer
   @SuppressWarnings({"unchecked", "rawtypes"})
   public static <T> DataMap transform(Request<T> request, ProtocolVersion version)
   {
-    ResourceSpec resourceSpec = request.getResourceSpec();
+    ResourceProperties resourceProperties = null;
     switch (request.getMethod())
     {
       case BATCH_UPDATE:
+        resourceProperties = request.getResourceProperties();
+
         return CollectionRequestUtil.
             convertToBatchRequest((CollectionRequest<KeyValueRecord>) request.getInputRecord(),
-                                  resourceSpec.getKeyType(),
-                                  resourceSpec.getComplexKeyType(),
-                                  resourceSpec.getKeyParts(),
-                                  resourceSpec.getValueType(),
+                                  resourceProperties.getKeyType(),
+                                  resourceProperties.getComplexKeyType(),
+                                  resourceProperties.getKeyParts(),
+                                  resourceProperties.getValueType(),
                                   version).data();
       case BATCH_PARTIAL_UPDATE:
+        resourceProperties = request.getResourceProperties();
+
         return CollectionRequestUtil.
             convertToBatchRequest((CollectionRequest<KeyValueRecord>) request.getInputRecord(),
-                                  resourceSpec.getKeyType(),
-                                  resourceSpec.getComplexKeyType(),
-                                  resourceSpec.getKeyParts(),
+                                  resourceProperties.getKeyType(),
+                                  resourceProperties.getComplexKeyType(),
+                                  resourceProperties.getKeyParts(),
                                   new TypeSpec<PatchRequest>(PatchRequest.class),
                                   version).data();
       default:

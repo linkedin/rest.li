@@ -65,6 +65,12 @@ public final class ComplexResourceKey<K extends RecordTemplate, P extends Record
     {
       throw new IllegalArgumentException("Key part of the complex resource key is required");
     }
+
+    if (params != null && params.data() == null)
+    {
+      throw new IllegalArgumentException("Params part of the complex resource key has a null internal data map");
+    }
+
     this.key = key;
     this.params = params;
   }
@@ -156,7 +162,7 @@ public final class ComplexResourceKey<K extends RecordTemplate, P extends Record
   public DataMap toDataMap()
   {
     final DataMap m = new DataMap(key.data());
-    if (params != null && params.data() != null)
+    if (params != null)
     {
       m.put(COMPLEX_KEY_PARAMS, params.data());
     }
@@ -164,15 +170,30 @@ public final class ComplexResourceKey<K extends RecordTemplate, P extends Record
   }
 
   /**
+   * Returns whether this key is read only by checking the underlying {@link DataMap}s in the key and params.
+   */
+  public boolean isReadOnly()
+  {
+    boolean result = true;
+
+    result = key.data().isReadOnly();
+
+    if (params != null)
+    {
+      result &= params.data().isReadOnly();
+    }
+
+    return result;
+  }
+
+  /**
    * Makes this key read only by making the underlying {@link DataMap}s in the key and params read only.
    */
   public void makeReadOnly()
   {
-    if (key.data() != null)
-    {
-      key.data().makeReadOnly();
-    }
-    if (params != null && params.data() != null)
+    key.data().makeReadOnly();
+
+    if (params != null)
     {
       params.data().makeReadOnly();
     }
@@ -366,5 +387,19 @@ public final class ComplexResourceKey<K extends RecordTemplate, P extends Record
     // Key cannot be null
     return key.equals(other.key)
         && (params == null ? other.params == null : (params.equals(other.params)));
+  }
+
+  @SuppressWarnings("unchecked")
+  public ComplexResourceKey<K, P> copy() throws CloneNotSupportedException
+  {
+    K copyKey = (K) key.copy();
+    P copyParams = null;
+
+    if (params != null)
+    {
+      copyParams = (P) params.copy();
+    }
+
+    return new ComplexResourceKey<K, P>(copyKey, copyParams);
   }
 }

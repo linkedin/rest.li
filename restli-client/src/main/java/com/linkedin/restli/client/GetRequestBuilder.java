@@ -27,6 +27,7 @@ import com.linkedin.restli.common.ResourceSpec;
 
 import java.util.Map;
 
+
 /**
  * @author Josh Walker
  * @version $Revision: $
@@ -34,23 +35,20 @@ import java.util.Map;
 
 
 public class GetRequestBuilder<K, V extends RecordTemplate> extends
-    RestfulRequestBuilder<K,V, GetRequest<V>>
+    SingleEntityRequestBuilder<K,V, GetRequest<V>>
 {
-  private final Class<V> _elementClass;
-  private K              _id;
-
   public GetRequestBuilder(String baseUriTemplate,
                            Class<V> elementClass,
                            ResourceSpec resourceSpec,
                            RestliRequestOptions requestOptions)
   {
-    super(baseUriTemplate, resourceSpec, requestOptions);
-    _elementClass = elementClass;
+    super(baseUriTemplate, elementClass, resourceSpec, requestOptions);
   }
 
+  @Override
   public GetRequestBuilder<K, V> id(K id)
   {
-    _id = id;
+    super.id(id);
     return this;
   }
 
@@ -113,13 +111,13 @@ public class GetRequestBuilder<K, V extends RecordTemplate> extends
   @Override
   public GetRequest<V> build()
   {
-    return new GetRequest<V>(_headers,
-                             _elementClass,
-                             _id,
-                             _queryParams,
+    return new GetRequest<V>(buildReadOnlyHeaders(),
+                             getValueClass(),
+                             buildReadOnlyId(),
+                             buildReadOnlyQueryParameters(),
                              _resourceSpec,
                              getBaseUriTemplate(),
-                             _pathKeys,
+                             buildReadOnlyPathKeys(),
                              getRequestOptions());
   }
 

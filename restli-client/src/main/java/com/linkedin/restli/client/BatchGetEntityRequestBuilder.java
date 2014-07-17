@@ -22,6 +22,8 @@ import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.ResourceSpec;
+import com.linkedin.restli.common.TypeSpec;
+import com.linkedin.restli.internal.client.BatchEntityResponseDecoder;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
 
 import java.util.Arrays;
@@ -94,8 +96,10 @@ public class BatchGetEntityRequestBuilder<K, V extends RecordTemplate> extends
                                                                                 boolean batchFields)
   {
     final BatchGetEntityRequest<K, V> firstRequest = requests.get(0);
+    @SuppressWarnings("deprecation")
     final ResourceSpec firstResourceSpec = firstRequest.getResourceSpec();
-    final Map<String, Object> batchQueryParams = BatchGetRequestUtil.getBatchQueryParam(requests, batchFields);
+    final Map<String, Object> batchQueryParams =
+        getReadOnlyQueryParameters(BatchGetRequestUtil.getBatchQueryParam(requests, batchFields));
 
     return new BatchGetEntityRequest<K, V>(firstRequest.getHeaders(),
                                            firstRequest.getResponseDecoder(),
@@ -113,6 +117,21 @@ public class BatchGetEntityRequestBuilder<K, V extends RecordTemplate> extends
   {
     super(baseUriTemplate, resourceSpec, requestOptions);
     _decoder = decoder;
+  }
+
+  @SuppressWarnings("unchecked")
+  public BatchGetEntityRequestBuilder(String baseUriTemplate,
+                                      ResourceSpec resourceSpec,
+                                      RestliRequestOptions requestOptions)
+  {
+    this(baseUriTemplate,
+          new BatchEntityResponseDecoder<K, V>(
+              (TypeSpec<V>) resourceSpec.getValueType(),
+              (TypeSpec<K>) resourceSpec.getKeyType(),
+              resourceSpec.getKeyParts(),
+              resourceSpec.getComplexKeyType()),
+          resourceSpec,
+          requestOptions);
   }
 
   @SuppressWarnings("unchecked")
@@ -193,12 +212,12 @@ public class BatchGetEntityRequestBuilder<K, V extends RecordTemplate> extends
   {
     ensureBatchKeys();
 
-    return new BatchGetEntityRequest<K, V>(_headers,
+    return new BatchGetEntityRequest<K, V>(buildReadOnlyHeaders(),
                                            _decoder,
-                                           _queryParams,
+                                           buildReadOnlyQueryParameters(),
                                            _resourceSpec,
                                            getBaseUriTemplate(),
-                                           _pathKeys,
+                                           buildReadOnlyPathKeys(),
                                            getRequestOptions());
   }
 

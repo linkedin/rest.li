@@ -17,10 +17,13 @@
 package com.linkedin.restli.client;
 
 
+import com.linkedin.data.ByteString;
 import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.Null;
 import com.linkedin.data.schema.PathSpec;
+import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.data.template.DynamicRecordTemplate;
@@ -48,6 +51,7 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.ResourceSpecImpl;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.internal.client.CollectionRequestUtil;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
@@ -182,10 +186,13 @@ public class TestClientBuilders
     d.put("p", "42");
     @SuppressWarnings("unchecked")
     DynamicRecordTemplate expectedRecordTemplate =
-        new DynamicRecordTemplate(d, DynamicRecordMetadata.buildSchema("action",
-                                                                       Arrays.asList(new FieldDef<String>("p",
-                                                                                                          String.class,
-                                                                                                          DataTemplateUtil.getSchema(String.class)))));
+        new DynamicRecordTemplate(
+            d,
+            DynamicRecordMetadata.buildSchema("action",
+                                              Arrays.asList(
+                                                 new FieldDef<String>("p",
+                                                                      String.class,
+                                                                      DataTemplateUtil.getSchema(String.class)))));
 
     URIDetails.testUriGeneration(request, expectedURIDetails);
     Assert.assertEquals(request.getMethod(), ResourceMethod.ACTION);
@@ -194,6 +201,64 @@ public class TestClientBuilders
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), false);
     Assert.assertEquals(request.getResponseDecoder().getEntityClass(), Void.class);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testActionRequestInputIsReadOnly()
+  {
+    FieldDef<TestRecord> pParam = new FieldDef<TestRecord>("p",
+                                                           TestRecord.class,
+                                                           DataTemplateUtil.getSchema(TestRecord.class));
+    Map<String, DynamicRecordMetadata> requestMetadataMap = new HashMap<String, DynamicRecordMetadata>();
+
+    DynamicRecordMetadata requestMetadata =
+        new DynamicRecordMetadata("action", Collections.<FieldDef<?>>singleton(pParam));
+    requestMetadataMap.put("action", requestMetadata);
+
+    DynamicRecordMetadata responseMetadata =
+        new DynamicRecordMetadata("action", Collections.<FieldDef<?>>emptyList());
+    Map<String, DynamicRecordMetadata> responseMetadataMap = new HashMap<String, DynamicRecordMetadata>();
+    responseMetadataMap.put("action", responseMetadata);
+
+    ResourceSpec resourceSpec = new ResourceSpecImpl(Collections.<ResourceMethod>emptySet(),
+                                                     requestMetadataMap,
+                                                     responseMetadataMap,
+                                                     ComplexResourceKey.class,
+                                                     TestRecord.class,
+                                                     TestRecord.class,
+                                                     TestRecord.class,
+                                                     Collections.<String, CompoundKey.TypeInfo> emptyMap());
+
+    ActionRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> builder =
+        new ActionRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord>(
+            TEST_URI,
+            TestRecord.class,
+            resourceSpec,
+            RestliRequestOptions.DEFAULT_OPTIONS);
+    TestRecord testRecord1 = new TestRecord();
+    TestRecord testRecord2 = new TestRecord();
+    ComplexResourceKey<TestRecord, TestRecord> key =
+        new ComplexResourceKey<TestRecord, TestRecord>(testRecord1, testRecord2);
+
+    ActionRequest<TestRecord> request = builder.name("action").setParam(pParam, testRecord1).id(key).build();
+
+    DynamicRecordTemplate inputParams = (DynamicRecordTemplate) request.getInputRecord();
+    Assert.assertNotSame(inputParams.getValue(pParam).data(), testRecord1.data());
+    Assert.assertTrue(inputParams.data().isReadOnly());
+    Assert.assertTrue(inputParams.getValue(pParam).data().isMadeReadOnly());
+    Assert.assertNotSame(request.getId(), key);
+    Assert.assertTrue(((ComplexResourceKey<TestRecord, TestRecord>) request.getId()).isReadOnly());
+
+    testRecord1.data().makeReadOnly();
+    testRecord2.data().makeReadOnly();
+
+    request = builder.build();
+
+    inputParams = (DynamicRecordTemplate) request.getInputRecord();
+    Assert.assertSame(inputParams.getValue(pParam).data(), testRecord1.data());
+    Assert.assertTrue(inputParams.data().isReadOnly());
+    Assert.assertSame(request.getId(), key);
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchGetWithProjections")
@@ -219,19 +284,21 @@ public class TestClientBuilders
         idSet, null, fieldSet);
 
     return new Object[][] {
-        {uriDetails1},
-        {uriDetails2}
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchGetWithProjections")
   public void testBatchGetRequestBuilder(URIDetails expectedURIDetails)
   {
-    BatchGetRequestBuilder<Long, TestRecord> builder = new BatchGetRequestBuilder<Long, TestRecord>(TEST_URI,
+    BatchGetRequestBuilder<Long, TestRecord> builder = new BatchGetRequestBuilder<Long, TestRecord>(
+        TEST_URI,
         TestRecord.class,
         _COLL_SPEC,
         RestliRequestOptions.DEFAULT_OPTIONS);
-    BatchGetRequest<TestRecord> request = builder.ids(1L, 2L, 3L).fields(TestRecord.fields().id(), TestRecord.fields().message()).build();
+    BatchGetRequest<TestRecord> request =
+        builder.ids(1L, 2L, 3L).fields(TestRecord.fields().id(), TestRecord.fields().message()).build();
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
     Assert.assertEquals(request.getObjectIds(), new HashSet<Long>(Arrays.asList(1L, 2L, 3L)));
     Assert.assertEquals(request.getFields(), new HashSet<PathSpec>(Arrays.asList(
@@ -240,6 +307,71 @@ public class TestClientBuilders
     Assert.assertEquals(request.isIdempotent(), true);
 
     checkBasicRequest(request, expectedURIDetails, ResourceMethod.BATCH_GET, null, Collections.<String, String>emptyMap());
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testBatchGetKVInputIsReadOnly()
+  {
+    BatchGetRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> builder =
+        new BatchGetRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord>(
+            TEST_URI,
+            TestRecord.class,
+            _COMPLEX_KEY_SPEC,
+            RestliRequestOptions.DEFAULT_OPTIONS);
+
+    TestRecord testRecord1 = new TestRecord();
+    TestRecord testRecord2 = new TestRecord();
+    ComplexResourceKey<TestRecord, TestRecord> key =
+        new ComplexResourceKey<TestRecord, TestRecord>(testRecord1, testRecord2);
+
+    BatchGetKVRequest<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> request = builder.ids(key).buildKV();
+
+    ComplexResourceKey<TestRecord, TestRecord> requestKey =
+        (ComplexResourceKey<TestRecord, TestRecord>) request.getObjectIds().iterator().next();
+
+    Assert.assertNotSame(requestKey, key);
+    Assert.assertTrue(requestKey.isReadOnly());
+
+    key.makeReadOnly();
+
+    request = builder.buildKV();
+
+    requestKey = (ComplexResourceKey<TestRecord, TestRecord>) request.getObjectIds().iterator().next();
+
+    Assert.assertSame(requestKey, key);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testBatchGetEntityInputIsReadOnly()
+  {
+    BatchGetEntityRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> builder =
+        new BatchGetEntityRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord>(
+            TEST_URI,
+            _COMPLEX_KEY_SPEC,
+            RestliRequestOptions.DEFAULT_OPTIONS);
+
+    TestRecord testRecord1 = new TestRecord();
+    TestRecord testRecord2 = new TestRecord();
+    ComplexResourceKey<TestRecord, TestRecord> key =
+        new ComplexResourceKey<TestRecord, TestRecord>(testRecord1, testRecord2);
+
+    BatchGetEntityRequest<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> request = builder.ids(key).build();
+
+    ComplexResourceKey<TestRecord, TestRecord> requestKey =
+        (ComplexResourceKey<TestRecord, TestRecord>) request.getObjectIds().iterator().next();
+
+    Assert.assertNotSame(requestKey, key);
+    Assert.assertTrue(requestKey.isReadOnly());
+
+    key.makeReadOnly();
+
+    request = builder.build();
+
+    requestKey = (ComplexResourceKey<TestRecord, TestRecord>) request.getObjectIds().iterator().next();
+
+    Assert.assertSame(requestKey, key);
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchGetWithEncoding")
@@ -731,6 +863,52 @@ public class TestClientBuilders
                       Collections.<String, String>emptyMap());
   }
 
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testBatchCreateRequestInputIsReadOnly()
+  {
+    BatchCreateRequestBuilder<Long, TestRecord> builder =
+        new BatchCreateRequestBuilder<Long, TestRecord>(TEST_URI,
+                                                        TestRecord.class,
+                                                        _COLL_SPEC,
+                                                        RestliRequestOptions.DEFAULT_OPTIONS);
+    TestRecord testRecord = new TestRecord();
+    List<TestRecord> newRecords = Arrays.asList(testRecord);
+    BatchCreateRequest<TestRecord> request = builder.inputs(newRecords).build();
+    CollectionRequest<TestRecord> createInput = (CollectionRequest<TestRecord>) request.getInputRecord();
+
+    Assert.assertNotSame(createInput.getElements().get(0), testRecord);
+    Assert.assertTrue(createInput.getElements().get(0).data().isMadeReadOnly());
+
+    testRecord.data().makeReadOnly();
+    request = builder.build();
+    createInput = (CollectionRequest<TestRecord>) request.getInputRecord();
+    Assert.assertSame(createInput.getElements().get(0), testRecord);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testBatchCreateIdRequestInputIsReadOnly()
+  {
+    BatchCreateIdRequestBuilder<Long, TestRecord> builder =
+        new BatchCreateIdRequestBuilder<Long, TestRecord>(TEST_URI,
+                                                          TestRecord.class,
+                                                          _COLL_SPEC,
+                                                          RestliRequestOptions.DEFAULT_OPTIONS);
+    TestRecord testRecord = new TestRecord();
+    List<TestRecord> newRecords = Arrays.asList(testRecord);
+    BatchCreateIdRequest<Long, TestRecord> request = builder.inputs(newRecords).build();
+    CollectionRequest<TestRecord> createInput = (CollectionRequest<TestRecord>) request.getInputRecord();
+
+    Assert.assertNotSame(createInput.getElements().get(0), testRecord);
+    Assert.assertTrue(createInput.getElements().get(0).data().isMadeReadOnly());
+
+    testRecord.data().makeReadOnly();
+    request = builder.build();
+    createInput = (CollectionRequest<TestRecord>) request.getInputRecord();
+    Assert.assertSame(createInput.getElements().get(0), testRecord);
+  }
+
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "noEntity")
   public void testCreateRequestBuilder(URIDetails expectedURIDetails)
   {
@@ -1210,10 +1388,11 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "singleEntity")
   public void testPartialUpdateRequestBuilder(URIDetails expectedURIDetails) throws Exception
   {
-    PartialUpdateRequestBuilder<Long, TestRecord> builder = new PartialUpdateRequestBuilder<Long, TestRecord>(TEST_URI,
-                                                                                                              TestRecord.class,
-                                                                                                              _COLL_SPEC,
-                                                                                                              RestliRequestOptions.DEFAULT_OPTIONS);
+    PartialUpdateRequestBuilder<Long, TestRecord> builder =
+        new PartialUpdateRequestBuilder<Long, TestRecord>(TEST_URI,
+                                           TestRecord.class,
+                                           _COLL_SPEC,
+                                           RestliRequestOptions.DEFAULT_OPTIONS);
     TestRecord t1 = new TestRecord();
     TestRecord t2 = new TestRecord(t1.data().copy());
     t2.setId(1L);
@@ -1449,9 +1628,9 @@ public class TestClientBuilders
   {
     BatchUpdateRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> builder =
         new BatchUpdateRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord>(TEST_URI,
-                                                                                              TestRecord.class,
-                                                                                              _COMPLEX_KEY_SPEC,
-                                                                                              RestliRequestOptions.DEFAULT_OPTIONS);
+                                         TestRecord.class,
+                                         _COMPLEX_KEY_SPEC,
+                                         RestliRequestOptions.DEFAULT_OPTIONS);
     ComplexResourceKey<TestRecord, TestRecord> id1 =
         buildComplexKey(1L, "KeyMessage1", 10L, "ParamMessage1");
     ComplexResourceKey<TestRecord, TestRecord> id2 =
@@ -1490,6 +1669,166 @@ public class TestClientBuilders
                       collectionRequest,
                       expectedRequest,
                       Collections.<String, String>emptyMap());
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testBatchUpdateRequestInputIsReadOnly()
+  {
+    BatchUpdateRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> builder =
+        new BatchUpdateRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord>(TEST_URI,
+                                         TestRecord.class,
+                                         _COMPLEX_KEY_SPEC,
+                                         RestliRequestOptions.DEFAULT_OPTIONS);
+    ComplexResourceKey<TestRecord, TestRecord> id1 =
+        buildComplexKey(1L, "KeyMessage1", 10L, "ParamMessage1");
+    ComplexResourceKey<TestRecord, TestRecord> id2 =
+        buildComplexKey(2L, "KeyMessage2", 20L, "ParamMessage2");
+    TestRecord t1 = new TestRecord().setMessage("foo");
+    TestRecord t2 = new TestRecord().setMessage("bar");
+
+    BatchUpdateRequest<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> request =
+        builder.input(id1, t1).input(id2, t2).build();
+
+    checkKeyValueRecordCollectionIsReadOnly(id1,
+                                              id2,
+                                              t1,
+                                              t2,
+                                              TestRecord.class,
+                                              (CollectionRequest<KeyValueRecord>) request.getInputRecord());
+
+    checkKeyValueMapIsReadOnly(id1, id2, t1, t2, TestRecord.class, request.getUpdateInputMap());
+
+    id1.makeReadOnly();
+    t2.data().makeReadOnly();
+
+    request = builder.input(id1, t1).input(id2, t2).build();
+
+    checkKeyValueRecordCollectionIsReadOnly(id1,
+                                              id2,
+                                              t1,
+                                              t2,
+                                              TestRecord.class,
+                                              (CollectionRequest<KeyValueRecord>) request.getInputRecord());
+
+    checkKeyValueMapIsReadOnly(id1, id2, t1, t2, TestRecord.class, request.getUpdateInputMap());
+  }
+
+  private void checkKeyValueMapIsReadOnly(ComplexResourceKey<TestRecord, TestRecord> id1,
+                                            ComplexResourceKey<TestRecord, TestRecord> id2,
+                                            RecordTemplate t1,
+                                            RecordTemplate t2,
+                                            Class<? extends RecordTemplate> valueClass,
+                                            Map<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> entries)
+  {
+    for (Map.Entry<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> entry : entries.entrySet())
+    {
+      ComplexResourceKey<TestRecord, TestRecord> generatedKey = entry.getKey();
+
+      if (generatedKey.equals(id1))
+      {
+        checkComplexKeyIsReadOnly(id1, generatedKey);
+      }
+      else
+      {
+        checkComplexKeyIsReadOnly(id2, generatedKey);
+      }
+
+      Assert.assertTrue(generatedKey.isReadOnly());
+
+      RecordTemplate value = entry.getValue();
+      if (value.equals(t1))
+      {
+        if (t1.data().isMadeReadOnly())
+        {
+          Assert.assertSame(t1, value);
+        }
+        else
+        {
+          Assert.assertNotSame(t1, value);
+        }
+      }
+      else
+      {
+        if (t2.data().isReadOnly())
+        {
+          Assert.assertSame(t2, value);
+        }
+        else
+        {
+          Assert.assertNotSame(t2, value);
+        }
+      }
+
+      Assert.assertTrue(value.data().isMadeReadOnly());
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private void checkKeyValueRecordCollectionIsReadOnly(ComplexResourceKey<TestRecord, TestRecord> id1,
+                                                         ComplexResourceKey<TestRecord, TestRecord> id2,
+                                                         RecordTemplate t1,
+                                                         RecordTemplate t2,
+                                                         Class<? extends RecordTemplate> valueClass,
+                                                         CollectionRequest<KeyValueRecord> entries)
+  {
+    for (KeyValueRecord entry : entries.getElements())
+    {
+      ComplexResourceKey<TestRecord, TestRecord> generatedKey =
+          entry.getComplexKey(TestRecord.class, TestRecord.class);
+
+      if (generatedKey.equals(id1))
+      {
+        checkComplexKeyIsReadOnly(id1, generatedKey);
+      }
+      else
+      {
+        checkComplexKeyIsReadOnly(id2, generatedKey);
+      }
+
+      Assert.assertTrue(generatedKey.isReadOnly());
+
+      RecordTemplate value = entry.getValue(valueClass);
+      if (value.equals(t1))
+      {
+        if (t1.data().isMadeReadOnly())
+        {
+          Assert.assertSame(t1.data(), value.data());
+        }
+        else
+        {
+          Assert.assertNotSame(t1.data(), value.data());
+        }
+      }
+      else
+      {
+        if (t2.data().isReadOnly())
+        {
+          Assert.assertSame(t2.data(), value.data());
+        }
+        else
+        {
+          Assert.assertNotSame(t2.data(), value.data());
+        }
+      }
+
+      Assert.assertTrue(value.data().isMadeReadOnly());
+    }
+  }
+
+  private void checkComplexKeyIsReadOnly(ComplexResourceKey<TestRecord, TestRecord> originalKey,
+                                           ComplexResourceKey<TestRecord, TestRecord> generatedKey)
+  {
+    if (originalKey.isReadOnly())
+    {
+      Assert.assertSame(originalKey.getKey().data(), generatedKey.getKey().data());
+      Assert.assertSame(originalKey.getParams().data(), generatedKey.getParams().data());
+    }
+    else
+    {
+      Assert.assertNotSame(originalKey.getKey().data(), generatedKey.getKey().data());
+      Assert.assertNotSame(originalKey.getParams().data(), generatedKey.getParams().data());
+    }
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "complexKey")
@@ -1638,6 +1977,46 @@ public class TestClientBuilders
 
     checkBasicRequest(request, expectedURIDetails, ResourceMethod.BATCH_PARTIAL_UPDATE, collectionRequest, batchRequest,
         Collections.<String, String>emptyMap());
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testBatchPartialUpdateRequestInputIsReadOnly()
+  {
+    BatchPartialUpdateRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> builder =
+        new BatchPartialUpdateRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord>(
+            TEST_URI,
+            TestRecord.class,
+            _COMPLEX_KEY_SPEC,
+            RestliRequestOptions.DEFAULT_OPTIONS);
+    ComplexResourceKey<TestRecord, TestRecord> id1 =
+        buildComplexKey(1L, "KeyMessage1", 10L, "ParamMessage1");
+    ComplexResourceKey<TestRecord, TestRecord> id2 =
+        buildComplexKey(2L, "KeyMessage2", 20L, "ParamMessage2");
+    PatchRequest<TestRecord> t1 = PatchGenerator.diffEmpty(new TestRecord().setMessage("foo"));
+    PatchRequest<TestRecord> t2 = PatchGenerator.diffEmpty(new TestRecord().setMessage("bar"));
+
+    BatchPartialUpdateRequest<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> request =
+        builder.input(id1, t1).input(id2, t2).build();
+
+    checkKeyValueRecordCollectionIsReadOnly(id1,
+                                              id2,
+                                              t1,
+                                              t2,
+                                              PatchRequest.class,
+                                              (CollectionRequest<KeyValueRecord>) request.getInputRecord());
+
+    id1.makeReadOnly();
+    t2.data().makeReadOnly();
+
+    request = builder.input(id1, t1).input(id2, t2).build();
+
+    checkKeyValueRecordCollectionIsReadOnly(id1,
+                                              id2,
+                                              t1,
+                                              t2,
+                                              PatchRequest.class,
+                                              (CollectionRequest<KeyValueRecord>) request.getInputRecord());
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subSubResourceAction1")
@@ -2706,6 +3085,7 @@ public class TestClientBuilders
                                  Map<String, String> expectedHeaders)
   {
     URIDetails.testUriGeneration(request, expectedURIDetails);
+    checkRequestIsReadOnly(request);
     Assert.assertEquals(request.getMethod(), expectedMethod);
     Assert.assertEquals(request.getHeaders(), expectedHeaders);
 
@@ -2727,6 +3107,204 @@ public class TestClientBuilders
     }
   }
 
+  @SuppressWarnings("unchecked")
+  private void checkRequestIsReadOnly(final Request<?> request)
+  {
+    final Set<PathSpec> fields = request.getFields();
+
+    if (fields != null)
+    {
+      checkReadOnlyOperation(new Runnable()
+      {
+        @Override
+        public void run()
+        {
+          fields.add(new PathSpec("abc"));
+        }
+      });
+    }
+
+    checkReadOnlyOperation(new Runnable()
+    {
+      @Override
+      public void run()
+      {
+        request.getHeaders().put("abc", "abc");
+      }
+    });
+
+    final RecordTemplate input = request.getInputRecord();
+
+    if (input != null)
+    {
+      checkReadOnlyOperation(new Runnable()
+      {
+        @Override
+        public void run()
+        {
+          input.data().put("abc", "abc");
+        }
+      });
+    }
+
+    final Map<String, Object> pathKeys = request.getPathKeys();
+
+    if (pathKeys != null)
+    {
+      checkReadOnlyOperation(new Runnable()
+      {
+        @Override
+        public void run()
+        {
+          pathKeys.put("abc", "abc");
+        }
+      });
+
+      final List<Object> keysToEdit = new ArrayList<Object>();
+      for (Object key: pathKeys.values())
+      {
+        if (key instanceof CompoundKey || key instanceof ComplexResourceKey)
+        {
+          keysToEdit.add(key);
+        }
+        else
+        {
+          Assert.assertTrue(isPrimitiveOrEnum(key));
+        }
+      }
+
+      for (final Object keytoEdit: keysToEdit)
+      {
+        checkReadOnlyOperation(new Runnable()
+        {
+          @Override
+          public void run()
+          {
+            if (keytoEdit instanceof ComplexResourceKey)
+            {
+              ((ComplexResourceKey) keytoEdit).getKey().data().put("abc", "abc");
+            }
+            else if (keytoEdit instanceof CompoundKey)
+            {
+              ((CompoundKey) keytoEdit).append("abc", "abc");
+            }
+          }
+        });
+      }
+
+      Collection<Object> queryParamObjects = request.getQueryParamsObjects().values();
+      List<Object> readOnlyTargets = new ArrayList<Object>();
+
+      for (Object queryParamObject: queryParamObjects)
+      {
+        collectReadOnlyQueryParamObjectTargets(queryParamObject, readOnlyTargets);
+      }
+
+      for (final Object readOnlyTarget: readOnlyTargets)
+      {
+        checkReadOnlyOperation(new Runnable()
+        {
+          @Override
+          public void run()
+          {
+            if (readOnlyTarget instanceof DataTemplate)
+            {
+              Object data = ((DataTemplate)readOnlyTarget).data();
+
+              if (data instanceof DataMap)
+              {
+                ((DataMap) data).put("abc", "abc");
+              }
+              else if (data instanceof DataList)
+              {
+                ((DataList) data).add("abc");
+              }
+            }
+            else if (readOnlyTarget instanceof CompoundKey)
+            {
+              ((CompoundKey) readOnlyTarget).append("abc", "abc");
+            }
+            else if (readOnlyTarget instanceof ComplexResourceKey)
+            {
+              ((ComplexResourceKey) readOnlyTarget).getKey().data().put("abc", "abc");
+            }
+            else if (readOnlyTarget instanceof List)
+            {
+              ((List<Object>) readOnlyTarget).add("abc");
+            }
+          }
+        });
+      }
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private void collectReadOnlyQueryParamObjectTargets(Object queryParamObject, List<Object> readOnlyTargets)
+  {
+    if (queryParamObject instanceof List)
+    {
+      readOnlyTargets.add(queryParamObject);
+      for (Object item: ((List<Object>) queryParamObject))
+      {
+        collectReadOnlyQueryParamObjectTargets(item, readOnlyTargets);
+      }
+    }
+    else if (queryParamObject instanceof DataTemplate)
+    {
+      Object data = ((DataTemplate)queryParamObject).data();
+
+      if (data instanceof DataMap || data instanceof DataList)
+      {
+        readOnlyTargets.add(queryParamObject);
+      }
+      else
+      {
+        //As more tests are added it is likely to add more custom types as data for data templates.
+        Assert.assertTrue(isPrimitiveOrEnum(data),
+                          "Unknown type for data template data object: " + data.getClass().toString());
+      }
+    }
+    else if (queryParamObject instanceof CompoundKey ||
+             queryParamObject instanceof ComplexResourceKey)
+    {
+      readOnlyTargets.add(queryParamObject);
+    }
+    else
+    {
+      //As more tests are added it is likely to add more custom types as query parameter object types.
+      Assert.assertTrue(isPrimitiveOrEnum(queryParamObject) || queryParamObject instanceof PathSpec,
+                        "Unknown type for query parameter object: " + queryParamObject.getClass().toString());
+
+    }
+  }
+
+  private boolean isPrimitiveOrEnum(Object o)
+  {
+    Class<?> clazz = o.getClass();
+
+    return clazz.isEnum() ||
+          clazz == String.class ||
+          clazz == Integer.class ||
+          clazz == Double.class ||
+          clazz == Boolean.class ||
+          clazz == Long.class ||
+          clazz == Float.class ||
+          clazz == ByteString.class ||
+          clazz == Null.class;
+  }
+
+  private void checkReadOnlyOperation(Runnable runnable)
+  {
+    try
+    {
+      runnable.run();
+      Assert.fail("Read-only field updated.");
+    }
+    catch (UnsupportedOperationException ex)
+    {
+    }
+  }
+
   /**
    * Converts the new request body encoding into the old format and then checks that the conversion matches the expected
    * old format input.
@@ -2737,14 +3315,17 @@ public class TestClientBuilders
   @SuppressWarnings({"unchecked", "rawtypes"})
   private void checkInputForBatchUpdateAndPatch(Request<?> request, RecordTemplate expectedInput, ProtocolVersion version)
   {
-    Assert.assertEquals(CollectionRequestUtil.convertToBatchRequest((CollectionRequest<KeyValueRecord>) request.getInputRecord(),
-                                                                    request.getResourceSpec().getKeyClass(),
-                                                                    request.getResourceSpec().getKeyKeyClass(),
-                                                                    request.getResourceSpec().getKeyParamsClass(),
-                                                                    request.getResourceSpec().getKeyParts(),
-                                                                    request.getResourceSpec().getValueClass(),
-                                                                    version),
-                        expectedInput);
+    Assert.assertEquals(
+      CollectionRequestUtil.convertToBatchRequest(
+        (CollectionRequest<KeyValueRecord>) request.getInputRecord(),
+        request.getResourceProperties().getKeyType(),
+        request.getResourceProperties().getComplexKeyType(),
+        request.getResourceProperties().getKeyParts(),
+        request.getMethod() == ResourceMethod.BATCH_PARTIAL_UPDATE ?
+            new TypeSpec<PatchRequest>(PatchRequest.class) :
+            request.getResourceProperties().getValueType(),
+        version),
+      expectedInput);
   }
 
   /**

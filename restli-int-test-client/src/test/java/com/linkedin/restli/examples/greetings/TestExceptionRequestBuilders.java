@@ -38,7 +38,7 @@ public class TestExceptionRequestBuilders
   public void testUnbatchable(RootBuilderWrapper<Long, Greeting> builders)
   {
     Request<Greeting> request = builders.get().id(1L).build();
-    Assert.assertFalse(request.getResourceSpec().getSupportedMethods().contains(ResourceMethod.BATCH_GET));
+    Assert.assertFalse(request.getResourceProperties().getSupportedMethods().contains(ResourceMethod.BATCH_GET));
   }
 
   @DataProvider
