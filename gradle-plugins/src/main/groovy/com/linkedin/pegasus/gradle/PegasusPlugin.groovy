@@ -926,7 +926,7 @@ class PegasusPlugin implements Plugin<Project>
       // find api project here instead of in each project's plugin configuration
       // this allows api project relation options (ext.api*) to be specified anywhere in the build.gradle file
       // alternatively, pass closures to task configuration, and evaluate the closures when task is executed
-      Project apiProject = getApiProject(project)
+      Project apiProject = getCheckedApiProject(project)
 
       // make sure the api project is evaluated. Important for configure-on-demand mode.
       if (apiProject)
@@ -1376,13 +1376,13 @@ class PegasusPlugin implements Plugin<Project>
       return project.ext.apiProject
     }
 
-    List subsSuffixes = [ '-impl', '-service', '-server', '-server-impl' ]
+    List subsSuffixes = ['-impl', '-service', '-server', '-server-impl']
     if (project.ext.has('apiProjectSubstitutionSuffixes'))
     {
       subsSuffixes = project.ext.apiProjectSubstitutionSuffixes
     }
 
-    for (String suffix: subsSuffixes)
+    for (String suffix : subsSuffixes)
     {
       if (project.path.endsWith(suffix))
       {
@@ -1396,6 +1396,18 @@ class PegasusPlugin implements Plugin<Project>
     }
 
     return project.findProject(project.path + '-api')
+  }
+
+  private static Project getCheckedApiProject(Project project)
+  {
+    final Project apiProject = getApiProject(project)
+
+    if (apiProject == project)
+    {
+      throw new GradleException("The API project of ${project.path} must not be itself.")
+    }
+
+    return apiProject
   }
 
   /**
@@ -1490,7 +1502,7 @@ class PegasusPlugin implements Plugin<Project>
       if (!isPropertyTrue(project, IDL_NO_PUBLISH))
       {
         _needCheckinFiles.addAll(idlFiles)
-        _needBuildFolders.add(getApiProject(project).getPath())
+        _needBuildFolders.add(getCheckedApiProject(project).getPath())
       }
 
       if (!isPropertyTrue(project, SNAPSHOT_NO_PUBLISH))
