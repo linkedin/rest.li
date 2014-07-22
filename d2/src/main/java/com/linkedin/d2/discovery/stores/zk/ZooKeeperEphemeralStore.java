@@ -156,10 +156,16 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
       public void onSuccess(Map<String,T> children)
       {
         String delete = _merger.unmerge(prop, value, children);
-        _zkConn.removeNodeUnsafe(path + "/" + delete.toString(), callback);
 
+        //delete string maybe null if children map is empty. Which could happen if
+        //someone else deletes the child asynchronously while we're sending
+        //a message to delete. So the ChildCollector will not be able to populate the children map
+        //with the node that we want to delete.
+        if (delete != null)
+        {
+          _zkConn.removeNodeUnsafe(path + "/" + delete.toString(), callback);
+        }
       }
-
       @Override
       public void onError(Throwable e)
       {

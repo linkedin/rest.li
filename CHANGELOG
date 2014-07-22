@@ -1,6 +1,7 @@
 1.20.1
 ------
-
+(RB=334824)
+Add NPE check for removePartial in ZookeeperEphemeralStore
 
 1.20.0
 ------
