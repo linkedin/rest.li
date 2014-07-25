@@ -63,8 +63,10 @@ public class DefaultDocumentationRequestHandler implements RestLiDocumentationRe
   {
     final String path = request.getURI().getRawPath();
     final List<UriComponent.PathSegment> pathSegments = UriComponent.decodePath(path, true);
-    return (DOC_PREFIX.equals(pathSegments.get(1).getPath()) && DOC_VIEW_DOCS_ACTION.equals(pathSegments.get(2).getPath())) ||
-           HttpMethod.valueOf(request.getMethod()) == HttpMethod.OPTIONS;
+    return (pathSegments.size() > 2 &&
+                DOC_PREFIX.equals(pathSegments.get(1).getPath()) &&
+                DOC_VIEW_DOCS_ACTION.equals(pathSegments.get(2).getPath())) ||
+            HttpMethod.valueOf(request.getMethod()) == HttpMethod.OPTIONS;
   }
 
   @Override

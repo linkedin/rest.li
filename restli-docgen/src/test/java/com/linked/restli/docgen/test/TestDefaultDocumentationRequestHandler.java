@@ -57,7 +57,10 @@ public class TestDefaultDocumentationRequestHandler
           { buildRestRequest("/foo/docs/rest/foo"), false},
           { buildRestRequest("/restli/docsrest/foo"), false},
           { buildRestRequest("/restli/Docs/rest/foo"), false},
-          { buildRestRequest("/foo/restli/docs/rest/bar"), false}
+          { buildRestRequest("/foo/restli/docs/rest/bar"), false},
+          { buildRestRequest("/restli"), false},
+          { buildRestRequest("/"), false},
+          { buildRestRequest(""), false}
       };
   }
 
