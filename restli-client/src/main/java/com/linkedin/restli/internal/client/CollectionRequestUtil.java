@@ -48,7 +48,7 @@ public class CollectionRequestUtil
     return convertToBatchRequest(elementList,
                                  keyType, complexKeyType,
                                  keyParts, valueType,
-                                 AllProtocolVersions.BASELINE_PROTOCOL_VERSION);
+                                 AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion());
   }
 
   /**

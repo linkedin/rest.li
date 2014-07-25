@@ -47,12 +47,7 @@ public class RestliUriBuilderUtil
 {
   public static RestliUriBuilder createUriBuilder(Request<?> request)
   {
-    return createUriBuilder(request, "", AllProtocolVersions.BASELINE_PROTOCOL_VERSION);
-  }
-
-  public static RestliUriBuilder createUriBuilder(Request<?> request, String uriPrefix)
-  {
-    return createUriBuilder(request, uriPrefix, AllProtocolVersions.BASELINE_PROTOCOL_VERSION);
+    return createUriBuilder(request, "", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion());
   }
 
   public static RestliUriBuilder createUriBuilder(Request<?> request, ProtocolVersion version)

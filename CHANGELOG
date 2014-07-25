@@ -9,6 +9,9 @@ Add new API to Ring: getIterator()
 (RB=344866)
 Fixing Java 7 Build.
 
+(RB=337425)
+Changing the protocol version to 1.0 in those places we want 1.0 instead of baseline such as deprecated code paths.
+
 1.21.0
 ------
 (RB=334824)

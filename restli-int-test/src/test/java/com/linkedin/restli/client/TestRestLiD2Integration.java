@@ -116,7 +116,8 @@ public class TestRestLiD2Integration extends RestLiIntegrationTest
     Greeting g = future.getResponse().getEntity();
     Assert.assertEquals(g.getId().longValue(), 1L);
     Assert.assertNotNull(g.getMessage());
-    Assert.assertEquals(future.getResponse().getHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION), AllProtocolVersions.BASELINE_PROTOCOL_VERSION.toString());
+    Assert.assertEquals(future.getResponse().getHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION),
+                        AllProtocolVersions.BASELINE_PROTOCOL_VERSION.toString());
   }
 
   @Test(dataProvider = "requestGroupBuilderDataProvider")
@@ -174,7 +175,7 @@ public class TestRestLiD2Integration extends RestLiIntegrationTest
     Greeting entity = responseFuture.getResponse().getEntity();
     Assert.assertEquals(entity.getId(), new Long(1L));
     Assert.assertEquals(responseFuture.getResponse().getHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION),
-                        AllProtocolVersions.BASELINE_PROTOCOL_VERSION.toString());
+                        AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion().toString());
   }
 
   @DataProvider

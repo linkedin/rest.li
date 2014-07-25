@@ -218,7 +218,7 @@ public class RestLiServer extends BaseRestServer
   private void ensureRequestUsesValidRestliProtocol(final RestRequest request) throws RestLiServiceException
   {
     ProtocolVersion clientProtocolVersion = ProtocolVersionUtil.extractProtocolVersion(request.getHeaders());
-    ProtocolVersion lowerBound = AllProtocolVersions.BASELINE_PROTOCOL_VERSION;
+    ProtocolVersion lowerBound = AllProtocolVersions.OLDEST_SUPPORTED_PROTOCOL_VERSION;
     ProtocolVersion upperBound = AllProtocolVersions.LATEST_PROTOCOL_VERSION;
     if (_config.getRestliProtocolCheck() == RestLiConfig.RestliProtocolCheck.RELAXED)
     {
