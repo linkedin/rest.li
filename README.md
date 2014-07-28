@@ -21,7 +21,7 @@ Features
 * Optional [Dynamic Discovery](https://github.com/linkedin/rest.li/wiki/Dynamic-Discovery) subsystem adds client side load balancing and fault tolerance
 * Backward compatibility checking to ensure all API changes are safe
 * Support for batch operations, partial updates and projections
-* [Web UI](https://github.com/linkedin/rest.li-api-hub) for for browsing and searching a catelog of rest.li APIs.
+* [Web UI](https://github.com/linkedin/rest.li-api-hub) for browsing and searching a catalog of rest.li APIs.
 
 Website
 -------
