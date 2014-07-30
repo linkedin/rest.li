@@ -870,34 +870,13 @@ public class DegraderLoadBalancerStrategyV2_1 implements LoadBalancerStrategy
                            int partitionId,
                            List<TrackerClient> trackerClients)
   {
-    return getRing(clusterGenerationId, partitionId, trackerClients, Collections.EMPTY_LIST);
-  }
-
-  @Override
-  public Ring<URI> getRing(long clusterGenerationId,
-                           int partitionId,
-                           List<TrackerClient> trackerClients,
-                           List<URI> excludedURIs)
-  {
     if (partitionId != DEFAULT_PARTITION_ID)
     {
       throw new UnsupportedOperationException("Trying to access partition: " + partitionId + "on an unpartitioned cluster");
     }
     checkUpdateState(clusterGenerationId, trackerClients);
 
-    if (excludedURIs == null || excludedURIs.isEmpty())
-    {
-      return _state.getRing();
-    }
-    else
-    {
-      Map<URI, Integer> pointsMap = new HashMap<URI,Integer>(_state.getPointsMap());
-      for (URI uri : excludedURIs)
-      {
-        pointsMap.remove(uri);
-      }
-      return new ConsistentHashRing<URI>(pointsMap);
-    }
+    return _state.getRing();
 
   }
 

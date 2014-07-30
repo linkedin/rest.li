@@ -25,6 +25,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
@@ -142,6 +143,24 @@ public class ConsistentHashRing<T> implements Ring<T>
     debug(_log, "re-initializing consistent hash ring with items: ", _objects);
   }
 
+  private int getIndex(int key)
+  {
+    debug(_log, "searching for hash in ring of size ", _ring.length, " using hash: ", key);
+
+    int index = Arrays.binarySearch(_ring, key);
+
+    // if the index is negative, then no exact match was found, and the search function is
+    // returning (-(insertionPoint) - 1).
+    if (index < 0)
+    {
+      index = Math.abs(index + 1);
+    }
+
+    index = index % _objects.length;
+
+    return index;
+  }
+
   /**
    * Deterministically pick an object in the ring based on the specified key. As long as
    * the ring doesn't change, the same key will always yield the same object.
@@ -155,18 +174,30 @@ public class ConsistentHashRing<T> implements Ring<T>
       return null;
     }
 
-    debug(_log, "searching for hash in ring of size ", _ring.length, " using hash: ", key);
+    int index = getIndex(key);
 
-    int index = Arrays.binarySearch(_ring, key);
+    return _objects[index];
+  }
 
-    // if the index is negative, then no exact match was found, and the search function is
-    // returning (-(insertionPoint) - 1).
-    if (index < 0)
+  /**
+   * Get a ConsistentHashRingIterator starting from a specified point.
+   *
+   * @param key The iteration will start from the point corresponded by this key
+   * @return An Iterator with no objects when the hash ring is empty
+   */
+  @Override
+  public Iterator<T> getIterator(int key)
+  {
+    if (_objects.length <= 0)
     {
-      index = Math.abs(index + 1);
+      debug(_log, "get called on a hash ring with nothing in it");
+
+      return new ConsistentHashRingIterator<T>(_objects, 0);
     }
 
-    return _objects[index % _objects.length];
+    int from = getIndex(key);
+
+    return new ConsistentHashRingIterator<T>(_objects, from);
   }
 
   public Set<Point<T>> getPoints()

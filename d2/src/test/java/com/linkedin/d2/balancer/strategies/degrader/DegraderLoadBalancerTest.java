@@ -2401,15 +2401,6 @@ public class DegraderLoadBalancerTest
       return _strategy.getRing(clusterGenerationId, partitionId, trackerClients);
     }
 
-    @Override
-    public Ring<URI> getRing(long clusterGenerationId,
-                                     int partitionId,
-                                     List<TrackerClient> trackerClients,
-                                     List<URI> excludedURIs)
-    {
-      return _strategy.getRing(clusterGenerationId, partitionId, trackerClients, excludedURIs);
-    }
-
     public void setStrategyV3(int partitionID,
                               DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState.Strategy
                               strategy)

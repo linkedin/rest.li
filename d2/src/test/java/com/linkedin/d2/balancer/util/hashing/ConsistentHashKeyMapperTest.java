@@ -671,7 +671,6 @@ public class ConsistentHashKeyMapperTest
         }
       }
 
-      @Override
       public Ring<URI> getRing(long clusterGenerationId,
           int partitionId,
           List<TrackerClient> trackerClients,
@@ -1191,28 +1190,6 @@ public class ConsistentHashKeyMapperTest
       if (_partitionData.containsKey(partitionId))
       {
         return new ConsistentHashRing<URI>(_partitionData.get(partitionId));
-      }
-      else
-      {
-        return new ConsistentHashRing<URI>(new HashMap<URI, Integer>());
-      }
-    }
-
-    @Override
-    public Ring<URI> getRing(long clusterGenerationId,
-        int partitionId,
-        List<TrackerClient> trackerClients,
-        List<URI> excludedURIs)
-    {
-      Map<URI, Integer> map;
-      if (_partitionData.containsKey(partitionId))
-      {
-        map = new HashMap<URI, Integer>(_partitionData.get(partitionId));
-        for (URI uri : excludedURIs)
-        {
-          map.remove(uri);
-        }
-        return new ConsistentHashRing<URI>(map);
       }
       else
       {

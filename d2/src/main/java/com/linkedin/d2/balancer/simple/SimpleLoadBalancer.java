@@ -460,25 +460,21 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       {
         Set<URI> possibleUris = uris.getUriBySchemeAndPartition(pair.getScheme(), partitionId);
         List<TrackerClient> trackerClients = getPotentialClients(serviceName, service, possibleUris);
-        List<URI> rankedUri = new ArrayList<URI>();
         int size = trackerClients.size() <= numHostPerPartition ? trackerClients.size() : numHostPerPartition;
+        List<URI> rankedUri = new ArrayList<URI>(size);
 
         Ring<URI> ring = pair.getStrategy().getRing(uriItem.getVersion(), partitionId, trackerClients);
+        Iterator<URI> iterator = ring.getIterator(hashProvider.nextHash());
 
-        for (int i = 0; i < size; i++)
+        while (iterator.hasNext() && rankedUri.size() < size)
         {
-          URI uri = ring.get(hashProvider.nextHash());
-          if (uri == null)
+          URI uri = iterator.next();
+          if (!rankedUri.contains(uri))
           {
-            //that means there is no longer valid URI in the ring
-            break;
-          }
-          rankedUri.add(uri);
-          if (rankedUri.size() < trackerClients.size())
-          {
-            ring = pair.getStrategy().getRing(uriItem.getVersion(), partitionId, trackerClients, rankedUri);
+            rankedUri.add(uri);
           }
         }
+
         hostList.put(partitionId, rankedUri);
         if (rankedUri.size() < numHostPerPartition)
         {
@@ -557,25 +553,21 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       {
         Set<URI> possibleUris = uris.getUriBySchemeAndPartition(pair.getScheme(), partitionId);
         List<TrackerClient> trackerClients = getPotentialClients(serviceName, service, possibleUris);
-        List<URI> rankedUri = new ArrayList<URI>();
         int size = trackerClients.size() <= limitHostPerPartition ? trackerClients.size() : limitHostPerPartition;
+        List<URI> rankedUri = new ArrayList<URI>(size);
 
         Ring<URI> ring = pair.getStrategy().getRing(uriItem.getVersion(), partitionId, trackerClients);
+        Iterator<URI> iterator = ring.getIterator(hashProvider.nextHash());
 
-        for (int i = 0; i < size; i++)
+        while (iterator.hasNext() && rankedUri.size() < size)
         {
-          URI uri = ring.get(hashProvider.nextHash());
-          if (uri == null)
+          URI uri = iterator.next();
+          if (!rankedUri.contains(uri))
           {
-            //that means there is no longer valid URI in the ring
-            break;
-          }
-          rankedUri.add(uri);
-          if (rankedUri.size() < trackerClients.size())
-          {
-            ring = pair.getStrategy().getRing(uriItem.getVersion(), partitionId, trackerClients, rankedUri);
+            rankedUri.add(uri);
           }
         }
+
         hostList.put(partitionId, rankedUri);
         if (rankedUri.size() < limitHostPerPartition)
         {
