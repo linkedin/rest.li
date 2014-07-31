@@ -82,8 +82,7 @@ public class DirectoryDbSink implements DbSink
     writeResponse(res, id);
   }
 
-  @SuppressWarnings("deprecation")
- private void writeRequest(Request req, int id) throws IOException
+  private void writeRequest(Request req, int id) throws IOException
   {
     final File file = DirectoryDbUtil.restRequestFileName(_dir, id);
     final FileOutputStream out = new FileOutputStream(file);
@@ -97,8 +96,7 @@ public class DirectoryDbSink implements DbSink
     }
   }
 
-  @SuppressWarnings("deprecation")
- private void writeResponse(Response res, int id) throws IOException
+  private void writeResponse(Response res, int id) throws IOException
   {
     final File file = DirectoryDbUtil.restResponseFileName(_dir, id);
     final FileOutputStream out = new FileOutputStream(file);

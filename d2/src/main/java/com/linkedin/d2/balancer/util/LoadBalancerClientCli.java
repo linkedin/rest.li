@@ -374,7 +374,6 @@ public class LoadBalancerClientCli
     return d2conf.configure();
   }
 
-  @SuppressWarnings("deprecation")
   public String getSchema(ZKConnection zkclient,
                         String zkserver,
                         String d2path,
@@ -465,7 +464,6 @@ public class LoadBalancerClientCli
     return sendRequest(client, _zkclient, _zkConnectionString, _d2path, cluster, service, "", request, requestType, false);
   }
 
-  @SuppressWarnings("deprecation")
   public String sendRequest(DynamicClient client,
                             ZKConnection zkclient,
                             String zkserver,

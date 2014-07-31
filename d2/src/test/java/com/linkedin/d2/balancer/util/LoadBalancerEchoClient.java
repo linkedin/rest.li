@@ -87,7 +87,6 @@ public class LoadBalancerEchoClient
     _random = new Random();
   }
 
-  @SuppressWarnings("deprecation")
   public void startClient() throws URISyntaxException,
       InterruptedException,
       ExecutionException,
@@ -126,7 +125,6 @@ public class LoadBalancerEchoClient
     }
   }
 
-  @SuppressWarnings("unchecked")
   public static SimpleLoadBalancer getLoadBalancer(String hostPort) throws IOException,
       PropertyStoreException
   {

@@ -244,7 +244,6 @@ public class LoadBalancerEchoServer
     return _partitionWeight;
   }
 
-  @SuppressWarnings("deprecation")
   public void startServer() throws IOException,
       InterruptedException,
       URISyntaxException

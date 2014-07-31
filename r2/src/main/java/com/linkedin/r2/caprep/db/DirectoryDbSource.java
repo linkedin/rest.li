@@ -85,7 +85,6 @@ public class DirectoryDbSource implements DbSource
     }
   }
 
-  @SuppressWarnings("deprecation")
   private Map<Request, Response> loadDb(File dir, MessageSerializer serializer) throws IOException
   {
     final Map<Request, Response> db = new HashMap<Request, Response>();

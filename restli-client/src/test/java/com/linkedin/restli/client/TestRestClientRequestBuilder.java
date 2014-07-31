@@ -381,7 +381,6 @@ public class TestRestClientRequestBuilder
   @SuppressWarnings("rawtypes")
   private void setCommonExpectations(Request mockRequest,
                                      ResourceMethod method,
-                                     RecordTemplate mockRecordTemplate,
                                      RestResponseDecoder mockResponseDecoder)
   {
     EasyMock.expect(mockRequest.getMethod()).andReturn(method).anyTimes();
@@ -412,7 +411,7 @@ public class TestRestClientRequestBuilder
     EasyMock.expect(mockRequest.getResourceSpec()).andReturn(resourceSpec).once();
   }
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
+  @SuppressWarnings("unchecked")
   private <T extends Request> RestRequest clientGeneratedRequest(Class<T> requestClass,
                                                                  ResourceMethod method,
                                                                  DataMap entityBody,
@@ -429,7 +428,7 @@ public class TestRestClientRequestBuilder
     @SuppressWarnings({"rawtypes"})
     RestResponseDecoder mockResponseDecoder = EasyMock.createMock(RestResponseDecoder.class);
 
-    setCommonExpectations(mockRequest, method, mockRecordTemplate, mockResponseDecoder);
+    setCommonExpectations(mockRequest, method, mockResponseDecoder);
 
     if (method == ResourceMethod.BATCH_PARTIAL_UPDATE || method == ResourceMethod.BATCH_UPDATE)
     {

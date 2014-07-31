@@ -844,7 +844,6 @@ public class BatchGetRequestBuilderTest
     Assert.assertEquals(batchingRequest.getObjectIds(), new HashSet<Integer>(Arrays.asList(1, 2, 3)));
   }
 
-  @SuppressWarnings("deprecation")
   private static void testUriGeneration(Request<?> request, String protocol1UriString, String protocol2UriString)
       throws URISyntaxException {
     ProtocolVersion protocol1 = AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion();

@@ -43,7 +43,6 @@ public final class ActionResponse<T> extends DynamicRecordTemplate
    * @param valueFieldDef the {@link FieldDef} representing the action return.
    * @param schema the {@link RecordDataSchema} of the Action return
    */
-  @SuppressWarnings({"unchecked"})
   public ActionResponse(DataMap data, FieldDef<T> valueFieldDef, RecordDataSchema schema)
   {
     super(data, schema);

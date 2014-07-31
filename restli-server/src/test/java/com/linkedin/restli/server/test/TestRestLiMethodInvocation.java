@@ -1934,7 +1934,6 @@ public class TestRestLiMethodInvocation
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchComplexKeyWithBody")
-  @SuppressWarnings({"unchecked"})
   public void testPromiseBatchPatchComplexKey(ProtocolVersion version, String uri, String body) throws Exception
   {
     ResourceModel discoveredItemsResourceModel = buildResourceModel(PromiseDiscoveredItemsResource.class);

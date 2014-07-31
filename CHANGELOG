@@ -3,6 +3,9 @@
 (RB=392178)
 Add additional unit tests for RestLiArgumentBuilders.
 
+(RB=404678)
+Remove redundant warning suppressions.
+
 2.0.1
 -----
 (RB=387791)

@@ -134,7 +134,6 @@ public class RestLiResourceRelationship
     }
   }
 
-  @SuppressWarnings("unchecked")
   private void findDataModels()
   {
     final ResourceSchemaVisitior visitor = new BaseResourceSchemaVisitor()

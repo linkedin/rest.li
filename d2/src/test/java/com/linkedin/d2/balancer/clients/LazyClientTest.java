@@ -37,7 +37,6 @@ import static org.testng.Assert.assertNull;
 public class LazyClientTest
 {
   @Test(groups = { "small", "back-end" })
-  @SuppressWarnings("deprecation")
   public void testClient()
   {
     LazyClientTestFactory factory = new LazyClientTestFactory();

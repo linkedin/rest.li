@@ -30,7 +30,6 @@ public class ChainedIterator<T> implements Iterator<T>
   private final Iterator<Iterator<? extends T>> _iterators;
   private Iterator<? extends T> _currItr;
 
-  @SuppressWarnings({"unchecked"})
   public ChainedIterator(Iterator<? extends T>... iterators)
   {
     final List<Iterator<? extends T>> list = new ArrayList<Iterator<? extends T>>();

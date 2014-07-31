@@ -33,7 +33,6 @@ import com.linkedin.r2.testutils.filter.FilterUtil;
 public abstract class AbstractCaptureFilterTest extends AbstractCapRepTest
 {
   @Test
-  @SuppressWarnings("deprecation")
   public void testInitialCapture()
   {
     final Request req = request();
@@ -47,7 +46,6 @@ public abstract class AbstractCaptureFilterTest extends AbstractCapRepTest
   }
 
   @Test
-  @SuppressWarnings("deprecation")
   public void testTwoDifferentRequests()
   {
     final Request req1 = request();
@@ -64,7 +62,6 @@ public abstract class AbstractCaptureFilterTest extends AbstractCapRepTest
   }
 
   @Test
-  @SuppressWarnings("deprecation")
   public void testSameRequestDifferentResponses()
   {
     final Request req = request();

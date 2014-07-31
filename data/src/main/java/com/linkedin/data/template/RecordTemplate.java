@@ -63,7 +63,6 @@ public abstract class RecordTemplate implements DataTemplate<DataMap>
   }
 
   @Override
-  @SuppressWarnings("unchecked")
   public RecordTemplate clone() throws CloneNotSupportedException
   {
     RecordTemplate clone = (RecordTemplate) super.clone();

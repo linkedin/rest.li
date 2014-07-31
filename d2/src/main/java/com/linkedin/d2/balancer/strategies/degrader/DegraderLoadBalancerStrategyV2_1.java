@@ -864,7 +864,6 @@ public class DegraderLoadBalancerStrategyV2_1 implements LoadBalancerStrategy
     }
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public Ring<URI> getRing(long clusterGenerationId,
                            int partitionId,
@@ -947,7 +946,6 @@ public class DegraderLoadBalancerStrategyV2_1 implements LoadBalancerStrategy
 
     private final Map<String, String> _degraderProperties;
 
-    @SuppressWarnings("unchecked")
     private final Map<URI, Integer>                  _pointsMap;
 
     // Used to keep track of Clients that have been ramped down to the minimum level in the hash

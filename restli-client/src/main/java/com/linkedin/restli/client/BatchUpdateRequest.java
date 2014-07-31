@@ -44,7 +44,7 @@ public class BatchUpdateRequest<K, V extends RecordTemplate>
 {
   private final Map<K, V> _updateInputMap;
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
+  @SuppressWarnings("unchecked")
   BatchUpdateRequest(Map<String, String> headers,
                      CollectionRequest<KeyValueRecord<K, V>> entities,
                      Map<String, Object> queryParams,

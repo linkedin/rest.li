@@ -110,7 +110,6 @@ public class D2Config
   private final boolean _useDeltaWrite;
   private final int _maxOutstandingWrites;
 
-  @SuppressWarnings("unchecked")
   public D2Config (String zkHosts, int sessionTimeout, String basePath,
                          long timeout, int retryLimit,
                          Map<String, Object> clusterDefaults,

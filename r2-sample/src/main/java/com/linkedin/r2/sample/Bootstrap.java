@@ -90,7 +90,6 @@ public class Bootstrap
     return THROWING_ECHO_URI;
   }
 
-  @SuppressWarnings("deprecation")
   private static TransportDispatcher createDispatcher()
   {
     return new TransportDispatcherBuilder()

@@ -38,7 +38,7 @@ import java.util.Map;
  */
 public class CollectionRequestUtil
 {
-  @SuppressWarnings({"unchecked", "rawtypes"})
+  @SuppressWarnings("rawtypes")
   public static <V extends RecordTemplate> BatchRequest<V> convertToBatchRequest(CollectionRequest<KeyValueRecord> elementList,
                                                                                  TypeSpec<?> keyType,
                                                                                  ComplexKeySpec<?, ?> complexKeyType,
@@ -64,7 +64,7 @@ public class CollectionRequestUtil
    * @param version
    * @return a data map with one key, "entities". "entities" maps to another data map (as in the old body encoding)
    */
-  @SuppressWarnings({"unchecked", "rawtypes"})
+  @SuppressWarnings("rawtypes")
   public static <V extends RecordTemplate> BatchRequest<V> convertToBatchRequest(CollectionRequest<KeyValueRecord> elementList,
                                                                                  Class<?> keyClass,
                                                                                  Class<? extends RecordTemplate> keyKeyClass,

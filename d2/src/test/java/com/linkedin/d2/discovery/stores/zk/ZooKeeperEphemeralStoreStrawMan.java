@@ -33,7 +33,6 @@ import java.util.concurrent.ScheduledExecutorService;
 
 public class ZooKeeperEphemeralStoreStrawMan
 {
-  @SuppressWarnings("unchecked")
   public static void main(String[] args) throws IOException, InterruptedException,
           PropertyStoreException
   {

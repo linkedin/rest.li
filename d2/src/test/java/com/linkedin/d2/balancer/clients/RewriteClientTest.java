@@ -37,7 +37,6 @@ import static org.testng.Assert.assertFalse;
 public class RewriteClientTest
 {
   @Test(groups = { "small", "back-end" })
-  @SuppressWarnings("deprecation")
   public void testClient() throws URISyntaxException
   {
     URI uri = URI.create("http://test.linkedin.com/test");

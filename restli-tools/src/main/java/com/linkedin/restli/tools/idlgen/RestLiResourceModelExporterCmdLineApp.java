@@ -37,7 +37,6 @@ import org.slf4j.LoggerFactory;
  * @author dellamag
  */
 // OptionBuilder usage requires static-access suppression :/
-@SuppressWarnings("static-access")
 public class RestLiResourceModelExporterCmdLineApp
 {
   private static final Logger log = LoggerFactory.getLogger(RestLiResourceModelExporterCmdLineApp.class);

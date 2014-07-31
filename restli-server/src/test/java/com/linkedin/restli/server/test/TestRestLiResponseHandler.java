@@ -1181,7 +1181,6 @@ public class TestRestLiResponseHandler
       return null;
     }
 
-    @SuppressWarnings("unused")
     public BasicCollectionResult<Status> find()
     {
       return null;

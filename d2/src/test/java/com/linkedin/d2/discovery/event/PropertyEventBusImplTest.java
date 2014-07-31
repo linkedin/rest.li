@@ -33,7 +33,6 @@ import org.testng.annotations.Test;
 
 public class PropertyEventBusImplTest extends PropertyEventBusTest
 {
-  @SuppressWarnings("unchecked")
   @Override
   public PropertyEventBus<String> getBus()
   {

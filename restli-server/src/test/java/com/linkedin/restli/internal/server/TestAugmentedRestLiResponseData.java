@@ -249,7 +249,6 @@ public class TestAugmentedRestLiResponseData
     return listToArray(ret);
   }
 
-  @SuppressWarnings("unchecked")
   @DataProvider(name = "responseDataProvider")
   public Object[][] responseDataProvider()
   {

@@ -169,7 +169,6 @@ public class SimpleLoadBalancerSimulation
    * Reset the entire state of the simulation.
    *
    */
-  @SuppressWarnings("unchecked")
   public void reset()
   {
     // simulation state

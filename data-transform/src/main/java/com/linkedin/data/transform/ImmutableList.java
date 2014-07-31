@@ -33,7 +33,6 @@ import com.linkedin.util.ArgumentUtil;
  */
 public class ImmutableList<T>
 {
-
   @SuppressWarnings({ "unchecked", "rawtypes" })
   private static final ImmutableList EMPTY = new ImmutableList(null, null);
   private static final Object[] EMPTY_ARRAY = new Object[0];
@@ -179,6 +178,4 @@ public class ImmutableList<T>
       return false;
     return true;
   }
-
-
 }

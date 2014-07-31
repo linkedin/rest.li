@@ -114,7 +114,6 @@ public abstract class WrappingMapTemplate<V extends DataTemplate<?>> extends Abs
     return clone;
   }
 
-  @SuppressWarnings("unchecked")
   private void initializeClone() throws CloneNotSupportedException
   {
     _cache = _cache.clone();
@@ -129,7 +128,6 @@ public abstract class WrappingMapTemplate<V extends DataTemplate<?>> extends Abs
     return copy;
   }
 
-  @SuppressWarnings("unchecked")
   private void initializeCopy()
   {
     _cache = new DataObjectToObjectCache<V>(data().size());

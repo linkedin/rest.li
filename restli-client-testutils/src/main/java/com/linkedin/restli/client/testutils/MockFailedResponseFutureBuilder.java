@@ -255,7 +255,6 @@ public class MockFailedResponseFutureBuilder<K, V extends RecordTemplate> extend
     return buildWithEntity();
   }
 
-  @SuppressWarnings("unchecked")
   private ResponseFuture<V> buildWithErrorResponse(ProtocolVersion protocolVersion)
   {
     int status = (_errorResponse.hasStatus()) ? _errorResponse.getStatus() : DEFAULT_HTTP_STATUS;

@@ -49,7 +49,6 @@ public class FixedFileDbSink implements DbSink
     writeResponse(res, _responseFile);
   }
 
-  @SuppressWarnings("deprecation")
   private void writeRequest(Request req, File file) throws IOException
   {
     final FileOutputStream out = new FileOutputStream(file);
@@ -63,7 +62,6 @@ public class FixedFileDbSink implements DbSink
     }
   }
 
-  @SuppressWarnings("deprecation")
   private void writeResponse(Response res, File file) throws IOException
   {
     final FileOutputStream out = new FileOutputStream(file);

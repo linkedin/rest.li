@@ -847,7 +847,6 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     }
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public Ring<URI> getRing(long clusterGenerationId, int partitionId, List<TrackerClient> trackerClients)
   {
@@ -1055,7 +1054,6 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     private final String    _serviceName;
     private final Map<String, String> _degraderProperties;
 
-    @SuppressWarnings("unchecked")
     private final Map<URI, Integer>                  _pointsMap;
 
     // Used to keep track of Clients that have been ramped down to the minimum level in the hash

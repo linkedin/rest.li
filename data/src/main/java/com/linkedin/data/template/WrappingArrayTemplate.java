@@ -96,7 +96,6 @@ public class WrappingArrayTemplate<E extends DataTemplate<?>> extends AbstractAr
   }
 
   @Override
-  @SuppressWarnings("unchecked")
   public WrappingArrayTemplate<E> clone() throws CloneNotSupportedException
   {
     WrappingArrayTemplate<E> clone = (WrappingArrayTemplate<E>) super.clone();

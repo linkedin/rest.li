@@ -71,7 +71,6 @@ public class HttpDispatcher
    * @param context the request context.
    * @param callback the callback to be invoked with the response or error.
    */
-  @SuppressWarnings("deprecation")
   public void handleRequest(RestRequest req,
                             RequestContext context,
                             TransportCallback<RestResponse> callback)

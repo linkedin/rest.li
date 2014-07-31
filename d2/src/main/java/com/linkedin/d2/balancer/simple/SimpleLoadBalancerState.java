@@ -197,7 +197,6 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
    * _trackerClients _serviceStrategies
    */
 
-  @SuppressWarnings("unchecked")
   public SimpleLoadBalancerState(ScheduledExecutorService executorService,
                                  PropertyEventPublisher<UriProperties> uriPublisher,
                                  PropertyEventPublisher<ClusterProperties> clusterPublisher,

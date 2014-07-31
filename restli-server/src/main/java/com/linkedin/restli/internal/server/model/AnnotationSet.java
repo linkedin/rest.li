@@ -76,7 +76,6 @@ public class AnnotationSet
    * @param classes annotations to count
    * @return number of annotations out of the input array present in the set
    */
-  @SuppressWarnings("unchecked")
   public int count(final Class<? extends Annotation> ... classes)
   {
     int result = 0;

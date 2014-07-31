@@ -658,7 +658,7 @@ public class TestClientBuilders
   }
 
   // need suppress on the method because the more specific suppress isn't being obeyed.
-  @SuppressWarnings({"unchecked", "rawtypes"})
+  @SuppressWarnings("unchecked")
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batch")
   public void testBatchPartialUpdateRequestBuilder(URIDetails expectedURIDetails)
   {
@@ -2675,7 +2675,6 @@ public class TestClientBuilders
     Assert.assertEquals(request.getPathKeys(), expectedPathKeys);
   }
 
-  @SuppressWarnings("deprecation")
   private void testBaseUriGeneration(Request<?> request, ProtocolVersion version)
   {
     URI expectedBaseUri = URI.create(TEST_URI);

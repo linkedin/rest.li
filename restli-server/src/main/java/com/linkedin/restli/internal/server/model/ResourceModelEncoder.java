@@ -624,7 +624,6 @@ public class ResourceModelEncoder
   }
 
 
-  @SuppressWarnings("unchecked")
   private ActionSchemaArray createActions(final ResourceModel resourceModel,
                                           final ResourceLevel resourceLevel)
   {

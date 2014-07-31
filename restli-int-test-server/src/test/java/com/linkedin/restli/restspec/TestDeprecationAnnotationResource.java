@@ -42,7 +42,6 @@ import java.util.List;
  *
  * @deprecated This is a deprecation documentation string for a resource.
  */
-@SuppressWarnings({"deprecation", "dep-ann"})
 @Deprecated
 @RestLiCollection(name = "testDeprecationAnnotation", namespace = "com.linkedin.restli.restspec")
 public class TestDeprecationAnnotationResource extends CollectionResourceTemplate<Long, MockRecord>
@@ -58,7 +57,6 @@ public class TestDeprecationAnnotationResource extends CollectionResourceTemplat
    *
    * @deprecated Please use something else instead.
    */
-  @SuppressWarnings({"deprecation", "dep-ann"})
   @Deprecated
   @Override
   public CreateResponse create(MockRecord empty)
@@ -69,7 +67,7 @@ public class TestDeprecationAnnotationResource extends CollectionResourceTemplat
   /**
    * @deprecated Please use something else instead.
    */
-  @SuppressWarnings({"deprecation", "dep-ann"})
+  @SuppressWarnings("dep-ann")
   @Finder("testFinder")
   public List<MockRecord> testFinder(@PagingContextParam PagingContext pagingContext,
                                      @QueryParam("title") @Optional String criterion)
@@ -77,7 +75,6 @@ public class TestDeprecationAnnotationResource extends CollectionResourceTemplat
     return null;
   }
 
-  @SuppressWarnings({"deprecation", "dep-ann"})
   @Deprecated
   @Action(name = "testAction", resourceLevel = ResourceLevel.COLLECTION)
   public int testAction(@ActionParam("num") int num)

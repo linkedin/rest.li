@@ -42,7 +42,7 @@ import java.util.Map;
 public class BatchPartialUpdateRequest<K, V extends RecordTemplate> extends
     com.linkedin.restli.client.BatchRequest<BatchKVResponse<K, UpdateStatus>>
 {
-  @SuppressWarnings({"unchecked", "rawtypes"})
+  @SuppressWarnings("unchecked")
   BatchPartialUpdateRequest(Map<String, String> headers,
                             CollectionRequest<KeyValueRecord<K, PatchRequest<V>>> entities,
                             Map<String, Object> queryParams,

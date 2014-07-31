@@ -165,7 +165,6 @@ public class TestKeyValueRecord
     testCompoundKey(compoundKey, fieldTypes);
   }
 
-  @SuppressWarnings("rawtypes")
   private void testCompoundKey(CompoundKey compoundKey, Map<String, CompoundKey.TypeInfo> fieldTypes)
   {
     RecordTemplateWithPrimitiveKey mockRecord = new RecordTemplateWithPrimitiveKey().setId(7L).setBody("foo");

@@ -93,7 +93,6 @@ abstract class AbstractRestliRequestUriBuilder<R extends Request<?>> implements 
     }
   }
 
-  @SuppressWarnings("unchecked")
   protected void appendQueryParams(UriBuilder b)
   {
     DataMap params = QueryParamsUtil.convertToDataMap(_request.getQueryParamsObjects(),

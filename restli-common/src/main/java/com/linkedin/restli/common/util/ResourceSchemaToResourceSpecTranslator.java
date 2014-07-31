@@ -129,7 +129,7 @@ public class ResourceSchemaToResourceSpecTranslator
     }
   }
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
+  @SuppressWarnings("rawtypes")
   private ResourceSpec collectionToResourceSpec(ResourceSchema resourceSchema, CollectionSchema collection)
   {
     ActionSchemaArray actions = null, entityActions = null;

@@ -35,7 +35,6 @@ import com.linkedin.r2.testutils.filter.FilterUtil;
 public abstract class AbstractReplayFilterTest extends AbstractCapRepTest
 {
   @Test
-  @SuppressWarnings("deprecation")
   public void testReplayWithNoMatch()
   {
     final Request req = request();

@@ -31,7 +31,6 @@ import java.net.URI;
  */
 public abstract class AbstractPerfServerFactory
 {
-  @SuppressWarnings("deprecation")
   public Server create(int port, URI echoUri)
   {
     final TransportDispatcher dispatcher = new TransportDispatcherBuilder()

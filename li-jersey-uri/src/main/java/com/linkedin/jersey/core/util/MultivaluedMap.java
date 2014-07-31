@@ -96,7 +96,7 @@ public class MultivaluedMap
      * Copy constructor for MultivaluedMap
      * @param that MultivaluedMap to copy
      */
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @SuppressWarnings("unchecked")
     public MultivaluedMap(MultivaluedMap that) {
         for (Map.Entry<String, List<String>> e : that.entrySet()) {
             this.put(e.getKey(), new ArrayList(e.getValue()));

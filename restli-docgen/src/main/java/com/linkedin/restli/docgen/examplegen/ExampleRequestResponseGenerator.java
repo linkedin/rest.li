@@ -483,7 +483,6 @@ public class ExampleRequestResponseGenerator
     return new ExampleRequestResponse(restRequest, restResponse);
   }
 
-  @SuppressWarnings("unchecked")
   private RestRequest buildRequest(Request<?> request)
   {
     ProtocolVersion protocolVersion;

@@ -112,7 +112,6 @@ public abstract class DataTemplateGenerator extends CodeGenerator
    */
   public static final String GENERATOR_GENERATE_IMPORTED = "generator.generate.imported";
 
-  @SuppressWarnings("unused")
   private static final Logger log = LoggerFactory.getLogger(DataTemplateGenerator.class);
   protected static final String SUPER = "super";
   protected static final String THIS = "this";

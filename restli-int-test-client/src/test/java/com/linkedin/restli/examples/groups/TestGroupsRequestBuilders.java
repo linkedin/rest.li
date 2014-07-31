@@ -524,7 +524,7 @@ public class TestGroupsRequestBuilders
     checkRequestBuilder(request, ResourceMethod.ACTION, ActionResponseDecoder.class, expectedURIDetails, requestInput);
   }
 
-  @SuppressWarnings({"rawtypes", "deprecation"})
+  @SuppressWarnings("rawtypes")
   private static void checkRequestBuilder(Request<?> request,
                                           ResourceMethod resourceMethod,
                                           Class<? extends RestResponseDecoder> responseDecoderClass,

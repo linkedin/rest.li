@@ -189,7 +189,6 @@ public class RetryZooKeeperTest {
                                                             long.class);
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void testRetryGetChildren() throws NoSuchMethodException
   {
@@ -219,7 +218,6 @@ public class RetryZooKeeperTest {
 
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void testRetryGetData() throws NoSuchMethodException
   {
@@ -246,7 +244,6 @@ public class RetryZooKeeperTest {
     EasyMock.verify(rzkPartialMock);
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void testRetryExists() throws NoSuchMethodException
   {
@@ -275,7 +272,6 @@ public class RetryZooKeeperTest {
     EasyMock.verify(rzkPartialMock);
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void testRetrySetData() throws NoSuchMethodException
   {
@@ -305,7 +301,6 @@ public class RetryZooKeeperTest {
     EasyMock.verify(rzkPartialMock);
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void testDelete() throws NoSuchMethodException
   {
@@ -504,7 +499,6 @@ public class RetryZooKeeperTest {
     EasyMock.verify(rzkPartialMock);
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void testRetryLimit() throws NoSuchMethodException
   {
@@ -535,7 +529,6 @@ public class RetryZooKeeperTest {
     EasyMock.verify(rzkPartialMock);
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void testRetryBackoff() throws NoSuchMethodException, InterruptedException
   {
