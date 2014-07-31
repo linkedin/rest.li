@@ -35,15 +35,8 @@ import java.util.Map;
 public class FindRequestBuilder<K, V extends RecordTemplate> extends
     RestfulRequestBuilder<K, V, FindRequest<V>>
 {
-
   private final Class<V> _elementClass;
   private String _name;
-
-  @Deprecated
-  public FindRequestBuilder(String baseUriTemplate, Class<V> elementClass, ResourceSpec resourceSpec)
-  {
-    this(baseUriTemplate, elementClass, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
-  }
 
   public FindRequestBuilder(String baseUriTemplate,
                             Class<V> elementClass,
@@ -105,22 +98,6 @@ public class FindRequestBuilder<K, V extends RecordTemplate> extends
   }
 
   @Override
-  @Deprecated
-  public FindRequestBuilder<K, V> param(String key, Object value)
-  {
-    super.setParam(key, value);
-    return this;
-  }
-
-  @Override
-  @Deprecated
-  public FindRequestBuilder<K, V> reqParam(String key, Object value)
-  {
-    super.setReqParam(key, value);
-    return this;
-  }
-
-  @Override
   public FindRequestBuilder<K, V> setParam(String key, Object value)
   {
     super.setParam(key, value);
@@ -145,14 +122,6 @@ public class FindRequestBuilder<K, V extends RecordTemplate> extends
   public FindRequestBuilder<K, V> addReqParam(String key, Object value)
   {
     super.addReqParam(key, value);
-    return this;
-  }
-
-  @Override
-  @Deprecated
-  public FindRequestBuilder<K, V> header(String key, String value)
-  {
-    super.setHeader(key, value);
     return this;
   }
 

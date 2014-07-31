@@ -27,6 +27,7 @@ import com.linkedin.restli.client.BatchGetRequestBuilder;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.internal.client.BatchResponseDecoder;
+
 import java.util.Collection;
 
 /**
@@ -40,12 +41,6 @@ public abstract class BatchGetRequestBuilderBase<
         RB extends BatchGetRequestBuilderBase<K, V, RB>>
         extends BatchGetRequestBuilder<K, V>
 {
-  @Deprecated
-  protected BatchGetRequestBuilderBase(String baseUriTemplate, Class<V> modelClass, ResourceSpec resourceSpec)
-  {
-    this(baseUriTemplate, modelClass, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
-  }
-
   protected BatchGetRequestBuilderBase(String baseUriTemplate,
                                        Class<V> modelClass,
                                        ResourceSpec resourceSpec,
@@ -108,19 +103,6 @@ public abstract class BatchGetRequestBuilderBase<
   public RB addReqParam(String key, Object value)
   {
     return (RB) super.addReqParam(key, value);
-  }
-
-  /**
-   * @deprecated This method is deprecated and replaced by a set* method for API consistency reasons.
-   * This method cannot be removed permanently until all projects use a version of Rest.li containing the
-   * set* methods in a multi-project build environment for binary compatibility.
-   */
-  @SuppressWarnings({"unchecked"})
-  @Deprecated
-  @Override
-  public RB header(String key, String value)
-  {
-    return (RB) super.header(key, value);
   }
 
   @SuppressWarnings({"unchecked"})

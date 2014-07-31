@@ -111,7 +111,6 @@ public class RestLiServer extends BaseRestServer
         new RestLiMethodInvoker(_resourceFactory, engine, _errorResponseBuilder, config.getRequestFilters());
     _responseHandler =
         new RestLiResponseHandler.Builder().setErrorResponseBuilder(_errorResponseBuilder)
-                                           .setPermissiveEncoding(config.getPermissiveEncoding())
                                            .build();
     _docRequestHandler = config.getDocumentationRequestHandler();
     _debugHandlers = new HashMap<String, RestLiDebugRequestHandler>();

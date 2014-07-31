@@ -16,25 +16,22 @@
 
 package com.linkedin.r2.filter;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 import com.linkedin.r2.filter.message.MessageFilter;
 import com.linkedin.r2.filter.message.RequestFilter;
 import com.linkedin.r2.filter.message.ResponseFilter;
 import com.linkedin.r2.filter.message.rest.RestRequestFilter;
 import com.linkedin.r2.filter.message.rest.RestResponseFilter;
-import com.linkedin.r2.filter.message.rpc.RpcRequestFilter;
-import com.linkedin.r2.filter.message.rpc.RpcResponseFilter;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.Response;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcResponse;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Chris Pettitt
@@ -66,34 +63,6 @@ import com.linkedin.r2.message.rpc.RpcResponse;
   public FilterChain addLast(Filter filter)
   {
     return new FilterChainImpl(addLastRpc(filter), addLastRest(filter));
-  }
-
-  @Override
-  @Deprecated
-  public void onRpcRequest(RpcRequest req, RequestContext requestContext,
-                           Map<String, String> wireAttrs)
-  {
-    new FilterChainIterator<RpcRequest, RpcResponse>(_rpcFilters, 0)
-            .onRequest(req, requestContext, wireAttrs);
-  }
-
-  @Override
-  @Deprecated
-  public void onRpcResponse(RpcResponse res, RequestContext requestContext,
-                            Map<String, String> wireAttrs)
-  {
-    new FilterChainIterator<RpcRequest, RpcResponse>(_rpcFilters, _rpcFilters.size())
-            .onResponse(res, requestContext, wireAttrs);
-  }
-
-  @Override
-  @Deprecated
-  public void onRpcError(Exception ex,
-                         RequestContext requestContext,
-                         Map<String, String> wireAttrs)
-  {
-    new FilterChainIterator<RpcRequest, RpcResponse>(_rpcFilters, _rpcFilters.size())
-            .onError(ex, requestContext, wireAttrs);
   }
 
   @Override
@@ -160,11 +129,7 @@ import com.linkedin.r2.message.rpc.RpcResponse;
   private MessageFilter adaptRpcFilter(Filter filter)
   {
     final RequestFilter reqFilter;
-    if (filter instanceof RpcRequestFilter)
-    {
-      reqFilter = adaptRpcRequestFilter((RpcRequestFilter) filter);
-    }
-    else if (filter instanceof RequestFilter)
+    if (filter instanceof RequestFilter)
     {
       reqFilter = (RequestFilter) filter;
     }
@@ -174,11 +139,7 @@ import com.linkedin.r2.message.rpc.RpcResponse;
     }
 
     final ResponseFilter resFilter;
-    if (filter instanceof RpcResponseFilter)
-    {
-      resFilter = adaptRpcResponseFilter((RpcResponseFilter) filter);
-    }
-    else if (filter instanceof ResponseFilter)
+    if (filter instanceof ResponseFilter)
     {
       resFilter = (ResponseFilter) filter;
     }
@@ -188,22 +149,6 @@ import com.linkedin.r2.message.rpc.RpcResponse;
     }
 
     return new ComposedFilter(reqFilter, resFilter);
-  }
-
-  private static RequestFilter adaptRpcRequestFilter(final RpcRequestFilter rpcFilter)
-  {
-    return new RpcRequestFilterAdapter(rpcFilter);
-  }
-
-  private static ResponseFilter adaptRpcResponseFilter(final RpcResponseFilter rpcFilter)
-  {
-    return new RpcResponseFilterAdapter(rpcFilter);
-  }
-
-  @SuppressWarnings("unchecked")
-  private static NextFilter<RpcRequest, RpcResponse> adaptRpcNextFilter(NextFilter<?, ?> nextFilter)
-  {
-    return (NextFilter<RpcRequest, RpcResponse>)nextFilter;
   }
 
   private static MessageFilter adaptRestFilter(Filter filter)
@@ -253,61 +198,6 @@ import com.linkedin.r2.message.rpc.RpcResponse;
   private static NextFilter<RestRequest, RestResponse> adaptRestNextFilter(NextFilter<?, ?> nextFilter)
   {
     return (NextFilter<RestRequest, RestResponse>)nextFilter;
-  }
-
-  private static final class RpcRequestFilterAdapter implements RequestFilter
-  {
-    private final RpcRequestFilter _rpcFilter;
-
-    private RpcRequestFilterAdapter(RpcRequestFilter rpcFilter)
-    {
-      _rpcFilter = rpcFilter;
-    }
-
-    @Override
-    @SuppressWarnings("deprecation")
-    public void onRequest(Request req,
-                          RequestContext requestContext,
-                          Map<String, String> wireAttrs,
-                          NextFilter<Request, Response> nextFilter)
-    {
-      _rpcFilter.onRpcRequest((RpcRequest) req,
-                              requestContext,
-                              wireAttrs,
-                              adaptRpcNextFilter(nextFilter));
-    }
-  }
-
-  private static final class RpcResponseFilterAdapter implements ResponseFilter
-  {
-    private final RpcResponseFilter _rpcFilter;
-
-    private RpcResponseFilterAdapter(RpcResponseFilter rpcFilter)
-    {
-      _rpcFilter = rpcFilter;
-    }
-
-    @Override
-    @SuppressWarnings("deprecation")
-    public void onResponse(Response res, RequestContext requestContext,
-                           Map<String, String> wireAttrs,
-                           NextFilter<Request, Response> nextFilter)
-    {
-      _rpcFilter.onRpcResponse((RpcResponse) res,
-                               requestContext,
-                               wireAttrs,
-                               adaptRpcNextFilter(nextFilter));
-    }
-
-    @Override
-    @SuppressWarnings("deprecation")
-    public void onError(Throwable ex,
-                        RequestContext requestContext,
-                        Map<String, String> wireAttrs,
-                        NextFilter<Request, Response> nextFilter)
-    {
-      _rpcFilter.onRpcError(ex, requestContext, wireAttrs, adaptRpcNextFilter(nextFilter));
-   }
   }
 
   private static final class RestRequestFilterAdapter implements RequestFilter

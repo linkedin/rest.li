@@ -25,10 +25,6 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcRequestBuilder;
-import com.linkedin.r2.message.rpc.RpcResponse;
-import com.linkedin.r2.message.rpc.RpcResponseBuilder;
 
 import java.net.URI;
 import java.util.HashMap;
@@ -41,24 +37,6 @@ import java.util.Map;
 public class FilterUtil
 {
   private FilterUtil() {}
-
-  @SuppressWarnings("deprecation")
-  public static void fireSimpleRpcRequest(FilterChain fc)
-  {
-    fireRpcRequest(fc, simpleRpcRequest());
-  }
-
-  @SuppressWarnings("deprecation")
-  public static void fireSimpleRpcResponse(FilterChain fc)
-  {
-    fc.onRpcResponse(simpleRpcResponse(), emptyRequestContext(), emptyWireAttrs());
-  }
-
-  @SuppressWarnings("deprecation")
-  public static void fireSimpleRpcError(FilterChain fc)
-  {
-    fc.onRpcError(simpleError(), emptyRequestContext(), emptyWireAttrs());
-  }
 
   public static void fireSimpleRestRequest(FilterChain fc)
   {
@@ -75,12 +53,6 @@ public class FilterUtil
     fc.onRestError(simpleError(), emptyRequestContext(), emptyWireAttrs());
   }
 
-  @SuppressWarnings("deprecation")
-  public static void fireRpcRequest(FilterChain fc, RpcRequest req)
-  {
-    fc.onRpcRequest(req, emptyRequestContext(), emptyWireAttrs());
-  }
-
   public static void fireRestRequest(FilterChain fc, RestRequest req)
   {
     fc.onRestRequest(req, emptyRequestContext(), emptyWireAttrs());
@@ -93,11 +65,7 @@ public class FilterUtil
 
   public static void fireUntypedRequest(FilterChain fc, Request req)
   {
-    if (req instanceof RpcRequest)
-    {
-      fireRpcRequest(fc, (RpcRequest)req);
-    }
-    else if (req instanceof RestRequest)
+    if (req instanceof RestRequest)
     {
       fireRestRequest(fc, (RestRequest)req);
     }
@@ -105,16 +73,6 @@ public class FilterUtil
     {
       throw new IllegalArgumentException("Unexpected request type: " + req.getClass());
     }
-  }
-
-  // Fires a request, saving the local attributes, and then fires a response with the local
-  // attributes.
-  @SuppressWarnings("deprecation")
-  public static void fireRpcRequestResponse(FilterChain fc, RpcRequest req, RpcResponse res)
-  {
-    final RequestContext context = new RequestContext();
-    fc.onRpcRequest(req, context, emptyWireAttrs());
-    fc.onRpcResponse(res, context, emptyWireAttrs());
   }
 
   // Fires a request, saving the local attributes, and then fires a response with the local
@@ -129,11 +87,7 @@ public class FilterUtil
   // Determines the type of the request at runtime.
   public static void fireUntypedRequestResponse(FilterChain fc, Request req, Response res)
   {
-    if (req instanceof RpcRequest)
-    {
-      fireRpcRequestResponse(fc, (RpcRequest)req, (RpcResponse)res);
-    }
-    else if (req instanceof RestRequest)
+    if (req instanceof RestRequest)
     {
       fireRestRequestResponse(fc, (RestRequest)req, (RestResponse)res);
     }
@@ -141,14 +95,6 @@ public class FilterUtil
     {
       throw new IllegalArgumentException("Unexpected request type: " + req.getClass());
     }
-  }
-
-  @SuppressWarnings("deprecation")
-  public static void fireRpcRequestError(FilterChain fc, RpcRequest req, Exception ex)
-  {
-    final RequestContext context = new RequestContext();
-    fc.onRpcRequest(req, context, emptyWireAttrs());
-    fc.onRpcError(ex, context, emptyWireAttrs());
   }
 
   public static void fireRestRequestError(FilterChain fc, RestRequest req, Exception ex)
@@ -160,11 +106,7 @@ public class FilterUtil
 
   public static void fireUntypedRequestError(FilterChain fc, Request req, Exception ex)
   {
-    if (req instanceof RpcRequest)
-    {
-      fireRpcRequestError(fc, (RpcRequest)req, ex);
-    }
-    else if (req instanceof RestRequest)
+    if (req instanceof RestRequest)
     {
       fireRestRequestError(fc, (RestRequest)req, ex);
     }
@@ -172,20 +114,6 @@ public class FilterUtil
     {
       throw new IllegalArgumentException("Unexpected request type: " + req.getClass());
     }
-  }
-
-  @SuppressWarnings("deprecation")
-  public static RpcRequest simpleRpcRequest()
-  {
-    return new RpcRequestBuilder(URI.create("simple_uri"))
-            .build();
-  }
-
-  @SuppressWarnings("deprecation")
-  public static RpcResponse simpleRpcResponse()
-  {
-    return new RpcResponseBuilder()
-            .build();
   }
 
   public static RestRequest simpleRestRequest()

@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer.clients;
 
+
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.properties.PartitionData;
@@ -25,30 +26,26 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcRequestBuilder;
-import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.SettableClock;
-import org.testng.annotations.Test;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.testng.annotations.Test;
+
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
 
 public class TrackerClientTest
 {
   @Test(groups = { "small", "back-end" })
-  @SuppressWarnings("deprecation")
   public void testClient() throws URISyntaxException
   {
     URI uri = URI.create("http://test.qa.com:1234/foo");
@@ -74,19 +71,6 @@ public class TrackerClientTest
     assertFalse(restCallback.response.hasError());
     assertEquals(wrappedClient.restRequest, restRequest);
     assertEquals(wrappedClient.restWireAttrs, restWireAttrs);
-
-    RpcRequest rpcRequest = new RpcRequestBuilder(uri).build();
-    Map<String, String> rpcWireAttrs = new HashMap<String, String>();
-    TestTransportCallback<RpcResponse> rpcCallback =
-        new TestTransportCallback<RpcResponse>();
-
-    client.rpcRequest(rpcRequest, new RequestContext(), rpcWireAttrs, rpcCallback);
-
-    assertTrue(rpcCallback.response.hasError());
-    assertEquals(wrappedClient.rpcRequest, rpcRequest);
-    assertEquals(wrappedClient.rpcWireAttrs, rpcWireAttrs);
-    assertEquals(client.getCallTracker().getCurrentErrorCountTotal(), 1);
-    assertEquals(client.getCallTracker().getCurrentCallCountTotal(), 2);
   }
 
   public static class TestClient implements TransportClient
@@ -95,11 +79,6 @@ public class TrackerClientTest
     public RequestContext                  restRequestContext;
     public Map<String, String>             restWireAttrs;
     public TransportCallback<RestResponse> restCallback;
-
-    public RpcRequest                      rpcRequest;
-    public RequestContext                  rpcRequestContext;
-    public Map<String, String>             rpcWireAttrs;
-    public TransportCallback<RpcResponse>  rpcCallback;
 
     public boolean                         shutdownCalled;
 
@@ -114,25 +93,7 @@ public class TrackerClientTest
       restWireAttrs = wireAttrs;
       restCallback = callback;
 
-      callback.onResponse(TransportResponseImpl.<RestResponse> success(new RestResponseBuilder().build(),
-                                                                       wireAttrs));
-    }
-
-    @Override
-    @Deprecated
-    @SuppressWarnings("deprecation")
-    public void rpcRequest(RpcRequest request,
-                           RequestContext requestContext,
-                           Map<String, String> wireAttrs,
-                           TransportCallback<RpcResponse> callback)
-    {
-      rpcRequest = request;
-      rpcRequestContext = requestContext;
-      rpcWireAttrs = wireAttrs;
-      rpcCallback = callback;
-
-      callback.onResponse(TransportResponseImpl.<RpcResponse> error(new Exception("fail"),
-                                                                    wireAttrs));
+      callback.onResponse(TransportResponseImpl.<RestResponse> success(new RestResponseBuilder().build(), wireAttrs));
     }
 
     @Override

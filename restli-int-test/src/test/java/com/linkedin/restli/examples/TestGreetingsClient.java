@@ -26,7 +26,6 @@ import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
 import com.linkedin.data.schema.validation.ValidationOptions;
 import com.linkedin.data.template.DataTemplateUtil;
-import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.transport.common.Client;
@@ -59,10 +58,6 @@ import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.Link;
 import com.linkedin.restli.common.OptionsResponse;
 import com.linkedin.restli.common.PatchRequest;
-import com.linkedin.restli.common.ResourceMethod;
-import com.linkedin.restli.common.ResourceSpec;
-import com.linkedin.restli.common.ResourceSpecImpl;
-import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.examples.greetings.api.Empty;
 import com.linkedin.restli.examples.greetings.api.Greeting;
@@ -82,21 +77,15 @@ import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsTaskBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsTaskRequestBuilders;
 import com.linkedin.restli.examples.groups.api.TransferOwnershipRequest;
-import com.linkedin.restli.internal.client.EntityResponseDecoder;
-import com.linkedin.restli.internal.client.RestResponseDecoder;
-import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.test.util.BatchCreateHelper;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
-import com.sun.tools.hat.internal.model.Root;
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -162,25 +151,6 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     ResponseFuture<Integer> responseFuture = REST_CLIENT.sendRequest(request);
     Assert.assertEquals(responseFuture.getResponse().getStatus(), 200);
     Assert.assertEquals(responseFuture.getResponse().getEntity().intValue(), 100);
-  }
-
-  @Test
-  @SuppressWarnings("deprecation")
-  public void testDeprecatedRequestCreation()
-      throws URISyntaxException, RemoteInvocationException
-  {
-    URI uri = new URI("greetings/1");
-    ResourceMethod method = ResourceMethod.GET;
-    RecordTemplate inputRecord = null;
-    Map<String, String> headers = Collections.emptyMap();
-    RestResponseDecoder<Greeting> decoder = new EntityResponseDecoder<Greeting>(Greeting.class);
-    ResourceSpec resourceSpec = new ResourceSpecImpl(EnumSet.of(method), null, null, Long.class, Greeting.class, Collections.<String, Object>emptyMap());
-    Request<Greeting> request = new Request<Greeting>(uri, method, inputRecord, headers, decoder, resourceSpec);
-    ResponseFuture<Greeting> responseFuture = REST_CLIENT.sendRequest(request);
-    Greeting entity = responseFuture.getResponse().getEntity();
-    Assert.assertEquals(entity.getId(), new Long(1L));
-    Assert.assertEquals(responseFuture.getResponse().getHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION),
-                        AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion().toString());
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")

@@ -20,9 +20,11 @@
 
 package com.linkedin.d2.jmx;
 
+
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
+
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,8 +43,7 @@ public class DegraderLoadBalancerStrategyV3Jmx implements DegraderLoadBalancerSt
   @Override
   public double getOverrideClusterDropRate()
   {
-    @SuppressWarnings("deprecation")
-    double rate = _strategy.getCurrentOverrideDropRate();
+    double rate = _strategy.getState().getPartitionState(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getCurrentOverrideDropRate();
     return rate;
   }
 

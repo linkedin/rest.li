@@ -20,6 +20,27 @@
 
 package com.linkedin.r2.transport.http.client;
 
+
+import com.linkedin.common.callback.Callback;
+import com.linkedin.common.util.None;
+import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.rest.QueryTunnelUtil;
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestRequestBuilder;
+import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.transport.common.MessageType;
+import com.linkedin.r2.transport.common.WireAttributeHelper;
+import com.linkedin.r2.transport.common.bridge.client.TransportClient;
+import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
+import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
+import com.linkedin.r2.transport.http.common.HttpBridge;
+import com.linkedin.r2.util.Cancellable;
+import com.linkedin.r2.util.TimeoutRunnable;
+
+import javax.mail.MessagingException;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLParameters;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -35,17 +56,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
-import javax.mail.MessagingException;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLParameters;
-
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.Channels;
-import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.ChannelGroupFuture;
 import org.jboss.netty.channel.group.ChannelGroupFutureListener;
@@ -55,24 +71,6 @@ import org.jboss.netty.handler.codec.http.HttpChunkAggregator;
 import org.jboss.netty.handler.codec.http.HttpClientCodec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.linkedin.common.callback.Callback;
-import com.linkedin.common.util.None;
-import com.linkedin.r2.message.RequestContext;
-import com.linkedin.r2.message.rest.RestRequest;
-import com.linkedin.r2.message.rest.RestRequestBuilder;
-import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.rest.QueryTunnelUtil;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcResponse;
-import com.linkedin.r2.transport.common.MessageType;
-import com.linkedin.r2.transport.common.WireAttributeHelper;
-import com.linkedin.r2.transport.common.bridge.client.TransportClient;
-import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
-import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
-import com.linkedin.r2.transport.http.common.HttpBridge;
-import com.linkedin.r2.util.Cancellable;
-import com.linkedin.r2.util.TimeoutRunnable;
 
 /**
  * @author Steven Ihde
@@ -199,21 +197,21 @@ import com.linkedin.r2.util.TimeoutRunnable;
                          AbstractJmxManager jmxManager)
   {
     this(factory,
-        executor,
-        poolSize,
-        requestTimeout,
-        idleTimeout,
-        shutdownTimeout,
-        maxResponseSize,
-        sslContext,
-        sslParameters,
-        queryPostThreshold,
-        callbackExecutor,
-        poolWaiterSize,
-        name,
-        jmxManager,
-        AsyncPoolImpl.Strategy.MRU,
-        0);
+         executor,
+         poolSize,
+         requestTimeout,
+         idleTimeout,
+         shutdownTimeout,
+         maxResponseSize,
+         sslContext,
+         sslParameters,
+         queryPostThreshold,
+         callbackExecutor,
+         poolWaiterSize,
+         name,
+         jmxManager,
+         AsyncPoolImpl.Strategy.MRU,
+         0);
   }
 
   /**
@@ -306,19 +304,6 @@ import com.linkedin.r2.util.TimeoutRunnable;
   {
     MessageType.setMessageType(MessageType.Type.REST, wireAttrs);
     writeRequestWithTimeout(request, wireAttrs, HttpBridge.restToHttpCallback(callback, request));
-  }
-
-  @Override
-  @Deprecated
-  @SuppressWarnings("deprecation")
-  public void rpcRequest(RpcRequest request,
-                         RequestContext requestContext,
-                         Map<String, String> wireAttrs,
-                         TransportCallback<RpcResponse> callback)
-  {
-    MessageType.setMessageType(MessageType.Type.RPC, wireAttrs);
-    writeRequestWithTimeout(HttpBridge.toHttpRequest(request), wireAttrs,
-                            HttpBridge.rpcToHttpCallback(callback, request));
   }
 
   @Override

@@ -17,26 +17,19 @@
 /* $Id$ */
 package com.linkedin.r2.transport.http.common;
 
-import java.net.URI;
-import java.nio.charset.Charset;
-import java.util.Map;
 
-import com.linkedin.data.ByteString;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.message.rest.RestException;
-import com.linkedin.r2.message.rest.RestMethod;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.r2.message.rest.RestStatus;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcRequestBuilder;
-import com.linkedin.r2.message.rpc.RpcResponse;
-import com.linkedin.r2.message.rpc.RpcResponseBuilder;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
+
+import java.net.URI;
+import java.util.Map;
 
 /**
  * @author Chris Pettitt
@@ -128,121 +121,6 @@ public class HttpBridge
         }
 
         callback.onResponse(response);
-      }
-    };
-  }
-
-  /**
-   * Convert incoming "generic" http request to an RPC request.
-   *
-   * @param req the incoming HTTP request
-   * @return the incoming RPC request
-   */
-  @Deprecated
-  @SuppressWarnings("deprecation")
-  public static RpcRequest toRpcRequest(RestRequest req)
-  {
-    return new RpcRequestBuilder(req.getURI())
-            .setEntity(req.getEntity())
-            .build();
-  }
-
-  /**
-   * Convert outgoing RpcRequest to "generic" http request.
-   *
-   * @param request the outgoing RPC request
-   * @return the outgoing HTTP request
-   */
-  public static RestRequest toHttpRequest(RpcRequest request)
-  {
-    return new RestRequestBuilder(request.getURI())
-            .setEntity(request.getEntity())
-            .setMethod(RestMethod.POST)
-            .build();
-  }
-
-  /**
-   * Wrap transport callback for outgoing "generic" http response with a callback to pass to the
-   * application RPC server.
-   *
-   * @param callback the callback to receive the outgoing HTTP response
-   * @return the callback to receive the outgoing RPC response
-   */
-  @Deprecated
-  public static TransportCallback<RpcResponse> httpToRpcCallback(final TransportCallback<RestResponse> callback)
-  {
-    return new TransportCallback<RpcResponse>()
-    {
-      @Override
-      public void onResponse(TransportResponse<RpcResponse> response)
-      {
-        if (response.hasError())
-        {
-          callback.onResponse(TransportResponseImpl.<RestResponse> error(response.getError(),
-                                                                         response.getWireAttributes()));
-          return;
-        }
-
-        final RestResponse restResponse = new RestResponseBuilder()
-                .setEntity(response.getResponse().getEntity())
-                .setStatus(RestStatus.OK)
-                .build();
-        callback.onResponse(TransportResponseImpl.success(restResponse,
-                                                          response.getWireAttributes()));
-      }
-    };
-  }
-
-  /**
-   * Wrap application callback for incoming RpcResponse with "generic" http response
-   * callback.
-   *
-   * @param callback the callback to receive the incoming RPC response
-   * @param request the request, used to provide better context in case an error occurs
-   * @return the callback to receive the incoming HTTP response
-   */
-  @Deprecated
-  @SuppressWarnings("deprecation")
-  public static TransportCallback<RestResponse> rpcToHttpCallback(final TransportCallback<RpcResponse> callback,
-                                                                  RpcRequest request)
-  {
-    final URI uri = request.getURI();
-    return new TransportCallback<RestResponse>()
-    {
-      @Override
-      public void onResponse(TransportResponse<RestResponse> response)
-      {
-        final RestResponse httpResponse = response.getResponse();
-        final TransportResponse<RpcResponse> newResponse;
-
-        if (!response.hasError())
-        {
-          if (!RestStatus.isOK(httpResponse.getStatus()))
-          {
-            newResponse =
-                TransportResponseImpl.error(new RemoteInvocationException("Received error "
-                                                + httpResponse.getStatus()
-                                                + " from server for URI "
-                                                + uri),
-                                            response.getWireAttributes());
-          }
-          else
-          {
-            newResponse = TransportResponseImpl.success(new RpcResponseBuilder()
-                    .setEntity(httpResponse.getEntity())
-                    .build(), response.getWireAttributes());
-          }
-        }
-        else
-        {
-          newResponse =
-              TransportResponseImpl.error(new RemoteInvocationException("Failed to get response from server for URI "
-                                                                            + uri,
-                                                                        response.getError()),
-                                          response.getWireAttributes());
-        }
-
-        callback.onResponse(newResponse);
       }
     };
   }

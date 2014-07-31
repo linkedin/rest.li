@@ -20,6 +20,7 @@
 
 package com.linkedin.d2.discovery.event;
 
+
 import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEvent;
 
 import java.util.ArrayList;
@@ -28,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,25 +47,6 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
   private final Map<String,List<PropertyEventSubscriber<T>>> _subscribers = new HashMap<String,List<PropertyEventSubscriber<T>>>();
   private final List<PropertyEventSubscriber<T>> _allPropertySubscribers = new ArrayList<PropertyEventSubscriber<T>>();
   private static final Logger _log = LoggerFactory.getLogger(PropertyEventBusImpl.class);
-  /*
-   * Concurrency considerations:
-   *
-   * All data structures are unsynchronized. They are manipulated only by tasks submitted
-   * to the executor, which is assumed to be single-threaded.
-   */
-  @Deprecated
-  public PropertyEventBusImpl(PropertyEventThread thread)
-  {
-      _thread = thread;
-  }
-
-  @Deprecated
-  public PropertyEventBusImpl(PropertyEventThread thread, PropertyEventPublisher<T> publisher)
-  {
-      this(thread);
-      _publisher = publisher;
-      _publisher.setBus(this);
-  }
 
   public PropertyEventBusImpl(ExecutorService executorService)
   {

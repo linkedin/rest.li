@@ -26,8 +26,6 @@ import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.AbstractClient;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.TransportClientFactory;
@@ -108,14 +106,6 @@ public class TestGreetingsClientProtocolVersionHeader extends RestLiIntegrationT
     public void restRequest(RestRequest request, RequestContext requestContext, Callback<RestResponse> callback)
     {
       __client.restRequest(request, requestContext, callback);
-    }
-
-    @Override
-    @Deprecated
-    @SuppressWarnings("deprecation")
-    public void rpcRequest(RpcRequest request, RequestContext requestContext, Callback<RpcResponse> callback)
-    {
-      __client.rpcRequest(request, requestContext, callback);
     }
 
     @Override

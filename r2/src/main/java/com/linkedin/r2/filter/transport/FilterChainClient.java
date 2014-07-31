@@ -17,16 +17,15 @@
 /* $Id$ */
 package com.linkedin.r2.filter.transport;
 
+
 import com.linkedin.common.callback.Callback;
+import com.linkedin.common.util.None;
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
-import com.linkedin.common.util.None;
 
 import java.util.Map;
 
@@ -69,18 +68,6 @@ public class FilterChainClient implements TransportClient
   {
     ResponseFilter.registerCallback(callback, requestContext);
     _filters.onRestRequest(request, requestContext, wireAttrs);
-  }
-
-  @Override
-  @Deprecated
-  @SuppressWarnings("deprecation")
-  public void rpcRequest(RpcRequest request,
-                         RequestContext requestContext,
-                         Map<String, String> wireAttrs,
-                         TransportCallback<RpcResponse> callback)
-  {
-    ResponseFilter.registerCallback(callback, requestContext);
-    _filters.onRpcRequest(request, requestContext, wireAttrs);
   }
 
   @Override

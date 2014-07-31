@@ -30,10 +30,6 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcRequestBuilder;
-import com.linkedin.r2.message.rpc.RpcResponse;
-import com.linkedin.r2.message.rpc.RpcResponseBuilder;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -132,33 +128,11 @@ public class DefaultMessageSerializer implements MessageSerializer
   }
 
   @Override
-  @Deprecated
-  public RpcRequest readRpcRequest(InputStream in) throws IOException
-  {
-    final RpcRequestBuilder builder = new RpcRequestBuilder(URI.create(""));
-    readReqLine(builder, in);
-    readIgnoreNewLine(in);
-    readEntity(builder, in);
-    return builder.build();
-  }
-
-  @Override
   public RestResponse readRestResponse(InputStream in) throws IOException
   {
     final RestResponseBuilder builder = new RestResponseBuilder();
     readResLine(builder, in);
     readHeaders(builder, in);
-    readEntity(builder, in);
-    return builder.build();
-  }
-
-  @Override
-  @Deprecated
-  public RpcResponse readRpcResponse(InputStream in) throws IOException
-  {
-    final RpcResponseBuilder builder = new RpcResponseBuilder();
-    readResLine(builder, in);
-    readIgnoreNewLine(in);
     readEntity(builder, in);
     return builder.build();
   }

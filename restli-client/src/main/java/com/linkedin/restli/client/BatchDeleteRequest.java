@@ -23,14 +23,12 @@ package com.linkedin.restli.client;
 
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.client.response.BatchKVResponse;
-import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.internal.client.BatchUpdateResponseDecoder;
 
-import java.net.URI;
 import java.util.Map;
 
 /**
@@ -59,15 +57,5 @@ public class BatchDeleteRequest<K, V extends RecordTemplate> extends BatchReques
           baseUriTemplate,
           pathKeys,
           requestOptions);
-  }
-
-  /**
-   * @deprecated Please use {@link com.linkedin.restli.client.uribuilders.RestliUriBuilder#buildBaseUri()} instead
-   * @return
-   */
-  @Deprecated
-  public URI getBaseUri()
-  {
-    return RestliUriBuilderUtil.createUriBuilder(this).buildBaseUri();
   }
 }

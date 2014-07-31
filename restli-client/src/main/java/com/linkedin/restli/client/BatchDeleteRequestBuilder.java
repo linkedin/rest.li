@@ -37,15 +37,6 @@ import java.util.Map;
 public class BatchDeleteRequestBuilder<K, V extends RecordTemplate> extends
     BatchKVRequestBuilder<K, V, BatchDeleteRequest<K, V>>
 {
-
-  @Deprecated
-  public BatchDeleteRequestBuilder(String baseUriTemplate,
-                                   Class<V> valueClass,
-                                   ResourceSpec resourceSpec)
-  {
-    this(baseUriTemplate, valueClass, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
-  }
-
   public BatchDeleteRequestBuilder(String baseUriTemplate,
                                    Class<V> valueClass,
                                    ResourceSpec resourceSpec,
@@ -63,22 +54,6 @@ public class BatchDeleteRequestBuilder<K, V extends RecordTemplate> extends
   public BatchDeleteRequestBuilder<K, V> ids(Collection<K> ids)
   {
     addKeys(ids);
-    return this;
-  }
-
-  @Override
-  @Deprecated
-  public BatchDeleteRequestBuilder<K, V> param(String key, Object value)
-  {
-    super.setParam(key, value);
-    return this;
-  }
-
-  @Override
-  @Deprecated
-  public BatchDeleteRequestBuilder<K, V> reqParam(String key, Object value)
-  {
-    super.setReqParam(key, value);
     return this;
   }
 
@@ -107,14 +82,6 @@ public class BatchDeleteRequestBuilder<K, V extends RecordTemplate> extends
   public BatchDeleteRequestBuilder<K, V> addReqParam(String key, Object value)
   {
     super.addReqParam(key, value);
-    return this;
-  }
-
-  @Override
-  @Deprecated
-  public BatchDeleteRequestBuilder<K, V> header(String key, String value)
-  {
-    super.setHeader(key, value);
     return this;
   }
 

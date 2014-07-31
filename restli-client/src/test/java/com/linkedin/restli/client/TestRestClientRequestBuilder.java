@@ -32,11 +32,13 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.ResourceSpecImpl;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.testng.Assert;
@@ -383,7 +385,6 @@ public class TestRestClientRequestBuilder
                                      RestResponseDecoder mockResponseDecoder)
   {
     EasyMock.expect(mockRequest.getMethod()).andReturn(method).anyTimes();
-    EasyMock.expect(mockRequest.hasUri()).andReturn(false).once();
     EasyMock.expect(mockRequest.getPathKeys()).andReturn(Collections.<String, String>emptyMap()).once();
     EasyMock.expect(mockRequest.getQueryParamsObjects()).andReturn(Collections.emptyMap()).once();
     EasyMock.expect(mockRequest.getBaseUriTemplate()).andReturn(BASE_URI_TEMPLATE).times(2);

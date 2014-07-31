@@ -22,14 +22,13 @@ package com.linkedin.restli.client;
 
 
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
 import com.linkedin.restli.common.CollectionRequest;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.CreateStatus;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.internal.client.BatchCreateDecoder;
-import java.net.URI;
+
 import java.util.Map;
 
 
@@ -40,8 +39,6 @@ import java.util.Map;
 
 public class BatchCreateRequest<T extends RecordTemplate> extends Request<CollectionResponse<CreateStatus>>
 {
-  private URI _baseUri = null;
-
   BatchCreateRequest(Map<String, String> headers,
                      BatchCreateDecoder<?> decoder,
                      CollectionRequest<T> input,
@@ -61,18 +58,5 @@ public class BatchCreateRequest<T extends RecordTemplate> extends Request<Collec
           baseUriTemplate,
           pathKeys,
           requestOptions);
-  }
-
-  /**
-   * @deprecated Please use {@link com.linkedin.restli.client.uribuilders.RestliUriBuilder#buildBaseUri()} instead
-   */
-  @Deprecated
-  public URI getBaseURI()
-  {
-    if (_baseUri == null)
-    {
-      _baseUri = RestliUriBuilderUtil.createUriBuilder(this).buildBaseUri();
-    }
-    return _baseUri;
   }
 }

@@ -28,8 +28,6 @@ import com.linkedin.data.ByteString;
  *
  * @see com.linkedin.r2.message.rest.RestRequest
  * @see com.linkedin.r2.message.rest.RestResponse
- * @see com.linkedin.r2.message.rpc.RpcRequest
- * @see com.linkedin.r2.message.rpc.RpcResponse
  * @author Chris Pettitt
  * @version $Revision$
  */

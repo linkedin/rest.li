@@ -16,16 +16,18 @@
 
 package com.linkedin.d2.balancer.properties;
 
+
 import com.linkedin.d2.balancer.util.JacksonUtil;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.d2.discovery.PropertySerializationException;
-import java.util.Collections;
-import org.testng.annotations.Test;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
 
@@ -56,13 +58,11 @@ public class UriPropertiesSerializerTest
     assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), property);
 
     uriWeights.put(URI.create("http://www.google.com"), 1d);
-    //noinspection deprecation
     UriProperties property1 = getInstanceWithOldArguments("test", uriWeights);
     assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property1)), property1);
 
     uriWeights.put(URI.create("http://www.imdb.com"), 2d);
 
-    //noinspection deprecation
     UriProperties property2 = getInstanceWithOldArguments("test2", uriWeights);
     assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property2)), property2);
 

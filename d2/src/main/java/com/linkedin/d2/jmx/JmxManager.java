@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.jmx;
 
+
 import com.linkedin.d2.balancer.servers.ZooKeeperAnnouncer;
 import com.linkedin.d2.balancer.servers.ZooKeeperServer;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
@@ -24,14 +25,10 @@ import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV2;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV2_1;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
-import com.linkedin.d2.discovery.event.PropertyEventThread;
 import com.linkedin.d2.discovery.stores.file.FileStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperPermanentStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperTogglingStore;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
@@ -39,6 +36,10 @@ import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.linkedin.d2.discovery.util.LogUtil.warn;
 
@@ -91,15 +92,6 @@ public class JmxManager
                                                                     ZooKeeperTogglingStore<T> store)
   {
     checkReg(new ZooKeeperTogglingStoreJmx<T>(store), name);
-
-    return this;
-  }
-
-  @Deprecated
-  public synchronized JmxManager registerPropertyEventThread(String name,
-                                                             PropertyEventThread thread)
-  {
-    checkReg(new PropertyEventThreadJmx(thread), name);
 
     return this;
   }

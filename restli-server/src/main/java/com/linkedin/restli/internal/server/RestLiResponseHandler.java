@@ -71,13 +71,11 @@ public class RestLiResponseHandler
 {
   private final MethodAdapterRegistry _methodAdapterRegistry;
   private final ErrorResponseBuilder _errorResponseBuilder;
-  private final boolean  _permissiveEncoding;
 
-  public RestLiResponseHandler(MethodAdapterRegistry methodAdapterRegistry, ErrorResponseBuilder errorResponseBuilder, boolean permissiveEncoding)
+  public RestLiResponseHandler(MethodAdapterRegistry methodAdapterRegistry, ErrorResponseBuilder errorResponseBuilder)
   {
     _methodAdapterRegistry = methodAdapterRegistry;
     _errorResponseBuilder = errorResponseBuilder;
-    _permissiveEncoding = permissiveEncoding;
   }
 
   public static class Builder
@@ -98,12 +96,6 @@ public class RestLiResponseHandler
       return this;
     }
 
-    public Builder setPermissiveEncoding(boolean permissiveEncoding)
-    {
-      _permissiveEncoding = permissiveEncoding;
-      return this;
-    }
-
     public RestLiResponseHandler build()
     {
       if (_errorResponseBuilder == null)
@@ -114,7 +106,7 @@ public class RestLiResponseHandler
       {
         _methodAdapterRegistry = new MethodAdapterRegistry(_errorResponseBuilder);
       }
-      return new RestLiResponseHandler(_methodAdapterRegistry, _errorResponseBuilder, _permissiveEncoding);
+      return new RestLiResponseHandler(_methodAdapterRegistry, _errorResponseBuilder);
     }
   }
 
@@ -282,7 +274,7 @@ public class RestLiResponseHandler
     else if (RestConstants.HEADER_VALUE_APPLICATION_JSON.equalsIgnoreCase(mimeType))
     {
       builder.setHeader(RestConstants.HEADER_CONTENT_TYPE, RestConstants.HEADER_VALUE_APPLICATION_JSON);
-      builder.setEntity(DataMapUtils.mapToBytes(dataMap, _permissiveEncoding));
+      builder.setEntity(DataMapUtils.mapToBytes(dataMap));
     }
     else
     {

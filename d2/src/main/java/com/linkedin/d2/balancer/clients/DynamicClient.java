@@ -29,14 +29,14 @@ import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdown
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.AbstractClient;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
+
 import java.net.URI;
 import java.util.Collections;
 import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,6 +45,7 @@ import static com.linkedin.d2.discovery.util.LogUtil.error;
 import static com.linkedin.d2.discovery.util.LogUtil.info;
 import static com.linkedin.d2.discovery.util.LogUtil.trace;
 import static com.linkedin.d2.discovery.util.LogUtil.warn;
+
 
 public class DynamicClient extends AbstractClient implements D2Client
 {
@@ -110,37 +111,6 @@ public class DynamicClient extends AbstractClient implements D2Client
       callback.onError(e);
 
       warn(_log, "unable to find service for: ", extractLogInfo(request));
-    }
-  }
-
-  @Override
-  @Deprecated
-  @SuppressWarnings("deprecation")
-  public void rpcRequest(RpcRequest request,
-                         RequestContext requestContext,
-                         Callback<RpcResponse> callback)
-  {
-    trace(_log, "rpc request: ", request);
-
-    try
-    {
-      TransportClient client = _balancer.getClient(request, requestContext);
-
-      if (client != null)
-      {
-        new TransportClientAdapter(client).rpcRequest(request, requestContext, callback);
-      }
-      else
-      {
-        throw new ServiceUnavailableException("unknown: " + request.getURI(),
-                                              "got null client from load balancer");
-      }
-    }
-    catch (ServiceUnavailableException e)
-    {
-      callback.onError(e);
-
-      warn(_log, "unable to find service for: ", request);
     }
   }
 

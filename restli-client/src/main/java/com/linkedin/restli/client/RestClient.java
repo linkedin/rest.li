@@ -226,43 +226,23 @@ public class RestClient
     sendRestRequest(request, requestContext, new RestLiCallbackAdapter<T>(request.getResponseDecoder(), callback));
   }
 
-/**
+  /**
    * Sends a type-bound REST request using a {@link CallbackAdapter}.
    *
    * @param request to send
    * @param requestContext context for the request
    * @param callback to call on request completion
    */
-  @SuppressWarnings("deprecation")
   public <T> void sendRestRequest(final Request<T> request,
                                   RequestContext requestContext,
                                   Callback<RestResponse> callback)
   {
     RecordTemplate input = request.getInputRecord();
-    ProtocolVersion protocolVersion;
-
-    URI requestUri;
-    boolean hasPrefix;
-
-    if (request.hasUri())
-    {
-      // if someone has manually crafted a request with a URI we want to use that. This if check will be removed when
-      // we remove the getUri() method. In this case hasPrefix is false because the old constructor assumed no prefix
-      // and prepended a prefix in this class. In this case we use the baseline protocol version.
-      protocolVersion = AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion();
-      requestUri = request.getUri();
-      hasPrefix = false;
-    }
-    else
-    {
-      protocolVersion = getProtocolVersionForService(request);
-      requestUri = RestliUriBuilderUtil.createUriBuilder(request, _uriPrefix, protocolVersion).build();
-      hasPrefix = true;
-    }
+    ProtocolVersion protocolVersion = getProtocolVersionForService(request);
+    URI requestUri = RestliUriBuilderUtil.createUriBuilder(request, _uriPrefix, protocolVersion).build();
 
     sendRequestImpl(requestContext,
                     requestUri,
-                    hasPrefix,
                     request.getMethod(),
                     input != null ? RequestBodyTransformer.transform(request, protocolVersion) : null,
                     request.getHeaders(),
@@ -567,7 +547,6 @@ public class RestClient
    *
    * @param requestContext context for the request
    * @param uri for resource
-   * @param hasPrefix
    * @param method to perform
    * @param dataMap request body entity
    * @param protocolVersion the version of the Rest.li protocol used to build this request
@@ -578,7 +557,6 @@ public class RestClient
    */
   private void sendRequestImpl(RequestContext requestContext,
                                URI uri,
-                               boolean hasPrefix,
                                ResourceMethod method,
                                DataMap dataMap,
                                Map<String, String> headers,
@@ -588,7 +566,7 @@ public class RestClient
   {
     try
     {
-      RestRequest request = buildRequest(uri, hasPrefix, method, dataMap, headers, protocolVersion);
+      RestRequest request = buildRequest(uri, method, dataMap, headers, protocolVersion);
       String operation = OperationNameGenerator.generate(method, methodName);
       requestContext.putLocalAttr(R2Constants.OPERATION, operation);
       _client.restRequest(request, requestContext, callback);
@@ -603,24 +581,11 @@ public class RestClient
   // This throws Exception to remind the caller to deal with arbitrary exceptions including RuntimeException
   // in a way appropriate for the public method that was originally invoked.
   private RestRequest buildRequest(URI uri,
-                                   boolean hasPrefix,
                                    ResourceMethod method,
                                    DataMap dataMap,
                                    Map<String, String> headers,
                                    ProtocolVersion protocolVersion) throws Exception
   {
-    if (!hasPrefix)
-    {
-      try
-      {
-        uri = new URI(_uriPrefix + uri.toString());
-      }
-      catch (URISyntaxException e)
-      {
-        throw new IllegalArgumentException(e);
-      }
-    }
-
     RestRequestBuilder requestBuilder = new RestRequestBuilder(uri).setMethod(
             method.getHttpMethod().toString());
 

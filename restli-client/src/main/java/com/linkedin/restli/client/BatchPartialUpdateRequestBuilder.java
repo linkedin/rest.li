@@ -42,14 +42,6 @@ public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> exten
   private final CollectionRequest<KeyValueRecord<K, PatchRequest<V>>> _entities;
   private final KeyValueRecordFactory<K, PatchRequest<V>> _keyValueRecordFactory;
 
-  @Deprecated
-  public BatchPartialUpdateRequestBuilder(String baseUriTemplate,
-                                          Class<V> valueClass,
-                                          ResourceSpec resourceSpec)
-  {
-    this(baseUriTemplate, valueClass, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
-  }
-
   @SuppressWarnings({"unchecked", "rawtypes"})
   public BatchPartialUpdateRequestBuilder(String baseUriTemplate,
                                           Class<V> valueClass,
@@ -86,22 +78,6 @@ public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> exten
   }
 
   @Override
-  @Deprecated
-  public BatchPartialUpdateRequestBuilder<K, V> param(String key, Object value)
-  {
-    super.setParam(key, value);
-    return this;
-  }
-
-  @Override
-  @Deprecated
-  public BatchPartialUpdateRequestBuilder<K, V> reqParam(String key, Object value)
-  {
-    super.setReqParam(key, value);
-    return this;
-  }
-
-  @Override
   public BatchPartialUpdateRequestBuilder<K, V> setParam(String key, Object value)
   {
     super.setParam(key, value);
@@ -126,14 +102,6 @@ public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> exten
   public BatchPartialUpdateRequestBuilder<K, V> addReqParam(String key, Object value)
   {
     super.addReqParam(key, value);
-    return this;
-  }
-
-  @Override
-  @Deprecated
-  public BatchPartialUpdateRequestBuilder<K, V> header(String key, String value)
-  {
-    super.setHeader(key, value);
     return this;
   }
 

@@ -32,7 +32,7 @@ public class MessageType
 
   public static enum Type
   {
-    RPC, REST
+    REST
   }
 
   /**

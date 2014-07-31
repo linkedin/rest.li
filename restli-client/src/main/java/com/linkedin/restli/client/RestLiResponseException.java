@@ -47,15 +47,6 @@ public class RestLiResponseException extends RestException
   private final ErrorResponse _errorResponse;
   private final Response<?> _decodedResponse;
 
-  @Deprecated
-  public RestLiResponseException(RestResponse rawResponse, ErrorResponse errorResponse)
-  {
-    super(rawResponse);
-    _status = rawResponse.getStatus();
-    _errorResponse = errorResponse;
-    _decodedResponse = null;
-  }
-
   public RestLiResponseException(RestResponse rawResponse,
                                  Response<?> decodedResponse,
                                  ErrorResponse errorResponse)
@@ -64,25 +55,6 @@ public class RestLiResponseException extends RestException
     _status = rawResponse.getStatus();
     _errorResponse = errorResponse;
     _decodedResponse = decodedResponse;
-  }
-
-  @Deprecated
-  public RestLiResponseException(RestResponse rawResponse, ErrorResponse errorResponse,
-                                 Throwable cause)
-  {
-    super(rawResponse, cause);
-    _status = rawResponse.getStatus();
-    _errorResponse = errorResponse;
-    _decodedResponse = null;
-  }
-
-  @Deprecated
-  public RestLiResponseException(ErrorResponse errorResponse)
-  {
-    super(RestResponse.NO_RESPONSE, errorResponse.getMessage());
-    _status = errorResponse.getStatus();
-    _errorResponse = errorResponse;
-    _decodedResponse = null;
   }
 
   public RestLiResponseException(RestResponse rawResponse,

@@ -25,8 +25,10 @@ import com.linkedin.data.schema.JsonBuilder;
 import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.SchemaToJsonEncoder;
 import com.linkedin.data.schema.validation.ValidationOptions;
+
 import java.io.IOException;
 import java.util.Arrays;
+
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
@@ -34,7 +36,12 @@ import org.apache.avro.io.Decoder;
 import org.apache.avro.io.DecoderFactory;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertSame;
+import static org.testng.Assert.assertTrue;
 
 
 public class TestSchemaTranslator
@@ -1145,10 +1152,9 @@ public class TestSchemaTranslator
               String avroSchema2Json = SchemaTranslator.dataToAvroSchemaJson(
                 TestUtil.dataSchemaFromString(schemaText)
               );
-              @SuppressWarnings("deprecation")
               String avroSchema2JsonCompact = SchemaTranslator.dataToAvroSchemaJson(
                 TestUtil.dataSchemaFromString(schemaText),
-                JsonBuilder.Pretty.COMPACT
+                new DataToAvroSchemaTranslationOptions()
               );
               assertEquals(avroSchema2Json, avroSchema2JsonCompact);
               Schema avroSchema2 = Schema.parse(avroSchema2Json);

@@ -69,23 +69,14 @@ public class PartialUpdateRequest<T>
   @Override
   public int hashCode()
   {
-    int hashCode = super.hashCode();
-    if (!hasUri())
-    {
-      hashCode = (31 * hashCode) + (_id != null ? _id.hashCode() : 0);
-    }
-    return hashCode;
+    final int idHashCode = (_id != null ? _id.hashCode() : 0);
+    return 31 * super.hashCode() + idHashCode;
   }
 
   @Override
   public boolean equals(Object obj)
   {
     boolean superEquals = super.equals(obj);
-
-    if (hasUri())
-    {
-      return superEquals;
-    }
 
     if (!superEquals)
     {
@@ -106,12 +97,9 @@ public class PartialUpdateRequest<T>
   public String toString()
   {
     StringBuilder sb = new StringBuilder(super.toString());
-    if (!hasUri())
-    {
-      sb.append(", {_id=");
-      sb.append(_id);
-      sb.append("}");
-    }
+    sb.append(", {_id=");
+    sb.append(_id);
+    sb.append("}");
     return sb.toString();
   }
 }

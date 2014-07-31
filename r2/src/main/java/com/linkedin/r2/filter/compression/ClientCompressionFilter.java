@@ -17,19 +17,20 @@
 package com.linkedin.r2.filter.compression;
 
 
-import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.filter.Filter;
 import com.linkedin.r2.filter.NextFilter;
+import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.filter.message.rest.RestFilter;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.http.common.HttpConstants;
-import com.linkedin.r2.util.ConfigValueExtractor;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -122,14 +123,6 @@ public class ClientCompressionFilter implements Filter, RestFilter
   {
     this(requestCompression.trim().isEmpty() ? EncodingType.IDENTITY : EncodingType.get(requestCompression.trim().toLowerCase()),
         AcceptEncoding.parseAcceptEncoding(acceptCompression), responseCompressionOperations);
-  }
-
-  @Deprecated
-  public ClientCompressionFilter(String requestCompression, String acceptCompression, String responseCompressionOperations)
-  {
-    this(requestCompression,
-         acceptCompression,
-         ConfigValueExtractor.buildList(responseCompressionOperations, OPERATION_SEPARATOR));
   }
 
   /**

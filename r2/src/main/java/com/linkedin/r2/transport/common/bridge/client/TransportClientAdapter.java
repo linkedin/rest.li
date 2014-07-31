@@ -17,14 +17,13 @@
 /* $Id$ */
 package com.linkedin.r2.transport.common.bridge.client;
 
+
 import com.linkedin.common.callback.Callback;
+import com.linkedin.common.util.None;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.AbstractClient;
-import com.linkedin.common.util.None;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -55,18 +54,6 @@ public class TransportClientAdapter extends AbstractClient
     final Map<String, String> wireAttrs = new HashMap<String, String>();
     //make a copy of the caller's RequestContext to ensure that we have a unique instance per-request
     _client.restRequest(request, new RequestContext(requestContext), wireAttrs, new TransportCallbackAdapter<RestResponse>(callback));
-  }
-
-  @Override
-  @Deprecated
-  public void rpcRequest(RpcRequest request,
-                         RequestContext requestContext,
-                         Callback<RpcResponse> callback)
-  {
-    final Map<String, String> wireAttrs = new HashMap<String, String>();
-    //make a copy of the caller's RequestContext to ensure that we have a unique instance per-request
-    _client.rpcRequest(request, new RequestContext(requestContext), wireAttrs, new TransportCallbackAdapter<RpcResponse>(callback)
-    );
   }
 
   @Override

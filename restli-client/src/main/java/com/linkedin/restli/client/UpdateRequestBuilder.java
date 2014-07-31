@@ -38,12 +38,6 @@ public class UpdateRequestBuilder<K, V extends RecordTemplate> extends
   private V _input;
   private K _id;
 
-  @Deprecated
-  public UpdateRequestBuilder(String baseUriTemplate, Class<V> valueClass, ResourceSpec resourceSpec)
-  {
-    this(baseUriTemplate, valueClass, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
-  }
-
   public UpdateRequestBuilder(String baseUriTemplate,
                               Class<V> valueClass,
                               ResourceSpec resourceSpec,
@@ -61,22 +55,6 @@ public class UpdateRequestBuilder<K, V extends RecordTemplate> extends
   public UpdateRequestBuilder<K, V> input(V entity)
   {
     _input = entity;
-    return this;
-  }
-
-  @Override
-  @Deprecated
-  public UpdateRequestBuilder<K, V> param(String key, Object value)
-  {
-    super.setParam(key, value);
-    return this;
-  }
-
-  @Override
-  @Deprecated
-  public UpdateRequestBuilder<K, V> reqParam(String key, Object value)
-  {
-    super.setReqParam(key, value);
     return this;
   }
 
@@ -105,14 +83,6 @@ public class UpdateRequestBuilder<K, V extends RecordTemplate> extends
   public UpdateRequestBuilder<K, V> addReqParam(String key, Object value)
   {
     super.addReqParam(key, value);
-    return this;
-  }
-
-  @Override
-  @Deprecated
-  public UpdateRequestBuilder<K, V> header(String key, String value)
-  {
-    super.setHeader(key, value);
     return this;
   }
 
@@ -156,5 +126,4 @@ public class UpdateRequestBuilder<K, V extends RecordTemplate> extends
                                 getRequestOptions(),
                                 _id);
   }
-
 }

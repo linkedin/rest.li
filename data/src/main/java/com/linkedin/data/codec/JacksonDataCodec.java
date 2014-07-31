@@ -17,14 +17,6 @@
 package com.linkedin.data.codec;
 
 
-import com.fasterxml.jackson.core.JsonEncoding;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonLocation;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.core.PrettyPrinter;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
 import com.linkedin.data.DataComplex;
@@ -45,6 +37,15 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+
+import com.fasterxml.jackson.core.JsonEncoding;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonLocation;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.PrettyPrinter;
 
 
 /**
@@ -354,12 +355,6 @@ public class JacksonDataCodec implements TextDataCodec
     {
       closeJsonParserQuietly(jsonParser);
     }
-  }
-
-  @Deprecated
-  public List<Object> parse(InputStream in, StringBuilder mesg) throws IOException
-  {
-    return parse(in, mesg, null);
   }
 
   /**

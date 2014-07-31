@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer.clients;
 
+
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.Directory;
@@ -31,8 +32,8 @@ import com.linkedin.d2.balancer.util.AllPartitionsResult;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.DelegatingFacilities;
 import com.linkedin.d2.balancer.util.DirectoryProvider;
-import com.linkedin.d2.balancer.util.KeyMapperProvider;
 import com.linkedin.d2.balancer.util.HostToKeyMapper;
+import com.linkedin.d2.balancer.util.KeyMapperProvider;
 import com.linkedin.d2.balancer.util.MapKeyResult;
 import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
 import com.linkedin.r2.message.Request;
@@ -40,27 +41,24 @@ import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcRequestBuilder;
-import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
-import org.testng.annotations.Test;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+
+import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
+
 
 public class DynamicClientTest
 {
@@ -82,14 +80,6 @@ public class DynamicClientTest
 
     assertNull(restCallback.e);
     assertNotNull(restCallback.t);
-
-    RpcRequest rpcRequest = new RpcRequestBuilder(uri).build();
-    TestCallback<RpcResponse> rpcCallback = new TestCallback<RpcResponse>();
-
-    client.rpcRequest(rpcRequest, rpcCallback);
-
-    assertNotNull(rpcCallback.e);
-    assertNull(rpcCallback.t);
 
     Facilities myFacilities = client.getFacilities();
     assertNotNull(facilities, "facilities should not be null");
@@ -206,14 +196,6 @@ public class DynamicClientTest
 
   public static class TestKeyMapper implements KeyMapper
   {
-    @Deprecated
-    @Override
-    public <K> Map<URI, Set<K>> mapKeys(URI serviceUri, Set<K> keys)
-            throws ServiceUnavailableException
-    {
-      return null;
-    }
-
     @Override
     public <K> MapKeyResult<URI, K> mapKeysV2(URI serviceUri, Iterable<K> keys)
         throws ServiceUnavailableException
@@ -233,13 +215,6 @@ public class DynamicClientTest
                                                  Collection<K> keys,
                                                  int limitNumHostsPerPartition,
                                                  S stickyKey)
-        throws ServiceUnavailableException
-    {
-      return null;
-    }
-
-    @Deprecated
-    public <K> Map<URI, Collection<K>> mapKeys(URI serviceUri, Iterable<K> keys)
         throws ServiceUnavailableException
     {
       return null;

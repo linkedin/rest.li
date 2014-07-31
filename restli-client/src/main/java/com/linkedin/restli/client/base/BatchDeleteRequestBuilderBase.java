@@ -39,13 +39,6 @@ public abstract class BatchDeleteRequestBuilderBase<
         RB extends BatchDeleteRequestBuilderBase<K, V, RB>>
         extends BatchDeleteRequestBuilder<K, V>
 {
-  @Deprecated
-  public BatchDeleteRequestBuilderBase(String baseUriTemplate, Class<V> valueClass,
-                                       ResourceSpec resourceSpec)
-  {
-    this(baseUriTemplate, valueClass, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
-  }
-
   public BatchDeleteRequestBuilderBase(String baseUriTemplate,
                                        Class<V> valueClass,
                                        ResourceSpec resourceSpec,
@@ -66,19 +59,6 @@ public abstract class BatchDeleteRequestBuilderBase<
   public RB ids(Collection<K> ids)
   {
     return (RB) super.ids(ids);
-  }
-
-  /**
-   * @deprecated This method is deprecated and replaced by a set* method for API consistency reasons.
-   * This method cannot be removed permanently until all projects use a version of Rest.li containing the
-   * set* methods in a multi-project build environment for binary compatibility.
-   */
-  @SuppressWarnings({"unchecked"})
-  @Deprecated
-  @Override
-  public RB header(String key, String value)
-  {
-    return (RB) super.header(key, value);
   }
 
   @SuppressWarnings({"unchecked"})

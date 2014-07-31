@@ -17,11 +17,10 @@
 /* $Id$ */
 package com.linkedin.r2.transport.common.bridge.server;
 
+
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 
 import java.util.Map;
@@ -34,17 +33,6 @@ import java.util.Map;
  */
 public interface TransportDispatcher
 {
-  /**
-   * Dispatch an {@link RpcRequest}.
-   *
-   * @param req the {@link RpcRequest} to be dispatched.
-   * @param wireAttrs the wire attributes of the request.
-   * @param callback a {@link TransportCallback} to be called with the {@link RpcResponse}.
-   */
-  @Deprecated
-  void handleRpcRequest(RpcRequest req, Map<String, String> wireAttrs,
-                        TransportCallback<RpcResponse> callback);
-
   /**
    * Dispatch a {@link RestRequest}.
    *

@@ -22,8 +22,6 @@ import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcResponse;
 
 import java.net.URI;
 import java.util.Collections;
@@ -69,29 +67,6 @@ public abstract class AbstractClient implements Client
   public void restRequest(RestRequest request, Callback<RestResponse> callback)
   {
     restRequest(request, _EMPTY_CONTEXT, callback);
-  }
-
-  @Override
-  @Deprecated
-  public Future<RpcResponse> rpcRequest(RpcRequest request)
-  {
-    return rpcRequest(request, _EMPTY_CONTEXT);
-  }
-
-  @Override
-  @Deprecated
-  public Future<RpcResponse> rpcRequest(RpcRequest request, RequestContext requestContext)
-  {
-    final FutureCallback<RpcResponse> future = new FutureCallback<RpcResponse>();
-    rpcRequest(request, requestContext, future);
-    return future;
-  }
-
-  @Override
-  @Deprecated
-  public void rpcRequest(RpcRequest request, Callback<RpcResponse> callback)
-  {
-    rpcRequest(request, _EMPTY_CONTEXT, callback);
   }
 
   @Override

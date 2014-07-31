@@ -45,47 +45,6 @@ public class DelegatingFacilities implements Facilities
 
   @Deprecated
   public DelegatingFacilities(DirectoryProvider directoryProvider,
-                              KeyMapperProvider keyMapperProvider)
-  {
-    this(directoryProvider, keyMapperProvider, new ClientFactoryProvider()
-    {
-      @Override
-      public TransportClientFactory getClientFactory(String scheme)
-      {
-        return null;
-      }
-    }, new PartitionInfoProvider()
-    {
-      @Override
-      public <K> MapKeyHostPartitionResult<K> getPartitionInformation (URI serviceUri,
-                                                                       Collection<K> keys,
-                                                                       int limitHostPerPartition,
-                                                                       HashProvider hashProvider)
-          throws ServiceUnavailableException
-      {
-        return null;
-      }
-
-      @Override
-      public PartitionAccessor getPartitionAccessor (URI serviceUri)
-          throws ServiceUnavailableException
-      {
-        return null;
-      }
-
-      @Override
-      public AllPartitionsMultipleHostsResult<URI> getAllPartitionMultipleHosts(URI serviceUri,
-                                                                                    int limitHostPerPartition,
-                                                                                    HashProvider hashProvider)
-          throws ServiceUnavailableException
-      {
-        return null;
-      }
-    });
-  }
-
-  @Deprecated
-  public DelegatingFacilities(DirectoryProvider directoryProvider,
                               KeyMapperProvider keyMapperProvider,
                               ClientFactoryProvider clientFactoryProvider)
   {

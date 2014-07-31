@@ -115,49 +115,6 @@ public class ResourceModel
   /**
    * Constructor.
    *
-   * @param keyClass resource key class
-   * @param keyKeyClass class of the key part of a {@link ComplexResourceKey} if this is a
-   *          {@link ComplexKeyResource}
-   * @param keyParamsClass class of the param part of a {@link ComplexResourceKey} if this
-   *          is a {@link ComplexKeyResource}
-   * @param keys set of resource keys
-   * @param valueClass resource value class
-   * @param resourceClass resource class
-   * @param parentResourceClass parent resource class
-   * @param name resource name
-   * @param keyName resource key name
-   * @param resourceType {@link ResourceType}
-   * @param namespace namespace
-   *
-   * @deprecated should pass in a fully formed primary key rather than a class and a name
-   */
-  @Deprecated
-  public ResourceModel(final Class<?> keyClass,
-                       final Class<? extends RecordTemplate> keyKeyClass,
-                       final Class<? extends RecordTemplate> keyParamsClass,
-                       final Set<Key> keys,
-                       final Class<? extends RecordTemplate> valueClass,
-                       final Class<?> resourceClass,
-                       final Class<?> parentResourceClass,
-                       final String name,
-                       final String keyName,
-                       final ResourceType resourceType,
-                       final String namespace)
-  {
-    this(new Key(keyName, keyClass),
-         keyKeyClass,
-         keyParamsClass,
-         keys, valueClass,
-         resourceClass,
-         parentResourceClass,
-         name,
-         resourceType,
-         namespace);
-  }
-
-  /**
-   * Constructor.
-   *
    * @param valueClass resource value class
    * @param resourceClass resource class
    * @param parentResourceClass parent resource class

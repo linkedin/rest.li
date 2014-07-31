@@ -16,20 +16,19 @@
 
 package com.linkedin.restli.server;
 
-import java.util.Map;
 
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestStatus;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.RestRequestHandler;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.r2.transport.common.bridge.server.TransportCallbackAdapter;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
+
+import java.util.Map;
 
 /**
  * Delegates dispatch to a single {@link RestRequestHandler}.
@@ -60,15 +59,5 @@ public class DelegatingTransportDispatcher implements TransportDispatcher
       final Exception ex = RestException.forError(RestStatus.INTERNAL_SERVER_ERROR, e);
       callback.onResponse(TransportResponseImpl.<RestResponse>error(ex));
     }
-  }
-
-  @Override
-  @Deprecated
-  @SuppressWarnings("deprecation")
-  public void handleRpcRequest(final RpcRequest req,
-                               final Map<String, String> wireAttrs,
-                               final TransportCallback<RpcResponse> callback)
-  {
-    throw new UnsupportedOperationException();
   }
 }

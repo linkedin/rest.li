@@ -16,26 +16,6 @@
 
 package com.linkedin.d2.balancer.util;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
@@ -58,16 +38,33 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.r2.message.rest.RestStatus;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcResponse;
-import com.linkedin.r2.message.rpc.RpcResponseBuilder;
 import com.linkedin.r2.transport.common.RestRequestHandler;
-import com.linkedin.r2.transport.common.RpcRequestHandler;
 import com.linkedin.r2.transport.common.Server;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcherBuilder;
 import com.linkedin.r2.transport.http.server.HttpJettyServer;
 import com.linkedin.r2.transport.http.server.HttpServerFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 // Server startup
@@ -252,13 +249,11 @@ public class LoadBalancerEchoServer
       InterruptedException,
       URISyntaxException
   {
-    final RpcDispatcher rpcDispatcher = new RpcDispatcher();
     final RestDispatcher restDispatcher = new RestDispatcher();
 
     final TransportDispatcherBuilder dispatcherBuilder = new TransportDispatcherBuilder();
     for (String validPath : _validPaths)
     {
-      dispatcherBuilder.addRpcHandler(URI.create(validPath), rpcDispatcher);
       dispatcherBuilder.addRestHandler(URI.create(validPath), restDispatcher);
     }
     final TransportDispatcher dispatcher = dispatcherBuilder.build();
@@ -433,21 +428,6 @@ public class LoadBalancerEchoServer
     }
 
     return sb.toString();
-  }
-
-
-  public class RpcDispatcher implements RpcRequestHandler
-  {
-    @Override
-    @Deprecated
-    @SuppressWarnings("deprecation")
-    public void handleRequest(RpcRequest request, final Callback<RpcResponse> callback)
-    {
-      System.out.println("RPC server request: " +
-      request.getEntity().asString("UTF-8"));
-
-      callback.onSuccess(new RpcResponseBuilder().setEntity(request.getEntity()).build());
-    }
   }
 
   public class RestDispatcher implements RestRequestHandler

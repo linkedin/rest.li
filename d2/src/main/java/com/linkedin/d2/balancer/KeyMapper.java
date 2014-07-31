@@ -20,6 +20,7 @@
 
 package com.linkedin.d2.balancer;
 
+
 import com.linkedin.d2.balancer.util.AllPartitionsMultipleHostsResult;
 import com.linkedin.d2.balancer.util.AllPartitionsResult;
 import com.linkedin.d2.balancer.util.HostToKeyMapper;
@@ -28,8 +29,6 @@ import com.linkedin.r2.message.RequestContext;
 
 import java.net.URI;
 import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * KeyMapper is used with D2's consistent hashing mechanism to maintain key to host affinity across
@@ -52,42 +51,6 @@ import java.util.Set;
 
 public interface KeyMapper
 {
-  /**
-   * Maps keys to hosts according to the underlying strategy, e.g., consistent hashing.
-   * Output is a map of host URI to group of keys.  Each key in the input set will
-   * appear in exactly one of output groups, i.e., the groups are mutually exclusive
-   * and collectively exhaustive (MECE).
-   *
-   * Duplicate keys are allowed.
-   *
-   * @param keys The set of keys to be mapped
-   * @param serviceUri The URI for the service to which requests will be issued
-   * @param <K> The key type
-   * @return map of host URI -> mapped keys
-   * @deprecated use @link #mapKeysV2(URI, Collection) instead
-   */
-  @Deprecated
-  public <K> Map<URI, Collection<K>> mapKeys(URI serviceUri, Iterable<K> keys)
-          throws ServiceUnavailableException;
-
-  /**
-   * Maps keys to hosts according to the underlying strategy, e.g., consistent hashing.
-   * Output is a map of host URI to group of keys.  Each key in the input set will
-   * appear in exactly one of output groups, i.e., the groups are mutually exclusive
-   * and collectively exhaustive (MECE).
-   *
-   * Duplicate keys are not allowed.
-   *
-   * @param keys The set of keys to be mapped
-   * @param serviceUri The URI for the service to which requests will be issued
-   * @param <K> The key type
-   * @return map of host URI -> mapped keys
-   * @deprecated use @link #mapKeysV2(URI, Collection) instead
-   */
-  @Deprecated
-  public <K> Map<URI, Set<K>> mapKeys(URI serviceUri, Set<K> keys)
-          throws ServiceUnavailableException;
-
   /**
    * Maps keys to hosts according to the underlying strategy, e.g., consistent hashing.
    * Output is a map of host URI to group of keys.  Each key in the input set will

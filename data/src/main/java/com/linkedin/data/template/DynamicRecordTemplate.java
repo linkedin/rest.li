@@ -23,11 +23,10 @@ import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaUtil;
 import com.linkedin.data.schema.RecordDataSchema;
-
 import com.linkedin.data.schema.TyperefDataSchema;
+
 import java.lang.reflect.Array;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -39,22 +38,6 @@ import java.util.Map;
  */
 public class DynamicRecordTemplate extends RecordTemplate
 {
-
-  /**
-   * Construct a new {@link DynamicRecordTemplate}.
-   *
-   * @param name provides the name of the record type.
-   * @param fieldDefs defines the fields of the record type.
-   * @param data provides the underlying data that backs this {@link DynamicRecordTemplate}.
-   * @deprecated {@link RecordDataSchema} should be computed in builders and passed, rather than creating
-   * it on the fly.
-   */
-  @Deprecated
-  public DynamicRecordTemplate(String name, Collection<? extends FieldDef<?>> fieldDefs, DataMap data)
-  {
-    super(data, DynamicRecordMetadata.buildSchema(name, fieldDefs));
-  }
-
   /**
    * Construct a new {@link DynamicRecordTemplate}.
    *
@@ -67,20 +50,6 @@ public class DynamicRecordTemplate extends RecordTemplate
   }
 
   /**
-   * Construct a new empty {@link DynamicRecordTemplate}.
-   *
-   * @param name provides the name of the record type.
-   * @param fieldDefs defines the fields of the record type.
-   * @deprecated {@link RecordDataSchema} should be computed in builders and passed, rather than creating
-   * it on the fly.
-   */
-  @Deprecated
-  public DynamicRecordTemplate(String name, Collection<? extends FieldDef<?>> fieldDefs)
-  {
-    this(name, fieldDefs, new DataMap());
-  }
-
-  /**
    * Construct a new {@link DynamicRecordTemplate}
    *
    * @param schema the schema for the {@link DynamicRecordTemplate}.
@@ -88,26 +57,6 @@ public class DynamicRecordTemplate extends RecordTemplate
   public DynamicRecordTemplate(RecordDataSchema schema)
   {
     super(new DataMap(), schema);
-  }
-
-  /**
-   * Construct a new {@link DynamicRecordTemplate} initialized with the provided field values.
-   *
-   * @param name provides the name of the record type.
-   * @param fieldDefValues defines the fields of the record type and the value of each field.
-   * @deprecated {@link RecordDataSchema} should be computed in builders and passed, rather than creating
-   * it on the fly.
-   */
-  @Deprecated
-  @SuppressWarnings({"unchecked"})
-  public DynamicRecordTemplate(String name, Map<? extends FieldDef<?>, Object> fieldDefValues)
-  {
-    this(name, fieldDefValues.keySet());
-
-    for (Map.Entry<? extends FieldDef<?>, Object> entry: fieldDefValues.entrySet())
-    {
-      setValue((FieldDef<Object>) entry.getKey(), entry.getValue());
-    }
   }
 
   /**

@@ -23,10 +23,7 @@ import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestStatus;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.RestRequestHandler;
-import com.linkedin.r2.transport.common.RpcRequestHandler;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.r2.util.URIUtil;
@@ -43,14 +40,6 @@ import java.util.Map;
  */
 public class ContextDispatcher implements TransportDispatcher
 {
-  @SuppressWarnings("deprecation")
-  private static final RpcRequestHandler DEFAULT_RPC_HANDLER = new RpcRequestHandler() {
-    @Override
-    public void handleRequest(RpcRequest req, Callback<RpcResponse> callback)
-    {
-      callback.onError(new Exception("No dispatcher for URI '" + req.getURI() + "'"));
-    }
-  };
   private static final RestRequestHandler DEFAULT_REST_HANDLER = new RestRequestHandler() {
     @Override
     public void handleRequest(RestRequest req, RequestContext requestContext, Callback<RestResponse> callback)
@@ -61,7 +50,6 @@ public class ContextDispatcher implements TransportDispatcher
     }
   };
 
-  private final Map<String, RpcRequestHandler> _rpcHandlers;
   private final Map<String, RestRequestHandler> _restHandlers;
 
   /**
@@ -73,45 +61,7 @@ public class ContextDispatcher implements TransportDispatcher
    */
   public ContextDispatcher(Map<String, RestRequestHandler> restDispatcher)
   {
-    _rpcHandlers = null;
     _restHandlers = restDispatcher;
-  }
-
-  /**
-   * Construct a new instance with the specified dispatcher maps.
-   *
-   * @param rpcDispatcher a map from path to {@link RpcRequestHandler}.  RPC requests whose first
-   *                      path segment matches the map key will be dispatched to the respective
-   *                      handler.
-   * @param restDispatcher a map from path to {@link RestRequestHandler}.  REST requests whose first
-   *                       path segment matches the map key will be dispatched to the respective
-   *                       handler.
-   */
-  @Deprecated
-  public ContextDispatcher(Map<String, RpcRequestHandler> rpcDispatcher,
-                        Map<String, RestRequestHandler> restDispatcher)
-  {
-    _rpcHandlers = rpcDispatcher;
-    _restHandlers = restDispatcher;
-  }
-
-  @Override
-  @Deprecated
-  @SuppressWarnings("deprecation")
-  public void handleRpcRequest(RpcRequest req, Map<String, String> wireAttrs,
-                               TransportCallback<RpcResponse> callback)
-  {
-    final RpcRequestHandler handler = getHandler(req.getURI(), _rpcHandlers,
-            DEFAULT_RPC_HANDLER);
-
-    try
-    {
-      handler.handleRequest(req, new TransportCallbackAdapter<RpcResponse>(callback));
-    }
-    catch (Exception e)
-    {
-      callback.onResponse(TransportResponseImpl.<RpcResponse>error(e));
-    }
   }
 
   @Override

@@ -17,6 +17,7 @@
 /* $Id$ */
 package test.r2.message;
 
+
 import com.linkedin.r2.message.Message;
 import com.linkedin.r2.message.MessageBuilder;
 import com.linkedin.r2.message.Request;
@@ -27,15 +28,11 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
-import com.linkedin.r2.message.rpc.RpcMessage;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcRequestBuilder;
-import com.linkedin.r2.message.rpc.RpcResponse;
-import com.linkedin.r2.message.rpc.RpcResponseBuilder;
-import org.testng.Assert;
-import org.testng.annotations.Test;
 
 import java.net.URI;
+
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 /**
  * @author Chris Pettitt
@@ -43,129 +40,6 @@ import java.net.URI;
  */
 public class TestBuilders
 {
-  @Test
-  @SuppressWarnings("deprecation")
-  public void testChainBuildRpcRequestFromRpcRequestBuilder()
-  {
-    final RpcRequest req = new RpcRequestBuilder(URI.create("test"))
-            .setEntity(new byte[] {1,2,3,4})
-            .build()
-            .builder()
-              .setEntity(new byte[] {5,6,7,8})
-              .setURI(URI.create("anotherURI"))
-              .build();
-
-    Assert.assertEquals(new byte[] {5,6,7,8}, req.getEntity().copyBytes());
-    Assert.assertEquals(URI.create("anotherURI"), req.getURI());
-  }
-
-  @Test
-  @SuppressWarnings("deprecation")
-  public void testChainBuildRpcRequestFromRequestBuilder()
-  {
-    final Request req = new RpcRequestBuilder(URI.create("test"))
-            .setEntity(new byte[] {1,2,3,4})
-            .build()
-            .requestBuilder()
-              .setEntity(new byte[] {5,6,7,8})
-              .setURI(URI.create("anotherURI"))
-              .build();
-
-    Assert.assertEquals(new byte[] {5,6,7,8}, req.getEntity().copyBytes());
-    Assert.assertEquals(URI.create("anotherURI"), req.getURI());
-  }
-
-  @Test
-  @SuppressWarnings("deprecation")
-  public void testChainBuildRpcRequestFromRpcBuilder()
-  {
-    final RpcMessage req = new RpcRequestBuilder(URI.create("test"))
-            .setEntity(new byte[] {1,2,3,4})
-            .build()
-            .rpcBuilder()
-              .setEntity(new byte[] {5,6,7,8})
-              .build();
-
-    Assert.assertEquals(new byte[] {5,6,7,8}, req.getEntity().copyBytes());
-    Assert.assertTrue(req instanceof RpcRequest);
-    Assert.assertEquals(URI.create("test"), ((RpcRequest)req).getURI());
-  }
-
-  @Test
-  @SuppressWarnings("deprecation")
-  public void testChainBuildRpcRequestFromMessageBuilder()
-  {
-    final MessageBuilder<?> builder = new RpcRequestBuilder(URI.create("test"))
-            .setEntity(new byte[] {1,2,3,4})
-            .build()
-            .builder();
-    final Message req = builder
-            .setEntity(new byte[] {5,6,7,8})
-            .build();
-
-    Assert.assertEquals(new byte[] {5,6,7,8}, req.getEntity().copyBytes());
-    Assert.assertTrue(req instanceof RpcRequest);
-    Assert.assertEquals(URI.create("test"), ((RpcRequest)req).getURI());
-  }
-
-  @Test
-  @SuppressWarnings("deprecation")
-  public void testChainBuildRpcResponseFromRpcResponseBuilder()
-  {
-    final RpcResponse res = new RpcResponseBuilder()
-            .setEntity(new byte[] {1,2,3,4})
-            .build()
-            .builder()
-              .setEntity(new byte[] {5,6,7,8})
-              .build();
-
-    Assert.assertEquals(new byte[] {5,6,7,8}, res.getEntity().copyBytes());
-  }
-
-  @Test
-  @SuppressWarnings("deprecation")
-  public void testChainBuildRpcResponseFromResponseBuilder()
-  {
-    final Response res = new RpcResponseBuilder()
-            .setEntity(new byte[] {1,2,3,4})
-            .build()
-            .responseBuilder()
-              .setEntity(new byte[] {5,6,7,8})
-              .build();
-
-    Assert.assertEquals(new byte[] {5,6,7,8}, res.getEntity().copyBytes());
-  }
-
-  @Test
-  @SuppressWarnings("deprecation")
-  public void testChainBuildRpcResponseFromRpcBuilder()
-  {
-    final RpcMessage res = new RpcResponseBuilder()
-            .setEntity(new byte[] {1,2,3,4})
-            .build()
-            .rpcBuilder()
-              .setEntity(new byte[] {5,6,7,8})
-              .build();
-
-    Assert.assertEquals(new byte[] {5,6,7,8}, res.getEntity().copyBytes());
-  }
-
-  @Test
-  @SuppressWarnings("deprecation")
-  public void testChainBuildRpcResponseFromMessageBuilder()
-  {
-    final MessageBuilder<?> builder = new RpcResponseBuilder()
-              .setEntity(new byte[] {1,2,3,4})
-              .build()
-              .builder();
-
-    final Message res = builder
-              .setEntity(new byte[] {5,6,7,8})
-              .build();
-
-    Assert.assertEquals(new byte[] {5,6,7,8}, res.getEntity().copyBytes());
-  }
-
   @Test
   public void testChainBuildRestRequestFromRestRequestBuilder()
   {

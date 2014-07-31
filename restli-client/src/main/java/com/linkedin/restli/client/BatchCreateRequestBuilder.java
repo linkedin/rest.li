@@ -41,12 +41,6 @@ public class BatchCreateRequestBuilder<K, V extends RecordTemplate> extends
 {
   private final CollectionRequest<V> _input;
 
-  @Deprecated
-  public BatchCreateRequestBuilder(String baseUriTemplate, Class<V> valueClass, ResourceSpec resourceSpec)
-  {
-    this(baseUriTemplate, valueClass, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
-  }
-
   public BatchCreateRequestBuilder(String baseUriTemplate,
                                    Class<V> valueClass,
                                    ResourceSpec resourceSpec,
@@ -65,22 +59,6 @@ public class BatchCreateRequestBuilder<K, V extends RecordTemplate> extends
   public BatchCreateRequestBuilder<K, V> inputs(List<V> entities)
   {
     _input.getElements().addAll(entities);
-    return this;
-  }
-
-  @Override
-  @Deprecated
-  public BatchCreateRequestBuilder<K, V> param(String key, Object value)
-  {
-    super.setParam(key, value);
-    return this;
-  }
-
-  @Override
-  @Deprecated
-  public BatchCreateRequestBuilder<K, V> reqParam(String key, Object value)
-  {
-    super.setReqParam(key, value);
     return this;
   }
 
@@ -109,14 +87,6 @@ public class BatchCreateRequestBuilder<K, V extends RecordTemplate> extends
   public BatchCreateRequestBuilder<K, V> addReqParam(String key, Object value)
   {
     super.addReqParam(key, value);
-    return this;
-  }
-
-  @Override
-  @Deprecated
-  public BatchCreateRequestBuilder<K, V> header(String key, String value)
-  {
-    super.setHeader(key, value);
     return this;
   }
 

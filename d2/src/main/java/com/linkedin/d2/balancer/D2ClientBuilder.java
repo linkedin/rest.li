@@ -25,19 +25,17 @@ import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
 import java.net.URI;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLParameters;
 
 
 /**
@@ -252,38 +250,6 @@ public class D2ClientBuilder
     public void restRequest(RestRequest request, RequestContext requestContext, Callback<RestResponse> callback)
     {
       _d2Client.restRequest(request, requestContext, callback);
-    }
-
-    @Override
-    @Deprecated
-    @SuppressWarnings("deprecation")
-    public Future<RpcResponse> rpcRequest(RpcRequest request)
-    {
-      return _d2Client.rpcRequest(request);
-    }
-
-    @Override
-    @Deprecated
-    @SuppressWarnings("deprecation")
-    public Future<RpcResponse> rpcRequest(RpcRequest request, RequestContext requestContext)
-    {
-      return _d2Client.rpcRequest(request, requestContext);
-    }
-
-    @Override
-    @Deprecated
-    @SuppressWarnings("deprecation")
-    public void rpcRequest(RpcRequest request, Callback<RpcResponse> callback)
-    {
-      _d2Client.rpcRequest(request, callback);
-    }
-
-    @Override
-    @Deprecated
-    @SuppressWarnings("deprecation")
-    public void rpcRequest(RpcRequest request, RequestContext requestContext, Callback<RpcResponse> callback)
-    {
-      _d2Client.rpcRequest(request, requestContext, callback);
     }
 
     @Override

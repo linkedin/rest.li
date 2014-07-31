@@ -19,14 +19,11 @@ package com.linkedin.r2.filter.transport;
 
 import com.linkedin.r2.filter.NextFilter;
 import com.linkedin.r2.filter.message.rest.RestRequestFilter;
-import com.linkedin.r2.filter.message.rpc.RpcRequestFilter;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.Response;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
@@ -40,7 +37,7 @@ import java.util.Map;
  * @author Chris Pettitt
  * @version $Revision$
  */
-public class DispatcherRequestFilter implements RpcRequestFilter, RestRequestFilter
+public class DispatcherRequestFilter implements RestRequestFilter
 {
   private final TransportDispatcher _dispatcher;
 
@@ -52,23 +49,6 @@ public class DispatcherRequestFilter implements RpcRequestFilter, RestRequestFil
   public DispatcherRequestFilter(TransportDispatcher dispatcher)
   {
     _dispatcher = dispatcher;
-  }
-
-  @Override
-  @Deprecated
-  @SuppressWarnings("deprecation")
-  public void onRpcRequest(RpcRequest req, final RequestContext requestContext,
-                           Map<String, String> wireAttrs,
-                           final NextFilter<RpcRequest, RpcResponse> nextFilter)
-  {
-    try
-    {
-      _dispatcher.handleRpcRequest(req, wireAttrs, createCallback(requestContext, nextFilter));
-    }
-    catch (Exception e)
-    {
-      nextFilter.onError(e, requestContext, new HashMap<String, String>());
-    }
   }
 
   @Override

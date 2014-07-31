@@ -16,7 +16,9 @@
 
 package com.linkedin.data.schema.validation;
 
+
 import com.linkedin.util.ArgumentUtil;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -76,22 +78,6 @@ public final class ValidationOptions
   /**
    * Constructor.
    *
-   * This method is deprecated, use {@link #ValidationOptions(RequiredMode, CoercionMode)} instead.
-   *
-   * @param requiredMode specifies the required mode.
-   * @param fixup if true, sets coercion mode to {@link CoercionMode#NORMAL} else, set coercion mode to
-   *              {@link CoercionMode#OFF}
-   */
-  @Deprecated
-  public ValidationOptions(RequiredMode requiredMode, boolean fixup)
-  {
-    _coercionMode = fixup ? CoercionMode.NORMAL : CoercionMode.OFF;
-    _requiredMode = requiredMode;
-  }
-
-  /**
-   * Constructor.
-   *
    * @param requiredMode specifies the required mode.
    * @param coercionMode specifies the coercion mode.
    */
@@ -99,35 +85,6 @@ public final class ValidationOptions
   {
     _coercionMode = coercionMode;
     _requiredMode = requiredMode;
-  }
-
-  /**
-   * Return whether to fix-up is enabled.
-   *
-   * This method is deprecated, use {@link #getCoercionMode()} instead.
-   *
-   * @return true if fix-up is possible,
-   *         i.e. coercion mod is not set to {@link CoercionMode#OFF} or
-   *         required mode is set to {@link RequiredMode#FIXUP_ABSENT_WITH_DEFAULT}.
-   */
-  @Deprecated
-  public boolean isFixup()
-  {
-    return (_coercionMode != CoercionMode.OFF) || (_requiredMode == RequiredMode.FIXUP_ABSENT_WITH_DEFAULT);
-  }
-
-  /**
-   * Set whether to fix-up is enabled.
-   *
-   * This method is deprecated, use {@link #setCoercionMode(CoercionMode)} instead.
-   *
-   * @param fixup if true, then set coercion mode to {@link CoercionMode#NORMAL} else
-   *              set coercion mode to {@link CoercionMode#OFF}.
-   */
-  @Deprecated
-  public void setFixup(boolean fixup)
-  {
-    _coercionMode =  (fixup ? CoercionMode.NORMAL : CoercionMode.OFF);
   }
 
   /**

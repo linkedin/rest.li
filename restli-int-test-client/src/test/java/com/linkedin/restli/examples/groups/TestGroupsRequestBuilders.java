@@ -524,7 +524,7 @@ public class TestGroupsRequestBuilders
     checkRequestBuilder(request, ResourceMethod.ACTION, ActionResponseDecoder.class, expectedUri, requestInput, version);
   }
 
-  @SuppressWarnings({"deprecation", "rawtypes"})
+  @SuppressWarnings({"rawtypes"})
   private static void checkRequestBuilder(Request<?> request,
                                           ResourceMethod resourceMethod,
                                           Class<? extends RestResponseDecoder> responseDecoderClass,
@@ -536,18 +536,11 @@ public class TestGroupsRequestBuilders
     assertEquals(request.getMethod(), resourceMethod);
     assertEquals(request.getResponseDecoder().getClass(), responseDecoderClass);
     assertEquals(RestliUriBuilderUtil.createUriBuilder(request, version).build().toString(), expectedUri);
-    if (version.compareTo(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion()) <= 0)
-    {
-      // getUri is deprecated and will only return a 1.0 version of the URI format.
-      assertEquals(request.getUri().toString(), expectedUri);
-    }
   }
 
-  @SuppressWarnings("deprecation")
   private static void testInput(Request<?> request, RecordTemplate expectedInput)
   {
     assertEquals(request.getInputRecord(), expectedInput);
-    assertEquals(request.getInput(), expectedInput);
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestGroupsBuilderDataProviderEntity")

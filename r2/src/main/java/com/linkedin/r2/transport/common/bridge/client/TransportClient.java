@@ -17,14 +17,13 @@
 /* $Id$ */
 package com.linkedin.r2.transport.common.bridge.client;
 
+
 import com.linkedin.common.callback.Callback;
+import com.linkedin.common.util.None;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
-import com.linkedin.common.util.None;
 
 import java.util.Map;
 
@@ -47,22 +46,6 @@ public interface TransportClient
                    RequestContext requestContext,
                    Map<String, String> wireAttrs,
                    TransportCallback<RestResponse> callback);
-
-  /**
-   * Asynchronously issues the given request. The given callback is invoked when the response is
-   * received.
-   *
-   * @param request the request to issue
-   * @param requestContext context for the request
-   * @param wireAttrs attributes that should be sent over the wire to the server
-   * @param callback the callback to invoke with the response
-   * @deprecated r2 rpc is not supported, use rest instead
-   */
-  @Deprecated
-  void rpcRequest(RpcRequest request,
-                  RequestContext requestContext,
-                  Map<String, String> wireAttrs,
-                  TransportCallback<RpcResponse> callback);
 
   /**
    * Starts asynchronous shutdown of the client. This method should block minimally, if at all.

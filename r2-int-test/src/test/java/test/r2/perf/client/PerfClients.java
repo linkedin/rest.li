@@ -17,8 +17,6 @@
 /* $Id$ */
 package test.r2.perf.client;
 
-import java.net.URI;
-import java.util.Collections;
 
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.transport.common.Client;
@@ -26,22 +24,15 @@ import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 
+import java.net.URI;
+import java.util.Collections;
+
 /**
  * @author Chris Pettitt
  * @version $Revision$
  */
 public class PerfClients
 {
-  public static PerfClient httpRpc(URI uri, int numThreads, int numMsgs, int msgSize)
-  {
-    final TransportClient transportClient = new HttpClientFactory().getClient(Collections.<String, String>emptyMap());
-    final Client client = new TransportClientAdapter(transportClient);
-    final RequestGenerator<String> reqGen = new StringRequestGenerator(numMsgs, msgSize);
-    final ClientRunnableFactory crf = new RpcClientRunnableFactory(client, uri, reqGen);
-
-    return new PerfClient(crf, numThreads);
-  }
-
   public static PerfClient httpRest(URI uri, int numThreads, int numMsgs, int msgSize)
   {
     final TransportClient transportClient = new HttpClientFactory().getClient(Collections.<String, String>emptyMap());

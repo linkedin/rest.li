@@ -28,18 +28,19 @@ import com.linkedin.data.schema.DataSchemaConstants;
 import com.linkedin.data.schema.DataSchemaTraverse;
 import com.linkedin.data.schema.EnumDataSchema;
 import com.linkedin.data.schema.FixedDataSchema;
-import com.linkedin.data.schema.JsonBuilder;
 import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.SchemaParserFactory;
 import com.linkedin.data.schema.UnionDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.apache.avro.Schema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -267,22 +268,6 @@ public class SchemaTranslator
   public static String dataToAvroSchemaJson(DataSchema dataSchema)
   {
     return dataToAvroSchemaJson(dataSchema, new DataToAvroSchemaTranslationOptions());
-  }
-
-  /**
-   * Translate from a {@link DataSchema} to an Avro {@link Schema}
-   *
-   * This method is deprecated, use {@link #dataToAvroSchemaJson(com.linkedin.data.schema.DataSchema, DataToAvroSchemaTranslationOptions)}
-   * instead.
-   *
-   * @param dataSchema provides the {@link DataSchema}.
-   * @param pretty provides how the JSON output will be formatted.
-   * @return the JSON representation of the Avro {@link Schema}.
-   */
-  @Deprecated
-  public static String dataToAvroSchemaJson(DataSchema dataSchema, JsonBuilder.Pretty pretty)
-  {
-    return dataToAvroSchemaJson(dataSchema, new DataToAvroSchemaTranslationOptions(pretty));
   }
 
   /**

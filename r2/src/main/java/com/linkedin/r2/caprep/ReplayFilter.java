@@ -17,10 +17,10 @@
 /* $Id$ */
 package com.linkedin.r2.caprep;
 
+
 import com.linkedin.r2.caprep.db.DbSource;
 import com.linkedin.r2.filter.NextFilter;
 import com.linkedin.r2.filter.message.rest.RestRequestFilter;
-import com.linkedin.r2.filter.message.rpc.RpcRequestFilter;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.Response;
@@ -28,13 +28,12 @@ import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestStatus;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Filter which replays response messages when respective request messages are observed.
@@ -43,7 +42,7 @@ import java.util.Map;
  * @author Chris Pettitt
  * @version $Revision$
  */
-public class ReplayFilter implements RpcRequestFilter, RestRequestFilter
+public class ReplayFilter implements RestRequestFilter
 {
   private static final Logger _log = LoggerFactory.getLogger(ReplayFilter.class);
 
@@ -63,18 +62,6 @@ public class ReplayFilter implements RpcRequestFilter, RestRequestFilter
   public void onRestRequest(RestRequest req, RequestContext requestContext,
                             Map<String, String> wireAttrs,
                             NextFilter<RestRequest, RestResponse> nextFilter)
-  {
-    if (!replayResponse(req, requestContext, nextFilter))
-    {
-      nextFilter.onRequest(req, requestContext, wireAttrs);
-    }
-  }
-
-  @Override
-  @Deprecated
-  public void onRpcRequest(RpcRequest req, RequestContext requestContext,
-                           Map<String, String> wireAttrs,
-                           NextFilter<RpcRequest, RpcResponse> nextFilter)
   {
     if (!replayResponse(req, requestContext, nextFilter))
     {

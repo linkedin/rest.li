@@ -18,24 +18,6 @@
 package com.linkedin.r2.transport.http.server;
 
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Enumeration;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicReference;
-
-import javax.mail.MessagingException;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.linkedin.data.ByteString;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.RequestContext;
@@ -50,6 +32,23 @@ import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 
+import javax.mail.MessagingException;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Enumeration;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * @author Steven Ihde
  * @author Chris Pettitt
@@ -60,27 +59,6 @@ public abstract class AbstractR2Servlet extends HttpServlet
 {
   private static final Logger _log = LoggerFactory.getLogger(AbstractR2Servlet.class);
   private static final long   serialVersionUID = 0L;
-
-  /**
-   * @deprecated This constructor is deprecated as support for async servlet support
-   * is provided through {@link AbstractAsyncR2Servlet} class.
-   */
-  @Deprecated
-  public AbstractR2Servlet(boolean useContinuations, int timeOut, int timeOutDelta)
-  {
-    if (useContinuations)
-    {
-      throw new UnsupportedOperationException("Asynchronous continuations not supported");
-    }
-  }
-
-  /**
-   * Construct a new instance using synchronous servlet support.
-   */
-  public AbstractR2Servlet()
-  {
-    this(false, -1, -1);
-  }
 
   protected abstract HttpDispatcher getDispatcher();
 

@@ -21,8 +21,6 @@ import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.Response;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcResponse;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -64,16 +62,6 @@ public interface MessageSerializer
   RestRequest readRestRequest(InputStream in) throws IOException;
 
   /**
-   * Read a {@link RpcRequest} from an {@link InputStream}.
-   *
-   * @param in the source for the deserialization.
-   * @return a {@link RpcRequest} object obtained from the stream.
-   * @throws IOException
-   */
-  @Deprecated
-  RpcRequest readRpcRequest(InputStream in) throws IOException;
-
-  /**
    * Read a {@link RestResponse} from an {@link InputStream}.
    *
    * @param in the source for the deserialization.
@@ -81,14 +69,4 @@ public interface MessageSerializer
    * @throws IOException
    */
   RestResponse readRestResponse(InputStream in) throws IOException;
-
-  /**
-   * Read a {@link RpcResponse} from an {@link InputStream}.
-   *
-   * @param in the source for the deserialization.
-   * @return a {@link RpcResponse} object obtained from the stream.
-   * @throws IOException
-   */
-  @Deprecated
-  RpcResponse readRpcResponse(InputStream in) throws IOException;
 }

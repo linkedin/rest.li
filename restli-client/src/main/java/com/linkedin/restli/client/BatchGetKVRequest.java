@@ -20,11 +20,10 @@ package com.linkedin.restli.client;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.client.response.BatchKVResponse;
-import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
-import java.net.URI;
+
 import java.util.Map;
 import java.util.Set;
 
@@ -54,15 +53,5 @@ public class BatchGetKVRequest<K, V extends RecordTemplate> extends BatchRequest
   public Set<PathSpec> getFields()
   {
     return super.getFields();
-  }
-
-  /**
-   * @deprecated Please use {@link com.linkedin.restli.client.uribuilders.RestliUriBuilder#buildBaseUri()} instead
-   * @return
-   */
-  @Deprecated
-  public URI getBaseUri()
-  {
-    return RestliUriBuilderUtil.createUriBuilder(this).buildBaseUri();
   }
 }

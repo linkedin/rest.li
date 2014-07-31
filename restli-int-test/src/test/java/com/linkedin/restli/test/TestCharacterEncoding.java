@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.Collections;
 
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import com.linkedin.common.callback.Callback;
@@ -36,8 +37,11 @@ import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.restli.client.GetRequest;
 import com.linkedin.restli.client.GetRequestBuilder;
 import com.linkedin.restli.common.CompoundKey;
+import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpecImpl;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
+import com.linkedin.restli.internal.common.TestConstants;
 import com.linkedin.restli.server.RestLiConfig;
 import com.linkedin.restli.server.RestLiServer;
 import com.linkedin.restli.server.resources.PrototypeResourceFactory;
@@ -50,9 +54,8 @@ import com.linkedin.restli.server.resources.PrototypeResourceFactory;
 
 public class TestCharacterEncoding
 {
-
-  @Test
-  public void testQueryParamValueEncoding()
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "protocolVersions")
+  public void testQueryParamValueEncoding(ProtocolVersion protocolVersion)
   {
     RestLiConfig config = new RestLiConfig();
     config.setResourcePackageNames(QueryParamMockCollection.class.getPackage().getName());
@@ -76,7 +79,7 @@ public class TestCharacterEncoding
                       RestliRequestOptions.DEFAULT_OPTIONS)
                       .id("dummy")
                       .setParam(QueryParamMockCollection.VALUE_KEY, testValue).build();
-      RestRequest restRequest = new RestRequestBuilder(RestliUriBuilderUtil.createUriBuilder(req).build())
+      RestRequest restRequest = new RestRequestBuilder(RestliUriBuilderUtil.createUriBuilder(req, protocolVersion).build())
               .setMethod(req.getMethod().getHttpMethod().toString()).build();
 
       // N.B. since QueryParamMockCollection is implemented using the synchronous rest.li interface,
@@ -108,5 +111,14 @@ public class TestCharacterEncoding
       });
 
     }
+  }
+
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "protocolVersions")
+  public Object[][] protocolVersionsDataProvider()
+  {
+    return new Object[][] {
+      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), },
+      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), }
+    };
   }
 }

@@ -26,8 +26,6 @@ import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.AbstractClient;
 import com.linkedin.r2.transport.common.bridge.client.TransportCallbackAdapter;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
@@ -71,18 +69,8 @@ public class MockClient extends AbstractClient
   }
 
   @Override
-  @Deprecated
-  @SuppressWarnings("deprecation")
-  public void rpcRequest(RpcRequest request, RequestContext requestContext,
-                         Callback<RpcResponse> callback)
-  {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public void shutdown(Callback<None> callback)
   {
-
   }
 
   protected int status()

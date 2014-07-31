@@ -17,15 +17,13 @@
 /* $Id$ */
 package com.linkedin.r2.transport.common.bridge.server;
 
+
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestStatus;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.RestRequestHandler;
-import com.linkedin.r2.transport.common.RpcRequestHandler;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 
@@ -38,40 +36,11 @@ import java.util.Map;
  */
 /* package private */ class TransportDispatcherImpl implements TransportDispatcher
 {
-  private final Map<URI, RpcRequestHandler> _rpcHandlers;
   private final Map<URI, RestRequestHandler> _restHandlers;
 
-  /* package private */ TransportDispatcherImpl(Map<URI, RpcRequestHandler> rpcDispatcher,
-                                                Map<URI, RestRequestHandler> restDispatcher)
+  /* package private */ TransportDispatcherImpl(Map<URI, RestRequestHandler> restDispatcher)
   {
-    _rpcHandlers = rpcDispatcher;
     _restHandlers = restDispatcher;
-  }
-
-  @Override
-  @Deprecated
-  @SuppressWarnings("deprecation")
-  public void handleRpcRequest(RpcRequest req, Map<String, String> wireAttrs,
-                               TransportCallback<RpcResponse> callback)
-  {
-    final URI address = req.getURI();
-    final RpcRequestHandler handler = _rpcHandlers.get(address);
-
-    if (handler == null)
-    {
-      final Exception ex = new Exception("No dispatcher for URI '" + address + "'");
-      callback.onResponse(TransportResponseImpl.<RpcResponse>error(ex));
-      return;
-    }
-
-    try
-    {
-      handler.handleRequest(req, new TransportCallbackAdapter<RpcResponse>(callback));
-    }
-    catch (Exception e)
-    {
-      callback.onResponse(TransportResponseImpl.<RpcResponse>error(e));
-    }
   }
 
   @Override

@@ -59,14 +59,6 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
     _mapper = mapper;
   }
 
-  // for those who do not care about trouble keys.
-  @Deprecated
-  public Collection<RequestInfo<T>> buildRequests(BatchGetRequest<T> request, RequestContext requestContext)
-    throws ServiceUnavailableException
-  {
-    return buildRequestsV2(request, requestContext).getRequestInfo();
-  }
-
   // return value contains the request info and the unmapped keys (also the cause)
   // V2 is here to differentiate it from the older API
   public ScatterGatherResult<T> buildRequestsV2(BatchGetRequest<T> request, RequestContext requestContext)
@@ -236,22 +228,13 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
     return new KVScatterGatherResult<K, UpdateStatus>(scatterGatherRequests, mapKeyResult.getUnmappedKeys());
   }
 
-  @SuppressWarnings("deprecation")
   private <K> MapKeyResult<URI, K> mapKeys(BatchRequest<?> request, Collection<K> ids)
     throws ServiceUnavailableException
   {
     URI serviceUri;
     try
     {
-      if (request.hasUri())
-      {
-        // legacy constructor used to construct the request
-        serviceUri = new URI(D2_URI_PREFIX + request.getUri().toString());
-      }
-      else
-      {
-        serviceUri = new URI(D2_URI_PREFIX + request.getServiceName());
-      }
+      serviceUri = new URI(D2_URI_PREFIX + request.getServiceName());
     }
     catch (URISyntaxException e)
     {

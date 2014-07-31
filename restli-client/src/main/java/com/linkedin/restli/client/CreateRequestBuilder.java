@@ -35,12 +35,6 @@ public class CreateRequestBuilder<K, V extends RecordTemplate>
 {
   private V _input;
 
-  @Deprecated
-  public CreateRequestBuilder(String baseUriTemplate, Class<V> valueClass, ResourceSpec resourceSpec)
-  {
-    this(baseUriTemplate, valueClass, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
-  }
-
   public CreateRequestBuilder(String baseUriTemplate,
                               Class<V> valueClass,
                               ResourceSpec resourceSpec,
@@ -52,22 +46,6 @@ public class CreateRequestBuilder<K, V extends RecordTemplate>
   public CreateRequestBuilder<K, V> input(V entity)
   {
     _input = entity;
-    return this;
-  }
-
-  @Override
-  @Deprecated
-  public CreateRequestBuilder<K, V> param(String key, Object value)
-  {
-    super.setParam(key, value);
-    return this;
-  }
-
-  @Override
-  @Deprecated
-  public CreateRequestBuilder<K, V> reqParam(String key, Object value)
-  {
-    super.setReqParam(key, value);
     return this;
   }
 
@@ -96,14 +74,6 @@ public class CreateRequestBuilder<K, V extends RecordTemplate>
   public CreateRequestBuilder<K, V> addReqParam(String key, Object value)
   {
     super.addReqParam(key, value);
-    return this;
-  }
-
-  @Override
-  @Deprecated
-  public CreateRequestBuilder<K, V> header(String key, String value)
-  {
-    super.setHeader(key, value);
     return this;
   }
 

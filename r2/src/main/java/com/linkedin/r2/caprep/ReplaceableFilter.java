@@ -17,7 +17,6 @@
 /* $Id$ */
 package com.linkedin.r2.caprep;
 
-import java.util.Map;
 
 import com.linkedin.r2.filter.Filter;
 import com.linkedin.r2.filter.NextFilter;
@@ -26,17 +25,14 @@ import com.linkedin.r2.filter.message.ResponseFilter;
 import com.linkedin.r2.filter.message.rest.RestFilter;
 import com.linkedin.r2.filter.message.rest.RestRequestFilter;
 import com.linkedin.r2.filter.message.rest.RestResponseFilter;
-import com.linkedin.r2.filter.message.rpc.RpcFilter;
-import com.linkedin.r2.filter.message.rpc.RpcRequestFilter;
-import com.linkedin.r2.filter.message.rpc.RpcResponseFilter;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.Response;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.util.ArgumentUtil;
+
+import java.util.Map;
 
 /**
  * Filter which delegates all calls to a specified Filter. The delegate can be reset
@@ -45,7 +41,7 @@ import com.linkedin.util.ArgumentUtil;
  * @author Chris Pettitt
  * @version $Revision$
  */
-public class ReplaceableFilter implements RestFilter, RpcFilter
+public class ReplaceableFilter implements RestFilter
 {
   private volatile Filter _filter;
 
@@ -89,10 +85,7 @@ public class ReplaceableFilter implements RestFilter, RpcFilter
     final Filter filter = _filter;
     if (filter instanceof RestRequestFilter)
     {
-      ((RestRequestFilter) filter).onRestRequest(req,
-                                                 requestContext,
-                                                 wireAttrs,
-                                                 nextFilter);
+      ((RestRequestFilter) filter).onRestRequest(req, requestContext, wireAttrs, nextFilter);
     }
     else
     {
@@ -109,10 +102,7 @@ public class ReplaceableFilter implements RestFilter, RpcFilter
     final Filter filter = _filter;
     if (filter instanceof RestResponseFilter)
     {
-      ((RestResponseFilter) filter).onRestResponse(res,
-                                                   requestContext,
-                                                   wireAttrs,
-                                                   nextFilter);
+      ((RestResponseFilter) filter).onRestResponse(res, requestContext, wireAttrs, nextFilter);
     }
     else
     {
@@ -130,63 +120,6 @@ public class ReplaceableFilter implements RestFilter, RpcFilter
     if (filter instanceof RestResponseFilter)
     {
       ((RestResponseFilter) filter).onRestError(ex, requestContext, wireAttrs, nextFilter);
-    }
-    else
-    {
-      handleGenericError(ex, requestContext, wireAttrs, nextFilter);
-    }
-  }
-
-  @Override
-  @Deprecated
-  public void onRpcRequest(RpcRequest req,
-                           RequestContext requestContext,
-                           Map<String, String> wireAttrs,
-                           NextFilter<RpcRequest, RpcResponse> nextFilter)
-  {
-    final Filter filter = _filter;
-    if (filter instanceof RpcRequestFilter)
-    {
-      ((RpcRequestFilter) filter).onRpcRequest(req, requestContext, wireAttrs, nextFilter);
-    }
-    else
-    {
-      handleGenericRequest(req, requestContext, wireAttrs, nextFilter);
-    }
-  }
-
-  @Override
-  @Deprecated
-  public void onRpcResponse(RpcResponse res,
-                            RequestContext requestContext,
-                            Map<String, String> wireAttrs,
-                            NextFilter<RpcRequest, RpcResponse> nextFilter)
-  {
-    final Filter filter = _filter;
-    if (filter instanceof RpcResponseFilter)
-    {
-      ((RpcResponseFilter) filter).onRpcResponse(res,
-                                                 requestContext,
-                                                 wireAttrs,
-                                                 nextFilter);
-    }
-    else
-    {
-      handleGenericResponse(res, requestContext, wireAttrs, nextFilter);
-    }
-  }
-
-  @Override
-  @Deprecated
-  public void onRpcError(Throwable ex,
-                         RequestContext requestContext,
-                         Map<String, String> wireAttrs,
-                         NextFilter<RpcRequest, RpcResponse> nextFilter)
-  {
-    final Filter filter = _filter;
-    if (filter instanceof RpcResponseFilter)
-    {
-      ((RpcResponseFilter) filter).onRpcError(ex, requestContext, wireAttrs, nextFilter);
     }
     else
     {

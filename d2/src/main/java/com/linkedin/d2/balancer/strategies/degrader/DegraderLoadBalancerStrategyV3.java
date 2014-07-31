@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer.strategies.degrader;
 
+
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
@@ -24,24 +25,23 @@ import com.linkedin.d2.balancer.util.hashing.HashFunction;
 import com.linkedin.d2.balancer.util.hashing.RandomHash;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.d2.balancer.util.hashing.URIRegexHash;
-import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.util.degrader.DegraderControl;
 
-import java.util.ArrayList;
-import java.util.concurrent.ConcurrentMap;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.linkedin.d2.discovery.util.LogUtil.debug;
 import static com.linkedin.d2.discovery.util.LogUtil.warn;
@@ -62,8 +62,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
   public static final String HASH_METHOD_URI_REGEX = "uriRegex";
   public static final double EPSILON = 10e-6;
 
-  private static final Logger                         _log =
-                           LoggerFactory.getLogger(DegraderLoadBalancerStrategyV3.class);
+  private static final Logger _log = LoggerFactory.getLogger(DegraderLoadBalancerStrategyV3.class);
 
   private boolean                                     _updateEnabled;
   private volatile DegraderLoadBalancerStrategyConfig _config;
@@ -909,12 +908,6 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
   {
     return "DegraderLoadBalancerStrategyV3 [_config=" + _config
         + ", _state=" + _state + "]";
-  }
-
-  @Deprecated
-  public double getCurrentOverrideDropRate()
-  {
-    return _state.getPartitionState(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getCurrentOverrideDropRate();
   }
 
   private static class Partition

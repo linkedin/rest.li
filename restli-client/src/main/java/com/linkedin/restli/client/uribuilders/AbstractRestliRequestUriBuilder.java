@@ -142,7 +142,6 @@ abstract class AbstractRestliRequestUriBuilder<R extends Request<?>> implements 
     return URI.create(bindPathKeys());
   }
 
-
   public URI buildBaseUriWithPrefix()
   {
     return URI.create(addPrefix(bindPathKeys()));

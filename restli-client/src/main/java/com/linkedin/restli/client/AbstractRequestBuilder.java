@@ -22,7 +22,6 @@ package com.linkedin.restli.client;
 
 
 import com.linkedin.data.schema.PathSpec;
-import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.restli.client.base.BuilderBase;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ResourceSpec;
@@ -53,31 +52,11 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
   protected final Map<String, Object> _queryParams = new HashMap<String, Object>();
   protected Map<String, String>       _headers     = new HashMap<String, String>();
 
-  @Deprecated
-  protected AbstractRequestBuilder(String baseURITemplate, ResourceSpec resourceSpec)
-  {
-    this(baseURITemplate, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
-  }
-
   protected AbstractRequestBuilder(String baseUriTemplate, ResourceSpec resourceSpec, RestliRequestOptions requestOptions)
   {
     super(baseUriTemplate, requestOptions);
     _resourceSpec = resourceSpec;
     _requestOptions = requestOptions;
-  }
-
-  /**
-   * Create a header with the specified value if there is no existing name
-   * Otherwise, overwrite the existing header with the specified value to the existing value
-   *
-   * @param name name of the header
-   * @param value value of the header
-   * @return this {@link AbstractRequestBuilder}
-   */
-  @Deprecated
-  public AbstractRequestBuilder<K, V, R> header(String name, String value)
-  {
-    return setHeader(name, value);
   }
 
   /**
@@ -254,21 +233,6 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
   protected final void addKey(K id)
   {
     addKeys(Collections.singletonList(id));
-  }
-
-  /**
-   * @deprecated Please use {@link #pathKey(String, Object)} instead.
-   * @param key
-   * @param value
-   */
-  @Deprecated
-  protected void addPathKey(String key, Object value)
-  {
-    if (value == null)
-    {
-      throw new IllegalArgumentException("Path key must be non-null");
-    }
-    _pathKeys.put(key, DataTemplateUtil.stringify(value));
   }
 
   protected void addAssocKey(String key, Object value)

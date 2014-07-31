@@ -19,7 +19,6 @@ package test.r2.perf.server;
 
 import com.linkedin.r2.sample.echo.EchoServiceImpl;
 import com.linkedin.r2.sample.echo.rest.RestEchoServer;
-import com.linkedin.r2.sample.echo.rpc.RpcEchoServer;
 import com.linkedin.r2.transport.common.Server;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcherBuilder;
@@ -36,7 +35,6 @@ public abstract class AbstractPerfServerFactory
   public Server create(int port, URI echoUri)
   {
     final TransportDispatcher dispatcher = new TransportDispatcherBuilder()
-          .addRpcHandler(echoUri, new RpcEchoServer(new EchoServiceImpl()))
           .addRestHandler(echoUri, new RestEchoServer(new EchoServiceImpl()))
           .build();
 

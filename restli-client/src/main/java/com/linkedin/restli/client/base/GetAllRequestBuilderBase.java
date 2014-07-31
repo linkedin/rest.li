@@ -38,12 +38,6 @@ public abstract class GetAllRequestBuilderBase<
         RB extends GetAllRequestBuilderBase<K, V, RB>>
         extends GetAllRequestBuilder<K, V>
 {
-  @Deprecated
-  protected GetAllRequestBuilderBase(String baseUriTemplate, Class<V> elementClass, ResourceSpec resourceSpec)
-  {
-    this(baseUriTemplate, elementClass, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
-  }
-
   protected GetAllRequestBuilderBase(String baseUriTemplate,
                                      Class<V> elementClass,
                                      ResourceSpec resourceSpec,
@@ -94,19 +88,6 @@ public abstract class GetAllRequestBuilderBase<
     return (RB) super.pagingFields(pagingFieldPaths);
   }
 
-  /**
-   * @deprecated This method is deprecated and replaced by a set* method for API consistency reasons.
-   * This method cannot be removed permanently until all projects use a version of Rest.li containing the
-   * set* methods in a multi-project build environment for binary compatibility.
-   */
-  @SuppressWarnings({"unchecked"})
-  @Deprecated
-  @Override
-  public RB header(String key, String value)
-  {
-    return (RB) super.header(key, value);
-  }
-
   @SuppressWarnings({"unchecked"})
   @Override
   public RB setHeader(String key, String value)
@@ -114,37 +95,11 @@ public abstract class GetAllRequestBuilderBase<
     return (RB) super.setHeader(key, value);
   }
 
-  /**
-   * @deprecated This method is deprecated and replaced by a set* method for API consistency reasons.
-   * This method cannot be removed permanently until all projects use a version of Rest.li containing the
-   * set* methods in a multi-project build environment for binary compatibility.
-   */
-  @SuppressWarnings({"unchecked"})
-  @Deprecated
-  @Override
-  public RB param(String key, Object value)
-  {
-    return (RB) super.param(key, value);
-  }
-
   @SuppressWarnings({"unchecked"})
   @Override
   public RB setParam(String key, Object value)
   {
     return (RB) super.setParam(key, value);
-  }
-
-  /**
-   * @deprecated This method is deprecated and replaced by a set* method for API consistency reasons.
-   * This method cannot be removed permanently until all projects use a version of Rest.li containing the
-   * set* methods in a multi-project build environment for binary compatibility.
-   */
-  @SuppressWarnings({"unchecked"})
-  @Deprecated
-  @Override
-  public RB reqParam(String key, Object value)
-  {
-    return (RB) super.reqParam(key, value);
   }
 
   @SuppressWarnings({"unchecked"})

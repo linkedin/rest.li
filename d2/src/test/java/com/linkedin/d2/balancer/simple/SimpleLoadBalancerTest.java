@@ -68,11 +68,10 @@ import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -91,6 +90,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+
 import org.apache.commons.io.FileUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
@@ -1055,16 +1055,6 @@ public class SimpleLoadBalancerTest
                               RequestContext requestContext,
                               Map<String, String> wireAttrs,
                               TransportCallback<RestResponse> callback)
-      {
-      }
-
-      @Override
-      @Deprecated
-      @SuppressWarnings("deprecation")
-      public void rpcRequest(RpcRequest request,
-                             RequestContext requestContext,
-                             Map<String, String> wireAttrs,
-                             TransportCallback<RpcResponse> callback)
       {
       }
 

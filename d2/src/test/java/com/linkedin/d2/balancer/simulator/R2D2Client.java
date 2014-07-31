@@ -22,11 +22,8 @@ package com.linkedin.d2.balancer.simulator;
 
 import com.linkedin.d2.balancer.clients.DynamicClient;
 import com.linkedin.d2.balancer.util.LoadBalancerEchoClient;
-import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcRequestBuilder;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -125,28 +122,6 @@ public class R2D2Client
       {
         //rpcFuture();
         restFuture();
-      }
-    }
-
-    @SuppressWarnings("deprecation")
-    private void rpcFuture()
-    {
-      try
-      {
-        _total.incrementAndGet();
-
-        URI uri = getRandomServiceUrn();
-
-        RpcRequest req =
-            new RpcRequestBuilder(uri).setEntity(BYTES).build();
-
-        _client.rpcRequest(req).get();
-        _success.incrementAndGet();
-      }
-      catch (Exception e)
-      {
-        _error.incrementAndGet();
-        e.printStackTrace();
       }
     }
 

@@ -33,30 +33,9 @@ import java.util.Map;
 public abstract class RestfulRequestBuilder<K, V extends RecordTemplate, R extends Request<?>> extends
     AbstractRequestBuilder<K, V, R>
 {
-  @Deprecated
-  protected RestfulRequestBuilder(String baseURITemplate, ResourceSpec resourceSpec)
-  {
-    this(baseURITemplate, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
-  }
-
   protected RestfulRequestBuilder(String baseURITemplate, ResourceSpec resourceSpec, RestliRequestOptions requestOptions)
   {
     super(baseURITemplate, resourceSpec, requestOptions);
-  }
-
-  /**
-   * Create a header with the specified value if there is no existing name
-   * Otherwise, overwrite the existing header with the specified value to the existing value
-   *
-   * @param name name of the header
-   * @param value value of the header
-   */
-  @Override
-  @Deprecated
-  public RestfulRequestBuilder<K, V, R> header(String name, String value)
-  {
-    super.setHeader(name, value);
-    return this;
   }
 
   @Override
@@ -77,28 +56,6 @@ public abstract class RestfulRequestBuilder<K, V extends RecordTemplate, R exten
   public RestfulRequestBuilder<K, V, R> addHeader(String name, String value)
   {
     super.addHeader(name, value);
-    return this;
-  }
-
-  /**
-   * Note that this method overrides the value at the given key, rather than adds to the
-   * collection of values for it.
-   */
-  @Deprecated
-  public RestfulRequestBuilder<K, V, R> param(String key, Object value)
-  {
-    super.setParam(key, value);
-    return this;
-  }
-
-  /**
-   * Note that this method overrides the value at the given key, rather than adds to the
-   * collection of values for it.
-   */
-  @Deprecated
-  public RestfulRequestBuilder<K, V, R> reqParam(String key, Object value)
-  {
-    super.setReqParam(key, value);
     return this;
   }
 

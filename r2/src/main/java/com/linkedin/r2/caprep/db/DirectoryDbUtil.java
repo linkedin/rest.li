@@ -146,17 +146,6 @@ public class DirectoryDbUtil
   }
 
   /**
-   * Return true iff the given id is a REST id.
-   *
-   * @param id the id to be checked.
-   * @return true iff the given id is a REST id.
-   */
-  public static boolean isRestId(String id)
-  {
-    return id.endsWith(REST_SUFFIX);
-  }
-
-  /**
    * Return the integer index portion of a given id.
    *
    * @param id the string id for which the index should be obtained.

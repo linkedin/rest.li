@@ -17,30 +17,29 @@
 /* $Id$ */
 package com.linkedin.r2.caprep;
 
+
 import com.linkedin.r2.caprep.db.DbSink;
 import com.linkedin.r2.filter.NextFilter;
 import com.linkedin.r2.filter.message.RequestFilter;
 import com.linkedin.r2.filter.message.rest.RestResponseFilter;
-import com.linkedin.r2.filter.message.rpc.RpcResponseFilter;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.Response;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Chris Pettitt
  * @version $Revision$
  */
-public class CaptureFilter implements RequestFilter, RpcResponseFilter, RestResponseFilter
+public class CaptureFilter implements RequestFilter, RestResponseFilter
 {
   private static final Logger _log = LoggerFactory.getLogger(CaptureFilter.class);
 
@@ -87,24 +86,6 @@ public class CaptureFilter implements RequestFilter, RpcResponseFilter, RestResp
       saveResponse(((RestException)ex).getResponse(), requestContext);
     }
 
-    nextFilter.onError(ex, requestContext, wireAttrs);
-  }
-
-  @Override
-  @Deprecated
-  public void onRpcResponse(RpcResponse res, RequestContext requestContext,
-                            Map<String, String> wireAttrs,
-                            NextFilter<RpcRequest, RpcResponse> nextFilter)
-  {
-    saveResponse(res, requestContext);
-    nextFilter.onResponse(res, requestContext, wireAttrs);
-  }
-
-  @Override
-  @Deprecated
-  public void onRpcError(Throwable ex, RequestContext requestContext, Map<String, String> wireAttrs,
-                         NextFilter<RpcRequest, RpcResponse> nextFilter)
-  {
     nextFilter.onError(ex, requestContext, wireAttrs);
   }
 

@@ -17,11 +17,6 @@
 /* $Id$ */
 package com.linkedin.r2.caprep;
 
-import java.io.IOException;
-import java.util.Map;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.linkedin.r2.caprep.db.DefaultMessageSerializer;
 import com.linkedin.r2.caprep.db.DirectoryDbSink;
@@ -29,18 +24,21 @@ import com.linkedin.r2.caprep.db.DirectoryDbSource;
 import com.linkedin.r2.filter.Filter;
 import com.linkedin.r2.filter.NextFilter;
 import com.linkedin.r2.filter.message.rest.RestFilter;
-import com.linkedin.r2.filter.message.rpc.RpcFilter;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcResponse;
+
+import java.io.IOException;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Chris Pettitt
  * @version $Revision$
  */
-public class CapRepFilter implements RpcFilter, RestFilter, CapRepAdmin
+public class CapRepFilter implements RestFilter, CapRepAdmin
 {
   private static final Logger _log = LoggerFactory.getLogger(CapRepFilter.class);
 
@@ -127,31 +125,5 @@ public class CapRepFilter implements RpcFilter, RestFilter, CapRepAdmin
                           NextFilter<RestRequest, RestResponse> nextFilter)
   {
     _filter.onRestError(ex, requestContext, wireAttrs, nextFilter);
-  }
-
-  @Override
-  @Deprecated
-  public void onRpcRequest(RpcRequest req, RequestContext requestContext,
-                           Map<String, String> wireAttrs,
-                           NextFilter<RpcRequest, RpcResponse> nextFilter)
-  {
-    _filter.onRpcRequest(req, requestContext, wireAttrs, nextFilter);
-  }
-
-  @Override
-  @Deprecated
-  public void onRpcResponse(RpcResponse res, RequestContext requestContext,
-                            Map<String, String> wireAttrs,
-                            NextFilter<RpcRequest, RpcResponse> nextFilter)
-  {
-    _filter.onRpcResponse(res, requestContext, wireAttrs, nextFilter);
-  }
-
-  @Override
-  @Deprecated
-  public void onRpcError(Throwable ex, RequestContext requestContext, Map<String, String> wireAttrs,
-                         NextFilter<RpcRequest, RpcResponse> nextFilter)
-  {
-    _filter.onRpcError(ex, requestContext, wireAttrs, nextFilter);
   }
 }

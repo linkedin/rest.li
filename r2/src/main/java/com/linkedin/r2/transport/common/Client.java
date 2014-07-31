@@ -17,13 +17,12 @@
 /* $Id$ */
 package com.linkedin.r2.transport.common;
 
+
 import com.linkedin.common.callback.Callback;
+import com.linkedin.common.util.None;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcResponse;
-import com.linkedin.common.util.None;
 
 import java.net.URI;
 import java.util.Map;
@@ -77,56 +76,6 @@ public interface Client
    */
   void restRequest(RestRequest request, RequestContext requestContext,
                    Callback<RestResponse> callback);
-
-  /**
-   * Asynchronously issues the given request and returns a {@link Future} that can be used to wait
-   * for the response.
-   *
-   *
-   * @param request the request to issue
-   * @return a future to wait for the response
-   * @deprecated r2 rpc is not supported, use rest instead
-   */
-  @Deprecated
-  Future<RpcResponse> rpcRequest(RpcRequest request);
-
-  /**
-   * Asynchronously issues the given request and returns a {@link Future} that can be used to wait
-   * for the response.
-   *
-   *
-   * @param request the request to issue
-   * @param requestContext context for the request
-   * @return a future to wait for the response
-   * @deprecated r2 rpc is not supported, use rest instead
-   */
-  @Deprecated
-  Future<RpcResponse> rpcRequest(RpcRequest request, RequestContext requestContext);
-
-  /**
-   * Asynchronously issues the given request. The given callback is invoked when the response is
-   * received. This event driven approach is typically more complicated to use and is appropriate
-   * for building other abstractions, such as a DAG based resolver.
-   *
-   * @param request the request to issue
-   * @param callback the callback to invoke with the response
-   * @deprecated r2 rpc is not supported, use rest instead
-   */
-  @Deprecated
-  void rpcRequest(RpcRequest request, Callback<RpcResponse> callback);
-
-  /**
-   * Asynchronously issues the given request. The given callback is invoked when the response is
-   * received. This event driven approach is typically more complicated to use and is appropriate
-   * for building other abstractions, such as a DAG based resolver.
-   *
-   * @param request the request to issue
-   * @param requestContext context for the request
-   * @param callback the callback to invoke with the response
-   * @deprecated r2 rpc is not supported, use rest instead
-   */
-  @Deprecated
-  void rpcRequest(RpcRequest request, RequestContext requestContext, Callback<RpcResponse> callback);
 
   /**
    * Initiates asynchronous shutdown of the client. This method should block minimally, if at all.

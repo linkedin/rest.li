@@ -20,6 +20,7 @@
 
 package com.linkedin.d2.balancer.util.hashing;
 
+
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.util.AllPartitionsMultipleHostsResult;
@@ -28,9 +29,6 @@ import com.linkedin.d2.balancer.util.HostToKeyMapper;
 import com.linkedin.d2.balancer.util.MapKeyHostPartitionResult;
 import com.linkedin.d2.balancer.util.MapKeyResult;
 import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
-import java.util.Random;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -39,7 +37,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Josh Walker
@@ -241,31 +243,6 @@ public class ConsistentHashKeyMapper implements KeyMapper
     }
     return _partitionInfoProvider.getPartitionInformation(serviceURI, keys, limitNumHostsPerPartition,
         new StickyKeyHashProvider<S>(stickyKey));
-  }
-
-  @Deprecated
-  @Override
-  public <K> Map<URI, Set<K>> mapKeys(URI serviceUri, Set<K> keys)
-          throws ServiceUnavailableException
-  {
-    MapKeyResult<URI, K> mapKeyResult = mapKeysV2(serviceUri, keys);
-    Map<URI, Collection<K>> collectionMap = mapKeyResult.getMapResult();
-    Map<URI, Set<K>> result = new HashMap<URI, Set<K>>();
-    for (Map.Entry<URI, Collection<K>> entry : collectionMap.entrySet())
-    {
-      result.put(entry.getKey(), new HashSet<K>(entry.getValue()));
-    }
-
-    return result;
-  }
-
-  @Deprecated
-  @Override
-  public <K> Map<URI, Collection<K>> mapKeys(URI serviceUri, Iterable<K> keys)
-    throws ServiceUnavailableException
-  {
-    MapKeyResult<URI, K> result = mapKeysV2(serviceUri, keys);
-    return result.getMapResult();
   }
 
   @Override

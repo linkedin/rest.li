@@ -17,15 +17,12 @@
 /* $Id$ */
 package com.linkedin.r2.sample;
 
-import java.net.URI;
-import java.util.Collections;
 
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.sample.echo.EchoServiceImpl;
 import com.linkedin.r2.sample.echo.OnExceptionEchoService;
 import com.linkedin.r2.sample.echo.ThrowingEchoService;
 import com.linkedin.r2.sample.echo.rest.RestEchoServer;
-import com.linkedin.r2.sample.echo.rpc.RpcEchoServer;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.Server;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
@@ -34,6 +31,9 @@ import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcherBuilder;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.transport.http.server.HttpServerFactory;
+
+import java.net.URI;
+import java.util.Collections;
 
 /**
  * @author Chris Pettitt
@@ -94,9 +94,6 @@ public class Bootstrap
   private static TransportDispatcher createDispatcher()
   {
     return new TransportDispatcherBuilder()
-            .addRpcHandler(ECHO_URI, new RpcEchoServer(new EchoServiceImpl()))
-            .addRpcHandler(ON_EXCEPTION_ECHO_URI, new RpcEchoServer(new OnExceptionEchoService()))
-            .addRpcHandler(THROWING_ECHO_URI, new RpcEchoServer(new ThrowingEchoService()))
             .addRestHandler(ECHO_URI, new RestEchoServer(new EchoServiceImpl()))
             .addRestHandler(ON_EXCEPTION_ECHO_URI, new RestEchoServer(new OnExceptionEchoService()))
             .addRestHandler(THROWING_ECHO_URI, new RestEchoServer(new ThrowingEchoService()))

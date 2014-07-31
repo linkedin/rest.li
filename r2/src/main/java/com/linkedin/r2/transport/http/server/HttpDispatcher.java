@@ -17,9 +17,6 @@
 /* $Id$ */
 package com.linkedin.r2.transport.http.server;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -30,6 +27,10 @@ import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.http.common.HttpBridge;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Chris Pettitt
@@ -83,13 +84,6 @@ public class HttpDispatcher
       MessageType.Type msgType = MessageType.getMessageType(wireAttrs, MessageType.Type.REST);
       switch (msgType)
       {
-        case RPC:
-          _dispatcher.handleRpcRequest(HttpBridge.toRpcRequest(req),
-                                       wireAttrs,
-                                       HttpBridge.httpToRpcCallback(callback));
-          break;
-
-        // default is REST
         default:
         case REST:
           _dispatcher.handleRestRequest(HttpBridge.toRestRequest(req, headers),

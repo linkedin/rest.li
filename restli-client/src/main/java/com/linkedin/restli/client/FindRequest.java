@@ -23,6 +23,7 @@ import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.internal.client.CollectionResponseDecoder;
+
 import java.util.Map;
 
 
@@ -69,23 +70,14 @@ public class FindRequest<T extends RecordTemplate>
   @Override
   public int hashCode()
   {
-    int hashCode = super.hashCode();
-    if (!hasUri())
-    {
-      hashCode = (31 * hashCode) + (_assocKey != null ? _assocKey.hashCode() : 0);
-    }
-    return hashCode;
+    final int assocKeyHashCode = (_assocKey != null ? _assocKey.hashCode() : 0);
+    return 31 * super.hashCode() + assocKeyHashCode;
   }
 
   @Override
   public boolean equals(Object obj)
   {
     boolean superEquals = super.equals(obj);
-
-    if (hasUri())
-    {
-      return superEquals;
-    }
 
     if (!superEquals)
     {
@@ -106,12 +98,9 @@ public class FindRequest<T extends RecordTemplate>
   public String toString()
   {
     StringBuilder sb = new StringBuilder(super.toString());
-    if (!hasUri())
-    {
-      sb.append(", {_assocKey=");
-      sb.append(_assocKey);
-      sb.append("}");
-    }
+    sb.append(", {_assocKey=");
+    sb.append(_assocKey);
+    sb.append("}");
     return sb.toString();
   }
 }

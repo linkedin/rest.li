@@ -51,12 +51,6 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
   private String                         _name;
   private final Map<FieldDef<?>, Object> _actionParams = new HashMap<FieldDef<?>, Object>();
 
-  @Deprecated
-  public ActionRequestBuilder(String baseUriTemplate, Class<V> elementClass, ResourceSpec resourceSpec)
-  {
-    this(baseUriTemplate, new TypeSpec<V>(elementClass), resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
-  }
-
   public ActionRequestBuilder(String baseUriTemplate, Class<V> elementClass, ResourceSpec resourceSpec, RestliRequestOptions requestOptions)
   {
     this(baseUriTemplate, new TypeSpec<V>(elementClass), resourceSpec, requestOptions);
@@ -79,20 +73,6 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
   {
     _id = id;
     return this;
-  }
-
-  @Deprecated
-  public ActionRequestBuilder<K, V> param(FieldDef<?> key, Object value)
-  {
-    _actionParams.put(key, value);
-    return this;
-  }
-
-  @Deprecated
-  public ActionRequestBuilder<K, V> reqParam(FieldDef<?> key, Object value)
-  {
-    ArgumentUtil.notNull(value, "value");
-    return setParam(key, value);
   }
 
   public ActionRequestBuilder<K, V> setParam(FieldDef<?> key, Object value)
@@ -139,14 +119,6 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
   {
     ArgumentUtil.notNull(value, "value");
     return addParam(key, value);
-  }
-
-  @Override
-  @Deprecated
-  public ActionRequestBuilder<K, V> header(String key, String value)
-  {
-    super.setHeader(key, value);
-    return this;
   }
 
   @Override

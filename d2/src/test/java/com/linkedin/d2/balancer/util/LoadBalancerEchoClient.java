@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer.util;
 
+
 import com.linkedin.d2.balancer.clients.DynamicClient;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterPropertiesJsonSerializer;
@@ -39,13 +40,13 @@ import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperPermanentStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperTogglingStore;
 import com.linkedin.d2.jmx.JmxManager;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcRequestBuilder;
-import com.linkedin.r2.message.rpc.RpcResponse;
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestRequestBuilder;
+import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
-
 import com.linkedin.r2.util.NamedThreadFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -106,12 +107,12 @@ public class LoadBalancerEchoClient
       String service = _services[index];
       URI uri = URI.create("d2://" + service);
 
-      RpcRequest req =
-          new RpcRequestBuilder(uri).setEntity("hi there".getBytes("UTF-8")).build();
+      RestRequest req =
+          new RestRequestBuilder(uri).setEntity("hi there".getBytes("UTF-8")).build();
 
       try
       {
-        Future<RpcResponse> response = client.rpcRequest(req);
+        Future<RestResponse> response = client.restRequest(req);
         String responseString = response.get().getEntity().asString("UTF-8");
 
         System.err.println(uri + " response: " + responseString);

@@ -16,24 +16,23 @@
 
 package com.linkedin.d2.balancer.clients;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import org.testng.annotations.Test;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.testng.annotations.Test;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
 
 public class LazyClientTest
 {
@@ -56,11 +55,9 @@ public class LazyClientTest
     assertEquals(factory.properties, properties);
 
     client.restRequest(null, new RequestContext(), null, null);
-    client.rpcRequest(null, new RequestContext(), null, null);
 
     assertEquals(factory.getClientCount, 1);
     assertEquals(factory.restRequestCount, 2);
-    assertEquals(factory.rpcRequestCount, 1);
     assertEquals(factory.shutdownCount, 0);
 
     client.shutdown(null);
@@ -72,7 +69,6 @@ public class LazyClientTest
   {
     public int                 getClientCount   = 0;
     public int                 restRequestCount = 0;
-    public int                 rpcRequestCount  = 0;
     public int                 shutdownCount    = 0;
     public Map<String, ? extends Object> properties;
 
@@ -92,17 +88,6 @@ public class LazyClientTest
                                 TransportCallback<RestResponse> callback)
         {
           ++restRequestCount;
-        }
-
-        @Override
-        @Deprecated
-        @SuppressWarnings("deprecation")
-        public void rpcRequest(RpcRequest request,
-                               RequestContext requestContext,
-                               Map<String, String> wireAttrs,
-                               TransportCallback<RpcResponse> callback)
-        {
-          ++rpcRequestCount;
         }
 
         @Override

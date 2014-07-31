@@ -28,6 +28,7 @@ import com.linkedin.data.schema.validation.RequiredMode;
 import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
 import com.linkedin.data.schema.validation.ValidationOptions;
 import com.linkedin.data.schema.validation.ValidationResult;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,6 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.testng.annotations.Test;
 
 import static com.linkedin.data.TestUtil.asMap;
@@ -308,7 +310,6 @@ public class TestValidator
       {
         if ((tests & SCHEMA_VALIDATOR) != 0)
         {
-          // validate using ValidateDataWithSchema
           VisitedTrackingValidator visitedValidator = new VisitedTrackingValidator(annotationValidator);
           ValidationOptions validationOptions = new ValidationOptions(RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT, CoercionMode.NORMAL);
           ValidationResult result = ValidateDataAgainstSchema.validate(value.copy(), schema, validationOptions, visitedValidator);
@@ -317,10 +318,9 @@ public class TestValidator
 
         if ((tests & OBJECT_VALIDATOR) != 0)
         {
-          // validate using ValidateWithValidator
           VisitedTrackingValidator visitedValidator = new VisitedTrackingValidator(annotationValidator);
-          @SuppressWarnings("deprecation")
-          ValidationResult result = ValidateWithValidator.validate(value.copy(), schema, visitedValidator);
+          ValidationOptions validationOptions = new ValidationOptions();
+          ValidationResult result = ValidateDataAgainstSchema.validate(value.copy(), schema, validationOptions, visitedValidator);
           checkValidationResult(value, result, row, visitedValidator);
         }
       }

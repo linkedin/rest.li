@@ -22,6 +22,7 @@ import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.util.AllPartitionsResult;
 import com.linkedin.r2.message.RequestContext;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -52,23 +53,14 @@ public class AllPartitionsRequestBuilder <T>
    * partitions, an int of total partition number and a collection of available partitions
    * @throws ServiceUnavailableException
    */
-  @SuppressWarnings("deprecation")
   public AllPartitionsResult<RequestContext>
-  buildRequestContexts(Request<T> request, RequestContext requestContext)
-      throws ServiceUnavailableException
+    buildRequestContexts(Request<T> request, RequestContext requestContext)
+    throws ServiceUnavailableException
   {
     URI serviceUri;
     try
     {
-      if (request.hasUri())
-      {
-        // legacy constructor used to construct the request
-        serviceUri = new URI(D2_URI_PREFIX + request.getUri().toString());
-      }
-      else
-      {
-        serviceUri = new URI(D2_URI_PREFIX + request.getServiceName());
-      }
+      serviceUri = new URI(D2_URI_PREFIX + request.getServiceName());
     }
     catch(URISyntaxException e)
     {

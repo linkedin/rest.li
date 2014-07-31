@@ -16,29 +16,21 @@
 
 package com.linkedin.d2.balancer.strategies.degrader;
 
+
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.linkedin.d2.discovery.util.LogUtil.debug;
 
 public class DegraderLoadBalancerStrategyFactoryV2 implements
     LoadBalancerStrategyFactory<DegraderLoadBalancerStrategyV2>
 {
-  private static final Logger                                   _log =
-                                                                         LoggerFactory.getLogger(DegraderLoadBalancerStrategyFactoryV2.class);
+  private static final Logger _log = LoggerFactory.getLogger(DegraderLoadBalancerStrategyFactoryV2.class);
   public DegraderLoadBalancerStrategyFactoryV2()
-  {
-  }
-
-  /**
-   * @deprecated use the no-arg constructor instead {@link #DegraderLoadBalancerStrategyFactoryV2()}
-   * @param config ignored for compatibility
-   */
-  @Deprecated
-  public DegraderLoadBalancerStrategyFactoryV2(DegraderLoadBalancerStrategyConfig config)
   {
   }
 

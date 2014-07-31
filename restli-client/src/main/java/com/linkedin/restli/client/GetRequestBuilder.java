@@ -39,12 +39,6 @@ public class GetRequestBuilder<K, V extends RecordTemplate> extends
   private final Class<V> _elementClass;
   private K              _id;
 
-  @Deprecated
-  public GetRequestBuilder(String baseUriTemplate, Class<V> elementClass, ResourceSpec resourceSpec)
-  {
-    this(baseUriTemplate, elementClass, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
-  }
-
   public GetRequestBuilder(String baseUriTemplate,
                            Class<V> elementClass,
                            ResourceSpec resourceSpec,
@@ -57,22 +51,6 @@ public class GetRequestBuilder<K, V extends RecordTemplate> extends
   public GetRequestBuilder<K, V> id(K id)
   {
     _id = id;
-    return this;
-  }
-
-  @Override
-  @Deprecated
-  public GetRequestBuilder<K, V> param(String key, Object value)
-  {
-    super.setParam(key, value);
-    return this;
-  }
-
-  @Override
-  @Deprecated
-  public GetRequestBuilder<K, V> reqParam(String key, Object value)
-  {
-    super.setReqParam(key, value);
     return this;
   }
 
@@ -101,14 +79,6 @@ public class GetRequestBuilder<K, V extends RecordTemplate> extends
   public GetRequestBuilder<K, V> addReqParam(String key, Object value)
   {
     super.addReqParam(key, value);
-    return this;
-  }
-
-  @Override
-  @Deprecated
-  public GetRequestBuilder<K, V> header(String key, String value)
-  {
-    super.setHeader(key, value);
     return this;
   }
 

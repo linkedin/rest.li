@@ -17,14 +17,10 @@
 package com.linkedin.restli.client;
 
 
-import com.linkedin.data.DataList;
-import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
-import com.linkedin.restli.internal.client.QueryParamsUtil;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
 
 import java.util.Collection;
@@ -42,17 +38,6 @@ import java.util.Set;
  */
 public class BatchRequest<T> extends Request<T>
 {
-  /**
-   *
-   * @param method
-   * @param input
-   * @param headers
-   * @param decoder
-   * @param resourceSpec
-   * @param queryParams
-   * @param baseUriTemplate
-   * @param pathKeys
-   */
   BatchRequest(ResourceMethod method,
                       RecordTemplate input,
                       Map<String, String> headers,
@@ -67,44 +52,6 @@ public class BatchRequest<T> extends Request<T>
   }
 
   /**
-   * @deprecated Please use {@link #getObjectIds()} instead. {@link #getObjectIds()} returns IDs as their original,
-   *             non-coerced type.
-   *
-   * Return ids of this batch request as object. At the query params datamap level complex
-   * keys are represented as datamaps. Need to convert them back to ComplexResourceKeys
-   * before returning.
-   */
-  @Deprecated
-  public Set<Object> getIdObjects()
-  {
-    DataMap dataMap = QueryParamsUtil.convertToDataMap(getQueryParamsObjects());
-    DataList idsList =
-        (DataList) dataMap.get(RestConstants.QUERY_BATCH_IDS_PARAM);
-    if (idsList == null || idsList.isEmpty())
-    {
-      return Collections.emptySet();
-    }
-
-    Set<Object> result = new HashSet<Object>(idsList.size());
-
-    if (getResourceSpec().getKeyType() != null && getResourceSpec().getKeyType().getType() == ComplexResourceKey.class)
-    {
-      for (Object key : idsList)
-      {
-        assert (key instanceof DataMap);
-        result.add(ComplexResourceKey.buildFromDataMap((DataMap) key,
-                                                       getResourceSpec().getComplexKeyType()));
-
-      }
-    }
-    else
-    {
-      result.addAll(idsList);
-    }
-    return result;
-  }
-
-  /**
    * @return the IDs of the objects in this request. The IDs are the keys with their original types (non-coerced)
    */
   public Set<Object> getObjectIds()
@@ -116,26 +63,5 @@ public class BatchRequest<T> extends Request<T>
       return Collections.emptySet();
     }
     return new HashSet<Object>(ids);
-  }
-
-  /**
-   * @deprecated Please use {@link #getObjectIds()} instead
-   * @return
-   */
-  @SuppressWarnings("deprecation")
-  @Deprecated
-  public Set<String> getIds()
-  {
-    Set<Object> idObjects = getIdObjects();
-    if (idObjects.isEmpty())
-    {
-      return Collections.emptySet();
-    }
-    HashSet<String> result = new HashSet<String>(idObjects.size());
-    for (Object obj : idObjects)
-    {
-      result.add(obj.toString());
-    }
-    return result;
   }
 }

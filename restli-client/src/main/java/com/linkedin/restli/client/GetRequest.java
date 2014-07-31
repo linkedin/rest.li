@@ -18,14 +18,11 @@ package com.linkedin.restli.client;
 
 
 import com.linkedin.data.schema.PathSpec;
-import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
-import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.internal.client.EntityResponseDecoder;
-import java.net.URI;
+
 import java.util.Map;
 import java.util.Set;
 
@@ -76,73 +73,23 @@ public class GetRequest<T extends RecordTemplate> extends Request<T>
     return _id;
   }
 
-  /**
-   * @deprecated Please use {@link #getObjectId()} instead
-   * @return
-   */
-  @Deprecated
-  public Object getIdObject()
-  {
-    if (_id == null)
-    {
-      return null;
-    }
-    else if (_id instanceof ComplexResourceKey)
-    {
-      return _id;
-    }
-    else
-    {
-      return DataTemplateUtil.stringify(_id);
-    }
-  }
-
-  /**
-   * @deprecated Please use {@link #getObjectId()} instead
-   * @return
-   */
-  @Deprecated
-  public String getId()
-  {
-    return _id == null ? null : _id.toString();
-  }
-
   @Override
   public Set<PathSpec> getFields()
   {
     return super.getFields();
   }
 
-  /**
-   * @deprecated Please use {@link com.linkedin.restli.client.uribuilders.RestliUriBuilder#buildBaseUri()} instead
-   * @return
-   */
-  @Deprecated
-  public URI getBaseURI()
-  {
-    return RestliUriBuilderUtil.createUriBuilder(this).buildBaseUri();
-  }
-
   @Override
   public int hashCode()
   {
-    int hashCode = super.hashCode();
-    if (!hasUri())
-    {
-      hashCode = (31 * hashCode) + (_id != null ? _id.hashCode() : 0);
-    }
-    return hashCode;
+    final int idHashCode = (_id != null ? _id.hashCode() : 0);
+    return 31 * super.hashCode() + idHashCode;
   }
 
   @Override
   public boolean equals(Object obj)
   {
     boolean superEquals = super.equals(obj);
-
-    if (hasUri())
-    {
-      return superEquals;
-    }
 
     if (!superEquals)
     {
@@ -163,14 +110,11 @@ public class GetRequest<T extends RecordTemplate> extends Request<T>
   public String toString()
   {
     StringBuilder sb = new StringBuilder(super.toString());
-    if (!hasUri())
-    {
-      sb.append(", {_id=");
-      sb.append(_id);
-      sb.append(", _templateClass=");
-      sb.append(_templateClass);
-      sb.append("}");
-    }
+    sb.append(", {_id=");
+    sb.append(_id);
+    sb.append(", _templateClass=");
+    sb.append(_templateClass);
+    sb.append("}");
     return sb.toString();
   }
 }

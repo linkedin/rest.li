@@ -249,26 +249,12 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
                                    request.getRequestOptions());
   }
 
-  @Deprecated
-  public BatchGetRequestBuilder(String baseUriTemplate, Class<V> modelClass, ResourceSpec resourceSpec)
-  {
-    this(baseUriTemplate, new BatchResponseDecoder<V>(modelClass), resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
-  }
-
   public BatchGetRequestBuilder(String baseUriTemplate,
                                 Class<V> modelClass,
                                 ResourceSpec resourceSpec,
                                 RestliRequestOptions requestOptions)
   {
     this(baseUriTemplate, new BatchResponseDecoder<V>(modelClass), resourceSpec, requestOptions);
-  }
-
-  @Deprecated
-  public BatchGetRequestBuilder(String baseUriTemplate,
-                                RestResponseDecoder<BatchResponse<V>> decoder,
-                                ResourceSpec resourceSpec)
-  {
-    this(baseUriTemplate, decoder, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
   }
 
   public BatchGetRequestBuilder(String baseUriTemplate,
@@ -289,22 +275,6 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
   public BatchGetRequestBuilder<K, V> ids(Collection<K> ids)
   {
     addKeys(ids);
-    return this;
-  }
-
-  @Override
-  @Deprecated
-  public BatchGetRequestBuilder<K, V> reqParam(String key, Object value)
-  {
-    super.setReqParam(key, value);
-    return this;
-  }
-
-  @Override
-  @Deprecated
-  public BatchGetRequestBuilder<K, V> param(String key, Object value)
-  {
-    super.setParam(key, value);
     return this;
   }
 
@@ -333,14 +303,6 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
   public BatchGetRequestBuilder<K, V> addReqParam(String key, Object value)
   {
     super.addReqParam(key, value);
-    return this;
-  }
-
-  @Override
-  @Deprecated
-  public BatchGetRequestBuilder<K, V> header(String key, String value)
-  {
-    super.setHeader(key, value);
     return this;
   }
 

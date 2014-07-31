@@ -31,22 +31,6 @@ abstract public class AbstractValidator implements Validator
 {
   private final DataMap _config;
 
-  /**
-   * Default constructor.
-   * <p>
-   * A {@link Validator} is most commonly instantiated by
-   * {@link DataSchemaAnnotationValidator}. {@link DataSchemaAnnotationValidator}
-   * expects the constructor to take a {@link DataMap} as its only argument.
-   * Deprecating the default no-argument constructor
-   * emphasizes that derived classes should provide a constructor
-   * that takes a {@link DataMap} as an argument.
-   */
-  @Deprecated
-  protected AbstractValidator()
-  {
-    _config = null;
-  }
-
   protected AbstractValidator(DataMap config)
   {
     _config = config;

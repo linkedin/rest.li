@@ -19,12 +19,9 @@ package com.linkedin.r2.testutils.filter;
 
 import com.linkedin.r2.filter.NextFilter;
 import com.linkedin.r2.filter.message.rest.RestFilter;
-import com.linkedin.r2.filter.message.rpc.RpcFilter;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcResponse;
 
 import java.util.Map;
 
@@ -36,7 +33,7 @@ import java.util.Map;
 // This class subclasses MessageCountFilter. Because this class implements RpcFilter and RestFilter
 // the base class methods (onRequest, onResponse, onError) should not be invoked.
 
-public class RpcRestCountFilter extends MessageCountFilter implements RpcFilter, RestFilter
+public class RpcRestCountFilter extends MessageCountFilter implements RestFilter
 {
   private int _rpcReqCount;
   private int _rpcResCount;
@@ -108,37 +105,6 @@ public class RpcRestCountFilter extends MessageCountFilter implements RpcFilter,
                           NextFilter<RestRequest, RestResponse> nextFilter)
   {
     _restErrCount++;
-    nextFilter.onError(ex, requestContext, wireAttrs);
-  }
-
-
-  @Override
-  @SuppressWarnings("deprecation")
-  public void onRpcRequest(RpcRequest req, RequestContext requestContext,
-                           Map<String, String> wireAttrs,
-                           NextFilter<RpcRequest, RpcResponse> nextFilter)
-  {
-    _rpcReqCount++;
-    nextFilter.onRequest(req, requestContext, wireAttrs);
-  }
-
-
-  @Override
-  @SuppressWarnings("deprecation")
-  public void onRpcResponse(RpcResponse res, RequestContext requestContext,
-                            Map<String, String> wireAttrs,
-                            NextFilter<RpcRequest, RpcResponse> nextFilter)
-  {
-    _rpcResCount++;
-    nextFilter.onResponse(res, requestContext, wireAttrs);
-  }
-
-  @Override
-  @SuppressWarnings("deprecation")
-  public void onRpcError(Throwable ex, RequestContext requestContext, Map<String, String> wireAttrs,
-                         NextFilter<RpcRequest, RpcResponse> nextFilter)
-  {
-    _rpcErrCount++;
     nextFilter.onError(ex, requestContext, wireAttrs);
   }
 }

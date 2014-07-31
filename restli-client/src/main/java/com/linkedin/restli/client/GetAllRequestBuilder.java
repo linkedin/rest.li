@@ -34,14 +34,7 @@ import java.util.Map;
 public class GetAllRequestBuilder<K, V extends RecordTemplate> extends
     RestfulRequestBuilder<K, V, GetAllRequest<V>>
 {
-
   private final Class<V> _elementClass;
-
-  @Deprecated
-  public GetAllRequestBuilder(String baseUriTemplate, Class<V> elementClass, ResourceSpec resourceSpec)
-  {
-    this(baseUriTemplate, elementClass, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
-  }
 
   public GetAllRequestBuilder(String baseUriTemplate,
                               Class<V> elementClass,
@@ -90,22 +83,6 @@ public class GetAllRequestBuilder<K, V extends RecordTemplate> extends
   }
 
   @Override
-  @Deprecated
-  public GetAllRequestBuilder<K, V> param(String key, Object value)
-  {
-    super.setParam(key, value);
-    return this;
-  }
-
-  @Override
-  @Deprecated
-  public GetAllRequestBuilder<K, V> reqParam(String key, Object value)
-  {
-    super.setReqParam(key, value);
-    return this;
-  }
-
-  @Override
   public GetAllRequestBuilder<K, V> setParam(String key, Object value)
   {
     super.setParam(key, value);
@@ -130,14 +107,6 @@ public class GetAllRequestBuilder<K, V extends RecordTemplate> extends
   public GetAllRequestBuilder<K, V> addReqParam(String key, Object value)
   {
     super.addReqParam(key, value);
-    return this;
-  }
-
-  @Override
-  @Deprecated
-  public GetAllRequestBuilder<K, V> header(String key, String value)
-  {
-    super.setHeader(key, value);
     return this;
   }
 

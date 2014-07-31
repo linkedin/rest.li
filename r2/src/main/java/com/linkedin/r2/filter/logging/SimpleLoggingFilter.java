@@ -16,21 +16,20 @@
 package com.linkedin.r2.filter.logging;
 
 
-import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.filter.NextFilter;
+import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.filter.message.rest.RestFilter;
-import com.linkedin.r2.filter.message.rpc.RpcFilter;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.Response;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcResponse;
+
 import java.net.URI;
 import java.util.Iterator;
 import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +42,7 @@ import org.slf4j.LoggerFactory;
  * @author Chris Pettitt
  * @author Joe Betz
  */
-public class SimpleLoggingFilter implements RpcFilter, RestFilter
+public class SimpleLoggingFilter implements RestFilter
 {
   // _log is not static because we need to be able to set it during test.
   private final Logger _log;
@@ -86,33 +85,6 @@ public class SimpleLoggingFilter implements RpcFilter, RestFilter
                           NextFilter<RestRequest, RestResponse> nextFilter)
   {
     warn("onRestError", ex, wireAttrs, requestContext);
-    nextFilter.onError(ex, requestContext, wireAttrs);
-  }
-
-  @Override
-  @Deprecated
-  public void onRpcRequest(RpcRequest req, RequestContext requestContext, Map<String, String> wireAttrs,
-                           NextFilter<RpcRequest, RpcResponse> nextFilter)
-  {
-    trace("onRpcRequest", req, wireAttrs, requestContext);
-    nextFilter.onRequest(req, requestContext, wireAttrs);
-  }
-
-  @Override
-  @Deprecated
-  public void onRpcResponse(RpcResponse res, RequestContext requestContext, Map<String, String> wireAttrs,
-                            NextFilter<RpcRequest, RpcResponse> nextFilter)
-  {
-    trace("onRpcResponse", res, wireAttrs, requestContext);
-    nextFilter.onResponse(res, requestContext, wireAttrs);
-  }
-
-  @Override
-  @Deprecated
-  public void onRpcError(Throwable ex, RequestContext requestContext, Map<String, String> wireAttrs,
-                         NextFilter<RpcRequest, RpcResponse> nextFilter)
-  {
-    warn("onRpcError", ex, wireAttrs, requestContext);
     nextFilter.onError(ex, requestContext, wireAttrs);
   }
 

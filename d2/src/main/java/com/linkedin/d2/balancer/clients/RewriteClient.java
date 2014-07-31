@@ -16,25 +16,24 @@
 
 package com.linkedin.d2.balancer.clients;
 
+
+import com.linkedin.common.callback.Callback;
+import com.linkedin.common.util.None;
+import com.linkedin.d2.balancer.LoadBalancerClient;
+import com.linkedin.d2.balancer.util.LoadBalancerUtil;
+import com.linkedin.jersey.api.uri.UriBuilder;
+import com.linkedin.r2.message.Request;
+import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.transport.common.bridge.client.TransportClient;
+import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
+
 import java.net.URI;
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.linkedin.d2.balancer.LoadBalancerClient;
-import com.linkedin.d2.balancer.util.LoadBalancerUtil;
-import com.linkedin.jersey.api.uri.UriBuilder;
-import com.linkedin.common.callback.Callback;
-import com.linkedin.r2.message.Request;
-import com.linkedin.r2.message.RequestContext;
-import com.linkedin.r2.message.rest.RestRequest;
-import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcResponse;
-import com.linkedin.r2.transport.common.bridge.client.TransportClient;
-import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
-import com.linkedin.common.util.None;
 
 import static com.linkedin.d2.discovery.util.LogUtil.debug;
 
@@ -61,24 +60,7 @@ public class RewriteClient implements LoadBalancerClient
                           Map<String, String> wireAttrs,
                           TransportCallback<RestResponse> callback)
   {
-    _wrappedClient.restRequest(rewriteRequest(request),
-                               requestContext,
-                               wireAttrs,
-                               callback);
-  }
-
-  @Override
-  @Deprecated
-  @SuppressWarnings("deprecation")
-  public void rpcRequest(RpcRequest request,
-                         RequestContext requestContext,
-                         Map<String, String> wireAttrs,
-                         TransportCallback<RpcResponse> callback)
-  {
-    _wrappedClient.rpcRequest(rewriteRequest(request),
-                              requestContext,
-                              wireAttrs,
-                              callback);
+    _wrappedClient.restRequest(rewriteRequest(request), requestContext, wireAttrs, callback);
   }
 
   @Override

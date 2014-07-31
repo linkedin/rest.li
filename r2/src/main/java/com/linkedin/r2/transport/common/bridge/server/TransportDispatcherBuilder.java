@@ -17,12 +17,12 @@
 /* $Id$ */
 package com.linkedin.r2.transport.common.bridge.server;
 
+
+import com.linkedin.r2.transport.common.RestRequestHandler;
+
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
-
-import com.linkedin.r2.transport.common.RestRequestHandler;
-import com.linkedin.r2.transport.common.RpcRequestHandler;
 
 /**
  * Builder for {@link TransportDispatcher} instances.
@@ -32,66 +32,7 @@ import com.linkedin.r2.transport.common.RpcRequestHandler;
  */
 public class TransportDispatcherBuilder
 {
-  private final Map<URI, RpcRequestHandler> _rpcHandlers = new HashMap<URI, RpcRequestHandler>();
   private final Map<URI, RestRequestHandler> _restHandlers = new HashMap<URI, RestRequestHandler>();
-
-  /**
-   * Add an {@link RpcRequestHandler} for the specified URI.
-   *
-   * @param uri the URI at which to bind the handler.
-   * @param handler the handler to be bound at the specified URI.
-   * @return the current Builder object, for fluent interface chaining.
-   */
-  @Deprecated
-  public TransportDispatcherBuilder addRpcHandler(URI uri, RpcRequestHandler handler)
-  {
-    _rpcHandlers.put(uri, handler);
-    return this;
-  }
-
-  /**
-   * Add bindings for multiple RPC RequestHandlers that have a common dispatch prefix.
-   *
-   * The input arguments are a common URI prefix and a map of suffixes to RPC
-   * RequestHandlers. The dispatch key for each entry in the map will be specified URI
-   * prefix followed by the suffix provided by key the entry. If the URI prefix does not
-   * end with a "/", a "/" will be inserted to separate the URI prefix from suffix.
-   *
-   * @param uriPrefix provides the common URI prefix.
-   * @param map whose keys provide the dispatch key suffixes and values provide the RPC
-   *          RequestHandlers associated with the dispatch keys created from the specified
-   *          URI prefix and map's keys.
-   * @return this.
-   */
-  @Deprecated
-  public TransportDispatcherBuilder addRpcHandler(URI uriPrefix,
-                                                  Map<String, RpcRequestHandler> map)
-  {
-    String uriPrefixStr = uriPrefix.toString();
-    if (!uriPrefixStr.endsWith("/"))
-    {
-      uriPrefixStr += "/";
-    }
-    for (Map.Entry<String, RpcRequestHandler> entry : map.entrySet())
-    {
-      URI handlerUri = URI.create(uriPrefixStr + entry.getKey());
-      _rpcHandlers.put(handlerUri, entry.getValue());
-    }
-    return this;
-  }
-
-  /**
-   * Remove the handler at the specified URI.
-   *
-   * @param uri the URI for which the handler should be removed.
-   * @return the {@link RpcRequestHandler} which was removed, or null if no handler
-   *         exists.
-   */
-  @Deprecated
-  public RpcRequestHandler removeRpcHandler(URI uri)
-  {
-    return _rpcHandlers.remove(uri);
-  }
 
   /**
    * Add a {@link RestRequestHandler} at the specified URI.
@@ -125,7 +66,6 @@ public class TransportDispatcherBuilder
    */
   public TransportDispatcherBuilder reset()
   {
-    _rpcHandlers.clear();
     _restHandlers.clear();
     return this;
   }
@@ -137,7 +77,7 @@ public class TransportDispatcherBuilder
    */
   public TransportDispatcher build()
   {
-    return new TransportDispatcherImpl(copy(_rpcHandlers), copy(_restHandlers));
+    return new TransportDispatcherImpl(copy(_restHandlers));
   }
 
   private <T> Map<URI, T> copy(Map<URI, T> handlers)

@@ -16,26 +16,23 @@
 
 package com.linkedin.d2.balancer.clients;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
+
+import com.linkedin.d2.balancer.clients.TrackerClientTest.TestClient;
+import com.linkedin.d2.balancer.clients.TrackerClientTest.TestTransportCallback;
+import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestRequestBuilder;
+import com.linkedin.r2.message.rest.RestResponse;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.linkedin.r2.message.RequestContext;
 import org.testng.annotations.Test;
 
-import com.linkedin.d2.balancer.clients.TrackerClientTest.TestClient;
-import com.linkedin.d2.balancer.clients.TrackerClientTest.TestTransportCallback;
-import com.linkedin.r2.message.rest.RestRequest;
-import com.linkedin.r2.message.rest.RestRequestBuilder;
-import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcRequestBuilder;
-import com.linkedin.r2.message.rpc.RpcResponse;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 
 public class RewriteClientTest
 {
@@ -68,19 +65,6 @@ public class RewriteClientTest
     assertEquals(wrappedClient.restRequest.getURI(),
                  URI.create("http://test.linkedin.com/test/getCube"));
     assertEquals(wrappedClient.restWireAttrs, restWireAttrs);
-
-    RpcRequest rpcRequest = new RpcRequestBuilder(URI.create("d2://HistoryService/getCube")).build();
-    Map<String, String> rpcWireAttrs = new HashMap<String, String>();
-    TestTransportCallback<RpcResponse> rpcCallback =
-        new TestTransportCallback<RpcResponse>();
-
-    client.rpcRequest(rpcRequest, new RequestContext(), rpcWireAttrs, rpcCallback);
-
-    assertTrue(rpcCallback.response.hasError());
-    assertEquals(wrappedClient.rpcRequest.getURI(),
-                 URI.create("http://test.linkedin.com/test/getCube"));
-    assertEquals(wrappedClient.rpcRequest.getEntity(), rpcRequest.getEntity());
-    assertEquals(wrappedClient.rpcWireAttrs, rpcWireAttrs);
   }
 
   @Test

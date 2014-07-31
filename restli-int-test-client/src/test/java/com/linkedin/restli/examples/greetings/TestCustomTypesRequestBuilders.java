@@ -153,7 +153,7 @@ public class TestCustomTypesRequestBuilders
 
   }
 
-  @SuppressWarnings({"rawtypes", "deprecation"})
+  @SuppressWarnings({"rawtypes"})
   private static void checkRequestBuilder(Request<?> request, ResourceMethod resourceMethod,
                                           Class<? extends RestResponseDecoder> responseDecoderClass,
                                           String expectedUri,
@@ -161,15 +161,9 @@ public class TestCustomTypesRequestBuilders
                                           ProtocolVersion version)
   {
     assertEquals(request.getInputRecord(), requestInput);
-    assertEquals(request.getInput(), requestInput);
     assertEquals(request.getMethod(), resourceMethod);
     assertEquals(request.getResponseDecoder().getClass(), responseDecoderClass);
     assertEquals(RestliUriBuilderUtil.createUriBuilder(request, version).build().toString(), expectedUri);
-    if (version.compareTo(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion()) <= 0)
-    {
-      // getUri is deprecated and will only return a 1.0 version of the URI format.
-      assertEquals(request.getUri().toString(), expectedUri);
-    }
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "request1BuilderDataProviderCustomLongFinder")

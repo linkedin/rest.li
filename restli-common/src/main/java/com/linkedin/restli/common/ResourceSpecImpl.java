@@ -69,26 +69,6 @@ public class ResourceSpecImpl implements ResourceSpec
    * Initialize a ResourceSpecImpl with the given data.
    *
    * @param supportedMethods Set of ResourceMethods supported
-   * @deprecated builder should pass in actionRequestMetadata and actionResponseMetadata
-   */
-  @Deprecated
-  public ResourceSpecImpl(Set<ResourceMethod> supportedMethods)
-  {
-    this(supportedMethods,
-         Collections.<String, DynamicRecordMetadata> emptyMap(),
-         Collections.<String, DynamicRecordMetadata> emptyMap(),
-         null,
-         null,
-         null,
-         null,
-         Collections.<String, CompoundKey.TypeInfo> emptyMap());
-  }
-
-
-  /**
-   * Initialize a ResourceSpecImpl with the given data.
-   *
-   * @param supportedMethods Set of ResourceMethods supported
    * @param actionRequestMetadata Map from method name to method {@link RecordDataSchema}
    * @param actionResponseMetadata Map from method name to response RecordDataSchema
    */
@@ -104,32 +84,6 @@ public class ResourceSpecImpl implements ResourceSpec
          null,
          null,
          Collections.<String, CompoundKey.TypeInfo> emptyMap());
-  }
-
-  /**
-   * Initialize a ResourceSpecImpl with the given data.
-   *
-   * @param supportedMethods Set of ResourceMethods supported
-   * @param keyClass type of the key of the Resource
-   * @param valueClass the type of the RecordTemplate the Resource manages
-   * @param keyParts Map of key names to key types (AssocKeyBindingTypes
-   *         or, for backward compatibility, Class<?>), if the keyClass is a {@link CompoundKey}.
-   * @deprecated builder should pass in actionRequestMetadata and actionResponseMetadata
-   */
-  @Deprecated
-  public ResourceSpecImpl(Set<ResourceMethod> supportedMethods,
-                          Class<?> keyClass,
-                          Class<? extends RecordTemplate> valueClass,
-                          Map<String, ?> keyParts)
-  {
-    this(supportedMethods,
-         Collections.<String, DynamicRecordMetadata> emptyMap(),
-         Collections.<String, DynamicRecordMetadata> emptyMap(),
-         keyClass,
-         null,
-         null,
-         valueClass,
-         keyParts);
   }
 
   /**
@@ -181,36 +135,6 @@ public class ResourceSpecImpl implements ResourceSpec
          null,
          valueClass,
          Collections.<String, CompoundKey.TypeInfo> emptyMap());
-  }
-
-  /**
-   * Initialize a ResourceSpecImpl with the given data.
-   *
-   * @param supportedMethods Set of ResourceMethods supported
-   * @param keyClass type of the key of the Resource
-   * @param keyKeyClass RecordTemplate type of the key, if the keyClass is a ComplexResourceKey
-   * @param keyParamsClass RecordTemplate type of parameters of the key, if the keyClass is a ComplexResourceKey
-   * @param valueClass the type of the RecordTemplate that the Resource manages
-   * @param keyParts Map of key names to key types (AssocKeyBindingTypes
-   *         or, for backward compatibility, Class<?>), if the keyClass is a {@link CompoundKey}.
-   * @deprecated builder should pass in actionRequestMetadata and actionResponseMetadata
-   */
-  @Deprecated
-  public ResourceSpecImpl(Set<ResourceMethod> supportedMethods,
-                          Class<?> keyClass,
-                          Class<? extends RecordTemplate> keyKeyClass,
-                          Class<? extends RecordTemplate> keyParamsClass,
-                          Class<? extends RecordTemplate> valueClass,
-                          Map<String, ?> keyParts)
-  {
-    this(supportedMethods,
-         Collections.<String, DynamicRecordMetadata> emptyMap(),
-         Collections.<String, DynamicRecordMetadata> emptyMap(),
-         keyClass,
-         keyKeyClass,
-         keyParamsClass,
-         valueClass,
-         keyParts);
   }
 
   /**

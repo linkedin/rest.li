@@ -27,23 +27,6 @@ public class Custom
   /**
    * Registers a new custom class with its {@link DirectCoercer}.
    *
-   * This is retained for backwards compatibility.
-   *
-   * @param targetClass provides the custom class.
-   * @param coercer provides the coercer that will be used to coerce the custom class to and from its primitive
-   *                representation.
-   * @param <T> the type of the custom class.
-   * @throws IllegalArgumentException if the target class has already been registered previously.
-   */
-  @Deprecated
-  public static <T> void registerCoercer(Class<T> targetClass, DirectCoercer<T> coercer)
-  {
-    DataTemplateUtil.registerCoercer(targetClass, coercer);
-  }
-
-  /**
-   * Registers a new custom class with its {@link DirectCoercer}.
-   *
    * Return value allows initialization as follows:
    *
    * <pre>

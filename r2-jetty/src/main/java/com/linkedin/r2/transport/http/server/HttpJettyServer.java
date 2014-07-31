@@ -20,9 +20,9 @@
 
 package com.linkedin.r2.transport.http.server;
 
-import java.io.IOException;
 
 import javax.servlet.http.HttpServlet;
+import java.io.IOException;
 
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
@@ -59,17 +59,6 @@ public class HttpJettyServer implements HttpServer
     this(port, contextPath, threadPoolSize,
          useAsync ? new AsyncR2Servlet(dispatcher, asyncTimeOut) :
                     new RAPServlet(dispatcher));
-  }
-
-  @Deprecated
-  public HttpJettyServer(int port, String contextPath, int threadPoolSize, HttpDispatcher dispatcher)
-  {
-    this(port,
-         contextPath,
-         threadPoolSize,
-         dispatcher,
-         HttpServerFactory.DEFAULT_USE_ASYNC_SERVLET_API,
-         HttpServerFactory.DEFAULT_ASYNC_TIMEOUT);
   }
 
   public HttpJettyServer(int port, HttpServlet servlet)

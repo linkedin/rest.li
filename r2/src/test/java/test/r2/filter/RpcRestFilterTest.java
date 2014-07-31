@@ -17,15 +17,17 @@
 /* $Id$ */
 package test.r2.filter;
 
+
 import com.linkedin.r2.filter.Filter;
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.filter.FilterChains;
+import com.linkedin.r2.testutils.filter.BaseFilterTest;
+import com.linkedin.r2.testutils.filter.FilterUtil;
+import com.linkedin.r2.testutils.filter.RpcRestCountFilter;
+
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-import com.linkedin.r2.testutils.filter.BaseFilterTest;
-import com.linkedin.r2.testutils.filter.RpcRestCountFilter;
-import com.linkedin.r2.testutils.filter.FilterUtil;
 
 /**
  * @author Chris Pettitt
@@ -53,30 +55,6 @@ public class RpcRestFilterTest extends BaseFilterTest
     protected Filter getFilter()
     {
         return _filter;
-    }
-
-    @Test
-    public void testRpcRequestCallsNextFilter()
-    {
-        FilterUtil.fireSimpleRpcRequest(_fc);
-
-        Assert.assertEquals(1, _afterFilter.getRpcReqCount());
-    }
-
-    @Test
-    public void testRpcResponseCallsNextFilter()
-    {
-        FilterUtil.fireSimpleRpcResponse(_fc);
-
-        Assert.assertEquals(1, _beforeFilter.getRpcResCount());
-    }
-
-    @Test
-    public void testRpcErrorCallsNextFilter()
-    {
-        FilterUtil.fireSimpleRpcError(_fc);
-
-        Assert.assertEquals(1, _beforeFilter.getRpcErrCount());
     }
 
     @Test

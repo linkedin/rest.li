@@ -17,21 +17,21 @@
 /* $Id$ */
 package test.r2.filter;
 
+
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.filter.FilterChains;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
-import com.linkedin.r2.message.rpc.RpcRequestBuilder;
-import com.linkedin.r2.message.rpc.RpcResponseBuilder;
-import org.testng.Assert;
-import org.testng.annotations.Test;
 import com.linkedin.r2.testutils.filter.MessageCountFilter;
 import com.linkedin.r2.testutils.filter.RpcRestCountFilter;
 
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 /**
  * @author Chris Pettitt
@@ -40,45 +40,6 @@ import java.util.Map;
 public class TestFilterChainImpl
 {
   @Test
-  public void testRpcRequestFilter()
-  {
-    final RpcRestCountFilter filter = new RpcRestCountFilter();
-    final FilterChain fc = FilterChains.create(filter);
-
-    fireRpcRequest(fc);
-
-    assertRpcCounts    (1, 0, 0, filter);
-    assertRestCounts   (0, 0, 0, filter);
-    assertMessageCounts(0, 0, 0, filter);
-  }
-
-  @Test
-  public void testRpcResponseFilter()
-  {
-    final RpcRestCountFilter filter = new RpcRestCountFilter();
-    final FilterChain fc = FilterChains.create(filter);
-
-    fireRpcResponse(fc);
-
-    assertRpcCounts    (0, 1, 0, filter);
-    assertRestCounts   (0, 0, 0, filter);
-    assertMessageCounts(0, 0, 0, filter);
-  }
-
-  @Test
-  public void testRpcErrorFilter()
-  {
-    final RpcRestCountFilter filter = new RpcRestCountFilter();
-    final FilterChain fc = FilterChains.create(filter);
-
-    fireRpcError(fc);
-
-    assertRpcCounts    (0, 0, 1, filter);
-    assertRestCounts   (0, 0, 0, filter);
-    assertMessageCounts(0, 0, 0, filter);
-  }
-
-  @Test
   public void testRestRequestFilter()
   {
     final RpcRestCountFilter filter = new RpcRestCountFilter();
@@ -86,8 +47,8 @@ public class TestFilterChainImpl
 
     fireRestRequest(fc);
 
-    assertRpcCounts    (0, 0, 0, filter);
-    assertRestCounts   (1, 0, 0, filter);
+    assertRpcCounts(0, 0, 0, filter);
+    assertRestCounts(1, 0, 0, filter);
     assertMessageCounts(0, 0, 0, filter);
   }
 
@@ -99,8 +60,8 @@ public class TestFilterChainImpl
 
     fireRestResponse(fc);
 
-    assertRpcCounts    (0, 0, 0, filter);
-    assertRestCounts   (0, 1, 0, filter);
+    assertRpcCounts(0, 0, 0, filter);
+    assertRestCounts(0, 1, 0, filter);
     assertMessageCounts(0, 0, 0, filter);
   }
 
@@ -112,8 +73,8 @@ public class TestFilterChainImpl
 
     fireRestError(fc);
 
-    assertRpcCounts    (0, 0, 0, filter);
-    assertRestCounts   (0, 0, 1, filter);
+    assertRpcCounts(0, 0, 0, filter);
+    assertRestCounts(0, 0, 1, filter);
     assertMessageCounts(0, 0, 0, filter);
   }
 
@@ -122,12 +83,6 @@ public class TestFilterChainImpl
   {
     final MessageCountFilter filter = new MessageCountFilter();
     final FilterChain fc = FilterChains.create(filter);
-
-    fireRpcRequest(fc);
-    assertMessageCounts(1, 0, 0, filter);
-
-    filter.reset();
-    assertMessageCounts(0, 0, 0, filter);
 
     fireRestRequest(fc);
     assertMessageCounts(1, 0, 0, filter);
@@ -139,12 +94,6 @@ public class TestFilterChainImpl
     final MessageCountFilter filter = new MessageCountFilter();
     final FilterChain fc = FilterChains.create(filter);
 
-    fireRpcResponse(fc);
-    assertMessageCounts(0, 1, 0, filter);
-
-    filter.reset();
-    assertMessageCounts(0, 0, 0, filter);
-
     fireRestResponse(fc);
     assertMessageCounts(0, 1, 0, filter);
   }
@@ -154,12 +103,6 @@ public class TestFilterChainImpl
   {
     final MessageCountFilter filter = new MessageCountFilter();
     final FilterChain fc = FilterChains.create(filter);
-
-    fireRpcError(fc);
-    assertMessageCounts(0, 0, 1, filter);
-
-    filter.reset();
-    assertMessageCounts(0, 0, 0, filter);
 
     fireRestError(fc);
     assertMessageCounts(0, 0, 1, filter);
@@ -172,15 +115,6 @@ public class TestFilterChainImpl
     final MessageCountFilter filter2 = new MessageCountFilter();
     final MessageCountFilter filter3 = new MessageCountFilter();
     final FilterChain fc = FilterChains.create(filter1, filter2, filter3);
-
-    fireRpcRequest(fc);
-    assertMessageCounts(1, 0, 0, filter1);
-    assertMessageCounts(1, 0, 0, filter2);
-    assertMessageCounts(1, 0, 0, filter3);
-
-    filter1.reset();
-    filter2.reset();
-    filter3.reset();
 
     fireRestRequest(fc);
     assertMessageCounts(1, 0, 0, filter1);
@@ -196,15 +130,6 @@ public class TestFilterChainImpl
     final MessageCountFilter filter3 = new MessageCountFilter();
     final FilterChain fc = FilterChains.create(filter1, filter2, filter3);
 
-    fireRpcResponse(fc);
-    assertMessageCounts(0, 1, 0, filter1);
-    assertMessageCounts(0, 1, 0, filter2);
-    assertMessageCounts(0, 1, 0, filter3);
-
-    filter1.reset();
-    filter2.reset();
-    filter3.reset();
-
     fireRestResponse(fc);
     assertMessageCounts(0, 1, 0, filter1);
     assertMessageCounts(0, 1, 0, filter2);
@@ -219,43 +144,10 @@ public class TestFilterChainImpl
     final MessageCountFilter filter3 = new MessageCountFilter();
     final FilterChain fc = FilterChains.create(filter1, filter2, filter3);
 
-    fireRpcError(fc);
-    assertMessageCounts(0, 0, 1, filter1);
-    assertMessageCounts(0, 0, 1, filter2);
-    assertMessageCounts(0, 0, 1, filter3);
-
-    filter1.reset();
-    filter2.reset();
-    filter3.reset();
-
     fireRestError(fc);
     assertMessageCounts(0, 0, 1, filter1);
     assertMessageCounts(0, 0, 1, filter2);
     assertMessageCounts(0, 0, 1, filter3);
-  }
-
-  @SuppressWarnings("deprecation")
-  private void fireRpcRequest(FilterChain fc)
-  {
-    fc.onRpcRequest(new RpcRequestBuilder(URI.create("test")).build(),
-                    createRequestContext(), createWireAttributes()
-    );
-  }
-
-  @SuppressWarnings("deprecation")
-  private void fireRpcResponse(FilterChain fc)
-  {
-    fc.onRpcResponse(new RpcResponseBuilder().build(),
-                     createRequestContext(), createWireAttributes()
-    );
-  }
-
-  @SuppressWarnings("deprecation")
-  private void fireRpcError(FilterChain fc)
-  {
-    fc.onRpcError(new Exception(),
-                  createRequestContext(), createWireAttributes()
-    );
   }
 
   private void fireRestRequest(FilterChain fc)

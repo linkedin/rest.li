@@ -17,29 +17,27 @@
 /* $Id$ */
 package com.linkedin.r2.filter.transport;
 
+
+import com.linkedin.r2.filter.NextFilter;
+import com.linkedin.r2.filter.message.rest.RestResponseFilter;
+import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.transport.common.bridge.common.NullTransportCallback;
+import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
+import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
+
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.linkedin.r2.filter.NextFilter;
-import com.linkedin.r2.filter.message.rest.RestResponseFilter;
-import com.linkedin.r2.filter.message.rpc.RpcResponseFilter;
-import com.linkedin.r2.message.RequestContext;
-import com.linkedin.r2.message.rest.RestRequest;
-import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcResponse;
-import com.linkedin.r2.transport.common.bridge.common.NullTransportCallback;
-import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
-import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 /**
  * Filter implementation which invokes a {@link TransportCallback} when processing responses.
  *
  * @author Chris Pettitt
  * @version $Revision$
  */
-public class ResponseFilter implements RpcResponseFilter, RestResponseFilter
+public class ResponseFilter implements RestResponseFilter
 {
   private static final String CALLBACK_ATTR = ResponseFilter.class.getName() + ".callback";
 
@@ -68,33 +66,12 @@ public class ResponseFilter implements RpcResponseFilter, RestResponseFilter
   }
 
   @Override
-  @Deprecated
-  public void onRpcResponse(RpcResponse res, RequestContext requestContext,
-                            Map<String, String> wireAttrs,
-                            NextFilter<RpcRequest, RpcResponse> nextFilter)
-  {
-    final TransportCallback<RpcResponse> callback = getCallback(requestContext);
-    callback.onResponse(TransportResponseImpl.success(res, wireAttrs));
-    nextFilter.onResponse(res, requestContext, wireAttrs);
-  }
-
-  @Override
   public void onRestError(Throwable ex, RequestContext requestContext,
                           Map<String, String> wireAttrs,
                           NextFilter<RestRequest, RestResponse> nextFilter)
   {
     final TransportCallback<RestResponse> callback = getCallback(requestContext);
     callback.onResponse(TransportResponseImpl.<RestResponse>error(ex, wireAttrs));
-    nextFilter.onError(ex, requestContext, wireAttrs);
-  }
-
-  @Override
-  @Deprecated
-  public void onRpcError(Throwable ex, RequestContext requestContext, Map<String, String> wireAttrs,
-                         NextFilter<RpcRequest, RpcResponse> nextFilter)
-  {
-    final TransportCallback<RpcResponse> callback = getCallback(requestContext);
-    callback.onResponse(TransportResponseImpl.<RpcResponse>error(ex, wireAttrs));
     nextFilter.onError(ex, requestContext, wireAttrs);
   }
 

@@ -25,13 +25,9 @@ import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.clients.DynamicClient;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
 import com.linkedin.d2.discovery.event.PropertyEventThread;
-import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.restli.common.CompoundKey;
-import com.linkedin.restli.common.ResourceMethod;
-import com.linkedin.restli.common.ResourceSpec;
-import com.linkedin.restli.common.ResourceSpecImpl;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.examples.RestLiIntegrationTest;
 import com.linkedin.restli.examples.greetings.api.Greeting;
@@ -42,16 +38,9 @@ import com.linkedin.restli.examples.groups.api.GroupMembership;
 import com.linkedin.restli.examples.groups.client.GroupMembershipsBuilders;
 import com.linkedin.restli.examples.groups.client.GroupMembershipsRequestBuilders;
 import com.linkedin.restli.examples.groups.client.GroupsBuilders;
-import com.linkedin.restli.internal.client.EntityResponseDecoder;
-import com.linkedin.restli.internal.client.RestResponseDecoder;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 import org.testng.Assert;
@@ -151,31 +140,6 @@ public class TestRestLiD2Integration extends RestLiIntegrationTest
     {
       Assert.assertTrue(e.getCause() instanceof ServiceUnavailableException);
     }
-  }
-
-  @Test
-  @SuppressWarnings("deprecation")
-  public void testDeprecatedRequestCreation()
-      throws URISyntaxException, RemoteInvocationException
-  {
-    URI uri = new URI("greetings/1");
-    ResourceMethod method = ResourceMethod.GET;
-    RecordTemplate inputRecord = null;
-    Map<String, String> headers = Collections.emptyMap();
-    RestResponseDecoder<Greeting> decoder = new EntityResponseDecoder<Greeting>(Greeting.class);
-    ResourceSpec resourceSpec = new ResourceSpecImpl(EnumSet.of(method),
-                                                     null,
-                                                     null,
-                                                     Long.class,
-                                                     Greeting.class,
-                                                     Collections.<String, Object>emptyMap());
-    Request<Greeting> request = new Request<Greeting>(uri, method, inputRecord, headers, decoder, resourceSpec);
-
-    ResponseFuture<Greeting> responseFuture = _restClient.sendRequest(request);
-    Greeting entity = responseFuture.getResponse().getEntity();
-    Assert.assertEquals(entity.getId(), new Long(1L));
-    Assert.assertEquals(responseFuture.getResponse().getHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION),
-                        AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion().toString());
   }
 
   @DataProvider

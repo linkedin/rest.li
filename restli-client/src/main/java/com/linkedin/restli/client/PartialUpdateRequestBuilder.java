@@ -39,12 +39,6 @@ public class PartialUpdateRequestBuilder<K, V extends RecordTemplate> extends
   private K _id;
   private PatchRequest<V> _input;
 
-  @Deprecated
-  public PartialUpdateRequestBuilder(String baseUriTemplate, Class<V> valueClass, ResourceSpec resourceSpec)
-  {
-    this(baseUriTemplate, valueClass, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
-  }
-
   public PartialUpdateRequestBuilder(String baseUriTemplate,
                                      Class<V> valueClass,
                                      ResourceSpec resourceSpec,
@@ -62,22 +56,6 @@ public class PartialUpdateRequestBuilder<K, V extends RecordTemplate> extends
   public PartialUpdateRequestBuilder<K, V> input(PatchRequest<V> entity)
   {
     _input = entity;
-    return this;
-  }
-
-  @Override
-  @Deprecated
-  public PartialUpdateRequestBuilder<K, V> param(String key, Object value)
-  {
-    super.setParam(key, value);
-    return this;
-  }
-
-  @Override
-  @Deprecated
-  public PartialUpdateRequestBuilder<K, V> reqParam(String key, Object value)
-  {
-    super.setReqParam(key, value);
     return this;
   }
 
@@ -106,14 +84,6 @@ public class PartialUpdateRequestBuilder<K, V extends RecordTemplate> extends
   public PartialUpdateRequestBuilder<K, V> addReqParam(String key, Object value)
   {
     super.addReqParam(key, value);
-    return this;
-  }
-
-  @Override
-  @Deprecated
-  public PartialUpdateRequestBuilder<K, V> header(String key, String value)
-  {
-    super.setHeader(key, value);
     return this;
   }
 
@@ -157,5 +127,4 @@ public class PartialUpdateRequestBuilder<K, V extends RecordTemplate> extends
                                        getRequestOptions(),
                                        _id);
   }
-
 }

@@ -19,8 +19,6 @@ package com.linkedin.r2.caprep.db;
 
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.Response;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcResponse;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -87,16 +85,7 @@ public class DirectoryDbSink implements DbSink
   @SuppressWarnings("deprecation")
  private void writeRequest(Request req, int id) throws IOException
   {
-    final File file;
-    if (req instanceof RpcRequest)
-    {
-      file = DirectoryDbUtil.rpcRequestFileName(_dir, id);
-    }
-    else
-    {
-      file = DirectoryDbUtil.restRequestFileName(_dir, id);
-    }
-
+    final File file = DirectoryDbUtil.restRequestFileName(_dir, id);
     final FileOutputStream out = new FileOutputStream(file);
     try
     {
@@ -111,16 +100,7 @@ public class DirectoryDbSink implements DbSink
   @SuppressWarnings("deprecation")
  private void writeResponse(Response res, int id) throws IOException
   {
-    final File file;
-    if (res instanceof RpcResponse)
-    {
-      file = DirectoryDbUtil.rpcResponseFileName(_dir, id);
-    }
-    else
-    {
-      file = DirectoryDbUtil.restResponseFileName(_dir, id);
-    }
-
+    final File file = DirectoryDbUtil.restResponseFileName(_dir, id);
     final FileOutputStream out = new FileOutputStream(file);
     try
     {

@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer.clients;
 
+
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.LoadBalancerClient;
@@ -26,8 +27,6 @@ import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
@@ -41,8 +40,6 @@ import com.linkedin.util.degrader.DegraderControl;
 import com.linkedin.util.degrader.DegraderImpl;
 import com.linkedin.util.degrader.DegraderImpl.Config;
 import com.linkedin.util.degrader.ErrorType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.ConnectException;
 import java.net.URI;
@@ -51,10 +48,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import static com.linkedin.d2.discovery.util.LogUtil.debug;
 
 // TODO if we ever want to get rid of ties to linkedin-specific code, we'll need to move/redo call tracker/call completion/degrader
-
 
 public class TrackerClient implements LoadBalancerClient
 {
@@ -141,27 +140,7 @@ public class TrackerClient implements LoadBalancerClient
                           Map<String, String> wireAttrs,
                           TransportCallback<RestResponse> callback)
   {
-    _wrappedClient.restRequest(request,
-                               requestContext,
-                               wireAttrs,
-                               new TrackerClientCallback<RestResponse>(callback,
-                                                                       _callTracker.startCall()));
-  }
-
-  @Override
-  @Deprecated
-  @SuppressWarnings("deprecation")
-  public void rpcRequest(RpcRequest request,
-                         RequestContext requestContext,
-                         Map<String, String> wireAttrs,
-                         TransportCallback<RpcResponse> callback)
-  {
-    _wrappedClient.rpcRequest(request,
-                              requestContext,
-                              wireAttrs,
-                              new TrackerClientCallback<RpcResponse>(callback,
-                                                                     _callTracker.startCall())
-    );
+    _wrappedClient.restRequest(request, requestContext, wireAttrs, new TrackerClientCallback<RestResponse>(callback, _callTracker.startCall()));
   }
 
   @Override

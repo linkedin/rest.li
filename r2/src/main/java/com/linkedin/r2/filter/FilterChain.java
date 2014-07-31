@@ -19,8 +19,6 @@ package com.linkedin.r2.filter;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.rpc.RpcRequest;
-import com.linkedin.r2.message.rpc.RpcResponse;
 
 import java.util.Map;
 
@@ -93,48 +91,6 @@ public interface FilterChain
    * @return the new filter chain
    */
   FilterChain addLast(Filter filter);
-
-  /**
-   * Runs the request through the filter chain with the supplied wire attributes and local
-   * attributes. See interface-level documentation for details about wire attributes and local
-   * attributes.
-   *
-   * @param req the request to send through the filter chain
-   * @param requestContext context for the request
-   * @param wireAttrs the initial set of wire attributes
-   */
-  @Deprecated
-  void onRpcRequest(RpcRequest req,
-                    RequestContext requestContext,
-                    Map<String, String> wireAttrs);
-
-  /**
-   * Runs the response through the filter chain with the supplied wire attributes and local
-   * attributes. See interface-level documentation for details about wire attributes and local
-   * attributes.
-   *
-   * @param res the response to send through the filter chain
-   * @param requestContext context for the request
-   * @param wireAttrs the initial set of wire attributes
-   */
-  @Deprecated
-  void onRpcResponse(RpcResponse res,
-                     RequestContext requestContext,
-                     Map<String, String> wireAttrs);
-
-  /**
-   * Runs the error through the filter chain with the supplied wire attributes and local
-   * attributes. See interface-level documentation for details about wire attributes and local
-   * attributes.
-   *
-   * @param ex the error to send through the filter chain
-   * @param requestContext context for the request
-   * @param wireAttrs the initial set of wire attributes
-   */
-  @Deprecated
-  void onRpcError(Exception ex,
-                  RequestContext requestContext,
-                  Map<String, String> wireAttrs);
 
   /**
    * Runs the request through the filter chain with the supplied wire attributes and local

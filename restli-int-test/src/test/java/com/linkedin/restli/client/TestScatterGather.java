@@ -34,7 +34,9 @@ import com.linkedin.d2.balancer.util.hashing.StaticRingProvider;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
 import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.jersey.api.uri.UriComponent;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestException;
@@ -317,7 +319,7 @@ public class TestScatterGather extends RestLiIntegrationTest
       expectedParams.add(RestConstants.QUERY_BATCH_IDS_PARAM);
       expectedParams.add("foo");
       expectedParams.add(RestConstants.FIELDS_PARAM);
-      Set<String> expectedFields = Collections.singleton("message");
+      Set<PathSpec> expectedFields = Collections.singleton(new PathSpec("message"));
 
       testRequest(request, expectedParams, expectedFields, null, requestIdSets, requestIds);
     }
@@ -343,7 +345,7 @@ public class TestScatterGather extends RestLiIntegrationTest
       expectedParams.add(RestConstants.QUERY_BATCH_IDS_PARAM);
       expectedParams.add("foo");
       expectedParams.add(RestConstants.FIELDS_PARAM);
-      Set<String> expectedFields = Collections.singleton("message");
+      Set<PathSpec> expectedFields = Collections.singleton(new PathSpec("message"));
 
       testGetEntityRequest(request, expectedParams, expectedFields, null, requestIdSets, requestIds);
     }
@@ -369,7 +371,7 @@ public class TestScatterGather extends RestLiIntegrationTest
       expectedParams.add(RestConstants.QUERY_BATCH_IDS_PARAM);
       expectedParams.add("foo");
       expectedParams.add(RestConstants.FIELDS_PARAM);
-      Set<String> expectedFields = Collections.singleton("message");
+      Set<PathSpec> expectedFields = Collections.singleton(new PathSpec("message"));
 
       testRequest(request, expectedParams, expectedFields, null, requestIdSets, requestIds);
     }
@@ -380,34 +382,26 @@ public class TestScatterGather extends RestLiIntegrationTest
   @SuppressWarnings({"unchecked", "rawtypes"})
   private static void testRequest(BatchRequest<?> request,
                                   Set<String> expectedParams,
-                                  Set<String> expectedFields,
+                                  Set<PathSpec> expectedFields,
                                   Map<Long, Greeting> expectedInput,
                                   Set<Set<String>> requestIdSets,
                                   Set<Long> requestIds)
   {
-    String[] queryParams = RestliUriBuilderUtil.createUriBuilder(request).build().getQuery().split("&");
-    Map<String, List<String>> params = new HashMap<String, List<String>>();
-    for (String paramString : queryParams)
-    {
-      String[] keyValue = paramString.split("=");
-      Assert.assertEquals(keyValue.length, 2);
-      if (! params.containsKey(keyValue[0]))
-      {
-        params.put(keyValue[0], new ArrayList<String>());
-      }
-      params.get(keyValue[0]).add(keyValue[1]);
-    }
-    Assert.assertEquals(params.keySet(), expectedParams);
+    Assert.assertEquals(request.getQueryParamsObjects().keySet(), expectedParams);
 
     if (expectedFields != null)
     {
-      Assert.assertTrue(params.get(RestConstants.FIELDS_PARAM).containsAll(expectedFields));
+      Collection<PathSpec> actualFields = (Collection<PathSpec>) request.getQueryParamsObjects().get(RestConstants.FIELDS_PARAM);
+      for (PathSpec field : actualFields)
+      {
+        Assert.assertTrue(expectedFields.contains(field));
+      }
     }
 
     Set<String> uriIds = new HashSet<String>();
-    for (String value : params.get(RestConstants.QUERY_BATCH_IDS_PARAM))
+    for (Long id : (Collection<Long>) request.getQueryParamsObjects().get(RestConstants.QUERY_BATCH_IDS_PARAM))
     {
-      uriIds.addAll(Arrays.asList(value.split(",")));
+      uriIds.add(id.toString());
     }
 
     if (expectedInput != null)
@@ -455,34 +449,26 @@ public class TestScatterGather extends RestLiIntegrationTest
   @SuppressWarnings({"unchecked", "rawtypes"})
   private static void testGetEntityRequest(BatchRequest<BatchKVResponse<Long, EntityResponse<Greeting>>> request,
                                            Set<String> expectedParams,
-                                           Set<String> expectedFields,
+                                           Set<PathSpec> expectedFields,
                                            Map<Long, Greeting> expectedInput,
                                            Set<Set<String>> requestIdSets,
                                            Set<Long> requestIds)
   {
-    String[] queryParams = RestliUriBuilderUtil.createUriBuilder(request).build().getQuery().split("&");
-    Map<String, List<String>> params = new HashMap<String, List<String>>();
-    for (String paramString : queryParams)
-    {
-      String[] keyValue = paramString.split("=");
-      Assert.assertEquals(keyValue.length, 2);
-      if (! params.containsKey(keyValue[0]))
-      {
-        params.put(keyValue[0], new ArrayList<String>());
-      }
-      params.get(keyValue[0]).add(keyValue[1]);
-    }
-    Assert.assertEquals(params.keySet(), expectedParams);
+    Assert.assertEquals(request.getQueryParamsObjects().keySet(), expectedParams);
 
     if (expectedFields != null)
     {
-      Assert.assertTrue(params.get(RestConstants.FIELDS_PARAM).containsAll(expectedFields));
+      Collection<PathSpec> actualFields = (Collection<PathSpec>) request.getQueryParamsObjects().get(RestConstants.FIELDS_PARAM);
+      for (PathSpec field : actualFields)
+      {
+        Assert.assertTrue(expectedFields.contains(field));
+      }
     }
 
     Set<String> uriIds = new HashSet<String>();
-    for (String value : params.get(RestConstants.QUERY_BATCH_IDS_PARAM))
+    for (Long id : (Collection<Long>) request.getQueryParamsObjects().get(RestConstants.QUERY_BATCH_IDS_PARAM))
     {
-      uriIds.addAll(Arrays.asList(value.split(",")));
+      uriIds.add(id.toString());
     }
 
     if (expectedInput != null)
@@ -825,8 +811,7 @@ public class TestScatterGather extends RestLiIntegrationTest
 
     try
     {
-      @SuppressWarnings("deprecation")
-      Map<URI, Set<String>> result = keyMapper.mapKeys(URI.create("http://badurischeme/"), new HashSet<String>());
+      keyMapper.mapKeysV2(URI.create("http://badurischeme/"), new HashSet<String>());
       Assert.fail("keyMapper should reject non-D2 URI scheme");
     }
     catch (IllegalArgumentException e)
@@ -851,8 +836,7 @@ public class TestScatterGather extends RestLiIntegrationTest
 
     try
     {
-      @SuppressWarnings("deprecation")
-      Map<URI, Set<String>> result = keyMapper.mapKeys(URI.create("http://badurischeme/"), new HashSet<String>());
+      keyMapper.mapKeysV2(URI.create("http://badurischeme/"), new HashSet<String>());
       Assert.fail("keyMapper should reject non-D2 URI scheme");
     }
     catch (IllegalArgumentException e)
@@ -877,8 +861,7 @@ public class TestScatterGather extends RestLiIntegrationTest
 
     try
     {
-      @SuppressWarnings("deprecation")
-      Map<URI, Set<String>> result = keyMapper.mapKeys(URI.create("http://badurischeme/"), new HashSet<String>());
+      keyMapper.mapKeysV2(URI.create("http://badurischeme/"), new HashSet<String>());
       Assert.fail("keyMapper should reject non-D2 URI scheme");
     }
     catch (IllegalArgumentException e)
