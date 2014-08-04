@@ -16,7 +16,6 @@
 
 package com.linkedin.d2.balancer.simple;
 
-
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.KeyMapper;
@@ -64,6 +63,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -526,7 +526,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       final PartitionAccessor accessor = getPartitionAccessor(serviceName, clusterName);
 
       //get the partitionId -> keys mapping
-      Map<Integer, Set<K>> partitionSet = new HashMap<Integer, Set<K>>();
+      Map<Integer, Set<K>> partitionSet = new TreeMap<Integer, Set<K>>();
       for (final K key : keys)
       {
         int partitionId;

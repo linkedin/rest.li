@@ -9,6 +9,9 @@ Fixing documentation handler to handle empty path and paths containing just "res
 (RB=321440)
 Throw an exception when getId is called on the response and the key is a complex or compound key.
 
+(RB=341565)
+make sure we always get consistent ordering of hashes from getPartitionInformation
+
 1.20.0
 ------
 (RB=319445)
