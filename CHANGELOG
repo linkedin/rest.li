@@ -1,3 +1,7 @@
+1.20.2
+------
+
+
 1.20.1
 ------
 (RB=334824)
@@ -11,6 +15,9 @@ Throw an exception when getId is called on the response and the key is a complex
 
 (RB=341565)
 make sure we always get consistent ordering of hashes from getPartitionInformation
+
+(RB=342147)
+Fix incorrect generated snapshot when a typerefed data schema has included schema.
 
 1.20.0
 ------

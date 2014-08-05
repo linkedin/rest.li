@@ -25,6 +25,7 @@ import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.SchemaToJsonEncoder;
+import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.restspec.ActionSchema;
@@ -371,6 +372,10 @@ public class SnapshotGenerator
           {
             recordType(field.getType(), foundTypes, typeOrder);
           }
+        }
+        else if (schema instanceof TyperefDataSchema)
+        {
+          recordType(schema.getDereferencedDataSchema(), foundTypes, typeOrder);
         }
 
         typeOrder.add(namedDataSchema);
