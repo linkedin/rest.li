@@ -18,6 +18,7 @@ package com.linkedin.restli.client;
 
 
 import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.common.RestConstants;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -109,7 +110,8 @@ public class TestVersionNegotiation
                                                       _LATEST_VERSION,
                                                       _NEXT_VERSION,
                                                       announcedVersion,
-                                                      versionOption),
+                                                      versionOption,
+                                                      RestConstants.RESTLI_LATEST_VERSION_PERCENTAGE_DEFAULT),
                         expectedProtocolVersion);
   }
 
@@ -122,7 +124,8 @@ public class TestVersionNegotiation
                                     _LATEST_VERSION,
                                     _NEXT_VERSION,
                                     new ProtocolVersion(0, 0, 0),
-                                    ProtocolVersionOption.USE_LATEST_IF_AVAILABLE);
+                                    ProtocolVersionOption.USE_LATEST_IF_AVAILABLE,
+                                    RestConstants.RESTLI_LATEST_VERSION_PERCENTAGE_DEFAULT);
       Assert.fail("Expected a RuntimeException as the announced version is less than the default!");
     }
     catch (RuntimeException e)
@@ -130,4 +133,46 @@ public class TestVersionNegotiation
       Assert.assertTrue(e.getMessage().contains("Announced version is less than the default version!"));
     }
   }
+
+  @Test
+  public void testLatestVersionAnnouncedHundredPercent()
+  {
+      //For 100% latest version, expectation is to get latest version everytime
+      ProtocolVersion actualVersion = RestClient.getProtocolVersion(
+              _BASELINE_VERSION,
+              _LATEST_VERSION,
+              _NEXT_VERSION,
+              _LATEST_VERSION,
+              ProtocolVersionOption.USE_LATEST_IF_AVAILABLE,
+              100);
+      Assert.assertEquals(_LATEST_VERSION.getMajor(), actualVersion.getMajor(), "Expected Version: " + _LATEST_VERSION.getMajor() + " Actual Version: " + actualVersion.getMajor());
+  }
+
+  @Test
+  public void testLatestVersionAnnouncedAsZeroPercent()
+  {
+        //For 0% latest version, expectation is to get baseline version everytime
+      ProtocolVersion actualVersion = RestClient.getProtocolVersion(
+              _BASELINE_VERSION,
+              _LATEST_VERSION,
+              _NEXT_VERSION,
+              _LATEST_VERSION,
+              ProtocolVersionOption.USE_LATEST_IF_AVAILABLE,
+              0);
+      Assert.assertEquals(_BASELINE_VERSION.getMajor(), actualVersion.getMajor(), "Expected Version: " + _BASELINE_VERSION.getMajor() + " Actual Version: " + actualVersion.getMajor());
+  }
+
+  @Test
+  public void testDefaultLatestVersionAnnouncedAsNullOrIncorrectFormat()
+  {
+      //For null or incorrectly formatted latest version percentage, expectation is to get latest version default everytime
+      String[] versionInputs = new String[]{null, "", "ksfdjkf", "-1", "-93229", "101", "384948"};
+      for(int i=0; i<versionInputs.length; i++)
+      {
+         Assert.assertEquals(RestClient.getLatestVersionPercentage(versionInputs[i]), RestConstants.RESTLI_LATEST_VERSION_PERCENTAGE_DEFAULT, "For input percentage " + versionInputs[i] +
+                " the default latest version percentage of " + RestConstants.RESTLI_LATEST_VERSION_PERCENTAGE_DEFAULT + " is not returned correctly" );
+      }
+  }
+
+
 }

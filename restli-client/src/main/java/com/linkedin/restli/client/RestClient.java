@@ -47,10 +47,7 @@ import javax.mail.internet.ParseException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Subset of Jersey's REST client, omitting things we probably won't use for internal API calls +
@@ -277,12 +274,12 @@ public class RestClient
       // if the server doesn't announce a protocol version we assume it is running the baseline version
       ProtocolVersion announcedVersion = (potentialAnnouncedVersion == null) ?
           AllProtocolVersions.BASELINE_PROTOCOL_VERSION : new ProtocolVersion((String)potentialAnnouncedVersion);
-
       return getProtocolVersion(AllProtocolVersions.BASELINE_PROTOCOL_VERSION,
                                 AllProtocolVersions.LATEST_PROTOCOL_VERSION,
                                 AllProtocolVersions.NEXT_PROTOCOL_VERSION,
                                 announcedVersion,
-                                request.getRequestOptions().getProtocolVersionOption());
+                                request.getRequestOptions().getProtocolVersionOption(),
+                                getLatestVersionPercentage((String) properties.get(RestConstants.RESTLI_LATEST_VERSION_PERCENTAGE_PROPERTY)));
     }
     catch (URISyntaxException e)
     {
@@ -303,7 +300,8 @@ public class RestClient
                                                                ProtocolVersion latestVersion,
                                                                ProtocolVersion nextVersion,
                                                                ProtocolVersion announcedVersion,
-                                                               ProtocolVersionOption versionOption)
+                                                               ProtocolVersionOption versionOption,
+                                                               Integer latestVersionPercentage)
   {
     if (versionOption == null)
     {
@@ -333,10 +331,33 @@ public class RestClient
           return announcedVersion;
         }
         // server is either running the latest version or something newer. Use the latest version in this case.
-        return latestVersion;
+        // check for latest version percentage probability and return latest if its within the percentage bounds otherwise default to base version
+        return (new Random().nextInt(100) + 1 <= latestVersionPercentage) ? latestVersion : baselineProtocolVersion;
       default:
         return baselineProtocolVersion;
     }
+  }
+
+  /**
+   * @param announcedLatestVersionPercentage the latest string based version percentage announced by the service
+   * @return the actual latest version integer percentage post processing
+  */
+  /*package private*/ static Integer getLatestVersionPercentage(String announcedLatestVersionPercentage)
+  {
+     // if server doesn't announce a latest version percentage or if there is a syntax error we assume the default
+     try
+     {
+        if (announcedLatestVersionPercentage == null)
+        {
+            return RestConstants.RESTLI_LATEST_VERSION_PERCENTAGE_DEFAULT;
+        }
+        Integer latestVersionPercentage = Integer.parseInt(announcedLatestVersionPercentage);
+        return (latestVersionPercentage < 0 || latestVersionPercentage > 100) ? RestConstants.RESTLI_LATEST_VERSION_PERCENTAGE_DEFAULT : latestVersionPercentage;
+     }
+     catch(NumberFormatException e)
+     {
+        return RestConstants.RESTLI_LATEST_VERSION_PERCENTAGE_DEFAULT;
+     }
   }
 
   private void addAcceptHeaders(RestRequestBuilder builder)
