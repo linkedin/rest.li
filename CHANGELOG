@@ -1,7 +1,15 @@
-1.22.1
+1.23.1
 ------
-(RB=347094) 
+
+
+1.23.0
+------
+(RB=347094)
 change getPartitionInformation so the ordering of the server will be consistent for identical hashrings
+
+(RB=349490)
+Add RestliRequestUriSignature, A summary object for the URI of a Rest.li Request.
+Add MockActionResponseFactory for mocking ActionResponse.
 
 1.22.0
 ------

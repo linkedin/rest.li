@@ -1,7 +1,8 @@
 apply plugin: 'pegasus'
 
 dependencies {
-  compile project (':data')
+  compile project(':data')
+  compile project(':restli-common')
   compile externalDependency.testng
   compile externalDependency.commonsLang
 
