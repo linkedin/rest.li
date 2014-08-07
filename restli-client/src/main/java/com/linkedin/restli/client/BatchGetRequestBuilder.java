@@ -20,6 +20,8 @@ package com.linkedin.restli.client;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.BatchResponse;
+import com.linkedin.restli.common.ComplexResourceKey;
+import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.TypeSpec;
@@ -98,6 +100,10 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
                                                                       boolean batchFields)
   {
     final BatchGetRequest<RT> firstRequest = requests.get(0);
+    Class<?> keyClass = firstRequest.getResourceSpec().getKeyClass();
+
+    throwIfClassCompoundOrComplex(keyClass, "batch", "batchKV");
+
     final ResourceSpec firstResourceSpec = firstRequest.getResourceSpec();
     final Map<String, Object> batchQueryParams = BatchGetRequestUtil.getBatchQueryParam(requests, batchFields);
 
@@ -225,6 +231,10 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
       throw new IllegalArgumentException(
           "It is not possible to create a batch get request from a get request without an id.");
     }
+
+    Class<?> keyClass = request.getResourceSpec().getKeyClass();
+
+    throwIfClassCompoundOrComplex(keyClass, "batch", "batchKV");
 
     Map<String, Object> queryParams = new HashMap<String, Object>(request.getQueryParamsObjects());
     queryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM,
@@ -374,12 +384,7 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
 
     Class<?> keyClass = _resourceSpec.getKeyClass();
 
-    if (com.linkedin.restli.common.CompoundKey.class.isAssignableFrom(keyClass) ||
-        keyClass == com.linkedin.restli.common.ComplexResourceKey.class)
-    {
-      throw new UnsupportedOperationException("The build method cannot be used with Compound and Complex key types. " +
-                                                  "Please use the buildKV method instead.");
-    }
+    throwIfClassCompoundOrComplex(keyClass, "build", "buildKV");
 
     return new BatchGetRequest<V>(_headers,
                                   _decoder,
@@ -415,5 +420,16 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
   {
     addFields(fieldPaths);
     return this;
+  }
+
+  private static void throwIfClassCompoundOrComplex(Class<?> keyClass, String currentMethod, String replacementMethod)
+  {
+    if (CompoundKey.class.isAssignableFrom(keyClass) ||
+        keyClass == ComplexResourceKey.class)
+    {
+      throw new UnsupportedOperationException(
+          "The " + currentMethod + " method cannot be used with Compound or Complex key types. " +
+              "Please use the " + replacementMethod + " method instead.");
+    }
   }
 }

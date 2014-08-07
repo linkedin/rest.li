@@ -1,7 +1,13 @@
-1.21.3
+1.22.1
+------
+
+1.22.0
 ------
 (RB=346821)
 allows client to change r2 client pool waiter size
+
+(RB=344020)
+Adding logic to throw exception if BatchGetRequestBuilder.batch methods are called for requests with Compound or Complex Keys.
 
 1.21.2
 ------
