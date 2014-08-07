@@ -16,16 +16,13 @@
 
 package com.linkedin.restli.client;
 
-
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-
 import java.util.HashMap;
 import java.util.Map;
-
 
 /**
  * Tests protocol version negotiation between the client and the server.
@@ -108,10 +105,8 @@ public class TestVersionNegotiation
   public Object[][] getVersionTestVariations()
   {
     return new Object[][]{
-
             // Expectation is to get baseline announced version if the input version is null
             {null, null, _BASELINE_VERSION},
-
             // Expectation is to get baseline announced version every time for input baseline version irrespective of the percentage
             {_BASELINE_VERSION, null, _BASELINE_VERSION},
             {_BASELINE_VERSION, "", _BASELINE_VERSION},
@@ -122,10 +117,8 @@ public class TestVersionNegotiation
             {_BASELINE_VERSION, "101", _BASELINE_VERSION},
             {_BASELINE_VERSION, "43984", _BASELINE_VERSION},
             {_BASELINE_VERSION, "jfk**j&&j888", _BASELINE_VERSION},
-
             // Expectation is to get baseline announced version for input latest version if the version percentage is zero
             {_LATEST_VERSION, "0", _BASELINE_VERSION},
-
             // Expectation is to get latest announced version for input latest version if the version percentage is hundred or incorrect percentage
             {_LATEST_VERSION, "100", _LATEST_VERSION},
             {_LATEST_VERSION, "-1", _LATEST_VERSION},
@@ -133,7 +126,6 @@ public class TestVersionNegotiation
             {_LATEST_VERSION, "101", _LATEST_VERSION},
             {_LATEST_VERSION, "43984", _LATEST_VERSION},
             {_LATEST_VERSION, "jfk**j&&j888", _LATEST_VERSION},
-
       };
   }
 
@@ -175,7 +167,6 @@ public class TestVersionNegotiation
     String blah = "";
   }
 
-
   private void setupVersionTest(ProtocolVersion inputVersion, String inputVersionPercentage, ProtocolVersion expectedVersion)
   {
     Map<String, Object> properties = new HashMap<String, Object>();
@@ -184,6 +175,4 @@ public class TestVersionNegotiation
     ProtocolVersion announcedVersion = RestClient.getAnnouncedVersion(properties);
     Assert.assertEquals(expectedVersion.getMajor(), announcedVersion.getMajor(), "Expected Version: " + expectedVersion.getMajor() + " Actual Version: " + announcedVersion.getMajor());
   }
-
-
 }

@@ -284,6 +284,10 @@ public class RestClient
     }
   }
 
+  /**
+   * @param properties The server properties
+   * @return the announced protocol version based on percentage
+   */
   /*package private*/ static ProtocolVersion getAnnouncedVersion(Map<String, Object> properties)
   {
     if(properties == null)
