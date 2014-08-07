@@ -23,6 +23,9 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.util.HashMap;
+import java.util.Map;
+
 
 /**
  * Tests protocol version negotiation between the client and the server.
@@ -101,6 +104,39 @@ public class TestVersionNegotiation
         };
   }
 
+  @DataProvider(name = "versionTestVariations")
+  public Object[][] getVersionTestVariations()
+  {
+    return new Object[][]{
+
+            // Expectation is to get baseline announced version if the input version is null
+            {null, null, _BASELINE_VERSION},
+
+            // Expectation is to get baseline announced version every time for input baseline version irrespective of the percentage
+            {_BASELINE_VERSION, null, _BASELINE_VERSION},
+            {_BASELINE_VERSION, "", _BASELINE_VERSION},
+            {_BASELINE_VERSION, "0", _BASELINE_VERSION},
+            {_BASELINE_VERSION, "100", _BASELINE_VERSION},
+            {_BASELINE_VERSION, "-1", _BASELINE_VERSION},
+            {_BASELINE_VERSION, "-32938", _BASELINE_VERSION},
+            {_BASELINE_VERSION, "101", _BASELINE_VERSION},
+            {_BASELINE_VERSION, "43984", _BASELINE_VERSION},
+            {_BASELINE_VERSION, "jfk**j&&j888", _BASELINE_VERSION},
+
+            // Expectation is to get baseline announced version for input latest version if the version percentage is zero
+            {_LATEST_VERSION, "0", _BASELINE_VERSION},
+
+            // Expectation is to get latest announced version for input latest version if the version percentage is hundred or incorrect percentage
+            {_LATEST_VERSION, "100", _LATEST_VERSION},
+            {_LATEST_VERSION, "-1", _LATEST_VERSION},
+            {_LATEST_VERSION, "-32938", _LATEST_VERSION},
+            {_LATEST_VERSION, "101", _LATEST_VERSION},
+            {_LATEST_VERSION, "43984", _LATEST_VERSION},
+            {_LATEST_VERSION, "jfk**j&&j888", _LATEST_VERSION},
+
+      };
+  }
+
   @Test(dataProvider = "data")
   public void testProtocolVersionNegotiation(ProtocolVersion announcedVersion,
                                              ProtocolVersionOption versionOption,
@@ -110,8 +146,7 @@ public class TestVersionNegotiation
                                                       _LATEST_VERSION,
                                                       _NEXT_VERSION,
                                                       announcedVersion,
-                                                      versionOption,
-                                                      RestConstants.RESTLI_LATEST_VERSION_PERCENTAGE_DEFAULT),
+                                                      versionOption),
                         expectedProtocolVersion);
   }
 
@@ -124,8 +159,7 @@ public class TestVersionNegotiation
                                     _LATEST_VERSION,
                                     _NEXT_VERSION,
                                     new ProtocolVersion(0, 0, 0),
-                                    ProtocolVersionOption.USE_LATEST_IF_AVAILABLE,
-                                    RestConstants.RESTLI_LATEST_VERSION_PERCENTAGE_DEFAULT);
+                                    ProtocolVersionOption.USE_LATEST_IF_AVAILABLE);
       Assert.fail("Expected a RuntimeException as the announced version is less than the default!");
     }
     catch (RuntimeException e)
@@ -134,44 +168,21 @@ public class TestVersionNegotiation
     }
   }
 
-  @Test
-  public void testLatestVersionAnnouncedHundredPercent()
+  @Test(dataProvider = "versionTestVariations")
+  public void testAnnouncedVersionWithVersionPercentages(ProtocolVersion versionInput, String versionPercentageInput, ProtocolVersion expectedAnnouncedVersion)
   {
-      //For 100% latest version, expectation is to get latest version everytime
-      ProtocolVersion actualVersion = RestClient.getProtocolVersion(
-              _BASELINE_VERSION,
-              _LATEST_VERSION,
-              _NEXT_VERSION,
-              _LATEST_VERSION,
-              ProtocolVersionOption.USE_LATEST_IF_AVAILABLE,
-              100);
-      Assert.assertEquals(_LATEST_VERSION.getMajor(), actualVersion.getMajor(), "Expected Version: " + _LATEST_VERSION.getMajor() + " Actual Version: " + actualVersion.getMajor());
+    setupVersionTest(versionInput, versionPercentageInput, expectedAnnouncedVersion);
+    String blah = "";
   }
 
-  @Test
-  public void testLatestVersionAnnouncedAsZeroPercent()
-  {
-        //For 0% latest version, expectation is to get baseline version everytime
-      ProtocolVersion actualVersion = RestClient.getProtocolVersion(
-              _BASELINE_VERSION,
-              _LATEST_VERSION,
-              _NEXT_VERSION,
-              _LATEST_VERSION,
-              ProtocolVersionOption.USE_LATEST_IF_AVAILABLE,
-              0);
-      Assert.assertEquals(_BASELINE_VERSION.getMajor(), actualVersion.getMajor(), "Expected Version: " + _BASELINE_VERSION.getMajor() + " Actual Version: " + actualVersion.getMajor());
-  }
 
-  @Test
-  public void testDefaultLatestVersionAnnouncedAsNullOrIncorrectFormat()
+  private void setupVersionTest(ProtocolVersion inputVersion, String inputVersionPercentage, ProtocolVersion expectedVersion)
   {
-      //For null or incorrectly formatted latest version percentage, expectation is to get latest version default everytime
-      String[] versionInputs = new String[]{null, "", "ksfdjkf", "-1", "-93229", "101", "384948"};
-      for(int i=0; i<versionInputs.length; i++)
-      {
-         Assert.assertEquals(RestClient.getLatestVersionPercentage(versionInputs[i]), RestConstants.RESTLI_LATEST_VERSION_PERCENTAGE_DEFAULT, "For input percentage " + versionInputs[i] +
-                " the default latest version percentage of " + RestConstants.RESTLI_LATEST_VERSION_PERCENTAGE_DEFAULT + " is not returned correctly" );
-      }
+    Map<String, Object> properties = new HashMap<String, Object>();
+    properties.put(RestConstants.RESTLI_PROTOCOL_VERSION_PROPERTY, inputVersion);
+    properties.put(RestConstants.RESTLI_PROTOCOL_VERSION_PERCENTAGE_PROPERTY, inputVersionPercentage);
+    ProtocolVersion announcedVersion = RestClient.getAnnouncedVersion(properties);
+    Assert.assertEquals(expectedVersion.getMajor(), announcedVersion.getMajor(), "Expected Version: " + expectedVersion.getMajor() + " Actual Version: " + announcedVersion.getMajor());
   }
 
 

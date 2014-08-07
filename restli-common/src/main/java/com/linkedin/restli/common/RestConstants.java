@@ -59,8 +59,6 @@ public interface RestConstants
 
   String RESOURCE_MODEL_FILENAME_EXTENSION = ".restspec.json";
   String SNAPSHOT_FILENAME_EXTENTION = ".snapshot.json";
-  Integer RESTLI_LATEST_VERSION_PERCENTAGE_DEFAULT = 100;
-
   Set<ResourceMethod> SIMPLE_RESOURCE_METHODS = Collections.unmodifiableSet(
       new HashSet<ResourceMethod>(
         Arrays.asList(
@@ -71,6 +69,6 @@ public interface RestConstants
             ResourceMethod.UPDATE)));
 
   String RESTLI_PROTOCOL_VERSION_PROPERTY = "restli.protocol";
-  String RESTLI_LATEST_VERSION_PERCENTAGE_PROPERTY = "restli.protocol.latest.percentage";
+  String RESTLI_PROTOCOL_VERSION_PERCENTAGE_PROPERTY = "restli.protocol.percentage";
 
 }
