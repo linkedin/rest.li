@@ -1,0 +1,21 @@
+allprojects {
+    apply plugin: 'idea'
+    apply plugin: 'eclipse'
+}
+
+final pegasusVersion = '1.20.0'
+ext.spec = [
+    'product' : [
+        'pegasus' : [
+                'r2' : 'com.linkedin.pegasus:r2:' + pegasusVersion,
+                'd2' : 'com.linkedin.pegasus:d2:' + pegasusVersion
+        ]
+    ]
+]
+
+subprojects {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+}

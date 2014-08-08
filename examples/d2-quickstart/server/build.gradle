@@ -1,0 +1,13 @@
+apply plugin: 'java'
+
+dependencies {
+    compile 'com.googlecode.json-simple:json-simple:1.1.1'
+    compile spec.product.pegasus.r2
+    compile spec.product.pegasus.d2
+}
+
+task runServer(type: JavaExec) {
+    main = 'com.example.d2.server.ExampleD2Server'
+    classpath = sourceSets.main.runtimeClasspath
+    standardInput = System.in
+}

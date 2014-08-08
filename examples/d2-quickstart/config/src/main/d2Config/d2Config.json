@@ -1,0 +1,50 @@
+{
+    "d2Clusters" : {
+        "RecommendationService": {
+            "services":
+                {
+                    "articleRecommendation": {
+                        "path" : "/articleRecommendation"
+                    },
+                    "jobRecommendation": {
+                        "path" : "/jobRecommendation"
+                    }
+                }
+
+        },
+        "NewsService": {
+            "services":
+                {
+                    "newsArticle" : {
+                        "path" : "/newsArticle"
+                    }
+                }
+
+        }
+    },
+    "defaultServiceProperties" : {
+        "loadBalancerStrategyList" : [
+            "degraderV3",
+            "degraderV2"
+        ],
+        "prioritizedSchemes" : [
+            "http"
+        ],
+        "loadBalancerStrategyProperties" : {
+            "http.loadBalancer.updateIntervalMs" : "5000",
+            "http.loadBalancer.pointsPerWeight" : "100"
+        },
+        "transportClientProperties" : {
+            "http.requestTimeout" : "10000"
+        },
+        "degraderProperties" : {
+            "degrader.minCallCount" : "10",
+            "degrader.lowErrorRate" : "0.01",
+            "degrader.highErrorRate" : "0.1"
+        }
+    },
+    "zkConnectString" : "localhost:2181",
+    "zkSessionTimeout" : 5000,
+    "zkBasePath" : "/d2",
+    "zkRetryLimit" : 10
+}

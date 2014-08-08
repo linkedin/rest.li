@@ -1,0 +1,119 @@
+{
+    "echoServers" :
+        [
+            {
+                "name" : "RecommendationService-1",
+                "port" : 39901,
+                "threadPoolSize" : 1,
+                "contextPaths" : [
+                    "/articleRecommendation",
+                    "/jobRecommendation"
+                ]
+            },
+            {
+                "name" : "RecommendationService-2",
+                "port" : 39902,
+                "threadPoolSize" : 1,
+                "contextPaths" : [
+                    "/articleRecommendation",
+                    "/jobRecommendation"
+                ]
+            },
+            {
+                "name" : "RecommendationService-3",
+                "port" : 39903,
+                "threadPoolSize" : 1,
+                "contextPaths" : [
+                    "/articleRecommendation",
+                    "/jobRecommendation"
+                ]
+            },
+            {
+                "name" : "NewsService-1",
+                "port" : 39904,
+                "threadPoolSize" : 1,
+                "contextPaths" : [
+                    "/newsArticle"
+                ]
+            },
+            {
+                "name" : "NewsService-2",
+                "port" : 39905,
+                "threadPoolSize" : 1,
+                "contextPaths" : [
+                    "/newsArticle"
+                ]
+            },
+            {
+                "name" : "NewsService-3",
+                "port" : 39906,
+                "threadPoolSize" : 1,
+                "contextPaths" : [
+                    "/newsArticle"
+                ]
+            }
+        ],
+    "d2Servers" :
+        [
+            {
+                "serverUri" : "http://localhost:39901",
+                "d2Cluster" : "RecommendationService",
+                "partitionData" : {
+                    "0" : {
+                        "weight" : "1.0"
+                    }
+                }
+            },
+            {
+                "serverUri" : "http://localhost:39902",
+                "d2Cluster" : "RecommendationService",
+                "partitionData" : {
+                    "0" : {
+                        "weight" : "1.0"
+                    }
+                }
+            },
+            {
+                "serverUri" : "http://localhost:39903",
+                "d2Cluster" : "RecommendationService",
+                "partitionData" : {
+                    "0" : {
+                        "weight" : "1.0"
+                    }
+                }
+            },
+            {
+                "serverUri" : "http://localhost:39904",
+                "d2Cluster" : "NewsService",
+                "partitionData" : {
+                    "0" : {
+                        "weight" : "1.0"
+                    }
+                }
+            },
+            {
+                "serverUri" : "http://localhost:39905",
+                "d2Cluster" : "NewsService",
+                "partitionData" : {
+                    "0" : {
+                        "weight" : "1.0"
+                    }
+                }
+            },
+            {
+                "serverUri" : "http://localhost:39906",
+                "d2Cluster" : "NewsService",
+                "partitionData" : {
+                    "0" : {
+                        "weight" : "1.0"
+                    }
+                }
+            }
+        ],
+    "zkConnectString" : "localhost:2181",
+    "zkSessionTimeout" : 5000,
+    "zkBasePath" : "/d2",
+    "zkRetryLimit" : 10,
+    "announcerStartTimeout" : 5000,
+    "announcerShutdownTimeout" : 5000
+}
