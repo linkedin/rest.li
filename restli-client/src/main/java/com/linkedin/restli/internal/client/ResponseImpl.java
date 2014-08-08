@@ -153,15 +153,16 @@ public class ResponseImpl<T> implements Response<T>
   {
     final Object id;
     final String castMessage;
+
     if (_entity instanceof CreateResponse)
     {
-      CreateResponse createResponse = (CreateResponse)_entity;
+      CreateResponse<?> createResponse = (CreateResponse<?>)_entity;
       id = createResponse.getId();
       castMessage = "CreateResponse";
     }
     else
     {
-      IdResponse idResponse = (IdResponse)_entity;
+      IdResponse<?> idResponse = (IdResponse<?>)_entity;
       id = idResponse.getId();
       castMessage = "IdResponse";
     }

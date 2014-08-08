@@ -6,6 +6,9 @@
 (RB=339157)
 Add new API to Ring: getIterator()
 
+(RB=344866)
+Fixing Java 7 Build.
+
 1.21.0
 ------
 (RB=334824)
