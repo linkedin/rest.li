@@ -1,5 +1,10 @@
+1.21.3
+------
+
 1.21.2
 ------
+(RB=345140)
+Unit test and the fix for the DegraderImpl rollver deadlock
 
 1.21.1
 ------
