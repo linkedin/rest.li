@@ -329,6 +329,7 @@ public class ConsistentHashKeyMapperTest
     Assert.assertEquals(100, numOfMatch);
   }
 
+  @SuppressWarnings("rawtypes")
   @Test
   public void testMapKeysConcurrency() throws Exception
   {
