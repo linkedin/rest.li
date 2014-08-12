@@ -163,16 +163,12 @@ public class TestVersionNegotiation
   @Test(dataProvider = "versionTestVariations")
   public void testAnnouncedVersionWithVersionPercentages(ProtocolVersion versionInput, String versionPercentageInput, ProtocolVersion expectedAnnouncedVersion)
   {
-    setupVersionTest(versionInput, versionPercentageInput, expectedAnnouncedVersion);
-    String blah = "";
+      Map<String, Object> properties = new HashMap<String, Object>();
+      properties.put(RestConstants.RESTLI_PROTOCOL_VERSION_PROPERTY, versionInput);
+      properties.put(RestConstants.RESTLI_PROTOCOL_VERSION_PERCENTAGE_PROPERTY, versionPercentageInput);
+      ProtocolVersion announcedVersion = RestClient.getAnnouncedVersion(properties);
+      Assert.assertTrue(expectedAnnouncedVersion.equals(announcedVersion), "Expected Version: " + expectedAnnouncedVersion.toString() + " Actual Version: " + announcedVersion.toString());
   }
 
-  private void setupVersionTest(ProtocolVersion inputVersion, String inputVersionPercentage, ProtocolVersion expectedVersion)
-  {
-    Map<String, Object> properties = new HashMap<String, Object>();
-    properties.put(RestConstants.RESTLI_PROTOCOL_VERSION_PROPERTY, inputVersion);
-    properties.put(RestConstants.RESTLI_PROTOCOL_VERSION_PERCENTAGE_PROPERTY, inputVersionPercentage);
-    ProtocolVersion announcedVersion = RestClient.getAnnouncedVersion(properties);
-    Assert.assertEquals(expectedVersion.getMajor(), announcedVersion.getMajor(), "Expected Version: " + expectedVersion.getMajor() + " Actual Version: " + announcedVersion.getMajor());
-  }
 }
+

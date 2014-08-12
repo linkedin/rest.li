@@ -300,15 +300,21 @@ public class RestClient
     {
       return AllProtocolVersions.BASELINE_PROTOCOL_VERSION;
     }
+    Object potentialAnnouncedVersionPercentage = properties.get(RestConstants.RESTLI_PROTOCOL_VERSION_PERCENTAGE_PROPERTY);
+    // if the server doesn't announce a protocol version percentage we assume it is running the announced version
+    if(potentialAnnouncedVersionPercentage == null)
+    {
+      return new ProtocolVersion(potentialAnnouncedVersion.toString());
+    }
     try
     {
-
-      int announceVersionPercentage = Integer.parseInt((String) properties.get(RestConstants.RESTLI_PROTOCOL_VERSION_PERCENTAGE_PROPERTY));
+      int announceVersionPercentage = Integer.parseInt(potentialAnnouncedVersionPercentage.toString());
       return (announceVersionPercentage < 0 || new Random().nextInt(100) + 1 <= announceVersionPercentage) ?
           new ProtocolVersion(potentialAnnouncedVersion.toString()) : AllProtocolVersions.BASELINE_PROTOCOL_VERSION;
     }
     catch(NumberFormatException e)
     {
+      // if the server announces a incorrect protocol version percentage we assume it is running the announced version
       return new ProtocolVersion(potentialAnnouncedVersion.toString());
     }
   }
