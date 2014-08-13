@@ -1,5 +1,7 @@
 1.21.3
 ------
+(RB=346821)
+allows client to change r2 client pool waiter size
 
 1.21.2
 ------
