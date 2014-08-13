@@ -1,5 +1,7 @@
 1.22.1
 ------
+(RB=347094) 
+change getPartitionInformation so the ordering of the server will be consistent for identical hashrings
 
 1.22.0
 ------
