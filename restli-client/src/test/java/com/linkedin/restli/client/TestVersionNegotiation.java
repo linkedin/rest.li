@@ -117,15 +117,15 @@ public class TestVersionNegotiation
             {_BASELINE_VERSION, "101", _BASELINE_VERSION},
             {_BASELINE_VERSION, "43984", _BASELINE_VERSION},
             {_BASELINE_VERSION, "jfk**j&&j888", _BASELINE_VERSION},
-            // Expectation is to get baseline announced version for input latest version if the version percentage is zero
+            // Expectation is to get baseline announced version for input latest version if the version percentage is below 1 or above 100 or incorrect
             {_LATEST_VERSION, "0", _BASELINE_VERSION},
-            // Expectation is to get latest announced version for input latest version if the version percentage is hundred or incorrect percentage
-            {_LATEST_VERSION, "100", _LATEST_VERSION},
-            {_LATEST_VERSION, "-1", _LATEST_VERSION},
-            {_LATEST_VERSION, "-32938", _LATEST_VERSION},
-            {_LATEST_VERSION, "101", _LATEST_VERSION},
-            {_LATEST_VERSION, "43984", _LATEST_VERSION},
-            {_LATEST_VERSION, "jfk**j&&j888", _LATEST_VERSION},
+            {_LATEST_VERSION, "-1", _BASELINE_VERSION},
+            {_LATEST_VERSION, "-32938", _BASELINE_VERSION},
+            {_LATEST_VERSION, "101", _BASELINE_VERSION},
+            {_LATEST_VERSION, "43984", _BASELINE_VERSION},
+            {_LATEST_VERSION, "jfk**j&&j888", _BASELINE_VERSION},
+            // Expectation is to get latest announced version for input latest version if the version percentage is hundred
+            {_LATEST_VERSION, "100", _LATEST_VERSION}
       };
   }
 
@@ -167,8 +167,7 @@ public class TestVersionNegotiation
       properties.put(RestConstants.RESTLI_PROTOCOL_VERSION_PROPERTY, versionInput);
       properties.put(RestConstants.RESTLI_PROTOCOL_VERSION_PERCENTAGE_PROPERTY, versionPercentageInput);
       ProtocolVersion announcedVersion = RestClient.getAnnouncedVersion(properties);
-      Assert.assertTrue(expectedAnnouncedVersion.equals(announcedVersion), "Expected Version: " + expectedAnnouncedVersion.toString() + " Actual Version: " + announcedVersion.toString());
+      Assert.assertEquals(expectedAnnouncedVersion, announcedVersion);
   }
-
 }
 

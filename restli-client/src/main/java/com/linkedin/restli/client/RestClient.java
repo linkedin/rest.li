@@ -309,13 +309,14 @@ public class RestClient
     try
     {
       int announceVersionPercentage = Integer.parseInt(potentialAnnouncedVersionPercentage.toString());
-      return (announceVersionPercentage < 0 || new Random().nextInt(100) + 1 <= announceVersionPercentage) ?
+      // if server announces percentage between 1 to 100 which is also below or equal to the generated probability, then we return announced version else the baseline
+      return (announceVersionPercentage > 0 && announceVersionPercentage <= 100 && new Random().nextInt(100) + 1 <= announceVersionPercentage) ?
           new ProtocolVersion(potentialAnnouncedVersion.toString()) : AllProtocolVersions.BASELINE_PROTOCOL_VERSION;
     }
     catch(NumberFormatException e)
     {
-      // if the server announces a incorrect protocol version percentage we assume it is running the announced version
-      return new ProtocolVersion(potentialAnnouncedVersion.toString());
+      // if the server announces a incorrect protocol version percentage we assume it is running the baseline version
+      return AllProtocolVersions.BASELINE_PROTOCOL_VERSION;
     }
   }
 
