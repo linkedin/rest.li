@@ -27,7 +27,11 @@ import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
+import com.linkedin.d2.balancer.simple.SimpleLoadBalancerState;
+import com.linkedin.d2.balancer.simple.SimpleLoadBalancerStateTest;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
+import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
+import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
 import com.linkedin.d2.balancer.util.AllPartitionsMultipleHostsResult;
 import com.linkedin.d2.balancer.util.AllPartitionsResult;
 import com.linkedin.d2.balancer.util.HostToKeyMapper;
@@ -54,6 +58,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * @author Josh Walker
@@ -252,7 +260,7 @@ public class ConsistentHashKeyMapperTest
     String strategyName = "degrader";
 
     //setup partition
-    Map<URI,Map<Integer, PartitionData>> partitionDescriptions = new HashMap<URI, Map<Integer, PartitionData>>();
+    Map<URI, Map<Integer, PartitionData>> partitionDescriptions = new HashMap<URI, Map<Integer, PartitionData>>();
 
     final URI foo1 = new URI("http://foo1.com");
     Map<Integer, PartitionData> foo1Data = new HashMap<Integer, PartitionData>();
@@ -296,8 +304,8 @@ public class ConsistentHashKeyMapperTest
 
     URI serviceURI = new URI("d2://" + serviceName);
     SimpleLoadBalancer balancer = new SimpleLoadBalancer(new PartitionedLoadBalancerTestState(
-        clusterName, serviceName, path, strategyName, partitionDescriptions, orderedStrategies,
-        accessor
+            clusterName, serviceName, path, strategyName, partitionDescriptions, orderedStrategies,
+            accessor
     ));
 
     ConsistentHashKeyMapper mapper = new ConsistentHashKeyMapper(balancer, balancer);
@@ -319,6 +327,104 @@ public class ConsistentHashKeyMapperTest
       }
     }
     Assert.assertEquals(100, numOfMatch);
+  }
+
+  @SuppressWarnings("rawtypes")
+  @Test
+  public void testMapKeysConcurrency() throws Exception
+  {
+    String serviceName = "articles";
+    String clusterName = "cluster";
+    String path = "path";
+    String strategyName = "degrader";
+    int numPartitions = 500;
+
+    // setup partition
+    Map<URI,Map<Integer, PartitionData>> partitionDescriptions = new HashMap<URI, Map<Integer, PartitionData>>();
+    final URI foo1 = new URI("http://foo1.com");
+    Map<Integer, PartitionData> foo1Data = new HashMap<Integer, PartitionData>();
+    for (int i = 0; i < numPartitions; i++)
+    {
+      foo1Data.put(i, new PartitionData(1.0));
+    }
+    partitionDescriptions.put(foo1, foo1Data);
+
+    DegraderLoadBalancerStrategyV3 strategy = new DegraderLoadBalancerStrategyV3(new DegraderLoadBalancerStrategyConfig(5000), serviceName, null);
+    List<LoadBalancerState.SchemeStrategyPair> orderedStrategies = new ArrayList<LoadBalancerState.SchemeStrategyPair>();
+    orderedStrategies.add(new LoadBalancerState.SchemeStrategyPair("http", strategy));
+
+    PartitionAccessor accessor = new TestDeadlockPartitionAccessor(numPartitions);
+
+    SimpleLoadBalancer balancer = new SimpleLoadBalancer(new PartitionedLoadBalancerTestState(
+            clusterName, serviceName, path, strategyName, partitionDescriptions, orderedStrategies,
+            accessor
+    ));
+    ConsistentHashKeyMapper mapper = new ConsistentHashKeyMapper(balancer, balancer);
+
+    CountDownLatch latch = new CountDownLatch(numPartitions);
+    List<Runnable> runnables = createRunnables(numPartitions, mapper, serviceName, latch);
+    final ExecutorService executor = Executors.newFixedThreadPool(numPartitions);
+    List<Future> futures = new ArrayList<Future>();
+    for (int i = 0; i < numPartitions; i++)
+    {
+      futures.add(executor.submit(runnables.get(i)));
+    }
+
+    // wait for threads to finish
+    Thread.sleep(3000);
+
+    // every thread should have finished, otherwise there is a deadlock
+    for (int i = 0; i < numPartitions; i++)
+    {
+      Assert.assertTrue(futures.get(i).isDone());
+    }
+  }
+
+  /**
+   * Create tasks for the deadlock test
+   */
+  private List<Runnable> createRunnables(int num, final ConsistentHashKeyMapper mapper, String serviceName, final CountDownLatch latch) throws URISyntaxException
+  {
+    final URI serviceURI = new URI("d2://" + serviceName);
+
+    List<Runnable> runnables = new ArrayList<Runnable>();
+    for (int i = 0; i < num; i++)
+    {
+      // since i < numPartitions, the keys will be distributed to different partitions
+      final List<String> keys = generateKeys(i);
+      Runnable runnable = new Runnable()
+      {
+        @Override
+        public void run()
+        {
+          // wait until all jobs submitted
+          latch.countDown();
+          try
+          {
+            latch.await();
+            mapper.mapKeysV3(serviceURI, keys, 1);
+          }
+          catch (InterruptedException e)
+          {
+            e.printStackTrace();
+          }
+          catch (ServiceUnavailableException e)
+          {
+            e.printStackTrace();
+          }
+        }
+      };
+      runnables.add(runnable);
+    }
+
+    return runnables;
+  }
+
+  private List<String> generateKeys(int partition)
+  {
+    List<String> keys = new ArrayList<String>();
+    keys.add(String.valueOf(partition));
+    return keys;
   }
 
   private boolean verifyResultsEqual(AllPartitionsMultipleHostsResult<URI> originalResult,
@@ -671,7 +777,6 @@ public class ConsistentHashKeyMapperTest
         }
       }
 
-      @Override
       public Ring<URI> getRing(long clusterGenerationId,
           int partitionId,
           List<TrackerClient> trackerClients,
@@ -1197,28 +1302,6 @@ public class ConsistentHashKeyMapperTest
         return new ConsistentHashRing<URI>(new HashMap<URI, Integer>());
       }
     }
-
-    @Override
-    public Ring<URI> getRing(long clusterGenerationId,
-        int partitionId,
-        List<TrackerClient> trackerClients,
-        List<URI> excludedURIs)
-    {
-      Map<URI, Integer> map;
-      if (_partitionData.containsKey(partitionId))
-      {
-        map = new HashMap<URI, Integer>(_partitionData.get(partitionId));
-        for (URI uri : excludedURIs)
-        {
-          map.remove(uri);
-        }
-        return new ConsistentHashRing<URI>(map);
-      }
-      else
-      {
-        return new ConsistentHashRing<URI>(new HashMap<URI, Integer>());
-      }
-    }
   }
 
   private class TestPartitionAccessor implements PartitionAccessor
@@ -1264,6 +1347,39 @@ public class ConsistentHashKeyMapperTest
     public int getMaxPartitionId()
     {
       return 4;
+    }
+
+  }
+
+  private class TestDeadlockPartitionAccessor implements PartitionAccessor
+  {
+
+    private int _maxPartitionId;
+
+    public TestDeadlockPartitionAccessor(int maxPartitionId)
+    {
+      _maxPartitionId = maxPartitionId;
+    }
+
+    @Override
+    public int getPartitionId(URI uri)
+            throws PartitionAccessException
+    {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public int getPartitionId(String key)
+            throws PartitionAccessException
+    {
+      Integer i = Integer.parseInt(key);
+      return i % _maxPartitionId;
+    }
+
+    @Override
+    public int getMaxPartitionId()
+    {
+      return _maxPartitionId;
     }
 
   }

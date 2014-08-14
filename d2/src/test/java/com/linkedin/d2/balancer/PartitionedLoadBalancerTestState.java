@@ -12,11 +12,15 @@ import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
 import com.linkedin.d2.discovery.event.PropertyEventThread;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
+import com.linkedin.util.clock.SettableClock;
+import com.linkedin.util.clock.SystemClock;
+
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 /**
@@ -32,6 +36,7 @@ public class PartitionedLoadBalancerTestState implements LoadBalancerState
   Map<URI,Map<Integer, PartitionData>> _partitionDescriptions;
   List<SchemeStrategyPair> _orderedStrategies;
   PartitionAccessor _partitionAccessor;
+  ConcurrentHashMap<URI, TrackerClient> _trackerClients;
 
   public PartitionedLoadBalancerTestState(String cluster, String service, String path, String strategyName,
                                    Map<URI,Map<Integer, PartitionData>> partitionDescriptions,
@@ -45,6 +50,7 @@ public class PartitionedLoadBalancerTestState implements LoadBalancerState
     _partitionDescriptions = partitionDescriptions;
     _orderedStrategies = orderedStrategies;
     _partitionAccessor = partitionAccessor;
+    _trackerClients = new ConcurrentHashMap<URI, TrackerClient>();
   }
 
   @Override
@@ -119,7 +125,10 @@ public class PartitionedLoadBalancerTestState implements LoadBalancerState
   {
     if (_partitionDescriptions.get(uri) != null)
     {
-      return new TrackerClient(uri, _partitionDescriptions.get(uri), null);
+      // shorten the update interval to 20ms in order to increase the possibility of deadlock
+      _trackerClients.putIfAbsent(uri, new TrackerClient(uri, _partitionDescriptions.get(uri), null, new SettableClock(), null, 20));
+
+      return _trackerClients.get(uri);
     }
     return null;
   }

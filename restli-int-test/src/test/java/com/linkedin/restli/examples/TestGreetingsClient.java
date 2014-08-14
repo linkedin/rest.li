@@ -177,7 +177,8 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     ResponseFuture<Greeting> responseFuture = REST_CLIENT.sendRequest(request);
     Greeting entity = responseFuture.getResponse().getEntity();
     Assert.assertEquals(entity.getId(), new Long(1L));
-    Assert.assertEquals(responseFuture.getResponse().getHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION), AllProtocolVersions.BASELINE_PROTOCOL_VERSION.toString());
+    Assert.assertEquals(responseFuture.getResponse().getHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION),
+                        AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion().toString());
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")

@@ -161,12 +161,105 @@ public class BatchGetRequestBuilderTest
                   .fields(FIELDS.id(), FIELDS.message())
                   .setParam("param", "paramValue");
     GetRequest<TestRecord> request = requestBuilder.build();
-    BatchGetRequest<TestRecord> batchRequest = BatchGetRequestBuilder.batch(request);
+    BatchGetKVRequest<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> batchRequest = BatchGetRequestBuilder.batchKV(request);
     Assert.assertEquals(RestliUriBuilderUtil.createUriBuilder(batchRequest).buildBaseUri(),
                         RestliUriBuilderUtil.createUriBuilder(request).buildBaseUri());
     testUriGeneration(batchRequest, expectedUri);
     Assert.assertEquals(batchRequest.getFields(), request.getFields());
     checkObjectIds(batchRequest, new HashSet<Object>(Arrays.asList(request.getObjectId())), true);
+  }
+
+  @Test
+  public void testComplexKeyBatchingWithoutTypedKeys()
+  {
+    GetRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> requestBuilder =
+        new GetRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord>("/",
+                                 TestRecord.class,
+                                 _complexResourceSpec,
+                                 RestliRequestOptions.DEFAULT_OPTIONS);
+    ComplexResourceKey<TestRecord, TestRecord> complexKey1 =
+        buildComplexKey(1L, "keyMessage1", 1L, "paramMessage1");
+    requestBuilder.id(complexKey1);
+    GetRequest<TestRecord> request = requestBuilder.build();
+
+    try
+    {
+      BatchGetRequestBuilder.batch(request);
+      Assert.fail("Complex Keys should not be supported by the non-KV batch operation.");
+    }
+    catch (UnsupportedOperationException exc)
+    {
+    }
+
+    Map<String, Object> queryParams = new HashMap<String, Object>();
+
+    queryParams.put("ids", Arrays.asList((Object)complexKey1));
+    BatchGetRequest<TestRecord> request3 = new BatchGetRequest<TestRecord>(
+        Collections.<String, String>emptyMap(),
+        new BatchResponseDecoder<TestRecord>(TestRecord.class),
+        queryParams,
+        _complexResourceSpec,
+        "/",
+        Collections.<String, Object>emptyMap(),
+        RestliRequestOptions.DEFAULT_OPTIONS);
+
+    try
+    {
+      @SuppressWarnings("unchecked")
+      List<BatchGetRequest<TestRecord>> requests = Arrays.asList(request3);
+      BatchGetRequestBuilder.batch(requests);
+      Assert.fail("Complex Keys should not be supported by the non-KV batch operation.");
+    }
+    catch (UnsupportedOperationException exc)
+    {
+    }
+  }
+
+  @Test
+  public void testCompoundKeyBatchingWithoutTypedKeys()
+  {
+    GetRequestBuilder<CompoundKey, TestRecord> requestBuilder2 =
+        new GetRequestBuilder<CompoundKey, TestRecord>("/",
+                                 TestRecord.class,
+                                 _compoundResourceSpec,
+                                 RestliRequestOptions.DEFAULT_OPTIONS);
+    CompoundKey key = new CompoundKey().append("abc", 1).append("def", 2);
+
+    requestBuilder2.id(key);
+
+    GetRequest<TestRecord> request2 = requestBuilder2.build();
+
+    try
+    {
+      BatchGetRequestBuilder.batch(request2);
+      Assert.fail("Compound Keys should not be supported by the non-KV batch operation.");
+    }
+    catch (UnsupportedOperationException exc)
+    {
+    }
+
+    Map<String, Object> queryParams = new HashMap<String, Object>();
+
+    queryParams.put("ids", Arrays.asList((Object)key));
+    BatchGetRequest<TestRecord> request4 = new BatchGetRequest<TestRecord>(
+        Collections.<String, String>emptyMap(),
+        new BatchResponseDecoder<TestRecord>(TestRecord.class),
+        queryParams,
+        _compoundResourceSpec,
+        "/",
+        Collections.<String, Object>emptyMap(),
+        RestliRequestOptions.DEFAULT_OPTIONS);
+
+    try
+    {
+      @SuppressWarnings("unchecked")
+      List<BatchGetRequest<TestRecord>> requests = Arrays.asList(request4);
+      BatchGetRequestBuilder.batch(requests);
+      Assert.fail("Compound Keys should not be supported by the non-KV batch operation.");
+    }
+    catch (UnsupportedOperationException exc)
+    {
+    }
   }
 
   @Test
@@ -703,7 +796,7 @@ public class BatchGetRequestBuilderTest
   }
 
   @SuppressWarnings("deprecation")
-  private void testUriGeneration(BatchGetRequest<?> request, String expectedUri)
+  private void testUriGeneration(Request<?> request, String expectedUri)
   {
     Assert.assertEquals(RestliUriBuilderUtil.createUriBuilder(request).build().toString(), expectedUri);
     Assert.assertEquals(request.getUri().toString(), expectedUri);

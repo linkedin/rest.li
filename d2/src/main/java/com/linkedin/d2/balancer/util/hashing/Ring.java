@@ -16,7 +16,10 @@
 
 package com.linkedin.d2.balancer.util.hashing;
 
+import java.util.Iterator;
+
 public interface Ring<T>
 {
   T get(int key);
+  Iterator<T> getIterator(int key);
 }

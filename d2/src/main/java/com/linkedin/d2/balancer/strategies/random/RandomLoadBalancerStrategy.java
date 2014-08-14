@@ -42,15 +42,6 @@ public class RandomLoadBalancerStrategy implements LoadBalancerStrategy
   }
 
   @Override
-  public Ring<URI> getRing(long clusterGenerationId,
-                           int partitionId,
-                           List<TrackerClient> trackerClients,
-                           List<URI> excludedURIs)
-  {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public TrackerClient getTrackerClient(Request request,
                                         RequestContext requestContext,
                                         long clusterGenerationId,

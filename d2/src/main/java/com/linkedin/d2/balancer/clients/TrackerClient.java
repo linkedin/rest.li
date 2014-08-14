@@ -24,10 +24,8 @@ import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategy
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.message.RequestContext;
-import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.rest.RestStatus;
 import com.linkedin.r2.message.rpc.RpcRequest;
 import com.linkedin.r2.message.rpc.RpcResponse;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
@@ -35,7 +33,6 @@ import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
 import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.SystemClock;
-import com.linkedin.util.clock.Time;
 import com.linkedin.util.degrader.CallCompletion;
 import com.linkedin.util.degrader.CallTracker;
 import com.linkedin.util.degrader.CallTrackerImpl;
@@ -44,12 +41,12 @@ import com.linkedin.util.degrader.DegraderControl;
 import com.linkedin.util.degrader.DegraderImpl;
 import com.linkedin.util.degrader.DegraderImpl.Config;
 import com.linkedin.util.degrader.ErrorType;
-import java.net.ConnectException;
-import java.nio.channels.ClosedChannelException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.ConnectException;
 import java.net.URI;
+import java.nio.channels.ClosedChannelException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -57,6 +54,7 @@ import java.util.Map;
 import static com.linkedin.d2.discovery.util.LogUtil.debug;
 
 // TODO if we ever want to get rid of ties to linkedin-specific code, we'll need to move/redo call tracker/call completion/degrader
+
 
 public class TrackerClient implements LoadBalancerClient
 {
@@ -98,14 +96,39 @@ public class TrackerClient implements LoadBalancerClient
       // The overrideDropRate will be globally determined by the DegraderLoadBalancerStrategy.
       config.setOverrideDropRate(0.0);
 
-
+      /* TrackerClient contains state for each partition, but they actually share the same DegraderImpl
+       *
+       * There used to be a deadlock if each partition has its own DegraderImpl:
+       * getStats() and rolloverStats() in DegraderImpl are both synchronized. getstats() will check whether
+       * the state is stale, and if yes a rollover event will be delivered which will call rolloverStats() in all
+       * DegraderImpl within this CallTracker. Therefore, when multiple threads are calling getStats() simultaneously,
+       * one thread may try to grab a lock which is already acquired by another.
+       *
+       * An example:
+       * Suppose we have two threads, and here is the execution sequence:
+       * 1. Thread 1 (DegraderImpl 1): grab its lock, enter getStats()
+       * 2. Thread 2 (DegraderImpl 2): grab its lock, enter getStats()
+       * 3. Thread 1: PendingEvent is delivered to all registered StatsRolloverEventListener, so it will call rolloverStats()
+       *    in both DegraderImpl 1 and DegraderImpl 2. But the lock of DegraderImpl 2 has already been acquired by thread 2
+       * 4. Same happens for thread 2. Deadlock.
+       *
+       * Solution:
+       * Currently all DegraderImpl within the same CallTracker actually share exactly the same information,
+       * so we just use create one instance of DegraderImpl, and use it for all partitions.
+       *
+       * Pros and Cons:
+       * Deadlocks will be gone since there will be only one DegraderImpl.
+       * However, now it becomes harder to have different configurations for different partitions.
+       */
       int mapSize = partitionDataMap.size();
       Map<Integer, PartitionState>partitionStates = new HashMap<Integer, PartitionState>(mapSize * 2);
+      config.setName("TrackerClient Degrader: " + uri);
+      DegraderImpl degrader = new DegraderImpl(config);
+      DegraderControl degraderControl = new DegraderControl(degrader);
       for (Map.Entry<Integer, PartitionData> entry : partitionDataMap.entrySet())
       {
         int partitionId = entry.getKey();
-        config.setName("TrackerClient Degrader: " + uri + ", partitionId: " + partitionId);
-        PartitionState partitionState = new PartitionState(entry.getValue(), config);
+        PartitionState partitionState = new PartitionState(entry.getValue(), degrader, degraderControl);
         partitionStates.put(partitionId, partitionState);
       }
       _partitionStates = Collections.unmodifiableMap(partitionStates);
@@ -245,11 +268,9 @@ public class TrackerClient implements LoadBalancerClient
     private final DegraderControl _degraderControl;
     private final PartitionData _partitionData;
 
-    PartitionState(PartitionData partitionData, Config config)
+    PartitionState(PartitionData partitionData, Degrader degrader, DegraderControl degraderControl)
     {
       _partitionData = partitionData;
-      DegraderImpl degrader = new DegraderImpl(config);
-      DegraderControl degraderControl = new DegraderControl(degrader);
       _degrader = degrader;
       _degraderControl = degraderControl;
     }

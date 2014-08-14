@@ -427,6 +427,44 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     return clusterItem.getProperty();
   }
 
+  /**
+   * returns all the partitions for the given serviceUri. For each partition, we return the number of
+   * hosts that belong to that partition.
+   * The order of the hosts for a partition is retained if the given hashProvider provided the same value
+   * In addition, if multiple hosts belong to the same set of partition S, then the hosts ordering will be identical
+   * in each partition.
+   *
+   * Example:
+   * We have a service d2://foo
+   * We have 3 servers: server1, server2, server3
+   * We have 3 partitions. 1,2,3. All the 3 servers above belong to all partitions.
+   * When we ask for getAllPartitionMultipleHosts("d2://foo", 3, someHashProvider);
+   * one theoretical possible result is
+   *
+   * {
+   *   partitionId 0 -> []
+   *   partitionId 1 -> [server1, server2, server3]
+   *   partitionId 2 -> [server2, server3, server1]
+   *   partitionId 3 -> [server2, server1, server3]
+   * }
+   *
+   * but we want to guarantee that the ordering of server for each partition will be the same because
+   * server1,2,3 all belongs to partition 1,2,3. So
+   * This is the expected result (notice the ordering of the servers are the same for partition 1,2,3)
+   *
+   * {
+   *   partitionId 0 -> []
+   *   partitionId 1 -> [server2, server3, server1]
+   *   partitionId 2 -> [server2, server3, server1]
+   *   partitionId 3 -> [server2, server3, server1]
+   * }
+   *
+   * @param serviceUri for example d2://articles
+   * @param numHostPerPartition Number of hosts to be returned for each partition
+   * @param hashProvider Hash provider to access elements of a ring
+   * @return
+   * @throws ServiceUnavailableException
+   */
   @Override
   public AllPartitionsMultipleHostsResult<URI> getAllPartitionMultipleHosts(URI serviceUri, int numHostPerPartition,
       HashProvider hashProvider)
@@ -456,29 +494,26 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       final LoadBalancerState.SchemeStrategyPair pair = orderedStrategies.get(0);
       final PartitionAccessor accessor = getPartitionAccessor(serviceName, clusterName);
       maxPartitionId = accessor.getMaxPartitionId();
+      int hash = hashProvider.nextHash();
       for (int partitionId = 0; partitionId <= maxPartitionId; partitionId++)
       {
         Set<URI> possibleUris = uris.getUriBySchemeAndPartition(pair.getScheme(), partitionId);
         List<TrackerClient> trackerClients = getPotentialClients(serviceName, service, possibleUris);
-        List<URI> rankedUri = new ArrayList<URI>();
         int size = trackerClients.size() <= numHostPerPartition ? trackerClients.size() : numHostPerPartition;
+        List<URI> rankedUri = new ArrayList<URI>(size);
 
         Ring<URI> ring = pair.getStrategy().getRing(uriItem.getVersion(), partitionId, trackerClients);
+        Iterator<URI> iterator = ring.getIterator(hash);
 
-        for (int i = 0; i < size; i++)
+        while (iterator.hasNext() && rankedUri.size() < size)
         {
-          URI uri = ring.get(hashProvider.nextHash());
-          if (uri == null)
+          URI uri = iterator.next();
+          if (!rankedUri.contains(uri))
           {
-            //that means there is no longer valid URI in the ring
-            break;
-          }
-          rankedUri.add(uri);
-          if (rankedUri.size() < trackerClients.size())
-          {
-            ring = pair.getStrategy().getRing(uriItem.getVersion(), partitionId, trackerClients, rankedUri);
+            rankedUri.add(uri);
           }
         }
+
         hostList.put(partitionId, rankedUri);
         if (rankedUri.size() < numHostPerPartition)
         {
@@ -493,6 +528,40 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     return new AllPartitionsMultipleHostsResult<URI>(hostList, maxPartitionId + 1, partitionWithoutEnoughHost);
   }
 
+  /**
+   * maps keys to partitions and also return the servers that belongs to that partition up to limitHostPerPartition.
+   * The order of the hosts for a partition is retained if the given hashProvider provided the same value
+   * In addition, if multiple hosts belong to the same set of partition S, then the hosts ordering will be identical
+   * in each partition.
+   *
+   * Example:
+   * We have 3 servers: server1, server2, server3
+   * We have 3 partitions. 1,2,3. All the 3 servers above belong to all partitions.
+   * We have 3 data: 1,2,3. Data 1 belongs to partition 1. Data 2 belongs to partition 2, Data 3 belongs to partition 3.
+   * When we ask for partitionInfo one theoretical possible result is:
+   *
+   * {
+   *   partitionId 1 -> [data1], [server1, server2, server3]
+   *   partitionId 2 -> [data2], [server2, server3, server1]
+   *   partitionId 3 -> [data3], [server2, server1, server3]
+   * }
+   *
+   * But we want to guarantee the ordering of servers (notice the ordering of the servers are the same for partition 1,2,3)
+   *
+   * {
+   *   partitionId 1 -> [data1], [server2, server3, server1]
+   *   partitionId 2 -> [data2], [server2, server3, server1]
+   *   partitionId 3 -> [data3], [server2, server3, server1]
+   * }
+   *
+   * @param serviceUri for example d2://articles
+   * @param keys all the keys we want to find the partition for
+   * @param limitHostPerPartition the number of hosts that we should return for this partition. Must be larger than 0.
+   * @param hashProvider this will be used to help determine the host uri that we return
+   * @param <K>
+   * @return
+   * @throws ServiceUnavailableException
+   */
   @Override
   public <K> MapKeyHostPartitionResult<K> getPartitionInformation(URI serviceUri, Collection<K> keys,
                                                                         int limitHostPerPartition,
@@ -551,31 +620,29 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
 
       Collection<Integer> partitionWithoutEnoughHost = new HashSet<Integer>();
 
+      int hash = hashProvider.nextHash();
+
       //get the partitionId -> host URIs list
       Map<Integer, List<URI>> hostList = new HashMap<Integer, List<URI>>();
       for (Integer partitionId : partitionSet.keySet())
       {
         Set<URI> possibleUris = uris.getUriBySchemeAndPartition(pair.getScheme(), partitionId);
         List<TrackerClient> trackerClients = getPotentialClients(serviceName, service, possibleUris);
-        List<URI> rankedUri = new ArrayList<URI>();
         int size = trackerClients.size() <= limitHostPerPartition ? trackerClients.size() : limitHostPerPartition;
+        List<URI> rankedUri = new ArrayList<URI>(size);
 
         Ring<URI> ring = pair.getStrategy().getRing(uriItem.getVersion(), partitionId, trackerClients);
+        Iterator<URI> iterator = ring.getIterator(hash);
 
-        for (int i = 0; i < size; i++)
+        while (iterator.hasNext() && rankedUri.size() < size)
         {
-          URI uri = ring.get(hashProvider.nextHash());
-          if (uri == null)
+          URI uri = iterator.next();
+          if (!rankedUri.contains(uri))
           {
-            //that means there is no longer valid URI in the ring
-            break;
-          }
-          rankedUri.add(uri);
-          if (rankedUri.size() < trackerClients.size())
-          {
-            ring = pair.getStrategy().getRing(uriItem.getVersion(), partitionId, trackerClients, rankedUri);
+            rankedUri.add(uri);
           }
         }
+
         hostList.put(partitionId, rankedUri);
         if (rankedUri.size() < limitHostPerPartition)
         {

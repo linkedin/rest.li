@@ -1,6 +1,31 @@
+1.22.1
+------
+(RB=347094) 
+change getPartitionInformation so the ordering of the server will be consistent for identical hashrings
+
+1.22.0
+------
+(RB=346821)
+allows client to change r2 client pool waiter size
+
+(RB=344020)
+Adding logic to throw exception if BatchGetRequestBuilder.batch methods are called for requests with Compound or Complex Keys.
+
+1.21.2
+------
+(RB=345140)
+Unit test and the fix for the DegraderImpl rollver deadlock
+
 1.21.1
 ------
+(RB=339157)
+Add new API to Ring: getIterator()
 
+(RB=344866)
+Fixing Java 7 Build.
+
+(RB=337425)
+Changing the protocol version to 1.0 in those places we want 1.0 instead of baseline such as deprecated code paths.
 
 1.21.0
 ------
