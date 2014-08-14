@@ -104,6 +104,7 @@ public class RestClient
   private static final PsonDataCodec     PSON_DATA_CODEC    = new PsonDataCodec();
   private static final List<AcceptType>  DEFAULT_ACCEPT_TYPES = Collections.emptyList();
   private static final ContentType DEFAULT_CONTENT_TYPE = ContentType.JSON;
+  private static final Random RANDOM_INSTANCE = new Random();
 
   private final Client _client;
   private final String _uriPrefix;
@@ -310,7 +311,7 @@ public class RestClient
     {
       int announceVersionPercentage = Integer.parseInt(potentialAnnouncedVersionPercentage.toString());
       // if server announces percentage between 1 to 100 which is also below or equal to the generated probability, then we return announced version else the baseline
-      return (announceVersionPercentage > 0 && announceVersionPercentage <= 100 && new Random().nextInt(100) + 1 <= announceVersionPercentage) ?
+      return (announceVersionPercentage > 0 && announceVersionPercentage <= 100 && RANDOM_INSTANCE.nextInt(100) + 1 <= announceVersionPercentage) ?
           new ProtocolVersion(potentialAnnouncedVersion.toString()) : AllProtocolVersions.BASELINE_PROTOCOL_VERSION;
     }
     catch(NumberFormatException e)
