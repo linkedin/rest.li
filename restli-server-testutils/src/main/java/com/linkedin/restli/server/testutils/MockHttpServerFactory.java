@@ -64,7 +64,6 @@ public class MockHttpServerFactory
   {
     RestLiConfig restLiConfig = new RestLiConfig();
     restLiConfig.setServerNodeUri(URI.create(LOCALHOST + port));
-    restLiConfig.setRestliProtocolCheck(RestLiConfig.RestliProtocolCheck.RELAXED);
     restLiConfig.setDocumentationRequestHandler(new DefaultDocumentationRequestHandler());
     return restLiConfig;
   }

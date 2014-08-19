@@ -197,17 +197,12 @@ public class RestLiServer extends BaseRestServer
   }
 
   /**
-   * Ensures that the Rest.li protocol version used by the client is valid based on the config.
+   * Ensures that the Rest.li protocol version used by the client is valid
    *
    * (assume the protocol version used by the client is "v")
    *
-   * If we are using {@link com.linkedin.restli.server.RestLiConfig.RestliProtocolCheck#STRICT} then
-   * {@link AllProtocolVersions#BASELINE_PROTOCOL_VERSION} <= v <=
-   * {@link AllProtocolVersions#LATEST_PROTOCOL_VERSION}
-   *
-   * If we are using {@link com.linkedin.restli.server.RestLiConfig.RestliProtocolCheck#RELAXED}
-   * then {@link AllProtocolVersions#BASELINE_PROTOCOL_VERSION} <= v <=
-   * {@link AllProtocolVersions#NEXT_PROTOCOL_VERSION}
+   * v is valid if {@link com.linkedin.restli.internal.common.AllProtocolVersions#OLDEST_SUPPORTED_PROTOCOL_VERSION}
+   * <= v <= {@link com.linkedin.restli.internal.common.AllProtocolVersions#NEXT_PROTOCOL_VERSION}
    *
    * @param request
    *          the incoming request from the client
@@ -219,11 +214,7 @@ public class RestLiServer extends BaseRestServer
   {
     ProtocolVersion clientProtocolVersion = ProtocolVersionUtil.extractProtocolVersion(request.getHeaders());
     ProtocolVersion lowerBound = AllProtocolVersions.OLDEST_SUPPORTED_PROTOCOL_VERSION;
-    ProtocolVersion upperBound = AllProtocolVersions.LATEST_PROTOCOL_VERSION;
-    if (_config.getRestliProtocolCheck() == RestLiConfig.RestliProtocolCheck.RELAXED)
-    {
-      upperBound = AllProtocolVersions.NEXT_PROTOCOL_VERSION;
-    }
+    ProtocolVersion upperBound = AllProtocolVersions.NEXT_PROTOCOL_VERSION;
     if (!isSupportedProtocolVersion(clientProtocolVersion, lowerBound, upperBound))
     {
       throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, "Rest.li protocol version "

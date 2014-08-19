@@ -43,7 +43,6 @@ import com.linkedin.restli.server.test.EasyMockResourceFactory;
 import com.linkedin.restli.server.twitter.AsyncStatusCollectionResource;
 import com.linkedin.restli.server.twitter.StatusCollectionResource;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Status;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -52,7 +51,6 @@ import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-
 import org.apache.commons.io.IOUtils;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
@@ -82,7 +80,6 @@ public class TestRestLiServer
 
   private RestLiServer _server;
   private RestLiServer _serverWithFilters;
-  private RestLiServer _serverWithStrictProtocolCheck;
   private RestLiServer _serverWithCustomErrorResponseConfig; // configured different than server
   private EasyMockResourceFactory _resourceFactory;
   private RequestFilter _mockRequestFilter;
@@ -98,17 +95,7 @@ public class TestRestLiServer
     setUpServer(fakeEngine);
     setupServerWithFilters(fakeEngine);
     setupServerWithCustomErrorResponseConfig(fakeEngine);
-    setupServerWithStrictProtocolCheck(fakeEngine);
     EasyMock.replay(fakeEngine);
-  }
-
-  private void setupServerWithStrictProtocolCheck(Engine fakeEngine)
-  {
-    RestLiConfig strictConfig = new RestLiConfig(); // default is to use STRICT checking
-    strictConfig.addResourcePackageNames("com.linkedin.restli.server.twitter");
-    strictConfig.addRequestFilter(_mockRequestFilter);
-    strictConfig.addResponseFilter(_mockResponseFilter);
-    _serverWithStrictProtocolCheck = new RestLiServer(strictConfig, _resourceFactory, fakeEngine);
   }
 
   private void setupServerWithCustomErrorResponseConfig(Engine fakeEngine)
@@ -117,7 +104,6 @@ public class TestRestLiServer
     customErrorResponseConfig.addResourcePackageNames("com.linkedin.restli.server.twitter");
     customErrorResponseConfig.setErrorResponseFormat(ErrorResponseFormat.MESSAGE_AND_DETAILS);
     customErrorResponseConfig.setInternalErrorMessage("kthxbye.");
-    customErrorResponseConfig.setRestliProtocolCheck(RestLiConfig.RestliProtocolCheck.RELAXED);
     _serverWithCustomErrorResponseConfig = new RestLiServer(customErrorResponseConfig, _resourceFactory, fakeEngine);
   }
 
@@ -134,7 +120,6 @@ public class TestRestLiServer
   {
     RestLiConfig config = new RestLiConfig();
     config.addResourcePackageNames("com.linkedin.restli.server.twitter");
-    config.setRestliProtocolCheck(RestLiConfig.RestliProtocolCheck.RELAXED);
     _resourceFactory  = new EasyMockResourceFactory();
 
     RestLiDebugRequestHandler debugRequestHandlerA = new RestLiDebugRequestHandler()
@@ -220,11 +205,6 @@ public class TestRestLiServer
   {
     return new Object[][]
         {
-            // strict checking
-            { _serverWithStrictProtocolCheck, AllProtocolVersions.BASELINE_PROTOCOL_VERSION },
-            { _serverWithStrictProtocolCheck, AllProtocolVersions.LATEST_PROTOCOL_VERSION },
-
-            // relaxed checking
             { _server, AllProtocolVersions.BASELINE_PROTOCOL_VERSION },
             { _server, AllProtocolVersions.LATEST_PROTOCOL_VERSION },
             { _server, AllProtocolVersions.NEXT_PROTOCOL_VERSION }
@@ -240,11 +220,6 @@ public class TestRestLiServer
 
     return new Object[][]
         {
-            // strict checking
-            { _serverWithStrictProtocolCheck, AllProtocolVersions.NEXT_PROTOCOL_VERSION },
-            { _serverWithStrictProtocolCheck, new ProtocolVersion(0, 0, 0) },
-
-            // relaxed checking
             { _server, greaterThanNext },
             { _server, new ProtocolVersion(0, 0, 0) }
         };

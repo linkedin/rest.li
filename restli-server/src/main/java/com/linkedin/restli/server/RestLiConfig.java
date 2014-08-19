@@ -39,6 +39,12 @@ import java.util.Set;
  */
 public class RestLiConfig
 {
+  /**
+   * @deprecated There is no longer a notion of strict v.s. relaxed checking. The only check is that the version used
+   * by the client is between {@link com.linkedin.restli.internal.common.AllProtocolVersions#OLDEST_SUPPORTED_PROTOCOL_VERSION}
+   *  and {@link com.linkedin.restli.internal.common.AllProtocolVersions#NEXT_PROTOCOL_VERSION}
+   */
+  @Deprecated
   public static enum RestliProtocolCheck
   {
     /**
@@ -249,6 +255,13 @@ public class RestLiConfig
     _permissiveEncoding = permissiveEncoding;
   }
 
+  /**
+   * @deprecated There is no longer a notion of strict v.s. relaxed checking. The only check is that the version used
+   * by the client is between {@link com.linkedin.restli.internal.common.AllProtocolVersions#OLDEST_SUPPORTED_PROTOCOL_VERSION}
+   *  and {@link com.linkedin.restli.internal.common.AllProtocolVersions#NEXT_PROTOCOL_VERSION}
+   * @param restliProtocolCheck
+   */
+  @Deprecated
   public void setRestliProtocolCheck(RestliProtocolCheck restliProtocolCheck)
   {
     if (restliProtocolCheck == null)
@@ -258,6 +271,12 @@ public class RestLiConfig
     _restliProtocolCheck = restliProtocolCheck;
   }
 
+  /**
+   * @deprecated There is no longer a notion of strict v.s. relaxed checking. The only check is that the version used
+   * by the client is between {@link com.linkedin.restli.internal.common.AllProtocolVersions#OLDEST_SUPPORTED_PROTOCOL_VERSION}
+   *  and {@link com.linkedin.restli.internal.common.AllProtocolVersions#NEXT_PROTOCOL_VERSION}
+   */
+  @Deprecated
   public RestliProtocolCheck getRestliProtocolCheck()
   {
     return _restliProtocolCheck;
