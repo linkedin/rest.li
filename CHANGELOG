@@ -1,5 +1,8 @@
 1.23.2
 ------
+(RB=353147)
+RestliRequestUriSignature: Handle assocKey for FindRequest and GetAllRequest.
+MockActionResponseFactory: Add option to support dynamic schema, such as CollectionResponse.
 
 1.23.1
 ------

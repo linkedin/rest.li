@@ -17,8 +17,8 @@
 package com.linkedin.restli.common.testutils;
 
 
+import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
-import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.data.template.FieldDef;
@@ -38,23 +38,31 @@ public class MockActionResponseFactory
 
   /**
    * Create an {@link ActionResponse} with specified value class and data.
+   * The schema is retrieved from the response class with {@link DataTemplateUtil}.getSchema().
    *
    * @param clazz value class of the response
    * @param value value data of the response
    * @param <T> type of the value class
    * @return mocked {@link ActionResponse}
    */
-  public static <T extends DataTemplate<?>> ActionResponse<T> create(Class<T> clazz, T value)
+  public static <T> ActionResponse<T> create(Class<T> clazz, T value)
   {
-    final FieldDef<T> fieldDef = new FieldDef<T>(ActionResponse.VALUE_NAME, clazz, DataTemplateUtil.getSchema(clazz));
+    return create(clazz, DataTemplateUtil.getSchema(clazz), value);
+  }
+
+  /**
+   * Create an {@link ActionResponse} with specified value class and data.
+   *
+   * @param clazz value class of the response
+   * @param schema schema of the response
+   * @param value value data of the response
+   * @param <T> type of the value class
+   * @return mocked {@link ActionResponse}
+   */
+  public static <T> ActionResponse<T> create(Class<T> clazz, DataSchema schema, T value)
+  {
+    final FieldDef<T> fieldDef = new FieldDef<T>(ActionResponse.VALUE_NAME, clazz, schema);
     final RecordDataSchema entitySchema = DynamicRecordMetadata.buildSchema(ActionResponse.class.getName(), Collections.<FieldDef<?>>singletonList(fieldDef));
-    if (value == null)
-    {
-      return new ActionResponse<T>(fieldDef, entitySchema);
-    }
-    else
-    {
-      return new ActionResponse<T>(value, fieldDef, entitySchema);
-    }
+    return new ActionResponse<T>(value, fieldDef, entitySchema);
   }
 }

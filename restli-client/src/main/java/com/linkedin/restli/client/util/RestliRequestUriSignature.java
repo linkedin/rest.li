@@ -18,10 +18,13 @@ package com.linkedin.restli.client.util;
 
 
 import com.linkedin.restli.client.DeleteRequest;
+import com.linkedin.restli.client.FindRequest;
+import com.linkedin.restli.client.GetAllRequest;
 import com.linkedin.restli.client.GetRequest;
 import com.linkedin.restli.client.PartialUpdateRequest;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.UpdateRequest;
+import com.linkedin.restli.common.CompoundKey;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -130,6 +133,16 @@ public class RestliRequestUriSignature
     else if (request instanceof DeleteRequest)
     {
       _id = ((DeleteRequest) request).getId();
+    }
+    else if (request instanceof FindRequest)
+    {
+      final CompoundKey assocKey = ((FindRequest) request).getAssocKey();
+      _id = assocKey.getNumParts() == 0 ? null : assocKey;
+    }
+    else if (request instanceof GetAllRequest)
+    {
+      final CompoundKey assocKey = ((GetAllRequest) request).getAssocKey();
+      _id = assocKey.getNumParts() == 0 ? null : assocKey;
     }
     else
     {

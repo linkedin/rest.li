@@ -20,6 +20,7 @@ package com.linkedin.restli.common.testutils;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.restli.common.ActionResponse;
+import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.test.RecordTemplateWithDefaultValue;
 
 import org.testng.Assert;
@@ -32,7 +33,7 @@ import org.testng.annotations.Test;
 public class TestMockActionResponseFactory
 {
   @Test
-  public void test()
+  public void testInference()
   {
     final RecordTemplateWithDefaultValue record = new RecordTemplateWithDefaultValue();
     record.setId(42L);
@@ -43,7 +44,26 @@ public class TestMockActionResponseFactory
     Assert.assertEquals(response.getValue(), record);
 
     final RecordDataSchema schema = response.schema();
-    Assert.assertEquals(schema.getName(), "ActionResponse");
+    Assert.assertEquals(schema.getName(), ActionResponse.class.getSimpleName());
     Assert.assertEquals(schema.getField(ActionResponse.VALUE_NAME).getType(), DataTemplateUtil.getSchema(RecordTemplateWithDefaultValue.class));
+  }
+
+  @Test
+  public void testDynamicSchema()
+  {
+    final RecordTemplateWithDefaultValue record = new RecordTemplateWithDefaultValue();
+    record.setId(42L);
+    record.setMessage("Lorem ipsum");
+
+    final CollectionResponse<RecordTemplateWithDefaultValue> collectionResponse = new CollectionResponse<RecordTemplateWithDefaultValue>(RecordTemplateWithDefaultValue.class);
+    collectionResponse.getElements().add(record);
+    final ActionResponse<CollectionResponse> response =
+      MockActionResponseFactory.create(CollectionResponse.class, collectionResponse.schema(), collectionResponse);
+
+    Assert.assertEquals(response.getValue(), collectionResponse);
+
+    final RecordDataSchema schema = response.schema();
+    Assert.assertEquals(schema.getName(), ActionResponse.class.getSimpleName());
+    Assert.assertEquals(schema.getField(ActionResponse.VALUE_NAME).getType(), collectionResponse.schema());
   }
 }
