@@ -57,8 +57,10 @@ public class TestMockActionResponseFactory
 
     final CollectionResponse<RecordTemplateWithDefaultValue> collectionResponse = new CollectionResponse<RecordTemplateWithDefaultValue>(RecordTemplateWithDefaultValue.class);
     collectionResponse.getElements().add(record);
-    final ActionResponse<CollectionResponse> response =
-      MockActionResponseFactory.create(CollectionResponse.class, collectionResponse.schema(), collectionResponse);
+    @SuppressWarnings("unchecked")
+    final ActionResponse<CollectionResponse<RecordTemplateWithDefaultValue>> response =
+      (ActionResponse<CollectionResponse<RecordTemplateWithDefaultValue>>) (Object)
+          MockActionResponseFactory.create(CollectionResponse.class, collectionResponse.schema(), collectionResponse);
 
     Assert.assertEquals(response.getValue(), collectionResponse);
 
