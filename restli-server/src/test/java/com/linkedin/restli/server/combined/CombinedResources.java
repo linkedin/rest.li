@@ -47,7 +47,6 @@ import com.linkedin.restli.server.annotations.RestAnnotations;
 import com.linkedin.restli.server.annotations.RestLiActions;
 import com.linkedin.restli.server.annotations.RestLiAssociation;
 import com.linkedin.restli.server.annotations.RestLiCollection;
-import com.linkedin.restli.server.annotations.RestLiCollectionCompoundKey;
 import com.linkedin.restli.server.annotations.RestLiSimpleResource;
 import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.combined.CombinedTestDataModels.DummyKeyPart;
@@ -209,23 +208,6 @@ public class CombinedResources
     public Foo get()
     {
       return null;
-    }
-  }
-
-  @RestLiCollectionCompoundKey(name="compoundKeyCollection",
-                    keys={@Key(name="key1", type=Long.class), @Key(name="key2", type=String.class)})
-  public static class CompoundKeyCollection extends CollectionResourceTemplate<CompoundKey, Foo>
-  {
-    @Override
-    public Foo get(CompoundKey key)
-    {
-      return null;
-    }
-
-    @Override
-    public CreateResponse create(Foo entity)
-    {
-      return super.create(entity);
     }
   }
 

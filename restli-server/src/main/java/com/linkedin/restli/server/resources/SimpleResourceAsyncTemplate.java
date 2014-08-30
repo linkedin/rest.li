@@ -22,11 +22,14 @@ import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.UpdateResponse;
+import com.linkedin.restli.server.annotations.RestLiSimpleResource;
+import com.linkedin.restli.server.annotations.RestLiTemplate;
 
 
 /**
  *  Base {@link SimpleResourceAsync} implementation. All implementations should extend this.
  */
+@RestLiTemplate(expectedAnnotation = RestLiSimpleResource.class)
 public class SimpleResourceAsyncTemplate<V extends RecordTemplate>
     extends ResourceContextHolder implements SimpleResourceAsync<V>
 {

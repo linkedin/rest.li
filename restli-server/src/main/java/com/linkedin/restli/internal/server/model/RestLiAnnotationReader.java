@@ -71,8 +71,8 @@ import com.linkedin.restli.server.annotations.RestAnnotations;
 import com.linkedin.restli.server.annotations.RestLiActions;
 import com.linkedin.restli.server.annotations.RestLiAssociation;
 import com.linkedin.restli.server.annotations.RestLiCollection;
-import com.linkedin.restli.server.annotations.RestLiCollectionCompoundKey;
 import com.linkedin.restli.server.annotations.RestLiSimpleResource;
+import com.linkedin.restli.server.annotations.RestLiTemplate;
 import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.resources.ComplexKeyResource;
 import com.linkedin.restli.server.resources.ComplexKeyResourceAsync;
@@ -123,9 +123,10 @@ public final class RestLiAnnotationReader
   {
     final ResourceModel model;
 
+    checkAnnotation(resourceClass);
+
     if ((resourceClass.isAnnotationPresent(RestLiCollection.class) ||
-         resourceClass.isAnnotationPresent(RestLiAssociation.class) ||
-         resourceClass.isAnnotationPresent(RestLiCollectionCompoundKey.class)))
+         resourceClass.isAnnotationPresent(RestLiAssociation.class)))
     {
       // If any of these annotations, a subclass of KeyValueResource is expected
       if (!KeyValueResource.class.isAssignableFrom(resourceClass))
@@ -162,6 +163,44 @@ public final class RestLiAnnotationReader
 
     model.setCustomAnnotation(annotationsMap);
     return model;
+  }
+
+  /**
+   * Check if resourceClass is annotated with the expected annotation of its template class,
+   * expressed in the {@link RestLiTemplate} annotation.
+   */
+  private static void checkAnnotation(final Class<?> resourceClass)
+  {
+    Class templateClass = resourceClass;
+    while (templateClass != Object.class)
+    {
+      templateClass = templateClass.getSuperclass();
+
+      final RestLiTemplate templateAnnotation = (RestLiTemplate) templateClass.getAnnotation(RestLiTemplate.class);
+      if (templateAnnotation != null)
+      {
+        final Class<? extends Annotation> currentExpect = templateAnnotation.expectedAnnotation();
+        if (currentExpect == RestLiCollection.class ||
+            currentExpect == RestLiAssociation.class ||
+            currentExpect == RestLiSimpleResource.class)
+        {
+          if (resourceClass.getAnnotation(currentExpect) == null)
+          {
+            throw new ResourceConfigException(resourceClass.getName() + " is not annotated with "
+              + currentExpect.getName() + ", expected by " + templateClass.getName());
+          }
+          else
+          {
+            return;
+          }
+        }
+        else
+        {
+          throw new ResourceConfigException("Unknown expected annotation " + currentExpect.getName()
+            + " from " + templateClass.getName());
+        }
+      }
+    }
   }
 
   private static DataMap addDeprecatedAnnotation(DataMap annotationsMap, Class<?> clazz)
@@ -255,11 +294,6 @@ public final class RestLiAnnotationReader
     {
       annotationData =
           new RestLiAnnotationData(collectionResourceClass.getAnnotation(RestLiCollection.class));
-    }
-    else if (collectionResourceClass.isAnnotationPresent(RestLiCollectionCompoundKey.class))
-    {
-      annotationData =
-          new RestLiAnnotationData(collectionResourceClass.getAnnotation(RestLiCollectionCompoundKey.class));
     }
     else if (collectionResourceClass.isAnnotationPresent(RestLiAssociation.class))
     {
@@ -368,8 +402,6 @@ public final class RestLiAnnotationReader
   private static ResourceType getResourceType(final Class<?> resourceClass)
   {
     RestLiCollection collAnno = resourceClass.getAnnotation(RestLiCollection.class);
-    RestLiCollectionCompoundKey collCKAnno =
-        resourceClass.getAnnotation(RestLiCollectionCompoundKey.class);
     RestLiAssociation assocAnno = resourceClass.getAnnotation(RestLiAssociation.class);
     RestLiSimpleResource simpleResourceAnno = resourceClass.getAnnotation(RestLiSimpleResource.class);
 
@@ -381,7 +413,6 @@ public final class RestLiAnnotationReader
 
     int annoCount = 0;
     annoCount += collAnno != null ? 1 : 0;
-    annoCount += collCKAnno != null ? 1 : 0;
     annoCount += assocAnno != null ? 1 : 0;
     annoCount += simpleResourceAnno != null ? 1 : 0;
 
@@ -390,7 +421,7 @@ public final class RestLiAnnotationReader
       throw new ResourceConfigException("Class '" + resourceClass.getName()
           + "' is annotated " + "with too many RestLi annotations");
     }
-    else if (collAnno != null || collCKAnno != null)
+    else if (collAnno != null)
     {
       return ResourceType.COLLECTION;
     }
@@ -407,7 +438,6 @@ public final class RestLiAnnotationReader
       throw new ResourceConfigException("Class '" + resourceClass.getName()
           + "' should be annotated " + "with '" + RestLiAssociation.class.getName() + "'"
           + " or '" + RestLiCollection.class.getName() + "'" + " or '"
-          + RestLiCollectionCompoundKey.class.getName() + "'"+ " or '"
           + RestLiSimpleResource.class.getName() + "'");
     }
   }

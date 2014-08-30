@@ -498,15 +498,6 @@ public class TestRestLiResourceModels
     }
   }
 
-
-  @Test
-  public void testCollectionCompoundKey()
-  {
-    ResourceModel model = buildResourceModel(CombinedResources.CompoundKeyCollection.class);
-    checkCollectionModel(model, "compoundKeyCollection", CompoundKey.class, "compoundKeyCollectionId", Foo.class, false,
-                         CombinedResources.CompoundKeyCollection.class);
-  }
-  
   @Test
   public void testCollectionComplexKey()
   {

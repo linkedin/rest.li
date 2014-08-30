@@ -16,22 +16,24 @@
 
 package com.linkedin.restli.server.resources;
 
-import com.linkedin.restli.server.BatchDeleteRequest;
-import com.linkedin.restli.server.BatchPatchRequest;
-import com.linkedin.restli.server.BatchUpdateRequest;
-import com.linkedin.restli.server.BatchUpdateResult;
-import com.linkedin.restli.server.PagingContext;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.PatchRequest;
+import com.linkedin.restli.server.BatchDeleteRequest;
+import com.linkedin.restli.server.BatchPatchRequest;
+import com.linkedin.restli.server.BatchUpdateRequest;
+import com.linkedin.restli.server.BatchUpdateResult;
+import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.UpdateResponse;
+import com.linkedin.restli.server.annotations.RestLiAssociation;
+import com.linkedin.restli.server.annotations.RestLiTemplate;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -40,6 +42,7 @@ import com.linkedin.restli.server.UpdateResponse;
  *
  * @author femekci
  */
+@RestLiTemplate(expectedAnnotation = RestLiAssociation.class)
 public class AssociationResourceAsyncTemplate<V extends RecordTemplate> extends
     ResourceContextHolder implements AssociationResourceAsync<V>
 {

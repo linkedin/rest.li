@@ -1,6 +1,8 @@
 1.23.3
 ------
-
+(RB=356010)
+Update RestLiAnnotationReader to check if a resource' annotation matches its template type.
+Remove RestLiCollectionCompoundKey as it is not used.
 
 1.23.2
 ------

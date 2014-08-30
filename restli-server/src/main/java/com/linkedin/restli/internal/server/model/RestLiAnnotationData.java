@@ -25,7 +25,6 @@ import com.linkedin.restli.server.annotations.Key;
 import com.linkedin.restli.server.annotations.RestAnnotations;
 import com.linkedin.restli.server.annotations.RestLiAssociation;
 import com.linkedin.restli.server.annotations.RestLiCollection;
-import com.linkedin.restli.server.annotations.RestLiCollectionCompoundKey;
 import com.linkedin.restli.server.annotations.RestLiSimpleResource;
 
 /**
@@ -53,19 +52,6 @@ public class RestLiAnnotationData
     _keys = null;
     _keyName = RestAnnotations.DEFAULT.equals(collectionAnno.keyName()) ? null : collectionAnno.keyName();
     _typerefInfoClass = RestAnnotations.NULL_TYPEREF_INFO.class.equals(collectionAnno.keyTyperefClass()) ? null : collectionAnno.keyTyperefClass();
-  }
-
-  /**
-   * @param collectionAnno {@link RestLiCollectionCompoundKey} annotation
-   */
-  public RestLiAnnotationData(RestLiCollectionCompoundKey collectionAnno)
-  {
-    _parent = collectionAnno.parent();
-    _name = collectionAnno.name();
-    _namespace = collectionAnno.namespace();
-    _keys = collectionAnno.keys();
-    _keyName = null;
-    _typerefInfoClass = null;
   }
 
   /**

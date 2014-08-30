@@ -17,26 +17,29 @@
 package com.linkedin.restli.server.resources;
 
 
+import com.linkedin.common.callback.Callback;
+import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.common.ComplexResourceKey;
+import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.server.BatchCreateRequest;
 import com.linkedin.restli.server.BatchCreateResult;
 import com.linkedin.restli.server.BatchDeleteRequest;
 import com.linkedin.restli.server.BatchPatchRequest;
 import com.linkedin.restli.server.BatchUpdateRequest;
 import com.linkedin.restli.server.BatchUpdateResult;
+import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.PagingContext;
+import com.linkedin.restli.server.RoutingException;
+import com.linkedin.restli.server.UpdateResponse;
+import com.linkedin.restli.server.annotations.RestLiCollection;
+import com.linkedin.restli.server.annotations.RestLiTemplate;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.linkedin.common.callback.Callback;
-import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.restli.common.ComplexResourceKey;
-import com.linkedin.restli.common.PatchRequest;
-import com.linkedin.restli.server.CreateResponse;
-import com.linkedin.restli.server.RoutingException;
-import com.linkedin.restli.server.UpdateResponse;
 
-
+@RestLiTemplate(expectedAnnotation = RestLiCollection.class)
 public class ComplexKeyResourceAsyncTemplate<K extends RecordTemplate, P extends RecordTemplate, V extends RecordTemplate> extends
     ResourceContextHolder implements ComplexKeyResourceAsync<K, P, V>
 {

@@ -16,9 +16,6 @@
 
 package com.linkedin.restli.server.resources;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.CompoundKey;
@@ -32,7 +29,12 @@ import com.linkedin.restli.server.BatchUpdateResult;
 import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.UpdateResponse;
+import com.linkedin.restli.server.annotations.RestLiAssociation;
+import com.linkedin.restli.server.annotations.RestLiTemplate;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -40,6 +42,7 @@ import com.linkedin.restli.server.UpdateResponse;
  *
  * @author dellamag
  */
+@RestLiTemplate(expectedAnnotation = RestLiAssociation.class)
 public class AssociationResourceTemplate<V extends RecordTemplate> extends
     ResourceContextHolder implements AssociationResource<V>
 {
