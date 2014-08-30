@@ -130,6 +130,14 @@ public class ResourceModelEncoder
      * @return method param documentation, or null if no documentation is available
      */
     String getParamDoc(Method method, String name);
+
+    /**
+     * Returns the documentation for the @return tag
+     *
+     * @param method resource {@link Method}
+     * @return Description of the @return tag
+     */
+    String getReturnDoc(Method method);
   }
 
   public static class NullDocsProvider implements DocsProvider
@@ -172,6 +180,12 @@ public class ResourceModelEncoder
 
     @Override
     public String getParamDoc(final Method method, final String name)
+    {
+      return null;
+    }
+
+    @Override
+    public String getReturnDoc(final Method method)
     {
       return null;
     }
@@ -659,10 +673,24 @@ public class ResourceModelEncoder
 
         action.setName(resourceMethodDescriptor.getActionName());
 
-        String doc = _docsProvider.getMethodDoc(resourceMethodDescriptor.getMethod());
-        if (doc != null)
+        //We have to construct the method doc for the action which includes the action return type
+        final String methodDoc = _docsProvider.getMethodDoc(resourceMethodDescriptor.getMethod());
+        if (methodDoc != null)
         {
-          action.setDoc(doc);
+          final StringBuilder methodDocBuilder = new StringBuilder(methodDoc.trim());
+          if (methodDocBuilder.length() > 0)
+          {
+            final String returnDoc = sanitizeDoc(_docsProvider.getReturnDoc(resourceMethodDescriptor.getMethod()));
+            if (returnDoc != null && !returnDoc.isEmpty())
+            {
+              methodDocBuilder.append("\n");
+              methodDocBuilder.append("Service Returns: ");
+              //Capitalize the first character
+              methodDocBuilder.append(returnDoc.substring(0, 1).toUpperCase());
+              methodDocBuilder.append(returnDoc.substring(1));
+            }
+          }
+          action.setDoc(methodDocBuilder.toString());
         }
 
         ParameterSchemaArray parameters = createParameters(resourceMethodDescriptor);
@@ -696,6 +724,30 @@ public class ResourceModelEncoder
       }
     }
     return actionsArray;
+  }
+
+  /**
+   * This method takes a Javadoc tag description and sanitizes it to do the following:
+   * 1. Remove all leading and trailing white space including \n and \t by calling trim().
+   * 2. Remove all superfluous whitespace between the words. This includes tabs and white spaces.
+   * 3. Preserves \n characters within the description itself.
+   *
+   * @param doc The text to sanitize
+   * @return The sanitized text
+   */
+  static String sanitizeDoc(final String doc)
+  {
+    if (doc != null)
+    {
+      //Remove all unnecessary whitespace including tabs. Note we can't use \s because it will chew
+      //up \n's which we need to preserve
+      String returnComment = doc.trim().replaceAll("[ \\t]+", " ");
+      //We should not allow a space to the right or left of a new line character
+      returnComment = returnComment.replace("\n ", "\n");
+      returnComment = returnComment.replace(" \n", "\n");
+      return returnComment;
+    }
+    return null;
   }
 
   private DataMap deprecateDocToAnnotationMap(String deprecatedDoc)

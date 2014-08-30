@@ -41,7 +41,7 @@
       },
       "actions" : [ {
         "name" : "action",
-        "doc" : "<p>An action.\n</p>",
+        "doc" : "<p>An action.\n</p>\nService Returns: <p>a string response\n</p>",
         "returns" : "string",
         "parameters" : [ {
           "name" : "param1",

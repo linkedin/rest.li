@@ -4,6 +4,9 @@
 Update RestLiAnnotationReader to check if a resource' annotation matches its template type.
 Remove RestLiCollectionCompoundKey as it is not used.
 
+(RB=356000)
+Introduce doc support for action return types.
+
 1.23.2
 ------
 (RB=353147)

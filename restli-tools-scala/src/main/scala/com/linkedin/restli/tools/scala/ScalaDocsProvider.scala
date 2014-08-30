@@ -86,6 +86,15 @@ class ScalaDocsProvider(classpath: Array[String]) extends DocsProvider {
 
   }
 
+  def getReturnDoc(method: Method): String = {
+    findMethod(method)
+            .flatMap(_.comment)
+            .flatMap(_.result)
+            .map(toDocString)
+            .orNull
+
+  }
+
   private def filterDocTemplates(templates:List[TemplateEntity with MemberEntity]):List[DocTemplateEntity] = {
     val matches = templates filter { template =>
       template.isDocTemplate && template.isClass

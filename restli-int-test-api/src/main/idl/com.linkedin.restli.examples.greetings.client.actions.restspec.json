@@ -74,7 +74,7 @@
       "returns" : "string"
     }, {
       "name" : "parseq",
-      "doc" : "Performs three \"slow\" tasks and collects the results. This uses the passed context\n parameter to execute tasks. The position of the context argument is arbitrary.",
+      "doc" : "Performs three \"slow\" tasks and collects the results. This uses the passed context\n parameter to execute tasks. The position of the context argument is arbitrary.\nService Returns: Concatenation of binary representation of a, all caps of b, and string value\nof c",
       "parameters" : [ {
         "name" : "a",
         "type" : "int"
@@ -88,7 +88,7 @@
       "returns" : "string"
     }, {
       "name" : "parseq2",
-      "doc" : "Performs three \"slow\" tasks and collects the results. This returns a task and lets\n the RestLi server invoke it.",
+      "doc" : "Performs three \"slow\" tasks and collects the results. This returns a task and lets\n the RestLi server invoke it.\nService Returns: Concatenation of binary representation of a, all caps of b, and string value\nof c",
       "parameters" : [ {
         "name" : "a",
         "type" : "int"

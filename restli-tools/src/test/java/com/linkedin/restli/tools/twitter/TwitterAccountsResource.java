@@ -38,6 +38,22 @@ public class TwitterAccountsResource
   {
   }
 
+  /**
+   * This is a sample Javadoc comment for an action. This method below takes in parameters that
+   * specify what accounts to close
+   *
+   * @return    
+   *                  
+   * a map that contains details about account closures.     This return description here is intentionally  
+   *  long     and poorly spaced in   between   
+   *      so that I can       make sure it shows up correctly in the restspec.json          
+   *
+   *
+   * @param emailAddresses Array of email addresses
+   * @param someFlag flag for some custom behavior
+   * @param options a map specifying some custom options
+   *
+   */
   @Action(name="closeAccounts")
   public StringMap closeAccounts(@ActionParam("emailAddresses") StringArray emailAddresses,
                                                  @ActionParam("someFlag") boolean someFlag,
@@ -55,11 +71,23 @@ public class TwitterAccountsResource
   {
   }
 
+  /**
+   * This is a another sample Javadoc comment for an action. This semi-poorly written java doc only has one character in the
+   * return description and uses a mixture of upper and lower case letters in the @return tag
+   *
+   * @ReTuRn ^
+   */
   @Action(name="spamTweets")
   public void spamTweets(@ActionParam("statuses") StringArray statuses)
   {
   }
 
+  /**
+   * This is a another sample Javadoc comment for an action. This poorly written java doc neglects to mention a return
+   * parameter description
+   *
+   * @return
+   */
   @Action(name="primitiveResponse")
   public int primitiveResponse()
   {

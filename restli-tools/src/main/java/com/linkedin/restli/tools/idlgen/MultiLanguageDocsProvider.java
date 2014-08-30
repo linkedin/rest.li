@@ -175,4 +175,18 @@ public class MultiLanguageDocsProvider implements DocsProvider
     }
     return null;
   }
+
+  @Override
+  public String getReturnDoc(Method method)
+  {
+    for (DocsProvider provider : _languageSpecificProviders)
+    {
+      String doc = provider.getReturnDoc(method);
+      if (doc != null)
+      {
+        return doc;
+      }
+    }
+    return null;
+  }
 }

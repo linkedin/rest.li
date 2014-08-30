@@ -192,6 +192,24 @@ public class DocletDocsProvider implements DocsProvider
     return null;
   }
 
+  @Override
+  public String getReturnDoc(Method method)
+  {
+    final MethodDoc methodDoc = RestLiDoclet.getMethodDoc(_docletId, method);
+    if (methodDoc != null)
+    {
+      for (Tag tag : methodDoc.tags())
+      {
+        if(tag.name().toLowerCase().equals("@return"))
+        {
+          return buildDoc(tag.text());
+        }
+      }
+    }
+
+    return null;
+  }
+
   private String buildDoc(String docText)
   {
     if (docText != null && !docText.isEmpty())
