@@ -35,11 +35,16 @@ import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorFactory;
 import com.linkedin.d2.balancer.zkfs.ZKFSUtil;
 import com.linkedin.d2.discovery.stores.PropertyStoreException;
+import com.linkedin.d2.discovery.stores.zk.SymlinkAwareZooKeeper;
 import com.linkedin.d2.discovery.stores.zk.ZKConnection;
 import com.linkedin.d2.discovery.stores.zk.ZKServer;
 import com.linkedin.d2.discovery.stores.zk.ZKTestUtil;
+import com.linkedin.d2.discovery.stores.zk.ZooKeeper;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperPermanentStore;
+import org.apache.zookeeper.AsyncCallback;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
@@ -59,6 +64,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
@@ -684,6 +691,94 @@ public class TestD2Config
     assertNull(getClusterProperties(_zkclient, "Cluster#1"));
     assertNull(getClusterProperties(_zkclient, "Cluster#2"));
 
+  }
+
+  @Test
+  public static void testWriteConfigDelta() throws Exception
+  {
+    // Upload config for the first time.
+    @SuppressWarnings("serial")
+    Map<String,List<String>> clustersData = new HashMap<String,List<String>>()
+    {{
+        put("cluster-a", Arrays.asList(new String[]{"service-1_a", "service-1_b"}));
+        put("cluster-b", Arrays.asList(new String[]{"service-2_a", "service-2_b"}));
+    }};
+    D2ConfigTestUtil d2Conf = new D2ConfigTestUtil(clustersData);
+    d2Conf.setUseDeltaWrite(true);
+    assertEquals(d2Conf.runDiscovery(_zkHosts), 0);
+
+    // Upload the same config with service-1_1 replaced with service-1_3.
+    //  - Duplicate services will not be rewritten.
+    //  - New service (service-1_3) will be added.
+    //  - Deleted service (service-1_1) will NOT be deleted.
+    // Therefore all clusters & services should be uploaded once after this step (aka all have version 1).
+    clustersData.put("cluster-a", Arrays.asList(new String[]{"service-1_b", "service-1_c"}));
+    d2Conf = new D2ConfigTestUtil(clustersData);
+    d2Conf.setUseDeltaWrite(true);
+    assertEquals(d2Conf.runDiscovery(_zkHosts), 0);
+
+    // Upload cluster-1 and service-1_1 again with new properties.
+    // They should both change to version 2 while others remain version 1.
+    //  - Rest of cluster-a's fields deleted.
+    //  - cluster-b deleted
+    //  - cluster-c added
+    @SuppressWarnings("serial")
+    Map<String,List<String>> modifiedClustersData = new HashMap<String,List<String>>()
+    {{
+        put("cluster-a", Arrays.asList(new String[]{"service-1_a"}));
+        put("cluster-c", Arrays.asList(new String[]{"service-3_a"}));
+    }};
+    d2Conf = new D2ConfigTestUtil(modifiedClustersData);
+    d2Conf.setUseDeltaWrite(true);
+    d2Conf.setServiceDefaults(Arrays.asList(new String[]{"degrader-new"}));
+    d2Conf.setClusterProperties(1001, 1002);
+    assertEquals(d2Conf.runDiscovery(_zkHosts), 0);
+
+    // Build map of path to expected version.
+    final HashMap<String, Integer> expectedVersionMap = new HashMap<String, Integer>();
+    expectedVersionMap.put("/d2/services/service-1_a", 2);
+    expectedVersionMap.put("/d2/services/service-1_b", 1);
+    expectedVersionMap.put("/d2/services/service-1_c", 1);
+    expectedVersionMap.put("/d2/services/service-2_a", 1);
+    expectedVersionMap.put("/d2/services/service-2_b", 1);
+    expectedVersionMap.put("/d2/services/service-3_a", 1);
+    expectedVersionMap.put("/d2/clusters/cluster-a", 2);
+    expectedVersionMap.put("/d2/clusters/cluster-b", 1);
+    expectedVersionMap.put("/d2/clusters/cluster-c", 1);
+
+    // Get actual version number for each path.
+    final HashMap<String, Integer> actualVersionMap = new HashMap<String, Integer>();
+    final CountDownLatch latch = new CountDownLatch(expectedVersionMap.size());
+    final AsyncCallback.StatCallback statCallback = new AsyncCallback.StatCallback()
+    {
+      @Override
+      public void processResult(int rc, String path, Object ctx, Stat stat)
+      {
+        KeeperException.Code code = KeeperException.Code.get(rc);
+        if (code == KeeperException.Code.OK)
+        {
+          actualVersionMap.put(path, stat.getVersion());
+          latch.countDown();
+        }
+      }
+    };
+
+    ZooKeeper zk = _zkclient.getZooKeeper();
+    for (String path : expectedVersionMap.keySet())
+    {
+      zk.exists(path, false, statCallback, null);
+    }
+
+    // Wait for expectedVersionMap to be populated.
+    if (!latch.await(5, TimeUnit.SECONDS))
+    {
+      fail("Unable to get stat for all paths.");
+    }
+
+    for (String path : expectedVersionMap.keySet())
+    {
+      assertEquals(actualVersionMap.get(path).intValue(), expectedVersionMap.get(path).intValue());
+    }
   }
 
   private static LoadBalancerEchoServer startEchoServer(int echoServerPort, String cluster,String... services) throws Exception

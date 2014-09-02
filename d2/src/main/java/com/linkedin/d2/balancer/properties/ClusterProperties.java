@@ -124,6 +124,7 @@ public class ClusterProperties
         prime * result
             + ((_prioritizedSchemes == null) ? 0 : _prioritizedSchemes.hashCode());
     result = prime * result + ((_properties == null) ? 0 : _properties.hashCode());
+    result = prime * result + ((_partitionProperties == null) ? 0 : _partitionProperties.hashCode());
     return result;
   }
 
@@ -165,6 +166,15 @@ public class ClusterProperties
     }
     else if (!_properties.equals(other._properties))
       return false;
+    if (_partitionProperties == null)
+    {
+      if (other._partitionProperties != null)
+        return false;
+    }
+    else if (!_partitionProperties.equals(other._partitionProperties))
+    {
+      return false;
+    }
 
     return true;
   }

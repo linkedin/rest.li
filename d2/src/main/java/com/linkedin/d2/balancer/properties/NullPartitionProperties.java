@@ -38,5 +38,4 @@ public class NullPartitionProperties implements PartitionProperties
   private NullPartitionProperties()
   {
   }
-
 }

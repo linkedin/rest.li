@@ -65,4 +65,40 @@ public class HashBasedPartitionProperties implements PartitionProperties
     return PartitionType.HASH;
   }
 
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj)
+    {
+      return true;
+    }
+    if (obj == null || getClass() != obj.getClass())
+    {
+      return false;
+    }
+    HashBasedPartitionProperties other = (HashBasedPartitionProperties) obj;
+    if (!_partitionKeyRegex.equals(other._partitionKeyRegex))
+    {
+      return false;
+    }
+    if (_partitionCount != other._partitionCount)
+    {
+      return false;
+    }
+    if (_hashAlgorithm != other._hashAlgorithm)
+    {
+      return false;
+    }
+    return true;
+  }
+
+  @Override
+  public int hashCode()
+  {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((_partitionKeyRegex == null) ? 0 : _partitionKeyRegex.hashCode());
+    result = prime * result + _partitionCount;
+    result = prime * result + ((_hashAlgorithm == null) ? 0 : _hashAlgorithm.hashCode());
+    return result;
+  }
 }

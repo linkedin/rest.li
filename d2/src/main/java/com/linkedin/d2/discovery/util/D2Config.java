@@ -31,7 +31,7 @@ import com.linkedin.d2.balancer.properties.util.PropertyUtil;
 import com.linkedin.d2.balancer.zkfs.ZKFSUtil;
 import com.linkedin.d2.discovery.PropertyBuilder;
 import com.linkedin.d2.discovery.PropertySerializer;
-import com.linkedin.d2.discovery.stores.zk.SymlinkUtil;
+import com.linkedin.d2.discovery.stores.zk.DeltaWriteZooKeeperPermanentStore;
 import com.linkedin.d2.discovery.stores.zk.ZKConnection;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperPermanentStore;
 import org.slf4j.Logger;
@@ -107,6 +107,7 @@ public class D2Config
   private final Map<String,Object> _serviceVariants;
   private final long _timeout;
   private final int _retryLimit;
+  private final boolean _useDeltaWrite;
 
   @SuppressWarnings("unchecked")
   public D2Config (String zkHosts, int sessionTimeout, String basePath,
@@ -117,6 +118,20 @@ public class D2Config
                          Map<String, Object> extraClusterServiceConfigurations,
                          Map<String, Object> serviceVariants)
   {
+    this(zkHosts, sessionTimeout, basePath, timeout, retryLimit, clusterDefaults, serviceDefaults,
+            clusterServiceConfigurations, extraClusterServiceConfigurations, serviceVariants, false);
+  }
+
+  @SuppressWarnings("unchecked")
+  public D2Config (String zkHosts, int sessionTimeout, String basePath,
+                   long timeout, int retryLimit,
+                   Map<String, Object> clusterDefaults,
+                   Map<String, Object> serviceDefaults,
+                   Map<String, Object> clusterServiceConfigurations,
+                   Map<String, Object> extraClusterServiceConfigurations,
+                   Map<String, Object> serviceVariants,
+                   boolean useDeltaWrite)
+  {
     _retryLimit = retryLimit;
     // use retry zkConnection
     _zkConnection = new ZKConnection(zkHosts, sessionTimeout, _retryLimit, false, null, 0);
@@ -126,6 +141,7 @@ public class D2Config
     _clusterDefaults = clusterDefaults;
     _serviceDefaults = serviceDefaults;
     _serviceVariants = serviceVariants;
+    _useDeltaWrite = useDeltaWrite;
   }
 
   public int configure() throws Exception
@@ -578,7 +594,9 @@ public class D2Config
                                Map<String, Map<String, Object>> properties,
                                Map<String, Object> propertyDefaults) throws Exception
   {
-    ZooKeeperPermanentStore<T> store = new ZooKeeperPermanentStore<T>(_zkConnection, serializer, path);
+    ZooKeeperPermanentStore<T> store = _useDeltaWrite ?
+            new DeltaWriteZooKeeperPermanentStore<T>(_zkConnection, serializer, path) :
+            new ZooKeeperPermanentStore<T>(_zkConnection, serializer, path);
     ConfigWriter<T> writer = new ConfigWriter<T>(store, builder, properties, propertyDefaults, _timeout, TimeUnit.MILLISECONDS);
     writer.writeConfig();
   }

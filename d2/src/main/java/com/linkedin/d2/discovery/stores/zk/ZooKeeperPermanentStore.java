@@ -54,7 +54,13 @@ public class ZooKeeperPermanentStore<T> extends ZooKeeperStore<T>
 
     final String path = getPath(listenTo);
 
-    Callback<None> existsCallback = new Callback<None>()
+    _zkConn.ensurePersistentNodeExists(path, getExistsCallBack(listenTo, discoveryProperties, callback));
+  }
+
+  protected Callback<None> getExistsCallBack(final String listenTo, final T discoveryProperties, final Callback<None> callback)
+  {
+    final String path = getPath(listenTo);
+    return new Callback<None>()
     {
       @Override
       public void onSuccess(None none)
@@ -68,8 +74,6 @@ public class ZooKeeperPermanentStore<T> extends ZooKeeperStore<T>
         callback.onError(e);
       }
     };
-
-    _zkConn.ensurePersistentNodeExists(path, existsCallback);
   }
 
   @Override

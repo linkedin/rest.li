@@ -67,4 +67,45 @@ public class RangeBasedPartitionProperties implements PartitionProperties
     return PartitionType.RANGE;
   }
 
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj)
+    {
+      return true;
+    }
+    if (obj == null || getClass() != obj.getClass())
+    {
+      return false;
+    }
+    RangeBasedPartitionProperties other = (RangeBasedPartitionProperties) obj;
+    if (!_partitionKeyRegex.equals(other._partitionKeyRegex))
+    {
+      return false;
+    }
+    if (_keyRangeStart != other._keyRangeStart)
+    {
+      return false;
+    }
+    if (_partitionSize != other._partitionSize)
+    {
+      return false;
+    }
+    if (_partitionCount != other._partitionCount)
+    {
+      return false;
+    }
+    return true;
+  }
+
+  @Override
+  public int hashCode()
+  {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((_partitionKeyRegex == null) ? 0 : _partitionKeyRegex.hashCode());
+    result = prime * result + (int)_keyRangeStart;
+    result = prime * result + (int)_partitionSize;
+    result = prime * result + _partitionCount;
+    return result;
+  }
 }
