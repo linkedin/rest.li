@@ -675,7 +675,7 @@ public final class RestLiAnnotationReader
         }
         else if (paramAnnotations.contains(AssocKey.class))
         {
-          param = buildAssocKeyParam(method, paramAnnotations, paramType);
+          param = buildAssocKeyParam(model, method, paramAnnotations, paramType);
         }
         else if (paramAnnotations.contains(Context.class))
         {
@@ -1004,12 +1004,32 @@ public final class RestLiAnnotationReader
     return param;
   }
 
-  private static Parameter<?> buildAssocKeyParam(final Method method,
+  private static boolean checkAssocKey(final Set<Key> keys,
+                                       final AssocKey assocKey)
+  {
+    for (Key k : keys)
+    {
+      if (k.getName().equals(assocKey.value()))
+      {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static Parameter<?> buildAssocKeyParam(final ResourceModel model,
+                                                 final Method method,
                                                  final AnnotationSet annotations,
                                                  final Class<?> paramType)
   {
     AssocKey assocKey = annotations.get(AssocKey.class);
     Optional optional = annotations.get(Optional.class);
+
+    if (!checkAssocKey(model.getKeys(), assocKey))
+    {
+      throw new ResourceConfigException("Non-existing assocKey '" + assocKey.value() + "' on " + buildMethodMessage(method));
+    }
+
     Class<? extends TyperefInfo> typerefInfoClass = assocKey.typeref();
     try
     {
