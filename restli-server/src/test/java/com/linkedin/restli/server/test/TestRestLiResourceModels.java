@@ -213,6 +213,8 @@ public class TestRestLiResourceModels
     expectConfigException(InvalidResources.FinderUnannotatedParameters.class, "must annotate each parameter");
     expectConfigException(InvalidResources.FinderTwoDefaultsInOneClass.class, "duplicate @Finder");
     expectConfigException(InvalidResources.FinderTwoNamedInOneClass.class, "duplicate @Finder");
+    expectConfigException(InvalidResources.FinderNonExistingAssocKey.class, "Non-existing assocKey");
+    expectConfigException(InvalidResources.GetAllNonExistingAssocKey.class, "Non-existing assocKey");
   }
 
   @Test

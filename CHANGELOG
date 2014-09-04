@@ -10,6 +10,9 @@ Remove RestLiCollectionCompoundKey as it is not used.
 RestliRequestUriSignature: Handle assocKey for FindRequest and GetAllRequest.
 MockActionResponseFactory: Add option to support dynamic schema, such as CollectionResponse.
 
+(RB=357131)
+Throw exception while generating IDL when Finder or GetAll methods are annotated with non-existing assocKeys.
+
 1.23.1
 ------
 (RB=348277)

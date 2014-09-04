@@ -27,6 +27,7 @@ import com.linkedin.restli.server.annotations.RestLiSimpleResource;
 import com.linkedin.restli.server.custom.types.CustomLong;
 import com.linkedin.restli.server.custom.types.CustomString;
 import com.linkedin.restli.server.annotations.Action;
+import com.linkedin.restli.server.annotations.AssocKey;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.Key;
 import com.linkedin.restli.server.annotations.QueryParam;
@@ -138,6 +139,29 @@ public class InvalidResources
   {
     @Finder("find")
     public List<Status> find(String s) {return null;}
+  }
+
+  @RestLiAssociation(name="foo",
+      assocKeys={@Key(name="key1", type=String.class),
+                 @Key(name="key2", type=String.class)})
+  public class FinderNonExistingAssocKey extends AssociationResourceTemplate<Record>
+  {
+    @Finder("assocKeyFinder")
+    public List<Record> assocKeyFinder(@AssocKey("key3") String s)
+    {
+      return null;
+    }
+  }
+
+  @RestLiAssociation(name="foo",
+      assocKeys={@Key(name="key1", type=String.class),
+                 @Key(name="key2", type=String.class)})
+  public class GetAllNonExistingAssocKey extends AssociationResourceTemplate<Record>
+  {
+    public List<Record> getAll(@AssocKey("key3") String s)
+    {
+      return null;
+    }
   }
 
   @RestLiCollection(name = "foo", keyName="foo")
