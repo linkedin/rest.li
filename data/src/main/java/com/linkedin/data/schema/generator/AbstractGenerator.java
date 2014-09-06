@@ -292,7 +292,11 @@ public abstract class AbstractGenerator
     finally
     {
       schemaStream.close();
-      getMessage().append(parser.errorMessage());
+      if (parser.hasError())
+      {
+        getMessage().append(schemaSourceFile.getPath() + ",");
+        getMessage().append(parser.errorMessage());
+      }
     }
   }
 

@@ -71,6 +71,28 @@ public class TestBadSchemas
         ),
         IllegalArgumentException.class,
         "Java class name conflict detected, class name: com.linkedin.pegasus.generator.test.XArray, class already bound to schema: { \"type\" : \"array\", \"items\" : { \"type\" : \"enum\", \"name\" : \"X\", \"namespace\" : \"com.linkedin.pegasus.generator.test\", \"symbols\" : [ \"X\" ] } }, attempting to rebind to schema: { \"type\" : \"enum\", \"name\" : \"XArray\", \"namespace\" : \"com.linkedin.pegasus.generator.test\", \"symbols\" : [ \"Y\" ] }"
+      },
+      {
+        asMap(
+          "com/linkedin/pegasus/generator/test/FieldDefinedTwice.pdsc",
+          "{\n" +
+          "  \"type\" : \"record\",\n" +
+          "  \"name\" : \"FieldDefinedTwice\",\n" +
+          "  \"namespace\" : \"com.linkedin.pegasus.generator.test\",\n" +
+          "  \"fields\" : [\n" +
+          "    {\n" +
+          "      \"name\" : \"foo\",\n" +
+          "      \"type\" : \"long\"\n" +
+          "    },\n" +
+          "    {\n" +
+          "      \"name\" : \"foo\",\n" +
+          "      \"type\" : \"string\"\n" +
+          "    }\n" +
+          "  ]\n" +
+          "}"
+        ),
+        IOException.class,
+        "build/test/testGeneratorBadSchemas/pegasuscom/linkedin/pegasus/generator/test/FieldDefinedTwice.pdsc,4,54: Field \"foo\" defined more than once, with \"long\" and \"string\"."
       }
     };
 
