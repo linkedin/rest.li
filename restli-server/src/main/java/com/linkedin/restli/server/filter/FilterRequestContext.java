@@ -25,6 +25,7 @@ import com.linkedin.restli.server.PathKeys;
 import com.linkedin.restli.server.ProjectionMode;
 import com.linkedin.restli.server.RestLiRequestData;
 
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.Map;
 
@@ -146,4 +147,11 @@ public interface FilterRequestContext
    * @return ResourceModel corresponding to the resource.
    */
   FilterResourceModel getFilterResourceModel();
+
+  /**
+   * Get {@link Method} that's being invoked on the resource.
+   *
+   * @return {@link Method}
+   */
+  Method getMethod();
 }

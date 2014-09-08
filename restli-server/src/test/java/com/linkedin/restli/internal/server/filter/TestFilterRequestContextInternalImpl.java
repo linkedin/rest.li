@@ -44,7 +44,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 
 public class TestFilterRequestContextInternalImpl
@@ -90,6 +91,8 @@ public class TestFilterRequestContextInternalImpl
     when(resourceMethod.getFinderName()).thenReturn(finderName);
     when(resourceMethod.getActionName()).thenReturn(actionName);
     when(resourceMethod.getCustomAnnotationData()).thenReturn(customAnnotations);
+    when(resourceMethod.getMethod()).thenReturn(null);
+
     when(context.getProjectionMode()).thenReturn(projectionMode);
     when(context.getProjectionMask()).thenReturn(maskTree);
     when(context.getPathKeys()).thenReturn(pathKeys);
@@ -116,6 +119,7 @@ public class TestFilterRequestContextInternalImpl
     assertEquals(filterContext.getQueryParameters(), queryParams);
     assertEquals(filterContext.getActionName(), actionName);
     assertEquals(filterContext.getFinderName(), finderName);
+    assertNull(filterContext.getMethod());
     assertTrue(filterContext.getFilterScratchpad().get(spKey) == spValue);
     filterContext.getRequestHeaders().put("header2", "value2");
     assertEquals(requestHeaders.get("header2"), "value2");
@@ -127,6 +131,7 @@ public class TestFilterRequestContextInternalImpl
     verify(resourceMethod).getCustomAnnotationData();
     verify(resourceMethod).getFinderName();
     verify(resourceMethod).getActionName();
+    verify(resourceMethod).getMethod();
     verify(context).getProjectionMode();
     verify(context).getProjectionMask();
     verify(context).getPathKeys();
