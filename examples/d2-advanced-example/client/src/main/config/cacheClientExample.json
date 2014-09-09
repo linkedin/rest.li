@@ -9,10 +9,7 @@
     "clientShutdownTimeout" : 5000,
     "clientStartTimeout" : 5000,
     "trafficProportion" : {
-        "comment" : "this represent the number of request per second for a particular service",
-        "newsArticle": 3,
-        "jobRecommendation": 2,
-        "articleRecommendation" : 1
+        "cache": 1
     },
-    "rateMillisecond" : 1000
+    "keys" : ["pineapple","cherimoya","starfruit","mangosteen","durian"]
 }

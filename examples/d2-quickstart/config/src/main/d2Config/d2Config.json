@@ -1,5 +1,6 @@
 {
     "d2Clusters" : {
+        "comment" : "This is the mapping of clusters and services for our system.",
         "RecommendationService": {
             "services":
                 {

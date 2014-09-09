@@ -9,10 +9,18 @@
     "clientShutdownTimeout" : 5000,
     "clientStartTimeout" : 5000,
     "trafficProportion" : {
-        "comment" : "this represent the number of request per second for a particular service",
-        "newsArticle": 3,
-        "jobRecommendation": 2,
-        "articleRecommendation" : 1
-    },
-    "rateMillisecond" : 1000
+        "member": {
+            "5" : 1,
+            "110" : 1,
+            "203" : 1
+        },
+        "connection": {
+            "56" : 1,
+            "211" : 1
+        },
+        "contact": {
+            "39" : 1,
+            "12" : 1
+        }
+    }
 }
