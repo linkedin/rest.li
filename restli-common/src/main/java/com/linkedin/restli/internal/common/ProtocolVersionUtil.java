@@ -45,7 +45,11 @@ public class ProtocolVersionUtil
       return AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion();
     }
 
-    final String protocolVersion = headers.get(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION);
+    String protocolVersion = headers.get(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION);
+    if (protocolVersion == null)
+    {
+      protocolVersion = headers.get(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION_DEPRECATED);
+    }
     if (protocolVersion == null)
     {
       // if no protocol version is present we assume that the 1.0.0 protocol was used in the request.

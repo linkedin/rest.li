@@ -29,6 +29,7 @@ import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.common.TestProtocolVersionUtil;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.TestConstants;
@@ -205,13 +206,16 @@ public class TestRestLiServer
   {
     return new Object[][]
         {
-            { _server, AllProtocolVersions.BASELINE_PROTOCOL_VERSION },
-            { _server, AllProtocolVersions.LATEST_PROTOCOL_VERSION },
-            { _server, AllProtocolVersions.NEXT_PROTOCOL_VERSION }
+            { _server, AllProtocolVersions.BASELINE_PROTOCOL_VERSION, RestConstants.HEADER_RESTLI_PROTOCOL_VERSION },
+            { _server, AllProtocolVersions.LATEST_PROTOCOL_VERSION, RestConstants.HEADER_RESTLI_PROTOCOL_VERSION },
+            { _server, AllProtocolVersions.NEXT_PROTOCOL_VERSION, RestConstants.HEADER_RESTLI_PROTOCOL_VERSION },
+            { _server, AllProtocolVersions.BASELINE_PROTOCOL_VERSION, RestConstants.HEADER_RESTLI_PROTOCOL_VERSION_DEPRECATED },
+            { _server, AllProtocolVersions.LATEST_PROTOCOL_VERSION, RestConstants.HEADER_RESTLI_PROTOCOL_VERSION_DEPRECATED },
+            { _server, AllProtocolVersions.NEXT_PROTOCOL_VERSION, RestConstants.HEADER_RESTLI_PROTOCOL_VERSION_DEPRECATED }
         };
   }
 
-  @DataProvider(name = "invalidClientProtcolVersionData")
+  @DataProvider(name = "invalidClientProtocolVersionData")
   public Object[][] provideInvalidClientProtocolVersionData()
   {
     ProtocolVersion greaterThanNext = new ProtocolVersion(AllProtocolVersions.NEXT_PROTOCOL_VERSION.getMajor() + 1,
@@ -220,37 +224,39 @@ public class TestRestLiServer
 
     return new Object[][]
         {
-            { _server, greaterThanNext },
-            { _server, new ProtocolVersion(0, 0, 0) }
+            { _server, greaterThanNext, RestConstants.HEADER_RESTLI_PROTOCOL_VERSION },
+            { _server, new ProtocolVersion(0, 0, 0), RestConstants.HEADER_RESTLI_PROTOCOL_VERSION },
+            { _server, greaterThanNext, RestConstants.HEADER_RESTLI_PROTOCOL_VERSION_DEPRECATED },
+            { _server, new ProtocolVersion(0, 0, 0), RestConstants.HEADER_RESTLI_PROTOCOL_VERSION_DEPRECATED }
         };
   }
 
-  @Test
-  public void testServer() throws Exception
+  @Test(dataProvider = "headerConstant", dataProviderClass = TestProtocolVersionUtil.class)
+  public void testServer(String headerConstant) throws Exception
   {
-    testValidRequest(_server, null, false);
+    testValidRequest(_server, null, false, headerConstant);
   }
 
-  @Test
-  public void testServerWithFilters() throws Exception
+  @Test(dataProvider = "headerConstant", dataProviderClass = TestProtocolVersionUtil.class)
+  public void testServerWithFilters(String headerConstant) throws Exception
   {
-    testValidRequest(_serverWithFilters, null, true);
+    testValidRequest(_serverWithFilters, null, true, headerConstant);
   }
 
   @Test(dataProvider = "validClientProtocolVersionData")
-  public void testValidClientProtocolVersion(RestLiServer server, ProtocolVersion clientProtocolVersion)
+  public void testValidClientProtocolVersion(RestLiServer server, ProtocolVersion clientProtocolVersion, String headerConstant)
       throws URISyntaxException
   {
-    testValidRequest(server, clientProtocolVersion, false);
+    testValidRequest(server, clientProtocolVersion, false, headerConstant);
   }
 
-  private void testValidRequest(RestLiServer restLiServer, final ProtocolVersion clientProtocolVersion, boolean filters) throws URISyntaxException
+  private void testValidRequest(RestLiServer restLiServer, final ProtocolVersion clientProtocolVersion, boolean filters, String headerConstant) throws URISyntaxException
   {
     RestRequest request;
     if (clientProtocolVersion != null)
     {
       request =
-          new RestRequestBuilder(new URI("/statuses/1")).setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION,
+          new RestRequestBuilder(new URI("/statuses/1")).setHeader(headerConstant,
                                                                    clientProtocolVersion.toString()).build();
     }
     else
@@ -294,18 +300,17 @@ public class TestRestLiServer
     }
   }
 
-  @Test(dataProvider = "invalidClientProtcolVersionData")
-  public void testInvalidClientProtocolVersion(RestLiServer server, ProtocolVersion clientProtocolVersion)
+  @Test(dataProvider = "invalidClientProtocolVersionData")
+  public void testInvalidClientProtocolVersion(RestLiServer server, ProtocolVersion clientProtocolVersion, String headerConstant)
       throws URISyntaxException
   {
-    testBadRequest(server, clientProtocolVersion);
+    testBadRequest(server, clientProtocolVersion, headerConstant);
   }
 
-  private void testBadRequest(RestLiServer restLiServer, final ProtocolVersion clientProtocolVersion)
+  private void testBadRequest(RestLiServer restLiServer, final ProtocolVersion clientProtocolVersion, String headerConstant)
       throws URISyntaxException
   {
-    RestRequest request = new RestRequestBuilder(new URI("/statuses/1")).
-        setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, clientProtocolVersion.toString()).build();
+    RestRequest request = new RestRequestBuilder(new URI("/statuses/1")).setHeader(headerConstant, clientProtocolVersion.toString()).build();
 
     Callback<RestResponse> callback = new Callback<RestResponse>()
     {
