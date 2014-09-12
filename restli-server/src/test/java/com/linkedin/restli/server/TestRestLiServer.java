@@ -398,16 +398,16 @@ public class TestRestLiServer
       @Override
       public void onSuccess(RestResponse restResponse)
       {
-        assertEquals(restResponse.getStatus(), 404);
-
-        EasyMock.verify(statusResource);
-        EasyMock.reset(statusResource);
+        fail("We should not get a success here. The server should have returned a 404!");
       }
 
       @Override
       public void onError(Throwable e)
       {
-        fail();
+        RestException restException = (RestException) e;
+        assertEquals(restException.getResponse().getStatus(), 404, "We should get a 404 back here!");
+        EasyMock.verify(statusResource);
+        EasyMock.reset(statusResource);
       }
     };
 

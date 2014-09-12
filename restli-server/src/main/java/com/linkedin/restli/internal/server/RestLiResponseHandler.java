@@ -45,7 +45,10 @@ import com.linkedin.restli.server.resources.CollectionResource;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+
 
 /**
  * Interprets the method response to generate a {@link RestResponse}. Per methods on
@@ -209,15 +212,23 @@ public class RestLiResponseHandler
 
     if (responseObject == null)
     {
-      boolean isAction = routingResult.getResourceMethod().getType().equals(ResourceMethod.ACTION);
-      HttpStatus status = isAction ? HttpStatus.S_200_OK : HttpStatus.S_404_NOT_FOUND;
-      if (!isAction)
+      //If we have a null result, we have to assign the correct response status
+      if (routingResult.getResourceMethod().getType().equals(ResourceMethod.ACTION))
       {
-        responseHeaders.put(HeaderUtil.getErrorResponseHeaderName(protocolVersion), RestConstants.HEADER_VALUE_ERROR);
+        return new AugmentedRestLiResponseData.Builder(routingResult.getResourceMethod().getMethodType())
+            .status(HttpStatus.S_200_OK).headers(responseHeaders).build();
       }
-      return new AugmentedRestLiResponseData.Builder(routingResult.getResourceMethod().getMethodType()).status(status)
-                                                                                                       .headers(responseHeaders)
-                                                                                                       .build();
+      else if (routingResult.getResourceMethod().getType().equals(ResourceMethod.GET))
+      {
+        throw new RestLiServiceException(HttpStatus.S_404_NOT_FOUND,
+            "Requested entity not found: " + routingResult.getResourceMethod());
+      }
+      else
+      {
+        //All other cases do not permit null to be returned
+        throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
+            "Unexpected null encountered. Null returned by the resource method: " + routingResult.getResourceMethod());
+      }
     }
 
     RestLiResponseBuilder responseBuilder = chooseResponseBuilder(responseObject, routingResult);

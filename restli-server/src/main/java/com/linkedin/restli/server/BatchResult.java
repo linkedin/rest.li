@@ -26,6 +26,7 @@ import com.linkedin.restli.common.HttpStatus;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -39,18 +40,17 @@ public class BatchResult<K, V extends RecordTemplate> implements Map<K, V>
   private final Map<K, HttpStatus> _statuses;
   private final Map<K, RestLiServiceException> _errors;
 
+  //We make sure that we initialize to mutable empty maps in the event we get nulls from our clients
   public BatchResult(final Map<K, V> data, final Map<K, RestLiServiceException> errors)
   {
-    _data = data;
-    _statuses = Collections.emptyMap();
-    _errors = errors;
+    this (data, null, errors);
   }
 
   public BatchResult(final Map<K, V> data, final Map<K, HttpStatus> statuses, final Map<K, RestLiServiceException> errors)
   {
-    _data = data;
-    _statuses = statuses;
-    _errors = errors;
+    _data = data == null ? new HashMap<K, V>() : data;
+    _statuses = statuses == null ? new HashMap<K, HttpStatus>() : statuses;
+    _errors = errors == null ? new HashMap<K, RestLiServiceException>() : errors;
   }
 
   @Override

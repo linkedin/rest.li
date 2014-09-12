@@ -3191,16 +3191,17 @@ public class TestRestLiMethodInvocation
                     buildPathKeys("statusID", 1L),
                     new RequestExecutionCallback<RestResponse>()
                     {
+                      //A 404 is considered an error by rest.li
                       @Override
                       public void onError(final Throwable e, RequestExecutionReport executionReport)
                       {
-                        Assert.fail("Request failed unexpectedly.");
+                        Assert.assertNull(executionReport.getParseqTrace(), "There should be no parseq trace!");
                       }
 
                       @Override
                       public void onSuccess(final RestResponse result, RequestExecutionReport executionReport)
                       {
-                        Assert.assertNull(executionReport.getParseqTrace());
+                        Assert.fail("Request failed unexpectedly.");
                       }
                     },
                     true);
@@ -3245,16 +3246,17 @@ public class TestRestLiMethodInvocation
                     buildPathKeys("statusID", 1L),
                     new RequestExecutionCallback<RestResponse>()
                     {
+                      //A 404 is considered an error by rest.li
                       @Override
                       public void onError(Throwable e, RequestExecutionReport executionReport)
                       {
-                        Assert.fail("Request failed unexpectedly.");
+                        Assert.assertNotNull(executionReport.getParseqTrace(), "There should be a valid parseq trace!");
                       }
 
                       @Override
                       public void onSuccess(RestResponse result, RequestExecutionReport executionReport)
                       {
-                        Assert.assertNotNull(executionReport.getParseqTrace());
+                        Assert.fail("Request failed unexpectedly.");
                       }
                     },
                     true);

@@ -23,6 +23,7 @@ import com.linkedin.data.template.SetMode;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.ErrorResponse;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.internal.common.URIParamUtils;
@@ -76,12 +77,34 @@ public final class BatchUpdateResponseBuilder implements RestLiResponseBuilder
     final BatchUpdateResult<Object, ?> updateResult = (BatchUpdateResult<Object, ?>) result;
 
     final Map<Object, UpdateResponse> updates = updateResult.getResults();
-    final Map<Object, RestLiServiceException> serviceErrors = updateResult.getErrors();
+    //Verify the map is not null. If so, this is a developer error.
+    if (updates == null)
+    {
+      throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
+          "Unexpected null encountered. Null Map found inside of the BatchUpdateResult returned by the resource method: "
+              + routingResult.getResourceMethod());
+    }
+    //Verify that there is no null key in the map. If so, this is a developer error.
+    if (updates.containsKey(null))
+    {
+      throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
+          "Unexpected null encountered. Null key inside of the Map returned inside of the BatchUpdateResult returned by the resource method: "
+              + routingResult.getResourceMethod());
+    }
 
-    final ServerResourceContext context = (ServerResourceContext) routingResult.getContext();
+    final Map<Object, RestLiServiceException> serviceErrors = updateResult.getErrors();
+    //Verify the errors map is not null. If so, this is a developer error.
+    //Note that we don't have to check the errors map for nulls, because its taken care
+    //of in populateErrors below.
+    if (serviceErrors == null)
+    {
+      throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
+          "Unexpected null encountered. Null errors Map found inside of the BatchUpdateResult returned by the resource method: "
+              + routingResult.getResourceMethod());
+    }
 
     final Map<Object, ErrorResponse> errors =
-        BatchResponseUtil.populateErrors(serviceErrors, context, _errorResponseBuilder);
+        BatchResponseUtil.populateErrors(serviceErrors, routingResult, _errorResponseBuilder);
 
     final Set<Object> mergedKeys = new HashSet<Object>(updates.keySet());
     mergedKeys.addAll(errors.keySet());

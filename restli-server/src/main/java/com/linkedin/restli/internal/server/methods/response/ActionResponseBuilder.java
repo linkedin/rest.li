@@ -25,7 +25,7 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.internal.server.AugmentedRestLiResponseData;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.server.ActionResult;
-
+import com.linkedin.restli.server.RestLiServiceException;
 import java.util.Map;
 
 
@@ -55,6 +55,12 @@ public class ActionResponseBuilder implements RestLiResponseBuilder
       final ActionResult<?> actionResult = (ActionResult<?>) result;
       value = actionResult.getValue();
       status = actionResult.getStatus();
+      if (status == null)
+      {
+        throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
+            "Unexpected null encountered. Null HttpStatus inside of an ActionResult returned by the resource method: "
+                + routingResult.getResourceMethod());
+      }
     }
     else
     {

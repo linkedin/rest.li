@@ -398,8 +398,17 @@ public class ResourceMethodDescriptor implements RestLiMethodContext
   @Override
   public String toString()
   {
-    StringBuilder sb = new StringBuilder();
-    sb.append("type=").append(_type).append(", pathName=").append(_finderName);
+    final StringBuilder sb = new StringBuilder("type=").append(_type);
+    sb.append(", ");
+    sb.append("resourceName=").append(_resourceModel.getName());
+    if (_finderName != null)
+    {
+      sb.append(", ").append("finderName=").append(_finderName);
+    }
+    if (_actionName != null)
+    {
+      sb.append(", ").append("actionName=").append(_actionName);
+    }
     return sb.toString();
   }
 }

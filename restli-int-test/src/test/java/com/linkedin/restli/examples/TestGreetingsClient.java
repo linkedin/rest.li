@@ -17,6 +17,7 @@
 package com.linkedin.restli.examples;
 
 
+import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.data.DataMap;
@@ -83,7 +84,6 @@ import com.linkedin.restli.examples.greetings.client.GreetingsTaskRequestBuilder
 import com.linkedin.restli.examples.groups.api.TransferOwnershipRequest;
 import com.linkedin.restli.internal.client.EntityResponseDecoder;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
-import com.linkedin.restli.internal.client.response.BatchEntityResponse;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.test.util.BatchCreateHelper;
@@ -100,6 +100,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -907,6 +908,30 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     {
       Assert.assertEquals(e.getStatus(), HttpStatus.S_404_NOT_FOUND.getCode());
     }
+  }
+
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
+  public void test404Callback(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException, InterruptedException
+  {
+    final CountDownLatch countDownLatch = new CountDownLatch(1);
+    final Request<Greeting> request = builders.get().id(999L).build();
+    REST_CLIENT.sendRequest(request, new Callback<Response<Greeting>>()
+    {
+      @Override
+      public void onError(Throwable e)
+      {
+        Assert.assertNotNull(e, "We should have gotten an error!");
+        countDownLatch.countDown();
+      }
+
+      @Override
+      public void onSuccess(Response<Greeting> result)
+      {
+        Assert.fail("We should not have received a success!");
+        countDownLatch.countDown();
+      }
+    });
+    countDownLatch.await();
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderWithResourceNameDataProvider")

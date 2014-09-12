@@ -23,12 +23,14 @@ import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.CollectionMetadata;
 import com.linkedin.restli.common.CollectionResponse;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.internal.server.AugmentedRestLiResponseData;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.methods.AnyRecord;
 import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.CollectionResult.PageIncrement;
+import com.linkedin.restli.server.RestLiServiceException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -75,6 +77,14 @@ public class CollectionResponseBuilder implements RestLiResponseBuilder
       CollectionResult<? extends RecordTemplate, ? extends RecordTemplate> collectionResult =
           (CollectionResult<? extends RecordTemplate, ? extends RecordTemplate>) object;
 
+      //Verify that a null wasn't passed into the collection result. If so, this is a developer error.
+      if (collectionResult.getElements() == null)
+      {
+        throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
+            "Unexpected null encountered. Null elements List inside of CollectionResult returned by the resource method: "
+                + routingResult.getResourceMethod());
+      }
+
       return buildRestLiResponseData(request, routingResult, collectionResult.getElements(),
                                      collectionResult.getPageIncrement(), collectionResult.getMetadata(),
                                      collectionResult.getTotal(), headers);
@@ -89,7 +99,6 @@ public class CollectionResponseBuilder implements RestLiResponseBuilder
                                                                      final Integer totalResults,
                                                                      final Map<String, String> headers)
   {
-
     CollectionMetadata pagingMetadata =
         RestUtils.buildMetadata(request.getURI(), routingResult.getContext(), routingResult.getResourceMethod(),
                                 elements, pageIncrement, totalResults);
@@ -98,6 +107,13 @@ public class CollectionResponseBuilder implements RestLiResponseBuilder
     List<AnyRecord> processedElements = new ArrayList<AnyRecord>(elements.size());
     for (RecordTemplate entry : elements)
     {
+      //We don't permit null elements in our lists. If so, this is a developer error.
+      if (entry == null)
+      {
+        throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
+            "Unexpected null encountered. Null element inside of a List returned by the resource method: " + routingResult
+                .getResourceMethod());
+      }
       processedElements.add(new AnyRecord(RestUtils.projectFields(entry.data(), routingResult.getContext())));
     }
     return new AugmentedRestLiResponseData.Builder(routingResult.getResourceMethod().getMethodType()).headers(headers)

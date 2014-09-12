@@ -24,11 +24,13 @@ package com.linkedin.restli.internal.server.methods.response;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.BatchCreateIdResponse;
 import com.linkedin.restli.common.CreateIdStatus;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.server.AugmentedRestLiResponseData;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.server.BatchCreateResult;
 import com.linkedin.restli.server.CreateResponse;
+import com.linkedin.restli.server.RestLiServiceException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,9 +62,25 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
                                                              Object result, Map<String, String> headers)
   {
     BatchCreateResult<?, ?> list = (BatchCreateResult<?, ?>) result;
+
+    //Verify that a null list was not passed into the BatchCreateResult. If so, this is a developer error.
+    if (list.getResults() == null)
+    {
+      throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
+          "Unexpected null encountered. Null List inside of a BatchCreateResult returned by the resource method: " + routingResult
+              .getResourceMethod());
+    }
+
     List<CreateIdStatus<Object>> statuses = new ArrayList<CreateIdStatus<Object>>(list.getResults().size());
     for (CreateResponse e : list.getResults())
     {
+      //Verify that a null element was not passed into the BatchCreateResult list. If so, this is a developer error.
+      if (e == null)
+      {
+        throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
+            "Unexpected null encountered. Null element inside of List inside of a BatchCreateResult returned by the resource method: "
+                + routingResult.getResourceMethod());
+      }
       statuses.add(new CreateIdStatus<Object>(e.getStatus().getCode(), e.getId(), e.getError() == null ? null
           : _errorResponseBuilder.buildErrorResponse(e.getError()), ProtocolVersionUtil.extractProtocolVersion(headers)));
     }

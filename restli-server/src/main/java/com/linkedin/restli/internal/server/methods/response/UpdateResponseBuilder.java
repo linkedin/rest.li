@@ -18,8 +18,10 @@ package com.linkedin.restli.internal.server.methods.response;
 
 
 import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.internal.server.AugmentedRestLiResponseData;
 import com.linkedin.restli.internal.server.RoutingResult;
+import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
 
 import java.util.Map;
@@ -39,6 +41,13 @@ public class UpdateResponseBuilder implements RestLiResponseBuilder
                                                              Object result, Map<String, String> headers)
   {
     UpdateResponse updateResponse = (UpdateResponse) result;
+    //Verify that the status in the UpdateResponse is not null. If so, this is a developer error.
+    if (updateResponse.getStatus() == null)
+    {
+      throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
+          "Unexpected null encountered. HttpStatus is null inside of a UpdateResponse returned by the resource method: "
+              + routingResult.getResourceMethod());
+    }
     return new AugmentedRestLiResponseData.Builder(routingResult.getResourceMethod().getMethodType()).headers(headers)
                                                                                                      .status(updateResponse.getStatus())
                                                                                                      .build();

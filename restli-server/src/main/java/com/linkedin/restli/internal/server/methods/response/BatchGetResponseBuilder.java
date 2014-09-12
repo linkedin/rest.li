@@ -76,19 +76,35 @@ public class BatchGetResponseBuilder implements RestLiResponseBuilder
     Map<Object, HttpStatus> statuses = Collections.emptyMap();
     Map<Object, RestLiServiceException> serviceErrors = Collections.emptyMap();
 
+    //Verify that there is no null key inside any of the maps. If so, this is a developer error.
+    if (entities.containsKey(null))
+    {
+      throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
+          "Unexpected null encountered. Null key inside of the Map returned by the resource method: " + routingResult
+              .getResourceMethod());
+    }
+
     if (result instanceof BatchResult)
     {
       @SuppressWarnings({ "unchecked" })
       /** constrained by signature of {@link com.linkedin.restli.server.resources.CollectionResource#batchGet(java.util.Set)} */
       final BatchResult<Object, RecordTemplate> batchResult = (BatchResult<Object, RecordTemplate>) result;
       statuses = batchResult.getStatuses();
+      //We only need to check the statuses map here inside of BatchResult, otherwise it would be an empty map.
+      if (statuses.containsKey(null))
+      {
+        throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
+            "Unexpected null encountered. Null key inside of the status map returned by the resource method: " + routingResult
+                .getResourceMethod());
+      }
+      //Note that we don't have to check the service errors map for nulls, because its taken care
+      //of in populateErrors below.
       serviceErrors = batchResult.getErrors();
     }
 
     final ServerResourceContext context = (ServerResourceContext) routingResult.getContext();
-
     final Map<Object, ErrorResponse> errors =
-        BatchResponseUtil.populateErrors(serviceErrors, context, _errorResponseBuilder);
+        BatchResponseUtil.populateErrors(serviceErrors, routingResult, _errorResponseBuilder);
 
     final Set<Object> mergedKeys = new HashSet<Object>(entities.keySet());
     mergedKeys.addAll(statuses.keySet());

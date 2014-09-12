@@ -65,6 +65,7 @@ public class TestResourceSchemaCollection
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.exceptions2", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.exceptions3", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.greetings", ResourceType.COLLECTION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.nullGreeting", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.greetingsAuth", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.greetingsCallback", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.greetingsPromise", ResourceType.COLLECTION);

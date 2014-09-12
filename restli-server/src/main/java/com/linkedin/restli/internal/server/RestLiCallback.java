@@ -16,7 +16,6 @@
 
 package com.linkedin.restli.internal.server;
 
-
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
@@ -94,7 +93,9 @@ public class RestLiCallback<T> implements RequestExecutionCallback<T>
     catch (Exception e)
     {
       // Convert the caught exception to a rest exception and invoke the callback.
-      _callback.onError(toRestException(e), executionReport);
+      //This is so that exceptions returned early on by buildRestLiResponseData() due to null resource method
+      //responses are still given the opportunity to have filters run on them.
+      onError(e, executionReport);
     }
   }
 
