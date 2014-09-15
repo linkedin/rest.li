@@ -71,5 +71,5 @@ public interface RestConstants
 
   String RESTLI_PROTOCOL_VERSION_PROPERTY = "restli.protocol";
   String RESTLI_PROTOCOL_VERSION_PERCENTAGE_PROPERTY = "restli.protocol.percentage";
-
+  String RESTLI_FORCE_USE_NEXT_VERSION_OVERRIDE = "restli.forceUseNextVersionOverride";
 }

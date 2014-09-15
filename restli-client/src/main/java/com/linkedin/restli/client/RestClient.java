@@ -105,11 +105,16 @@ public class RestClient
   private static final List<AcceptType>  DEFAULT_ACCEPT_TYPES = Collections.emptyList();
   private static final ContentType DEFAULT_CONTENT_TYPE = ContentType.JSON;
   private static final Random RANDOM_INSTANCE = new Random();
-
   private final Client _client;
+
   private final String _uriPrefix;
   private final List<AcceptType> _acceptTypes;
   private final ContentType _contentType;
+  // This is a system property that a user can set to override the protocol version handshake mechanism and always
+  // use FORCE_USE_NEXT as the ProtocolVersionOption. If this system property is "true" (ignoring case) the override
+  // is set. THIS SHOULD NOT BE USED IN PRODUCTION!
+  private final boolean _forceUseNextVersionOverride =
+      "true".equalsIgnoreCase(System.getProperty(RestConstants.RESTLI_FORCE_USE_NEXT_VERSION_OVERRIDE));
 
   public RestClient(Client client, String uriPrefix)
   {
@@ -277,7 +282,8 @@ public class RestClient
                                 AllProtocolVersions.LATEST_PROTOCOL_VERSION,
                                 AllProtocolVersions.NEXT_PROTOCOL_VERSION,
                                 getAnnouncedVersion(_client.getMetadata(new URI(_uriPrefix + request.getServiceName()))),
-                                request.getRequestOptions().getProtocolVersionOption());
+                                request.getRequestOptions().getProtocolVersionOption(),
+                                _forceUseNextVersionOverride);
     }
     catch (URISyntaxException e)
     {
@@ -328,17 +334,23 @@ public class RestClient
    * @param nextVersion the next version on the client
    * @param announcedVersion version announced by the service
    * @param versionOption options present on the request
+   * @param forceUseNextVersionOverride if we always want to use {@link com.linkedin.restli.client.ProtocolVersionOption#FORCE_USE_NEXT}
    * @return the {@link ProtocolVersion} that should be used to build the request
    */
   /*package private*/static ProtocolVersion getProtocolVersion(ProtocolVersion baselineProtocolVersion,
                                                                ProtocolVersion latestVersion,
                                                                ProtocolVersion nextVersion,
                                                                ProtocolVersion announcedVersion,
-                                                               ProtocolVersionOption versionOption)
+                                                               ProtocolVersionOption versionOption,
+                                                               boolean forceUseNextVersionOverride)
   {
     if (versionOption == null)
     {
       throw new IllegalArgumentException("versionOptions cannot be null!");
+    }
+    if (forceUseNextVersionOverride)
+    {
+      return nextVersion;
     }
     switch (versionOption)
     {

@@ -138,7 +138,8 @@ public class TestVersionNegotiation
                                                       _LATEST_VERSION,
                                                       _NEXT_VERSION,
                                                       announcedVersion,
-                                                      versionOption),
+                                                      versionOption,
+                                                      false),
                         expectedProtocolVersion);
   }
 
@@ -151,7 +152,8 @@ public class TestVersionNegotiation
                                     _LATEST_VERSION,
                                     _NEXT_VERSION,
                                     new ProtocolVersion(0, 0, 0),
-                                    ProtocolVersionOption.USE_LATEST_IF_AVAILABLE);
+                                    ProtocolVersionOption.USE_LATEST_IF_AVAILABLE,
+                                    false);
       Assert.fail("Expected a RuntimeException as the announced version is less than the default!");
     }
     catch (RuntimeException e)
@@ -161,13 +163,45 @@ public class TestVersionNegotiation
   }
 
   @Test(dataProvider = "versionTestVariations")
-  public void testAnnouncedVersionWithVersionPercentages(ProtocolVersion versionInput, String versionPercentageInput, ProtocolVersion expectedAnnouncedVersion)
+  public void testAnnouncedVersionWithVersionPercentages(ProtocolVersion versionInput,
+                                                         String versionPercentageInput,
+                                                         ProtocolVersion expectedAnnouncedVersion)
   {
       Map<String, Object> properties = new HashMap<String, Object>();
       properties.put(RestConstants.RESTLI_PROTOCOL_VERSION_PROPERTY, versionInput);
       properties.put(RestConstants.RESTLI_PROTOCOL_VERSION_PERCENTAGE_PROPERTY, versionPercentageInput);
       ProtocolVersion announcedVersion = RestClient.getAnnouncedVersion(properties);
       Assert.assertEquals(expectedAnnouncedVersion, announcedVersion);
+  }
+
+  @DataProvider(name = "testForceUseNextVersionOverrideData")
+  public Object[][] testForceUseNextVersionOverrideData()
+  {
+    return new Object[][]
+        {
+            {ProtocolVersionOption.FORCE_USE_NEXT, _NEXT_VERSION, true},
+            {ProtocolVersionOption.FORCE_USE_LATEST, _NEXT_VERSION, true},
+            {ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, _NEXT_VERSION, true},
+
+            {ProtocolVersionOption.FORCE_USE_NEXT, _NEXT_VERSION, false},
+            {ProtocolVersionOption.FORCE_USE_LATEST, _LATEST_VERSION, false},
+            {ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, _LATEST_VERSION, false},
+        };
+  }
+
+  @Test(dataProvider = "testForceUseNextVersionOverrideData")
+  public void testForceUseNextVersionOverride(ProtocolVersionOption protocolVersionOption,
+                                              ProtocolVersion expectedProtocolVersion,
+                                              boolean forceUseOverrideSystemProperty)
+  {
+    ProtocolVersion announcedVersion = new ProtocolVersion("2.0.0");
+    ProtocolVersion actualProtocolVersion = RestClient.getProtocolVersion(_BASELINE_VERSION,
+                                                                          _LATEST_VERSION,
+                                                                          _NEXT_VERSION,
+                                                                          announcedVersion,
+                                                                          protocolVersionOption,
+                                                                          forceUseOverrideSystemProperty);
+    Assert.assertEquals(actualProtocolVersion, expectedProtocolVersion);
   }
 }
 

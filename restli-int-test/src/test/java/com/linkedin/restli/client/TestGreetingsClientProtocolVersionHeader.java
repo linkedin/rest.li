@@ -44,13 +44,11 @@ import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
-
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -65,11 +63,14 @@ import org.testng.annotations.Test;
  */
 public class TestGreetingsClientProtocolVersionHeader extends RestLiIntegrationTest
 {
-  private static final TransportClientFactory clientFactory = new HttpClientFactory();
-  private static final String uriPrefix = "http://localhost:1338/";
-  private static final RestClient PROPERTY_PROVIDING_REST_CLIENT = new RestClient(new PropertyProviderClient(AllProtocolVersions.BASELINE_PROTOCOL_VERSION.toString()),
-                                                                uriPrefix);
-  private static final RestClient NO_PROPERTY_REST_CLIENT = new RestClient(new PropertyProviderClient(), uriPrefix);
+  private static final TransportClientFactory CLIENT_FACTORY = new HttpClientFactory();
+  private static final String URI_PREFIX = "http://localhost:1338/";
+
+  private static final PropertyProviderClient BASELINE_PROVIDER =
+      new PropertyProviderClient(AllProtocolVersions.BASELINE_PROTOCOL_VERSION.toString());
+
+  private static final RestClient PROPERTY_PROVIDING_REST_CLIENT = new RestClient(BASELINE_PROVIDER, URI_PREFIX);
+  private static final RestClient NO_PROPERTY_REST_CLIENT = new RestClient(new PropertyProviderClient(), URI_PREFIX);
 
   @BeforeClass
   public void initClass() throws Exception
@@ -100,7 +101,7 @@ public class TestGreetingsClientProtocolVersionHeader extends RestLiIntegrationT
       {
         __metadata.put(RestConstants.RESTLI_PROTOCOL_VERSION_PROPERTY, restliProtocolVersion);
       }
-      __client = new TransportClientAdapter(clientFactory.getClient(Collections.<String, String>emptyMap()));
+      __client = new TransportClientAdapter(CLIENT_FACTORY.getClient(Collections.<String, String>emptyMap()));
     }
 
     @Override
@@ -139,6 +140,35 @@ public class TestGreetingsClientProtocolVersionHeader extends RestLiIntegrationT
     checkProtocolVersionHeader(NO_PROPERTY_REST_CLIENT, getRequest, version);
   }
 
+  @Test(dataProvider = "requestBuilderDataProvider")
+  public void testForceUseNextVersionOverride(RootBuilderWrapper<Long, Greeting> builders, ProtocolVersion version)
+      throws RemoteInvocationException
+  {
+    final Request<Greeting> getRequest = builders.get().id(1L).build();
+
+    testForceUseNextVersionOverride(getRequest, "true", AllProtocolVersions.NEXT_PROTOCOL_VERSION);
+    // version is the version we expect if the standard handshake takes place
+    testForceUseNextVersionOverride(getRequest, "false", version);
+    // null is used to simulate the scenario where no value has been set for this system property
+    testForceUseNextVersionOverride(getRequest, null, version);
+  }
+
+  private void testForceUseNextVersionOverride(Request<Greeting> request,
+                                               String override,
+                                               ProtocolVersion expectedProtocolVersion)
+      throws RemoteInvocationException
+  {
+    if (override != null)
+    {
+      System.setProperty(RestConstants.RESTLI_FORCE_USE_NEXT_VERSION_OVERRIDE, override);
+    }
+
+    RestClient restClient = new RestClient(BASELINE_PROVIDER, URI_PREFIX);
+    checkProtocolVersionHeader(restClient, request, expectedProtocolVersion);
+
+    System.clearProperty(RestConstants.RESTLI_FORCE_USE_NEXT_VERSION_OVERRIDE);
+  }
+
   private void checkProtocolVersionHeader(RestClient restClient,
                                           Request<Greeting> request,
                                           ProtocolVersion expectedProtocolVersion)
@@ -151,8 +181,8 @@ public class TestGreetingsClientProtocolVersionHeader extends RestLiIntegrationT
   @Test
   public void testNoProtocolVersionHeaderSuccess() throws InterruptedException, ExecutionException
   {
-    final TransportClientAdapter client = new TransportClientAdapter(clientFactory.getClient(Collections.<String, String>emptyMap()));
-    final RestRequestBuilder requestBuilder = new RestRequestBuilder(URI.create(uriPrefix + "greetings/1"));
+    final TransportClientAdapter client = new TransportClientAdapter(CLIENT_FACTORY.getClient(Collections.<String, String>emptyMap()));
+    final RestRequestBuilder requestBuilder = new RestRequestBuilder(URI.create(URI_PREFIX + "greetings/1"));
     final RestRequest request = requestBuilder.build();
     Assert.assertTrue(request.getHeaders().isEmpty());
 
@@ -165,8 +195,8 @@ public class TestGreetingsClientProtocolVersionHeader extends RestLiIntegrationT
   @Test
   public void testNoProtocolVersionHeaderFail() throws InterruptedException
   {
-    final TransportClientAdapter client = new TransportClientAdapter(clientFactory.getClient(Collections.<String, String>emptyMap()));
-    final RestRequestBuilder requestBuilder = new RestRequestBuilder(URI.create(uriPrefix));
+    final TransportClientAdapter client = new TransportClientAdapter(CLIENT_FACTORY.getClient(Collections.<String, String>emptyMap()));
+    final RestRequestBuilder requestBuilder = new RestRequestBuilder(URI.create(URI_PREFIX));
     final RestRequest request = requestBuilder.build();
     Assert.assertTrue(request.getHeaders().isEmpty());
 
