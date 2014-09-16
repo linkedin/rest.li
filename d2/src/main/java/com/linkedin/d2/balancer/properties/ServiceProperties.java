@@ -245,8 +245,6 @@ public class ServiceProperties
     ServiceProperties other = (ServiceProperties) obj;
     if (!_clusterName.equals(other._clusterName))
       return false;
-    if (!_loadBalancerStrategyName.equals(other._loadBalancerStrategyName))
-      return false;
     if (!_loadBalancerStrategyList.equals(other._loadBalancerStrategyList))
       return false;
     if (!_path.equals(other._path))

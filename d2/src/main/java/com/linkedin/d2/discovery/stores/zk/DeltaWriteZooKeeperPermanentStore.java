@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
  * put.
  *
  * The atomic unit for comparison is Property here.
+ * @author Yu Meng Zhang
  */
 
 public class DeltaWriteZooKeeperPermanentStore<T> extends  ZooKeeperPermanentStore<T>
@@ -97,7 +98,7 @@ public class DeltaWriteZooKeeperPermanentStore<T> extends  ZooKeeperPermanentSto
               }
               catch (PropertySerializationException e)
               {
-                _log.warn("Unable to de-serialize properties for {} {}, overwriting", path, e);
+                _log.warn("Unable to de-serialize properties for {}, overwriting", path, e);
               }
             }
 

@@ -1,5 +1,10 @@
+1.23.6
+------
+
 1.23.5
 ------
+(RB=364338)
+Use Semaphore to allow multiple outstanding put (when calling D2Config) simultaneously.
 
 1.23.4
 ------

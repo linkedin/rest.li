@@ -56,6 +56,7 @@ public class D2ConfigTestUtil
   private Map<String, Object> _serviceVariants = new HashMap<String, Object>();
 
   private boolean _useDeltaWrite = false;
+  private int _maxOutstandingWrites = 1;
 
   public D2ConfigTestUtil()
   {
@@ -316,18 +317,22 @@ public class D2ConfigTestUtil
   {
     _serviceDefaults.put("loadBalancerStrategyProperties", _loadBalancerStrategyProperties);
     _serviceDefaults.put("loadBalancerStrategyList", _loadBalancerStrategyList);
-    _serviceDefaults.put("loadBalancerStrategyName", "strategyName");
   }
 
   public void setServiceDefaults(List<String> loadBalancerStrategyList)
   {
     _serviceDefaults.put("loadBalancerStrategyProperties", _loadBalancerStrategyProperties);
     _serviceDefaults.put("loadBalancerStrategyList", loadBalancerStrategyList);
-    _serviceDefaults.put("loadBalancerStrategyName", "strategyName");
   }
 
-  public void setUseDeltaWrite(boolean useDeltaWrite) {
+  public void setUseDeltaWrite(boolean useDeltaWrite)
+  {
     _useDeltaWrite = useDeltaWrite;
+  }
+
+  public void setMaxOutstandingWrites(int maxOutstandingWrites)
+  {
+    _maxOutstandingWrites = maxOutstandingWrites;
   }
 
   public void generateClusters(String clusterNamePrefix, String serviceNamePrefix, int totalClusters, int servicesPerCluster)
@@ -548,7 +553,8 @@ public class D2ConfigTestUtil
                                       _clusterServiceConfigurations,
                                       _extraClusterServiceConfigurations,
                                       _serviceVariants,
-                                      _useDeltaWrite);
+                                      _useDeltaWrite,
+                                      _maxOutstandingWrites);
 
     int exitCode = discovery.configure();
 

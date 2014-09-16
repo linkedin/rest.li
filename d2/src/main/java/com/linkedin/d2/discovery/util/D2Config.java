@@ -108,6 +108,7 @@ public class D2Config
   private final long _timeout;
   private final int _retryLimit;
   private final boolean _useDeltaWrite;
+  private final int _maxOutstandingWrites;
 
   @SuppressWarnings("unchecked")
   public D2Config (String zkHosts, int sessionTimeout, String basePath,
@@ -119,7 +120,7 @@ public class D2Config
                          Map<String, Object> serviceVariants)
   {
     this(zkHosts, sessionTimeout, basePath, timeout, retryLimit, clusterDefaults, serviceDefaults,
-            clusterServiceConfigurations, extraClusterServiceConfigurations, serviceVariants, false);
+            clusterServiceConfigurations, extraClusterServiceConfigurations, serviceVariants, false, 1);
   }
 
   @SuppressWarnings("unchecked")
@@ -130,7 +131,8 @@ public class D2Config
                    Map<String, Object> clusterServiceConfigurations,
                    Map<String, Object> extraClusterServiceConfigurations,
                    Map<String, Object> serviceVariants,
-                   boolean useDeltaWrite)
+                   boolean useDeltaWrite,
+                   int maxOutstandingWrites)
   {
     _retryLimit = retryLimit;
     // use retry zkConnection
@@ -142,6 +144,7 @@ public class D2Config
     _serviceDefaults = serviceDefaults;
     _serviceVariants = serviceVariants;
     _useDeltaWrite = useDeltaWrite;
+    _maxOutstandingWrites = maxOutstandingWrites;
   }
 
   public int configure() throws Exception
@@ -597,7 +600,8 @@ public class D2Config
     ZooKeeperPermanentStore<T> store = _useDeltaWrite ?
             new DeltaWriteZooKeeperPermanentStore<T>(_zkConnection, serializer, path) :
             new ZooKeeperPermanentStore<T>(_zkConnection, serializer, path);
-    ConfigWriter<T> writer = new ConfigWriter<T>(store, builder, properties, propertyDefaults, _timeout, TimeUnit.MILLISECONDS);
+    ConfigWriter<T> writer = new ConfigWriter<T>(store, builder, properties, propertyDefaults, _timeout,
+            TimeUnit.MILLISECONDS, _maxOutstandingWrites);
     writer.writeConfig();
   }
 
