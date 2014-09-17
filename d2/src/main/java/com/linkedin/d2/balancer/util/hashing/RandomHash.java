@@ -38,4 +38,10 @@ public class RandomHash implements HashFunction<Request>
   {
     return _random.nextInt();
   }
+
+  @Override
+  public long hashLong(Request request)
+  {
+    return _random.nextLong();
+  }
 }

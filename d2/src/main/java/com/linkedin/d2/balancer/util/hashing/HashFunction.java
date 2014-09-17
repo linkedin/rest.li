@@ -28,4 +28,5 @@ package com.linkedin.d2.balancer.util.hashing;
 public interface HashFunction<T>
 {
   int hash(T t);
+  long hashLong(T t);
 }

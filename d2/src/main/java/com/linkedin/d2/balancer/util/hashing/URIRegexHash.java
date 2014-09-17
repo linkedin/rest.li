@@ -147,4 +147,10 @@ public class URIRegexHash implements HashFunction<Request>
     }
     return _random.nextInt();
   }
+
+  @Override
+  public long hashLong(Request request)
+  {
+    throw new UnsupportedOperationException("hashLong is not supported yet by URIRegexHash.");
+  }
 }

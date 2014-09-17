@@ -17,46 +17,70 @@
 package com.linkedin.d2.balancer.util.partitions;
 
 import com.linkedin.d2.balancer.properties.HashBasedPartitionProperties;
+import com.linkedin.d2.balancer.util.hashing.HashFunction;
 import com.linkedin.d2.balancer.util.hashing.MD5Hash;
 
 public class HashBasedPartitionAccessor extends AbstractPartitionAccessor
 {
   final private HashBasedPartitionProperties _properties;
+  final private HashFunction<String[]> _hashFunction;
+
   public HashBasedPartitionAccessor(HashBasedPartitionProperties properties)
   {
     super(properties.getPartitionKeyRegex(), properties.getPartitionCount() - 1);
     _properties = properties;
+    HashBasedPartitionProperties.HashAlgorithm hashAlgorithm = _properties.getHashAlgorithm();
+
+    switch(hashAlgorithm)
+    {
+      case MODULO:
+        _hashFunction = new ModuloHash();
+        break;
+      case MD5:
+        _hashFunction = new MD5Hash();
+        break;
+      default:
+        // impossible to happen
+        throw new IllegalArgumentException("Unsupported hash algorithm: " + hashAlgorithm);
+    }
   }
 
   @Override
   public int getPartitionId(String key)
       throws PartitionAccessException
   {
-    HashBasedPartitionProperties.HashAlgorithm hashAlgorithm = _properties.getHashAlgorithm();
-    long longKey;
-    switch(hashAlgorithm)
+    try
     {
-      case MODULO:
-        try
-        {
-          longKey = Long.parseLong(key);
-        }
-        catch (NumberFormatException e)
-        {
-          throw new PartitionAccessException("Using MODULO hash function. Keys should be long values, but failed to parse key to long: " + key);
-        }
-        break;
-      case MD5:
-        MD5Hash hashFunction = new MD5Hash();
-        String[] keyStrings = new String[1];
-        keyStrings[0] = key;
-        longKey = hashFunction.hashLong(keyStrings);
-        break;
-      default:
-        // impossible to happen
-        throw new PartitionAccessException("Unsupported hash algorithm");
+      long longKey = _hashFunction.hashLong(new String[]{key});
+
+      return Math.abs((int) (longKey % _properties.getPartitionCount()));
+    }
+    catch (Exception ex)
+    {
+      throw new PartitionAccessException("Failed to getPartitionId", ex);
+    }
+  }
+
+  private static class ModuloHash implements HashFunction<String[]>
+  {
+    @Override
+    public int hash(String key[])
+    {
+      throw new UnsupportedOperationException();
     }
 
-    return Math.abs((int)(longKey % _properties.getPartitionCount()));
+    @Override
+    public long hashLong(String key[])
+    {
+      try
+      {
+        return Long.parseLong(key[0]);
+      }
+      catch (NumberFormatException ex)
+      {
+        throw new IllegalArgumentException("Using MODULO hash function. Keys should be long values, but failed to parse key to long: " + key[0], ex);
+      }
+    }
   }
+
 }

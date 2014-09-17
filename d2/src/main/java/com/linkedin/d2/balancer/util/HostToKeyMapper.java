@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -104,10 +105,11 @@ public class HostToKeyMapper<K>
   private final MapKeyHostPartitionResult<K> _mapResult;
   private final PartitionAccessor _partitionAccessor;
   private final int _maxNumOfHosts;
-  private final Collection<K> _originalKeys;
+  final Map<Integer, Collection<K>> _partitionIdToKeys;
+  final Set<UnmappedKey<K>> _unmappedKeys;
 
   public HostToKeyMapper(MapKeyHostPartitionResult<K> mapResult, PartitionAccessor partitionAccessor,
-                         int maxNumOfHosts, Collection<K> keys)
+                         int maxNumOfHosts)
   {
     if (maxNumOfHosts <= 0)
     {
@@ -116,7 +118,19 @@ public class HostToKeyMapper<K>
     _partitionAccessor = partitionAccessor;
     _mapResult = mapResult;
     _maxNumOfHosts = maxNumOfHosts;
-    _originalKeys = Collections.unmodifiableCollection(keys);
+
+    final Map<Integer, Collection<K>> partitionIdToKeys = new HashMap<Integer, Collection<K>>();
+    for (Map.Entry<Integer, KeysAndHosts<K>> entry : _mapResult.getPartitionInfoMap().entrySet())
+    {
+      partitionIdToKeys.put(entry.getKey(), entry.getValue().getKeys());
+    }
+    final Set<UnmappedKey<K>> unmappedKeys = new HashSet<UnmappedKey<K>>();
+    for (K key : _mapResult.getUnmappedKeys())
+    {
+      unmappedKeys.add(new UnmappedKey<K>(key, ErrorType.FAIL_TO_FIND_PARTITION));
+    }
+    _partitionIdToKeys = Collections.unmodifiableMap(partitionIdToKeys);
+    _unmappedKeys = Collections.unmodifiableSet(unmappedKeys);
   }
 
   /**
@@ -148,7 +162,7 @@ public class HostToKeyMapper<K>
    */
   public HostToKeyResult<URI, K> getResult(int whichIteration)
   {
-    return getResult(whichIteration, _originalKeys);
+    return getResult(whichIteration, _partitionIdToKeys, new HashSet<UnmappedKey<K>>(_unmappedKeys));
   }
 
   // utility method to merge keys that maps to the same host. This method does the merging in hostToKeysMerge that
@@ -191,10 +205,6 @@ public class HostToKeyMapper<K>
    */
   public HostToKeyResult<URI, K> getResult(int whichIteration, Collection<K> keys)
   {
-    if (whichIteration >= _maxNumOfHosts)
-    {
-      return null;
-    }
     Collection<UnmappedKey<K>> unmappedKeys = new HashSet<UnmappedKey<K>>();
     //build a partitionId -> keys map. So if there is no key for that partition we don't have to process.
     Map<Integer, Collection<K>> partitionIdToKeyMap = new HashMap<Integer, Collection<K>>();
@@ -217,11 +227,21 @@ public class HostToKeyMapper<K>
       }
     }
 
+    return getResult(whichIteration, partitionIdToKeyMap, unmappedKeys);
+  }
+
+  private HostToKeyResult<URI, K> getResult(int whichIteration, Map<Integer, Collection<K>> partitionIdToKeys, Collection<UnmappedKey<K>> unmappedKeys)
+  {
+    if (whichIteration >= _maxNumOfHosts)
+    {
+      return null;
+    }
+
     Map<URI, Collection<K>> hostToKeysMerge = new HashMap<URI, Collection<K>>();
     for (Map.Entry<Integer, KeysAndHosts<K>> entry : _mapResult.getPartitionInfoMap().entrySet())
     {
       Integer partitionId = entry.getKey();
-      Collection<K> keysForThisPartition = partitionIdToKeyMap.get(partitionId);
+      Collection<K> keysForThisPartition = partitionIdToKeys.get(partitionId);
       if (keysForThisPartition == null)
       {
         // this means there is no need to worry about this partition. The user didn't pass any keys

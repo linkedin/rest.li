@@ -25,4 +25,14 @@ public class PartitionAccessException extends Exception
   {
     super(msg);
   }
+
+  public PartitionAccessException(Exception ex)
+  {
+    super(ex);
+  }
+
+  public PartitionAccessException(String msg, Exception ex)
+  {
+    super(msg, ex);
+  }
 }

@@ -319,7 +319,7 @@ public class ConsistentHashKeyMapper implements KeyMapper
     }
     return new HostToKeyMapper<K>(getPartitionInfo(serviceUri, keys, limitNumHostsPerPartition),
                                   _partitionInfoProvider.getPartitionAccessor(serviceUri),
-                                  limitNumHostsPerPartition, keys);
+                                  limitNumHostsPerPartition);
   }
 
   @Override
@@ -336,7 +336,7 @@ public class ConsistentHashKeyMapper implements KeyMapper
     return new HostToKeyMapper<K>(getPartitionInfo(serviceUri, keys, limitNumHostsPerPartition,
                                                            stickyKey),
                                     _partitionInfoProvider.getPartitionAccessor(serviceUri),
-                                    limitNumHostsPerPartition, keys);
+                                    limitNumHostsPerPartition);
   }
 
   private <K> MapKeyResult<URI, K> doMapKeys(Ring<URI> ring, Iterable<K> keys)
