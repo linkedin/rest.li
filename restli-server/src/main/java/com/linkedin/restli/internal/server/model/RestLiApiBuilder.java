@@ -94,10 +94,11 @@ public class RestLiApiBuilder implements RestApiBuilder
         final ResourceModel existingResource = rootResourceModels.get(path);
         if (existingResource != null)
         {
-          _log.warn(String.format("Resource classes \"%s\" and \"%s\" clash on the resource name \"%s\".",
-                                  existingResource.getResourceClass().getCanonicalName(),
-                                  resourceModel.getResourceClass().getCanonicalName(),
-                                  existingResource.getName()));
+          String errorMessage = String.format("Resource classes \"%s\" and \"%s\" clash on the resource name \"%s\".",
+                                        existingResource.getResourceClass().getCanonicalName(),
+                                        resourceModel.getResourceClass().getCanonicalName(),
+                                        existingResource.getName());
+          throw new ResourceConfigException(errorMessage);
         }
         rootResourceModels.put(path, resourceModel);
       }
