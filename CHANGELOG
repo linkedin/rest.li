@@ -1,5 +1,13 @@
+1.23.7
+------
+
+
 1.23.6
 ------
+(RB=364827)
+reduce the number of hashes in mapKeyV3
+update HashBasedPartitionAccessor
+move hashLong into HashFunction interface
 
 1.23.5
 ------
