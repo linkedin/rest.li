@@ -15,11 +15,17 @@ move hashLong into HashFunction interface
 
 1.23.5
 ------
+(RB=363214)
+Support deprecated protocol version header (X-Restli-Protocol-Version).
+
 (RB=364338)
 Use Semaphore to allow multiple outstanding put (when calling D2Config) simultaneously.
 
 1.23.4
 ------
+(RB=359021)
+Include file name for pdsc related error messages.
+
 (RB=356420)
 Subclassing ZooKeeperPermanentStore to only write changed and new properties to store.
 
