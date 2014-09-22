@@ -14,7 +14,6 @@ dependencies {
   compile project(':restli-server')
   compile project(':restli-server-extras')
   compile project(':restli-common')
-  compile externalDependency.log4j
   compile externalDependency.guava
   compile externalDependency.commonsLang
   compile externalDependency.javaxInject

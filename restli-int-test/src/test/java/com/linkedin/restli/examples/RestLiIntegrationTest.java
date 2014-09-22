@@ -27,15 +27,10 @@ import com.linkedin.restli.server.filter.RequestFilter;
 import com.linkedin.restli.server.filter.ResponseFilter;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.spi.LoggerRepository;
 
 /**
  * @author Josh Walker
@@ -44,8 +39,6 @@ import org.apache.log4j.spi.LoggerRepository;
 
 public class RestLiIntegrationTest
 {
-  public static final String NETTY_CLIENT_LOGGER = "com.linkedin.r2.transport.http.client.HttpNettyClient";
-  public static final String ASYNC_POOL_LOGGER = "com.linkedin.r2.transport.http.client.AsyncPoolImpl";
   private final int numCores = Runtime.getRuntime().availableProcessors();
 
   private ScheduledExecutorService _scheduler;
@@ -53,7 +46,6 @@ public class RestLiIntegrationTest
   private HttpServer               _server;
   private HttpServer               _serverWithoutCompression;
   private HttpServer               _serverWithFilters;
-  private final Map<String, Level> _originalLevels     = new HashMap<String, Level>();
 
   // By default start a single synchronous server with compression.
   public void init() throws Exception
@@ -76,9 +68,6 @@ public class RestLiIntegrationTest
         new EngineBuilder().setTaskExecutor(_scheduler)
                            .setTimerScheduler(_scheduler)
                            .build();
-
-    reduceLogging(NETTY_CLIENT_LOGGER, Level.ERROR);
-    reduceLogging(ASYNC_POOL_LOGGER, Level.FATAL);
 
     // Always start one server, whether sync or async
     _server =
@@ -108,8 +97,6 @@ public class RestLiIntegrationTest
     int asyncTimeout = 5000;
     _scheduler = Executors.newScheduledThreadPool(numCores + 1);
     _engine = new EngineBuilder().setTaskExecutor(_scheduler).setTimerScheduler(_scheduler).build();
-    reduceLogging(NETTY_CLIENT_LOGGER, Level.ERROR);
-    reduceLogging(ASYNC_POOL_LOGGER, Level.FATAL);
     _serverWithFilters =
         RestLiIntTestServer.createServer(_engine,
                                          RestLiIntTestServer.DEFAULT_PORT,
@@ -119,20 +106,6 @@ public class RestLiIntegrationTest
                                          requestFilters,
                                          responseFilters);
     _serverWithFilters.start();
-  }
-
-  private void reduceLogging(String logName, Level newLevel)
-  {
-    LoggerRepository repo = Logger.getLogger(logName).getLoggerRepository();
-    _originalLevels.put(logName, repo.getThreshold());
-    repo.setThreshold(newLevel);
-  }
-
-  private void restoreLogging(String logName)
-  {
-    LoggerRepository repo = Logger.getLogger(logName).getLoggerRepository();
-    repo.setThreshold(_originalLevels.get(logName));
-
   }
 
   public void shutdown() throws Exception
@@ -157,8 +130,5 @@ public class RestLiIntegrationTest
     {
       _scheduler.shutdownNow();
     }
-
-    restoreLogging(NETTY_CLIENT_LOGGER);
-    restoreLogging(ASYNC_POOL_LOGGER);
   }
 }

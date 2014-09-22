@@ -22,6 +22,7 @@ import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.EngineBuilder;
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.filter.FilterChains;
+import com.linkedin.r2.filter.logging.SimpleLoggingFilter;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.http.server.HttpServer;
 import com.linkedin.r2.transport.http.server.HttpServerFactory;
@@ -180,8 +181,7 @@ public class MockHttpServerFactory
                                                                                         resourceFactory,
                                                                                         engine));
 
-    FilterChain fc = FilterChains.empty();
-
+    final FilterChain fc = FilterChains.empty().addLast(new SimpleLoggingFilter());
     final HttpServer server = new HttpServerFactory(fc).createServer(port,
                                                                HttpServerFactory.DEFAULT_CONTEXT_PATH,
                                                                NUM_THREADS,

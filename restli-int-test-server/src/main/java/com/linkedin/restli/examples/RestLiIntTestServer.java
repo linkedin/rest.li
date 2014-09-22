@@ -22,6 +22,7 @@ import com.linkedin.parseq.EngineBuilder;
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.filter.FilterChains;
 import com.linkedin.r2.filter.compression.ServerCompressionFilter;
+import com.linkedin.r2.filter.logging.SimpleLoggingFilter;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.http.server.HttpServer;
 import com.linkedin.r2.transport.http.server.HttpServerFactory;
@@ -44,12 +45,9 @@ import com.linkedin.restli.server.resources.ResourceFactory;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
-import java.util.Properties;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.PropertyConfigurator;
 
 /**
  * @author dellamag
@@ -105,11 +103,6 @@ public class RestLiIntTestServer
                                         List<? extends RequestFilter> requestFilters,
                                         List<? extends ResponseFilter> responseFilters)
   {
-    Properties properties = new Properties();
-    properties.put("log4j.rootLogger", "INFO");
-    PropertyConfigurator.configure(properties);
-    BasicConfigurator.configure();
-
     RestLiConfig config = new RestLiConfig();
     config.addResourcePackageNames(RESOURCE_PACKAGE_NAMES);
     config.setServerNodeUri(URI.create("http://localhost:" + port));
@@ -128,7 +121,8 @@ public class RestLiIntTestServer
 
     TransportDispatcher dispatcher = new DelegatingTransportDispatcher(new RestLiServer(config, factory, engine));
 
-    FilterChain fc = FilterChains.empty().addLast(new ServerCompressionFilter(supportedCompression));
+    final FilterChain fc = FilterChains.empty().addLast(new ServerCompressionFilter(supportedCompression))
+        .addLast(new SimpleLoggingFilter());
     return new HttpServerFactory(fc).createServer(port,
                                                   HttpServerFactory.DEFAULT_CONTEXT_PATH,
                                                   HttpServerFactory.DEFAULT_THREAD_POOL_SIZE,

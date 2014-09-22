@@ -15,6 +15,8 @@ Disallow server impl module itself to be its API project.
 (RB=371175)
 Allow projections on custom metadata and paging.
 
+(RB=367345)
+Repair logging for restli tests
 
 1.24.3
 ------
