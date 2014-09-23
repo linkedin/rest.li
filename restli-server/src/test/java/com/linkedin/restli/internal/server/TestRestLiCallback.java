@@ -44,6 +44,7 @@ import com.linkedin.restli.server.filter.ResponseFilter;
 import java.util.Arrays;
 import java.util.Map;
 
+import com.google.common.collect.Maps;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -53,8 +54,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-
-import com.google.common.collect.Maps;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyMap;
@@ -190,7 +189,7 @@ public class TestRestLiCallback
                                                     augErrorHeadersCapture.capture());
     verify(_responseHandler).buildPartialResponse(_routingResult, responseData);
     verify(_callback).onError(restException, executionReport);
-    verify(_restRequest, times(2)).getHeaders();
+    verify(_restRequest, times(1)).getHeaders();
     verifyZeroInteractions(_routingResult);
     verifyNoMoreInteractions(_restRequest, _responseHandler, _callback);
     Map<String, String> augErrorHeaders = augErrorHeadersCapture.getValue();
@@ -240,7 +239,7 @@ public class TestRestLiCallback
     verify(_responseHandler).buildPartialResponse(_routingResult, responseData);
     verify(_responseHandler).buildRestException(ex, partialResponse);
     verify(_callback).onError(restException, executionReport);
-    verify(_restRequest, times(2)).getHeaders();
+    verify(_restRequest, times(1)).getHeaders();
     verifyZeroInteractions(_routingResult);
     verifyNoMoreInteractions(_restRequest, _responseHandler, _callback);
     RestLiServiceException restliEx = exCapture.getValue();
@@ -403,7 +402,7 @@ public class TestRestLiCallback
     verify(_responseHandler).buildPartialResponse(_routingResult, responseErrorData);
     verify(_responseHandler).buildResponse(_routingResult, partialFilterErrorResponse);
     verify(_callback).onSuccess(restResponse, executionReport);
-    verify(_restRequest, times(2)).getHeaders();
+    verify(_restRequest, times(1)).getHeaders();
     verifyZeroInteractions(_routingResult);
     verifyNoMoreInteractions(_responseHandler, _callback);
     assertFalse(responseErrorData.isErrorResponse());
@@ -484,7 +483,7 @@ public class TestRestLiCallback
     verify(_responseHandler).buildPartialResponse(_routingResult, responseErrorData);
     verify(_responseHandler).buildRestException(exFromFilter, partialFilterErrorResponse);
     verify(_callback).onError(finalRestException, executionReport);
-    verify(_restRequest, times(2)).getHeaders();
+    verify(_restRequest, times(1)).getHeaders();
     verifyZeroInteractions(_routingResult);
     verifyNoMoreInteractions(_responseHandler, _callback);
     RestLiServiceException restliEx = exFromFilterCapture.getValue();
@@ -558,7 +557,7 @@ public class TestRestLiCallback
     verify(_responseHandler).buildPartialResponse(_routingResult, filterResponseData);
     verify(_responseHandler).buildRestException(exFromFilter, partialFilterErrorResponse);
     verify(_callback).onError(finalRestException, executionReport);
-    verify(_restRequest, times(2)).getHeaders();
+    verify(_restRequest, times(1)).getHeaders();
     verifyZeroInteractions(_routingResult);
     verifyNoMoreInteractions(_responseHandler, _callback);
     RestLiServiceException restliEx = exFromFilterCapture.getValue();
@@ -646,7 +645,7 @@ public class TestRestLiCallback
     verify(_responseHandler).buildPartialResponse(_routingResult, responseData);
     verify(_responseHandler).buildRestException(exFromApp, partialResponse);
     verify(_callback).onError(restException, executionReport);
-    verify(_restRequest, times(2)).getHeaders();
+    verify(_restRequest, times(1)).getHeaders();
     verifyZeroInteractions(_routingResult);
     verifyNoMoreInteractions(_restRequest, _responseHandler, _callback);
     RestLiServiceException restliEx = exCapture.getValue();
@@ -733,7 +732,7 @@ public class TestRestLiCallback
     verify(_responseHandler).buildPartialResponse(_routingResult, responseData);
     verify(_responseHandler).buildResponse(_routingResult, partialResponse);
     verify(_callback).onSuccess(restResponse, executionReport);
-    verify(_restRequest, times(2)).getHeaders();
+    verify(_restRequest, times(1)).getHeaders();
     verifyZeroInteractions(_routingResult);
     verifyNoMoreInteractions(_restRequest, _responseHandler, _callback);
     RestLiServiceException restliEx = exCapture.getValue();
@@ -808,7 +807,7 @@ public class TestRestLiCallback
     verify(_responseHandler).buildRestException(exFromFirstFilter, partialResponse);
     verify(_responseHandler).buildPartialResponse(_routingResult, responseFilterData);
     verify(_callback).onError(restException, executionReport);
-    verify(_restRequest, times(4)).getHeaders();
+    verify(_restRequest, times(2)).getHeaders();
     verifyZeroInteractions(_routingResult);
     verifyNoMoreInteractions(_restRequest, _responseHandler, _callback);
     assertNotNull(responseFilterData);
@@ -896,7 +895,7 @@ public class TestRestLiCallback
     verify(_responseHandler).buildPartialResponse(_routingResult, responseFilterData);
     verify(_responseHandler).buildResponse(_routingResult, partialResponse);
     verify(_callback).onSuccess(restResponse, executionReport);
-    verify(_restRequest, times(4)).getHeaders();
+    verify(_restRequest, times(2)).getHeaders();
     verifyZeroInteractions(_routingResult);
     verifyNoMoreInteractions(_restRequest, _responseHandler, _callback);
     assertNotNull(responseFilterData);
@@ -971,7 +970,7 @@ public class TestRestLiCallback
     verify(_responseHandler).buildPartialResponse(_routingResult, responseFilterData);
     verify(_responseHandler).buildRestException(exFromSecondFilter, partialResponse);
     verify(_callback).onError(restException, executionReport);
-    verify(_restRequest, times(4)).getHeaders();
+    verify(_restRequest, times(2)).getHeaders();
     verifyZeroInteractions(_routingResult);
     verifyNoMoreInteractions(_restRequest, _responseHandler, _callback);
     assertNotNull(responseFilterData);

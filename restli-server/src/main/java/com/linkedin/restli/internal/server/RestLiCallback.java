@@ -178,10 +178,12 @@ public class RestLiCallback<T> implements RequestExecutionCallback<T>
     {
       restLiServiceException = new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, e.getMessage(), e);
     }
+
+    Map<String, String> requestHeaders = _request.getHeaders();
     Map<String, String> headers = new HashMap<String, String>();
-    headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION,
-                ProtocolVersionUtil.extractProtocolVersion(_request.getHeaders()).toString());
-    headers.put(HeaderUtil.getErrorResponseHeaderName(_request.getHeaders()), RestConstants.HEADER_VALUE_ERROR);
+    headers.put(ProtocolVersionUtil.getProtocolVersionHeaderName(requestHeaders),
+                ProtocolVersionUtil.extractProtocolVersion(requestHeaders).toString());
+    headers.put(HeaderUtil.getErrorResponseHeaderName(requestHeaders), RestConstants.HEADER_VALUE_ERROR);
     return _responseHandler.buildErrorResponseData(_request, _method, restLiServiceException, headers);
   }
 

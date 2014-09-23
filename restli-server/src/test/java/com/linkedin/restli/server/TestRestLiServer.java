@@ -29,9 +29,10 @@ import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
-import com.linkedin.restli.common.TestProtocolVersionUtil;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.common.TestProtocolVersionUtil;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
+import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.common.TestConstants;
 import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
@@ -44,6 +45,7 @@ import com.linkedin.restli.server.test.EasyMockResourceFactory;
 import com.linkedin.restli.server.twitter.AsyncStatusCollectionResource;
 import com.linkedin.restli.server.twitter.StatusCollectionResource;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Status;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -52,6 +54,7 @@ import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+
 import org.apache.commons.io.IOUtils;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
@@ -250,7 +253,7 @@ public class TestRestLiServer
     testValidRequest(server, clientProtocolVersion, false, headerConstant);
   }
 
-  private void testValidRequest(RestLiServer restLiServer, final ProtocolVersion clientProtocolVersion, boolean filters, String headerConstant) throws URISyntaxException
+  private void testValidRequest(RestLiServer restLiServer, final ProtocolVersion clientProtocolVersion, boolean filters, final String headerConstant) throws URISyntaxException
   {
     RestRequest request;
     if (clientProtocolVersion != null)
@@ -285,6 +288,11 @@ public class TestRestLiServer
         assertTrue(restResponse.getEntity().length() > 0);
         EasyMock.verify(statusResource);
         EasyMock.reset(statusResource);
+
+        if (clientProtocolVersion != null)
+        {
+          assertEquals(ProtocolVersionUtil.getProtocolVersionHeaderName(restResponse.getHeaders()), headerConstant);
+        }
       }
 
       @Override

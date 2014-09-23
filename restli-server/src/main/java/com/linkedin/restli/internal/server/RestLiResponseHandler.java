@@ -28,6 +28,7 @@ import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.HeaderUtil;
+import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.server.methods.MethodAdapterRegistry;
 import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.methods.response.PartialRestResponse;
@@ -170,7 +171,7 @@ public class RestLiResponseHandler
    *          {@link RoutingResult}
    * @param responseData
    *          response value
-   * @return {@link RestLiResponseDataInternal}
+   * @return {@link PartialRestResponse}
    * @throws IOException
    *           if cannot build response
    */
@@ -204,7 +205,7 @@ public class RestLiResponseHandler
     final ProtocolVersion protocolVersion = context.getRestliProtocolVersion();
     Map<String, String> responseHeaders = new HashMap<String, String>();
     responseHeaders.putAll(context.getResponseHeaders());
-    responseHeaders.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString());
+    responseHeaders.put(ProtocolVersionUtil.getProtocolVersionHeaderName(request.getHeaders()), protocolVersion.toString());
 
     if (responseObject == null)
     {
