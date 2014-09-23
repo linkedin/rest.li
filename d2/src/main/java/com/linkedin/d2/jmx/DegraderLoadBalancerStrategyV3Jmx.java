@@ -96,4 +96,19 @@ public class DegraderLoadBalancerStrategyV3Jmx implements DegraderLoadBalancerSt
     }
     return ring.toString();
   }
+
+  @Override
+  public long getCurrentClusterCallCount(int partitionId)
+  {
+    long currentClusterCallCount = _strategy.getState().getPartitionState(partitionId).getCurrentClusterCallCount();
+    return currentClusterCallCount;
+  }
+
+  @Override
+  public double getCurrentAvgClusterLatency(int partitionId)
+  {
+    double currentAvgClusterLatency = _strategy.getState().getPartitionState(partitionId).getCurrentAvgClusterLatency();
+    return currentAvgClusterLatency;
+  }
+
 }

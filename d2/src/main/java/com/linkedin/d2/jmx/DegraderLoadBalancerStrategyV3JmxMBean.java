@@ -69,4 +69,18 @@ public interface DegraderLoadBalancerStrategyV3JmxMBean
    */
   String getRingInformation(int partitionId);
 
+  /**
+   *
+   * @param partitionId
+   * @return number of call counts per d2 service.
+   */
+  long getCurrentClusterCallCount(int partitionId);
+
+  /**
+   *
+   * @param partitionId
+   * @return current average latency per d2 service in ms.
+   */
+  double getCurrentAvgClusterLatency(int partitionId);
+
 }
