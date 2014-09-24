@@ -1,5 +1,10 @@
+1.23.9
+------
+
 1.23.8
 ------
+(RB=368138)
+Expose more properties through DegraderLoadBalancerStrategyV3Jmx
 
 1.23.7
 ------
