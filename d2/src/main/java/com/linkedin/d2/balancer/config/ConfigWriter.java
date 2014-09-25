@@ -71,6 +71,8 @@ public class ConfigWriter<T>
 
   public void writeConfig() throws ExecutionException, TimeoutException, InterruptedException
   {
+    long startTime = System.currentTimeMillis();
+
     FutureCallback<None> callback = new FutureCallback<None>();
     _store.start(callback);
     callback.get(_timeout, _timeoutUnit);
@@ -117,6 +119,9 @@ public class ConfigWriter<T>
     FutureCallback<None> shutdownCallback = new FutureCallback<None>();
     _store.shutdown(shutdownCallback);
     shutdownCallback.get(_timeout, _timeoutUnit);
+
+    long elapsedTime = System.currentTimeMillis() - startTime;
+    _log.info("A total of {}.{}s elapsed to write configs to store.", elapsedTime / 1000, elapsedTime % 1000);
   }
 
   public static Map<String,Object> merge(Map<String,Object> source, Map<String,Object> defaultMap)
