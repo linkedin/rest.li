@@ -1,6 +1,7 @@
 1.23.9
 ------
-
+(RB=364843)
+Fail fast if resource names clash.
 
 1.23.8
 ------
