@@ -490,8 +490,10 @@ public class ExampleRequestResponseGenerator
     switch(_requestOptions.getProtocolVersionOption())
     {
       case FORCE_USE_LATEST:
-      case USE_LATEST_IF_AVAILABLE:
         protocolVersion = AllProtocolVersions.LATEST_PROTOCOL_VERSION;
+        break;
+      case USE_LATEST_IF_AVAILABLE:
+        protocolVersion = AllProtocolVersions.BASELINE_PROTOCOL_VERSION;
         break;
       case FORCE_USE_NEXT:
         protocolVersion = AllProtocolVersions.NEXT_PROTOCOL_VERSION;

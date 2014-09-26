@@ -30,7 +30,7 @@ public enum AllProtocolVersions
 
   public static final ProtocolVersion OLDEST_SUPPORTED_PROTOCOL_VERSION = RESTLI_PROTOCOL_1_0_0.getProtocolVersion();
   public static final ProtocolVersion BASELINE_PROTOCOL_VERSION = RESTLI_PROTOCOL_1_0_0.getProtocolVersion();
-  public static final ProtocolVersion LATEST_PROTOCOL_VERSION = RESTLI_PROTOCOL_1_0_0.getProtocolVersion();
+  public static final ProtocolVersion LATEST_PROTOCOL_VERSION = RESTLI_PROTOCOL_2_0_0.getProtocolVersion();
   public static final ProtocolVersion NEXT_PROTOCOL_VERSION = RESTLI_PROTOCOL_2_0_0.getProtocolVersion();
 
   private final ProtocolVersion _protocolVersion;
