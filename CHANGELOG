@@ -1,7 +1,13 @@
-1.23.9
+1.24.1
+------
+
+1.24.0
 ------
 (RB=364843)
 Fail fast if resource names clash.
+
+(RB=369715)
+Make latest version Rest.li 2.0.
 
 1.23.8
 ------
