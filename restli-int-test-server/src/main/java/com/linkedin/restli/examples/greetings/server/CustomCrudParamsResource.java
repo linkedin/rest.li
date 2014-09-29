@@ -57,7 +57,7 @@ public class CustomCrudParamsResource implements KeyValueResource<Long, Greeting
   public CreateResponse createGreeting(Greeting entity, @Optional @QueryParam("auth") String auth)
   {
     validateAuth(auth);
-    return _impl.create(entity);
+    return _impl.create(entity, false);
   }
 
   @RestMethod.Delete

@@ -11,7 +11,12 @@
     },
     "supports" : [ "batch_create", "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "delete", "get", "get_all", "partial_update", "update" ],
     "methods" : [ {
-      "method" : "create"
+      "method" : "create",
+      "parameters" : [ {
+        "name" : "isNullId",
+        "type" : "boolean",
+        "default" : "false"
+      } ]
     }, {
       "method" : "get"
     }, {

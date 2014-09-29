@@ -243,7 +243,10 @@ public class URIParamUtils
                                       UriComponent.Type componentType,
                                       boolean full)
   {
-
+    if (key == null)
+    {
+      return null;
+    }
     if (key instanceof ComplexResourceKey)
     {
       Object convertedKey;

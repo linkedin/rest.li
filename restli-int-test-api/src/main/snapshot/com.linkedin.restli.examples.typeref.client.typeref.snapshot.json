@@ -51,23 +51,25 @@
       "values" : "int"
     }
   }, {
+    "type" : "fixed",
+    "name" : "Fixed16",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "size" : 16
+  }, {
     "type" : "typeref",
     "name" : "Fixed16Ref",
     "namespace" : "com.linkedin.restli.examples.typeref.api",
-    "ref" : {
-      "type" : "fixed",
-      "name" : "Fixed16",
-      "size" : 16
-    }
+    "ref" : "Fixed16"
+  }, {
+    "type" : "enum",
+    "name" : "Fruits",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "symbols" : [ "APPLE", "ORANGE" ]
   }, {
     "type" : "typeref",
     "name" : "FruitsRef",
     "namespace" : "com.linkedin.restli.examples.typeref.api",
-    "ref" : {
-      "type" : "enum",
-      "name" : "Fruits",
-      "symbols" : [ "APPLE", "ORANGE" ]
-    }
+    "ref" : "Fruits"
   }, {
     "type" : "typeref",
     "name" : "Union",
@@ -79,20 +81,21 @@
     "namespace" : "com.linkedin.restli.examples.typeref.api",
     "ref" : "Union"
   }, {
+    "type" : "record",
+    "name" : "Point",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "fields" : [ {
+      "name" : "x",
+      "type" : "double"
+    }, {
+      "name" : "y",
+      "type" : "double"
+    } ]
+  }, {
     "type" : "typeref",
     "name" : "PointRef",
     "namespace" : "com.linkedin.restli.examples.typeref.api",
-    "ref" : {
-      "type" : "record",
-      "name" : "Point",
-      "fields" : [ {
-        "name" : "x",
-        "type" : "double"
-      }, {
-        "name" : "y",
-        "type" : "double"
-      } ]
-    }
+    "ref" : "Point"
   }, {
     "type" : "record",
     "name" : "TyperefRecord",

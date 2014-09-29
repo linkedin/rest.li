@@ -71,7 +71,12 @@
     "path" : "/greetingsTask",
     "collection" : {
       "methods" : [ {
-        "method" : "create"
+        "method" : "create",
+        "parameters" : [ {
+          "default" : "false",
+          "name" : "isNullId",
+          "type" : "boolean"
+        } ]
       }, {
         "method" : "get"
       }, {

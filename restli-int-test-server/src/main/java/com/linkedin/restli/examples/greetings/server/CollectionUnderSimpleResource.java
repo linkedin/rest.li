@@ -50,7 +50,7 @@ public class CollectionUnderSimpleResource extends CollectionResourceTemplate<Lo
   @RestMethod.Create
   public CreateResponse create(Greeting entity)
   {
-    return _impl.create(entity);
+    return _impl.create(entity, false);
   }
 
   @RestMethod.BatchGet

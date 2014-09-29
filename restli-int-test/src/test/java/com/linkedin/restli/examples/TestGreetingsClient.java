@@ -89,6 +89,7 @@ import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.test.util.BatchCreateHelper;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
+import com.sun.tools.hat.internal.model.Root;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -935,6 +936,19 @@ public class TestGreetingsClient extends RestLiIntegrationTest
       DataSchema optionsDataSchema = rawDataSchemas.get(dataSchema.getFullName());
       Assert.assertEquals(optionsDataSchema, dataSchema);
     }
+  }
+
+  @SuppressWarnings("deprecation")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
+  public void testCreateWithNullId(RootBuilderWrapper<Long, Greeting> builders)
+      throws RemoteInvocationException
+  {
+    Request<EmptyRecord> request = builders.create()
+                                           .input(new Greeting().setId(1L).setMessage("foo"))
+                                           .setQueryParam("isNullId", true)
+                                           .build();
+    Response<EmptyRecord> response = REST_CLIENT.sendRequest(request).getResponse();
+    Assert.assertNull(response.getId());
   }
 
   @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")

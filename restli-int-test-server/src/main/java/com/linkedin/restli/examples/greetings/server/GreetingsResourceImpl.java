@@ -112,10 +112,14 @@ class GreetingsResourceImpl implements KeyValueResource<Long,Greeting>
   // These CRUD annotations are MANDATORY for the code generator because we want to generate
   // implementations which do not use the templates, e.g. Task
   @RestMethod.Create
-  public CreateResponse create(Greeting entity)
+  public CreateResponse create(Greeting entity, @QueryParam("isNullId") @Optional("false") boolean isNullId)
   {
     entity.setId(_idSeq.incrementAndGet());
     _db.put(entity.getId(), entity);
+    if (isNullId)
+    {
+      return new CreateResponse(null, HttpStatus.S_201_CREATED);
+    }
     return new CreateResponse(entity.getId());
   }
 
@@ -169,7 +173,7 @@ class GreetingsResourceImpl implements KeyValueResource<Long,Greeting>
 
     for (Greeting g : entities.getInput())
     {
-      responses.add(create(g));
+      responses.add(create(g, false));
     }
     return new BatchCreateResult<Long, Greeting>(responses);
   }
