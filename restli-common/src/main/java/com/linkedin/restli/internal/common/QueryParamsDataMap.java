@@ -119,36 +119,44 @@ public class QueryParamsDataMap
   }
 
   /**
-   * Encode "fields" query param, if it exists, and put the result into result.
-   * @return a dataMap that will not have the "fields" query param, to ensure it does not
+   * Encode any of the projection fields query parameters, if they exist, and place them into result.
+   * @return a dataMap that will not have any of the projection fields query parameters set, to ensure they do not
    * get encoded twice
    */
   public static DataMap processProjections(DataMap dataMap, Map<String, List<String>> result)
   {
-    if (dataMap.containsKey(RestConstants.FIELDS_PARAM))
+    //We send this through the pipeline and migrate from the dataMap into the result
+    for (final String parameterName : RestConstants.PROJECTION_PARAMETERS)
     {
-      DataMap projectionsMap = dataMap.getDataMap(RestConstants.FIELDS_PARAM);
-      String encodedFields = URIMaskUtil.encodeMaskForURI(projectionsMap);
-      result.put(RestConstants.FIELDS_PARAM, Collections.singletonList(encodedFields));
-      DataMap dataMapClone;
-      try
+      if (dataMap.containsKey(parameterName))
       {
-        dataMapClone = dataMap.clone();
-        dataMapClone.remove(RestConstants.FIELDS_PARAM);
+        dataMap = processIndividualProjection(dataMap, result, parameterName);
       }
-      catch (CloneNotSupportedException e)
-      {
-        // should never be reached
-        throw new AssertionError(e);
-      }
-      return dataMapClone;
     }
-    else
-    {
-      return dataMap;
-    }
+
+    //If there were no projection parameters, we simply return the unmodified dataMap
+    return dataMap;
   }
 
+  private static DataMap processIndividualProjection(final DataMap dataMap, final Map<String, List<String>> result,
+      final String projectionKey)
+  {
+    final DataMap projectionsMap = dataMap.getDataMap(projectionKey);
+    final String encodedFields = URIMaskUtil.encodeMaskForURI(projectionsMap);
+    result.put(projectionKey, Collections.singletonList(encodedFields));
+    final DataMap dataMapClone;
+    try
+    {
+      dataMapClone = dataMap.clone();
+      dataMapClone.remove(projectionKey);
+    }
+    catch (CloneNotSupportedException e)
+    {
+      // should never be reached
+      throw new AssertionError(e);
+    }
+    return dataMapClone;
+  }
 
   private static void iterate(String keyPrefix,
                               DataComplex dataComplex,

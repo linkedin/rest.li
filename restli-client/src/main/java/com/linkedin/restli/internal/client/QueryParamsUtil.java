@@ -61,7 +61,7 @@ public class QueryParamsUtil
       String key = entry.getKey();
       Object value = entry.getValue();
 
-      if (key.equals(RestConstants.FIELDS_PARAM))
+      if (RestConstants.PROJECTION_PARAMETERS.contains(key))
       {
         @SuppressWarnings("unchecked")
         List<PathSpec> pathSpecs = (List<PathSpec>)value;

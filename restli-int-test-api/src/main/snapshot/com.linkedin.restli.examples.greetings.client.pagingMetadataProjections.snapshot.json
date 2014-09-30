@@ -1,0 +1,87 @@
+{
+  "models" : [ {
+    "type" : "enum",
+    "name" : "Tone",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "symbols" : [ "FRIENDLY", "SINCERE", "INSULTING" ]
+  }, {
+    "type" : "record",
+    "name" : "Greeting",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "doc" : "A greeting",
+    "fields" : [ {
+      "name" : "id",
+      "type" : "long"
+    }, {
+      "name" : "message",
+      "type" : "string"
+    }, {
+      "name" : "tone",
+      "type" : "Tone",
+      "doc" : "tone"
+    } ]
+  }, {
+    "type" : "record",
+    "name" : "Empty",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "fields" : [ ]
+  } ],
+  "schema" : {
+    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+    "name" : "pagingMetadataProjections",
+    "doc" : "Resource methods for automatic projection for paging in addition to a mixture of automatic/manual projection for\n custom metadata.\n Note that we intentionally pass in MaskTrees for root object entity projection, custom metadata projection and paging\n projection to verify RestliAnnotationReader's ability to properly construct the correct arguments when\n reflectively calling resource methods.\n Also note that resource methods cannot project paging (CollectionMetadata) with the exception of\n intentionally setting total to NULL when constructing CollectionResult.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.PagingProjectionResource",
+    "path" : "/pagingMetadataProjections",
+    "collection" : {
+      "methods" : [ {
+        "doc" : "Same as the test above except that this test is to make sure that GET_ALL observes the same code path in\n restli as FINDER does for custom metadata and paging projection.\n Redundant comments excluded for the sake of brevity.",
+        "method" : "get_all"
+      } ],
+      "entity" : {
+        "path" : "/pagingMetadataProjections/{pagingMetadataProjectionsId}"
+      },
+      "finders" : [ {
+        "name" : "metadataAutomaticPagingAutomaticPartialNull",
+        "doc" : "This resource method performs automatic projection for the custom metadata and automatic projection\n for paging. This particular resource method also varies on what it sets total to.",
+        "metadata" : {
+          "type" : "com.linkedin.restli.examples.greetings.api.Greeting"
+        }
+      }, {
+        "name" : "metadataAutomaticPagingAutomaticPartialNullIncorrect",
+        "doc" : "This resource method performs automatic projection for the custom metadata and automatic projection\n for paging. This particular resource method also varies on what it sets total to.\n The caveat with this test is that it incorrectly assigns a non null value for the total\n even though the MaskTree says to exclude it.",
+        "metadata" : {
+          "type" : "com.linkedin.restli.examples.greetings.api.Greeting"
+        }
+      }, {
+        "name" : "metadataAutomaticPagingFullyAutomatic",
+        "doc" : "This resource method performs automatic projection for the custom metadata and complete automatic projection\n for paging. This means that it will provide a total in its construction of CollectionResult.",
+        "metadata" : {
+          "type" : "com.linkedin.restli.examples.greetings.api.Greeting"
+        }
+      }, {
+        "name" : "metadataManualPagingAutomaticPartialNull",
+        "doc" : "This resource method performs manual projection for the custom metadata and automatic projection\n for paging. This particular resource method also varies on what it sets total to.\n Comments excluded since its combining behavior from the previous tests.",
+        "metadata" : {
+          "type" : "com.linkedin.restli.examples.greetings.api.Greeting"
+        }
+      }, {
+        "name" : "metadataManualPagingFullyAutomatic",
+        "doc" : "This resource method performs manual projection for the custom metadata and automatic projection\n for Paging.",
+        "metadata" : {
+          "type" : "com.linkedin.restli.examples.greetings.api.Greeting"
+        }
+      }, {
+        "name" : "searchWithLinksResult",
+        "doc" : "This resource method is used to create additional paging metadata for fields such as links. Client side\n tests can use this method to potentially project on fields inside of links.",
+        "metadata" : {
+          "type" : "com.linkedin.restli.examples.greetings.api.Empty"
+        }
+      } ],
+      "supports" : [ "get_all" ],
+      "identifier" : {
+        "name" : "pagingMetadataProjectionsId",
+        "type" : "long"
+      }
+    },
+    "namespace" : "com.linkedin.restli.examples.greetings.client"
+  }
+}

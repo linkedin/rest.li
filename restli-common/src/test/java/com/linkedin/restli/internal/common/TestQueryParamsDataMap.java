@@ -16,18 +16,21 @@
 
 package com.linkedin.restli.internal.common;
 
-import java.net.URI;
-import java.util.List;
-import java.util.Map;
-
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.PathSpec;
+import com.linkedin.data.transform.filter.request.MaskCreator;
+import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.jersey.api.uri.UriComponent;
+import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.PathSegment.PathSegmentSyntaxException;
 import com.linkedin.restli.internal.common.URLEscaper.Escaping;
+import java.net.URI;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 public class TestQueryParamsDataMap
 {
@@ -318,5 +321,35 @@ public class TestQueryParamsDataMap
     String queryString =
         QueryParamsDataMap.dataMapToQueryString(queryParamDataMap, Escaping.NO_ESCAPING);
     Assert.assertEquals(queryString, testQS);
+  }
+
+  /**
+   * Creates MaskTrees and extracts the subsequent DataMap to verify that processProjections can correctly
+   * convert it correctly into a Map that can later be constructed and encoded into an URI
+   */
+  @Test
+  public void testProcessProjections()
+  {
+    //Construct a MaskTree from a series of PathSpecs. Extract the subsequent Datamap representation.
+    final MaskTree rootObjectsMask = MaskCreator
+        .createPositiveMask(new PathSpec("foo", PathSpec.WILDCARD, "bar"));
+
+    final MaskTree metadataMask = MaskCreator
+        .createPositiveMask(new PathSpec("foo", "bar"), new PathSpec("bar", "baz"), new PathSpec("qux"));
+
+    final MaskTree pagingMask = MaskCreator
+        .createPositiveMask(new PathSpec("total"), new PathSpec("count"), new PathSpec("links", PathSpec.WILDCARD, "rel"));
+
+    final DataMap resultMap = new DataMap(4); //For each type of projection, plus one query string parameter
+    resultMap.put(RestConstants.FIELDS_PARAM, rootObjectsMask.getDataMap());
+    resultMap.put(RestConstants.METADATA_FIELDS_PARAM, metadataMask.getDataMap());
+    resultMap.put(RestConstants.PAGING_FIELDS_PARAM, pagingMask.getDataMap());
+    resultMap.put("someQueryString", "someValue");
+
+    final Map<String, List<String>> processedProjections = new LinkedHashMap<String, List<String>>();
+    final DataMap processedDataMap = QueryParamsDataMap.processProjections(resultMap, processedProjections);
+    Assert.assertTrue(processedDataMap.size() == 1, "Processed datamap should only have one item left!");
+    Assert.assertEquals(processedProjections.toString(),
+        "{fields=[foo:($*:(bar))], metadataFields=[foo:(bar),bar:(baz),qux], pagingFields=[total,count,links:($*:(rel))]}");
   }
 }

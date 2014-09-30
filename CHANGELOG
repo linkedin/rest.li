@@ -12,6 +12,10 @@ Add unit tests for all classes that implement RestLiResponseBuilder.
 (RB=333673)
 Disallow server impl module itself to be its API project.
 
+(RB=371175)
+Allow projections on custom metadata and paging.
+
+
 1.24.3
 ------
 (RB=362685)

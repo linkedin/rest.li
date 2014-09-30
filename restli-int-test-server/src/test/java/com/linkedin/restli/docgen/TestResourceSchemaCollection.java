@@ -59,6 +59,7 @@ public class TestResourceSchemaCollection
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.customTypes2", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.customTypes3", ResourceType.ASSOCIATION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.chainedTyperefs", ResourceType.ASSOCIATION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.customMetadataProjections", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.customTypes2.customTypes4", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.withContext", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.exceptions", ResourceType.COLLECTION);
@@ -73,6 +74,7 @@ public class TestResourceSchemaCollection
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.greetingsTask", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.greetingsold", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.mixed", ResourceType.COLLECTION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.pagingMetadataProjections", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.stringKeys", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.stringKeys.stringKeysSub", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.complexArray", ResourceType.COLLECTION);

@@ -64,8 +64,10 @@ import com.linkedin.restli.server.annotations.Context;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.HeaderParam;
 import com.linkedin.restli.server.annotations.Keys;
+import com.linkedin.restli.server.annotations.MetadataProjectionParam;
 import com.linkedin.restli.server.annotations.Optional;
 import com.linkedin.restli.server.annotations.PagingContextParam;
+import com.linkedin.restli.server.annotations.PagingProjectionParam;
 import com.linkedin.restli.server.annotations.ParSeqContext;
 import com.linkedin.restli.server.annotations.ParSeqContextParam;
 import com.linkedin.restli.server.annotations.PathKeysParam;
@@ -85,8 +87,10 @@ import com.linkedin.restli.server.resources.ComplexKeyResource;
 import com.linkedin.restli.server.resources.ComplexKeyResourceAsync;
 import com.linkedin.restli.server.resources.KeyValueResource;
 import com.linkedin.restli.server.resources.SingleObjectResource;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Method;
@@ -738,11 +742,19 @@ public final class RestLiAnnotationReader
         }
         else if (paramAnnotations.contains(Projection.class))
         {
-          param = buildProjectionParam(paramAnnotations, paramType, Projection.class);
+          param = buildProjectionParam(paramAnnotations, paramType, Parameter.ParamType.PROJECTION);
         }
         else if (paramAnnotations.contains(ProjectionParam.class))
         {
-          param = buildProjectionParam(paramAnnotations, paramType, ProjectionParam.class);
+          param = buildProjectionParam(paramAnnotations, paramType, Parameter.ParamType.PROJECTION_PARAM);
+        }
+        else if (paramAnnotations.contains(MetadataProjectionParam.class))
+        {
+          param = buildProjectionParam(paramAnnotations, paramType, Parameter.ParamType.METADATA_PROJECTION_PARAM);
+        }
+        else if (paramAnnotations.contains(PagingProjectionParam.class))
+        {
+          param = buildProjectionParam(paramAnnotations, paramType, Parameter.ParamType.PAGING_PROJECTION_PARAM);
         }
         else if (paramAnnotations.contains(Keys.class))
         {
@@ -763,7 +775,9 @@ public final class RestLiAnnotationReader
         else
         {
           throw new ResourceConfigException(buildMethodMessage(method)
-              + " must annotate each parameter with @QueryParam, @ActionParam, @AssocKeyParam, @PagingContextParam, @ProjectionParam, @PathKeysParam, @HeaderParam, @CallbackParam, @ResourceContext or @ParSeqContextParam");
+              + " must annotate each parameter with @QueryParam, @ActionParam, @AssocKeyParam, @PagingContextParam, " +
+              "@ProjectionParam, @MetadataProjectionParam, @PagingProjectionParam, @PathKeysParam, @HeaderParam, " +
+              "@CallbackParam, @ResourceContext or @ParSeqContextParam");
         }
       }
 
@@ -1007,27 +1021,16 @@ public final class RestLiAnnotationReader
 
   }
 
-  private static Parameter<?> buildProjectionParam(final AnnotationSet annotations,
-                                                   final Class<?> paramType,
-                                                   final Class<?> paramAnnotationType)
+  private static Parameter<?> buildProjectionParam(final AnnotationSet annotations, final Class<?> paramType,
+      final Parameter.ParamType projectionType)
   {
     if (!paramType.equals(MaskTree.class))
     {
-      throw new ResourceConfigException("Incorrect data type for param: @" + ProjectionParam.class.getSimpleName() + " or @" + Projection.class.getSimpleName() +
-              " parameter annotation must be of type " +  MaskTree.class.getName());
-    }
-    Parameter.ParamType parameter = null;
-    if(paramAnnotationType.equals(Projection.class))
-    {
-      parameter = Parameter.ParamType.PROJECTION;
-    }
-    else if (paramAnnotationType.equals(ProjectionParam.class))
-    {
-      parameter = Parameter.ParamType.PROJECTION_PARAM;
-    }
-    else
-    {
-      throw new ResourceConfigException("Param Annotation type must be 'ProjectionParam' or the deprecated 'Projection' for Projection");
+      throw new ResourceConfigException("Incorrect data type for param: @" + ProjectionParam.class.getSimpleName() +
+          ", @" + Projection.class.getSimpleName() +
+          ", @" + MetadataProjectionParam.class.getSimpleName() +
+          " or @" + PagingProjectionParam.class.getSimpleName() +
+          " parameter annotation must be of type " + MaskTree.class.getName());
     }
     Optional optional = annotations.get(Optional.class);
 
@@ -1037,7 +1040,7 @@ public final class RestLiAnnotationReader
                                        null,
                                        optional != null,
                                        null, // default mask is null.
-                                       parameter,
+                                       projectionType,
                                        false,
                                        annotations);
     return param;

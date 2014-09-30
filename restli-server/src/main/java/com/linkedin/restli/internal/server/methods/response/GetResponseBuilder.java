@@ -30,6 +30,7 @@ import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.methods.AnyRecord;
 import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.GetResult;
+import com.linkedin.restli.server.ResourceContext;
 
 import java.util.Map;
 
@@ -60,7 +61,9 @@ public class GetResponseBuilder implements RestLiResponseBuilder
       record = (RecordTemplate) result;
       status = HttpStatus.S_200_OK;
     }
-    final DataMap data = RestUtils.projectFields(record.data(), routingResult.getContext());
+    final ResourceContext resourceContext = routingResult.getContext();
+    final DataMap data = RestUtils.projectFields(record.data(), resourceContext.getProjectionMode(),
+        resourceContext.getProjectionMask());
     return new AugmentedRestLiResponseData.Builder(routingResult.getResourceMethod().getMethodType()).headers(headers)
                                                                                                      .status(status)
                                                                                                      .entity(new AnyRecord(data))

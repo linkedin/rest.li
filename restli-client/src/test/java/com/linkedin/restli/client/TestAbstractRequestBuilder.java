@@ -1,8 +1,8 @@
 package com.linkedin.restli.client;
 
 
-import com.linkedin.data.DataList;
-import com.linkedin.restli.common.test.MyComplexKey;
+import com.linkedin.data.schema.PathSpec;
+import com.linkedin.restli.common.RestConstants;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -260,6 +261,33 @@ public class TestAbstractRequestBuilder
     {
 
     }
+  }
+
+  @Test
+  public void testProjectionFields()
+  {
+    final AbstractRequestBuilder<?, ?, ?> builder = new DummyAbstractRequestBuilder();
+
+    builder.addFields(new PathSpec("firstField"), new PathSpec("secondField", PathSpec.WILDCARD, "thirdField"));
+    Assert.assertTrue(builder._queryParams.get(RestConstants.FIELDS_PARAM) instanceof PathSpec[]);
+    final PathSpec[] fieldsPathSpecs = (PathSpec[])builder._queryParams.get(RestConstants.FIELDS_PARAM);
+    Assert.assertEquals(fieldsPathSpecs[0].toString(), "/firstField", "The path spec(s) should match!");
+    Assert.assertEquals(fieldsPathSpecs[1].toString(), "/secondField/*/thirdField", "The path spec(s) should match!");
+
+    builder.addMetadataFields(new PathSpec(PathSpec.WILDCARD, "fourthField"), new PathSpec("fifthField"));
+    Assert.assertTrue(builder._queryParams.get(RestConstants.METADATA_FIELDS_PARAM) instanceof PathSpec[]);
+    final PathSpec[] metadataFieldsPathSpecs = (PathSpec[])builder._queryParams.get(RestConstants.METADATA_FIELDS_PARAM);
+    Assert.assertEquals(metadataFieldsPathSpecs[0].toString(), "/*/fourthField", "The path spec(s) should match!");
+    Assert.assertEquals(metadataFieldsPathSpecs[1].toString(), "/fifthField", "The path spec(s) should match!");
+
+    builder.addPagingFields(new PathSpec("sixthField", PathSpec.WILDCARD), new PathSpec("seventhField"),
+        new PathSpec(PathSpec.WILDCARD));
+    Assert.assertTrue(builder._queryParams.get(RestConstants.PAGING_FIELDS_PARAM) instanceof PathSpec[]);
+    final PathSpec[] pagingFieldsPathSpecs = (PathSpec[])builder._queryParams.get(RestConstants.PAGING_FIELDS_PARAM);
+    Assert.assertEquals(pagingFieldsPathSpecs[0].toString(), "/sixthField/*", "The path spec(s) should match!");
+    Assert.assertEquals(pagingFieldsPathSpecs[1].toString(), "/seventhField", "The path spec(s) should match!");
+
+    Assert.assertEquals(builder._queryParams.size(), 3, "We should have 3 query parameters, one for each projection type");
   }
 
   private static class DummyAbstractRequestBuilder extends AbstractRequestBuilder<Object, Object, Request<Object>>

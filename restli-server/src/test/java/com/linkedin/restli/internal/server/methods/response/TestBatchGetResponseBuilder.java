@@ -169,6 +169,7 @@ public class TestBatchGetResponseBuilder
     ServerResourceContext mockContext = EasyMock.createMock(ServerResourceContext.class);
     EasyMock.expect(mockContext.getBatchKeyErrors()).andReturn(exceptions).once();
     EasyMock.expect(mockContext.getProjectionMode()).andReturn(ProjectionMode.MANUAL).times(2);
+    EasyMock.expect(mockContext.getProjectionMask()).andReturn(null).times(2);
     EasyMock.expect(mockContext.getRestliProtocolVersion()).andReturn(protocolVersion).once();
     EasyMock.replay(mockContext);
     return mockContext;

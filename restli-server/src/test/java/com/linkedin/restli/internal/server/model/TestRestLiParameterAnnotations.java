@@ -27,30 +27,23 @@ import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.annotations.AssocKeyParam;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.Key;
+import com.linkedin.restli.server.annotations.MetadataProjectionParam;
 import com.linkedin.restli.server.annotations.PagingContextParam;
+import com.linkedin.restli.server.annotations.PagingProjectionParam;
 import com.linkedin.restli.server.annotations.ParSeqContextParam;
 import com.linkedin.restli.server.annotations.PathKeysParam;
 import com.linkedin.restli.server.annotations.ProjectionParam;
 import com.linkedin.restli.server.annotations.ResourceContextParam;
 import com.linkedin.restli.server.annotations.RestLiAssociation;
 import com.linkedin.restli.server.annotations.RestLiCollection;
-import com.linkedin.restli.server.annotations.RestLiSimpleResource;
-import com.linkedin.restli.server.annotations.RestMethod;
-import com.linkedin.restli.server.resources.AssociationResourceAsyncTemplate;
 import com.linkedin.restli.server.resources.AssociationResourceTemplate;
-import com.linkedin.restli.server.resources.CollectionResourceAsyncTemplate;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
-import com.linkedin.restli.server.resources.ComplexKeyResourceAsyncTemplate;
-import com.linkedin.restli.server.resources.ComplexKeyResourceTemplate;
-import com.linkedin.restli.server.resources.SimpleResourceAsyncTemplate;
-import com.linkedin.restli.server.resources.SimpleResourceTemplate;
-import com.sun.org.apache.xpath.internal.operations.*;
+
+import java.util.Collections;
+import java.util.List;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-import java.lang.String;
-import java.util.Collections;
-import java.util.List;
 
 
 /**
@@ -100,6 +93,18 @@ public class TestRestLiParameterAnnotations
       return Collections.emptyList();
     }
 
+    @Finder("MetadataProjectionParamFinder")
+    public List<EmptyRecord> MetadataProjectionParamNewTest(@MetadataProjectionParam MaskTree metadataProjectionParam)
+    {
+      return Collections.emptyList();
+    }
+
+    @Finder("PagingProjectionParamFinder")
+    public List<EmptyRecord> PagingProjectionParamNewTest(@PagingProjectionParam MaskTree pagingProjectionParam)
+    {
+      return Collections.emptyList();
+    }
+
     @Finder("ResourceContextParamFinder")
     public List<EmptyRecord> ResourceContextParamNewTest(@ResourceContextParam ResourceContext resourceContext)
     {
@@ -137,6 +142,18 @@ public class TestRestLiParameterAnnotations
   {
     @Finder("ProjectionParamIncorrectDataTypeFinder")
     public List<EmptyRecord> ProjectionParamIncorrectDataTypeTest(@ProjectionParam String projectionParam)
+    {
+      return Collections.emptyList();
+    }
+
+    @Finder("MetadataProjectionParamIncorrectDataTypeFinder")
+    public List<EmptyRecord> MetadataProjectionParamIncorrectDataTypeTest(@MetadataProjectionParam String metadataProjectionParam)
+    {
+      return Collections.emptyList();
+    }
+
+    @Finder("PagingProjectionParamIncorrectDataTypeFinder")
+    public List<EmptyRecord> PagingProjectionParamIncorrectDataTypeTest(@PagingProjectionParam String pagingProjectionParam)
     {
       return Collections.emptyList();
     }

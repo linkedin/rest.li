@@ -59,23 +59,25 @@ public class Parameter<T> extends FieldDef<T>
      * @deprecated Use PAGING_CONTEXT_PARAM instead
      */
     @Deprecated
-    CONTEXT,                // @PagingContext
-    PAGING_CONTEXT_PARAM,   // @PagingContextParam
-    CALLBACK,               // @CallbackParam
+    CONTEXT,                      // @PagingContext
+    PAGING_CONTEXT_PARAM,         // @PagingContextParam
+    CALLBACK,                     // @CallbackParam
     @Deprecated
-    PARSEQ_CONTEXT,         // @ParSeqContext
-    PARSEQ_CONTEXT_PARAM,   // @ParSeqContextParam
+    PARSEQ_CONTEXT,               // @ParSeqContext
+    PARSEQ_CONTEXT_PARAM,         // @ParSeqContextParam
     BATCH,
     @Deprecated
-    PROJECTION,             // @Projection
-    PROJECTION_PARAM,       // @ProjectionParam
+    PROJECTION,                   // @Projection
+    PROJECTION_PARAM,             // @ProjectionParam
     @Deprecated
-    PATH_KEYS,              // @Keys
-    PATH_KEYS_PARAM,        // @PathKeysParam
+    PATH_KEYS,                    // @Keys
+    PATH_KEYS_PARAM,              // @PathKeysParam
     @Deprecated
-    RESOURCE_CONTEXT,        // @ResourceContextParam
-    RESOURCE_CONTEXT_PARAM,  // @ResourceContextParam
-    HEADER,                 // @HeaderParam
+    RESOURCE_CONTEXT,             // @ResourceContextParam
+    RESOURCE_CONTEXT_PARAM,       // @ResourceContextParam
+    HEADER,                       // @HeaderParam
+    METADATA_PROJECTION_PARAM,    // @MetadataProjectionParam
+    PAGING_PROJECTION_PARAM       // @PagingProjectionParam
   }
 
   private final boolean _optional;

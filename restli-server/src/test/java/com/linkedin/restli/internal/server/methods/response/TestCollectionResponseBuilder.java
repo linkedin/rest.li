@@ -17,7 +17,6 @@
 
 package com.linkedin.restli.internal.server.methods.response;
 
-
 import com.linkedin.data.DataMap;
 import com.linkedin.pegasus.generator.examples.Foo;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -52,16 +51,13 @@ public class TestCollectionResponseBuilder
 {
   @DataProvider(name = "testData")
   public Object[][] dataProvider() {
-    Foo f1 = new Foo().setStringField("f1");
-    Foo f2 = new Foo().setStringField("f2");
     Foo metadata = new Foo().setStringField("metadata");
-
-    List<Foo> results = Arrays.asList(f1, f2);
-    CollectionResult<Foo, Foo> collectionResult = new CollectionResult<Foo, Foo>(results, 2, metadata);
+    final List<Foo> generatedList = generateTestList();
+    CollectionResult<Foo, Foo> collectionResult = new CollectionResult<Foo, Foo>(generatedList, generatedList.size(), metadata);
 
     return new Object[][]
         {
-            {results, null},
+            {generatedList, null},
             {collectionResult, metadata.data()},
         };
   }
@@ -138,7 +134,18 @@ public class TestCollectionResponseBuilder
     EasyMock.expect(mockContext.getParameter(EasyMock.<String>anyObject())).andReturn(null).times(2);
     EasyMock.expect(mockContext.getRequestHeaders()).andReturn(getHeaders()).once();
     EasyMock.expect(mockContext.getRawRequest()).andReturn(getRestRequest()).once();
-    EasyMock.expect(mockContext.getProjectionMode()).andReturn(ProjectionMode.MANUAL).times(2);
+
+    //Field Projection
+    EasyMock.expect(mockContext.getProjectionMode()).andReturn(ProjectionMode.AUTOMATIC).times(generateTestList().size());
+    EasyMock.expect(mockContext.getProjectionMask()).andReturn(null).times(generateTestList().size());
+
+    //Metadata Projection
+    EasyMock.expect(mockContext.getMetadataProjectionMode()).andReturn(ProjectionMode.AUTOMATIC).anyTimes();
+    EasyMock.expect(mockContext.getMetadataProjectionMask()).andReturn(null).anyTimes();
+
+    //Paging Projection
+    EasyMock.expect(mockContext.getPagingProjectionMask()).andReturn(null).once();
+
     EasyMock.replay(mockContext);
     return mockContext;
   }
@@ -150,6 +157,14 @@ public class TestCollectionResponseBuilder
     EasyMock.expect(mockDescriptor.getParametersWithType(EasyMock.<Parameter.ParamType>anyObject())).andReturn(Collections.<Parameter<?>>emptyList()).once();
     EasyMock.replay(mockDescriptor);
     return mockDescriptor;
+  }
+
+  private static List<Foo> generateTestList()
+  {
+    Foo f1 = new Foo().setStringField("f1");
+    Foo f2 = new Foo().setStringField("f2");
+    List<Foo> results = Arrays.asList(f1, f2);
+    return results;
   }
 
   private static Map<String, String> getHeaders()

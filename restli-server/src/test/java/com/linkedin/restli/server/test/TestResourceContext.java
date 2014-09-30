@@ -57,9 +57,11 @@ public class TestResourceContext
     return new Object[][]
       {
         { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
-          "groups/?count=10&emailDomain=foo.com&fields=locale,state&q=emailDomain&start=0"},
+          "groups/?count=10&emailDomain=foo.com&fields=locale,state&metadataFields=city,region" +
+              "&pagingFields=start,links&q=emailDomain&start=0"},
         { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
-          "groups/?count=10&emailDomain=foo.com&fields=locale,state&q=emailDomain&start=0"}
+          "groups/?count=10&emailDomain=foo.com&fields=locale,state&metadataFields=city,region" +
+              "&pagingFields=start,links&q=emailDomain&start=0"}
       };
   }
 
@@ -73,8 +75,14 @@ public class TestResourceContext
     ResourceContext context = new ResourceContextImpl(new PathKeysImpl(),
                                                       new MockRequest(uri, headers),
                                                       new RequestContext());
-    MaskTree mask = context.getProjectionMask();
-    Assert.assertEquals(mask.toString(), "{locale=1, state=1}");
+    final MaskTree rootEntityMask = context.getProjectionMask();
+    Assert.assertEquals(rootEntityMask.toString(), "{locale=1, state=1}");
+
+    final MaskTree metadataMask = context.getMetadataProjectionMask();
+    Assert.assertEquals(metadataMask.toString(), "{region=1, city=1}");
+
+    final MaskTree pagingMask = context.getPagingProjectionMask();
+    Assert.assertEquals(pagingMask.toString(), "{start=1, links=1}");
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "queryParamsProjectionMaskWithSyntax")
@@ -83,9 +91,13 @@ public class TestResourceContext
     return new Object[][]
       {
         { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
-          "groups/?count=10&emailDomain=foo.com&fields=locale,state,location:(longitude,latitude)&q=emailDomain&start=0"},
+          "groups/?count=10&emailDomain=foo.com&fields=locale,state,location:(longitude,latitude)" +
+              "&metadataFields=city,region,profile:(height,weight)" +
+              "&q=emailDomain&start=0"},
         { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
-          "groups/?count=10&emailDomain=foo.com&fields=locale,state,location:(longitude,latitude)&q=emailDomain&start=0"}
+          "groups/?count=10&emailDomain=foo.com&fields=locale,state,location:(longitude,latitude)" +
+              "&metadataFields=city,region,profile:(height,weight)" +
+              "&q=emailDomain&start=0"}
       };
   }
 
@@ -99,8 +111,15 @@ public class TestResourceContext
     ResourceContext context = new ResourceContextImpl(new PathKeysImpl(),
                                                       new MockRequest(uri, headers),
                                                       new RequestContext());
-    MaskTree mask = context.getProjectionMask();
-    Assert.assertEquals(mask.toString(), "{location={longitude=1, latitude=1}, locale=1, state=1}");
+    final MaskTree rootEntityMask = context.getProjectionMask();
+    Assert.assertEquals(rootEntityMask.toString(), "{location={longitude=1, latitude=1}, locale=1, state=1}");
+
+    final MaskTree metadataMask = context.getMetadataProjectionMask();
+    Assert.assertEquals(metadataMask.toString(), "{region=1, profile={weight=1, height=1}, city=1}");
+
+    //Note the lack of a test with paging here. This is because paging (CollectionMetadata) has a LinkArray which
+    //requires a wildcard path spec in the URI. That behavior is inconsistent with the other projections in this test,
+    //therefore it will be included in the subsequent test.
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "projectionMaskWithSyntax")
@@ -109,9 +128,13 @@ public class TestResourceContext
     return new Object[][]
       {
         { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
-          "groups/?fields=a:($*),b:($*:(c)),d:($*:(e,f))"},
+          "groups/?fields=a:($*),b:($*:(c)),d:($*:(e,f))" +
+              "&metadataFields=foo:($*:(a,b,c)),bar:($*),baz:($*:(a))" +
+              "&pagingFields=count,total,links:($*:(rel))"},
         { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
-          "groups/?fields=a:($*),b:($*:(c)),d:($*:(e,f))"}
+          "groups/?fields=a:($*),b:($*:(c)),d:($*:(e,f))" +
+              "&metadataFields=foo:($*:(a,b,c)),bar:($*),baz:($*:(a))" +
+              "&pagingFields=count,total,links:($*:(rel))"}
       };
   }
 
@@ -125,8 +148,14 @@ public class TestResourceContext
     ResourceContext context = new ResourceContextImpl(new PathKeysImpl(),
                                                       new MockRequest(uri, headers),
                                                       new RequestContext());
-    MaskTree mask = context.getProjectionMask();
-    Assert.assertEquals(mask.toString(), "{d={$*={f=1, e=1}}, b={$*={c=1}}, a={$*=1}}");
+    final MaskTree rootEntityMask = context.getProjectionMask();
+    Assert.assertEquals(rootEntityMask.toString(), "{d={$*={f=1, e=1}}, b={$*={c=1}}, a={$*=1}}");
+
+    final MaskTree metadataMask = context.getMetadataProjectionMask();
+    Assert.assertEquals(metadataMask.toString(), "{baz={$*={a=1}}, foo={$*={b=1, c=1, a=1}}, bar={$*=1}}");
+
+    final MaskTree pagingMask = context.getPagingProjectionMask();
+    Assert.assertEquals(pagingMask.toString(), "{total=1, count=1, links={$*={rel=1}}}");
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "uriDecoding")
@@ -135,9 +164,11 @@ public class TestResourceContext
     return new Object[][]
       {
         { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
-          "groups/?fields=foo,bar,baz&testParam.a%5B0%5D=b&testParam.a%5B1%5D=c&testParam.a%5B2%5D=d&q=test"},
+          "groups/?fields=foo,bar,baz&metadataFields=city,region&pagingFields=start,links" +
+              "&testParam.a%5B0%5D=b&testParam.a%5B1%5D=c&testParam.a%5B2%5D=d&q=test"},
         { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
-          "groups/?fields=foo,bar,baz&testParam=(a:List(b,c,d))&q=test"}
+          "groups/?fields=foo,bar,baz&metadataFields=city,region&pagingFields=start,links" +
+              "&testParam=(a:List(b,c,d))&q=test"}
       };
   }
 
@@ -152,12 +183,20 @@ public class TestResourceContext
                                                             new MockRequest(uri, headers),
                                                             new RequestContext());
 
-    MaskTree projectionMask = context.getProjectionMask();
-    Assert.assertEquals(projectionMask.toString(), "{baz=1, foo=1, bar=1}");
+    final MaskTree rootEntityMask = context.getProjectionMask();
+    Assert.assertEquals(rootEntityMask.toString(), "{baz=1, foo=1, bar=1}");
+
+    final MaskTree metadataMask = context.getMetadataProjectionMask();
+    Assert.assertEquals(metadataMask.toString(), "{region=1, city=1}");
+
+    final MaskTree pagingMask = context.getPagingProjectionMask();
+    Assert.assertEquals(pagingMask.toString(), "{start=1, links=1}");
 
     DataMap parameters = context.getParameters();
     DataMap expectedParameters = new DataMap();
     expectedParameters.put("fields", "foo,bar,baz");
+    expectedParameters.put("metadataFields", "city,region");
+    expectedParameters.put("pagingFields", "start,links");
     expectedParameters.put("q", "test");
     DataMap testParam = new DataMap();
     DataList aValue = new DataList();

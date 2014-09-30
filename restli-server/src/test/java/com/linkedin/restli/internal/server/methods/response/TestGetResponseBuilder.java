@@ -18,6 +18,8 @@
 package com.linkedin.restli.internal.server.methods.response;
 
 
+import com.linkedin.data.DataMap;
+import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.pegasus.generator.examples.Foo;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ResourceMethod;
@@ -27,8 +29,10 @@ import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.server.GetResult;
 import com.linkedin.restli.server.ProjectionMode;
 import com.linkedin.restli.server.ResourceContext;
+
 import java.util.HashMap;
 import java.util.Map;
+
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
@@ -72,7 +76,7 @@ public class TestGetResponseBuilder
     EasyMock.verify(mockContext, mockDescriptor);
     Assert.assertEquals(partialRestResponse.getHeaders(), headers);
     Assert.assertEquals(partialRestResponse.getStatus(), httpStatus);
-    Assert.assertEquals(partialRestResponse.getEntity(), getRecord());
+    Assert.assertEquals(partialRestResponse.getEntity(), getProjectedRecord());
   }
 
   private static ResourceMethodDescriptor getMockResourceMethodDescriptor()
@@ -86,12 +90,20 @@ public class TestGetResponseBuilder
   private static ResourceContext getMockResourceContext()
   {
     ResourceContext mockContext = EasyMock.createMock(ResourceContext.class);
-    EasyMock.expect(mockContext.getProjectionMode()).andReturn(ProjectionMode.MANUAL).once();
+    EasyMock.expect(mockContext.getProjectionMode()).andReturn(ProjectionMode.AUTOMATIC).once();
+    final DataMap projectionMask = new DataMap();
+    projectionMask.put("stringField", 1);
+    EasyMock.expect(mockContext.getProjectionMask()).andReturn(new MaskTree(projectionMask)).once();
     EasyMock.replay(mockContext);
     return mockContext;
   }
 
   private static Foo getRecord()
+  {
+    return new Foo().setStringField("foo").setBooleanField(false);
+  }
+
+  private static Foo getProjectedRecord()
   {
     return new Foo().setStringField("foo");
   }

@@ -149,6 +149,16 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
       return invoke(getMethod("fields", PathSpec[].class), (Object) fieldPaths);
     }
 
+    public MethodBuilderWrapper<K, V, R> metadataFields(PathSpec... metadataFieldPaths)
+    {
+      return invoke(getMethod("metadataFields", PathSpec[].class), (Object) metadataFieldPaths);
+    }
+
+    public MethodBuilderWrapper<K, V, R> pagingFields(PathSpec... pagingFieldPaths)
+    {
+      return invoke(getMethod("pagingFields", PathSpec[].class), (Object) pagingFieldPaths);
+    }
+
     public MethodBuilderWrapper<K, V, R> name(String name)
     {
       return invoke(getMethod("name", String.class), name);

@@ -223,30 +223,30 @@ public class RestUtils
   }
 
   /**
-   * Filter input {@link DataMap} by the projection mask from the input
+   * Filter input {@link DataMap} by the projection mask from the input.
    * {@link ResourceContext}.
    *
    * @param dataMap {@link DataMap} to filter
-   * @param resourceContext {@link ResourceContext} to get the projection mask from
-   * @return filtered DataMap. Empty one if the projection mast specifies no fields.
+   * @param projectionMode {@link ProjectionMode} to decide if restli should project or not
+   * @param  projectionMask {@link MaskTree} the mask to use when projecting
+   * @return filtered DataMap. Empty one if the projection mask specifies no fields.
    */
-  public static DataMap projectFields(final DataMap dataMap,
-                                      final ResourceContext resourceContext)
+  public static DataMap projectFields(final DataMap dataMap, final ProjectionMode projectionMode,
+      final MaskTree projectionMask)
   {
-    if (resourceContext.getProjectionMode() == ProjectionMode.MANUAL)
+    if (projectionMode == ProjectionMode.MANUAL)
     {
       return dataMap;
     }
 
-    final MaskTree filter = resourceContext.getProjectionMask();
-    if (filter == null)
+    if (projectionMask == null)
     {
       return dataMap;
     }
 
-    final DataMap filterMap = filter.getDataMap();
+    final DataMap filterMap = projectionMask.getDataMap();
     //Special-case: when present, an empty filter should not return any fields.
-    if (filter.getDataMap().isEmpty())
+    if (projectionMask.getDataMap().isEmpty())
     {
       return EMPTY_DATAMAP;
     }

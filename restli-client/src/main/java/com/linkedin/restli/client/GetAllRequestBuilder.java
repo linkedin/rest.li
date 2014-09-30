@@ -77,6 +77,18 @@ public class GetAllRequestBuilder<K, V extends RecordTemplate> extends
     return this;
   }
 
+  public GetAllRequestBuilder<K, V> metadataFields(PathSpec... metadataFieldPaths)
+  {
+    addMetadataFields(metadataFieldPaths);
+    return this;
+  }
+
+  public GetAllRequestBuilder<K, V> pagingFields(PathSpec... pagingFieldPaths)
+  {
+    addPagingFields(pagingFieldPaths);
+    return this;
+  }
+
   @Override
   @Deprecated
   public GetAllRequestBuilder<K, V> param(String key, Object value)

@@ -52,14 +52,37 @@ public class CollectionResult<T extends RecordTemplate, MD extends RecordTemplat
   }
 
   /**
-   * Constructor. Uses the default page increment mode of {@link PageIncrement#RELATIVE}.  Metadata is null.  Next page
-   * links will only be displayed if elements size is equal to requested page count.
+   * Constructor. Uses the default page increment mode of {@link PageIncrement#RELATIVE} and sets the total to null.
+   *
+   * @param elements provides the elements in current page of collection results.
+   * @param metadata provides search result metadata, as defined by the application.
+   */
+  public CollectionResult(final List<T> elements, final MD metadata)
+  {
+    this(elements, null, metadata);
+  }
+
+  /**
+   * Constructor. Total is set to null.
+   *
+   * @param elements provides the elements in current page of collection results.
+   * @param metadata provides search result metadata, as defined by the application.
+   * @param pageIncrement Provides the page increment mode.
+   */
+  public CollectionResult(final List<T> elements, final MD metadata, final PageIncrement pageIncrement)
+  {
+    this(elements, null, metadata, pageIncrement);
+  }
+
+  /**
+   * Constructor. Uses the default page increment mode of {@link PageIncrement#RELATIVE}. Metadata is null and
+   * the total is null. Next page links will only be displayed if elements size is equal to requested page count.
    *
    * @param elements provides the elements in current page of collection results.
    */
   public CollectionResult(final List<T> elements)
   {
-    this(elements, null, null);
+    this(elements, null, (MD)null);
   }
 
   /**

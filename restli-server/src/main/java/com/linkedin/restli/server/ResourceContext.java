@@ -16,12 +16,14 @@
 
 package com.linkedin.restli.server;
 
+
 import java.util.List;
 import java.util.Map;
 
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
+
 
 /**
  * Captures nested/scoped resource context.
@@ -52,11 +54,29 @@ public interface ResourceContext
   PathKeys getPathKeys();
 
   /**
-   * get the projection mask parsed from the query.
+   * get the projection mask parsed from the query for root object entities.
    *
-   * @return MaskTree parsed from query, or null if no projection mask was requested.
+   * @return MaskTree parsed from query, or null if no root object projection mask was requested.
    */
   MaskTree getProjectionMask();
+
+  /**
+   * get the projection mask parsed from the query for CollectionResult metadata
+   *
+   * @return MaskTree parsed from query, or null if no metadata projection mask was requested.
+   */
+  MaskTree getMetadataProjectionMask();
+
+  /**
+   * get the projection mask parsed from the query for paging (CollectionMetadata)
+   *
+   * Note that there is no get/set projection mode for paging because paging is fully automatic. Clients can choose
+   * whether or not to pass a non-null total in the CollectionResult based on their paging MaskTree, but restli will
+   * always automatically project paging.
+   *
+   * @return MaskTree parsed from query, or null if no paging projection mask was requested.
+   */
+  MaskTree getPagingProjectionMask();
 
   /**
    * check whether a given query parameter was present in the request.
@@ -118,14 +138,26 @@ public interface ResourceContext
   RequestContext getRawRequestContext();
 
   /**
-   * Get the projection mode to be applied to the response body.
-   * @return Projection mode for the response body.
+   * Get the projection mode to be applied to the response body for root object entities.
+   * @return Projection mode for the response body for root object entities.
    */
   ProjectionMode getProjectionMode();
 
   /**
-   * Set the projection mode to be applied to the response body.
-   * @param mode Projection mode for the response body.
+   * Set the projection mode to be applied to the response body for root object entities.
+   * @param mode Projection mode for the response body for root object entities.
    */
   void setProjectionMode(ProjectionMode mode);
+
+  /**
+   * Get the projection mode to be applied to the response body for the CollectionResult metadata.
+   * @return Projection mode for the response body for the CollectionResult metadata.
+   */
+  ProjectionMode getMetadataProjectionMode();
+
+  /**
+   * Set the projection mode to be applied to the response body for the CollectionResult metadata.
+   * @param mode Projection mode for the response body for the CollectionResult metadata.
+   */
+  void setMetadataProjectionMode(ProjectionMode mode);
 }

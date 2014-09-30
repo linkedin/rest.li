@@ -20,6 +20,7 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -51,6 +52,11 @@ public interface RestConstants
   String QUERY_TYPE_PARAM = "q";
   String QUERY_BATCH_IDS_PARAM = "ids";
   String FIELDS_PARAM = "fields";
+  String METADATA_FIELDS_PARAM = "metadataFields";
+  String PAGING_FIELDS_PARAM = "pagingFields";
+  Set<String> PROJECTION_PARAMETERS = Collections.unmodifiableSet(new LinkedHashSet<String>(
+      Arrays.asList(FIELDS_PARAM, METADATA_FIELDS_PARAM, PAGING_FIELDS_PARAM)));
+
   /** delimiter used for separating (name=value) parts of compound key */
   char   SIMPLE_KEY_DELIMITER = '&';
   /** delimiter used for separating name from value in a name-value pair forming a part of compound key */

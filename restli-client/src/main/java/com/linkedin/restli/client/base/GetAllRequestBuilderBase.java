@@ -80,6 +80,20 @@ public abstract class GetAllRequestBuilderBase<
     return (RB) super.fields(fieldPaths);
   }
 
+  @SuppressWarnings({"unchecked"})
+  @Override
+  public RB metadataFields(PathSpec... metadataFieldPaths)
+  {
+    return (RB) super.metadataFields(metadataFieldPaths);
+  }
+
+  @SuppressWarnings({"unchecked"})
+  @Override
+  public RB pagingFields(PathSpec... pagingFieldPaths)
+  {
+    return (RB) super.pagingFields(pagingFieldPaths);
+  }
+
   /**
    * @deprecated This method is deprecated and replaced by a set* method for API consistency reasons.
    * This method cannot be removed permanently until all projects use a version of Rest.li containing the

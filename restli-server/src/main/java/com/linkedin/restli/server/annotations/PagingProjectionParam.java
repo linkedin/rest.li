@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2012 LinkedIn Corp.
+   Copyright (c) 2014 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -14,30 +14,22 @@
    limitations under the License.
 */
 
+package com.linkedin.restli.server.annotations;
+
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+
 /**
- * $Id: $
+ * @author Karim Vidhani
+ *
+ * Used to denote an injected type of {@link com.linkedin.data.transform.filter.request.MaskTree}
  */
-
-package com.linkedin.restli.server;
-
-import java.util.List;
-
-import com.linkedin.data.template.RecordTemplate;
-
-/**
- * @author Josh Walker
- * @version $Revision: $
- */
-
-public class BasicCollectionResult<T extends RecordTemplate> extends CollectionResult<T, NoMetadata>
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.PARAMETER)
+public @interface PagingProjectionParam
 {
-  public BasicCollectionResult(final List<T> elements)
-  {
-    super(elements, null, (NoMetadata)null);
-  }
-
-  public BasicCollectionResult(final List<T> elements, final Integer total)
-  {
-    super(elements, total, null);
-  }
 }

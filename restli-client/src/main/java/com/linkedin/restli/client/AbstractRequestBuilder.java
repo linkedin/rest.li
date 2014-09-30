@@ -280,10 +280,30 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
   {
     if (_queryParams.containsKey(RestConstants.FIELDS_PARAM))
     {
-      throw new IllegalStateException("Fields already set on this request: "
+      throw new IllegalStateException("Entity projection fields already set on this request: "
                                           + _queryParams.get(RestConstants.FIELDS_PARAM));
     }
     setParam(RestConstants.FIELDS_PARAM, fieldPaths);
+  }
+
+  protected void addMetadataFields(PathSpec... fieldPaths)
+  {
+    if (_queryParams.containsKey(RestConstants.METADATA_FIELDS_PARAM))
+    {
+      throw new IllegalStateException("Metadata projection fields already set on this request: "
+          + _queryParams.get(RestConstants.METADATA_FIELDS_PARAM));
+    }
+    setParam(RestConstants.METADATA_FIELDS_PARAM, fieldPaths);
+  }
+
+  protected void addPagingFields(PathSpec... fieldPaths)
+  {
+    if (_queryParams.containsKey(RestConstants.PAGING_FIELDS_PARAM))
+    {
+      throw new IllegalStateException("Paging projection fields already set on this request: "
+          + _queryParams.get(RestConstants.PAGING_FIELDS_PARAM));
+    }
+    setParam(RestConstants.PAGING_FIELDS_PARAM, fieldPaths);
   }
 
   @Override

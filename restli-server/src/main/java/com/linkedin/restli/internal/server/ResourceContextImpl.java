@@ -57,15 +57,26 @@ public class ResourceContextImpl implements ServerResourceContext
   private final MutablePathKeys                     _pathKeys;
   private final RestRequest                         _request;
   private final DataMap                             _parameters;
-  private final MaskTree                            _projectionMask;
   private final Map<String, String>                 _responseHeaders;
   private final Map<Object, RestLiServiceException> _batchKeyErrors;
   private final RequestContext                      _requestContext;
   private final ProtocolVersion                     _protocolVersion;
-
-  private ProjectionMode                            _projectionMode;
-
   private String                                    _mimeType;
+
+  //For root object entities
+  private ProjectionMode                            _projectionMode;
+  private final MaskTree                            _projectionMask;
+
+  //For the metadata inside of a CollectionResult
+  private ProjectionMode                            _metadataProjectionMode;
+  private final MaskTree                            _metadataProjectionMask;
+
+  //For paging. Note that there is no projection mode for paging (CollectionMetadata) because its fully automatic.
+  //Client resource methods have the option of setting the total if they so desire, but restli will always
+  //project CollectionMetadata if the client asks for it.
+  //The paging projection mask is still available to both parties (the resource method and restli).
+  private final MaskTree                            _pagingProjectionMask;
+
 
   /**
    * Default constructor.
@@ -129,10 +140,32 @@ public class ResourceContextImpl implements ServerResourceContext
     {
       _projectionMask = null;
     }
+
+    if (_parameters.containsKey(RestConstants.METADATA_FIELDS_PARAM))
+    {
+      _metadataProjectionMask = ArgumentUtils.parseProjectionParameter(ArgumentUtils
+          .argumentAsString(getParameter(RestConstants.METADATA_FIELDS_PARAM), RestConstants.METADATA_FIELDS_PARAM));
+    }
+    else
+    {
+      _metadataProjectionMask = null;
+    }
+
+    if (_parameters.containsKey(RestConstants.PAGING_FIELDS_PARAM))
+    {
+      _pagingProjectionMask = ArgumentUtils.parseProjectionParameter(ArgumentUtils
+          .argumentAsString(getParameter(RestConstants.PAGING_FIELDS_PARAM), RestConstants.PAGING_FIELDS_PARAM));
+    }
+    else
+    {
+      _pagingProjectionMask = null;
+    }
+
     _responseHeaders = new HashMap<String, String>();
     _batchKeyErrors = new HashMap<Object, RestLiServiceException>();
 
     _projectionMode = ProjectionMode.getDefault();
+    _metadataProjectionMode = ProjectionMode.getDefault();
   }
 
   @Override
@@ -183,6 +216,16 @@ public class ResourceContextImpl implements ServerResourceContext
   public MaskTree getProjectionMask()
   {
     return _projectionMask;
+  }
+
+  @Override
+  public MaskTree getMetadataProjectionMask() {
+    return _metadataProjectionMask;
+  }
+
+  @Override
+  public MaskTree getPagingProjectionMask() {
+    return _pagingProjectionMask;
   }
 
   @Override
@@ -320,6 +363,18 @@ public class ResourceContextImpl implements ServerResourceContext
   public void setProjectionMode(ProjectionMode projectionMode)
   {
     _projectionMode = projectionMode;
+  }
+
+  @Override
+  public ProjectionMode getMetadataProjectionMode()
+  {
+    return _metadataProjectionMode;
+  }
+
+  @Override
+  public void setMetadataProjectionMode(ProjectionMode metadataProjectionMode)
+  {
+    _metadataProjectionMode = metadataProjectionMode;
   }
 
   @Override

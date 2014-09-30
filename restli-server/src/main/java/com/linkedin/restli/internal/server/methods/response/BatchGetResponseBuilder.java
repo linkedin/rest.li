@@ -128,7 +128,8 @@ public class BatchGetResponseBuilder implements RestLiResponseBuilder
         final Class<RecordTemplate> entityClass = (Class<RecordTemplate>) entityTemplate.getClass();
         entityResponse = new EntityResponse<RecordTemplate>(entityClass);
 
-        final DataMap projectedData = RestUtils.projectFields(entityTemplate.data(), context);
+        final DataMap projectedData =
+            RestUtils.projectFields(entityTemplate.data(), context.getProjectionMode(), context.getProjectionMask());
         CheckedUtil.putWithoutChecking(entityResponse.data(), EntityResponse.ENTITY, projectedData);
       }
 

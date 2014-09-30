@@ -54,16 +54,18 @@ public class URIParamUtils
 
   private static Map<String, String> dataMapToQueryParams(DataMap dataMap)
   {
-    if (dataMap.containsKey(RestConstants.FIELDS_PARAM))
+    final Map<String, String> result = encodeDataMapParameters(dataMap);
+
+    //Walk through the pipeline
+    for (final String parameterName : RestConstants.PROJECTION_PARAMETERS)
     {
-      Map<String, String> result = encodeDataMapParameters(dataMap);
-      result.put(RestConstants.FIELDS_PARAM, URIMaskUtil.encodeMaskForURI(dataMap.getDataMap(RestConstants.FIELDS_PARAM)));
-      return result;
+      if (dataMap.containsKey(parameterName))
+      {
+        result.put(parameterName, URIMaskUtil.encodeMaskForURI(dataMap.getDataMap(parameterName)));
+      }
     }
-    else
-    {
-      return encodeDataMapParameters(dataMap);
-    }
+
+    return result;
   }
 
   /**
@@ -396,7 +398,7 @@ public class URIParamUtils
       }
       String encodedValue =  values.get(0);
 
-      if (key.equals(RestConstants.FIELDS_PARAM))
+      if (RestConstants.PROJECTION_PARAMETERS.contains(key))
       {
         //don't decode it.
         value = encodedValue;

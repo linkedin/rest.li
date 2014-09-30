@@ -34,7 +34,6 @@ import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.TemplateRuntimeException;
-import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.BatchRequest;
 import com.linkedin.restli.common.ComplexResourceKey;
@@ -117,16 +116,35 @@ public class ArgumentBuilder
         arguments[i] = value;
       }
 
+      //Since we have multiple different types of MaskTrees that can be passed into resource methods,
+      //we must evaluate based on the param type (annotation used)
+      else if (param.getParamType() == Parameter.ParamType.PROJECTION)
+      {
+        arguments[i] = context.getProjectionMask();
+      }
+
+      else if (param.getParamType() == Parameter.ParamType.PROJECTION_PARAM)
+      {
+        arguments[i] = context.getProjectionMask();
+      }
+
+      else if (param.getParamType() == Parameter.ParamType.METADATA_PROJECTION_PARAM)
+      {
+        arguments[i] = context.getMetadataProjectionMask();
+      }
+
+      else if (param.getParamType() == Parameter.ParamType.PAGING_PROJECTION_PARAM)
+      {
+        arguments[i] = context.getPagingProjectionMask();
+      }
+
       else if (param.getType().isAssignableFrom(PagingContext.class))
       {
         PagingContext ctx =
             RestUtils.getPagingContext(context, (PagingContext) param.getDefaultValue());
         arguments[i] = ctx;
       }
-      else if (param.getType().isAssignableFrom(MaskTree.class))
-      {
-        arguments[i] = context.getProjectionMask();
-      }
+
       else if (param.getType().isAssignableFrom(PathKeys.class))
       {
         arguments[i] = context.getPathKeys();

@@ -31,6 +31,8 @@ import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.CollectionResult.PageIncrement;
 import com.linkedin.restli.server.RestLiServiceException;
+import com.linkedin.restli.server.ProjectionMode;
+import com.linkedin.restli.server.ResourceContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -99,11 +101,32 @@ public class CollectionResponseBuilder implements RestLiResponseBuilder
                                                                      final Integer totalResults,
                                                                      final Map<String, String> headers)
   {
-    CollectionMetadata pagingMetadata =
-        RestUtils.buildMetadata(request.getURI(), routingResult.getContext(), routingResult.getResourceMethod(),
+    //Extract the resource context that contains projection information for root object entities, metadata and paging.
+    final ResourceContext resourceContext = routingResult.getContext();
+
+    //Calculate paging metadata and apply projection
+    final CollectionMetadata paging =
+        RestUtils.buildMetadata(request.getURI(), resourceContext, routingResult.getResourceMethod(),
                                 elements, pageIncrement, totalResults);
 
-    // Process projection.
+    //PagingMetadata cannot be null at this point so we skip the null check. Notice here that we are using automatic
+    //intentionally since resource methods cannot explicitly project paging. However, it should be noted that client
+    //resource methods have the option of selectively setting the total to null. This happens if a client decides
+    //that they want the total in the paging response, which the resource method will see in their paging path spec,
+    //and then specify total when they create CollectionResult. Restli will then also subsequently separately project
+    //paging using this same path spec.
+    //Note that there is no chance of potential data loss here:
+    //If the client decides they don't want total in their paging response, then the resource method will
+    //see the lack of total in their paging path spec and then decide to set total to null. We will then also exclude it
+    //when we project paging.
+    //If the client decides they want total in their paging response, then the resource method will see total in their
+    //paging path spec and then decide to set total to a non null value. We will then also include it when we project
+    //paging.
+    final RecordTemplate anyRecord = new AnyRecord(RestUtils.projectFields(paging.data(),
+        ProjectionMode.AUTOMATIC, resourceContext.getPagingProjectionMask()));
+    final CollectionMetadata projectedPaging = new CollectionMetadata(anyRecord.data());
+
+    //For root object entities
     List<AnyRecord> processedElements = new ArrayList<AnyRecord>(elements.size());
     for (RecordTemplate entry : elements)
     {
@@ -114,12 +137,26 @@ public class CollectionResponseBuilder implements RestLiResponseBuilder
             "Unexpected null encountered. Null element inside of a List returned by the resource method: " + routingResult
                 .getResourceMethod());
       }
-      processedElements.add(new AnyRecord(RestUtils.projectFields(entry.data(), routingResult.getContext())));
+      processedElements.add(new AnyRecord(RestUtils
+          .projectFields(entry.data(), resourceContext.getProjectionMode(), resourceContext.getProjectionMask())));
     }
+
+    //Now for custom metadata
+    final AnyRecord projectedCustomMetadata;
+    if (customMetadata != null)
+    {
+      projectedCustomMetadata = new AnyRecord(RestUtils
+          .projectFields(customMetadata.data(), resourceContext.getMetadataProjectionMode(),
+              resourceContext.getMetadataProjectionMask()));
+    }
+    else
+    {
+      projectedCustomMetadata = null;
+    }
+
     return new AugmentedRestLiResponseData.Builder(routingResult.getResourceMethod().getMethodType()).headers(headers)
-                                                                                                     .collectionEntities(processedElements)
-                                                                                                     .collectionResponsePaging(pagingMetadata)
-                                                                                                     .collectionCustomMetadata(customMetadata)
-                                                                                                     .build();
+        .collectionEntities(processedElements)
+        .collectionResponsePaging(projectedPaging)
+        .collectionCustomMetadata(projectedCustomMetadata).build();
   }
 }
