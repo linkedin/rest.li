@@ -871,11 +871,13 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
             long trackerClientInterval = getTrackerClientInterval (serviceProperties.getProperty());
             for (URI uri : discoveryProperties.Uris())
             {
-              if (!trackerClients.containsKey(uri))
+              Map<Integer, PartitionData> partitionDataMap = discoveryProperties.getPartitionDataMap(uri);
+              TrackerClient client = trackerClients.get(uri);
+              if (client == null || !client.getParttitionDataMap().equals(partitionDataMap))
               {
-                TrackerClient client = getTrackerClient(serviceName,
+                 client = getTrackerClient(serviceName,
                     uri,
-                    discoveryProperties.getPartitionDataMap(uri),
+                    partitionDataMap,
                     config,
                     trackerClientInterval);
 

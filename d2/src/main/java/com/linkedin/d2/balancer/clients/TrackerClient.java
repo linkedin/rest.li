@@ -172,8 +172,7 @@ public class TrackerClient implements LoadBalancerClient
 
   public Double getPartitionWeight(int partitionId)
   {
-    // _partitionStates.get(partitionId) would not be null
-    PartitionData partitionData = _partitionStates.get(partitionId).getPartitionData();
+    PartitionData partitionData = getPartitionState(partitionId).getPartitionData();
 
     return partitionData == null ? null : partitionData.getWeight();
   }
@@ -190,14 +189,34 @@ public class TrackerClient implements LoadBalancerClient
 
   public Degrader getDegrader(int partitionId)
   {
-    // _partitionStates.get(partitionId) would not be null
-    return _partitionStates.get(partitionId).getDegrader();
+    return getPartitionState(partitionId).getDegrader();
   }
 
   public DegraderControl getDegraderControl(int partitionId)
   {
-    // _partitionStates.get(partitionId) would not be null
-    return _partitionStates.get(partitionId).getDegraderControl();
+
+    return getPartitionState(partitionId).getDegraderControl();
+  }
+
+  public Map<Integer, PartitionData> getParttitionDataMap()
+  {
+    Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>();
+    for (Map.Entry<Integer, PartitionState> entry : _partitionStates.entrySet())
+    {
+      partitionDataMap.put(entry.getKey(), entry.getValue().getPartitionData());
+    }
+    return partitionDataMap;
+  }
+
+  private PartitionState getPartitionState(int partitionId)
+  {
+    PartitionState partitionState = _partitionStates.get(partitionId);
+    if (partitionState == null)
+    {
+      String msg = "PartitionState does not exist for partitionId: " + partitionId + ". The current states are " + _partitionStates;
+      throw new IllegalStateException(msg);
+    }
+    return partitionState;
   }
 
   @Override

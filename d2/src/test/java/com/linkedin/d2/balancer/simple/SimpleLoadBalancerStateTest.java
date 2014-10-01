@@ -76,6 +76,7 @@ import java.util.concurrent.TimeUnit;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNotSame;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
@@ -1228,6 +1229,50 @@ public class SimpleLoadBalancerStateTest
     _state.listenToService("service-1", new SimpleLoadBalancer.SimpleLoadBalancerCountDownCallback(cdl));
 
     assertTrue(cdl.await(60, TimeUnit.SECONDS));
+
+  }
+
+  @Test(groups = {"small", "back-end"})
+  public void testUpdatePartitionDataMap()
+  {
+    reset();
+    URI uri = URI.create("http://cluster-1/test");
+    List<String> schemes = new ArrayList<String>();
+    Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>(1);
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>();
+    uriData.put(uri, partitionDataMap);
+
+    schemes.add("http");
+    _state.listenToCluster("cluster-1", new NullStateListenerCallback());
+    _state.listenToService("service-1", new NullStateListenerCallback());
+    _serviceRegistry.put("service-1", new ServiceProperties("service-1", "cluster-1",
+        "/test", "random", null,
+        Collections.<String, Object>emptyMap(),
+        null, null, schemes, null));
+
+    // first we announce uri with empty partition data map
+    _uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData));
+
+    TrackerClient client = _state.getClient("service-1", uri);
+
+    assertNotNull(client);
+    assertEquals(client.getUri(), uri);
+    // tracker client should see empty partition data map
+    assertTrue(client.getParttitionDataMap().isEmpty());
+
+    // then we update this uri to have a non-empty partition data map
+    partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
+    _uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData));
+
+    TrackerClient updatedClient = _state.getClient("service-1", uri);
+
+    assertNotNull(updatedClient);
+    // should have got a different tracker client
+    assertNotSame(client, updatedClient);
+    assertEquals(updatedClient.getUri(), uri);
+    // this updated client should have updated partition data map
+    assertFalse(updatedClient.getParttitionDataMap().isEmpty());
+    assertEquals(updatedClient.getParttitionDataMap(), partitionDataMap);
 
   }
 
