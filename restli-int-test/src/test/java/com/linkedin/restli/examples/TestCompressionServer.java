@@ -21,6 +21,7 @@ import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.filter.FilterChains;
+import com.linkedin.r2.filter.CompressionConfig;
 import com.linkedin.r2.filter.compression.Bzip2Compressor;
 import com.linkedin.r2.filter.compression.ClientCompressionFilter;
 import com.linkedin.r2.filter.compression.CompressionException;
@@ -335,6 +336,7 @@ public class TestCompressionServer extends RestLiIntegrationTest
   public void testEncodingGeneration(EncodingType[] encoding, String acceptEncoding)
   {
     ClientCompressionFilter cf = new ClientCompressionFilter(EncodingType.IDENTITY,
+                                                             new CompressionConfig(Integer.MAX_VALUE),
                                                              encoding,
                                                              Arrays.asList(new String[]{"*"}));
     Assert.assertEquals(cf.buildAcceptEncodingHeader(), acceptEncoding);

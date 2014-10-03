@@ -63,7 +63,7 @@ public class TestRequest
 
     Assert.assertEquals(
         request.toSecureString(),
-        "com.linkedin.restli.client.GetRequest{_method=get, _baseUriTemplate=abc, _methodName=null, _requestOptions={_protocolVersionOption: USE_LATEST_IF_AVAILABLE}}");
+        "com.linkedin.restli.client.GetRequest{_method=get, _baseUriTemplate=abc, _methodName=null, _requestOptions={_protocolVersionOption: USE_LATEST_IF_AVAILABLE, _requestCompressionOverride: null}}");
   }
 
   @Test

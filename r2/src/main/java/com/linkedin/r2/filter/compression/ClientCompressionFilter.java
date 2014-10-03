@@ -20,6 +20,8 @@ package com.linkedin.r2.filter.compression;
 import com.linkedin.r2.filter.Filter;
 import com.linkedin.r2.filter.NextFilter;
 import com.linkedin.r2.filter.R2Constants;
+import com.linkedin.r2.filter.CompressionConfig;
+import com.linkedin.r2.filter.CompressionOption;
 import com.linkedin.r2.filter.message.rest.RestFilter;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -36,13 +38,17 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Client filter for compression
- * */
+ */
 public class ClientCompressionFilter implements Filter, RestFilter
 {
   private static final Logger LOG = LoggerFactory.getLogger(ClientCompressionFilter.class);
 
-  private final EncodingType _requestCompression;
-  private final EncodingType[] _acceptCompression;
+  private final EncodingType _requestContentEncoding;
+  private final CompressionConfig _requestCompressionConfig;
+  /**
+   * Encodings accepted by the client, used to generate Accept-Encoding header.
+   */
+  private final EncodingType[] _acceptedEncodings;
   private final String _acceptEncodingHeader;
 
   /**
@@ -62,34 +68,35 @@ public class ClientCompressionFilter implements Filter, RestFilter
    */
   private static final String COMPRESS_ALL_RESPONSES_INDICATOR = "*";
 
-  private static final String OPERATION_SEPARATOR = ",";
-  private static final String FAMILIY_SEPARATOR = ":";
-  private static final String COMPRESS_ALL_IN_FAMILY = FAMILIY_SEPARATOR + COMPRESS_ALL_RESPONSES_INDICATOR;
+  private static final String FAMILY_SEPARATOR = ":";
+  private static final String COMPRESS_ALL_IN_FAMILY = FAMILY_SEPARATOR + COMPRESS_ALL_RESPONSES_INDICATOR;
 
 
   /**
-   * Instantiates a client compression filter
-   * @param requestCompression Specifies which compression encoding
-   * was used to compress requests
-   * @param acceptCompression Specifies which compression encodings
-   * are accepted by the client
+   * Instantiates a client compression filter.
+   *
+   * @param requestContentEncoding the encoding that should be used to compress requests.
+   * @param requestCompressionConfig config for determining when to compress requests.
+   * @param acceptedEncodings encodings accepted by the client, used to generate Accept-Encoding header.
+   * @param responseCompressionOperations the set of operations for which response compression will be turned on.
    */
-  public ClientCompressionFilter(EncodingType requestCompression,
-                                 EncodingType[] acceptCompression,
+  public ClientCompressionFilter(EncodingType requestContentEncoding,
+                                 CompressionConfig requestCompressionConfig,
+                                 EncodingType[] acceptedEncodings,
                                  List<String> responseCompressionOperations)
   {
-    if (requestCompression == null)
+    if (requestContentEncoding == null)
     {
       throw new IllegalArgumentException(CompressionConstants.NULL_COMPRESSOR_ERROR);
     }
 
-    if (acceptCompression == null)
+    if (acceptedEncodings == null)
     {
-      acceptCompression = new EncodingType[0];
+      acceptedEncodings = new EncodingType[0];
     }
 
     //Sanity check
-    for(EncodingType type : acceptCompression)
+    for (EncodingType type : acceptedEncodings)
     {
       if (type == null)
       {
@@ -97,14 +104,15 @@ public class ClientCompressionFilter implements Filter, RestFilter
       }
     }
 
-    if (requestCompression.equals(EncodingType.ANY))
+    if (requestContentEncoding.equals(EncodingType.ANY))
     {
       throw new IllegalArgumentException(CompressionConstants.REQUEST_ANY_ERROR
-                                         + requestCompression.getHttpName());
+                                         + requestContentEncoding.getHttpName());
     }
 
-    _requestCompression = requestCompression;
-    _acceptCompression = acceptCompression;
+    _requestContentEncoding = requestContentEncoding;
+    _requestCompressionConfig = requestCompressionConfig;
+    _acceptedEncodings = acceptedEncodings;
 
     _acceptEncodingHeader = buildAcceptEncodingHeader();
     _responseCompressionMethods = new HashSet<String>();
@@ -115,14 +123,17 @@ public class ClientCompressionFilter implements Filter, RestFilter
   }
 
   /**
-   * Same as previous constructor, but with comma delimited strings as args.
-   * @param requestCompression
-   * @param acceptCompression
+   * Same as previous constructor, but with comma delimited strings for requestContentEncoding and acceptedEncodings.
    */
-  public ClientCompressionFilter(String requestCompression, String acceptCompression, List<String> responseCompressionOperations)
+  public ClientCompressionFilter(String requestContentEncoding,
+                                 CompressionConfig requestCompressionConfig,
+                                 String acceptedEncodings,
+                                 List<String> responseCompressionOperations)
   {
-    this(requestCompression.trim().isEmpty() ? EncodingType.IDENTITY : EncodingType.get(requestCompression.trim().toLowerCase()),
-        AcceptEncoding.parseAcceptEncoding(acceptCompression), responseCompressionOperations);
+    this(requestContentEncoding.trim().isEmpty() ? EncodingType.IDENTITY : EncodingType.get(requestContentEncoding.trim().toLowerCase()),
+        requestCompressionConfig,
+        AcceptEncoding.parseAcceptEncoding(acceptedEncodings),
+        responseCompressionOperations);
   }
 
   /**
@@ -137,7 +148,7 @@ public class ClientCompressionFilter implements Filter, RestFilter
       // family operations are represented in the config as "familyName:*"
       if (operation.endsWith(COMPRESS_ALL_IN_FAMILY))
       {
-        String[] parts = operation.split(FAMILIY_SEPARATOR);
+        String[] parts = operation.split(FAMILY_SEPARATOR);
         if (parts == null || parts.length != 2)
         {
           LOG.warn("Illegal compression operation family " + operation + " specified");
@@ -159,14 +170,14 @@ public class ClientCompressionFilter implements Filter, RestFilter
   public String buildAcceptEncodingHeader()
   {
     //Essentially, we want to assign nonzero quality values to all those specified;
-    float delta = 1.0f/(_acceptCompression.length+1);
+    float delta = 1.0f/(_acceptedEncodings.length+1);
     float currentQuality = 1.0f;
 
     //Special case so we don't end with an unnecessary delimiter
     StringBuilder acceptEncodingValue = new StringBuilder();
-    for(int i=0; i < _acceptCompression.length; i++)
+    for(int i=0; i < _acceptedEncodings.length; i++)
     {
-      EncodingType t = _acceptCompression[i];
+      EncodingType t = _acceptedEncodings[i];
 
       if(i > 0)
       {
@@ -192,22 +203,27 @@ public class ClientCompressionFilter implements Filter, RestFilter
   {
     try
     {
-      //If request can be compressed, compress
-      if (_requestCompression.hasCompressor())
+      if (_requestContentEncoding.hasCompressor())
       {
-        Compressor compressor = _requestCompression.getCompressor();
-        byte[] compressed = compressor.deflate(req.getEntity().asInputStream());
-
-        if (compressed.length < req.getEntity().length())
+        if (_requestCompressionConfig.shouldCompressRequest(
+            req.getEntity().length(),
+            (CompressionOption) requestContext.getLocalAttr(R2Constants.REQUEST_COMPRESSION_OVERRIDE)
+        ))
         {
-          req = req.builder().setEntity(compressed).setHeader(HttpConstants.CONTENT_ENCODING,
-                                                              compressor.getContentEncodingName()).build();
+          Compressor compressor = _requestContentEncoding.getCompressor();
+          byte[] compressed = compressor.deflate(req.getEntity().asInputStream());
+
+          if (compressed.length < req.getEntity().length())
+          {
+            req = req.builder().setEntity(compressed).setHeader(HttpConstants.CONTENT_ENCODING,
+                compressor.getContentEncodingName()).build();
+          }
         }
       }
 
       //Set accepted encoding for compressed response
-      String operation = (String)requestContext.getLocalAttr(R2Constants.OPERATION);
-      if (operation != null && _acceptCompression.length > 0 && shouldCompress(operation))
+      String operation = (String) requestContext.getLocalAttr(R2Constants.OPERATION);
+      if (operation != null && _acceptedEncodings.length > 0 && shouldCompressResponse(operation))
       {
         req = req.builder().addHeaderValue(HttpConstants.ACCEPT_ENCODING, _acceptEncodingHeader).build();
       }
@@ -222,10 +238,10 @@ public class ClientCompressionFilter implements Filter, RestFilter
   }
 
   /**
-   * Check if the operation should be compressed
+   * Returns true if the client wants a compressed response from the server.
    * @param operation
    */
-  private boolean shouldCompress(String operation)
+  private boolean shouldCompressResponse(String operation)
   {
     return _compressAllResponses ||
            _responseCompressionMethods.contains(operation) ||
@@ -238,9 +254,9 @@ public class ClientCompressionFilter implements Filter, RestFilter
    */
   private boolean isMemberOfCompressionFamily(String operation)
   {
-    if (operation.contains(FAMILIY_SEPARATOR))
+    if (operation.contains(FAMILY_SEPARATOR))
     {
-      String[] parts = operation.split(FAMILIY_SEPARATOR);
+      String[] parts = operation.split(FAMILY_SEPARATOR);
       if (parts == null || parts.length != 2)
       {
         return false;
@@ -267,17 +283,21 @@ public class ClientCompressionFilter implements Filter, RestFilter
       //Compress if necessary
       if (compressionHeader != null && res.getEntity().length() > 0)
       {
-        EncodingType encoding = EncodingType.get(compressionHeader.trim().toLowerCase());
-        if (encoding == null || !encoding.hasCompressor())
+        EncodingType encoding = null;
+        try
+        {
+          encoding = EncodingType.get(compressionHeader.trim().toLowerCase());
+        }
+        catch (IllegalArgumentException e)
         {
           throw new CompressionException(CompressionConstants.SERVER_ENCODING_ERROR + compressionHeader);
         }
-
-        if (encoding.hasCompressor())
+        if (!encoding.hasCompressor())
         {
-          byte[] inflated = encoding.getCompressor().inflate(res.getEntity().asInputStream());
-          res = res.builder().setEntity(inflated).build();
+          throw new CompressionException(CompressionConstants.SERVER_ENCODING_ERROR + compressionHeader);
         }
+        byte[] inflated = encoding.getCompressor().inflate(res.getEntity().asInputStream());
+        res = res.builder().setEntity(inflated).build();
       }
     }
     catch (CompressionException e)

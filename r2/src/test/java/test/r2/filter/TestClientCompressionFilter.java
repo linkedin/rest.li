@@ -18,13 +18,19 @@ package test.r2.filter;
 
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.filter.NextFilter;
+import com.linkedin.r2.filter.CompressionConfig;
+import com.linkedin.r2.filter.CompressionOption;
 import com.linkedin.r2.filter.compression.ClientCompressionFilter;
+import com.linkedin.r2.filter.compression.CompressionException;
 import com.linkedin.r2.filter.compression.EncodingType;
 import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.rest.RestMethod;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.http.common.HttpConstants;
+
+import java.io.ByteArrayInputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
@@ -40,7 +46,7 @@ import org.testng.annotations.Test;
  *
  * @author Karan Parikh
  */
-public class TestCompressionOperations
+public class TestClientCompressionFilter
 {
 
   private static final String ACCEPT_COMPRESSIONS = "gzip, deflate, bzip2, snappy";
@@ -55,23 +61,36 @@ public class TestCompressionOperations
   {
 
     private boolean _shouldBePresent;
+    private String _headerName;
+    private int _entityLength = 0;
 
-    public HeaderCaptureFilter(boolean shouldBePresent)
+    public HeaderCaptureFilter(String headerName, boolean shouldBePresent)
     {
       _shouldBePresent = shouldBePresent;
+      _headerName = headerName;
+    }
+
+    public HeaderCaptureFilter(String headerName, boolean shouldBePresent, int entityLength)
+    {
+      this(headerName, shouldBePresent);
+      _entityLength = entityLength;
     }
 
     @Override
     public void onRequest(RestRequest restRequest, RequestContext requestContext, Map<String, String> wireAttrs)
     {
-      String acceptEncodingHeader = restRequest.getHeader(HttpConstants.ACCEPT_ENCODING);
+      String header = restRequest.getHeader(_headerName);
       if (_shouldBePresent)
       {
-        Assert.assertNotNull(acceptEncodingHeader);
+        Assert.assertNotNull(header);
       }
       else
       {
-        Assert.assertNull(acceptEncodingHeader);
+        Assert.assertNull(header);
+      }
+      if (_entityLength > 0)
+      {
+        Assert.assertEquals(restRequest.getEntity().length(), _entityLength);
       }
     }
 
@@ -88,8 +107,8 @@ public class TestCompressionOperations
     }
   }
 
-  @DataProvider(name = "data")
-  public Object[][] provideData()
+  @DataProvider(name = "operationsData")
+  public Object[][] provideOperationsData()
   {
     return new Object[][] {
         {"*", new String[]{"foo", "bar", "foo:bar"}, true},
@@ -111,12 +130,13 @@ public class TestCompressionOperations
     };
   }
 
-  @Test(dataProvider = "data")
-  public void test(String compressionConfig, String[] operations, boolean headerShouldBePresent)
+  @Test(dataProvider = "operationsData")
+  public void testCompressionOperations(String compressionConfig, String[] operations, boolean headerShouldBePresent)
       throws URISyntaxException
   {
     RestRequest restRequest = new RestRequestBuilder(new URI(URI)).build();
     ClientCompressionFilter clientCompressionFilter = new ClientCompressionFilter(EncodingType.IDENTITY.getHttpName(),
+                                                                                  new CompressionConfig(Integer.MAX_VALUE),
                                                                                   ACCEPT_COMPRESSIONS,
                                                                                   Arrays.asList(compressionConfig.split(",")));
 
@@ -128,7 +148,52 @@ public class TestCompressionOperations
       clientCompressionFilter.onRestRequest(restRequest,
                                             context,
                                             Collections.<String, String>emptyMap(),
-                                            new HeaderCaptureFilter(headerShouldBePresent));
+                                            new HeaderCaptureFilter(HttpConstants.ACCEPT_ENCODING, headerShouldBePresent));
     }
+  }
+
+  @DataProvider(name = "requestData")
+  private Object[][] provideRequestData()
+  {
+    CompressionConfig smallThresholdConfig = new CompressionConfig(1);
+    CompressionConfig largeThresholdConfig = new CompressionConfig(10000);
+
+    return new Object[][] {
+        {new CompressionConfig(Integer.MAX_VALUE), CompressionOption.FORCE_OFF, false},
+        {new CompressionConfig(Integer.MAX_VALUE), CompressionOption.FORCE_ON, true},
+        {new CompressionConfig(Integer.MAX_VALUE), null, false},
+        {new CompressionConfig(0), CompressionOption.FORCE_OFF, false},
+        {new CompressionConfig(0), CompressionOption.FORCE_ON, true},
+        {new CompressionConfig(0), null, true},
+        {smallThresholdConfig, CompressionOption.FORCE_OFF, false},
+        {smallThresholdConfig, CompressionOption.FORCE_ON, true},
+        {smallThresholdConfig, null, true},
+        {largeThresholdConfig, CompressionOption.FORCE_OFF, false},
+        {largeThresholdConfig, CompressionOption.FORCE_ON, true},
+        {largeThresholdConfig, null, false}
+    };
+  }
+
+  @Test(dataProvider = "requestData")
+  public void testRequestCompressionRules(CompressionConfig requestCompressionConfig,
+                                          CompressionOption requestCompressionOverride, boolean headerShouldBePresent)
+      throws CompressionException, URISyntaxException
+  {
+    ClientCompressionFilter clientCompressionFilter = new ClientCompressionFilter(EncodingType.SNAPPY.getHttpName(),
+        requestCompressionConfig,
+        ACCEPT_COMPRESSIONS,
+        Collections.<String>emptyList());
+    // The entity should be compressible for this test.
+    int original = 100;
+    byte[] entity = new byte[original];
+    Arrays.fill(entity, (byte)'A');
+    RestRequest restRequest = new RestRequestBuilder(new URI(URI)).setMethod(RestMethod.POST).setEntity(entity).build();
+    int compressed = EncodingType.SNAPPY.getCompressor().deflate(new ByteArrayInputStream(entity)).length;
+    RequestContext context = new RequestContext();
+    context.putLocalAttr(R2Constants.OPERATION, "");
+    context.putLocalAttr(R2Constants.REQUEST_COMPRESSION_OVERRIDE, requestCompressionOverride);
+    int entityLength = headerShouldBePresent ? compressed : original;
+    clientCompressionFilter.onRestRequest(restRequest, context, Collections.<String, String>emptyMap(),
+        new HeaderCaptureFilter(HttpConstants.CONTENT_ENCODING, headerShouldBePresent, entityLength));
   }
 }

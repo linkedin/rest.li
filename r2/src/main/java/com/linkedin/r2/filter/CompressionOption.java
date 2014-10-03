@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2013 LinkedIn Corp.
+   Copyright (c) 2014 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -17,14 +17,23 @@
 package com.linkedin.r2.filter;
 
 
+import com.linkedin.r2.message.RequestContext;
+
 /**
- * @author kparikh
+ * This enumeration is used by the client to force compression on or off for each request,
+ * when included as a local attribute of the {@link RequestContext} with the key as {@link R2Constants#REQUEST_COMPRESSION_OVERRIDE}.
+ *
+ * @author Soojung Ha
  */
-public class R2Constants
+public enum CompressionOption
 {
-  public static final String OPERATION = "OPERATION";
-  public static final String REMOTE_ADDR = "REMOTE_ADDR";
-  public static final String IS_SECURE = "IS_SECURE";
-  public static final String CLIENT_CERT = "CLIENT_CERT";
-  public static final String REQUEST_COMPRESSION_OVERRIDE = "REQUEST_COMPRESSION_OVERRIDE";
+  /**
+   * Compress the request.
+   */
+  FORCE_ON,
+
+  /**
+   * Do not compress the request.
+   */
+  FORCE_OFF
 }

@@ -17,6 +17,8 @@
 package com.linkedin.restli.client;
 
 
+import com.linkedin.r2.filter.CompressionOption;
+
 /**
  * Builds {@link RestliRequestOptions}. NOT thread safe.
  *
@@ -25,6 +27,7 @@ package com.linkedin.restli.client;
 public class RestliRequestOptionsBuilder
 {
   private ProtocolVersionOption _protocolVersionOption;
+  private CompressionOption _requestCompressionOverride;
 
   public RestliRequestOptionsBuilder()
   {
@@ -34,6 +37,7 @@ public class RestliRequestOptionsBuilder
   public RestliRequestOptionsBuilder(RestliRequestOptions restliRequestOptions)
   {
     setProtocolVersionOption(restliRequestOptions.getProtocolVersionOption());
+    setRequestCompressionOverride(restliRequestOptions.getRequestCompressionOverride());
   }
 
   public RestliRequestOptionsBuilder setProtocolVersionOption(ProtocolVersionOption protocolVersionOption)
@@ -42,8 +46,14 @@ public class RestliRequestOptionsBuilder
     return this;
   }
 
+  public RestliRequestOptionsBuilder setRequestCompressionOverride(CompressionOption requestCompressionOverride)
+  {
+    _requestCompressionOverride = requestCompressionOverride;
+    return this;
+  }
+
   public RestliRequestOptions build()
   {
-    return new RestliRequestOptions(_protocolVersionOption);
+    return new RestliRequestOptions(_protocolVersionOption, _requestCompressionOverride);
   }
 }

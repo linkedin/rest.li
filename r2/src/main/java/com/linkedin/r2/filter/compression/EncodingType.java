@@ -17,6 +17,7 @@
 
 package com.linkedin.r2.filter.compression;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,18 +34,19 @@ public enum EncodingType
   IDENTITY("identity"),
   ANY("*");
 
-  private String httpName;
-  private Compressor compressor;
-  private static Map<String,EncodingType> _reverseMap;
+  private final String httpName;
+  private final Compressor compressor;
+  private static final Map<String,EncodingType> _reverseMap;
 
   //Initialize the reverse map for lookups
   static
   {
-    _reverseMap = new HashMap<String, EncodingType>();
+    Map<String, EncodingType> reverseMap = new HashMap<String, EncodingType>();
     for(EncodingType t : EncodingType.values())
     {
-      _reverseMap.put(t.getHttpName(), t);
+      reverseMap.put(t.getHttpName(), t);
     }
+    _reverseMap = Collections.unmodifiableMap(reverseMap);
   }
 
   /**
@@ -82,12 +84,31 @@ public enum EncodingType
   }
 
   /**
-   * @param compressionHeader Http encoding value as string
-   * @return Associated enum value, null if no mapping exists
+   * Returns the encoding type corresponding to the encoding name.
+   * Throws {@link IllegalArgumentException} if there is no corresponding enum.
+   *
+   * @param compressionHeader Http encoding type as string.
+   * @return associated enum value.
    */
   public static EncodingType get(String compressionHeader)
   {
-    return _reverseMap.get(compressionHeader);
+    EncodingType result = _reverseMap.get(compressionHeader);
+    if (result == null)
+    {
+      throw new IllegalArgumentException(CompressionConstants.UNSUPPORTED_ENCODING + compressionHeader);
+    }
+    return result;
+  }
+
+  /**
+   * Checks whether the encoding is supported.
+   *
+   * @param encodingName Http encoding name.
+   * @return true if the encoding is supported
+   */
+  public static boolean isSupported(String encodingName)
+  {
+    return _reverseMap.containsKey(encodingName);
   }
 
   /**

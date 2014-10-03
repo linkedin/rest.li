@@ -29,6 +29,7 @@ import com.linkedin.r2.filter.Filter;
 import com.linkedin.r2.filter.NextFilter;
 import com.linkedin.r2.filter.message.rest.RestFilter;
 import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
@@ -87,18 +88,25 @@ public class ServerCompressionFilter implements Filter, RestFilter
     try
     {
       //Check if the request is compressed, if so, decompress
-      String requestCompression = req.getHeader(HttpConstants.CONTENT_ENCODING);
+      String requestContentEncoding = req.getHeader(HttpConstants.CONTENT_ENCODING);
 
-      if (requestCompression != null)
+      if (requestContentEncoding != null)
       {
         //This must be a specific compression type other than *
-        EncodingType encoding = EncodingType.get(requestCompression.trim().toLowerCase());
-        if (encoding == null || encoding == EncodingType.ANY)
+        EncodingType encoding;
+        try
         {
-          //NOTE: this is going to be thrown up, but this isn't quite the right type of exception
-          //Will change to proper type when rest.li supports centralized filter exception handling
-          throw new RuntimeException(CompressionConstants.UNSUPPORTED_ENCODING
-                                     + requestCompression);
+          encoding = EncodingType.get(requestContentEncoding.trim().toLowerCase());
+        }
+        catch (IllegalArgumentException ex)
+        {
+          throw new CompressionException(CompressionConstants.UNSUPPORTED_ENCODING
+              + requestContentEncoding);
+        }
+        if (encoding == EncodingType.ANY)
+        {
+          throw new CompressionException(CompressionConstants.REQUEST_ANY_ERROR
+              + requestContentEncoding);
         }
 
         //Process the correct compression types only
@@ -117,13 +125,15 @@ public class ServerCompressionFilter implements Filter, RestFilter
       }
 
       requestContext.putLocalAttr(HttpConstants.ACCEPT_ENCODING, responseCompression);
+      nextFilter.onRequest(req, requestContext, wireAttrs);
     }
     catch (CompressionException e)
     {
+      //If we can't decompress the client's request, we can't do much more with it
       LOG.error(e.getMessage(), e.getCause());
+      RestResponse restResponse = new RestResponseBuilder().setStatus(HttpConstants.UNSUPPORTED_MEDIA_TYPE).build();
+      nextFilter.onError(new RestException(restResponse, e), requestContext, wireAttrs);
     }
-
-    nextFilter.onRequest(req, requestContext, wireAttrs);
   }
 
   /**

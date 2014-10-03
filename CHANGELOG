@@ -1,6 +1,7 @@
 2.1.2
 -----
-
+(RB=406996)
+Configuration support for Rest.li request compression.
 
 2.1.1
 -----

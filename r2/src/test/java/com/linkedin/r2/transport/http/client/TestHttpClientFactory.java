@@ -34,18 +34,21 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import com.linkedin.r2.message.rest.RestResponse;
 import org.jboss.netty.channel.socket.ClientSocketChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.filter.FilterChains;
+import com.linkedin.r2.filter.CompressionConfig;
+import com.linkedin.r2.filter.compression.EncodingType;
+import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.transport.common.Client;
@@ -389,4 +392,30 @@ public class TestHttpClientFactory
 
   }
 
+  @DataProvider(name = "compressionConfigsData")
+  private Object[][] compressionConfigsData()
+  {
+    return new Object[][] {
+        {"service1", 10000, new CompressionConfig(0)},
+        {"service2", 10000, new CompressionConfig(Integer.MAX_VALUE)},
+        {"service3", 10000, new CompressionConfig(111)},
+        {"service4", 10000, new CompressionConfig(10000)},
+        {"service1", 0, new CompressionConfig(0)},
+        {"service2", 0, new CompressionConfig(Integer.MAX_VALUE)},
+        {"service3", 0, new CompressionConfig(111)},
+        {"service4", 0, new CompressionConfig(0)}
+    };
+  }
+
+  @Test(dataProvider = "compressionConfigsData")
+  public void testGetCompressionConfig(String serviceName, int requestCompressionThresholdDefault, CompressionConfig expectedConfig)
+  {
+    Map<String, CompressionConfig> requestCompressionConfigs = new HashMap<String, CompressionConfig>();
+    requestCompressionConfigs.put("service1", new CompressionConfig(0));
+    requestCompressionConfigs.put("service2", new CompressionConfig(Integer.MAX_VALUE));
+    requestCompressionConfigs.put("service3", new CompressionConfig(111));
+    HttpClientFactory factory = new HttpClientFactory(null, null, true, null, true, null, true, null,
+        requestCompressionThresholdDefault, requestCompressionConfigs);
+    Assert.assertEquals(factory.getCompressionConfig(serviceName, EncodingType.SNAPPY.getHttpName()), expectedConfig);
+  }
 }

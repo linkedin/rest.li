@@ -76,14 +76,7 @@ public class AcceptEncoding implements Comparable<AcceptEncoding>
     EncodingType[] types = new EncodingType[entries.length];
     for(int i = 0; i < entries.length; i++)
     {
-      EncodingType type = EncodingType.get(entries[i].trim());
-
-      if(type == null)
-      {
-        throw new IllegalArgumentException(CompressionConstants.UNSUPPORTED_ENCODING + entries[i]);
-      }
-
-      types[i] = type;
+      types[i] = EncodingType.get(entries[i].trim());
     }
 
     return types;
@@ -111,7 +104,15 @@ public class AcceptEncoding implements Comparable<AcceptEncoding>
         throw new IllegalArgumentException(CompressionConstants.ILLEGAL_FORMAT + entry);
       }
 
-      EncodingType type = EncodingType.get(content[0].trim());
+      EncodingType type = null;
+      try
+      {
+        type = EncodingType.get(content[0].trim());
+      }
+      catch (IllegalArgumentException e)
+      {
+        // Encoding type is not supported.
+      }
       Float quality = 1.0f;
 
       if (type != null && supportedEncodings.contains(type))

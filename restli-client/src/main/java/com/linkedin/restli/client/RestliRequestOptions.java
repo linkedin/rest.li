@@ -17,6 +17,8 @@
 package com.linkedin.restli.client;
 
 
+import com.linkedin.r2.filter.CompressionOption;
+
 /**
  * Represents custom options for a {@link com.linkedin.restli.client.Request}.
  *
@@ -25,18 +27,20 @@ package com.linkedin.restli.client;
 public class RestliRequestOptions
 {
   private final ProtocolVersionOption _protocolVersionOption;
+  private final CompressionOption _requestCompressionOverride;
 
   public static final RestliRequestOptions DEFAULT_OPTIONS
-      = new RestliRequestOptions(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE);
+      = new RestliRequestOptions(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, null);
 
   public static final RestliRequestOptions FORCE_USE_NEXT_OPTION =
-      new RestliRequestOptions(ProtocolVersionOption.FORCE_USE_NEXT);
+      new RestliRequestOptions(ProtocolVersionOption.FORCE_USE_NEXT, null);
 
   // use {@link RestliRequestOptionsBuilder} to construct new instance.
-  RestliRequestOptions(ProtocolVersionOption protocolVersionOption)
+  RestliRequestOptions(ProtocolVersionOption protocolVersionOption, CompressionOption requestCompressionOverride)
   {
     _protocolVersionOption =
         (protocolVersionOption == null) ? ProtocolVersionOption.USE_LATEST_IF_AVAILABLE : protocolVersionOption;
+    _requestCompressionOverride = requestCompressionOverride;
   }
 
   public ProtocolVersionOption getProtocolVersionOption()
@@ -44,10 +48,17 @@ public class RestliRequestOptions
     return _protocolVersionOption;
   }
 
+  public CompressionOption getRequestCompressionOverride()
+  {
+    return _requestCompressionOverride;
+  }
+
   @Override
   public int hashCode()
   {
-    return _protocolVersionOption.hashCode();
+    int result = _protocolVersionOption != null ? _protocolVersionOption.hashCode() : 0;
+    result = 31 * result + (_requestCompressionOverride != null ? _requestCompressionOverride.hashCode() : 0);
+    return result;
   }
 
   @Override
@@ -66,12 +77,20 @@ public class RestliRequestOptions
       return false;
     }
     RestliRequestOptions other = (RestliRequestOptions)obj;
-    return _protocolVersionOption == other._protocolVersionOption;
+    if (_protocolVersionOption != other._protocolVersionOption)
+    {
+      return false;
+    }
+    return _requestCompressionOverride == other._requestCompressionOverride;
   }
 
   @Override
   public String toString()
   {
-    return "{_protocolVersionOption: " + _protocolVersionOption.toString() + "}";
+    return "{_protocolVersionOption: "
+        + _protocolVersionOption.toString()
+        + ", _requestCompressionOverride: "
+        + (_requestCompressionOverride != null ? _requestCompressionOverride.toString() : "null")
+        + "}";
   }
 }

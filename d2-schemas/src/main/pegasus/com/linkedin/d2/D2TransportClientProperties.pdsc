@@ -53,6 +53,14 @@
       },
       "doc": "operations where compression should be used",
       "optional": true
+    },
+    {
+      "name": "requestContentEncodings",
+      "type": {
+        "type": "array", "items": "string"
+      },
+      "doc": "supported content encodings for requests",
+      "optional": true
     }
   ]
 }

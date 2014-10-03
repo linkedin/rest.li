@@ -26,6 +26,7 @@ import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.codec.PsonDataCodec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.filter.R2Constants;
+import com.linkedin.r2.filter.CompressionOption;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
@@ -248,6 +249,7 @@ public class RestClient
                     request.getHeaders(),
                     request.getMethodName(),
                     protocolVersion,
+                    request.getRequestOptions().getRequestCompressionOverride(),
                     callback);
   }
 
@@ -562,6 +564,7 @@ public class RestClient
                                Map<String, String> headers,
                                String methodName,
                                ProtocolVersion protocolVersion,
+                               CompressionOption requestCompressionOverride,
                                Callback<RestResponse> callback)
   {
     try
@@ -569,6 +572,7 @@ public class RestClient
       RestRequest request = buildRequest(uri, method, dataMap, headers, protocolVersion);
       String operation = OperationNameGenerator.generate(method, methodName);
       requestContext.putLocalAttr(R2Constants.OPERATION, operation);
+      requestContext.putLocalAttr(R2Constants.REQUEST_COMPRESSION_OVERRIDE, requestCompressionOverride);
       _client.restRequest(request, requestContext, callback);
     }
     catch (Exception e)
