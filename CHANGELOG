@@ -3,6 +3,9 @@
 (RB=383405)
 Fix memory leak in documentation generation.
 
+(RB=378851)
+Add unit tests for RestLiArgumentBuilders.
+
 1.24.5
 ------
 (RB=387900)
