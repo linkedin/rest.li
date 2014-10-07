@@ -44,23 +44,20 @@ import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.CallbackParam;
-import com.linkedin.restli.server.annotations.Context;
 import com.linkedin.restli.server.annotations.Finder;
+import com.linkedin.restli.server.annotations.PagingContextParam;
 import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
-
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 
 /**
@@ -126,7 +123,7 @@ public class NullGreetingsResourceImpl extends CollectionResourceTemplate<Long, 
   }
 
   @Finder("searchReturnNullList")
-  public List<Greeting> searchReturnNullList(@Context PagingContext ctx, @QueryParam("tone") Tone tone)
+  public List<Greeting> searchReturnNullList(@PagingContextParam PagingContext ctx, @QueryParam("tone") Tone tone)
   {
     if (tone == Tone.INSULTING)
     {
@@ -144,7 +141,7 @@ public class NullGreetingsResourceImpl extends CollectionResourceTemplate<Long, 
   }
 
   @Finder("searchReturnNullCollectionList")
-  public CollectionResult<Greeting, SearchMetadata> searchReturnNullCollectionList(@Context PagingContext ctx,
+  public CollectionResult<Greeting, SearchMetadata> searchReturnNullCollectionList(@PagingContextParam PagingContext ctx,
       @QueryParam("tone") Tone tone)
   {
     if (tone == Tone.INSULTING)
@@ -174,7 +171,7 @@ public class NullGreetingsResourceImpl extends CollectionResourceTemplate<Long, 
   }
 
   @RestMethod.GetAll
-  public CollectionResult<Greeting, Empty> getAllCollectionResult(@Context PagingContext ctx)
+  public CollectionResult<Greeting, Empty> getAllCollectionResult(@PagingContextParam PagingContext ctx)
   {
     return null;
   }
@@ -368,7 +365,7 @@ public class NullGreetingsResourceImpl extends CollectionResourceTemplate<Long, 
   }
 
   @Finder("finderCallbackNullList")
-  public void finderCallbackNull(@Context final PagingContext a, @QueryParam("tone") final Tone b,
+  public void finderCallbackNull(@PagingContextParam final PagingContext a, @QueryParam("tone") final Tone b,
       @CallbackParam final Callback<List<Greeting>> callback)
   {
     final Runnable requestHandler = new Runnable()
@@ -390,7 +387,7 @@ public class NullGreetingsResourceImpl extends CollectionResourceTemplate<Long, 
   }
 
   @Finder("finderPromiseNullList")
-  public Promise<List<Greeting>> finderPromiseNullList(@Context final PagingContext a, @QueryParam("tone") final Tone b)
+  public Promise<List<Greeting>> finderPromiseNullList(@PagingContextParam final PagingContext a, @QueryParam("tone") final Tone b)
   {
     final SettablePromise<List<Greeting>> result = Promises.settable();
     final Runnable requestHandler = new Runnable()
@@ -413,7 +410,7 @@ public class NullGreetingsResourceImpl extends CollectionResourceTemplate<Long, 
   }
 
   @Finder("finderTaskNullList")
-  public Task<List<Greeting>> finderTaskNullList(@Context final PagingContext a, @QueryParam("tone") final Tone b)
+  public Task<List<Greeting>> finderTaskNullList(@PagingContextParam final PagingContext a, @QueryParam("tone") final Tone b)
   {
     return new BaseTask<List<Greeting>>()
     {
