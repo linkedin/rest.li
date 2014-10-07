@@ -23,7 +23,7 @@ import java.util.Set;
 import com.linkedin.parseq.promise.Promise;
 import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.ActionParam;
-import com.linkedin.restli.server.annotations.Context;
+import com.linkedin.restli.server.annotations.PagingContextParam;
 import com.linkedin.restli.server.annotations.RestMethod;
 
 import com.linkedin.restli.server.CreateResponse;
@@ -57,7 +57,7 @@ public class PromiseRepliesCollectionResource extends ResourceContextHolder impl
    * Iterates through all replies to the parent status
    */
   @Finder("paging")
-  public Promise<List<Status>> getAll(@Context PagingContext pagingContext)
+  public Promise<List<Status>> getAll(@PagingContextParam PagingContext pagingContext)
   {
     throw new AssertionError("should be mocked");
   }

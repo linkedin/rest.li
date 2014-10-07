@@ -20,6 +20,7 @@
 
 package com.linkedin.restli.server.annotations;
 
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -27,6 +28,7 @@ import java.lang.annotation.Target;
 
 import com.linkedin.data.template.TyperefInfo;
 import com.linkedin.restli.server.ResourceLevel;
+
 
 /**
 * @author Josh Walker

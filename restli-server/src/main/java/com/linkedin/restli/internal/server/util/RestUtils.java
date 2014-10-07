@@ -61,7 +61,7 @@ public class RestUtils
     CollectionMetadata metadata = new CollectionMetadata();
 
     List<Parameter<?>> pagingContextParams =
-        methodDescriptor.getParametersWithType(Parameter.ParamType.CONTEXT);
+        methodDescriptor.getParametersWithType(Parameter.ParamType.PAGING_CONTEXT_PARAM);
     PagingContext defaultPagingContext =
         pagingContextParams.isEmpty() ? null
             : (PagingContext) pagingContextParams.get(0).getDefaultValue();

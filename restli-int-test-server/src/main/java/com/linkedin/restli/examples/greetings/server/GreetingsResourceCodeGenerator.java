@@ -27,7 +27,7 @@ import com.linkedin.parseq.promise.SettablePromise;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor.InterfaceType;
 import com.linkedin.restli.server.annotations.CallbackParam;
-import com.linkedin.restli.server.annotations.ParSeqContext;
+import com.linkedin.restli.server.annotations.ParSeqContextParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.resources.BaseResource;
@@ -271,7 +271,7 @@ public class GreetingsResourceCodeGenerator
     {
       if (!first)
         out.print(", ");
-      out.printf("@%s final %s psContext", className(ParSeqContext.class), className(Context.class));
+      out.printf("@%s final %s psContext", className(ParSeqContextParam.class), className(Context.class));
     }
   }
 

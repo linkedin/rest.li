@@ -24,7 +24,7 @@ import com.linkedin.parseq.promise.Promise;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.server.UpdateResponse;
-import com.linkedin.restli.server.annotations.AssocKey;
+import com.linkedin.restli.server.annotations.AssocKeyParam;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.Key;
 import com.linkedin.restli.server.annotations.QueryParam;
@@ -91,7 +91,7 @@ public class PromiseFollowsAssociativeResource extends ResourceContextHolder imp
    * @param someParam some parameter
    */
   @Finder("other")
-  public Promise<List<Followed>> getOther(@AssocKey("followerID") long followerID,
+  public Promise<List<Followed>> getOther(@AssocKeyParam("followerID") long followerID,
                                  @QueryParam("someParam") String someParam)
   {
     throw new AssertionError("should be mocked");

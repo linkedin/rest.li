@@ -26,7 +26,7 @@ import com.linkedin.restli.server.BatchUpdateRequest;
 import com.linkedin.restli.server.BatchUpdateResult;
 import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.PagingContext;
-import com.linkedin.restli.server.annotations.Context;
+import com.linkedin.restli.server.annotations.PagingContextParam;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.UpdateResponse;
@@ -52,7 +52,7 @@ public class TrendRegionsCollectionResource extends CollectionResourceTemplate<S
    * Returns the trending regions sorted by popularity.
    */
   @Finder("get_trending_by_popularity")
-  public List<Trending> getTrendingByPopularity(@Context PagingContext pagingContext)
+  public List<Trending> getTrendingByPopularity(@PagingContextParam PagingContext pagingContext)
   {
     return null;
   }

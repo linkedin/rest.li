@@ -29,7 +29,7 @@ import com.linkedin.restli.server.BatchUpdateResult;
 import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
-import com.linkedin.restli.server.annotations.AssocKey;
+import com.linkedin.restli.server.annotations.AssocKeyParam;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.Key;
 import com.linkedin.restli.server.annotations.Optional;
@@ -113,13 +113,13 @@ public class AssociationsResource extends AssociationResourceTemplate<Message>
   }
 
   @Finder("assocKeyFinder")
-  public List<Message> assocKeyFinder(@AssocKey("src") String src)
+  public List<Message> assocKeyFinder(@AssocKeyParam("src") String src)
   {
     return Collections.emptyList();
   }
 
   @Finder("assocKeyFinderOpt")
-  public List<Message> assocKeyFinderOpt(@Optional @AssocKey("src") String src)
+  public List<Message> assocKeyFinderOpt(@Optional @AssocKeyParam("src") String src)
   {
     return Collections.emptyList();
   }

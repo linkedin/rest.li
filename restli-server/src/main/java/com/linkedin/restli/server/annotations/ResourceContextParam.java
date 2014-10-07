@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2012 LinkedIn Corp.
+   Copyright (c) 2014 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -14,10 +14,6 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.restli.server.annotations;
 
 
@@ -28,14 +24,13 @@ import java.lang.annotation.Target;
 
 
 /**
- * Method-level annotation for 'finder' methods e.g. /people-search?q=search&name=bob&title=ceo. Note that
- * the annotation just names the finder and implementations @QueryParam to annotate parameters in
- * the method signature
+ * @author Sachin Jhunjhunwala
+ * @version $Revision: $
+ *
+ * Used to denote an injected type of {@link com.linkedin.restli.server.ResourceContext}
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface Finder
+@Target(ElementType.PARAMETER)
+public @interface ResourceContextParam
 {
-  /** Name of this Finder */
-  String value();
 }

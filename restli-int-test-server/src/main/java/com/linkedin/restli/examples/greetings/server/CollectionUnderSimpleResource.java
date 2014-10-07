@@ -27,9 +27,9 @@ import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.Action;
-import com.linkedin.restli.server.annotations.Context;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.Optional;
+import com.linkedin.restli.server.annotations.PagingContextParam;
 import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestMethod;
@@ -90,7 +90,7 @@ public class CollectionUnderSimpleResource extends CollectionResourceTemplate<Lo
   }
 
   @Finder("search")
-  public List<Greeting> search(@Context PagingContext ctx, @QueryParam("tone") @Optional Tone tone, @QueryParam("complexQueryParam") @Optional Greeting complexQueryParam)
+  public List<Greeting> search(@PagingContextParam PagingContext ctx, @QueryParam("tone") @Optional Tone tone, @QueryParam("complexQueryParam") @Optional Greeting complexQueryParam)
   {
     return _impl.search(ctx, tone);
   }

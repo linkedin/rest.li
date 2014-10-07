@@ -25,8 +25,8 @@ import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.ActionParam;
-import com.linkedin.restli.server.annotations.Context;
 import com.linkedin.restli.server.annotations.Finder;
+import com.linkedin.restli.server.annotations.PagingContextParam;
 import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestMethod;
@@ -71,7 +71,7 @@ public class TestDeprecationAnnotationResource extends CollectionResourceTemplat
    */
   @SuppressWarnings({"deprecation", "dep-ann"})
   @Finder("testFinder")
-  public List<MockRecord> testFinder(@Context PagingContext pagingContext,
+  public List<MockRecord> testFinder(@PagingContextParam PagingContext pagingContext,
                                      @QueryParam("title") @Optional String criterion)
   {
     return null;

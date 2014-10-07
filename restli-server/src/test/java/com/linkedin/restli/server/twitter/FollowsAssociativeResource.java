@@ -18,7 +18,7 @@ package com.linkedin.restli.server.twitter;
 
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.PatchRequest;
-import com.linkedin.restli.server.annotations.AssocKey;
+import com.linkedin.restli.server.annotations.AssocKeyParam;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.Key;
 import com.linkedin.restli.server.annotations.QueryParam;
@@ -88,7 +88,7 @@ public class FollowsAssociativeResource extends AssociationResourceTemplate<Foll
    * @param someParam some parameter
    */
   @Finder("other")
-  public List<Followed> getOther(@AssocKey("followerID") long followerID,
+  public List<Followed> getOther(@AssocKeyParam("followerID") long followerID,
                                  @QueryParam("someParam") String someParam)
   {
     return null;

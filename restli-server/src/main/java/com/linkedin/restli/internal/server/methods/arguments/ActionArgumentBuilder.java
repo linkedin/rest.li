@@ -73,7 +73,7 @@ public class ActionArgumentBuilder implements RestLiArgumentBuilder
         {
           value = null;
         }
-        else if (param.getParamType() == Parameter.ParamType.PARSEQ_CONTEXT)
+        else if (param.getParamType() == Parameter.ParamType.PARSEQ_CONTEXT_PARAM || param.getParamType() == Parameter.ParamType.PARSEQ_CONTEXT)
         {
           value = null;
         }

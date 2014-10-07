@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2012 LinkedIn Corp.
+   Copyright (c) 2014 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@
 package com.linkedin.restli.server.annotations;
 
 
+import com.linkedin.data.template.TyperefInfo;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -28,14 +30,15 @@ import java.lang.annotation.Target;
 
 
 /**
- * Method-level annotation for 'finder' methods e.g. /people-search?q=search&name=bob&title=ceo. Note that
- * the annotation just names the finder and implementations @QueryParam to annotate parameters in
- * the method signature
- */
+* @author Sachin Jhunjhunwala
+* @version $Revision: $
+*/
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface Finder
+@Target(ElementType.PARAMETER)
+public @interface AssocKeyParam
 {
-  /** Name of this Finder */
+  /** name */
   String value();
+  /** typeref */
+  Class<? extends TyperefInfo> typeref() default RestAnnotations.NULL_TYPEREF_INFO.class;
 }

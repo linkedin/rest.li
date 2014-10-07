@@ -26,9 +26,11 @@ import java.lang.annotation.Target;
 /**
  * @author Moira Tagle
  * @version $Revision: $
+ * @deprecated Use link #PathKeysParam instead
  * 
  * Used to denote an injected type of {@link com.linkedin.restli.server.PathKeys}
  */
+@Deprecated
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
 public @interface Keys

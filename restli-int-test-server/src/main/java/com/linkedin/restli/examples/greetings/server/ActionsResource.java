@@ -38,7 +38,7 @@ import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.ActionParam;
 import com.linkedin.restli.server.annotations.CallbackParam;
-import com.linkedin.restli.server.annotations.ParSeqContext;
+import com.linkedin.restli.server.annotations.ParSeqContextParam;
 import com.linkedin.restli.server.annotations.RestLiActions;
 
 /**
@@ -202,7 +202,7 @@ public class ActionsResource
   @Action(name = "parseq")
   public Promise<String> parseqAction(@ActionParam("a") final int a,
                                       @ActionParam("b") final String b,
-                                      @ParSeqContext com.linkedin.parseq.Context ctx,
+                                      @ParSeqContextParam com.linkedin.parseq.Context ctx,
                                       @ActionParam("c") final boolean c)
   {
     final Task<String> t1 = makeTaskA(a);

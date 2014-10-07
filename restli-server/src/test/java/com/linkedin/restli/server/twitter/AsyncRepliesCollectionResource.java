@@ -24,7 +24,7 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.annotations.CallbackParam;
-import com.linkedin.restli.server.annotations.Context;
+import com.linkedin.restli.server.annotations.PagingContextParam;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.resources.CollectionResourceAsyncTemplate;
@@ -55,7 +55,7 @@ public class AsyncRepliesCollectionResource extends
    * Iterates through all replies to the parent status.
    */
   @Finder("paging")
-  public void getAll(@Context final PagingContext pagingContext,
+  public void getAll(@PagingContextParam final PagingContext pagingContext,
                      @CallbackParam final Callback<List<Status>> callback)
   {
     callback.onSuccess(null);

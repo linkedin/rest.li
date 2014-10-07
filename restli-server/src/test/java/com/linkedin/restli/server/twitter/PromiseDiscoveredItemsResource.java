@@ -30,7 +30,7 @@ import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.ActionParam;
-import com.linkedin.restli.server.annotations.Context;
+import com.linkedin.restli.server.annotations.PagingContextParam;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
@@ -51,7 +51,7 @@ public class PromiseDiscoveredItemsResource
 {
   @Finder("user")
   public Promise<List<DiscoveredItem>> getDiscoveredItemsForUser(@QueryParam("userId") long userId,
-                                                        @Context PagingContext pagingContext)
+                                                        @PagingContextParam PagingContext pagingContext)
   {
     return null;
   }

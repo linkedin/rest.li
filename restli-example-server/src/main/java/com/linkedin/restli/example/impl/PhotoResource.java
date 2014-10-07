@@ -16,16 +16,15 @@
 
 package com.linkedin.restli.example.impl;
 
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import javax.inject.Inject;
 import javax.inject.Named;
-
 import com.linkedin.data.transform.DataProcessingException;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.PatchRequest;
@@ -38,13 +37,14 @@ import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.Action;
-import com.linkedin.restli.server.annotations.Context;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.Optional;
+import com.linkedin.restli.server.annotations.PagingContextParam;
 import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
 import com.linkedin.restli.server.util.PatchApplier;
+
 
 /**
  * @author kjin
@@ -180,7 +180,7 @@ public class PhotoResource extends CollectionResourceTemplate<Long, Photo>
   // find photos by title and/or format
   // if both title and format are empty, any photo meets the search criteria
   @Finder("titleAndOrFormat")
-  public List<Photo> find(@Context PagingContext pagingContext,
+  public List<Photo> find(@PagingContextParam PagingContext pagingContext,
                           @QueryParam("title") @Optional String title,
                           @QueryParam("format") @Optional PhotoFormats format)
   {

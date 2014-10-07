@@ -45,15 +45,14 @@ import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.ActionParam;
-import com.linkedin.restli.server.annotations.Context;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.Optional;
+import com.linkedin.restli.server.annotations.PagingContextParam;
 import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.resources.BaseResource;
 import com.linkedin.restli.server.resources.KeyValueResource;
 import com.linkedin.restli.server.util.PatchApplier;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -64,6 +63,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+
 
 /**
  * Base class to various interfaces of a richer "Hello world" example, demonstrating a
@@ -241,7 +241,7 @@ class GreetingsResourceImpl implements KeyValueResource<Long,Greeting>
   }
 
   @RestMethod.GetAll
-  public List<Greeting> getAll(@Context PagingContext ctx)
+  public List<Greeting> getAll(@PagingContextParam PagingContext ctx)
   {
     // Deterministic behaviour of getAll to make it easier to test as part of the integration test suite
     // Just return those greetings that have "GetAll" present in their message
@@ -257,14 +257,14 @@ class GreetingsResourceImpl implements KeyValueResource<Long,Greeting>
   }
 
   @Finder("searchWithDefault")
-  public List<Greeting> searchWithDefault(@Context PagingContext ctx,
+  public List<Greeting> searchWithDefault(@PagingContextParam PagingContext ctx,
                                           @QueryParam("tone") @Optional("FRIENDLY") Tone tone)
   {
     return search(ctx, tone);
   }
 
   @Finder("search")
-  public List<Greeting> search(@Context PagingContext ctx, @QueryParam("tone") @Optional Tone tone)
+  public List<Greeting> search(@PagingContextParam PagingContext ctx, @QueryParam("tone") @Optional Tone tone)
   {
     List<Greeting> greetings = new ArrayList<Greeting>();
     int idx = 0;
@@ -289,7 +289,7 @@ class GreetingsResourceImpl implements KeyValueResource<Long,Greeting>
   }
 
   @Finder("searchWithPostFilter")
-  public CollectionResult<Greeting, Empty> searchWithPostFilter(@Context PagingContext ctx)
+  public CollectionResult<Greeting, Empty> searchWithPostFilter(@PagingContextParam PagingContext ctx)
   {
     List<Greeting> greetings = new ArrayList<Greeting>();
     int idx = 0;
@@ -316,7 +316,7 @@ class GreetingsResourceImpl implements KeyValueResource<Long,Greeting>
   }
 
   @Finder("searchWithTones")
-  public List<Greeting> searchWithTones(@Context PagingContext ctx, @QueryParam("tones") @Optional Tone[] tones)
+  public List<Greeting> searchWithTones(@PagingContextParam PagingContext ctx, @QueryParam("tones") @Optional Tone[] tones)
   {
     Set<Tone> toneSet = new HashSet<Tone>(Arrays.asList(tones));
     List<Greeting> greetings = new ArrayList<Greeting>();
@@ -342,7 +342,7 @@ class GreetingsResourceImpl implements KeyValueResource<Long,Greeting>
   }
 
   @Finder("searchWithFacets")
-  public CollectionResult<Greeting, SearchMetadata> searchWithFacets(@Context PagingContext ctx, @QueryParam("tone") @Optional Tone tone)
+  public CollectionResult<Greeting, SearchMetadata> searchWithFacets(@PagingContextParam PagingContext ctx, @QueryParam("tone") @Optional Tone tone)
   {
     List<Greeting> greetings = search(ctx, tone);
 

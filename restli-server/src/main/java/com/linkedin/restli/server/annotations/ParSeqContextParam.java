@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2012 LinkedIn Corp.
+   Copyright (c) 2014 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -14,10 +14,6 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.restli.server.annotations;
 
 
@@ -28,14 +24,15 @@ import java.lang.annotation.Target;
 
 
 /**
- * Method-level annotation for 'finder' methods e.g. /people-search?q=search&name=bob&title=ceo. Note that
- * the annotation just names the finder and implementations @QueryParam to annotate parameters in
- * the method signature
+ * @author Sachin Jhunjhunwala
+ * @version $Revision: $
+ *
+ * Indicates a parameter that is a ParSeq Context. Only one method argument may be a
+ * context. This annotation may only be used on Promise based methods, but Promise based
+ * methods are not required to take a ParSeq context.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface Finder
+@Target(ElementType.PARAMETER)
+public @interface ParSeqContextParam
 {
-  /** Name of this Finder */
-  String value();
 }

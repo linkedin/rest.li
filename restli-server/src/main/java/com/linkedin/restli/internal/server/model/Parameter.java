@@ -50,16 +50,32 @@ public class Parameter<T> extends FieldDef<T>
 {
   public enum ParamType
   {
-    QUERY,          // @QueryParam
-    KEY,            // @AssocKey
-    POST,           // POST-based parameters such as @ActionParam or CREATE
-    CONTEXT,        // @Context
-    CALLBACK,       // @CallbackParam
-    PARSEQ_CONTEXT, // @ParSeqContext
+    QUERY,                  // @QueryParam
+    @Deprecated
+    KEY,                    // @AssocKey
+    ASSOC_KEY_PARAM,         // @AssocKeyParam
+    POST,                   // POST-based parameters such as @ActionParam or CREATE
+    /**
+     * @deprecated Use PAGING_CONTEXT_PARAM instead
+     */
+    @Deprecated
+    CONTEXT,                // @PagingContext
+    PAGING_CONTEXT_PARAM,   // @PagingContextParam
+    CALLBACK,               // @CallbackParam
+    @Deprecated
+    PARSEQ_CONTEXT,         // @ParSeqContext
+    PARSEQ_CONTEXT_PARAM,   // @ParSeqContextParam
     BATCH,
-    PROJECTION,     // @Projection
-    PATH_KEYS,      // @PathKeys
-    HEADER          // @Header
+    @Deprecated
+    PROJECTION,             // @Projection
+    PROJECTION_PARAM,       // @ProjectionParam
+    @Deprecated
+    PATH_KEYS,              // @Keys
+    PATH_KEYS_PARAM,        // @PathKeysParam
+    @Deprecated
+    RESOURCE_CONTEXT,        // @ResourceContextParam
+    RESOURCE_CONTEXT_PARAM,  // @ResourceContextParam
+    HEADER,                 // @HeaderParam
   }
 
   private final boolean _optional;

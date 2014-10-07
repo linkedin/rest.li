@@ -26,9 +26,11 @@ import java.lang.annotation.Target;
 /**
  * @author Moira Tagle
  * @version $Revision: $
- * 
+ * @deprecated Use @link #ProjectionParam instead
+ *
  * Used to denote an injected type of {@link com.linkedin.data.transform.filter.request.MaskTree}
  */
+@Deprecated
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
 public @interface Projection

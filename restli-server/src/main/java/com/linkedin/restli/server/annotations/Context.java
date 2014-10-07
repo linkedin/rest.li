@@ -20,17 +20,20 @@
 
 package com.linkedin.restli.server.annotations;
 
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-
 import com.linkedin.restli.common.RestConstants;
+
 
 /**
 * @author Josh Walker
 * @version $Revision: $
+* @deprecated Use @link #PagingContextParam instead
 */
+@Deprecated
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
 public @interface Context

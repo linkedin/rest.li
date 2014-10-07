@@ -34,7 +34,7 @@ import com.linkedin.restli.server.BatchUpdateRequest;
 import com.linkedin.restli.server.BatchUpdateResult;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
-import com.linkedin.restli.server.annotations.AssocKey;
+import com.linkedin.restli.server.annotations.AssocKeyParam;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.Key;
 import com.linkedin.restli.server.annotations.RestLiAssociation;
@@ -81,7 +81,7 @@ public class CustomTypesResource3 extends AssociationResourceTemplate<Greeting>
   }
 
   @Finder("dateOnly")
-  public List<Greeting> dateOnly(@AssocKey(value="dateId", typeref=DateRef.class) Date dateId)
+  public List<Greeting> dateOnly(@AssocKeyParam(value="dateId", typeref=DateRef.class) Date dateId)
   {
     return Collections.emptyList();
   }

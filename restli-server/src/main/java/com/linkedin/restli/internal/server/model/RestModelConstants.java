@@ -30,7 +30,9 @@ import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.server.ActionResult;
 import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.annotations.Context;
+import com.linkedin.restli.server.annotations.PagingContextParam;
 import com.linkedin.restli.server.annotations.ParSeqContext;
+import com.linkedin.restli.server.annotations.ParSeqContextParam;
 import com.linkedin.restli.server.resources.AssociationResource;
 import com.linkedin.restli.server.resources.AssociationResourceAsync;
 import com.linkedin.restli.server.resources.CollectionResource;
@@ -197,11 +199,15 @@ public interface RestModelConstants
   };
 
   Set<Class<?>> CLASSES_WITHOUT_SCHEMAS = new HashSet<Class<?>>(
-          Arrays.asList(
-                  new Class<?>[]{ComplexResourceKey.class,
+          Arrays.<Class<?>>asList(
+                          ComplexResourceKey.class,
                           CompoundKey.class,
                           Context.class,
+                          PagingContextParam.class,
                           Callback.class,
                           PagingContext.class,
-                          ParSeqContext.class}));
+                          ParSeqContext.class,
+                          ParSeqContextParam.class)
+  );
+
 }

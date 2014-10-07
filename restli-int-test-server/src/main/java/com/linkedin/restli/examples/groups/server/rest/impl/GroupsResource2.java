@@ -37,14 +37,13 @@ import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.ActionParam;
-import com.linkedin.restli.server.annotations.Context;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.Optional;
+import com.linkedin.restli.server.annotations.PagingContextParam;
 import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
 import com.linkedin.restli.server.util.PatchApplier;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.Arrays;
@@ -53,6 +52,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 
 /**
  * TODO Derive path, resourceClass and keyName from class names (GroupsResource => /groups, GroupResource.class, "groupId")
@@ -94,14 +94,14 @@ public class GroupsResource2 extends CollectionResourceTemplate<Integer, Group>
   }
 
   @Finder("emailDomain")
-  public List<Group> findByEmailDomain(@Context PagingContext pagingContext,
+  public List<Group> findByEmailDomain(@PagingContextParam PagingContext pagingContext,
                                        @QueryParam("emailDomain") String emailDomain)
   {
     return getGroupMgr().findByEmailDomain(emailDomain, pagingContext.getStart(), pagingContext.getCount());
   }
 
   @Finder("manager")
-  public List<Group> findByManager(@Context PagingContext pagingContext,
+  public List<Group> findByManager(@PagingContextParam PagingContext pagingContext,
                                    @QueryParam("managerMemberID") int memberID)
   {
     return getGroupMgr().findByManager(memberID, pagingContext.getStart(), pagingContext.getCount());
@@ -109,7 +109,7 @@ public class GroupsResource2 extends CollectionResourceTemplate<Integer, Group>
 
   // TODO SearchResults response
   @Finder("search")
-  public List<Group> search(@Context PagingContext pagingContext,
+  public List<Group> search(@PagingContextParam PagingContext pagingContext,
                             @QueryParam("keywords") @Optional String keywords,
                             @QueryParam("nameKeywords") @Optional String nameKeywords,
                             @QueryParam("groupID") @Optional Integer groupID)
@@ -121,7 +121,7 @@ public class GroupsResource2 extends CollectionResourceTemplate<Integer, Group>
    * Test the default value for various types
    */
   @Finder("complexCircuit")
-  public List<Group> complexCircuit(@Context PagingContext pagingContext,
+  public List<Group> complexCircuit(@PagingContextParam PagingContext pagingContext,
                                     @QueryParam("nativeArray") @Optional("[1.1, 2.2, 3.3]") double[] nativeArray,
                                     @QueryParam("coercedArray") @Optional("[1.1, 2.2, 3.3]") int[] coercedArray,
                                     @QueryParam("wrappedArray") @Optional("[2, 3, 4]") IntegerArray wrappedArray,

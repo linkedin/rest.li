@@ -37,8 +37,8 @@ import com.linkedin.restli.server.TestRecord;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.ActionParam;
-import com.linkedin.restli.server.annotations.AssocKey;
-import com.linkedin.restli.server.annotations.Context;
+import com.linkedin.restli.server.annotations.AssocKeyParam;
+import com.linkedin.restli.server.annotations.PagingContextParam;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.Key;
 import com.linkedin.restli.server.annotations.Optional;
@@ -135,7 +135,7 @@ public class CombinedResources
     }
 
     @Finder("find")
-    public List<Foo> find(@Context PagingContext context, @AssocKey("foo") int foo, @AssocKey("bar") int bar)
+    public List<Foo> find(@PagingContextParam PagingContext context, @AssocKeyParam("foo") int foo, @AssocKeyParam("bar") int bar)
     {
       return new ArrayList<Foo>();
     }

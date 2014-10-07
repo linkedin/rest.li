@@ -24,7 +24,7 @@ import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.ActionParam;
-import com.linkedin.restli.server.annotations.Context;
+import com.linkedin.restli.server.annotations.PagingContextParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
 import com.linkedin.restli.tools.twitter.TwitterTestDataModels.Status;
@@ -52,7 +52,7 @@ public class RepliesCollectionResource extends CollectionResourceTemplate<Long, 
    * Iterates through all replies to the parent status
    */
   @Override
-  public List<Status> getAll(@Context PagingContext pagingContext)
+  public List<Status> getAll(@PagingContextParam PagingContext pagingContext)
   {
     return null;
   }

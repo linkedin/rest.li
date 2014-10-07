@@ -27,7 +27,9 @@ import java.lang.annotation.Target;
  * methods are not required to take a ParSeq context.
  *
  * @author jnwang
+ * @deprecated Use @link #ParseqContextParam instead
  */
+@Deprecated
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
 public @interface ParSeqContext

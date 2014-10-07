@@ -265,7 +265,7 @@ public class RestLiMethodInvoker
           break;
         }
         final int contextIndex =
-            descriptor.indexOfParameterType(ParamType.PARSEQ_CONTEXT);
+            descriptor.indexOfParameterType(ParamType.PARSEQ_CONTEXT_PARAM);
         // run through the engine to get the context
         Task<Object> restliTask =
             new RestLiParSeqTask(arguments, contextIndex, method, resource);

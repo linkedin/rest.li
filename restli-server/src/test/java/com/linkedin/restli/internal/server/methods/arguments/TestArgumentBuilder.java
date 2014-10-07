@@ -36,7 +36,7 @@ public class TestArgumentBuilder
     String param1Key = "param1";
     @SuppressWarnings("unchecked")
     Parameter<Integer> param1 = new Parameter<Integer>(param1Key, Integer.class, DataTemplateUtil.getSchema(Integer.class),
-                                          false, null, Parameter.ParamType.KEY, false, AnnotationSet.EMPTY);
+                                          false, null, Parameter.ParamType.ASSOC_KEY_PARAM, false, AnnotationSet.EMPTY);
     Integer param1Value = 123;
 
     //test regular string argument

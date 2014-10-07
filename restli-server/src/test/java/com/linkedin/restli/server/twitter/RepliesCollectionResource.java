@@ -27,7 +27,7 @@ import com.linkedin.restli.server.CustomStringRef;
 import com.linkedin.restli.server.NoCoercerCustomStringRef;
 import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.ActionParam;
-import com.linkedin.restli.server.annotations.Context;
+import com.linkedin.restli.server.annotations.PagingContextParam;
 
 import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.PagingContext;
@@ -63,7 +63,7 @@ public class RepliesCollectionResource extends CollectionResourceTemplate<Long, 
    * Iterates through all replies to the parent status
    */
   @Finder("paging")
-  public List<Status> getAll(@Context PagingContext pagingContext)
+  public List<Status> getAll(@PagingContextParam PagingContext pagingContext)
   {
     return null;
   }

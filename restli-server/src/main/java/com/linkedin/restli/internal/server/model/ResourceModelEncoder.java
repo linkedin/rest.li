@@ -842,7 +842,7 @@ public class ResourceModelEncoder
     for (Parameter<?> param : resourceMethodDescriptor.getParameters())
     {
       // assocKeys are listed outside the parameters list
-      if (param.getParamType() == Parameter.ParamType.KEY)
+      if (param.getParamType() == Parameter.ParamType.KEY || param.getParamType() == Parameter.ParamType.ASSOC_KEY_PARAM)
       {
         assocKeys.add(param.getName());
         continue;
@@ -863,7 +863,7 @@ public class ResourceModelEncoder
       }
 
       // assocKeys are listed outside the parameters list
-      if (param.getParamType() == Parameter.ParamType.KEY)
+      if (param.getParamType() == Parameter.ParamType.KEY  || param.getParamType() == Parameter.ParamType.ASSOC_KEY_PARAM)
       {
         continue;
       }

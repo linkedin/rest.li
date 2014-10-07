@@ -23,8 +23,8 @@ import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.server.PathKeys;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.HeaderParam;
-import com.linkedin.restli.server.annotations.Keys;
-import com.linkedin.restli.server.annotations.Projection;
+import com.linkedin.restli.server.annotations.PathKeysParam;
+import com.linkedin.restli.server.annotations.ProjectionParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.resources.KeyValueResource;
@@ -47,7 +47,7 @@ public class WithContextResource implements KeyValueResource<Long,Greeting>
   private static final String NO_HEADER_MESSAGE = "No Header!";
 
   @RestMethod.Get
-  public Greeting get(Long key, @Projection MaskTree projection, @Keys PathKeys keys)
+  public Greeting get(Long key, @ProjectionParam MaskTree projection, @PathKeysParam PathKeys keys)
   {
     Greeting greeting = createGreeting(projection, keys);
     greeting.setId(key);
@@ -56,7 +56,7 @@ public class WithContextResource implements KeyValueResource<Long,Greeting>
   }
 
   @Finder("finder")
-  public List<Greeting> finder(@HeaderParam("Expected-Header") String header, @Projection MaskTree projection, @Keys PathKeys keys)
+  public List<Greeting> finder(@HeaderParam("Expected-Header") String header, @ProjectionParam MaskTree projection, @PathKeysParam PathKeys keys)
   {
     List<Greeting> list = new ArrayList<Greeting>();
 

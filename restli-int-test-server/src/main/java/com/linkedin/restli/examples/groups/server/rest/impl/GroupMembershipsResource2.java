@@ -35,11 +35,11 @@ import com.linkedin.restli.server.BatchUpdateResult;
 import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
-import com.linkedin.restli.server.annotations.AssocKey;
-import com.linkedin.restli.server.annotations.Context;
+import com.linkedin.restli.server.annotations.AssocKeyParam;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.Key;
 import com.linkedin.restli.server.annotations.Optional;
+import com.linkedin.restli.server.annotations.PagingContextParam;
 import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiAssociation;
 import com.linkedin.restli.server.resources.AssociationResource;
@@ -58,6 +58,7 @@ import static com.linkedin.restli.common.HttpStatus.S_400_BAD_REQUEST;
 import static com.linkedin.restli.common.HttpStatus.S_404_NOT_FOUND;
 import static com.linkedin.restli.examples.groups.server.api.GroupsKeys.GROUP_ID;
 import static com.linkedin.restli.examples.groups.server.api.GroupsKeys.MEMBER_ID;
+
 
 /**
  * Association between members and groups
@@ -100,8 +101,8 @@ public class GroupMembershipsResource2 extends AssociationResourceTemplate<Group
 
   // TODO Better search interface (needs parameter binding to Query object, results object w/total)
   @Finder("group")
-  public List<GroupMembership> getMemberships(@Context PagingContext pagingContext,
-                                              @AssocKey("groupID") int groupID,
+  public List<GroupMembership> getMemberships(@PagingContextParam PagingContext pagingContext,
+                                              @AssocKeyParam("groupID") int groupID,
                                               // TODO Bind friendly parameter values to enum values
                                               @QueryParam("level") @Optional String level,
                                               @QueryParam("firstName") @Optional String firstName,
@@ -122,8 +123,8 @@ public class GroupMembershipsResource2 extends AssociationResourceTemplate<Group
   }
 
   @Finder("member")
-  public List<GroupMembership> getMemberships(@Context PagingContext pagingContext,
-                                              @AssocKey("memberID") int memberID)
+  public List<GroupMembership> getMemberships(@PagingContextParam PagingContext pagingContext,
+                                              @AssocKeyParam("memberID") int memberID)
   {
     return _app.getMembershipMgr().getByMember(memberID,
                                               MembershipLevel.MEMBER,
@@ -270,7 +271,7 @@ public class GroupMembershipsResource2 extends AssociationResourceTemplate<Group
   }
 
   @Override
-  public List<GroupMembership> getAll(@Context PagingContext pagingContext)
+  public List<GroupMembership> getAll(@PagingContextParam PagingContext pagingContext)
   {
     return _app.getMembershipMgr()
                .search(new GroupMembershipSearchQuery(GroupMembershipSearchQuery.WILDCARD,

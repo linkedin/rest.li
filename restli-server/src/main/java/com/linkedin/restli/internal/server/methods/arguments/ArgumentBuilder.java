@@ -91,7 +91,7 @@ public class ArgumentBuilder
     for (int i = positionalArguments.length; i < parameters.size(); ++i)
     {
       Parameter<?> param = parameters.get(i);
-      if (param.getParamType() == Parameter.ParamType.KEY)
+      if (param.getParamType() == Parameter.ParamType.KEY || param.getParamType() == Parameter.ParamType.ASSOC_KEY_PARAM)
       {
         Object value = context.getPathKeys().get(param.getName());
         if (value == null && param.isOptional() == false)
@@ -105,7 +105,7 @@ public class ArgumentBuilder
       {
         continue;
       }
-      else if (param.getParamType() == Parameter.ParamType.PARSEQ_CONTEXT)
+      else if (param.getParamType() == Parameter.ParamType.PARSEQ_CONTEXT_PARAM ||param.getParamType() == Parameter.ParamType.PARSEQ_CONTEXT)
       {
         continue; // don't know what to fill in yet
       }

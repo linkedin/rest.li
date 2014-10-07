@@ -33,7 +33,7 @@ import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.CallbackParam;
-import com.linkedin.restli.server.annotations.Context;
+import com.linkedin.restli.server.annotations.PagingContextParam;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
@@ -49,7 +49,7 @@ public class AsyncDiscoveredItemsResource
     extends ComplexKeyResourceAsyncTemplate<DiscoveredItemKey, DiscoveredItemKeyParams, DiscoveredItem>
 {
   @Finder("user")
-  public void getDiscoveredItemsForUser(@Context PagingContext pagingContext,
+  public void getDiscoveredItemsForUser(@PagingContextParam PagingContext pagingContext,
                                          @QueryParam("userId") long userId,
                                          @CallbackParam final Callback<List<DiscoveredItem>> callback)
   {
@@ -129,7 +129,7 @@ public class AsyncDiscoveredItemsResource
   }
 
   @Override
-  public void getAll(@Context PagingContext ctx, @CallbackParam Callback<List<DiscoveredItem>> callback)
+  public void getAll(@PagingContextParam PagingContext ctx, @CallbackParam Callback<List<DiscoveredItem>> callback)
   {
     callback.onSuccess(null);
   }

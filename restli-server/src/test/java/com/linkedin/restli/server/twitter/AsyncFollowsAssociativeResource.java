@@ -26,9 +26,9 @@ import com.linkedin.restli.server.BatchUpdateRequest;
 import com.linkedin.restli.server.BatchUpdateResult;
 import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.UpdateResponse;
-import com.linkedin.restli.server.annotations.AssocKey;
+import com.linkedin.restli.server.annotations.AssocKeyParam;
 import com.linkedin.restli.server.annotations.CallbackParam;
-import com.linkedin.restli.server.annotations.Context;
+import com.linkedin.restli.server.annotations.PagingContextParam;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.Key;
 import com.linkedin.restli.server.annotations.QueryParam;
@@ -99,7 +99,7 @@ public class AsyncFollowsAssociativeResource extends
    * @param someParam some parameter
    */
   @Finder("other")
-  public void getOther(@AssocKey("followerID") final long followerID,
+  public void getOther(@AssocKeyParam("followerID") final long followerID,
                        @QueryParam("someParam") final String someParam,
                        @CallbackParam final Callback<List<Followed>> callback)
   {
@@ -150,7 +150,7 @@ public class AsyncFollowsAssociativeResource extends
   }
 
   @Override
-  public void getAll(@Context PagingContext ctx, @CallbackParam Callback<List<Followed>> callback)
+  public void getAll(@PagingContextParam PagingContext ctx, @CallbackParam Callback<List<Followed>> callback)
   {
     callback.onSuccess(null);
   }

@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.examples.greetings.server;
 
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -42,14 +43,15 @@ import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
-import com.linkedin.restli.server.annotations.Context;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.Optional;
+import com.linkedin.restli.server.annotations.PagingContextParam;
 import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
 import com.linkedin.restli.server.util.PatchApplier;
+
 
 /**
  * Demonstrates a resource keyed by a string.
@@ -235,7 +237,7 @@ public class StringKeysResource extends CollectionResourceTemplate<String, Messa
   }
 
   @Finder("search")
-  public List<Message> search(@Context PagingContext ctx, @QueryParam("keyword") @Optional String keyword)
+  public List<Message> search(@PagingContextParam PagingContext ctx, @QueryParam("keyword") @Optional String keyword)
   {
     keyword = keyword.toLowerCase();
     List<Message> messages = new ArrayList<Message>();

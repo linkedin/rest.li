@@ -58,15 +58,21 @@ import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.ActionParam;
 import com.linkedin.restli.server.annotations.AssocKey;
+import com.linkedin.restli.server.annotations.AssocKeyParam;
 import com.linkedin.restli.server.annotations.CallbackParam;
 import com.linkedin.restli.server.annotations.Context;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.HeaderParam;
 import com.linkedin.restli.server.annotations.Keys;
 import com.linkedin.restli.server.annotations.Optional;
+import com.linkedin.restli.server.annotations.PagingContextParam;
 import com.linkedin.restli.server.annotations.ParSeqContext;
+import com.linkedin.restli.server.annotations.ParSeqContextParam;
+import com.linkedin.restli.server.annotations.PathKeysParam;
 import com.linkedin.restli.server.annotations.Projection;
+import com.linkedin.restli.server.annotations.ProjectionParam;
 import com.linkedin.restli.server.annotations.QueryParam;
+import com.linkedin.restli.server.annotations.ResourceContextParam;
 import com.linkedin.restli.server.annotations.RestAnnotations;
 import com.linkedin.restli.server.annotations.RestLiActions;
 import com.linkedin.restli.server.annotations.RestLiAssociation;
@@ -74,11 +80,13 @@ import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestLiSimpleResource;
 import com.linkedin.restli.server.annotations.RestLiTemplate;
 import com.linkedin.restli.server.annotations.RestMethod;
+import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.resources.ComplexKeyResource;
 import com.linkedin.restli.server.resources.ComplexKeyResourceAsync;
 import com.linkedin.restli.server.resources.KeyValueResource;
 import com.linkedin.restli.server.resources.SingleObjectResource;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Method;
@@ -95,8 +103,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -359,7 +365,7 @@ public final class RestLiAnnotationReader
 
     List<Class<?>> kvParams =
         ReflectionUtils.getTypeArguments(SingleObjectResource.class,
-                                         singleObjectResourceClass);
+                singleObjectResourceClass);
 
     valueClass = kvParams.get(0).asSubclass(RecordTemplate.class);
 
@@ -647,7 +653,7 @@ public final class RestLiAnnotationReader
                          model.getPrimaryKey().getDataSchema(),
                          false,
                          null,
-                         Parameter.ParamType.KEY,
+                         Parameter.ParamType.ASSOC_KEY_PARAM,
                          false,
                          AnnotationSet.EMPTY);
   }
@@ -671,7 +677,6 @@ public final class RestLiAnnotationReader
     {
       return null;
     }
-
     return optional.value();
   }
 
@@ -705,36 +710,60 @@ public final class RestLiAnnotationReader
         }
         else if (paramAnnotations.contains(AssocKey.class))
         {
-          param = buildAssocKeyParam(model, method, paramAnnotations, paramType);
+          param = buildAssocKeyParam(model, method, paramAnnotations, paramType, AssocKey.class);
+        }
+        else if (paramAnnotations.contains(AssocKeyParam.class))
+        {
+          param = buildAssocKeyParam(model, method, paramAnnotations, paramType, AssocKeyParam.class);
         }
         else if (paramAnnotations.contains(Context.class))
         {
-          param = buildContextParam(paramAnnotations, paramType);
+          param = buildPagingContextParam(paramAnnotations, paramType, Context.class);
+        }
+        else if (paramAnnotations.contains(PagingContextParam.class))
+        {
+          param = buildPagingContextParam(paramAnnotations, paramType, PagingContextParam.class);
         }
         else if (paramAnnotations.contains(CallbackParam.class))
         {
           param = buildCallbackParam(method, methodType, idx, paramType, paramAnnotations);
         }
+        else if (paramAnnotations.contains(ParSeqContextParam.class))
+        {
+          param = buildParSeqContextParam(method, methodType, idx, paramType, paramAnnotations, ParSeqContextParam.class);
+        }
         else if (paramAnnotations.contains(ParSeqContext.class))
         {
-          param = buildParSeqContextParam(method, methodType, idx, paramType, paramAnnotations);
+          param = buildParSeqContextParam(method, methodType, idx, paramType, paramAnnotations, ParSeqContext.class);
         }
         else if (paramAnnotations.contains(Projection.class))
         {
-          param = buildProjectionParam(paramAnnotations, paramType);
+          param = buildProjectionParam(paramAnnotations, paramType, Projection.class);
+        }
+        else if (paramAnnotations.contains(ProjectionParam.class))
+        {
+          param = buildProjectionParam(paramAnnotations, paramType, ProjectionParam.class);
         }
         else if (paramAnnotations.contains(Keys.class))
         {
-          param = buildKeysParam(paramAnnotations, paramType);
+          param = buildPathKeysParam(paramAnnotations, paramType, Keys.class);
+        }
+        else if (paramAnnotations.contains(PathKeysParam.class))
+        {
+          param = buildPathKeysParam(paramAnnotations, paramType, PathKeysParam.class);
         }
         else if (paramAnnotations.contains(HeaderParam.class))
         {
           param = buildHeaderParam(paramAnnotations, paramType);
         }
+        else if (paramAnnotations.contains(ResourceContextParam.class))
+        {
+          param = buildResourceContextParam(paramAnnotations, paramType);
+        }
         else
         {
           throw new ResourceConfigException(buildMethodMessage(method)
-              + " must annotate each parameter with @QueryParam, @ActionParam, @AssocKey, @Context, @Projection, @Keys, @HeaderParam, @CallbackParam or @ParSeqContext");
+              + " must annotate each parameter with @QueryParam, @ActionParam, @AssocKeyParam, @PagingContextParam, @ProjectionParam, @PathKeysParam, @HeaderParam, @CallbackParam, @ResourceContext or @ParSeqContextParam");
         }
       }
 
@@ -753,6 +782,24 @@ public final class RestLiAnnotationReader
 
     return queryParameters;
   }
+
+  @SuppressWarnings({ "unchecked", "rawtypes" })
+  private static Parameter<ResourceContext> buildResourceContextParam(AnnotationSet annotations, final Class<?> paramType)
+  {
+      if (!paramType.equals(ResourceContext.class))
+      {
+        throw new ResourceConfigException("Incorrect data type for param: @" + ResourceContextParam.class.getSimpleName() + " parameter annotation must be of type " +  ResourceContext.class.getName());
+      }
+      Optional optional = annotations.get(Optional.class);
+      return new Parameter("",
+                           paramType,
+                           null,
+                           optional != null,
+                           null,
+                           Parameter.ParamType.RESOURCE_CONTEXT_PARAM,
+                           false,
+                           annotations);
+    }
 
   @SuppressWarnings({"unchecked", "rawtypes"})
   private static Parameter buildCallbackParam(final Method method,
@@ -785,22 +832,37 @@ public final class RestLiAnnotationReader
                                                                                 final ResourceMethod methodType,
                                                                                 final int idx,
                                                                                 final Class<?> paramType,
-                                                                                final AnnotationSet annotations)
+                                                                                final AnnotationSet annotations,
+                                                                                final Class<?> paramAnnotationType)
   {
     if (!com.linkedin.parseq.Context.class.equals(paramType))
     {
-      throw new ResourceConfigException("@ParSeqContext must be com.linkedin.parseq.Context");
+      throw new ResourceConfigException("Incorrect data type for param: @" + ParSeqContextParam.class.getSimpleName() + " or @" + ParSeqContext.class.getSimpleName() +
+              " parameter annotation must be of type " +  com.linkedin.parseq.Context.class.getName());
     }
     if (getInterfaceType(method) != InterfaceType.PROMISE)
     {
       throw new ResourceConfigException("Cannot have ParSeq context on non-promise method");
+    }
+    Parameter.ParamType parameter = null;
+    if(paramAnnotationType.equals(ParSeqContext.class))
+    {
+      parameter = Parameter.ParamType.PARSEQ_CONTEXT;
+    }
+    else if (paramAnnotationType.equals(ParSeqContextParam.class))
+    {
+      parameter = Parameter.ParamType.PARSEQ_CONTEXT_PARAM;
+    }
+    else
+    {
+      throw new ResourceConfigException("Param Annotation type must be 'ParseqContextParam' or the deprecated 'ParseqContext' for ParseqContext");
     }
     return new Parameter<com.linkedin.parseq.Context>("",
                                                       com.linkedin.parseq.Context.class,
                                                       null,
                                                       false,
                                                       null,
-                                                      Parameter.ParamType.PARSEQ_CONTEXT,
+                                                      parameter,
                                                       false,
                                                       annotations);
   }
@@ -811,10 +873,10 @@ public final class RestLiAnnotationReader
   {
     return annotations.count(QueryParam.class,
                              ActionParam.class,
-                             AssocKey.class,
-                             Context.class,
+                             AssocKeyParam.class,
+                             PagingContextParam.class,
                              CallbackParam.class,
-                             ParSeqContext.class);
+                             ParSeqContextParam.class);
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})
@@ -883,7 +945,7 @@ public final class RestLiAnnotationReader
     if (annotationCount(annotations) > 1)
     {
       throw new ResourceConfigException(buildMethodMessage(method)
-          + "' must declare only one of @QueryParam, @ActionParam, @AssocKey, @Context, or @CallbackParam");
+          + "' must declare only one of @QueryParam, @ActionParam, @AssocKeyParam, @PagingContextParam, or @CallbackParam");
     }
   }
 
@@ -946,11 +1008,26 @@ public final class RestLiAnnotationReader
   }
 
   private static Parameter<?> buildProjectionParam(final AnnotationSet annotations,
-                                                   final Class<?> paramType)
+                                                   final Class<?> paramType,
+                                                   final Class<?> paramAnnotationType)
   {
     if (!paramType.equals(MaskTree.class))
     {
-      throw new ResourceConfigException("Projection must be MaskTree");
+      throw new ResourceConfigException("Incorrect data type for param: @" + ProjectionParam.class.getSimpleName() + " or @" + Projection.class.getSimpleName() +
+              " parameter annotation must be of type " +  MaskTree.class.getName());
+    }
+    Parameter.ParamType parameter = null;
+    if(paramAnnotationType.equals(Projection.class))
+    {
+      parameter = Parameter.ParamType.PROJECTION;
+    }
+    else if (paramAnnotationType.equals(ProjectionParam.class))
+    {
+      parameter = Parameter.ParamType.PROJECTION_PARAM;
+    }
+    else
+    {
+      throw new ResourceConfigException("Param Annotation type must be 'ProjectionParam' or the deprecated 'Projection' for Projection");
     }
     Optional optional = annotations.get(Optional.class);
 
@@ -960,29 +1037,43 @@ public final class RestLiAnnotationReader
                                        null,
                                        optional != null,
                                        null, // default mask is null.
-                                       Parameter.ParamType.PROJECTION,
+                                       parameter,
                                        false,
                                        annotations);
     return param;
   }
 
-  private static Parameter<?> buildKeysParam(final AnnotationSet annotations,
-                                             final Class<?> paramType)
+  private static Parameter<?> buildPathKeysParam(final AnnotationSet annotations,
+                                                 final Class<?> paramType,
+                                                 final Class<?> paramAnnotationType)
   {
     if (!paramType.equals(PathKeys.class))
     {
-      throw new ResourceConfigException("Keys must be PathKeys");
+      throw new ResourceConfigException("Incorrect data type for param: @" + PathKeysParam.class.getSimpleName() + " or @" + Keys.class.getSimpleName() +
+              " parameter annotation must be of type " +  PathKeys.class.getName());
     }
 
     Optional optional = annotations.get(Optional.class);
-
+    Parameter.ParamType parameter = null;
+    if(paramAnnotationType.equals(Keys.class))
+    {
+      parameter = Parameter.ParamType.PATH_KEYS;
+    }
+    else if (paramAnnotationType.equals(PathKeysParam.class))
+    {
+      parameter = Parameter.ParamType.PATH_KEYS_PARAM;
+    }
+    else
+    {
+      throw new ResourceConfigException("Param Annotation type must be 'PathKeysParam' or the deprecated 'Keys' for PathKeys");
+    }
     @SuppressWarnings({"unchecked", "rawtypes"})
     Parameter<?> param = new Parameter("",
                                        paramType,
                                        null,
                                        optional != null,
                                        new PathKeysImpl(),
-                                       Parameter.ParamType.PATH_KEYS,
+                                       parameter,
                                        false,
                                        annotations);
     return param;
@@ -993,7 +1084,7 @@ public final class RestLiAnnotationReader
   {
     if (!paramType.equals(String.class))
     {
-      throw new ResourceConfigException("Header must be a String");
+      throw new ResourceConfigException("Incorrect data type for param: @" + HeaderParam.class.getSimpleName() + " parameter annotation must be of type String");
     }
     Optional optional = annotations.get(Optional.class);
 
@@ -1009,18 +1100,35 @@ public final class RestLiAnnotationReader
     return param;
   }
 
-  private static Parameter<?> buildContextParam(final AnnotationSet annotations,
-                                                final Class<?> paramType)
+  private static Parameter<?> buildPagingContextParam(final AnnotationSet annotations,
+                                                      final Class<?> paramType,
+                                                      final Class<?> paramAnnotationType)
   {
     if (!paramType.equals(PagingContext.class))
     {
-      throw new ResourceConfigException("Context must be PagingContext");
+      throw new ResourceConfigException("Incorrect data type for param: @" + PagingContextParam.class.getSimpleName() + " or @" + Context.class.getSimpleName() +
+              " parameter annotation must be of type " +  PagingContext.class.getName());
     }
 
-    Context context = annotations.get(Context.class);
+    PagingContext defaultContext = null;
+    Parameter.ParamType parameter = null;
+    if(paramAnnotationType.equals(PagingContextParam.class))
+    {
+      PagingContextParam pagingContextParam = annotations.get(PagingContextParam.class);
+      defaultContext = new PagingContext(pagingContextParam.defaultStart(), pagingContextParam.defaultCount(), false, false);
+      parameter = Parameter.ParamType.PAGING_CONTEXT_PARAM;
+    }
+    else if (paramAnnotationType.equals(Context.class))
+    {
+      Context contextParam = annotations.get(Context.class);
+      defaultContext = new PagingContext(contextParam.defaultStart(), contextParam.defaultCount(), false, false);
+      parameter = Parameter.ParamType.CONTEXT;
+    }
+    else
+    {
+      throw new ResourceConfigException("Param Annotation type must be 'PagingContextParam' or the deprecated 'Context' for PagingContext");
+    }
     Optional optional = annotations.get(Optional.class);
-    PagingContext defaultContext =
-        new PagingContext(context.defaultStart(), context.defaultCount(), false, false);
     @SuppressWarnings({"unchecked", "rawtypes"})
     Parameter<?> param =
         new Parameter("",
@@ -1028,18 +1136,18 @@ public final class RestLiAnnotationReader
                       null,
                       optional != null,
                       defaultContext,
-                      Parameter.ParamType.CONTEXT,
+                      parameter,
                       false,
                       annotations);
     return param;
   }
 
   private static boolean checkAssocKey(final Set<Key> keys,
-                                       final AssocKey assocKey)
+                                       final String assocKeyValue)
   {
     for (Key k : keys)
     {
-      if (k.getName().equals(assocKey.value()))
+      if (k.getName().equals(assocKeyValue))
       {
         return true;
       }
@@ -1050,39 +1158,57 @@ public final class RestLiAnnotationReader
   private static Parameter<?> buildAssocKeyParam(final ResourceModel model,
                                                  final Method method,
                                                  final AnnotationSet annotations,
-                                                 final Class<?> paramType)
+                                                 final Class<?> paramType,
+                                                 final Class<?> paramAnnotationType)
   {
-    AssocKey assocKey = annotations.get(AssocKey.class);
+    Parameter.ParamType parameter = null;
+    String assocKeyParamValue = null;
+    Class<? extends TyperefInfo> typerefInfoClass = null;
+    if(paramAnnotationType.equals(AssocKey.class))
+    {
+      parameter = Parameter.ParamType.KEY;
+      assocKeyParamValue = annotations.get(AssocKey.class).value();
+      typerefInfoClass = annotations.get(AssocKey.class).typeref();
+    }
+    else if (paramAnnotationType.equals(AssocKeyParam.class))
+    {
+      parameter = Parameter.ParamType.ASSOC_KEY_PARAM;
+      assocKeyParamValue = annotations.get(AssocKeyParam.class).value();
+      typerefInfoClass = annotations.get(AssocKeyParam.class).typeref();
+    }
+    else
+    {
+      throw new ResourceConfigException("Param Annotation type must be 'AssocKeysParam' or the deprecated 'AssocKey' for AssocKey");
+    }
     Optional optional = annotations.get(Optional.class);
 
-    if (!checkAssocKey(model.getKeys(), assocKey))
+    if (!checkAssocKey(model.getKeys(), assocKeyParamValue))
     {
-      throw new ResourceConfigException("Non-existing assocKey '" + assocKey.value() + "' on " + buildMethodMessage(method));
+      throw new ResourceConfigException("Non-existing assocKey '" + assocKeyParamValue + "' on " + buildMethodMessage(method));
     }
 
-    Class<? extends TyperefInfo> typerefInfoClass = assocKey.typeref();
     try
     {
       @SuppressWarnings({"unchecked", "rawtypes"})
       Parameter<?> param =
-          new Parameter(assocKey.value(),
+          new Parameter(assocKeyParamValue,
                         paramType,
                         getDataSchema(paramType, getSchemaFromTyperefInfo(typerefInfoClass)),
                         optional != null,
                         getDefaultValueData(optional),
-                        Parameter.ParamType.KEY,
+                        parameter,
                         true,
                         annotations);
       return param;
     }
     catch (TemplateRuntimeException e)
     {
-      throw new ResourceConfigException("DataSchema for assocKey '" + assocKey.value() + "' of type " + paramType.getSimpleName() + " on "
+      throw new ResourceConfigException("DataSchema for assocKey '" + assocKeyParamValue + "' of type " + paramType.getSimpleName() + " on "
                                                 + buildMethodMessage(method) + "cannot be found; type is invalid or requires typeref", e);
     }
     catch (Exception e)
     {
-      throw new ResourceConfigException("Typeref for assocKey '" + assocKey.value() + "' on "
+      throw new ResourceConfigException("Typeref for assocKey '" + assocKeyParamValue + "' on "
                                                 + buildMethodMessage(method) + " cannot be instantiated, " + e.getMessage(), e);
     }
   }

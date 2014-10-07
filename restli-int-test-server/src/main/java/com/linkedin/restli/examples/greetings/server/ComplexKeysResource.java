@@ -35,8 +35,8 @@ import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.Action;
-import com.linkedin.restli.server.annotations.Context;
 import com.linkedin.restli.server.annotations.Finder;
+import com.linkedin.restli.server.annotations.PagingContextParam;
 import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.resources.ComplexKeyResourceTemplate;
@@ -140,7 +140,7 @@ public class ComplexKeysResource extends ComplexKeyResourceTemplate<TwoPartKey, 
   }
 
   @Override
-  public List<Message> getAll(@Context PagingContext pagingContext)
+  public List<Message> getAll(@PagingContextParam PagingContext pagingContext)
   {
     return _dataProvider.getAll();
   }
