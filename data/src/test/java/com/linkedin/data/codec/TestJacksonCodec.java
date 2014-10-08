@@ -20,6 +20,8 @@ package com.linkedin.data.codec;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.linkedin.data.Data;
 import com.linkedin.data.DataMap;
+
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -42,31 +44,51 @@ public class TestJacksonCodec
   @Test
   public void testNoStringIntern() throws IOException
   {
-    String keyName = "testKey";
-    String json = "{ \"" + keyName + "\" : 1 }";
-    byte[] jsonAsBytes = json.getBytes(Data.UTF_8_CHARSET);
+    final String keyName = "testKey";
+    final String json = "{ \"" + keyName + "\" : 1 }";
+    final byte[] jsonAsBytes = json.getBytes(Data.UTF_8_CHARSET);
 
     {
-      JsonFactory jsonFactory = new JsonFactory();
-      JacksonDataCodec codec = new JacksonDataCodec(jsonFactory);
+      final JsonFactory jsonFactory = new JsonFactory();
+      final JacksonDataCodec codec = new JacksonDataCodec(jsonFactory);
       // make sure intern field names is not enabled
       assertFalse(jsonFactory.isEnabled(JsonFactory.Feature.INTERN_FIELD_NAMES));
       assertTrue(jsonFactory.isEnabled(JsonFactory.Feature.CANONICALIZE_FIELD_NAMES));
-      DataMap map = codec.bytesToMap(jsonAsBytes);
-      String key = map.keySet().iterator().next();
+      final DataMap map = codec.bytesToMap(jsonAsBytes);
+      final String key = map.keySet().iterator().next();
       assertNotSame(key, keyName);
     }
 
     {
-      JsonFactory jsonFactory = new JsonFactory();
-      JacksonDataCodec codec = new JacksonDataCodec(jsonFactory);
+      final JsonFactory jsonFactory = new JsonFactory();
+      final JacksonDataCodec codec = new JacksonDataCodec(jsonFactory);
       // enable intern field names
       jsonFactory.enable(JsonFactory.Feature.INTERN_FIELD_NAMES);
       assertTrue(jsonFactory.isEnabled(JsonFactory.Feature.INTERN_FIELD_NAMES));
       assertTrue(jsonFactory.isEnabled(JsonFactory.Feature.CANONICALIZE_FIELD_NAMES));
-      DataMap map = codec.bytesToMap(jsonAsBytes);
-      String key = map.keySet().iterator().next();
+      final DataMap map = codec.bytesToMap(jsonAsBytes);
+      final String key = map.keySet().iterator().next();
       assertSame(key, keyName);
     }
+  }
+
+  /**
+   * Prior to version 2.4.3, Jackson could not handle map keys >= 262146 bytes, if the data source is byte array.
+   * The issue is resolved in https://github.com/FasterXML/jackson-core/issues/152
+   */
+  @Test
+  public void testLongKeyFromByteSource() throws IOException
+  {
+    final StringBuilder jsonBuilder = new StringBuilder();
+    jsonBuilder.append("{\"");
+    for (int i = 0; i < 43691; ++i)
+    {
+      jsonBuilder.append("6_byte");
+    }
+    jsonBuilder.append("\":0}");
+
+    final JacksonDataCodec codec = new JacksonDataCodec();
+    final DataMap map = codec.bytesToMap(jsonBuilder.toString().getBytes());
+    Assert.assertEquals(map.keySet().iterator().next().length(), 262146);
   }
 }
