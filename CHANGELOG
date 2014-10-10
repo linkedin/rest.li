@@ -1,6 +1,7 @@
 1.24.4
 ------
-
+(RB=377223)
+Turn on Rest.li 2.0 request builders by default in Gradle plugin.
 
 1.24.3
 ------

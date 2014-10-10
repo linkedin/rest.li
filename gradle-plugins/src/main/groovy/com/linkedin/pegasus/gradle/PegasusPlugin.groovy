@@ -498,7 +498,7 @@ class PegasusPlugin implements Plugin<Project>
   private static final String IDL_COMPAT_REQUIREMENT = 'rest.idl.compatibility'
   private static final String IDL_NO_PUBLISH = 'rest.idl.noPublish'
   private static final String SKIP_IDL_CHECK = 'rest.idl.skipCheck'
-  private static final String REST_CLIENT_RESTLI_2 = 'rest.client.restli2'
+  private static final String SUPPRESS_REST_CLIENT_RESTLI_2 = 'rest.client.restli2.suppress'
 
   private static final String GENERATOR_CLASSLOADER_NAME = 'pegasusGeneratorClassLoader'
 
@@ -1312,7 +1312,7 @@ class PegasusPlugin implements Plugin<Project>
       resolverPath = dataModels
       runtimeClasspath = project.configurations.dataModel + project.configurations.dataTemplate.artifacts.files
       destinationDir = generatedRestClientDir
-      needRestli2Format = isPropertyTrue(project, REST_CLIENT_RESTLI_2)
+      suppressRestli2Format = project.hasProperty(SUPPRESS_REST_CLIENT_RESTLI_2)
     }
 
     if (dataTemplateJarTask != null)
@@ -2332,7 +2332,7 @@ class PegasusPlugin implements Plugin<Project>
     @InputFiles FileCollection resolverPath
     @InputFiles FileCollection runtimeClasspath
     @OutputDirectory File destinationDir
-    boolean needRestli2Format
+    boolean suppressRestli2Format
 
     @TaskAction
     protected void generate()
@@ -2388,7 +2388,7 @@ class PegasusPlugin implements Plugin<Project>
         final String restModelFilePath = "${inputDir}${File.separatorChar}${clientItem.restModelFileName}"
         stubGenerator.run(resolverPathStr, defaultPackage, false, false, false, destinationDir.path, [restModelFilePath] as String[])
 
-        if (needRestli2Format)
+        if (!suppressRestli2Format)
         {
           stubGenerator.run(resolverPathStr, defaultPackage, false, false, true, destinationDir.path, [restModelFilePath] as String[])
         }

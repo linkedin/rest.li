@@ -120,9 +120,6 @@ subprojects {
   apply plugin: 'java'
   apply plugin: 'eclipse'
 
-  // generate Rest.li 2 request builders
-  it.ext['rest.client.restli2'] = true
-
   afterEvaluate {
     if (project.plugins.hasPlugin('pegasus'))
     {
