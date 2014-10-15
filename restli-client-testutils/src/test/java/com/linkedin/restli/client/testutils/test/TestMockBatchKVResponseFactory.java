@@ -137,7 +137,7 @@ public class TestMockBatchKVResponseFactory
 
     errorResponses.put(new ComplexResourceKey<Greeting, Greeting>(g3, g3), new ErrorResponse().setMessage("3"));
 
-    BatchKVResponse<ComplexResourceKey, Greeting> response =
+    BatchKVResponse<ComplexResourceKey<Greeting, Greeting>, Greeting> response =
         MockBatchKVResponseFactory.createWithComplexKey(Greeting.class,
                                                         Greeting.class,
                                                         Greeting.class,

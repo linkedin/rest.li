@@ -1,3 +1,7 @@
+1.24.5
+------
+
+
 1.24.4
 ------
 (RB=377223)
@@ -17,6 +21,9 @@ Allow projections on custom metadata and paging.
 
 (RB=367345)
 Repair logging for restli tests
+
+(RB=385511)
+Return parameterized ComplexResourceKey from MockBatchKVResponseFactory.createWithComplexKey().
 
 1.24.3
 ------

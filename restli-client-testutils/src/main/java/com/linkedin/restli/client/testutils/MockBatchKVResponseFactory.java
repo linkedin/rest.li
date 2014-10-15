@@ -80,7 +80,7 @@ public class MockBatchKVResponseFactory
    * @return
    */
   @SuppressWarnings("rawtypes")
-  public static <KK extends RecordTemplate, KP extends RecordTemplate, V extends RecordTemplate> BatchKVResponse<ComplexResourceKey, V> createWithComplexKey
+  public static <KK extends RecordTemplate, KP extends RecordTemplate, V extends RecordTemplate> BatchKVResponse<ComplexResourceKey<KK, KP>, V> createWithComplexKey
       (Class<V> valueClass,
        Class<KK> keyKeyClass,
        Class<KP> keyParamsClass,
@@ -91,13 +91,16 @@ public class MockBatchKVResponseFactory
 
     DataMap batchResponseDataMap = buildDataMap(recordTemplates, errorResponses, version);
 
-    return new BatchKVResponse<ComplexResourceKey, V>(batchResponseDataMap,
-                                                      ComplexResourceKey.class,
-                                                      valueClass,
-                                                      null,
-                                                      keyKeyClass,
-                                                      keyParamsClass,
-                                                      version);
+    @SuppressWarnings("unchecked")
+    BatchKVResponse<ComplexResourceKey<KK, KP>, V> response =
+      (BatchKVResponse<ComplexResourceKey<KK, KP>, V>) (Object) new BatchKVResponse<ComplexResourceKey, V>(batchResponseDataMap,
+                                                                                                           ComplexResourceKey.class,
+                                                                                                           valueClass,
+                                                                                                           null,
+                                                                                                           keyKeyClass,
+                                                                                                           keyParamsClass,
+                                                                                                           version);
+    return response;
   }
 
   /**
