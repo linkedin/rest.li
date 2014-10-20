@@ -17,9 +17,6 @@
 package com.linkedin.restli.client;
 
 
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.PathSpec;
@@ -30,21 +27,25 @@ import com.linkedin.restli.client.test.TestRecord;
 import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
+import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpecImpl;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.client.BatchResponseDecoder;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.PathSegment.PathSegmentSyntaxException;
 import com.linkedin.restli.internal.common.QueryParamsDataMap;
-
+import com.linkedin.restli.internal.common.URIElementParser;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 
 /**
@@ -120,8 +121,11 @@ public class BatchGetRequestBuilderTest
 
   @Test
   public void testBatchConversion()
+      throws URISyntaxException
   {
-    String expectedUri = "/?fields=message,id&ids=1&param=paramValue";
+    String expectedProtocol1Uri = "/?fields=message,id&ids=1&param=paramValue";
+    String expectedProtocol2Uri = "/?fields=message,id&ids=List(1)&param=paramValue";
+
     GetRequestBuilder<Integer, TestRecord> requestBuilder =
         new GetRequestBuilder<Integer, TestRecord>("/",
                                                    TestRecord.class,
@@ -137,19 +141,23 @@ public class BatchGetRequestBuilderTest
                   .setParam("param", "paramValue");
     GetRequest<TestRecord> request = requestBuilder.build();
     BatchGetRequest<TestRecord> batchRequest = BatchGetRequestBuilder.batch(request);
-    Assert.assertEquals(RestliUriBuilderUtil.createUriBuilder(batchRequest).buildBaseUri(),
-                        RestliUriBuilderUtil.createUriBuilder(request).buildBaseUri());
-    testUriGeneration(batchRequest, expectedUri);
+    Assert.assertEquals(batchRequest.getBaseUriTemplate(), request.getBaseUriTemplate());
+    Assert.assertEquals(batchRequest.getPathKeys(), request.getPathKeys());
+    testUriGeneration(batchRequest, expectedProtocol1Uri, expectedProtocol2Uri);
     Assert.assertEquals(batchRequest.getFields(), request.getFields());
-    checkObjectIds(batchRequest, new HashSet<Object>(Arrays.asList(request.getObjectId())), false);
+    Assert.assertEquals(batchRequest.getObjectIds(), new HashSet<Object>(Arrays.asList(request.getObjectId())));
   }
 
   @Test
   public void testComplexKeyBatchConversion()
+      throws URISyntaxException
   {
     // Comment for the review - this appears to be breaking wire protocol, but it doesn't. Request batching
     // for complex keys never worked, and the old format was incorrect.
-    String expectedUri = "/?fields=message,id&ids%5B0%5D.$params.id=1&ids%5B0%5D.$params.message=paramMessage1&ids%5B0%5D.id=1&ids%5B0%5D.message=keyMessage1&param=paramValue";
+    String expectedProtocol1Uri =
+        "/?fields=message,id&ids%5B0%5D.$params.id=1&ids%5B0%5D.$params.message=paramMessage1&ids%5B0%5D.id=1&ids%5B0%5D.message=keyMessage1&param=paramValue";
+    String expectedProtocol2Uri =
+        "/?fields=message,id&ids=List(($params:(id:1,message:paramMessage1),id:1,message:keyMessage1))&param=paramValue";
     GetRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> requestBuilder =
         new GetRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord>("/",
                                                                                       TestRecord.class,
@@ -162,11 +170,11 @@ public class BatchGetRequestBuilderTest
                   .setParam("param", "paramValue");
     GetRequest<TestRecord> request = requestBuilder.build();
     BatchGetKVRequest<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> batchRequest = BatchGetRequestBuilder.batchKV(request);
-    Assert.assertEquals(RestliUriBuilderUtil.createUriBuilder(batchRequest).buildBaseUri(),
-                        RestliUriBuilderUtil.createUriBuilder(request).buildBaseUri());
-    testUriGeneration(batchRequest, expectedUri);
+    Assert.assertEquals(batchRequest.getBaseUriTemplate(), request.getBaseUriTemplate());
+    Assert.assertEquals(batchRequest.getPathKeys(), request.getPathKeys());
+    testUriGeneration(batchRequest, expectedProtocol1Uri, expectedProtocol2Uri);
     Assert.assertEquals(batchRequest.getFields(), request.getFields());
-    checkObjectIds(batchRequest, new HashSet<Object>(Arrays.asList(request.getObjectId())), true);
+    Assert.assertEquals(batchRequest.getObjectIds(), new HashSet<Object>(Arrays.asList(request.getObjectId())));
   }
 
   @Test
@@ -264,9 +272,12 @@ public class BatchGetRequestBuilderTest
 
   @Test
   public void testSimpleBatching()
+      throws URISyntaxException
   {
-    String expectedUri =
+    String expectedProtocol1Uri =
         "/?fields=id,message&ids=1&ids=2&ids=3&param1=value1&param2=value2";
+    String expectedProtocol2Uri =
+        "/?fields=id,message&ids=List(1,2,3)&param1=value1&param2=value2";
 
     BatchGetRequestBuilder<Integer, TestRecord> batchRequestBuilder1 =
         new BatchGetRequestBuilder<Integer, TestRecord>("/",
@@ -309,19 +320,19 @@ public class BatchGetRequestBuilderTest
     @SuppressWarnings("unchecked")
     BatchGetRequest<TestRecord> batchingRequest =
         BatchGetRequestBuilder.batch(Arrays.asList(batchRequest1, batchRequest2));
-    testUriGeneration(batchingRequest, expectedUri);
-    Assert.assertEquals(RestliUriBuilderUtil.createUriBuilder(batchingRequest).buildBaseUri(),
-                        RestliUriBuilderUtil.createUriBuilder(batchRequest1).buildBaseUri());
+    testUriGeneration(batchingRequest, expectedProtocol1Uri, expectedProtocol2Uri);
+    Assert.assertEquals(batchingRequest.getBaseUriTemplate(), batchRequest1.getBaseUriTemplate());
+    Assert.assertEquals(batchingRequest.getPathKeys(), batchRequest1.getPathKeys());
     Assert.assertEquals(batchingRequest.getFields(),
                         new HashSet<PathSpec>(Arrays.asList(FIELDS.id(), FIELDS.message())));
-    checkObjectIds(batchingRequest, new HashSet<Integer>(Arrays.asList(1, 2, 3)), false);
+    Assert.assertEquals(batchingRequest.getObjectIds(), new HashSet<Integer>(Arrays.asList(1, 2, 3)));
   }
 
   @SuppressWarnings("unchecked")
   @Test
   public void testComplexKeyBatching()
-  {
-    String expectedUri =
+      throws URISyntaxException, PathSegmentSyntaxException {
+    String expectedProtocol1Uri =
         "/?fields=id,message&ids%5B0%5D.$params.id=1&ids%5B0%5D.$params.message=paramMessage1&ids%5B0%5D.id=1&ids%5B0%5D.message=keyMessage1&ids%5B1%5D.$params.id=2&ids%5B1%5D.$params.message=paramMessage2&ids%5B1%5D.id=2&ids%5B1%5D.message=keyMessage2&ids%5B2%5D.$params.id=3&ids%5B2%5D.$params.message=paramMessage3&ids%5B2%5D.id=3&ids%5B2%5D.message=keyMessage3&param1=value1&param2=value2";
 
     ComplexResourceKey<TestRecord, TestRecord> complexKey1 =
@@ -369,10 +380,11 @@ public class BatchGetRequestBuilderTest
     BatchGetKVRequest<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> batchingRequest =
         BatchGetRequestBuilder.batchKV(Arrays.asList(batchRequest1, batchRequest2));
 
-    URI actualUri = RestliUriBuilderUtil.createUriBuilder(batchingRequest).build();
-    MultivaluedMap actualParams = UriComponent.decodeQuery(actualUri, true);
+    URI actualProtocol1Uri = RestliUriBuilderUtil.createUriBuilder(batchingRequest, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion()).build();
+
+    MultivaluedMap actualParams = UriComponent.decodeQuery(actualProtocol1Uri, true);
     MultivaluedMap expectedUriParams =
-        UriComponent.decodeQuery(URI.create(expectedUri), true);
+        UriComponent.decodeQuery(URI.create(expectedProtocol1Uri), true);
     DataMap expectedParamsDataMap = null;
     DataMap actualParamsDataMap = null;
     try
@@ -383,10 +395,10 @@ public class BatchGetRequestBuilderTest
     catch (PathSegmentSyntaxException e)
     {
       // Should never happen
-      throw new RuntimeException(e);
+      Assert.fail("Failed to parse data map keys!");
     }
 
-    Assert.assertEquals(actualUri.getPath(), "/");
+    Assert.assertEquals(actualProtocol1Uri.getPath(), "/");
     // Apparently due to using set to compact the list of ids in
     // BatchGetRequestBuilder.batch() the order of the parameters on the url is no longer
     // reliable.
@@ -396,17 +408,43 @@ public class BatchGetRequestBuilderTest
         (DataList) expectedParamsDataMap.remove(RestConstants.QUERY_BATCH_IDS_PARAM);
     Assert.assertEquals(new HashSet<Object>(actualIds), new HashSet<Object>(expectedIds));
     Assert.assertEquals(actualParamsDataMap, expectedParamsDataMap);
-    Assert.assertEquals(RestliUriBuilderUtil.createUriBuilder(batchingRequest).buildBaseUri(),
-                        RestliUriBuilderUtil.createUriBuilder(batchRequest1).buildBaseUri());
+    Assert.assertEquals(batchingRequest.getBaseUriTemplate(), batchRequest1.getBaseUriTemplate());
+    Assert.assertEquals(batchingRequest.getPathKeys(), batchRequest1.getPathKeys());
     Assert.assertEquals(batchingRequest.getFields(),
                         new HashSet<PathSpec>(Arrays.asList(FIELDS.id(), FIELDS.message())));
-    checkObjectIds(batchingRequest, new HashSet<Object>(Arrays.asList(complexKey1, complexKey2, complexKey3)), true);
+    Assert.assertEquals(batchingRequest.getObjectIds(), new HashSet<Object>(Arrays.asList(complexKey1, complexKey2, complexKey3)));
+
+    String expectedProtocol2Uri =
+        "/?fields=id,message&ids=List(($params:(id:1,message:paramMessage1),id:1,message:keyMessage1),($params:(id:2,message:paramMessage2),id:2,message:keyMessage2),($params:(id:3,message:paramMessage3),id:3,message:keyMessage3))&param1=value1&param2=value2";
+    URI actualProtocol2Uri = RestliUriBuilderUtil.createUriBuilder(batchingRequest, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()).build();
+
+    Assert.assertEquals(actualProtocol2Uri.getPath(), "/");
+
+    actualParams = UriComponent.decodeQuery(actualProtocol2Uri, true);
+    MultivaluedMap expectedParams = UriComponent.decodeQuery(URI.create(expectedProtocol2Uri), true);
+
+    // we can't compare the query param "ids" directly as ID ordering is not preserved while batching in
+    // BatchGetRequestBuilder.batch()
+
+    Assert.assertEquals(actualParams.get("ids").size(), 1);
+    Assert.assertEquals(actualParams.get("ids").size(), expectedParams.get("ids").size());
+
+    // parse out the "ids" param into a DataList and then convert it into a set
+    String actualProtocol2IdsAsString = actualParams.remove("ids").get(0);
+    String expectedProtocol2IdsAsString = expectedParams.remove("ids").get(0);
+    DataList actualProtocol2Ids = (DataList) URIElementParser.parse(actualProtocol2IdsAsString);
+    DataList expectedProtocol2Ids = (DataList) URIElementParser.parse(expectedProtocol2IdsAsString);
+    Assert.assertEquals(new HashSet<Object>(actualProtocol2Ids.values()),
+                        new HashSet<Object>(expectedProtocol2Ids.values()));
+
+    // apart from the "ids" fields everything else should be the same
+    Assert.assertEquals(actualParams, expectedParams);
   }
 
-  private ComplexResourceKey<TestRecord, TestRecord> buildComplexKey(Long keyId,
-                                                                     String keyMessage,
-                                                                     Long paramId,
-                                                                     String paramMessage)
+  private static ComplexResourceKey<TestRecord, TestRecord> buildComplexKey(Long keyId,
+                                                                            String keyMessage,
+                                                                            Long paramId,
+                                                                            String paramMessage)
   {
     return new ComplexResourceKey<TestRecord, TestRecord>(new TestRecord().setId(keyId)
                                                                           .setMessage(keyMessage),
@@ -415,11 +453,8 @@ public class BatchGetRequestBuilderTest
   }
 
   @Test
-  public void testSimpleBatchingWithDiffParams()
+  public void testSimpleBatchingFailureWithDiffParams()
   {
-    String expectedUri =
-        "/?param1=value1&ids=1&param2=value2&ids=2&ids=3&fields=id,message";
-
     BatchGetRequestBuilder<Integer, TestRecord> batchRequestBuilder1 =
         new BatchGetRequestBuilder<Integer, TestRecord>("/",
                                                         TestRecord.class,
@@ -515,7 +550,11 @@ public class BatchGetRequestBuilderTest
 
   @Test
   public void testNoFieldBatching()
+      throws URISyntaxException
   {
+    String expectedProtocol1Uri = "/?fields=id&ids=1&ids=2&ids=3";
+    String expectedProtocol2Uri = "/?fields=id&ids=List(1,2,3)";
+
     BatchGetRequestBuilder<Integer, TestRecord> batchRequestBuilder1 =
         new BatchGetRequestBuilder<Integer, TestRecord>("/",
                                                         TestRecord.class,
@@ -554,11 +593,12 @@ public class BatchGetRequestBuilderTest
         BatchGetRequestBuilder.batch(Arrays.asList(batchRequest1,
                                                    batchRequestBuilder2.build()),
                                      false);
-    Assert.assertEquals(RestliUriBuilderUtil.createUriBuilder(batchingRequest).buildBaseUri(),
-                        RestliUriBuilderUtil.createUriBuilder(batchRequest1).buildBaseUri());
+    Assert.assertEquals(batchingRequest.getBaseUriTemplate(), batchRequest1.getBaseUriTemplate());
+    Assert.assertEquals(batchingRequest.getPathKeys(), batchRequest1.getPathKeys());
     Assert.assertEquals(batchingRequest.getFields(),
                         new HashSet<PathSpec>(Arrays.asList(FIELDS.id())));
-    checkObjectIds(batchingRequest, new HashSet<Integer>(Arrays.asList(1, 2, 3)), false);
+    Assert.assertEquals(batchingRequest.getObjectIds(), new HashSet<Integer>(Arrays.asList(1, 2, 3)));
+    testUriGeneration(batchingRequest, expectedProtocol1Uri, expectedProtocol2Uri);
   }
 
   @Test
@@ -661,7 +701,11 @@ public class BatchGetRequestBuilderTest
 
   @Test
   public void testBatchingWithNoFields()
+      throws URISyntaxException
   {
+    String expectedProtocol1Uri = "/?ids=1&ids=2&ids=3";
+    String expectedProtocol2Uri = "/?ids=List(1,2,3)";
+
     BatchGetRequestBuilder<Integer, TestRecord> batchRequestBuilder1 =
         new BatchGetRequestBuilder<Integer, TestRecord>("/",
                                                         TestRecord.class,
@@ -699,10 +743,11 @@ public class BatchGetRequestBuilderTest
     BatchGetRequest<TestRecord> batchingRequest =
         BatchGetRequestBuilder.batch(Arrays.asList(batchRequest1,
                                                    batchRequestBuilder2.build()));
-    Assert.assertEquals(RestliUriBuilderUtil.createUriBuilder(batchingRequest).buildBaseUri(),
-                        RestliUriBuilderUtil.createUriBuilder(batchRequest1).buildBaseUri());
+    Assert.assertEquals(batchingRequest.getBaseUriTemplate(), batchRequest1.getBaseUriTemplate());
+    Assert.assertEquals(batchingRequest.getPathKeys(), batchRequest1.getPathKeys());
     Assert.assertEquals(batchingRequest.getFields(), Collections.emptySet());
-    checkObjectIds(batchingRequest, new HashSet<Integer>(Arrays.asList(1, 2, 3)), false);
+    Assert.assertEquals(batchingRequest.getObjectIds(), new HashSet<Integer>(Arrays.asList(1, 2, 3)));
+    testUriGeneration(batchingRequest, expectedProtocol1Uri, expectedProtocol2Uri);
   }
 
   @Test
@@ -744,10 +789,10 @@ public class BatchGetRequestBuilderTest
     BatchGetRequest<TestRecord> batchingRequest =
         BatchGetRequestBuilder.batch(Arrays.asList(batchRequest1,
                                                    batchRequestBuilder2.build()));
-    Assert.assertEquals(RestliUriBuilderUtil.createUriBuilder(batchingRequest).buildBaseUri(),
-                        RestliUriBuilderUtil.createUriBuilder(batchRequest1).buildBaseUri());
+    Assert.assertEquals(batchingRequest.getBaseUriTemplate(), batchRequest1.getBaseUriTemplate());
+    Assert.assertEquals(batchingRequest.getPathKeys(), batchRequest1.getPathKeys());
     Assert.assertEquals(batchingRequest.getFields(), Collections.emptySet());
-    checkObjectIds(batchingRequest, new HashSet<Integer>(Arrays.asList(1, 2, 3)), false);
+    Assert.assertEquals(batchingRequest.getObjectIds(), new HashSet<Integer>(Arrays.asList(1, 2, 3)));
   }
 
   @Test
@@ -789,36 +834,27 @@ public class BatchGetRequestBuilderTest
     BatchGetRequest<TestRecord> batchingRequest =
         BatchGetRequestBuilder.batch(Arrays.asList(batchRequest1,
                                                    batchRequestBuilder2.build()));
-    Assert.assertEquals(RestliUriBuilderUtil.createUriBuilder(batchingRequest).buildBaseUri(),
-                        RestliUriBuilderUtil.createUriBuilder(batchRequest1).buildBaseUri());
+    Assert.assertEquals(batchingRequest.getBaseUriTemplate(), batchRequest1.getBaseUriTemplate());
+    Assert.assertEquals(batchingRequest.getPathKeys(), batchRequest1.getPathKeys());
     Assert.assertEquals(batchingRequest.getFields(), Collections.emptySet());
-    checkObjectIds(batchingRequest, new HashSet<Integer>(Arrays.asList(1, 2, 3)), false);
+    Assert.assertEquals(batchingRequest.getObjectIds(), new HashSet<Integer>(Arrays.asList(1, 2, 3)));
   }
 
   @SuppressWarnings("deprecation")
-  private void testUriGeneration(Request<?> request, String expectedUri)
-  {
-    Assert.assertEquals(RestliUriBuilderUtil.createUriBuilder(request).build().toString(), expectedUri);
-    Assert.assertEquals(request.getUri().toString(), expectedUri);
-  }
+  private static void testUriGeneration(Request<?> request, String protocol1UriString, String protocol2UriString)
+      throws URISyntaxException {
+    ProtocolVersion protocol1 = AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion();
+    ProtocolVersion protocol2 = AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion();
 
-  @SuppressWarnings("deprecation")
-  private void checkObjectIds(BatchRequest<?> request, Set<?> expectedIds, boolean isComplexKey)
-  {
-    Assert.assertEquals(request.getObjectIds(), expectedIds);
-    if (isComplexKey)
-    {
-      Assert.assertEquals(request.getIdObjects(), expectedIds);
-    }
-    else
-    {
-      Set<String> idsAsStrings = new HashSet<String>(expectedIds.size());
-      for (Object o: expectedIds)
-      {
-        idsAsStrings.add(o.toString());
-      }
-      Assert.assertEquals(request.getIdObjects(), idsAsStrings);
-    }
+    URI protocol1Uri = RestliUriBuilderUtil.createUriBuilder(request, protocol1).build();
+    URI protocol2Uri = RestliUriBuilderUtil.createUriBuilder(request, protocol2).build();
+
+    Assert.assertEquals(UriComponent.decodeQuery(protocol1Uri, true),
+                        UriComponent.decodeQuery(new URI(protocol1UriString), true),
+                        "Protocol 1 URI generation did not match expected URI!");
+    Assert.assertEquals(UriComponent.decodeQuery(protocol2Uri, true),
+                        UriComponent.decodeQuery(new URI(protocol2UriString), true),
+                        "Protocol 2 URI generation did not match expected URI!");
   }
 
   public static class MyCompoundKey extends CompoundKey
