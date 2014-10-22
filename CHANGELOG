@@ -6,6 +6,9 @@ Turn on Rest.li 2.0 request builders by default in Gradle plugin.
 (RB=377647)
 Add protocol 2 URIs for BatchGetRequestBuilderTest.
 
+(RB=380112)
+Add unit tests for all classes that implement RestLiResponseBuilder.
+
 1.24.3
 ------
 (RB=362685)
