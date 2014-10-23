@@ -18,11 +18,7 @@ package com.linkedin.restli.tools.idlgen;
 
 
 import com.linkedin.restli.internal.server.model.ResourceModelEncoder.DocsProvider;
-import com.sun.javadoc.ClassDoc;
-import com.sun.javadoc.Doc;
-import com.sun.javadoc.MethodDoc;
-import com.sun.javadoc.ParamTag;
-import com.sun.javadoc.Tag;
+
 import java.io.PrintWriter;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -31,6 +27,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+
+import com.sun.javadoc.ClassDoc;
+import com.sun.javadoc.Doc;
+import com.sun.javadoc.MethodDoc;
+import com.sun.javadoc.ParamTag;
+import com.sun.javadoc.Tag;
 import org.apache.commons.io.output.NullWriter;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -51,7 +53,7 @@ public class DocletDocsProvider implements DocsProvider
   private final String[] _sourcePaths;
   private final String[] _resourcePackages;
 
-  private Long _docletId = null;
+  private RestLiDoclet _doclet;
 
   public DocletDocsProvider(String apiName,
                             String[] classpath,
@@ -101,13 +103,17 @@ public class DocletDocsProvider implements DocsProvider
       javadocArgs.addAll(sourceFileNames);
     }
 
-    _docletId = RestLiDoclet.generateJavadoc(_apiName, sysoutWriter, nullWriter, nullWriter, javadocArgs.toArray(new String[0]));
+    _doclet = RestLiDoclet.generateDoclet(_apiName,
+                                          sysoutWriter,
+                                          nullWriter,
+                                          nullWriter,
+                                          javadocArgs.toArray(new String[0]));
   }
 
   @Override
   public String getClassDoc(Class<?> resourceClass)
   {
-    final ClassDoc doc = RestLiDoclet.getClassDoc(_docletId, resourceClass);
+    final ClassDoc doc = _doclet.getClassDoc(resourceClass);
     if (doc == null)
     {
       return null;
@@ -119,7 +125,7 @@ public class DocletDocsProvider implements DocsProvider
   @Override
   public String getClassDeprecatedTag(Class<?> resourceClass)
   {
-    final ClassDoc doc = RestLiDoclet.getClassDoc(_docletId, resourceClass);
+    final ClassDoc doc = _doclet.getClassDoc(resourceClass);
     if (doc == null)
     {
       return null;
@@ -153,7 +159,7 @@ public class DocletDocsProvider implements DocsProvider
   @Override
   public String getMethodDoc(Method method)
   {
-    final MethodDoc doc = RestLiDoclet.getMethodDoc(_docletId, method);
+    final MethodDoc doc = _doclet.getMethodDoc(method);
     if (doc == null)
     {
       return null;
@@ -165,7 +171,7 @@ public class DocletDocsProvider implements DocsProvider
   @Override
   public String getMethodDeprecatedTag(Method method)
   {
-    final MethodDoc doc = RestLiDoclet.getMethodDoc(_docletId, method);
+    final MethodDoc doc = _doclet.getMethodDoc(method);
     if (doc == null)
     {
       return null;
@@ -177,7 +183,7 @@ public class DocletDocsProvider implements DocsProvider
   @Override
   public String getParamDoc(Method method, String name)
   {
-    final MethodDoc methodDoc = RestLiDoclet.getMethodDoc(_docletId, method);
+    final MethodDoc methodDoc = _doclet.getMethodDoc(method);
     if (methodDoc != null)
     {
       for (ParamTag tag: methodDoc.paramTags())
@@ -195,7 +201,7 @@ public class DocletDocsProvider implements DocsProvider
   @Override
   public String getReturnDoc(Method method)
   {
-    final MethodDoc methodDoc = RestLiDoclet.getMethodDoc(_docletId, method);
+    final MethodDoc methodDoc = _doclet.getMethodDoc(method);
     if (methodDoc != null)
     {
       for (Tag tag : methodDoc.tags())
