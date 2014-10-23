@@ -14,3 +14,10 @@ dependencies {
   testCompile project(path: ':data', configuration: 'testArtifacts')
   testRuntime project(path: ':data-avro-generator')
 }
+
+idea.module.iml.whenMerged { module ->
+  def jarDeps = module.dependencies.findAll {
+    it instanceof org.gradle.plugins.ide.idea.model.ModuleLibrary
+  }
+  module.dependencies = jarDeps + module.dependencies
+}

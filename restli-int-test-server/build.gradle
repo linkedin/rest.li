@@ -29,49 +29,58 @@ dependencies {
 // run the generator for each configuration
 def genClass = 'com.linkedin.restli.examples.greetings.server.GreetingsResourceCodeGenerator'
 def outputBase = 'src/mainGeneratedTest/java/com/linkedin/restli/examples/greetings/server/'
-task generateGreetings(dependsOn: ['compileJava']) << {
-  mkdir(outputBase)
-  ant.java(classname: genClass,
-           output: outputBase + 'GreetingsResource.java',
-           classpath: "${sourceSets.main.runtimeClasspath.asPath}") {
-    arg(value: 'com.linkedin.restli.server.resources.CollectionResourceTemplate')
-    arg(value: 'SYNC')
-    arg(value: '')
-    arg(value: 'false')
-  }
-  ant.java(classname: genClass,
-           output: outputBase + 'GreetingsResourceCallback.java',
-           classpath: "${sourceSets.main.runtimeClasspath.asPath}") {
-    arg(value: 'com.linkedin.restli.server.resources.CollectionResourceAsyncTemplate')
-    arg(value: 'CALLBACK')
-    arg(value: 'Callback')
-    arg(value: 'false')
-  }
-  ant.java(classname: genClass,
-           output: outputBase + 'GreetingsResourcePromise.java',
-           classpath: "${sourceSets.main.runtimeClasspath.asPath}") {
-    arg(value: 'com.linkedin.restli.server.resources.CollectionResourcePromiseTemplate')
-    arg(value: 'PROMISE')
-    arg(value: 'Promise')
-    arg(value: 'false')
-  }
-  ant.java(classname: genClass,
-           output: outputBase + 'GreetingsResourcePromiseCtx.java',
-           classpath: "${sourceSets.main.runtimeClasspath.asPath}") {
-    arg(value: 'com.linkedin.restli.server.resources.KeyValueResource')
-    arg(value: 'PROMISE')
-    arg(value: 'PromiseCtx')
-    arg(value: 'true')
-  }
-  ant.java(classname: genClass,
-           output: outputBase + 'GreetingsResourceTask.java',
-           classpath: "${sourceSets.main.runtimeClasspath.asPath}") {
-    arg(value: 'com.linkedin.restli.server.resources.CollectionResourceTaskTemplate')
-    arg(value: 'TASK')
-    arg(value: 'Task')
-    arg(value: 'false')
-  }
+mkdir(file(outputBase))
+
+task generateGreetingsCollection(type: JavaExec, dependsOn: 'compileJava') {
+  main = genClass
+  standardOutput = new FileOutputStream(file(outputBase + 'GreetingsResource.java'))
+  classpath sourceSets.main.runtimeClasspath
+  args 'com.linkedin.restli.server.resources.CollectionResourceTemplate'
+  args 'SYNC'
+  args ''
+  args false
 }
+task generateGreetingsCallback(type: JavaExec, dependsOn: 'compileJava') {
+  main = genClass
+  standardOutput = new FileOutputStream(file(outputBase + 'GreetingsResourceCallback.java'))
+  classpath sourceSets.main.runtimeClasspath
+  args 'com.linkedin.restli.server.resources.CollectionResourceAsyncTemplate'
+  args 'CALLBACK'
+  args 'Callback'
+  args false
+}
+task generateGreetingsPromise(type: JavaExec, dependsOn: 'compileJava') {
+  main = genClass
+  standardOutput = new FileOutputStream(file(outputBase + 'GreetingsResourcePromise.java'))
+  classpath sourceSets.main.runtimeClasspath
+  args 'com.linkedin.restli.server.resources.CollectionResourcePromiseTemplate'
+  args 'PROMISE'
+  args 'Promise'
+  args false
+}
+task generateGreetingsPromiseCtx(type: JavaExec, dependsOn: 'compileJava') {
+  main = genClass
+  standardOutput = new FileOutputStream(file(outputBase + 'GreetingsResourcePromiseCtx.java'))
+  classpath sourceSets.main.runtimeClasspath
+  args 'com.linkedin.restli.server.resources.KeyValueResource'
+  args 'PROMISE'
+  args 'PromiseCtx'
+  args true
+}
+task generateGreetingsTask(type: JavaExec, dependsOn: 'compileJava') {
+  main = genClass
+  standardOutput = new FileOutputStream(file(outputBase + 'GreetingsResourceTask.java'))
+  classpath sourceSets.main.runtimeClasspath
+  args 'com.linkedin.restli.server.resources.CollectionResourceTaskTemplate'
+  args 'TASK'
+  args 'Task'
+  args false
+}
+task generateGreetings(dependsOn: [generateGreetingsCollection,
+                                   generateGreetingsCallback,
+                                   generateGreetingsPromise,
+                                   generateGreetingsPromiseCtx,
+                                   generateGreetingsTask])
 // compile generated code separately from the main code, but put the classes
 // in the same output directory
 sourceSets {
@@ -88,6 +97,9 @@ compileGeneratedJava.dependsOn(generateGreetings)
 test.dependsOn(compileGeneratedJava)
 jar.dependsOn(compileGeneratedJava)
 compileTestJava.dependsOn(compileGeneratedJava)
+project.afterEvaluate {
+  generateRestModel.dependsOn(compileGeneratedJava)
+}
 javadoc.dependsOn(compileGeneratedJava)
 // cleanup
 task cleanGenerateGreetings(type: Delete) {

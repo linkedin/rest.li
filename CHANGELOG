@@ -9,6 +9,10 @@ Add unit tests for RestLiArgumentBuilders.
 (RB=386973)
 Task and Promise based async templates.
 
+(RB=383125)
+Enable Gradle parallel build and config-on-demand.
+Fix the dependency order in the generated IntelliJ IDEA module of data-avro-1_6.
+
 1.24.5
 ------
 (RB=387900)
