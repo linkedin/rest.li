@@ -13,6 +13,9 @@ Task and Promise based async templates.
 Enable Gradle parallel build and config-on-demand.
 Fix the dependency order in the generated IntelliJ IDEA module of data-avro-1_6.
 
+(RB=385433)
+Introduce ProjectionUtil that tells if specific PathSpecs are filtered by a given MaskTree.
+
 1.24.5
 ------
 (RB=387900)

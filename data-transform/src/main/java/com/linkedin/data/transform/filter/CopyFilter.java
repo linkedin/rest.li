@@ -71,12 +71,11 @@ public class CopyFilter extends AbstractFilter
   @Override
   protected Object onFilterDataMap(DataMap data, Map<String, Object> fieldToOperation)
   {
-    final DataMap resultMap = new DataMap((int) Math.ceil(fieldToOperation.size() / 0.75f));
+    final DataMap resultMap = new DataMap((int)(fieldToOperation.size() / 0.75f + 1));
 
     for (Map.Entry<String, Object> entry : fieldToOperation.entrySet())
     {
       final Object operation = entry.getValue();
-      final Object original = data.get(entry.getKey());
       final Object value;
 
       if (operation == FilterConstants.POSITIVE)
@@ -86,6 +85,7 @@ public class CopyFilter extends AbstractFilter
       else
       {
         assert(operation.getClass() == DataMap.class);
+        final Object original = data.get(entry.getKey());
         assert(original instanceof DataComplex);
         value = filter(original, (DataMap) operation);
       }

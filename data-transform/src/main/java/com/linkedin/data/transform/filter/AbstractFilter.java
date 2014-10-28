@@ -35,6 +35,9 @@ import static com.linkedin.data.transform.filter.FilterUtil.getIntegerWithDefaul
 
 
 /**
+ * This class captures the generic logic of Data filtering.
+ * Note that only {@link DataComplex} objects are valid input. Because it is required that the data is acyclic.
+ *
  * @author Keren Jin
  */
 public abstract class AbstractFilter
@@ -211,9 +214,9 @@ public abstract class AbstractFilter
           {
             onError(i,
                     "complex filter defined for array element, which is not an object nor an array, " +
-                    "but it is of type: %1$s, with value: %2$s",
+                        "but it is of type: %1$s, with value: %2$s",
                     elem.getClass().getName(),
-                    elem.toString());
+                    elem);
           }
         }
         return wildcard;
@@ -225,7 +228,7 @@ public abstract class AbstractFilter
         onError(null,
                 "wildcard can be either 0, 1 or DataMap instance, but it is of type: %1$s, equal to: %2$s",
                 wildcard.getClass().getName(),
-                wildcard.toString());
+                wildcard);
       }
       // if _wildcard is 1, then there is no filtering
     }
@@ -347,8 +350,8 @@ public abstract class AbstractFilter
             else
             {
               onError(name, "data is of primitve value: %1$s, but filter: %2$s is complex",
-                      childValue.toString(),
-                      opChild.toString());
+                      childValue,
+                      opChild);
             }
           }
         }
