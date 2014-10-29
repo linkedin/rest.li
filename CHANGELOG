@@ -1,7 +1,14 @@
+2.0.1
+------
+
+
 2.0.0
 -----
 (RB=340252)
 Remove Rest.li 1.0 deprecated APIs.
+
+(RB=386223)
+Deprecate Rest.li 1.0 request builders.
 
 1.24.8
 ------

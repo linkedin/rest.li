@@ -3,6 +3,7 @@ dependencies {
   compile project(':r2')
   compile project(':li-jersey-uri')
   compile project(':generator')
+  compile project(':pegasus-common')
   compile project(':restli-common')
   compile project(':restli-client')
   compile project(':restli-server')

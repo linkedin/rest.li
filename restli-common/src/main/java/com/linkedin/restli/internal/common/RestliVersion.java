@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2013 LinkedIn Corp.
+   Copyright (c) 2014 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -14,30 +14,42 @@
    limitations under the License.
 */
 
-package com.linkedin.restli.common;
+package com.linkedin.restli.internal.common;
 
 
 import com.linkedin.common.Version;
 
 
 /**
- * Represents a Rest.li protocol version.
- *
- * @see com.linkedin.common.Version
- * @see com.linkedin.restli.internal.common.AllProtocolVersions
- *
- * @author kparikh
+ * @author Keren Jin
  */
-public class ProtocolVersion extends Version
+public enum RestliVersion
 {
-  public ProtocolVersion(String Version)
+  RESTLI_1_0_0(new Version(1, 0, 0)),
+  RESTLI_2_0_0(new Version(2, 0, 0));
+
+  private final Version _restliVersion;
+
+  RestliVersion(Version Version)
   {
-    super(Version);
+    _restliVersion = Version;
   }
 
-  public ProtocolVersion(int major, int minor, int patch)
+  public Version getRestliVersion()
   {
-    super(major, minor, patch);
+    return _restliVersion;
+  }
+
+  public static RestliVersion lookUpRestliVersion(Version version)
+  {
+    for (RestliVersion v : RestliVersion.values())
+    {
+      if (version.equals(v.getRestliVersion()))
+      {
+        return v;
+      }
+    }
+
+    return null;
   }
 }
-

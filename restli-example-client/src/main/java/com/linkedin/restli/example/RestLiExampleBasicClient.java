@@ -30,14 +30,14 @@ import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
 import com.linkedin.restli.client.RestClient;
-import com.linkedin.restli.client.response.CreateResponse;
 import com.linkedin.restli.client.util.PatchGenerator;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.EmptyRecord;
+import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.PatchRequest;
-import com.linkedin.restli.example.photos.AlbumEntryBuilders;
-import com.linkedin.restli.example.photos.AlbumsBuilders;
-import com.linkedin.restli.example.photos.PhotosBuilders;
+import com.linkedin.restli.example.photos.AlbumEntryRequestBuilders;
+import com.linkedin.restli.example.photos.AlbumsRequestBuilders;
+import com.linkedin.restli.example.photos.PhotosRequestBuilders;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -164,14 +164,14 @@ public class RestLiExampleBasicClient
     final EXIF newExif = new EXIF().setLocation(newLatLong);
     final Photo newPhoto = new Photo().setTitle("New Photo").setFormat(PhotoFormats.PNG).setExif(newExif);
 
-    final Request<EmptyRecord> createReq1 = _photoBuilders.create().input(newPhoto).build();
-    final ResponseFuture<EmptyRecord> createFuture1 = _restClient.sendRequest(createReq1);
+    final Request<IdResponse<Long>> createReq1 = _photoBuilders.create().input(newPhoto).build();
+    final ResponseFuture<IdResponse<Long>> createFuture1 = _restClient.sendRequest(createReq1);
     // Future.getResource() blocks until server responds
-    final Response<EmptyRecord> createResp1 = createFuture1.getResponse();
-    EmptyRecord entity1 = createResp1.getEntity();
+    final Response<IdResponse<Long>> createResp1 = createFuture1.getResponse();
+    createResp1.getEntity();
 
     @SuppressWarnings("unchecked")
-    final CreateResponse<Long> entity = (CreateResponse<Long>)createResp1.getEntity();
+    final IdResponse<Long> entity = createResp1.getEntity();
     final long newPhotoId = entity.getId();
     respWriter.println("New photo ID: " + newPhotoId);
 
@@ -394,9 +394,9 @@ public class RestLiExampleBasicClient
   private static final int SERVER_PORT = 7279;
 
   // builder is convenient way to generate rest.li request
-  private static final PhotosBuilders _photoBuilders          = new PhotosBuilders();
-  private static final AlbumsBuilders _albumBuilders          = new AlbumsBuilders();
-  private static final AlbumEntryBuilders _albumEntryBuilders = new AlbumEntryBuilders();
+  private static final PhotosRequestBuilders _photoBuilders          = new PhotosRequestBuilders();
+  private static final AlbumsRequestBuilders _albumBuilders          = new AlbumsRequestBuilders();
+  private static final AlbumEntryRequestBuilders _albumEntryBuilders = new AlbumEntryRequestBuilders();
 
   private final RestClient _restClient;
 }

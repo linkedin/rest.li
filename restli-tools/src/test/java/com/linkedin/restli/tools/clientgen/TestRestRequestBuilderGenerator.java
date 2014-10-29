@@ -1,13 +1,17 @@
 package com.linkedin.restli.tools.clientgen;
 
 
+import com.linkedin.restli.internal.common.RestliVersion;
 import com.linkedin.restli.tools.idlgen.TestRestLiResourceModelExporter;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.regex.Pattern;
 
+import org.apache.commons.io.IOUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -35,22 +39,24 @@ public class TestRestRequestBuilderGenerator
   }
 
   @Test(dataProvider = "arrayDuplicateDataProvider")
-  public void test(boolean isRestli2Format, String ABuildersName, String BBuildersName) throws Exception
+  public void testGeneration(RestliVersion version, String ABuildersName, String BBuildersName) throws Exception
   {
-    final String pegasus_dir = moduleDir + FS + RESOURCES_DIR + FS + "pegasus";
+    final String pegasusDir = moduleDir + FS + RESOURCES_DIR + FS + "pegasus";
     final String outPath = outdir.getPath();
-    RestRequestBuilderGenerator.run(pegasus_dir,
+    RestRequestBuilderGenerator.run(pegasusDir,
                                     null,
                                     null,
                                     false,
-                                    isRestli2Format,
+                                    version,
+                                    null,
                                     outPath,
                                     new String[] { moduleDir + FS + RESOURCES_DIR + FS + "idls" + FS + "arrayDuplicateA.restspec.json" });
-    RestRequestBuilderGenerator.run(pegasus_dir,
+    RestRequestBuilderGenerator.run(pegasusDir,
                                     null,
                                     null,
                                     false,
-                                    isRestli2Format,
+                                    version,
+                                    null,
                                     outPath,
                                     new String[] { moduleDir + FS + RESOURCES_DIR + FS + "idls" + FS + "arrayDuplicateB.restspec.json" });
 
@@ -60,24 +66,48 @@ public class TestRestRequestBuilderGenerator
     Assert.assertTrue(bBuilderFile.exists());
   }
 
-  @Test(dataProvider = "oldNewStyleDataProvider")
-  public void testOldStylePathIDL(boolean isRestli2Format, String AssocKeysPathBuildersName, String SubBuildersName, String SubGetBuilderName) throws Exception
+  @Test(dataProvider = "deprecatedByVersionDataProvider")
+  public void testDeprecatedByVersion(String idlName, String buildersName, String substituteClassName) throws Exception
   {
-    final String pegasus_dir = moduleDir + FS + RESOURCES_DIR + FS + "pegasus";
+    final String pegasusDir = moduleDir + FS + RESOURCES_DIR + FS + "pegasus";
+    final String outPath = outdir.getPath();
+    RestRequestBuilderGenerator.run(pegasusDir,
+                                    null,
+                                    null,
+                                    false,
+                                    RestliVersion.RESTLI_1_0_0,
+                                    RestliVersion.RESTLI_2_0_0,
+                                    outPath,
+                                    new String[] { moduleDir + FS + RESOURCES_DIR + FS + "idls" + FS + idlName });
+
+    final File builderFile = new File(outPath + FS + buildersName);
+    Assert.assertTrue(builderFile.exists());
+
+    final String fileContent = IOUtils.toString(new FileInputStream(builderFile));
+    final Pattern regex = Pattern.compile(".*@deprecated$.*\\{@link " + substituteClassName + "\\}.*^@Deprecated$\n^public class .*", Pattern.MULTILINE | Pattern.DOTALL);
+    Assert.assertTrue(regex.matcher(fileContent).matches());
+  }
+
+  @Test(dataProvider = "oldNewStyleDataProvider")
+  public void testOldStylePathIDL(RestliVersion version, String AssocKeysPathBuildersName, String SubBuildersName, String SubGetBuilderName) throws Exception
+  {
+    final String pegasusDir = moduleDir + FS + RESOURCES_DIR + FS + "pegasus";
     final String outPath = outdir.getPath();
     final String outPath2 = outdir2.getPath();
-    RestRequestBuilderGenerator.run(pegasus_dir,
+    RestRequestBuilderGenerator.run(pegasusDir,
                                     null,
                                     null,
                                     false,
-                                    isRestli2Format,
+                                    version,
+                                    null,
                                     outPath,
                                     new String[] { moduleDir + FS + RESOURCES_DIR + FS + "idls" + FS + "oldStyleAssocKeysPath.restspec.json" });
-    RestRequestBuilderGenerator.run(pegasus_dir,
+    RestRequestBuilderGenerator.run(pegasusDir,
                                     null,
                                     null,
                                     false,
-                                    isRestli2Format,
+                                    version,
+                                    null,
                                     outPath2,
                                     new String[] { moduleDir + FS + RESOURCES_DIR + FS + "idls" + FS + "newStyleAssocKeysPath.restspec.json" });
 
@@ -117,8 +147,17 @@ public class TestRestRequestBuilderGenerator
   private static Object[][] arrayDuplicateDataProvider()
   {
     return new Object[][] {
-      { false, "ArrayDuplicateABuilders.java", "ArrayDuplicateBBuilders.java" },
-      { true, "ArrayDuplicateARequestBuilders.java", "ArrayDuplicateBRequestBuilders.java" }
+      { RestliVersion.RESTLI_1_0_0, "ArrayDuplicateABuilders.java", "ArrayDuplicateBBuilders.java" },
+      { RestliVersion.RESTLI_2_0_0, "ArrayDuplicateARequestBuilders.java", "ArrayDuplicateBRequestBuilders.java" }
+    };
+  }
+
+  @DataProvider
+  private static Object[][] deprecatedByVersionDataProvider()
+  {
+    return new Object[][] {
+        { "arrayDuplicateA.restspec.json", "ArrayDuplicateABuilders.java", "ArrayDuplicateARequestBuilders" },
+        { "arrayDuplicateB.restspec.json", "ArrayDuplicateBBuilders.java", "ArrayDuplicateBRequestBuilders" }
     };
   }
 
@@ -126,8 +165,8 @@ public class TestRestRequestBuilderGenerator
   private static Object[][] oldNewStyleDataProvider()
   {
     return new Object[][] {
-      { false, "AssocKeysPathBuilders.java", "SubBuilders.java", "SubGetBuilder.java" },
-      { true, "AssocKeysPathRequestBuilders.java", "SubRequestBuilders.java", "SubGetRequestBuilder.java", }
+      { RestliVersion.RESTLI_1_0_0, "AssocKeysPathBuilders.java", "SubBuilders.java", "SubGetBuilder.java" },
+      { RestliVersion.RESTLI_2_0_0, "AssocKeysPathRequestBuilders.java", "SubRequestBuilders.java", "SubGetRequestBuilder.java", }
     };
   }
 

@@ -32,10 +32,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * This class has been deprecated. Please use {@link BatchCreateIdRequestBuilder} instead.
+ *
  * @author Josh Walker
- * @version $Revision: $
  */
-
 public class BatchCreateRequestBuilder<K, V extends RecordTemplate> extends
     RestfulRequestBuilder<K, V, BatchCreateRequest<V>>
 {

@@ -48,6 +48,13 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
   private final List<PropertyEventSubscriber<T>> _allPropertySubscribers = new ArrayList<PropertyEventSubscriber<T>>();
   private static final Logger _log = LoggerFactory.getLogger(PropertyEventBusImpl.class);
 
+  /*
+   * Concurrency considerations:
+   *
+   * All data structures are unsynchronized. They are manipulated only by tasks submitted
+   * to the executor, which is assumed to be single-threaded.
+   */
+
   public PropertyEventBusImpl(ExecutorService executorService)
   {
     _thread = new PropertyEventExecutor("PropertyEventBusImpl PropertyEventThread", executorService);

@@ -28,9 +28,10 @@ import com.linkedin.restli.common.ResourceSpec;
 
 /**
  * @author Josh Walker
- * @version $Revision: $
+ *
+ * @deprecated This class has been deprecated. Please use {@link CreateIdRequestBuilderBase} instead.
  */
-
+@Deprecated
 public abstract class CreateRequestBuilderBase<K,
         V extends RecordTemplate,
         RB extends CreateRequestBuilderBase<K, V, RB>>

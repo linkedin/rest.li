@@ -31,6 +31,8 @@ import java.util.Set;
 /**
  * A request for reading a resource batch.
  *
+ * This class has been deprecated. Please use {@link BatchGetEntityRequest} instead.
+ *
  * @param <T> entity template class
  *
  * @author Eran Leshem

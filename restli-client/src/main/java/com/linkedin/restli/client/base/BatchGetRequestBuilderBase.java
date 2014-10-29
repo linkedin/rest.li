@@ -32,9 +32,10 @@ import java.util.Collection;
 
 /**
  * @author Josh Walker
- * @version $Revision: $
+ *
+ * @deprecated This class has been deprecated. Please use {@link BatchGetEntityRequestBuilderBase} instead.
  */
-
+@Deprecated
 public abstract class BatchGetRequestBuilderBase<
         K,
         V extends RecordTemplate,

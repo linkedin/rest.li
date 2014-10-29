@@ -28,6 +28,7 @@ class PegasusPluginLoader implements Plugin<Project>
   {
     final PegasusPlugin plugin = new PegasusPlugin()
     plugin.setPluginType(this.class)
+    plugin._isRestli1BuildersDeprecated = false;
     plugin.apply(project)
 
     project.afterEvaluate {

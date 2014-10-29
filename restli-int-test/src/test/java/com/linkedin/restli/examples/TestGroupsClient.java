@@ -132,16 +132,16 @@ public class TestGroupsClient extends RestLiIntegrationTest
     param.setIntParameter(1);
     param.setStringParameter("String");
 
-    final GroupsBuilders groupBuilders = new GroupsBuilders(requestOptions);
-    final GroupMembershipsBuilders membershipBuilders = new GroupMembershipsBuilders(requestOptions);
+    final GroupsRequestBuilders groupBuilders = new GroupsRequestBuilders(requestOptions);
+    final GroupMembershipsRequestBuilders membershipBuilders = new GroupMembershipsRequestBuilders(requestOptions);
 
     // Create
-    Response<EmptyRecord> response = REST_CLIENT.sendRequest(groupBuilders.create()
+    Response<IdResponse<Integer>> response = REST_CLIENT.sendRequest(groupBuilders.create()
                                                                .input(group)
                                                                .build()).getResponse();
     Assert.assertEquals(response.getStatus(), 201);
     @SuppressWarnings("unchecked")
-    CreateResponse<Integer> createResponse = (CreateResponse<Integer>) response.getEntity();
+    IdResponse<Integer> createResponse = response.getEntity();
     Assert.assertNotNull(createResponse.getId());
     @SuppressWarnings("deprecation")
     String stringId = response.getId();

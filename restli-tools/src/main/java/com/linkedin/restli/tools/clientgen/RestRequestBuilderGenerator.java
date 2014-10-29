@@ -17,6 +17,7 @@
 package com.linkedin.restli.tools.clientgen;
 
 
+import com.linkedin.common.Version;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
@@ -38,15 +39,12 @@ import com.linkedin.restli.client.OptionsRequestBuilder;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.client.base.ActionRequestBuilderBase;
 import com.linkedin.restli.client.base.BatchCreateIdRequestBuilderBase;
-import com.linkedin.restli.client.base.BatchCreateRequestBuilderBase;
 import com.linkedin.restli.client.base.BatchDeleteRequestBuilderBase;
 import com.linkedin.restli.client.base.BatchGetEntityRequestBuilderBase;
-import com.linkedin.restli.client.base.BatchGetRequestBuilderBase;
 import com.linkedin.restli.client.base.BatchPartialUpdateRequestBuilderBase;
 import com.linkedin.restli.client.base.BatchUpdateRequestBuilderBase;
 import com.linkedin.restli.client.base.BuilderBase;
 import com.linkedin.restli.client.base.CreateIdRequestBuilderBase;
-import com.linkedin.restli.client.base.CreateRequestBuilderBase;
 import com.linkedin.restli.client.base.DeleteRequestBuilderBase;
 import com.linkedin.restli.client.base.FindRequestBuilderBase;
 import com.linkedin.restli.client.base.GetAllRequestBuilderBase;
@@ -60,6 +58,7 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.ResourceSpecImpl;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.common.RestliVersion;
 import com.linkedin.restli.internal.common.TyperefUtils;
 import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.internal.server.model.ResourceModelEncoder;
@@ -137,15 +136,14 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
   }
 
   private static final String GENERATOR_REST_GENERATE_DATATEMPLATES = "generator.rest.generate.datatemplates";
-  private static final String GENERATOR_REST_GENERATE_RESTLI2 = "generator.rest.generate.restli2";
+  private static final String GENERATOR_REST_GENERATE_VERSION = "generator.rest.generate.version";
   private static final Logger log = LoggerFactory.getLogger(RestRequestBuilderGenerator.class);
   private static final String NAME = "name";
   private static final String NAMESPACE = "namespace";
-  private static final String BUILDER = "Builder";
-  private static final String BUILDERS = "Builders";
-  private static final String REQUEST_BUILDER = "RequestBuilder";
-  private static final String REQUEST_BUILDERS = "RequestBuilders";
   private static final RestSpecCodec _codec = new RestSpecCodec();
+
+  private static final Map<RestliVersion, String> ROOT_BUILDERS_SUFFIX;
+  private static final Map<RestliVersion, String> METHOD_BUILDER_SUFFIX;
 
   private final JClass _voidClass = getCodeModel().ref(Void.class);
   private final JClass _fieldDefClass = getCodeModel().ref(FieldDef.class);
@@ -159,17 +157,30 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
   private final ClassLoader _classLoader;
   private final Config _config;
 
+  static
+  {
+    ROOT_BUILDERS_SUFFIX = new HashMap<RestliVersion, String>();
+    ROOT_BUILDERS_SUFFIX.put(RestliVersion.RESTLI_1_0_0, "Builders");
+    ROOT_BUILDERS_SUFFIX.put(RestliVersion.RESTLI_2_0_0, "RequestBuilders");
+
+    METHOD_BUILDER_SUFFIX = new HashMap<RestliVersion, String>();
+    METHOD_BUILDER_SUFFIX.put(RestliVersion.RESTLI_1_0_0, "Builder");
+    METHOD_BUILDER_SUFFIX.put(RestliVersion.RESTLI_2_0_0, "RequestBuilder");
+  }
+
   protected static class Config extends DataTemplateGenerator.Config
   {
     public Config(String resolverPath,
                   String defaultPackage,
                   Boolean generateImported,
                   Boolean generateDataTemplates,
-                  Boolean isRestli2Format)
+                  RestliVersion version,
+                  RestliVersion deprecatedByVersion)
     {
       super(resolverPath, defaultPackage, generateImported);
       _generateDataTemplates = generateDataTemplates;
-      _isRestli2Format = isRestli2Format;
+      _version = version;
+      _deprecatedByVersion = deprecatedByVersion;
     }
 
     /**
@@ -181,13 +192,19 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
       return _generateDataTemplates == null || _generateDataTemplates;
     }
 
-    public boolean isRestli2Format()
+    public RestliVersion getVersion()
     {
-      return _isRestli2Format;
+      return _version;
+    }
+
+    public RestliVersion getDeprecatedByVersion()
+    {
+      return _deprecatedByVersion;
     }
 
     private final Boolean _generateDataTemplates;
-    private final Boolean _isRestli2Format;
+    private final RestliVersion _version;
+    private final RestliVersion _deprecatedByVersion;
   }
 
   /**
@@ -204,12 +221,19 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
 
     final String generateImported = System.getProperty(GENERATOR_GENERATE_IMPORTED);
     final String generateDataTemplates = System.getProperty(GENERATOR_REST_GENERATE_DATATEMPLATES);
-    final boolean isRestli2Format = Boolean.getBoolean(GENERATOR_REST_GENERATE_RESTLI2);
+    final String versionString = System.getProperty(GENERATOR_GENERATE_IMPORTED);
+    final RestliVersion version = RestliVersion.lookUpRestliVersion(new Version(versionString));
+    if (version == null)
+    {
+      throw new IllegalArgumentException("Unrecognized version: " + versionString);
+    }
+
     run(System.getProperty(GENERATOR_RESOLVER_PATH),
         System.getProperty(GENERATOR_DEFAULT_PACKAGE),
         generateImported == null ? null : Boolean.parseBoolean(generateImported),
         generateDataTemplates == null ? null : Boolean.parseBoolean(generateDataTemplates),
-        isRestli2Format,
+        version,
+        null,
         args[0],
         Arrays.copyOfRange(args, 1, args.length));
   }
@@ -218,11 +242,12 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
                                     String defaultPackage,
                                     Boolean generateImported,
                                     Boolean generateDataTemplates,
-                                    Boolean isRestli2Format,
+                                    RestliVersion version,
+                                    RestliVersion deprecatedByVersion,
                                     String targetDirectoryPath,
                                     String[] sources) throws IOException
   {
-    final Config config = new Config(resolverPath, defaultPackage, generateImported, generateDataTemplates, isRestli2Format);
+    final Config config = new Config(resolverPath, defaultPackage, generateImported, generateDataTemplates, version, deprecatedByVersion);
     final RestRequestBuilderGenerator generator = new RestRequestBuilderGenerator(config);
 
     return generator.generate(targetDirectoryPath, sources);
@@ -239,6 +264,33 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
   protected Config getConfig()
   {
     return _config;
+  }
+
+  private static String getBuilderClassNameByVersion(RestliVersion version, String namespace, String builderName, boolean isRootBuilders)
+  {
+    final String className = (namespace == null || namespace.trim().isEmpty() ? "" : namespace + ".") + capitalize(builderName);
+    final Map<RestliVersion, String> suffixMap = (isRootBuilders ? ROOT_BUILDERS_SUFFIX : METHOD_BUILDER_SUFFIX);
+    return className + suffixMap.get(version);
+  }
+
+  private static boolean checkVersionAndDeprecateBuilderClass(Config config, JDefinedClass clazz, boolean isRootBuilders)
+  {
+    if (config.getDeprecatedByVersion() == null)
+    {
+      return false;
+    }
+    else
+    {
+      clazz.annotate(Deprecated.class);
+
+      final Map<RestliVersion, String> suffixMap = (isRootBuilders ? ROOT_BUILDERS_SUFFIX : METHOD_BUILDER_SUFFIX);
+      final String deprecatedBuilderName = clazz.name();
+      final String replacementBuilderName = deprecatedBuilderName.substring(0, deprecatedBuilderName.length() - suffixMap.get(config.getVersion()).length());
+      clazz.javadoc().addDeprecated().append("This format of request builder is obsolete. Please use {@link " +
+                                                 getBuilderClassNameByVersion(config.getDeprecatedByVersion(), clazz.getPackage().name(), replacementBuilderName, isRootBuilders) +
+                                                 "} instead.");
+      return true;
+    }
   }
 
   /**
@@ -381,20 +433,19 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
                 validationResult.toString()));
     }
 
-    String resourceName = capitalize(resource.getName());
-
     String packageName = resource.getNamespace();
     JPackage clientPackage = (packageName == null || packageName.isEmpty()) ? getPackage() : getPackage(packageName);
 
-    JDefinedClass facadeClass;
-    if (_config.isRestli2Format())
+    String className;
+    if (_config.getVersion() == RestliVersion.RESTLI_2_0_0)
     {
-      facadeClass = clientPackage._class(resourceName + REQUEST_BUILDERS);
+      className = getBuilderClassNameByVersion(RestliVersion.RESTLI_2_0_0, null, resource.getName(), true);
     }
     else
     {
-      facadeClass = clientPackage._class(resourceName + BUILDERS);
+      className = getBuilderClassNameByVersion(RestliVersion.RESTLI_1_0_0, null, resource.getName(), true);
     }
+    JDefinedClass facadeClass = clientPackage._class(className);
     annotate(facadeClass, sourceFile);
 
     final JFieldVar baseUriField;
@@ -402,7 +453,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     final JExpression baseUriGetter = JExpr.invoke("getBaseUriTemplate");
     final JExpression requestOptionsGetter = JExpr.invoke("getRequestOptions");
 
-    if (_config.isRestli2Format())
+    if (_config.getVersion() == RestliVersion.RESTLI_2_0_0)
     {
       baseUriField = null;
       requestOptionsField = null;
@@ -427,7 +478,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     final JClass restliRequestOptionsClass = getCodeModel().ref(RestliRequestOptions.class);
     JFieldRef defaultOptionsField = restliRequestOptionsClass.staticRef("DEFAULT_OPTIONS");
 
-    if (!_config.isRestli2Format())
+    if (_config.getVersion() == RestliVersion.RESTLI_1_0_0)
     {
       // same getPathComponents() logic as in RequestBuilderBase
       JMethod pathComponentsGetter = facadeClass.method(JMod.PUBLIC, String[].class, "getPathComponents");
@@ -460,7 +511,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     // request options override constructor
     JVar requestOptionsOverrideOptionsParam = requestOptionsOverrideConstructor.param(RestliRequestOptions.class, "requestOptions");
 
-    if (_config.isRestli2Format())
+    if (_config.getVersion() == RestliVersion.RESTLI_2_0_0)
     {
       requestOptionsOverrideConstructor.body().invoke(SUPER).arg(originalResourceField).arg(requestOptionsOverrideOptionsParam);
     }
@@ -489,7 +540,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
       baseUriExpr = mainConsResourceNameParam;
     }
 
-    if (_config.isRestli2Format())
+    if (_config.getVersion() == RestliVersion.RESTLI_2_0_0)
     {
       mainConstructor.body().invoke(SUPER).arg(baseUriExpr).arg(mainConsOptionsParam);
     }
@@ -500,6 +551,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
       mainConstructor.body().assign(requestOptionsField, mainAssignRequestOptions);
     }
 
+    String resourceName = capitalize(resource.getName());
     JMethod primaryResourceGetter = facadeClass.method(JMod.PUBLIC | JMod.STATIC, String.class, "getPrimaryResource");
     primaryResourceGetter.body()._return(originalResourceField);
 
@@ -735,7 +787,11 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
 
 
     generateClassJavadoc(facadeClass, resource);
-    generateClassAnnotations(facadeClass, resource);
+
+    if (!checkVersionAndDeprecateBuilderClass(_config, facadeClass, true))
+    {
+      checkRestSpecAndDeprecateRootBuildersClass(facadeClass, resource);
+    }
 
     return facadeClass;
   }
@@ -979,15 +1035,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
       {
         String finderName = finder.getName();
 
-        String builderName;
-        if (_config.isRestli2Format())
-        {
-          builderName = capitalize(resourceName) + "FindBy" + capitalize(finderName) + REQUEST_BUILDER;
-        }
-        else
-        {
-          builderName = capitalize(resourceName) + "FindBy" + capitalize(finderName) + BUILDER;
-        }
+        String builderName = capitalize(resourceName) + "FindBy" + capitalize(finderName) + METHOD_BUILDER_SUFFIX.get(_config.getVersion());
         JDefinedClass finderBuilderClass = generateDerivedBuilder(baseBuilderClass,
                                                                   valueClass,
                                                                   finderName,
@@ -1075,8 +1123,11 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
                                                JPackage clientPackage)
           throws JClassAlreadyExistsException
   {
+    // this method applies to REST methods and finder
+
     JDefinedClass derivedBuilderClass = clientPackage._class(JMod.PUBLIC, derivedBuilderName);
     annotate(derivedBuilderClass, null);
+    checkVersionAndDeprecateBuilderClass(_config, derivedBuilderClass, false);
     derivedBuilderClass._extends(baseBuilderClass.narrow(derivedBuilderClass));
     JMethod derivedBuilderConstructor = derivedBuilderClass.constructor(JMod.PUBLIC);
     JVar uriParam = derivedBuilderConstructor.param(_stringClass, "baseUriTemplate");
@@ -1234,17 +1285,10 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
                                                                                 returnType);
     String actionName = action.getName();
 
-    String actionBuilderClassName;
-    if (_config.isRestli2Format())
-    {
-      actionBuilderClassName = capitalize(resourceName) + "Do" + capitalize(actionName) + REQUEST_BUILDER;
-    }
-    else
-    {
-      actionBuilderClassName = capitalize(resourceName) + "Do" + capitalize(actionName) + BUILDER;
-    }
+    String actionBuilderClassName = capitalize(resourceName) + "Do" + capitalize(actionName) + METHOD_BUILDER_SUFFIX.get(_config.getVersion());
     JDefinedClass actionBuilderClass = facadeClass.getPackage()._class(JMod.PUBLIC, actionBuilderClassName);
     annotate(actionBuilderClass, null);
+    checkVersionAndDeprecateBuilderClass(_config, actionBuilderClass, false);
     actionBuilderClass._extends(vanillaActionBuilderClass.narrow(actionBuilderClass));
     JMethod actionBuilderConstructor = actionBuilderClass.constructor(JMod.PUBLIC);
     JVar uriParam = actionBuilderConstructor.param(_stringClass, "baseUriTemplate");
@@ -1266,7 +1310,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
         boolean isOptional = param.isOptional() == null ? false : param.isOptional();
         JavaBinding binding = getJavaBindingType(param.getType(), facadeClass);
 
-        JMethod typesafeMethod = _config.isRestli2Format() ?
+        JMethod typesafeMethod = _config.getVersion() == RestliVersion.RESTLI_2_0_0 ?
             actionBuilderClass.method(JMod.PUBLIC, actionBuilderClass, RestLiToolsUtils.nameCamelCase(paramName + "Param")) :
             actionBuilderClass.method(JMod.PUBLIC, actionBuilderClass, "param" + capitalize(paramName));
         JVar typesafeMethodParam = typesafeMethod.param(binding.valueClass, "value");
@@ -1289,6 +1333,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     generateFactoryMethodJavadoc(actionMethod, action);
   }
 
+  @SuppressWarnings("deprecation")
   private void generateBasicMethods(JDefinedClass facadeClass,
                                     JExpression baseUriExpr,
                                     JClass keyClass,
@@ -1314,38 +1359,43 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     }
 
     Map<ResourceMethod, Class<?>> crudBuilderClasses = new HashMap<ResourceMethod, Class<?>>();
-    if (_config.isRestli2Format())
+    if (_config.getVersion() == RestliVersion.RESTLI_2_0_0)
     {
       crudBuilderClasses.put(ResourceMethod.CREATE, CreateIdRequestBuilderBase.class);
     }
     else
     {
-      crudBuilderClasses.put(ResourceMethod.CREATE, CreateRequestBuilderBase.class);
+      // we use fully qualified class name to avoid importing the deprecated class
+      // so far in Java there is no way to suppress deprecation warning for import
+      crudBuilderClasses.put(ResourceMethod.CREATE, com.linkedin.restli.client.base.CreateRequestBuilderBase.class);
     }
     crudBuilderClasses.put(ResourceMethod.GET, GetRequestBuilderBase.class);
     crudBuilderClasses.put(ResourceMethod.UPDATE, UpdateRequestBuilderBase.class);
     crudBuilderClasses.put(ResourceMethod.PARTIAL_UPDATE, PartialUpdateRequestBuilderBase.class);
     crudBuilderClasses.put(ResourceMethod.DELETE, DeleteRequestBuilderBase.class);
-    if (_config.isRestli2Format())
+    if (_config.getVersion() == RestliVersion.RESTLI_2_0_0)
     {
       crudBuilderClasses.put(ResourceMethod.BATCH_CREATE, BatchCreateIdRequestBuilderBase.class);
     }
     else
     {
-      crudBuilderClasses.put(ResourceMethod.BATCH_CREATE, BatchCreateRequestBuilderBase.class);
+      // we use fully qualified class name to avoid importing the deprecated class
+      // so far in Java there is no way to suppress deprecation warning for import
+      crudBuilderClasses.put(ResourceMethod.BATCH_CREATE, com.linkedin.restli.client.base.BatchCreateRequestBuilderBase.class);
     }
-    crudBuilderClasses.put(ResourceMethod.BATCH_GET, BatchGetRequestBuilderBase.class);
     crudBuilderClasses.put(ResourceMethod.BATCH_UPDATE, BatchUpdateRequestBuilderBase.class);
     crudBuilderClasses.put(ResourceMethod.BATCH_PARTIAL_UPDATE, BatchPartialUpdateRequestBuilderBase.class);
     crudBuilderClasses.put(ResourceMethod.BATCH_DELETE, BatchDeleteRequestBuilderBase.class);
     crudBuilderClasses.put(ResourceMethod.GET_ALL, GetAllRequestBuilderBase.class);
-    if (_config.isRestli2Format())
+    if (_config.getVersion() == RestliVersion.RESTLI_2_0_0)
     {
       crudBuilderClasses.put(ResourceMethod.BATCH_GET, BatchGetEntityRequestBuilderBase.class);
     }
     else
     {
-      crudBuilderClasses.put(ResourceMethod.BATCH_GET, BatchGetRequestBuilderBase.class);
+      // we use fully qualified class name to avoid importing the deprecated class
+      // so far in Java there is no way to suppress deprecation warning for import
+      crudBuilderClasses.put(ResourceMethod.BATCH_GET, com.linkedin.restli.client.base.BatchGetRequestBuilderBase.class);
     }
 
     for (Map.Entry<ResourceMethod, Class<?>> entry : crudBuilderClasses.entrySet())
@@ -1356,19 +1406,12 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
         String methodName = RestLiToolsUtils.normalizeUnderscores(method.toString());
 
         JClass builderClass = getCodeModel().ref(entry.getValue()).narrow(keyClass, valueClass);
-        JDefinedClass derivedBuilder;
-        if (_config.isRestli2Format())
-        {
-          derivedBuilder = generateDerivedBuilder(builderClass, valueClass, null, resourceName + RestLiToolsUtils.nameCapsCase(
-              methodName) + REQUEST_BUILDER,
+        JDefinedClass derivedBuilder = generateDerivedBuilder(builderClass,
+                                                              valueClass,
+                                                              null,
+                                                              resourceName + RestLiToolsUtils.nameCapsCase(methodName) +
+                                                                METHOD_BUILDER_SUFFIX.get(_config.getVersion()),
                                                               facadeClass.getPackage());
-        }
-        else
-        {
-          derivedBuilder = generateDerivedBuilder(builderClass, valueClass, null, resourceName + RestLiToolsUtils.nameCapsCase(
-              methodName) + BUILDER,
-                                                  facadeClass.getPackage());
-        }
         generatePathKeyBindingMethods(pathKeys, derivedBuilder, pathKeyTypes, assocKeyTypes, pathToAssocKeys);
 
         JMethod factoryMethod = facadeClass.method(JMod.PUBLIC, derivedBuilder, RestLiToolsUtils.nameCamelCase(
@@ -1449,9 +1492,7 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     final String methodName = RestLiToolsUtils.nameCamelCase(paramName + "Param");
     final JMethod setMethod = derivedBuilderClass.method(JMod.PUBLIC, derivedBuilderClass, methodName);
     final JVar setMethodParam = setMethod.param(paramClass, "value");
-    setMethod.body().add(JExpr._super().invoke(isOptional ? "setParam" : "setReqParam")
-                             .arg(paramName)
-                             .arg(setMethodParam));
+    setMethod.body().add(JExpr._super().invoke(isOptional ? "setParam" : "setReqParam").arg(paramName).arg(setMethodParam));
     setMethod.body()._return(JExpr._this());
 
     generateParamJavadoc(setMethod, setMethodParam, param);
@@ -1482,16 +1523,18 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     }
   }
 
-  private static void generateClassAnnotations(JDefinedClass clazz, RecordTemplate schema)
+  private static void checkRestSpecAndDeprecateRootBuildersClass(JDefinedClass clazz, ResourceSchema schema)
   {
+    // this method only applies to the root builders class
+
     if(schema.data().containsKey("annotations"))
     {
       DataMap annotations = schema.data().getDataMap("annotations");
-      if(annotations.containsKey(ResourceModelEncoder.DEPRECATED_ANNOTATION_NAME))
+      DataMap deprecated = annotations.getDataMap(ResourceModelEncoder.DEPRECATED_ANNOTATION_NAME);
+      if(deprecated != null)
       {
         clazz.annotate(Deprecated.class);
 
-        DataMap deprecated = annotations.getDataMap(ResourceModelEncoder.DEPRECATED_ANNOTATION_NAME);
         if(deprecated.containsKey(ResourceModelEncoder.DEPRECATED_ANNOTATION_DOC_FIELD))
         {
           clazz.javadoc().addDeprecated().append(deprecated.getString(ResourceModelEncoder.DEPRECATED_ANNOTATION_DOC_FIELD));
@@ -1649,4 +1692,3 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     return binding;
   }
 }
-

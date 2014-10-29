@@ -31,8 +31,8 @@ import com.linkedin.restli.example.impl.AlbumResource;
 import com.linkedin.restli.example.impl.PhotoDatabase;
 import com.linkedin.restli.example.impl.PhotoDatabaseImpl;
 import com.linkedin.restli.example.impl.PhotoResource;
-import com.linkedin.restli.example.photos.AlbumsBuilders;
-import com.linkedin.restli.example.photos.PhotosBuilders;
+import com.linkedin.restli.example.photos.AlbumsRequestBuilders;
+import com.linkedin.restli.example.photos.PhotosRequestBuilders;
 import com.linkedin.restli.server.testutils.MockHttpServerFactory;
 import java.io.IOException;
 import java.util.Collections;
@@ -50,8 +50,8 @@ import org.testng.annotations.Test;
 public class TestMockHttpServerFactory
 {
   private static final int PORT = 7777;
-  private static final PhotosBuilders PHOTOS_BUILDERS = new PhotosBuilders();
-  private static final AlbumsBuilders ALBUMS_BUILDERS = new AlbumsBuilders();
+  private static final PhotosRequestBuilders PHOTOS_BUILDERS = new PhotosRequestBuilders();
+  private static final AlbumsRequestBuilders ALBUMS_BUILDERS = new AlbumsRequestBuilders();
   private static final TransportClient TRANSPORT_CLIENT =
       new HttpClientFactory().getClient(Collections.<String, Object>emptyMap());
   private static final RestClient REST_CLIENT =

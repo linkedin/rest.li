@@ -33,10 +33,10 @@ import java.util.Map;
 
 
 /**
+ * This class has been deprecated. Please use {@link BatchCreateIdRequest} instead.
+ *
  * @author Josh Walker
- * @version $Revision: $
  */
-
 public class BatchCreateRequest<T extends RecordTemplate> extends Request<CollectionResponse<CreateStatus>>
 {
   BatchCreateRequest(Map<String, String> headers,

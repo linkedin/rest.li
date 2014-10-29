@@ -40,6 +40,8 @@ import java.util.Map;
 /**
  * Builds a type-bound Request for a batch of resources.
  *
+ * This class has been deprecated. Please use {@link BatchGetEntityRequestBuilder} instead.
+ *
  * @param <V> batch element type
  *
  * @author Eran Leshem

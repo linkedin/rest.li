@@ -30,9 +30,10 @@ import java.util.List;
 
 /**
  * @author Josh Walker
- * @version $Revision: $
+ *
+ * @deprecated This class has been deprecated. Please use {@link BatchCreateIdRequestBuilderBase} instead.
  */
-
+@Deprecated
 public abstract class BatchCreateRequestBuilderBase<
         K,
         V extends RecordTemplate,

@@ -503,6 +503,7 @@ class PegasusPlugin implements Plugin<Project>
   private static final String GENERATOR_CLASSLOADER_NAME = 'pegasusGeneratorClassLoader'
 
   private static boolean _runOnce = false
+  private static boolean _isRestli1BuildersDeprecated = true
 
   private static final StringBuffer _restModelCompatMessage = new StringBuffer()
   private static final Collection<String> _needCheckinFiles = new ArrayList<String>()
@@ -1312,7 +1313,7 @@ class PegasusPlugin implements Plugin<Project>
       resolverPath = dataModels
       runtimeClasspath = project.configurations.dataModel + project.configurations.dataTemplate.artifacts.files
       destinationDir = generatedRestClientDir
-      suppressRestli2Format = project.hasProperty(SUPPRESS_REST_CLIENT_RESTLI_2)
+      isRestli2FormatSuppressed = project.hasProperty(SUPPRESS_REST_CLIENT_RESTLI_2)
     }
 
     if (dataTemplateJarTask != null)
@@ -1330,6 +1331,7 @@ class PegasusPlugin implements Plugin<Project>
     // make sure rest client source files have been generated before compiling them
     Task compileGeneratedRestClientTask = project.tasks[targetSourceSet.compileJavaTaskName]
     compileGeneratedRestClientTask.dependsOn(generateRestClientTask)
+    compileGeneratedRestClientTask.options.compilerArgs += '-Xlint:-deprecation'
 
     // create the rest client jar file
     def restClientJarTask = project.task(sourceSet.name + 'RestClientJar',
@@ -2344,7 +2346,7 @@ class PegasusPlugin implements Plugin<Project>
     @InputFiles FileCollection resolverPath
     @InputFiles FileCollection runtimeClasspath
     @OutputDirectory File destinationDir
-    boolean suppressRestli2Format
+    boolean isRestli2FormatSuppressed
 
     @TaskAction
     protected void generate()
@@ -2398,11 +2400,13 @@ class PegasusPlugin implements Plugin<Project>
         }
 
         final String restModelFilePath = "${inputDir}${File.separatorChar}${clientItem.restModelFileName}"
-        stubGenerator.run(resolverPathStr, defaultPackage, false, false, false, destinationDir.path, [restModelFilePath] as String[])
+        final Class<?> RestliVersion = generatorClassLoader.loadClass('com.linkedin.restli.internal.common.RestliVersion')
+        final deprecatedByVersion = (_isRestli1BuildersDeprecated ? RestliVersion.RESTLI_2_0_0 : null)
+        stubGenerator.run(resolverPathStr, defaultPackage, false, false, RestliVersion.RESTLI_1_0_0, deprecatedByVersion, destinationDir.path, [restModelFilePath] as String[])
 
-        if (!suppressRestli2Format)
+        if (!isRestli2FormatSuppressed)
         {
-          stubGenerator.run(resolverPathStr, defaultPackage, false, false, true, destinationDir.path, [restModelFilePath] as String[])
+          stubGenerator.run(resolverPathStr, defaultPackage, false, false, RestliVersion.RESTLI_2_0_0, null, destinationDir.path, [restModelFilePath] as String[])
         }
       }
 

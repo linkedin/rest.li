@@ -29,6 +29,8 @@ import java.util.Map;
 /**
  * A request for writing a resource.
  *
+ * This class has been deprecated. Please use {@link CreateIdRequest} instead.
+ *
  * @author Eran Leshem
  */
 public class CreateRequest<T extends RecordTemplate>

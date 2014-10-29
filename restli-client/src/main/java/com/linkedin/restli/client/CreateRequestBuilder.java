@@ -26,10 +26,10 @@ import java.util.Map;
 
 
 /**
+ * This class has been deprecated. Please use {@link CreateIdRequestBuilder} instead.
+ *
  * @author Josh Walker
- * @version $Revision: $
  */
-
 public class CreateRequestBuilder<K, V extends RecordTemplate>
                 extends RestfulRequestBuilder<K, V, CreateRequest<V>>
 {

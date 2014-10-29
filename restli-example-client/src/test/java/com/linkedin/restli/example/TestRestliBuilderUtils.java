@@ -5,8 +5,9 @@
 package com.linkedin.restli.example;
 
 import com.linkedin.restli.client.util.RestliBuilderUtils;
-import com.linkedin.restli.example.photos.PhotosBuilders;
 import com.linkedin.restli.example.photos.PhotosCreateBuilder;
+import com.linkedin.restli.example.photos.PhotosRequestBuilders;
+
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -34,7 +35,7 @@ public class TestRestliBuilderUtils
   @Test
   public void testPhotoBuilder()
   {
-    String serviceName = RestliBuilderUtils.getPrimaryResourceName(PhotosBuilders.class);
+    String serviceName = RestliBuilderUtils.getPrimaryResourceName(PhotosRequestBuilders.class);
     Assert.assertEquals(serviceName, "photos");
   }
 }
