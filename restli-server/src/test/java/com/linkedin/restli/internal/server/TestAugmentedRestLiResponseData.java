@@ -20,10 +20,10 @@ package com.linkedin.restli.internal.server;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.CollectionMetadata;
-import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.server.RestLiResponseDataException;
+import com.linkedin.restli.server.RestLiServiceException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -140,7 +140,7 @@ public class TestAugmentedRestLiResponseData
   }
 
   @Test(dataProvider = "builderDataProvider")
-  public void testBuilder(ResourceMethod methodType, RecordTemplate entity, ErrorResponse error,
+  public void testBuilder(ResourceMethod methodType, RecordTemplate entity, RestLiServiceException exception,
                           List<? extends RecordTemplate> entities, CollectionMetadata collectionPaging,
                           RecordTemplate collectionMetadata, Map<?, ? extends RecordTemplate> batchEntities,
                           Map<String, String> headers, HttpStatus status, boolean expectException)
@@ -153,9 +153,9 @@ public class TestAugmentedRestLiResponseData
       {
         builder.entity(entity);
       }
-      if (error != null)
+      if (exception != null)
       {
-        builder.errorResponse(error);
+        builder.serviceException(exception);
       }
       if (entities != null)
       {
@@ -188,7 +188,7 @@ public class TestAugmentedRestLiResponseData
         assertFalse(responseData.isBatchResponse());
         assertFalse(responseData.isCollectionResponse());
         assertEquals(responseData.getEntityResponse(), entity);
-        assertNull(responseData.getErrorResponse());
+        assertNull(responseData.getServiceException());
         assertNull(responseData.getCollectionResponse());
         assertNull(responseData.getBatchResponseMap());
       }
@@ -201,7 +201,7 @@ public class TestAugmentedRestLiResponseData
         assertEquals(responseData.getCollectionResponse(), entities);
         assertEquals(responseData.getCollectionResponseCustomMetadata(), collectionMetadata);
         assertEquals(responseData.getCollectionResponsePaging(), collectionPaging);
-        assertNull(responseData.getErrorResponse());
+        assertNull(responseData.getServiceException());
         assertNull(responseData.getEntityResponse());
         assertNull(responseData.getBatchResponseMap());
       }
@@ -212,17 +212,17 @@ public class TestAugmentedRestLiResponseData
         assertTrue(responseData.isBatchResponse());
         assertFalse(responseData.isCollectionResponse());
         assertEquals(responseData.getBatchResponseMap(), batchEntities);
-        assertNull(responseData.getErrorResponse());
+        assertNull(responseData.getServiceException());
         assertNull(responseData.getEntityResponse());
         assertNull(responseData.getCollectionResponse());
       }
-      if (error != null)
+      if (exception != null)
       {
         assertFalse(responseData.isEntityResponse());
         assertTrue(responseData.isErrorResponse());
         assertFalse(responseData.isBatchResponse());
         assertFalse(responseData.isCollectionResponse());
-        assertEquals(responseData.getErrorResponse(), error);
+        assertEquals(responseData.getServiceException(), exception);
         assertNull(responseData.getBatchResponseMap());
         assertNull(responseData.getEntityResponse());
         assertNull(responseData.getCollectionResponse());
@@ -245,7 +245,7 @@ public class TestAugmentedRestLiResponseData
     buildCollectionResponseWithPagingAndCustomMetadata(ret);
     buildCollectionResponseWithoutPagingAndCustomMetadata(ret);
     buildBatchResponse(ret);
-    buildErrorResponse(ret);
+    buildExceptionResponse(ret);
     return listToArray(ret);
   }
 
@@ -265,11 +265,11 @@ public class TestAugmentedRestLiResponseData
   }
 
 
-  private void buildErrorResponse(List<List<? extends Object>> ret)
+  private void buildExceptionResponse(List<List<? extends Object>> ret)
   {
     for (ResourceMethod type : ResourceMethod.values())
     {
-      ret.add(Arrays.asList(type, null, new ErrorResponse(Foo.createFoo("foo", "bar").data()), null, null, null, null,
+      ret.add(Arrays.asList(type, null, new RestLiServiceException(HttpStatus.S_404_NOT_FOUND), null, null, null, null,
                             ImmutableMap.of("key", "value"), HttpStatus.S_404_NOT_FOUND, false));
     }
   }

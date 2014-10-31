@@ -23,7 +23,6 @@ import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
-import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
@@ -41,7 +40,10 @@ import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.FilterResponseContext;
 import com.linkedin.restli.server.filter.ResponseFilter;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.google.common.collect.Maps;
@@ -175,8 +177,8 @@ public class TestRestLiCallback
     // Set up.
     when(_restRequest.getHeaders()).thenReturn(inputHeaders);
     when(
-         _responseHandler.buildErrorResponseData(eq(_restRequest), eq(_routingResult), eq(ex),
-                                                 augErrorHeadersCapture.capture())).thenReturn(responseData);
+         _responseHandler.buildExceptionResponseData(eq(_restRequest), eq(_routingResult), eq(ex),
+             augErrorHeadersCapture.capture())).thenReturn(responseData);
     when(_responseHandler.buildPartialResponse(_routingResult, responseData)).thenReturn(partialResponse);
     when(_responseHandler.buildRestException(ex, partialResponse)).thenReturn(restException);
 
@@ -185,8 +187,8 @@ public class TestRestLiCallback
 
     // Verify.
     verify(_responseHandler).buildRestException(ex, partialResponse);
-    verify(_responseHandler).buildErrorResponseData(eq(_restRequest), eq(_routingResult), eq(ex),
-                                                    augErrorHeadersCapture.capture());
+    verify(_responseHandler).buildExceptionResponseData(eq(_restRequest), eq(_routingResult), eq(ex),
+        augErrorHeadersCapture.capture());
     verify(_responseHandler).buildPartialResponse(_routingResult, responseData);
     verify(_callback).onError(restException, executionReport);
     verify(_restRequest, times(1)).getHeaders();
@@ -207,7 +209,10 @@ public class TestRestLiCallback
   private Object[][] provideExceptions()
   {
     return new Object[][] { { new RuntimeException("Test runtime exception") },
-        { new RoutingException("Test routing exception", 404) } };
+        { new RoutingException("Test routing exception", 404) },
+        { new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, "Test service exception") },
+        { new RestLiServiceException(HttpStatus.S_403_FORBIDDEN, "Wrapped runtime exception with custom status",
+            new RuntimeException("Original cause")) } };
   }
 
   @SuppressWarnings("unchecked")
@@ -225,8 +230,8 @@ public class TestRestLiCallback
     // Set up.
     when(_restRequest.getHeaders()).thenReturn(inputHeaders);
     when(
-         _responseHandler.buildErrorResponseData(eq(_restRequest), eq(_routingResult), exCapture.capture(),
-                                                 anyMap())).thenReturn(responseData);
+         _responseHandler.buildExceptionResponseData(eq(_restRequest), eq(_routingResult), exCapture.capture(),
+             anyMap())).thenReturn(responseData);
     when(_responseHandler.buildPartialResponse(_routingResult, responseData)).thenReturn(partialResponse);
     when(_responseHandler.buildRestException(ex, partialResponse)).thenReturn(restException);
 
@@ -234,8 +239,8 @@ public class TestRestLiCallback
     _noFilterRestLiCallback.onError(ex, executionReport);
 
     // Verify.
-    verify(_responseHandler).buildErrorResponseData(eq(_restRequest), eq(_routingResult),
-                                                    exCapture.capture(), anyMap());
+    verify(_responseHandler).buildExceptionResponseData(eq(_restRequest), eq(_routingResult),
+        exCapture.capture(), anyMap());
     verify(_responseHandler).buildPartialResponse(_routingResult, responseData);
     verify(_responseHandler).buildRestException(ex, partialResponse);
     verify(_callback).onError(restException, executionReport);
@@ -248,12 +253,23 @@ public class TestRestLiCallback
     {
       assertEquals(HttpStatus.fromCode(((RoutingException) ex).getStatus()), restliEx.getStatus());
     }
+    else if (ex instanceof RestLiServiceException)
+    {
+      assertEquals(((RestLiServiceException) ex).getStatus(), restliEx.getStatus());
+    }
     else
     {
       assertEquals(HttpStatus.S_500_INTERNAL_SERVER_ERROR, restliEx.getStatus());
     }
     assertEquals(ex.getMessage(), restliEx.getMessage());
-    assertEquals(ex, restliEx.getCause());
+    if (ex instanceof RestLiServiceException)
+    {
+      assertEquals(ex, restliEx);
+    }
+    else
+    {
+      assertEquals(ex, restliEx.getCause());
+    }
   }
 
   @Test
@@ -348,10 +364,10 @@ public class TestRestLiCallback
     ArgumentCaptor<RestLiServiceException> exFromFilterCapture = ArgumentCaptor.forClass(RestLiServiceException.class);
     final Map<String, String> headersFromFilter = Maps.newHashMap();
     headersFromFilter.put("Key", "Error from filter");
-    final ErrorResponse errorResponseFromFilter = new ErrorResponse().setStatus(500);
+    final RestLiServiceException exceptionFromFilter = new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR);
     AugmentedRestLiResponseData responseErrorData =
         new AugmentedRestLiResponseData.Builder(ResourceMethod.GET).status(HttpStatus.S_500_INTERNAL_SERVER_ERROR)
-                                                                   .errorResponse(errorResponseFromFilter)
+                                                                   .serviceException(exceptionFromFilter)
                                                                    .headers(headersFromFilter).build();
     final RecordTemplate entityFromFilter = Foo.createFoo("Key", "Two");
     PartialRestResponse partialFilterErrorResponse = new PartialRestResponse.Builder().build();
@@ -362,8 +378,8 @@ public class TestRestLiCallback
     when(_responseHandler.buildRestLiResponseData(_restRequest, _routingResult, entityFromApp)).thenReturn(appResponseData);
     when(_restRequest.getHeaders()).thenReturn(null);
     when(
-         _responseHandler.buildErrorResponseData(eq(_restRequest), eq(_routingResult),
-                                                 exFromFilterCapture.capture(), anyMap())).thenReturn(responseErrorData);
+         _responseHandler.buildExceptionResponseData(eq(_restRequest), eq(_routingResult),
+             exFromFilterCapture.capture(), anyMap())).thenReturn(responseErrorData);
     when(_responseHandler.buildPartialResponse(_routingResult, responseErrorData)).thenReturn(partialFilterErrorResponse);
 
     when(_responseHandler.buildResponse(_routingResult, partialFilterErrorResponse)).thenReturn(restResponse);
@@ -380,7 +396,7 @@ public class TestRestLiCallback
         assertEquals(context.getHttpStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR);
         assertNull(context.getResponseData().getEntityResponse());
         assertEquals(context.getResponseHeaders(), headersFromFilter);
-        assertEquals(context.getResponseData().getErrorResponse(), errorResponseFromFilter);
+        assertEquals(context.getResponseData().getServiceException(), exceptionFromFilter);
 
         // Modify data.
         context.setHttpStatus(HttpStatus.S_402_PAYMENT_REQUIRED);
@@ -397,8 +413,8 @@ public class TestRestLiCallback
     // Verify.
     verify(_responseHandler).buildRestLiResponseData(_restRequest, _routingResult, entityFromApp);
     verify(_responseHandler).buildPartialResponse(_routingResult, responseErrorData);
-    verify(_responseHandler).buildErrorResponseData(eq(_restRequest), eq(_routingResult),
-                                                    exFromFilterCapture.capture(), anyMap());
+    verify(_responseHandler).buildExceptionResponseData(eq(_restRequest), eq(_routingResult),
+        exFromFilterCapture.capture(), anyMap());
     verify(_responseHandler).buildPartialResponse(_routingResult, responseErrorData);
     verify(_responseHandler).buildResponse(_routingResult, partialFilterErrorResponse);
     verify(_callback).onSuccess(restResponse, executionReport);
@@ -415,7 +431,7 @@ public class TestRestLiCallback
     assertNotNull(responseErrorData);
     assertEquals(HttpStatus.S_402_PAYMENT_REQUIRED, responseErrorData.getStatus());
     assertEquals(responseErrorData.getHeaders(), headersFromFilter);
-    assertNull(responseErrorData.getErrorResponse());
+    assertNull(responseErrorData.getServiceException());
   }
 
   @SuppressWarnings("unchecked")
@@ -433,10 +449,10 @@ public class TestRestLiCallback
     ArgumentCaptor<RestLiServiceException> exFromFilterCapture = ArgumentCaptor.forClass(RestLiServiceException.class);
     final Map<String, String> headersFromFilter = Maps.newHashMap();
     headersFromFilter.put("Key", "Error from filter");
-    ErrorResponse errorResponseFromFilter = new ErrorResponse().setStatus(500);
+    RestLiServiceException exceptionFromFilter = new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR);
     AugmentedRestLiResponseData responseErrorData =
         new AugmentedRestLiResponseData.Builder(ResourceMethod.GET).status(HttpStatus.S_500_INTERNAL_SERVER_ERROR)
-                                                                   .errorResponse(errorResponseFromFilter)
+                                                                   .serviceException(exceptionFromFilter)
                                                                    .headers(headersFromFilter).build();
     PartialRestResponse partialFilterErrorResponse = new PartialRestResponse.Builder().build();
     final Exception exFromFilter = new RuntimeException("Exception From Filter");
@@ -447,8 +463,8 @@ public class TestRestLiCallback
     when(_responseHandler.buildRestLiResponseData(_restRequest, _routingResult, entityFromApp)).thenReturn(appResponseData);
     when(_restRequest.getHeaders()).thenReturn(null);
     when(
-         _responseHandler.buildErrorResponseData(eq(_restRequest), eq(_routingResult),
-                                                 exFromFilterCapture.capture(), anyMap())).thenReturn(responseErrorData);
+         _responseHandler.buildExceptionResponseData(eq(_restRequest), eq(_routingResult),
+             exFromFilterCapture.capture(), anyMap())).thenReturn(responseErrorData);
     when(_responseHandler.buildPartialResponse(_routingResult, responseErrorData)).thenReturn(partialFilterErrorResponse);
     when(_responseHandler.buildRestException(exFromFilter, partialFilterErrorResponse)).thenReturn(finalRestException);    // Mock filter behavior.
     doThrow(exFromFilter).doAnswer(new Answer<Object>()
@@ -478,8 +494,8 @@ public class TestRestLiCallback
     // Verify.
     verify(_responseHandler).buildRestLiResponseData(_restRequest, _routingResult, entityFromApp);
     verify(_responseHandler).buildPartialResponse(_routingResult, responseErrorData);
-    verify(_responseHandler).buildErrorResponseData(eq(_restRequest), eq(_routingResult),
-                                                    exFromFilterCapture.capture(), anyMap());
+    verify(_responseHandler).buildExceptionResponseData(eq(_restRequest), eq(_routingResult),
+        exFromFilterCapture.capture(), anyMap());
     verify(_responseHandler).buildPartialResponse(_routingResult, responseErrorData);
     verify(_responseHandler).buildRestException(exFromFilter, partialFilterErrorResponse);
     verify(_callback).onError(finalRestException, executionReport);
@@ -523,8 +539,8 @@ public class TestRestLiCallback
     when(_responseHandler.buildRestLiResponseData(_restRequest, _routingResult, result)).thenReturn(appResponseData);
     when(_restRequest.getHeaders()).thenReturn(null);
     when(
-         _responseHandler.buildErrorResponseData(eq(_restRequest), eq(_routingResult),
-                                                 exFromFilterCapture.capture(), anyMap())).thenReturn(filterResponseData);
+         _responseHandler.buildExceptionResponseData(eq(_restRequest), eq(_routingResult),
+             exFromFilterCapture.capture(), anyMap())).thenReturn(filterResponseData);
     when(_responseHandler.buildPartialResponse(_routingResult, filterResponseData)).thenReturn(partialFilterErrorResponse);
     when(_responseHandler.buildRestException(exFromFilter, partialFilterErrorResponse)).thenReturn(finalRestException);
     // Mock filter behavior.
@@ -552,8 +568,8 @@ public class TestRestLiCallback
     // Verify.
     verify(_responseHandler).buildPartialResponse(_routingResult, filterResponseData);
     verify(_responseHandler).buildRestLiResponseData(_restRequest, _routingResult, result);
-    verify(_responseHandler).buildErrorResponseData(eq(_restRequest), eq(_routingResult),
-                                                    exFromFilterCapture.capture(), anyMap());
+    verify(_responseHandler).buildExceptionResponseData(eq(_restRequest), eq(_routingResult),
+        exFromFilterCapture.capture(), anyMap());
     verify(_responseHandler).buildPartialResponse(_routingResult, filterResponseData);
     verify(_responseHandler).buildRestException(exFromFilter, partialFilterErrorResponse);
     verify(_callback).onError(finalRestException, executionReport);
@@ -576,7 +592,7 @@ public class TestRestLiCallback
   public void testOnErrorWithFiltersNotHandlingAppEx() throws Exception
   {
     Exception exFromApp = new RuntimeException("Runtime exception from app");
-    ErrorResponse appErrorResponse = new ErrorResponse().setStatus(404);
+    RestLiServiceException appException = new RestLiServiceException(HttpStatus.S_404_NOT_FOUND);
     RequestExecutionReport executionReport = new RequestExecutionReportBuilder().build();
     final Map<String, String> headersFromApp = Maps.newHashMap();
     headersFromApp.put("Key", "Input");
@@ -586,12 +602,12 @@ public class TestRestLiCallback
     AugmentedRestLiResponseData responseData =
         new AugmentedRestLiResponseData.Builder(ResourceMethod.GET).status(HttpStatus.S_404_NOT_FOUND)
                                                                    .headers(headersFromApp)
-                                                                   .errorResponse(appErrorResponse).build();
+                                                                   .serviceException(appException).build();
     PartialRestResponse partialResponse = new PartialRestResponse.Builder().build();
     ArgumentCaptor<RestLiServiceException> exCapture = ArgumentCaptor.forClass(RestLiServiceException.class);
     when(
-         _responseHandler.buildErrorResponseData(eq(_restRequest), eq(_routingResult), exCapture.capture(),
-                                                 anyMap())).thenReturn(responseData);
+         _responseHandler.buildExceptionResponseData(eq(_restRequest), eq(_routingResult), exCapture.capture(),
+             anyMap())).thenReturn(responseData);
     when(_responseHandler.buildPartialResponse(_routingResult, responseData)).thenReturn(partialResponse);
 
     // Mock the behavior of the first filter.
@@ -638,10 +654,10 @@ public class TestRestLiCallback
     assertEquals(HttpStatus.S_403_FORBIDDEN, responseData.getStatus());
     assertNull(responseData.getEntityResponse());
     assertTrue(responseData.isErrorResponse());
-    assertEquals(responseData.getErrorResponse(), appErrorResponse);
+    assertEquals(responseData.getServiceException(), appException);
     assertEquals(headersFromFilter, responseData.getHeaders());
-    verify(_responseHandler).buildErrorResponseData(eq(_restRequest), eq(_routingResult),
-                                                    exCapture.capture(), anyMap());
+    verify(_responseHandler).buildExceptionResponseData(eq(_restRequest), eq(_routingResult),
+        exCapture.capture(), anyMap());
     verify(_responseHandler).buildPartialResponse(_routingResult, responseData);
     verify(_responseHandler).buildRestException(exFromApp, partialResponse);
     verify(_callback).onError(restException, executionReport);
@@ -660,7 +676,7 @@ public class TestRestLiCallback
   public void testOnErrorWithFiltersSuccessfulyHandlingAppEx() throws Exception
   {
     Exception exFromApp = new RuntimeException("Runtime exception from app");
-    ErrorResponse appErrorResponse = new ErrorResponse().setStatus(404);
+    RestLiServiceException appException = new RestLiServiceException(HttpStatus.S_404_NOT_FOUND);
     RequestExecutionReport executionReport = new RequestExecutionReportBuilder().build();
     final Map<String, String> headersFromApp = Maps.newHashMap();
     headersFromApp.put("Key", "Input");
@@ -671,12 +687,12 @@ public class TestRestLiCallback
     AugmentedRestLiResponseData responseData =
         new AugmentedRestLiResponseData.Builder(ResourceMethod.GET).status(HttpStatus.S_404_NOT_FOUND)
                                                                    .headers(headersFromApp)
-                                                                   .errorResponse(appErrorResponse).build();
+                                                                   .serviceException(appException).build();
     PartialRestResponse partialResponse = new PartialRestResponse.Builder().build();
     ArgumentCaptor<RestLiServiceException> exCapture = ArgumentCaptor.forClass(RestLiServiceException.class);
     when(
-         _responseHandler.buildErrorResponseData(eq(_restRequest), eq(_routingResult), exCapture.capture(),
-                                                 anyMap())).thenReturn(responseData);
+         _responseHandler.buildExceptionResponseData(eq(_restRequest), eq(_routingResult), exCapture.capture(),
+             anyMap())).thenReturn(responseData);
     when(_responseHandler.buildPartialResponse(_routingResult, responseData)).thenReturn(partialResponse);
 
     // Mock the behavior of the first filter.
@@ -727,8 +743,8 @@ public class TestRestLiCallback
     assertEquals(HttpStatus.S_403_FORBIDDEN, responseData.getStatus());
     assertEquals(entityFromFilter, responseData.getEntityResponse());
     assertEquals(headersFromFilter, responseData.getHeaders());
-    verify(_responseHandler).buildErrorResponseData(eq(_restRequest), eq(_routingResult),
-                                                    exCapture.capture(), anyMap());
+    verify(_responseHandler).buildExceptionResponseData(eq(_restRequest), eq(_routingResult),
+        exCapture.capture(), anyMap());
     verify(_responseHandler).buildPartialResponse(_routingResult, responseData);
     verify(_responseHandler).buildResponse(_routingResult, partialResponse);
     verify(_callback).onSuccess(restResponse, executionReport);
@@ -749,17 +765,17 @@ public class TestRestLiCallback
     // App stuff.
     RestLiServiceException exFromApp = new RestLiServiceException(HttpStatus.S_404_NOT_FOUND, "App failure");
     RequestExecutionReport executionReport = new RequestExecutionReportBuilder().build();
-    ErrorResponse appErrorResponse = new ErrorResponse().setStatus(404);
+    RestLiServiceException appException = new RestLiServiceException(HttpStatus.S_404_NOT_FOUND);
     AugmentedRestLiResponseData responseAppData =
         new AugmentedRestLiResponseData.Builder(ResourceMethod.GET).status(HttpStatus.S_404_NOT_FOUND)
-                                                                   .errorResponse(appErrorResponse).build();
+                                                                   .serviceException(appException).build();
 
     // Filter stuff.
     final Exception exFromFirstFilter = new RuntimeException("Runtime exception from first filter");
-    ErrorResponse filterErrorResponse = new ErrorResponse().setStatus(500);
+    RestLiServiceException filterException = new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR);
     AugmentedRestLiResponseData responseFilterData =
         new AugmentedRestLiResponseData.Builder(ResourceMethod.GET).status(HttpStatus.S_500_INTERNAL_SERVER_ERROR)
-                                                                   .errorResponse(filterErrorResponse).build();
+                                                                   .serviceException(filterException).build();
 
     PartialRestResponse partialResponse = new PartialRestResponse.Builder().build();
     ArgumentCaptor<RestLiServiceException> wrappedExCapture = ArgumentCaptor.forClass(RestLiServiceException.class);
@@ -767,8 +783,8 @@ public class TestRestLiCallback
 
     // Setup.
     when(
-         _responseHandler.buildErrorResponseData(eq(_restRequest), eq(_routingResult),
-                                                 wrappedExCapture.capture(), anyMap())).thenReturn(responseAppData)
+         _responseHandler.buildExceptionResponseData(eq(_restRequest), eq(_routingResult),
+             wrappedExCapture.capture(), anyMap())).thenReturn(responseAppData)
                                                                                        .thenReturn(responseFilterData);
     when(_responseHandler.buildPartialResponse(_routingResult, responseFilterData)).thenReturn(partialResponse);
     when(_restRequest.getHeaders()).thenReturn(null);
@@ -802,8 +818,8 @@ public class TestRestLiCallback
     _twoFilterRestLiCallback.onError(exFromApp, executionReport);
 
     // Verify.
-    verify(_responseHandler, times(2)).buildErrorResponseData(eq(_restRequest), eq(_routingResult),
-                                                              wrappedExCapture.capture(), anyMap());
+    verify(_responseHandler, times(2)).buildExceptionResponseData(eq(_restRequest), eq(_routingResult),
+        wrappedExCapture.capture(), anyMap());
     verify(_responseHandler).buildRestException(exFromFirstFilter, partialResponse);
     verify(_responseHandler).buildPartialResponse(_routingResult, responseFilterData);
     verify(_callback).onError(restException, executionReport);
@@ -825,36 +841,56 @@ public class TestRestLiCallback
     assertEquals(exFromFirstFilter, restliEx.getCause());
   }
 
+  @DataProvider(name = "provideResponseEntities")
+  private Object[][] provideResponseEntities()
+  {
+    List<Foo> fooCollection = new ArrayList<Foo>();
+    fooCollection.add(Foo.createFoo("Key", "One"));
+    fooCollection.add(Foo.createFoo("Key", "Two"));
+    fooCollection.add(Foo.createFoo("Key", "Three"));
+    Map<String, Foo> fooBatch = new HashMap<String, Foo>();
+    fooBatch.put("batchKey1", Foo.createFoo("Key", "One"));
+    fooBatch.put("batchKey2", Foo.createFoo("Key", "Two"));
+    return new Object[][] {
+        { ResourceMethod.GET, Foo.createFoo("Key", "One") },
+        { ResourceMethod.FINDER, fooCollection },
+        { ResourceMethod.BATCH_GET, fooBatch }
+    };
+  }
 
   @SuppressWarnings("unchecked")
-  @Test
-  public void testOnErrorWithFiltersExceptionFromFirstFilterSecondFilterHandles() throws Exception
+  @Test(dataProvider = "provideResponseEntities")
+  public void testOnErrorWithFiltersExceptionFromFirstFilterSecondFilterHandles(ResourceMethod resourceMethod, final Object entityFromFilter2) throws Exception
   {
     // App stuff.
     RestLiServiceException exFromApp = new RestLiServiceException(HttpStatus.S_404_NOT_FOUND, "App failure");
     RequestExecutionReport executionReport = new RequestExecutionReportBuilder().build();
-    ErrorResponse appErrorResponse = new ErrorResponse().setStatus(404);
+    RestLiServiceException appException = new RestLiServiceException(HttpStatus.S_404_NOT_FOUND);
     AugmentedRestLiResponseData responseAppData =
-        new AugmentedRestLiResponseData.Builder(ResourceMethod.GET).status(HttpStatus.S_404_NOT_FOUND)
-                                                                   .errorResponse(appErrorResponse).build();
+        new AugmentedRestLiResponseData.Builder(resourceMethod).status(HttpStatus.S_404_NOT_FOUND)
+                                                                   .serviceException(appException).build();
 
     // Filter stuff.
     final Exception exFromFirstFilter = new RuntimeException("Runtime exception from first filter");
-    ErrorResponse filterErrorResponse = new ErrorResponse().setStatus(500);
+    RestLiServiceException filterException = new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR);
+    final Map<String, String> headersFromFilter = Maps.newHashMap();
+    headersFromFilter.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, AllProtocolVersions.LATEST_PROTOCOL_VERSION.toString());
+    String errorResponseHeaderName = HeaderUtil.getErrorResponseHeaderName(AllProtocolVersions.LATEST_PROTOCOL_VERSION);
+    headersFromFilter.put(errorResponseHeaderName, RestConstants.HEADER_VALUE_ERROR);
     AugmentedRestLiResponseData responseFilterData =
-        new AugmentedRestLiResponseData.Builder(ResourceMethod.GET).status(HttpStatus.S_500_INTERNAL_SERVER_ERROR)
-                                                                   .errorResponse(filterErrorResponse).build();
-    final RecordTemplate entityFromFilter2 = Foo.createFoo("Key", "Two");
+        new AugmentedRestLiResponseData.Builder(resourceMethod).status(HttpStatus.S_500_INTERNAL_SERVER_ERROR)
+                                                                   .headers(headersFromFilter).serviceException(filterException).build();
 
     PartialRestResponse partialResponse = new PartialRestResponse.Builder().build();
     ArgumentCaptor<RestLiServiceException> wrappedExCapture = ArgumentCaptor.forClass(RestLiServiceException.class);
     RestResponse restResponse = new RestResponseBuilder().build();
-
+    final String customHeader = "Custom-Header";
+    final String customHeaderValue = "CustomValue";
 
     // Setup.
     when(
-         _responseHandler.buildErrorResponseData(eq(_restRequest), eq(_routingResult),
-                                                 wrappedExCapture.capture(), anyMap())).thenReturn(responseAppData)
+         _responseHandler.buildExceptionResponseData(eq(_restRequest), eq(_routingResult),
+             wrappedExCapture.capture(), anyMap())).thenReturn(responseAppData)
                                                                                        .thenReturn(responseFilterData);
     when(_responseHandler.buildPartialResponse(_routingResult, responseFilterData)).thenReturn(partialResponse);
     when(_responseHandler.buildResponse(_routingResult, partialResponse)).thenReturn(restResponse);
@@ -873,15 +909,27 @@ public class TestRestLiCallback
         // filter. Verify incoming data.
         assertEquals(context.getHttpStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR);
         assertNull(context.getResponseData().getEntityResponse());
-        assertTrue(context.getResponseHeaders().isEmpty());
+        assertEquals(context.getResponseHeaders(), headersFromFilter);
         assertTrue(context.getResponseData().isErrorResponse());
 
         // Modify data.
+        context.getResponseHeaders().put(customHeader, customHeaderValue);
         context.setHttpStatus(HttpStatus.S_402_PAYMENT_REQUIRED);
         // The second filter does handles the exception thrown by the first filter (i.e.) clears the
         // error response corresponding to the exception from the first
         // filter.
-        context.getResponseData().setEntityResponse(entityFromFilter2);
+        if (entityFromFilter2 instanceof RecordTemplate)
+        {
+          context.getResponseData().setEntityResponse((RecordTemplate) entityFromFilter2);
+        }
+        else if (entityFromFilter2 instanceof List)
+        {
+          context.getResponseData().setCollectionResponse((List<? extends RecordTemplate>) entityFromFilter2);
+        }
+        else
+        {
+          context.getResponseData().setBatchKeyResponseMap((Map<?, ? extends RecordTemplate>) entityFromFilter2);
+        }
         return null;
       }
     }).when(_filter).onResponse(eq(_filterRequestContext), any(FilterResponseContext.class));
@@ -890,8 +938,8 @@ public class TestRestLiCallback
     _twoFilterRestLiCallback.onError(exFromApp, executionReport);
 
     // Verify.
-    verify(_responseHandler, times(2)).buildErrorResponseData(eq(_restRequest), eq(_routingResult),
-                                                              wrappedExCapture.capture(), anyMap());
+    verify(_responseHandler, times(2)).buildExceptionResponseData(eq(_restRequest), eq(_routingResult),
+        wrappedExCapture.capture(), anyMap());
     verify(_responseHandler).buildPartialResponse(_routingResult, responseFilterData);
     verify(_responseHandler).buildResponse(_routingResult, partialResponse);
     verify(_callback).onSuccess(restResponse, executionReport);
@@ -900,8 +948,24 @@ public class TestRestLiCallback
     verifyNoMoreInteractions(_restRequest, _responseHandler, _callback);
     assertNotNull(responseFilterData);
     assertEquals(HttpStatus.S_402_PAYMENT_REQUIRED, responseFilterData.getStatus());
-    assertTrue(responseFilterData.getHeaders().isEmpty());
-    assertEquals(responseFilterData.getEntityResponse(), entityFromFilter2);
+    // Only the error header should have been cleared.
+    assertFalse(responseFilterData.getHeaders().containsKey(errorResponseHeaderName));
+    assertEquals(responseFilterData.getHeaders().get(customHeader), customHeaderValue);
+    if (entityFromFilter2 instanceof RecordTemplate)
+    {
+      assertTrue(responseFilterData.isEntityResponse());
+      assertEquals(responseFilterData.getEntityResponse(), entityFromFilter2);
+    }
+    else if (entityFromFilter2 instanceof List)
+    {
+      assertTrue(responseFilterData.isCollectionResponse());
+      assertEquals(responseFilterData.getCollectionResponse(), entityFromFilter2);
+    }
+    else
+    {
+      assertTrue(responseFilterData.isBatchResponse());
+      assertEquals(responseFilterData.getBatchResponseMap(), entityFromFilter2);
+    }
     assertFalse(responseFilterData.isErrorResponse());
     RestLiServiceException restliEx = wrappedExCapture.getAllValues().get(0);
     assertNotNull(restliEx);
@@ -935,8 +999,8 @@ public class TestRestLiCallback
 
     // Setup.
     when(
-         _responseHandler.buildErrorResponseData(eq(_restRequest), eq(_routingResult),
-                                                 wrappedExCapture.capture(), anyMap())).thenReturn(responseAppData)
+         _responseHandler.buildExceptionResponseData(eq(_restRequest), eq(_routingResult),
+             wrappedExCapture.capture(), anyMap())).thenReturn(responseAppData)
                                                                                        .thenReturn(responseFilterData);
     when(_responseHandler.buildPartialResponse(_routingResult, responseFilterData)).thenReturn(partialResponse);
     when(_restRequest.getHeaders()).thenReturn(null);
@@ -965,8 +1029,8 @@ public class TestRestLiCallback
     _twoFilterRestLiCallback.onError(exFromApp, executionReport);
 
     // Verify.
-    verify(_responseHandler, times(2)).buildErrorResponseData(eq(_restRequest), eq(_routingResult),
-                                                              wrappedExCapture.capture(), anyMap());
+    verify(_responseHandler, times(2)).buildExceptionResponseData(eq(_restRequest), eq(_routingResult),
+        wrappedExCapture.capture(), anyMap());
     verify(_responseHandler).buildPartialResponse(_routingResult, responseFilterData);
     verify(_responseHandler).buildRestException(exFromSecondFilter, partialResponse);
     verify(_callback).onError(restException, executionReport);
@@ -1016,6 +1080,59 @@ public class TestRestLiCallback
     assertEquals(responseData, ((FilterResponseContextInternal) context).getAugmentedRestLiResponseData());
     ((FilterResponseContextInternal) context).setAugmentedRestLiResponseData(updatedResponseData);
     assertEquals(updatedResponseData, ((FilterResponseContextInternal) context).getAugmentedRestLiResponseData());
+  }
+
+  @DataProvider(name = "provideExceptionsAndStatuses")
+  private Object[][] provideExceptionsAndStatuses()
+  {
+    return new Object[][] {
+        { new RuntimeException("Test runtime exception"), HttpStatus.S_500_INTERNAL_SERVER_ERROR },
+        { new RoutingException("Test routing exception", 404), HttpStatus.S_404_NOT_FOUND},
+        { new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, "Test service exception"), HttpStatus.S_400_BAD_REQUEST },
+        { new RestLiServiceException(HttpStatus.S_403_FORBIDDEN, "Wrapped runtime exception with custom status",
+            new RuntimeException("Original cause")), HttpStatus.S_403_FORBIDDEN }
+    };
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test(dataProvider = "provideExceptionsAndStatuses")
+  public void testConvertExceptionToRestLiResponseData(Exception e, HttpStatus status)
+  {
+    RestLiServiceException serviceException;
+    if (e instanceof RestLiServiceException)
+    {
+      serviceException = (RestLiServiceException) e;
+    }
+    else
+    {
+      serviceException = new RestLiServiceException(status, e);
+    }
+    AugmentedRestLiResponseData responseData = new AugmentedRestLiResponseData.Builder(ResourceMethod.GET)
+        .serviceException(serviceException).status(status).build();
+    ArgumentCaptor<RestLiServiceException> exceptionArgumentCaptor = ArgumentCaptor.forClass(RestLiServiceException.class);
+
+    // Setup.
+    when(_responseHandler.buildExceptionResponseData(eq(_restRequest), eq(_routingResult), exceptionArgumentCaptor.capture(),
+        anyMap())).thenReturn(responseData);
+    when(_restRequest.getHeaders()).thenReturn(null);
+
+    // Invoke.
+    AugmentedRestLiResponseData resultData = _noFilterRestLiCallback.convertExceptionToRestLiResponseData(e);
+
+    // Verify.
+    verify(_responseHandler).buildExceptionResponseData(eq(_restRequest), eq(_routingResult), exceptionArgumentCaptor.capture(),
+        anyMap());
+    verify(_restRequest).getHeaders();
+    verifyNoMoreInteractions(_responseHandler, _restRequest);
+    verifyZeroInteractions(_routingResult, _callback);
+    // RestLiCallback should pass the original exception to the response handler.
+    RestLiServiceException exceptionArgument = exceptionArgumentCaptor.getValue();
+    assertTrue(exceptionArgument.equals(e) || exceptionArgument.getCause().equals(e));
+    assertEquals(exceptionArgument.getStatus(), status);
+    // The end result should also contain the original exception.
+    assertTrue(resultData.isErrorResponse());
+    assertTrue(resultData.getServiceException().equals(e) || resultData.getServiceException().getCause().equals(e));
+    assertEquals(resultData.getServiceException().getStatus(), status);
   }
 
   private static class Foo extends RecordTemplate

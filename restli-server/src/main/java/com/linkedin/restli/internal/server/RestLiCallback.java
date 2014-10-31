@@ -159,7 +159,8 @@ public class RestLiCallback<T> implements RequestExecutionCallback<T>
     return _responseHandler.buildRestException(e, partialResponse);
   }
 
-  private AugmentedRestLiResponseData convertExceptionToRestLiResponseData(Throwable e)
+  /* Package private for testing purposes */
+  AugmentedRestLiResponseData convertExceptionToRestLiResponseData(Throwable e)
   {
     RestLiServiceException restLiServiceException;
     if (e instanceof RestLiServiceException)
@@ -185,7 +186,7 @@ public class RestLiCallback<T> implements RequestExecutionCallback<T>
     headers.put(ProtocolVersionUtil.getProtocolVersionHeaderName(requestHeaders),
                 ProtocolVersionUtil.extractProtocolVersion(requestHeaders).toString());
     headers.put(HeaderUtil.getErrorResponseHeaderName(requestHeaders), RestConstants.HEADER_VALUE_ERROR);
-    return _responseHandler.buildErrorResponseData(_request, _method, restLiServiceException, headers);
+    return _responseHandler.buildExceptionResponseData(_request, _method, restLiServiceException, headers);
   }
 
   private void invokeResponseFilters(final FilterResponseContextInternal responseContext, Throwable lastException) throws Throwable

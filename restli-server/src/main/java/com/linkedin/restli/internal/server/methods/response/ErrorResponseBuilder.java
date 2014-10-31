@@ -107,16 +107,16 @@ public final class ErrorResponseBuilder implements RestLiResponseBuilder
   @Override
   public PartialRestResponse buildResponse(RoutingResult routingResult, AugmentedRestLiResponseData responseData)
   {
+    ErrorResponse errorResponse = buildErrorResponse(responseData.getServiceException());
     return new PartialRestResponse.Builder().headers(responseData.getHeaders()).status(responseData.getStatus())
-                                            .entity(responseData.getErrorResponse()).build();
+                                            .entity(errorResponse).build();
   }
 
   @Override
   public AugmentedRestLiResponseData buildRestLiResponseData(RestRequest request, RoutingResult routingResult,
                                                              Object object, Map<String, String> headers)
   {
-    RestLiServiceException result = (RestLiServiceException) object;
-    ErrorResponse er = buildErrorResponse(result);
+    RestLiServiceException exceptionResult = (RestLiServiceException) object;
     if (_errorResponseFormat.showHeaders())
     {
       final ProtocolVersion protocolVersion = ProtocolVersionUtil.extractProtocolVersion(headers);
@@ -131,7 +131,7 @@ public final class ErrorResponseBuilder implements RestLiResponseBuilder
     {
       type = null;
     }
-    return new AugmentedRestLiResponseData.Builder(type).headers(headers).status(result.getStatus()).errorResponse(er)
-                                                        .build();
+    return new AugmentedRestLiResponseData.Builder(type).headers(headers).status(exceptionResult.getStatus()).serviceException(exceptionResult)
+        .build();
   }
 }

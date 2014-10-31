@@ -19,11 +19,12 @@ package com.linkedin.restli.internal.server;
 
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.CollectionMetadata;
-import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiResponseDataException;
+import com.linkedin.restli.server.RestLiServiceException;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -57,7 +58,7 @@ import static com.linkedin.restli.common.ResourceMethod.UPDATE;
 public class AugmentedRestLiResponseData implements RestLiResponseData
 {
   private RecordTemplate _entity;
-  private ErrorResponse _errorResponse;
+  private RestLiServiceException _serviceException;
   private List<? extends RecordTemplate> _entities;
   private Map<?, ? extends RecordTemplate> _keyEntityMap;
   private HttpStatus _status;
@@ -68,7 +69,7 @@ public class AugmentedRestLiResponseData implements RestLiResponseData
 
   private AugmentedRestLiResponseData(ResponseType responseType,
                                       RecordTemplate entity,
-                                      ErrorResponse errorResponse,
+                                      RestLiServiceException serviceException,
                                       List<? extends RecordTemplate> entities,
                                       CollectionMetadata paging,
                                       RecordTemplate metadata,
@@ -78,7 +79,7 @@ public class AugmentedRestLiResponseData implements RestLiResponseData
   {
     _responseType = responseType;
     _entity = entity;
-    _errorResponse = errorResponse;
+    _serviceException = serviceException;
     _entities = entities;
     _keyEntityMap = keyEntityMap;
     _status = status;
@@ -108,7 +109,7 @@ public class AugmentedRestLiResponseData implements RestLiResponseData
   @Override
   public boolean isErrorResponse()
   {
-    return _errorResponse != null;
+    return _serviceException != null;
   }
 
   @Override
@@ -122,13 +123,15 @@ public class AugmentedRestLiResponseData implements RestLiResponseData
   {
     _responseType.validateResponseData(entity);
     _entity = entity;
-    _errorResponse = null;
+    _entities = null;
+    _keyEntityMap = null;
+    clearServiceException();
   }
 
   @Override
-  public ErrorResponse getErrorResponse()
+  public RestLiServiceException getServiceException()
   {
-    return _errorResponse;
+    return _serviceException;
   }
 
   @Override
@@ -180,7 +183,9 @@ public class AugmentedRestLiResponseData implements RestLiResponseData
   {
     _responseType.validateResponseData(responseEntities);
     _entities = responseEntities;
-    _errorResponse = null;
+    _entity = null;
+    _keyEntityMap = null;
+    clearServiceException();
   }
 
   @Override
@@ -188,7 +193,15 @@ public class AugmentedRestLiResponseData implements RestLiResponseData
   {
     _responseType.validateResponseData(batchEntityMap);
     _keyEntityMap = batchEntityMap;
-    _errorResponse = null;
+    _entity = null;
+    _entities = null;
+    clearServiceException();
+  }
+
+  private void clearServiceException()
+  {
+    _serviceException = null;
+    _headers.remove(HeaderUtil.getErrorResponseHeaderName(_headers));
   }
 
   public HttpStatus getStatus()
@@ -209,7 +222,7 @@ public class AugmentedRestLiResponseData implements RestLiResponseData
   public static class Builder
   {
     private RecordTemplate _entity;
-    private ErrorResponse _errorResponse;
+    private RestLiServiceException _serviceException;
     private List<? extends RecordTemplate> _entities;
     private Map<?, ? extends RecordTemplate> _keyEntityMap;
     private HttpStatus _status;
@@ -279,9 +292,9 @@ public class AugmentedRestLiResponseData implements RestLiResponseData
       return this;
     }
 
-    public Builder errorResponse(ErrorResponse errorResponse)
+    public Builder serviceException(RestLiServiceException serviceException)
     {
-      _errorResponse = errorResponse;
+      _serviceException = serviceException;
       return this;
     }
 
@@ -315,7 +328,7 @@ public class AugmentedRestLiResponseData implements RestLiResponseData
 
     public AugmentedRestLiResponseData build()
     {
-      return new AugmentedRestLiResponseData(_responseType, _entity, _errorResponse, _entities,
+      return new AugmentedRestLiResponseData(_responseType, _entity, _serviceException, _entities,
                                              _collectionResponsePaging, _collectionMetadata, _keyEntityMap, _status,
                                              _headers);
     }

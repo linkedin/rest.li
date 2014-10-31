@@ -33,7 +33,6 @@ import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.client.response.CreateResponse;
 import com.linkedin.restli.common.EmptyRecord;
-import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.ResourceMethod;
@@ -50,6 +49,7 @@ import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsTaskBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsTaskRequestBuilders;
 import com.linkedin.restli.server.RestLiServiceException;
+import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.FilterResponseContext;
 import com.linkedin.restli.server.filter.RequestFilter;
@@ -57,9 +57,12 @@ import com.linkedin.restli.server.filter.ResponseFilter;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -72,6 +75,7 @@ import org.testng.annotations.Test;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import com.google.common.collect.Sets;
 
 import static com.linkedin.restli.examples.TestConstants.FORCE_USE_NEXT_OPTIONS;
 
@@ -153,20 +157,17 @@ public class TestFilters extends RestLiIntegrationTest
    * b. If the tone of the outgoing greeting from the resource is insulting, the filter modifies it
    * to sincere.
    *
-   * @param builders
-   *          Type of request builder.
-   * @param tone
-   *          Tone of the greeting to be created.
-   * @param responseFilter
-   *          flag indicating whether or not the response filter is to be hooked up. NOTE: The
-   *          request filter is always hooked up.
-   * @throws Exception
-   *           If anything unexpected happens.
+   * @param builders type of request builder.
+   * @param tone tone of the greeting to be created.
+   * @param responseFilter flag indicating whether or not the response filter is to be hooked up. NOTE: The
+   *        request filter is always hooked up.
+   * @param responseFilterException the exception the response filter will throw.
+   * @throws Exception if anything unexpected happens.
    */
   @Test(dataProvider = "requestBuilderDataProvider")
-  public void testGetOldBuilders(RootBuilderWrapper<Long, Greeting> builders, Tone tone, boolean responseFilter) throws Exception
+  public void testGetOldBuilders(RootBuilderWrapper<Long, Greeting> builders, Tone tone, boolean responseFilter, Exception responseFilterException) throws Exception
   {
-    setupFilters(responseFilter);
+    setupFilters(responseFilter, responseFilterException);
     Greeting greeting = generateTestGreeting("Test greeting.....", tone);
     Long createdId = null;
     try
@@ -262,7 +263,7 @@ public class TestFilters extends RestLiIntegrationTest
     }
   }
 
-  private void setupFilters(boolean responseFilter) throws IOException
+  private void setupFilters(boolean responseFilter, final Exception responseFilterException) throws IOException
   {
     reset(_requestFilter);
     final Integer spValue = new Integer(100);
@@ -322,12 +323,10 @@ public class TestFilters extends RestLiIntegrationTest
               responseContext.getResponseData().setEntityResponse(greeting);
             }
           }
-          ErrorResponse errorResponse = responseContext.getResponseData().getErrorResponse();
-          if (errorResponse != null && requestContext.getMethodType() == ResourceMethod.CREATE
+          if (responseContext.getResponseData().isErrorResponse() && requestContext.getMethodType() == ResourceMethod.CREATE
               && responseContext.getHttpStatus() == REQ_FILTER_ERROR_STATUS)
           {
-            errorResponse.setMessage(RESP_FILTER_ERROR_MESSAGE);
-            responseContext.setHttpStatus(RESP_FILTER_ERROR_STATUS);
+            throw responseFilterException;
           }
           return null;
         }
@@ -347,123 +346,64 @@ public class TestFilters extends RestLiIntegrationTest
     return toneMapper.inverse().get(outputTone);
   }
 
+  private Object[][] to2DArray(Set<List<Object>> objectSet)
+  {
+    Object[][] result = new Object[objectSet.size()][];
+    int i = 0;
+    for (List<Object> objects : objectSet)
+    {
+      result[i] = objects.toArray();
+      i++;
+    }
+    return result;
+  }
+
+  @SuppressWarnings("unchecked")
   @DataProvider
   private Object[][] requestBuilderDataProvider()
   {
-    return new Object[][] {
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseBuilders()), Tone.FRIENDLY, false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders()), Tone.FRIENDLY, false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackBuilders()), Tone.FRIENDLY, false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackRequestBuilders()), Tone.FRIENDLY, false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxBuilders()), Tone.FRIENDLY, false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxRequestBuilders()), Tone.FRIENDLY, false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskBuilders()), Tone.FRIENDLY, false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskRequestBuilders()), Tone.FRIENDLY, false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()), Tone.INSULTING, false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()), Tone.INSULTING, false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseBuilders()), Tone.INSULTING, false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders()), Tone.INSULTING, false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackBuilders()), Tone.INSULTING, false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackRequestBuilders()), Tone.INSULTING, false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxBuilders()), Tone.INSULTING, false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxRequestBuilders()), Tone.INSULTING, false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskBuilders()), Tone.INSULTING, false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskRequestBuilders()), Tone.INSULTING, false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()), Tone.FRIENDLY, true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()), Tone.FRIENDLY, true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseBuilders()), Tone.FRIENDLY, true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders()), Tone.FRIENDLY, true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackBuilders()), Tone.FRIENDLY, true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackRequestBuilders()), Tone.FRIENDLY, true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxBuilders()), Tone.FRIENDLY, true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxRequestBuilders()), Tone.FRIENDLY, true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskBuilders()), Tone.FRIENDLY, true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskRequestBuilders()), Tone.FRIENDLY, true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()), Tone.INSULTING, true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()), Tone.INSULTING, true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseBuilders()), Tone.INSULTING, true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders()), Tone.INSULTING, true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackBuilders()), Tone.INSULTING, true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackRequestBuilders()), Tone.INSULTING, true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxBuilders()), Tone.INSULTING, true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxRequestBuilders()), Tone.INSULTING, true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskBuilders()), Tone.INSULTING, true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskRequestBuilders()), Tone.INSULTING, true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(FORCE_USE_NEXT_OPTIONS)), Tone.FRIENDLY, false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(FORCE_USE_NEXT_OPTIONS)), Tone.FRIENDLY,
-            false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseBuilders(FORCE_USE_NEXT_OPTIONS)), Tone.FRIENDLY,
-            false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders(FORCE_USE_NEXT_OPTIONS)),
-            Tone.FRIENDLY, false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackBuilders(FORCE_USE_NEXT_OPTIONS)), Tone.FRIENDLY,
-            false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackRequestBuilders(FORCE_USE_NEXT_OPTIONS)),
-            Tone.FRIENDLY, false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxBuilders(FORCE_USE_NEXT_OPTIONS)),
-            Tone.FRIENDLY, false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxRequestBuilders(FORCE_USE_NEXT_OPTIONS)),
-            Tone.FRIENDLY, false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskBuilders(FORCE_USE_NEXT_OPTIONS)), Tone.FRIENDLY,
-            false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskRequestBuilders(FORCE_USE_NEXT_OPTIONS)),
-            Tone.FRIENDLY, false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(FORCE_USE_NEXT_OPTIONS)), Tone.INSULTING, false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(FORCE_USE_NEXT_OPTIONS)), Tone.INSULTING,
-            false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseBuilders(FORCE_USE_NEXT_OPTIONS)), Tone.INSULTING,
-            false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders(FORCE_USE_NEXT_OPTIONS)),
-            Tone.INSULTING, false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackBuilders(FORCE_USE_NEXT_OPTIONS)),
-            Tone.INSULTING, false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackRequestBuilders(FORCE_USE_NEXT_OPTIONS)),
-            Tone.INSULTING, false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxBuilders(FORCE_USE_NEXT_OPTIONS)),
-            Tone.INSULTING, false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxRequestBuilders(FORCE_USE_NEXT_OPTIONS)),
-            Tone.INSULTING, false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskBuilders(FORCE_USE_NEXT_OPTIONS)), Tone.INSULTING,
-            false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskRequestBuilders(FORCE_USE_NEXT_OPTIONS)),
-            Tone.INSULTING, false },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(FORCE_USE_NEXT_OPTIONS)), Tone.FRIENDLY, true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(FORCE_USE_NEXT_OPTIONS)), Tone.FRIENDLY,
-            true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseBuilders(FORCE_USE_NEXT_OPTIONS)), Tone.FRIENDLY,
-            true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders(FORCE_USE_NEXT_OPTIONS)),
-            Tone.FRIENDLY, true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackBuilders(FORCE_USE_NEXT_OPTIONS)), Tone.FRIENDLY,
-            true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackRequestBuilders(FORCE_USE_NEXT_OPTIONS)),
-            Tone.FRIENDLY, true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxBuilders(FORCE_USE_NEXT_OPTIONS)),
-            Tone.FRIENDLY, true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxRequestBuilders(FORCE_USE_NEXT_OPTIONS)),
-            Tone.FRIENDLY, true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskBuilders(FORCE_USE_NEXT_OPTIONS)), Tone.FRIENDLY,
-            true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskRequestBuilders(FORCE_USE_NEXT_OPTIONS)),
-            Tone.FRIENDLY, true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(FORCE_USE_NEXT_OPTIONS)), Tone.INSULTING, true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(FORCE_USE_NEXT_OPTIONS)), Tone.INSULTING,
-            true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseBuilders(FORCE_USE_NEXT_OPTIONS)), Tone.INSULTING,
-            true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders(FORCE_USE_NEXT_OPTIONS)),
-            Tone.INSULTING, true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackBuilders(FORCE_USE_NEXT_OPTIONS)),
-            Tone.INSULTING, true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackRequestBuilders(FORCE_USE_NEXT_OPTIONS)),
-            Tone.INSULTING, true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxBuilders(FORCE_USE_NEXT_OPTIONS)),
-            Tone.INSULTING, true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxRequestBuilders(FORCE_USE_NEXT_OPTIONS)),
-            Tone.INSULTING, true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskBuilders(FORCE_USE_NEXT_OPTIONS)), Tone.INSULTING,
-            true },
-        { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskRequestBuilders(FORCE_USE_NEXT_OPTIONS)),
-            Tone.INSULTING, true }};
+    Object[] builders = new Object[]{
+        new GreetingsBuilders(),
+        new GreetingsRequestBuilders(),
+        new GreetingsPromiseBuilders(),
+        new GreetingsPromiseRequestBuilders(),
+        new GreetingsCallbackBuilders(),
+        new GreetingsCallbackRequestBuilders(),
+        new GreetingsPromiseCtxBuilders(),
+        new GreetingsPromiseCtxRequestBuilders(),
+        new GreetingsTaskBuilders(),
+        new GreetingsTaskRequestBuilders(),
+        new GreetingsBuilders(FORCE_USE_NEXT_OPTIONS),
+        new GreetingsRequestBuilders(FORCE_USE_NEXT_OPTIONS),
+        new GreetingsPromiseBuilders(FORCE_USE_NEXT_OPTIONS),
+        new GreetingsPromiseRequestBuilders(FORCE_USE_NEXT_OPTIONS),
+        new GreetingsCallbackBuilders(FORCE_USE_NEXT_OPTIONS),
+        new GreetingsCallbackRequestBuilders(FORCE_USE_NEXT_OPTIONS),
+        new GreetingsPromiseCtxBuilders(FORCE_USE_NEXT_OPTIONS),
+        new GreetingsPromiseCtxRequestBuilders(FORCE_USE_NEXT_OPTIONS),
+        new GreetingsTaskBuilders(FORCE_USE_NEXT_OPTIONS),
+        new GreetingsTaskRequestBuilders(FORCE_USE_NEXT_OPTIONS)
+    };
+    Set<Object> builderWrapperSet = new HashSet<Object>();
+    for (Object builder : builders)
+    {
+      builderWrapperSet.add(new RootBuilderWrapper<Long, Greeting>(builder));
+    }
+    Set<Tone> toneSet = new HashSet<Tone>(Arrays.asList(Tone.FRIENDLY, Tone.INSULTING));
+    Set<Boolean> responseFilterSet = new HashSet<Boolean>(Arrays.asList(false, true));
+    Set<Exception> exceptionSet = new HashSet<Exception>(Arrays.asList(
+        new RestLiServiceException(RESP_FILTER_ERROR_STATUS, RESP_FILTER_ERROR_MESSAGE),
+        new RestLiServiceException(RESP_FILTER_ERROR_STATUS, RESP_FILTER_ERROR_MESSAGE, new RuntimeException("Original cause")),
+        new RoutingException(RESP_FILTER_ERROR_MESSAGE, RESP_FILTER_ERROR_STATUS.getCode())
+    ));
+    List<Set<? extends Object>> sets = Arrays.asList(builderWrapperSet, toneSet, responseFilterSet, exceptionSet);
+    Object[][] dataSources = to2DArray(Sets.cartesianProduct(sets));
+    // Sanity check for array dimensions.
+    assertEquals(dataSources.length, builderWrapperSet.size() * toneSet.size() * responseFilterSet.size() * exceptionSet.size());
+    for (int i = 0; i < dataSources.length; i++)
+    {
+      assertEquals(dataSources[i].length, sets.size());
+    }
+    return dataSources;
   }
 }

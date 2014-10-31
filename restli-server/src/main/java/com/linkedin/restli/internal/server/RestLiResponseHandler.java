@@ -235,10 +235,10 @@ public class RestLiResponseHandler
     return responseBuilder.buildRestLiResponseData(request, routingResult, responseObject, responseHeaders);
   }
 
-  public AugmentedRestLiResponseData buildErrorResponseData(final RestRequest request,
-                                                           final RoutingResult routingResult,
-                                                           final Object object,
-                                                           final Map<String, String> headers)
+  public AugmentedRestLiResponseData buildExceptionResponseData(final RestRequest request,
+                                                                final RoutingResult routingResult,
+                                                                final Object object,
+                                                                final Map<String, String> headers)
   {
     return _errorResponseBuilder.buildRestLiResponseData(request, routingResult, object, headers);
   }

@@ -1,5 +1,7 @@
 2.0.4
 -----
+(RB=387501)
+Pass the actual exception thrown by the resource (or a previous filter) to the rest.li response filters.
 
 2.0.3
 -----

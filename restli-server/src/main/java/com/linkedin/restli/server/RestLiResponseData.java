@@ -19,7 +19,6 @@ package com.linkedin.restli.server;
 
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.CollectionMetadata;
-import com.linkedin.restli.common.ErrorResponse;
 
 import java.util.List;
 import java.util.Map;
@@ -71,25 +70,23 @@ public interface RestLiResponseData
   /**
    * Set the response entity. This is permitted only for GET, ACTION, and CREATE method types.
    *
-   * @param entity
-   *          New value of the entity.
-   * @throws RestLiResponseDataException
-   *           is thrown if this method is invoked for any method types other than the
-   *           aforementioned ones.
+   * @param  entity new value of the entity.
+   * @throws RestLiResponseDataException if this method is invoked for any method types other than the
+   *         aforementioned ones.
    */
   void setEntityResponse(RecordTemplate entity) throws RestLiResponseDataException;
 
   /**
-   * Obtain the error response.
+   * Obtain the RestLiServiceException associated with the response data when the data is an error response.
    *
-   * @return the error response if one exists; else null.
+   * @return the RestLiServiceException if one exists; else null.
    */
-  ErrorResponse getErrorResponse();
+  RestLiServiceException getServiceException();
 
   /**
    * Obtain a mutable {@link List} of response entities.
    *
-   * @return List of response entities if they exists; else null.
+   * @return list of response entities if they exists; else null.
    */
   List<? extends RecordTemplate> getCollectionResponse();
 
@@ -97,30 +94,26 @@ public interface RestLiResponseData
    * Set collection response entities. This is permitted only for FINDER, GET_ALL, and BATCH_CREATE
    * method types.
    *
-   * @param entity
-   *          New value of collection response entity.
-   * @throws RestLiResponseDataException
-   *           is thrown if this method is invoked for any method types other than the
-   *           aforementioned ones.
+   * @param  responseEntities new value of collection response entities.
+   * @throws RestLiResponseDataException if this method is invoked for any method types other than the
+   *         aforementioned ones.
    */
   void setCollectionResponse(List<? extends RecordTemplate> responseEntities) throws RestLiResponseDataException;
 
   /**
-   * Get paganation info associated with collection response.
+   * Get pagination info associated with collection response.
    *
    * @return {@link CollectionMetadata}
    */
   CollectionMetadata getCollectionResponsePaging();
 
   /**
-   * Set paganation info associated with collection response. This is permitted only for FINDER and
+   * Set pagination info associated with collection response. This is permitted only for FINDER and
    * GET_ALL method types.
    *
-   * @param paging
-   *          {@link CollectionMetadata}
-   * @throws RestLiResponseDataException
-   *           is thrown if this method is invoked for any method types other than the
-   *           aforementioned ones.
+   * @param  paging {@link CollectionMetadata}
+   * @throws RestLiResponseDataException if this method is invoked for any method types other than the
+   *         aforementioned ones.
    */
   void setCollectionResponsePaging(CollectionMetadata paging) throws RestLiResponseDataException;
 
@@ -135,11 +128,9 @@ public interface RestLiResponseData
    * Set custom metadata to be associated with the collection response. This is permitted only for
    * FINDER and GET_ALL method types.
    *
-   * @param metadata
-   *          Custom metadata associated with the collection response.
-   * @throws RestLiResponseDataException
-   *           is thrown if this method is invoked for any method types other than the
-   *           aforementioned ones.
+   * @param  metadata custom metadata associated with the collection response.
+   * @throws RestLiResponseDataException if this method is invoked for any method types other than the
+   *         aforementioned ones.
    */
   void setCollectionResponseCustomMetadata(RecordTemplate metadata) throws RestLiResponseDataException;
 
@@ -154,11 +145,9 @@ public interface RestLiResponseData
    * Set batch response entities. This is permitted only for BATCH_GET, BATCH_UPDATE,
    * BATCH_PARTIAL_UPDATE, and BATCH_DELETE method types.
    *
-   * @param entity
-   *          New value of collection response entity.
-   * @throws RestLiResponseDataException
-   *           is thrown if this method is invoked for any method types other than the
-   *           aforementioned ones.
+   * @param  batchEntityMap new value of batch response entities.
+   * @throws RestLiResponseDataException if this method is invoked for any method types other than the
+   *         aforementioned ones.
    */
   void setBatchKeyResponseMap(Map<?, ? extends RecordTemplate> batchEntityMap) throws RestLiResponseDataException;
 }
