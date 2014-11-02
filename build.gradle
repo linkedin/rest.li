@@ -93,27 +93,29 @@ if (!project.ext.isDefaultEnvironment)
 allprojects {
   apply plugin: 'idea'
 
-  tasks.withType(Compile).all { Compile compile ->
+  tasks.withType(JavaCompile).all { JavaCompile compile ->
 
     if(!project.sourceCompatibility.isJava6Compatible()) // lower bound of java versions we support.
     {
       throw new GradleScriptException("Pegasus required Java 6 or later to build, current version: ${JavaVersion.current()}", null)
     }
-    else if(project.sourceCompatibility.isJava8Compatible()) // upper bound of java versions we test build against.  We still want to support them, but we don't fail on warnings.
+    // for all supported versions that we test build, fail the build if any compilation warnings are reported
+    compile.options.compilerArgs = ['-Xlint', '-Xlint:-path', '-Xlint:-static', '-Werror']
+  }
+
+  tasks.withType(Javadoc)
+  {
+    if (JavaVersion.current().isJava8Compatible())
     {
-      // '-Werror' intentionally removed for these java versions since we don't yet test build them.
-      compile.options.compilerArgs = ['-Xlint', '-Xlint:-path', '-Xlint:-static']
-    }
-    else
-    {
-      // for all supported versions that we test build, fail the build if any compilation warnings are reported
-      compile.options.compilerArgs = ['-Xlint', '-Xlint:-path', '-Xlint:-static', '-Werror']
+      //Disable the crazy super-strict doclint tool in Java 8
+      //noinspection SpellCheckingInspection
+      options.addStringOption('Xdoclint:none', '-quiet')
     }
   }
 }
 
 task wrapper(type: Wrapper) {
-  gradleVersion = '1.12'
+  gradleVersion = '2.1'
 }
 
 subprojects {

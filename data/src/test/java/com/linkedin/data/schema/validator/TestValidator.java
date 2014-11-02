@@ -754,6 +754,14 @@ public class TestValidator
       OrderEntry o = (OrderEntry) other;
       return _path.equals(o._path) && _validatorName.equals(o._validatorName);
     }
+
+    @Override
+    public int hashCode()
+    {
+      int result = _path.hashCode();
+      result = 31 * result + _validatorName.hashCode();
+      return result;
+    }
   }
 
   private static class OrderRelation

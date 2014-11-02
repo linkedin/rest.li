@@ -17,6 +17,7 @@
 package com.linkedin.restli.server.test;
 
 
+import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.DataCodec;
 import com.linkedin.data.codec.JacksonDataCodec;
@@ -58,6 +59,7 @@ import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
 import com.linkedin.restli.internal.server.util.RestUtils;
+import com.linkedin.restli.internal.testutils.URIDetails;
 import com.linkedin.restli.server.ActionResult;
 import com.linkedin.restli.server.BasicCollectionResult;
 import com.linkedin.restli.server.BatchCreateResult;
@@ -91,12 +93,7 @@ import org.testng.annotations.Test;
 
 import static com.linkedin.restli.server.test.RestLiTestHelper.buildResourceModel;
 import static com.linkedin.restli.server.test.RestLiTestHelper.doubleQuote;
-
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.*;
 
 
 /**
@@ -363,7 +360,13 @@ public class TestRestLiResponseHandler
                                      buildStatusList(5),
                                      acceptTypeData.acceptHeaders,
                                      protocolVersion);
-    checkCollectionResponse(response, 5, 0, 5, 1, null, null, "/test?count=5&start=5&someParam=foo", acceptTypeData);
+    //"/test?count=5&start=5&someParam=foo"
+    final Map<String, String> queryParamsMap3next = new HashMap<String, String>();
+    queryParamsMap3next.put("count", "5");
+    queryParamsMap3next.put("start", "5");
+    queryParamsMap3next.put("someParam", "foo");
+    final URIDetails expectedURIDetails3next = new URIDetails(protocolVersion, "/test", null, queryParamsMap3next, null);
+    checkCollectionResponse(response, 5, 0, 5, 1, null, null, expectedURIDetails3next, acceptTypeData);
 
     // #4 pagination: second page, has prev/ext
     response = invokeResponseHandler(baseUri + "&start=5&count=5",
@@ -371,8 +374,18 @@ public class TestRestLiResponseHandler
                                      buildStatusList(5),
                                      acceptTypeData.acceptHeaders,
                                      protocolVersion);
-    checkCollectionResponse(response, 5, 5, 5, 2, null, "/test?count=5&start=0&someParam=foo", "/test?count=5&start=10&someParam=foo", acceptTypeData);
-
+    //"/test?count=5&start=0&someParam=foo", "/test?count=5&start=10&someParam=foo",
+    final Map<String, String> queryParamsMap4prev = new HashMap<String, String>();
+    queryParamsMap4prev.put("count", "5");
+    queryParamsMap4prev.put("start", "0");
+    queryParamsMap4prev.put("someParam", "foo");
+    final URIDetails expectedURIDetails4prev = new URIDetails(protocolVersion, "/test", null, queryParamsMap4prev, null);
+    final Map<String, String> queryParamsMap4next = new HashMap<String, String>();
+    queryParamsMap4next.put("count", "5");
+    queryParamsMap4next.put("start", "10");
+    queryParamsMap4next.put("someParam", "foo");
+    final URIDetails expectedURIDetails4next = new URIDetails(protocolVersion, "/test", null, queryParamsMap4next, null);
+    checkCollectionResponse(response, 5, 5, 5, 2, null, expectedURIDetails4prev, expectedURIDetails4next, acceptTypeData);
 
     // #5 pagination:last page, has prev
     response = invokeResponseHandler(baseUri + "&start=10&count=5",
@@ -380,22 +393,44 @@ public class TestRestLiResponseHandler
                                      buildStatusList(4),
                                      acceptTypeData.acceptHeaders,
                                      protocolVersion);
-    checkCollectionResponse(response, 4, 10, 5, 1, null, "/test?count=5&start=5&someParam=foo", null, acceptTypeData);
+    //"/test?count=5&start=5&someParam=foo"
+    final Map<String, String> queryParamsMap5prev = new HashMap<String, String>();
+    queryParamsMap5prev.put("count", "5");
+    queryParamsMap5prev.put("start", "5");
+    queryParamsMap5prev.put("someParam", "foo");
+    final URIDetails expectedURIDetails5prev = new URIDetails(protocolVersion, "/test", null, queryParamsMap5prev, null);
+    checkCollectionResponse(response, 4, 10, 5, 1, null, expectedURIDetails5prev, null, acceptTypeData);
 
     response = invokeResponseHandler(baseUri + "&start=10&count=5",
                                      methodDescriptor,
                                      new BasicCollectionResult<Status>(buildStatusList(4), 15),
                                      acceptTypeData.acceptHeaders,
                                      protocolVersion);
-    checkCollectionResponse(response, 4, 10, 5, 2, 15, "/test?count=5&start=5&someParam=foo", "/test?count=5&start=14&someParam=foo", acceptTypeData);
+    //"/test?count=5&start=5&someParam=foo", "/test?count=5&start=14&someParam=foo"
+    final Map<String, String> queryParamsMap6prev = new HashMap<String, String>();
+    queryParamsMap6prev.put("count", "5");
+    queryParamsMap6prev.put("start", "5");
+    queryParamsMap6prev.put("someParam", "foo");
+    final URIDetails expectedURIDetails6prev = new URIDetails(protocolVersion, "/test", null, queryParamsMap6prev, null);
+    final Map<String, String> queryParamsMap6next = new HashMap<String, String>();
+    queryParamsMap6next.put("count", "5");
+    queryParamsMap6next.put("start", "14");
+    queryParamsMap6next.put("someParam", "foo");
+    final URIDetails expectedURIDetails6next = new URIDetails(protocolVersion, "/test", null, queryParamsMap6next, null);
+    checkCollectionResponse(response, 4, 10, 5, 2, 15, expectedURIDetails6prev, expectedURIDetails6next, acceptTypeData);
 
     response = invokeResponseHandler(baseUri + "&start=10&count=5",
                                      methodDescriptor,
                                      new BasicCollectionResult<Status>(buildStatusList(4), 14),
                                      acceptTypeData.acceptHeaders,
                                      protocolVersion);
-    checkCollectionResponse(response, 4, 10, 5, 1, 14, "/test?count=5&start=5&someParam=foo", null, acceptTypeData);
-
+    //"/test?count=5&start=5&someParam=foo"
+    final Map<String, String> queryParamsMap7prev = new HashMap<String, String>();
+    queryParamsMap7prev.put("count", "5");
+    queryParamsMap7prev.put("start", "5");
+    queryParamsMap7prev.put("someParam", "foo");
+    final URIDetails expectedURIDetails7prev = new URIDetails(protocolVersion, "/test", null, queryParamsMap7prev, null);
+    checkCollectionResponse(response, 4, 10, 5, 1, 14, expectedURIDetails7prev, null, acceptTypeData);
   }
 
   private RestResponse invokeResponseHandler(String uri,
@@ -511,8 +546,21 @@ public class TestRestLiResponseHandler
                                               map);
 
     checkResponse(response, 200, 2, acceptTypeData.responseContentType, ActionResponse.class.getName(), StringMap.class.getName(), true, errorResponseHeaderName);
-    String actual = response.getEntity().asAvroString();
-    assertEquals(actual, response2);
+
+    //Convert both of these back into maps depending on their response type
+    final DataMap actualMap;
+    final DataMap expectedMap;
+    if (acceptTypeData == AcceptTypeData.PSON)
+    {
+      actualMap = PSON_DATA_CODEC.bytesToMap(response.getEntity().copyBytes());
+      expectedMap = PSON_DATA_CODEC.bytesToMap(ByteString.copyAvroString(response2, false).copyBytes());
+    }
+    else
+    {
+      actualMap = JACKSON_DATA_CODEC.bytesToMap(response.getEntity().copyBytes());
+      expectedMap = JACKSON_DATA_CODEC.stringToMap(response2);
+    }
+    assertEquals(actualMap, expectedMap);
 
     // #3 empty response
     response = _responseHandler.buildResponse(request,
@@ -531,14 +579,14 @@ public class TestRestLiResponseHandler
         {
           AcceptTypeData.ANY,
           EXPECTED_STATUS_ACTION_RESPONSE_STRING,
-          "{value={key2=value2, key1=value1}}",
+          doubleQuote("{'value':{'key2':'value2','key1':'value1'}}"),
           AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
           RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE
         },
         {
             AcceptTypeData.ANY,
             EXPECTED_STATUS_ACTION_RESPONSE_STRING,
-            "{value={key2=value2, key1=value1}}",
+            doubleQuote("{'value':{'key2':'value2','key1':'value1'}}"),
             AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
             RestConstants.HEADER_RESTLI_ERROR_RESPONSE
         }
@@ -572,8 +620,14 @@ public class TestRestLiResponseHandler
         _responseHandler.buildPartialResponse(routingResult2,
                                               _responseHandler.buildRestLiResponseData(request, routingResult2, map));
     checkResponse(response, HttpStatus.S_200_OK, 1, false, true, errorResponseHeaderName);
-    String actual = response.getEntity().toString();
-    assertEquals(actual, response2);
+
+    //Obtain the maps necessary for comparison
+    final DataMap actualMap;
+    final DataMap expectedMap;
+    actualMap = response.getDataMap();
+    expectedMap = JACKSON_DATA_CODEC.stringToMap(response2);
+    assertEquals(actualMap, expectedMap);
+
     RoutingResult routingResult3 = buildRoutingResultAction(Void.TYPE, request, acceptTypeData.acceptHeaders);
     // #3 empty response
     response =
@@ -609,8 +663,14 @@ public class TestRestLiResponseHandler
     RoutingResult routingResult2 = buildRoutingResultAction(StringMap.class, request, acceptTypeData.acceptHeaders);
     responseData = _responseHandler.buildRestLiResponseData(request, routingResult2, map);
     checkResponseData(responseData, HttpStatus.S_200_OK, 1, false, true, errorResponseHeaderName);
-    String actual = responseData.getEntityResponse().toString();
-    assertEquals(actual, response2);
+
+    //Obtain the maps necessary for comparison
+    final DataMap actualMap;
+    final DataMap expectedMap;
+    actualMap = responseData.getEntityResponse().data();
+    expectedMap = JACKSON_DATA_CODEC.stringToMap(response2);
+    assertEquals(actualMap, expectedMap);
+
     RoutingResult routingResult3 = buildRoutingResultAction(Void.TYPE, request, acceptTypeData.acceptHeaders);
     // #3 empty response
     responseData =
@@ -1275,8 +1335,8 @@ public class TestRestLiResponseHandler
                                        int count,
                                        int numLinks,
                                        Integer total,
-                                       String prevLink,
-                                       String nextLink,
+                                       URIDetails prevLink,
+                                       URIDetails nextLink,
                                        AcceptTypeData acceptTypeData)
           throws Exception
   {
@@ -1306,12 +1366,12 @@ public class TestRestLiResponseHandler
     }
   }
 
-  private static void checkLink(Link link, String rel, String uri, String type)
+  private static void checkLink(Link link, String rel, URIDetails expectedURIDetails, String type)
   {
     assertEquals(link.getRel(), rel);
     assertFalse(link.hasTitle());
     assertEquals(link.getType(), type);
-    assertEquals(link.getHref(), uri);
+    URIDetails.testUriGeneration(link.getHref(), expectedURIDetails);
   }
 
   private static void checkProjectedFields(RestResponse response, String[] expectedFields, String[] missingFields)

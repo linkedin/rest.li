@@ -19,6 +19,7 @@ package com.linkedin.data.template;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
+
 import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
 import com.linkedin.data.DataList;
@@ -42,6 +43,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+
 
 public class JacksonDataTemplateCodec extends JacksonDataCodec
 {

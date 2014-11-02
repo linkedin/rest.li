@@ -16,13 +16,11 @@
 
 package com.linkedin.restli.tools.snapshot.gen;
 
+
+import com.linkedin.data.DataMap;
+import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.schema.generator.AbstractGenerator;
 import com.linkedin.pegasus.generator.GeneratorResult;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -33,9 +31,16 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
+
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
+
 
 /**
  * @author Moira Tagle
@@ -166,7 +171,13 @@ public class TestRestLiSnapshotExporter
   {
     String actualContent = readFile(actualFileName);
     String expectedContent = readFile(expectedFileName);
-    if (! actualContent.trim().equals(expectedContent.trim()))
+
+    //Compare using a map as opposed to line by line
+    final JacksonDataCodec jacksonDataCodec = new JacksonDataCodec();
+    final DataMap actualContentMap = jacksonDataCodec.stringToMap(actualContent);
+    final DataMap expectedContentMap = jacksonDataCodec.stringToMap(expectedContent);
+
+    if(!actualContentMap.equals(expectedContentMap))
     {
       // Ugh... gradle
       PrintStream actualStdout = new PrintStream(new FileOutputStream(FileDescriptor.out));
@@ -183,7 +194,6 @@ public class TestRestLiSnapshotExporter
         while ((line = reader.readLine()) != null)
         {
           actualStdout.println(line);
-//          System.out.println(line);
         }
       }
       catch (Exception e)

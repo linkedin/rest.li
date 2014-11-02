@@ -22,15 +22,20 @@ import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
-import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.element.DataElement;
 import com.linkedin.data.element.SimpleDataElement;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -50,23 +55,19 @@ public class TestDataIterator
 
   public Object jsonToObject(String s) throws IOException
   {
-    JacksonDataCodec codec = new JacksonDataCodec();
     String input = "{ \"key\" : " + s + " }";
     DataMap map = TestUtil.dataMapFromString(input);
     return map.get("key");
   }
 
-  public String traverse(DataElement element, IterationOrder order, boolean usePath)
+  public List<String> traverse(DataElement element, IterationOrder order, boolean usePath)
   {
-    String spaces = "                                          ";
-
-    StringBuilder s = new StringBuilder();
+    List<String> traversalList = new ArrayList<String>();
     DataIterator it = Builder.create(element, order).dataIterator();
     DataElement current;
     while ((current = it.next()) != null)
     {
-      int level = current.level();
-      s.append(spaces, 0, level);
+      StringBuilder s = new StringBuilder();
       if (usePath)
       {
         s.append("path=").append(current.pathAsString());
@@ -89,58 +90,59 @@ public class TestDataIterator
           s.append(value.toString());
         }
       }
-      s.append("\n");
+      traversalList.add(s.toString());
     }
-    return s.toString();
+    return traversalList;
   }
 
-  public void traverseAndCheck(Object root, String preExpected, String postExpected)
+  public List<String> traverse(Object root, IterationOrder iterationOrder)
   {
     DataElement element = new SimpleDataElement(root, null);
-    traverseAndCheckWithDataElement(element, preExpected, postExpected, false);
+    return traverseWithDataElement(element, iterationOrder, false);
   }
 
-  public void traverseAndCheckWithDataElement(DataElement element, String preExpected, String postExpected, boolean usePath)
+  public List<String> traverseWithDataElement(DataElement element, IterationOrder iterationOrder, boolean usePath)
   {
-    String preResult = traverse(element, IterationOrder.PRE_ORDER, usePath);
-    assertEquals(preResult, preExpected);
-    String postResult = traverse(element, IterationOrder.POST_ORDER, usePath);
-    assertEquals(postResult, postExpected);
+    return traverse(element, iterationOrder, usePath);
   }
 
   @Test
   public void testNoSchemaDataMapRoot()
   {
     DataMap root = new DataMap();
-    root.put("boolean", false);
+    root.put("bytes", ByteString.copyAvroString("abc", false));
     root.put("int", 1);
+    root.put("string", "foo");
+    root.put("boolean", false);
+    root.put("double", 4.0);
     root.put("long", 2L);
     root.put("float", 3.0f);
-    root.put("double", 4.0);
-    root.put("string", "foo");
-    root.put("bytes", ByteString.copyAvroString("abc", false));
 
-    String preExpected =
-      "name=" + DataElement.ROOT_NAME + ", class=com.linkedin.data.DataMap\n" +
-      " name=bytes, class=com.linkedin.data.ByteString, value=abc\n" +
-      " name=int, class=java.lang.Integer, value=1\n" +
-      " name=string, class=java.lang.String, value=foo\n" +
-      " name=boolean, class=java.lang.Boolean, value=false\n" +
-      " name=double, class=java.lang.Double, value=4.0\n" +
-      " name=long, class=java.lang.Long, value=2\n" +
-      " name=float, class=java.lang.Float, value=3.0\n";
+    //Since there is no order in which the elements under root will be visited, we compare the output of the traversals
+    //using a Set. We want to make sure they are all visited. The only caveat is the position of root, as it should
+    //appear first for preOrder and last for postOrder.
 
-    String postExpected =
-      " name=bytes, class=com.linkedin.data.ByteString, value=abc\n" +
-      " name=int, class=java.lang.Integer, value=1\n" +
-      " name=string, class=java.lang.String, value=foo\n" +
-      " name=boolean, class=java.lang.Boolean, value=false\n" +
-      " name=double, class=java.lang.Double, value=4.0\n" +
-      " name=long, class=java.lang.Long, value=2\n" +
-      " name=float, class=java.lang.Float, value=3.0\n" +
-      "name=" + DataElement.ROOT_NAME + ", class=com.linkedin.data.DataMap\n";
+    final Set<String> commonValues = new HashSet<String>();
+    commonValues.add("name=bytes, class=com.linkedin.data.ByteString, value=abc");
+    commonValues.add("name=int, class=java.lang.Integer, value=1");
+    commonValues.add("name=string, class=java.lang.String, value=foo");
+    commonValues.add("name=boolean, class=java.lang.Boolean, value=false");
+    commonValues.add("name=double, class=java.lang.Double, value=4.0");
+    commonValues.add("name=long, class=java.lang.Long, value=2");
+    commonValues.add("name=float, class=java.lang.Float, value=3.0");
 
-    traverseAndCheck(root, preExpected, postExpected);
+    List<String> preOrderTraversal = traverse(root, IterationOrder.PRE_ORDER);
+    Set<String> preOrderTraversalWithoutRoot = new HashSet<String>(preOrderTraversal.subList(1, preOrderTraversal.size()));
+    Assert.assertEquals(preOrderTraversal.get(0), "name=" + DataElement.ROOT_NAME + ", class=com.linkedin.data.DataMap",
+        "The first node in the pre order traversal should be com.linkedin.data.DataMap");
+
+    List<String> postOrderTraversal = traverse(root, IterationOrder.POST_ORDER);
+    Set<String> postOrderTraversalWithoutRoot = new HashSet<String>(postOrderTraversal.subList(0, postOrderTraversal.size() - 1));
+    Assert.assertEquals(postOrderTraversal.get(postOrderTraversal.size() - 1), "name=" + DataElement.ROOT_NAME + ", class=com.linkedin.data.DataMap",
+        "The last node in the post order traversal should be com.linkedin.data.DataMap");
+
+    Assert.assertEquals(preOrderTraversalWithoutRoot, postOrderTraversalWithoutRoot, "The traversals without the root should match each other");
+    Assert.assertEquals(preOrderTraversalWithoutRoot, commonValues, "The traversals should cover all the leaves");
   }
 
   @Test
@@ -155,90 +157,148 @@ public class TestDataIterator
     root.add("foo");
     root.add(ByteString.copyAvroString("abc", false));
 
-    String preExpected =
-      "name=" + DataElement.ROOT_NAME + ", class=com.linkedin.data.DataList\n" +
-      " name=0, class=java.lang.Boolean, value=false\n" +
-      " name=1, class=java.lang.Integer, value=1\n" +
-      " name=2, class=java.lang.Long, value=2\n" +
-      " name=3, class=java.lang.Float, value=3.0\n" +
-      " name=4, class=java.lang.Double, value=4.0\n" +
-      " name=5, class=java.lang.String, value=foo\n" +
-      " name=6, class=com.linkedin.data.ByteString, value=abc\n";
+    final List<String> commonElements = new ArrayList<String>();
+    commonElements.add("name=0, class=java.lang.Boolean, value=false");
+    commonElements.add("name=1, class=java.lang.Integer, value=1");
+    commonElements.add("name=2, class=java.lang.Long, value=2");
+    commonElements.add("name=3, class=java.lang.Float, value=3.0");
+    commonElements.add("name=4, class=java.lang.Double, value=4.0");
+    commonElements.add("name=5, class=java.lang.String, value=foo");
+    commonElements.add("name=6, class=com.linkedin.data.ByteString, value=abc");
 
-    String postExpected =
-      " name=0, class=java.lang.Boolean, value=false\n" +
-      " name=1, class=java.lang.Integer, value=1\n" +
-      " name=2, class=java.lang.Long, value=2\n" +
-      " name=3, class=java.lang.Float, value=3.0\n" +
-      " name=4, class=java.lang.Double, value=4.0\n" +
-      " name=5, class=java.lang.String, value=foo\n" +
-      " name=6, class=com.linkedin.data.ByteString, value=abc\n" +
-      "name=" + DataElement.ROOT_NAME + ", class=com.linkedin.data.DataList\n";
+    final List<String> preOrderOutput = new ArrayList<String>();
+    preOrderOutput.add("name=" + DataElement.ROOT_NAME + ", class=com.linkedin.data.DataList");
+    preOrderOutput.addAll(commonElements);
 
-    traverseAndCheck(root, preExpected, postExpected);
+    final List<String> postOrderOutput = new ArrayList<String>();
+    postOrderOutput.addAll(commonElements);
+    postOrderOutput.add("name=" + DataElement.ROOT_NAME + ", class=com.linkedin.data.DataList");
+
+    Assert.assertEquals(traverse(root, IterationOrder.PRE_ORDER), preOrderOutput, "The pre order traversal should be correct");
+    Assert.assertEquals(traverse(root, IterationOrder.POST_ORDER), postOrderOutput, "The post order traversal should be correct");
   }
 
   @Test
-  public void testNoSchemaNested() throws IOException
+  public void testNoSchemaNestedMapOfArray() throws IOException
   {
-    String[][] data =
-      {
-        {
+    /*
           // map of array
-          "{ \"aKey\" : [ 1, 2 ], \"bKey\" : [ 1.0, 2.0 ] }",
+          "{ "aKey" : [ 1, 2 ], "bKey" : [ 1.0, 2.0 ] }",
           // pre-order
-          "name=" + DataElement.ROOT_NAME + ", class=com.linkedin.data.DataMap\n" +
+          " name=" + DataElement.ROOT_NAME + ", class=com.linkedin.data.DataMap\n" +
           " name=bKey, class=com.linkedin.data.DataList\n" +
-          "  name=0, class=java.lang.Double, value=1.0\n" +
-          "  name=1, class=java.lang.Double, value=2.0\n" +
+          " name=0, class=java.lang.Double, value=1.0\n" +
+          " name=1, class=java.lang.Double, value=2.0\n" +
           " name=aKey, class=com.linkedin.data.DataList\n" +
-          "  name=0, class=java.lang.Integer, value=1\n" +
-          "  name=1, class=java.lang.Integer, value=2\n",
-          // post-order
-          "  name=0, class=java.lang.Double, value=1.0\n" +
-          "  name=1, class=java.lang.Double, value=2.0\n" +
-          " name=bKey, class=com.linkedin.data.DataList\n" +
-          "  name=0, class=java.lang.Integer, value=1\n" +
-          "  name=1, class=java.lang.Integer, value=2\n" +
-          " name=aKey, class=com.linkedin.data.DataList\n" +
-          "name=" + DataElement.ROOT_NAME + ", class=com.linkedin.data.DataMap\n"
-        },
-        {
-          // array of maps
-          "[ { \"aKey\" : 1 }, { \"bKey\" : 2.0 } ]",
-          // pre-order
-          "name=" + DataElement.ROOT_NAME + ", class=com.linkedin.data.DataList\n" +
-          " name=0, class=com.linkedin.data.DataMap\n" +
-          "  name=aKey, class=java.lang.Integer, value=1\n" +
-          " name=1, class=com.linkedin.data.DataMap\n" +
-          "  name=bKey, class=java.lang.Double, value=2.0\n",
-          // post-order
-          "  name=aKey, class=java.lang.Integer, value=1\n" +
-          " name=0, class=com.linkedin.data.DataMap\n" +
-          "  name=bKey, class=java.lang.Double, value=2.0\n" +
-          " name=1, class=com.linkedin.data.DataMap\n" +
-          "name=" + DataElement.ROOT_NAME + ", class=com.linkedin.data.DataList\n",
-        }
-      };
+          " name=0, class=java.lang.Integer, value=1\n" +
+          " name=1, class=java.lang.Integer, value=2\n",
 
-    for (String[] row : data)
-    {
-      Object o = jsonToObject(row[0]);
-      traverseAndCheck(o, row[1], row[2]);
-    }
+          // post-order
+          " name=0, class=java.lang.Double, value=1.0\n" +
+          " name=1, class=java.lang.Double, value=2.0\n" +
+          " name=bKey, class=com.linkedin.data.DataList\n" +
+          " name=0, class=java.lang.Integer, value=1\n" +
+          " name=1, class=java.lang.Integer, value=2\n" +
+          " name=aKey, class=com.linkedin.data.DataList\n" +
+          " name=" + DataElement.ROOT_NAME + ", class=com.linkedin.data.DataMap\n"
+    */
+
+    final String mapOfArrayString = "{ \"aKey\" : [ 1, 2 ], \"bKey\" : [ 1.0, 2.0 ] }";
+    final Object mapOfArrayObject = jsonToObject(mapOfArrayString);
+
+    //Preorder:
+    final List<String> preOrderTraversal = traverse(mapOfArrayObject, IterationOrder.PRE_ORDER);
+    Assert.assertEquals(preOrderTraversal.size(), 7, "We should have 7 elements in our pre order traversal");
+    Assert.assertEquals(preOrderTraversal.get(0), "name=" + DataElement.ROOT_NAME + ", class=com.linkedin.data.DataMap");
+    //The bKey and aKey traversal could be in any order
+    final List<String> aKeyPreOrderList = new ArrayList<String>();
+    aKeyPreOrderList.add("name=aKey, class=com.linkedin.data.DataList");
+    aKeyPreOrderList.add("name=0, class=java.lang.Integer, value=1");
+    aKeyPreOrderList.add("name=1, class=java.lang.Integer, value=2");
+    final List<String> bKeyPreOrderList = new ArrayList<String>();
+    bKeyPreOrderList.add("name=bKey, class=com.linkedin.data.DataList");
+    bKeyPreOrderList.add("name=0, class=java.lang.Double, value=1.0");
+    bKeyPreOrderList.add("name=1, class=java.lang.Double, value=2.0");
+
+    Assert.assertNotEquals(Collections.indexOfSubList(preOrderTraversal, aKeyPreOrderList), -1,
+        "We must have the aKey traversal");
+    Assert.assertNotEquals(Collections.indexOfSubList(preOrderTraversal, bKeyPreOrderList), -1,
+        "We must have the bKey traversal");
+
+    //Postorder:
+    final List<String> postOrderTraversal = traverse(mapOfArrayObject, IterationOrder.POST_ORDER);
+    Assert.assertEquals(postOrderTraversal.size(), 7, "We should have 7 elements in our pre order traversal");
+    Assert.assertEquals(postOrderTraversal.get(postOrderTraversal.size() - 1),
+        "name=" + DataElement.ROOT_NAME + ", class=com.linkedin.data.DataMap");
+    //The bKey and aKey traversal could be in any order
+    final List<String> aKeyPostOrderList = new ArrayList<String>();
+    aKeyPostOrderList.add("name=0, class=java.lang.Integer, value=1");
+    aKeyPostOrderList.add("name=1, class=java.lang.Integer, value=2");
+    aKeyPostOrderList.add("name=aKey, class=com.linkedin.data.DataList");
+    final List<String> bKeyPostOrderList = new ArrayList<String>();
+    bKeyPostOrderList.add("name=0, class=java.lang.Double, value=1.0");
+    bKeyPostOrderList.add("name=1, class=java.lang.Double, value=2.0");
+    bKeyPostOrderList.add("name=bKey, class=com.linkedin.data.DataList");
+
+    Assert.assertNotEquals(Collections.indexOfSubList(postOrderTraversal, aKeyPostOrderList), -1,
+        "We must have the aKey traversal");
+    Assert.assertNotEquals(Collections.indexOfSubList(postOrderTraversal, bKeyPostOrderList), -1,
+        "We must have the bKey traversal");
+  }
+
+  @Test
+  public void testNoSchemaNestedArrayOfMaps() throws IOException
+  {
+    /*
+          //array of maps:
+          "[ { "aKey" : 1 }, { "bKey" : 2.0 } ]",
+          // pre-order
+          " name=" + DataElement.ROOT_NAME + ", class=com.linkedin.data.DataList\n" +
+          " name=0, class=com.linkedin.data.DataMap\n" +
+          " name=aKey, class=java.lang.Integer, value=1\n" +
+          " name=1, class=com.linkedin.data.DataMap\n" +
+          " name=bKey, class=java.lang.Double, value=2.0\n",
+          // post-order
+          " name=aKey, class=java.lang.Integer, value=1\n" +
+          " name=0, class=com.linkedin.data.DataMap\n" +
+          " name=bKey, class=java.lang.Double, value=2.0\n" +
+          " name=1, class=com.linkedin.data.DataMap\n" +
+          " name=" + DataElement.ROOT_NAME + ", class=com.linkedin.data.DataList\n",
+    */
+
+    final String arrayOfMapsString = "[ { \"aKey\" : 1 }, { \"bKey\" : 2.0 } ]";
+    final Object arrayOfMapsObject = jsonToObject(arrayOfMapsString);
+
+    final List<String> preOrderTraversal = traverse(arrayOfMapsObject, IterationOrder.PRE_ORDER);
+    final List<String> expectedPreOrder = new ArrayList<String>();
+    expectedPreOrder.add("name=" + DataElement.ROOT_NAME + ", class=com.linkedin.data.DataList");
+    expectedPreOrder.add("name=0, class=com.linkedin.data.DataMap");
+    expectedPreOrder.add("name=aKey, class=java.lang.Integer, value=1");
+    expectedPreOrder.add("name=1, class=com.linkedin.data.DataMap");
+    expectedPreOrder.add("name=bKey, class=java.lang.Double, value=2.0");
+    Assert.assertEquals(preOrderTraversal, expectedPreOrder, "We should get the expected pre order traversal");
+
+    final List<String> postOrderTraversal = traverse(arrayOfMapsObject, IterationOrder.POST_ORDER);
+    final List<String> expectedPostOrder = new ArrayList<String>();
+    expectedPostOrder.add("name=aKey, class=java.lang.Integer, value=1");
+    expectedPostOrder.add("name=0, class=com.linkedin.data.DataMap");
+    expectedPostOrder.add("name=bKey, class=java.lang.Double, value=2.0");
+    expectedPostOrder.add("name=1, class=com.linkedin.data.DataMap");
+    expectedPostOrder.add("name=" + DataElement.ROOT_NAME + ", class=com.linkedin.data.DataList");
+    Assert.assertEquals(postOrderTraversal, expectedPostOrder, "We should get the expected post order traversal");
   }
 
   @Test
   public void testNoSchemaWithParentDataElement()
   {
     DataMap root = new DataMap();
-    root.put("boolean", false);
+    root.put("bytes", ByteString.copyAvroString("abc", false));
     root.put("int", 1);
+    root.put("string", "foo");
+    root.put("boolean", false);
+    root.put("double", 4.0);
     root.put("long", 2L);
     root.put("float", 3.0f);
-    root.put("double", 4.0);
-    root.put("string", "foo");
-    root.put("bytes", ByteString.copyAvroString("abc", false));
 
     DataMap grandParent = new DataMap();
     DataMap parent = new DataMap();
@@ -249,6 +309,8 @@ public class TestDataIterator
     DataElement parentElement = new SimpleDataElement(parent, "child", null, grandParentElement);
     DataElement element = new SimpleDataElement(root, "child", null, parentElement);
 
+    /*
+    //Possible preExpected output:
     String preExpected =
       "  path=/child/child, class=com.linkedin.data.DataMap\n" +
       "   path=/child/child/bytes, class=com.linkedin.data.ByteString, value=abc\n" +
@@ -259,6 +321,7 @@ public class TestDataIterator
       "   path=/child/child/long, class=java.lang.Long, value=2\n" +
       "   path=/child/child/float, class=java.lang.Float, value=3.0\n";
 
+    //Possible postExpected output:
     String postExpected =
       "   path=/child/child/bytes, class=com.linkedin.data.ByteString, value=abc\n" +
       "   path=/child/child/int, class=java.lang.Integer, value=1\n" +
@@ -268,8 +331,29 @@ public class TestDataIterator
       "   path=/child/child/long, class=java.lang.Long, value=2\n" +
       "   path=/child/child/float, class=java.lang.Float, value=3.0\n" +
       "  path=/child/child, class=com.linkedin.data.DataMap\n";
+      */
 
-    traverseAndCheckWithDataElement(element, preExpected, postExpected, true);
+    final Set<String> commonValues = new HashSet<String>();
+    commonValues.add("path=/child/child/bytes, class=com.linkedin.data.ByteString, value=abc");
+    commonValues.add("path=/child/child/int, class=java.lang.Integer, value=1");
+    commonValues.add("path=/child/child/string, class=java.lang.String, value=foo");
+    commonValues.add("path=/child/child/boolean, class=java.lang.Boolean, value=false");
+    commonValues.add("path=/child/child/double, class=java.lang.Double, value=4.0");
+    commonValues.add("path=/child/child/long, class=java.lang.Long, value=2");
+    commonValues.add("path=/child/child/float, class=java.lang.Float, value=3.0");
+
+    List<String> preOrderTraversal = traverseWithDataElement(element, IterationOrder.PRE_ORDER, true);
+    Set<String> preOrderTraversalWithoutRoot = new HashSet<String>(preOrderTraversal.subList(1, preOrderTraversal.size()));
+    Assert.assertEquals(preOrderTraversal.get(0), "path=/child/child, class=com.linkedin.data.DataMap",
+        "The first node in the pre order traversal should be: com.linkedin.data.DataMap");
+
+    List<String> postOrderTraversal = traverseWithDataElement(element, IterationOrder.POST_ORDER, true);
+    Set<String> postOrderTraversalWithoutRoot = new HashSet<String>(postOrderTraversal.subList(0, postOrderTraversal.size() - 1));
+    Assert.assertEquals(postOrderTraversal.get(postOrderTraversal.size() - 1), "path=/child/child, class=com.linkedin.data.DataMap",
+        "The last node in the post order traversal should be: com.linkedin.data.DataMap");
+
+    Assert.assertEquals(preOrderTraversalWithoutRoot, postOrderTraversalWithoutRoot, "The traversals without the root should match each other");
+    Assert.assertEquals(preOrderTraversalWithoutRoot, commonValues, "The traversals should cover all the leaves");
   }
 
   public void assertEqualsByName(Builder builder, List<Object> expectedNames)

@@ -1,0 +1,8 @@
+apply plugin: 'java'
+
+dependencies {
+  testCompile externalDependency.testng
+  testCompile project(':restli-common')
+  testCompile project(':restli-client')
+}
+

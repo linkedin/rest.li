@@ -22,6 +22,7 @@ import com.linkedin.data.Data;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.ArrayDataSchema;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringWriter;
@@ -29,6 +30,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+
 import org.testng.annotations.Test;
 
 import static com.linkedin.data.TestUtil.asList;
@@ -101,6 +103,11 @@ public class TestJacksonDataTemplateCodec
   public DataMap stringToDataMap(String s) throws IOException
   {
     return _jacksonDataTemplateCodec.stringToMap(s);
+  }
+
+  public DataList stringToDataList(String s) throws IOException
+  {
+    return _jacksonDataTemplateCodec.stringToList(s);
   }
 
   @Test
@@ -193,14 +200,18 @@ public class TestJacksonDataTemplateCodec
       String raw = dataMapToString(map);
       String noOrder = templateToString(foo, false);
       String order = templateToString(foo, true);
-      /* out.println(noOrder);
-      out.println(order);
-      out.println(); */
-      assertEquals(noOrder, raw);
-      assertEquals(noOrder, row[1]);
+      DataMap noOrderMap = stringToDataMap(noOrder);
+
+      //Assert raw is no order
+      assertEquals(noOrderMap, stringToDataMap(raw));
+
+      //We want to make sure that no order just matches with any order in a map
+      DataMap expectedAnyOrderMap = stringToDataMap((String)row[1]);
+      assertEquals(noOrderMap, expectedAnyOrderMap);
+
+      //Assert ordered
       assertEquals(order, row[2]);
 
-      DataMap noOrderMap = stringToDataMap(noOrder);
       DataMap orderMap = stringToDataMap(order);
       DataMap rawMap = stringToDataMap(raw);
       assertEquals(rawMap, noOrderMap);
@@ -254,10 +265,13 @@ public class TestJacksonDataTemplateCodec
       FooArray fooArray = new FooArray(list);
       String noOrder = templateToString(fooArray, false);
       String order = templateToString(fooArray, true);
-      /* out.println(noOrder);
-      out.println(order);
-      out.println(); */
-      assertEquals(noOrder, row[1]);
+
+      //We have to compare reconstructed DataLists because the key/value pairs inside of the map which is inside of
+      //the list are in a non-deterministic order
+      DataList expectedNoOrderList = stringToDataList(noOrder);
+      DataList actualNoOrderList = stringToDataList((String)row[1]);
+      assertEquals(expectedNoOrderList, actualNoOrderList);
+
       assertEquals(order, row[2]);
     }
   }
@@ -286,10 +300,12 @@ public class TestJacksonDataTemplateCodec
       StringMap stringMap = new StringMap(map);
       String noOrder = templateToString(stringMap, false);
       String order = templateToString(stringMap, true);
-      /* out.println(noOrder);
-      out.println(order);
-      out.println(); */
-      assertEquals(noOrder, row[1]);
+
+      DataMap expectedAnyOrderMap = stringToDataMap((String)row[1]);
+      //We want to make sure that no order just matches with any order in a map
+      DataMap noOrderMap = stringToDataMap(noOrder);
+      assertEquals(noOrderMap, expectedAnyOrderMap);
+
       assertEquals(order, row[2]);
     }
   }

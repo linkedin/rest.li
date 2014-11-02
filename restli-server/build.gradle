@@ -14,6 +14,8 @@ dependencies {
   compile externalDependency.servletApi
   testCompile project(path: ':generator-test', configuration: 'testArtifacts')
   testCompile project(path: ':restli-common', configuration: 'testArtifacts')
+  testCompile project(path: ':restli-client')
+  testCompile project(path: ':restli-internal-testutils', configuration: 'testArtifacts')
   testCompile externalDependency.guava
   testCompile externalDependency.testng
   testCompile externalDependency.easymock

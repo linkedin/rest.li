@@ -2231,7 +2231,7 @@ public class TestRestLiRouting
     assertNotNull(result);
     assertEquals(result.getResourceMethod().getActionName(), "replyToAll");
     assertEquals(result.getResourceMethod().getType(), ResourceMethod.ACTION);
-    assertEquals(result.getContext().getPathKeys().get("statusID"), 1L);
+    assertEquals(result.getContext().getPathKeys().get("statusID"), Long.valueOf(1));
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "actionNestedSimpleRouting")
@@ -2258,7 +2258,7 @@ public class TestRestLiRouting
     assertEquals(result.getResourceMethod().getActionName(), "new_status_from_location");
     assertEquals(result.getResourceMethod().getType(), ResourceMethod.ACTION);
     assertEquals(result.getResourceMethod().getMethod().getParameterTypes(), new Class<?>[] { String.class });
-    assertEquals(result.getContext().getPathKeys().get("statusID"), 1L);
+    assertEquals(result.getContext().getPathKeys().get("statusID"), Long.valueOf(1));
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingErrors")

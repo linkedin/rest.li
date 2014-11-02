@@ -58,6 +58,7 @@ import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.Link;
 import com.linkedin.restli.common.OptionsResponse;
 import com.linkedin.restli.common.PatchRequest;
+import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.examples.greetings.api.Empty;
 import com.linkedin.restli.examples.greetings.api.Greeting;
@@ -77,6 +78,8 @@ import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsTaskBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsTaskRequestBuilders;
 import com.linkedin.restli.examples.groups.api.TransferOwnershipRequest;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
+import com.linkedin.restli.internal.testutils.URIDetails;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.test.util.BatchCreateHelper;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
@@ -366,7 +369,8 @@ public class TestGreetingsClient extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderWithResourceNameDataProvider")
-  public void testSearchWithPostFilter(RootBuilderWrapper<Long, Greeting> builders, String resourceName) throws RemoteInvocationException
+  public void testSearchWithPostFilter(RootBuilderWrapper<Long, Greeting> builders, String resourceName,
+      ProtocolVersion protocolVersion) throws RemoteInvocationException
   {
     Request<CollectionResponse<Greeting>> findRequest = builders.findBy("SearchWithPostFilter").paginate(0, 5).build();
     CollectionResponse<Greeting> entity = REST_CLIENT.sendRequest(findRequest).getResponse().getEntity();
@@ -378,7 +382,16 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     // to accommodate post filtering, even though 4 are returned, next page should be 5-10.
     Link next = paging.getLinks().get(0);
     Assert.assertEquals(next.getRel(), "next");
-    Assert.assertEquals(next.getHref(), "/" + resourceName + "?count=5&start=5&q=searchWithPostFilter");
+
+    //Query parameter order is non deterministic
+    //"/" + resourceName + "?count=5&start=5&q=searchWithPostFilter";
+    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    queryParamsMap.put("count", "5");
+    queryParamsMap.put("start", "5");
+    queryParamsMap.put("q", "searchWithPostFilter");
+
+    final URIDetails uriDetails = new URIDetails(protocolVersion, "/" + resourceName, null, queryParamsMap, null);
+    URIDetails.testUriGeneration(next.getHref(), uriDetails);
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
@@ -905,7 +918,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderWithResourceNameDataProvider")
-  public void testOptions(RootBuilderWrapper<Long, Greeting> builders, String resourceName)
+  public void testOptions(RootBuilderWrapper<Long, Greeting> builders, String resourceName, ProtocolVersion protocolVersion)
       throws RemoteInvocationException, URISyntaxException, IOException
   {
     Request<OptionsResponse> optionsRequest = builders.options().build();
@@ -1040,26 +1053,46 @@ public class TestGreetingsClient extends RestLiIntegrationTest
   private static Object[][] requestBuilderWithResourceNameDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()), "greetings" },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "greetings" },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()), "greetings" },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "greetings" },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseBuilders()), "greetingsPromise" },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "greetingsPromise" },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders()), "greetingsPromise" },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "greetingsPromise" },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackBuilders()), "greetingsCallback" },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "greetingsCallback" },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackRequestBuilders()), "greetingsCallback" },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "greetingsCallback" },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxBuilders()), "greetingsPromiseCtx" },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "greetingsPromiseCtx" },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxRequestBuilders()), "greetingsPromiseCtx" },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "greetingsPromiseCtx" },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskBuilders()), "greetingsTask" },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "greetingsTask" },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskRequestBuilders()), "greetingsTask" },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "greetingsTask" },
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()), "greetings" ,
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion()},
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "greetings",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()},
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()), "greetings",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion()},
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "greetings",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()},
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseBuilders()), "greetingsPromise",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion()},
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "greetingsPromise",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()},
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders()), "greetingsPromise",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion()},
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "greetingsPromise",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()},
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackBuilders()), "greetingsCallback",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion()},
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "greetingsCallback",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()},
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackRequestBuilders()), "greetingsCallback",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion()},
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "greetingsCallback",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()},
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxBuilders()), "greetingsPromiseCtx",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion()},
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "greetingsPromiseCtx",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()},
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxRequestBuilders()), "greetingsPromiseCtx",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion()},
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "greetingsPromiseCtx",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()},
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskBuilders()), "greetingsTask",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion()},
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "greetingsTask",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()},
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskRequestBuilders()), "greetingsTask",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion()},
+      { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "greetingsTask",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()},
     };
   }
 

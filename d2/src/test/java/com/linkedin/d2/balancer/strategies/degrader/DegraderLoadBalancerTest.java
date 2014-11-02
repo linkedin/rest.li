@@ -585,6 +585,19 @@ public class DegraderLoadBalancerTest
       }
       return false;
     }
+
+    @Override
+    public int hashCode()
+    {
+      int result;
+      long temp;
+      temp = Double.doubleToLongBits(_overrideDropRate);
+      result = (int) (temp ^ (temp >>> 32));
+      temp = Double.doubleToLongBits(_maxDropRate);
+      result = 31 * result + (int) (temp ^ (temp >>> 32));
+      result = 31 * result + _overrideMinCallCount;
+      return result;
+    }
   }
 
   private static Map<TrackerClient, TrackerClientMetrics> getTrackerClientMetrics(List<TrackerClient> clients)

@@ -27,7 +27,6 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
-import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.server.methods.MethodAdapterRegistry;
 import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
@@ -45,9 +44,7 @@ import com.linkedin.restli.server.resources.CollectionResource;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 
 /**

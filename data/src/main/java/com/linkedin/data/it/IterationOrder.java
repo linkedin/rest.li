@@ -16,9 +16,24 @@
 
 package com.linkedin.data.it;
 
+
+/*
+ * The iteration order used by the ObjectIterator to determine how to traverse the DataComplex object graph. Note that
+ * this only guarantees the order in which root is visited with respect to its children. It makes no guarantee that
+ * the same exact preorder or postorder traversal is guaranteed everytime since we could have a DataMap as a
+ * node whose key/value pairs are not iterated through in a deterministic order.
+ */
 public enum IterationOrder
 {
+  /*
+   * The root node is visited before its children. If the root node is an instance of DataComplex, then the children
+   * are called in the iteration order of the underlying collection.
+   */
   PRE_ORDER,
+  /*
+   * The root node is visited after its children. If the root node is an instance of DataComplex, then the children
+   * are called in the iteration order of the underlying collection.
+   */
   POST_ORDER
 }
 

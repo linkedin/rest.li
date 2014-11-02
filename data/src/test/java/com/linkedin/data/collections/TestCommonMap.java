@@ -76,8 +76,8 @@ public class TestCommonMap
     assertEquals(map.hashCode(), referenceMap1.hashCode());
     assertFalse(map.isEmpty());
     assert(map.entrySet().equals(referenceMap1.entrySet()));
-    assertEquals(map.keySet().toArray(), referenceMap1.keySet().toArray());
-    assertEquals(map.values().toArray(), referenceMap1.values().toArray());
+    assertEquals(map.keySet(), referenceMap1.keySet());
+    assertEquals(new HashSet<String>(map.values()), new HashSet<String>(referenceMap1.values()));
   }
 
   public static void containsReferenceMap2(Map<String,String> map)

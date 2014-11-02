@@ -26,9 +26,13 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.PathSegment.PathSegmentSyntaxException;
 import com.linkedin.restli.internal.common.URLEscaper.Escaping;
 import java.net.URI;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -349,7 +353,23 @@ public class TestQueryParamsDataMap
     final Map<String, List<String>> processedProjections = new LinkedHashMap<String, List<String>>();
     final DataMap processedDataMap = QueryParamsDataMap.processProjections(resultMap, processedProjections);
     Assert.assertTrue(processedDataMap.size() == 1, "Processed datamap should only have one item left!");
-    Assert.assertEquals(processedProjections.toString(),
-        "{fields=[foo:($*:(bar))], metadataFields=[foo:(bar),bar:(baz),qux], pagingFields=[total,count,links:($*:(rel))]}");
+
+    final Map<String, Set<String>> expectedProcessedProjections = new LinkedHashMap<String, Set<String>>();
+    //"{fields=[foo:($*:(bar))], metadataFields=[foo:(bar),bar:(baz),qux], pagingFields=[total,count,links:($*:(rel))]}"
+    expectedProcessedProjections.put(RestConstants.FIELDS_PARAM, Collections.singleton("foo:($*:(bar))"));
+    expectedProcessedProjections.put(RestConstants.METADATA_FIELDS_PARAM,
+        new HashSet<String>(Arrays.asList("foo:(bar)", "bar:(baz)", "qux")));
+    expectedProcessedProjections.put(RestConstants.PAGING_FIELDS_PARAM,
+        new HashSet<String>(Arrays.asList("total", "count", "links:($*:(rel))")));
+
+    Assert.assertEquals(processedProjections.size(), expectedProcessedProjections.size(), "We must have the correct number of" +
+        " expected projections!");
+    for (final Map.Entry<String, List<String>> entry : processedProjections.entrySet())
+    {
+      //Acceptable because these are always comma delimited
+      final Set<String> actualProjectionValueSet = new HashSet<String>(Arrays.asList(entry.getValue().get(0).split(",")));
+      Assert.assertEquals(actualProjectionValueSet, expectedProcessedProjections.get(entry.getKey()), "The individual projection " +
+          "for " + entry.getKey() + " does not match what is expected!");
+    }
   }
 }

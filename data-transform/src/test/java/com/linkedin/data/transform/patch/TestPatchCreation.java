@@ -20,18 +20,22 @@
 
 package com.linkedin.data.transform.patch;
 
+
+import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.transform.patch.request.PatchCreator;
 import com.linkedin.data.transform.patch.request.PatchOpFactory;
 import com.linkedin.data.transform.patch.request.PatchTree;
+
+import java.util.Arrays;
+
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import static com.linkedin.data.TestUtil.asMap;
+import static org.testng.Assert.assertEquals;
+
 
 /**
  * @author Josh Walker
@@ -46,7 +50,18 @@ public class TestPatchCreation
     PatchTree patch = new PatchTree();
     patch.addOperation(new PathSpec("foo"), PatchOpFactory.setFieldOp(42));
     patch.addOperation(new PathSpec("bar", "baz"), PatchOpFactory.setFieldOp("The quick brown fox"));
-    Assert.assertEquals(patch.toString(), "{$set={foo=42}, bar={$set={baz=The quick brown fox}}}");
+
+    //"{$set={foo=42}, bar={$set={baz=The quick brown fox}}}"
+    final DataMap setBarMap = new DataMap();
+    final DataMap bazMap = new DataMap();
+    bazMap.put("baz", "The quick brown fox");
+    final DataMap setMap = new DataMap();
+    setMap.put(PatchConstants.SET_COMMAND, bazMap);
+    setBarMap.put("bar", setMap);
+    final DataMap fooMap = new DataMap();
+    fooMap.put("foo", 42);
+    setBarMap.put(PatchConstants.SET_COMMAND, fooMap);
+    assertEquals(patch.getDataMap(), setBarMap, "PatchTree DataMap must be correct");
   }
 
   @Test
@@ -65,7 +80,17 @@ public class TestPatchCreation
     patch.addOperation(new PathSpec("foo"), PatchOpFactory.setFieldOp(42));
     patch.addOperation(new PathSpec("bar", "baz"), PatchOpFactory.REMOVE_FIELD_OP);
     patch.addOperation(new PathSpec("qux"), PatchOpFactory.REMOVE_FIELD_OP);
-    Assert.assertEquals(patch.toString(), "{$set={foo=42}, bar={$delete=[baz]}, $delete=[qux]}");
+
+    //"{$set={foo=42}, bar={$delete=[baz]}, $delete=[qux]}"
+    final DataMap fooMap = new DataMap();
+    fooMap.put("foo", 42);
+    final DataMap deleteMap = new DataMap();
+    deleteMap.put(PatchConstants.DELETE_COMMAND, new DataList(Arrays.asList("baz")));
+    final DataMap setBarDeleteMap = new DataMap();
+    setBarDeleteMap.put(PatchConstants.SET_COMMAND, fooMap);
+    setBarDeleteMap.put("bar", deleteMap);
+    setBarDeleteMap.put(PatchConstants.DELETE_COMMAND, new DataList(Arrays.asList("qux")));
+    assertEquals(patch.getDataMap(), setBarDeleteMap, "PatchTree DataMap must be correct");
   }
 
   @Test
@@ -78,7 +103,16 @@ public class TestPatchCreation
     ((DataMap)map2.get("bar")).put("baz", "The quick brown fox");
 
     PatchTree patch = PatchCreator.diff(map, map2);
-    Assert.assertEquals(patch.toString(), "{$set={foo=42, bar={baz=The quick brown fox}}}");
+
+    //"{$set={foo=42, bar={baz=The quick brown fox}}}"
+    final DataMap bazMap = new DataMap();
+    bazMap.put("baz", "The quick brown fox");
+    final DataMap fooBarMap = new DataMap();
+    fooBarMap.put("foo", 42);
+    fooBarMap.put("bar", bazMap);
+    final DataMap setMap = new DataMap();
+    setMap.put(PatchConstants.SET_COMMAND, fooBarMap);
+    assertEquals(patch.getDataMap(), setMap, "PatchTree DataMap must be correct");
   }
 
   @Test
@@ -118,7 +152,17 @@ public class TestPatchCreation
     patch.addOperation(new PathSpec("foo"), PatchOpFactory.setFieldOp(42));
     patch.addOperation(new PathSpec("bar", "baz"), PatchOpFactory.REMOVE_FIELD_OP);
     patch.addOperation(new PathSpec("qux"), PatchOpFactory.REMOVE_FIELD_OP);
-    Assert.assertEquals(patch.toString(), "{$set={foo=42}, bar={$delete=[baz]}, $delete=[qux]}");
+
+    //"{$set={foo=42}, bar={$delete=[baz]}, $delete=[qux]}"
+    final DataMap fooMap = new DataMap();
+    fooMap.put("foo", 42);
+    final DataMap deleteMap = new DataMap();
+    deleteMap.put(PatchConstants.DELETE_COMMAND, new DataList(Arrays.asList("baz")));
+    final DataMap setBarDeleteMap = new DataMap();
+    setBarDeleteMap.put(PatchConstants.SET_COMMAND, fooMap);
+    setBarDeleteMap.put("bar", deleteMap);
+    setBarDeleteMap.put(PatchConstants.DELETE_COMMAND, new DataList(Arrays.asList("qux")));
+    assertEquals(patch.getDataMap(), setBarDeleteMap, "PatchTree DataMap must be correct");
   }
 
   @Test

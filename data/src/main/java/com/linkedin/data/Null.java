@@ -16,9 +16,11 @@
 
 package com.linkedin.data;
 
+
 /**
  * Represent NULL value in DataMap.
  */
+@SuppressWarnings({"overrides"}) //for hashCode/equals contract
 public final class Null
 {
   private static final Null INSTANCE = new Null();

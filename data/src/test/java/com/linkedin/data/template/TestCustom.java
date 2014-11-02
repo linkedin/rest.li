@@ -86,6 +86,14 @@ public class TestCustom
       return (p._x == _x) && (p._y == _y);
     }
 
+    @Override
+    public int hashCode()
+    {
+      int result = _x;
+      result = 31 * result + _y;
+      return result;
+    }
+
     public static class CustomPointCoercer implements DirectCoercer<CustomPoint>
     {
       @Override

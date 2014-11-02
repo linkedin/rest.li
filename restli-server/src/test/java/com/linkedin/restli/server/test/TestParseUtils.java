@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2012 LinkedIn Corp.
+   Copyright (c) 2014 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -14,18 +14,16 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.restli.server.test;
 
+
+import com.linkedin.data.DataMap;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
-import static org.testng.Assert.*;
+
 
 /**
  * @author Josh Walker
@@ -38,14 +36,46 @@ public class TestParseUtils
   @Test
   public void testMaskParse() throws Exception
   {
-    checkProjection("", "{}");
-    checkProjection("foo", "{foo=1}");
-    checkProjection("foo,bar", "{foo=1, bar=1}");
-    checkProjection("foo, bar", "{foo=1, bar=1}");
+    //"{}"
+    checkProjection("", new DataMap());
 
-    checkProjection("foo:(bar)", "{foo={bar=1}}");
-    checkProjection("foo:(bar),baz", "{baz=1, foo={bar=1}}");
-    checkProjection("foo:(bar),baz:(qux)", "{baz={qux=1}, foo={bar=1}}");
+    final DataMap fooMap = new DataMap();
+    fooMap.put("foo", 1);
+    //"{foo=1}"
+    checkProjection("foo", fooMap);
+
+    final DataMap fooBarMap = new DataMap();
+    fooBarMap.put("foo", 1);
+    fooBarMap.put("bar", 1);
+    //"{foo=1, bar=1}"
+    checkProjection("foo,bar", fooBarMap);
+
+    final DataMap fooBarSpaceMap = new DataMap();
+    fooBarMap.put("foo", 1);
+    fooBarMap.put("bar", 1);
+    //"{foo=1, bar=1}"
+    checkProjection("foo, bar", fooBarMap);
+
+    final DataMap fooMapWithBar = new DataMap();
+    final DataMap barMap = new DataMap();
+    barMap.put("bar", 1);
+    fooMapWithBar.put("foo", barMap);
+    //"{foo={bar=1}}"
+    checkProjection("foo:(bar)", fooMapWithBar);
+
+    final DataMap foobazMapWithBar = new DataMap();
+    foobazMapWithBar.put("baz", 1);
+    foobazMapWithBar.put("foo", barMap);
+    //"{baz=1, foo={bar=1}}"
+    checkProjection("foo:(bar),baz", foobazMapWithBar);
+
+    final DataMap foobazMapWithBarAndQux = new DataMap();
+    final DataMap quxMap = new DataMap();
+    quxMap.put("qux", 1);
+    foobazMapWithBarAndQux.put("baz", quxMap);
+    foobazMapWithBarAndQux.put("foo", barMap);
+    //"{baz={qux=1}, foo={bar=1}}"
+    checkProjection("foo:(bar),baz:(qux)", foobazMapWithBarAndQux);
   }
 
   @Test
@@ -59,17 +89,17 @@ public class TestParseUtils
     expectException("foo:(bar))");
   }
 
-  private void checkProjection(String input, String expected) throws Exception
+  private void checkProjection(final String input, final DataMap expected) throws Exception
   {
     MaskTree mask = ArgumentUtils.parseProjectionParameter(input);
-    assertEquals(mask.getDataMap().toString(), expected);
+    Assert.assertEquals(mask.getDataMap(), expected);
   }
 
   private void expectException(String input)
   {
     try
     {
-      MaskTree mask = ArgumentUtils.parseProjectionParameter(input);
+      ArgumentUtils.parseProjectionParameter(input);
       Assert.fail("Expected exception");
     }
     catch (Exception e)

@@ -17,15 +17,16 @@
 package com.linkedin.data.schema;
 
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.PrettyPrinter;
 import com.linkedin.data.codec.JacksonDataCodec;
 
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.List;
 import java.util.Map;
+
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.PrettyPrinter;
 
 
 /**

@@ -20,16 +20,20 @@
 
 package com.linkedin.data.transform.filter;
 
-import static com.linkedin.data.TestUtil.dataMapFromString;
 
-import java.io.IOException;
-
+import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.transform.filter.request.MaskCreator;
 import com.linkedin.data.transform.filter.request.MaskOperation;
 import com.linkedin.data.transform.filter.request.MaskTree;
+
+import java.io.IOException;
+
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import static com.linkedin.data.TestUtil.dataMapFromString;
+
 
 /**
  * @author Josh Walker
@@ -49,14 +53,29 @@ public class TestMaskCreation
   public void testPositiveMaskMultipleFields()
   {
     MaskTree mask = MaskCreator.createPositiveMask(new PathSpec("foo"), new PathSpec("bar"));
-    Assert.assertEquals(mask.toString(), "{foo=1, bar=1}");
+
+    //"{foo=1, bar=1}"
+    final DataMap fooBarMap = new DataMap();
+    fooBarMap.put("foo", MaskOperation.POSITIVE_MASK_OP.getRepresentation());
+    fooBarMap.put("bar", MaskOperation.POSITIVE_MASK_OP.getRepresentation());
+    Assert.assertEquals(mask.getDataMap(), fooBarMap, "The MaskTree DataMap should match");
   }
 
   @Test
   public void testPositiveMaskNestedFields()
   {
     MaskTree mask = MaskCreator.createPositiveMask(new PathSpec("foo", "bar"), new PathSpec("bar", "baz"), new PathSpec("qux"));
-    Assert.assertEquals(mask.toString(), "{foo={bar=1}, bar={baz=1}, qux=1}");
+
+    //"{foo={bar=1}, bar={baz=1}, qux=1}"
+    final DataMap fooBarQuxMap = new DataMap();
+    fooBarQuxMap.put("qux", MaskOperation.POSITIVE_MASK_OP.getRepresentation());
+    final DataMap barMap = new DataMap();
+    barMap.put("baz", MaskOperation.POSITIVE_MASK_OP.getRepresentation());
+    final DataMap fooMap = new DataMap();
+    fooMap.put("bar", MaskOperation.POSITIVE_MASK_OP.getRepresentation());
+    fooBarQuxMap.put("foo", fooMap);
+    fooBarQuxMap.put("bar", barMap);
+    Assert.assertEquals(mask.getDataMap(), fooBarQuxMap, "The MaskTree DataMap should match");
   }
 
   @Test
@@ -70,7 +89,12 @@ public class TestMaskCreation
   public void testNegativeMaskMultipleFields()
   {
     MaskTree mask = MaskCreator.createNegativeMask(new PathSpec("foo"), new PathSpec("bar"));
-    Assert.assertEquals(mask.toString(), "{foo=0, bar=0}");
+
+    //"{foo=0, bar=0}"
+    final DataMap fooBarMap = new DataMap();
+    fooBarMap.put("foo", MaskOperation.NEGATIVE_MASK_OP.getRepresentation());
+    fooBarMap.put("bar", MaskOperation.NEGATIVE_MASK_OP.getRepresentation());
+    Assert.assertEquals(mask.getDataMap(), fooBarMap, "The MaskTree DataMap should match");
   }
 
   @Test
@@ -78,7 +102,17 @@ public class TestMaskCreation
   {
     MaskTree mask = MaskCreator.createNegativeMask(new PathSpec("foo", "bar"), new PathSpec("bar", "baz"),
                                                    new PathSpec("qux"));
-    Assert.assertEquals(mask.toString(), "{foo={bar=0}, bar={baz=0}, qux=0}");
+
+    //"{foo={bar=0}, bar={baz=0}, qux=0}"
+    final DataMap fooBarQuxMap = new DataMap();
+    fooBarQuxMap.put("qux", MaskOperation.NEGATIVE_MASK_OP.getRepresentation());
+    final DataMap barMap = new DataMap();
+    barMap.put("baz", MaskOperation.NEGATIVE_MASK_OP.getRepresentation());
+    final DataMap fooMap = new DataMap();
+    fooMap.put("bar", MaskOperation.NEGATIVE_MASK_OP.getRepresentation());
+    fooBarQuxMap.put("foo", fooMap);
+    fooBarQuxMap.put("bar", barMap);
+    Assert.assertEquals(mask.getDataMap(), fooBarQuxMap, "The MaskTree DataMap should match");
   }
 
   @Test
@@ -87,7 +121,16 @@ public class TestMaskCreation
     MaskTree mask = new MaskTree();
     mask.addOperation(new PathSpec("foo", "bar"), MaskOperation.POSITIVE_MASK_OP);
     mask.addOperation(new PathSpec("baz", "qux"), MaskOperation.NEGATIVE_MASK_OP);
-    Assert.assertEquals(mask.toString(), "{baz={qux=0}, foo={bar=1}}");
+
+    //"{baz={qux=0}, foo={bar=1}}"
+    final DataMap bazFooMap = new DataMap();
+    final DataMap bazMap = new DataMap();
+    final DataMap fooMap = new DataMap();
+    bazMap.put("qux", MaskOperation.NEGATIVE_MASK_OP.getRepresentation());
+    fooMap.put("bar", MaskOperation.POSITIVE_MASK_OP.getRepresentation());
+    bazFooMap.put("baz", bazMap);
+    bazFooMap.put("foo", fooMap);
+    Assert.assertEquals(mask.getDataMap(), bazFooMap, "The MaskTree DataMap should match");
   }
 
   @Test

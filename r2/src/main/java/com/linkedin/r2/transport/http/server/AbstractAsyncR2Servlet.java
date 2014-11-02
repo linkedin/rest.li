@@ -43,6 +43,7 @@ import java.io.IOException;
  * @author Goksel Genc
  * @version $Revision$
  */
+@SuppressWarnings("serial")
 public abstract class AbstractAsyncR2Servlet extends AbstractR2Servlet
 {
   private static final String TRANSPORT_CALLBACK_IOEXCEPTION = "TransportCallbackIOException";

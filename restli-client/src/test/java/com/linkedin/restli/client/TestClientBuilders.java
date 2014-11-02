@@ -17,6 +17,8 @@
 package com.linkedin.restli.client;
 
 
+import com.linkedin.data.DataComplex;
+import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.DataTemplateUtil;
@@ -52,6 +54,7 @@ import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.TestConstants;
 import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.internal.common.URLEscaper;
+import com.linkedin.restli.internal.testutils.URIDetails;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -64,6 +67,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import com.google.common.collect.HashMultiset;
+import com.google.common.collect.Multiset;
 
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
@@ -129,14 +135,27 @@ public class TestClientBuilders
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "action")
   public Object[][] action()
   {
+    //Sample valid URIs:
+    //"test/1?action=action"
+    //"test/1?action=action"
+
+    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    queryParamsMap.put("action", "action");
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test/1",
+        null, queryParamsMap, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test/1",
+        null, queryParamsMap, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test/1?action=action" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test/1?action=action" }
+        {uriDetails1},
+        {uriDetails2}
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "action")
-  public void testActionRequestBuilder(ProtocolVersion version, String expectedUri)
+  public void testActionRequestBuilder(URIDetails expectedURIDetails)
   {
     FieldDef<String> pParam = new FieldDef<String>("p", String.class, DataTemplateUtil.getSchema(String.class));
     Map<String, DynamicRecordMetadata> requestMetadataMap = new HashMap<String, DynamicRecordMetadata>();
@@ -168,7 +187,7 @@ public class TestClientBuilders
                                                                                                           String.class,
                                                                                                           DataTemplateUtil.getSchema(String.class)))));
 
-    testUriGeneration(request, expectedUri, version);
+    URIDetails.testUriGeneration(request, expectedURIDetails);
     Assert.assertEquals(request.getMethod(), ResourceMethod.ACTION);
     Assert.assertEquals(request.getHeaders(), Collections.<String, String>emptyMap());
     Assert.assertEquals(request.getInputRecord(), expectedRecordTemplate);
@@ -180,50 +199,96 @@ public class TestClientBuilders
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchGetWithProjections")
   public Object[][] batchGetWithProjections()
   {
+    //Sample valid URIs:
+    //"test?fields=message,id&ids=1&ids=2&ids=3"
+    //"test?fields=message,id&ids=List(1,2,3)"
+
+    final Set<String> fieldSet = new HashSet<String>();
+    fieldSet.add("message");
+    fieldSet.add("id");
+
+    final Set<String> idSet = new HashSet<String>();
+    idSet.add("1");
+    idSet.add("2");
+    idSet.add("3");
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test",
+        idSet, null, fieldSet);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test",
+        idSet, null, fieldSet);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test?fields=message,id&ids=1&ids=2&ids=3" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test?fields=message,id&ids=List(1,2,3)" }
+        {uriDetails1},
+        {uriDetails2}
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchGetWithProjections")
-  public void testBatchGetRequestBuilder(ProtocolVersion version, String expectedUri)
+  public void testBatchGetRequestBuilder(URIDetails expectedURIDetails)
   {
     BatchGetRequestBuilder<Long, TestRecord> builder = new BatchGetRequestBuilder<Long, TestRecord>(TEST_URI,
-                                                                                     TestRecord.class,
-                                                                                     _COLL_SPEC,
-                                                                                     RestliRequestOptions.DEFAULT_OPTIONS);
+        TestRecord.class,
+        _COLL_SPEC,
+        RestliRequestOptions.DEFAULT_OPTIONS);
     BatchGetRequest<TestRecord> request = builder.ids(1L, 2L, 3L).fields(TestRecord.fields().id(), TestRecord.fields().message()).build();
-    testBaseUriGeneration(request, version);
+    testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
     Assert.assertEquals(request.getObjectIds(), new HashSet<Long>(Arrays.asList(1L, 2L, 3L)));
     Assert.assertEquals(request.getFields(), new HashSet<PathSpec>(Arrays.asList(
-            TestRecord.fields().id(), TestRecord.fields().message())));
+        TestRecord.fields().id(), TestRecord.fields().message())));
     Assert.assertEquals(request.isSafe(), true);
     Assert.assertEquals(request.isIdempotent(), true);
 
-    checkBasicRequest(request, expectedUri, ResourceMethod.BATCH_GET,
-                      null, Collections.<String, String>emptyMap(), version);
+    checkBasicRequest(request, expectedURIDetails, ResourceMethod.BATCH_GET, null, Collections.<String, String>emptyMap());
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchGetWithEncoding")
   public Object[][] batchGetWithEncoding()
   {
+    //Sample URIs:
+    //"test?fields=message,id&ids=ampersand%3D%2526%2526%26equals%3D%253D%253D&ids=ampersand%3D%2526%26equals%3D%253D"
+    //"test?fields=message,id&ids=List((ampersand:%26%26,equals:%3D%3D),(ampersand:%26,equals:%3D))"
+
+    final Set<String> fieldSet = new HashSet<String>();
+    fieldSet.add("message");
+    fieldSet.add("id");
+
+    //Note that we need two different ID sets, one for V1 and one for V2 since batch operations on compound keys
+    //are unique.
+    final Set<String> idSetV1 = new HashSet<String>();
+    idSetV1.add("ampersand=%26%26&equals=%3D%3D");
+    idSetV1.add("ampersand=%26&equals=%3D");
+
+    final Set<DataMap> idSetV2 = new HashSet<DataMap>();
+    final DataMap map1 = new DataMap();
+    map1.put("ampersand", "&&");
+    map1.put("equals", "==");
+    final DataMap map2 = new DataMap();
+    map2.put("ampersand", "&");
+    map2.put("equals", "=");
+    idSetV2.add(map1);
+    idSetV2.add(map2);
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test",
+        idSetV1, null, fieldSet);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test",
+        idSetV2, null, fieldSet);
+
     return new Object[][] {
       // Note double encoding for V1 - one comes from CompoundKey.toString, another - from BatchGetRequestBuilder.ids().
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
-        "test?fields=message,id&ids=ampersand%3D%2526%2526%26equals%3D%253D%253D&ids=ampersand%3D%2526%26equals%3D%253D" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
-        "test?fields=message,id&ids=List((ampersand:%26%26,equals:%3D%3D),(ampersand:%26,equals:%3D))" }
+      { uriDetails1 },
+      { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchGetWithEncoding")
-  public void testBatchGetCompoundKeyRequestBuilder(ProtocolVersion version, String expectedUri)
+  public void testBatchGetCompoundKeyRequestBuilder(URIDetails expectedURIDetails)
   {
-    BatchGetRequestBuilder<CompoundKey, TestRecord> builder = new BatchGetRequestBuilder<CompoundKey, TestRecord>(TEST_URI,
-                                                                                                                  TestRecord.class,
-                                                                                                                  _ASSOC_SPEC,
-                                                                                                                  RestliRequestOptions.DEFAULT_OPTIONS);
+    BatchGetRequestBuilder<CompoundKey, TestRecord> builder =
+        new BatchGetRequestBuilder<CompoundKey, TestRecord>(TEST_URI, TestRecord.class, _ASSOC_SPEC,
+            RestliRequestOptions.DEFAULT_OPTIONS);
+
     CompoundKey key1 = new CompoundKey();
     key1.append("equals", "=");
     key1.append("ampersand", "&");
@@ -234,7 +299,7 @@ public class TestClientBuilders
     BatchGetKVRequest<CompoundKey, TestRecord> request =
         builder.ids(key1,key2).fields(TestRecord.fields().id(), TestRecord.fields().message()).buildKV();
 
-    testBaseUriGeneration(request, version);
+    testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
 
     // Compare key sets. Note that have to convert keys to Strings as the request internally converts them to string
     HashSet<CompoundKey> expectedIds = new HashSet<CompoundKey>(Arrays.asList(key1, key2));
@@ -245,11 +310,10 @@ public class TestClientBuilders
     Assert.assertEquals(request.isIdempotent(), true);
 
     checkBasicRequest(request,
-                      expectedUri,
+                      expectedURIDetails,
                       ResourceMethod.BATCH_GET,
                       null,
-                      Collections.<String, String>emptyMap(),
-                      version);
+                      Collections.<String, String>emptyMap());
   }
 
   private CompoundKey buildCompoundKey()
@@ -268,14 +332,25 @@ public class TestClientBuilders
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "compoundKey")
   public Object[][] compoundKey()
   {
+    //Sample URIs:
+    //"test/part1=1&part2=2"
+    //"test/(part1:1,part2:2)"
+
+    //We can compare the serialized compound key as a part of the path since its always serialized into a sorted order
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+        "test/part1=1&part2=2", null, null, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+        "test/(part1:1,part2:2)", null, null, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test/part1=1&part2=2" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test/(part1:1,part2:2)" }
+      { uriDetails1 },
+      { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "compoundKey")
-  public void testGetCompoundKeyRequestBuilder(ProtocolVersion version, String expectedUri)
+  public void testGetCompoundKeyRequestBuilder(URIDetails expectedURIDetails)
   {
     GetRequestBuilder<CompoundKey, TestRecord> builder =
         new GetRequestBuilder<CompoundKey, TestRecord>(TEST_URI, TestRecord.class, _ASSOC_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
@@ -284,28 +359,37 @@ public class TestClientBuilders
 
     GetRequest<TestRecord> request = builder.id(key).build();
 
-    testBaseUriGeneration(request, version);
+    testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
     Assert.assertEquals(request.isSafe(), true);
     Assert.assertEquals(request.isIdempotent(), true);
     checkBasicRequest(request,
-                      expectedUri,
+                      expectedURIDetails,
                       ResourceMethod.GET,
                       null,
-                      Collections.<String, String>emptyMap(),
-                      version);
+                      Collections.<String, String>emptyMap());
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "noEntity")
   public Object[][] noEntity()
   {
+    //Sample URIs:
+    //"test"
+    //"test"
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+        "test", null, null, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+        "test", null, null, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test" }
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "noEntity")
-  public void testCreateCompoundKeyRequestBuilder(ProtocolVersion version, String expectedUri)
+  public void testCreateCompoundKeyRequestBuilder(URIDetails expectedURIDetails)
   {
     CreateRequestBuilder<CompoundKey, TestRecord> builder =
         new CreateRequestBuilder<CompoundKey, TestRecord>(TEST_URI, TestRecord.class, _ASSOC_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
@@ -316,13 +400,13 @@ public class TestClientBuilders
 
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), false);
-    testBaseUriGeneration(request, version);
-    checkBasicRequest(request, expectedUri, ResourceMethod.CREATE, record, Collections.<String, String>emptyMap(),
-                      version);
+
+    testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
+    checkBasicRequest(request, expectedURIDetails, ResourceMethod.CREATE, record, Collections.<String, String>emptyMap());
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "compoundKey")
-  public void testUpdateCompoundKeyRequestBuilder(ProtocolVersion version, String expectedUri)
+  public void testUpdateCompoundKeyRequestBuilder(URIDetails expectedURIDetails)
   {
     UpdateRequestBuilder<CompoundKey, TestRecord> builder =
         new UpdateRequestBuilder<CompoundKey, TestRecord>(TEST_URI, TestRecord.class, _ASSOC_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
@@ -332,17 +416,16 @@ public class TestClientBuilders
 
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), true);
-    testBaseUriGeneration(request, version);
+    testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
     checkBasicRequest(request,
-                      expectedUri,
+                      expectedURIDetails,
                       ResourceMethod.UPDATE,
                       record,
-                      Collections.<String, String>emptyMap(),
-                      version);
+                      Collections.<String, String>emptyMap());
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "compoundKey")
-  public void testPartialUpdateCompoundKeyRequestBuilder(ProtocolVersion version, String expectedUri)
+  public void testPartialUpdateCompoundKeyRequestBuilder(URIDetails expectedURIDetails)
       throws CloneNotSupportedException
   {
     PartialUpdateRequestBuilder<CompoundKey, TestRecord> builder =
@@ -358,24 +441,48 @@ public class TestClientBuilders
 
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), false);
-    testBaseUriGeneration(request, version);
-    checkBasicRequest(request, expectedUri, ResourceMethod.PARTIAL_UPDATE, patch, Collections.<String, String>emptyMap(),
-                      version);
+
+    testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
+    checkBasicRequest(request, expectedURIDetails, ResourceMethod.PARTIAL_UPDATE, patch, Collections.<String, String>emptyMap());
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchCompoundKey")
   public Object[][] batchCompoundKey()
   {
+    //Sample URIs:
+    //"test?ids=part1%3D1%26part2%3D2&ids=part1%3D11%26part2%3D22",
+    //"test?ids=List((part1:1,part2:2),(part1:11,part2:22))");
+
+    //Note that we need two different ID sets, one for V1 and one for V2 since batch operations on compound keys
+    //are unique.
+    final Set<String> idSetV1 = new HashSet<String>();
+    idSetV1.add("part1=1&part2=2");
+    idSetV1.add("part1=11&part2=22");
+
+    final Set<DataMap> idSetV2 = new HashSet<DataMap>();
+    final DataMap id1 = new DataMap();
+    id1.put("part1", "1");
+    id1.put("part2", "2");
+    final DataMap id2 = new DataMap();
+    id2.put("part1", "11");
+    id2.put("part2", "22");
+    idSetV2.add(id1);
+    idSetV2.add(id2);
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test",
+        idSetV1, null, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test",
+        idSetV2, null, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
-        "test?ids=part1%3D1%26part2%3D2&ids=part1%3D11%26part2%3D22" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
-        "test?ids=List((part1:1,part2:2),(part1:11,part2:22))" }
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchCompoundKey")
-  public void testBatchUpdateCompoundKeyRequestBuilder(ProtocolVersion version, String expectedUri)
+  public void testBatchUpdateCompoundKeyRequestBuilder(URIDetails expectedURIDetails)
   {
     BatchUpdateRequestBuilder<CompoundKey, TestRecord> builder =
         new BatchUpdateRequestBuilder<CompoundKey, TestRecord>(TEST_URI, TestRecord.class, _ASSOC_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
@@ -389,12 +496,12 @@ public class TestClientBuilders
     inputs.put(key2, t2);
 
     BatchRequest<TestRecord> expectedRequest = new BatchRequest<TestRecord>(new DataMap(), TestRecord.class);
-    expectedRequest.getEntities().put(toEntityKey(key1, version), t1);
-    expectedRequest.getEntities().put(toEntityKey(key2, version), t2);
+    expectedRequest.getEntities().put(toEntityKey(key1, expectedURIDetails.getProtocolVersion()), t1);
+    expectedRequest.getEntities().put(toEntityKey(key2, expectedURIDetails.getProtocolVersion()), t2);
 
     BatchUpdateRequest<CompoundKey, TestRecord> request = builder.inputs(inputs).build();
 
-    testBaseUriGeneration(request, version);
+    testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), true);
 
@@ -410,16 +517,15 @@ public class TestClientBuilders
                                                                                  new TestRecord[]{t1, t2});
 
     checkBasicRequest(request,
-                      expectedUri,
+                      expectedURIDetails,
                       ResourceMethod.BATCH_UPDATE,
                       collectionRequest,
                       expectedRequest,
-                      Collections.<String, String>emptyMap(),
-                      version);
+                      Collections.<String, String>emptyMap());
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchCompoundKey")
-  public void testBatchPartialUpdateCompoundKeyRequestBuilder(ProtocolVersion version, String expectedUri)
+  public void testBatchPartialUpdateCompoundKeyRequestBuilder(URIDetails expectedURIDetails)
       throws CloneNotSupportedException
   {
     BatchPartialUpdateRequestBuilder<CompoundKey, TestRecord> builder =
@@ -438,14 +544,14 @@ public class TestClientBuilders
 
     BatchPartialUpdateRequest<CompoundKey, TestRecord> request = builder.inputs(inputs).build();
 
-    testBaseUriGeneration(request, version);
+    testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), false);
 
     @SuppressWarnings({"unchecked","rawtypes"})
     BatchRequest<PatchRequest<TestRecord>> expectedRequest = new BatchRequest(new DataMap(), PatchRequest.class);
-    expectedRequest.getEntities().put(toEntityKey(key1, version), patch1);
-    expectedRequest.getEntities().put(toEntityKey(key2, version), patch2);
+    expectedRequest.getEntities().put(toEntityKey(key1, expectedURIDetails.getProtocolVersion()), patch1);
+    expectedRequest.getEntities().put(toEntityKey(key2, expectedURIDetails.getProtocolVersion()), patch2);
 
     @SuppressWarnings({"unchecked","rawtypes"})
     KeyValueRecordFactory<CompoundKey, PatchRequest> factory =
@@ -460,16 +566,15 @@ public class TestClientBuilders
                                                                                  new PatchRequest[]{patch1, patch2});
 
     checkBasicRequest(request,
-                      expectedUri,
+                      expectedURIDetails,
                       ResourceMethod.BATCH_PARTIAL_UPDATE,
                       collectionRequest,
                       expectedRequest,
-                      Collections.<String, String>emptyMap(),
-                      version);
+                      Collections.<String, String>emptyMap());
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchGetWithProjections")
-  public void testBatchGetRequestBuilderCollectionIds(ProtocolVersion version, String expectedUri)
+  public void testBatchGetRequestBuilderCollectionIds(URIDetails expectedURIDetails)
   {
     BatchGetRequestBuilder<Long, TestRecord> builder = new BatchGetRequestBuilder<Long, TestRecord>(TEST_URI,
                                                                                                     TestRecord.class,
@@ -477,28 +582,42 @@ public class TestClientBuilders
                                                                                                     RestliRequestOptions.DEFAULT_OPTIONS);
     List<Long> ids = Arrays.asList(1L, 2L, 3L);
     BatchGetRequest<TestRecord> request = builder.ids(ids).fields(TestRecord.fields().id(), TestRecord.fields().message()).build();
-    testBaseUriGeneration(request, version);
+    testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
     Assert.assertEquals(request.getObjectIds(), new HashSet<Long>(Arrays.asList(1L, 2L, 3L)));
     Assert.assertEquals(request.getFields(), new HashSet<PathSpec>(Arrays.asList(
             TestRecord.fields().id(), TestRecord.fields().message())));
     Assert.assertEquals(request.isSafe(), true);
     Assert.assertEquals(request.isIdempotent(), true);
 
-    checkBasicRequest(request, expectedUri, ResourceMethod.BATCH_GET, null, Collections.<String, String>emptyMap(),
-                      version);
+    checkBasicRequest(request, expectedURIDetails, ResourceMethod.BATCH_GET, null, Collections.<String, String>emptyMap());
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batch")
   public Object[][] batch()
   {
+    //Sample URIs:
+    //"test?ids=1&ids=2&ids=3"
+    //"test?ids=List(1,2,3)"
+
+    final Set<String> idSet = new HashSet<String>();
+    idSet.add("1");
+    idSet.add("2");
+    idSet.add("3");
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test",
+        idSet, null, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test",
+        idSet, null, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test?ids=1&ids=2&ids=3" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test?ids=List(1,2,3)" }
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batch")
-  public void testBatchUpdateRequestBuilder(ProtocolVersion version, String expectedUri)
+  public void testBatchUpdateRequestBuilder(URIDetails expectedURIDetails)
   {
     BatchUpdateRequestBuilder<Long, TestRecord> builder =
             new BatchUpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
@@ -507,7 +626,7 @@ public class TestClientBuilders
     updates.put(2L, new TestRecord());
     updates.put(3L, new TestRecord());
     BatchUpdateRequest<Long, TestRecord> request = builder.inputs(updates).build();
-    testBaseUriGeneration(request, version);
+    testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
     Assert.assertEquals(request.getObjectIds(), new HashSet<Long>(Arrays.asList(1L, 2L, 3L)));
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), true);
@@ -531,17 +650,17 @@ public class TestClientBuilders
                                new TestRecord[]{new TestRecord(), new TestRecord(), new TestRecord()});
 
     checkBasicRequest(request,
-                      expectedUri,
+                      expectedURIDetails,
                       ResourceMethod.BATCH_UPDATE,
                       collectionRequest,
                       expectedRequest,
-                      Collections.<String, String>emptyMap(), version);
+                      Collections.<String, String>emptyMap());
   }
 
   // need suppress on the method because the more specific suppress isn't being obeyed.
   @SuppressWarnings({"unchecked", "rawtypes"})
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batch")
-  public void testBatchPartialUpdateRequestBuilder(ProtocolVersion version, String expectedUri)
+  public void testBatchPartialUpdateRequestBuilder(URIDetails expectedURIDetails)
   {
     BatchPartialUpdateRequestBuilder<Long, TestRecord> builder =
             new BatchPartialUpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
@@ -550,7 +669,7 @@ public class TestClientBuilders
     builder.input(2L, new PatchRequest<TestRecord>());
     builder.input(3L, new PatchRequest<TestRecord>());
     BatchPartialUpdateRequest<Long, TestRecord> request = builder.build();
-    testBaseUriGeneration(request, version);
+    testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
     Assert.assertEquals(request.getObjectIds(), new HashSet<Long>(Arrays.asList(1L, 2L, 3L)));
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), false);
@@ -573,49 +692,47 @@ public class TestClientBuilders
                                new PatchRequest[]{new PatchRequest(), new PatchRequest(), new PatchRequest()});
 
     checkBasicRequest(request,
-                      expectedUri,
+                      expectedURIDetails,
                       ResourceMethod.BATCH_PARTIAL_UPDATE,
                       collectionRequest,
                       expectedRequest,
-                      Collections.<String, String>emptyMap(),
-                      version);
+                      Collections.<String, String>emptyMap());
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batch")
-  public void testBatchDeleteRequestBuilder(ProtocolVersion version, String expectedUri)
+  public void testBatchDeleteRequestBuilder(URIDetails expectedURIDetails)
   {
     BatchDeleteRequestBuilder<Long, TestRecord> builder =
             new BatchDeleteRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
     BatchDeleteRequest<Long, TestRecord> request = builder.ids(1L, 2L, 3L).build();
-    testBaseUriGeneration(request, version);
+    testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
     Assert.assertEquals(request.getObjectIds(), new HashSet<Long>(Arrays.asList(1L, 2L, 3L)));
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), true);
 
-    checkBasicRequest(request, expectedUri, ResourceMethod.BATCH_DELETE, null, Collections.<String, String>emptyMap(),
-                      version);
+    checkBasicRequest(request, expectedURIDetails, ResourceMethod.BATCH_DELETE, null, Collections.<String, String>emptyMap());
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "noEntity")
-  public void testBatchCreateRequestBuilder(ProtocolVersion version, String expectedUri)
+  public void testBatchCreateRequestBuilder(URIDetails expectedURIDetails)
   {
     BatchCreateRequestBuilder<Long, TestRecord> builder =
             new BatchCreateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
     List<TestRecord> newRecords = Arrays.asList(new TestRecord(), new TestRecord(), new TestRecord());
     BatchCreateRequest<TestRecord> request = builder.inputs(newRecords).build();
-    testBaseUriGeneration(request, version);
+    testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), false);
 
     CollectionRequest<TestRecord> expectedRequest = new CollectionRequest<TestRecord>(new DataMap(), TestRecord.class);
     expectedRequest.getElements().addAll(newRecords);
-    checkBasicRequest(request, expectedUri, ResourceMethod.BATCH_CREATE,
+    checkBasicRequest(request, expectedURIDetails, ResourceMethod.BATCH_CREATE,
                       expectedRequest,
-                      Collections.<String, String>emptyMap(), version);
+                      Collections.<String, String>emptyMap());
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "noEntity")
-  public void testCreateRequestBuilder(ProtocolVersion version, String expectedUri)
+  public void testCreateRequestBuilder(URIDetails expectedURIDetails)
   {
     CreateRequestBuilder<Long, TestRecord> builder = new CreateRequestBuilder<Long, TestRecord>(TEST_URI,
                                                                                                 TestRecord.class,
@@ -625,21 +742,30 @@ public class TestClientBuilders
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), false);
 
-    checkBasicRequest(request, expectedUri, ResourceMethod.CREATE, new TestRecord(), Collections.<String, String>emptyMap(),
-                      version);
+    checkBasicRequest(request, expectedURIDetails, ResourceMethod.CREATE, new TestRecord(), Collections.<String, String>emptyMap());
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "singleEntity")
   public Object[][] singleEntity()
   {
+    //Sample URIs:
+    //"test/1"
+    //"test/1"
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+        "test/1", null, null, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+        "test/1", null, null, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test/1" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test/1" }
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "singleEntity")
-  public void testDeleteRequestBuilder(ProtocolVersion version, String expectedUri)
+  public void testDeleteRequestBuilder(URIDetails expectedURIDetails)
   {
     DeleteRequestBuilder<Long, TestRecord> builder = new DeleteRequestBuilder<Long, TestRecord>(TEST_URI,
                                                                                                 TestRecord.class,
@@ -649,12 +775,11 @@ public class TestClientBuilders
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), true);
 
-    checkBasicRequest(request, expectedUri, ResourceMethod.DELETE, null, Collections.<String, String>emptyMap(),
-                      version);
+    checkBasicRequest(request, expectedURIDetails, ResourceMethod.DELETE, null, Collections.<String, String>emptyMap());
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "noEntity")
-  public void testDeleteRequestBuilderWithKeylessResource(ProtocolVersion version, String expectedUri)
+  public void testDeleteRequestBuilderWithKeylessResource(URIDetails expectedURIDetails)
   {
     DeleteRequestBuilder<Long, TestRecord> builder = new DeleteRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class,
                                                                                                 _SIMPLE_RESOURCE_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
@@ -662,23 +787,40 @@ public class TestClientBuilders
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), true);
 
-    checkBasicRequest(request, expectedUri, ResourceMethod.DELETE, null, Collections.<String, String>emptyMap(),
-                      version);
+    checkBasicRequest(request, expectedURIDetails, ResourceMethod.DELETE, null, Collections.<String, String>emptyMap());
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "search1")
   public Object[][] search1()
   {
+    //Sample URIs:
+    //"test/key=a%3Ab?count=4&fields=message,id&p=42&q=search&start=1"
+    //"test/(key:a%3Ab)?count=4&fields=message,id&p=42&q=search&start=1"
+
+    final Set<String> fieldSet = new HashSet<String>();
+    fieldSet.add("message");
+    fieldSet.add("id");
+
+    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    queryParamsMap.put("p", "42");
+    queryParamsMap.put("q", "search");
+    queryParamsMap.put("start", "1");
+    queryParamsMap.put("count", "4");
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test/key=a%3Ab",
+        null, queryParamsMap, fieldSet);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test/(key:a%3Ab)",
+        null, queryParamsMap, fieldSet);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
-        "test/key=a%3Ab?count=4&fields=message,id&p=42&q=search&start=1" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
-        "test/(key:a%3Ab)?count=4&fields=message,id&p=42&q=search&start=1" }
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "search1")
-  public void testFindRequestBuilder1(ProtocolVersion version, String expectedUri)
+  public void testFindRequestBuilder1(URIDetails expectedURIDetails)
   {
     FindRequestBuilder<Long, TestRecord> builder = new FindRequestBuilder<Long, TestRecord>(TEST_URI,
                                                                                             TestRecord.class,
@@ -695,24 +837,38 @@ public class TestClientBuilders
     Assert.assertEquals(request.isIdempotent(), true);
 
     checkBasicRequest(request,
-                      expectedUri,
+                      expectedURIDetails,
                       ResourceMethod.FINDER,
                       null,
-                      Collections.<String, String>emptyMap(),
-                      version);
+                      Collections.<String, String>emptyMap());
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "search2")
   public Object[][] search2()
   {
+    //Sample URIs:
+    //"test/key=a%3Ab?p=42&q=search&start=1"
+    //"test/(key:a%3Ab)?p=42&q=search&start=1"
+
+    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    queryParamsMap.put("p", "42");
+    queryParamsMap.put("q", "search");
+    queryParamsMap.put("start", "1");
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test/key=a%3Ab",
+        null, queryParamsMap, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test/(key:a%3Ab)",
+        null, queryParamsMap, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test/key=a%3Ab?p=42&q=search&start=1" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test/(key:a%3Ab)?p=42&q=search&start=1" }
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "search2")
-  public void testFindRequestBuilder2(ProtocolVersion version, String expectedUri)
+  public void testFindRequestBuilder2(URIDetails expectedURIDetails)
   {
     FindRequestBuilder<Long, TestRecord> builder = new FindRequestBuilder<Long, TestRecord>(TEST_URI,
                                                                                             TestRecord.class,
@@ -727,24 +883,38 @@ public class TestClientBuilders
     Assert.assertEquals(request.isIdempotent(), true);
 
     checkBasicRequest(request,
-                      expectedUri,
+                      expectedURIDetails,
                       ResourceMethod.FINDER,
                       null,
-                      Collections.<String, String>emptyMap(),
-                      version);
+                      Collections.<String, String>emptyMap());
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "search3")
   public Object[][] search3()
   {
+    //Sample URIs:
+    //"test/key=a%3Ab?count=4&p=42&q=search"
+    //"test/(key:a%3Ab)?count=4&p=42&q=search"
+
+    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    queryParamsMap.put("p", "42");
+    queryParamsMap.put("q", "search");
+    queryParamsMap.put("count", "4");
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test/key=a%3Ab",
+        null, queryParamsMap, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test/(key:a%3Ab)",
+        null, queryParamsMap, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test/key=a%3Ab?count=4&p=42&q=search" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test/(key:a%3Ab)?count=4&p=42&q=search" }
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "search3")
-  public void testFindRequestBuilder3(ProtocolVersion version, String expectedUri)
+  public void testFindRequestBuilder3(URIDetails expectedURIDetails)
   {
     FindRequestBuilder<Long, TestRecord> builder = new FindRequestBuilder<Long, TestRecord>(TEST_URI,
                                                                                             TestRecord.class,
@@ -759,24 +929,41 @@ public class TestClientBuilders
     Assert.assertEquals(request.isIdempotent(), true);
 
     checkBasicRequest(request,
-                      expectedUri,
+                      expectedURIDetails,
                       ResourceMethod.FINDER,
                       null,
-                      Collections.<String, String>emptyMap(),
-                      version);
+                      Collections.<String, String>emptyMap());
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "getAll1")
   public Object[][] getAll1()
   {
+    //Sample URIs:
+    //"test?count=4&fields=message,id&start=1"
+    //"test?count=4&fields=message,id&start=1"
+
+    final Set<String> fieldSet = new HashSet<String>();
+    fieldSet.add("message");
+    fieldSet.add("id");
+
+    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    queryParamsMap.put("count", "4");
+    queryParamsMap.put("start", "1");
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test",
+        null, queryParamsMap, fieldSet);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test",
+        null, queryParamsMap, fieldSet);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test?count=4&fields=message,id&start=1" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test?count=4&fields=message,id&start=1" }
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "getAll1")
-  public void testGetAllRequestBuilder1(ProtocolVersion version, String expectedUri)
+  public void testGetAllRequestBuilder1(URIDetails expectedURIDetails)
   {
     GetAllRequestBuilder<Long, TestRecord> builder =
         new GetAllRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
@@ -788,24 +975,36 @@ public class TestClientBuilders
     Assert.assertEquals(request.isSafe(), true);
     Assert.assertEquals(request.isIdempotent(), true);
     checkBasicRequest(request,
-                      expectedUri,
+                      expectedURIDetails,
                       ResourceMethod.GET_ALL,
                       null,
-                      Collections.<String, String>emptyMap(),
-                      version);
+                      Collections.<String, String>emptyMap());
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "getAll2")
   public Object[][] getAll2()
   {
+    //Sample URIs:
+    //"test?start=1"
+    //"test?start=1"
+
+    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    queryParamsMap.put("start", "1");
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test",
+        null, queryParamsMap, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test",
+        null, queryParamsMap, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test?start=1" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test?start=1" }
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider =  TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "getAll2")
-  public void testGetAllRequestBuilder2(ProtocolVersion version, String expectedUri)
+  public void testGetAllRequestBuilder2(URIDetails expectedURIDetails)
   {
     GetAllRequestBuilder<Long, TestRecord> builder =
         new GetAllRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
@@ -814,24 +1013,36 @@ public class TestClientBuilders
     Assert.assertEquals(request.isSafe(), true);
     Assert.assertEquals(request.isIdempotent(), true);
     checkBasicRequest(request,
-                      expectedUri,
+                      expectedURIDetails,
                       ResourceMethod.GET_ALL,
                       null,
-                      Collections.<String, String>emptyMap(),
-                      version);
+                      Collections.<String, String>emptyMap());
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "getAll3")
   public Object[][] getAll3()
   {
+    //Sample URIs:
+    //"test?count=4"
+    //"test?count=4"
+
+    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    queryParamsMap.put("count", "4");
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test",
+        null, queryParamsMap, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test",
+        null, queryParamsMap, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test?count=4" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test?count=4" }
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "getAll3")
-  public void testGetAllRequestBuilder3(ProtocolVersion version, String expectedUri)
+  public void testGetAllRequestBuilder3(URIDetails expectedURIDetails)
   {
     GetAllRequestBuilder<Long, TestRecord> builder =
         new GetAllRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
@@ -840,35 +1051,47 @@ public class TestClientBuilders
     Assert.assertEquals(request.isSafe(), true);
     Assert.assertEquals(request.isIdempotent(), true);
     checkBasicRequest(request,
-                      expectedUri,
+                      expectedURIDetails,
                       ResourceMethod.GET_ALL,
                       null,
-                      Collections.<String, String>emptyMap(),
-                      version);
+                      Collections.<String, String>emptyMap());
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "getWithProjection")
   public Object[][] getWithProjection()
   {
+    //Sample URIs:
+    //"test/1?fields=message,id"
+    //"test/1?fields=message,id"
+    final Set<String> fieldSet = new HashSet<String>();
+    fieldSet.add("message");
+    fieldSet.add("id");
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test/1",
+        null, null, fieldSet);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test/1",
+        null, null, fieldSet);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test/1?fields=message,id" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test/1?fields=message,id" }
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "getWithProjection")
-  public void testGetRequestBuilder(ProtocolVersion version, String expectedUri)
+  public void testGetRequestBuilder(URIDetails expectedURIDetails)
   {
     GetRequestBuilder<Long, TestRecord> builder = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
     GetRequest<TestRecord> request = builder.id(1L).fields(TestRecord.fields().id(), TestRecord.fields().message()).build();
-    testBaseUriGeneration(request, version);
+    testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
     Assert.assertEquals(request.getObjectId(), new Long(1L));
     Assert.assertEquals(request.getFields(), new HashSet<PathSpec>(Arrays.asList(
             TestRecord.fields().id(), TestRecord.fields().message())));
     Assert.assertEquals(request.isSafe(), true);
     Assert.assertEquals(request.isIdempotent(), true);
 
-    checkBasicRequest(request, expectedUri, ResourceMethod.GET, null, Collections.<String, String>emptyMap(), version);
+    checkBasicRequest(request, expectedURIDetails, ResourceMethod.GET, null, Collections.<String, String>emptyMap());
   }
 
   @Test
@@ -896,44 +1119,78 @@ public class TestClientBuilders
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "getOnKeyless")
   public Object[][] getOnKeyless()
   {
+    //Sample URIs:
+    //"test?fields=message,id"
+    //"test?fields=message,id"
+
+    final Set<String> fieldSet = new HashSet<String>();
+    fieldSet.add("message");
+    fieldSet.add("id");
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test",
+        null, null, fieldSet);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test",
+        null, null, fieldSet);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test?fields=message,id" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test?fields=message,id" }
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "getOnKeyless")
-  public void testGetRequestBuilderWithKeylessResource(ProtocolVersion version, String expectedUri)
+  public void testGetRequestBuilderWithKeylessResource(URIDetails expectedURIDetails)
   {
     GetRequestBuilder<Void, TestRecord> builder = new GetRequestBuilder<Void, TestRecord>(TEST_URI,
                                                                                           TestRecord.class,
                                                                                           _SIMPLE_RESOURCE_SPEC,
                                                                                           RestliRequestOptions.DEFAULT_OPTIONS);
     GetRequest<TestRecord> request = builder.fields(TestRecord.fields().id(), TestRecord.fields().message()).build();
-    testBaseUriGeneration(request, version);
+    testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
     Assert.assertEquals(request.getObjectId(), null);
     Assert.assertEquals(request.getFields(), new HashSet<PathSpec>(Arrays.asList(
         TestRecord.fields().id(), TestRecord.fields().message())));
     Assert.assertEquals(request.isSafe(), true);
     Assert.assertEquals(request.isIdempotent(), true);
 
-    checkBasicRequest(request, expectedUri, ResourceMethod.GET, null, Collections.<String, String>emptyMap(),
-                      version);
+    checkBasicRequest(request, expectedURIDetails, ResourceMethod.GET, null, Collections.<String, String>emptyMap());
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "builderParam")
   public Object[][] builderParam()
   {
+    //Sample URIs:
+    //"test/1?arrayKey1=3&arrayKey1=4&arrayKey1=5&arrayKey2=3&arrayKey2=4&arrayKey2=5&simpleKey=2"
+    //"test/1?arrayKey1=List(3,4,5)&arrayKey2=List(3,4,5)&simpleKey=2"
+
+    final Map<String, Object> queryParamsMap = new HashMap<String, Object>();
+    queryParamsMap.put("simpleKey", "2");
+    final DataList arrayKey1List = new DataList();
+    arrayKey1List.add("3");
+    arrayKey1List.add("4");
+    arrayKey1List.add("5");
+    final DataList arrayKey2List = new DataList();
+    arrayKey2List.add("3");
+    arrayKey2List.add("4");
+    arrayKey2List.add("5");
+    queryParamsMap.put("arrayKey1", arrayKey1List);
+    queryParamsMap.put("arrayKey2", arrayKey2List);
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test/1",
+        null, queryParamsMap, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test/1",
+        null, queryParamsMap, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
-        "test/1?arrayKey1=3&arrayKey1=4&arrayKey1=5&arrayKey2=3&arrayKey2=4&arrayKey2=5&simpleKey=2" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
-        "test/1?arrayKey1=List(3,4,5)&arrayKey2=List(3,4,5)&simpleKey=2" }
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "builderParam")
-  public void testBuilderParam(ProtocolVersion version, String expectedUri)
+  public void testBuilderParam(URIDetails expectedURIDetails)
   {
     final GetRequestBuilder<Long, TestRecord> builder = new GetRequestBuilder<Long, TestRecord>(TEST_URI,
                                                                                                 TestRecord.class,
@@ -947,11 +1204,11 @@ public class TestClientBuilders
                                           .setParam("arrayKey1", coll)
                                           .setParam("arrayKey2", array)
                                           .build();
-    testUriGeneration(request, expectedUri, version);
+    URIDetails.testUriGeneration(request, expectedURIDetails);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "singleEntity")
-  public void testPartialUpdateRequestBuilder(ProtocolVersion version, String expectedUri) throws Exception
+  public void testPartialUpdateRequestBuilder(URIDetails expectedURIDetails) throws Exception
   {
     PartialUpdateRequestBuilder<Long, TestRecord> builder = new PartialUpdateRequestBuilder<Long, TestRecord>(TEST_URI,
                                                                                                               TestRecord.class,
@@ -966,11 +1223,15 @@ public class TestClientBuilders
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), false);
 
-    checkBasicRequest(request, expectedUri, ResourceMethod.PARTIAL_UPDATE, patch, Collections.<String, String>emptyMap(), version);
+    checkBasicRequest(request,
+                      expectedURIDetails,
+                      ResourceMethod.PARTIAL_UPDATE,
+                      patch,
+                      Collections.<String, String>emptyMap());
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "noEntity")
-  public void testPartialUpdateRequestBuilderWithKeylessResource(ProtocolVersion version, String expectedUri) throws Exception
+  public void testPartialUpdateRequestBuilderWithKeylessResource(URIDetails expectedURIDetails) throws Exception
   {
     PartialUpdateRequestBuilder<Long, TestRecord> builder = new PartialUpdateRequestBuilder<Long, TestRecord>(TEST_URI,
                                                                                                               TestRecord.class,
@@ -986,11 +1247,10 @@ public class TestClientBuilders
     Assert.assertEquals(request.isIdempotent(), false);
 
     checkBasicRequest(request,
-                      expectedUri,
+                      expectedURIDetails,
                       ResourceMethod.PARTIAL_UPDATE,
                       patch,
-                      Collections.<String, String>emptyMap(),
-                      version);
+                      Collections.<String, String>emptyMap());
   }
 
   @Test
@@ -1011,7 +1271,7 @@ public class TestClientBuilders
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "singleEntity")
-  public void testUpdateRequestBuilder(ProtocolVersion version, String expectedUri)
+  public void testUpdateRequestBuilder(URIDetails expectedURIDetails)
   {
     UpdateRequestBuilder<Long, TestRecord> builder = new UpdateRequestBuilder<Long, TestRecord>(TEST_URI,
                                                                                                 TestRecord.class,
@@ -1021,11 +1281,15 @@ public class TestClientBuilders
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), true);
 
-    checkBasicRequest(request, expectedUri, ResourceMethod.UPDATE, new TestRecord(), Collections.<String, String>emptyMap(), version);
+    checkBasicRequest(request,
+                      expectedURIDetails,
+                      ResourceMethod.UPDATE,
+                      new TestRecord(),
+                      Collections.<String, String>emptyMap());
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "noEntity")
-  public void testUpdateRequestBuilderWithKeylessResource(ProtocolVersion version, String expectedUri)
+  public void testUpdateRequestBuilderWithKeylessResource(URIDetails expectedURIDetails)
   {
     UpdateRequestBuilder<Void, TestRecord> builder = new UpdateRequestBuilder<Void, TestRecord>(TEST_URI,
                                                                                                 TestRecord.class,
@@ -1036,24 +1300,39 @@ public class TestClientBuilders
     Assert.assertEquals(request.isIdempotent(), true);
 
     checkBasicRequest(request,
-                      expectedUri,
+                      expectedURIDetails,
                       ResourceMethod.UPDATE,
                       new TestRecord(),
-                      Collections.<String, String>emptyMap(),
-                      version);
+                      Collections.<String, String>emptyMap());
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "complexKeyAndParam")
   public Object[][] complexKeyAndParam()
   {
+    //Sample URIs:
+    //"test/$params.id=10&$params.message=ParamMessage&id=1&message=KeyMessage?testParam.id=123&testParam.message=ParamMessage"
+    //"test/($params:(id:10,message:ParamMessage),id:1,message:KeyMessage)?testParam=(id:123,message:ParamMessage)"
+
+    final DataMap idMessageMap = new DataMap();
+    idMessageMap.put("id", "123");
+    idMessageMap.put("message", "ParamMessage");
+    final Map<String, DataComplex> queryParamsMap = new HashMap<String, DataComplex>();
+    queryParamsMap.put("testParam", idMessageMap);
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+        "test/$params.id=10&$params.message=ParamMessage&id=1&message=KeyMessage", null, queryParamsMap, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+        "test/($params:(id:10,message:ParamMessage),id:1,message:KeyMessage)", null, queryParamsMap, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test/$params.id=10&$params.message=ParamMessage&id=1&message=KeyMessage?testParam.id=123&testParam.message=ParamMessage" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test/($params:(id:10,message:ParamMessage),id:1,message:KeyMessage)?testParam=(id:123,message:ParamMessage)" }
+        {uriDetails1},
+        {uriDetails2}
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "complexKeyAndParam")
-  public void testComplexKeyGetRequestBuilder(ProtocolVersion version, String expectedUri) throws Exception
+  public void testComplexKeyGetRequestBuilder(URIDetails expectedURIDetails) throws Exception
   {
     GetRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> builder =
         new GetRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord>(TEST_URI,
@@ -1068,15 +1347,14 @@ public class TestClientBuilders
     Assert.assertTrue(request.isSafe());
     Assert.assertTrue(request.isIdempotent());
     checkBasicRequest(request,
-                      expectedUri,
+                      expectedURIDetails,
                       ResourceMethod.GET,
                       null,
-                      Collections.<String, String> emptyMap(),
-                      version);
+                      Collections.<String, String> emptyMap());
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "complexKeyAndParam")
-  public void testComplexKeyDeleteRequestBuilder(ProtocolVersion version, String expectedUri) throws Exception
+  public void testComplexKeyDeleteRequestBuilder(URIDetails expectedURIDetails) throws Exception
   {
     DeleteRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> builder =
         new DeleteRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord>(TEST_URI,
@@ -1091,32 +1369,63 @@ public class TestClientBuilders
     Assert.assertFalse(request.isSafe());
     Assert.assertTrue(request.isIdempotent());
     checkBasicRequest(request,
-                      expectedUri,
+                      expectedURIDetails,
                       ResourceMethod.DELETE,
                       null,
-                      Collections.<String, String> emptyMap(),
-                      version);
+                      Collections.<String, String> emptyMap());
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchComplexKeyAndParam")
   public Object[][] batchComplexKeyAndParam()
   {
+    //Sample valid URIs:
+    //"test?ids%5B0%5D.$params.id=20&ids%5B0%5D.$params.message=ParamMessage2&ids%5B0%5D.id=2&ids%5B0%5D.message=KeyMessage2&ids%5B1%5D.$params.id=10&ids%5B1%5D.$params.message=ParamMessage1&ids%5B1%5D.id=1&ids%5B1%5D.message=KeyMessage1&testParam.id=123&testParam.message=ParamMessage"
+    //"test?ids=List(($params:(id:20,message:ParamMessage2),id:2,message:KeyMessage2),($params:(id:10,message:ParamMessage1),id:1,message:KeyMessage1))&testParam=(id:123,message:ParamMessage)"
+
+    final DataMap idMessageMap = new DataMap();
+    idMessageMap.put("id", "123");
+    idMessageMap.put("message", "ParamMessage");
+    final Map<String, DataComplex> queryParamsMap = new HashMap<String, DataComplex>();
+    queryParamsMap.put("testParam", idMessageMap);
+
+    final Set<DataMap> idList = new HashSet<DataMap>();
+    final DataMap idMapOne = new DataMap();
+    idMapOne.put("id", "1");
+    idMapOne.put("message", "KeyMessage1");
+    final DataMap paramMapOne = new DataMap();
+    paramMapOne.put("id", "10");
+    paramMapOne.put("message", "ParamMessage1");
+    idMapOne.put("$params", paramMapOne);
+    final DataMap idMapTwo = new DataMap();
+    idMapTwo.put("id", "2");
+    idMapTwo.put("message", "KeyMessage2");
+    final DataMap paramMapTwo = new DataMap();
+    paramMapTwo.put("id", "20");
+    paramMapTwo.put("message", "ParamMessage2");
+    idMapTwo.put("$params", paramMapTwo);
+    idList.add(idMapOne);
+    idList.add(idMapTwo);
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test",
+        idList, queryParamsMap, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test",
+        idList, queryParamsMap, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
-        "test?ids%5B0%5D.$params.id=20&ids%5B0%5D.$params.message=ParamMessage2&ids%5B0%5D.id=2&ids%5B0%5D.message=KeyMessage2&ids%5B1%5D.$params.id=10&ids%5B1%5D.$params.message=ParamMessage1&ids%5B1%5D.id=1&ids%5B1%5D.message=KeyMessage1&testParam.id=123&testParam.message=ParamMessage" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
-        "test?ids=List(($params:(id:20,message:ParamMessage2),id:2,message:KeyMessage2),($params:(id:10,message:ParamMessage1),id:1,message:KeyMessage1))&testParam=(id:123,message:ParamMessage)" }
+        {uriDetails1},
+        {uriDetails2}
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchComplexKeyAndParam")
-  public void testComplexKeyBatchGetRequestBuilder(ProtocolVersion version, String expectedUri) throws Exception
+  public void testComplexKeyBatchGetRequestBuilder(URIDetails expectedURIDetails) throws Exception
   {
     BatchGetRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> builder =
         new BatchGetRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord>(TEST_URI,
-                                                                                           TestRecord.class,
-                                                                                           _COMPLEX_KEY_SPEC,
-                                                                                           RestliRequestOptions.DEFAULT_OPTIONS);
+            TestRecord.class,
+            _COMPLEX_KEY_SPEC,
+            RestliRequestOptions.DEFAULT_OPTIONS);
     ComplexResourceKey<TestRecord, TestRecord> id1 =
         buildComplexKey(1L, "KeyMessage1", 10L, "ParamMessage1");
     ComplexResourceKey<TestRecord, TestRecord> id2 =
@@ -1129,15 +1438,14 @@ public class TestClientBuilders
     Assert.assertTrue(request.isIdempotent());
     Assert.assertTrue(request.isSafe());
     checkBasicRequest(request,
-                      expectedUri,
+                      expectedURIDetails,
                       ResourceMethod.BATCH_GET,
                       null,
-                      Collections.<String, String>emptyMap(),
-                      version);
+                      Collections.<String, String>emptyMap());
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchComplexKeyAndParam")
-  public void testComplexKeyBatchUpdateRequestBuilder(ProtocolVersion version, String expectedUri) throws Exception
+  public void testComplexKeyBatchUpdateRequestBuilder(URIDetails expectedURIDetails) throws Exception
   {
     BatchUpdateRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> builder =
         new BatchUpdateRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord>(TEST_URI,
@@ -1157,10 +1465,10 @@ public class TestClientBuilders
 
     // using toStringFull (which is deprecated) because this is only used to check v1
     BatchRequest<TestRecord> expectedRequest = new BatchRequest<TestRecord>(new DataMap(), TestRecord.class);
-    expectedRequest.getEntities().put(toEntityKey(id1, version), t1);
-    expectedRequest.getEntities().put(toEntityKey(id2, version), t2);
+    expectedRequest.getEntities().put(toEntityKey(id1, expectedURIDetails.getProtocolVersion()), t1);
+    expectedRequest.getEntities().put(toEntityKey(id2, expectedURIDetails.getProtocolVersion()), t2);
 
-    testBaseUriGeneration(request, version);
+    testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
     Assert.assertTrue(request.isIdempotent());
     Assert.assertFalse(request.isSafe());
 
@@ -1177,25 +1485,34 @@ public class TestClientBuilders
                                                                                  new TestRecord[]{t1, t2});
 
     checkBasicRequest(request,
-                      expectedUri,
+                      expectedURIDetails,
                       ResourceMethod.BATCH_UPDATE,
                       collectionRequest,
                       expectedRequest,
-                      Collections.<String, String>emptyMap(),
-                      version);
+                      Collections.<String, String>emptyMap());
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "complexKey")
   public Object[][] complexKey()
   {
+    //Sample URIs:
+    //"test/$params.id=2&$params.message=paramMessage&id=1&message=keyMessage"
+    //"test/($params:(id:2,message:paramMessage),id:1,message:keyMessage)"
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+        "test/$params.id=2&$params.message=paramMessage&id=1&message=keyMessage", null, null, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+        "test/($params:(id:2,message:paramMessage),id:1,message:keyMessage)", null, null, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test/$params.id=2&$params.message=paramMessage&id=1&message=keyMessage" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test/($params:(id:2,message:paramMessage),id:1,message:keyMessage)" }
+        {uriDetails1},
+        {uriDetails2}
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "complexKey")
-  public void testComplexKeyUpdateRequestBuilder(ProtocolVersion version, String expectedUri)
+  public void testComplexKeyUpdateRequestBuilder(URIDetails expectedURIDetails)
   {
     UpdateRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> builder =
         new UpdateRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord>(TEST_URI,
@@ -1206,19 +1523,18 @@ public class TestClientBuilders
 
     UpdateRequest<TestRecord> request = builder.id(key).input(new TestRecord()).build();
 
-    testBaseUriGeneration(request, version);
+    testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), true);
     checkBasicRequest(request,
-                      expectedUri,
+                      expectedURIDetails,
                       ResourceMethod.UPDATE,
                       new TestRecord(),
-                      Collections.<String, String> emptyMap(),
-                      version);
+                      Collections.<String, String> emptyMap());
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "noEntity")
-  public void testComplexKeyCreateRequestBuilder(ProtocolVersion version, String expectedUri)
+  public void testComplexKeyCreateRequestBuilder(URIDetails expectedURIDetails)
   {
     CreateRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> builder =
         new CreateRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord>(TEST_URI,
@@ -1227,30 +1543,56 @@ public class TestClientBuilders
                                                                                          RestliRequestOptions.DEFAULT_OPTIONS);
     CreateRequest<TestRecord> request = builder.input(new TestRecord()).build();
 
-    testBaseUriGeneration(request, version);
+    testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), false);
     checkBasicRequest(request,
-                      expectedUri,
+                      expectedURIDetails,
                       ResourceMethod.CREATE,
                       new TestRecord(),
-                      Collections.<String, String> emptyMap(),
-                      version);
+                      Collections.<String, String> emptyMap());
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchComplexKey")
   public Object[][] batchComplexKey()
   {
+    //Sample URIs:
+    //"test?ids%5B0%5D.$params.id=2&ids%5B0%5D.$params.message=paramMessage1&ids%5B0%5D.id=1&ids%5B0%5D.message=keyMessage1&ids%5B1%5D.$params.id=4&ids%5B1%5D.$params.message=paramMessage2&ids%5B1%5D.id=3&ids%5B1%5D.message=keyMessage2"
+    //"test?ids=List(($params:(id:2,message:paramMessage1),id:1,message:keyMessage1),($params:(id:4,message:paramMessage2),id:3,message:keyMessage2))"
+
+    final Set<DataMap> idList = new HashSet<DataMap>();
+    final DataMap idMapOne = new DataMap();
+    idMapOne.put("id", "1");
+    idMapOne.put("message", "keyMessage1");
+    final DataMap paramMapOne = new DataMap();
+    paramMapOne.put("id", "2");
+    paramMapOne.put("message", "paramMessage1");
+    idMapOne.put("$params", paramMapOne);
+    idList.add(idMapOne);
+
+    final DataMap idMapTwo = new DataMap();
+    idMapTwo.put("id", "3");
+    idMapTwo.put("message", "keyMessage2");
+    final DataMap paramMapTwo = new DataMap();
+    paramMapTwo.put("id", "4");
+    paramMapTwo.put("message", "paramMessage2");
+    idMapTwo.put("$params", paramMapTwo);
+    idList.add(idMapTwo);
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test",
+        idList, null, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test",
+        idList, null, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
-        "test?ids%5B0%5D.$params.id=2&ids%5B0%5D.$params.message=paramMessage1&ids%5B0%5D.id=1&ids%5B0%5D.message=keyMessage1&ids%5B1%5D.$params.id=4&ids%5B1%5D.$params.message=paramMessage2&ids%5B1%5D.id=3&ids%5B1%5D.message=keyMessage2" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
-        "test?ids=List(($params:(id:2,message:paramMessage1),id:1,message:keyMessage1),($params:(id:4,message:paramMessage2),id:3,message:keyMessage2))" }
+        {uriDetails1},
+        {uriDetails2}
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchComplexKey")
-  public void testComplexKeyBatchPartialUpdateRequestBuilder(ProtocolVersion version, String expectedUri)
+  public void testComplexKeyBatchPartialUpdateRequestBuilder(URIDetails expectedURIDetails)
   {
     BatchPartialUpdateRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> builder =
         new BatchPartialUpdateRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord>(TEST_URI,
@@ -1274,13 +1616,13 @@ public class TestClientBuilders
 
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), false);
-    testBaseUriGeneration(request, version);
+    testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
 
     // using .toStringFull (which is deprecated) because this is only used for checking v1
     @SuppressWarnings({"unchecked","rawtypes"})
     BatchRequest<PatchRequest<TestRecord>> batchRequest = new BatchRequest(new DataMap(), PatchRequest.class);
-    batchRequest.getEntities().put(toEntityKey(key1, version), patch1);
-    batchRequest.getEntities().put(toEntityKey(key2, version), patch2);
+    batchRequest.getEntities().put(toEntityKey(key1, expectedURIDetails.getProtocolVersion()), patch1);
+    batchRequest.getEntities().put(toEntityKey(key2, expectedURIDetails.getProtocolVersion()), patch2);
 
     @SuppressWarnings({"unchecked","rawtypes"})
     KeyValueRecordFactory<ComplexResourceKey, PatchRequest> factory =
@@ -1294,26 +1636,34 @@ public class TestClientBuilders
                                                                                  new ComplexResourceKey[]{key1, key2},
                                                                                  new PatchRequest[]{patch1, patch2});
 
-    checkBasicRequest(request,
-                      expectedUri,
-                      ResourceMethod.BATCH_PARTIAL_UPDATE,
-                      collectionRequest,
-                      batchRequest,
-                      Collections.<String, String>emptyMap(),
-                      version);
+    checkBasicRequest(request, expectedURIDetails, ResourceMethod.BATCH_PARTIAL_UPDATE, collectionRequest, batchRequest,
+        Collections.<String, String>emptyMap());
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subSubResourceAction1")
   public Object[][] subSubResourceAction1()
   {
+    //Sample URIs:
+    //"foo/1/bar/2/baz?action=action"
+    //"foo/1/bar/2/baz?action=action"
+
+    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    queryParamsMap.put("action", "action");
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+        "foo/1/bar/2/baz", null, queryParamsMap, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+        "foo/1/bar/2/baz", null, queryParamsMap, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "foo/1/bar/2/baz?action=action" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "foo/1/bar/2/baz?action=action" }
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subSubResourceAction1")
-  public void testBuilderPathKeys1(ProtocolVersion version, String expectedUri)
+  public void testBuilderPathKeys1(URIDetails expectedURIDetails)
   {
     List<FieldDef<?>> fieldDefs = new ArrayList<FieldDef<?>>();
     fieldDefs.add(new FieldDef<Integer>("key1", Integer.class, DataTemplateUtil.getSchema(Integer.class)));
@@ -1332,32 +1682,43 @@ public class TestClientBuilders
 
     Request<TestRecord> request = new ActionRequestBuilder<Void, TestRecord>(SUBRESOURCE_URI, TestRecord.class, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS)
       .name("action").pathKey("key1", 1).pathKey("key2", 2).build();
-    testUriGeneration(request, expectedUri, version);
+
+    URIDetails.testUriGeneration(request, expectedURIDetails);
     testPathKeys(request, SUBRESOURCE_URI, expectedPathKeys);
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subSubResourceAction2")
   public Object[][] subSubResourceAction2()
   {
+    //Sample URIs:
+    //"foo/http%3A%2F%2Fexample.com%2Fimages%2F1.png/bar/http%3A%2F%2Fexample.com%2Fimages%2F2.png/baz?action=action"
+    //"foo/http%3A%2F%2Fexample.com%2Fimages%2F1.png/bar/http%3A%2F%2Fexample.com%2Fimages%2F2.png/baz?action=action"
+
+    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    queryParamsMap.put("action", "action");
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+        "foo/http%3A%2F%2Fexample.com%2Fimages%2F1.png/bar/http%3A%2F%2Fexample.com%2Fimages%2F2.png/baz", null, queryParamsMap, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+        "foo/http%3A%2F%2Fexample.com%2Fimages%2F1.png/bar/http%3A%2F%2Fexample.com%2Fimages%2F2.png/baz", null, queryParamsMap, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
-        "foo/http%3A%2F%2Fexample.com%2Fimages%2F1.png/bar/http%3A%2F%2Fexample.com%2Fimages%2F2.png/baz?action=action" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
-        "foo/http%3A%2F%2Fexample.com%2Fimages%2F1.png/bar/http%3A%2F%2Fexample.com%2Fimages%2F2.png/baz?action=action" }
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subSubResourceAction2")
-  public void testBuilderPathKeys2(ProtocolVersion version, String expectedUri)
+  public void testBuilderPathKeys2(URIDetails expectedURIDetails)
   {
     ResourceSpec resourceSpec = getResourceSpecForBuilderPathKeys();
 
     // test with keys containing URL escaped chars
     Request<TestRecord> request = new ActionRequestBuilder<Void, TestRecord>(SUBRESOURCE_URI, TestRecord.class, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS)
       .name("action").pathKey("key1", "http://example.com/images/1.png").pathKey("key2", "http://example.com/images/2.png").build();
-    testUriGeneration(request,
-                      expectedUri,
-                      version);
+    URIDetails.testUriGeneration(request, expectedURIDetails);
+
     Map<String, String> pathKeys1 = new HashMap<String, String>();
     pathKeys1.put("key1", "http://example.com/images/1.png");
     pathKeys1.put("key2", "http://example.com/images/2.png");
@@ -1367,14 +1728,28 @@ public class TestClientBuilders
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subSubResourceBatch")
   public Object[][] subSubResourceBatch()
   {
+    //Sample URIs:
+    //"foo/1/bar/2/baz?ids=1&ids=2"
+    //"foo/1/bar/2/baz?ids=List(1,2)"
+
+    final Set<String> idSet = new HashSet<String>();
+    idSet.add("1");
+    idSet.add("2");
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "foo/1/bar/2/baz",
+        idSet, null, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "foo/1/bar/2/baz",
+        idSet, null, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "foo/1/bar/2/baz?ids=1&ids=2" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "foo/1/bar/2/baz?ids=List(1,2)" }
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subSubResourceBatch")
-  public void testBuilderPathKeys3(ProtocolVersion version, String expectedUri)
+  public void testBuilderPathKeys3(URIDetails expectedURIDetails)
   {
     Map<String, Integer> expectedPathKeys = new HashMap<String, Integer>();
     expectedPathKeys.put("key1", 1);
@@ -1382,21 +1757,31 @@ public class TestClientBuilders
 
     Request<BatchResponse<TestRecord>> request = new BatchGetRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
       .ids(1L, 2L).pathKey("key1", 1).pathKey("key2", 2).build();
-    testUriGeneration(request, expectedUri, version);
+    URIDetails.testUriGeneration(request, expectedURIDetails);
     testPathKeys(request, SUBRESOURCE_URI, expectedPathKeys);
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subSubResourceNoEntity")
   public Object[][] subSubResourceNoEntity()
   {
+    //Sample URIs:
+    //"foo/1/bar/2/baz"
+    //"foo/1/bar/2/baz"
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "foo/1/bar/2/baz",
+        null, null, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "foo/1/bar/2/baz",
+        null, null, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "foo/1/bar/2/baz" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "foo/1/bar/2/baz" }
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subSubResourceNoEntity")
-  public void testBuilderPathKeys4(ProtocolVersion version, String expectedUri)
+  public void testBuilderPathKeys4(URIDetails expectedURIDetails)
   {
     Map<String, Integer> expectedPathKeys = new HashMap<String, Integer>();
     expectedPathKeys.put("key1", 1);
@@ -1404,21 +1789,30 @@ public class TestClientBuilders
 
     Request<EmptyRecord> request = new CreateRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
       .pathKey("key1", 1).pathKey("key2", 2).build();
-    testUriGeneration(request, expectedUri, version);
+    URIDetails.testUriGeneration(request, expectedURIDetails);
     testPathKeys(request, SUBRESOURCE_URI, expectedPathKeys);
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subSubResourceSingleEntity")
   public Object[][] subSubResourceSingleEntity()
   {
+    //"foo/1/bar/2/baz/3"
+    //"foo/1/bar/2/baz/3"
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "foo/1/bar/2/baz/3",
+        null, null, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "foo/1/bar/2/baz/3",
+        null, null, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "foo/1/bar/2/baz/3" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "foo/1/bar/2/baz/3" }
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subSubResourceSingleEntity")
-  public void testBuilderPathKeys5(ProtocolVersion version, String expectedUri)
+  public void testBuilderPathKeys5(URIDetails expectedURIDetails)
   {
     Map<String, Integer> expectedPathKeys = new HashMap<String, Integer>();
     expectedPathKeys.put("key1", 1);
@@ -1426,12 +1820,12 @@ public class TestClientBuilders
 
     Request<EmptyRecord> request = new DeleteRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
       .id(3L).pathKey("key1", 1).pathKey("key2", 2).build();
-    testUriGeneration(request, expectedUri, version);
+    URIDetails.testUriGeneration(request, expectedURIDetails);
     testPathKeys(request, SUBRESOURCE_URI, expectedPathKeys);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subSubResourceNoEntity")
-  public void testBuilderPathKeys6(ProtocolVersion version, String expectedUri)
+  public void testBuilderPathKeys6(URIDetails expectedURIDetails)
   {
     Map<String, Integer> expectedPathKeys = new HashMap<String, Integer>();
     expectedPathKeys.put("key1", 1);
@@ -1439,12 +1833,12 @@ public class TestClientBuilders
 
     Request<CollectionResponse<TestRecord>> request = new FindRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
       .pathKey("key1", 1).pathKey("key2", 2).build();
-    testUriGeneration(request, expectedUri, version);
+    URIDetails.testUriGeneration(request, expectedURIDetails);
     testPathKeys(request, SUBRESOURCE_URI, expectedPathKeys);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subSubResourceSingleEntity")
-  public void testBuilderPathKeys7(ProtocolVersion version, String expectedUri)
+  public void testBuilderPathKeys7(URIDetails expectedURIDetails)
   {
     Map<String, Integer> expectedPathKeys = new HashMap<String, Integer>();
     expectedPathKeys.put("key1", 1);
@@ -1452,12 +1846,12 @@ public class TestClientBuilders
 
     Request<TestRecord> request = new GetRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
       .id(3L).pathKey("key1", 1).pathKey("key2", 2).build();
-    testUriGeneration(request, expectedUri, version);
+    URIDetails.testUriGeneration(request, expectedURIDetails);
     testPathKeys(request, SUBRESOURCE_URI, expectedPathKeys);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subSubResourceSingleEntity")
-  public void testBuilderPathKeys8(ProtocolVersion version, String expectedUri)
+  public void testBuilderPathKeys8(URIDetails expectedURIDetails)
   {
     Map<String, Integer> expectedPathKeys = new HashMap<String, Integer>();
     expectedPathKeys.put("key1", 1);
@@ -1465,12 +1859,12 @@ public class TestClientBuilders
 
     Request<EmptyRecord> request = new PartialUpdateRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
       .id(3L).pathKey("key1", 1).pathKey("key2", 2).build();
-    testUriGeneration(request, expectedUri, version);
+    URIDetails.testUriGeneration(request, expectedURIDetails);
     testPathKeys(request, SUBRESOURCE_URI, expectedPathKeys);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subSubResourceSingleEntity")
-  public void testBuilderPathKeys9(ProtocolVersion version, String expectedUri)
+  public void testBuilderPathKeys9(URIDetails expectedURIDetails)
   {
     Map<String, Integer> expectedPathKeys = new HashMap<String, Integer>();
     expectedPathKeys.put("key1", 1);
@@ -1478,42 +1872,69 @@ public class TestClientBuilders
 
     Request<EmptyRecord> request = new UpdateRequestBuilder<Long, TestRecord>(SUBRESOURCE_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
       .id(3L).pathKey("key1", 1).pathKey("key2", 2).build();
-    testUriGeneration(request, expectedUri, version);
+    URIDetails.testUriGeneration(request, expectedURIDetails);
     testPathKeys(request, SUBRESOURCE_URI, expectedPathKeys);
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subResourceAction1")
   public Object[][] subResourceAction1()
   {
+    //Sample URIs:
+    //"foo/bar/1/baz?action=action"
+    //"foo/bar/1/baz?action=action"
+
+    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    queryParamsMap.put("action", "action");
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "foo/bar/1/baz",
+        null, queryParamsMap, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "foo/bar/1/baz",
+        null, queryParamsMap, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "foo/bar/1/baz?action=action" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "foo/bar/1/baz?action=action" }
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subResourceAction1")
-  public void testBuilderPathKeys10(ProtocolVersion version, String expectedUri)
+  public void testBuilderPathKeys10(URIDetails expectedURIDetails)
   {
     ResourceSpec resourceSpec = getResourceSpecForBuilderPathKeys();
 
     // simple resource & sub resources tests
     Request<TestRecord> request = new ActionRequestBuilder<Void, TestRecord>(SUBRESOURCE_SIMPLE_ROOT_URI, TestRecord.class, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS)
       .name("action").pathKey("key1", 1).build();
-    testUriGeneration(request, expectedUri, version);
+
+    URIDetails.testUriGeneration(request, expectedURIDetails);
     testPathKeys(request, SUBRESOURCE_SIMPLE_ROOT_URI, Collections.singletonMap("key1", 1));
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subResourceAction2")
   public Object[][] subResourceAction2()
   {
+    //Sample URIs:
+    //"foo/bar/http%3A%2F%2Fexample.com%2Fimages%2F1.png/baz?action=action"
+    //"foo/bar/http%3A%2F%2Fexample.com%2Fimages%2F1.png/baz?action=action"
+
+    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    queryParamsMap.put("action", "action");
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+        "foo/bar/http%3A%2F%2Fexample.com%2Fimages%2F1.png/baz", null, queryParamsMap, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+        "foo/bar/http%3A%2F%2Fexample.com%2Fimages%2F1.png/baz", null, queryParamsMap, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "foo/bar/http%3A%2F%2Fexample.com%2Fimages%2F1.png/baz?action=action" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "foo/bar/http%3A%2F%2Fexample.com%2Fimages%2F1.png/baz?action=action" }
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subResourceAction2")
-  public void testBuilderPathKeys11(ProtocolVersion version, String expectedUri)
+  public void testBuilderPathKeys11(URIDetails expectedURIDetails)
   {
     ResourceSpec resourceSpec = getResourceSpecForBuilderPathKeys();
 
@@ -1521,7 +1942,7 @@ public class TestClientBuilders
       SUBRESOURCE_SIMPLE_ROOT_URI, TestRecord.class, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS).name("action")
       .pathKey("key1", "http://example.com/images/1.png")
       .build();
-    testUriGeneration(request, expectedUri, version);
+    URIDetails.testUriGeneration(request, expectedURIDetails);
     testPathKeys(request,
                  SUBRESOURCE_SIMPLE_ROOT_URI,
                  Collections.singletonMap("key1", "http://example.com/images/1.png"));
@@ -1530,124 +1951,191 @@ public class TestClientBuilders
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subResourceBatch")
   public Object[][] subResourceBatch()
   {
+    //Sample URIs:
+    //"foo/bar/1/baz?ids=1&ids=2"
+    //"foo/bar/1/baz?ids=List(1,2)"
+
+    final Set<String> idSet = new HashSet<String>();
+    idSet.add("1");
+    idSet.add("2");
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "foo/bar/1/baz",
+        idSet, null, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "foo/bar/1/baz",
+        idSet, null, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "foo/bar/1/baz?ids=1&ids=2" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "foo/bar/1/baz?ids=List(1,2)" }
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subResourceBatch")
-  public void testBuilderPathKeys12(ProtocolVersion version, String expectedUri)
+  public void testBuilderPathKeys12(URIDetails expectedURIDetails)
   {
     Request<BatchResponse<TestRecord>> request = new BatchGetRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_ROOT_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
       .ids(1L, 2L).pathKey("key1", 1).build();
-    testUriGeneration(request, expectedUri, version);
+
+    URIDetails.testUriGeneration(request, expectedURIDetails);
     testPathKeys(request, SUBRESOURCE_SIMPLE_ROOT_URI, Collections.singletonMap("key1", 1));
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subResourceNoEntity")
   public Object[][] subResourceNoEntity()
   {
+    //Sample URIs:
+    //"foo/bar/1/baz"
+    //"foo/bar/1/baz"
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "foo/bar/1/baz",
+        null, null, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "foo/bar/1/baz",
+        null, null, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "foo/bar/1/baz" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "foo/bar/1/baz" }
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subResourceNoEntity")
-  public void testBuilderPathKeys13(ProtocolVersion version, String expectedUri)
+  public void testBuilderPathKeys13(URIDetails expectedURIDetails)
   {
     Request<EmptyRecord> request = new CreateRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_ROOT_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
       .pathKey("key1", 1).build();
-    testUriGeneration(request, expectedUri, version);
+
+    URIDetails.testUriGeneration(request, expectedURIDetails);
     testPathKeys(request, SUBRESOURCE_SIMPLE_ROOT_URI, Collections.singletonMap("key1", 1));
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subResourceSingleEntity")
   public Object[][] subResourceSingleEntity()
   {
+    //Sample URIs:
+    //"foo/bar/1/baz/2"
+    //"foo/bar/1/baz/2"
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "foo/bar/1/baz/2",
+        null, null, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "foo/bar/1/baz/2",
+        null, null, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "foo/bar/1/baz/2" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "foo/bar/1/baz/2" }
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subResourceSingleEntity")
-  public void testBuilderPathKeys14(ProtocolVersion version, String expectedUri)
+  public void testBuilderPathKeys14(URIDetails expectedURIDetails)
   {
     Request<EmptyRecord> request = new DeleteRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_ROOT_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
       .id(2L).pathKey("key1", 1).build();
-    testUriGeneration(request, expectedUri, version);
+
+    URIDetails.testUriGeneration(request, expectedURIDetails);
     testPathKeys(request, SUBRESOURCE_SIMPLE_ROOT_URI, Collections.singletonMap("key1", 1));
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subResourceNoEntity")
-  public void testBuilderPathKeys15(ProtocolVersion version, String expectedUri)
+  public void testBuilderPathKeys15(URIDetails expectedURIDetails)
   {
     Request<CollectionResponse<TestRecord>> request = new FindRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_ROOT_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
       .pathKey("key1", 1).build();
-    testUriGeneration(request, expectedUri, version);
+
+    URIDetails.testUriGeneration(request, expectedURIDetails);
     testPathKeys(request, SUBRESOURCE_SIMPLE_ROOT_URI, Collections.singletonMap("key1", 1));
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subResourceSingleEntity")
-  public void testBuilderPathKeys16(ProtocolVersion version, String expectedUri)
+  public void testBuilderPathKeys16(URIDetails expectedURIDetails)
   {
     Request<TestRecord> request = new GetRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_ROOT_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
       .id(2L).pathKey("key1", 1).build();
-    testUriGeneration(request, expectedUri, version);
+
+    URIDetails.testUriGeneration(request, expectedURIDetails);
     testPathKeys(request, SUBRESOURCE_SIMPLE_ROOT_URI, Collections.singletonMap("key1", 1));
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subResourceSingleEntity")
-  public void testBuilderPathKeys17(ProtocolVersion version, String expectedUri)
+  public void testBuilderPathKeys17(URIDetails expectedURIDetails)
   {
     Request<EmptyRecord> request = new PartialUpdateRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_ROOT_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
       .id(2L).pathKey("key1", 1).build();
-    testUriGeneration(request, expectedUri, version);
+
+    URIDetails.testUriGeneration(request, expectedURIDetails);
     testPathKeys(request, SUBRESOURCE_SIMPLE_ROOT_URI, Collections.singletonMap("key1", 1));
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subResourceSingleEntity")
-  public void testBuilderPathKeys18(ProtocolVersion version, String expectedUri)
+  public void testBuilderPathKeys18(URIDetails expectedURIDetails)
   {
     Request<EmptyRecord> request = new UpdateRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_ROOT_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
       .id(2L).pathKey("key1", 1).build();
-    testUriGeneration(request, expectedUri, version);
+
+    URIDetails.testUriGeneration(request, expectedURIDetails);
     testPathKeys(request, SUBRESOURCE_SIMPLE_ROOT_URI, Collections.singletonMap("key1", 1));
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "simpleSubResourceAction1")
   public Object[][] simpleSubResourceAction1()
   {
+    //"foo/1/bar?action=action"
+    //"foo/1/bar?action=action"
+
+    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    queryParamsMap.put("action", "action");
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "foo/1/bar",
+        null, queryParamsMap, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "foo/1/bar",
+        null, queryParamsMap, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "foo/1/bar?action=action" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "foo/1/bar?action=action" }
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "simpleSubResourceAction1")
-  public void testBuilderPathKeys19(ProtocolVersion version, String expectedUri)
+  public void testBuilderPathKeys19(URIDetails expectedURIDetails)
   {
     ResourceSpec resourceSpec = getResourceSpecForBuilderPathKeys();
 
     Request<TestRecord> request = new ActionRequestBuilder<Void, TestRecord>(SUBRESOURCE_SIMPLE_SUB_URI, TestRecord.class, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS)
       .name("action").pathKey("key1", 1).build();
-    testUriGeneration(request, expectedUri, version);
+
+    URIDetails.testUriGeneration(request, expectedURIDetails);
     testPathKeys(request, SUBRESOURCE_SIMPLE_SUB_URI, Collections.singletonMap("key1", 1));
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "simpleSubResourceAction2")
   public Object[][] simpleSubResourceAction2()
   {
+    //Sample URIs:
+    //"foo/http%3A%2F%2Fexample.com%2Fimages%2F1.png/bar?action=action"
+    //"foo/http%3A%2F%2Fexample.com%2Fimages%2F1.png/bar?action=action"
+
+    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    queryParamsMap.put("action", "action");
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+        "foo/http%3A%2F%2Fexample.com%2Fimages%2F1.png/bar", null, queryParamsMap, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+        "foo/http%3A%2F%2Fexample.com%2Fimages%2F1.png/bar", null, queryParamsMap, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "foo/http%3A%2F%2Fexample.com%2Fimages%2F1.png/bar?action=action" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "foo/http%3A%2F%2Fexample.com%2Fimages%2F1.png/bar?action=action" }
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "simpleSubResourceAction2")
-  public void testBuilderPathKeys20(ProtocolVersion version, String expectedUri)
+  public void testBuilderPathKeys20(URIDetails expectedURIDetails)
   {
     ResourceSpec resourceSpec = getResourceSpecForBuilderPathKeys();
 
@@ -1655,7 +2143,7 @@ public class TestClientBuilders
       SUBRESOURCE_SIMPLE_SUB_URI, TestRecord.class, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS).name("action")
       .pathKey("key1", "http://example.com/images/1.png")
       .build();
-    testUriGeneration(request, expectedUri, version);
+    URIDetails.testUriGeneration(request, expectedURIDetails);
     testPathKeys(request,
                  SUBRESOURCE_SIMPLE_SUB_URI,
                  Collections.singletonMap("key1", "http://example.com/images/1.png"));
@@ -1664,36 +2152,49 @@ public class TestClientBuilders
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "simpleSubResourceNoEntity")
   public Object[][] simpleSubResourceNoEntity()
   {
+    //Sample URIs:
+    //"foo/1/bar"
+    //"foo/1/bar"
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "foo/1/bar",
+        null, null, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "foo/1/bar",
+        null, null, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "foo/1/bar" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "foo/1/bar" }
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "simpleSubResourceNoEntity")
-  public void testBuilderPathKeys21(ProtocolVersion version, String expectedUri)
+  public void testBuilderPathKeys21(URIDetails expectedURIDetails)
   {
     Request<EmptyRecord> request = new DeleteRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_SUB_URI, TestRecord.class,
                                                          _SIMPLE_RESOURCE_SPEC, RestliRequestOptions.DEFAULT_OPTIONS).pathKey("key1", 1).build();
-    testUriGeneration(request, expectedUri, version);
+
+    URIDetails.testUriGeneration(request, expectedURIDetails);
     testPathKeys(request, SUBRESOURCE_SIMPLE_SUB_URI, Collections.singletonMap("key1", 1));
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "simpleSubResourceNoEntity")
-  public void testBuilderPathKeys22(ProtocolVersion version, String expectedUri)
+  public void testBuilderPathKeys22(URIDetails expectedURIDetails)
   {
     Request<TestRecord> request = new GetRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_SUB_URI, TestRecord.class, _SIMPLE_RESOURCE_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
       .pathKey("key1", 1).build();
-    testUriGeneration(request, expectedUri, version);
+
+    URIDetails.testUriGeneration(request, expectedURIDetails);
     testPathKeys(request, SUBRESOURCE_SIMPLE_SUB_URI, Collections.singletonMap("key1", 1));
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "simpleSubResourceNoEntity")
-  public void testBuilderPathKeys23(ProtocolVersion version, String expectedUri)
+  public void testBuilderPathKeys23(URIDetails expectedURIDetails)
   {
     Request<EmptyRecord> request = new UpdateRequestBuilder<Long, TestRecord>(SUBRESOURCE_SIMPLE_SUB_URI, TestRecord.class,
                                                          _SIMPLE_RESOURCE_SPEC, RestliRequestOptions.DEFAULT_OPTIONS).pathKey("key1", 1).build();
-    testUriGeneration(request, expectedUri, version);
+
+    URIDetails.testUriGeneration(request, expectedURIDetails);
     testPathKeys(request, SUBRESOURCE_SIMPLE_SUB_URI, Collections.singletonMap("key1", 1));
   }
 
@@ -1715,235 +2216,358 @@ public class TestClientBuilders
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "noEntityWithParam")
   public Object[][] noEntityWithParam()
   {
+    //Sample URIs:
+    //"test?foo=bar"
+    //"test?foo=bar"
+
+    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    queryParamsMap.put("foo", "bar");
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test",
+        null, queryParamsMap, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test",
+        null, queryParamsMap, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test?foo=bar" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test?foo=bar" }
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "noEntityWithParam")
-  public void testCrudBuilderParams1(ProtocolVersion version, String expectedUri)
+  public void testCrudBuilderParams1(URIDetails expectedURIDetails)
   {
     Request<EmptyRecord> request = new CreateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .setParam("foo", "bar").build();
-    testUriGeneration(request, expectedUri, version);
+    URIDetails.testUriGeneration(request, expectedURIDetails);
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "entityWithParam")
   public Object[][] entityWithParam()
   {
+    //Sample URIs"
+    //"test/3?foo=bar"
+    //"test/3?foo=bar"
+
+    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    queryParamsMap.put("foo", "bar");
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test/3",
+        null, queryParamsMap, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test/3",
+        null, queryParamsMap, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test/3?foo=bar" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test/3?foo=bar" }
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "entityWithParam")
-  public void testCrudBuilderParams2(ProtocolVersion version, String expectedUri)
+  public void testCrudBuilderParams2(URIDetails expectedURIDetails)
   {
     Request<EmptyRecord> request = new DeleteRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .id(3L).setParam("foo", "bar").build();
-    testUriGeneration(request, expectedUri, version);
+    URIDetails.testUriGeneration(request, expectedURIDetails);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "noEntityWithParam")
-  public void testCrudBuilderParams3(ProtocolVersion version, String expectedUri)
+  public void testCrudBuilderParams3(URIDetails expectedURIDetails)
   {
     Request<CollectionResponse<TestRecord>> request = new FindRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .setParam("foo", "bar").build();
-    testUriGeneration(request, expectedUri, version);
+    URIDetails.testUriGeneration(request, expectedURIDetails);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "entityWithParam")
-  public void testCrudBuilderParams4(ProtocolVersion version, String expectedUri)
+  public void testCrudBuilderParams4(URIDetails expectedURIDetails)
   {
     Request<TestRecord> request = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .id(3L).setParam("foo", "bar").build();
-    testUriGeneration(request, expectedUri, version);
+    URIDetails.testUriGeneration(request, expectedURIDetails);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "entityWithParam")
-  public void testCrudBuilderParams5(ProtocolVersion version, String expectedUri)
+  public void testCrudBuilderParams5(URIDetails expectedURIDetails)
   {
     Request<EmptyRecord> request = new PartialUpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .id(3L).setParam("foo", "bar").build();
-    testUriGeneration(request, expectedUri, version);
+    URIDetails.testUriGeneration(request, expectedURIDetails);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "entityWithParam")
-  public void testCrudBuilderParams6(ProtocolVersion version, String expectedUri)
+  public void testCrudBuilderParams6(URIDetails expectedURIDetails)
   {
     Request<EmptyRecord> request = new UpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .id(3L).setParam("foo", "bar").build();
-    testUriGeneration(request, expectedUri, version);
+    URIDetails.testUriGeneration(request, expectedURIDetails);
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchWithParam")
   public Object[][] batchWithParam()
   {
+    //Sample URIs:
+    //"test?foo=bar&ids=1&ids=2"
+    //"test?foo=bar&ids=List(1,2)"
+
+    final Set<String> idSet = new HashSet<String>();
+    idSet.add("1");
+    idSet.add("2");
+
+    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    queryParamsMap.put("foo", "bar");
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test",
+        idSet, queryParamsMap, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test",
+        idSet, queryParamsMap, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test?foo=bar&ids=1&ids=2" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test?foo=bar&ids=List(1,2)" }
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchWithParam")
-  public void testCrudBuilderParams7(ProtocolVersion version, String expectedUri)
+  public void testCrudBuilderParams7(URIDetails expectedURIDetails)
   {
     Request<BatchResponse<TestRecord>> request = new BatchGetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .ids(1L, 2L).setParam("foo", "bar").build();
-    testUriGeneration(request, expectedUri, version);
+    URIDetails.testUriGeneration(request, expectedURIDetails);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "noEntityWithParam")
-  public void testCrudBuilderParams8(ProtocolVersion version, String expectedUri)
+  public void testCrudBuilderParams8(URIDetails expectedURIDetails)
   {
     Request<CollectionResponse<CreateStatus>> request = new BatchCreateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .input(new TestRecord()).setParam("foo", "bar").build();
-    testUriGeneration(request, expectedUri, version);
+    URIDetails.testUriGeneration(request, expectedURIDetails);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchWithParam")
-  public void testCrudBuilderParams9(ProtocolVersion version, String expectedUri)
+  public void testCrudBuilderParams9(URIDetails expectedURIDetails)
   {
     Request<BatchKVResponse<Long, UpdateStatus>>  request = new BatchDeleteRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .ids(1L, 2L).setParam("foo", "bar").build();
-    testUriGeneration(request, expectedUri, version);
+    URIDetails.testUriGeneration(request, expectedURIDetails);
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchSingleWithParam")
   public Object[][] batchSingleWithParam()
   {
+    //"test?foo=bar&ids=1"
+    //"test?foo=bar&ids=List(1)"
+
+    final Set<String> idSet = new HashSet<String>();
+    idSet.add("1");
+
+    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    queryParamsMap.put("foo", "bar");
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test",
+        idSet, queryParamsMap, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test",
+        idSet, queryParamsMap, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test?foo=bar&ids=1" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test?foo=bar&ids=List(1)" }
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchSingleWithParam")
-  public void testCrudBuilderParams10(ProtocolVersion version, String expectedUri)
+  public void testCrudBuilderParams10(URIDetails expectedURIDetails)
   {
     Request<BatchKVResponse<Long, UpdateStatus>> request = new BatchUpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .input(1L, new TestRecord()).setParam("foo", "bar").build();
-    testUriGeneration(request, expectedUri, version);
+    URIDetails.testUriGeneration(request, expectedURIDetails);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchSingleWithParam")
-  public void testCrudBuilderParams11(ProtocolVersion version, String expectedUri)
+  public void testCrudBuilderParams11(URIDetails expectedURIDetails)
   {
     Request<BatchKVResponse<Long, UpdateStatus>> request = new BatchPartialUpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .input(1L, new PatchRequest<TestRecord>()).setParam("foo", "bar").build();
-    testUriGeneration(request, expectedUri, version);
+    URIDetails.testUriGeneration(request, expectedURIDetails);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "noEntityWithParam")
-  public void testCrudBuilderParams12(ProtocolVersion version, String expectedUri)
+  public void testCrudBuilderParams12(URIDetails expectedURIDetails)
   {
     //Simple resource tests
     Request<EmptyRecord> request = new DeleteRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _SIMPLE_RESOURCE_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .setParam("foo", "bar").build();
-    testUriGeneration(request, expectedUri, version);
+    URIDetails.testUriGeneration(request, expectedURIDetails);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "noEntityWithParam")
-  public void testCrudBuilderParams13(ProtocolVersion version, String expectedUri)
+  public void testCrudBuilderParams13(URIDetails expectedURIDetails)
   {
     Request<TestRecord> request = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _SIMPLE_RESOURCE_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .setParam("foo", "bar").build();
-    testUriGeneration(request, expectedUri, version);
+    URIDetails.testUriGeneration(request, expectedURIDetails);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "noEntityWithParam")
-  public void testCrudBuilderParams14(ProtocolVersion version, String expectedUri)
+  public void testCrudBuilderParams14(URIDetails expectedURIDetails)
   {
     Request<EmptyRecord> request = new UpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _SIMPLE_RESOURCE_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .setParam("foo", "bar").build();
-    testUriGeneration(request, expectedUri, version);
+    URIDetails.testUriGeneration(request, expectedURIDetails);
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "encodingEqualsAndValue")
   public Object[][] encodingEqualsAnd1()
   {
+    //Sample URIs:
+    //"test/3?foo=bar%26baz%3Dqux"
+    //"test/3?foo=bar%26baz%3Dqux"
+
+    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    queryParamsMap.put("foo", "bar&baz=qux");
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test/3",
+        null, queryParamsMap, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test/3",
+        null, queryParamsMap, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test/3?foo=bar%26baz%3Dqux" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test/3?foo=bar%26baz%3Dqux" }
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "encodingEqualsAndValue")
-  public void testParamEncodingEqualsAndValue(ProtocolVersion version, String expectedUri)
+  public void testParamEncodingEqualsAndValue(URIDetails expectedURIDetails)
   {
     GetRequest<?> request = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .id(3L).setParam("foo", "bar&baz=qux").build();
-    testUriGeneration(request, expectedUri, version);
+    URIDetails.testUriGeneration(request, expectedURIDetails);
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "encodingEqualsAndKey")
   public Object[][] encodingEqualsAnd2()
   {
+    //Sample URIs:
+    //"test/3?foo%26bar%3Dbaz=qux"
+    //"test/3?foo%26bar%3Dbaz=qux"
+
+    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    queryParamsMap.put("foo&bar=baz", "qux");
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test/3",
+        null, queryParamsMap, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test/3",
+        null, queryParamsMap, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test/3?foo%26bar%3Dbaz=qux" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test/3?foo%26bar%3Dbaz=qux" }
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "encodingEqualsAndKey")
-  public void testParamEncodingEqualsAndKey(ProtocolVersion version, String expectedUri)
+  public void testParamEncodingEqualsAndKey(URIDetails expectedURIDetails)
   {
     Request<TestRecord> request = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .id(3L).setParam("foo&bar=baz", "qux").build();
-    testUriGeneration(request, expectedUri, version);
+    URIDetails.testUriGeneration(request, expectedURIDetails);
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "encodingSlash")
   public Object[][] encodingSlash()
   {
+    //Sample URIs:
+    //"test/3?foo/bar=baz/qux"
+    //"test/3?foo/bar=baz/qux"
+
+    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    queryParamsMap.put("foo/bar", "baz/qux");
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test/3",
+        null, queryParamsMap, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test/3",
+        null, queryParamsMap, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test/3?foo/bar=baz/qux" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test/3?foo/bar=baz/qux" }
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "encodingSlash")
-  public void testParamEncodingSlash(ProtocolVersion version, String expectedUri)
+  public void testParamEncodingSlash(URIDetails expectedURIDetails)
   {
     Request<TestRecord> request = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .id(3L).setParam("foo/bar", "baz/qux").build();
-    testUriGeneration(request, expectedUri, version);
+    URIDetails.testUriGeneration(request, expectedURIDetails);
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "encodingColon")
   public Object[][] encodingColon()
   {
+    //Sample URIs:
+    //"test/3?foo:bar=baz:qux"
+    //"test/3?foo%3Abar=baz%3Aqux"
+
+    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    queryParamsMap.put("foo:bar", "baz:qux");
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test/3",
+        null, queryParamsMap, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test/3",
+        null, queryParamsMap, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test/3?foo:bar=baz:qux" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test/3?foo%3Abar=baz%3Aqux" }
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "encodingColon")
-  public void testParamEncodingColon(ProtocolVersion version, String expectedUri)
+  public void testParamEncodingColon(URIDetails expectedURIDetails)
   {
     Request<TestRecord> request = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .id(3L).setParam("foo:bar", "baz:qux").build();
-    testUriGeneration(request, expectedUri, version);
+    URIDetails.testUriGeneration(request, expectedURIDetails);
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "encodingQuestionMark")
   public Object[][] encodingQuestionMark()
   {
+    //Sample URIs:
+    //"test/3?foo?bar=baz?qux"
+    //"test/3?foo?bar=baz?qux"
+
+    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    queryParamsMap.put("foo?bar", "baz?qux");
+
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test/3",
+        null, queryParamsMap, null);
+
+    final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test/3",
+        null, queryParamsMap, null);
+
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test/3?foo?bar=baz?qux" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "test/3?foo?bar=baz?qux" }
+        { uriDetails1 },
+        { uriDetails2 }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "encodingQuestionMark")
-  public void testParamEncodingQuestionMark(ProtocolVersion version, String expectedUri)
+  public void testParamEncodingQuestionMark(URIDetails expectedURIDetails)
   {
     Request<TestRecord> request = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .id(3L).setParam("foo?bar", "baz?qux").build();
-    testUriGeneration(request, expectedUri, version);
+    URIDetails.testUriGeneration(request, expectedURIDetails);
   }
 
   @Test
@@ -2051,14 +2675,7 @@ public class TestClientBuilders
     Assert.assertEquals(request.getPathKeys(), expectedPathKeys);
   }
 
-  /**
-   * Tests constructing the URI using a builder.
-   */
-  private void testUriGeneration(Request<?> request, String expectedUri, ProtocolVersion version)
-  {
-    Assert.assertEquals(RestliUriBuilderUtil.createUriBuilder(request, version).build(), URI.create(expectedUri));
-  }
-
+  @SuppressWarnings("deprecation")
   private void testBaseUriGeneration(Request<?> request, ProtocolVersion version)
   {
     URI expectedBaseUri = URI.create(TEST_URI);
@@ -2067,14 +2684,14 @@ public class TestClientBuilders
   }
 
   private void checkBasicRequest(Request<?> request,
-                                 String expectedUri,
+                                 URIDetails expectedURIDetails,
                                  ResourceMethod expectedMethod,
                                  CollectionRequest<?> expectedInput,
                                  BatchRequest<?> expectedBatchInput,
-                                 Map<String, String> expectedHeaders,
-                                 ProtocolVersion version)
+                                 Map<String, String> expectedHeaders)
   {
-    checkBasicRequest(request, expectedUri, expectedMethod, expectedInput, expectedHeaders, version);
+    final ProtocolVersion version = expectedURIDetails.getProtocolVersion();
+    checkBasicRequest(request, expectedURIDetails, expectedMethod, expectedInput, expectedHeaders);
     if (request.getMethod() == ResourceMethod.BATCH_UPDATE ||
         request.getMethod() == ResourceMethod.BATCH_PARTIAL_UPDATE)
     {
@@ -2084,16 +2701,31 @@ public class TestClientBuilders
   }
 
   private void checkBasicRequest(Request<?> request,
-                                 String expectedUri,
+                                 URIDetails expectedURIDetails,
                                  ResourceMethod expectedMethod,
                                  RecordTemplate expectedInput,
-                                 Map<String, String> expectedHeaders,
-                                 ProtocolVersion version)
+                                 Map<String, String> expectedHeaders)
   {
-    testUriGeneration(request, expectedUri, version);
+    URIDetails.testUriGeneration(request, expectedURIDetails);
     Assert.assertEquals(request.getMethod(), expectedMethod);
     Assert.assertEquals(request.getHeaders(), expectedHeaders);
-    Assert.assertEquals(request.getInputRecord(), expectedInput);
+
+    if(expectedInput != null && (expectedMethod == ResourceMethod.BATCH_UPDATE ||
+        expectedMethod == ResourceMethod.BATCH_PARTIAL_UPDATE || expectedMethod == ResourceMethod.BATCH_CREATE))
+    {
+      //The list of elements will need to be compared order independently because CollectionRequest has a list
+      //which is constructed in a non-deterministic order for these 3 method types
+      final List<Object> expectedElementList = (DataList)expectedInput.data().get(CollectionRequest.ELEMENTS);
+      final Multiset<Object> expectedElementSet = HashMultiset.create(expectedElementList);
+      final List<Object> actualElementList = (DataList)request.getInputRecord().data().get(CollectionRequest.ELEMENTS);
+      final Multiset<Object> actualElementSet = HashMultiset.create(actualElementList);
+      //TestNG has sporadic issues with comparing Sets for equality
+      Assert.assertTrue(actualElementSet.equals(expectedElementSet), "The CollectRequest must be correct");
+    }
+    else
+    {
+      Assert.assertEquals(request.getInputRecord(), expectedInput);
+    }
   }
 
   /**
