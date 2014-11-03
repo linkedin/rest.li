@@ -1,6 +1,10 @@
-1.24.5
+1.24.6
 ------
 
+1.24.5
+------
+(RB=387900)
+Add null pointer check for load balancer.
 
 1.24.4
 ------
