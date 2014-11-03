@@ -269,6 +269,10 @@ public class ZKFSLoadBalancer
   public ServiceProperties getLoadBalancedServiceProperties(String serviceName)
       throws ServiceUnavailableException
   {
+    if (_currentLoadBalancer == null)
+    {
+      return null;
+    }
     return _currentLoadBalancer.getLoadBalancedServiceProperties(serviceName);
   }
 
