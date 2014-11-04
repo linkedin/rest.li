@@ -85,6 +85,8 @@ import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.resources.ComplexKeyResource;
 import com.linkedin.restli.server.resources.ComplexKeyResourceAsync;
+import com.linkedin.restli.server.resources.ComplexKeyResourcePromise;
+import com.linkedin.restli.server.resources.ComplexKeyResourceTask;
 import com.linkedin.restli.server.resources.KeyValueResource;
 import com.linkedin.restli.server.resources.SingleObjectResource;
 
@@ -231,6 +233,7 @@ public final class RestLiAnnotationReader
     return annotationsMap;
   }
 
+  @SuppressWarnings("unchecked")
   private static ResourceModel processCollection(final Class<? extends KeyValueResource<?, ?>> collectionResourceClass)
   {
     Class<?> keyClass;
@@ -248,21 +251,45 @@ public final class RestLiAnnotationReader
     {
       complexKeyResourceBase = ComplexKeyResourceAsync.class;
     }
+    else if (ComplexKeyResourceTask.class.isAssignableFrom(collectionResourceClass))
+    {
+      complexKeyResourceBase = ComplexKeyResourceTask.class;
+    }
+    else if (ComplexKeyResourcePromise.class.isAssignableFrom(collectionResourceClass))
+    {
+      complexKeyResourceBase = ComplexKeyResourcePromise.class;
+    }
 
     if (complexKeyResourceBase != null)
     {
-      @SuppressWarnings("unchecked")
-      List<Class<?>> kvParams = complexKeyResourceBase.equals(ComplexKeyResource.class) ?
-          ReflectionUtils.getTypeArguments(ComplexKeyResource.class,
-                                           (Class<? extends ComplexKeyResource<?, ?, ?>>) collectionResourceClass) :
-          ReflectionUtils.getTypeArguments(ComplexKeyResourceAsync.class,
-                                           (Class<? extends ComplexKeyResourceAsync<?, ?, ?>>) collectionResourceClass);
+      List<Class<?>> kvParams;
+      if (complexKeyResourceBase.equals(ComplexKeyResource.class))
+      {
+        kvParams = ReflectionUtils.getTypeArguments(ComplexKeyResource.class,
+                                                    (Class<? extends ComplexKeyResource<?, ?, ?>>) collectionResourceClass);
+      }
+      else if (complexKeyResourceBase.equals(ComplexKeyResourceAsync.class))
+      {
+        kvParams = ReflectionUtils.getTypeArguments(ComplexKeyResourceAsync.class,
+                                                    (Class<? extends ComplexKeyResourceAsync<?, ?, ?>>) collectionResourceClass);
+      }
+      else if (complexKeyResourceBase.equals(ComplexKeyResourceTask.class))
+      {
+        kvParams = ReflectionUtils.getTypeArguments(ComplexKeyResourceTask.class,
+                                                    (Class<? extends ComplexKeyResourceTask<?, ?, ?>>) collectionResourceClass);
+      }
+      else
+      {
+        kvParams = ReflectionUtils.getTypeArguments(ComplexKeyResourcePromise.class,
+                                                    (Class<? extends ComplexKeyResourcePromise<?, ?, ?>>) collectionResourceClass);
+      }
 
       keyClass = ComplexResourceKey.class;
       keyKeyClass = kvParams.get(0).asSubclass(RecordTemplate.class);
       keyParamsClass = kvParams.get(1).asSubclass(RecordTemplate.class);
       valueClass = kvParams.get(2).asSubclass(RecordTemplate.class);
     }
+
     // Otherwise, it's a KeyValueResource, whose parameters are resource key and resource
     // value
     else

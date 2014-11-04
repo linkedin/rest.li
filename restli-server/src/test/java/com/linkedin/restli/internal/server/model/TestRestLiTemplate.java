@@ -24,12 +24,20 @@ import com.linkedin.restli.server.annotations.RestLiAssociation;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestLiSimpleResource;
 import com.linkedin.restli.server.resources.AssociationResourceAsyncTemplate;
+import com.linkedin.restli.server.resources.AssociationResourcePromiseTemplate;
+import com.linkedin.restli.server.resources.AssociationResourceTaskTemplate;
 import com.linkedin.restli.server.resources.AssociationResourceTemplate;
 import com.linkedin.restli.server.resources.CollectionResourceAsyncTemplate;
+import com.linkedin.restli.server.resources.CollectionResourcePromiseTemplate;
+import com.linkedin.restli.server.resources.CollectionResourceTaskTemplate;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
 import com.linkedin.restli.server.resources.ComplexKeyResourceAsyncTemplate;
+import com.linkedin.restli.server.resources.ComplexKeyResourcePromiseTemplate;
+import com.linkedin.restli.server.resources.ComplexKeyResourceTaskTemplate;
 import com.linkedin.restli.server.resources.ComplexKeyResourceTemplate;
 import com.linkedin.restli.server.resources.SimpleResourceAsyncTemplate;
+import com.linkedin.restli.server.resources.SimpleResourcePromiseTemplate;
+import com.linkedin.restli.server.resources.SimpleResourceTaskTemplate;
 import com.linkedin.restli.server.resources.SimpleResourceTemplate;
 
 import org.testng.Assert;
@@ -93,6 +101,16 @@ public class TestRestLiTemplate
   {
   }
 
+  @RestLiCollection(name="collectionAssociationPromise")
+  private static class CollectionAssociationPromiseResource extends AssociationResourcePromiseTemplate<EmptyRecord>
+  {
+  }
+
+  @RestLiCollection(name="collectionAssociationTask")
+  private static class CollectionAssociationTaskResource extends AssociationResourceTaskTemplate<EmptyRecord>
+  {
+  }
+
   @RestLiCollection(name="collectionSimple")
   private static class CollectionSimpleResource extends SimpleResourceTemplate<EmptyRecord>
   {
@@ -100,6 +118,16 @@ public class TestRestLiTemplate
 
   @RestLiCollection(name="collectionSimpleAsync")
   private static class CollectionSimpleAsyncResource extends SimpleResourceAsyncTemplate<EmptyRecord>
+  {
+  }
+
+  @RestLiCollection(name="collectionSimpleTask")
+  private static class CollectionSimpleTaskResource extends SimpleResourceTaskTemplate<EmptyRecord>
+  {
+  }
+
+  @RestLiCollection(name="collectionSimplePromise")
+  private static class CollectionSimplePromiseResource extends SimpleResourcePromiseTemplate<EmptyRecord>
   {
   }
 
@@ -113,6 +141,16 @@ public class TestRestLiTemplate
   {
   }
 
+  @RestLiAssociation(name="associationCollectionTask", assocKeys = {})
+  private static class AssociationCollectionTaskResource extends CollectionResourceTaskTemplate<String, EmptyRecord>
+  {
+  }
+
+  @RestLiAssociation(name="associationCollectionPromise", assocKeys = {})
+  private static class AssociationCollectionPromiseResource extends CollectionResourcePromiseTemplate<String, EmptyRecord>
+  {
+  }
+
   @RestLiAssociation(name="associationComplexKey", assocKeys = {})
   private static class AssociationComplexKeyResource extends ComplexKeyResourceTemplate<EmptyRecord, EmptyRecord, EmptyRecord>
   {
@@ -120,6 +158,16 @@ public class TestRestLiTemplate
 
   @RestLiAssociation(name="associationComplexKeyAsync", assocKeys = {})
   private static class AssociationComplexKeyAsyncResource extends ComplexKeyResourceAsyncTemplate<EmptyRecord, EmptyRecord, EmptyRecord>
+  {
+  }
+
+  @RestLiAssociation(name="associationComplexKeyPromise", assocKeys = {})
+  private static class AssociationComplexKeyPromiseResource extends ComplexKeyResourcePromiseTemplate<EmptyRecord, EmptyRecord, EmptyRecord>
+  {
+  }
+
+  @RestLiAssociation(name="associationComplexKeyTask", assocKeys = {})
+  private static class AssociationComplexKeyTaskResource extends ComplexKeyResourceTaskTemplate<EmptyRecord, EmptyRecord, EmptyRecord>
   {
   }
 
@@ -139,6 +187,23 @@ public class TestRestLiTemplate
   {
   }
 
+
+  @RestLiAssociation(name="associationAssociationTask", assocKeys = {
+      @Key(name="src", type=String.class),
+      @Key(name="dest", type=String.class)
+  })
+  private static class AssociationAssociationTaskResource extends AssociationResourceTaskTemplate<EmptyRecord>
+  {
+  }
+
+  @RestLiAssociation(name="associationAssociationPromise", assocKeys = {
+      @Key(name="src", type=String.class),
+      @Key(name="dest", type=String.class)
+  })
+  private static class AssociationAssociationPromiseResource extends AssociationResourcePromiseTemplate<EmptyRecord>
+  {
+  }
+
   @RestLiAssociation(name="associationSimple", assocKeys = {})
   private static class AssociationSimpleResource extends SimpleResourceTemplate<EmptyRecord>
   {
@@ -146,6 +211,16 @@ public class TestRestLiTemplate
 
   @RestLiAssociation(name="associationSimpleAsync", assocKeys = {})
   private static class AssociationSimpleAsyncResource extends SimpleResourceAsyncTemplate<EmptyRecord>
+  {
+  }
+
+  @RestLiAssociation(name="associationSimpleTask", assocKeys = {})
+  private static class AssociationSimpleTaskResource extends SimpleResourceTaskTemplate<EmptyRecord>
+  {
+  }
+
+  @RestLiAssociation(name="associationSimplePromise", assocKeys = {})
+  private static class AssociationSimplePromiseResource extends SimpleResourcePromiseTemplate<EmptyRecord>
   {
   }
 
@@ -159,6 +234,16 @@ public class TestRestLiTemplate
   {
   }
 
+  @RestLiSimpleResource(name="simpleCollectionTask")
+  private static class SimpleCollectionTaskResource extends CollectionResourceTaskTemplate<String, EmptyRecord>
+  {
+  }
+
+  @RestLiSimpleResource(name="simpleCollectionPromise")
+  private static class SimpleCollectionPromiseResource extends CollectionResourcePromiseTemplate<String, EmptyRecord>
+  {
+  }
+
   @RestLiSimpleResource(name="simpleComplexKey")
   private static class SimpleComplexKeyResource extends ComplexKeyResourceTemplate<EmptyRecord, EmptyRecord, EmptyRecord>
   {
@@ -166,6 +251,16 @@ public class TestRestLiTemplate
 
   @RestLiSimpleResource(name="simpleComplexKeyAsync")
   private static class SimpleComplexKeyAsyncResource extends ComplexKeyResourceAsyncTemplate<EmptyRecord, EmptyRecord, EmptyRecord>
+  {
+  }
+
+  @RestLiSimpleResource(name="simpleComplexKeyPromise")
+  private static class SimpleComplexKeyPromiseResource extends ComplexKeyResourcePromiseTemplate<EmptyRecord, EmptyRecord, EmptyRecord>
+  {
+  }
+
+  @RestLiSimpleResource(name="simpleComplexKeyTask")
+  private static class SimpleComplexKeyTaskResource extends ComplexKeyResourceTaskTemplate<EmptyRecord, EmptyRecord, EmptyRecord>
   {
   }
 
@@ -179,6 +274,16 @@ public class TestRestLiTemplate
   {
   }
 
+  @RestLiSimpleResource(name="simpleAssociationPromise")
+  private static class SimpleAssociationPromiseResource extends AssociationResourcePromiseTemplate<EmptyRecord>
+  {
+  }
+
+  @RestLiSimpleResource(name="simpleAssociationTask")
+  private static class SimpleAssociationTaskResource extends AssociationResourceTaskTemplate<EmptyRecord>
+  {
+  }
+
   @RestLiSimpleResource(name="simpleSimple")
   private static class SimpleSimpleResource extends SimpleResourceTemplate<EmptyRecord>
   {
@@ -189,18 +294,56 @@ public class TestRestLiTemplate
   {
   }
 
+  @RestLiSimpleResource(name="simpleSimplePromise")
+  private static class SimpleSimplePromiseResource extends SimpleResourcePromiseTemplate<EmptyRecord>
+  {
+  }
+
+  @RestLiSimpleResource(name="simpleSimpleTask")
+  private static class SimpleSimpleTaskResource extends SimpleResourceTaskTemplate<EmptyRecord>
+  {
+  }
+
+  @RestLiCollection(name = "collectionPromise")
+  private static class CollectionCollectionPromise extends CollectionResourcePromiseTemplate<String, EmptyRecord>
+  {
+  }
+
+  @RestLiCollection(name = "collectionTask")
+  private static class CollectionCollectionTask extends CollectionResourceTaskTemplate<String, EmptyRecord>
+  {
+  }
+
+  @RestLiCollection(name = "collectionComplexKeyPromise")
+  private static class CollectionComplexKeyPromise extends ComplexKeyResourcePromiseTemplate<EmptyRecord, EmptyRecord, EmptyRecord>
+  {
+  }
+
+  @RestLiCollection(name = "collectionComplexKeyTask")
+  private static class CollectionComplexKeyTask extends ComplexKeyResourceTaskTemplate<EmptyRecord, EmptyRecord, EmptyRecord>
+  {
+  }
+
   @DataProvider
   private static Object[][] successResourceProvider()
   {
     return new Object[][] {
       { CollectionCollectionResource.class },
       { CollectionCollectionAsyncResource.class },
+      { CollectionCollectionPromise.class },
+      { CollectionCollectionTask.class },
       { CollectionComplexKeyResource.class },
       { CollectionComplexKeyAsyncResource.class },
+      { CollectionComplexKeyPromise.class },
+      { CollectionComplexKeyTask.class },
       { AssociationAssociationResource.class },
       { AssociationAssociationAsyncResource.class },
+      { AssociationAssociationPromiseResource.class },
+      { AssociationAssociationTaskResource.class },
       { SimpleSimpleResource.class },
-      { SimpleSimpleAsyncResource.class }
+      { SimpleSimpleAsyncResource.class },
+      { SimpleSimplePromiseResource.class },
+      { SimpleSimpleTaskResource.class }
     };
   }
 
@@ -210,20 +353,36 @@ public class TestRestLiTemplate
     return new Object[][] {
       { CollectionAssociationResource.class },
       { CollectionAssociationAsyncResource.class },
+      { CollectionAssociationPromiseResource.class },
+      { CollectionAssociationTaskResource.class },
       { CollectionSimpleResource.class },
       { CollectionSimpleAsyncResource.class },
+      { CollectionSimplePromiseResource.class },
+      { CollectionSimpleTaskResource.class },
       { AssociationCollectionResource.class },
       { AssociationCollectionAsyncResource.class },
+      { AssociationCollectionPromiseResource.class },
+      { AssociationCollectionTaskResource.class },
       { AssociationComplexKeyResource.class },
       { AssociationComplexKeyAsyncResource.class },
+      { AssociationComplexKeyPromiseResource.class },
+      { AssociationComplexKeyTaskResource.class },
       { AssociationSimpleResource.class },
       { AssociationSimpleAsyncResource.class },
+      { AssociationSimplePromiseResource.class },
+      { AssociationSimpleTaskResource.class },
       { SimpleCollectionResource.class },
       { SimpleCollectionAsyncResource.class },
+      { SimpleCollectionPromiseResource.class },
+      { SimpleCollectionTaskResource.class },
       { SimpleComplexKeyResource.class },
       { SimpleComplexKeyAsyncResource.class },
+      { SimpleComplexKeyPromiseResource.class },
+      { SimpleComplexKeyTaskResource.class },
       { SimpleAssociationResource.class },
-      { SimpleAssociationAsyncResource.class }
+      { SimpleAssociationAsyncResource.class },
+      { SimpleAssociationPromiseResource.class },
+      { SimpleAssociationTaskResource.class }
     };
   }
 }

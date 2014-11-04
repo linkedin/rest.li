@@ -35,13 +35,20 @@ import com.linkedin.restli.server.annotations.ParSeqContext;
 import com.linkedin.restli.server.annotations.ParSeqContextParam;
 import com.linkedin.restli.server.resources.AssociationResource;
 import com.linkedin.restli.server.resources.AssociationResourceAsync;
+import com.linkedin.restli.server.resources.AssociationResourcePromise;
+import com.linkedin.restli.server.resources.AssociationResourceTask;
 import com.linkedin.restli.server.resources.CollectionResource;
 import com.linkedin.restli.server.resources.CollectionResourceAsync;
+import com.linkedin.restli.server.resources.CollectionResourcePromise;
+import com.linkedin.restli.server.resources.CollectionResourceTask;
 import com.linkedin.restli.server.resources.ComplexKeyResource;
 import com.linkedin.restli.server.resources.ComplexKeyResourceAsync;
+import com.linkedin.restli.server.resources.ComplexKeyResourcePromise;
+import com.linkedin.restli.server.resources.ComplexKeyResourceTask;
 import com.linkedin.restli.server.resources.SimpleResource;
 import com.linkedin.restli.server.resources.SimpleResourceAsync;
-
+import com.linkedin.restli.server.resources.SimpleResourcePromise;
+import com.linkedin.restli.server.resources.SimpleResourceTask;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -190,12 +197,20 @@ public interface RestModelConstants
   Class<?>[] FIXED_RESOURCE_CLASSES = {
       CollectionResource.class,
       CollectionResourceAsync.class,
+      CollectionResourcePromise.class,
+      CollectionResourceTask.class,
       AssociationResource.class,
       AssociationResourceAsync.class,
+      AssociationResourcePromise.class,
+      AssociationResourceTask.class,
       ComplexKeyResource.class,
       ComplexKeyResourceAsync.class,
+      ComplexKeyResourcePromise.class,
+      ComplexKeyResourceTask.class,
       SimpleResource.class,
-      SimpleResourceAsync.class
+      SimpleResourceAsync.class,
+      SimpleResourcePromise.class,
+      SimpleResourceTask.class,
   };
 
   Set<Class<?>> CLASSES_WITHOUT_SCHEMAS = new HashSet<Class<?>>(
