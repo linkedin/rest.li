@@ -35,6 +35,8 @@ import com.linkedin.restli.server.resources.KeyValueResource;
 import com.linkedin.restli.server.resources.ResourceContextHolder;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.GenericArrayType;
@@ -100,20 +102,21 @@ public class GreetingsResourceCodeGenerator
    *          template, interface type, suffix, use ParSeq context
    * @throws ClassNotFoundException
    */
-  public static void main(final String[] args) throws ClassNotFoundException
+  public static void main(final String[] args) throws ClassNotFoundException, FileNotFoundException
   {
     // want a hard failure if something goes wrong, so gradle stops
-    if (args.length != 4)
+    if (args.length != 5)
       throw new IllegalArgumentException("Bad arguments to code generator");
 
-    final Class<?> template = Class.forName(args[0]);
-    final InterfaceType type = InterfaceType.valueOf(args[1]);
-    final String suffix = args[2];
-    final boolean useParSeqCtx = Boolean.valueOf(args[3]);
+    final PrintStream outputStream = new PrintStream(new File(args[0]));
+    final Class<?> template = Class.forName(args[1]);
+    final InterfaceType type = InterfaceType.valueOf(args[2]);
+    final String suffix = args[3];
+    final boolean useParSeqCtx = Boolean.valueOf(args[4]);
 
     final GreetingsResourceCodeGenerator gen =
         new GreetingsResourceCodeGenerator(template, type, suffix, useParSeqCtx);
-    gen.printAll(System.out);
+    gen.printAll(outputStream);
   }
 
   private void printAll(final PrintStream out)
