@@ -108,6 +108,23 @@ public class URIParamUtils
     return keyToString(key, URLEscaper.Escaping.URL_ESCAPING, componentType, true, version);
   }
 
+  public static Map<String, String> encodePathKeysForUri(Map<String, Object> pathKeys, ProtocolVersion version)
+  {
+    final Map<String, String> escapedKeys = new HashMap<String, String>();
+
+    for (Map.Entry<String, Object> entry : pathKeys.entrySet())
+    {
+      final String value = URIParamUtils.encodeKeyForUri(entry.getValue(), UriComponent.Type.PATH_SEGMENT, version);
+      if (value == null)
+      {
+        throw new IllegalArgumentException("Missing value for path key " + entry.getKey());
+      }
+      escapedKeys.put(entry.getKey(), value);
+    }
+
+    return escapedKeys;
+  }
+
   /**
    * Serialize the given key for use in an header. Params are not included.
    *

@@ -17,6 +17,8 @@
 package com.linkedin.restli.client.util;
 
 
+import com.linkedin.data.Data;
+import com.linkedin.data.DataMap;
 import com.linkedin.restli.client.DeleteRequest;
 import com.linkedin.restli.client.FindRequest;
 import com.linkedin.restli.client.GetAllRequest;
@@ -25,6 +27,10 @@ import com.linkedin.restli.client.PartialUpdateRequest;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.UpdateRequest;
 import com.linkedin.restli.common.CompoundKey;
+import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.internal.client.QueryParamsUtil;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
+import com.linkedin.restli.internal.common.URIParamUtils;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -222,6 +228,28 @@ public class RestliRequestUriSignature
       .append(_pathKeys)
       .append(_id)
       .append(_queryParams);
+
+    return builder.toString();
+  }
+
+  /**
+   * Return a {@link String} representation of the signature. The difference to {@link #toString()} is that
+   * this method always returns stable result across different Map capacity and Java versions, ideal for storing and caching.
+   * This is done by visiting the Map {@link Map}s by the order of its keys.
+   *
+   * This method is more costly tha toString(). If there is no requirement for stability, prefer to use toString().
+   */
+  public String dump()
+  {
+    final ProtocolVersion protocolVersion = AllProtocolVersions.LATEST_PROTOCOL_VERSION;
+    final DataMap pathKeysMap = new DataMap(URIParamUtils.encodePathKeysForUri(_pathKeys, protocolVersion));
+    final DataMap queryParamsMap = QueryParamsUtil.convertToDataMap(_queryParams, protocolVersion);
+
+    final ToStringBuilder builder = new ToStringBuilder(null, ToStringStyle.SHORT_PREFIX_STYLE)
+        .append(_baseUriTemplate)
+        .append(Data.dump("", pathKeysMap, ""))
+        .append(_id)
+        .append(Data.dump("", queryParamsMap, ""));
 
     return builder.toString();
   }

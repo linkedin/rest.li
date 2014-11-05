@@ -9,6 +9,9 @@ Improve performance for BatchGet when using the new request builder.
 (RB=395883)
 Add projection tests to Rest.li response builder tests.
 
+(RB=389315)
+Add dump functionality to RestliRequestUriSignature, which produces stable toString() output.
+
 2.0.0
 -----
 (RB=340252)

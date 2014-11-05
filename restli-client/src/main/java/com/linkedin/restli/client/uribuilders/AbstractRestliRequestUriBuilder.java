@@ -30,8 +30,6 @@ import com.linkedin.restli.internal.common.QueryParamsDataMap;
 import com.linkedin.restli.internal.common.URIParamUtils;
 
 import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
 
 
 /**
@@ -79,21 +77,7 @@ abstract class AbstractRestliRequestUriBuilder<R extends Request<?>> implements 
   private String bindPathKeys()
   {
     UriTemplate template = new UriTemplate(_request.getBaseUriTemplate());
-    @SuppressWarnings("unchecked")
-    Map<String, Object> pathKeys = _request.getPathKeys();
-    Map<String, String> escapedKeys = new HashMap<String, String>();
-
-    for(Map.Entry<String, Object> entry : pathKeys.entrySet())
-    {
-      String value = URIParamUtils.encodeKeyForUri(entry.getValue(), UriComponent.Type.PATH_SEGMENT, _version);
-      if (value == null)
-      {
-        throw new IllegalArgumentException("Missing value for path key " + entry.getKey());
-      }
-      escapedKeys.put(entry.getKey(), value);
-    }
-
-    return template.createURI(escapedKeys);
+    return template.createURI(URIParamUtils.encodePathKeysForUri(_request.getPathKeys(), _version));
   }
 
   private final String addPrefix(String uri)

@@ -17,6 +17,8 @@
 package com.linkedin.restli.client.util;
 
 
+import com.linkedin.data.DataMap;
+import com.linkedin.data.template.IntegerMap;
 import com.linkedin.restli.client.GetRequest;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.util.RestliRequestUriSignature.SignatureField;
@@ -31,7 +33,6 @@ import java.util.Set;
 
 import org.mockito.Mockito;
 import org.testng.Assert;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 
@@ -48,15 +49,19 @@ public class TestRestliRequestUriSignature
   {
     BASE_URI_TEMPLATE = "myBaseUriTemplate";
 
+    final DataMap nestedMap = new DataMap();
+    nestedMap.put("foo", 1);
+    nestedMap.put("bar", 2);
+
     PATH_KEYS = new HashMap<String, Object>();
     PATH_KEYS.put("pathKey1", "value1");
-    PATH_KEYS.put("pathKey2", "value2");
+    PATH_KEYS.put("pathKey2", nestedMap);
 
     ID = "myID";
 
     QUERY_PARAMS_OBJECTS = new HashMap<String, Object>();
     QUERY_PARAMS_OBJECTS.put("queryKey1", "value1");
-    QUERY_PARAMS_OBJECTS.put("queryKey2", "value2");
+    QUERY_PARAMS_OBJECTS.put("queryKey2", nestedMap);
   }
 
   @Test
@@ -226,6 +231,19 @@ public class TestRestliRequestUriSignature
       final RestliRequestUriSignature signature2 = new RestliRequestUriSignature(getRequest, f);
       Assert.assertNotEquals(signature1, signature2);
     }
+  }
+
+  @Test
+  public void testDump()
+  {
+    final Request<?> request = Mockito.mock(Request.class);
+    Mockito.when(request.getBaseUriTemplate()).thenReturn(BASE_URI_TEMPLATE);
+    Mockito.when(request.getPathKeys()).thenReturn(PATH_KEYS);
+    Mockito.when(request.getQueryParamsObjects()).thenReturn(QUERY_PARAMS_OBJECTS);
+
+    final RestliRequestUriSignature signature = new RestliRequestUriSignature(request, RestliRequestUriSignature.ALL_FIELDS);
+    final String dump = signature.dump();
+    Assert.assertNotNull(dump);
   }
 
   private static boolean isMapContainedInString(String str, Map<String, Object> map)
