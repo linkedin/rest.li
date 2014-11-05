@@ -22,12 +22,9 @@ import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.model.AnnotationSet;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
-import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
 import com.linkedin.restli.server.BatchDeleteRequest;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiRequestData;
-import org.easymock.EasyMock;
-import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -36,6 +33,9 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.easymock.EasyMock.verify;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @author Soojung Ha
@@ -63,7 +63,7 @@ public class TestBatchDeleteArgumentBuilder
   }
 
   @Test(dataProvider = "argumentData")
-  public void testArgumentBuilder(Set<Object> batchKeys) throws RestLiSyntaxException
+  public void testArgumentBuilderSuccess(Set<Object> batchKeys)
   {
     @SuppressWarnings("rawtypes")
     Parameter<Set> param = new Parameter<Set>("", Set.class, null, false, null, Parameter.ParamType.BATCH, false, new AnnotationSet(new Annotation[]{}));
@@ -76,10 +76,10 @@ public class TestBatchDeleteArgumentBuilder
     RestLiRequestData requestData = argumentBuilder.extractRequestData(routingResult, request);
     Object[] args = argumentBuilder.buildArguments(requestData, routingResult);
 
-    Assert.assertEquals(args.length, 1);
-    Assert.assertTrue(args[0] instanceof BatchDeleteRequest);
-    Assert.assertEquals(((BatchDeleteRequest)args[0]).getKeys(), batchKeys);
+    assertEquals(args.length, 1);
+    assertTrue(args[0] instanceof BatchDeleteRequest);
+    assertEquals(((BatchDeleteRequest)args[0]).getKeys(), batchKeys);
 
-    EasyMock.verify(descriptor, context, routingResult, request);
+    verify(descriptor, context, routingResult, request);
   }
 }

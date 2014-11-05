@@ -18,7 +18,9 @@ package com.linkedin.restli.internal.server.methods.arguments;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
+import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.test.MyComplexKey;
@@ -27,12 +29,10 @@ import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.model.AnnotationSet;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
-import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
 import com.linkedin.restli.server.BatchPatchRequest;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiRequestData;
-import org.easymock.EasyMock;
-import org.testng.Assert;
+import com.linkedin.restli.server.RoutingException;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -42,6 +42,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import static org.easymock.EasyMock.verify;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 
 /**
@@ -71,6 +76,13 @@ public class TestBatchPatchArgumentBuilder
     @SuppressWarnings("rawtypes")
     PatchRequest[] patches = new PatchRequest[]{patch1, patch2};
 
+    Object[] compoundKeys = new Object[]{new CompoundKey().append("string1", "apples").append("string2", "oranges"),
+        new CompoundKey().append("string1", "coffee").append("string2", "tea")};
+
+    Object[] complexResourceKeys = new Object[]{
+        new ComplexResourceKey<MyComplexKey, EmptyRecord>(new MyComplexKey().setA("A1").setB(111L), new EmptyRecord()),
+        new ComplexResourceKey<MyComplexKey, EmptyRecord>(new MyComplexKey().setA("A2").setB(222L), new EmptyRecord())};
+
     return new Object[][]
         {
             {
@@ -84,23 +96,35 @@ public class TestBatchPatchArgumentBuilder
                 AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
                 "{\"entities\":{\"string1=apples&string2=oranges\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}," +
                     "\"string1=coffee&string2=tea\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}}}",
-                new Object[]{new CompoundKey().append("string1", "apples").append("string2", "oranges"),
-                    new CompoundKey().append("string1", "coffee").append("string2", "tea")},
+                compoundKeys,
                 patches
             },
             {
                 AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
                 "{\"entities\":{\"(string1:apples,string2:oranges)\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}," +
                     "\"(string1:coffee,string2:tea)\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}}}",
-                new Object[]{new CompoundKey().append("string1", "apples").append("string2", "oranges"),
-                    new CompoundKey().append("string1", "coffee").append("string2", "tea")},
+                compoundKeys,
+                patches
+            },
+            {
+                AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                "{\"entities\":{\"a=A1&b=111\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}," +
+                    "\"a=A2&b=222\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}}}",
+                complexResourceKeys,
+                patches
+            },
+            {
+                AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                "{\"entities\":{\"($params:(),a:A2,b:222)\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}," +
+                    "\"($params:(),a:A1,b:111)\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}}}",
+                complexResourceKeys,
                 patches
             }
         };
   }
 
   @Test(dataProvider = "argumentData")
-  public void testArgumentBuilder(ProtocolVersion version, String requestEntity, Object[] keys, PatchRequest<MyComplexKey>[] patches) throws RestLiSyntaxException
+  public void testArgumentBuilderSuccess(ProtocolVersion version, String requestEntity, Object[] keys, PatchRequest<MyComplexKey>[] patches)
   {
     RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(requestEntity, version);
     @SuppressWarnings("rawtypes")
@@ -122,15 +146,94 @@ public class TestBatchPatchArgumentBuilder
     RestLiRequestData requestData = argumentBuilder.extractRequestData(routingResult, request);
     Object[] args = argumentBuilder.buildArguments(requestData, routingResult);
 
-    Assert.assertEquals(args.length, 1);
-    Assert.assertTrue(args[0] instanceof BatchPatchRequest);
+    assertEquals(args.length, 1);
+    assertTrue(args[0] instanceof BatchPatchRequest);
     Map<?, ?> data = ((BatchPatchRequest)args[0]).getData();
-    Assert.assertEquals(data.size(), keys.length);
+    assertEquals(data.size(), keys.length);
     for (int i = 0; i < keys.length; i++)
     {
-      Assert.assertEquals(data.get(keys[i]), patches[i]);
+      assertEquals(data.get(keys[i]), patches[i]);
     }
 
-    EasyMock.verify(request, descriptor, context, routingResult);
+    verify(request, descriptor, context, routingResult);
+  }
+
+  @DataProvider
+  private Object[][] failureData()
+  {
+    Object[] compoundKeys = new Object[]{new CompoundKey().append("string1", "apples").append("string2", "oranges"),
+        new CompoundKey().append("string1", "XYZ").append("string2", "tea")};
+
+    Object[] complexResourceKeys = new Object[]{
+        new ComplexResourceKey<MyComplexKey, EmptyRecord>(new MyComplexKey().setA("XYZ").setB(111L), new EmptyRecord()),
+        new ComplexResourceKey<MyComplexKey, EmptyRecord>(new MyComplexKey().setA("A2").setB(222L), new EmptyRecord())};
+
+    return new Object[][]
+        {
+            {
+                AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                "{\"entities\":{\"10001\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}," +
+                    "\"10002\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}}}",
+                new Object[]{10001, 99999}
+            },
+            {
+                AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                "{\"entities\":{\"10001\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}," +
+                    "\"99999\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}}}",
+                new Object[]{10001, 10002}
+            },
+            {
+                AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                "{\"entities\":{\"10001\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}," +
+                    "\"10002\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}}}",
+                new Object[]{10001, 10002, 10003}
+            },
+            {
+                AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                "{\"entities\":{\"string1=apples&string2=oranges\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}," +
+                    "\"string1=coffee&string2=tea\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}}}",
+                compoundKeys
+            },
+            {
+                AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                "{\"entities\":{\"(string1:apples,string2:oranges)\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}," +
+                    "\"(string1:coffee,string2:tea)\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}}}",
+                compoundKeys
+            },
+            {
+                AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                "{\"entities\":{\"a=A1&b=111\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}," +
+                    "\"a=A2&b=222\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}}}",
+                complexResourceKeys
+            },
+            {
+                AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                "{\"entities\":{\"($params:(),a:A2,b:222)\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}," +
+                    "\"($params:(),a:A1,b:111)\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}}}",
+                complexResourceKeys
+            }
+        };
+  }
+
+  @Test(dataProvider = "failureData")
+  public void testFailure(ProtocolVersion version, String requestEntity, Object[] keys)
+  {
+    RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(requestEntity, version);
+    Set<Object> batchKeys = new HashSet<Object>(Arrays.asList(keys));
+    ResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(null, null, batchKeys);
+    RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(null, 0, context, 1);
+
+    RestLiArgumentBuilder argumentBuilder = new BatchPatchArgumentBuilder();
+    try
+    {
+      argumentBuilder.extractRequestData(routingResult, request);
+      fail("Expected RoutingException");
+    }
+    catch (RoutingException e)
+    {
+      assertTrue(e.getMessage().contains("Batch request mismatch"));
+    }
+
+    verify(request, context, routingResult);
   }
 }

@@ -1,6 +1,7 @@
 2.0.2
 -----
-
+(RB=392178)
+Add additional unit tests for RestLiArgumentBuilders.
 
 2.0.1
 -----

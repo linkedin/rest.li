@@ -19,25 +19,30 @@ package com.linkedin.restli.internal.server.methods.arguments;
 import com.linkedin.data.schema.IntegerDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
+import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.test.MyComplexKey;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.model.AnnotationSet;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
-import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
 import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiRequestData;
-import org.easymock.EasyMock;
-import org.testng.Assert;
+import com.linkedin.restli.server.RoutingException;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.easymock.EasyMock.verify;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 
 /**
@@ -85,6 +90,20 @@ public class TestUpdateArgumentBuilder
         new AnnotationSet(new Annotation[]{})));
     associationResourceParams.add(myComplexKeyParam);
 
+    List<Parameter<?>> complexResourceKeyParams = new ArrayList<Parameter<?>>();
+    @SuppressWarnings("rawtypes")
+    Parameter<ComplexResourceKey> complexResourceKeyParam = new Parameter<ComplexResourceKey>(
+        "complexKeyTestId",
+        ComplexResourceKey.class,
+        null,
+        false,
+        null,
+        Parameter.ParamType.ASSOC_KEY_PARAM,
+        false,
+        new AnnotationSet(new Annotation[]{}));
+    complexResourceKeyParams.add(complexResourceKeyParam);
+    complexResourceKeyParams.add(myComplexKeyParam);
+
     return new Object[][]
         {
             {
@@ -104,12 +123,19 @@ public class TestUpdateArgumentBuilder
                 new Key("myComplexKeyAssociationId", CompoundKey.class, null),
                 "myComplexKeyAssociationId",
                 new CompoundKey().append("string1", "apples").append("string2", "oranges")
+            },
+            {
+                complexResourceKeyParams,
+                new Key("complexKeyTestId", ComplexResourceKey.class, null),
+                "complexKeyTestId",
+                new ComplexResourceKey<MyComplexKey, EmptyRecord>(
+                    new MyComplexKey().setA("keyString").setB(1234L), new EmptyRecord())
             }
         };
   }
 
   @Test(dataProvider = "argumentData")
-  public void testArgumentBuilder(List<Parameter<?>> params, Key key, String keyName, Object keyValue) throws RestLiSyntaxException
+  public void testArgumentBuilderSuccess(List<Parameter<?>> params, Key key, String keyName, Object keyValue)
   {
     RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(false, "{\"a\":\"xyz\",\"b\":123}", 1);
     ResourceModel model = RestLiArgumentBuilderTestHelper.getMockResourceModel(MyComplexKey.class, key, true);
@@ -139,14 +165,36 @@ public class TestUpdateArgumentBuilder
 
     if (keyValue != null)
     {
-      Assert.assertEquals(args.length, 2);
-      Assert.assertEquals(args[0], keyValue);
+      assertEquals(args.length, 2);
+      assertEquals(args[0], keyValue);
     }
 
-    Assert.assertTrue(args[args.length - 1] instanceof MyComplexKey);
-    Assert.assertEquals(((MyComplexKey)args[args.length - 1]).getA(), "xyz");
-    Assert.assertEquals((long) ((MyComplexKey)args[args.length - 1]).getB(), 123L);
+    assertTrue(args[args.length - 1] instanceof MyComplexKey);
+    assertEquals(((MyComplexKey)args[args.length - 1]).getA(), "xyz");
+    assertEquals((long) ((MyComplexKey)args[args.length - 1]).getB(), 123L);
 
-    EasyMock.verify(request, model, descriptor, context, routingResult);
+    verify(request, model, descriptor, context, routingResult);
+  }
+
+  @Test(dataProvider = "failureEntityData", dataProviderClass = RestLiArgumentBuilderTestHelper.class)
+  public void testFailure(String entity)
+  {
+    RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(false, entity, 1);
+    ResourceModel model = RestLiArgumentBuilderTestHelper.getMockResourceModel(MyComplexKey.class, null, false);
+    ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(model, 1, null);
+    RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 1, null, 0);
+
+    RestLiArgumentBuilder argumentBuilder = new UpdateArgumentBuilder();
+    try
+    {
+      argumentBuilder.extractRequestData(routingResult, request);
+      fail("Expected RoutingException");
+    }
+    catch (RoutingException e)
+    {
+      assertTrue(e.getMessage().contains("Error parsing entity body"));
+    }
+
+    verify(request, model, descriptor, routingResult);
   }
 }
