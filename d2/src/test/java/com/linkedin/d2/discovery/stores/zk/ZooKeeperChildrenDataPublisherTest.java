@@ -128,6 +128,7 @@ public class ZooKeeperChildrenDataPublisherTest
     publisher.start(new Callback<None>() {
       @Override
       public void onError(Throwable e) {
+        Assert.fail("publisher start onError called",e);
       }
 
       @Override
