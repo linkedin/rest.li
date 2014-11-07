@@ -99,7 +99,7 @@ public class HttpClientFactory implements TransportClientFactory
   public static final int DEFAULT_POOL_WAITER_SIZE = Integer.MAX_VALUE;
   public static final int DEFAULT_POOL_SIZE = 200;
   public static final int DEFAULT_REQUEST_TIMEOUT = 10000;
-  public static final int DEFAULT_IDLE_TIMEOUT = 30000;
+  public static final int DEFAULT_IDLE_TIMEOUT = 25000;
   public static final int DEFAULT_SHUTDOWN_TIMEOUT = 5000;
   public static final int DEFAULT_MAX_RESPONSE_SIZE = 1024 * 1024 * 2;
   public static final String DEFAULT_CLIENT_NAME = "noNameSpecifiedClient";
