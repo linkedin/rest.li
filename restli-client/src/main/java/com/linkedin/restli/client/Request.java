@@ -32,6 +32,7 @@ import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.client.QueryParamsUtil;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.URIParamUtils;
 
 import java.lang.reflect.Array;
@@ -321,13 +322,14 @@ public class Request<T>
   }
 
   /**
-   * @deprecated Requests are now built using a {@link com.linkedin.restli.client.uribuilders.RestliUriBuilder}.
+   * @deprecated Requests are now built using {@link com.linkedin.restli.client.uribuilders.RestliUriBuilder}.
    * We do not recommend calling this method as URI generation is an expensive process and is dependent on the version
    * of Rest.li protocol being used.
    *
-   * Consider using the {@link #toString()} method instead to meet your needs.
+   * If you need a string representation of the URI information, use {@link com.linkedin.restli.client.util.RestliRequestUriSignature}.
    *
-   * If you must generate a URI, please use {@link com.linkedin.restli.client.uribuilders.RestliUriBuilder#build()}
+   * If you must generate a URI, please use {@link com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil#createUriBuilder(Request, com.linkedin.restli.common.ProtocolVersion)}.
+   * Note that the generated URI should not be used for making requests because it is tied to specific wire protocol version.
    *
    * @return the URI for this request.
    */
@@ -344,7 +346,7 @@ public class Request<T>
       {
         // if someone calls this method w/o manually setting a URI in the constructor we will generate a URI using the
         // current default Rest.li version in the builders and cache it.
-        _uri = RestliUriBuilderUtil.createUriBuilder(this).build();
+        _uri = RestliUriBuilderUtil.createUriBuilder(this, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion()).build();
       }
       return _uri;
     }

@@ -37,7 +37,6 @@ import com.linkedin.restli.client.PartialUpdateRequest;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.UpdateRequest;
 import com.linkedin.restli.common.ProtocolVersion;
-import com.linkedin.restli.internal.common.AllProtocolVersions;
 
 
 /**
@@ -45,11 +44,6 @@ import com.linkedin.restli.internal.common.AllProtocolVersions;
  */
 public class RestliUriBuilderUtil
 {
-  public static RestliUriBuilder createUriBuilder(Request<?> request)
-  {
-    return createUriBuilder(request, "", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion());
-  }
-
   public static RestliUriBuilder createUriBuilder(Request<?> request, ProtocolVersion version)
   {
     return createUriBuilder(request, "", version);
