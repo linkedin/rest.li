@@ -346,7 +346,7 @@ public class Request<T>
       {
         // if someone calls this method w/o manually setting a URI in the constructor we will generate a URI using the
         // current default Rest.li version in the builders and cache it.
-        _uri = RestliUriBuilderUtil.createUriBuilder(this, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion()).build();
+        _uri = RestliUriBuilderUtil.createUriBuilder(this).build();
       }
       return _uri;
     }
