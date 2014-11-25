@@ -18,6 +18,7 @@ package com.linkedin.restli.internal.client;
 
 
 import com.linkedin.data.DataMap;
+import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.common.BatchResponse;
@@ -95,27 +96,27 @@ public class BatchEntityResponseDecoder<K, V extends RecordTemplate> extends Res
       final Object entityData = inputResults.get(key);
       if (entityData != null)
       {
-        entityResponseData.put(EntityResponse.ENTITY, entityData);
+        CheckedUtil.putWithoutChecking(entityResponseData, EntityResponse.ENTITY, entityData);
       }
 
       final Object statusData = inputStatuses.get(key);
       if (statusData != null)
       {
-        entityResponseData.put(EntityResponse.STATUS, statusData);
+        CheckedUtil.putWithoutChecking(entityResponseData, EntityResponse.STATUS, statusData);
       }
 
       final Object errorData = inputErrors.get(key);
       if (errorData != null)
       {
-        entityResponseData.put(EntityResponse.ERROR, errorData);
+        CheckedUtil.putWithoutChecking(entityResponseData, EntityResponse.ERROR, errorData);
       }
 
-      mergedResults.put(key, entityResponseData);
+      CheckedUtil.putWithoutChecking(mergedResults, key, entityResponseData);
     }
 
     final DataMap responseData = new DataMap();
-    responseData.put(BatchKVResponse.RESULTS, mergedResults);
-    responseData.put(BatchKVResponse.ERRORS, inputErrors);
+    CheckedUtil.putWithoutChecking(responseData, BatchKVResponse.RESULTS, mergedResults);
+    CheckedUtil.putWithoutChecking(responseData, BatchKVResponse.ERRORS, inputErrors);
 
     return new BatchEntityResponse<K, V>(responseData, _keyType, _entityType, _keyParts, _complexKeyType, version);
   }
