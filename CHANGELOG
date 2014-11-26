@@ -6,6 +6,9 @@ Java 8 support for Pegasus
 (RB=399776)
 Improve performance for BatchGet when using the new request builder.
 
+(RB=395883)
+Add projection tests to Rest.li response builder tests.
+
 2.0.0
 -----
 (RB=340252)
