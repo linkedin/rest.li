@@ -81,11 +81,18 @@ class RAPServerCodec implements ChannelUpstreamHandler, ChannelDownstreamHandler
       ChannelBuffer buf = nettyRequest.getContent();
       if (buf != null)
       {
-        if (buf.hasArray())
+        byte[] bufBytes;
+        long contentLengthFromHeader = HttpHeaders.getContentLength(nettyRequest, -1);
+        if (buf.hasArray() && buf.arrayOffset() == 0 && buf.array().length == contentLengthFromHeader)
         {
-          // TODO make a copy?
-          builder.setEntity(buf.array());
+          bufBytes = buf.array();
         }
+        else
+        {
+          bufBytes = new byte[buf.readableBytes()];
+          buf.slice().readBytes(bufBytes);
+        }
+        builder.setEntity(bufBytes);
       }
 
       return builder.build();
