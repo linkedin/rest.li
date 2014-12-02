@@ -99,15 +99,15 @@ public class RestException extends RemoteInvocationException
   }
 
   /**
-   * Factory method to obtain a new instance for a specified HTTP status code.
+   * Factory method to obtain a new instance for a specified HTTP status code with the given cause.
    *
    * @param status the HTTP status code for the exception.
-   * @param e the exception to be used as detail for this exception.
+   * @param throwable the throwable to be used as the cause for this exception.
    * @return a new instance, as described above.
    */
-  public static RestException forError(int status, Exception e)
+  public static RestException forError(int status, Throwable throwable)
   {
-    return forError(status, e.toString());
+    return new RestException(RestStatus.responseForError(status, throwable), throwable);
   }
 
   /**

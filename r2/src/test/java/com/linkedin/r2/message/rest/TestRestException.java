@@ -47,4 +47,18 @@ public class TestRestException
     pw.close();
     Assert.assertEquals(sw.toString().indexOf(TEST_STRING), -1, TEST_STRING);
   }
+
+  @Test
+  public void testRestExceptionForError()
+  {
+    Throwable throwable = new Exception("Some exception message");
+    String message = throwable.getMessage();
+    int expectedStatus = 400;
+
+    RestException restException = RestException.forError(expectedStatus, throwable);
+
+    Assert.assertSame(restException.getCause(), throwable);
+    Assert.assertTrue(restException.getMessage().contains(message));
+    Assert.assertEquals(restException.getResponse().getStatus(), expectedStatus);
+  }
 }
