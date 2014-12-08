@@ -7,68 +7,67 @@
     "fields" : [ ]
   } ],
   "schema" : {
-    "schema" : "com.linkedin.restli.examples.MockRecord",
-    "name" : "testDeprecationAnnotation",
-    "doc" : "generated from: com.linkedin.restli.restspec.TestDeprecationAnnotationResource",
-    "path" : "/testDeprecationAnnotation",
     "annotations" : {
       "deprecated" : {
         "doc" : "This is a deprecation documentation string for a resource."
       }
     },
+    "name" : "testDeprecationAnnotation",
+    "namespace" : "com.linkedin.restli.restspec",
+    "path" : "/testDeprecationAnnotation",
+    "schema" : "com.linkedin.restli.examples.MockRecord",
+    "doc" : "generated from: com.linkedin.restli.restspec.TestDeprecationAnnotationResource",
     "collection" : {
+      "identifier" : {
+        "name" : "testDeprecationAnnotationId",
+        "type" : "long"
+      },
+      "supports" : [ "create", "get" ],
       "methods" : [ {
-        "method" : "create",
         "annotations" : {
           "deprecated" : {
             "doc" : "Please use something else instead."
           }
-        }
+        },
+        "method" : "create"
       }, {
         "method" : "get",
         "parameters" : [ {
-          "name" : "extra",
           "annotations" : {
             "com.linkedin.restli.restspec.UnnamedAnnotation" : {
               "value" : 123
             }
           },
+          "name" : "extra",
           "type" : "string"
         } ]
       } ],
-      "entity" : {
-        "path" : "/testDeprecationAnnotation/{testDeprecationAnnotationId}"
-      },
       "finders" : [ {
-        "name" : "testFinder",
         "annotations" : {
           "deprecated" : {
             "doc" : "Please use something else instead."
           }
         },
+        "name" : "testFinder",
         "parameters" : [ {
           "name" : "title",
           "type" : "string"
         } ]
       } ],
-      "supports" : [ "create", "get" ],
-      "identifier" : {
-        "name" : "testDeprecationAnnotationId",
-        "type" : "long"
-      },
       "actions" : [ {
-        "name" : "testAction",
         "annotations" : {
-          "deprecated" : {
-          }
+          "deprecated" : { }
         },
-        "returns" : "int",
+        "name" : "testAction",
         "parameters" : [ {
           "name" : "num",
           "type" : "int"
-        } ]
-      } ]
-    },
-    "namespace" : "com.linkedin.restli.restspec"
+        } ],
+        "returns" : "int"
+      } ],
+      "entity" : {
+        "path" : "/testDeprecationAnnotation/{testDeprecationAnnotationId}"
+      }
+    }
   }
 }

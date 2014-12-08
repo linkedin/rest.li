@@ -46,14 +46,17 @@
     } ]
   } ],
   "schema" : {
-    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
     "name" : "finders",
-    "doc" : "generated from: com.linkedin.restli.examples.greetings.server.FindersResource",
+    "namespace" : "com.linkedin.restli.examples.greetings.client",
     "path" : "/finders",
+    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+    "doc" : "generated from: com.linkedin.restli.examples.greetings.server.FindersResource",
     "collection" : {
-      "entity" : {
-        "path" : "/finders/{findersId}"
+      "identifier" : {
+        "name" : "findersId",
+        "type" : "long"
       },
+      "supports" : [ ],
       "finders" : [ {
         "name" : "basicSearch"
       }, {
@@ -66,12 +69,9 @@
       }, {
         "name" : "searchWithoutMetadata"
       } ],
-      "supports" : [ ],
-      "identifier" : {
-        "name" : "findersId",
-        "type" : "long"
+      "entity" : {
+        "path" : "/finders/{findersId}"
       }
-    },
-    "namespace" : "com.linkedin.restli.examples.greetings.client"
+    }
   }
 }

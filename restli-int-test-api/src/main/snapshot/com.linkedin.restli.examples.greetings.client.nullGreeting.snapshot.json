@@ -46,11 +46,17 @@
     } ]
   } ],
   "schema" : {
-    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
     "name" : "nullGreeting",
-    "doc" : "Tests to observe restli's resilience for resource methods returning null. We are simply reusing\n the Greetings model here for our own null-generating purposes.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.NullGreetingsResourceImpl",
+    "namespace" : "com.linkedin.restli.examples.greetings.client",
     "path" : "/nullGreeting",
+    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+    "doc" : "Tests to observe restli's resilience for resource methods returning null. We are simply reusing\n the Greetings model here for our own null-generating purposes.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.NullGreetingsResourceImpl",
     "collection" : {
+      "identifier" : {
+        "name" : "nullGreetingId",
+        "type" : "long"
+      },
+      "supports" : [ "batch_create", "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "delete", "get", "get_all", "update" ],
       "methods" : [ {
         "method" : "create"
       }, {
@@ -72,9 +78,6 @@
       }, {
         "method" : "get_all"
       } ],
-      "entity" : {
-        "path" : "/nullGreeting/{nullGreetingId}"
-      },
       "finders" : [ {
         "name" : "finderCallbackNullList",
         "parameters" : [ {
@@ -109,11 +112,6 @@
           "type" : "com.linkedin.restli.examples.greetings.api.Tone"
         } ]
       } ],
-      "supports" : [ "batch_create", "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "delete", "get", "get_all", "update" ],
-      "identifier" : {
-        "name" : "nullGreetingId",
-        "type" : "long"
-      },
       "actions" : [ {
         "name" : "returnActionResultWithNullStatus",
         "returns" : "int"
@@ -129,8 +127,10 @@
       }, {
         "name" : "returnStringArrayWithNullElement",
         "returns" : "{ \"type\" : \"array\", \"items\" : \"string\" }"
-      } ]
-    },
-    "namespace" : "com.linkedin.restli.examples.greetings.client"
+      } ],
+      "entity" : {
+        "path" : "/nullGreeting/{nullGreetingId}"
+      }
+    }
   }
 }

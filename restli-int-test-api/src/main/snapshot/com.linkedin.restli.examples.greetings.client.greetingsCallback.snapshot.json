@@ -65,17 +65,23 @@
     } ]
   } ],
   "schema" : {
-    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
     "name" : "greetingsCallback",
-    "doc" : "generated from: com.linkedin.restli.examples.greetings.server.GreetingsResourceCallback",
+    "namespace" : "com.linkedin.restli.examples.greetings.client",
     "path" : "/greetingsCallback",
+    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+    "doc" : "generated from: com.linkedin.restli.examples.greetings.server.GreetingsResourceCallback",
     "collection" : {
+      "identifier" : {
+        "name" : "greetingsCallbackId",
+        "type" : "long"
+      },
+      "supports" : [ "batch_create", "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "delete", "get", "get_all", "partial_update", "update" ],
       "methods" : [ {
         "method" : "create",
         "parameters" : [ {
-          "default" : "false",
           "name" : "isNullId",
-          "type" : "boolean"
+          "type" : "boolean",
+          "default" : "false"
         } ]
       }, {
         "method" : "get"
@@ -98,64 +104,26 @@
       }, {
         "method" : "get_all"
       } ],
-      "entity" : {
-        "path" : "/greetingsCallback/{greetingsCallbackId}",
-        "actions" : [ {
-          "name" : "someAction",
-          "returns" : "com.linkedin.restli.examples.greetings.api.Greeting",
-          "parameters" : [ {
-            "default" : "1",
-            "name" : "a",
-            "type" : "int"
-          }, {
-            "default" : "default",
-            "name" : "b",
-            "type" : "string"
-          }, {
-            "optional" : true,
-            "name" : "c",
-            "type" : "com.linkedin.restli.examples.groups.api.TransferOwnershipRequest"
-          }, {
-            "name" : "d",
-            "type" : "com.linkedin.restli.examples.groups.api.TransferOwnershipRequest"
-          }, {
-            "name" : "e",
-            "type" : "int"
-          } ]
-        }, {
-          "name" : "updateTone",
-          "returns" : "com.linkedin.restli.examples.greetings.api.Greeting",
-          "parameters" : [ {
-            "optional" : true,
-            "name" : "newTone",
-            "type" : "com.linkedin.restli.examples.greetings.api.Tone"
-          }, {
-            "default" : "false",
-            "name" : "delOld",
-            "type" : "boolean"
-          } ]
-        } ]
-      },
       "finders" : [ {
         "name" : "search",
         "parameters" : [ {
-          "optional" : true,
           "name" : "tone",
-          "type" : "com.linkedin.restli.examples.greetings.api.Tone"
+          "type" : "com.linkedin.restli.examples.greetings.api.Tone",
+          "optional" : true
         } ]
       }, {
         "name" : "searchWithDefault",
         "parameters" : [ {
-          "default" : "FRIENDLY",
           "name" : "tone",
-          "type" : "com.linkedin.restli.examples.greetings.api.Tone"
+          "type" : "com.linkedin.restli.examples.greetings.api.Tone",
+          "default" : "FRIENDLY"
         } ]
       }, {
         "name" : "searchWithFacets",
         "parameters" : [ {
-          "optional" : true,
           "name" : "tone",
-          "type" : "com.linkedin.restli.examples.greetings.api.Tone"
+          "type" : "com.linkedin.restli.examples.greetings.api.Tone",
+          "optional" : true
         } ],
         "metadata" : {
           "type" : "com.linkedin.restli.examples.greetings.api.SearchMetadata"
@@ -168,16 +136,11 @@
       }, {
         "name" : "searchWithTones",
         "parameters" : [ {
-          "optional" : true,
           "name" : "tones",
-          "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.Tone\" }"
+          "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.Tone\" }",
+          "optional" : true
         } ]
       } ],
-      "supports" : [ "batch_create", "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "delete", "get", "get_all", "partial_update", "update" ],
-      "identifier" : {
-        "name" : "greetingsCallbackId",
-        "type" : "long"
-      },
       "actions" : [ {
         "name" : "anotherAction",
         "parameters" : [ {
@@ -198,8 +161,45 @@
       }, {
         "name" : "purge",
         "returns" : "int"
-      } ]
-    },
-    "namespace" : "com.linkedin.restli.examples.greetings.client"
+      } ],
+      "entity" : {
+        "path" : "/greetingsCallback/{greetingsCallbackId}",
+        "actions" : [ {
+          "name" : "someAction",
+          "parameters" : [ {
+            "name" : "a",
+            "type" : "int",
+            "default" : "1"
+          }, {
+            "name" : "b",
+            "type" : "string",
+            "default" : "default"
+          }, {
+            "name" : "c",
+            "type" : "com.linkedin.restli.examples.groups.api.TransferOwnershipRequest",
+            "optional" : true
+          }, {
+            "name" : "d",
+            "type" : "com.linkedin.restli.examples.groups.api.TransferOwnershipRequest"
+          }, {
+            "name" : "e",
+            "type" : "int"
+          } ],
+          "returns" : "com.linkedin.restli.examples.greetings.api.Greeting"
+        }, {
+          "name" : "updateTone",
+          "parameters" : [ {
+            "name" : "newTone",
+            "type" : "com.linkedin.restli.examples.greetings.api.Tone",
+            "optional" : true
+          }, {
+            "name" : "delOld",
+            "type" : "boolean",
+            "default" : "false"
+          } ],
+          "returns" : "com.linkedin.restli.examples.greetings.api.Greeting"
+        } ]
+      }
+    }
   }
 }

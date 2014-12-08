@@ -33,11 +33,18 @@
     } ]
   } ],
   "schema" : {
-    "schema" : "com.linkedin.restli.examples.greetings.api.Message",
     "name" : "complexKeys",
-    "doc" : "Demonstrates a resource with a complex key.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.ComplexKeysResource",
+    "namespace" : "com.linkedin.restli.examples.greetings.client",
     "path" : "/complexKeys",
+    "schema" : "com.linkedin.restli.examples.greetings.api.Message",
+    "doc" : "Demonstrates a resource with a complex key.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.ComplexKeysResource",
     "collection" : {
+      "identifier" : {
+        "name" : "keys",
+        "type" : "com.linkedin.restli.examples.greetings.api.TwoPartKey",
+        "params" : "com.linkedin.restli.examples.greetings.api.TwoPartKey"
+      },
+      "supports" : [ "batch_create", "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "get", "get_all", "partial_update" ],
       "methods" : [ {
         "method" : "create"
       }, {
@@ -57,33 +64,6 @@
       }, {
         "method" : "get_all"
       } ],
-      "entity" : {
-        "subresources" : [ {
-          "schema" : "com.linkedin.restli.examples.greetings.api.TwoPartKey",
-          "name" : "complexKeysSub",
-          "doc" : "generated from: com.linkedin.restli.examples.greetings.server.ComplexKeysSubResource",
-          "path" : "/complexKeys/{keys}/complexKeysSub",
-          "collection" : {
-            "methods" : [ {
-              "method" : "get"
-            } ],
-            "entity" : {
-              "path" : "/complexKeys/{keys}/complexKeysSub/{subKey}"
-            },
-            "supports" : [ "get" ],
-            "identifier" : {
-              "name" : "subKey",
-              "type" : "string"
-            }
-          },
-          "namespace" : "com.linkedin.restli.examples.greetings.client"
-        } ],
-        "path" : "/complexKeys/{keys}",
-        "actions" : [ {
-          "name" : "entityAction",
-          "returns" : "int"
-        } ]
-      },
       "finders" : [ {
         "name" : "prefix",
         "parameters" : [ {
@@ -91,13 +71,33 @@
           "type" : "string"
         } ]
       } ],
-      "supports" : [ "batch_create", "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "get", "get_all", "partial_update" ],
-      "identifier" : {
-        "name" : "keys",
-        "params" : "com.linkedin.restli.examples.greetings.api.TwoPartKey",
-        "type" : "com.linkedin.restli.examples.greetings.api.TwoPartKey"
+      "entity" : {
+        "path" : "/complexKeys/{keys}",
+        "actions" : [ {
+          "name" : "entityAction",
+          "returns" : "int"
+        } ],
+        "subresources" : [ {
+          "name" : "complexKeysSub",
+          "namespace" : "com.linkedin.restli.examples.greetings.client",
+          "path" : "/complexKeys/{keys}/complexKeysSub",
+          "schema" : "com.linkedin.restli.examples.greetings.api.TwoPartKey",
+          "doc" : "generated from: com.linkedin.restli.examples.greetings.server.ComplexKeysSubResource",
+          "collection" : {
+            "identifier" : {
+              "name" : "subKey",
+              "type" : "string"
+            },
+            "supports" : [ "get" ],
+            "methods" : [ {
+              "method" : "get"
+            } ],
+            "entity" : {
+              "path" : "/complexKeys/{keys}/complexKeysSub/{subKey}"
+            }
+          }
+        } ]
       }
-    },
-    "namespace" : "com.linkedin.restli.examples.greetings.client"
+    }
   }
 }

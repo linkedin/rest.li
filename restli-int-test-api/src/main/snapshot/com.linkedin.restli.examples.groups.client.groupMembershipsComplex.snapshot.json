@@ -117,23 +117,30 @@
     } ]
   } ],
   "schema" : {
-    "schema" : "com.linkedin.restli.examples.groups.api.ComplexKeyGroupMembership",
     "name" : "groupMembershipsComplex",
-    "doc" : "generated from: com.linkedin.restli.examples.groups.server.rest.impl.GroupMembershipsResource3",
+    "namespace" : "com.linkedin.restli.examples.groups.client",
     "path" : "/groupMembershipsComplex",
+    "schema" : "com.linkedin.restli.examples.groups.api.ComplexKeyGroupMembership",
+    "doc" : "generated from: com.linkedin.restli.examples.groups.server.rest.impl.GroupMembershipsResource3",
     "collection" : {
+      "identifier" : {
+        "name" : "groupMembershipsComplexId",
+        "type" : "com.linkedin.restli.examples.groups.api.GroupMembershipKey",
+        "params" : "com.linkedin.restli.examples.groups.api.GroupMembershipParam"
+      },
+      "supports" : [ "batch_create", "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "delete", "get", "partial_update", "update" ],
       "methods" : [ {
         "method" : "create"
       }, {
         "method" : "get",
         "parameters" : [ {
-          "optional" : true,
           "name" : "testParam",
-          "type" : "com.linkedin.restli.examples.groups.api.GroupMembershipParam"
+          "type" : "com.linkedin.restli.examples.groups.api.GroupMembershipParam",
+          "optional" : true
         }, {
-          "optional" : true,
           "name" : "testParamArray",
-          "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.groups.api.GroupMembershipQueryParam\" }"
+          "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.groups.api.GroupMembershipQueryParam\" }",
+          "optional" : true
         } ]
       }, {
         "method" : "update"
@@ -154,14 +161,7 @@
       } ],
       "entity" : {
         "path" : "/groupMembershipsComplex/{groupMembershipsComplexId}"
-      },
-      "supports" : [ "batch_create", "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "delete", "get", "partial_update", "update" ],
-      "identifier" : {
-        "name" : "groupMembershipsComplexId",
-        "params" : "com.linkedin.restli.examples.groups.api.GroupMembershipParam",
-        "type" : "com.linkedin.restli.examples.groups.api.GroupMembershipKey"
       }
-    },
-    "namespace" : "com.linkedin.restli.examples.groups.client"
+    }
   }
 }

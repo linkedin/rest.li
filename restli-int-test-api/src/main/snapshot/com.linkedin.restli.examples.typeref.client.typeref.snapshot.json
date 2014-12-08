@@ -175,140 +175,140 @@
     }
   } ],
   "schema" : {
-    "schema" : "com.linkedin.restli.examples.typeref.api.TyperefRecord",
     "name" : "typeref",
-    "doc" : "Test for typeref param and return types in actions.\n\ngenerated from: com.linkedin.restli.examples.typeref.server.TyperefTestResource",
+    "namespace" : "com.linkedin.restli.examples.typeref.client",
     "path" : "/typeref",
+    "schema" : "com.linkedin.restli.examples.typeref.api.TyperefRecord",
+    "doc" : "Test for typeref param and return types in actions.\n\ngenerated from: com.linkedin.restli.examples.typeref.server.TyperefTestResource",
     "collection" : {
-      "entity" : {
-        "path" : "/typeref/{typerefId}"
-      },
-      "supports" : [ ],
       "identifier" : {
         "name" : "typerefId",
         "type" : "long"
       },
+      "supports" : [ ],
       "actions" : [ {
         "name" : "BytesFunc",
-        "returns" : "com.linkedin.restli.examples.typeref.api.BytesRef",
         "parameters" : [ {
           "name" : "arg1",
           "type" : "com.linkedin.restli.examples.typeref.api.BytesRef"
-        } ]
+        } ],
+        "returns" : "com.linkedin.restli.examples.typeref.api.BytesRef"
       }, {
         "name" : "CustomNonNegativeLongRef",
-        "returns" : "com.linkedin.restli.examples.typeref.api.CustomNonNegativeLongRef",
         "parameters" : [ {
           "name" : "arg1",
           "type" : "com.linkedin.restli.examples.typeref.api.CustomNonNegativeLongRef"
-        } ]
+        } ],
+        "returns" : "com.linkedin.restli.examples.typeref.api.CustomNonNegativeLongRef"
       }, {
         "name" : "FruitsRef",
-        "returns" : "com.linkedin.restli.examples.typeref.api.FruitsRef",
         "parameters" : [ {
           "name" : "arg1",
           "type" : "com.linkedin.restli.examples.typeref.api.FruitsRef"
-        } ]
+        } ],
+        "returns" : "com.linkedin.restli.examples.typeref.api.FruitsRef"
       }, {
         "name" : "IntArrayFunc",
-        "returns" : "com.linkedin.restli.examples.typeref.api.IntArrayRef",
         "parameters" : [ {
           "name" : "arg1",
           "type" : "com.linkedin.restli.examples.typeref.api.IntArrayRef"
-        } ]
+        } ],
+        "returns" : "com.linkedin.restli.examples.typeref.api.IntArrayRef"
       }, {
         "name" : "IntMapFunc",
-        "returns" : "com.linkedin.restli.examples.typeref.api.IntMapRef",
         "parameters" : [ {
           "name" : "arg1",
           "type" : "com.linkedin.restli.examples.typeref.api.IntMapRef"
-        } ]
+        } ],
+        "returns" : "com.linkedin.restli.examples.typeref.api.IntMapRef"
       }, {
         "name" : "PointRef",
-        "returns" : "com.linkedin.restli.examples.typeref.api.PointRef",
         "parameters" : [ {
           "name" : "arg1",
           "type" : "com.linkedin.restli.examples.typeref.api.PointRef"
-        } ]
+        } ],
+        "returns" : "com.linkedin.restli.examples.typeref.api.PointRef"
       }, {
         "name" : "StringFunc",
-        "returns" : "com.linkedin.restli.examples.typeref.api.StringRef",
         "parameters" : [ {
           "name" : "arg1",
           "type" : "com.linkedin.restli.examples.typeref.api.StringRef"
-        } ]
+        } ],
+        "returns" : "com.linkedin.restli.examples.typeref.api.StringRef"
       }, {
         "name" : "booleanFunc",
-        "returns" : "com.linkedin.restli.examples.typeref.api.BooleanRef",
         "parameters" : [ {
           "name" : "arg1",
           "type" : "com.linkedin.restli.examples.typeref.api.BooleanRef"
-        } ]
+        } ],
+        "returns" : "com.linkedin.restli.examples.typeref.api.BooleanRef"
       }, {
         "name" : "booleanFunc2",
-        "returns" : "com.linkedin.restli.examples.typeref.api.BooleanRef",
         "parameters" : [ {
           "name" : "arg1",
           "type" : "com.linkedin.restli.examples.typeref.api.BooleanRef"
-        } ]
+        } ],
+        "returns" : "com.linkedin.restli.examples.typeref.api.BooleanRef"
       }, {
         "name" : "doubleFunc",
-        "returns" : "com.linkedin.restli.examples.typeref.api.DoubleRef",
         "parameters" : [ {
           "name" : "arg1",
           "type" : "com.linkedin.restli.examples.typeref.api.DoubleRef"
-        } ]
+        } ],
+        "returns" : "com.linkedin.restli.examples.typeref.api.DoubleRef"
       }, {
         "name" : "doubleFunc2",
-        "returns" : "com.linkedin.restli.examples.typeref.api.DoubleRef",
         "parameters" : [ {
           "name" : "arg1",
           "type" : "com.linkedin.restli.examples.typeref.api.DoubleRef"
-        } ]
+        } ],
+        "returns" : "com.linkedin.restli.examples.typeref.api.DoubleRef"
       }, {
         "name" : "floatFunc",
-        "returns" : "com.linkedin.restli.examples.typeref.api.FloatRef",
         "parameters" : [ {
           "name" : "arg1",
           "type" : "com.linkedin.restli.examples.typeref.api.FloatRef"
-        } ]
+        } ],
+        "returns" : "com.linkedin.restli.examples.typeref.api.FloatRef"
       }, {
         "name" : "floatFunc2",
-        "returns" : "com.linkedin.restli.examples.typeref.api.FloatRef",
         "parameters" : [ {
           "name" : "arg1",
           "type" : "com.linkedin.restli.examples.typeref.api.FloatRef"
-        } ]
+        } ],
+        "returns" : "com.linkedin.restli.examples.typeref.api.FloatRef"
       }, {
         "name" : "intFunc",
-        "returns" : "com.linkedin.restli.examples.typeref.api.IntRef",
         "parameters" : [ {
           "name" : "arg1",
           "type" : "com.linkedin.restli.examples.typeref.api.IntRef"
-        } ]
+        } ],
+        "returns" : "com.linkedin.restli.examples.typeref.api.IntRef"
       }, {
         "name" : "intFunc2",
-        "returns" : "com.linkedin.restli.examples.typeref.api.IntRef",
         "parameters" : [ {
           "name" : "arg1",
           "type" : "com.linkedin.restli.examples.typeref.api.IntRef"
-        } ]
+        } ],
+        "returns" : "com.linkedin.restli.examples.typeref.api.IntRef"
       }, {
         "name" : "longFunc",
-        "returns" : "com.linkedin.restli.examples.typeref.api.LongRef",
         "parameters" : [ {
           "name" : "arg1",
           "type" : "com.linkedin.restli.examples.typeref.api.LongRef"
-        } ]
+        } ],
+        "returns" : "com.linkedin.restli.examples.typeref.api.LongRef"
       }, {
         "name" : "longFunc2",
-        "returns" : "com.linkedin.restli.examples.typeref.api.LongRef",
         "parameters" : [ {
           "name" : "arg1",
           "type" : "com.linkedin.restli.examples.typeref.api.LongRef"
-        } ]
-      } ]
-    },
-    "namespace" : "com.linkedin.restli.examples.typeref.client"
+        } ],
+        "returns" : "com.linkedin.restli.examples.typeref.api.LongRef"
+      } ],
+      "entity" : {
+        "path" : "/typeref/{typerefId}"
+      }
+    }
   }
 }

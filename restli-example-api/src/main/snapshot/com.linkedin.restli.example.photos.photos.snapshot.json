@@ -61,11 +61,17 @@
     } ]
   } ],
   "schema" : {
-    "schema" : "com.linkedin.restli.example.Photo",
     "name" : "photos",
-    "doc" : "generated from: com.linkedin.restli.example.impl.PhotoResource",
+    "namespace" : "com.linkedin.restli.example.photos",
     "path" : "/photos",
+    "schema" : "com.linkedin.restli.example.Photo",
+    "doc" : "generated from: com.linkedin.restli.example.impl.PhotoResource",
     "collection" : {
+      "identifier" : {
+        "name" : "photosId",
+        "type" : "long"
+      },
+      "supports" : [ "batch_get", "create", "delete", "get", "partial_update", "update" ],
       "methods" : [ {
         "method" : "create"
       }, {
@@ -79,31 +85,25 @@
       }, {
         "method" : "batch_get"
       } ],
-      "entity" : {
-        "path" : "/photos/{photosId}"
-      },
       "finders" : [ {
         "name" : "titleAndOrFormat",
         "parameters" : [ {
-          "optional" : true,
           "name" : "title",
-          "type" : "string"
+          "type" : "string",
+          "optional" : true
         }, {
-          "optional" : true,
           "name" : "format",
-          "type" : "com.linkedin.restli.example.PhotoFormats"
+          "type" : "com.linkedin.restli.example.PhotoFormats",
+          "optional" : true
         } ]
       } ],
-      "supports" : [ "batch_get", "create", "delete", "get", "partial_update", "update" ],
-      "identifier" : {
-        "name" : "photosId",
-        "type" : "long"
-      },
       "actions" : [ {
         "name" : "purge",
         "returns" : "int"
-      } ]
-    },
-    "namespace" : "com.linkedin.restli.example.photos"
+      } ],
+      "entity" : {
+        "path" : "/photos/{photosId}"
+      }
+    }
   }
 }

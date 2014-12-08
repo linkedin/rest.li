@@ -34,66 +34,66 @@
     } ]
   } ],
   "schema" : {
-    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
     "name" : "noNamespace",
-    "doc" : "An REST endpoint without namespace\n\ngenerated from: com.linkedin.restli.examples.greetings.server.NoNamespaceResource",
     "path" : "/noNamespace",
+    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+    "doc" : "An REST endpoint without namespace\n\ngenerated from: com.linkedin.restli.examples.greetings.server.NoNamespaceResource",
     "collection" : {
-      "entity" : {
-        "subresources" : [ {
-          "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
-          "name" : "noNamespace",
-          "doc" : "A Subresource whose unqualified name is identical to its parent\n\n N.B. The only reason a namespace is specified on this resource is to avoid clashing when the\n client builders are generated.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.IdenticallyNamedSubResource",
-          "path" : "/noNamespace/{noNamespaceId}/noNamespace",
-          "collection" : {
-            "entity" : {
-              "path" : "/noNamespace/{noNamespaceId}/noNamespace/{noNamespaceId}"
-            },
-            "supports" : [ ],
-            "identifier" : {
-              "name" : "noNamespaceId",
-              "type" : "long"
-            }
-          },
-          "namespace" : "com.linkedin.restli.examples"
-        }, {
-          "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
-          "name" : "noNamespaceSub",
-          "doc" : "A subresource of the REST endpoint without namespace\n\ngenerated from: com.linkedin.restli.examples.greetings.server.NoNamespaceSubResource",
-          "path" : "/noNamespace/{noNamespaceId}/noNamespaceSub",
-          "collection" : {
-            "entity" : {
-              "subresources" : [ {
-                "schema" : "com.linkedin.restli.examples.greetings.api.ToneFacet",
-                "name" : "subSub",
-                "doc" : "generated from: com.linkedin.restli.examples.greetings.server.SubSubResource",
-                "path" : "/noNamespace/{noNamespaceId}/noNamespaceSub/{noNamespaceSubId}/subSub",
-                "collection" : {
-                  "entity" : {
-                    "path" : "/noNamespace/{noNamespaceId}/noNamespaceSub/{noNamespaceSubId}/subSub/{subSubId}"
-                  },
-                  "supports" : [ ],
-                  "identifier" : {
-                    "name" : "subSubId",
-                    "type" : "long"
-                  }
-                }
-              } ],
-              "path" : "/noNamespace/{noNamespaceId}/noNamespaceSub/{noNamespaceSubId}"
-            },
-            "supports" : [ ],
-            "identifier" : {
-              "name" : "noNamespaceSubId",
-              "type" : "long"
-            }
-          }
-        } ],
-        "path" : "/noNamespace/{noNamespaceId}"
-      },
-      "supports" : [ ],
       "identifier" : {
         "name" : "noNamespaceId",
         "type" : "long"
+      },
+      "supports" : [ ],
+      "entity" : {
+        "path" : "/noNamespace/{noNamespaceId}",
+        "subresources" : [ {
+          "name" : "noNamespace",
+          "namespace" : "com.linkedin.restli.examples",
+          "path" : "/noNamespace/{noNamespaceId}/noNamespace",
+          "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+          "doc" : "A Subresource whose unqualified name is identical to its parent\n\n N.B. The only reason a namespace is specified on this resource is to avoid clashing when the\n client builders are generated.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.IdenticallyNamedSubResource",
+          "collection" : {
+            "identifier" : {
+              "name" : "noNamespaceId",
+              "type" : "long"
+            },
+            "supports" : [ ],
+            "entity" : {
+              "path" : "/noNamespace/{noNamespaceId}/noNamespace/{noNamespaceId}"
+            }
+          }
+        }, {
+          "name" : "noNamespaceSub",
+          "path" : "/noNamespace/{noNamespaceId}/noNamespaceSub",
+          "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+          "doc" : "A subresource of the REST endpoint without namespace\n\ngenerated from: com.linkedin.restli.examples.greetings.server.NoNamespaceSubResource",
+          "collection" : {
+            "identifier" : {
+              "name" : "noNamespaceSubId",
+              "type" : "long"
+            },
+            "supports" : [ ],
+            "entity" : {
+              "path" : "/noNamespace/{noNamespaceId}/noNamespaceSub/{noNamespaceSubId}",
+              "subresources" : [ {
+                "name" : "subSub",
+                "path" : "/noNamespace/{noNamespaceId}/noNamespaceSub/{noNamespaceSubId}/subSub",
+                "schema" : "com.linkedin.restli.examples.greetings.api.ToneFacet",
+                "doc" : "generated from: com.linkedin.restli.examples.greetings.server.SubSubResource",
+                "collection" : {
+                  "identifier" : {
+                    "name" : "subSubId",
+                    "type" : "long"
+                  },
+                  "supports" : [ ],
+                  "entity" : {
+                    "path" : "/noNamespace/{noNamespaceId}/noNamespaceSub/{noNamespaceSubId}/subSub/{subSubId}"
+                  }
+                }
+              } ]
+            }
+          }
+        } ]
       }
     }
   }

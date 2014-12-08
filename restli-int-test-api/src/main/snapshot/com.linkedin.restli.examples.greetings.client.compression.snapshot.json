@@ -30,14 +30,17 @@
     }
   } ],
   "schema" : {
-    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
     "name" : "compression",
-    "doc" : "Simple \"hello world\" resource that takes a repeat parameter to specify how many times it should appear.\n Tuning the level of redundancy allows testing of compression correctness.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.CompressionResource",
+    "namespace" : "com.linkedin.restli.examples.greetings.client",
     "path" : "/compression",
+    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+    "doc" : "Simple \"hello world\" resource that takes a repeat parameter to specify how many times it should appear.\n Tuning the level of redundancy allows testing of compression correctness.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.CompressionResource",
     "collection" : {
-      "entity" : {
-        "path" : "/compression/{compressionId}"
+      "identifier" : {
+        "name" : "compressionId",
+        "type" : "long"
       },
+      "supports" : [ ],
       "finders" : [ {
         "name" : "repeatedGreetings",
         "parameters" : [ {
@@ -45,12 +48,9 @@
           "type" : "com.linkedin.restli.examples.typeref.api.CustomLongRef"
         } ]
       } ],
-      "supports" : [ ],
-      "identifier" : {
-        "name" : "compressionId",
-        "type" : "long"
+      "entity" : {
+        "path" : "/compression/{compressionId}"
       }
-    },
-    "namespace" : "com.linkedin.restli.examples.greetings.client"
+    }
   }
 }

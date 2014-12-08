@@ -48,8 +48,7 @@
     } ],
     "actions" : [ {
       "annotations" : {
-        "deprecated" : {
-        }
+        "deprecated" : { }
       },
       "name" : "testAction",
       "parameters" : [ {

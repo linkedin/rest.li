@@ -22,22 +22,20 @@
     } ]
   } ],
   "schema" : {
-    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
     "name" : "exceptions2",
-    "doc" : "generated from: com.linkedin.restli.examples.greetings.server.ExceptionsResource2",
+    "namespace" : "com.linkedin.restli.examples.greetings.client",
     "path" : "/exceptions2",
+    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+    "doc" : "generated from: com.linkedin.restli.examples.greetings.server.ExceptionsResource2",
     "collection" : {
-      "methods" : [ {
-        "method" : "get"
-      } ],
-      "entity" : {
-        "path" : "/exceptions2/{exceptions2Id}"
-      },
-      "supports" : [ "get" ],
       "identifier" : {
         "name" : "exceptions2Id",
         "type" : "long"
       },
+      "supports" : [ "get" ],
+      "methods" : [ {
+        "method" : "get"
+      } ],
       "actions" : [ {
         "name" : "exceptionWithValue",
         "doc" : "Action that responds HTTP 500 with integer value",
@@ -45,8 +43,10 @@
       }, {
         "name" : "exceptionWithoutValue",
         "doc" : "Action that responds HTTP 500 without value"
-      } ]
-    },
-    "namespace" : "com.linkedin.restli.examples.greetings.client"
+      } ],
+      "entity" : {
+        "path" : "/exceptions2/{exceptions2Id}"
+      }
+    }
   }
 }

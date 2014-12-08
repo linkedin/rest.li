@@ -53,11 +53,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
 /**
  * @author Moira Tagle
- * @version $Revision: $
  */
-
 public class SnapshotGenerator
 {
   private ResourceSchema _topLevelSchema;
@@ -100,9 +99,7 @@ public class SnapshotGenerator
     jsonBuilder.writeEndArray();
 
     jsonBuilder.writeFieldName(Snapshot.SCHEMA_KEY);
-    jsonBuilder.writeStartObject();
-    jsonBuilder.writeProperties(_topLevelSchema.data());
-    jsonBuilder.writeEndObject();
+    jsonBuilder.writeDataTemplate(_topLevelSchema, true);
 
     jsonBuilder.writeEndObject();
 
@@ -345,7 +342,8 @@ public class SnapshotGenerator
 
   private void recordType(String type, Map<String, NamedDataSchema> foundTypes, List<NamedDataSchema> typeOrder)
   {
-    if (!foundTypes.containsKey(type)){
+    if (!foundTypes.containsKey(type))
+    {
       DataSchema schema = RestSpecCodec.textToSchema(type, _schemaResolver);
       recordType(schema, foundTypes, typeOrder);
     }

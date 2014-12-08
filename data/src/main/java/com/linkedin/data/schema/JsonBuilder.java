@@ -18,6 +18,8 @@ package com.linkedin.data.schema;
 
 
 import com.linkedin.data.codec.JacksonDataCodec;
+import com.linkedin.data.template.DataTemplate;
+import com.linkedin.data.template.JacksonDataTemplateCodec;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -288,9 +290,15 @@ public class JsonBuilder
     }
   }
 
+  public void writeDataTemplate(DataTemplate<?> template, Boolean order) throws IOException
+  {
+    _jacksonDataTemplateCodec.dataTemplateToJsonGenerator(template, _jsonGenerator, order);
+  }
+
   private final StringWriter _writer;
   private final JsonGenerator _jsonGenerator;
   private final JacksonDataCodec _jacksonDataCodec = new JacksonDataCodec();
+  private final JacksonDataTemplateCodec _jacksonDataTemplateCodec = new JacksonDataTemplateCodec();
 
   private static final JsonFactory _jsonFactory = new JsonFactory().disable(JsonFactory.Feature.INTERN_FIELD_NAMES);
   private static final PrettyPrinter _spacesPrettyPrinter = new SpacesPrettyPrinter();

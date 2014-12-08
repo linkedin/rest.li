@@ -33,11 +33,18 @@
     } ]
   } ],
   "schema" : {
-    "schema" : "com.linkedin.restli.examples.greetings.api.Message",
     "name" : "annotatedComplexKeys",
-    "doc" : "generated from: com.linkedin.restli.examples.greetings.server.AnnotatedComplexKeysResource",
+    "namespace" : "com.linkedin.restli.examples.greetings.client",
     "path" : "/annotatedComplexKeys",
+    "schema" : "com.linkedin.restli.examples.greetings.api.Message",
+    "doc" : "generated from: com.linkedin.restli.examples.greetings.server.AnnotatedComplexKeysResource",
     "collection" : {
+      "identifier" : {
+        "name" : "annotatedComplexKeyId",
+        "type" : "com.linkedin.restli.examples.greetings.api.TwoPartKey",
+        "params" : "com.linkedin.restli.examples.greetings.api.TwoPartKey"
+      },
+      "supports" : [ "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "get", "partial_update" ],
       "methods" : [ {
         "method" : "create"
       }, {
@@ -53,29 +60,22 @@
       }, {
         "method" : "batch_delete"
       } ],
-      "entity" : {
-        "path" : "/annotatedComplexKeys/{annotatedComplexKeyId}"
-      },
       "finders" : [ {
-        "name" : "prefix",
-        "doc" : "Example javadoc",
         "annotations" : {
           "testMethod" : {
             "doc" : "For integration tests only."
           }
         },
+        "name" : "prefix",
+        "doc" : "Example javadoc",
         "parameters" : [ {
           "name" : "prefix",
           "type" : "string"
         } ]
       } ],
-      "supports" : [ "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "get", "partial_update" ],
-      "identifier" : {
-        "name" : "annotatedComplexKeyId",
-        "params" : "com.linkedin.restli.examples.greetings.api.TwoPartKey",
-        "type" : "com.linkedin.restli.examples.greetings.api.TwoPartKey"
+      "entity" : {
+        "path" : "/annotatedComplexKeys/{annotatedComplexKeyId}"
       }
-    },
-    "namespace" : "com.linkedin.restli.examples.greetings.client"
+    }
   }
 }

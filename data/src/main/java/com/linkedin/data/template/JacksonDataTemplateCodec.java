@@ -57,6 +57,78 @@ public class JacksonDataTemplateCodec extends JacksonDataCodec
     super(jsonFactory);
   }
 
+  /**
+   * Serialize the provided {@link java.lang.Object} to JSON and, if order is set to true, sort and order the output
+   * using {@link com.linkedin.data.template.JacksonDataTemplateCodec.SchemaOrderTraverseCallback} with the specified
+   * {@link com.linkedin.data.schema.DataSchema}. The output is then written using the provided
+   * {@link com.fasterxml.jackson.core.JsonGenerator}. The most typical use case of this method is to
+   * feed a {@link com.linkedin.data.template.DataTemplate} into a {@link com.fasterxml.jackson.core.JsonGenerator}.
+   *
+   * <p><i>Note</i> that the provided {@link com.fasterxml.jackson.core.JsonGenerator} will NOT close its underlying output,
+   * whether its a {@link java.io.Writer} or an {@link java.io.OutputStream}, after the completion of this
+   * method.
+   *
+   * @param  data the data to serialize. Note that data here must be any of the acceptable Pegasus Data types. For example,
+   *         {@link java.lang.Integer}, {@link java.lang.String}, {@link com.linkedin.data.DataList}, etc.
+   * @param  schema the schema to use to sort and order the JSON output if order is set to true.
+   * @param  generator the underlying JsonGenerator to call when the value is to be output.
+   * @param  order whether or not to apply ordering to the serialized JSON based on the schema.
+   * @throws IOException
+   */
+  protected void dataTemplateToJsonGenerator(Object data,
+                                             DataSchema schema,
+                                             JsonGenerator generator,
+                                             boolean order) throws IOException
+  {
+    if (order)
+    {
+      JsonTraverseCallback callback = new SchemaOrderTraverseCallback(schema, generator);
+      Data.traverse(data, callback);
+    }
+    else
+    {
+      objectToJsonGenerator(data, generator);
+    }
+  }
+
+  /**
+   * Serializes the provided {@link com.linkedin.data.template.DataTemplate} to JSON and writes it using the provided
+   * {@link com.fasterxml.jackson.core.JsonGenerator}. If the order is set to to true, then the resulting serialization
+   * of the DataTemplate will use {@link com.linkedin.data.template.JacksonDataTemplateCodec.SchemaOrderTraverseCallback}
+   * to order the output.
+   *
+   * Refer to the documentation of {@link JacksonDataTemplateCodec#dataTemplateToJsonGenerator(java.lang.Object, com.linkedin.data.schema.DataSchema, com.fasterxml.jackson.core.JsonGenerator, boolean)
+   *
+   * @param  template the template to write.
+   * @param  generator the underlying JsonGenerator to call when the value is to be output.
+   * @param  order whether or not to apply ordering to the serialized JSON based on the schema.
+   * @throws IOException
+   */
+  public void dataTemplateToJsonGenerator(DataTemplate<?> template,
+                                          JsonGenerator generator,
+                                          boolean order) throws IOException
+  {
+    dataTemplateToJsonGenerator(template.data(), template.schema(), generator, order);
+  }
+
+  /**
+   * Serialize the provided {@link java.lang.Object} to JSON and, if order is set to true, sort and order the output
+   * using {@link com.linkedin.data.template.JacksonDataTemplateCodec.SchemaOrderTraverseCallback} with the specified
+   * {@link com.linkedin.data.schema.DataSchema}. The output is then written using the provided
+   * {@link com.fasterxml.jackson.core.JsonGenerator}. The most typical use case of this method is to
+   * write a {@link com.linkedin.data.template.DataTemplate}.
+   *
+   * <p><i>Note</i> that the provided {@link com.fasterxml.jackson.core.JsonGenerator} will have its underlying output,
+   * whether its a {@link java.io.Writer} or an {@link java.io.OutputStream}, closed after the completion of this
+   * method.
+   *
+   * @param  data the data to serialize. Note that data here must be any of the acceptable Pegasus Data types. For example,
+   *         {@link java.lang.Integer}, {@link java.lang.String}, {@link com.linkedin.data.DataList}, etc.
+   * @param  schema the schema to use to sort and order the JSON output if order is set to true.
+   * @param  generator the underlying JsonGenerator to call when the value is to be output.
+   * @param  order whether or not to apply ordering to the serialized JSON based on the schema.
+   * @throws IOException
+   */
   protected void writeDataTemplate(Object data,
                                    DataSchema schema,
                                    JsonGenerator generator,
@@ -75,16 +147,55 @@ public class JacksonDataTemplateCodec extends JacksonDataCodec
     }
   }
 
+  /**
+   * Serializes the provided {@link com.linkedin.data.template.DataTemplate} to JSON and writes it to the provided
+   * {@link java.io.OutputStream}. If the order is set to to true, then the resulting serialization of the DataTemplate
+   * will use {@link com.linkedin.data.template.JacksonDataTemplateCodec.SchemaOrderTraverseCallback} to order the output.
+   *
+   * Refer to the documentation of {@link JacksonDataTemplateCodec#writeDataTemplate(java.lang.Object, com.linkedin.data.schema.DataSchema, com.fasterxml.jackson.core.JsonGenerator, boolean)
+   *
+   * @param  template the template to write.
+   * @param  out the OutputStream to write the serialized JSON to.
+   * @param  order whether or not to apply ordering to the serialized JSON based on the schema.
+   * @throws IOException
+   */
   public void writeDataTemplate(DataTemplate<?> template, OutputStream out, boolean order) throws IOException
   {
     writeDataTemplate(template.data(), template.schema(), out, order);
   }
 
+  /**
+   * Serializes the provided {@link com.linkedin.data.template.DataTemplate} to JSON and writes it to the provided
+   * {@link java.io.Writer}. If the order is set to to true, then the resulting serialization of the DataTemplate
+   * will use {@link com.linkedin.data.template.JacksonDataTemplateCodec.SchemaOrderTraverseCallback} to order the output.
+   *
+   * Refer to the documentation of {@link JacksonDataTemplateCodec#writeDataTemplate(java.lang.Object, com.linkedin.data.schema.DataSchema, com.fasterxml.jackson.core.JsonGenerator, boolean)
+   *
+   * @param  template the template to write.
+   * @param  out the Writer to write the serialized JSON to.
+   * @param  order whether or not to apply ordering to the serialized JSON based on the schema.
+   * @throws IOException
+   */
   public void writeDataTemplate(DataTemplate<?> template, Writer out, boolean order) throws IOException
   {
     writeDataTemplate(template.data(), template.schema(), out, order);
   }
 
+  /**
+   * Serialize the provided {@link java.lang.Object} to JSON and, if order is set to true, sort and order the output
+   * using {@link com.linkedin.data.template.JacksonDataTemplateCodec.SchemaOrderTraverseCallback} with the specified
+   * {@link com.linkedin.data.schema.DataSchema}. The output is then written to the provided {@link java.io.OutputStream}.
+   * The most typical use case of this method is to write a {@link com.linkedin.data.template.DataTemplate}.
+   *
+   * Refer to the documentation of {@link JacksonDataTemplateCodec#writeDataTemplate(java.lang.Object, com.linkedin.data.schema.DataSchema, com.fasterxml.jackson.core.JsonGenerator, boolean)
+   *
+   * @param  data the data to serialize. Note that data here must be any of the acceptable Pegasus Data types. For example,
+   *         {@link java.lang.Integer}, {@link java.lang.String}, {@link com.linkedin.data.DataList}, etc.
+   * @param  schema the schema to use to sort and order the JSON output if order is set to true.
+   * @param  out the OutputStream to write the serialized JSON to.
+   * @param  order whether or not to apply ordering to the serialized JSON based on the schema.
+   * @throws IOException
+   */
   public void writeDataTemplate(Object data,
                                 DataSchema schema,
                                 OutputStream out,
@@ -94,6 +205,21 @@ public class JacksonDataTemplateCodec extends JacksonDataCodec
     writeDataTemplate(data, schema, generator, order);
   }
 
+  /**
+   * Serialize the provided {@link java.lang.Object} to JSON and, if order is set to true, sort and order the output
+   * using {@link com.linkedin.data.template.JacksonDataTemplateCodec.SchemaOrderTraverseCallback} with the specified
+   * {@link com.linkedin.data.schema.DataSchema}. The output is then written to the provided {@link java.io.Writer}.
+   * The most typical use case of this method is to write a {@link com.linkedin.data.template.DataTemplate}.
+   *
+   * Refer to the documentation of {@link JacksonDataTemplateCodec#writeDataTemplate(java.lang.Object, com.linkedin.data.schema.DataSchema, com.fasterxml.jackson.core.JsonGenerator, boolean)
+   *
+   * @param  data the data to serialize. Note that data here must be any of the acceptable Pegasus Data types. For example,
+   *         {@link java.lang.Integer}, {@link java.lang.String}, {@link com.linkedin.data.DataList}, etc.
+   * @param  schema the schema to use to sort and order the JSON output if order is set to true.
+   * @param  out the Writer to write the serialized JSON output to.
+   * @param  order whether or not to apply ordering to the serialized JSON based on the schema.
+   * @throws IOException
+   */
   public void writeDataTemplate(Object data,
                                 DataSchema schema,
                                 Writer out,
@@ -103,16 +229,46 @@ public class JacksonDataTemplateCodec extends JacksonDataCodec
     writeDataTemplate(data, schema, generator, order);
   }
 
+  /**
+   * Serializes the provided {@link com.linkedin.data.template.DataTemplate} to JSON and writes it to the provided
+   * {@link java.io.OutputStream}. The serialized JSON is not ordered.
+   *
+   * Refer to the documentation of {@link JacksonDataTemplateCodec#writeDataTemplate(java.lang.Object, com.linkedin.data.schema.DataSchema, com.fasterxml.jackson.core.JsonGenerator, boolean)
+   *
+   * @param  template the template to write.
+   * @param  out the OutputStream to write the serialized JSON to.
+   * @throws IOException
+   */
   public void writeDataTemplate(DataTemplate<?> template, OutputStream out) throws IOException
   {
     writeObject(template.data(), createJsonGenerator(out));
   }
 
+  /**
+   * Serializes the provided {@link com.linkedin.data.template.DataTemplate} to JSON and writes it to the provided
+   * {@link java.io.Writer}. The serialized JSON is not ordered.
+   *
+   * Refer to the documentation of {@link JacksonDataTemplateCodec#writeDataTemplate(java.lang.Object, com.linkedin.data.schema.DataSchema, com.fasterxml.jackson.core.JsonGenerator, boolean)
+   *
+   * @param  template the template to write.
+   * @param  out the Writer to write the serialized JSON to.
+   * @throws IOException
+   */
   public void writeDataTemplate(DataTemplate<?> template, Writer out) throws IOException
   {
     writeObject(template.data(), createJsonGenerator(out));
   }
 
+  /**
+   * Serializes the provided {@link com.linkedin.data.template.DataTemplate} to JSON and into to a byte array. If
+   * the order is set to to true, then the resulting serialization of the DataTemplate will use
+   * {@link com.linkedin.data.template.JacksonDataTemplateCodec.SchemaOrderTraverseCallback} to order the output.
+   *
+   * @param  template the template to serialize.
+   * @param  order whether or not to apply ordering to the serialized data template based on the schema.
+   * @return the serialized byte array.
+   * @throws IOException
+   */
   public byte[] dataTemplateToBytes(DataTemplate<?> template, boolean order) throws IOException
   {
     if (order)
@@ -127,6 +283,16 @@ public class JacksonDataTemplateCodec extends JacksonDataCodec
     }
   }
 
+  /**
+   * Serializes the provided {@link com.linkedin.data.template.DataTemplate} to a {@link java.lang.String}. If the
+   * order is set to to true, then the resulting serialization of the DataTemplate will use
+   * {@link com.linkedin.data.template.JacksonDataTemplateCodec.SchemaOrderTraverseCallback} to order the output.
+   *
+   * @param  template the template to serialize.
+   * @param  order whether or not to apply ordering to the serialized data template based on the schema.
+   * @return the serialized String.
+   * @throws IOException
+   */
   public String dataTemplateToString(DataTemplate<?> template, boolean order) throws IOException
   {
     if (order)
@@ -141,12 +307,27 @@ public class JacksonDataTemplateCodec extends JacksonDataCodec
     }
   }
 
+  /**
+   * Serializes the provided {@link com.linkedin.data.template.DataTemplate} to a byte array. The serialized JSON
+   * is not ordered.
+   *
+   * @param  template the template to serialize.
+   * @return the serialized byte array.
+   * @throws IOException
+   */
   public byte[] dataTemplateToBytes(DataTemplate<?> template) throws IOException
   {
     return objectToBytes(template.data());
   }
 
-
+  /**
+   * Serializes the provided {@link com.linkedin.data.template.DataTemplate} to a {@link java.lang.String}.
+   * The serialized JSON is not ordered.
+   *
+   * @param  template the template to serialize.
+   * @return the serialized String.
+   * @throws IOException
+   */
   public String dataTemplateToString(DataTemplate<?> template) throws IOException
   {
     return objectToString(template.data());

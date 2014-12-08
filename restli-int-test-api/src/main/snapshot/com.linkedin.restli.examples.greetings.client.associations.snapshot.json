@@ -22,8 +22,21 @@
     } ]
   } ],
   "schema" : {
+    "name" : "associations",
+    "namespace" : "com.linkedin.restli.examples.greetings.client",
+    "path" : "/associations",
     "schema" : "com.linkedin.restli.examples.greetings.api.Message",
+    "doc" : "Demonstrates an assocation resource keyed by string.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.AssociationsResource",
     "association" : {
+      "identifier" : "associationsId",
+      "assocKeys" : [ {
+        "name" : "dest",
+        "type" : "string"
+      }, {
+        "name" : "src",
+        "type" : "string"
+      } ],
+      "supports" : [ "batch_get", "batch_partial_update", "batch_update", "create", "get" ],
       "methods" : [ {
         "method" : "create"
       }, {
@@ -35,40 +48,6 @@
       }, {
         "method" : "batch_partial_update"
       } ],
-      "entity" : {
-        "subresources" : [ {
-          "schema" : "com.linkedin.restli.examples.greetings.api.Message",
-          "name" : "associationsSub",
-          "doc" : "generated from: com.linkedin.restli.examples.greetings.server.AssociationsSubResource",
-          "path" : "/associations/{associationsId}/associationsSub",
-          "collection" : {
-            "methods" : [ {
-              "method" : "get"
-            } ],
-            "entity" : {
-              "path" : "/associations/{associationsId}/associationsSub/{subKey}"
-            },
-            "finders" : [ {
-              "name" : "tone",
-              "parameters" : [ {
-                "name" : "tone",
-                "type" : "com.linkedin.restli.examples.greetings.api.Tone"
-              } ]
-            } ],
-            "supports" : [ "get" ],
-            "identifier" : {
-              "name" : "subKey",
-              "type" : "string"
-            },
-            "actions" : [ {
-              "name" : "action",
-              "returns" : "int"
-            } ]
-          },
-          "namespace" : "com.linkedin.restli.examples.greetings.client"
-        } ],
-        "path" : "/associations/{associationsId}"
-      },
       "finders" : [ {
         "name" : "assocKeyFinder",
         "assocKeys" : [ "src" ]
@@ -76,19 +55,40 @@
         "name" : "assocKeyFinderOpt",
         "assocKeys" : [ "src" ]
       } ],
-      "supports" : [ "batch_get", "batch_partial_update", "batch_update", "create", "get" ],
-      "assocKeys" : [ {
-        "name" : "dest",
-        "type" : "string"
-      }, {
-        "name" : "src",
-        "type" : "string"
-      } ],
-      "identifier" : "associationsId"
-    },
-    "name" : "associations",
-    "doc" : "Demonstrates an assocation resource keyed by string.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.AssociationsResource",
-    "path" : "/associations",
-    "namespace" : "com.linkedin.restli.examples.greetings.client"
+      "entity" : {
+        "path" : "/associations/{associationsId}",
+        "subresources" : [ {
+          "name" : "associationsSub",
+          "namespace" : "com.linkedin.restli.examples.greetings.client",
+          "path" : "/associations/{associationsId}/associationsSub",
+          "schema" : "com.linkedin.restli.examples.greetings.api.Message",
+          "doc" : "generated from: com.linkedin.restli.examples.greetings.server.AssociationsSubResource",
+          "collection" : {
+            "identifier" : {
+              "name" : "subKey",
+              "type" : "string"
+            },
+            "supports" : [ "get" ],
+            "methods" : [ {
+              "method" : "get"
+            } ],
+            "finders" : [ {
+              "name" : "tone",
+              "parameters" : [ {
+                "name" : "tone",
+                "type" : "com.linkedin.restli.examples.greetings.api.Tone"
+              } ]
+            } ],
+            "actions" : [ {
+              "name" : "action",
+              "returns" : "int"
+            } ],
+            "entity" : {
+              "path" : "/associations/{associationsId}/associationsSub/{subKey}"
+            }
+          }
+        } ]
+      }
+    }
   }
 }

@@ -417,11 +417,17 @@
     } ]
   } ],
   "schema" : {
-    "schema" : "com.linkedin.restli.examples.groups.api.Group",
     "name" : "groups",
-    "doc" : "TODO Derive path, resourceClass and keyName from class names (GroupsResource => /groups, GroupResource.class, \"groupId\")\n\ngenerated from: com.linkedin.restli.examples.groups.server.rest.impl.GroupsResource2",
+    "namespace" : "com.linkedin.restli.examples.groups.client",
     "path" : "/groups",
+    "schema" : "com.linkedin.restli.examples.groups.api.Group",
+    "doc" : "TODO Derive path, resourceClass and keyName from class names (GroupsResource => /groups, GroupResource.class, \"groupId\")\n\ngenerated from: com.linkedin.restli.examples.groups.server.rest.impl.GroupsResource2",
     "collection" : {
+      "identifier" : {
+        "name" : "groupID",
+        "type" : "int"
+      },
+      "supports" : [ "batch_get", "create", "delete", "get", "partial_update" ],
       "methods" : [ {
         "method" : "create"
       }, {
@@ -433,38 +439,75 @@
       }, {
         "method" : "batch_get"
       } ],
+      "finders" : [ {
+        "name" : "complexCircuit",
+        "doc" : "Test the default value for various types",
+        "parameters" : [ {
+          "name" : "nativeArray",
+          "type" : "{ \"type\" : \"array\", \"items\" : \"double\" }",
+          "default" : "[1.1, 2.2, 3.3]"
+        }, {
+          "name" : "coercedArray",
+          "type" : "{ \"type\" : \"array\", \"items\" : \"int\" }",
+          "default" : "[1.1, 2.2, 3.3]"
+        }, {
+          "name" : "wrappedArray",
+          "type" : "{ \"type\" : \"array\", \"items\" : \"int\" }",
+          "default" : "[2, 3, 4]"
+        }, {
+          "name" : "wrappedMap",
+          "type" : "{ \"type\" : \"map\", \"values\" : \"int\" }",
+          "default" : "{\"A\": 1, \"B\": 2}"
+        }, {
+          "name" : "bytes",
+          "type" : "bytes",
+          "default" : "\u0007"
+        }, {
+          "name" : "fixed",
+          "type" : "com.linkedin.restli.examples.typeref.api.Fixed16",
+          "default" : "\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000B\f\r\u000E\u000F\u0010"
+        }, {
+          "name" : "union",
+          "type" : "\"com.linkedin.restli.examples.typeref.api.Union\"",
+          "default" : "{\"string\": \"I'm String\"}"
+        }, {
+          "name" : "record",
+          "type" : "com.linkedin.restli.examples.groups.api.GroupMembershipParam",
+          "default" : "{\"intParameter\": 7, \"stringParameter\": \"success\"}"
+        }, {
+          "name" : "records",
+          "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.groups.api.GroupMembershipParam\" }",
+          "default" : "[{\"intParameter\": 7, \"stringParameter\": \"success\"}]"
+        } ]
+      }, {
+        "name" : "emailDomain",
+        "parameters" : [ {
+          "name" : "emailDomain",
+          "type" : "string"
+        } ]
+      }, {
+        "name" : "manager",
+        "parameters" : [ {
+          "name" : "managerMemberID",
+          "type" : "int"
+        } ]
+      }, {
+        "name" : "search",
+        "parameters" : [ {
+          "name" : "keywords",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "name" : "nameKeywords",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "name" : "groupID",
+          "type" : "int",
+          "optional" : true
+        } ]
+      } ],
       "entity" : {
-        "subresources" : [ {
-          "schema" : "com.linkedin.restli.examples.groups.api.GroupContact",
-          "name" : "contacts",
-          "doc" : "TODO Not implemented in MongoDB yet\n\ngenerated from: com.linkedin.restli.examples.groups.server.rest.impl.GroupContactsResource2",
-          "path" : "/groups/{groupID}/contacts",
-          "collection" : {
-            "methods" : [ {
-              "method" : "create"
-            }, {
-              "method" : "get"
-            }, {
-              "method" : "partial_update"
-            }, {
-              "method" : "delete"
-            }, {
-              "method" : "batch_get"
-            } ],
-            "entity" : {
-              "path" : "/groups/{groupID}/contacts/{contactID}"
-            },
-            "supports" : [ "batch_get", "create", "delete", "get", "partial_update" ],
-            "identifier" : {
-              "name" : "contactID",
-              "type" : "int"
-            },
-            "actions" : [ {
-              "name" : "spamContacts"
-            } ]
-          },
-          "namespace" : "com.linkedin.restli.examples.groups.client"
-        } ],
         "path" : "/groups/{groupID}",
         "actions" : [ {
           "name" : "sendTestAnnouncement",
@@ -484,82 +527,39 @@
             "name" : "request",
             "type" : "com.linkedin.restli.examples.groups.api.TransferOwnershipRequest"
           } ]
+        } ],
+        "subresources" : [ {
+          "name" : "contacts",
+          "namespace" : "com.linkedin.restli.examples.groups.client",
+          "path" : "/groups/{groupID}/contacts",
+          "schema" : "com.linkedin.restli.examples.groups.api.GroupContact",
+          "doc" : "TODO Not implemented in MongoDB yet\n\ngenerated from: com.linkedin.restli.examples.groups.server.rest.impl.GroupContactsResource2",
+          "collection" : {
+            "identifier" : {
+              "name" : "contactID",
+              "type" : "int"
+            },
+            "supports" : [ "batch_get", "create", "delete", "get", "partial_update" ],
+            "methods" : [ {
+              "method" : "create"
+            }, {
+              "method" : "get"
+            }, {
+              "method" : "partial_update"
+            }, {
+              "method" : "delete"
+            }, {
+              "method" : "batch_get"
+            } ],
+            "actions" : [ {
+              "name" : "spamContacts"
+            } ],
+            "entity" : {
+              "path" : "/groups/{groupID}/contacts/{contactID}"
+            }
+          }
         } ]
-      },
-      "finders" : [ {
-        "name" : "complexCircuit",
-        "doc" : "Test the default value for various types",
-        "parameters" : [ {
-          "default" : "[1.1, 2.2, 3.3]",
-          "name" : "nativeArray",
-          "type" : "{ \"type\" : \"array\", \"items\" : \"double\" }"
-        }, {
-          "default" : "[1.1, 2.2, 3.3]",
-          "name" : "coercedArray",
-          "type" : "{ \"type\" : \"array\", \"items\" : \"int\" }"
-        }, {
-          "default" : "[2, 3, 4]",
-          "name" : "wrappedArray",
-          "type" : "{ \"type\" : \"array\", \"items\" : \"int\" }"
-        }, {
-          "default" : "{\"A\": 1, \"B\": 2}",
-          "name" : "wrappedMap",
-          "type" : "{ \"type\" : \"map\", \"values\" : \"int\" }"
-        }, {
-          "default" : "\u0007",
-          "name" : "bytes",
-          "type" : "bytes"
-        }, {
-          "default" : "\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000B\f\r\u000E\u000F\u0010",
-          "name" : "fixed",
-          "type" : "com.linkedin.restli.examples.typeref.api.Fixed16"
-        }, {
-          "default" : "{\"string\": \"I'm String\"}",
-          "name" : "union",
-          "type" : "\"com.linkedin.restli.examples.typeref.api.Union\""
-        }, {
-          "default" : "{\"intParameter\": 7, \"stringParameter\": \"success\"}",
-          "name" : "record",
-          "type" : "com.linkedin.restli.examples.groups.api.GroupMembershipParam"
-        }, {
-          "default" : "[{\"intParameter\": 7, \"stringParameter\": \"success\"}]",
-          "name" : "records",
-          "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.groups.api.GroupMembershipParam\" }"
-        } ]
-      }, {
-        "name" : "emailDomain",
-        "parameters" : [ {
-          "name" : "emailDomain",
-          "type" : "string"
-        } ]
-      }, {
-        "name" : "manager",
-        "parameters" : [ {
-          "name" : "managerMemberID",
-          "type" : "int"
-        } ]
-      }, {
-        "name" : "search",
-        "parameters" : [ {
-          "optional" : true,
-          "name" : "keywords",
-          "type" : "string"
-        }, {
-          "optional" : true,
-          "name" : "nameKeywords",
-          "type" : "string"
-        }, {
-          "optional" : true,
-          "name" : "groupID",
-          "type" : "int"
-        } ]
-      } ],
-      "supports" : [ "batch_get", "create", "delete", "get", "partial_update" ],
-      "identifier" : {
-        "name" : "groupID",
-        "type" : "int"
       }
-    },
-    "namespace" : "com.linkedin.restli.examples.groups.client"
+    }
   }
 }

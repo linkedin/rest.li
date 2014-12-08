@@ -22,18 +22,21 @@
     } ]
   } ],
   "schema" : {
-    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
     "name" : "customMetadataProjections",
-    "doc" : "Resource methods to apply a mixture of automatic/manual projection for root object entities as well as the custom\n metadata entity returned in a CollectionResult.\n Note that we intentionally pass in MaskTrees for root object projection, custom metadata projection and paging\n projection to verify RestliAnnotationReader's ability to properly construct the correct arguments when\n reflectively calling resource methods.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.CustomMetadataProjectionResource",
+    "namespace" : "com.linkedin.restli.examples.greetings.client",
     "path" : "/customMetadataProjections",
+    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+    "doc" : "Resource methods to apply a mixture of automatic/manual projection for root object entities as well as the custom\n metadata entity returned in a CollectionResult.\n Note that we intentionally pass in MaskTrees for root object projection, custom metadata projection and paging\n projection to verify RestliAnnotationReader's ability to properly construct the correct arguments when\n reflectively calling resource methods.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.CustomMetadataProjectionResource",
     "collection" : {
-      "methods" : [ {
-        "doc" : "This resource method is a variant of the rootAutomaticMetadataManual finder above, except it uses GET_ALL.\n This test is to make sure that GET_ALL observes the same code path in restli as FINDER does for projection.\n Redundant comments excluded for the sake of brevity.",
-        "method" : "get_all"
-      } ],
-      "entity" : {
-        "path" : "/customMetadataProjections/{customMetadataProjectionsId}"
+      "identifier" : {
+        "name" : "customMetadataProjectionsId",
+        "type" : "long"
       },
+      "supports" : [ "get_all" ],
+      "methods" : [ {
+        "method" : "get_all",
+        "doc" : "This resource method is a variant of the rootAutomaticMetadataManual finder above, except it uses GET_ALL.\n This test is to make sure that GET_ALL observes the same code path in restli as FINDER does for projection.\n Redundant comments excluded for the sake of brevity."
+      } ],
       "finders" : [ {
         "name" : "rootAutomaticMetadataAutomatic",
         "doc" : "This resource method performs automatic projection for the root object entities and also the custom metadata.",
@@ -65,12 +68,9 @@
           "type" : "com.linkedin.restli.examples.greetings.api.Greeting"
         }
       } ],
-      "supports" : [ "get_all" ],
-      "identifier" : {
-        "name" : "customMetadataProjectionsId",
-        "type" : "long"
+      "entity" : {
+        "path" : "/customMetadataProjections/{customMetadataProjectionsId}"
       }
-    },
-    "namespace" : "com.linkedin.restli.examples.greetings.client"
+    }
   }
 }

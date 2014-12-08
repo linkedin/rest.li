@@ -39,21 +39,13 @@
     }
   } ],
   "schema" : {
+    "name" : "customTypes3",
+    "namespace" : "com.linkedin.restli.examples.greetings.client",
+    "path" : "/customTypes3",
     "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+    "doc" : "generated from: com.linkedin.restli.examples.greetings.server.CustomTypesResource3",
     "association" : {
-      "methods" : [ {
-        "method" : "get"
-      }, {
-        "method" : "batch_update"
-      } ],
-      "entity" : {
-        "path" : "/customTypes3/{customTypes3Id}"
-      },
-      "finders" : [ {
-        "name" : "dateOnly",
-        "assocKeys" : [ "dateId" ]
-      } ],
-      "supports" : [ "batch_update", "get" ],
+      "identifier" : "customTypes3Id",
       "assocKeys" : [ {
         "name" : "dateId",
         "type" : "com.linkedin.restli.examples.typeref.api.DateRef"
@@ -61,11 +53,19 @@
         "name" : "longId",
         "type" : "com.linkedin.restli.examples.typeref.api.CustomLongRef"
       } ],
-      "identifier" : "customTypes3Id"
-    },
-    "name" : "customTypes3",
-    "doc" : "generated from: com.linkedin.restli.examples.greetings.server.CustomTypesResource3",
-    "path" : "/customTypes3",
-    "namespace" : "com.linkedin.restli.examples.greetings.client"
+      "supports" : [ "batch_update", "get" ],
+      "methods" : [ {
+        "method" : "get"
+      }, {
+        "method" : "batch_update"
+      } ],
+      "finders" : [ {
+        "name" : "dateOnly",
+        "assocKeys" : [ "dateId" ]
+      } ],
+      "entity" : {
+        "path" : "/customTypes3/{customTypes3Id}"
+      }
+    }
   }
 }

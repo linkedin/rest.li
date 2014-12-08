@@ -29,21 +29,19 @@ import com.linkedin.restli.server.util.FileClassNameScanner;
 import com.linkedin.restli.tools.compatibility.CompatibilityUtil;
 import com.linkedin.restli.tools.idlgen.DocletDocsProvider;
 import com.linkedin.restli.tools.idlgen.MultiLanguageDocsProvider;
-import com.linkedin.restli.tools.idlgen.RestLiDoclet;
+
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.apache.commons.io.output.NullWriter;
-import org.apache.commons.lang.StringUtils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 /**
  * Given a set of package names, scans all Rest.li resource classes in the packages and generate corresponding
@@ -51,7 +49,6 @@ import org.slf4j.LoggerFactory;
  *
  * @author Moira Tagle
  */
-
 public class RestLiSnapshotExporter
 {
   private static final Logger log = LoggerFactory.getLogger(RestLiSnapshotExporter.class);
@@ -124,7 +121,6 @@ public class RestLiSnapshotExporter
       else
       {
         config.addResourceClassNames(classFileNames.keySet());
-        sourceFileNames = classFileNames.values();
       }
     }
 
@@ -222,9 +218,8 @@ public class RestLiSnapshotExporter
   }
 
   private File writeSnapshotFile(File outdirFile,
-                            String fileName,
-                            ResourceSchema rootResourceNode)
-    throws IOException
+                                 String fileName,
+                                 ResourceSchema rootResourceNode) throws IOException
   {
     log.info("Writing file '" + fileName + '\'');
 

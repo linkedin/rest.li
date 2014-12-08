@@ -22,11 +22,17 @@
     } ]
   } ],
   "schema" : {
-    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
     "name" : "mixed",
-    "doc" : "This resource demonstrates mixing of various method signatures: synchronous, callback,\n promise\n\ngenerated from: com.linkedin.restli.examples.greetings.server.MixedResource",
+    "namespace" : "com.linkedin.restli.examples.greetings.client",
     "path" : "/mixed",
+    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+    "doc" : "This resource demonstrates mixing of various method signatures: synchronous, callback,\n promise\n\ngenerated from: com.linkedin.restli.examples.greetings.server.MixedResource",
     "collection" : {
+      "identifier" : {
+        "name" : "mixedId",
+        "type" : "long"
+      },
+      "supports" : [ "create", "delete", "get", "update" ],
       "methods" : [ {
         "method" : "create"
       }, {
@@ -36,9 +42,6 @@
       }, {
         "method" : "delete"
       } ],
-      "entity" : {
-        "path" : "/mixed/{mixedId}"
-      },
       "finders" : [ {
         "name" : "search",
         "parameters" : [ {
@@ -46,16 +49,13 @@
           "type" : "string"
         } ]
       } ],
-      "supports" : [ "create", "delete", "get", "update" ],
-      "identifier" : {
-        "name" : "mixedId",
-        "type" : "long"
-      },
       "actions" : [ {
         "name" : "theAction",
         "returns" : "string"
-      } ]
-    },
-    "namespace" : "com.linkedin.restli.examples.greetings.client"
+      } ],
+      "entity" : {
+        "path" : "/mixed/{mixedId}"
+      }
+    }
   }
 }

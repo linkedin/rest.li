@@ -37,19 +37,23 @@
     } ]
   } ],
   "schema" : {
-    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
     "name" : "complexArray",
-    "doc" : "generated from: com.linkedin.restli.examples.greetings.server.ComplexArrayResource",
+    "namespace" : "com.linkedin.restli.examples.greetings.client",
     "path" : "/complexArray",
+    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+    "doc" : "generated from: com.linkedin.restli.examples.greetings.server.ComplexArrayResource",
     "collection" : {
+      "identifier" : {
+        "name" : "complexArrayId",
+        "type" : "com.linkedin.restli.examples.greetings.api.ComplexArray",
+        "params" : "com.linkedin.restli.examples.greetings.api.ComplexArray"
+      },
+      "supports" : [ "batch_get", "get" ],
       "methods" : [ {
         "method" : "get"
       }, {
         "method" : "batch_get"
       } ],
-      "entity" : {
-        "path" : "/complexArray/{complexArrayId}"
-      },
       "finders" : [ {
         "name" : "finder",
         "parameters" : [ {
@@ -57,21 +61,17 @@
           "type" : "com.linkedin.restli.examples.greetings.api.ComplexArray"
         } ]
       } ],
-      "supports" : [ "batch_get", "get" ],
-      "identifier" : {
-        "name" : "complexArrayId",
-        "params" : "com.linkedin.restli.examples.greetings.api.ComplexArray",
-        "type" : "com.linkedin.restli.examples.greetings.api.ComplexArray"
-      },
       "actions" : [ {
         "name" : "action",
-        "returns" : "int",
         "parameters" : [ {
           "name" : "array",
           "type" : "com.linkedin.restli.examples.greetings.api.ComplexArray"
-        } ]
-      } ]
-    },
-    "namespace" : "com.linkedin.restli.examples.greetings.client"
+        } ],
+        "returns" : "int"
+      } ],
+      "entity" : {
+        "path" : "/complexArray/{complexArrayId}"
+      }
+    }
   }
 }

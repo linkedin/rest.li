@@ -47,21 +47,13 @@
     }
   } ],
   "schema" : {
+    "name" : "chainedTyperefs",
+    "namespace" : "com.linkedin.restli.examples.greetings.client",
+    "path" : "/chainedTyperefs",
     "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+    "doc" : "Uses CustomNonNegativeLong which is a typeref to CustomLong, which is a typeref to long\n\n Note that there are no coercers in this typeref chain.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.ChainedTyperefResource",
     "association" : {
-      "methods" : [ {
-        "method" : "get"
-      }, {
-        "method" : "batch_update"
-      } ],
-      "entity" : {
-        "path" : "/chainedTyperefs/{chainedTyperefsId}"
-      },
-      "finders" : [ {
-        "name" : "dateOnly",
-        "assocKeys" : [ "birthday" ]
-      } ],
-      "supports" : [ "batch_update", "get" ],
+      "identifier" : "chainedTyperefsId",
       "assocKeys" : [ {
         "name" : "age",
         "type" : "com.linkedin.restli.examples.typeref.api.CustomNonNegativeLongRef"
@@ -69,11 +61,19 @@
         "name" : "birthday",
         "type" : "com.linkedin.restli.examples.typeref.api.DateRef"
       } ],
-      "identifier" : "chainedTyperefsId"
-    },
-    "name" : "chainedTyperefs",
-    "doc" : "Uses CustomNonNegativeLong which is a typeref to CustomLong, which is a typeref to long\n\n Note that there are no coercers in this typeref chain.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.ChainedTyperefResource",
-    "path" : "/chainedTyperefs",
-    "namespace" : "com.linkedin.restli.examples.greetings.client"
+      "supports" : [ "batch_update", "get" ],
+      "methods" : [ {
+        "method" : "get"
+      }, {
+        "method" : "batch_update"
+      } ],
+      "finders" : [ {
+        "name" : "dateOnly",
+        "assocKeys" : [ "birthday" ]
+      } ],
+      "entity" : {
+        "path" : "/chainedTyperefs/{chainedTyperefsId}"
+      }
+    }
   }
 }

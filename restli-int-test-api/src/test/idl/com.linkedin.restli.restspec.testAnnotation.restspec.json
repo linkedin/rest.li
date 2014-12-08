@@ -84,8 +84,7 @@
             "value" : 7
           }, {
             "value" : 27
-          }, {
-          } ]
+          }, { } ]
         },
         "testMethod" : {
           "doc" : "For integration testing only."
@@ -107,8 +106,7 @@
       "path" : "/testAnnotation/{testAnnotationId}",
       "subresources" : [ {
         "annotations" : {
-          "com.linkedin.restli.restspec.EmptyAnnotation" : {
-          }
+          "com.linkedin.restli.restspec.EmptyAnnotation" : { }
         },
         "name" : "testAnnotationSub",
         "namespace" : "com.linkedin.restli.restspec",

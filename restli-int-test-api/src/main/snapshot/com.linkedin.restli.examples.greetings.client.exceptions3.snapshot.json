@@ -22,11 +22,17 @@
     } ]
   } ],
   "schema" : {
-    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
     "name" : "exceptions3",
-    "doc" : "generated from: com.linkedin.restli.examples.greetings.server.ExceptionsResource3",
+    "namespace" : "com.linkedin.restli.examples.greetings.client",
     "path" : "/exceptions3",
+    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+    "doc" : "generated from: com.linkedin.restli.examples.greetings.server.ExceptionsResource3",
     "collection" : {
+      "identifier" : {
+        "name" : "exceptions3Id",
+        "type" : "long"
+      },
+      "supports" : [ "get", "update" ],
       "methods" : [ {
         "method" : "get"
       }, {
@@ -34,13 +40,7 @@
       } ],
       "entity" : {
         "path" : "/exceptions3/{exceptions3Id}"
-      },
-      "supports" : [ "get", "update" ],
-      "identifier" : {
-        "name" : "exceptions3Id",
-        "type" : "long"
       }
-    },
-    "namespace" : "com.linkedin.restli.examples.greetings.client"
+    }
   }
 }

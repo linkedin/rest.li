@@ -20,11 +20,17 @@
     } ]
   } ],
   "schema" : {
-    "schema" : "com.linkedin.restli.example.Album",
     "name" : "albums",
-    "doc" : "generated from: com.linkedin.restli.example.impl.AlbumResource",
+    "namespace" : "com.linkedin.restli.example.photos",
     "path" : "/albums",
+    "schema" : "com.linkedin.restli.example.Album",
+    "doc" : "generated from: com.linkedin.restli.example.impl.AlbumResource",
     "collection" : {
+      "identifier" : {
+        "name" : "albumsId",
+        "type" : "long"
+      },
+      "supports" : [ "create", "delete", "get", "update" ],
       "methods" : [ {
         "method" : "create"
       }, {
@@ -34,19 +40,13 @@
       }, {
         "method" : "delete"
       } ],
-      "entity" : {
-        "path" : "/albums/{albumsId}"
-      },
-      "supports" : [ "create", "delete", "get", "update" ],
-      "identifier" : {
-        "name" : "albumsId",
-        "type" : "long"
-      },
       "actions" : [ {
         "name" : "purge",
         "returns" : "int"
-      } ]
-    },
-    "namespace" : "com.linkedin.restli.example.photos"
+      } ],
+      "entity" : {
+        "path" : "/albums/{albumsId}"
+      }
+    }
   }
 }

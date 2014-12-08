@@ -22,29 +22,29 @@
     } ]
   } ],
   "schema" : {
-    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
     "name" : "exceptions",
-    "doc" : "generated from: com.linkedin.restli.examples.greetings.server.ExceptionsResource",
+    "namespace" : "com.linkedin.restli.examples.greetings.client",
     "path" : "/exceptions",
+    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+    "doc" : "generated from: com.linkedin.restli.examples.greetings.server.ExceptionsResource",
     "collection" : {
-      "methods" : [ {
-        "doc" : "Responds with an error for requests to create insulting greetings, responds\n with 201 created for all other requests.",
-        "method" : "create"
-      }, {
-        "method" : "get"
-      }, {
-        "doc" : "For a batch create request, responds with an error for requests to create insulting greetings, responds\n with 201 created for all other requests.",
-        "method" : "batch_create"
-      } ],
-      "entity" : {
-        "path" : "/exceptions/{exceptionsId}"
-      },
-      "supports" : [ "batch_create", "create", "get" ],
       "identifier" : {
         "name" : "exceptionsId",
         "type" : "long"
+      },
+      "supports" : [ "batch_create", "create", "get" ],
+      "methods" : [ {
+        "method" : "create",
+        "doc" : "Responds with an error for requests to create insulting greetings, responds\n with 201 created for all other requests."
+      }, {
+        "method" : "get"
+      }, {
+        "method" : "batch_create",
+        "doc" : "For a batch create request, responds with an error for requests to create insulting greetings, responds\n with 201 created for all other requests."
+      } ],
+      "entity" : {
+        "path" : "/exceptions/{exceptionsId}"
       }
-    },
-    "namespace" : "com.linkedin.restli.examples.greetings.client"
+    }
   }
 }

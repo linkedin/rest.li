@@ -30,11 +30,17 @@
     }
   } ],
   "schema" : {
-    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
     "name" : "customTypes2",
-    "doc" : "generated from: com.linkedin.restli.examples.greetings.server.CustomTypesResource2",
+    "namespace" : "com.linkedin.restli.examples.greetings.client",
     "path" : "/customTypes2",
+    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+    "doc" : "generated from: com.linkedin.restli.examples.greetings.server.CustomTypesResource2",
     "collection" : {
+      "identifier" : {
+        "name" : "customTypes2Id",
+        "type" : "com.linkedin.restli.examples.typeref.api.CustomLongRef"
+      },
+      "supports" : [ "batch_create", "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "get" ],
       "methods" : [ {
         "method" : "create"
       }, {
@@ -51,34 +57,28 @@
         "method" : "batch_delete"
       } ],
       "entity" : {
+        "path" : "/customTypes2/{customTypes2Id}",
         "subresources" : [ {
-          "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
           "name" : "customTypes4",
-          "doc" : "generated from: com.linkedin.restli.examples.greetings.server.CustomTypesResource4",
+          "namespace" : "com.linkedin.restli.examples.greetings.client",
           "path" : "/customTypes2/{customTypes2Id}/customTypes4",
+          "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+          "doc" : "generated from: com.linkedin.restli.examples.greetings.server.CustomTypesResource4",
           "collection" : {
+            "identifier" : {
+              "name" : "customTypes4Id",
+              "type" : "com.linkedin.restli.examples.typeref.api.CustomLongRef"
+            },
+            "supports" : [ "get" ],
             "methods" : [ {
               "method" : "get"
             } ],
             "entity" : {
               "path" : "/customTypes2/{customTypes2Id}/customTypes4/{customTypes4Id}"
-            },
-            "supports" : [ "get" ],
-            "identifier" : {
-              "name" : "customTypes4Id",
-              "type" : "com.linkedin.restli.examples.typeref.api.CustomLongRef"
             }
-          },
-          "namespace" : "com.linkedin.restli.examples.greetings.client"
-        } ],
-        "path" : "/customTypes2/{customTypes2Id}"
-      },
-      "supports" : [ "batch_create", "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "get" ],
-      "identifier" : {
-        "name" : "customTypes2Id",
-        "type" : "com.linkedin.restli.examples.typeref.api.CustomLongRef"
+          }
+        } ]
       }
-    },
-    "namespace" : "com.linkedin.restli.examples.greetings.client"
+    }
   }
 }
