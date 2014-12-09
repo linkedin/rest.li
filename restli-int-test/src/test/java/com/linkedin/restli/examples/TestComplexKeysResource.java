@@ -609,7 +609,11 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     {
       Assert.assertTrue(inputs.containsKey(resp.getKey()));
       final UpdateStatus status = resp.getValue();
-      if (status.hasStatus())
+      if (status.hasError())
+      {
+        Assert.assertTrue(status.getStatus() == status.getError().getStatus(), "Update status should match the status of the error, if there is any.");
+      }
+      else
       {
         Assert.assertEquals((int) status.getStatus(), 200);
       }

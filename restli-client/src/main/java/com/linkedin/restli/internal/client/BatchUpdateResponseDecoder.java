@@ -22,6 +22,7 @@ import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.ComplexKeySpec;
 import com.linkedin.restli.common.CompoundKey;
+import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.common.UpdateStatus;
@@ -40,6 +41,10 @@ import java.util.Set;
  */
 public class BatchUpdateResponseDecoder<K> extends RestResponseDecoder<BatchKVResponse<K, UpdateStatus>>
 {
+  private static final String UPDATE_STATUS_STATUS = UpdateStatus.fields().status().getPathComponents().get(0); // "status"
+  private static final String UPDATE_STATUS_ERROR = UpdateStatus.fields().error().getPathComponents().get(0); // "error"
+  private static final String ERROR_RESPONSE_STATUS = ErrorResponse.fields().status().getPathComponents().get(0); // "status"
+
   private final TypeSpec<K> _keyType;
   private final Map<String, CompoundKey.TypeInfo> _keyParts;
   private final ComplexKeySpec<?, ?> _complexKeyType;
@@ -97,7 +102,10 @@ public class BatchUpdateResponseDecoder<K> extends RestResponseDecoder<BatchKVRe
       final Object errorData = inputErrors.get(key);
       if (errorData != null)
       {
-        updateData.put("error", errorData);
+        if (!updateData.containsKey(UPDATE_STATUS_STATUS)) {
+          updateData.put(UPDATE_STATUS_STATUS, ((DataMap)errorData).get(ERROR_RESPONSE_STATUS));
+        }
+        updateData.put(UPDATE_STATUS_ERROR, errorData);
       }
 
       mergedResults.put(key, updateData);

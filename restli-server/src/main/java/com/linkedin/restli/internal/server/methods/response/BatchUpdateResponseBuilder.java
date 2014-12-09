@@ -119,13 +119,20 @@ public final class BatchUpdateResponseBuilder implements RestLiResponseBuilder
     {
       final UpdateStatus status = new UpdateStatus();
 
+      final ErrorResponse error = errors.get(key);
+      if (error != null)
+      {
+        status.setStatus(error.getStatus());
+        status.setError(error);
+      }
+
       final UpdateResponse update = updates.get(key);
       if (update != null)
       {
+        // The status from UpdateResponse overwrites the one in RestLiServiceException/ErrorResponse,
+        // if both are provided for the same key.
         status.setStatus(update.getStatus().getCode());
       }
-
-      status.setError(errors.get(key), SetMode.IGNORE_NULL);
 
       results.put(key, status);
     }
