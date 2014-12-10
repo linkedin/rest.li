@@ -411,7 +411,7 @@ public class TestRestClientRequestBuilder
     EasyMock.expect(mockRequest.getResourceSpec()).andReturn(resourceSpec).once();
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   private <T extends Request> RestRequest clientGeneratedRequest(Class<T> requestClass,
                                                                  ResourceMethod method,
                                                                  DataMap entityBody,

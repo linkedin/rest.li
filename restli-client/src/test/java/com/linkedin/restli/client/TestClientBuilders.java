@@ -658,7 +658,7 @@ public class TestClientBuilders
   }
 
   // need suppress on the method because the more specific suppress isn't being obeyed.
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batch")
   public void testBatchPartialUpdateRequestBuilder(URIDetails expectedURIDetails)
   {
