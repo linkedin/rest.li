@@ -1,3 +1,6 @@
+2.0.3
+-----
+
 2.0.2
 -----
 (RB=392178)
@@ -5,6 +8,9 @@ Add additional unit tests for RestLiArgumentBuilders.
 
 (RB=404678)
 Remove redundant warning suppressions.
+
+(RB=404996)
+Fix enum encoding bug for compound keys in protocol v2.
 
 2.0.1
 -----

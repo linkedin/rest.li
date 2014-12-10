@@ -477,10 +477,10 @@ public class URIParamUtils
     {
       Object value = compoundKey.getPart(key);
       Class<?> valueClass = value.getClass();
-      if (DataTemplateUtil.hasCoercer(valueClass))
+      if (DataTemplateUtil.hasCoercer(valueClass) || valueClass.isEnum())
       {
         @SuppressWarnings("unchecked")
-        Object coercedValue = DataTemplateUtil.coerceInput(value, (Class<Object>) value.getClass(), Object.class);
+        Object coercedValue = DataTemplateUtil.coerceInput(value, (Class<Object>) valueClass, Object.class);
         dataMap.put(key, coercedValue);
       }
       else

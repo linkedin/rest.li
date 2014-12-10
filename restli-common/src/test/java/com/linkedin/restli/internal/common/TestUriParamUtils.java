@@ -19,15 +19,14 @@ package com.linkedin.restli.internal.common;
 
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.EnumDataSchema;
+import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.jersey.api.uri.UriComponent;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.test.MyComplexKey;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
@@ -213,21 +212,27 @@ public class TestUriParamUtils
   {
     return new Object[][]
       {
-        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "key1=stringVal&key2=5" },
-        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "(key1:stringVal,key2:5)" }
+        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "key1=stringVal&key2=5&key3=VALUE_1" },
+        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "(key1:stringVal,key2:5,key3:VALUE_1)" }
       };
+  }
+
+  public enum TestEnum
+  {
+    VALUE_1,
+    VALUE_2,
+    $UNKNOWN;
+    private final static EnumDataSchema SCHEMA = ((EnumDataSchema) DataTemplateUtil.parseSchema(
+        "{\"type\":\"enum\",\"name\":\"TestEnum\",\"namespace\":\"com.linkedin.restli.internal.common\",\"symbols\":[\"VALUE_1\",\"VALUE_2\"]}"));
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "compoundKey")
   public void testCompoundKeyToString(ProtocolVersion version, String expected)
   {
-    DataMap compoundData = new DataMap();
-    compoundData.put("key1", "stringVal");
-    compoundData.put("key2", 5);
-    Map<String, CompoundKey.TypeInfo> fieldTypes = new HashMap<String, CompoundKey.TypeInfo>();
-    fieldTypes.put("key1", new CompoundKey.TypeInfo(String.class, String.class));
-    fieldTypes.put("key2", new CompoundKey.TypeInfo(Integer.class, Integer.class));
-    CompoundKey compoundKey = CompoundKey.fromValues(compoundData, fieldTypes);
+    CompoundKey compoundKey = new CompoundKey();
+    compoundKey.append("key1", "stringVal");
+    compoundKey.append("key2", 5);
+    compoundKey.append("key3", TestEnum.VALUE_1);
     String compoundKeyString = URIParamUtils.keyToString(compoundKey, NO_ESCAPING, null, true, version);
     Assert.assertEquals(compoundKeyString, expected);
   }
