@@ -21,6 +21,7 @@
 package com.linkedin.r2.transport.http.server;
 
 import java.net.URI;
+import java.nio.ByteBuffer;
 import java.util.Map;
 
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -85,16 +86,15 @@ class RAPServerCodec implements ChannelUpstreamHandler, ChannelDownstreamHandler
         long contentLengthFromHeader = HttpHeaders.getContentLength(nettyRequest, -1);
         if (buf.hasArray() && buf.arrayOffset() == 0 && buf.array().length == contentLengthFromHeader)
         {
-          bufBytes = buf.array();
+          builder.setEntity(buf.array());
         }
         else
         {
-          bufBytes = new byte[buf.readableBytes()];
-          buf.slice().readBytes(bufBytes);
+          // Get readable portion of the underlying backing array.
+          ByteBuffer byteBuffer = buf.toByteBuffer(buf.readerIndex(), buf.readableBytes());
+          builder.setEntity(ByteString.copy(byteBuffer));
         }
-        builder.setEntity(bufBytes);
       }
-
       return builder.build();
     }
   }
