@@ -3,6 +3,9 @@
 (RB=387501)
 Pass the actual exception thrown by the resource (or a previous filter) to the rest.li response filters.
 
+(RB=409087)
+Fixing the wiring of parseq context for the method parameters annotated with the deprecated ParSeqContext annotation.
+
 2.0.3
 -----
 (RB=401742)

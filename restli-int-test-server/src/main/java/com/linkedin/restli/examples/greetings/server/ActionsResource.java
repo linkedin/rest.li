@@ -20,6 +20,7 @@
 
 package com.linkedin.restli.examples.greetings.server;
 
+
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -40,6 +41,7 @@ import com.linkedin.restli.server.annotations.ActionParam;
 import com.linkedin.restli.server.annotations.CallbackParam;
 import com.linkedin.restli.server.annotations.ParSeqContextParam;
 import com.linkedin.restli.server.annotations.RestLiActions;
+
 
 /**
  * Various action tasks that demonstrate usual behavior, timeout, and exceptions.
@@ -215,6 +217,32 @@ public class ActionsResource
     return collect;
   }
 
+//  This test cannot be compiled until we build with Java 8 by default.
+//  /**
+//   * Performs three "slow" tasks and collects the results. This uses the passed context
+//   * parameter to execute tasks. The position of the context argument is arbitrary.
+//   *
+//   * @return concatenation of binary representation of a, all caps of b, and string value
+//   *         of c
+//   */
+//  @Action(name = "parseq2")
+//  @SuppressWarnings("deprecation")
+//  public Promise<String> parseqAction2(
+//      @ActionParam("a") final int a,
+//      @com.linkedin.restli.server.annotations.ParSeqContext com.linkedin.parseq.Context ctx,
+//      @ActionParam("b") final String b,
+//      @ActionParam("c") final boolean c)
+//  {
+//    final Task<String> t1 = makeTaskA(a);
+//    final Task<String> t2 = makeTaskB(b);
+//    final Task<String> t3 = makeTaskC(c);
+//    final Task<String> collect = makeConcatTask(t1, t2, t3);
+//
+//    ctx.after(t1, t2, t3).run(collect);
+//    ctx.run(t1, t2, t3);
+//    return collect;
+//  }
+
   /**
    * Performs three "slow" tasks and collects the results. This returns a task and lets
    * the RestLi server invoke it.
@@ -222,8 +250,8 @@ public class ActionsResource
    * @return concatenation of binary representation of a, all caps of b, and string value
    *         of c
    */
-  @Action(name = "parseq2")
-  public Task<String> parseqAction2(@ActionParam("a") final int a,
+  @Action(name = "parseq3")
+  public Task<String> parseqAction3(@ActionParam("a") final int a,
                                     @ActionParam("b") final String b,
                                     @ActionParam("c") final boolean c)
   {

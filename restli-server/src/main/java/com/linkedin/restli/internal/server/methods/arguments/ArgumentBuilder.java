@@ -104,7 +104,8 @@ public class ArgumentBuilder
       {
         continue;
       }
-      else if (param.getParamType() == Parameter.ParamType.PARSEQ_CONTEXT_PARAM ||param.getParamType() == Parameter.ParamType.PARSEQ_CONTEXT)
+      else if (param.getParamType() == Parameter.ParamType.PARSEQ_CONTEXT_PARAM ||
+               param.getParamType() == Parameter.ParamType.PARSEQ_CONTEXT)
       {
         continue; // don't know what to fill in yet
       }

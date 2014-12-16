@@ -87,7 +87,7 @@
       } ],
       "returns" : "string"
     }, {
-      "name" : "parseq2",
+      "name" : "parseq3",
       "doc" : "Performs three \"slow\" tasks and collects the results. This returns a task and lets\n the RestLi server invoke it.\nService Returns: Concatenation of binary representation of a, all caps of b, and string value\nof c",
       "parameters" : [ {
         "name" : "a",

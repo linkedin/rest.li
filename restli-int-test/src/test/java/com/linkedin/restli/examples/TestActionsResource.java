@@ -151,30 +151,6 @@ public class TestActionsResource extends RestLiIntegrationTest
     }
   }
 
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testParSeqAction(RootBuilderWrapper<?, ?> builders) throws RemoteInvocationException
-  {
-    // this version is given a Context and returns a promise
-    Request<String> req =
-        builders.<String>action("Parseq").setActionParam("A", 5).setActionParam("B", "yay").setActionParam("C", false).build();
-    ResponseFuture<String> future = REST_CLIENT.sendRequest(req);
-    Response<String> response = future.getResponse();
-
-    Assert.assertEquals(response.getEntity(), "101 YAY false");
-  }
-
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testParSeqAction2(RootBuilderWrapper<?, ?> builders) throws RemoteInvocationException
-  {
-    // this version gives a Task that RestLi runs
-    Request<String> req =
-        builders.<String>action("Parseq2").setActionParam("A", 5).setActionParam("B", "yay").setActionParam("C", false).build();
-    ResponseFuture<String> future = REST_CLIENT.sendRequest(req);
-    Response<String> response = future.getResponse();
-
-    Assert.assertEquals(response.getEntity(), "101 YAY false");
-  }
-
   @Test(expectedExceptions = RestLiResponseException.class,
         dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testFailPromiseCall(RootBuilderWrapper<?, ?> builders) throws RemoteInvocationException
@@ -236,6 +212,43 @@ public class TestActionsResource extends RestLiIntegrationTest
     // this version gives a Task that RestLi runs
     Request<String> req = builders.<String>action("NullTask").build();
     REST_CLIENT.sendRequest(req).getResponse();
+  }
+
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProviderForParseqActions")
+  public void testBasicParseqBasedAction(RootBuilderWrapper<?, ?> builders, String actionName) throws RemoteInvocationException
+  {
+    // this version gives a Task that RestLi runs
+    Request<String> req = builders.<String>action(actionName).
+        setActionParam("a", 2).
+        setActionParam("b", "abc").
+        setActionParam("c", true).
+        build();
+    String result = REST_CLIENT.sendRequest(req).getResponse().getEntity();
+
+    Assert.assertEquals(result, "10 ABC true");
+  }
+
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProviderForParseqActions")
+  private static Object[][] requestBuilderDataProviderForParseqActions()
+  {
+    return new Object[][] {
+        { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsBuilders()), "parseq" },
+        //  This test cannot be compiled until we build with Java 8 by default.
+        //{ new RootBuilderWrapper<Object, RecordTemplate>(new ActionsBuilders()), "parseq2" },
+        { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsBuilders()), "parseq3" },
+        { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "parseq" },
+        //  This test cannot be compiled until we build with Java 8 by default.
+        //{ new RootBuilderWrapper<Object, RecordTemplate>(new ActionsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "parseq2" },
+        { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "parseq3" },
+        { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsRequestBuilders()), "parseq" },
+        //  This test cannot be compiled until we build with Java 8 by default.
+        //{ new RootBuilderWrapper<Object, RecordTemplate>(new ActionsRequestBuilders()), "parseq2" },
+        { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsRequestBuilders()), "parseq3" },
+        { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "parseq" },
+        //  This test cannot be compiled until we build with Java 8 by default.
+        //{ new RootBuilderWrapper<Object, RecordTemplate>(new ActionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "parseq2" },
+        { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "parseq3" }
+    };
   }
 
   @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
