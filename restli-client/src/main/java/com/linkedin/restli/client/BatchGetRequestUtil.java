@@ -19,7 +19,12 @@ package com.linkedin.restli.client;
 
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.r2.RemoteInvocationException;
+import com.linkedin.restli.client.response.BatchKVResponse;
+import com.linkedin.restli.common.BatchResponse;
+import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.client.ResponseImpl;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -100,5 +105,61 @@ public class BatchGetRequestUtil
     params.remove(RestConstants.QUERY_BATCH_IDS_PARAM);
     params.remove(RestConstants.FIELDS_PARAM);
     return params;
+  }
+
+  /**
+   * Extract the get response for this resource out of an auto-batched batch response.
+   * This is pure rest.li logic, and it complements the auto-batching logic in BatchGetRequestBuilder.
+   * @throws com.linkedin.r2.RemoteInvocationException if the server returned an error response for this resource,
+   * or if it returned neither a result nor an error.
+   */
+  public static <K, V extends RecordTemplate> Response<V> unbatchKVResponse(Request request,
+                                                                            Response<BatchKVResponse<K, V>> batchResponse,
+                                                                            K id)
+      throws RemoteInvocationException
+  {
+    final BatchKVResponse<K, V> batchEntity = batchResponse.getEntity();
+    final ErrorResponse errorResponse = batchEntity.getErrors().get(id);
+    if (errorResponse != null)
+    {
+      throw new RestLiResponseException(errorResponse);
+    }
+
+    final V entityResult = batchEntity.getResults().get(id);
+    if (entityResult == null)
+    {
+      throw new RestLiDecodingException("No result or error for base URI " + request.getBaseUriTemplate() + ", id " + id +
+                                             ". Verify that the batchGet endpoint returns response keys that match batchGet request IDs.", null);
+    }
+
+    return new ResponseImpl<V>(batchResponse, entityResult);
+  }
+
+  /**
+   * Extract the get response for this resource out of an auto-batched batch response.
+   * This is pure rest.li logic, and it complements the auto-batching logic in BatchGetRequestBuilder.
+   * @throws com.linkedin.r2.RemoteInvocationException if the server returned an error response for this resource,
+   * or if it returned neither a result nor an error.
+   */
+  public static <T extends RecordTemplate> Response<T> unbatchResponse(Request request,
+                                                                       Response<BatchResponse<T>> batchResponse,
+                                                                       Object id)
+      throws RemoteInvocationException
+  {
+    final BatchResponse<T> batchEntity = batchResponse.getEntity();
+    final ErrorResponse errorResponse = batchEntity.getErrors().get(id);
+    if (errorResponse != null)
+    {
+      throw new RestLiResponseException(errorResponse);
+    }
+
+    final T entityResult = batchEntity.getResults().get(id);
+    if (entityResult == null)
+    {
+      throw new RestLiDecodingException("No result or error for base URI " + request.getBaseUriTemplate() + ", id " + id +
+                                             ". Verify that the batchGet endpoint returns response keys that match batchGet request IDs.", null);
+    }
+
+    return new ResponseImpl<T>(batchResponse, entityResult);
   }
 }

@@ -24,6 +24,7 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.template.GetMode;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.internal.common.HeaderUtil;
 
@@ -66,6 +67,14 @@ public class RestLiResponseException extends RestException
     _status = rawResponse.getStatus();
     _errorResponse = errorResponse;
     _decodedResponse = decodedResponse;
+  }
+
+  RestLiResponseException(ErrorResponse errorResponse)
+  {
+    super(createErrorRestResponse(errorResponse));
+    _status = errorResponse.getStatus();
+    _errorResponse = errorResponse;
+    _decodedResponse = null;
   }
 
   public int getStatus()
@@ -171,5 +180,17 @@ public class RestLiResponseException extends RestException
   public boolean hasDecodedResponse()
   {
     return _decodedResponse != null;
+  }
+
+  private static RestResponse createErrorRestResponse(ErrorResponse errorResponse)
+  {
+    RestResponseBuilder builder = new RestResponseBuilder().setStatus(errorResponse.getStatus());
+    String errorMessage = errorResponse.getMessage();
+    if (errorMessage != null)
+    {
+      builder.setEntity(errorMessage.getBytes());
+    }
+
+    return builder.build();
   }
 }

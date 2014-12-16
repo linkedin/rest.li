@@ -1,6 +1,12 @@
-2.1.1
+2.1.2
 -----
 
+
+2.1.1
+-----
+(RB=408836)
+Add unbatch logic while extracts single resonpes from an auto-batched batch response.
+Add field name to RestliRequestUriSignature.toString() result.
 
 2.1.0
 -----

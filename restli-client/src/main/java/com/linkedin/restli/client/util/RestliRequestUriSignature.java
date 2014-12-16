@@ -224,10 +224,10 @@ public class RestliRequestUriSignature
   public String toString()
   {
     final ToStringBuilder builder = new ToStringBuilder(null, ToStringStyle.SHORT_PREFIX_STYLE)
-      .append(_baseUriTemplate)
-      .append(_pathKeys)
-      .append(_id)
-      .append(_queryParams);
+      .append("baseUriTemplate", _baseUriTemplate)
+      .append("pathKeys", _pathKeys)
+      .append("id", _id)
+      .append("queryParams", _queryParams);
 
     return builder.toString();
   }
@@ -246,10 +246,10 @@ public class RestliRequestUriSignature
     final DataMap queryParamsMap = QueryParamsUtil.convertToDataMap(_queryParams, protocolVersion);
 
     final ToStringBuilder builder = new ToStringBuilder(null, ToStringStyle.SHORT_PREFIX_STYLE)
-        .append(_baseUriTemplate)
-        .append(Data.dump("", pathKeysMap, ""))
-        .append(_id)
-        .append(Data.dump("", queryParamsMap, ""));
+        .append("baseUriTemplate", _baseUriTemplate)
+        .append("pathKeys", Data.dump("", pathKeysMap, ""))
+        .append("id", _id)
+        .append("queryParams", Data.dump("", queryParamsMap, ""));
 
     return builder.toString();
   }

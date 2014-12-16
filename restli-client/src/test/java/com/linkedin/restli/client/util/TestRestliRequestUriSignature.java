@@ -18,7 +18,6 @@ package com.linkedin.restli.client.util;
 
 
 import com.linkedin.data.DataMap;
-import com.linkedin.data.template.IntegerMap;
 import com.linkedin.restli.client.GetRequest;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.util.RestliRequestUriSignature.SignatureField;
