@@ -12,6 +12,9 @@ Added Rest.li 2.*.* release notes.
 (RB=410847)
 Fix deprecation Javadoc on annotations.
 
+(RB=409497)
+Handle the case when certain implementations of the Map inteface can't handle null.
+
 2.0.3
 -----
 (RB=401742)

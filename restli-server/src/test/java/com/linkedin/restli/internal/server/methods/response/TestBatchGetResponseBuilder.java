@@ -42,6 +42,7 @@ import com.linkedin.restli.server.RestLiServiceException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.easymock.EasyMock;
 import org.testng.Assert;
@@ -197,10 +198,11 @@ public class TestBatchGetResponseBuilder
     BatchResult<Long, Foo> batchResult = new BatchResult<Long, Foo>(Collections.singletonMap(1L, f1),
                                                                     Collections.<Long, HttpStatus>singletonMap(null, HttpStatus.S_404_NOT_FOUND),
                                                                     null);
+    final String expectedMessage = "Unexpected null encountered. Null key inside of a Map returned by the resource method: ";
     return new Object[][]
         {
-            {results, "Unexpected null encountered. Null key inside of the Map returned by the resource method: "},
-            {batchResult, "Unexpected null encountered. Null key inside of the status map returned by the resource method: "}
+            {results, expectedMessage},
+            {batchResult, expectedMessage}
         };
   }
 
@@ -208,7 +210,8 @@ public class TestBatchGetResponseBuilder
   public void testBuilderExceptions(Object results, String expectedErrorMessage)
   {
     // Protocol version doesn't matter here
-    ResourceContext mockContext = getMockResourceContext(null, null, null, null);
+    ResourceContext mockContext = getMockResourceContext(null, Collections.<Object, RestLiServiceException>emptyMap(),
+        null, null);
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor();
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
 
@@ -223,6 +226,81 @@ public class TestBatchGetResponseBuilder
     catch (RestLiServiceException e)
     {
       Assert.assertTrue(e.getMessage().contains(expectedErrorMessage));
+    }
+  }
+
+ /* Note that we use java.util.concurrent.ConcurrentHashMap when possible. This is because rest.li checks
+  * for the presence of nulls returned from maps which are returned from resource methods. The checking for nulls
+  * is prone to a NullPointerException since contains(null) can throw an NPE from certain map implementations such as
+  * java.util.concurrent.ConcurrentHashMap. We want to make sure our check for the presence of nulls is done in a
+  * way that doesn't throw an NullPointerException.
+  */
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "unsupportedNullKeyMapData")
+  public Object[][] unsupportedNullKeyMapData()
+  {
+    Map<CompoundKey, Foo> results = new ConcurrentHashMap<CompoundKey, Foo>();
+    CompoundKey c1 = new CompoundKey().append("a", "a1").append("b", 1);
+    Foo record1 = new Foo().setStringField("record1").setFruitsField(Fruits.APPLE);
+    results.put(c1, record1);
+
+    Map<CompoundKey, HttpStatus> statuses = new ConcurrentHashMap<CompoundKey, HttpStatus>();
+    statuses.put(c1, HttpStatus.S_200_OK);
+
+    final BatchResult<CompoundKey, Foo> batchResult =
+        new BatchResult<CompoundKey, Foo>(results, statuses, new ConcurrentHashMap<CompoundKey, RestLiServiceException>());
+
+    final Map<String, Foo> protocol1TransformedResults = new ConcurrentHashMap<String, Foo>();
+    protocol1TransformedResults.put("a=a1&b=1", record1);
+
+    final Map<String, Foo> protocol2TransformedResults = new ConcurrentHashMap<String, Foo>();
+    protocol2TransformedResults.put("(a:a1,b:1)", record1);
+
+    ProtocolVersion protocolVersion1 = AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion();
+    ProtocolVersion protocolVersion2 = AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion();
+
+    return new Object[][]
+        {
+            {results, protocolVersion1, protocol1TransformedResults},
+            {results, protocolVersion2, protocol2TransformedResults},
+            {batchResult, protocolVersion1, protocol1TransformedResults},
+            {batchResult, protocolVersion2, protocol2TransformedResults}
+        };
+  }
+
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "unsupportedNullKeyMapData")
+  @SuppressWarnings("unchecked")
+  public void unsupportedNullKeyMapTest(Object results, ProtocolVersion protocolVersion, Map<String, Foo> expectedTransformedResult)
+  {
+    ResourceContext mockContext = getMockResourceContext(protocolVersion, Collections.<Object, RestLiServiceException>emptyMap(), null, null);
+    ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor();
+    RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
+
+    Map<String, String> headers = getHeaders();
+
+    BatchGetResponseBuilder responseBuilder = new BatchGetResponseBuilder(new ErrorResponseBuilder());
+    AugmentedRestLiResponseData responseData = responseBuilder.buildRestLiResponseData(null,
+        routingResult,
+        results,
+        headers);
+    PartialRestResponse restResponse = responseBuilder.buildResponse(routingResult, responseData);
+
+    Assert.assertEquals(restResponse.getHeaders(), headers);
+    Assert.assertEquals(restResponse.getStatus(), HttpStatus.S_200_OK);
+    BatchResponse<Foo> entity = (BatchResponse<Foo>)restResponse.getEntity();
+    Assert.assertEquals(entity.getResults(), expectedTransformedResult);
+    if (results instanceof BatchResult)
+    {
+      Map<String, Integer> expectedStatuses = new HashMap<String, Integer>();
+      for (String key: entity.getResults().keySet())
+      {
+        expectedStatuses.put(key, HttpStatus.S_200_OK.getCode());
+      }
+      Assert.assertEquals(entity.getStatuses(), expectedStatuses);
+    }
+    else
+    {
+      // if the resource returns a Map we don't have a separate status map in the BatchResponse
+      Assert.assertEquals(entity.getStatuses(), Collections.emptyMap());
     }
   }
 

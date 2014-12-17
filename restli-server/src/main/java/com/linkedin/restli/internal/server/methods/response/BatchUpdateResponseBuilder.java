@@ -84,13 +84,6 @@ public final class BatchUpdateResponseBuilder implements RestLiResponseBuilder
           "Unexpected null encountered. Null Map found inside of the BatchUpdateResult returned by the resource method: "
               + routingResult.getResourceMethod());
     }
-    //Verify that there is no null key in the map. If so, this is a developer error.
-    if (updates.containsKey(null))
-    {
-      throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
-          "Unexpected null encountered. Null key inside of the Map returned inside of the BatchUpdateResult returned by the resource method: "
-              + routingResult.getResourceMethod());
-    }
 
     final Map<Object, RestLiServiceException> serviceErrors = updateResult.getErrors();
     //Verify the errors map is not null. If so, this is a developer error.
@@ -107,6 +100,16 @@ public final class BatchUpdateResponseBuilder implements RestLiResponseBuilder
         BatchResponseUtil.populateErrors(serviceErrors, routingResult, _errorResponseBuilder);
 
     final Set<Object> mergedKeys = new HashSet<Object>(updates.keySet());
+    //Verify that there is no null key in the UpdateResponse map. If so, this is a developer error. Note that we wait
+    //until this point to check for the existence of a null key since we can't check directly on the updates map
+    //since certain Map implementations, such as java.util.concurrent.ConcurrentHashMap, throw an NPE if containsKey(null) is called.
+    if (mergedKeys.contains(null))
+    {
+      throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
+          "Unexpected null encountered. Null key inside of the Map returned inside of the BatchUpdateResult returned by the resource method: "
+              + routingResult.getResourceMethod());
+    }
+
     mergedKeys.addAll(errors.keySet());
 
     final Map<Object, UpdateStatus> results =

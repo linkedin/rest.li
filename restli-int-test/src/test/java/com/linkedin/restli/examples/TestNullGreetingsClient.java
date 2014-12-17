@@ -23,7 +23,8 @@ import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
-import com.linkedin.restli.client.BatchGetRequestBuilder;
+import com.linkedin.restli.client.BatchGetEntityRequest;
+import com.linkedin.restli.client.BatchGetEntityRequestBuilder;
 import com.linkedin.restli.client.CreateIdRequest;
 import com.linkedin.restli.client.CreateIdRequestBuilder;
 import com.linkedin.restli.client.Request;
@@ -31,9 +32,10 @@ import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.client.response.BatchKVResponse;
-import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.EmptyRecord;
+import com.linkedin.restli.common.EntityResponse;
+import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.examples.greetings.api.Greeting;
@@ -46,10 +48,12 @@ import com.linkedin.restli.server.filter.RequestFilter;
 import com.linkedin.restli.server.filter.ResponseFilter;
 import com.linkedin.restli.test.util.BatchCreateHelper;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -268,8 +272,8 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
       Assert.assertEquals(responseException.getStatus(), 404, "We should have gotten a 404 back");
       Assert.assertNotNull(responseException.getResponse().getHeader("X-Null-Greetings-Filter"), "We should have" +
           " a header applied by the filter");
-      Assert.assertEquals(responseException.getResponse().getHeader("X-Null-Greetings-Filter"), "Ack", "The value" +
-          " of the header applied by the response filter should be correct");
+      Assert.assertEquals(responseException.getResponse().getHeader("X-Null-Greetings-Filter"), "Ack",
+          "The value of the header applied by the response filter should be correct");
     }
   }
 
@@ -367,6 +371,30 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
     {
       assertCorrectInternalServerMessageForNull(responseException, "batch_update");
     }
+  }
+
+  /*
+   * This test is one of the few areas in this test suite where we don't expect an exception.
+   * The purpose of this test is to make sure Rest.li can handle java.util.concurrent.ConcurrentHashMap(s) sent
+   * back by resource methods.
+   */
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX
+      + "requestBuilderDataProvider")
+  public void testBatchUpdateUnsupportedNullKeyMap(final RootBuilderWrapper<Long, Greeting> builders)
+      throws RemoteInvocationException
+  {
+    Greeting someGreeting = new Greeting().setMessage("Hello").setTone(Tone.INSULTING);
+    Request<BatchKVResponse<Long, UpdateStatus>> writeRequest = builders.batchUpdate().input(7l, someGreeting).build();
+    Response<BatchKVResponse<Long, UpdateStatus>> response = REST_CLIENT.sendRequest(writeRequest).getResponse();
+
+    Map<Long, ErrorResponse> actualErrors = response.getEntity().getErrors();
+    Assert.assertEquals(actualErrors.size(), 0, "Errors map should be empty");
+
+    Map<Long, UpdateStatus> actualResults = response.getEntity().getResults();
+    Map<Long, UpdateStatus> expectedResults = new HashMap<Long, UpdateStatus>();
+    UpdateStatus updateStatus = new UpdateStatus().setStatus(201);
+    expectedResults.put(3l, updateStatus);
+    Assert.assertEquals(actualResults, expectedResults, "The results map should be correct");
   }
 
   /*
@@ -596,17 +624,17 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
   }
 
   /*
-   * Tests for nulls in BatchRes ult returned by BatchGet
+   * Tests for nulls in BatchResult returned by BatchGet
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX
       + "batchGetRequestBuilderDataProvider")
-  public void testBatchGetNullBatchResult(final BatchGetRequestBuilder<Long, Greeting> builder)
+  public void testBatchGetNullBatchResult(final BatchGetEntityRequestBuilder<Long, Greeting> builder)
       throws RemoteInvocationException
   {
     try
     {
       //Here we force the server resource class to return null BatchResult
-      Request<BatchResponse<Greeting>> request =
+      BatchGetEntityRequest<Long, Greeting> request =
           builder.ids(ImmutableSet.of(1l)).fields(Greeting.fields().id(), Greeting.fields().message()).build();
       REST_CLIENT.sendRequest(request).getResponse();
       Assert.fail("We should not reach here!");
@@ -619,13 +647,13 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX
       + "batchGetRequestBuilderDataProvider")
-  public void testBatchGetNullBatchResultInternals(final BatchGetRequestBuilder<Long, Greeting> builder)
+  public void testBatchGetNullBatchResultInternals(final BatchGetEntityRequestBuilder<Long, Greeting> builder)
       throws RemoteInvocationException
   {
     //Here we force the server to place nulls for all of the maps in the BatchResult constructor
-    Request<BatchResponse<Greeting>> request =
+    BatchGetEntityRequest<Long, Greeting> request =
         builder.ids(ImmutableSet.of(2l)).fields(Greeting.fields().id(), Greeting.fields().message()).build();
-    Response<BatchResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    Response<BatchKVResponse<Long, EntityResponse<Greeting>>> response = REST_CLIENT.sendRequest(request).getResponse();
     Assert.assertEquals(response.getStatus(), 200, "We should have gotten a 200 here!");
     Assert.assertNotNull(response.getHeader("X-Null-Greetings-Filter"), "We should have" +
         " a header applied by the filter");
@@ -635,14 +663,14 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX
       + "batchGetRequestBuilderDataProvider")
-  public void testBatchGetNullKeyBatchResultStatusMap(final BatchGetRequestBuilder<Long, Greeting> builder)
+  public void testBatchGetNullKeyBatchResultStatusMap(final BatchGetEntityRequestBuilder<Long, Greeting> builder)
       throws RemoteInvocationException
   {
     //Here we force the server resource class to return a BatchResult that has a status map inside of it
     //which contains a null key
     try
     {
-      Request<BatchResponse<Greeting>> request =
+      BatchGetEntityRequest<Long, Greeting> request =
           builder.ids(ImmutableSet.of(3l)).fields(Greeting.fields().id(), Greeting.fields().message()).build();
       REST_CLIENT.sendRequest(request).getResponse();
       Assert.fail("We should not reach here!");
@@ -655,14 +683,13 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX
       + "batchGetRequestBuilderDataProvider")
-  public void testBatchGetNullKeyBatchResultMap(final BatchGetRequestBuilder<Long, Greeting> builder)
+  public void testBatchGetNullKeyBatchResultMap(final BatchGetEntityRequestBuilder<Long, Greeting> builder)
       throws RemoteInvocationException
   {
-    //Here we force the server resource class to return a BatchResult that has a map inside of it which contains a
-    //null key
+    //Here we force the server resource class to return a BatchResult that has a map inside of it which contains a null key
     try
     {
-      Request<BatchResponse<Greeting>> request =
+      BatchGetEntityRequest<Long, Greeting> request =
           builder.ids(ImmutableSet.of(4l)).fields(Greeting.fields().id(), Greeting.fields().message()).build();
       REST_CLIENT.sendRequest(request).getResponse();
       Assert.fail("We should not reach here!");
@@ -673,6 +700,23 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
     }
   }
 
+  /*
+   * This test is one of the few areas in this test suite where we don't expect an exception.
+   * The purpose of this test is to make sure Rest.li can handle java.util.concurrent.ConcurrentHashMap(s) sent
+   * back by resource methods.
+   */
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX
+      + "batchGetRequestBuilderDataProvider")
+  public void testBatchGetUnsupportedNullKeyMap(final BatchGetEntityRequestBuilder<Long, Greeting> builder)
+      throws RemoteInvocationException, CloneNotSupportedException
+  {
+    BatchGetEntityRequest<Long, Greeting> request =
+        builder.ids(ImmutableSet.of(5l)).fields(Greeting.fields().id(), Greeting.fields().message()).build();
+    Response<BatchKVResponse<Long, EntityResponse<Greeting>>> response = REST_CLIENT.sendRequest(request).getResponse();
+    final Greeting actualGreeting = response.getEntity().getResults().get(0l).getEntity();
+    Assert.assertEquals(actualGreeting.getMessage(), "Good morning!", "We should get the correct Greeting back");
+  }
+
   @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX
       + "batchGetRequestBuilderDataProvider")
   private static Object[][] batchGetRequestBuilderDataProvider()
@@ -680,10 +724,10 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
     return new Object[][]
     {
         {
-            new NullGreetingBuilders().batchGet()
+            new NullGreetingRequestBuilders().batchGet()
         },
         {
-            new NullGreetingBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS).batchGet()
+            new NullGreetingRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS).batchGet()
         }
     };
   }
