@@ -73,12 +73,19 @@ public final class BatchUpdateResponseBuilder implements RestLiResponseBuilder
     /** constrained by signature of {@link com.linkedin.restli.server.resources.CollectionResource#batchUpdate(java.util.Map)} */
     final BatchUpdateResult<Object, ?> updateResult = (BatchUpdateResult<Object, ?>) result;
 
-    final Map<Object, UpdateResponse> updates = updateResult.getResults();
+    final Map<Object, UpdateResponse> results = updateResult.getResults();
     //Verify the map is not null. If so, this is a developer error.
-    if (updates == null)
+    if (results == null)
     {
       throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
           "Unexpected null encountered. Null Map found inside of the BatchUpdateResult returned by the resource method: "
+              + routingResult.getResourceMethod());
+    }
+    //Verify that there is no null key in the map. If so, this is a developer error.
+    if (results.containsKey(null))
+    {
+      throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
+          "Unexpected null encountered. Null key inside of the Map returned inside of the BatchUpdateResult returned by the resource method: "
               + routingResult.getResourceMethod());
     }
 
@@ -96,7 +103,7 @@ public final class BatchUpdateResponseBuilder implements RestLiResponseBuilder
     final Map<Object, ErrorResponse> errors =
         BatchResponseUtil.populateErrors(serviceErrors, routingResult, _errorResponseBuilder);
 
-    final Set<Object> mergedKeys = new HashSet<Object>(updates.keySet());
+    final Set<Object> mergedKeys = new HashSet<Object>(results.keySet());
     //Verify that there is no null key in the UpdateResponse map. If so, this is a developer error. Note that we wait
     //until this point to check for the existence of a null key since we can't check directly on the updates map
     //since certain Map implementations, such as java.util.concurrent.ConcurrentHashMap, throw an NPE if containsKey(null) is called.
@@ -109,17 +116,17 @@ public final class BatchUpdateResponseBuilder implements RestLiResponseBuilder
 
     mergedKeys.addAll(errors.keySet());
 
-    final Map<Object, UpdateStatus> results =
+    final Map<Object, UpdateStatus> mergedResults =
         new HashMap<Object, UpdateStatus>((int) Math.ceil(mergedKeys.size() / 0.75));
 
     for (Object key : mergedKeys)
     {
-      final UpdateStatus status = new UpdateStatus();
+      final UpdateStatus mergedResult = new UpdateStatus();
 
-      final UpdateResponse update = updates.get(key);
+      final UpdateResponse update = results.get(key);
       if (update != null)
       {
-        status.setStatus(update.getStatus().getCode());
+        mergedResult.setStatus(update.getStatus().getCode());
       }
 
       final ErrorResponse error = errors.get(key);
@@ -127,14 +134,14 @@ public final class BatchUpdateResponseBuilder implements RestLiResponseBuilder
       {
         // The status from RestLiServiceException/ErrorResponse overwrites the one in UpdateResponse,
         // if both are provided for the same key.
-        status.setStatus(error.getStatus());
-        status.setError(error);
+        mergedResult.setStatus(error.getStatus());
+        mergedResult.setError(error);
       }
 
-      results.put(key, status);
+      mergedResults.put(key, mergedResult);
     }
 
-    return new AugmentedRestLiResponseData.Builder(routingResult.getResourceMethod().getMethodType()).batchKeyEntityMap(results)
+    return new AugmentedRestLiResponseData.Builder(routingResult.getResourceMethod().getMethodType()).batchKeyEntityMap(mergedResults)
                                                                                                      .headers(headers)
                                                                                                      .build();
   }
