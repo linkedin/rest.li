@@ -27,7 +27,6 @@ import java.util.Map;
  * @author Josh Walker
  * @version $Revision: $
  */
-
 public class BatchUpdateResult<K, V>
 {
   private final Map<K, UpdateResponse>         _results;
@@ -38,6 +37,13 @@ public class BatchUpdateResult<K, V>
     this(results, Collections.<K, RestLiServiceException> emptyMap());
   }
 
+  /**
+   * Constructs a <code>BatchUpdateResult</code> with the given results and errors. It is expected
+   * that, if a <code>RestLiServiceException</code> is provided for a given key in the errors map,
+   * no <code>UpdateResponse</code> should be provided for the same key in the results map. In case
+   * both an <code>UpdateResponse</code> and a <code>RestLiServiceException</code> are provided for
+   * the same key, the <code>RestLiServiceException</code> takes precedence.
+   */
   public BatchUpdateResult(final Map<K, UpdateResponse> results,
                            final Map<K, RestLiServiceException> errors)
   {
