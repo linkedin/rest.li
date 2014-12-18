@@ -431,4 +431,21 @@ public class Request<T>
     sb.append('}');
     return sb.toString();
   }
+
+  /**
+   * This method produces a string representation of this request by using only the data that cannot have
+   * personally identifiable information(PII) or security sensitive content.
+   * @return A representative string for this request free of PII and security sensitive content.
+   */
+  public String toSecureString()
+  {
+    final StringBuilder sb = new StringBuilder();
+    sb.append(getClass().getName());
+    sb.append("{_method=").append(_method);
+    sb.append(", _baseUriTemplate=").append(_baseUriTemplate);
+    sb.append(", _methodName=").append(_methodName);
+    sb.append(", _requestOptions=").append(_requestOptions);
+    sb.append('}');
+    return sb.toString();
+  }
 }
