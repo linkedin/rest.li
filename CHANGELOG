@@ -9,6 +9,9 @@ Fixing the wiring of parseq context for the method parameters annotated with the
 (RB=403572)
 Added Rest.li 2.*.* release notes.
 
+(RB=410847)
+Fix deprecation Javadoc on annotations.
+
 2.0.3
 -----
 (RB=401742)
