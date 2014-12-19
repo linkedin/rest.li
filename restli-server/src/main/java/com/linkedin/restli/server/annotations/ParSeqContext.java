@@ -27,7 +27,7 @@ import java.lang.annotation.Target;
  * methods are not required to take a ParSeq context.
  *
  * @author jnwang
- * @deprecated Use @link #ParseqContextParam instead
+ * @deprecated Please use {@link com.linkedin.restli.server.annotations.ParSeqContextParam} instead.
  */
 @Deprecated
 @Retention(RetentionPolicy.RUNTIME)

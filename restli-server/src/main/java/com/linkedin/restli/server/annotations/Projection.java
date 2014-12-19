@@ -24,11 +24,11 @@ import java.lang.annotation.Target;
 
 
 /**
+ * Used to denote an injected type of {@link com.linkedin.data.transform.filter.request.MaskTree}
+ *
  * @author Moira Tagle
  * @version $Revision: $
- * @deprecated Use @link #ProjectionParam instead
- *
- * Used to denote an injected type of {@link com.linkedin.data.transform.filter.request.MaskTree}
+ * @deprecated Please use {@link com.linkedin.restli.server.annotations.ProjectionParam} instead.
  */
 @Deprecated
 @Retention(RetentionPolicy.RUNTIME)

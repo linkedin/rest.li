@@ -32,7 +32,7 @@ import java.lang.annotation.Target;
 /**
 * @author Josh Walker
 * @version $Revision: $
-* @deprecated Use @link #AssocKeyParam instead
+* @deprecated Please use {@link com.linkedin.restli.server.annotations.AssocKeyParam} instead.
 */
 @Deprecated
 @Retention(RetentionPolicy.RUNTIME)

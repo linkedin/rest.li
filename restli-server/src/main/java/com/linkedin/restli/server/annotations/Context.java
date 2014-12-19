@@ -31,7 +31,7 @@ import com.linkedin.restli.common.RestConstants;
 /**
 * @author Josh Walker
 * @version $Revision: $
-* @deprecated Use @link #PagingContextParam instead
+* @deprecated Please use {@link com.linkedin.restli.server.annotations.PagingContextParam} instead.
 */
 @Deprecated
 @Retention(RetentionPolicy.RUNTIME)

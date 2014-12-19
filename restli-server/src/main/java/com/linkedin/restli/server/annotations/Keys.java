@@ -24,11 +24,11 @@ import java.lang.annotation.Target;
 
 
 /**
+ * Used to denote an injected type of {@link com.linkedin.restli.server.PathKeys}
+ *
  * @author Moira Tagle
  * @version $Revision: $
- * @deprecated Use link #PathKeysParam instead
- * 
- * Used to denote an injected type of {@link com.linkedin.restli.server.PathKeys}
+ * @deprecated Please use {@link com.linkedin.restli.server.annotations.PathKeysParam} instead.
  */
 @Deprecated
 @Retention(RetentionPolicy.RUNTIME)
