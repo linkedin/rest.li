@@ -1,3 +1,8 @@
+1.24.9
+------
+(RB=399484)
+Add @deprecated Javadoc to all methods that have been deprecated in Pegasus.
+
 1.24.8
 ------
 (RB=397613)
