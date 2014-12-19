@@ -243,6 +243,14 @@ public class ConsistentHashKeyMapper implements KeyMapper
         new StickyKeyHashProvider<S>(stickyKey));
   }
 
+  /**
+   * @deprecated Please use {@link #mapKeysV2(java.net.URI, Iterable)}
+   * @param serviceUri The URI for the service to which requests will be issued
+   * @param keys The set of keys to be mapped
+   * @param <K>
+   * @return
+   * @throws ServiceUnavailableException
+   */
   @Deprecated
   @Override
   public <K> Map<URI, Set<K>> mapKeys(URI serviceUri, Set<K> keys)
@@ -259,6 +267,14 @@ public class ConsistentHashKeyMapper implements KeyMapper
     return result;
   }
 
+  /**
+   * @deprecated Please use {@link #mapKeysV2(java.net.URI, Iterable)}
+   * @param serviceUri The URI for the service to which requests will be issued
+   * @param keys The set of keys to be mapped
+   * @param <K>
+   * @return
+   * @throws ServiceUnavailableException
+   */
   @Deprecated
   @Override
   public <K> Map<URI, Collection<K>> mapKeys(URI serviceUri, Iterable<K> keys)

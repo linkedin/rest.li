@@ -51,12 +51,22 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
    * All data structures are unsynchronized. They are manipulated only by tasks submitted
    * to the executor, which is assumed to be single-threaded.
    */
+
+  /**
+   * @deprecated Please use {@link #PropertyEventBusImpl(java.util.concurrent.ExecutorService)}
+   * @param thread
+   */
   @Deprecated
   public PropertyEventBusImpl(PropertyEventThread thread)
   {
       _thread = thread;
   }
 
+  /**
+   * @deprecated Please use {@link #PropertyEventBusImpl(java.util.concurrent.ExecutorService, PropertyEventPublisher)}
+   * @param thread
+   * @param publisher
+   */
   @Deprecated
   public PropertyEventBusImpl(PropertyEventThread thread, PropertyEventPublisher<T> publisher)
   {

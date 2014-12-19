@@ -71,6 +71,11 @@ public abstract class AbstractClient implements Client
     restRequest(request, _EMPTY_CONTEXT, callback);
   }
 
+  /**
+   * @deprecated R2 RPC is not supported. Please use REST instead.
+   * @param request the request to issue
+   * @return
+   */
   @Override
   @Deprecated
   public Future<RpcResponse> rpcRequest(RpcRequest request)
@@ -78,6 +83,12 @@ public abstract class AbstractClient implements Client
     return rpcRequest(request, _EMPTY_CONTEXT);
   }
 
+  /**
+   * @deprecated R2 RPC is not supported. Please use REST instead.
+   * @param request the request to issue
+   * @param requestContext context for the request
+   * @return
+   */
   @Override
   @Deprecated
   public Future<RpcResponse> rpcRequest(RpcRequest request, RequestContext requestContext)
@@ -87,6 +98,11 @@ public abstract class AbstractClient implements Client
     return future;
   }
 
+  /**
+   * @deprecated R2 RPC is not supported. Please use REST instead.
+   * @param request the request to issue
+   * @param callback the callback to invoke with the response
+   */
   @Override
   @Deprecated
   public void rpcRequest(RpcRequest request, Callback<RpcResponse> callback)

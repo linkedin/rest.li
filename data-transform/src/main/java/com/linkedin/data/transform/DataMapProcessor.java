@@ -24,7 +24,7 @@ import com.linkedin.data.DataMap;
 
 
 /**
- * Deprecated copy of {@link com.linkedin.data.transform.DataComplexProcessor}.
+ * @deprecated Please use {@link com.linkedin.data.transform.DataComplexProcessor} instead
  *
  * @author jodzga
  *

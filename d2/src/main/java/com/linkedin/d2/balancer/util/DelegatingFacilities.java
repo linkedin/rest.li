@@ -43,6 +43,12 @@ public class DelegatingFacilities implements Facilities
   private final ClientFactoryProvider _clientFactoryProvider;
   private final PartitionInfoProvider _partitionInfoProvider;
 
+  /**
+   * @deprecated Please use {@link #DelegatingFacilities(DirectoryProvider, KeyMapperProvider, ClientFactoryProvider, com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider)}
+   *             Please look at the implementation of this constructor to see how a {@link com.linkedin.d2.balancer.util.ClientFactoryProvider} and {@link com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider} can be implemented.
+   * @param directoryProvider
+   * @param keyMapperProvider
+   */
   @Deprecated
   public DelegatingFacilities(DirectoryProvider directoryProvider,
                               KeyMapperProvider keyMapperProvider)
@@ -84,6 +90,13 @@ public class DelegatingFacilities implements Facilities
     });
   }
 
+  /**
+   * @deprecated Please use {@link #DelegatingFacilities(DirectoryProvider, KeyMapperProvider, ClientFactoryProvider, com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider)}.
+   *             Please look at the implementation of this constructor to see how a {@link com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider} can be implemented.
+   * @param directoryProvider
+   * @param keyMapperProvider
+   * @param clientFactoryProvider
+   */
   @Deprecated
   public DelegatingFacilities(DirectoryProvider directoryProvider,
                               KeyMapperProvider keyMapperProvider,

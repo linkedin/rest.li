@@ -42,6 +42,12 @@ public class BatchUpdateRequestBuilder<K, V extends RecordTemplate> extends
   private final KeyValueRecordFactory<K, V> _keyValueRecordFactory;
   private final Map<K, V> _updateInputMap;
 
+  /**
+   * @deprecated Please use {@link #BatchUpdateRequestBuilder(String, Class, com.linkedin.restli.common.ResourceSpec, RestliRequestOptions)}
+   * @param baseUriTemplate
+   * @param valueClass
+   * @param resourceSpec
+   */
   @Deprecated
   public BatchUpdateRequestBuilder(String baseUriTemplate,
                                    Class<V> valueClass,
@@ -87,6 +93,12 @@ public class BatchUpdateRequestBuilder<K, V extends RecordTemplate> extends
     return this;
   }
 
+  /**
+   * @deprecated Please use {@link #setParam(String, Object)}
+   * @param key
+   * @param value
+   * @return
+   */
   @Override
   @Deprecated
   public BatchUpdateRequestBuilder<K, V> param(String key, Object value)
@@ -95,6 +107,12 @@ public class BatchUpdateRequestBuilder<K, V extends RecordTemplate> extends
     return this;
   }
 
+  /**
+   * @deprecated Please use {@link #setReqParam(String, Object)}
+   * @param key
+   * @param value
+   * @return
+   */
   @Override
   @Deprecated
   public BatchUpdateRequestBuilder<K, V> reqParam(String key, Object value)
@@ -131,6 +149,12 @@ public class BatchUpdateRequestBuilder<K, V extends RecordTemplate> extends
     return this;
   }
 
+  /**
+   * @deprecated Please use {@link #setHeader(String, String)}
+   * @param key
+   * @param value value of the header
+   * @return
+   */
   @Override
   @Deprecated
   public BatchUpdateRequestBuilder<K, V> header(String key, String value)

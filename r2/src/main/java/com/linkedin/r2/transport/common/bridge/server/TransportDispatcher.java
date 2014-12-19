@@ -37,6 +37,7 @@ public interface TransportDispatcher
   /**
    * Dispatch an {@link RpcRequest}.
    *
+   * @deprecated R2 RPC is not supported. Please use REST instead.
    * @param req the {@link RpcRequest} to be dispatched.
    * @param wireAttrs the wire attributes of the request.
    * @param callback a {@link TransportCallback} to be called with the {@link RpcResponse}.

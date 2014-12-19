@@ -47,6 +47,11 @@ public class RestLiResponseException extends RestException
   private final ErrorResponse _errorResponse;
   private final Response<?> _decodedResponse;
 
+  /**
+   * @deprecated Please use {@link #RestLiResponseException(com.linkedin.r2.message.rest.RestResponse, Response, com.linkedin.restli.common.ErrorResponse)}
+   * @param rawResponse
+   * @param errorResponse
+   */
   @Deprecated
   public RestLiResponseException(RestResponse rawResponse, ErrorResponse errorResponse)
   {
@@ -66,6 +71,12 @@ public class RestLiResponseException extends RestException
     _decodedResponse = decodedResponse;
   }
 
+  /**
+   * @deprecated Please use {@link #RestLiResponseException(com.linkedin.r2.message.rest.RestResponse, Response, com.linkedin.restli.common.ErrorResponse)}
+   * @param rawResponse
+   * @param errorResponse
+   * @param cause
+   */
   @Deprecated
   public RestLiResponseException(RestResponse rawResponse, ErrorResponse errorResponse,
                                  Throwable cause)
@@ -76,6 +87,10 @@ public class RestLiResponseException extends RestException
     _decodedResponse = null;
   }
 
+  /**
+   * @deprecated Please use {@link #RestLiResponseException(com.linkedin.r2.message.rest.RestResponse, Response, com.linkedin.restli.common.ErrorResponse)}
+   * @param errorResponse
+   */
   @Deprecated
   public RestLiResponseException(ErrorResponse errorResponse)
   {

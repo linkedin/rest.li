@@ -272,7 +272,7 @@ public class SchemaTranslator
   /**
    * Translate from a {@link DataSchema} to an Avro {@link Schema}
    *
-   * This method is deprecated, use {@link #dataToAvroSchemaJson(com.linkedin.data.schema.DataSchema, DataToAvroSchemaTranslationOptions)}
+   * @deprecated Please use {@link #dataToAvroSchemaJson(com.linkedin.data.schema.DataSchema, DataToAvroSchemaTranslationOptions)}
    * instead.
    *
    * @param dataSchema provides the {@link DataSchema}.

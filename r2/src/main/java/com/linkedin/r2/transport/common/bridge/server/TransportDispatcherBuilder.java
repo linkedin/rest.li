@@ -38,6 +38,7 @@ public class TransportDispatcherBuilder
   /**
    * Add an {@link RpcRequestHandler} for the specified URI.
    *
+   * @deprecated R2 RPC is not supported. Please use REST instead.
    * @param uri the URI at which to bind the handler.
    * @param handler the handler to be bound at the specified URI.
    * @return the current Builder object, for fluent interface chaining.
@@ -57,6 +58,7 @@ public class TransportDispatcherBuilder
    * prefix followed by the suffix provided by key the entry. If the URI prefix does not
    * end with a "/", a "/" will be inserted to separate the URI prefix from suffix.
    *
+   * @deprecated R2 RPC is not supported. Please use REST instead.
    * @param uriPrefix provides the common URI prefix.
    * @param map whose keys provide the dispatch key suffixes and values provide the RPC
    *          RequestHandlers associated with the dispatch keys created from the specified
@@ -83,6 +85,7 @@ public class TransportDispatcherBuilder
   /**
    * Remove the handler at the specified URI.
    *
+   * @deprecated R2 RPC is not supported. Please use REST instead.
    * @param uri the URI for which the handler should be removed.
    * @return the {@link RpcRequestHandler} which was removed, or null if no handler
    *         exists.

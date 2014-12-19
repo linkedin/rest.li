@@ -31,14 +31,18 @@ import java.util.Map;
  * @author Josh Walker
  * @version $Revision: $
  */
-
-
 public class PartialUpdateRequestBuilder<K, V extends RecordTemplate> extends
     RestfulRequestBuilder<K, V, PartialUpdateRequest<V>>
 {
   private K _id;
   private PatchRequest<V> _input;
 
+  /**
+   * @deprecated Please use {@link #PartialUpdateRequestBuilder(String, Class, com.linkedin.restli.common.ResourceSpec, RestliRequestOptions)}
+   * @param baseUriTemplate
+   * @param valueClass
+   * @param resourceSpec
+   */
   @Deprecated
   public PartialUpdateRequestBuilder(String baseUriTemplate, Class<V> valueClass, ResourceSpec resourceSpec)
   {
@@ -65,6 +69,12 @@ public class PartialUpdateRequestBuilder<K, V extends RecordTemplate> extends
     return this;
   }
 
+  /**
+   * @deprecated Please use {@link #setParam(String, Object)}
+   * @param key
+   * @param value
+   * @return
+   */
   @Override
   @Deprecated
   public PartialUpdateRequestBuilder<K, V> param(String key, Object value)
@@ -73,6 +83,12 @@ public class PartialUpdateRequestBuilder<K, V extends RecordTemplate> extends
     return this;
   }
 
+  /**
+   * @deprecated Please use {@link #setReqParam(String, Object)}
+   * @param key
+   * @param value
+   * @return
+   */
   @Override
   @Deprecated
   public PartialUpdateRequestBuilder<K, V> reqParam(String key, Object value)

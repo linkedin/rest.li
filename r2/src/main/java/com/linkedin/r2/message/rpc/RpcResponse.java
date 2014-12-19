@@ -37,6 +37,7 @@ public interface RpcResponse extends RpcMessage, Response
    * this response as a starting point. Changes made with the builder are not reflected by this
    * response instance.
    *
+   * @deprecated R2 RPC is not supported. Please use REST instead.
    * @return a builder for this response
    */
   @Deprecated

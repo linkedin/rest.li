@@ -31,13 +31,18 @@ import com.linkedin.restli.common.ResourceSpec;
  * @author Josh Walker
  * @version $Revision: $
  */
-
 public abstract class GetRequestBuilderBase<
         K,
         V extends RecordTemplate,
         RB extends GetRequestBuilderBase<K, V, RB>>
         extends GetRequestBuilder<K, V>
 {
+  /**
+   * @deprecated Please use {@link #GetRequestBuilderBase(String, Class, com.linkedin.restli.common.ResourceSpec, com.linkedin.restli.client.RestliRequestOptions)}
+   * @param baseUriTemplate
+   * @param elementClass
+   * @param resourceSpec
+   */
   @Deprecated
   protected GetRequestBuilderBase(String baseUriTemplate, Class<V> elementClass, ResourceSpec resourceSpec)
   {

@@ -26,6 +26,10 @@ import com.linkedin.restli.common.OptionsResponse;
  */
 public class OptionsRequestBuilder extends AbstractRequestBuilder<Void, OptionsResponse, OptionsRequest>
 {
+  /**
+   * @deprecated Please use {@link #OptionsRequestBuilder(String, RestliRequestOptions)}
+   * @param baseUriTemplate
+   */
   @Deprecated
   public OptionsRequestBuilder(String baseUriTemplate)
   {

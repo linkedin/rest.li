@@ -32,13 +32,18 @@ import java.util.Map;
  * @author Josh Walker
  * @version $Revision: $
  */
-
 public class BatchUpdateRequestBuilderBase<
         K,
         V extends RecordTemplate,
         RB extends BatchUpdateRequestBuilderBase<K, V, RB>>
         extends BatchUpdateRequestBuilder<K, V>
 {
+  /**
+   * @deprecated Please use {@link #BatchUpdateRequestBuilderBase(String, Class, com.linkedin.restli.common.ResourceSpec, com.linkedin.restli.client.RestliRequestOptions)}
+   * @param baseUriTemplate
+   * @param valueClass
+   * @param resourceSpec
+   */
   @Deprecated
   public BatchUpdateRequestBuilderBase(String baseUriTemplate, Class<V> valueClass,
                                        ResourceSpec resourceSpec)

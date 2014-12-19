@@ -356,6 +356,14 @@ public class JacksonDataCodec implements TextDataCodec
     }
   }
 
+  /**
+   * @deprecated Please use {@link #parse(java.io.InputStream, StringBuilder, java.util.Map)} instead, with {@code null}
+   *             as the last param
+   * @param in
+   * @param mesg
+   * @return
+   * @throws IOException
+   */
   @Deprecated
   public List<Object> parse(InputStream in, StringBuilder mesg) throws IOException
   {

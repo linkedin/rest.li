@@ -66,6 +66,11 @@ public final class RpcRequestBuilder
     return _uri;
   }
 
+  /**
+   * @deprecated R2 RPC is not supported. Please use REST instead.
+   * @param uri the URI to set
+   * @return
+   */
   @Override
   @Deprecated
   public RpcRequestBuilder setURI(URI uri)
@@ -77,6 +82,10 @@ public final class RpcRequestBuilder
     return this;
   }
 
+  /**
+   * @deprecated R2 RPC is not supported. Please use REST instead.
+   * @return
+   */
   @Override
   @Deprecated
   public RpcRequest build()
@@ -84,6 +93,10 @@ public final class RpcRequestBuilder
     return new RpcRequestImpl(getEntity(), getURI());
   }
 
+  /**
+   * @deprecated R2 RPC is not supported. Please use REST instead.
+   * @return
+   */
   @Override
   @Deprecated
   public RpcRequest buildCanonical()

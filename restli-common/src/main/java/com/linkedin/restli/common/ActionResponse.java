@@ -53,6 +53,12 @@ public final class ActionResponse<T> extends DynamicRecordTemplate
     _valueFieldDef = valueFieldDef;
   }
 
+  /**
+   * @deprecated Please use {@link #ActionResponse(com.linkedin.data.DataMap, com.linkedin.data.template.FieldDef, com.linkedin.data.schema.RecordDataSchema)}
+   *             or {@link #ActionResponse(com.linkedin.data.template.FieldDef, com.linkedin.data.schema.RecordDataSchema)}
+   * @param data
+   * @param valueFieldDef
+   */
   @SuppressWarnings({"unchecked"})
   @Deprecated
   private ActionResponse(DataMap data, FieldDef<T> valueFieldDef)
@@ -67,9 +73,11 @@ public final class ActionResponse<T> extends DynamicRecordTemplate
    * server, the expected return type of the Action, and the RecordDataSchema for the
    * Action return.
    *
+   * @deprecated Please use {@link #ActionResponse(com.linkedin.data.DataMap, com.linkedin.data.template.FieldDef, com.linkedin.data.schema.RecordDataSchema)}
+   *             or {@link #ActionResponse(com.linkedin.data.template.FieldDef, com.linkedin.data.schema.RecordDataSchema)}.
+   *             {@link FieldDef} and associated {@link RecordDataSchema} should be computed
    * @param data DataMap of the returned data
    * @param valueClass expected return type of the Action
-   * @deprecated value {@link FieldDef} and associated {@link RecordDataSchema} should be computed
    * in builders and passed in here rather than being computed on the fly.
    *
    */
@@ -93,9 +101,10 @@ public final class ActionResponse<T> extends DynamicRecordTemplate
   /**
    * Initialize an ActionResponse based on the expected return type of the action
    *
-   * @param valueClass Class of the type that the Action is expected to return
-   * @deprecated RecordDataSchema should be computed in builders and passed, rather than creating
-   * it on the fly.
+   * @deprecated Please use {@link #ActionResponse(com.linkedin.data.DataMap, com.linkedin.data.template.FieldDef, com.linkedin.data.schema.RecordDataSchema)}
+   *             or {@link #ActionResponse(com.linkedin.data.template.FieldDef, com.linkedin.data.schema.RecordDataSchema)}.
+   *             {@link com.linkedin.data.schema.RecordDataSchema} should be computed in builders and passed, rather than creating
+   * @param valueClass Class of the type that the Action is expected to return it on the fly.
    */
   @Deprecated
   public ActionResponse(Class<T> valueClass)
@@ -119,6 +128,8 @@ public final class ActionResponse<T> extends DynamicRecordTemplate
   /**
    * Initialize an ActionResponse based on the value result of the Action.
    *
+   * @deprecated Please use {@link #ActionResponse(com.linkedin.data.DataMap, com.linkedin.data.template.FieldDef, com.linkedin.data.schema.RecordDataSchema)}
+   *             or {@link #ActionResponse(com.linkedin.data.template.FieldDef, com.linkedin.data.schema.RecordDataSchema)}
    * @param value Class of the type that the Action is expected to return
    */
   @Deprecated

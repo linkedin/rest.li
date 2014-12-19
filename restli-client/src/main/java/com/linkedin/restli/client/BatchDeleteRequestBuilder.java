@@ -38,6 +38,12 @@ public class BatchDeleteRequestBuilder<K, V extends RecordTemplate> extends
     BatchKVRequestBuilder<K, V, BatchDeleteRequest<K, V>>
 {
 
+  /**
+   * @deprecated Please use {@link #BatchDeleteRequestBuilder(String, Class, com.linkedin.restli.common.ResourceSpec, RestliRequestOptions)}
+   * @param baseUriTemplate
+   * @param valueClass
+   * @param resourceSpec
+   */
   @Deprecated
   public BatchDeleteRequestBuilder(String baseUriTemplate,
                                    Class<V> valueClass,
@@ -66,6 +72,12 @@ public class BatchDeleteRequestBuilder<K, V extends RecordTemplate> extends
     return this;
   }
 
+  /**
+   * @deprecated Please use {@link #setParam(String, Object)}
+   * @param key
+   * @param value
+   * @return
+   */
   @Override
   @Deprecated
   public BatchDeleteRequestBuilder<K, V> param(String key, Object value)
@@ -74,6 +86,12 @@ public class BatchDeleteRequestBuilder<K, V extends RecordTemplate> extends
     return this;
   }
 
+  /**
+   * @deprecated Please use {@link #setReqParam(String, Object)}
+   * @param key
+   * @param value
+   * @return
+   */
   @Override
   @Deprecated
   public BatchDeleteRequestBuilder<K, V> reqParam(String key, Object value)
@@ -110,6 +128,12 @@ public class BatchDeleteRequestBuilder<K, V extends RecordTemplate> extends
     return this;
   }
 
+  /**
+   * @deprecated Please use {@link #setHeader(String, String)}
+   * @param key
+   * @param value value of the header
+   * @return
+   */
   @Override
   @Deprecated
   public BatchDeleteRequestBuilder<K, V> header(String key, String value)

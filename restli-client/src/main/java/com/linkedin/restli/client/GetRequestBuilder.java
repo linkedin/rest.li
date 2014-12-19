@@ -31,14 +31,18 @@ import java.util.Map;
  * @author Josh Walker
  * @version $Revision: $
  */
-
-
 public class GetRequestBuilder<K, V extends RecordTemplate> extends
     RestfulRequestBuilder<K,V, GetRequest<V>>
 {
   private final Class<V> _elementClass;
   private K              _id;
 
+  /**
+   * @deprecated Please use {@link #GetRequestBuilder(String, Class, com.linkedin.restli.common.ResourceSpec, RestliRequestOptions)}
+   * @param baseUriTemplate
+   * @param elementClass
+   * @param resourceSpec
+   */
   @Deprecated
   public GetRequestBuilder(String baseUriTemplate, Class<V> elementClass, ResourceSpec resourceSpec)
   {
@@ -60,6 +64,12 @@ public class GetRequestBuilder<K, V extends RecordTemplate> extends
     return this;
   }
 
+  /**
+   * @deprecated Please use {@link #setParam(String, Object)}
+   * @param key
+   * @param value
+   * @return
+   */
   @Override
   @Deprecated
   public GetRequestBuilder<K, V> param(String key, Object value)
@@ -68,6 +78,12 @@ public class GetRequestBuilder<K, V extends RecordTemplate> extends
     return this;
   }
 
+  /**
+   * @deprecated Please use {@link #setReqParam(String, Object)}
+   * @param key
+   * @param value
+   * @return
+   */
   @Override
   @Deprecated
   public GetRequestBuilder<K, V> reqParam(String key, Object value)
@@ -104,6 +120,12 @@ public class GetRequestBuilder<K, V extends RecordTemplate> extends
     return this;
   }
 
+  /**
+   * @deprecated Please use {@link #setHeader(String, String)}
+   * @param key
+   * @param value value of the header
+   * @return
+   */
   @Override
   @Deprecated
   public GetRequestBuilder<K, V> header(String key, String value)

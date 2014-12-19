@@ -84,6 +84,15 @@ public class Request<T>
   private final Map<String, Object>    _pathKeys;
   private final RestliRequestOptions   _requestOptions;
 
+  /**
+   * @deprecated Please use {@link #Request(com.linkedin.restli.common.ResourceMethod, com.linkedin.data.template.RecordTemplate, java.util.Map, com.linkedin.restli.internal.client.RestResponseDecoder, com.linkedin.restli.common.ResourceSpec, java.util.Map, String, String, java.util.Map, RestliRequestOptions)}
+   * @param uri
+   * @param method
+   * @param inputRecord
+   * @param headers
+   * @param decoder
+   * @param resourceSpec
+   */
   @Deprecated
   public Request(URI uri,
                  ResourceMethod method,
@@ -95,6 +104,16 @@ public class Request<T>
     this(uri, method, inputRecord, headers, decoder, resourceSpec, Collections.<String>emptyList());
   }
 
+  /**
+   * @deprecated Please use {@link #Request(com.linkedin.restli.common.ResourceMethod, com.linkedin.data.template.RecordTemplate, java.util.Map, com.linkedin.restli.internal.client.RestResponseDecoder, com.linkedin.restli.common.ResourceSpec, java.util.Map, String, String, java.util.Map, RestliRequestOptions)}
+   * @param uri
+   * @param method
+   * @param inputRecord
+   * @param headers
+   * @param decoder
+   * @param resourceSpec
+   * @param queryParams
+   */
   @Deprecated
   public Request(URI uri,
                  ResourceMethod method,
@@ -107,6 +126,16 @@ public class Request<T>
     this(uri, method, inputRecord, headers, decoder, resourceSpec, queryParams, Collections.<String>emptyList());
   }
 
+  /**
+   * @deprecated Please use {@link #Request(com.linkedin.restli.common.ResourceMethod, com.linkedin.data.template.RecordTemplate, java.util.Map, com.linkedin.restli.internal.client.RestResponseDecoder, com.linkedin.restli.common.ResourceSpec, java.util.Map, String, String, java.util.Map, RestliRequestOptions)}
+   * @param uri
+   * @param method
+   * @param inputRecord
+   * @param headers
+   * @param decoder
+   * @param resourceSpec
+   * @param resourcePath
+   */
   @Deprecated
   public Request(URI uri,
                  ResourceMethod method,
@@ -119,6 +148,17 @@ public class Request<T>
     this(uri, method, inputRecord, headers, decoder, resourceSpec, null, resourcePath);
   }
 
+  /**
+   * @deprecated Please use {@link #Request(com.linkedin.restli.common.ResourceMethod, com.linkedin.data.template.RecordTemplate, java.util.Map, com.linkedin.restli.internal.client.RestResponseDecoder, com.linkedin.restli.common.ResourceSpec, java.util.Map, String, String, java.util.Map, RestliRequestOptions)}
+   * @param uri
+   * @param method
+   * @param inputRecord
+   * @param headers
+   * @param decoder
+   * @param resourceSpec
+   * @param queryParams
+   * @param resourcePath
+   */
   @Deprecated
   public Request(URI uri,
                  ResourceMethod method,
@@ -132,6 +172,19 @@ public class Request<T>
     this(uri, method, inputRecord, headers, decoder, resourceSpec, queryParams, resourcePath, null);
   }
 
+  /**
+   * @deprecated Please use {@link #Request(com.linkedin.restli.common.ResourceMethod, com.linkedin.data.template.RecordTemplate, java.util.Map, com.linkedin.restli.internal.client.RestResponseDecoder, com.linkedin.restli.common.ResourceSpec, java.util.Map, String, String, java.util.Map, RestliRequestOptions)}.
+   *             Please take a look at the constructor for any of the subclasses of {@link com.linkedin.restli.client.Request} to see how this can be done. Example {@link com.linkedin.restli.client.GetRequest#GetRequest(java.util.Map, Class, Object, java.util.Map, com.linkedin.restli.common.ResourceSpec, String, java.util.Map, RestliRequestOptions)}
+   * @param uri
+   * @param method
+   * @param inputRecord
+   * @param headers
+   * @param decoder
+   * @param resourceSpec
+   * @param queryParams
+   * @param resourcePath
+   * @param methodName
+   */
   @Deprecated
   public Request(URI uri,
                  ResourceMethod method,
@@ -376,6 +429,8 @@ public class Request<T>
    *
    * The resource path of a simple sub-resource with a URI of "x/key1/y/z/key2/t" is a list with
    * four parts: ["x", "y", "z", "t"].
+   *
+   * @deprecated Please use {@link #getPathKeys()} and {@link #getBaseUriTemplate()}
    *
    * @return the resource path parts as a list.
    */

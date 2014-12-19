@@ -68,8 +68,8 @@ public class ResourceSpecImpl implements ResourceSpec
   /**
    * Initialize a ResourceSpecImpl with the given data.
    *
+   * @deprecated Please use {@link #ResourceSpecImpl(java.util.Set, java.util.Map, java.util.Map, TypeSpec, ComplexKeySpec, TypeSpec, java.util.Map)}
    * @param supportedMethods Set of ResourceMethods supported
-   * @deprecated builder should pass in actionRequestMetadata and actionResponseMetadata
    */
   @Deprecated
   public ResourceSpecImpl(Set<ResourceMethod> supportedMethods)
@@ -109,12 +109,12 @@ public class ResourceSpecImpl implements ResourceSpec
   /**
    * Initialize a ResourceSpecImpl with the given data.
    *
+   * @deprecated Please use {@link #ResourceSpecImpl(java.util.Set, java.util.Map, java.util.Map, TypeSpec, ComplexKeySpec, TypeSpec, java.util.Map)}
    * @param supportedMethods Set of ResourceMethods supported
    * @param keyClass type of the key of the Resource
    * @param valueClass the type of the RecordTemplate the Resource manages
    * @param keyParts Map of key names to key types (AssocKeyBindingTypes
    *         or, for backward compatibility, Class<?>), if the keyClass is a {@link CompoundKey}.
-   * @deprecated builder should pass in actionRequestMetadata and actionResponseMetadata
    */
   @Deprecated
   public ResourceSpecImpl(Set<ResourceMethod> supportedMethods,
@@ -186,6 +186,7 @@ public class ResourceSpecImpl implements ResourceSpec
   /**
    * Initialize a ResourceSpecImpl with the given data.
    *
+   * @deprecated Please use {@link #ResourceSpecImpl(java.util.Set, java.util.Map, java.util.Map, TypeSpec, ComplexKeySpec, TypeSpec, java.util.Map)}
    * @param supportedMethods Set of ResourceMethods supported
    * @param keyClass type of the key of the Resource
    * @param keyKeyClass RecordTemplate type of the key, if the keyClass is a ComplexResourceKey
@@ -193,7 +194,6 @@ public class ResourceSpecImpl implements ResourceSpec
    * @param valueClass the type of the RecordTemplate that the Resource manages
    * @param keyParts Map of key names to key types (AssocKeyBindingTypes
    *         or, for backward compatibility, Class<?>), if the keyClass is a {@link CompoundKey}.
-   * @deprecated builder should pass in actionRequestMetadata and actionResponseMetadata
    */
   @Deprecated
   public ResourceSpecImpl(Set<ResourceMethod> supportedMethods,

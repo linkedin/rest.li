@@ -42,6 +42,12 @@ public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> exten
   private final CollectionRequest<KeyValueRecord<K, PatchRequest<V>>> _entities;
   private final KeyValueRecordFactory<K, PatchRequest<V>> _keyValueRecordFactory;
 
+  /**
+   * @deprecated Please use {@link #BatchPartialUpdateRequestBuilder(String, Class, com.linkedin.restli.common.ResourceSpec, RestliRequestOptions)}
+   * @param baseUriTemplate
+   * @param valueClass
+   * @param resourceSpec
+   */
   @Deprecated
   public BatchPartialUpdateRequestBuilder(String baseUriTemplate,
                                           Class<V> valueClass,
@@ -85,6 +91,12 @@ public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> exten
     return this;
   }
 
+  /**
+   * @deprecated Please use {@link #setParam(String, Object)}
+   * @param key
+   * @param value
+   * @return
+   */
   @Override
   @Deprecated
   public BatchPartialUpdateRequestBuilder<K, V> param(String key, Object value)
@@ -93,6 +105,12 @@ public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> exten
     return this;
   }
 
+  /**
+   * @deprecated Please use {@link #setReqParam(String, Object)}
+   * @param key
+   * @param value
+   * @return
+   */
   @Override
   @Deprecated
   public BatchPartialUpdateRequestBuilder<K, V> reqParam(String key, Object value)
@@ -129,6 +147,12 @@ public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> exten
     return this;
   }
 
+  /**
+   * @deprecated Please use {@link #setHeader(String, String)}
+   * @param key
+   * @param value value of the header
+   * @return
+   */
   @Override
   @Deprecated
   public BatchPartialUpdateRequestBuilder<K, V> header(String key, String value)

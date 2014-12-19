@@ -34,6 +34,12 @@ import com.linkedin.restli.common.ResourceSpec;
 public abstract class ActionRequestBuilderBase<K, V, RB extends ActionRequestBuilderBase<K, V, RB>>
         extends ActionRequestBuilder<K, V>
 {
+  /**
+   * @deprecated Please use {@link #ActionRequestBuilderBase(String, Class, com.linkedin.restli.common.ResourceSpec, com.linkedin.restli.client.RestliRequestOptions)}
+   * @param baseUriTemplate
+   * @param elementClass
+   * @param resourceSpec
+   */
   @Deprecated
   protected ActionRequestBuilderBase(String baseUriTemplate, Class<V> elementClass, ResourceSpec resourceSpec)
   {

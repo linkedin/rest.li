@@ -124,6 +124,12 @@ public class ClientCompressionFilter implements Filter, RestFilter
         AcceptEncoding.parseAcceptEncoding(acceptCompression), responseCompressionOperations);
   }
 
+  /**
+   * @deprecated Please use {@link #ClientCompressionFilter(String, String, java.util.List)}
+   * @param requestCompression
+   * @param acceptCompression
+   * @param responseCompressionOperations
+   */
   @Deprecated
   public ClientCompressionFilter(String requestCompression, String acceptCompression, String responseCompressionOperations)
   {

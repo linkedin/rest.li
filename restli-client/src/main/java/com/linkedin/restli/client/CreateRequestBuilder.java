@@ -35,6 +35,12 @@ public class CreateRequestBuilder<K, V extends RecordTemplate>
 {
   private V _input;
 
+  /**
+   * @deprecated Please use {@link #CreateRequestBuilder(String, Class, com.linkedin.restli.common.ResourceSpec, RestliRequestOptions)}
+   * @param baseUriTemplate
+   * @param valueClass
+   * @param resourceSpec
+   */
   @Deprecated
   public CreateRequestBuilder(String baseUriTemplate, Class<V> valueClass, ResourceSpec resourceSpec)
   {
@@ -55,6 +61,12 @@ public class CreateRequestBuilder<K, V extends RecordTemplate>
     return this;
   }
 
+  /**
+   * @deprecated Please use {@link #setParam(String, Object)}
+   * @param key
+   * @param value
+   * @return
+   */
   @Override
   @Deprecated
   public CreateRequestBuilder<K, V> param(String key, Object value)
@@ -63,6 +75,12 @@ public class CreateRequestBuilder<K, V extends RecordTemplate>
     return this;
   }
 
+  /**
+   * @deprecated Please use {@link #setReqParam(String, Object)}
+   * @param key
+   * @param value
+   * @return
+   */
   @Override
   @Deprecated
   public CreateRequestBuilder<K, V> reqParam(String key, Object value)
@@ -99,6 +117,12 @@ public class CreateRequestBuilder<K, V extends RecordTemplate>
     return this;
   }
 
+  /**
+   * @deprecated Please use {@link #setHeader(String, String)}
+   * @param key
+   * @param value value of the header
+   * @return
+   */
   @Override
   @Deprecated
   public CreateRequestBuilder<K, V> header(String key, String value)

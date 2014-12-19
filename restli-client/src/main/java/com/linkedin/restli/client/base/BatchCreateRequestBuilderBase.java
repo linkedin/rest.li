@@ -39,6 +39,12 @@ public abstract class BatchCreateRequestBuilderBase<
         RB extends BatchCreateRequestBuilderBase<K, V, RB>>
         extends BatchCreateRequestBuilder<K, V>
 {
+  /**
+   * @deprecated Please use {@link #BatchCreateRequestBuilderBase(String, Class, com.linkedin.restli.common.ResourceSpec, com.linkedin.restli.client.RestliRequestOptions)}
+   * @param baseUriTemplate
+   * @param valueClass
+   * @param resourceSpec
+   */
   @Deprecated
   public BatchCreateRequestBuilderBase(String baseUriTemplate, Class<V> valueClass,
                                        ResourceSpec resourceSpec)

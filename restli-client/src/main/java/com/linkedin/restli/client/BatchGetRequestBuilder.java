@@ -249,6 +249,12 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
                                    request.getRequestOptions());
   }
 
+  /**
+   * @deprecated Please use {@link #BatchGetRequestBuilder(String, Class, com.linkedin.restli.common.ResourceSpec, RestliRequestOptions)}
+   * @param baseUriTemplate
+   * @param modelClass
+   * @param resourceSpec
+   */
   @Deprecated
   public BatchGetRequestBuilder(String baseUriTemplate, Class<V> modelClass, ResourceSpec resourceSpec)
   {
@@ -263,6 +269,12 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
     this(baseUriTemplate, new BatchResponseDecoder<V>(modelClass), resourceSpec, requestOptions);
   }
 
+  /**
+   * @deprecated Please use {@link #BatchGetRequestBuilder(String, Class, com.linkedin.restli.common.ResourceSpec, RestliRequestOptions)}
+   * @param baseUriTemplate
+   * @param decoder
+   * @param resourceSpec
+   */
   @Deprecated
   public BatchGetRequestBuilder(String baseUriTemplate,
                                 RestResponseDecoder<BatchResponse<V>> decoder,
@@ -292,6 +304,12 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
     return this;
   }
 
+  /**
+   * @deprecated Please use {@link #setReqParam(String, Object)}
+   * @param key
+   * @param value
+   * @return
+   */
   @Override
   @Deprecated
   public BatchGetRequestBuilder<K, V> reqParam(String key, Object value)
@@ -300,6 +318,12 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
     return this;
   }
 
+  /**
+   * @deprecated Please use {@link #setParam(String, Object)}
+   * @param key
+   * @param value
+   * @return
+   */
   @Override
   @Deprecated
   public BatchGetRequestBuilder<K, V> param(String key, Object value)
@@ -336,6 +360,12 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
     return this;
   }
 
+  /**
+   * @deprecated Please use {@link #setHeader(String, String)}
+   * @param key
+   * @param value value of the header
+   * @return
+   */
   @Override
   @Deprecated
   public BatchGetRequestBuilder<K, V> header(String key, String value)

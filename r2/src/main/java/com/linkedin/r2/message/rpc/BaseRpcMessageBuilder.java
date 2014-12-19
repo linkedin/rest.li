@@ -30,6 +30,8 @@ public abstract class BaseRpcMessageBuilder<B extends BaseRpcMessageBuilder<B>>
 {
   /**
    * Constructs a new builder with no initial values.
+   *
+   * @deprecated R2 RPC is not supported. Please use REST instead.
    */
   @Deprecated
   public BaseRpcMessageBuilder()
@@ -40,6 +42,7 @@ public abstract class BaseRpcMessageBuilder<B extends BaseRpcMessageBuilder<B>>
    * Copies the values from the supplied message. Changes to this builder will not be reflected
    * in the original message.
    *
+   * @deprecated R2 RPC is not supported. Please use REST instead.
    * @param message the message to copy
    */
   @Deprecated

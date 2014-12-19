@@ -30,13 +30,18 @@ import com.linkedin.restli.common.ResourceSpec;
  * @author Josh Walker
  * @version $Revision: $
  */
-
 public abstract class DeleteRequestBuilderBase<
         K,
         V extends RecordTemplate,
         RB extends DeleteRequestBuilderBase<K, V, RB>>
         extends DeleteRequestBuilder<K, V>
 {
+  /**
+   * @deprecated Please use {@link #DeleteRequestBuilderBase(String, Class, com.linkedin.restli.common.ResourceSpec, com.linkedin.restli.client.RestliRequestOptions)}
+   * @param baseUriTemplate
+   * @param valueClass
+   * @param resourceSpec
+   */
   @Deprecated
   protected DeleteRequestBuilderBase(String baseUriTemplate, Class<V> valueClass, ResourceSpec resourceSpec)
   {

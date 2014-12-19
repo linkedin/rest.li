@@ -80,6 +80,7 @@ public class ContextDispatcher implements TransportDispatcher
   /**
    * Construct a new instance with the specified dispatcher maps.
    *
+   * @deprecated Please use {@link #ContextDispatcher(java.util.Map)}
    * @param rpcDispatcher a map from path to {@link RpcRequestHandler}.  RPC requests whose first
    *                      path segment matches the map key will be dispatched to the respective
    *                      handler.

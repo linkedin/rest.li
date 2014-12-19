@@ -30,14 +30,18 @@ import java.util.Map;
  * @author Josh Walker
  * @version $Revision: $
  */
-
-
 public class UpdateRequestBuilder<K, V extends RecordTemplate> extends
     RestfulRequestBuilder<K, V, UpdateRequest<V>>
 {
   private V _input;
   private K _id;
 
+  /**
+   * @deprecated Please use {@link #UpdateRequestBuilder(String, Class, com.linkedin.restli.common.ResourceSpec, RestliRequestOptions)}
+   * @param baseUriTemplate
+   * @param valueClass
+   * @param resourceSpec
+   */
   @Deprecated
   public UpdateRequestBuilder(String baseUriTemplate, Class<V> valueClass, ResourceSpec resourceSpec)
   {
@@ -64,6 +68,12 @@ public class UpdateRequestBuilder<K, V extends RecordTemplate> extends
     return this;
   }
 
+  /**
+   * @deprecated Please use {@link #setParam(String, Object)}
+   * @param key
+   * @param value
+   * @return
+   */
   @Override
   @Deprecated
   public UpdateRequestBuilder<K, V> param(String key, Object value)
@@ -72,6 +82,12 @@ public class UpdateRequestBuilder<K, V extends RecordTemplate> extends
     return this;
   }
 
+  /**
+   * @deprecated Please use {@link #setReqParam(String, Object)}
+   * @param key
+   * @param value
+   * @return
+   */
   @Override
   @Deprecated
   public UpdateRequestBuilder<K, V> reqParam(String key, Object value)
@@ -108,6 +124,12 @@ public class UpdateRequestBuilder<K, V extends RecordTemplate> extends
     return this;
   }
 
+  /**
+   * @deprecated Please use {@link #setHeader(String, String)}
+   * @param key
+   * @param value value of the header
+   * @return
+   */
   @Override
   @Deprecated
   public UpdateRequestBuilder<K, V> header(String key, String value)

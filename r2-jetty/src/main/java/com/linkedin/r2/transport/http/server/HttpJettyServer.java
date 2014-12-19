@@ -61,6 +61,13 @@ public class HttpJettyServer implements HttpServer
                     new RAPServlet(dispatcher));
   }
 
+  /**
+   * @deprecated Please use {@link #HttpJettyServer(int, String, int, HttpDispatcher, boolean, int)}
+   * @param port
+   * @param contextPath
+   * @param threadPoolSize
+   * @param dispatcher
+   */
   @Deprecated
   public HttpJettyServer(int port, String contextPath, int threadPoolSize, HttpDispatcher dispatcher)
   {

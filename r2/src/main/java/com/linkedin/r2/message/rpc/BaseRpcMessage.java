@@ -31,6 +31,10 @@ import com.linkedin.r2.message.BaseMessage;
     super(body);
   }
 
+  /**
+   * @deprecated R2 RPC is not supported. Please use REST instead.
+   * @return
+   */
   @Override
   @Deprecated
   @SuppressWarnings("deprecation")

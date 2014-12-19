@@ -37,6 +37,12 @@ public class GetAllRequestBuilder<K, V extends RecordTemplate> extends
 
   private final Class<V> _elementClass;
 
+  /**
+   * @deprecated Please use {@link #GetAllRequestBuilder(String, Class, com.linkedin.restli.common.ResourceSpec, RestliRequestOptions)}
+   * @param baseUriTemplate
+   * @param elementClass
+   * @param resourceSpec
+   */
   @Deprecated
   public GetAllRequestBuilder(String baseUriTemplate, Class<V> elementClass, ResourceSpec resourceSpec)
   {
@@ -89,6 +95,12 @@ public class GetAllRequestBuilder<K, V extends RecordTemplate> extends
     return this;
   }
 
+  /**
+   * @deprecated Please use {@link #setParam(String, Object)}
+   * @param key
+   * @param value
+   * @return
+   */
   @Override
   @Deprecated
   public GetAllRequestBuilder<K, V> param(String key, Object value)
@@ -97,6 +109,12 @@ public class GetAllRequestBuilder<K, V extends RecordTemplate> extends
     return this;
   }
 
+  /**
+   * @deprecated Please use {@link #setReqParam(String, Object)}
+   * @param key
+   * @param value
+   * @return
+   */
   @Override
   @Deprecated
   public GetAllRequestBuilder<K, V> reqParam(String key, Object value)
@@ -112,6 +130,11 @@ public class GetAllRequestBuilder<K, V extends RecordTemplate> extends
     return this;
   }
 
+  /**
+   * @param key
+   * @param value
+   * @return
+   */
   @Override
   public GetAllRequestBuilder<K, V> setReqParam(String key, Object value)
   {
@@ -133,6 +156,12 @@ public class GetAllRequestBuilder<K, V extends RecordTemplate> extends
     return this;
   }
 
+  /**
+   * @deprecated Please use {@link #setHeader(String, String)}
+   * @param key
+   * @param value value of the header
+   * @return
+   */
   @Override
   @Deprecated
   public GetAllRequestBuilder<K, V> header(String key, String value)

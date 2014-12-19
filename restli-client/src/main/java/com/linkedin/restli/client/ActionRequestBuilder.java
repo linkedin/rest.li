@@ -51,6 +51,13 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
   private String                         _name;
   private final Map<FieldDef<?>, Object> _actionParams = new HashMap<FieldDef<?>, Object>();
 
+  /**
+   * @deprecated Please use {@link #ActionRequestBuilder(String, Class, com.linkedin.restli.common.ResourceSpec, RestliRequestOptions)}
+   *             instead
+   * @param baseUriTemplate
+   * @param elementClass
+   * @param resourceSpec
+   */
   @Deprecated
   public ActionRequestBuilder(String baseUriTemplate, Class<V> elementClass, ResourceSpec resourceSpec)
   {
@@ -81,6 +88,12 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
     return this;
   }
 
+  /**
+   * @deprecated Please use {@link #setParam(com.linkedin.data.template.FieldDef, Object)}
+   * @param key
+   * @param value
+   * @return
+   */
   @Deprecated
   public ActionRequestBuilder<K, V> param(FieldDef<?> key, Object value)
   {
@@ -88,6 +101,12 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
     return this;
   }
 
+  /**
+   * @deprecated Please use {@link #setParam(String, Object)} instead
+   * @param key
+   * @param value
+   * @return
+   */
   @Deprecated
   public ActionRequestBuilder<K, V> reqParam(FieldDef<?> key, Object value)
   {
@@ -141,6 +160,12 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
     return addParam(key, value);
   }
 
+  /**
+   * @deprecated Please use {@link #setHeader(String, String)} instead
+   * @param key
+   * @param value value of the header
+   * @return
+   */
   @Override
   @Deprecated
   public ActionRequestBuilder<K, V> header(String key, String value)

@@ -29,6 +29,7 @@ public class Custom
    *
    * This is retained for backwards compatibility.
    *
+   * @deprecated Please use {@link #registerCoercer(DirectCoercer, Class)} instead
    * @param targetClass provides the custom class.
    * @param coercer provides the coercer that will be used to coerce the custom class to and from its primitive
    *                representation.

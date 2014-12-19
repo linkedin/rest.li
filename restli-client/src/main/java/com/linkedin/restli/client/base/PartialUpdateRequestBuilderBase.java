@@ -31,13 +31,18 @@ import com.linkedin.restli.common.ResourceSpec;
  * @author Josh Walker
  * @version $Revision: $
  */
-
 public abstract class PartialUpdateRequestBuilderBase<
         K,
         V extends RecordTemplate,
         RB extends PartialUpdateRequestBuilderBase<K, V, RB>>
         extends PartialUpdateRequestBuilder<K, V>
 {
+  /**
+   * @deprecated Please use {@link #PartialUpdateRequestBuilderBase(String, Class, com.linkedin.restli.common.ResourceSpec, com.linkedin.restli.client.RestliRequestOptions)}
+   * @param baseUriTemplate
+   * @param valueClass
+   * @param resourceSpec
+   */
   @Deprecated
   protected PartialUpdateRequestBuilderBase(String baseUriTemplate, Class<V> valueClass, ResourceSpec resourceSpec)
   {

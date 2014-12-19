@@ -33,6 +33,11 @@ import java.util.Map;
 public abstract class RestfulRequestBuilder<K, V extends RecordTemplate, R extends Request<?>> extends
     AbstractRequestBuilder<K, V, R>
 {
+  /**
+   * @deprecated Please use {@link #RestfulRequestBuilder(String, com.linkedin.restli.common.ResourceSpec, RestliRequestOptions)}
+   * @param baseURITemplate
+   * @param resourceSpec
+   */
   @Deprecated
   protected RestfulRequestBuilder(String baseURITemplate, ResourceSpec resourceSpec)
   {
@@ -48,6 +53,7 @@ public abstract class RestfulRequestBuilder<K, V extends RecordTemplate, R exten
    * Create a header with the specified value if there is no existing name
    * Otherwise, overwrite the existing header with the specified value to the existing value
    *
+   * @deprecated Please use {@link #setHeader(String, String)}
    * @param name name of the header
    * @param value value of the header
    */
@@ -83,6 +89,8 @@ public abstract class RestfulRequestBuilder<K, V extends RecordTemplate, R exten
   /**
    * Note that this method overrides the value at the given key, rather than adds to the
    * collection of values for it.
+   *
+   * @deprecated Please use {@link #setParam(String, Object)}
    */
   @Deprecated
   public RestfulRequestBuilder<K, V, R> param(String key, Object value)
@@ -94,6 +102,8 @@ public abstract class RestfulRequestBuilder<K, V extends RecordTemplate, R exten
   /**
    * Note that this method overrides the value at the given key, rather than adds to the
    * collection of values for it.
+   *
+   * @deprecated Please use {@link #setReqParam(String, Object)}
    */
   @Deprecated
   public RestfulRequestBuilder<K, V, R> reqParam(String key, Object value)

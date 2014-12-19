@@ -40,6 +40,7 @@ abstract public class AbstractValidator implements Validator
    * Deprecating the default no-argument constructor
    * emphasizes that derived classes should provide a constructor
    * that takes a {@link DataMap} as an argument.
+   * @deprecated Please use {@link #AbstractValidator(com.linkedin.data.DataMap)} with a {@code null} config instead
    */
   @Deprecated
   protected AbstractValidator()

@@ -30,13 +30,18 @@ import com.linkedin.restli.common.ResourceSpec;
  * @author Josh Walker
  * @version $Revision: $
  */
-
 public abstract class UpdateRequestBuilderBase<
         K,
         V extends RecordTemplate,
         RB extends UpdateRequestBuilderBase<K, V, RB>>
         extends UpdateRequestBuilder<K, V>
 {
+  /**
+   * @deprecated Please use {@link #UpdateRequestBuilderBase(String, Class, com.linkedin.restli.common.ResourceSpec, com.linkedin.restli.client.RestliRequestOptions)}
+   * @param baseUriTemplate
+   * @param valueClass
+   * @param resourceSpec
+   */
   @Deprecated
   protected UpdateRequestBuilderBase(String baseUriTemplate, Class<V> valueClass, ResourceSpec resourceSpec)
   {

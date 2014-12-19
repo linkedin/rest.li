@@ -254,6 +254,11 @@ public class D2ClientBuilder
       _d2Client.restRequest(request, requestContext, callback);
     }
 
+    /**
+     * @deprecated R2 RPC is not supported. Please use REST instead.
+     * @param request the request to issue
+     * @return
+     */
     @Override
     @Deprecated
     @SuppressWarnings("deprecation")
@@ -262,6 +267,12 @@ public class D2ClientBuilder
       return _d2Client.rpcRequest(request);
     }
 
+    /**
+     * @deprecated R2 RPC is not supported. Please use REST instead.
+     * @param request the request to issue
+     * @param requestContext context for the request
+     * @return
+     */
     @Override
     @Deprecated
     @SuppressWarnings("deprecation")
@@ -270,6 +281,11 @@ public class D2ClientBuilder
       return _d2Client.rpcRequest(request, requestContext);
     }
 
+    /**
+     * @deprecated R2 RPC is not supported. Please use REST instead.
+     * @param request the request to issue
+     * @param callback the callback to invoke with the response
+     */
     @Override
     @Deprecated
     @SuppressWarnings("deprecation")
@@ -278,6 +294,12 @@ public class D2ClientBuilder
       _d2Client.rpcRequest(request, callback);
     }
 
+    /**
+     * @deprecated R2 RPC is not supported. Please use REST instead.
+     * @param request the request to issue
+     * @param requestContext context for the request
+     * @param callback the callback to invoke with the response
+     */
     @Override
     @Deprecated
     @SuppressWarnings("deprecation")

@@ -41,6 +41,12 @@ public class BatchCreateRequestBuilder<K, V extends RecordTemplate> extends
 {
   private final CollectionRequest<V> _input;
 
+  /**
+   * @deprecated Please use {@link #BatchCreateRequestBuilder(String, Class, com.linkedin.restli.common.ResourceSpec, RestliRequestOptions)}
+   * @param baseUriTemplate
+   * @param valueClass
+   * @param resourceSpec
+   */
   @Deprecated
   public BatchCreateRequestBuilder(String baseUriTemplate, Class<V> valueClass, ResourceSpec resourceSpec)
   {
@@ -68,6 +74,12 @@ public class BatchCreateRequestBuilder<K, V extends RecordTemplate> extends
     return this;
   }
 
+  /**
+   * @deprecated Please use {@link #setParam(String, Object)}
+   * @param key
+   * @param value
+   * @return
+   */
   @Override
   @Deprecated
   public BatchCreateRequestBuilder<K, V> param(String key, Object value)
@@ -76,6 +88,12 @@ public class BatchCreateRequestBuilder<K, V extends RecordTemplate> extends
     return this;
   }
 
+  /**
+   * @deprecated Please use {@link #setReqParam(String, Object)}
+   * @param key
+   * @param value
+   * @return
+   */
   @Override
   @Deprecated
   public BatchCreateRequestBuilder<K, V> reqParam(String key, Object value)
@@ -112,6 +130,12 @@ public class BatchCreateRequestBuilder<K, V extends RecordTemplate> extends
     return this;
   }
 
+  /**
+   * @deprecated Please use {@link #setHeader(String, String)}
+   * @param key
+   * @param value value of the header
+   * @return
+   */
   @Override
   @Deprecated
   public BatchCreateRequestBuilder<K, V> header(String key, String value)

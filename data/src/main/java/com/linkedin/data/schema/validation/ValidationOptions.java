@@ -76,8 +76,7 @@ public final class ValidationOptions
   /**
    * Constructor.
    *
-   * This method is deprecated, use {@link #ValidationOptions(RequiredMode, CoercionMode)} instead.
-   *
+   * @deprecated Please use {@link #ValidationOptions(RequiredMode, CoercionMode)} instead.
    * @param requiredMode specifies the required mode.
    * @param fixup if true, sets coercion mode to {@link CoercionMode#NORMAL} else, set coercion mode to
    *              {@link CoercionMode#OFF}
@@ -104,7 +103,7 @@ public final class ValidationOptions
   /**
    * Return whether to fix-up is enabled.
    *
-   * This method is deprecated, use {@link #getCoercionMode()} instead.
+   * @deprecated Please use {@link #getCoercionMode()} instead.
    *
    * @return true if fix-up is possible,
    *         i.e. coercion mod is not set to {@link CoercionMode#OFF} or
@@ -119,7 +118,7 @@ public final class ValidationOptions
   /**
    * Set whether to fix-up is enabled.
    *
-   * This method is deprecated, use {@link #setCoercionMode(CoercionMode)} instead.
+   * @deprecated Please use {@link #setCoercionMode(CoercionMode)} instead.
    *
    * @param fixup if true, then set coercion mode to {@link CoercionMode#NORMAL} else
    *              set coercion mode to {@link CoercionMode#OFF}.

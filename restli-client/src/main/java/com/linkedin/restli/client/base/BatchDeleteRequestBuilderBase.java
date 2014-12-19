@@ -39,6 +39,12 @@ public abstract class BatchDeleteRequestBuilderBase<
         RB extends BatchDeleteRequestBuilderBase<K, V, RB>>
         extends BatchDeleteRequestBuilder<K, V>
 {
+  /**
+   * @deprecated Please use {@link #BatchDeleteRequestBuilderBase(String, Class, com.linkedin.restli.common.ResourceSpec, com.linkedin.restli.client.RestliRequestOptions)}
+   * @param baseUriTemplate
+   * @param valueClass
+   * @param resourceSpec
+   */
   @Deprecated
   public BatchDeleteRequestBuilderBase(String baseUriTemplate, Class<V> valueClass,
                                        ResourceSpec resourceSpec)

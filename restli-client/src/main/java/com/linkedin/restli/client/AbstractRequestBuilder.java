@@ -53,6 +53,12 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
   protected final Map<String, Object> _queryParams = new HashMap<String, Object>();
   protected Map<String, String>       _headers     = new HashMap<String, String>();
 
+  /**
+   * @deprecated Please use {@link #AbstractRequestBuilder(String, com.linkedin.restli.common.ResourceSpec, RestliRequestOptions)}
+   *             instead
+   * @param baseURITemplate
+   * @param resourceSpec
+   */
   @Deprecated
   protected AbstractRequestBuilder(String baseURITemplate, ResourceSpec resourceSpec)
   {
@@ -70,6 +76,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
    * Create a header with the specified value if there is no existing name
    * Otherwise, overwrite the existing header with the specified value to the existing value
    *
+   * @deprecated Please use {@link #setHeader(String, String)} instead
    * @param name name of the header
    * @param value value of the header
    * @return this {@link AbstractRequestBuilder}

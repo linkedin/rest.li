@@ -39,6 +39,12 @@ public class FindRequestBuilder<K, V extends RecordTemplate> extends
   private final Class<V> _elementClass;
   private String _name;
 
+  /**
+   * @deprecated Please use {@link #FindRequestBuilder(String, Class, com.linkedin.restli.common.ResourceSpec, RestliRequestOptions)}
+   * @param baseUriTemplate
+   * @param elementClass
+   * @param resourceSpec
+   */
   @Deprecated
   public FindRequestBuilder(String baseUriTemplate, Class<V> elementClass, ResourceSpec resourceSpec)
   {
@@ -104,6 +110,12 @@ public class FindRequestBuilder<K, V extends RecordTemplate> extends
     return this;
   }
 
+  /**
+   * @deprecated Please use {@link #setParam(String, Object)}
+   * @param key
+   * @param value
+   * @return
+   */
   @Override
   @Deprecated
   public FindRequestBuilder<K, V> param(String key, Object value)
@@ -112,6 +124,12 @@ public class FindRequestBuilder<K, V extends RecordTemplate> extends
     return this;
   }
 
+  /**
+   * @deprecated Please use {@link #setReqParam(String, Object)}
+   * @param key
+   * @param value
+   * @return
+   */
   @Override
   @Deprecated
   public FindRequestBuilder<K, V> reqParam(String key, Object value)
@@ -148,6 +166,12 @@ public class FindRequestBuilder<K, V extends RecordTemplate> extends
     return this;
   }
 
+  /**
+   * @deprecated Please use {@link #setHeader(String, String)}
+   * @param key
+   * @param value value of the header
+   * @return
+   */
   @Override
   @Deprecated
   public FindRequestBuilder<K, V> header(String key, String value)

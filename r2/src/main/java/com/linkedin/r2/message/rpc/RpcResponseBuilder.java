@@ -29,6 +29,8 @@ public final class RpcResponseBuilder
 {
   /**
    * Constructs a new builder with no initial values.
+   *
+   * @deprecated R2 RPC is not supported. Please use REST instead.
    */
   @Deprecated
   public RpcResponseBuilder() {}
@@ -37,6 +39,7 @@ public final class RpcResponseBuilder
    * Copies the values from the supplied response. Changes to this builder will not be reflected
    * in the original message.
    *
+   * @deprecated R2 RPC is not supported. Please use REST instead.
    * @param response the response to copy
    */
   @Deprecated
@@ -45,6 +48,10 @@ public final class RpcResponseBuilder
     super(response);
   }
 
+  /**
+   * @deprecated R2 RPC is not supported. Please use REST instead.
+   * @return
+   */
   @Override
   @Deprecated
   public RpcResponse build()
@@ -52,6 +59,10 @@ public final class RpcResponseBuilder
     return new RpcResponseImpl(getEntity());
   }
 
+  /**
+   * @deprecated R2 RPC is not supported. Please use REST instead.
+   * @return
+   */
   @Override
   @Deprecated
   public RpcResponse buildCanonical()

@@ -135,6 +135,7 @@ public class HttpBridge
   /**
    * Convert incoming "generic" http request to an RPC request.
    *
+   * @deprecated R2 RPC is not supported. Please use REST instead.
    * @param req the incoming HTTP request
    * @return the incoming RPC request
    */
@@ -165,6 +166,7 @@ public class HttpBridge
    * Wrap transport callback for outgoing "generic" http response with a callback to pass to the
    * application RPC server.
    *
+   * @deprecated R2 RPC is not supported. Please use REST instead.
    * @param callback the callback to receive the outgoing HTTP response
    * @return the callback to receive the outgoing RPC response
    */
@@ -197,6 +199,7 @@ public class HttpBridge
    * Wrap application callback for incoming RpcResponse with "generic" http response
    * callback.
    *
+   * @deprecated R2 RPC is not supported. Please use REST instead.
    * @param callback the callback to receive the incoming RPC response
    * @param request the request, used to provide better context in case an error occurs
    * @return the callback to receive the incoming HTTP response

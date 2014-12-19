@@ -31,7 +31,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Use {@link com.linkedin.data.schema.validation.ValidateDataAgainstSchema} instead of this class.
+ * @deprecated Please use {@link com.linkedin.data.schema.validation.ValidateDataAgainstSchema} instead of this class.
  */
 @Deprecated
 public class ValidateWithValidator

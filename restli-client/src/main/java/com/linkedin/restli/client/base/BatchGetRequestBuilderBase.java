@@ -33,13 +33,18 @@ import java.util.Collection;
  * @author Josh Walker
  * @version $Revision: $
  */
-
 public abstract class BatchGetRequestBuilderBase<
         K,
         V extends RecordTemplate,
         RB extends BatchGetRequestBuilderBase<K, V, RB>>
         extends BatchGetRequestBuilder<K, V>
 {
+  /**
+   * @deprecated Please use {@link #BatchGetRequestBuilderBase(String, Class, com.linkedin.restli.common.ResourceSpec, com.linkedin.restli.client.RestliRequestOptions)}
+   * @param baseUriTemplate
+   * @param modelClass
+   * @param resourceSpec
+   */
   @Deprecated
   protected BatchGetRequestBuilderBase(String baseUriTemplate, Class<V> modelClass, ResourceSpec resourceSpec)
   {

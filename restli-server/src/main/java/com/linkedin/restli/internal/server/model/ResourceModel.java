@@ -115,11 +115,10 @@ public class ResourceModel
   /**
    * Constructor.
    *
+   * @deprecated Please use {@link #ResourceModel(com.linkedin.restli.server.Key, Class, Class, java.util.Set, Class, Class, Class, String, ResourceType, String)}
    * @param keyClass resource key class
-   * @param keyKeyClass class of the key part of a {@link ComplexResourceKey} if this is a
-   *          {@link ComplexKeyResource}
-   * @param keyParamsClass class of the param part of a {@link ComplexResourceKey} if this
-   *          is a {@link ComplexKeyResource}
+   * @param keyKeyClass class of the key part of a {@link ComplexResourceKey} if this is a {@link ComplexKeyResource}
+   * @param keyParamsClass class of the param part of a {@link ComplexResourceKey} if this is a {@link ComplexKeyResource}
    * @param keys set of resource keys
    * @param valueClass resource value class
    * @param resourceClass resource class
@@ -128,8 +127,6 @@ public class ResourceModel
    * @param keyName resource key name
    * @param resourceType {@link ResourceType}
    * @param namespace namespace
-   *
-   * @deprecated should pass in a fully formed primary key rather than a class and a name
    */
   @Deprecated
   public ResourceModel(final Class<?> keyClass,

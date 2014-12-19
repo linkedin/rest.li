@@ -95,6 +95,12 @@ public class JmxManager
     return this;
   }
 
+  /**
+   * @deprecated Please use {@link #checkReg(Object, String)}
+   * @param name
+   * @param thread
+   * @return
+   */
   @Deprecated
   public synchronized JmxManager registerPropertyEventThread(String name,
                                                              PropertyEventThread thread)

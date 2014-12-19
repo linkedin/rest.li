@@ -19,6 +19,7 @@ package com.linkedin.pegasus.generator;
 /**
  * Generates client and server Java RPC endpoints from Pegasus protocol definitions.
  *
+ * @deprecated This feature is no longer supported
  * @author Eran Leshem
  */
 @Deprecated

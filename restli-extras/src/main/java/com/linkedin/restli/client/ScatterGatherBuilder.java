@@ -59,6 +59,13 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
     _mapper = mapper;
   }
 
+  /**
+   * @deprecated Please use {@link #buildRequestsV2(BatchGetRequest, com.linkedin.r2.message.RequestContext)}
+   * @param request
+   * @param requestContext
+   * @return
+   * @throws ServiceUnavailableException
+   */
   // for those who do not care about trouble keys.
   @Deprecated
   public Collection<RequestInfo<T>> buildRequests(BatchGetRequest<T> request, RequestContext requestContext)

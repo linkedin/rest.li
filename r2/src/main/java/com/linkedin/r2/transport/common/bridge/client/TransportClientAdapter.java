@@ -57,6 +57,12 @@ public class TransportClientAdapter extends AbstractClient
     _client.restRequest(request, new RequestContext(requestContext), wireAttrs, new TransportCallbackAdapter<RestResponse>(callback));
   }
 
+  /**
+   * @deprecated R2 RPC is not supported. Please use REST instead.
+   * @param request the request to issue
+   * @param requestContext context for the request
+   * @param callback the callback to invoke with the response
+   */
   @Override
   @Deprecated
   public void rpcRequest(RpcRequest request,

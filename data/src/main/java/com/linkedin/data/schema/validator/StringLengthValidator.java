@@ -20,7 +20,7 @@ package com.linkedin.data.schema.validator;
 import com.linkedin.data.DataMap;
 
 /**
- * For backwards compatibility, originally implementation class renamed to {@link StrlenValidator}.
+ * @deprecated Please use {@link com.linkedin.data.schema.validator.StrlenValidator} instead
  */
 @Deprecated
 public class StringLengthValidator extends StrlenValidator
