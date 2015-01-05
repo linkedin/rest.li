@@ -263,9 +263,7 @@ public class RestClient
                     request.getHeaders(),
                     request.getMethodName(),
                     protocolVersion,
-                    request.getRequestOptions().getRequestCompressionOverride(),
-                    request.getRequestOptions().getContentType(),
-                    request.getRequestOptions().getAcceptTypes(),
+                    request.getRequestOptions(),
                     callback);
   }
 
@@ -640,9 +638,7 @@ public class RestClient
    * @param method to perform
    * @param dataMap request body entity
    * @param protocolVersion the version of the Rest.li protocol used to build this request
-   * @param requestCompressionOverride request compression override options
-   * @param contentType request content type
-   * @param acceptTypes list of response accept types
+   * @param requestOptions contains compression force on/off overrides, request content type and accept types
    * @param callback to call on request completion. In the event of an error, the callback
    *                 will receive a {@link com.linkedin.r2.RemoteInvocationException}. If a valid
    *                 error response was received from the remote server, the callback will receive
@@ -655,17 +651,16 @@ public class RestClient
                                Map<String, String> headers,
                                String methodName,
                                ProtocolVersion protocolVersion,
-                               CompressionOption requestCompressionOverride,
-                               ContentType contentType,
-                               List<AcceptType> acceptTypes,
+                               RestliRequestOptions requestOptions,
                                Callback<RestResponse> callback)
   {
     try
     {
-      RestRequest request = buildRequest(uri, method, dataMap, headers, protocolVersion, contentType, acceptTypes);
+      RestRequest request = buildRequest(uri, method, dataMap, headers, protocolVersion, requestOptions.getContentType(), requestOptions.getAcceptTypes());
       String operation = OperationNameGenerator.generate(method, methodName);
       requestContext.putLocalAttr(R2Constants.OPERATION, operation);
-      requestContext.putLocalAttr(R2Constants.REQUEST_COMPRESSION_OVERRIDE, requestCompressionOverride);
+      requestContext.putLocalAttr(R2Constants.REQUEST_COMPRESSION_OVERRIDE, requestOptions.getRequestCompressionOverride());
+      requestContext.putLocalAttr(R2Constants.RESPONSE_COMPRESSION_OVERRIDE, requestOptions.getResponseCompressionOverride());
       _client.restRequest(request, requestContext, callback);
     }
     catch (Exception e)

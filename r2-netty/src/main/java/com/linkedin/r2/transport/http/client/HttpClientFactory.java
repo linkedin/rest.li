@@ -40,7 +40,6 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import java.util.concurrent.ExecutorService;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -51,7 +50,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,6 +91,7 @@ public class HttpClientFactory implements TransportClientFactory
   public static final String HTTP_SSL_PARAMS = "http.sslParams";
   public static final String HTTP_RESPONSE_COMPRESSION_OPERATIONS = "http.responseCompressionOperations";
   public static final String HTTP_REQUEST_CONTENT_ENCODINGS = "http.requestContentEncodings";
+  public static final String HTTP_USE_RESPONSE_COMPRESSION = "http.useResponseCompression";
   public static final String HTTP_SERVICE_NAME = "http.serviceName";
   public static final String HTTP_POOL_STRATEGY = "http.poolStrategy";
   public static final String HTTP_POOL_MIN_SIZE = "http.poolMinSize";
@@ -131,6 +130,9 @@ public class HttpClientFactory implements TransportClientFactory
   private final CompressionConfig          _defaultRequestCompressionConfig;
   /** Request compression config for each http service. */
   private final Map<String, CompressionConfig> _requestCompressionConfigs;
+  /** Response compression config for each http service. */
+  private final Map<String, CompressionConfig> _responseCompressionConfigs;
+  /** If set to false, ClientCompressionFilter is never used to compress requests or decompress responses. */
   private final boolean                    _useClientCompression;
 
   // All fields below protected by _mutex
@@ -287,6 +289,24 @@ public class HttpClientFactory implements TransportClientFactory
                            Map<String, CompressionConfig> requestCompressionConfigs,
                            boolean useClientCompression)
   {
+    this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup,
+        shutdownCallbackExecutor, jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs,
+        Collections.<String, CompressionConfig>emptyMap(), useClientCompression);
+  }
+
+  public HttpClientFactory(FilterChain filters,
+                           NioEventLoopGroup eventLoopGroup,
+                           boolean shutdownFactory,
+                           ScheduledExecutorService executor,
+                           boolean shutdownExecutor,
+                           ExecutorService callbackExecutorGroup,
+                           boolean shutdownCallbackExecutor,
+                           AbstractJmxManager jmxManager,
+                           final int requestCompressionThresholdDefault,
+                           final Map<String, CompressionConfig> requestCompressionConfigs,
+                           final Map<String, CompressionConfig> responseCompressionConfigs,
+                           boolean useClientCompression)
+  {
     _filters = filters;
     _eventLoopGroup = eventLoopGroup;
     _shutdownFactory = shutdownFactory;
@@ -295,16 +315,17 @@ public class HttpClientFactory implements TransportClientFactory
     _callbackExecutorGroup = callbackExecutorGroup;
     _shutdownCallbackExecutor = shutdownCallbackExecutor;
     _jmxManager = jmxManager;
-    if (requestCompressionThresholdDefault < 0)
-    {
-      throw new IllegalArgumentException("requestCompressionThresholdDefault should not be negative.");
-    }
     _defaultRequestCompressionConfig = new CompressionConfig(requestCompressionThresholdDefault);
     if (requestCompressionConfigs == null)
     {
       throw new IllegalArgumentException("requestCompressionConfigs should not be null.");
     }
     _requestCompressionConfigs = Collections.unmodifiableMap(requestCompressionConfigs);
+    if (responseCompressionConfigs == null)
+    {
+      throw new IllegalArgumentException("responseCompressionConfigs should not be null.");
+    }
+    _responseCompressionConfigs = Collections.unmodifiableMap(responseCompressionConfigs);
     _useClientCompression = useClientCompression;
   }
 
@@ -347,11 +368,11 @@ public class HttpClientFactory implements TransportClientFactory
     return valueClass.cast(value);
   }
 
-  /* package private */ CompressionConfig getCompressionConfig(String httpServiceName, String requestContentEncodingName)
+  /* package private */ CompressionConfig getRequestCompressionConfig(String httpServiceName, EncodingType requestContentEncoding)
   {
     if (_requestCompressionConfigs.containsKey(httpServiceName))
     {
-      if (requestContentEncodingName == EncodingType.IDENTITY.getHttpName())
+      if (requestContentEncoding == EncodingType.IDENTITY)
       {
         // This will likely happen when the service doesn't allow any request content encodings for compression,
         // but the client specified a compression config for the service.
@@ -383,22 +404,32 @@ public class HttpClientFactory implements TransportClientFactory
              sslContext);
     TransportClient client = getRawClient(properties, sslContext, sslParameters);
 
-    List<String> httpResponseCompressionOperations = ConfigValueExtractor.buildList(properties.remove(HTTP_RESPONSE_COMPRESSION_OPERATIONS),
-                                                                                    LIST_SEPARATOR);
     List<String> httpRequestServerSupportedEncodings = ConfigValueExtractor.buildList(properties.remove(HTTP_REQUEST_CONTENT_ENCODINGS),
                                                                                       LIST_SEPARATOR);
-    FilterChain filters;
-
-    if (_useClientCompression)
+    // In the old model, responses were compressed according to the type of method, so clients would send
+    // the Accept-Encoding header if the method was in HTTP_RESPONSE_COMPRESSION_OPERATIONS.
+    // In the new model, responses are compressed according to its size, so clients send the Accept-Encoding header
+    // if the server enabled response compression by setting HTTP_USE_RESPONSE_COMPRESSION to true.
+    // Until all servers migrate to the new model, clients will understand both models,
+    // and send the Accept-Encoding header if either the old or the new criterion is satisfied.
+    List<String> httpResponseCompressionOperations = ConfigValueExtractor.buildList(properties.remove(HTTP_RESPONSE_COMPRESSION_OPERATIONS),
+                                                                                    LIST_SEPARATOR);
+    String useResponseCompressionProperty = (String) properties.get(HTTP_USE_RESPONSE_COMPRESSION);
+    if (useResponseCompressionProperty != null && Boolean.parseBoolean(useResponseCompressionProperty))
     {
-      String httpServiceName = (String) properties.get(HTTP_SERVICE_NAME);
-      String requestContentEncodingName = getRequestContentEncodingName(httpRequestServerSupportedEncodings);
-      CompressionConfig compressionConfig = getCompressionConfig(httpServiceName, requestContentEncodingName);
-      String responseCompressionSchemaName = httpResponseCompressionOperations.isEmpty() ? "" : buildAcceptEncodingSchemaNames();
-      filters = _filters.addLast(new ClientCompressionFilter(requestContentEncodingName,
-          compressionConfig,
-          responseCompressionSchemaName,
-          httpResponseCompressionOperations));
+      httpResponseCompressionOperations.add(ClientCompressionFilter.COMPRESS_ALL_RESPONSES_INDICATOR);
+    }
+
+    FilterChain filters;
+    String httpServiceName = (String) properties.get(HTTP_SERVICE_NAME);
+    EncodingType requestContentEncoding = getRequestContentEncoding(httpRequestServerSupportedEncodings);
+    if (_useClientCompression && (requestContentEncoding != EncodingType.IDENTITY || !httpResponseCompressionOperations.isEmpty()))
+    {
+      filters = _filters.addLast(new ClientCompressionFilter(requestContentEncoding,
+                                                             getRequestCompressionConfig(httpServiceName, requestContentEncoding),
+                                                             buildAcceptEncodingSchemas(),
+                                                             _responseCompressionConfigs.get(httpServiceName),
+                                                             httpResponseCompressionOperations));
     }
     else
     {
@@ -426,36 +457,35 @@ public class HttpClientFactory implements TransportClientFactory
    * This assumes that the service listed the encodings in order of preference.
    *
    * @param serverSupportedEncodings list of compression encodings the server supports.
-   * @return the encoding name that should be used to compress requests.
+   * @return the encoding that should be used to compress requests.
    */
-  private static String getRequestContentEncodingName(List<String> serverSupportedEncodings)
+  private static EncodingType getRequestContentEncoding(List<String> serverSupportedEncodings)
   {
     for (String encoding: serverSupportedEncodings)
     {
       if (EncodingType.isSupported(encoding))
       {
-        return encoding;
+        return EncodingType.get(encoding);
       }
     }
-    return EncodingType.IDENTITY.getHttpName();
+    return EncodingType.IDENTITY;
   }
 
   /**
    * @return the compression schemas that the client will support for response compression
    */
-  private String buildAcceptEncodingSchemaNames()
+  private EncodingType[] buildAcceptEncodingSchemas()
   {
-    List<String> schemaNames = new ArrayList<String>();
-    for (EncodingType type: EncodingType.values())
+    EncodingType[] schemas = new EncodingType[EncodingType.values().length - 2];
+    int i = 0;
+    for (EncodingType type : EncodingType.values())
     {
-      // For now clients will accept all supported encodings (which is why we don't add EncodingType.ANY as an accepted
-      // type)
       if (!type.equals(EncodingType.IDENTITY) && !type.equals(EncodingType.ANY))
       {
-        schemaNames.add(type.getHttpName());
+        schemas[i++] = type;
       }
     }
-    return StringUtils.join(schemaNames, ",");
+    return schemas;
   }
 
   /**

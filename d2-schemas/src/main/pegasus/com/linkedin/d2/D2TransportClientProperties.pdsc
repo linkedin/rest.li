@@ -61,6 +61,12 @@
       },
       "doc": "supported content encodings for requests",
       "optional": true
+    },
+    {
+      "name": "useResponseCompression",
+      "type": "boolean",
+      "doc": "whether to enable response compression or not",
+      "optional": true
     }
   ]
 }

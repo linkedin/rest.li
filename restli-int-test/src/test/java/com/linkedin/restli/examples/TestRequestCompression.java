@@ -148,7 +148,7 @@ public class TestRequestCompression extends RestLiIntegrationTest
         .addLast(new ServerCompressionFilter(RestLiIntTestServer.supportedCompression))
         .addLast(new CheckHeadersFilter())
         .addLast(new SimpleLoggingFilter());
-    super.init(null, null, fc);
+    super.init(null, null, fc, false);
   }
 
   @AfterClass

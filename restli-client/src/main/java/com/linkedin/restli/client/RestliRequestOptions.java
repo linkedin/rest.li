@@ -31,27 +31,15 @@ public class RestliRequestOptions
 {
   private final ProtocolVersionOption _protocolVersionOption;
   private final CompressionOption _requestCompressionOverride;
+  private final CompressionOption _responseCompressionOverride;
   private final RestClient.ContentType _contentType;
   private final List<RestClient.AcceptType> _acceptTypes;
 
-
   public static final RestliRequestOptions DEFAULT_OPTIONS
-      = new RestliRequestOptions(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, null);
+      = new RestliRequestOptions(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, null, null, null, null);
 
   public static final RestliRequestOptions FORCE_USE_NEXT_OPTION =
-      new RestliRequestOptions(ProtocolVersionOption.FORCE_USE_NEXT, null);
-
-  /**
-   * Since per-request content type and accept types are not specified, we will use their values from the corresponding configuration
-   * set at {@link RestClient}. Note that this form of configuration at {@link RestClient} is deprecated, therefore please consider using
-   * {@link RestliRequestOptionsBuilder} to construct a new instance.
-   * @param protocolVersionOption protocol version
-   * @param requestCompressionOverride request compression override
-   */
-  RestliRequestOptions(ProtocolVersionOption protocolVersionOption, CompressionOption requestCompressionOverride)
-  {
-    this(protocolVersionOption, requestCompressionOverride, null, null);
-  }
+      new RestliRequestOptions(ProtocolVersionOption.FORCE_USE_NEXT, null, null, null, null);
 
   /**
    * Content type and accept types (if not null) passed in this constructor will take precedence over the corresponding configuration set
@@ -59,17 +47,20 @@ public class RestliRequestOptions
    * {@link RestliRequestOptionsBuilder} to construct a new instance.
    * @param protocolVersionOption protocol version
    * @param requestCompressionOverride request compression override
+   * @param responseCompressionOverride response compression override
    * @param contentType request content type
    * @param acceptTypes list of accept types for response
    */
   RestliRequestOptions(ProtocolVersionOption protocolVersionOption,
                        CompressionOption requestCompressionOverride,
+                       CompressionOption responseCompressionOverride,
                        RestClient.ContentType contentType,
                        List<RestClient.AcceptType> acceptTypes)
   {
     _protocolVersionOption =
         (protocolVersionOption == null) ? ProtocolVersionOption.USE_LATEST_IF_AVAILABLE : protocolVersionOption;
     _requestCompressionOverride = requestCompressionOverride;
+    _responseCompressionOverride = responseCompressionOverride;
     _contentType = contentType;
     _acceptTypes = acceptTypes;
   }
@@ -94,62 +85,68 @@ public class RestliRequestOptions
     return _contentType;
   }
 
+  public CompressionOption getResponseCompressionOverride()
+  {
+    return _responseCompressionOverride;
+  }
+
+  @Override
+  public boolean equals(Object o)
+  {
+    if (this == o)
+    {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass())
+    {
+      return false;
+    }
+
+    RestliRequestOptions that = (RestliRequestOptions) o;
+
+    if (_acceptTypes != null ? !_acceptTypes.equals(that._acceptTypes) : that._acceptTypes != null)
+    {
+      return false;
+    }
+    if (_contentType != that._contentType)
+    {
+      return false;
+    }
+    if (_protocolVersionOption != that._protocolVersionOption)
+    {
+      return false;
+    }
+    if (_requestCompressionOverride != that._requestCompressionOverride)
+    {
+      return false;
+    }
+    if (_responseCompressionOverride != that._responseCompressionOverride)
+    {
+      return false;
+    }
+
+    return true;
+  }
+
   @Override
   public int hashCode()
   {
     int result = _protocolVersionOption != null ? _protocolVersionOption.hashCode() : 0;
     result = 31 * result + (_requestCompressionOverride != null ? _requestCompressionOverride.hashCode() : 0);
+    result = 31 * result + (_responseCompressionOverride != null ? _responseCompressionOverride.hashCode() : 0);
     result = 31 * result + (_contentType != null ? _contentType.hashCode() : 0);
     result = 31 * result + (_acceptTypes != null ? _acceptTypes.hashCode() : 0);
     return result;
   }
 
   @Override
-  public boolean equals(Object obj)
-  {
-    if (obj == this)
-    {
-      return true;
-    }
-    if (obj == null)
-    {
-      return false;
-    }
-    if (!(obj instanceof RestliRequestOptions))
-    {
-      return false;
-    }
-    RestliRequestOptions other = (RestliRequestOptions)obj;
-    if (_protocolVersionOption != other._protocolVersionOption)
-    {
-      return false;
-    }
-    if (_requestCompressionOverride != other._requestCompressionOverride)
-    {
-      return false;
-    }
-    if (_contentType != other._contentType)
-    {
-      return false;
-    }
-    if (_acceptTypes != null ? !_acceptTypes.equals(other._acceptTypes) : other._acceptTypes != null)
-    {
-      return false;
-    }
-    return true;
-  }
-
-  @Override
   public String toString()
   {
-    return "{_protocolVersionOption: "
-        + _protocolVersionOption.toString()
-        + ", _requestCompressionOverride: "
-        + (_requestCompressionOverride != null ? _requestCompressionOverride.toString() : "null")
-        + ", _contentType: "
-        + (_contentType != null ? _contentType.toString() : "null")
-        + ", _acceptTypes: "
-        + (_acceptTypes != null ? _acceptTypes.toString() : "null")
+    return "{_protocolVersionOption: " + _protocolVersionOption
+        + ", _requestCompressionOverride: " + _requestCompressionOverride
+        + ", _responseCompressionOverride: " + _responseCompressionOverride
+        + ", _contentType: " + _contentType
+        + ", _acceptTypes: " + _acceptTypes
         + "}";
   }
 }

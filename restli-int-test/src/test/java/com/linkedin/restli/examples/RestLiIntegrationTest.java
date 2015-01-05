@@ -24,7 +24,11 @@ import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.EngineBuilder;
+import com.linkedin.r2.filter.CompressionConfig;
 import com.linkedin.r2.filter.FilterChain;
+import com.linkedin.r2.filter.FilterChains;
+import com.linkedin.r2.filter.compression.ServerCompressionFilter;
+import com.linkedin.r2.filter.logging.SimpleLoggingFilter;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
@@ -87,23 +91,9 @@ public class RestLiIntegrationTest
 
   public void init(List<? extends RequestFilter> requestFilters, List<? extends ResponseFilter> responseFilters) throws IOException
   {
-    initSchedulerAndEngine();
-    _serverWithFilters =
-        RestLiIntTestServer.createServer(_engine,
-                                         RestLiIntTestServer.FILTERS_PORT,
-                                         RestLiIntTestServer.supportedCompression,
-                                         false,
-                                         -1,
-                                         requestFilters,
-                                         responseFilters);
-    _serverWithFilters.start();
-    initClient(FILTERS_URI_PREFIX);
-  }
-
-  public void init(List<? extends RequestFilter> requestFilters, List<? extends ResponseFilter> responseFilters,
-                   final FilterChain filterChain) throws IOException
-  {
-    init(requestFilters, responseFilters, filterChain, false);
+    final FilterChain fc = FilterChains.empty().addLast(new ServerCompressionFilter(RestLiIntTestServer.supportedCompression, new CompressionConfig(0)))
+        .addLast(new SimpleLoggingFilter());
+    init(requestFilters, responseFilters, fc, false);
   }
 
   public void init(List<? extends RequestFilter> requestFilters, List<? extends ResponseFilter> responseFilters,

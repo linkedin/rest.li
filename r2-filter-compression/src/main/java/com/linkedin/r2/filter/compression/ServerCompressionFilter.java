@@ -26,6 +26,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.linkedin.r2.filter.CompressionConfig;
 import com.linkedin.r2.filter.Filter;
 import com.linkedin.r2.filter.NextFilter;
 import com.linkedin.r2.filter.message.rest.RestFilter;
@@ -48,13 +49,16 @@ public class ServerCompressionFilter implements Filter, RestFilter
   private static final Logger LOG = LoggerFactory.getLogger(ServerCompressionFilter.class);
 
   private final Set<EncodingType> _supportedEncoding;
+  private final CompressionConfig _defaultResponseCompressionConfig;
+
+  private static final String EMPTY = "";
 
   /**
    * Instantiates an empty compression filter that does no compression.
    */
   public ServerCompressionFilter()
   {
-    this(new EncodingType[0]);
+    this(EMPTY);
   }
 
   /** Takes a comma delimited string containing standard
@@ -64,18 +68,28 @@ public class ServerCompressionFilter implements Filter, RestFilter
    */
   public ServerCompressionFilter(String acceptedFilters)
   {
-    this(AcceptEncoding.parseAcceptEncoding(acceptedFilters));
+    this(acceptedFilters, new CompressionConfig(Integer.MAX_VALUE));
+  }
+
+  public ServerCompressionFilter(String acceptedFilters, CompressionConfig responseCompressionConfig)
+  {
+    this(AcceptEncoding.parseAcceptEncoding(acceptedFilters), responseCompressionConfig);
   }
 
   /** Instantiates a compression filter
    * that supports the compression methods in the given set in argument.
    * @param supportedEncoding
    */
-  public ServerCompressionFilter(EncodingType[] supportedEncoding)
+  public ServerCompressionFilter(EncodingType[] supportedEncoding, CompressionConfig defaultResponseCompressionConfig)
   {
+    if (defaultResponseCompressionConfig == null)
+    {
+      throw new IllegalArgumentException(CompressionConstants.NULL_CONFIG_ERROR);
+    }
     _supportedEncoding = new HashSet<EncodingType>(Arrays.asList(supportedEncoding));
     _supportedEncoding.add(EncodingType.IDENTITY);
     _supportedEncoding.add(EncodingType.ANY);
+    _defaultResponseCompressionConfig = defaultResponseCompressionConfig;
   }
 
   /**
@@ -122,13 +136,17 @@ public class ServerCompressionFilter implements Filter, RestFilter
       }
 
       //Get client support for compression and flag compress if need be
-      String responseCompression = req.getHeader(HttpConstants.ACCEPT_ENCODING);
-      if (responseCompression == null)
+      String responseAcceptedEncodings = req.getHeader(HttpConstants.ACCEPT_ENCODING);
+      if (responseAcceptedEncodings == null)
       {
-        responseCompression = ""; //Only permit identity
+        responseAcceptedEncodings = EMPTY; //Only permit identity
       }
+      requestContext.putLocalAttr(HttpConstants.ACCEPT_ENCODING, responseAcceptedEncodings);
 
-      requestContext.putLocalAttr(HttpConstants.ACCEPT_ENCODING, responseCompression);
+      if (!responseAcceptedEncodings.isEmpty())
+      {
+        requestContext.putLocalAttr(HttpConstants.HEADER_RESPONSE_COMPRESSION_THRESHOLD, getResponseCompressionThreshold(req));
+      }
       nextFilter.onRequest(req, requestContext, wireAttrs);
     }
     catch (CompressionException e)
@@ -138,6 +156,24 @@ public class ServerCompressionFilter implements Filter, RestFilter
       RestResponse restResponse = new RestResponseBuilder().setStatus(HttpConstants.UNSUPPORTED_MEDIA_TYPE).build();
       nextFilter.onError(new RestException(restResponse, e), requestContext, wireAttrs);
     }
+  }
+
+  private int getResponseCompressionThreshold(RestRequest request) throws CompressionException
+  {
+    String responseCompressionThreshold = request.getHeader(HttpConstants.HEADER_RESPONSE_COMPRESSION_THRESHOLD);
+    // If Response-Compression-Threshold header is present, use that value. If not, use the value in _defaultResponseCompressionConfig.
+    if (responseCompressionThreshold != null)
+    {
+      try
+      {
+        return Integer.parseInt(responseCompressionThreshold);
+      }
+      catch (NumberFormatException e)
+      {
+        throw new CompressionException(CompressionConstants.INVALID_THRESHOLD + responseCompressionThreshold);
+      }
+    }
+    return _defaultResponseCompressionConfig.getCompressionThreshold();
   }
 
   /**
@@ -152,22 +188,20 @@ public class ServerCompressionFilter implements Filter, RestFilter
     {
       if (res.getEntity().length() > 0)
       {
-        String responseCompression = (String) requestContext.getLocalAttr(HttpConstants.ACCEPT_ENCODING);
-        if (responseCompression == null)
+        String responseAcceptedEncodings = (String) requestContext.getLocalAttr(HttpConstants.ACCEPT_ENCODING);
+        if (responseAcceptedEncodings == null)
         {
-          throw new CompressionException(CompressionConstants.UNKNOWN_ENCODING);
+          throw new CompressionException(HttpConstants.ACCEPT_ENCODING + " not in local attribute.");
         }
 
-        List<AcceptEncoding> parsedEncodings = AcceptEncoding.parseAcceptEncodingHeader(responseCompression, _supportedEncoding);
+        List<AcceptEncoding> parsedEncodings = AcceptEncoding.parseAcceptEncodingHeader(responseAcceptedEncodings, _supportedEncoding);
         EncodingType selectedEncoding = AcceptEncoding.chooseBest(parsedEncodings);
 
         //Check if there exists an acceptable encoding
         if (selectedEncoding != null)
         {
-          //NOTE: this is sort of problematic and is mirrored in 3 other places.
-          //ByteBuffer from res.getEntity() is read only, and it's awkward for
-          //compressor to return a sensible value for identity
-          if (selectedEncoding.hasCompressor())
+          if (selectedEncoding.hasCompressor() &&
+              res.getEntity().length() > (Integer) requestContext.getLocalAttr(HttpConstants.HEADER_RESPONSE_COMPRESSION_THRESHOLD))
           {
             Compressor compressor = selectedEncoding.getCompressor();
             byte[] compressed = compressor.deflate(res.getEntity().asInputStream());

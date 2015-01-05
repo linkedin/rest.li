@@ -1,5 +1,7 @@
 2.10.5
 -----
+(RB=419425)
+Align response compression with request compression.
 
 2.10.4
 -----

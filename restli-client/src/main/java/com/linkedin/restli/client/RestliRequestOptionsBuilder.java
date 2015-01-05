@@ -34,6 +34,7 @@ public class RestliRequestOptionsBuilder
   private CompressionOption _requestCompressionOverride;
   private RestClient.ContentType _contentType;
   private List<RestClient.AcceptType> _acceptTypes;
+  private CompressionOption _responseCompressionOverride;
 
   public RestliRequestOptionsBuilder()
   {
@@ -44,6 +45,7 @@ public class RestliRequestOptionsBuilder
   {
     setProtocolVersionOption(restliRequestOptions.getProtocolVersionOption());
     setRequestCompressionOverride(restliRequestOptions.getRequestCompressionOverride());
+    setResponseCompressionOverride(restliRequestOptions.getResponseCompressionOverride());
     setContentType(restliRequestOptions.getContentType());
     setAcceptTypes(restliRequestOptions.getAcceptTypes());
   }
@@ -72,8 +74,14 @@ public class RestliRequestOptionsBuilder
     return this;
   }
 
+  public RestliRequestOptionsBuilder setResponseCompressionOverride(CompressionOption responseCompressionOverride)
+  {
+    _responseCompressionOverride = responseCompressionOverride;
+    return this;
+  }
+
   public RestliRequestOptions build()
   {
-    return new RestliRequestOptions(_protocolVersionOption, _requestCompressionOverride, _contentType, _acceptTypes);
+    return new RestliRequestOptions(_protocolVersionOption, _requestCompressionOverride, _responseCompressionOverride, _contentType, _acceptTypes);
   }
 }
