@@ -137,6 +137,8 @@ public class HttpClientFactory implements TransportClientFactory
   private final CompressionConfig          _defaultRequestCompressionConfig;
   /** Request compression config for each http service. */
   private final Map<String, CompressionConfig> _requestCompressionConfigs;
+  /** Response compression config for each http service. */
+  private final Map<String, CompressionConfig> _responseCompressionConfigs;
 
   // All fields below protected by _mutex
   private final Object                     _mutex               = new Object();
@@ -279,6 +281,23 @@ public class HttpClientFactory implements TransportClientFactory
                            final int requestCompressionThresholdDefault,
                            final Map<String, CompressionConfig> requestCompressionConfigs)
   {
+    this(filters, channelFactory, shutdownFactory, executor, shutdownExecutor, callbackExecutor,
+        shutdownCallbackExecutor, jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs,
+        Collections.<String, CompressionConfig>emptyMap());
+  }
+
+  public HttpClientFactory(FilterChain filters,
+                           ClientSocketChannelFactory channelFactory,
+                           boolean shutdownFactory,
+                           ScheduledExecutorService executor,
+                           boolean shutdownExecutor,
+                           ExecutorService callbackExecutor,
+                           boolean shutdownCallbackExecutor,
+                           AbstractJmxManager jmxManager,
+                           final int requestCompressionThresholdDefault,
+                           final Map<String, CompressionConfig> requestCompressionConfigs,
+                           final Map<String, CompressionConfig> responseCompressionConfigs)
+  {
     _filters = filters;
     _channelFactory = channelFactory;
     _shutdownFactory = shutdownFactory;
@@ -287,16 +306,17 @@ public class HttpClientFactory implements TransportClientFactory
     _callbackExecutor = callbackExecutor;
     _shutdownCallbackExecutor = shutdownCallbackExecutor;
     _jmxManager = jmxManager;
-    if (requestCompressionThresholdDefault < 0)
-    {
-      throw new IllegalArgumentException("requestCompressionThresholdDefault should not be negative.");
-    }
     _defaultRequestCompressionConfig = new CompressionConfig(requestCompressionThresholdDefault);
     if (requestCompressionConfigs == null)
     {
       throw new IllegalArgumentException("requestCompressionConfigs should not be null.");
     }
     _requestCompressionConfigs = Collections.unmodifiableMap(requestCompressionConfigs);
+    if (responseCompressionConfigs == null)
+    {
+      throw new IllegalArgumentException("responseCompressionConfigs should not be null.");
+    }
+    _responseCompressionConfigs = Collections.unmodifiableMap(responseCompressionConfigs);
   }
 
   @Override
@@ -338,7 +358,7 @@ public class HttpClientFactory implements TransportClientFactory
     return valueClass.cast(value);
   }
 
-  /* package private */ CompressionConfig getCompressionConfig(String httpServiceName, String requestContentEncodingName)
+  /* package private */ CompressionConfig getRequestCompressionConfig(String httpServiceName, String requestContentEncodingName)
   {
     if (_requestCompressionConfigs.containsKey(httpServiceName))
     {
@@ -374,20 +394,16 @@ public class HttpClientFactory implements TransportClientFactory
              sslContext);
     TransportClient client = getRawClient(properties, sslContext, sslParameters);
 
-    List<String> httpResponseCompressionOperations = ConfigValueExtractor.buildList(properties.remove(HTTP_RESPONSE_COMPRESSION_OPERATIONS),
-                                                                                    LIST_SEPARATOR);
     List<String> httpRequestServerSupportedEncodings = ConfigValueExtractor.buildList(properties.remove(HTTP_REQUEST_CONTENT_ENCODINGS),
                                                                                       LIST_SEPARATOR);
     FilterChain filters;
 
     String httpServiceName = (String) properties.get(HTTP_SERVICE_NAME);
     String requestContentEncodingName = getRequestContentEncodingName(httpRequestServerSupportedEncodings);
-    CompressionConfig compressionConfig = getCompressionConfig(httpServiceName, requestContentEncodingName);
-    String responseCompressionSchemaName = httpResponseCompressionOperations.isEmpty() ? "" : buildAcceptEncodingSchemaNames();
     filters = _filters.addLast(new ClientCompressionFilter(requestContentEncodingName,
-                                                           compressionConfig,
-                                                           responseCompressionSchemaName,
-                                                           httpResponseCompressionOperations));
+                                                           getRequestCompressionConfig(httpServiceName, requestContentEncodingName),
+                                                           buildAcceptEncodingSchemaNames(),
+                                                           _responseCompressionConfigs.get(httpServiceName)));
 
     client = new FilterChainClient(client, filters);
     client = new FactoryClient(client);

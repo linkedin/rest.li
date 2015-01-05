@@ -641,7 +641,8 @@ public class RestClientTest
   {
     for (Map.Entry<String, Object> attr : DEFAULT_REQUEST_CONTEXT.getLocalAttrs().entrySet())
     {
-      if (attr.getKey().equals(R2Constants.OPERATION) || attr.getKey().equals(R2Constants.REQUEST_COMPRESSION_OVERRIDE))
+      if (attr.getKey().equals(R2Constants.OPERATION) || attr.getKey().equals(R2Constants.REQUEST_COMPRESSION_OVERRIDE)
+          || attr.getKey().equals(R2Constants.RESPONSE_COMPRESSION_OVERRIDE))
       {
         continue;
       }

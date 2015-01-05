@@ -28,19 +28,22 @@ public class RestliRequestOptions
 {
   private final ProtocolVersionOption _protocolVersionOption;
   private final CompressionOption _requestCompressionOverride;
+  private final CompressionOption _responseCompressionOverride;
 
   public static final RestliRequestOptions DEFAULT_OPTIONS
-      = new RestliRequestOptions(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, null);
+      = new RestliRequestOptions(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, null, null);
 
   public static final RestliRequestOptions FORCE_USE_NEXT_OPTION =
-      new RestliRequestOptions(ProtocolVersionOption.FORCE_USE_NEXT, null);
+      new RestliRequestOptions(ProtocolVersionOption.FORCE_USE_NEXT, null, null);
 
   // use {@link RestliRequestOptionsBuilder} to construct new instance.
-  RestliRequestOptions(ProtocolVersionOption protocolVersionOption, CompressionOption requestCompressionOverride)
+  RestliRequestOptions(ProtocolVersionOption protocolVersionOption, CompressionOption requestCompressionOverride,
+                       CompressionOption responseCompressionOverride)
   {
     _protocolVersionOption =
         (protocolVersionOption == null) ? ProtocolVersionOption.USE_LATEST_IF_AVAILABLE : protocolVersionOption;
     _requestCompressionOverride = requestCompressionOverride;
+    _responseCompressionOverride = responseCompressionOverride;
   }
 
   public ProtocolVersionOption getProtocolVersionOption()
@@ -53,44 +56,56 @@ public class RestliRequestOptions
     return _requestCompressionOverride;
   }
 
+  public CompressionOption getResponseCompressionOverride()
+  {
+    return _responseCompressionOverride;
+  }
+
   @Override
   public int hashCode()
   {
     int result = _protocolVersionOption != null ? _protocolVersionOption.hashCode() : 0;
     result = 31 * result + (_requestCompressionOverride != null ? _requestCompressionOverride.hashCode() : 0);
+    result = 31 * result + (_responseCompressionOverride != null ? _responseCompressionOverride.hashCode() : 0);
     return result;
   }
 
   @Override
-  public boolean equals(Object obj)
+  public boolean equals(Object o)
   {
-    if (obj == this)
+    if (this == o)
     {
       return true;
     }
-    if (obj == null)
+    if (o == null || getClass() != o.getClass())
     {
       return false;
     }
-    if (!(obj instanceof RestliRequestOptions))
+
+    RestliRequestOptions that = (RestliRequestOptions) o;
+
+    if (_protocolVersionOption != that._protocolVersionOption)
     {
       return false;
     }
-    RestliRequestOptions other = (RestliRequestOptions)obj;
-    if (_protocolVersionOption != other._protocolVersionOption)
+    if (_requestCompressionOverride != that._requestCompressionOverride)
     {
       return false;
     }
-    return _requestCompressionOverride == other._requestCompressionOverride;
+    if (_responseCompressionOverride != that._responseCompressionOverride)
+    {
+      return false;
+    }
+
+    return true;
   }
 
   @Override
   public String toString()
   {
-    return "{_protocolVersionOption: "
-        + _protocolVersionOption.toString()
-        + ", _requestCompressionOverride: "
-        + (_requestCompressionOverride != null ? _requestCompressionOverride.toString() : "null")
-        + "}";
+    return "{_protocolVersionOption: " + _protocolVersionOption.toString()
+        + ", _requestCompressionOverride: " + _requestCompressionOverride
+        + ", _responseCompressionOverride: " + _responseCompressionOverride
+        + '}';
   }
 }
