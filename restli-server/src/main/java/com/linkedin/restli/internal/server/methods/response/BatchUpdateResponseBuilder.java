@@ -19,7 +19,6 @@ package com.linkedin.restli.internal.server.methods.response;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.collections.CheckedUtil;
-import com.linkedin.data.template.SetMode;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.ErrorResponse;
@@ -40,12 +39,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-
 /**
  * @author Josh Walker
  * @version $Revision: $
  */
-
 public final class BatchUpdateResponseBuilder implements RestLiResponseBuilder
 {
   private final ErrorResponseBuilder _errorResponseBuilder;
@@ -119,19 +116,19 @@ public final class BatchUpdateResponseBuilder implements RestLiResponseBuilder
     {
       final UpdateStatus status = new UpdateStatus();
 
-      final ErrorResponse error = errors.get(key);
-      if (error != null)
-      {
-        status.setStatus(error.getStatus());
-        status.setError(error);
-      }
-
       final UpdateResponse update = updates.get(key);
       if (update != null)
       {
-        // The status from UpdateResponse overwrites the one in RestLiServiceException/ErrorResponse,
-        // if both are provided for the same key.
         status.setStatus(update.getStatus().getCode());
+      }
+
+      final ErrorResponse error = errors.get(key);
+      if (error != null)
+      {
+        // The status from RestLiServiceException/ErrorResponse overwrites the one in UpdateResponse,
+        // if both are provided for the same key.
+        status.setStatus(error.getStatus());
+        status.setError(error);
       }
 
       results.put(key, status);

@@ -25,7 +25,6 @@ import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
-import com.linkedin.restli.client.ActionRequest;
 import com.linkedin.restli.client.BatchCreateIdRequest;
 import com.linkedin.restli.client.BatchCreateIdRequestBuilder;
 import com.linkedin.restli.client.BatchCreateRequestBuilder;
@@ -63,10 +62,9 @@ import com.linkedin.restli.examples.greetings.client.ComplexKeysBuilders;
 import com.linkedin.restli.examples.greetings.client.ComplexKeysRequestBuilders;
 import com.linkedin.restli.examples.greetings.client.ComplexKeysSubBuilders;
 import com.linkedin.restli.examples.greetings.client.ComplexKeysSubRequestBuilders;
-import com.linkedin.restli.internal.common.ProtocolVersionUtil;
-import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -75,12 +73,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-
 
 public class TestComplexKeysResource extends RestLiIntegrationTest
 {
@@ -605,6 +603,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     final BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, UpdateStatus> response =
         future.getResponse().getEntity();
 
+    Assert.assertEquals(response.getResults().size(), inputs.size());
     for (Map.Entry<ComplexResourceKey<TwoPartKey, TwoPartKey>, UpdateStatus> resp : response.getResults().entrySet())
     {
       Assert.assertTrue(inputs.containsKey(resp.getKey()));
