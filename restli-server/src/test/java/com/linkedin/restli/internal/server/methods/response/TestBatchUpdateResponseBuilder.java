@@ -61,10 +61,19 @@ public class TestBatchUpdateResponseBuilder
     Map<CompoundKey, UpdateResponse> results = new HashMap<CompoundKey, UpdateResponse>();
     results.put(c1, new UpdateResponse(HttpStatus.S_202_ACCEPTED));
     results.put(c2, new UpdateResponse(HttpStatus.S_202_ACCEPTED));
+
     RestLiServiceException restLiServiceException = new RestLiServiceException(HttpStatus.S_404_NOT_FOUND);
+    Map<CompoundKey, RestLiServiceException> errors = Collections.singletonMap(c3, restLiServiceException);
 
     BatchUpdateResult<CompoundKey, Foo> batchUpdateResult =
-        new BatchUpdateResult<CompoundKey, Foo>(results, Collections.singletonMap(c3, restLiServiceException));
+        new BatchUpdateResult<CompoundKey, Foo>(results, errors);
+
+    Map<CompoundKey, UpdateResponse> keyOverlapResults = new HashMap<CompoundKey, UpdateResponse>();
+    keyOverlapResults.put(c1, new UpdateResponse(HttpStatus.S_202_ACCEPTED));
+    keyOverlapResults.put(c2, new UpdateResponse(HttpStatus.S_202_ACCEPTED));
+    keyOverlapResults.put(c3, new UpdateResponse(HttpStatus.S_404_NOT_FOUND));
+    BatchUpdateResult<CompoundKey, Foo> keyOverlapBatchUpdateResult =
+        new BatchUpdateResult<CompoundKey, Foo>(keyOverlapResults, errors);
 
     UpdateStatus updateStatus = new UpdateStatus().setStatus(202);
     ErrorResponse errorResponse = new ErrorResponse().setStatus(404);
@@ -84,7 +93,8 @@ public class TestBatchUpdateResponseBuilder
     return new Object[][]
         {
             {batchUpdateResult, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), expectedProtocol1Results, expectedProtocol1Errors},
-            {batchUpdateResult, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), expectedProtocol2Results, expectedProtocol2Errors}
+            {batchUpdateResult, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), expectedProtocol2Results, expectedProtocol2Errors},
+            {keyOverlapBatchUpdateResult, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), expectedProtocol2Results, expectedProtocol2Errors}
         };
   }
 
