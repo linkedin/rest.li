@@ -81,13 +81,6 @@ public final class BatchUpdateResponseBuilder implements RestLiResponseBuilder
           "Unexpected null encountered. Null Map found inside of the BatchUpdateResult returned by the resource method: "
               + routingResult.getResourceMethod());
     }
-    //Verify that there is no null key in the map. If so, this is a developer error.
-    if (results.containsKey(null))
-    {
-      throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
-          "Unexpected null encountered. Null key inside of the Map returned inside of the BatchUpdateResult returned by the resource method: "
-              + routingResult.getResourceMethod());
-    }
 
     final Map<Object, RestLiServiceException> serviceErrors = updateResult.getErrors();
     //Verify the errors map is not null. If so, this is a developer error.
