@@ -113,7 +113,7 @@ public class BatchGetRequestUtil
    * @throws com.linkedin.r2.RemoteInvocationException if the server returned an error response for this resource,
    * or if it returned neither a result nor an error.
    */
-  public static <K, V extends RecordTemplate> Response<V> unbatchKVResponse(Request request,
+  public static <K, V extends RecordTemplate> Response<V> unbatchKVResponse(Request<BatchKVResponse<K, V>> request,
                                                                             Response<BatchKVResponse<K, V>> batchResponse,
                                                                             K id)
       throws RemoteInvocationException
@@ -141,7 +141,7 @@ public class BatchGetRequestUtil
    * @throws com.linkedin.r2.RemoteInvocationException if the server returned an error response for this resource,
    * or if it returned neither a result nor an error.
    */
-  public static <T extends RecordTemplate> Response<T> unbatchResponse(Request request,
+  public static <T extends RecordTemplate> Response<T> unbatchResponse(Request<BatchResponse<T>> request,
                                                                        Response<BatchResponse<T>> batchResponse,
                                                                        Object id)
       throws RemoteInvocationException
