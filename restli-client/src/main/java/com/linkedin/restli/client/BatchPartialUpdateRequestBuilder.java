@@ -152,7 +152,7 @@ public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> exten
     try
     {
       DataMap map = new DataMap();
-      @SuppressWarnings("unchecked")
+      @SuppressWarnings({ "unchecked", "rawtypes" })
       CollectionRequest<KeyValueRecord<K, PatchRequest<V>>> input = new CollectionRequest(map, KeyValueRecord.class);
 
       for (Map.Entry<K, PatchRequest<V>> inputEntityEntry : _partialUpdateInputMap.entrySet())

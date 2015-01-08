@@ -159,7 +159,7 @@ public class BatchUpdateRequestBuilder<K, V extends RecordTemplate> extends
     try
     {
       DataMap map = new DataMap();
-      @SuppressWarnings("unchecked")
+      @SuppressWarnings({"unchecked", "rawtypes"})
       CollectionRequest<KeyValueRecord<K, V>> input = new CollectionRequest(map, KeyValueRecord.class);
 
       for (Map.Entry<K, V> inputEntityEntry : _updateInputMap.entrySet())

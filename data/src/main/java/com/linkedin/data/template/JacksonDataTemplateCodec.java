@@ -97,7 +97,7 @@ public class JacksonDataTemplateCodec extends JacksonDataCodec
    * of the DataTemplate will use {@link com.linkedin.data.template.JacksonDataTemplateCodec.SchemaOrderTraverseCallback}
    * to order the output.
    *
-   * Refer to the documentation of {@link JacksonDataTemplateCodec#dataTemplateToJsonGenerator(java.lang.Object, com.linkedin.data.schema.DataSchema, com.fasterxml.jackson.core.JsonGenerator, boolean)
+   * Refer to the documentation of {@link JacksonDataTemplateCodec#dataTemplateToJsonGenerator(java.lang.Object, com.linkedin.data.schema.DataSchema, com.fasterxml.jackson.core.JsonGenerator, boolean)}
    *
    * @param  template the template to write.
    * @param  generator the underlying JsonGenerator to call when the value is to be output.
@@ -152,7 +152,7 @@ public class JacksonDataTemplateCodec extends JacksonDataCodec
    * {@link java.io.OutputStream}. If the order is set to to true, then the resulting serialization of the DataTemplate
    * will use {@link com.linkedin.data.template.JacksonDataTemplateCodec.SchemaOrderTraverseCallback} to order the output.
    *
-   * Refer to the documentation of {@link JacksonDataTemplateCodec#writeDataTemplate(java.lang.Object, com.linkedin.data.schema.DataSchema, com.fasterxml.jackson.core.JsonGenerator, boolean)
+   * Refer to the documentation of {@link JacksonDataTemplateCodec#writeDataTemplate(java.lang.Object, com.linkedin.data.schema.DataSchema, com.fasterxml.jackson.core.JsonGenerator, boolean)}
    *
    * @param  template the template to write.
    * @param  out the OutputStream to write the serialized JSON to.
@@ -169,7 +169,7 @@ public class JacksonDataTemplateCodec extends JacksonDataCodec
    * {@link java.io.Writer}. If the order is set to to true, then the resulting serialization of the DataTemplate
    * will use {@link com.linkedin.data.template.JacksonDataTemplateCodec.SchemaOrderTraverseCallback} to order the output.
    *
-   * Refer to the documentation of {@link JacksonDataTemplateCodec#writeDataTemplate(java.lang.Object, com.linkedin.data.schema.DataSchema, com.fasterxml.jackson.core.JsonGenerator, boolean)
+   * Refer to the documentation of {@link JacksonDataTemplateCodec#writeDataTemplate(java.lang.Object, com.linkedin.data.schema.DataSchema, com.fasterxml.jackson.core.JsonGenerator, boolean)}
    *
    * @param  template the template to write.
    * @param  out the Writer to write the serialized JSON to.
@@ -187,7 +187,7 @@ public class JacksonDataTemplateCodec extends JacksonDataCodec
    * {@link com.linkedin.data.schema.DataSchema}. The output is then written to the provided {@link java.io.OutputStream}.
    * The most typical use case of this method is to write a {@link com.linkedin.data.template.DataTemplate}.
    *
-   * Refer to the documentation of {@link JacksonDataTemplateCodec#writeDataTemplate(java.lang.Object, com.linkedin.data.schema.DataSchema, com.fasterxml.jackson.core.JsonGenerator, boolean)
+   * Refer to the documentation of {@link JacksonDataTemplateCodec#writeDataTemplate(java.lang.Object, com.linkedin.data.schema.DataSchema, com.fasterxml.jackson.core.JsonGenerator, boolean)}
    *
    * @param  data the data to serialize. Note that data here must be any of the acceptable Pegasus Data types. For example,
    *         {@link java.lang.Integer}, {@link java.lang.String}, {@link com.linkedin.data.DataList}, etc.
@@ -211,7 +211,7 @@ public class JacksonDataTemplateCodec extends JacksonDataCodec
    * {@link com.linkedin.data.schema.DataSchema}. The output is then written to the provided {@link java.io.Writer}.
    * The most typical use case of this method is to write a {@link com.linkedin.data.template.DataTemplate}.
    *
-   * Refer to the documentation of {@link JacksonDataTemplateCodec#writeDataTemplate(java.lang.Object, com.linkedin.data.schema.DataSchema, com.fasterxml.jackson.core.JsonGenerator, boolean)
+   * Refer to the documentation of {@link JacksonDataTemplateCodec#writeDataTemplate(java.lang.Object, com.linkedin.data.schema.DataSchema, com.fasterxml.jackson.core.JsonGenerator, boolean)}
    *
    * @param  data the data to serialize. Note that data here must be any of the acceptable Pegasus Data types. For example,
    *         {@link java.lang.Integer}, {@link java.lang.String}, {@link com.linkedin.data.DataList}, etc.
@@ -233,7 +233,7 @@ public class JacksonDataTemplateCodec extends JacksonDataCodec
    * Serializes the provided {@link com.linkedin.data.template.DataTemplate} to JSON and writes it to the provided
    * {@link java.io.OutputStream}. The serialized JSON is not ordered.
    *
-   * Refer to the documentation of {@link JacksonDataTemplateCodec#writeDataTemplate(java.lang.Object, com.linkedin.data.schema.DataSchema, com.fasterxml.jackson.core.JsonGenerator, boolean)
+   * Refer to the documentation of {@link JacksonDataTemplateCodec#writeDataTemplate(java.lang.Object, com.linkedin.data.schema.DataSchema, com.fasterxml.jackson.core.JsonGenerator, boolean)}
    *
    * @param  template the template to write.
    * @param  out the OutputStream to write the serialized JSON to.
@@ -248,7 +248,7 @@ public class JacksonDataTemplateCodec extends JacksonDataCodec
    * Serializes the provided {@link com.linkedin.data.template.DataTemplate} to JSON and writes it to the provided
    * {@link java.io.Writer}. The serialized JSON is not ordered.
    *
-   * Refer to the documentation of {@link JacksonDataTemplateCodec#writeDataTemplate(java.lang.Object, com.linkedin.data.schema.DataSchema, com.fasterxml.jackson.core.JsonGenerator, boolean)
+   * Refer to the documentation of {@link JacksonDataTemplateCodec#writeDataTemplate(java.lang.Object, com.linkedin.data.schema.DataSchema, com.fasterxml.jackson.core.JsonGenerator, boolean)}
    *
    * @param  template the template to write.
    * @param  out the Writer to write the serialized JSON to.

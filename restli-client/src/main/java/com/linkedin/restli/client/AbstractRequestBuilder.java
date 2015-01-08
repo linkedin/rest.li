@@ -348,13 +348,13 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
     }
   }
 
-  protected <T extends DataTemplate> T getReadOnlyOrCopyDataTemplate(T value) throws CloneNotSupportedException
+  protected <T extends DataTemplate<?>> T getReadOnlyOrCopyDataTemplate(T value) throws CloneNotSupportedException
   {
     return getReadOnlyOrCopyDataTemplateObject(value);
   }
 
   @SuppressWarnings("unchecked")
-  static private <D extends DataTemplate> D getReadOnlyOrCopyDataTemplateObject(D value) throws CloneNotSupportedException
+  static private <D extends DataTemplate<?>> D getReadOnlyOrCopyDataTemplateObject(D value) throws CloneNotSupportedException
   {
     if (value == null)
     {
@@ -385,7 +385,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
   {
     if (key instanceof ComplexResourceKey)
     {
-      ComplexResourceKey complexKey = ((ComplexResourceKey) key);
+      ComplexResourceKey<?, ?> complexKey = ((ComplexResourceKey) key);
 
       if (!complexKey.isReadOnly())
       {

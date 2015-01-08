@@ -1695,7 +1695,7 @@ public class TestClientBuilders
                                               t1,
                                               t2,
                                               TestRecord.class,
-                                              (CollectionRequest<KeyValueRecord>) request.getInputRecord());
+                                              (CollectionRequest<KeyValueRecord<?, TestRecord>>) request.getInputRecord());
 
     checkKeyValueMapIsReadOnly(id1, id2, t1, t2, TestRecord.class, request.getUpdateInputMap());
 
@@ -1709,7 +1709,7 @@ public class TestClientBuilders
                                               t1,
                                               t2,
                                               TestRecord.class,
-                                              (CollectionRequest<KeyValueRecord>) request.getInputRecord());
+                                              (CollectionRequest<KeyValueRecord<?, TestRecord>>) request.getInputRecord());
 
     checkKeyValueMapIsReadOnly(id1, id2, t1, t2, TestRecord.class, request.getUpdateInputMap());
   }
@@ -1765,14 +1765,15 @@ public class TestClientBuilders
   }
 
   @SuppressWarnings("unchecked")
-  private void checkKeyValueRecordCollectionIsReadOnly(ComplexResourceKey<TestRecord, TestRecord> id1,
+  private <V extends RecordTemplate> void checkKeyValueRecordCollectionIsReadOnly(
+                                                         ComplexResourceKey<TestRecord, TestRecord> id1,
                                                          ComplexResourceKey<TestRecord, TestRecord> id2,
                                                          RecordTemplate t1,
                                                          RecordTemplate t2,
-                                                         Class<? extends RecordTemplate> valueClass,
-                                                         CollectionRequest<KeyValueRecord> entries)
+                                                         Class<V> valueClass,
+                                                         CollectionRequest<KeyValueRecord<?, V>> entries)
   {
-    for (KeyValueRecord entry : entries.getElements())
+    for (KeyValueRecord<?, V> entry : entries.getElements())
     {
       ComplexResourceKey<TestRecord, TestRecord> generatedKey =
           entry.getComplexKey(TestRecord.class, TestRecord.class);
@@ -1980,7 +1981,7 @@ public class TestClientBuilders
   }
 
   @Test
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   public void testBatchPartialUpdateRequestInputIsReadOnly()
   {
     BatchPartialUpdateRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> builder =
@@ -2004,7 +2005,7 @@ public class TestClientBuilders
                                               t1,
                                               t2,
                                               PatchRequest.class,
-                                              (CollectionRequest<KeyValueRecord>) request.getInputRecord());
+                                              (CollectionRequest<KeyValueRecord<?, PatchRequest>>) request.getInputRecord());
 
     id1.makeReadOnly();
     t2.data().makeReadOnly();
@@ -2016,7 +2017,7 @@ public class TestClientBuilders
                                               t1,
                                               t2,
                                               PatchRequest.class,
-                                              (CollectionRequest<KeyValueRecord>) request.getInputRecord());
+                                              (CollectionRequest<KeyValueRecord<?, PatchRequest>>) request.getInputRecord());
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subSubResourceAction1")
