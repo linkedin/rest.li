@@ -3316,15 +3316,18 @@ public class TestClientBuilders
   @SuppressWarnings({"unchecked", "rawtypes"})
   private void checkInputForBatchUpdateAndPatch(Request<?> request, RecordTemplate expectedInput, ProtocolVersion version)
   {
+    final TypeSpec<? extends RecordTemplate> valueType =
+        request.getMethod() == ResourceMethod.BATCH_PARTIAL_UPDATE ?
+          new TypeSpec<PatchRequest>(PatchRequest.class) :
+          request.getResourceProperties().getValueType();
+
     Assert.assertEquals(
       CollectionRequestUtil.convertToBatchRequest(
         (CollectionRequest<KeyValueRecord>) request.getInputRecord(),
         request.getResourceProperties().getKeyType(),
         request.getResourceProperties().getComplexKeyType(),
         request.getResourceProperties().getKeyParts(),
-        request.getMethod() == ResourceMethod.BATCH_PARTIAL_UPDATE ?
-            new TypeSpec<PatchRequest>(PatchRequest.class) :
-            request.getResourceProperties().getValueType(),
+        valueType,
         version),
       expectedInput);
   }
