@@ -5,6 +5,16 @@ public interface HttpConstants
   public static final String ACCEPT_ENCODING = "Accept-Encoding";
   public static final String CONTENT_ENCODING = "Content-Encoding";
 
+  /**
+   * HTTP Cookie header name. See RFC 2109.
+   */
+  public static final String REQUEST_COOKIE_HEADER_NAME = "Cookie";
+
+  /**
+   * HTTP Set-Cookie header name. See RFC 2109.
+   */
+  public static final String RESPONSE_COOKIE_HEADER_NAME = "Set-Cookie";
+
   public static final int NOT_ACCEPTABLE = 406;
   public static final int OK = 200;
   public static final int UNSUPPORTED_MEDIA_TYPE = 415;

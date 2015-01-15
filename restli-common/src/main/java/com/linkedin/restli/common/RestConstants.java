@@ -14,6 +14,7 @@
    limitations under the License.
 */
 
+
 package com.linkedin.restli.common;
 
 import java.nio.charset.Charset;
@@ -23,6 +24,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+
 
 public interface RestConstants
 {
@@ -42,7 +44,6 @@ public interface RestConstants
   String HEADER_VALUE_APPLICATION_PSON = "application/x-pson";
   String HEADER_VALUE_ACCEPT_ANY = "*/*";
   String HEADER_RESTLI_PROTOCOL_VERSION = "X-RestLi-Protocol-Version";
-  String HEADER_RESTLI_PROTOCOL_VERSION_DEPRECATED = "X-Restli-Protocol-Version"; // deprecated this to be consistent with the capitalization of RestLi in other headers
 
   List<String> SUPPORTED_MIME_TYPES = Arrays.asList(HEADER_VALUE_APPLICATION_PSON, HEADER_VALUE_APPLICATION_JSON);
 

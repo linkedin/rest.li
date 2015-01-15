@@ -17,14 +17,19 @@
 /* $Id$ */
 package com.linkedin.r2.message.rest;
 
+
+import com.linkedin.r2.message.BaseMessageBuilder;
+import com.linkedin.r2.transport.http.common.HttpConstants;
+import com.linkedin.util.ArgumentUtil;
+
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
-import com.linkedin.r2.message.BaseMessageBuilder;
-import com.linkedin.util.ArgumentUtil;
 
 /**
  * Abstract base class for {@link RestMessage} builders.
@@ -33,17 +38,24 @@ import com.linkedin.util.ArgumentUtil;
  * @version $Revision$
  */
 public abstract class BaseRestMessageBuilder<B extends BaseRestMessageBuilder<B>>
-        extends BaseMessageBuilder<B>
-        implements RestMessageBuilder<B>
+    extends BaseMessageBuilder<B>
+    implements RestMessageBuilder<B>
 {
+  private static final String CANONICAL_REGEX = "[ \t\n\r]+";
+
+  private static final String CANONICAL_REPLACEMENT = " ";
+
   private Map<String, String> _headers;
+
+  private List<String> _cookies;
 
   /**
    * Constructs a new builder with no initial values.
    */
   public BaseRestMessageBuilder()
   {
-    unsafeSetHeaders(Collections.<String, String>emptyMap());
+    setHeaders(Collections.<String, String>emptyMap());
+    setCookies(Collections.<String>emptyList());
   }
 
   /**
@@ -55,7 +67,8 @@ public abstract class BaseRestMessageBuilder<B extends BaseRestMessageBuilder<B>
   public BaseRestMessageBuilder(RestMessage message)
   {
     super(message);
-    unsafeSetHeaders(message.getHeaders());
+    setHeaders(message.getHeaders());
+    setCookies(message.getCookies());
   }
 
   @Override
@@ -89,6 +102,20 @@ public abstract class BaseRestMessageBuilder<B extends BaseRestMessageBuilder<B>
   }
 
   @Override
+  public B addCookie(String cookie)
+  {
+    _cookies.add(cookie);
+    return thisBuilder();
+  }
+
+  @Override
+  public B setCookies(List<String> cookies)
+  {
+    _cookies = new ArrayList<String>(cookies);
+    return thisBuilder();
+  }
+
+  @Override
   public B clearHeaders()
   {
     _headers.clear();
@@ -96,9 +123,22 @@ public abstract class BaseRestMessageBuilder<B extends BaseRestMessageBuilder<B>
   }
 
   @Override
+  public B clearCookies()
+  {
+    _cookies.clear();
+    return thisBuilder();
+  }
+
+  @Override
   public Map<String, String> getHeaders()
   {
     return Collections.unmodifiableMap(_headers);
+  }
+
+  @Override
+  public List<String> getCookies()
+  {
+    return Collections.unmodifiableList(_cookies);
   }
 
   @Override
@@ -136,7 +176,7 @@ public abstract class BaseRestMessageBuilder<B extends BaseRestMessageBuilder<B>
    * Appends a value to a header. This method should only be used when the headers are already known
    * to be properly validated.
    *
-   * @param name the name of the header
+   * @param name  the name of the header
    * @param value the value to append to the header
    * @return this builder
    */
@@ -144,9 +184,19 @@ public abstract class BaseRestMessageBuilder<B extends BaseRestMessageBuilder<B>
   {
     // This is "safe" because we explicitly state in MessageBuilder that the builder is not thread
     // safe and proper external synchronization must be used to use instances across threads.
-    final String currVal = _headers.get(name);
-    final String newVal = currVal != null ? currVal + ',' + value : value;
-    _headers.put(name, newVal);
+    final String current = _headers.get(name);
+
+    if (current == null)
+    {
+      _headers.put(name, value);
+    }
+    else
+    {
+      StringBuilder builder = new StringBuilder();
+      builder.append(current).append(',').append(value);
+      _headers.put(name, builder.toString());
+    }
+
     return thisBuilder();
   }
 
@@ -159,8 +209,8 @@ public abstract class BaseRestMessageBuilder<B extends BaseRestMessageBuilder<B>
    */
   public B unsafeSetHeaders(Map<String, String> headers)
   {
-    _headers = new HashMap<String, String>(headers);
-    return thisBuilder();
+    _headers = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    return unsafeOverwriteHeaders(headers);
   }
 
   /**
@@ -178,7 +228,8 @@ public abstract class BaseRestMessageBuilder<B extends BaseRestMessageBuilder<B>
 
   /**
    * Strictly validates the given fieldNames to ensure that they conform to the field-name
-   * specification in RFC 2616, section 2.2.
+   * specification in RFC 2616, section 2.2. In addition, validates {@code name} is not a
+   * cookie related header.
    *
    * @param fieldNames the field names to validate
    */
@@ -191,7 +242,8 @@ public abstract class BaseRestMessageBuilder<B extends BaseRestMessageBuilder<B>
   }
 
   /**
-   * Strictly validates the given field-name conforms to RFC 2616, section 2.2.
+   * Strictly validates {@code name} conforms to RFC 2616, section 2.2. In addition,
+   * validates {@code name} is not a cookie related header.
    *
    * @param name the name to test for conformation with RFC 2616, section 2.2.
    */
@@ -200,6 +252,15 @@ public abstract class BaseRestMessageBuilder<B extends BaseRestMessageBuilder<B>
     if (name.isEmpty())
     {
       throw new IllegalArgumentException("header names must contain at least one character");
+    }
+    else if (name.equalsIgnoreCase(HttpConstants.REQUEST_COOKIE_HEADER_NAME) ||
+        name.equalsIgnoreCase(HttpConstants.RESPONSE_COOKIE_HEADER_NAME))
+    {
+      String message = String.format(
+          "Header %s and %s are not allowed to be added as header.",
+          HttpConstants.REQUEST_COOKIE_HEADER_NAME,
+          HttpConstants.RESPONSE_COOKIE_HEADER_NAME);
+      throw new IllegalArgumentException(message);
     }
 
     for (int i = 0; i < name.length(); i++)
@@ -210,12 +271,25 @@ public abstract class BaseRestMessageBuilder<B extends BaseRestMessageBuilder<B>
         throw new IllegalArgumentException("header name does not conform to RFC 2616, section 2.2: " + name);
       }
 
-      switch(ch)
+      switch (ch)
       {
-        case '(': case ')': case '<': case '>': case '@':
-        case ',': case ';': case ':': case '\\': case '"':
-        case '/': case '[': case ']': case '?': case '=':
-        case '{': case '}':
+        case '(':
+        case ')':
+        case '<':
+        case '>':
+        case '@':
+        case ',':
+        case ';':
+        case ':':
+        case '\\':
+        case '"':
+        case '/':
+        case '[':
+        case ']':
+        case '?':
+        case '=':
+        case '{':
+        case '}':
           throw new IllegalArgumentException("header name does not conform to RFC 2616, section 2.2: " + name);
       }
     }
@@ -224,11 +298,6 @@ public abstract class BaseRestMessageBuilder<B extends BaseRestMessageBuilder<B>
   protected Map<String, String> getCanonicalHeaders()
   {
     final Map<String, String> orig = getHeaders();
-    if (orig.isEmpty())
-    {
-      return orig;
-    }
-
     final Map<String, String> headers = new HashMap<String, String>(orig.size());
     for (Map.Entry<String, String> entry : orig.entrySet())
     {
@@ -236,10 +305,23 @@ public abstract class BaseRestMessageBuilder<B extends BaseRestMessageBuilder<B>
 
       // Note: we don't handle null list elements because we don't know if the header is a list
       // or not.
-      final String value = entry.getValue().trim().replaceAll("[ \t\n\r]+", " ");
+      final String value = entry.getValue().trim().replaceAll(CANONICAL_REGEX, CANONICAL_REPLACEMENT);
       headers.put(key, value);
     }
 
-    return headers;
+    return Collections.unmodifiableMap(headers);
+  }
+
+  protected List<String> getCanonicalCookies()
+  {
+    final List<String> orig = getCookies();
+    final List<String> cookies = new ArrayList<String>(orig.size());
+    for (String entry : orig)
+    {
+      final String value = entry.trim().replaceAll(CANONICAL_REGEX, CANONICAL_REPLACEMENT);
+      cookies.add(value);
+    }
+
+    return Collections.unmodifiableList(cookies);
   }
 }

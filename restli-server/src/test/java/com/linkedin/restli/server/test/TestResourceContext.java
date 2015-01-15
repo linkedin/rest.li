@@ -14,8 +14,8 @@
    limitations under the License.
 */
 
-package com.linkedin.restli.server.test;
 
+package com.linkedin.restli.server.test;
 
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataList;
@@ -37,10 +37,11 @@ import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.server.ResourceContext;
 
 import java.net.URI;
-
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
@@ -298,17 +299,20 @@ public class TestResourceContext
   {
     private final URI _uri;
     private final Map<String, String> _headers;
+    private final List<String> _cookies;
 
     public MockRequest(URI uri)
     {
       _uri = uri;
-      _headers = new HashMap<String, String>();
+      _headers = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+      _cookies = new ArrayList<String>();
     }
 
     public MockRequest(URI uri, Map<String, String> headers)
     {
       _uri = uri;
       _headers = headers;
+      _cookies = new ArrayList<String>();
     }
 
     @Override
@@ -339,6 +343,12 @@ public class TestResourceContext
     public Map<String, String> getHeaders()
     {
       return _headers;
+    }
+
+    @Override
+    public List<String> getCookies()
+    {
+      return _cookies;
     }
 
     @Override

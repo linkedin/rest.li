@@ -14,6 +14,7 @@
    limitations under the License.
  */
 
+
 package com.linkedin.restli.internal.server;
 
 import com.linkedin.r2.message.rest.RestException;
@@ -183,7 +184,7 @@ public class RestLiCallback<T> implements RequestExecutionCallback<T>
 
     Map<String, String> requestHeaders = _request.getHeaders();
     Map<String, String> headers = new HashMap<String, String>();
-    headers.put(ProtocolVersionUtil.getProtocolVersionHeaderName(requestHeaders),
+    headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION,
                 ProtocolVersionUtil.extractProtocolVersion(requestHeaders).toString());
     headers.put(HeaderUtil.getErrorResponseHeaderName(requestHeaders), RestConstants.HEADER_VALUE_ERROR);
     return _responseHandler.buildExceptionResponseData(_request, _method, restLiServiceException, headers);

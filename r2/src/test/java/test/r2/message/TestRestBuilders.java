@@ -17,13 +17,25 @@
 /* $Id$ */
 package test.r2.message;
 
+
 import com.linkedin.r2.message.rest.RestMessage;
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
+
 
 /**
  * @author Chris Pettitt
@@ -31,6 +43,20 @@ import java.util.Arrays;
  */
 public class TestRestBuilders
 {
+  @Test
+  public void testGetHeaderCaseInsensitive()
+  {
+    final String headerName = "testName";
+    final String headerNameDifferentCase = "TestName";
+    final String headerValue = "testValue";
+
+    final RestResponse res = new RestResponseBuilder()
+        .setHeader(headerName, headerValue)
+        .build();
+
+    Assert.assertEquals(headerValue, res.getHeader(headerNameDifferentCase));
+  }
+
   @Test
   public void testSetValidHeader()
   {
@@ -174,5 +200,104 @@ public class TestRestBuilders
 
     Assert.assertEquals(headerValue, msg.getHeader(headerName));
     Assert.assertEquals(Arrays.asList(headerVal1, headerVal2), msg.getHeaderValues(headerName));
+  }
+
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void testSetHeaderWithCookieFails()
+  {
+    final String headerName = "set-cookie";
+    final String headerValue = "value";
+
+    final RestResponse res = new RestResponseBuilder()
+        .setHeader(headerName, headerValue)
+        .build();
+  }
+
+  @Test
+  public void testAddCookieSingleValue()
+  {
+    final String cookie = "cookie";
+
+    final RestResponse res = new RestResponseBuilder()
+        .addCookie(cookie).build();
+
+    Assert.assertNotNull(res.getHeaders());
+    Assert.assertNotNull(res.getCookies());
+    Assert.assertTrue(res.getHeaders().isEmpty());
+    Assert.assertEquals(res.getCookies().size(), 1);
+    Assert.assertEquals(res.getCookies().get(0), cookie);
+  }
+
+  @Test
+  public void testAddCookieMultipleValues()
+  {
+    final String cookie1 = "cookie1";
+    final String cookie2 = "cookie2";
+
+    final RestResponse res = new RestResponseBuilder()
+        .addCookie(cookie1)
+        .addCookie(cookie2)
+        .build();
+
+    Assert.assertNotNull(res.getHeaders());
+    Assert.assertNotNull(res.getCookies());
+    Assert.assertTrue(res.getHeaders().isEmpty());
+    Assert.assertEquals(res.getCookies().size(), 2);
+    Assert.assertEquals(res.getCookies().get(0), cookie1);
+    Assert.assertEquals(res.getCookies().get(1), cookie2);
+  }
+
+  @Test
+  public void testSetCookiesMultipleValues()
+  {
+    final String cookie1 = "cookie1";
+    final String cookie2 = "cookie2";
+    final String cookie3 = "cookie3";
+    List<String> cookies = new ArrayList<String>();
+    cookies.add(cookie2);
+    cookies.add(cookie3);
+
+    final RestResponse res = new RestResponseBuilder()
+        .addCookie(cookie1)
+        .setCookies(cookies)
+        .build();
+
+    Assert.assertNotNull(res.getHeaders());
+    Assert.assertNotNull(res.getCookies());
+    Assert.assertTrue(res.getHeaders().isEmpty());
+    Assert.assertEquals(res.getCookies().size(), 2);
+    Assert.assertEquals(res.getCookies().get(0), cookie2);
+    Assert.assertEquals(res.getCookies().get(1), cookie3);
+  }
+
+  @Test
+  public void testSetHeadersAndCookiesMultipleValues()
+  {
+    final String header1 = "key1";
+    final String header2 = "key2";
+    final String value1 = "value1";
+    final String value2 = "value2";
+    final String cookie1 = "cookie1";
+    final String cookie2 = "cookie2";
+    Map<String, String> headers = new HashMap<String, String>();
+    headers.put(header1, value1);
+    headers.put(header2, value2);
+    List<String> cookies = new ArrayList<String>();
+    cookies.add(cookie1);
+    cookies.add(cookie2);
+
+    final RestResponse res = new RestResponseBuilder()
+        .setHeaders(headers)
+        .setCookies(cookies)
+        .build();
+
+    Assert.assertNotNull(res.getHeaders());
+    Assert.assertNotNull(res.getCookies());
+    Assert.assertEquals(res.getHeaders().size(), 2);
+    Assert.assertEquals(res.getHeader(header1), value1);
+    Assert.assertEquals(res.getHeader(header2), value2);
+    Assert.assertEquals(res.getCookies().size(), 2);
+    Assert.assertEquals(res.getCookies().get(0), cookie1);
+    Assert.assertEquals(res.getCookies().get(1), cookie2);
   }
 }

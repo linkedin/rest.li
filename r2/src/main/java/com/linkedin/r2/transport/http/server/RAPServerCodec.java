@@ -20,6 +20,12 @@
 
 package com.linkedin.r2.transport.http.server;
 
+
+import com.linkedin.data.ByteString;
+import com.linkedin.r2.message.rest.RestRequestBuilder;
+import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.transport.http.common.HttpConstants;
+
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -40,9 +46,6 @@ import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.jboss.netty.handler.codec.oneone.OneToOneDecoder;
 import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
 
-import com.linkedin.data.ByteString;
-import com.linkedin.r2.message.rest.RestRequestBuilder;
-import com.linkedin.r2.message.rest.RestResponse;
 
 /**
 * @author Steven Ihde
@@ -115,6 +118,9 @@ class RAPServerCodec implements ChannelUpstreamHandler, ChannelDownstreamHandler
       {
         nettyResponse.setHeader(e.getKey(), e.getValue());
       }
+
+      nettyResponse.setHeader(HttpConstants.RESPONSE_COOKIE_HEADER_NAME, response.getCookies());
+
       final ByteString entity = response.getEntity();
       ChannelBuffer buf = ChannelBuffers.wrappedBuffer(entity.asByteBuffer());
       nettyResponse.setContent(buf);

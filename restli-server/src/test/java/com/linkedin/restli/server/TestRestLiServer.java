@@ -14,8 +14,8 @@
    limitations under the License.
 */
 
-package com.linkedin.restli.server;
 
+package com.linkedin.restli.server;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.DataMap;
@@ -212,9 +212,6 @@ public class TestRestLiServer
             { _server, AllProtocolVersions.BASELINE_PROTOCOL_VERSION, RestConstants.HEADER_RESTLI_PROTOCOL_VERSION },
             { _server, AllProtocolVersions.LATEST_PROTOCOL_VERSION, RestConstants.HEADER_RESTLI_PROTOCOL_VERSION },
             { _server, AllProtocolVersions.NEXT_PROTOCOL_VERSION, RestConstants.HEADER_RESTLI_PROTOCOL_VERSION },
-            { _server, AllProtocolVersions.BASELINE_PROTOCOL_VERSION, RestConstants.HEADER_RESTLI_PROTOCOL_VERSION_DEPRECATED },
-            { _server, AllProtocolVersions.LATEST_PROTOCOL_VERSION, RestConstants.HEADER_RESTLI_PROTOCOL_VERSION_DEPRECATED },
-            { _server, AllProtocolVersions.NEXT_PROTOCOL_VERSION, RestConstants.HEADER_RESTLI_PROTOCOL_VERSION_DEPRECATED }
         };
   }
 
@@ -229,21 +226,19 @@ public class TestRestLiServer
         {
             { _server, greaterThanNext, RestConstants.HEADER_RESTLI_PROTOCOL_VERSION },
             { _server, new ProtocolVersion(0, 0, 0), RestConstants.HEADER_RESTLI_PROTOCOL_VERSION },
-            { _server, greaterThanNext, RestConstants.HEADER_RESTLI_PROTOCOL_VERSION_DEPRECATED },
-            { _server, new ProtocolVersion(0, 0, 0), RestConstants.HEADER_RESTLI_PROTOCOL_VERSION_DEPRECATED }
         };
   }
 
-  @Test(dataProvider = "headerConstant", dataProviderClass = TestProtocolVersionUtil.class)
-  public void testServer(String headerConstant) throws Exception
+  @Test
+  public void testServer() throws Exception
   {
-    testValidRequest(_server, null, false, headerConstant);
+    testValidRequest(_server, null, false, RestConstants.HEADER_RESTLI_PROTOCOL_VERSION);
   }
 
-  @Test(dataProvider = "headerConstant", dataProviderClass = TestProtocolVersionUtil.class)
-  public void testServerWithFilters(String headerConstant) throws Exception
+  @Test
+  public void testServerWithFilters() throws Exception
   {
-    testValidRequest(_serverWithFilters, null, true, headerConstant);
+    testValidRequest(_serverWithFilters, null, true, RestConstants.HEADER_RESTLI_PROTOCOL_VERSION);
   }
 
   @Test(dataProvider = "validClientProtocolVersionData")
@@ -291,7 +286,10 @@ public class TestRestLiServer
 
         if (clientProtocolVersion != null)
         {
-          assertEquals(ProtocolVersionUtil.getProtocolVersionHeaderName(restResponse.getHeaders()), headerConstant);
+          assertEquals(
+              RestConstants.HEADER_RESTLI_PROTOCOL_VERSION,
+              headerConstant,
+              "Rest.li protocol header name is unexpected.");
         }
       }
 

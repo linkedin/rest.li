@@ -17,7 +17,6 @@
 
 package com.linkedin.restli.internal.common;
 
-
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
@@ -45,8 +44,7 @@ public class ProtocolVersionUtil
       return AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion();
     }
 
-    final String protocolVersionHeaderName = getProtocolVersionHeaderName(headers);
-    final String protocolVersion = headers.get(protocolVersionHeaderName);
+    final String protocolVersion = headers.get(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION);
     if (protocolVersion == null)
     {
       // if no protocol version is present we assume that the 1.0.0 protocol was used in the request.
@@ -55,28 +53,6 @@ public class ProtocolVersionUtil
     else
     {
       return new ProtocolVersion(protocolVersion);
-    }
-  }
-
-  /**
-   * Get the existing header name for {@link ProtocolVersion} from a {@link RestRequest}.
-   * Depending on the values in the headers, either {@link RestConstants#HEADER_RESTLI_PROTOCOL_VERSION} or
-   * {@link RestConstants#HEADER_RESTLI_PROTOCOL_VERSION_DEPRECATED} is returned.
-   *
-   * If neither is present in the headers, {@link RestConstants#HEADER_RESTLI_PROTOCOL_VERSION} is returned.
-   * The special treatment is for legacy requests which does not have protocol version concept.
-   */
-  public static String getProtocolVersionHeaderName(Map<String, String> headers)
-  {
-    if (headers != null &&
-        !headers.containsKey(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION) &&
-        headers.containsKey(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION_DEPRECATED))
-    {
-      return RestConstants.HEADER_RESTLI_PROTOCOL_VERSION_DEPRECATED;
-    }
-    else
-    {
-      return RestConstants.HEADER_RESTLI_PROTOCOL_VERSION;
     }
   }
 }

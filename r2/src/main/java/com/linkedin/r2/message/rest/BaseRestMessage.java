@@ -17,11 +17,15 @@
 /* $Id$ */
 package com.linkedin.r2.message.rest;
 
+
+import com.linkedin.r2.transport.http.common.HttpConstants;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import com.linkedin.data.ByteString;
 import com.linkedin.r2.message.BaseMessage;
+
 
 /**
  * @author Chris Pettitt
@@ -31,12 +35,16 @@ import com.linkedin.r2.message.BaseMessage;
 {
   private final Map<String, String> _headers;
 
-  protected BaseRestMessage(ByteString entity, Map<String, String> headers)
+  private final List<String> _cookies;
+
+  protected BaseRestMessage(ByteString entity, Map<String, String> headers, List<String> cookies)
   {
     super(entity);
 
     assert headers != null;
+    assert cookies != null;
     _headers = headers;
+    _cookies = cookies;
   }
 
   @Override
@@ -68,7 +76,13 @@ import com.linkedin.r2.message.BaseMessage;
   @Override
   public Map<String, String> getHeaders()
   {
-    return _headers;
+    return Collections.unmodifiableMap(_headers);
+  }
+
+  @Override
+  public List<String> getCookies()
+  {
+    return Collections.unmodifiableList(_cookies);
   }
 
   @Override
@@ -88,7 +102,7 @@ import com.linkedin.r2.message.BaseMessage;
     }
 
     BaseRestMessage that = (BaseRestMessage) o;
-    return _headers.equals(that._headers);
+    return _headers.equals(that._headers) && _cookies.equals(that._cookies);
   }
 
   @Override
@@ -96,6 +110,8 @@ import com.linkedin.r2.message.BaseMessage;
   {
     int result = super.hashCode();
     result = 31 * result + _headers.hashCode();
+    result = 31 * result + _cookies.hashCode();
+
     return result;
   }
 }

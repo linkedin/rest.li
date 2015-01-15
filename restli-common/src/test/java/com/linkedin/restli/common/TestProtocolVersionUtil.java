@@ -31,21 +31,12 @@ import org.testng.annotations.Test;
  */
 public class TestProtocolVersionUtil
 {
-  @DataProvider(name = "headerConstant")
-  public static Object[][] provideHeaderConstants()
-  {
-    return new Object[][]
-        {
-            { RestConstants.HEADER_RESTLI_PROTOCOL_VERSION },
-            { RestConstants.HEADER_RESTLI_PROTOCOL_VERSION_DEPRECATED }
-        };
-  }
-
-  @Test(dataProvider = "headerConstant")
-  public void testExtractProtocolVersion(String headerConstant) throws URISyntaxException
+  @Test
+  public void testExtractProtocolVersion() throws URISyntaxException
   {
     ProtocolVersion p1 = new ProtocolVersion("1.2.3");
-    RestRequestBuilder requestBuilder = new RestRequestBuilder(new URI("/test/1")).setHeader(headerConstant, p1.toString());
+    RestRequestBuilder requestBuilder = new RestRequestBuilder(
+        new URI("/test/1")).setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, p1.toString());
     ProtocolVersion p2 = ProtocolVersionUtil.extractProtocolVersion(requestBuilder.getHeaders());
     Assert.assertEquals(p2, p1);
   }

@@ -17,10 +17,13 @@
 /* $Id$ */
 package com.linkedin.r2.message.rest;
 
+
 import com.linkedin.data.ByteString;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
+
 
 /**
  * @author Chris Pettitt
@@ -32,9 +35,10 @@ import java.util.Map;
 
   private final String _method;
 
-  /* package private */ RestRequestImpl(ByteString entity, Map<String, String> headers, URI uri, String method)
+  /* package private */ RestRequestImpl(
+      ByteString entity, Map<String, String> headers, List<String> cookies, URI uri, String method)
   {
-    super(entity, headers);
+    super(entity, headers, cookies);
 
     assert uri != null;
     assert method != null;
@@ -97,6 +101,18 @@ import java.util.Map;
   @Override
   public String toString()
   {
-    return "RestRequest[headers=" + getHeaders() + ",uri=" + _uri + ",method=" + _method + ",entityLength=" + getEntity().length() + "]";
+    StringBuilder builder = new StringBuilder();
+    builder.append("RestRequest[headers=")
+        .append(getHeaders())
+        .append("cookies=")
+        .append(getCookies())
+        .append(",uri=")
+        .append(_uri)
+        .append(",method=")
+        .append(_method)
+        .append(",entityLength=")
+        .append(getEntity().length())
+        .append("]");
+    return builder.toString();
   }
 }

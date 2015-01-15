@@ -18,6 +18,7 @@
  * $Id: $
  */
 
+
 package com.linkedin.restli.server.mock;
 
 import com.linkedin.data.ByteString;
@@ -41,6 +42,7 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
 
 /**
  * @author Josh Walker
@@ -149,6 +151,12 @@ public class TestInjectMockResourceFactory
     public Map<String, String> getHeaders()
     {
       return Collections.emptyMap();
+    }
+
+    @Override
+    public List<String> getCookies()
+    {
+      return Collections.emptyList();
     }
 
     @Override

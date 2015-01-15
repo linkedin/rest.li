@@ -73,12 +73,12 @@ public final class RestResponseBuilder
   @Override
   public RestResponse build()
   {
-    return new RestResponseImpl(getEntity(), getHeaders(), getStatus());
+    return new RestResponseImpl(getEntity(), getHeaders(), getCookies(), getStatus());
   }
 
   @Override
   public RestResponse buildCanonical()
   {
-    return new RestResponseImpl(getEntity(), getCanonicalHeaders(), getStatus());
+    return new RestResponseImpl(getEntity(), getCanonicalHeaders(), getCanonicalCookies(), getStatus());
   }
 }

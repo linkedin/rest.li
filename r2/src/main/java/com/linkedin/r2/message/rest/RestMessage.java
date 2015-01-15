@@ -17,10 +17,12 @@
 /* $Id$ */
 package com.linkedin.r2.message.rest;
 
+
 import com.linkedin.r2.message.Message;
 
 import java.util.List;
 import java.util.Map;
+
 
 /**
  * An object that represents a REST message, either a request or a response.<p/>
@@ -56,6 +58,15 @@ public interface RestMessage extends Message
    * @return a list of values for the header or {@code null} if no values exist.
    */
   List<String> getHeaderValues(String name);
+
+  /**
+   * Gets the values of cookies as specified in the Cookie or Set-Cookies HTTP headers in the
+   * HTTP request and response respectively. Each Cookie or Set-Cookie header is a separate element in
+   * the returned elements. If no cookie exists then an empty list is returned.
+   *
+   * @return cookies specified in the Cookie or Set-Cookie HTTP headers.
+   */
+  List<String> getCookies();
 
   /**
    * Returns an unmodifiable view of the headers in this builder. Because this is a view of the

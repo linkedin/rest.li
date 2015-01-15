@@ -31,12 +31,8 @@ import com.linkedin.r2.transport.common.WireAttributeHelper;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
+import com.linkedin.r2.transport.http.common.HttpConstants;
 
-import javax.mail.MessagingException;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -45,9 +41,15 @@ import java.util.Enumeration;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.mail.MessagingException;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 /**
  * @author Steven Ihde
@@ -149,6 +151,12 @@ public abstract class AbstractR2Servlet extends HttpServlet
       // TODO multi-valued headers
       resp.setHeader(e.getKey(), e.getValue());
     }
+
+    for (String cookie : restResponse.getCookies())
+    {
+      resp.addHeader(HttpConstants.RESPONSE_COOKIE_HEADER_NAME, cookie);
+    }
+
     final ByteString entity = restResponse.getEntity();
     entity.write(resp.getOutputStream());
 

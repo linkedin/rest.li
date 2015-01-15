@@ -20,6 +20,12 @@
 
 package com.linkedin.r2.transport.http.client;
 
+
+import com.linkedin.data.ByteString;
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestResponseBuilder;
+import com.linkedin.r2.transport.http.common.HttpConstants;
+
 import java.net.URL;
 import java.util.Map;
 
@@ -40,9 +46,6 @@ import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.jboss.netty.handler.codec.oneone.OneToOneDecoder;
 import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
 
-import com.linkedin.data.ByteString;
-import com.linkedin.r2.message.rest.RestRequest;
-import com.linkedin.r2.message.rest.RestResponseBuilder;
 
 /**
 * @author Steven Ihde
@@ -92,6 +95,8 @@ class RAPClientCodec implements ChannelUpstreamHandler, ChannelDownstreamHandler
       {
         nettyRequest.setHeader(e.getKey(), e.getValue());
       }
+
+      nettyRequest.setHeader(HttpConstants.REQUEST_COOKIE_HEADER_NAME, request.getCookies());
 
       final ByteString entity = request.getEntity();
       ChannelBuffer buf = ChannelBuffers.wrappedBuffer(entity.asByteBuffer());

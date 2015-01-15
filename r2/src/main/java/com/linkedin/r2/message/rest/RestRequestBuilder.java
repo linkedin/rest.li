@@ -17,10 +17,12 @@
 /* $Id$ */
 package com.linkedin.r2.message.rest;
 
+
 import com.linkedin.r2.message.RequestBuilder;
 import com.linkedin.util.ArgumentUtil;
 
 import java.net.URI;
+
 
 /**
  * @author Chris Pettitt
@@ -102,12 +104,13 @@ public final class RestRequestBuilder
   @Override
   public RestRequest build()
   {
-    return new RestRequestImpl(getEntity(), getHeaders(), getURI(), getMethod());
+    return new RestRequestImpl(getEntity(), getHeaders(), getCookies(), getURI(), getMethod());
   }
 
   @Override
   public RestRequest buildCanonical()
   {
-    return new RestRequestImpl(getEntity(), getCanonicalHeaders(), getURI().normalize(), getMethod());
+    return new RestRequestImpl(
+        getEntity(), getCanonicalHeaders(), getCanonicalCookies(), getURI().normalize(), getMethod());
   }
 }

@@ -14,8 +14,8 @@
    limitations under the License.
 */
 
-package com.linkedin.restli.internal.server;
 
+package com.linkedin.restli.internal.server;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.r2.message.rest.RestException;
@@ -197,7 +197,7 @@ public class RestLiResponseHandler
     final ProtocolVersion protocolVersion = context.getRestliProtocolVersion();
     Map<String, String> responseHeaders = new HashMap<String, String>();
     responseHeaders.putAll(context.getResponseHeaders());
-    responseHeaders.put(ProtocolVersionUtil.getProtocolVersionHeaderName(request.getHeaders()), protocolVersion.toString());
+    responseHeaders.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString());
 
     if (responseObject == null)
     {

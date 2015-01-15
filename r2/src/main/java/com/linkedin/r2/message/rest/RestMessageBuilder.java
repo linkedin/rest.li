@@ -17,10 +17,12 @@
 /* $Id$ */
 package com.linkedin.r2.message.rest;
 
+
 import com.linkedin.r2.message.MessageBuilder;
 
 import java.util.List;
 import java.util.Map;
+
 
 /**
  * @author Chris Pettitt
@@ -75,11 +77,37 @@ public interface RestMessageBuilder<B extends RestMessageBuilder<B>> extends Mes
   B overwriteHeaders(Map<String, String> headers);
 
   /**
+   * Adds a new {@code cookie} to this message. The content of the {@code cookie} is expected to
+   * comply with RFC 2616 but not explicitly enforced.
+   *
+   * @param cookie the cookie to add to this message
+   * @return this builder
+   */
+  B addCookie(String cookie);
+
+  /**
+   * Sets a new list of {@code cookies} as the cookies of this message. Previously added cookies are
+   * replaced with the new list of {@code cookies}. The content of each cookie is expected to comply
+   * with RFC 2616 but not explicitly enforced.
+   *
+   * @param cookies the list cookies to be set to this message
+   * @return this builder
+   */
+  B setCookies(List<String> cookies);
+
+  /**
    * Removes all headers from this message.
    *
    * @return this builder
    */
   B clearHeaders();
+
+  /**
+   * Remove all cookies from this message.
+   *
+   * @return this builder
+   */
+  B clearCookies();
 
   /**
    * Returns an unmodifiable view of the headers in this builder. Because this is a view of the
@@ -89,6 +117,13 @@ public interface RestMessageBuilder<B extends RestMessageBuilder<B>> extends Mes
    * @return a view of the headers in this builder
    */
   Map<String, String> getHeaders();
+
+  /**
+   * Returns an unmodifiable view of the cookies in this builder.
+   *
+   * @return a view of the cookies in this builder
+   */
+  List<String> getCookies();
 
   /**
    * Gets the value of the header with the given name. If there is no header with the given name
@@ -123,7 +158,7 @@ public interface RestMessageBuilder<B extends RestMessageBuilder<B>> extends Mes
   /**
    * Similar to {@link #build}, but the returned Message is in canonical form.
    *
-   * @return  a RestMessage from the settings in this builder
+   * @return a RestMessage from the settings in this builder
    */
   @Override
   RestMessage buildCanonical();

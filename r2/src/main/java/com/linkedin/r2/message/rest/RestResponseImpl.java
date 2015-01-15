@@ -17,9 +17,12 @@
 /* $Id$ */
 package com.linkedin.r2.message.rest;
 
+
 import com.linkedin.data.ByteString;
 
+import java.util.List;
 import java.util.Map;
+
 
 /**
  * @author Chris Pettitt
@@ -29,9 +32,10 @@ import java.util.Map;
 {
   private final int _status;
 
-  /* package private */ RestResponseImpl(ByteString entity, Map<String, String> headers, int status)
+  /* package private */ RestResponseImpl(
+      ByteString entity, Map<String, String> headers, List<String> cookies, int status)
   {
-    super(entity, headers);
+    super(entity, headers, cookies);
     _status = status;
   }
 
@@ -83,6 +87,16 @@ import java.util.Map;
   @Override
   public String toString()
   {
-    return "RestResponse[headers=" + getHeaders() + ",status=" + _status + ",entityLength=" + getEntity().length() + "]";
+    StringBuilder builder = new StringBuilder();
+    builder.append("RestRequest[headers=")
+        .append(getHeaders())
+        .append("cookies=")
+        .append(getCookies())
+        .append(",status=")
+        .append(_status)
+        .append(",entityLength=")
+        .append(getEntity().length())
+        .append("]");
+    return builder.toString();
   }
 }

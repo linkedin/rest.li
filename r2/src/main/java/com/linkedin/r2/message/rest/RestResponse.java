@@ -17,10 +17,12 @@
 /* $Id$ */
 package com.linkedin.r2.message.rest;
 
+
 import java.util.Collections;
 
 import com.linkedin.data.ByteString;
 import com.linkedin.r2.message.Response;
+
 
 /**
  * An object that contains details of a REST response.<p/>
@@ -34,7 +36,8 @@ import com.linkedin.r2.message.Response;
  */
 public interface RestResponse extends RestMessage, Response
 {
-  RestResponse NO_RESPONSE = new RestResponseImpl(ByteString.empty(), Collections.<String, String>emptyMap(), 0);
+  RestResponse NO_RESPONSE = new RestResponseImpl(
+      ByteString.empty(), Collections.<String, String>emptyMap(), Collections.<String>emptyList(), 0);
 
   /**
    * Returns the status for this response.
