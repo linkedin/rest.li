@@ -61,7 +61,9 @@ public class MockBatchKVResponseFactory
        Map<K, V> recordTemplates,
        Map<K, ErrorResponse> errorResponses)
   {
-    return create(keyClass, valueClass, keyParts, recordTemplates, errorResponses, AllProtocolVersions.BASELINE_PROTOCOL_VERSION);
+    ProtocolVersion version = AllProtocolVersions.BASELINE_PROTOCOL_VERSION;
+
+    return create(keyClass, valueClass, keyParts, recordTemplates, errorResponses, version);
   }
 
   /**
@@ -119,7 +121,9 @@ public class MockBatchKVResponseFactory
                                                                                            Map<K, V> recordTemplates,
                                                                                            Map<K, ErrorResponse> errorResponses)
   {
-    return create(keyClass, valueClass, null, recordTemplates, errorResponses, AllProtocolVersions.BASELINE_PROTOCOL_VERSION);
+    ProtocolVersion version = AllProtocolVersions.BASELINE_PROTOCOL_VERSION;
+
+    return create(keyClass, valueClass, null, recordTemplates, errorResponses, version);
   }
 
   /**
