@@ -39,16 +39,14 @@ import java.util.concurrent.ScheduledExecutorService;
 class ChannelPoolLifecycle implements AsyncPool.Lifecycle<Channel>
 {
   private final SocketAddress _remoteAddress;
-  private final RateLimiter _rateLimiter;
   private final ClientBootstrap _bootstrap;
   private final ChannelGroup _channelGroup;
   private final LongTracking _createTimeTracker = new LongTracking();
 
-  public ChannelPoolLifecycle(SocketAddress address, ClientBootstrap bootstrap, long getTimeout,
-                              ScheduledExecutorService executor, ChannelGroup channelGroup)
+
+  public ChannelPoolLifecycle(SocketAddress address, ClientBootstrap bootstrap, ChannelGroup channelGroup)
   {
     _remoteAddress = address;
-    _rateLimiter = new RateLimiter(0, getTimeout / 2, Math.max(10, getTimeout / 32), executor);
     _bootstrap = bootstrap;
     _channelGroup = channelGroup;
   }
@@ -56,33 +54,25 @@ class ChannelPoolLifecycle implements AsyncPool.Lifecycle<Channel>
   @Override
   public void create(final Callback<Channel> channelCallback)
   {
-    _rateLimiter.submit(new Runnable()
+    final long start = System.currentTimeMillis();
+    _bootstrap.connect(_remoteAddress).addListener(new ChannelFutureListener()
     {
-      @Override
-      public void run()
+      public void operationComplete(ChannelFuture channelFuture) throws Exception
       {
-        final long start = System.currentTimeMillis();
-        _bootstrap.connect(_remoteAddress).addListener(new ChannelFutureListener()
+        if (channelFuture.isSuccess())
         {
-          public void operationComplete(ChannelFuture channelFuture) throws Exception
+          synchronized (_createTimeTracker)
           {
-            if (channelFuture.isSuccess())
-            {
-              synchronized (_createTimeTracker)
-              {
-                _createTimeTracker.addValue(System.currentTimeMillis() - start);
-              }
-              Channel c = channelFuture.getChannel();
-              _channelGroup.add(c);
-              channelCallback.onSuccess(c);
-            }
-            else
-            {
-              _rateLimiter.incrementPeriod();
-              channelCallback.onError(HttpNettyClient.toException(channelFuture.getCause()));
-            }
+            _createTimeTracker.addValue(System.currentTimeMillis() - start);
           }
-        });
+          Channel c = channelFuture.getChannel();
+          _channelGroup.add(c);
+          channelCallback.onSuccess(c);
+        }
+        else
+        {
+          channelCallback.onError(HttpNettyClient.toException(channelFuture.getCause()));
+        }
       }
     });
   }
@@ -96,22 +86,12 @@ class ChannelPoolLifecycle implements AsyncPool.Lifecycle<Channel>
   @Override
   public boolean validatePut(Channel c)
   {
-    if (c.isConnected())
-    {
-      // A channel made it through a complete request lifecycle
-      _rateLimiter.setPeriod(0);
-      return true;
-    }
-    return false;
+    return c.isConnected();
   }
 
   @Override
   public void destroy(final Channel channel, final boolean error, final Callback<Channel> channelCallback)
   {
-    if (error)
-    {
-      _rateLimiter.incrementPeriod();
-    }
     if (channel.isOpen())
     {
       channel.close().addListener(new ChannelFutureListener()

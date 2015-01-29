@@ -20,6 +20,7 @@
 
 package com.linkedin.r2.transport.http.client;
 
+import com.linkedin.util.ArgumentUtil;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -39,9 +40,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.linkedin.common.callback.Callback;
+import com.linkedin.common.callback.SimpleCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.util.Cancellable;
 import com.linkedin.r2.util.LinkedDeque;
+import com.linkedin.r2.transport.http.client.RateLimiter.Task;
 
 /**
  * @author Steven Ihde
@@ -62,6 +65,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
   private final ExecutorService _callbackExecutor;
   private final int _minSize;
   private volatile ScheduledFuture<?> _objectTimeoutFuture;
+  private final RateLimiter _rateLimiter;
 
   private enum State { NOT_YET_STARTED, RUNNING, SHUTTING_DOWN, STOPPED }
 
@@ -100,17 +104,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
   private int _checkedOut = 0;
 
   /**
-   * Creates an AsyncPoolImpl using a MRU (most recently used) strategy
-   * of reusing pool objects. The minimum number of pool objects is set
-   * to zero. This is a sensible configuration for talking to a single host.
-   *
-   * @param name Pool name, used in logs and statistics.
-   * @param lifecycle The lifecycle used to create and destroy pool objects.
-   * @param maxSize The maximum number of objects in the pool.
-   * @param idleTimeout The number of milliseconds before an idle pool
-   *                    object may be destroyed.
-   * @param timeoutExecutor A ScheduledExecutorService that will be used to
-   *                        periodically timeout objects.
+   * Constructs an AsyncPool with maxWaiters equals to ({@code Integer.MAX_VALUE}).
    */
   public AsyncPoolImpl(String name,
                        Lifecycle<T> lifecycle,
@@ -127,29 +121,9 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
         Integer.MAX_VALUE);
   }
 
-
   /**
-   * Creates an AsyncPoolImpl with a specified strategy of
-   * returning pool objects and a minimum pool size.
-   *
-   * Supported strategies are MRU (most recently used) and LRU
-   * (least recently used).
-   *
-   * MRU is sensible for communicating with a single host in order
-   * to minimize the number of idle pool objects.
-   *
-   * LRU, in combination with a minimum pool size, is sensible for
-   * communicating with a hardware load balancer that directly maps
-   * persistent connections to hosts. In this case, the AsyncPoolImpl
-   * balances requests evenly across the pool.
-   *
-   * @param name Pool name, used in logs and statistics.
-   * @param lifecycle The lifecycle used to create and destroy pool objects.
-   * @param maxSize The maximum number of objects in the pool.
-   * @param idleTimeout The number of milliseconds before an idle pool object
-   *                    may be destroyed.
-   * @param timeoutExecutor A ScheduledExecutorService that will be used to
-   *                        periodically timeout objects.
+   * Constructs an AsyncPool with {@link Strategy#MRU} strategy and
+   * minSize equals to 0.
    */
   public AsyncPoolImpl(String name,
                        Lifecycle<T> lifecycle,
@@ -159,15 +133,25 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
                        ExecutorService callbackExecutor,
                        int maxWaiters)
   {
-    _poolName = name;
-    _lifecycle = lifecycle;
-    _maxSize = maxSize;
-    _idleTimeout = idleTimeout;
-    _timeoutExecutor = timeoutExecutor;
-    _callbackExecutor = callbackExecutor;
-    _maxWaiters = maxWaiters;
-    _strategy = Strategy.MRU;
-    _minSize = 0;
+    this(name, lifecycle, maxSize, idleTimeout, timeoutExecutor,
+        callbackExecutor, maxWaiters, Strategy.MRU, 0);
+  }
+
+  /**
+   * Constructs an AsyncPool with an {@link NoopRateLimiter}.
+   */
+  public AsyncPoolImpl(String name,
+                       Lifecycle<T> lifecycle,
+                       int maxSize,
+                       long idleTimeout,
+                       ScheduledExecutorService timeoutExecutor,
+                       ExecutorService callbackExecutor,
+                       int maxWaiters,
+                       Strategy strategy,
+                       int minSize)
+  {
+    this(name, lifecycle, maxSize, idleTimeout, timeoutExecutor,
+        callbackExecutor, maxWaiters, strategy, minSize, new NoopRateLimiter());
   }
 
   /**
@@ -195,17 +179,27 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
    * @param strategy The strategy used to return pool objects.
    * @param minSize Minimum number of objects in the pool. Set to zero for
    *                no minimum.
+   * @param rateLimiter an optional {@link RateLimiter} that controls the
+   *                    object creation rate.
+   *
    */
   public AsyncPoolImpl(String name,
-                       Lifecycle<T> lifecycle,
-                       int maxSize,
-                       long idleTimeout,
-                       ScheduledExecutorService timeoutExecutor,
-                       ExecutorService callbackExecutor,
-                       int maxWaiters,
-                       Strategy strategy,
-                       int minSize)
+      Lifecycle<T> lifecycle,
+      int maxSize,
+      long idleTimeout,
+      ScheduledExecutorService timeoutExecutor,
+      ExecutorService callbackExecutor,
+      int maxWaiters,
+      Strategy strategy,
+      int minSize,
+      RateLimiter rateLimiter)
   {
+    ArgumentUtil.notNull(lifecycle, "lifecycle");
+    ArgumentUtil.notNull(timeoutExecutor, "timeoutExecutor");
+    ArgumentUtil.notNull(callbackExecutor, "callbackExecutor");
+    ArgumentUtil.notNull(strategy, "strategy");
+    ArgumentUtil.notNull(rateLimiter, "rateLimiter");
+
     _poolName = name;
     _lifecycle = lifecycle;
     _maxSize = maxSize;
@@ -215,6 +209,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
     _maxWaiters = maxWaiters;
     _strategy = strategy;
     _minSize = minSize;
+    _rateLimiter = rateLimiter;
   }
 
   @Override
@@ -396,6 +391,8 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
       destroy(obj, true);
       return;
     }
+    // A channel made it through a complete request lifecycle
+    _rateLimiter.setPeriod(0);
     add(obj);
   }
 
@@ -489,6 +486,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
   {
     if(bad)
     {
+      _rateLimiter.incrementPeriod();
       synchronized(_lock)
       {
         _totalBadDestroyed++;
@@ -525,18 +523,28 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
     });
   }
 
+  private boolean objectDestroyed()
+  {
+    return objectDestroyed(1);
+  }
+
   /**
    * This method is safe to call while holding the lock.
+   * @param num number of objects have been destroyed
    * @return true if another object creation should be initiated
    */
-  private boolean objectDestroyed()
+  private boolean objectDestroyed(int num)
   {
     boolean create;
     synchronized (_lock)
     {
-      if (_poolSize > 0)
+      if (_poolSize - num > 0)
       {
-        _poolSize--;
+        _poolSize -= num;
+      }
+      else
+      {
+        _poolSize = 0;
       }
       create = shouldCreate();
       shutdownIfNeeded();
@@ -581,60 +589,62 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
   private void create()
   {
     trc("initiating object creation");
-    _lifecycle.create(new Callback<T>() {
+    _rateLimiter.submit(new Task() {
       @Override
-      public void onSuccess(T t)
-      {
-        synchronized (_lock)
-        {
-          _totalCreated++;
-          _lastCreateError = null;
-        }
-        add(t);
-      }
-
-      @Override
-      public void onError(final Throwable e)
-      {
-        boolean create;
-        final Collection<Callback<T>> waitersDenied;
-        synchronized (_lock)
-        {
-          _totalCreateErrors++;
-          _lastCreateError = e;
-          create = objectDestroyed();
-          if (!_waiters.isEmpty())
-          {
-            waitersDenied = cancelWaiters();
-          }
-          else
-          {
-            waitersDenied = Collections.emptyList();
-          }
-        }
-        // Note this callback is invoked by Netty boss thread. We hand the actual callback
-        // task to a separate thread since we don't want to block the boss thread
-        _callbackExecutor.submit(new Runnable() {
+      public void run(final SimpleCallback callback) {
+        _lifecycle.create(new Callback<T>() {
           @Override
-          public void run() {
-            // Note we drain all waiters if a create fails.  When a create fails, rate-limiting
-            // logic may be applied.  In this case, we may be initiating creations at a lower rate
-            // than incoming requests.  While creations are suppressed, it is better to deny all
-            // waiters and let them see the real reason (this exception) rather than keep them around
-            // to eventually get an unhelpful timeout error
-            for (Callback<T> denied : waitersDenied)
-            {
-              denied.onError(e);
+          public void onSuccess(T t) {
+            synchronized (_lock) {
+              _totalCreated++;
+              _lastCreateError = null;
             }
+            add(t);
+            callback.onDone();
+          }
+
+          @Override
+          public void onError(final Throwable e) {
+            _rateLimiter.incrementPeriod();
+            // Note we drain all waiters and cancel all pending creates if a create fails.
+            // When a create fails, rate-limiting logic will be applied.  In this case,
+            // we may be initiating creations at a lower rate than incoming requests.  While
+            // creations are suppressed, it is better to deny all waiters and let them see
+            // the real reason (this exception) rather than keep them around to eventually
+            // get an unhelpful timeout error
+            final Collection<Callback<T>> waitersDenied;
+            final Collection<Task> cancelledCreate = _rateLimiter.cancelPendingTasks();
+            boolean create;
+            synchronized (_lock) {
+              _totalCreateErrors++;
+              _lastCreateError = e;
+              create = objectDestroyed(1 + cancelledCreate.size());
+              if (!_waiters.isEmpty()) {
+                waitersDenied = cancelWaiters();
+              } else {
+                waitersDenied = Collections.<Callback<T>>emptyList();
+              }
+            }
+            // Note this callback is invoked by Netty boss thread. We hand the actual callback
+            // task to a separate thread since we don't want to block the boss thread
+            _callbackExecutor.submit(new Runnable() {
+              @Override
+              public void run() {
+                for (Callback<T> denied : waitersDenied) {
+                  denied.onError(e);
+                }
+              }
+            });
+            if (create) {
+              create();
+            }
+            LOG.error(_poolName + ": object creation failed", e);
+            callback.onDone();
           }
         });
-        if (create)
-        {
-          create();
-        }
-        LOG.error(_poolName + ": object creation failed", e);
       }
     });
+
   }
 
   private void timeoutObjects()

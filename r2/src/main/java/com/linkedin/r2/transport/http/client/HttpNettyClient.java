@@ -679,8 +679,6 @@ import org.slf4j.LoggerFactory;
       return new AsyncPoolImpl<Channel>(address.toString() + " HTTP connection pool",
                                         new ChannelPoolLifecycle(address,
                                                                  _bootstrap,
-                                                                 _requestTimeout,
-                                                                 _scheduler,
                                                                  _allChannels),
                                         _maxPoolSize,
                                         _idleTimeout,
@@ -688,7 +686,12 @@ import org.slf4j.LoggerFactory;
                                         _callbackExecutor,
                                         _maxPoolWaiterSize,
                                         _strategy,
-                                        _minPoolSize);
+                                        _minPoolSize,
+                                        new ExponentialBackOffRateLimiter(0,
+                                                            _requestTimeout / 2,
+                                                            Math.max(10, _requestTimeout / 32),
+                                                            _scheduler)
+                                        );
     }
   }
 
