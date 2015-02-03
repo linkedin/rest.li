@@ -1,6 +1,11 @@
-2.1.3
+2.2.1
 -----
 
+
+2.2.0
+-----
+(RB=418083)
+Create separate internal storage data structure for Cookie and Set-Cookie HTTP header. Making header storage data structure case insensitive.
 
 2.1.2
 -----
