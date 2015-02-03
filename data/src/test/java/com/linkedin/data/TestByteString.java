@@ -19,6 +19,7 @@ package com.linkedin.data;
 
 
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -71,6 +72,10 @@ public class TestByteString
     final byte[] bytes = new byte[] {1,2,3,4,5};
     final ByteString bs = ByteString.copy(bytes);
     Assert.assertEquals(bytes, bs.copyBytes());
+
+    final byte[] region = new byte[] {2,3,4};
+    final ByteString bsRegion = ByteString.copy(bytes, 1, 3);
+    Assert.assertEquals(region, bsRegion.copyBytes());
   }
 
   @Test
@@ -123,16 +128,16 @@ public class TestByteString
     final byte[] bytes = "test string".getBytes(Data.UTF_8_CHARSET);
     final ByteString bs = ByteString.copy(bytes);
     Assert.assertEquals("test string", bs.asString(Data.UTF_8_CHARSET));
+    Assert.assertEquals("test", bs.slice(0, 4).asString(Data.UTF_8_CHARSET));
+    Assert.assertEquals("string", bs.copySlice(5, 6).asString(Data.UTF_8_CHARSET));
   }
 
-  @Test
-  public void testAsByteBuffer()
+  @Test(dataProvider = "byteStrings")
+  public void testAsByteBuffer(byte[] bytes, ByteString bs)
   {
-    final byte[] bytes = new byte[] {1,2,3,4};
     final ByteBuffer buf = ByteBuffer.wrap(bytes);
-    final ByteString bs = ByteString.copy(bytes);
 
-    Assert.assertEquals(4, buf.remaining());
+    Assert.assertEquals(bytes.length, buf.remaining());
     Assert.assertTrue(bs.asByteBuffer().isReadOnly());
 
     for (byte b : bytes)
@@ -141,12 +146,9 @@ public class TestByteString
     }
   }
 
-  @Test
-  public void testAsInputStream() throws IOException
+  @Test(dataProvider = "byteStrings")
+  public void testAsInputStream(byte[] bytes, ByteString bs) throws IOException
   {
-    final byte[] bytes = new byte[] {1,2,3,4};
-    final ByteString bs = ByteString.copy(bytes);
-
     final InputStream in = bs.asInputStream();
     Assert.assertEquals(bytes.length, in.available());
 
@@ -156,6 +158,13 @@ public class TestByteString
     Assert.assertEquals(bytes, actual);
   }
 
+  @Test(dataProvider = "byteStrings")
+  public void testAsAvroString(byte[] bytes, ByteString bs)
+  {
+    final String avroString = bs.asAvroString();
+    Assert.assertEquals(avroString, Data.bytesToString(bytes));
+  }
+
   @Test
   public void testEquals()
   {
@@ -163,6 +172,13 @@ public class TestByteString
                         ByteString.copy(new byte[] {1,2,3,4}));
     Assert.assertFalse(ByteString.copy(new byte[] {1,2,3,4}).equals(
                        ByteString.copy(new byte[] {5,6,7,8})));
+
+    ByteString bs = ByteString.copy(new byte[] {1,2,3,4});
+    Assert.assertNotEquals(bs, bs.slice(0, 3));
+    Assert.assertNotEquals(bs, bs.copySlice(0, 3));
+    Assert.assertEquals(bs, bs.slice(0, 4));
+    Assert.assertEquals(bs, bs.copySlice(0, 4));
+    Assert.assertEquals(bs.slice(1, 2), bs.copySlice(1, 2));
   }
 
   @Test
@@ -170,6 +186,13 @@ public class TestByteString
   {
     Assert.assertEquals(ByteString.copy(new byte[] {1,2,3,4}).hashCode(),
                         ByteString.copy(new byte[] {1,2,3,4}).hashCode());
+
+    ByteString bs = ByteString.copy(new byte[] {1,2,3,4});
+    Assert.assertNotEquals(bs.hashCode(), bs.slice(0, 3).hashCode());
+    Assert.assertNotEquals(bs.hashCode(), bs.copySlice(0, 3).hashCode());
+    Assert.assertEquals(bs.hashCode(), bs.slice(0, 4).hashCode());
+    Assert.assertEquals(bs.hashCode(), bs.copySlice(0, 4).hashCode());
+    Assert.assertEquals(bs.slice(1, 2).hashCode(), bs.copySlice(1, 2).hashCode());
   }
 
   @Test
@@ -177,32 +200,43 @@ public class TestByteString
   {
     final byte[] bytes = new byte[] {1,2,3,4};
     final ByteString bs = ByteString.copy(bytes);
+    final ByteString bsRegion = ByteString.copy(bytes, 1, 2);
 
     final byte[] bytesCopy = Arrays.copyOf(bytes, bytes.length);
+    final byte[] bytesRegionCopy = Arrays.copyOfRange(bytes, 1, 3);
     bytes[0] = 50;
+    bytes[2] = 100;
 
     Assert.assertEquals(bytesCopy, bs.copyBytes());
     Assert.assertFalse(Arrays.equals(bytes, bs.copyBytes()));
+
+    Assert.assertEquals(bytesRegionCopy, bsRegion.copyBytes());
+    Assert.assertNotEquals(Arrays.copyOfRange(bytes, 1, 3), bsRegion.copyBytes());
   }
 
   @Test
   public void testChangeCopiedBytes()
   {
     final byte[] bytes = new byte[] {1,2,3,4};
+    final byte[] bytesRegion = Arrays.copyOfRange(bytes, 1, 3);
     final ByteString bs = ByteString.copy(bytes);
+    final ByteString bsRegion = ByteString.copy(bytes, 1, 2);
 
     final byte[] bytesCopy = bs.copyBytes();
+    final byte[] bytesRegionCopy = bsRegion.copyBytes();
     bytesCopy[0] = 50;
+    bytesRegionCopy[0] = 100;
 
     Assert.assertEquals(bytes, bs.copyBytes());
     Assert.assertFalse(Arrays.equals(bytesCopy, bs.copyBytes()));
+
+    Assert.assertEquals(bytesRegion, bsRegion.copyBytes());
+    Assert.assertNotEquals(bytesRegionCopy, bsRegion.copyBytes());
   }
 
-  @Test
-  public void testWrite() throws IOException
+  @Test(dataProvider = "byteStrings")
+  public void testWrite(byte[] bytes, ByteString bs) throws IOException
   {
-    final byte[] bytes = new byte[] {1,2,3,4};
-    final ByteString bs = ByteString.copy(bytes);
     final ByteArrayOutputStream out = new ByteArrayOutputStream();
 
     bs.write(out);
@@ -215,8 +249,8 @@ public class TestByteString
   {
     for (int i = 1; i <= 8; i++)
     {
-      StringBuilder sb = new StringBuilder();
       final byte[] bytes = new byte[i];
+      StringBuilder sb = new StringBuilder();
       for (int j = 0; j < i; j++)
       {
         bytes[j] = (byte)j;
@@ -224,7 +258,6 @@ public class TestByteString
       }
 
       Assert.assertTrue(ByteString.copy(bytes).toString().contains("bytes=" + sb.toString()));
-
     }
   }
 
@@ -256,5 +289,62 @@ public class TestByteString
 
     // large byte strings should have constant size toString()
     Assert.assertTrue(ByteString.copy(bytes).toString().length() < 100);
+  }
+
+  @Test
+  public void testSliceToString()
+  {
+    final byte[] bytes = new byte[1000];
+    for (int i = 0; i < 1000; i++)
+    {
+      bytes[i] = (byte)i;
+    }
+
+    ByteString bs = ByteString.copy(bytes);
+    ByteString slice = bs.slice(10, 900);
+    String sliceToString = slice.toString();
+    String expectedToString = ByteString.copy(Arrays.copyOfRange(bytes, 10, 910)).toString();
+
+    Assert.assertEquals(sliceToString, expectedToString);
+  }
+
+  @Test(dataProvider = "byteStrings")
+  public void testSlice(byte[] bytes, ByteString bs)
+  {
+    ByteString slice = bs.slice(2, 1);
+
+    Assert.assertEquals(slice.copyBytes(), Arrays.copyOfRange(bytes, 2, 3));
+
+    try
+    {
+      // try to access the invisible portion of the backing array
+      slice.slice(0, 2);
+      Assert.fail("Should have failed due to IndexOutOfBound");
+    }
+    catch (IndexOutOfBoundsException ex)
+    {
+      // expected
+    }
+  }
+
+  @Test(dataProvider = "byteStrings")
+  public void testCopySlice(byte[] bytes, ByteString bs)
+  {
+    ByteString substr = bs.copySlice(2, 1);
+
+    Assert.assertEquals(substr.copyBytes(), Arrays.copyOfRange(bytes, 2, 3));
+  }
+
+  @DataProvider
+  public Object[][] byteStrings()
+  {
+    final byte[] bytes = new byte[] {1,2,3,4,5};
+    final ByteString bs = ByteString.copy(bytes);
+    return new Object[][]{
+        {bytes, bs},
+        {Arrays.copyOfRange(bytes, 1, 4), ByteString.copy(bytes, 1, 3)},
+        {Arrays.copyOfRange(bytes, 1, 5), bs.slice(1, 4)},
+        {Arrays.copyOfRange(bytes, 1, 4), bs.copySlice(1, 3)}
+    };
   }
 }

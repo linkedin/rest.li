@@ -55,4 +55,22 @@ public class ArgumentUtil
       throw new IllegalArgumentException(name + " is an empty string");
     }
   }
+
+  public static void checkBounds(int arrayLength, int offset, int length)
+  {
+    if (offset < 0)
+    {
+      throw new IndexOutOfBoundsException("offset cannot be negative: " + offset);
+    }
+
+    if (length < 0)
+    {
+      throw new IndexOutOfBoundsException("length cannot be negative: " + length);
+    }
+
+    if (offset + length > arrayLength)
+    {
+      throw new IndexOutOfBoundsException("index out of bound: " + (offset + length));
+    }
+  }
 }

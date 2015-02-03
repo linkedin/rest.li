@@ -1,6 +1,8 @@
 2.2.3
 -----
-
+(RB=425777)
+Change ByteString to have slice & copySlice methods
+Add new copy method to copy from a sub array
 
 2.2.2
 -----

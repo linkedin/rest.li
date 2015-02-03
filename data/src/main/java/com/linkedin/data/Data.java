@@ -789,6 +789,31 @@ public class Data
       ((DataComplex) o).makeReadOnly();
     }
   }
+
+  /**
+   * Get string from bytes following Avro convention.
+   *
+   * This method expands each byte into a character in the output string by encoding
+   * the byte's value into the least significant 8-bits of the character. The returned
+   * string will have the same length as the byte array, i.e. if there are 8 bytes in
+   * the byte array, the string will have 8 characters.
+   *
+   * @param input byte array to get string from.
+   * @param offset the offset to read in the input byte array
+   * @param length the length to read in the input byte array
+   * @return string whose least significant 8-bits of each character represents one byte.
+   */
+  public static String bytesToString(byte[] input, int offset, int length)
+  {
+    ArgumentUtil.checkBounds(input.length, offset, length);
+    char[] charArray = new char[length];
+    for (int i = 0; i < length; ++i)
+    {
+      charArray[i] = (char) (((char) input[i + offset]) & 0x00ff);
+    }
+    return new String(charArray);
+  }
+
   /**
    * Get string from bytes following Avro convention.
    *
@@ -802,14 +827,9 @@ public class Data
    */
   public static String bytesToString(byte[] input)
   {
-    int length = input.length;
-    char[] charArray = new char[length];
-    for (int i = 0; i < length; ++i)
-    {
-      charArray[i] = (char) (((char) input[i]) & 0x00ff);
-    }
-    return new String(charArray);
+    return bytesToString(input, 0, input.length);
   }
+
   /**
    * Get bytes from string following Avro convention.
    *

@@ -38,6 +38,8 @@ public final class ByteString
   private static final ByteString EMPTY = new ByteString(new byte[0]);
 
   private final byte[] _bytes;
+  private final int _offset;
+  private final int _length;
 
   /**
    * Returns an empty {@link ByteString}.
@@ -61,6 +63,25 @@ public final class ByteString
   {
     ArgumentUtil.notNull(bytes, "bytes");
     return bytes.length == 0 ? empty() : new ByteString(Arrays.copyOf(bytes, bytes.length));
+  }
+
+  /**
+   * Returns a new {@link ByteString} that wraps a copy of the desired region of supplied bytes. Changes to the supplied
+   * bytes will not be reflected in the returned {@link ByteString}.
+   *
+   * @param bytes the bytes to copy
+   * @param offset the starting point of region to be copied
+   * @param length the length of the region to be copied
+   * @return a {@link ByteString} that wraps a copy of the desired region of supplied bytes
+   * @throws NullPointerException if {@code bytes} is {@code null}.
+   * @throws IndexOutOfBoundsException if offset or length is negative, or offset + length is larger than the length
+   * of the bytes
+   */
+  public static ByteString copy(byte[] bytes, int offset, int length)
+  {
+    ArgumentUtil.notNull(bytes, "bytes");
+    ArgumentUtil.checkBounds(bytes.length, offset, length);
+    return length == 0 ? empty() : new ByteString(Arrays.copyOfRange(bytes, offset, offset + length));
   }
 
   /**
@@ -178,8 +199,21 @@ public final class ByteString
 
   private ByteString(byte[] bytes)
   {
-    assert bytes != null;
+    ArgumentUtil.notNull(bytes, "bytes");
     _bytes = bytes;
+    _offset = 0;
+    _length = bytes.length;
+  }
+
+  /**
+   * This is internally used to create slice or copySlice of ByteString.
+   */
+  private ByteString(byte[] bytes, int offset, int length)
+  {
+    ArgumentUtil.notNull(bytes, "bytes");
+    _bytes = bytes;
+    _offset = offset;
+    _length = length;
   }
 
   /**
@@ -189,7 +223,7 @@ public final class ByteString
    */
   public int length()
   {
-    return _bytes.length;
+    return _length;
   }
 
   /**
@@ -205,7 +239,7 @@ public final class ByteString
    */
   public byte[] copyBytes()
   {
-    return Arrays.copyOf(_bytes, _bytes.length);
+    return Arrays.copyOfRange(_bytes, _offset, _offset + _length);
   }
 
   /**
@@ -221,7 +255,7 @@ public final class ByteString
    */
   public void copyBytes(byte[] dest, int offset)
   {
-    System.arraycopy(_bytes, 0, dest, offset, _bytes.length);
+    System.arraycopy(_bytes, _offset, dest, offset, _length);
   }
 
   /**
@@ -231,7 +265,7 @@ public final class ByteString
    */
   public ByteBuffer asByteBuffer()
   {
-    return ByteBuffer.wrap(_bytes).asReadOnlyBuffer();
+    return ByteBuffer.wrap(_bytes, _offset, _length).asReadOnlyBuffer();
   }
 
   /**
@@ -255,7 +289,7 @@ public final class ByteString
    */
   public String asString(Charset charset)
   {
-    return new String(_bytes, charset);
+    return new String(_bytes, _offset, _length, charset);
   }
 
   /**
@@ -265,7 +299,7 @@ public final class ByteString
    */
   public String asAvroString()
   {
-    return Data.bytesToString(_bytes);
+    return Data.bytesToString(_bytes, _offset, _length);
   }
 
   /**
@@ -275,7 +309,7 @@ public final class ByteString
    */
   public InputStream asInputStream()
   {
-    return new ByteArrayInputStream(_bytes);
+    return new ByteArrayInputStream(_bytes, _offset, _length);
   }
 
   /**
@@ -287,7 +321,45 @@ public final class ByteString
    */
   public void write(OutputStream out) throws IOException
   {
-    out.write(_bytes);
+    out.write(_bytes, _offset, _length);
+  }
+
+  /**
+   * Returns a slice of ByteString.
+   * This create a "view" of this ByteString, which holds the entire content of the original ByteString. If your code
+   * only needs a small portion of a large ByteString and is not interested in the rest of that ByteString, it is better
+   * to use {@link #copySlice} method.
+   *
+   * @param offset the starting point of the slice
+   * @param length the length of the slice
+   * @return a slice of ByteString backed by the same backing byte array
+   * @throws IndexOutOfBoundsException if offset or length is negative, or offset + length is larger than the length
+   * of this ByteString
+   */
+  public ByteString slice(int offset, int length)
+  {
+    ArgumentUtil.checkBounds(_length, offset, length);
+    return new ByteString(_bytes, _offset + offset, length);
+  }
+
+  /**
+   * Returns a slice of ByteString backed by a new byte array.
+   * This copies the content from the desired portion of the original ByteString and does not hold reference to the
+   * original ByteString.
+   *
+   * @param offset the starting point of the slice
+   * @param length the length of the slice
+   * @return a slice of ByteString backed by a new byte array
+   * @throws IndexOutOfBoundsException if offset or length is negative, or offset + length is larger than the length
+   * of this ByteString
+   */
+  public ByteString copySlice(int offset, int length)
+  {
+    ArgumentUtil.checkBounds(_length, offset, length);
+    int from = _offset + offset;
+    int to = from + length;
+    byte[] content = Arrays.copyOfRange(_bytes, from, to);
+    return new ByteString(content);
   }
 
   @Override
@@ -304,13 +376,31 @@ public final class ByteString
     }
 
     ByteString that = (ByteString) o;
-    return Arrays.equals(_bytes, that._bytes);
+
+    if (_length == that._length)
+    {
+      for (int i = _offset, j = that._offset; i < _offset + _length; i++, j++)
+      {
+        if (_bytes[i] != that._bytes[j])
+        {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    return false;
   }
 
   @Override
   public int hashCode()
   {
-    return Arrays.hashCode(_bytes);
+    int result = 1;
+    for (int i = _offset; i < _offset + _length; i++)
+    {
+      result = result * 31 + _bytes[i];
+    }
+    return result;
   }
 
   /**
@@ -326,18 +416,18 @@ public final class ByteString
     StringBuilder sb = new StringBuilder();
     sb.append("ByteString(length=");
     sb.append(length());
-    if (_bytes.length > 0)
+    if (_length > 0)
     {
       sb.append(",bytes=");
-      for (int i = 0; i < Math.min(_bytes.length, NUM_BYTES); i++)
+      for (int i = _offset; i < _offset + Math.min(_length, NUM_BYTES); i++)
       {
         sb.append(String.format("%02x", (int) _bytes[i] & 0xff));
       }
-      if (_bytes.length > NUM_BYTES * 2)
+      if (_length > NUM_BYTES * 2)
       {
         sb.append("...");
       }
-      for (int i = Math.max(NUM_BYTES, _bytes.length - NUM_BYTES); i < _bytes.length; i++)
+      for (int i = _offset + Math.max(NUM_BYTES, _length - NUM_BYTES); i < _offset + _length; i++)
       {
         sb.append(String.format("%02x", (int)_bytes[i] & 0xff));
       }
