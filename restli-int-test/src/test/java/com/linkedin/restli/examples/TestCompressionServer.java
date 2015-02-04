@@ -68,6 +68,7 @@ import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -77,10 +78,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpException;
-import org.apache.commons.httpclient.methods.GetMethod;
-
+import org.apache.http.HttpException;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.util.EntityUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -319,17 +322,19 @@ public class TestCompressionServer extends RestLiIntegrationTest
 
   @Test(dataProvider = "contentNegotiationDataProvider")
   //This is meant to test for when server is NOT configured to compress anything.
-  public void testCompatibleDefault(String acceptEncoding, String contentEncoding) throws HttpException, IOException
+  public void testCompatibleDefault(String acceptEncoding, String contentEncoding) throws HttpException, IOException, URISyntaxException
   {
     String path = CompressionResource.getPath();
-    HttpClient client = new HttpClient();
-    GetMethod method = new GetMethod(URI_PREFIX_WITHOUT_COMPRESSION + path + CompressionResource.getRedundantQueryExample());
-    method.setPath(path);
-    method.addRequestHeader(HttpConstants.ACCEPT_ENCODING, acceptEncoding);
+    HttpClient client = HttpClientBuilder.create()
+            .disableContentCompression()
+            .build();
 
-    client.executeMethod(method);
+    HttpGet get = new HttpGet(URI_PREFIX_WITHOUT_COMPRESSION + path + CompressionResource.getRedundantQueryExample());
+    get.addHeader(HttpConstants.ACCEPT_ENCODING, acceptEncoding);
 
-    Assert.assertNull(method.getResponseHeader(HttpConstants.CONTENT_ENCODING));
+    HttpResponse response = client.execute(get);
+
+    Assert.assertNull(response.getFirstHeader(HttpConstants.CONTENT_ENCODING));
   }
 
   @Test(dataProvider = "contentEncodingGeneratorDataProvider")
@@ -344,52 +349,54 @@ public class TestCompressionServer extends RestLiIntegrationTest
 
   //Tests for when compression should be applied
   @Test(dataProvider = "compressorDataProvider")
-  public void testCompressionBetter(Compressor compressor) throws RemoteInvocationException, HttpException, IOException, CompressionException
+  public void testCompressionBetter(Compressor compressor) throws RemoteInvocationException, HttpException, IOException, CompressionException, URISyntaxException
   {
     String path = CompressionResource.getPath();
-    HttpClient client = new HttpClient();
+    HttpClient client = HttpClientBuilder.create()
+            .disableContentCompression()
+            .build();
 
     //Get the result uncompressed
-    GetMethod method = new GetMethod(URI_PREFIX + path + CompressionResource.getRedundantQueryExample());
-    method.setPath(path);
-    client.executeMethod(method);
-    byte[] original = method.getResponseBody().clone();
+    HttpGet get = new HttpGet(URI_PREFIX + path + CompressionResource.getRedundantQueryExample());
+    HttpResponse response = client.execute(get);
+    byte[] original = EntityUtils.toString(response.getEntity()).getBytes();
 
-    method.releaseConnection();
+    get.releaseConnection();
     //Ensure uncompressed
-    Assert.assertTrue(method.getResponseHeader(HttpConstants.CONTENT_ENCODING) == null);
+    Assert.assertTrue(response.getFirstHeader(HttpConstants.CONTENT_ENCODING) == null);
 
-    method.addRequestHeader(HttpConstants.ACCEPT_ENCODING, compressor.getContentEncodingName());
-    client.executeMethod(method);
+    get.addHeader(HttpConstants.ACCEPT_ENCODING, compressor.getContentEncodingName());
+    response = client.execute(get);
 
-    byte[] compressed = compressor.inflate(new ByteArrayInputStream(method.getResponseBody()));
-    Assert.assertEquals(compressor.getContentEncodingName(), method.getResponseHeader(HttpConstants.CONTENT_ENCODING).getValue());
+    byte[] compressed = compressor.inflate(response.getEntity().getContent());
+    Assert.assertEquals(compressor.getContentEncodingName(), response.getFirstHeader(HttpConstants.CONTENT_ENCODING).getValue());
 
     Assert.assertEquals(original, compressed);
-    Assert.assertTrue(method.getResponseBody().length < original.length);
+    Assert.assertTrue(response.getEntity().getContentLength() < original.length);
   }
 
   //Test compression when it is worse (lengthwise)
   @Test(dataProvider = "compressorDataProvider")
-  public void testCompressionWorse(Compressor compressor) throws RemoteInvocationException, HttpException, IOException
+  public void testCompressionWorse(Compressor compressor) throws RemoteInvocationException, HttpException, IOException, URISyntaxException
   {
     String path = CompressionResource.getPath();
-    HttpClient client = new HttpClient();
+    HttpClient client = HttpClientBuilder.create()
+            .disableContentCompression()
+            .build();
 
     //Get the result uncompressed
-    GetMethod method = new GetMethod(URI_PREFIX + path + CompressionResource.getNoRedundantQueryExample());
-    method.setPath(path);
-    client.executeMethod(method);
-    byte[] original = method.getResponseBody().clone();
+    HttpGet get = new HttpGet(URI_PREFIX + path + CompressionResource.getNoRedundantQueryExample());
+    HttpResponse response = client.execute(get);
+    String original = EntityUtils.toString(response.getEntity());
 
     //Ensure uncompressed
-    Assert.assertTrue(method.getResponseHeader(HttpConstants.CONTENT_ENCODING) == null);
+    Assert.assertTrue(response.getFirstHeader(HttpConstants.CONTENT_ENCODING) == null);
 
-    method.addRequestHeader(HttpConstants.ACCEPT_ENCODING, compressor.getContentEncodingName());
-    client.executeMethod(method);
-    byte[] compressed = method.getResponseBody();
+    get.addHeader(HttpConstants.ACCEPT_ENCODING, compressor.getContentEncodingName());
+    response = client.execute(get);
+    String compressed = EntityUtils.toString(response.getEntity());
 
-    Assert.assertEquals(null, method.getResponseHeader(HttpConstants.CONTENT_ENCODING));
+    Assert.assertEquals(null, response.getFirstHeader(HttpConstants.CONTENT_ENCODING));
 
     //Ensure the results are the same
     Assert.assertEquals(original, compressed);
@@ -397,39 +404,43 @@ public class TestCompressionServer extends RestLiIntegrationTest
 
   //Test server response parsings
   @Test(dataProvider = "contentNegotiationDataProvider")
-  public void testAcceptEncoding(String acceptedEncoding, String contentEncoding) throws HttpException, IOException
+  public void testAcceptEncoding(String acceptedEncoding, String contentEncoding) throws HttpException, IOException, URISyntaxException
   {
     String path = CompressionResource.getPath();
-    HttpClient client = new HttpClient();
-    GetMethod method = new GetMethod(URI_PREFIX + path + CompressionResource.getRedundantQueryExample());
-    method.setPath(path);
-    method.addRequestHeader(HttpConstants.ACCEPT_ENCODING, acceptedEncoding);
+    HttpClient client = HttpClientBuilder.create()
+            .disableContentCompression()
+            .build();
 
-    client.executeMethod(method);
+    HttpGet get = new HttpGet(URI_PREFIX + path + CompressionResource.getRedundantQueryExample());
+    get.addHeader(HttpConstants.ACCEPT_ENCODING, acceptedEncoding);
+
+    HttpResponse response = client.execute(get);
 
     if(contentEncoding == null)
     {
-      Assert.assertNull(method.getResponseHeader(HttpConstants.CONTENT_ENCODING));
+      Assert.assertNull(response.getFirstHeader(HttpConstants.CONTENT_ENCODING));
     }
     else
     {
-      Assert.assertEquals(contentEncoding, method.getResponseHeader(HttpConstants.CONTENT_ENCODING).getValue());
+      Assert.assertEquals(contentEncoding, response.getFirstHeader(HttpConstants.CONTENT_ENCODING).getValue());
     }
   }
 
   @Test(dataProvider = "error406DataProvider")
-  public void test406Error(String acceptContent) throws HttpException, IOException
+  public void test406Error(String acceptContent) throws HttpException, IOException, URISyntaxException
   {
     String path = CompressionResource.getPath();
-    HttpClient client = new HttpClient();
-    GetMethod method = new GetMethod(URI_PREFIX + path + CompressionResource.getRedundantQueryExample());
-    method.setPath(path);
-    method.addRequestHeader(HttpConstants.ACCEPT_ENCODING, acceptContent);
+    HttpClient client = HttpClientBuilder.create()
+            .disableContentCompression()
+            .build();
 
-    client.executeMethod(method);
+    HttpGet get = new HttpGet(URI_PREFIX + path + CompressionResource.getRedundantQueryExample());
+    get.addHeader(HttpConstants.ACCEPT_ENCODING, acceptContent);
 
-    Assert.assertEquals(method.getStatusCode(), HttpConstants.NOT_ACCEPTABLE);
-    Assert.assertEquals(method.getResponseBody().length, 0);
+    HttpResponse response = client.execute(get);
+
+    Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpConstants.NOT_ACCEPTABLE);
+    Assert.assertEquals(response.getEntity().getContentLength(), 0);
   }
 
   private <T> void checkContentEncodingHeaderIsAbsent(Response<T> response)

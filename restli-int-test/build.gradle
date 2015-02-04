@@ -25,6 +25,7 @@ dependencies {
   testCompile project(path: ':restli-client', configuration: 'testArtifacts')
   testCompile externalDependency.testng
   testCompile externalDependency.mockito
+  testCompile externalDependency.httpclient
   testDataModel project(path: ':restli-int-test-api', configuration: 'dataTemplate')
   testCompile project(path: ':restli-int-test-api', configuration: 'restClient')
   testCompile project(path: project.path, configuration: 'testRestClient')

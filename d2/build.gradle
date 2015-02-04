@@ -8,6 +8,8 @@ dependencies {
   compile externalDependency.commonsIo
   compile externalDependency.commonsCli
   compile externalDependency.commonsHttpClient
+  compile externalDependency.httpclient
+  compile externalDependency.httpcore
   compile externalDependency.json
   compile externalDependency.zookeeper
   compile externalDependency.jacksonCore

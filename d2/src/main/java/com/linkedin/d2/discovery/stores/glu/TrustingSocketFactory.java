@@ -17,21 +17,18 @@
 package com.linkedin.d2.discovery.stores.glu;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
-import java.net.UnknownHostException;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
-import org.apache.commons.httpclient.ConnectTimeoutException;
-import org.apache.commons.httpclient.HttpClientError;
-import org.apache.commons.httpclient.params.HttpConnectionParams;
-import org.apache.commons.httpclient.protocol.SecureProtocolSocketFactory;
+import org.apache.http.HttpHost;
+import org.apache.http.conn.socket.LayeredConnectionSocketFactory;
+import org.apache.http.protocol.HttpContext;
 
 /**
  * Copy and paste from HttpClient's contrib folder (EasyProtocolSocketFactory). This
@@ -41,7 +38,7 @@ import org.apache.commons.httpclient.protocol.SecureProtocolSocketFactory;
  * @author criccomini
  *
  */
-public class TrustingSocketFactory implements SecureProtocolSocketFactory
+public class TrustingSocketFactory implements LayeredConnectionSocketFactory
 {
 
   private SSLContext sslcontext = null;
@@ -77,7 +74,7 @@ public class TrustingSocketFactory implements SecureProtocolSocketFactory
     }
     catch (Exception e)
     {
-      throw new HttpClientError(e.toString());
+      throw new RuntimeException(e);
     }
   }
 
@@ -90,54 +87,31 @@ public class TrustingSocketFactory implements SecureProtocolSocketFactory
     return this.sslcontext;
   }
 
-  public Socket createSocket(String host, int port, InetAddress clientHost, int clientPort) throws IOException,
-      UnknownHostException
+  public Socket createLayeredSocket(Socket socket, String target, int port, HttpContext context) throws IOException
   {
-
-    return getSSLContext().getSocketFactory().createSocket(host,
-                                                           port,
-                                                           clientHost,
-                                                           clientPort);
+    return getSSLContext().getSocketFactory().createSocket(socket, target, port, false);
   }
 
-  public Socket createSocket(final String host,
-                             final int port,
-                             final InetAddress localAddress,
-                             final int localPort,
-                             final HttpConnectionParams params) throws IOException,
-      UnknownHostException,
-      ConnectTimeoutException
+  public Socket createSocket(HttpContext context) throws IOException
   {
-    if (params == null)
-    {
-      throw new IllegalArgumentException("Parameters may not be null");
-    }
-    int timeout = params.getConnectionTimeout();
+    return getSSLContext().getSocketFactory().createSocket();
+  }
+
+  public Socket connectSocket(int connectTimeout, Socket sock, HttpHost host, InetSocketAddress remoteAddress, InetSocketAddress localAddress, HttpContext context) throws IOException
+  {
     SocketFactory socketfactory = getSSLContext().getSocketFactory();
-    if (timeout == 0)
+    if (connectTimeout == 0)
     {
-      return socketfactory.createSocket(host, port, localAddress, localPort);
+      return socketfactory.createSocket(host.getHostName(), host.getPort(), localAddress.getAddress(), localAddress.getPort());
     }
     else
     {
       Socket socket = socketfactory.createSocket();
-      SocketAddress localaddr = new InetSocketAddress(localAddress, localPort);
-      SocketAddress remoteaddr = new InetSocketAddress(host, port);
+      SocketAddress localaddr = new InetSocketAddress(localAddress.getAddress(), localAddress.getPort());
+      SocketAddress remoteaddr = new InetSocketAddress(remoteAddress.getAddress(), remoteAddress.getPort());
       socket.bind(localaddr);
-      socket.connect(remoteaddr, timeout);
+      socket.connect(remoteaddr, connectTimeout);
       return socket;
     }
-  }
-
-  public Socket createSocket(String host, int port) throws IOException,
-      UnknownHostException
-  {
-    return getSSLContext().getSocketFactory().createSocket(host, port);
-  }
-
-  public Socket createSocket(Socket socket, String host, int port, boolean autoClose) throws IOException,
-      UnknownHostException
-  {
-    return getSSLContext().getSocketFactory().createSocket(socket, host, port, autoClose);
   }
 }
