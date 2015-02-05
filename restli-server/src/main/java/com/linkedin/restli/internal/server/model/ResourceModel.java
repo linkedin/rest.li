@@ -22,6 +22,7 @@ import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.internal.common.util.CollectionUtils;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.server.AlternativeKey;
 import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.resources.ComplexKeyResource;
@@ -56,6 +57,9 @@ public class ResourceModel
   // constituents Key and Params
   private final Class<? extends RecordTemplate> _keyKeyClass;
   private final Class<? extends RecordTemplate> _keyParamsClass;
+
+  //alternative key
+  private Map<String, AlternativeKey<?, ?>>     _alternativeKeys;
 
   private final Map<String, Class<?>>           _keyClasses;
   private final Class<? extends RecordTemplate> _valueClass;
@@ -206,6 +210,24 @@ public class ResourceModel
       keyNames.add(key.getName());
     }
     return keyNames;
+  }
+
+  /**
+   * Put the given alternative keys into this ResourceModel.
+   *
+   * @param alternativeKeys map from alternative key name to {@link com.linkedin.restli.server.AlternativeKey}.
+   */
+  public void putAlternativeKeys(Map<String, AlternativeKey<?, ?>> alternativeKeys)
+  {
+    _alternativeKeys = alternativeKeys;
+  }
+
+  /**
+   * @return map from alternative key name to {@link com.linkedin.restli.server.AlternativeKey} of this resource.
+   */
+  public Map<String, AlternativeKey<?, ?>> getAlternativeKeys()
+  {
+    return _alternativeKeys;
   }
 
   /**

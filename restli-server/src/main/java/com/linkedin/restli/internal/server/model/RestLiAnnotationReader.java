@@ -28,6 +28,7 @@ import com.linkedin.data.template.Custom;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.data.template.FieldDef;
+import com.linkedin.data.template.KeyCoercer;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.TemplateRuntimeException;
 import com.linkedin.data.template.TyperefInfo;
@@ -62,6 +63,8 @@ import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.ActionParam;
+import com.linkedin.restli.server.annotations.AlternativeKey;
+import com.linkedin.restli.server.annotations.AlternativeKeys;
 import com.linkedin.restli.server.annotations.AssocKey;
 import com.linkedin.restli.server.annotations.AssocKeyParam;
 import com.linkedin.restli.server.annotations.CallbackParam;
@@ -179,11 +182,102 @@ public final class RestLiAnnotationReader
     {
       checkRestLiDataAnnotations(resourceClass, (RecordDataSchema) getDataSchema(model.getValueClass(), null));
     }
+
+    addAlternativeKeys(model, resourceClass);
+
     DataMap annotationsMap = ResourceModelAnnotation.getAnnotationsMap(resourceClass.getAnnotations());
     addDeprecatedAnnotation(annotationsMap, resourceClass);
-
     model.setCustomAnnotation(annotationsMap);
+
     return model;
+  }
+
+  /**
+   * Add alternative keys, if there are any, to the given model.
+   *
+   * @param model The {@link com.linkedin.restli.internal.server.model.ResourceModel} that we are building.
+   * @param resourceClass The resource {@link java.lang.Class}.
+   */
+  private static void addAlternativeKeys(ResourceModel model, Class<?> resourceClass)
+  {
+    if (resourceClass.isAnnotationPresent(AlternativeKey.class) || resourceClass.isAnnotationPresent(AlternativeKeys.class))
+    {
+      AlternativeKey[] alternativeKeyAnnotations;
+      if (resourceClass.isAnnotationPresent(AlternativeKeys.class))
+      {
+        alternativeKeyAnnotations = resourceClass.getAnnotation(AlternativeKeys.class).alternativeKeys();
+      }
+      else //(resourceClass.isAnnotationPresent(AlternativeKey.class) == true)
+      {
+        alternativeKeyAnnotations = new AlternativeKey[]{resourceClass.getAnnotation(AlternativeKey.class)};
+      }
+
+      Map<String, com.linkedin.restli.server.AlternativeKey<?, ?>> alternativeKeyMap = new HashMap<String, com.linkedin.restli.server.AlternativeKey<?, ?>>(alternativeKeyAnnotations.length);
+      for (AlternativeKey altKeyAnnotation : alternativeKeyAnnotations)
+      {
+        @SuppressWarnings("unchecked")
+        com.linkedin.restli.server.AlternativeKey<?, ?> altKey = buildAlternativeKey(model.getName(), altKeyAnnotation);
+        alternativeKeyMap.put(altKeyAnnotation.name(), altKey);
+      }
+      model.putAlternativeKeys(alternativeKeyMap);
+    }
+    else
+    {
+      model.putAlternativeKeys(new HashMap<String, com.linkedin.restli.server.AlternativeKey<?, ?>>());
+    }
+  }
+
+  /**
+   * Create an {@link com.linkedin.restli.server.AlternativeKey} object from an {@link com.linkedin.restli.server.annotations.AlternativeKey} annotation.
+   *
+   * @param resourceName Name of the resource.
+   * @param altKeyAnnotation The {@link com.linkedin.restli.server.annotations.AlternativeKey} annotation.
+   * @return {@link com.linkedin.restli.server.AlternativeKey} object.
+   */
+  private static com.linkedin.restli.server.AlternativeKey<?, ?> buildAlternativeKey(String resourceName,
+                                                                                     AlternativeKey altKeyAnnotation)
+  {
+    String keyName = altKeyAnnotation.name();
+    Class<?> keyType = altKeyAnnotation.keyType();
+    Class<? extends TyperefInfo> altKeyTyperef = altKeyAnnotation.keyTyperefClass();
+
+    KeyCoercer<?, ?> keyCoercer;
+    try
+    {
+      keyCoercer = altKeyAnnotation.keyCoercer().newInstance();
+    }
+    catch (InstantiationException e)
+    {
+      throw new ResourceConfigException(String.format("KeyCoercer for alternative key '%s' on resource %s cannot be instantiated, %s",
+                                                      keyName, resourceName, e.getMessage()),
+                                        e);
+    }
+    catch (IllegalAccessException e)
+    {
+      throw new ResourceConfigException(String.format("KeyCoercer for alternative key '%s' on resource %s cannot be instantiated, %s",
+                                                      keyName, resourceName, e.getMessage()),
+                                        e);
+    }
+
+    try
+    {
+      @SuppressWarnings("unchecked")
+      com.linkedin.restli.server.AlternativeKey<?, ?> altKey =
+        new com.linkedin.restli.server.AlternativeKey(keyCoercer,
+                                                      keyType,
+                                                      getDataSchema(keyType, getSchemaFromTyperefInfo(altKeyTyperef)));
+      return altKey;
+    }
+    catch (TemplateRuntimeException e)
+    {
+      throw new ResourceConfigException(String.format("DataSchema for alternative key '%s' of type %s on resource %s cannot be found; type is invalid or requires typeref.",
+                                                      keyName, keyType, resourceName),
+                                        e);
+    }
+    catch (Exception e)
+    {
+      throw new ResourceConfigException(String.format("Typeref for alternative key '%s' on resource %s cannot be instantiated, %s", keyName, resourceName, e.getMessage()), e);
+    }
   }
 
   /**

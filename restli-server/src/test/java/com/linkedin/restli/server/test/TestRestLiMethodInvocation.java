@@ -2101,6 +2101,31 @@ public class TestRestLiMethodInvocation
                     buildPathKeys("discoveredItemId", key));
   }
 
+  // keys are already parsed by this point, so in path keys alternative keys are in canonical format.
+  // tests for ensuring keys are parsed into pathKeys correctly can be found in TestRestliRouting.
+  // this test is primarily for ensuring that alternate keys to not cause parameter parsing to fail.
+  @Test
+  public void testAltKeyGet() throws Exception
+  {
+    ResourceModel statusResourceModel = buildResourceModel(StatusCollectionResource.class);
+
+    ResourceMethodDescriptor  getMethodDescriptor = statusResourceModel.findMethod(ResourceMethod.GET);
+    StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
+    EasyMock.expect(statusResource.get(eq(1L))).andReturn(null).once();
+    checkInvocation(statusResource, getMethodDescriptor, "GET",
+                    version, "/statuses/Alt1?altkey=alt", buildPathKeys("statusID", 1L));
+
+    ResourceMethodDescriptor  batchGetMethodDescriptor = statusResourceModel.findMethod(ResourceMethod.BATCH_GET);
+    statusResource = getMockResource(StatusCollectionResource.class);
+    Set<Long> batchKeys = new HashSet<Long>(3);
+    batchKeys.add(1L);
+    batchKeys.add(2L);
+    batchKeys.add(3L);
+    EasyMock.expect(statusResource.batchGet(eq(batchKeys))).andReturn(null).once();
+    checkInvocation(statusResource, batchGetMethodDescriptor, "GET",
+                    version, "/statuses?ids=List(Alt1,Alt2,Alt3)&altkey=alt", buildBatchPathKeys(1L, 2L, 3L));
+  }
+
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "statusFinder")
   public void testFinder(ProtocolVersion version, String query) throws Exception
   {

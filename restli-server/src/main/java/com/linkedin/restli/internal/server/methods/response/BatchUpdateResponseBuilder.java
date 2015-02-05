@@ -36,7 +36,6 @@ import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
 
 import java.net.HttpCookie;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -135,7 +134,8 @@ public final class BatchUpdateResponseBuilder implements RestLiResponseBuilder
 
       if (!serviceErrors.containsKey(entry.getKey()))
       {
-        batchResponseMap.put(entry.getKey(), new BatchResponseEntry(entry.getValue().getStatus(), new UpdateStatus()));
+        Object finalKey = ResponseUtils.translateCanonicalKeyToAlternativeKeyIfNeeded(entry.getKey(), routingResult);
+        batchResponseMap.put(finalKey, new BatchResponseEntry(entry.getValue().getStatus(), new UpdateStatus()));
       }
     }
 
@@ -147,12 +147,14 @@ public final class BatchUpdateResponseBuilder implements RestLiResponseBuilder
             "Unexpected null encountered. Null key or value inside of the Map returned inside of the BatchUpdateResult returned by the resource method: "
           + routingResult.getResourceMethod());
       }
-      batchResponseMap.put(entry.getKey(), new BatchResponseEntry(entry.getValue().getStatus(), entry.getValue()));
+      Object finalKey = ResponseUtils.translateCanonicalKeyToAlternativeKeyIfNeeded(entry.getKey(), routingResult);
+      batchResponseMap.put(finalKey, new BatchResponseEntry(entry.getValue().getStatus(), entry.getValue()));
     }
 
     for (Map.Entry<Object, RestLiServiceException> entry : ((ServerResourceContext) routingResult.getContext()).getBatchKeyErrors().entrySet())
     {
-      batchResponseMap.put(entry.getKey(), new BatchResponseEntry(entry.getValue().getStatus(), entry.getValue()));
+      Object finalKey = ResponseUtils.translateCanonicalKeyToAlternativeKeyIfNeeded(entry.getKey(), routingResult);
+      batchResponseMap.put(finalKey, new BatchResponseEntry(entry.getValue().getStatus(), entry.getValue()));
     }
 
     return new BatchResponseEnvelope(batchResponseMap, headers, cookies);

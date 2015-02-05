@@ -367,7 +367,7 @@ public class TestRestLiRouting
           ResourceMethod.BATCH_GET,
           "batchGet",
           new HashSet<Long>(Arrays.asList(1L, 2L, 3L))
-        },        
+        },
         {
           "/statuses?ids=List(1,2,3)",
           AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
@@ -376,8 +376,7 @@ public class TestRestLiRouting
           ResourceMethod.BATCH_GET,
           "batchGet",
           new HashSet<Long>(Arrays.asList(1L, 2L, 3L))
-       
-        },                
+        },
         {
           "/statuses?ids=1&ids=2&ids=3",
           AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
@@ -386,7 +385,7 @@ public class TestRestLiRouting
           ResourceMethod.BATCH_GET,
           "batchGet",
           new HashSet<Long>(Arrays.asList(1L, 2L, 3L))
-        },        
+        },
         {
           "/statuses?ids=List(1,2,3)",
           AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
@@ -404,7 +403,7 @@ public class TestRestLiRouting
           ResourceMethod.BATCH_UPDATE,
           "batchUpdate",
           new HashSet<Long>(Arrays.asList(1L, 2L))
-        },        
+        },
         {
           "/statuses?ids=List(1,2)",
           AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
@@ -413,7 +412,7 @@ public class TestRestLiRouting
           ResourceMethod.BATCH_UPDATE,
           "batchUpdate",
           new HashSet<Long>(Arrays.asList(1L, 2L))
-        },        
+        },
         {
           "/statuses?ids=1&ids=2",
           AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
@@ -422,7 +421,7 @@ public class TestRestLiRouting
           ResourceMethod.BATCH_UPDATE,
           "batchUpdate",
           new HashSet<Long>(Arrays.asList(1L, 2L))
-        },        
+        },
         {
           "/statuses?ids=List(1,2)",
           AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
@@ -431,7 +430,7 @@ public class TestRestLiRouting
           ResourceMethod.BATCH_UPDATE,
           "batchUpdate",
           new HashSet<Long>(Arrays.asList(1L, 2L))
-        },        
+        },
         {
           "/statuses?ids=1&ids=2",
           AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
@@ -440,7 +439,7 @@ public class TestRestLiRouting
           ResourceMethod.BATCH_PARTIAL_UPDATE,
           "batchUpdate",
           new HashSet<Long>(Arrays.asList(1L, 2L))
-        },        
+        },
         {
           "/statuses?ids=List(1,2)",
           AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
@@ -449,7 +448,7 @@ public class TestRestLiRouting
           ResourceMethod.BATCH_PARTIAL_UPDATE,
           "batchUpdate",
           new HashSet<Long>(Arrays.asList(1L, 2L))
-        },        
+        },
         {
           "/statuses?ids=1&ids=2",
           AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
@@ -458,7 +457,7 @@ public class TestRestLiRouting
           ResourceMethod.BATCH_DELETE,
           "batchDelete",
           new HashSet<Long>(Arrays.asList(1L, 2L))
-        },        
+        },
         {
           "/statuses?ids=List(1,2)",
           AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
@@ -467,7 +466,7 @@ public class TestRestLiRouting
           ResourceMethod.BATCH_DELETE,
           "batchDelete",
           new HashSet<Long>(Arrays.asList(1L, 2L))
-        },        
+        },
         {
           "/statuses?ids=1&ids=2",
           AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
@@ -476,7 +475,7 @@ public class TestRestLiRouting
           ResourceMethod.BATCH_DELETE,
           "batchDelete",
           new HashSet<Long>(Arrays.asList(1L, 2L))
-        },        
+        },
         {
           "/statuses?ids=List(1,2)",
           AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
@@ -485,14 +484,15 @@ public class TestRestLiRouting
           ResourceMethod.BATCH_DELETE,
           "batchDelete",
           new HashSet<Long>(Arrays.asList(1L, 2L))
-        },        
+        },
       };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingCollectionBatch")
   public void testRoutingCollectionBatch(String uri,
                                          ProtocolVersion version,
-                                         String httpMethod, String restliMethod,
+                                         String httpMethod,
+                                         String restliMethod,
                                          ResourceMethod method,
                                          String methodName,
                                          Set<Long> keys) throws Exception
@@ -503,6 +503,193 @@ public class TestRestLiRouting
 
     checkResult(uri, version, httpMethod, restliMethod, method, StatusCollectionResource.class, methodName, true);
     checkBatchKeys(uri, version, httpMethod, keys);
+  }
+
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingAltBatch")
+  public Object[][] routingAltBatch()
+  {
+    return new Object[][]
+      {
+        {
+          "/statuses?ids=Alt1&ids=Alt2&ids=Alt3&altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.BATCH_GET,
+          "batchGet",
+          new HashSet<Long>(Arrays.asList(1L, 2L, 3L))
+        },
+        {
+          "/statuses?ids=Alt1&ids=badAlt2&ids=Alt3&altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.BATCH_GET,
+          "batchGet",
+          new HashSet<Long>(Arrays.asList(1L, 3L)) // second key should log an error.
+        },
+        {
+          "/statuses?ids=List(Alt1,Alt2,Alt3)&altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.BATCH_GET,
+          "batchGet",
+          new HashSet<Long>(Arrays.asList(1L, 2L, 3L))
+        },
+        {
+          "/statuses?ids=List(Alt1,badAlt2,Alt3)&altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.BATCH_GET,
+          "batchGet",
+          new HashSet<Long>(Arrays.asList(1L, 3L)) // second key should log an error.
+        },
+        {
+          "/statuses?ids=Alt1&ids=Alt2&ids=Alt3&altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          "BATCH_GET",
+          ResourceMethod.BATCH_GET,
+          "batchGet",
+          new HashSet<Long>(Arrays.asList(1L, 2L, 3L))
+        },
+        {
+          "/statuses?ids=Alt1&ids=badAlt2&ids=Alt3&altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          "BATCH_GET",
+          ResourceMethod.BATCH_GET,
+          "batchGet",
+          new HashSet<Long>(Arrays.asList(1L, 3L)) // second key should log an error
+        },
+        {
+          "/statuses?ids=List(Alt1,Alt2,Alt3)&altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          "BATCH_GET",
+          ResourceMethod.BATCH_GET,
+          "batchGet",
+          new HashSet<Long>(Arrays.asList(1L, 2L, 3L))
+        },
+        {
+          "/statuses?ids=List(Alt1,badAlt2,Alt3)&altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          "BATCH_GET",
+          ResourceMethod.BATCH_GET,
+          "batchGet",
+          new HashSet<Long>(Arrays.asList(1L, 3L)) // second key should log an error
+        },
+        {
+          "/statuses?ids=Alt1&ids=Alt2&altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "PUT",
+          null,
+          ResourceMethod.BATCH_UPDATE,
+          "batchUpdate",
+          new HashSet<Long>(Arrays.asList(1L, 2L))
+        },
+        {
+          "/statuses?ids=List(Alt1,Alt2)&altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "PUT",
+          null,
+          ResourceMethod.BATCH_UPDATE,
+          "batchUpdate",
+          new HashSet<Long>(Arrays.asList(1L, 2L))
+        },
+        {
+          "/statuses?ids=Alt1&ids=Alt2&altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "PUT",
+          "BATCH_UPDATE",
+          ResourceMethod.BATCH_UPDATE,
+          "batchUpdate",
+          new HashSet<Long>(Arrays.asList(1L, 2L))
+        },
+        {
+          "/statuses?ids=List(Alt1,Alt2)&altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "PUT",
+          "BATCH_UPDATE",
+          ResourceMethod.BATCH_UPDATE,
+          "batchUpdate",
+          new HashSet<Long>(Arrays.asList(1L, 2L))
+        },
+        {
+          "/statuses?ids=Alt1&ids=Alt2&altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "POST",
+          "BATCH_PARTIAL_UPDATE",
+          ResourceMethod.BATCH_PARTIAL_UPDATE,
+          "batchUpdate",
+          new HashSet<Long>(Arrays.asList(1L, 2L))
+        },
+        {
+          "/statuses?ids=List(Alt1,Alt2)&altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "POST",
+          "BATCH_PARTIAL_UPDATE",
+          ResourceMethod.BATCH_PARTIAL_UPDATE,
+          "batchUpdate",
+          new HashSet<Long>(Arrays.asList(1L, 2L))
+        },
+        {
+          "/statuses?ids=Alt1&ids=Alt2&altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "DELETE",
+          null,
+          ResourceMethod.BATCH_DELETE,
+          "batchDelete",
+          new HashSet<Long>(Arrays.asList(1L, 2L))
+        },
+        {
+          "/statuses?ids=List(Alt1,Alt2)&altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "DELETE",
+          null,
+          ResourceMethod.BATCH_DELETE,
+          "batchDelete",
+          new HashSet<Long>(Arrays.asList(1L, 2L))
+        },
+        {
+          "/statuses?ids=Alt1&ids=Alt2&altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "DELETE",
+          "BATCH_DELETE",
+          ResourceMethod.BATCH_DELETE,
+          "batchDelete",
+          new HashSet<Long>(Arrays.asList(1L, 2L))
+        },
+        {
+          "/statuses?ids=List(Alt1,Alt2)&altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "DELETE",
+          "BATCH_DELETE",
+          ResourceMethod.BATCH_DELETE,
+          "batchDelete",
+          new HashSet<Long>(Arrays.asList(1L, 2L))
+        }
+      };
+  }
+
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingAltBatch")
+  public void testRoutingAltBatch(String uri,
+                                  ProtocolVersion version,
+                                  String httpMethod,
+                                  String restliMethod,
+                                  ResourceMethod method,
+                                  String methodName,
+                                  Set<Long> expectedKeys) throws Exception
+  {
+
+    Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(StatusCollectionResource.class);
+    _router = new RestLiRouter(pathRootResourceMap);
+
+    checkResult(uri, version, httpMethod, restliMethod, method, StatusCollectionResource.class, methodName, true);
+    checkBatchKeys(uri, version, httpMethod, expectedKeys);
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingSubResourceCollectionBatch")
@@ -1146,6 +1333,227 @@ public class TestRestLiRouting
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingCollection")
   public void testRoutingCollection(String uri, ProtocolVersion version, String httpMethod, String restliMethod, ResourceMethod method, String methodName, String[] pathKeys) throws Exception
+  {
+    Map<String, ResourceModel> pathRootResourceMap =
+      buildResourceModels(StatusCollectionResource.class);
+    _router = new RestLiRouter(pathRootResourceMap);
+
+    checkResult(uri, version, httpMethod, restliMethod, method, StatusCollectionResource.class, methodName, false, pathKeys);
+  }
+
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingAltCollection")
+  public Object[][] routingAltCollection()
+  {
+    String[] statusKey = new String[] { "statusID" };
+
+    return new Object[][]
+      {
+        {
+          "/statuses/Alt1?altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.GET,
+          "get",
+          statusKey
+        },
+        { "/statuses/Alt1?altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.GET,
+          "get",
+          statusKey
+        },
+        { "/statuses/Alt1?altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          "GET",
+          ResourceMethod.GET,
+          "get",
+          statusKey
+        },
+        { "/statuses/Alt1?altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          "GET",
+          ResourceMethod.GET,
+          "get",
+          statusKey
+        },
+        { "/st%61tuses/Alt1?altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.GET,
+          "get",
+          statusKey
+        },
+        { "/st%61tuses/Alt1?altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.GET,
+          "get",
+          statusKey
+        },
+        { "/statuses/Alt%31?altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.GET,
+          "get",
+          statusKey
+        },
+        { "/statuses/Alt%31?altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.GET,
+          "get",
+          statusKey
+        },
+        { "/statuses/Alt-1?altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.GET,
+          "get",
+          statusKey
+        },
+        { "/statuses/Alt-1?altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "GET",
+          null,
+          ResourceMethod.GET,
+          "get",
+          statusKey
+        },
+        { "/statuses/Alt1?altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "PUT",
+          null,
+          ResourceMethod.UPDATE,
+          "update",
+          statusKey
+        },
+        { "/statuses/Alt1?altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "PUT",
+          null,
+          ResourceMethod.UPDATE,
+          "update",
+          statusKey
+        },
+        { "/statuses/Alt1?altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "PUT",
+          "UPDATE",
+          ResourceMethod.UPDATE,
+          "update",
+          statusKey
+        },
+        { "/statuses/Alt1?altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "PUT",
+          "UPDATE",
+          ResourceMethod.UPDATE,
+          "update",
+          statusKey
+        },
+        { "/statuses/Alt1?altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "POST",
+          null,
+          ResourceMethod.PARTIAL_UPDATE,
+          "update",
+          statusKey
+        },
+        { "/statuses/Alt1?altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "POST",
+          null,
+          ResourceMethod.PARTIAL_UPDATE,
+          "update",
+          statusKey
+        },
+        { "/statuses/Alt1?altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "POST",
+          "PARTIAL_UPDATE",
+          ResourceMethod.PARTIAL_UPDATE,
+          "update",
+          statusKey
+        },
+        { "/statuses/Alt1?altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "POST",
+          "PARTIAL_UPDATE",
+          ResourceMethod.PARTIAL_UPDATE,
+          "update",
+          statusKey
+        },
+        { "/statuses/Alt1?altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "DELETE",
+          null,
+          ResourceMethod.DELETE,
+          "delete",
+          statusKey
+        },
+        { "/statuses/Alt1?altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "DELETE",
+          null,
+          ResourceMethod.DELETE,
+          "delete",
+          statusKey
+        },
+        { "/statuses/Alt1?altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "DELETE",
+          "DELETE",
+          ResourceMethod.DELETE,
+          "delete",
+          statusKey
+        },
+        { "/statuses/Alt1?altkey=alt",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "DELETE",
+          "DELETE",
+          ResourceMethod.DELETE,
+          "delete",
+          statusKey
+        },
+        {
+          "/statuses/Alt1?altkey=alt&action=forward&to=5",
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "POST",
+          null,
+          ResourceMethod.ACTION,
+          "forward",
+          statusKey
+        },
+        {
+          "/statuses/Alt1?altkey=alt&action=forward&to=5",
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "POST",
+          null,
+          ResourceMethod.ACTION,
+          "forward",
+          statusKey
+        }
+      };
+  }
+
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingAltCollection")
+  public void testRoutingAltKeyCollection(String uri,
+                                          ProtocolVersion version,
+                                          String httpMethod,
+                                          String restliMethod,
+                                          ResourceMethod method,
+                                          String methodName,
+                                          String[] pathKeys) throws Exception
   {
     Map<String, ResourceModel> pathRootResourceMap =
       buildResourceModels(StatusCollectionResource.class);
@@ -2285,6 +2693,10 @@ public class TestRestLiRouting
         { "/statuses/replies", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
         { "/statuses/2.3", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
         { "/statuses/2.3", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses?ids=Alt1&ids=Alt2&ids=Alt3&altkey=notAlt", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses?ids=List(Alt1,Alt2,Alt3)&altkey=notAlt", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses?ids=Alt1&ids=Altfoo&ids=Alt3&altkey=alt", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_500_INTERNAL_SERVER_ERROR},
+        { "/statuses?ids=List(Alt1,Altfoo,Alt3)&altkey=alt", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_500_INTERNAL_SERVER_ERROR},
         { "/statuses/1/replies", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE", HttpStatus.S_400_BAD_REQUEST },
         { "/statuses/1/replies", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE", HttpStatus.S_400_BAD_REQUEST },
         { "/statuses/1/replies", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "PUT", HttpStatus.S_400_BAD_REQUEST },
@@ -2503,20 +2915,20 @@ public class TestRestLiRouting
   private void checkBatchKeys(String uri,
                               ProtocolVersion version,
                               String httpMethod,
-                              Set<?> batchCompoundKeys)
+                              Set<?> expectedBatchKeys)
       throws URISyntaxException
   {
     RestRequest request = createRequest(uri, httpMethod, version);
     RoutingResult result = _router.process(request, new RequestContext());
     Set<?> batchKeys = result.getContext().getPathKeys().getBatchIds();
-    assertEquals(batchKeys, batchCompoundKeys);
+    assertEquals(batchKeys, expectedBatchKeys);
   }
 
   private void expectRoutingExceptionWithStatus(String uri,
-                                      ProtocolVersion version,
-                                      String httpMethod,
-                                      String restliMethod,
-                                      HttpStatus status) throws URISyntaxException
+                                                ProtocolVersion version,
+                                                String httpMethod,
+                                                String restliMethod,
+                                                HttpStatus status) throws URISyntaxException
   {
     RestRequestBuilder builder = createRequestBuilder(uri, httpMethod, version);
     if (restliMethod != null)

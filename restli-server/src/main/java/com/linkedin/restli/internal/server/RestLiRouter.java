@@ -19,6 +19,7 @@ package com.linkedin.restli.internal.server;
 
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.template.InvalidAlternativeKeyException;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.TemplateRuntimeException;
 import com.linkedin.r2.filter.R2Constants;
@@ -36,6 +37,7 @@ import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.PathSegment.PathSegmentSyntaxException;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
+import com.linkedin.restli.internal.server.util.AlternativeKeyCoercerException;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
 import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
 import com.linkedin.restli.server.Key;
@@ -171,6 +173,11 @@ public class RestLiRouter
                                                    currentResource.getName(),
                                                    context.getRequestURI()),
                                      HttpStatus.S_400_BAD_REQUEST.getCode());
+        }
+        else if (context.getParameters().containsKey(RestConstants.ALT_KEY_PARAM))
+        {
+          parseAlternativeKey(currentResource, context, currentPathSegment);
+          currentLevel = ResourceLevel.ENTITY;
         }
         else if (currentResource.getKeyClass() == ComplexResourceKey.class)
         {
@@ -408,6 +415,47 @@ public class RestLiRouter
    return compoundKey;
  }
 
+  /**
+   * Coercers the alternative key into a primary key and puts it into path keys.
+   *
+   * @param resource the {@link com.linkedin.restli.internal.server.model.ResourceModel} of the resource.
+   * @param context the {@link com.linkedin.restli.internal.server.ServerResourceContext} of the request.
+   * @param currentPathSegment the serialized alternative key.
+   */
+  private static <K> void parseAlternativeKey(final ResourceModel resource,
+                                              final ServerResourceContext context,
+                                              final String currentPathSegment)
+  {
+    String altKeyName = context.getParameter(RestConstants.ALT_KEY_PARAM);
+    Object alternativeKey;
+    try
+    {
+      alternativeKey = ArgumentUtils.parseAlternativeKey(currentPathSegment,
+                                                       context.getParameter(RestConstants.ALT_KEY_PARAM),
+                                                       resource,
+                                                       context.getRestliProtocolVersion());
+    }
+    catch (IllegalArgumentException e)
+    {
+      throw new RoutingException(e.getMessage(), HttpStatus.S_400_BAD_REQUEST.getCode());
+    }
+
+    try
+    {
+      K canonicalKey = ArgumentUtils.translateFromAlternativeKey(alternativeKey, altKeyName, resource);
+      context.getPathKeys().append(resource.getKeyName(), canonicalKey);
+    }
+    catch (InvalidAlternativeKeyException e)
+    {
+      throw new RoutingException(e.getMessage(), HttpStatus.S_400_BAD_REQUEST.getCode());
+    }
+    catch (AlternativeKeyCoercerException e)
+    {
+      throw new RoutingException("KeyCoercer threw an unexpected exception",
+                                 HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode(),
+                                 e);
+    }
+  }
 
   /**
    * Instantiate the complex key from the current path segment (treat is as a list of
@@ -448,7 +496,11 @@ public class RestLiRouter
 
     try
     {
-      if (ComplexResourceKey.class.equals(keyClass))
+      if (context.getParameters().containsKey(RestConstants.ALT_KEY_PARAM))
+      {
+        batchKeys = parseAlternativeBatchKeys(resource, context);
+      }
+      else if (ComplexResourceKey.class.equals(keyClass))
       {
         // Parse all query parameters into a data map.
         DataMap allParametersDataMap = context.getParameters();
@@ -582,6 +634,50 @@ public class RestLiRouter
     }
 
     context.getPathKeys().setBatchKeys(batchKeys);
+  }
+
+  private static Set<Object> parseAlternativeBatchKeys(final ResourceModel resource,
+                                                       final ServerResourceContext context)
+  {
+    String altKeyName = context.getParameter(RestConstants.ALT_KEY_PARAM);
+    List<String> ids = context.getParameterValues(RestConstants.QUERY_BATCH_IDS_PARAM);
+    Set<Object> batchKeys = new HashSet<Object>();
+    if (ids == null)
+    {
+      batchKeys = null;
+    }
+    else if (ids.isEmpty())
+    {
+      batchKeys = Collections.emptySet();
+    }
+    else
+    {
+      if (!resource.getAlternativeKeys().containsKey(altKeyName))
+      {
+        throw new RoutingException(String.format("Resource '%s' does not have an alternative key named '%s'", resource.getName(), altKeyName),
+                                   HttpStatus.S_400_BAD_REQUEST.getCode());
+      }
+      for(String id : ids)
+      {
+        try
+        {
+          batchKeys.add(ArgumentUtils.translateFromAlternativeKey(ArgumentUtils.parseAlternativeKey(id, altKeyName, resource, context.getRestliProtocolVersion()),
+                                                                  altKeyName,
+                                                                  resource));
+        }
+        catch (InvalidAlternativeKeyException e)
+        {
+          log.warn(String.format("Invalid alternative key '%s', skipping key.", id));
+          context.getBatchKeyErrors().put(id, new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, e));
+        }
+        catch (AlternativeKeyCoercerException e)
+        {
+          throw new RoutingException(String.format("Unexpected error when coercing alternative key '%s': %s", id, e.getMessage()),
+                                     HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode());
+        }
+      }
+    }
+    return batchKeys;
   }
 
   private static void parseSimpleKey(final ResourceModel resource,

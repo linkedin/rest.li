@@ -53,10 +53,18 @@ public class TestRestliSnapshotCompatibilityChecker
     final Collection<CompatibilityInfo> restSpecDiffs = new HashSet<CompatibilityInfo>();
     restSpecErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "identifier", "type"),
                                             CompatibilityInfo.Type.TYPE_ERROR, "schema type changed from int to long"));
+    restSpecErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "alternativeKeys"),
+                                             CompatibilityInfo.Type.ARRAY_MISSING_ELEMENT, "altTwo"));
+    restSpecErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "alternativeKeys", "alt", "type"),
+                                             CompatibilityInfo.Type.VALUE_NOT_EQUAL, "long", "string"));
+    restSpecErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "alternativeKeys", "alt", "keyCoercer"),
+                                             CompatibilityInfo.Type.VALUE_NOT_EQUAL, "com.linkedin.restli.tools.twitter.IntLongCoercer", "com.linkedin.restli.tools.twitter.StringLongCoercer"));
     restSpecDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "supports"),
                                             CompatibilityInfo.Type.SUPERSET, new HashSet<String>(Arrays.asList("create"))));
     restSpecDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "methods"),
                                             CompatibilityInfo.Type.SUPERSET, new HashSet<String>(Arrays.asList("create"))));
+    restSpecDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "alternativeKeys"),
+                                            CompatibilityInfo.Type.SUPERSET, new HashSet<String>(Arrays.asList("newAlt"))));
 
     final RestLiSnapshotCompatibilityChecker checker = new RestLiSnapshotCompatibilityChecker();
     final CompatibilityInfoMap incompatibleInfoMap = checker.checkRestSpecVsSnapshot(RESOURCES_DIR + FS + "idls" + FS + "twitter-statuses-incompatible.restspec.json",

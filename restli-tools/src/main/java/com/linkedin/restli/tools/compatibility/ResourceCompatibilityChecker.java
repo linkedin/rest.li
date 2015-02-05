@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.tools.compatibility;
 
+
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.message.Message;
@@ -40,6 +41,7 @@ import com.linkedin.restli.common.validation.CreateOnly;
 import com.linkedin.restli.common.validation.ReadOnly;
 import com.linkedin.restli.restspec.ActionSchema;
 import com.linkedin.restli.restspec.ActionsSetSchema;
+import com.linkedin.restli.restspec.AlternativeKeySchema;
 import com.linkedin.restli.restspec.AssocKeySchema;
 import com.linkedin.restli.restspec.AssociationSchema;
 import com.linkedin.restli.restspec.CollectionSchema;
@@ -427,6 +429,10 @@ public class ResourceCompatibilityChecker
     {
       checkRestMethodSchema((RestMethodSchema) prevRec, (RestMethodSchema) currRec);
     }
+    else if (prevClass == AlternativeKeySchema.class)
+    {
+      checkAlternativeKeySchema((AlternativeKeySchema) prevRec, (AlternativeKeySchema) currRec);
+    }
     else
     {
       _infoMap.addRestSpecInfo(CompatibilityInfo.Type.OTHER_ERROR,
@@ -662,6 +668,11 @@ public class ResourceCompatibilityChecker
                       prevRec.getIdentifier(GetMode.DEFAULT),
                       currRec.getIdentifier(GetMode.DEFAULT));
 
+    checkComplexArrayField(prevRec.schema().getField("alternativeKeys"),
+                           "name",
+                           prevRec.getAlternativeKeys(GetMode.DEFAULT),
+                           currRec.getAlternativeKeys(GetMode.DEFAULT));
+
     checkArrayContainment(prevRec.schema().getField("supports"),
                           currRec.getSupports(GetMode.DEFAULT),
                           prevRec.getSupports(GetMode.DEFAULT));
@@ -774,6 +785,23 @@ public class ResourceCompatibilityChecker
     checkComplexField(prevRec.schema().getField("entity"),
                       prevRec.getEntity(GetMode.DEFAULT),
                       currRec.getEntity(GetMode.DEFAULT));
+  }
+
+  private void checkAlternativeKeySchema(AlternativeKeySchema prevRec, AlternativeKeySchema currRec)
+  {
+    checkEqualSingleValue(prevRec.schema().getField("name"),
+                          prevRec.getName(GetMode.DEFAULT),
+                          currRec.getName(GetMode.DEFAULT));
+
+    checkDoc(prevRec.schema().getField("doc"), prevRec.getDoc(GetMode.DEFAULT), currRec.getDoc(GetMode.DEFAULT));
+
+    checkEqualSingleValue(prevRec.schema().getField("type"),
+                          prevRec.getType(GetMode.DEFAULT),
+                          currRec.getType(GetMode.DEFAULT));
+
+    checkEqualSingleValue(prevRec.schema().getField("keyCoercer"),
+                          prevRec.getKeyCoercer(GetMode.DEFAULT),
+                          currRec.getKeyCoercer(GetMode.DEFAULT));
   }
 
   private void checkParameterSchema(ParameterSchema prevRec, ParameterSchema currRec)
@@ -975,6 +1003,11 @@ public class ResourceCompatibilityChecker
                                 "name",
                                 prevRec.getAssocKeys(GetMode.DEFAULT),
                                 currRec.getAssocKeys(GetMode.DEFAULT));
+
+    checkComplexArrayField(prevRec.schema().getField("alternativeKeys"),
+                           "name",
+                           prevRec.getAlternativeKeys(GetMode.DEFAULT),
+                           currRec.getAlternativeKeys(GetMode.DEFAULT));
 
     checkArrayContainment(prevRec.schema().getField("supports"),
                           currRec.getSupports(GetMode.DEFAULT),

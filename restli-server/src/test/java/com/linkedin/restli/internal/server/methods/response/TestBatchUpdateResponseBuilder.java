@@ -18,14 +18,17 @@ package com.linkedin.restli.internal.server.methods.response;
 
 
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.StringDataSchema;
+import com.linkedin.data.template.InvalidAlternativeKeyException;
+import com.linkedin.data.template.KeyCoercer;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.pegasus.generator.examples.Foo;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CompoundKey;
-import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
@@ -33,23 +36,23 @@ import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.methods.AnyRecord;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
+import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.response.BatchResponseEnvelope;
+import com.linkedin.restli.server.AlternativeKey;
 import com.linkedin.restli.server.BatchUpdateResult;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
+import org.easymock.EasyMock;
+import org.testng.Assert;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 import java.net.HttpCookie;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import org.easymock.EasyMock;
-
-import org.testng.Assert;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
 
 
 /**
@@ -95,11 +98,34 @@ public class TestBatchUpdateResponseBuilder
     Map<String, ErrorResponse> expectedProtocol2Errors = new HashMap<String, ErrorResponse>();
     expectedProtocol2Errors.put("(a:a3,b:3)", errorResponse);
 
+    Map<String, UpdateStatus> expectedAltKeyResults = new HashMap<String, UpdateStatus>();
+    expectedAltKeyResults.put("aa1xb1", updateStatus);
+    expectedAltKeyResults.put("aa2xb2", updateStatus);
+    Map<String, ErrorResponse> expectedAltKeyErrors = new HashMap<String, ErrorResponse>();
+    expectedAltKeyErrors.put("aa3xb3", errorResponse);
+
+    Map<String, AlternativeKey<?, ?>> alternativeKeyMap = new HashMap<String, AlternativeKey<?, ?>>();
+    alternativeKeyMap.put("alt", new AlternativeKey<String, CompoundKey>(new TestKeyCoercer(), String.class, new StringDataSchema()));
+
     return new Object[][]
         {
-            {batchUpdateResult, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), expectedProtocol1Results, expectedProtocol1Errors},
-            {batchUpdateResult, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), expectedProtocol2Results, expectedProtocol2Errors},
-            {keyOverlapBatchUpdateResult, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), expectedProtocol2Results, expectedProtocol2Errors}
+            { batchUpdateResult, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), null, null, expectedProtocol1Results, expectedProtocol1Errors },
+            { batchUpdateResult, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), null, null, expectedProtocol2Results, expectedProtocol2Errors },
+            { keyOverlapBatchUpdateResult, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), null, null, expectedProtocol2Results, expectedProtocol2Errors },
+            { batchUpdateResult,
+              AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+              "alt",
+              alternativeKeyMap,
+              expectedAltKeyResults,
+              expectedAltKeyErrors
+            },
+            { batchUpdateResult,
+              AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+              "alt",
+              alternativeKeyMap,
+              expectedAltKeyResults,
+              expectedAltKeyErrors
+            }
         };
   }
 
@@ -107,11 +133,13 @@ public class TestBatchUpdateResponseBuilder
   @SuppressWarnings("unchecked")
   public void testBuilder(Object results,
                           ProtocolVersion protocolVersion,
+                          String altKeyName,
+                          Map<String, AlternativeKey<?, ?>> alternativeKeyMap,
                           Map<String, UpdateStatus> expectedResults,
                           Map<String, ErrorResponse> expectedErrors)
   {
-    ResourceContext mockContext = getMockResourceContext(protocolVersion);
-    ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor();
+    ResourceContext mockContext = getMockResourceContext(protocolVersion, altKeyName);
+    ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(alternativeKeyMap);
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
 
     Map<String, String> headers = ResponseBuilderUtil.getHeaders();
@@ -145,6 +173,7 @@ public class TestBatchUpdateResponseBuilder
     Map<Object,RestLiServiceException> errors = new HashMap<Object, RestLiServiceException>();
     RestLiServiceException exception = new RestLiServiceException(HttpStatus.S_402_PAYMENT_REQUIRED);
     errors.put("foo", exception);
+    EasyMock.expect(context.hasParameter("altkey")).andReturn(false);
     EasyMock.expect(context.getBatchKeyErrors()).andReturn(errors);
     EasyMock.replay(context);
     RoutingResult routingResult = new RoutingResult(context, null);
@@ -191,8 +220,8 @@ public class TestBatchUpdateResponseBuilder
   @SuppressWarnings("unchecked")
   public void unsupportedNullKeyMapTest(Object results, ProtocolVersion protocolVersion, Map<String, UpdateStatus> expectedResults)
   {
-    ResourceContext mockContext = getMockResourceContext(protocolVersion);
-    ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor();
+    ResourceContext mockContext = getMockResourceContext(protocolVersion, null);
+    ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(null);
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
 
     Map<String, String> headers = ResponseBuilderUtil.getHeaders();
@@ -213,8 +242,8 @@ public class TestBatchUpdateResponseBuilder
   @Test(dataProvider = "updateStatusInstantiation")
   public void testUpdateStatusInstantiation(RestLiResponseEnvelope responseData, UpdateStatus expectedResult)
   {
-    ResourceContext mockContext = getMockResourceContext(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion());
-    ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor();
+    ResourceContext mockContext = getMockResourceContext(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), null);
+    ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(null);
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
 
     PartialRestResponse response = new BatchUpdateResponseBuilder(new ErrorResponseBuilder())
@@ -251,20 +280,54 @@ public class TestBatchUpdateResponseBuilder
     };
   }
 
-  private static ResourceContext getMockResourceContext(ProtocolVersion protocolVersion)
+  private static ResourceContext getMockResourceContext(ProtocolVersion protocolVersion, String altKeyName)
   {
     ServerResourceContext mockContext = EasyMock.createMock(ServerResourceContext.class);
     EasyMock.expect(mockContext.getBatchKeyErrors()).andReturn(Collections.<Object, RestLiServiceException>emptyMap()).once();
     EasyMock.expect(mockContext.getRestliProtocolVersion()).andReturn(protocolVersion).once();
+    EasyMock.expect(mockContext.hasParameter(RestConstants.ALT_KEY_PARAM)).andReturn(altKeyName != null).anyTimes();
+    if (altKeyName != null)
+    {
+      EasyMock.expect(mockContext.getParameter(RestConstants.ALT_KEY_PARAM)).andReturn(altKeyName).atLeastOnce();
+    }
     EasyMock.replay(mockContext);
     return mockContext;
   }
 
-  private static ResourceMethodDescriptor getMockResourceMethodDescriptor()
+  private static ResourceMethodDescriptor getMockResourceMethodDescriptor(Map<String, AlternativeKey<?, ?>> alternativeKeyMap)
   {
     ResourceMethodDescriptor mockDescriptor = EasyMock.createMock(ResourceMethodDescriptor.class);
-
+    if (alternativeKeyMap != null)
+    {
+      EasyMock.expect(mockDescriptor.getResourceModel()).andReturn(getMockResourceModel(alternativeKeyMap)).atLeastOnce();
+    }
     EasyMock.replay(mockDescriptor);
     return mockDescriptor;
+  }
+
+  private static ResourceModel getMockResourceModel(Map<String, AlternativeKey<?, ?>> alternativeKeyMap)
+  {
+    ResourceModel mockResourceModel = EasyMock.createMock(ResourceModel.class);
+    EasyMock.expect(mockResourceModel.getAlternativeKeys()).andReturn(alternativeKeyMap).anyTimes();
+    EasyMock.replay(mockResourceModel);
+    return mockResourceModel;
+  }
+
+  private class TestKeyCoercer implements KeyCoercer<String, CompoundKey>
+  {
+    @Override
+    public CompoundKey coerceToKey(String object) throws InvalidAlternativeKeyException
+    {
+      CompoundKey compoundKey = new CompoundKey();
+      compoundKey.append("a", object.substring(1, 3));
+      compoundKey.append("b", Integer.parseInt(object.substring(4, 5)));
+      return compoundKey;
+    }
+
+    @Override
+    public String coerceFromKey(CompoundKey object)
+    {
+      return "a" + object.getPart("a") + "xb" + object.getPart("b");
+    }
   }
 }

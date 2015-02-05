@@ -40,7 +40,6 @@ import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiServiceException;
 
 import java.net.HttpCookie;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -65,15 +64,25 @@ public class CreateResponseBuilder implements RestLiResponseBuilder
                                                         List<HttpCookie> cookies)
 {
     CreateResponse createResponse = (CreateResponse) result;
+
+    Object id = null;
+
     if (createResponse.hasId())
     {
+      id = ResponseUtils.translateCanonicalKeyToAlternativeKeyIfNeeded(createResponse.getId(), routingResult);
       final ProtocolVersion protocolVersion = ((ServerResourceContext) routingResult.getContext()).getRestliProtocolVersion();
-      String stringKey = URIParamUtils.encodeKeyForUri(createResponse.getId(), UriComponent.Type.PATH_SEGMENT, protocolVersion);
+      String stringKey = URIParamUtils.encodeKeyForUri(id, UriComponent.Type.PATH_SEGMENT, protocolVersion);
       UriBuilder uribuilder = UriBuilder.fromUri(request.getURI());
       uribuilder.path(stringKey);
+      if (routingResult.getContext().hasParameter(RestConstants.ALT_KEY_PARAM))
+      {
+        // add altkey param to location URI
+        uribuilder.queryParam(RestConstants.ALT_KEY_PARAM, routingResult.getContext().getParameter(RestConstants.ALT_KEY_PARAM));
+      }
       headers.put(RestConstants.HEADER_LOCATION, uribuilder.build((Object) null).toString());
-      headers.put(HeaderUtil.getIdHeaderName(protocolVersion), URIParamUtils.encodeKeyForHeader(createResponse.getId(), protocolVersion));
+      headers.put(HeaderUtil.getIdHeaderName(protocolVersion), URIParamUtils.encodeKeyForHeader(id, protocolVersion));
     }
+
     RecordTemplate resultEntity;
     if (createResponse instanceof CreateKVResponse)
     {
@@ -84,9 +93,10 @@ public class CreateResponseBuilder implements RestLiResponseBuilder
     }
     else //Instance of idResponse
     {
-      IdResponse<?> idResponse = new IdResponse<Object>(createResponse.getId());
+      IdResponse<?> idResponse = new IdResponse<Object>(id);
       resultEntity = idResponse;
     }
+
     //Verify that a null status was not passed into the CreateResponse. If so, this is a developer error.
     if (createResponse.getStatus() == null)
     {

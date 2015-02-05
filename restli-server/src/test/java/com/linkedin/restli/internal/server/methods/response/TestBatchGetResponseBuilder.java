@@ -18,6 +18,9 @@ package com.linkedin.restli.internal.server.methods.response;
 
 
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.StringDataSchema;
+import com.linkedin.data.template.InvalidAlternativeKeyException;
+import com.linkedin.data.template.KeyCoercer;
 import com.linkedin.data.transform.filter.request.MaskOperation;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.pegasus.generator.examples.Foo;
@@ -28,12 +31,15 @@ import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.TestConstants;
 import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
+import com.linkedin.restli.internal.server.model.ResourceModel;
+import com.linkedin.restli.server.AlternativeKey;
 import com.linkedin.restli.server.BatchResult;
 import com.linkedin.restli.server.ProjectionMode;
 import com.linkedin.restli.server.ResourceContext;
@@ -145,19 +151,20 @@ public class TestBatchGetResponseBuilder
   {
     ResourceContext mockContext = getMockResourceContext(protocolVersion,
                                                          expectedExceptionsWithUntypedKey,
+                                                         null,
                                                          maskTree,
                                                          projectionMode);
-    ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor();
+    ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(null);
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
 
     Map<String, String> headers = ResponseBuilderUtil.getHeaders();
 
     BatchGetResponseBuilder responseBuilder = new BatchGetResponseBuilder(new ErrorResponseBuilder());
     RestLiResponseEnvelope responseData = responseBuilder.buildRestLiResponseData(null,
-                                                                                       routingResult,
-                                                                                       results,
-                                                                                       headers,
-                                                                                       Collections.<HttpCookie>emptyList());
+                                                                                  routingResult,
+                                                                                  results,
+                                                                                  headers,
+                                                                                  Collections.<HttpCookie>emptyList());
     PartialRestResponse restResponse = responseBuilder.buildResponse(routingResult, responseData);
 
     EasyMock.verify(mockContext, mockDescriptor);
@@ -193,9 +200,10 @@ public class TestBatchGetResponseBuilder
   {
     BatchGetResponseBuilder builder = new BatchGetResponseBuilder(new ErrorResponseBuilder());
     ServerResourceContext context = EasyMock.createMock(ServerResourceContext.class);
-    Map<Object,RestLiServiceException> errors = new HashMap<Object, RestLiServiceException>();
+    Map<Object, RestLiServiceException> errors = new HashMap<Object, RestLiServiceException>();
     RestLiServiceException exception = new RestLiServiceException(HttpStatus.S_402_PAYMENT_REQUIRED);
     errors.put("foo", exception);
+    EasyMock.expect(context.hasParameter("altkey")).andReturn(false);
     EasyMock.expect(context.getBatchKeyErrors()).andReturn(errors);
     EasyMock.replay(context);
     RoutingResult routingResult = new RoutingResult(context, null);
@@ -204,8 +212,48 @@ public class TestBatchGetResponseBuilder
                                                                       new BatchResult<Object, EmptyRecord>(Collections.<Object, EmptyRecord>emptyMap(), Collections.<Object, RestLiServiceException>emptyMap()),
                                                                       Collections.<String, String>emptyMap(), Collections.<HttpCookie>emptyList());
     Assert.assertEquals(envelope.getBatchResponseEnvelope().getBatchResponseMap().get("foo").getException(),
-        exception);
+            exception);
     Assert.assertEquals(envelope.getBatchResponseEnvelope().getBatchResponseMap().size(), 1);
+  }
+
+  @Test
+  public void testAlternativeKeyBuilder()
+  {
+    Map<CompoundKey, Foo> rawResults = new HashMap<CompoundKey, Foo>();
+    CompoundKey c1 = new CompoundKey().append("a", "a1").append("b", 1);
+    CompoundKey c2 = new CompoundKey().append("a", "a2").append("b", 2);
+    Foo record1 = new Foo().setStringField("record1").setFruitsField(Fruits.APPLE);
+    Foo record2 = new Foo().setStringField("record2").setIntField(7);
+    rawResults.put(c1, record1);
+    rawResults.put(c2, record2);
+
+    Map<String, AlternativeKey<?, ?>> alternativeKeyMap = new HashMap<String, AlternativeKey<?, ?>>();
+    alternativeKeyMap.put("alt", new AlternativeKey<String, CompoundKey>(new TestKeyCoercer(), String.class, new StringDataSchema()));
+
+    Map<String, String> headers = ResponseBuilderUtil.getHeaders();
+
+    ResourceContext mockContext = getMockResourceContext(AllProtocolVersions.LATEST_PROTOCOL_VERSION,
+            Collections.<Object, RestLiServiceException>emptyMap(),
+            "alt", null, null);
+    ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(alternativeKeyMap);
+    RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
+
+    BatchGetResponseBuilder batchGetResponseBuilder = new BatchGetResponseBuilder(null);
+    RestLiResponseEnvelope responseEnvelope = batchGetResponseBuilder.buildRestLiResponseData(null,
+                                                                                              routingResult,
+                                                                                              rawResults,
+                                                                                              headers,
+                                                                                              Collections.<HttpCookie>emptyList());
+    PartialRestResponse restResponse = batchGetResponseBuilder.buildResponse(routingResult, responseEnvelope);
+
+    EasyMock.verify(mockContext, mockDescriptor);
+    ResponseBuilderUtil.validateHeaders(restResponse, headers);
+    Assert.assertEquals(restResponse.getStatus(), HttpStatus.S_200_OK);
+    @SuppressWarnings("unchecked")
+    Map<String, Foo> results = ((BatchResponse<Foo>)restResponse.getEntity()).getResults();
+    Assert.assertEquals(results.size(), 2);
+    Assert.assertTrue(results.containsKey("aa1xb1"));
+    Assert.assertTrue(results.containsKey("aa2xb2"));
   }
 
   @DataProvider(name = "exceptionTestData")
@@ -233,8 +281,8 @@ public class TestBatchGetResponseBuilder
   {
     // Protocol version doesn't matter here
     ResourceContext mockContext = getMockResourceContext(null, Collections.<Object, RestLiServiceException>emptyMap(),
-        null, null);
-    ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor();
+            null, null, null);
+    ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(null);
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
 
     Map<String, String> headers = ResponseBuilderUtil.getHeaders();
@@ -295,8 +343,8 @@ public class TestBatchGetResponseBuilder
   public void unsupportedNullKeyMapTest(Object results, ProtocolVersion protocolVersion, Map<String, Foo> expectedTransformedResult)
   {
     ResourceContext mockContext = getMockResourceContext(protocolVersion,
-        Collections.<Object, RestLiServiceException>emptyMap(), null, null);
-    ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor();
+        Collections.<Object, RestLiServiceException>emptyMap(), null, null, null);
+    ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(null);
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
 
     Map<String, String> headers = ResponseBuilderUtil.getHeaders();
@@ -331,6 +379,7 @@ public class TestBatchGetResponseBuilder
 
   private static ResourceContext getMockResourceContext(ProtocolVersion protocolVersion,
                                                         Map<Object, RestLiServiceException> exceptions,
+                                                        String altKeyName,
                                                         MaskTree maskTree,
                                                         ProjectionMode projectionMode)
   {
@@ -339,14 +388,49 @@ public class TestBatchGetResponseBuilder
     EasyMock.expect(mockContext.getProjectionMode()).andReturn(projectionMode).times(2);
     EasyMock.expect(mockContext.getProjectionMask()).andReturn(maskTree).times(2);
     EasyMock.expect(mockContext.getRestliProtocolVersion()).andReturn(protocolVersion).once();
+    EasyMock.expect(mockContext.hasParameter(RestConstants.ALT_KEY_PARAM)).andReturn(altKeyName != null).anyTimes();
+    if (altKeyName != null)
+    {
+      EasyMock.expect(mockContext.getParameter(RestConstants.ALT_KEY_PARAM)).andReturn(altKeyName).atLeastOnce();
+    }
     EasyMock.replay(mockContext);
     return mockContext;
   }
 
-  private static ResourceMethodDescriptor getMockResourceMethodDescriptor()
+  private static ResourceMethodDescriptor getMockResourceMethodDescriptor(Map<String, AlternativeKey<?, ?>> alternativeKeyMap)
   {
     ResourceMethodDescriptor mockDescriptor = EasyMock.createMock(ResourceMethodDescriptor.class);
+    if (alternativeKeyMap != null)
+    {
+      EasyMock.expect(mockDescriptor.getResourceModel()).andReturn(getMockResourceModel(alternativeKeyMap)).atLeastOnce();
+    }
     EasyMock.replay(mockDescriptor);
     return mockDescriptor;
+  }
+
+  private static ResourceModel getMockResourceModel(Map<String, AlternativeKey<?, ?>> alternativeKeyMap)
+  {
+    ResourceModel mockResourceModel = EasyMock.createMock(ResourceModel.class);
+    EasyMock.expect(mockResourceModel.getAlternativeKeys()).andReturn(alternativeKeyMap).anyTimes();
+    EasyMock.replay(mockResourceModel);
+    return mockResourceModel;
+  }
+
+  private class TestKeyCoercer implements KeyCoercer<String, CompoundKey>
+  {
+    @Override
+    public CompoundKey coerceToKey(String object) throws InvalidAlternativeKeyException
+    {
+      CompoundKey compoundKey = new CompoundKey();
+      compoundKey.append("a", object.substring(1, 3));
+      compoundKey.append("b", Integer.parseInt(object.substring(4, 5)));
+      return compoundKey;
+    }
+
+    @Override
+    public String coerceFromKey(CompoundKey object)
+    {
+      return "a" + object.getPart("a") + "xb" + object.getPart("b");
+    }
   }
 }

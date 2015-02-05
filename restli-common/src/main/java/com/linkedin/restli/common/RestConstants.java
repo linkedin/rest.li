@@ -53,6 +53,7 @@ public interface RestConstants
   String QUERY_TYPE_PARAM = "q";
   String QUERY_BATCH_IDS_PARAM = "ids";
   String FIELDS_PARAM = "fields";
+  String ALT_KEY_PARAM = "altkey";
   String METADATA_FIELDS_PARAM = "metadataFields";
   String PAGING_FIELDS_PARAM = "pagingFields";
   Set<String> PROJECTION_PARAMETERS = Collections.unmodifiableSet(new LinkedHashSet<String>(

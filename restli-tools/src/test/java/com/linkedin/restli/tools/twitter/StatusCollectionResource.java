@@ -23,6 +23,8 @@ import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.ActionParam;
+import com.linkedin.restli.server.annotations.AlternativeKey;
+import com.linkedin.restli.server.annotations.AlternativeKeys;
 import com.linkedin.restli.server.annotations.PagingContextParam;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.Optional;
@@ -43,6 +45,8 @@ import java.util.Set;
  */
 @RestLiCollection(name="statuses",
                     keyName="statusID")
+@AlternativeKeys(alternativeKeys = {@AlternativeKey(name="alt", keyCoercer=StringLongCoercer.class, keyType=String.class),
+                                    @AlternativeKey(name="newAlt", keyCoercer=StringLongCoercer.class, keyType=String.class)})
 public class StatusCollectionResource extends CollectionResourceTemplate<Long,Status>
 {
   /**

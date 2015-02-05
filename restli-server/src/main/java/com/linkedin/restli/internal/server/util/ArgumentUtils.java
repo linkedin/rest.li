@@ -21,6 +21,8 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaUtil;
 import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.data.template.InvalidAlternativeKeyException;
+import com.linkedin.data.template.KeyCoercer;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.jersey.api.uri.UriComponent;
@@ -38,6 +40,7 @@ import com.linkedin.restli.internal.common.ValueConverter;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.model.ResourceModel;
+import com.linkedin.restli.server.AlternativeKey;
 import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.RoutingException;
 import org.slf4j.Logger;
@@ -46,7 +49,6 @@ import org.slf4j.LoggerFactory;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLDecoder;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -362,7 +364,6 @@ public class ArgumentUtils
    * The method parses out and returns the correct simple type of the key out of the Object.
    * It does not handle {@link CompoundKey}s or {@link ComplexResourceKey}s.
    *
-   *
    * @param value key value string representation to parse
    * @param resource {@link com.linkedin.restli.internal.server.model.ResourceModel} containing the key type
    * @param version the {@link com.linkedin.restli.common.ProtocolVersion}
@@ -372,8 +373,7 @@ public class ArgumentUtils
    */
   public static Object parseSimplePathKey(final String value,
                                           final ResourceModel resource,
-                                          final ProtocolVersion version) throws IllegalArgumentException,
-                                                                                NumberFormatException
+                                          final ProtocolVersion version) throws IllegalArgumentException
 
   {
     Key key = resource.getPrimaryKey();
@@ -387,6 +387,113 @@ public class ArgumentUtils
       decodedValue = URLEscaper.unescape(value, URLEscaper.Escaping.URL_ESCAPING);
     }
     return convertSimpleValue(decodedValue, key.getDataSchema(), key.getType());
+  }
+
+  /**
+   * Parse a serialized alternative key into a deserialized alternative key.
+   *
+   * @param value The serialized alternative key.
+   * @param altKeyName The name of the type of the alternative key.
+   * @param resource The {@link com.linkedin.restli.internal.server.model.ResourceModel} of the resource.
+   * @param version The {@link com.linkedin.restli.common.ProtocolVersion}.
+   * @return The deserialized alternative key.
+   */
+  public static <K> Object parseAlternativeKey(final String value,
+                                               final String altKeyName,
+                                               final ResourceModel resource,
+                                               final ProtocolVersion version) throws IllegalArgumentException
+  {
+    if (!resource.getAlternativeKeys().containsKey(altKeyName))
+    {
+      throw new IllegalArgumentException("Resource '" + resource.getName() + "' does not contain alternative key named '" + altKeyName + "'.");
+    }
+    @SuppressWarnings("unchecked")
+    AlternativeKey<?, K> alternativeKey = (AlternativeKey<?, K>)resource.getAlternativeKeys().get(altKeyName);
+    String decodedValue;
+    if (version.compareTo(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()) >= 0)
+    {
+      decodedValue = UriComponent.decode(value, UriComponent.Type.PATH_SEGMENT);
+    }
+    else
+    {
+      decodedValue = URLEscaper.unescape(value, URLEscaper.Escaping.URL_ESCAPING);
+    }
+    return convertSimpleValue(decodedValue, alternativeKey.getDataSchema(), alternativeKey.getType());
+  }
+
+  /**
+   * Convert the alternative key to its primary key format.
+   *
+   * @param altKey The alternative key.
+   * @param altKeyName The name of the type of the alternative key to translate to.
+   * @param resource The {@link com.linkedin.restli.internal.server.model.ResourceModel} of the resource.
+   * @return The primary key.
+   * @throws InvalidAlternativeKeyException
+   * @throws AlternativeKeyCoercerException
+   */
+  public static <T, K> K translateFromAlternativeKey(final T altKey,
+                                                     final String altKeyName,
+                                                     final ResourceModel resource) throws InvalidAlternativeKeyException,
+          AlternativeKeyCoercerException
+  {
+    AlternativeKey<T, K> alternativeKey = getAltKeyOrError(altKeyName, resource);
+    KeyCoercer<T, K> keyCoercer = alternativeKey.getKeyCoercer();
+
+    try
+    {
+      return keyCoercer.coerceToKey(altKey);
+    }
+    catch (InvalidAlternativeKeyException invalidAlternativeKeyException)
+    {
+      // just rethrow
+      throw invalidAlternativeKeyException;
+    }
+    catch (Exception e)
+    {
+      throw new AlternativeKeyCoercerException(e);
+    }
+  }
+
+  /**
+   * Translate a primary key to an alternative key
+   *
+   * @param key The primary key.
+   * @param altKeyName The name of the alternative key to translate to.
+   * @param resource The {@link com.linkedin.restli.internal.server.model.ResourceModel} of the resource.
+   * @return The alternative key.
+   * @throws AlternativeKeyCoercerException
+   */
+  public static <T, K> T translateToAlternativeKey(final K key,
+                                                   final String altKeyName,
+                                                   final ResourceModel resource) throws AlternativeKeyCoercerException
+  {
+    AlternativeKey<T, K> alternativeKey = getAltKeyOrError(altKeyName, resource);
+    KeyCoercer<T, K> keyCoercer = alternativeKey.getKeyCoercer();
+
+    try
+    {
+      return keyCoercer.coerceFromKey(key);
+    }
+    catch (Exception e)
+    {
+      throw new AlternativeKeyCoercerException(e);
+    }
+
+  }
+
+  private static <T, K> AlternativeKey<T, K> getAltKeyOrError(final String altKeyName,
+                                                              final ResourceModel resource) throws IllegalArgumentException
+  {
+    if (!resource.getAlternativeKeys().containsKey(altKeyName))
+    {
+      throw new IllegalArgumentException(String.format("Resource '%s' does not contain alternative key named '%s'.", resource.getName(), altKeyName));
+    }
+    else
+    {
+      @SuppressWarnings("unchecked")
+      AlternativeKey<T, K> alternativeKey = (AlternativeKey<T, K>)resource.getAlternativeKeys().get(altKeyName);
+      return alternativeKey;
+    }
   }
 
   /**

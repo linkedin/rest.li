@@ -16,104 +16,41 @@
     "fields" : [ ]
   } ],
   "schema" : {
-    "schema" : "com.linkedin.restli.tools.twitter.Status",
     "name" : "statuses",
-    "doc" : "CollectionResource containing all statuses\n\ngenerated from: com.linkedin.restli.tools.twitter.StatusCollectionResource",
     "path" : "/statuses",
+    "schema" : "com.linkedin.restli.tools.twitter.Status",
+    "doc" : "CollectionResource containing all statuses\n\ngenerated from: com.linkedin.restli.tools.twitter.StatusCollectionResource",
     "collection" : {
-      "methods" : [ {
-        "doc" : "Creates a new Status",
-        "method" : "create"
-      }, {
-        "doc" : "Gets a single status resource",
-        "method" : "get"
-      }, {
-        "doc" : "Updates a single status resource",
-        "method" : "partial_update"
-      }, {
-        "doc" : "Deletes a status resource",
-        "method" : "delete"
-      }, {
-        "doc" : "Gets a batch of statuses",
-        "method" : "batch_get"
-      } ],
-      "entity" : {
-        "subresources" : [ {
-          "schema" : "com.linkedin.restli.tools.twitter.Location",
-          "simple" : {
-            "methods" : [ {
-              "doc" : "Gets the location of the parent status.",
-              "method" : "get"
-            }, {
-              "doc" : "Updates the location of the parent status.",
-              "method" : "update"
-            }, {
-              "doc" : "Updates the location of the parent status.",
-              "method" : "partial_update"
-            }, {
-              "doc" : "Deletes the location of the parent status.",
-              "method" : "delete"
-            } ],
-            "entity" : {
-              "path" : "/statuses/{statusID}/location"
-            },
-            "supports" : [ "delete", "get", "partial_update", "update" ],
-            "actions" : [ {
-              "name" : "new_status_from_location",
-              "doc" : "Replies to all followers nearby.",
-              "parameters" : [ {
-                "name" : "status",
-                "type" : "string"
-              } ]
-            } ]
-          },
-          "name" : "location",
-          "doc" : "Simple resource that contains the location of a status.\n\ngenerated from: com.linkedin.restli.tools.twitter.LocationResource",
-          "path" : "/statuses/{statusID}/location"
-        }, {
-          "schema" : "com.linkedin.restli.tools.twitter.Status",
-          "name" : "replies",
-          "doc" : "Nested CollectionResource of all replies to a given status\n\ngenerated from: com.linkedin.restli.tools.twitter.RepliesCollectionResource",
-          "path" : "/statuses/{statusID}/replies",
-          "collection" : {
-            "methods" : [ {
-              "doc" : "Replies to the parent status",
-              "method" : "create"
-            }, {
-              "doc" : "Gets a batch of replies by statusID",
-              "method" : "batch_get"
-            }, {
-              "doc" : "Iterates through all replies to the parent status",
-              "method" : "get_all"
-            } ],
-            "entity" : {
-              "path" : "/statuses/{statusID}/replies/{statusID}"
-            },
-            "supports" : [ "batch_get", "create", "get_all" ],
-            "identifier" : {
-              "name" : "statusID",
-              "type" : "long"
-            },
-            "actions" : [ {
-              "name" : "replyToAll",
-              "doc" : "Simple test action to demonstrate actions on a nested collection resource",
-              "parameters" : [ {
-                "name" : "status",
-                "type" : "string"
-              } ]
-            } ]
-          }
-        } ],
-        "path" : "/statuses/{statusID}",
-        "actions" : [ {
-          "name" : "forward",
-          "doc" : "Ambiguous action binding test case",
-          "parameters" : [ {
-            "name" : "to",
-            "type" : "long"
-          } ]
-        } ]
+      "identifier" : {
+        "name" : "statusID",
+        "type" : "long"
       },
+      "alternativeKeys" : [ {
+        "name" : "alt",
+        "type" : "string",
+        "keyCoercer" : "com.linkedin.restli.tools.twitter.StringLongCoercer"
+      }, {
+        "name" : "newAlt",
+        "type" : "string",
+        "keyCoercer" : "com.linkedin.restli.tools.twitter.StringLongCoercer"
+      }],
+      "supports" : [ "batch_get", "create", "delete", "get", "partial_update" ],
+      "methods" : [ {
+        "method" : "create",
+        "doc" : "Creates a new Status"
+      }, {
+        "method" : "get",
+        "doc" : "Gets a single status resource"
+      }, {
+        "method" : "partial_update",
+        "doc" : "Updates a single status resource"
+      }, {
+        "method" : "delete",
+        "doc" : "Deletes a status resource"
+      }, {
+        "method" : "batch_get",
+        "doc" : "Gets a batch of statuses"
+      } ],
       "finders" : [ {
         "name" : "public_timeline",
         "doc" : "Gets a sample of the timeline of statuses generated by all users"
@@ -122,44 +59,116 @@
         "doc" : "Keyword search for statuses",
         "parameters" : [ {
           "name" : "keywords",
-          "doc" : "keywords to search for",
-          "type" : "string"
+          "type" : "string",
+          "doc" : "keywords to search for"
         }, {
-          "default" : "-1",
           "name" : "since",
-          "doc" : "a unix timestamp. If present, only statuses created after this time are returned",
-          "type" : "long"
+          "type" : "long",
+          "default" : "-1",
+          "doc" : "a unix timestamp. If present, only statuses created after this time are returned"
         }, {
-          "optional" : true,
           "name" : "type",
-          "type" : "com.linkedin.restli.tools.twitter.StatusType"
+          "type" : "com.linkedin.restli.tools.twitter.StatusType",
+          "optional" : true
         } ]
       }, {
         "name" : "user_timeline",
         "doc" : "Gets the status timeline for a given user"
       } ],
-      "supports" : [ "batch_get", "create", "delete", "get", "partial_update" ],
-      "identifier" : {
-        "name" : "statusID",
-        "type" : "long"
-      },
       "actions" : [ {
         "name" : "intArrayAction",
         "doc" : "Action array return type test case",
-        "returns" : "{ \"type\" : \"array\", \"items\" : \"int\" }",
         "parameters" : [ {
           "name" : "ints",
           "type" : "{ \"type\" : \"array\", \"items\" : \"int\" }"
-        } ]
+        } ],
+        "returns" : "{ \"type\" : \"array\", \"items\" : \"int\" }"
       }, {
         "name" : "statusArrayAction",
         "doc" : "Action data template array return type and input type test case",
-        "returns" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.tools.twitter.Status\" }",
         "parameters" : [ {
           "name" : "statuses",
           "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.tools.twitter.Status\" }"
+        } ],
+        "returns" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.tools.twitter.Status\" }"
+      } ],
+      "entity" : {
+        "path" : "/statuses/{statusID}",
+        "actions" : [ {
+          "name" : "forward",
+          "doc" : "Ambiguous action binding test case",
+          "parameters" : [ {
+            "name" : "to",
+            "type" : "long"
+          } ]
+        } ],
+        "subresources" : [ {
+          "name" : "location",
+          "path" : "/statuses/{statusID}/location",
+          "schema" : "com.linkedin.restli.tools.twitter.Location",
+          "doc" : "Simple resource that contains the location of a status.\n\ngenerated from: com.linkedin.restli.tools.twitter.LocationResource",
+          "simple" : {
+            "supports" : [ "delete", "get", "partial_update", "update" ],
+            "methods" : [ {
+              "method" : "get",
+              "doc" : "Gets the location of the parent status."
+            }, {
+              "method" : "update",
+              "doc" : "Updates the location of the parent status."
+            }, {
+              "method" : "partial_update",
+              "doc" : "Updates the location of the parent status."
+            }, {
+              "method" : "delete",
+              "doc" : "Deletes the location of the parent status."
+            } ],
+            "actions" : [ {
+              "name" : "new_status_from_location",
+              "doc" : "Replies to all followers nearby.",
+              "parameters" : [ {
+                "name" : "status",
+                "type" : "string"
+              } ]
+            } ],
+            "entity" : {
+              "path" : "/statuses/{statusID}/location"
+            }
+          }
+        }, {
+          "name" : "replies",
+          "path" : "/statuses/{statusID}/replies",
+          "schema" : "com.linkedin.restli.tools.twitter.Status",
+          "doc" : "Nested CollectionResource of all replies to a given status\n\ngenerated from: com.linkedin.restli.tools.twitter.RepliesCollectionResource",
+          "collection" : {
+            "identifier" : {
+              "name" : "statusID",
+              "type" : "long"
+            },
+            "supports" : [ "batch_get", "create", "get_all" ],
+            "methods" : [ {
+              "method" : "create",
+              "doc" : "Replies to the parent status"
+            }, {
+              "method" : "batch_get",
+              "doc" : "Gets a batch of replies by statusID"
+            }, {
+              "method" : "get_all",
+              "doc" : "Iterates through all replies to the parent status"
+            } ],
+            "actions" : [ {
+              "name" : "replyToAll",
+              "doc" : "Simple test action to demonstrate actions on a nested collection resource",
+              "parameters" : [ {
+                "name" : "status",
+                "type" : "string"
+              } ]
+            } ],
+            "entity" : {
+              "path" : "/statuses/{statusID}/replies/{statusID}"
+            }
+          }
         } ]
-      } ]
+      }
     }
   }
 }

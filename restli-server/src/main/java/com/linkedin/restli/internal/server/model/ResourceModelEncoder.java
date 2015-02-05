@@ -40,6 +40,9 @@ import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.restspec.ActionSchema;
 import com.linkedin.restli.restspec.ActionSchemaArray;
 import com.linkedin.restli.restspec.ActionsSetSchema;
+import com.linkedin.restli.restspec.AlternativeKeySchema;
+import com.linkedin.restli.restspec.AlternativeKeySchemaArray;
+import com.linkedin.restli.restspec.AlternativeKeySetSchema;
 import com.linkedin.restli.restspec.AssocKeySchema;
 import com.linkedin.restli.restspec.AssocKeySchemaArray;
 import com.linkedin.restli.restspec.AssociationSchema;
@@ -57,6 +60,7 @@ import com.linkedin.restli.restspec.ResourceSchemaArray;
 import com.linkedin.restli.restspec.RestMethodSchema;
 import com.linkedin.restli.restspec.RestMethodSchemaArray;
 import com.linkedin.restli.restspec.SimpleSchema;
+import com.linkedin.restli.server.AlternativeKey;
 import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.ResourceLevel;
 import java.io.File;
@@ -68,6 +72,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.apache.commons.io.IOUtils;
 
@@ -229,6 +234,24 @@ public class ResourceModelEncoder
     }
 
     return rootNode;
+  }
+
+  public void appendAlternativeKeys(CollectionSchema rootNode, ResourceModel resourceModel)
+  {
+    Map<String,AlternativeKey<?, ?>> alternativeKeys = resourceModel.getAlternativeKeys();
+    if (!alternativeKeys.isEmpty())
+    {
+      AlternativeKeySchemaArray altKeyArray = new AlternativeKeySchemaArray();
+      for (Map.Entry<String, AlternativeKey<?, ?>> entry : alternativeKeys.entrySet())
+      {
+        AlternativeKeySchema altKeySchema = new AlternativeKeySchema();
+        altKeySchema.setName(entry.getKey());
+        altKeySchema.setType(buildDataSchemaType(entry.getValue().getType()));
+        altKeySchema.setKeyCoercer(entry.getValue().getKeyCoercer().getClass().getCanonicalName());
+        altKeyArray.add(altKeySchema);
+      }
+      rootNode.setAlternativeKeys(altKeyArray);
+    }
   }
 
   /**
@@ -461,6 +484,8 @@ public class ResourceModelEncoder
     {
       appendKeys(associationSchema, collectionModel);
     }
+
+    appendAlternativeKeys(collectionSchema, collectionModel);
 
     appendSupportsNodeToCollectionSchema(collectionSchema, collectionModel);
     appendMethodsToCollectionSchema(collectionSchema, collectionModel);

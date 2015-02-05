@@ -8,6 +8,15 @@
       "name" : "statusID",
       "type" : "int"
     },
+    "alternativeKeys" : [ {
+      "name" : "alt",
+      "type" : "long",
+      "keyCoercer" : "com.linkedin.restli.tools.twitter.IntLongCoercer"
+    },  {
+      "name" : "altTwo",
+      "type" : "string",
+      "keyCoercer" : "com.linkedin.restli.tools.twitter.StringLongCoercer"
+    } ],
     "supports" : [ "batch_get", "delete", "get", "partial_update" ],
     "methods" : [{
       "method" : "get",

@@ -29,7 +29,6 @@ import com.linkedin.restli.common.CreateIdEntityStatus;
 import com.linkedin.restli.common.CreateIdStatus;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
-import com.linkedin.restli.internal.server.ResourceContextImpl;
 import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
 import com.linkedin.restli.internal.server.methods.AnyRecord;
 import com.linkedin.restli.internal.server.response.CreateCollectionResponseEnvelope;
@@ -45,7 +44,6 @@ import com.linkedin.restli.server.ResourceContext;
 
 import java.net.HttpCookie;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -88,7 +86,11 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
           final DataMap data = RestUtils.projectFields(entityData,
                                                        resourceContext.getProjectionMode(),
                                                        resourceContext.getProjectionMask());
-          CreateIdEntityStatus<?, ?> projectedStatus = new CreateIdEntityStatus(currentStatus.getStatus(), currentStatus.getKey(), new AnyRecord(data), currentStatus.getError(), ((ResourceContextImpl)resourceContext).getRestliProtocolVersion());
+          CreateIdEntityStatus<?, ?> projectedStatus = new CreateIdEntityStatus(currentStatus.getStatus(),
+                                                                                currentStatus.getKey(),
+                                                                                new AnyRecord(data),
+                                                                                currentStatus.getError(),
+                                                                                ProtocolVersionUtil.extractProtocolVersion(resourceContext.getRequestHeaders()));
           formattedResponses.add((CreateIdStatus<Object>) projectedStatus);
         }
         else
@@ -129,14 +131,18 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
                                            "Unexpected null encountered. Null element inside of List inside of a BatchCreateResult returned by the resource method: "
                                                + routingResult.getResourceMethod());
         }
-        if (e.getError() == null)
-        {
-          CreateIdEntityStatus<Object, RecordTemplate> entry = new CreateIdEntityStatus<Object, RecordTemplate>(e.getStatus().getCode(), e.getId(), e.getEntity(), null, ProtocolVersionUtil.extractProtocolVersion(headers));
-          collectionCreateList.add(new CreateCollectionResponseEnvelope.CollectionCreateResponseItem(entry));
-        }
         else
         {
-          collectionCreateList.add(new CreateCollectionResponseEnvelope.CollectionCreateResponseItem(e.getError(), e.getId()));
+          Object id = ResponseUtils.translateCanonicalKeyToAlternativeKeyIfNeeded(e.getId(), routingResult);
+          if (e.getError() == null)
+          {
+            CreateIdEntityStatus<Object, RecordTemplate> entry = new CreateIdEntityStatus<Object, RecordTemplate>(e.getStatus().getCode(), id, e.getEntity(), null, ProtocolVersionUtil.extractProtocolVersion(headers));
+            collectionCreateList.add(new CreateCollectionResponseEnvelope.CollectionCreateResponseItem(entry));
+          }
+          else
+          {
+            collectionCreateList.add(new CreateCollectionResponseEnvelope.CollectionCreateResponseItem(e.getError(), id));
+          }
         }
       }
       return new CreateCollectionResponseEnvelope(collectionCreateList, headers, cookies);
@@ -163,15 +169,18 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
                                            "Unexpected null encountered. Null element inside of List inside of a BatchCreateResult returned by the resource method: "
                                                + routingResult.getResourceMethod());
         }
-
-        if (e.getError() == null)
-        {
-          CreateIdStatus<Object> entry = new CreateIdStatus<Object>(e.getStatus().getCode(), e.getId(), null, ProtocolVersionUtil.extractProtocolVersion(headers));
-          collectionCreateList.add(new CreateCollectionResponseEnvelope.CollectionCreateResponseItem(entry));
-        }
         else
         {
-          collectionCreateList.add(new CreateCollectionResponseEnvelope.CollectionCreateResponseItem(e.getError(), e.getId()));
+          Object id = ResponseUtils.translateCanonicalKeyToAlternativeKeyIfNeeded(e.getId(), routingResult);
+          if (e.getError() == null)
+          {
+            CreateIdStatus<Object> entry = new CreateIdStatus<Object>(e.getStatus().getCode(), id, null, ProtocolVersionUtil.extractProtocolVersion(headers));
+            collectionCreateList.add(new CreateCollectionResponseEnvelope.CollectionCreateResponseItem(entry));
+          }
+          else
+          {
+            collectionCreateList.add(new CreateCollectionResponseEnvelope.CollectionCreateResponseItem(e.getError(), id));
+          }
         }
       }
 

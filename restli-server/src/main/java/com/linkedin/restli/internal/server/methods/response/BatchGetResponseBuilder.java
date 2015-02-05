@@ -171,8 +171,8 @@ public class BatchGetResponseBuilder implements RestLiResponseBuilder
             "Unexpected null encountered. Null key inside of a Map returned by the resource method: " + routingResult
                 .getResourceMethod());
       }
-
-      batchResult.put(entity.getKey(), new BatchResponseEntry(statuses.get(entity.getKey()), entity.getValue()));
+      Object finalKey = ResponseUtils.translateCanonicalKeyToAlternativeKeyIfNeeded(entity.getKey(), routingResult);
+      batchResult.put(finalKey, new BatchResponseEntry(statuses.get(entity.getKey()), entity.getValue()));
     }
 
     for (Map.Entry<Object, RestLiServiceException> entity : serviceErrors.entrySet())
@@ -183,13 +183,15 @@ public class BatchGetResponseBuilder implements RestLiResponseBuilder
             "Unexpected null encountered. Null key inside of a Map returned by the resource method: " + routingResult
                 .getResourceMethod());
       }
-      batchResult.put(entity.getKey(), new BatchResponseEntry(statuses.get(entity.getKey()), entity.getValue()));
+      Object finalKey = ResponseUtils.translateCanonicalKeyToAlternativeKeyIfNeeded(entity.getKey(), routingResult);
+      batchResult.put(finalKey, new BatchResponseEntry(statuses.get(entity.getKey()), entity.getValue()));
     }
 
     final Map<Object, RestLiServiceException> contextErrors = ((ServerResourceContext) routingResult.getContext()).getBatchKeyErrors();
     for (Map.Entry<Object, RestLiServiceException> entry : contextErrors.entrySet())
     {
-      batchResult.put(entry.getKey(), new BatchResponseEntry(statuses.get(entry.getKey()), entry.getValue()));
+      Object finalKey = ResponseUtils.translateCanonicalKeyToAlternativeKeyIfNeeded(entry.getKey(), routingResult);
+      batchResult.put(finalKey, new BatchResponseEntry(statuses.get(entry.getKey()), entry.getValue()));
     }
 
     return new BatchResponseEnvelope(batchResult, headers, cookies);

@@ -23,8 +23,10 @@ import com.linkedin.restli.server.BatchDeleteRequest;
 import com.linkedin.restli.server.BatchPatchRequest;
 import com.linkedin.restli.server.BatchUpdateRequest;
 import com.linkedin.restli.server.BatchUpdateResult;
+import com.linkedin.restli.server.altkey.AltStatusKeyCoercer;
 import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.ActionParam;
+import com.linkedin.restli.server.annotations.AlternativeKey;
 import com.linkedin.restli.server.annotations.Optional;
 import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.PagingContext;
@@ -47,6 +49,7 @@ import java.util.Set;
  *
  * @author dellamag
  */
+@AlternativeKey(name="alt", keyCoercer = AltStatusKeyCoercer.class, keyType = String.class)
 @RestLiCollection(name="statuses",
                     keyName="statusID")
 public class StatusCollectionResource extends CollectionResourceTemplate<Long,Status>

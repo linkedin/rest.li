@@ -1,5 +1,10 @@
 2.10.14
 -------
+(RB=443539)
+Allow Resources to designate alternative keys with the @AlternativeKey and @AlternativeKeys annotation.
+Only client side work has been done.  Resources can be called with alternative keys but builders have
+not been modified to allow alternative key formats to be sent.
+
 (RB=554203)
 Corrected CHANGELOG to correctly reflect changes made in 2.10.13.
 
