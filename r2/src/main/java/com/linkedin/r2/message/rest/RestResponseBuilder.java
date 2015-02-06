@@ -18,6 +18,8 @@
 package com.linkedin.r2.message.rest;
 
 import com.linkedin.r2.message.ResponseBuilder;
+import com.linkedin.r2.transport.http.common.HttpConstants;
+
 
 /**
  * @author Chris Pettitt
@@ -80,5 +82,17 @@ public final class RestResponseBuilder
   public RestResponse buildCanonical()
   {
     return new RestResponseImpl(getEntity(), getCanonicalHeaders(), getCanonicalCookies(), getStatus());
+  }
+
+  @Override
+  protected void validateCookieHeader(String name)
+  {
+    if (name.equalsIgnoreCase(HttpConstants.RESPONSE_COOKIE_HEADER_NAME))
+    {
+      String message = String.format(
+          "Header %s are not allowed to be added as a response header.",
+          HttpConstants.RESPONSE_COOKIE_HEADER_NAME);
+      throw new IllegalArgumentException(message);
+    }
   }
 }

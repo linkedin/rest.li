@@ -193,8 +193,17 @@ public abstract class AbstractR2Servlet extends HttpServlet
     {
       // TODO multi-valued headers
       String headerName = headerNames.nextElement();
-      rb.setHeader(headerName, req.getHeader(headerName));
+      String headerValue = req.getHeader(headerName);
+      if (headerName.equalsIgnoreCase(HttpConstants.REQUEST_COOKIE_HEADER_NAME))
+      {
+        rb.addCookie(headerValue);
+      }
+      else
+      {
+        rb.setHeader(headerName, headerValue);
+      }
     }
+
     int length = req.getContentLength();
     if (length >= 0)
     {

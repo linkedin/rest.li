@@ -19,6 +19,7 @@ package com.linkedin.r2.message.rest;
 
 
 import com.linkedin.r2.message.RequestBuilder;
+import com.linkedin.r2.transport.http.common.HttpConstants;
 import com.linkedin.util.ArgumentUtil;
 
 import java.net.URI;
@@ -112,5 +113,17 @@ public final class RestRequestBuilder
   {
     return new RestRequestImpl(
         getEntity(), getCanonicalHeaders(), getCanonicalCookies(), getURI().normalize(), getMethod());
+  }
+
+  @Override
+  protected void validateCookieHeader(String name)
+  {
+    if (name.equalsIgnoreCase(HttpConstants.REQUEST_COOKIE_HEADER_NAME))
+    {
+      String message = String.format(
+          "Header %s are not allowed to be added as a request header.",
+          HttpConstants.REQUEST_COOKIE_HEADER_NAME);
+      throw new IllegalArgumentException(message);
+    }
   }
 }

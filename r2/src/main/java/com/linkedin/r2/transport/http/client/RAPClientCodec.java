@@ -122,7 +122,14 @@ class RAPClientCodec implements ChannelUpstreamHandler, ChannelDownstreamHandler
 
       for (Map.Entry<String, String> e : nettyResponse.getHeaders())
       {
-        builder.unsafeAddHeaderValue(e.getKey(), e.getValue());
+        if (e.getKey().equalsIgnoreCase(HttpConstants.RESPONSE_COOKIE_HEADER_NAME))
+        {
+          builder.addCookie(e.getValue());
+        }
+        else
+        {
+          builder.unsafeAddHeaderValue(e.getKey(), e.getValue());
+        }
       }
 
       ChannelBuffer buf = nettyResponse.getContent();

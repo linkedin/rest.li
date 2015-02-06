@@ -227,6 +227,13 @@ public abstract class BaseRestMessageBuilder<B extends BaseRestMessageBuilder<B>
   }
 
   /**
+   * Validates {@code name} is not a cookie related header (i.e. Cookie or Set-Cookie).
+   *
+   * @param name the name to test for conformation.
+   */
+  protected abstract void validateCookieHeader(String name);
+
+  /**
    * Strictly validates the given fieldNames to ensure that they conform to the field-name
    * specification in RFC 2616, section 2.2. In addition, validates {@code name} is not a
    * cookie related header.
@@ -242,25 +249,17 @@ public abstract class BaseRestMessageBuilder<B extends BaseRestMessageBuilder<B>
   }
 
   /**
-   * Strictly validates {@code name} conforms to RFC 2616, section 2.2. In addition,
-   * validates {@code name} is not a cookie related header.
+   * Strictly validates {@code name} conforms to RFC 2616, section 2.2.
    *
    * @param name the name to test for conformation with RFC 2616, section 2.2.
    */
   private void validateFieldName(String name)
   {
+    validateCookieHeader(name);
+
     if (name.isEmpty())
     {
       throw new IllegalArgumentException("header names must contain at least one character");
-    }
-    else if (name.equalsIgnoreCase(HttpConstants.REQUEST_COOKIE_HEADER_NAME) ||
-        name.equalsIgnoreCase(HttpConstants.RESPONSE_COOKIE_HEADER_NAME))
-    {
-      String message = String.format(
-          "Header %s and %s are not allowed to be added as header.",
-          HttpConstants.REQUEST_COOKIE_HEADER_NAME,
-          HttpConstants.RESPONSE_COOKIE_HEADER_NAME);
-      throw new IllegalArgumentException(message);
     }
 
     for (int i = 0; i < name.length(); i++)

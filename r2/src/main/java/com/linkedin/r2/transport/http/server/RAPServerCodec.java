@@ -80,7 +80,14 @@ class RAPServerCodec implements ChannelUpstreamHandler, ChannelDownstreamHandler
       builder.setMethod(nettyRequest.getMethod().getName());
       for (Map.Entry<String, String> e : nettyRequest.getHeaders())
       {
-        builder.unsafeAddHeaderValue(e.getKey(), e.getValue());
+        if (e.getKey().equalsIgnoreCase(HttpConstants.REQUEST_COOKIE_HEADER_NAME))
+        {
+          builder.addCookie(e.getValue());
+        }
+        else
+        {
+          builder.unsafeAddHeaderValue(e.getKey(), e.getValue());
+        }
       }
       ChannelBuffer buf = nettyRequest.getContent();
       if (buf != null)
