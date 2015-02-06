@@ -1,5 +1,11 @@
+2.2.3
+-----
+
+
 2.2.2
 -----
+(RB=427189)
+Fix illegal argument exception thrown when a cookie header is added.
 
 2.2.1
 -----
