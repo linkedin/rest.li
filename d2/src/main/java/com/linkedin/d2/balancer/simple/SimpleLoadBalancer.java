@@ -851,20 +851,15 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     {
       if (clientsToLoadBalance == null || clientsToLoadBalance.isEmpty())
       {
-        die(serviceName, "unable to find a host to route the request to. " +
-            "This is for service: " + serviceName + " in partition: " +
-            partitionId + " and the cluster = " + clusterName +
-            ". Usually this means there is a server misconfiguration in " + clusterName +
-            ". Please make sure the corresponding server(s) are announcing themselves to the right cluster.");
+        die(serviceName, "Service: " + serviceName + " unable to find a host to route the request"
+            + " in partition: " + partitionId + " cluster: " + clusterName
+            + ". Check what cluster your servers are announcing to.");
       }
       else
       {
-        die(serviceName, "The service " + serviceName + " is in a bad state (high latency/high error). " +
-            "D2 is dropping the request, even though we have a selection of " + clientsToLoadBalance.size() +
-            " hosts because D2 want to degrade gracefully. Please check the health of the service that your client is "
-            + "trying to communicate with. This is for: "
-            + serviceName + " in partition: " + partitionId + " and the cluster = " + clusterName
-        );
+        die(serviceName, "Service: " + serviceName + " is in a bad state (high latency/high error). "
+            + "Dropping request. Cluster: " + clusterName + ", partitionId:" + partitionId
+            + " (" + clientsToLoadBalance.size() + " hosts)");
       }
     }
     return trackerClient;
