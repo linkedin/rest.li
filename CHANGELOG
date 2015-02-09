@@ -1,8 +1,15 @@
+2.2.4
+-----
+
+
 2.2.3
 -----
 (RB=425777)
 Change ByteString to have slice & copySlice methods
 Add new copy method to copy from a sub array
+
+(RB=417088)
+Fix a bug in AsyncPoolImpl where it fails to cancel pending create requests when it has drained out all pool waiters.
 
 2.2.2
 -----
