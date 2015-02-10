@@ -91,7 +91,7 @@ public class TestHttpNettyClient
   @Test
   public void testNoChannelTimeout() throws InterruptedException
   {
-    HttpNettyClient client = new HttpNettyClient(new NoCreations(), _scheduler, 500, 500, 1024*1024*2);
+    HttpNettyClient client = new HttpNettyClient(new NoCreations(_scheduler), _scheduler, 500, 500, 1024*1024*2);
 
     RestRequest r = new RestRequestBuilder(URI.create("http://localhost/")).build();
     FutureCallback<RestResponse> cb = new FutureCallback<RestResponse>();
@@ -241,7 +241,7 @@ public class TestHttpNettyClient
 
   {
     // Test that shutdown works when the outstanding request is stuck in the pool waiting for a channel
-    HttpNettyClient client = new HttpNettyClient(new NoCreations(), _scheduler, 60000, 1,1024*1024*2);
+    HttpNettyClient client = new HttpNettyClient(new NoCreations(_scheduler), _scheduler, 60000, 1,1024*1024*2);
 
     RestRequest r = new RestRequestBuilder(URI.create("http://some.host/")).build();
     FutureCallback<RestResponse> futureCallback = new FutureCallback<RestResponse>();
@@ -578,6 +578,13 @@ public class TestHttpNettyClient
 */
   private static class NoCreations implements ChannelPoolFactory
   {
+    private final ScheduledExecutorService _scheduler;
+
+    public NoCreations(ScheduledExecutorService scheduler)
+    {
+      _scheduler = scheduler;
+    }
+
     @Override
     public AsyncPool<Channel> getPool(SocketAddress address)
     {
@@ -612,7 +619,7 @@ public class TestHttpNettyClient
         {
           return null;
         }
-      }, 0, 0, null);
+      }, 0, 0, _scheduler);
     }
 
   }
