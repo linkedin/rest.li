@@ -22,6 +22,7 @@ import com.linkedin.util.ArgumentUtil;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -170,11 +171,32 @@ public final class ValidationOptions
   }
 
   /**
+   * Set optional fields.
+   * The fields corresponding to the paths will be treated as optional, even if they are required.
+   *
+   * @param optionalFields
+   */
+  public void setOptionalFields(Set<String> optionalFields)
+  {
+    _optionalFields = Collections.unmodifiableSet(optionalFields);
+  }
+
+  /**
+   * Return which paths should be treated as optional.
+   *
+   * @return paths for optional fields
+   */
+  public Set<String> getOptionalFields()
+  {
+    return _optionalFields;
+  }
+
+  /**
    * Return whether Avro union mode is enabled.
-   * 
+   *
    * If Avro union mode is enabled, a union uses the name (instead of full name) of the
    * member type as the key to specify the type of the value in the union.
-   * 
+   *
    * @return true if Avro union mode is enabled.
    */
   public boolean isAvroUnionMode()
@@ -229,6 +251,7 @@ public final class ValidationOptions
   private RequiredMode _requiredMode;
   private boolean      _avroUnionMode = false;
   private Map<String,Object> _validatorParameters = NO_VALIDATOR_PARAMETERS;
+  private Set<String> _optionalFields = Collections.emptySet();
 
   private static final Map<String,Object> NO_VALIDATOR_PARAMETERS = Collections.emptyMap();
 }

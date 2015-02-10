@@ -54,6 +54,7 @@ public class TestResourceSchemaCollection
     final Map<String, ResourceType> expectedTypes = new HashMap<String, ResourceType>();
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.actions", ResourceType.ACTIONS);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.annotatedComplexKeys", ResourceType.COLLECTION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.autoValidationDemos", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.compression", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.customTypes", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.customTypes2", ResourceType.COLLECTION);
@@ -88,6 +89,7 @@ public class TestResourceSchemaCollection
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.greeting.subgreetings", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.greeting.subgreetings.subsubgreeting",
                       ResourceType.SIMPLE);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.validationDemos", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.groups.client.groupMemberships", ResourceType.ASSOCIATION);
     expectedTypes.put("com.linkedin.restli.examples.groups.client.groupMembershipsComplex", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.groups.client.groups", ResourceType.COLLECTION);

@@ -38,6 +38,10 @@ import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.common.validation.CreateOnly;
+import com.linkedin.restli.common.validation.ReadOnly;
+import com.linkedin.restli.common.validation.RestLiDataValidator;
+import com.linkedin.restli.common.validation.ValidationUtil;
 import com.linkedin.restli.internal.common.ReflectionUtils;
 import com.linkedin.restli.internal.common.TyperefUtils;
 import com.linkedin.restli.internal.server.PathKeysImpl;
@@ -82,6 +86,7 @@ import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestLiSimpleResource;
 import com.linkedin.restli.server.annotations.RestLiTemplate;
 import com.linkedin.restli.server.annotations.RestMethod;
+import com.linkedin.restli.server.annotations.ValidatorParam;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.resources.ComplexKeyResource;
 import com.linkedin.restli.server.resources.ComplexKeyResourceAsync;
@@ -170,6 +175,10 @@ public final class RestLiAnnotationReader
           + "' must be annotated with a valid @RestLi... annotation");
     }
 
+    if (!model.isActions())
+    {
+      checkRestLiDataAnnotations(resourceClass, (RecordDataSchema) getDataSchema(model.getValueClass(), null));
+    }
     DataMap annotationsMap = ResourceModelAnnotation.getAnnotationsMap(resourceClass.getAnnotations());
     addDeprecatedAnnotation(annotationsMap, resourceClass);
 
@@ -231,6 +240,81 @@ public final class RestLiAnnotationReader
       annotationsMap.put("deprecated", new DataMap());
     }
     return annotationsMap;
+  }
+
+  private static void checkPathsAgainstSchema(RecordDataSchema dataSchema, String resourceClassName, String annotationName, String[] paths)
+  {
+    for (String path : paths)
+    {
+      if (!ValidationUtil.containsPath(dataSchema, path))
+      {
+        throw new ResourceConfigException("In resource class '" + resourceClassName + "', "
+                                              + annotationName + " annotation " + path + " is not a valid path for "
+                                              + dataSchema.getName() + ".");
+      }
+    }
+  }
+
+  private static void checkRestLiDataAnnotations(final Class<?> resourceClass, RecordDataSchema dataSchema)
+  {
+    Map<String, String[]> annotations = new HashMap<String, String[]>();
+    if (resourceClass.isAnnotationPresent(ReadOnly.class))
+    {
+      annotations.put(ReadOnly.class.getSimpleName(), resourceClass.getAnnotation(ReadOnly.class).value());
+    }
+    if (resourceClass.isAnnotationPresent(CreateOnly.class))
+    {
+      annotations.put(CreateOnly.class.getSimpleName(), resourceClass.getAnnotation(CreateOnly.class).value());
+    }
+    String resourceClassName = resourceClass.getName();
+    // Check paths are valid.
+    for (Map.Entry<String, String[]> annotationEntry : annotations.entrySet())
+    {
+      checkPathsAgainstSchema(dataSchema, resourceClassName, annotationEntry.getKey(), annotationEntry.getValue());
+    }
+    // Check for redundant or conflicting information.
+    Map<String, String> pathToAnnotation = new HashMap<String, String>();
+    for (Map.Entry<String, String[]> annotationEntry : annotations.entrySet())
+    {
+      String annotationName = annotationEntry.getKey();
+      String[] paths = annotationEntry.getValue();
+      for (String path : paths)
+      {
+        String existingAnnotationName = pathToAnnotation.get(path);
+        if (existingAnnotationName != null)
+        {
+          if (existingAnnotationName.equals(annotationName))
+          {
+            throw new ResourceConfigException("In resource class '" + resourceClassName + "', "
+                                                  + path + " is marked as " + annotationName + " multiple times.");
+          }
+          else
+          {
+            throw new ResourceConfigException("In resource class '" + resourceClassName + "', " + path
+                                                  + " is marked as both " + existingAnnotationName + " and "
+                                                  + annotationName + ".");
+          }
+        }
+        for (Map.Entry<String, String> existingEntry : pathToAnnotation.entrySet())
+        {
+          String existingPath = existingEntry.getKey();
+          existingAnnotationName = existingEntry.getValue();
+          if (existingPath.startsWith(path))
+          {
+            throw new ResourceConfigException("In resource class '" + resourceClassName + "', " + existingPath
+                                                  + " is marked as " + existingAnnotationName + ", but is contained in a "
+                                                  + annotationName + " field " + path + ".");
+          }
+          else if (path.startsWith(existingPath))
+          {
+            throw new ResourceConfigException("In resource class '" + resourceClassName + "', " + path
+                                                  + " is marked as " + annotationName + ", but is contained in a "
+                                                  + existingAnnotationName + " field " + existingPath + ".");
+          }
+        }
+        pathToAnnotation.put(path, annotationName);
+      }
+    }
   }
 
   @SuppressWarnings("unchecked")
@@ -799,6 +883,10 @@ public final class RestLiAnnotationReader
         {
           param = buildResourceContextParam(paramAnnotations, paramType);
         }
+        else if (paramAnnotations.contains(ValidatorParam.class))
+        {
+          param = buildValidatorParam(paramAnnotations, paramType);
+        }
         else
         {
           throw new ResourceConfigException(buildMethodMessage(method)
@@ -841,6 +929,22 @@ public final class RestLiAnnotationReader
                            false,
                            annotations);
     }
+
+  private static Parameter<RestLiDataValidator> buildValidatorParam(AnnotationSet annotations, final Class<?> paramType)
+  {
+    if (!paramType.equals(RestLiDataValidator.class))
+    {
+      throw new ResourceConfigException("Incorrect data type for param: @" + ValidatorParam.class.getSimpleName() + " parameter annotation must be of type " +  RestLiDataValidator.class.getName());
+    }
+    return new Parameter("validator",
+        paramType,
+        null,
+        false,
+        null,
+        Parameter.ParamType.VALIDATOR_PARAM,
+        false,
+        annotations);
+  }
 
   @SuppressWarnings({"unchecked", "rawtypes"})
   private static Parameter buildCallbackParam(final Method method,

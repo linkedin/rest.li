@@ -40,7 +40,7 @@ public class CreateArgumentBuilder implements RestLiArgumentBuilder
   {
     Object[] positionalArgs = { requestData.getEntity() };
     return ArgumentBuilder.buildArgs(positionalArgs,
-                                     routingResult.getResourceMethod().getParameters(),
+                                     routingResult.getResourceMethod(),
                                      routingResult.getContext(),
                                      null);
   }

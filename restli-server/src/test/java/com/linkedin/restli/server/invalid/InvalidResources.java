@@ -19,12 +19,14 @@ package com.linkedin.restli.server.invalid;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.pegasus.generator.test.LongRef;
+import com.linkedin.restli.common.validation.CreateOnly;
+import com.linkedin.restli.common.validation.ReadOnly;
 import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.CustomLongRef;
 import com.linkedin.restli.server.CustomStringRef;
+import com.linkedin.restli.server.MapWithTestRecord;
 import com.linkedin.restli.server.ResourceLevel;
-import com.linkedin.restli.server.annotations.RestLiSimpleResource;
-import com.linkedin.restli.server.custom.types.CustomLong;
+import com.linkedin.restli.server.TestRecord;
 import com.linkedin.restli.server.custom.types.CustomString;
 import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.AssocKeyParam;
@@ -33,6 +35,7 @@ import com.linkedin.restli.server.annotations.Key;
 import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiAssociation;
 import com.linkedin.restli.server.annotations.RestLiCollection;
+import com.linkedin.restli.server.annotations.RestLiSimpleResource;
 import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.resources.AssociationResourceTemplate;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
@@ -217,5 +220,44 @@ public class InvalidResources
   {
     @Action(name="myAction", resourceLevel = ResourceLevel.COLLECTION)
     public void myAction() {}
+  }
+
+  @CreateOnly("asdf")
+  @RestLiSimpleResource(name="foo")
+  public class DataAnnotationOnNonexistentField extends SimpleResourceTemplate<TestRecord>
+  {
+  }
+
+  @ReadOnly({"mapA", "mapA"})
+  @RestLiSimpleResource(name="foo")
+  public class DuplicateDataAnnotation extends SimpleResourceTemplate<MapWithTestRecord>
+  {
+  }
+
+  @CreateOnly({"mapA", "mapA/intField"})
+  @RestLiSimpleResource(name="foo")
+  public class RedundantDataAnnotation1 extends SimpleResourceTemplate<MapWithTestRecord>
+  {
+  }
+
+  @ReadOnly("mapA")
+  @CreateOnly("mapA")
+  @RestLiSimpleResource(name="foo")
+  public class RedundantDataAnnotation2 extends SimpleResourceTemplate<MapWithTestRecord>
+  {
+  }
+
+  @ReadOnly("mapA")
+  @CreateOnly("mapA/doubleField")
+  @RestLiSimpleResource(name="foo")
+  public class RedundantDataAnnotation3 extends SimpleResourceTemplate<MapWithTestRecord>
+  {
+  }
+
+  @ReadOnly("mapA/doubleField")
+  @CreateOnly("mapA")
+  @RestLiSimpleResource(name="foo")
+  public class RedundantDataAnnotation4 extends SimpleResourceTemplate<MapWithTestRecord>
+  {
   }
 }

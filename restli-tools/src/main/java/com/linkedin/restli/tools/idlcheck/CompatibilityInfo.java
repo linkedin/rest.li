@@ -34,6 +34,9 @@ public class CompatibilityInfo
   public enum Type
   {
     FINDER_ASSOCKEYS_DOWNGRADE(Level.INCOMPATIBLE, "Finder AssocKeys may not be downgraded to AssocKey"),
+    ANNOTATION_CHANGE_BREAKS_NEW_SERVER(Level.INCOMPATIBLE, "%s, breaks new servers"),
+    ANNOTATION_CHANGE_BREAKS_OLD_CLIENT(Level.INCOMPATIBLE, "%s, old clients' requests will fail validation"),
+    ANNOTATION_CHANGE_MAY_REQUIRE_CLIENT_CODE_CHANGE(Level.INCOMPATIBLE, "%s, clients may need to change their code"),
     ARRAY_NOT_CONTAIN(Level.INCOMPATIBLE, "Current field must contain these values: %s"),
     ARRAY_NOT_EQUAL(Level.INCOMPATIBLE, "Current field must be these values: %s"),
     ARRAY_MISSING_ELEMENT(Level.INCOMPATIBLE, "\"%s\" has been removed from the current field"),

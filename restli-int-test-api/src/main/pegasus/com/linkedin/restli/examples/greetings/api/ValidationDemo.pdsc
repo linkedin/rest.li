@@ -1,0 +1,94 @@
+{
+  "type" : "record",
+  "name" : "ValidationDemo",
+  "namespace" : "com.linkedin.restli.examples.greetings.api",
+  "fields" : [
+    {
+      "name": "stringA",
+      "type": "string",
+      "validate": {
+        "strlen": {
+          "min": 1,
+          "max": 10
+        }
+      }
+    },
+    {
+      "name": "intA",
+      "type": "int",
+      "optional": true
+    },
+    {
+      "name": "stringB",
+      "type": "string"
+    },
+    {
+      "name": "intB",
+      "type": "int",
+      "optional": true
+    },
+    {
+      "name": "UnionFieldWithInlineRecord",
+      "type": [
+        {
+          "type" : "record",
+          "name" : "myRecord",
+          "fields": [
+            {
+              "name": "foo1",
+              "type": "int"
+            },
+            {
+              "name": "foo2",
+              "type": "int",
+              "optional": true
+            }
+          ]
+        },
+        {
+          "name": "myEnum",
+          "type" : "enum",
+          "symbols" : ["FOOFOO", "BARBAR"]
+        }
+      ]
+    },
+    {
+      "name": "ArrayWithInlineRecord",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "myItem",
+          "fields": [
+            {
+              "name": "bar1",
+              "type": "string"
+            },
+            {
+              "name": "bar2",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "optional": true
+    },
+    {
+      "name": "MapWithTyperefs",
+      "type": {
+        "type": "map",
+        "values": {
+          "type": "typeref",
+          "name": "myGreeting",
+          "ref": "Greeting"
+        }
+      },
+      "optional": true
+    },
+    {
+      "name": "validationDemoNext",
+      "type": "ValidationDemo",
+      "optional": true
+    }
+  ]
+}

@@ -1,0 +1,141 @@
+{
+  "models" : [ {
+    "type" : "record",
+    "name" : "myRecord",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "fields" : [ {
+      "name" : "foo1",
+      "type" : "int"
+    } ]
+  }, {
+    "type" : "enum",
+    "name" : "myEnum",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "symbols" : [ "FOOFOO", "BARBAR" ]
+  }, {
+    "type" : "record",
+    "name" : "myItem",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "fields" : [ {
+      "name" : "bar1",
+      "type" : "string"
+    }, {
+      "name" : "bar2",
+      "type" : "string"
+    } ]
+  }, {
+    "type" : "enum",
+    "name" : "Tone",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "symbols" : [ "FRIENDLY", "SINCERE", "INSULTING" ]
+  }, {
+    "type" : "record",
+    "name" : "Greeting",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "doc" : "A greeting",
+    "fields" : [ {
+      "name" : "id",
+      "type" : "long"
+    }, {
+      "name" : "message",
+      "type" : "string"
+    }, {
+      "name" : "tone",
+      "type" : "Tone",
+      "doc" : "tone"
+    } ]
+  }, {
+    "type" : "typeref",
+    "name" : "myGreeting",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "ref" : "Greeting"
+  }, {
+    "type" : "record",
+    "name" : "ValidationDemo",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "fields" : [ {
+      "name" : "stringA",
+      "type" : "string",
+      "validate" : {
+        "strlen" : {
+          "min" : 1,
+          "max" : 10
+        }
+      }
+    }, {
+      "name" : "intA",
+      "type" : "int",
+      "optional" : true
+    }, {
+      "name" : "stringB",
+      "type" : "string"
+    }, {
+      "name" : "intB",
+      "type" : "int",
+      "optional" : true
+    }, {
+      "name" : "intC",
+      "type" : "int",
+      "optional" : true
+    }, {
+      "name" : "UnionFieldWithInlineRecord",
+      "type" : [ "myRecord", "myEnum" ]
+    }, {
+      "name" : "ArrayWithInlineRecord",
+      "type" : {
+        "type" : "array",
+        "items" : "myItem"
+      },
+      "optional" : true
+    }, {
+      "name" : "MapWithTyperefs",
+      "type" : {
+        "type" : "map",
+        "values" : "myGreeting"
+      },
+      "optional" : true
+    }, {
+      "name" : "validationDemoNext",
+      "type" : "ValidationDemo",
+      "optional" : true
+    } ]
+  } ],
+  "schema" : {
+    "annotations" : {
+      "createOnly" : {
+        "value" : [ "stringB", "intB", "MapWithTyperefs/id" ]
+      },
+      "readOnly" : {
+        "value" : [ "intC", "stringA", "intA", "UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo1", "ArrayWithInlineRecord/bar1", "validationDemoNext/stringB", "validationDemoNext/UnionFieldWithInlineRecord" ]
+      }
+    },
+    "name" : "validationDemos",
+    "namespace" : "com.linkedin.restli.examples.greetings.client",
+    "path" : "/validationDemos",
+    "schema" : "com.linkedin.restli.examples.greetings.api.ValidationDemo",
+    "doc" : "Free-form resource for testing Rest.li data validation.\n This class shows how to validate incoming data manually by injecting the validator as a resource method parameter.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.ValidationDemoResource",
+    "collection" : {
+      "identifier" : {
+        "name" : "validationDemosId",
+        "type" : "int"
+      },
+      "supports" : [ "batch_create", "batch_partial_update", "batch_update", "create", "partial_update", "update" ],
+      "methods" : [ {
+        "method" : "create"
+      }, {
+        "method" : "update"
+      }, {
+        "method" : "partial_update"
+      }, {
+        "method" : "batch_create"
+      }, {
+        "method" : "batch_update"
+      }, {
+        "method" : "batch_partial_update"
+      } ],
+      "entity" : {
+        "path" : "/validationDemos/{validationDemosId}"
+      }
+    }
+  }
+}

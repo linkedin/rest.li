@@ -17,6 +17,7 @@
 package com.linkedin.restli.server.resources.fixtures;
 
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.server.TestRecord;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
 import com.linkedin.restli.server.resources.fixtures.SomeDependency1;
@@ -30,7 +31,7 @@ import javax.inject.Named;
  */
 @RestLiCollection(name="someResource1",
                   keyName="key")
-public class SomeResource1 extends CollectionResourceTemplate<String,RecordTemplate>
+public class SomeResource1 extends CollectionResourceTemplate<String,TestRecord>
 {
   @Inject @Named("dep1")
   private SomeDependency1 _dependency1;

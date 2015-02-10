@@ -254,4 +254,28 @@ public class DataElementUtil
     }
     return list;
   }
+
+  /**
+   * Similar to {@link DataElement#pathAsString}, but without map keys or array indices.
+   *
+   * @param dataElement data element
+   * @return path without keys as a string
+   */
+  public static String pathWithoutKeysAsString(DataElement dataElement)
+  {
+    DataElement element = dataElement;
+    StringBuilder builder = new StringBuilder();
+    while (element.getParent() != null)
+    {
+      DataSchema.Type parentType = element.getParent().getSchema().getType();
+      if (parentType == DataSchema.Type.ARRAY || parentType == DataSchema.Type.MAP)
+      {
+        element = element.getParent();
+        continue;
+      }
+      builder = new StringBuilder().append(DataElement.SEPARATOR).append(element.getName()).append(builder);
+      element = element.getParent();
+    }
+    return builder.toString();
+  }
 }

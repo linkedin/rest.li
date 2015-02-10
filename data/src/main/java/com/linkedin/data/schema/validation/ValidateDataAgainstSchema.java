@@ -30,6 +30,7 @@ import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.Null;
 import com.linkedin.data.element.DataElement;
+import com.linkedin.data.element.DataElementUtil;
 import com.linkedin.data.element.MutableDataElement;
 import com.linkedin.data.element.SimpleDataElement;
 import com.linkedin.data.it.IterationOrder;
@@ -287,6 +288,19 @@ public final class ValidateDataAgainstSchema
       }
     }
 
+    private boolean isFieldOptional(RecordDataSchema.Field field, DataElement element)
+    {
+      if (field.getOptional())
+      {
+        return true;
+      }
+      StringBuilder sb = new StringBuilder();
+      sb.append(DataElementUtil.pathWithoutKeysAsString(element));
+      sb.append(DataElement.SEPARATOR);
+      sb.append(field.getName());
+      return _options.getOptionalFields().contains(sb.substring(1));
+    }
+
     protected Object validateRecord(DataElement element, RecordDataSchema schema, Object object)
     {
       if (object instanceof DataMap)
@@ -301,7 +315,7 @@ public final class ValidateDataAgainstSchema
         {
           for (RecordDataSchema.Field field : schema.getFields())
           {
-            if (field.getOptional() == false && map.containsKey(field.getName()) == false)
+            if (isFieldOptional(field, element) == false && map.containsKey(field.getName()) == false)
             {
               switch (requiredMode)
               {

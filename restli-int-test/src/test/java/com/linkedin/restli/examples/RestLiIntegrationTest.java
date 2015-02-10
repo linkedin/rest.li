@@ -49,6 +49,7 @@ import java.util.concurrent.ScheduledExecutorService;
 public class RestLiIntegrationTest
 {
   protected static final String URI_PREFIX = "http://localhost:1338/";
+  protected static final String FILTERS_URI_PREFIX = "http://localhost:1340/";
 
   private final int numCores = Runtime.getRuntime().availableProcessors();
 
@@ -119,7 +120,7 @@ public class RestLiIntegrationTest
     _engine = new EngineBuilder().setTaskExecutor(_scheduler).setTimerScheduler(_scheduler).build();
     _serverWithFilters =
         RestLiIntTestServer.createServer(_engine,
-                                         RestLiIntTestServer.DEFAULT_PORT,
+                                         RestLiIntTestServer.FILTERS_PORT,
                                          RestLiIntTestServer.supportedCompression,
                                          false,
                                          asyncTimeout,
@@ -130,7 +131,7 @@ public class RestLiIntegrationTest
     _clientFactory = new HttpClientFactory();
     _transportClients = new ArrayList<Client>();
     Client client = newTransportClient(Collections.<String, String>emptyMap());
-    _restClient = new RestClient(client, URI_PREFIX);
+    _restClient = new RestClient(client, FILTERS_URI_PREFIX);
   }
 
   public void shutdown() throws Exception

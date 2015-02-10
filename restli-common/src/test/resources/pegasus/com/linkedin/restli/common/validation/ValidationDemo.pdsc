@@ -1,0 +1,115 @@
+{
+  "type" : "record",
+  "name" : "ValidationDemo",
+  "namespace" : "com.linkedin.restli.common.validation",
+  "fields" : [
+    {
+      "name": "stringA",
+      "type": "string",
+      "validate": {
+        "strlen": {
+          "min": 1,
+          "max": 10
+        }
+      }
+    },
+    {
+      "name": "intA",
+      "type": "int",
+      "optional": true
+    },
+    {
+      "name": "stringB",
+      "type": "string"
+    },
+    {
+      "name": "intB",
+      "type": "int",
+      "optional": true
+    },
+    {
+      "name": "UnionFieldWithInlineRecord",
+      "type": [
+        {
+          "type" : "record",
+          "name" : "myRecord",
+          "fields": [
+            {
+              "name": "foo1",
+              "type": "int"
+            },
+            {
+              "name": "foo2",
+              "type": "int",
+              "optional": true
+            }
+          ]
+        },
+        {
+          "name": "myEnum",
+          "type" : "enum",
+          "symbols" : ["FOOFOO", "BARBAR"]
+        }
+      ]
+    },
+    {
+      "name": "ArrayWithInlineRecord",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "myItem",
+          "fields": [
+            {
+              "name": "bar1",
+              "type": "string"
+            },
+            {
+              "name": "bar2",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "optional": true
+    },
+    {
+      "name": "MapWithTyperefs",
+      "type": {
+        "type": "map",
+        "values": {
+          "type": "typeref",
+          "name": "myGreeting",
+          "ref": {
+            "type": "record",
+            "name": "Greeting",
+            "fields": [
+              {
+                "name": "id",
+                "type": "long"
+              },
+              {
+                "name": "message",
+                "type": "string"
+              },
+              {
+                "name": "tone",
+                "type": {
+                  "type": "enum",
+                  "name": "Tone",
+                  "symbols": ["FRIENDLY","SINCERE","INSULTING"]
+                }
+              }
+            ]
+          }
+        }
+      },
+      "optional": true
+    },
+    {
+      "name": "validationDemoNext",
+      "type": "ValidationDemo",
+      "optional": true
+    }
+  ]
+}

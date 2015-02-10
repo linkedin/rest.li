@@ -70,7 +70,6 @@ import java.util.concurrent.ScheduledExecutorService;
  */
 public class TestRequestCompression extends RestLiIntegrationTest
 {
-  private static final String URI_PREFIX = "http://localhost:1338/";
   // Header for sending test information to the server. The value will be set to either EXPECT_COMPRESSION or EXPECT_NO_COMPRESSION.
   private static final String TEST_HELP_HEADER = "Test-Help-Header";
   private static final String EXPECT_COMPRESSION = "Expect-Compression";
@@ -209,7 +208,7 @@ public class TestRequestCompression extends RestLiIntegrationTest
     properties.put(HttpClientFactory.HTTP_REQUEST_CONTENT_ENCODINGS, supportedEncodings);
     properties.put(HttpClientFactory.HTTP_SERVICE_NAME, SERVICE_NAME);
     TransportClientAdapter clientAdapter1 = new TransportClientAdapter(httpClientFactory.getClient(properties));
-    RestClient client = new RestClient(clientAdapter1, URI_PREFIX);
+    RestClient client = new RestClient(clientAdapter1, FILTERS_URI_PREFIX);
     RootBuilderWrapper<Long, Greeting> builders = new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(restliRequestOptions));
 
     // GET

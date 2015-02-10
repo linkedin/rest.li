@@ -1,0 +1,18 @@
+{
+  "type" : "record",
+  "name" : "MapWithTestRecord",
+  "namespace" : "com.linkedin.restli.server",
+  "fields" : [
+    {
+      "name": "mapA",
+      "type": {
+        "type": "map",
+        "values": {
+          "type": "typeref",
+          "name": "myTestRecord",
+          "ref": "TestRecord"
+        }
+      }
+    }
+  ]
+}

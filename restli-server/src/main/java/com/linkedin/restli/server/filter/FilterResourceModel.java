@@ -16,6 +16,9 @@
 
 package com.linkedin.restli.server.filter;
 
+
+import com.linkedin.data.template.RecordTemplate;
+
 /**
  * This interface provides information regarding the resource implementation.
  *
@@ -51,6 +54,13 @@ public interface FilterResourceModel
    * @return {@link Class} of the resource.
    */
   Class<?> getResourceClass();
+
+  /**
+   * Obtain the {@link Class} of the record template.
+   *
+   * @return {@link Class} of the record template.
+   */
+  Class<? extends RecordTemplate> getValueClass();
 
   /**
    * Obtain the name of the key.

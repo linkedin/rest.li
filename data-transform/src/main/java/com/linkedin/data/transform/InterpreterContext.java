@@ -34,6 +34,9 @@ public class InterpreterContext
   //stores error messages
   private final MessageList<Message> _errorMessages = new MessageList<Message>();
 
+  //stores informational messages
+  private final MessageList<Message> _infoMessages = new MessageList<Message>();
+
   //current instruction is in every method that needs to add error message, because
   //instruction stores path; instead of passing instruction as parameter, it is accessible
   //on the interpreter level
@@ -86,6 +89,17 @@ public class InterpreterContext
   }
 
   /**
+   * Adds info message to the list of info messages.
+   *
+   * @param format format of the message.
+   * @param args arguments for the message.
+   */
+  public void addInfoMessage(final String format, final Object... args)
+  {
+    _infoMessages.add(new Message(getPath().toArray(), false, format, args));
+  }
+
+  /**
    * Returns true if interpretation of any instruction failed.
    * @return true if interpretation of any instruction failed
    */
@@ -101,6 +115,15 @@ public class InterpreterContext
   public MessageList<Message> getErrorMessages()
   {
     return _errorMessages;
+  }
+
+  /**
+   * Returns info messages that were added during data processing.
+   * @return list of info messages.
+   */
+  public MessageList<Message> getInfoMessages()
+  {
+    return _infoMessages;
   }
 
   /**

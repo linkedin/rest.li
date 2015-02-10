@@ -31,7 +31,9 @@ import java.util.HashSet;
  * @author Moira Tagle
  * @version $Revision: $
  */
-
+// Gradle by default will use the module directory as the working directory
+// IDE such as IntelliJ IDEA may use the project directory instead
+// If you create test in IDE, make sure the working directory is always the module directory
 public class TestRestliSnapshotCompatibilityChecker
 {
   @Test
@@ -78,6 +80,51 @@ public class TestRestliSnapshotCompatibilityChecker
 
     Assert.assertTrue(restSpecIncompatibles.isEmpty());
     Assert.assertTrue(restSpecCompatibles.isEmpty());
+  }
+
+  @Test
+  public void testCompatibleRestLiDataAnnotations()
+  {
+    final RestLiSnapshotCompatibilityChecker checker = new RestLiSnapshotCompatibilityChecker();
+    final CompatibilityInfoMap infoMap = checker.check(RESOURCES_DIR + FS + "snapshots" + FS + "prev-validationdemos.snapshot.json",
+                                                       RESOURCES_DIR + FS + "snapshots" + FS + "curr-validationdemos-pass.snapshot.json",
+                                                       CompatibilityLevel.BACKWARDS);
+    Assert.assertTrue(infoMap.isCompatible(CompatibilityLevel.BACKWARDS));
+  }
+
+  @Test
+  public void testIncompatibleRestLiDataAnnotations()
+  {
+    final Collection<CompatibilityInfo> errors = new HashSet<CompatibilityInfo>();
+    errors.add(new CompatibilityInfo(Arrays.<Object>asList("", "annotations", "intB"),
+                                     CompatibilityInfo.Type.ANNOTATION_CHANGE_BREAKS_OLD_CLIENT, "Cannot add ReadOnly annotation"));
+    errors.add(new CompatibilityInfo(Arrays.<Object>asList("", "annotations", "validationDemoNext/intA"),
+                                     CompatibilityInfo.Type.ANNOTATION_CHANGE_BREAKS_OLD_CLIENT, "Cannot add CreateOnly annotation"));
+    // Removing ReadOnly annotation on a required field
+    errors.add(new CompatibilityInfo(Arrays.<Object>asList("", "annotations", "validationDemoNext/stringB"),
+                                     CompatibilityInfo.Type.ANNOTATION_CHANGE_BREAKS_NEW_SERVER, "Cannot remove ReadOnly annotation"));
+    // Removing ReadOnly annotation on an optional field
+    errors.add(new CompatibilityInfo(Arrays.<Object>asList("", "annotations", "intA"),
+                                     CompatibilityInfo.Type.ANNOTATION_CHANGE_MAY_REQUIRE_CLIENT_CODE_CHANGE, "Cannot remove ReadOnly annotation"));
+    // Removing CreateOnly annotation on a required field
+    errors.add(new CompatibilityInfo(Arrays.<Object>asList("", "annotations", "stringB"),
+                                     CompatibilityInfo.Type.ANNOTATION_CHANGE_MAY_REQUIRE_CLIENT_CODE_CHANGE, "Cannot remove CreateOnly annotation"));
+    // Removing CreateOnly annotation on an optional field
+    errors.add(new CompatibilityInfo(Arrays.<Object>asList("", "annotations", "intB"),
+                                     CompatibilityInfo.Type.ANNOTATION_CHANGE_MAY_REQUIRE_CLIENT_CODE_CHANGE, "Cannot remove CreateOnly annotation"));
+
+    final RestLiSnapshotCompatibilityChecker checker = new RestLiSnapshotCompatibilityChecker();
+    final CompatibilityInfoMap infoMap = checker.check(RESOURCES_DIR + FS + "snapshots" + FS + "prev-validationdemos.snapshot.json",
+                                                       RESOURCES_DIR + FS + "snapshots" + FS + "curr-validationdemos-fail.snapshot.json",
+                                                       CompatibilityLevel.BACKWARDS);
+
+    final Collection<CompatibilityInfo> restSpecIncompatibles = infoMap.getRestSpecIncompatibles();
+    for (CompatibilityInfo e : errors)
+    {
+      Assert.assertTrue(restSpecIncompatibles.contains(e), "Reported restspec incompatibles should contain: " + e.toString());
+      restSpecIncompatibles.remove(e);
+    }
+    Assert.assertTrue(restSpecIncompatibles.isEmpty());
   }
 
   @Test

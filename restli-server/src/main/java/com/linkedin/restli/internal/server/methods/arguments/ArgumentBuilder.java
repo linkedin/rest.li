@@ -34,7 +34,6 @@ import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.DynamicRecordTemplate;
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.data.template.TemplateOutputCastException;
 import com.linkedin.data.template.TemplateRuntimeException;
 import com.linkedin.internal.common.util.CollectionUtils;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -46,9 +45,11 @@ import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.internal.common.QueryParamsDataMap;
 import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.internal.server.model.Parameter;
+import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.internal.server.util.RestUtils;
+import com.linkedin.restli.common.validation.RestLiDataValidator;
 import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.ResourceConfigException;
 import com.linkedin.restli.server.ResourceContext;
@@ -79,17 +80,18 @@ public class ArgumentBuilder
    *
    * @param positionalArguments pass-through arguments coming from
    *          {@link RestLiArgumentBuilder}
-   * @param parameters list of request {@link Parameter}s
+   * @param resourceMethod the resource method
    * @param context {@link ResourceContext}
    * @param template {@link DynamicRecordTemplate}
    * @return array of method argument for method invocation.
    */
   @SuppressWarnings("deprecation")
   public static Object[] buildArgs(final Object[] positionalArguments,
-                                   final List<Parameter<?>> parameters,
+                                   final ResourceMethodDescriptor resourceMethod,
                                    final ResourceContext context,
                                    final DynamicRecordTemplate template)
   {
+    List<Parameter<?>> parameters = resourceMethod.getParameters();
     Object[] arguments = Arrays.copyOf(positionalArguments, parameters.size());
 
     fixUpComplexKeySingletonArraysInArguments(arguments);
@@ -154,6 +156,13 @@ public class ArgumentBuilder
         else if (param.getParamType() == Parameter.ParamType.RESOURCE_CONTEXT || param.getParamType() == Parameter.ParamType.RESOURCE_CONTEXT_PARAM)
         {
           arguments[i] = context;
+          continue;
+        }
+        else if (param.getParamType() == Parameter.ParamType.VALIDATOR_PARAM)
+        {
+          RestLiDataValidator validator = new RestLiDataValidator(resourceMethod.getResourceModel().getResourceClass().getAnnotations(),
+                                                                  resourceMethod.getResourceModel().getValueClass(), resourceMethod.getMethodType());
+          arguments[i] = validator;
           continue;
         }
         else if (param.getParamType() == Parameter.ParamType.POST)

@@ -56,6 +56,7 @@ public class RestLiIntTestServer
 {
   public static final int      DEFAULT_PORT           = 1338;
   public static final int      NO_COMPRESSION_PORT    = 1339;
+  public static final int      FILTERS_PORT           = 1340;
   public static final String   supportedCompression   = "gzip,snappy,bzip2,deflate";
   public static final String[] RESOURCE_PACKAGE_NAMES = {
       "com.linkedin.restli.examples.groups.server.rest.impl",

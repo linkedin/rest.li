@@ -4,6 +4,8 @@
 Fix a bug in ChannelPoolHandler where it should NOT put a channel back to the pool if
 there is a "connection:close" header in the response.
 
+(RB=444340)
+Rest.li data validator, ReadOnly and CreateOnly Rest.li data annotations.
 
 2.4.3
 ------

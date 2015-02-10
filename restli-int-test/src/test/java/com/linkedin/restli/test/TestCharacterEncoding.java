@@ -37,6 +37,7 @@ import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.restli.client.GetRequest;
 import com.linkedin.restli.client.GetRequestBuilder;
 import com.linkedin.restli.common.CompoundKey;
+import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpecImpl;
@@ -64,17 +65,17 @@ public class TestCharacterEncoding
     for (char c = 0; c < 256; ++c)
     {
       final String testValue = String.valueOf(c);
-      GetRequest<QueryParamMockCollection.DummyRecord> req =
-              new GetRequestBuilder<String, QueryParamMockCollection.DummyRecord>(
+      GetRequest<EmptyRecord> req =
+              new GetRequestBuilder<String, EmptyRecord>(
                       QueryParamMockCollection.RESOURCE_NAME,
-                      QueryParamMockCollection.DummyRecord.class,
+                      EmptyRecord.class,
                       new ResourceSpecImpl(Collections.<ResourceMethod> emptySet(),
                                            Collections.<String, DynamicRecordMetadata> emptyMap(),
                                            Collections.<String, DynamicRecordMetadata> emptyMap(),
                                            String.class,
                                            null,
                                            null,
-                                           QueryParamMockCollection.DummyRecord.class,
+                                           EmptyRecord.class,
                                            Collections.<String, CompoundKey.TypeInfo> emptyMap()),
                       RestliRequestOptions.DEFAULT_OPTIONS)
                       .id("dummy")

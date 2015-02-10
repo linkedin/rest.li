@@ -78,7 +78,8 @@ public class Parameter<T> extends FieldDef<T>
     RESOURCE_CONTEXT_PARAM,       // @ResourceContextParam
     HEADER,                       // @HeaderParam
     METADATA_PROJECTION_PARAM,    // @MetadataProjectionParam
-    PAGING_PROJECTION_PARAM       // @PagingProjectionParam
+    PAGING_PROJECTION_PARAM,      // @PagingProjectionParam
+    VALIDATOR_PARAM               // @ValidatorParam
   }
 
   private final boolean _optional;

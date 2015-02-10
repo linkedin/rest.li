@@ -25,6 +25,8 @@ import com.linkedin.data.ByteString;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.PatchRequest;
+import com.linkedin.restli.common.validation.CreateOnly;
+import com.linkedin.restli.common.validation.ReadOnly;
 import com.linkedin.restli.server.BatchCreateRequest;
 import com.linkedin.restli.server.BatchCreateResult;
 import com.linkedin.restli.server.BatchDeleteRequest;
@@ -32,6 +34,7 @@ import com.linkedin.restli.server.BatchPatchRequest;
 import com.linkedin.restli.server.BatchUpdateRequest;
 import com.linkedin.restli.server.BatchUpdateResult;
 import com.linkedin.restli.server.CreateResponse;
+import com.linkedin.restli.server.MapWithTestRecord;
 import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.TestRecord;
 import com.linkedin.restli.server.UpdateResponse;
@@ -545,5 +548,12 @@ public class CombinedResources
     {
       return null;
     }
+  }
+
+  @ReadOnly({"intField", "longField"})
+  @CreateOnly("floatField")
+  @RestLiSimpleResource(name="foo")
+  public class DataAnnotationTestResource extends SimpleResourceTemplate<TestRecord>
+  {
   }
 }

@@ -21,6 +21,8 @@ package com.linkedin.data.transform;
 
 import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.message.Message;
+import com.linkedin.data.message.MessageList;
 
 /**
  * DataMapProcessor abstracts DataMap processing when it can be described as an
@@ -74,8 +76,9 @@ public class DataComplexProcessor
    * @param fastFail if true, stop immediately after the first error,
    *                 otherwise gather as many errors as possible.
    * @throws DataProcessingException
+   * @return information messages from the interpreter context.
    */
-  public void run(boolean fastFail) throws DataProcessingException
+  public MessageList<Message> runDataProcessing(boolean fastFail) throws DataProcessingException
   {
     if (_program != null)
     {
@@ -108,6 +111,17 @@ public class DataComplexProcessor
       if (ic.failed())
         throw new DataProcessingException(DATA_PROCESSING_FAILED,
                                           ic.getErrorMessages());
+
+      return ic.getInfoMessages();
     }
+    return null;
+  }
+
+  /**
+   * Same as {@link #runDataProcessing(boolean)}, but returns void.
+   */
+  public void run(boolean fastFail) throws DataProcessingException
+  {
+    runDataProcessing(fastFail);
   }
 }

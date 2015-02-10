@@ -18,6 +18,7 @@ package com.linkedin.restli.tools.clientgen;
 
 
 import com.linkedin.common.Version;
+import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
@@ -54,10 +55,12 @@ import com.linkedin.restli.client.base.UpdateRequestBuilderBase;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.CompoundKey.TypeInfo;
+import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.ResourceSpecImpl;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.common.validation.RestLiDataValidator;
 import com.linkedin.restli.internal.common.RestliVersion;
 import com.linkedin.restli.internal.common.TyperefUtils;
 import com.linkedin.restli.internal.common.URIParamUtils;
@@ -141,6 +144,11 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
   private static final String NAME = "name";
   private static final String NAMESPACE = "namespace";
   private static final RestSpecCodec _codec = new RestSpecCodec();
+  // Generate the validateInput() method for these resource methods
+  private static final List<ResourceMethod> _validateEntityMethods = Arrays.asList(
+      ResourceMethod.CREATE, ResourceMethod.UPDATE, ResourceMethod.BATCH_CREATE, ResourceMethod.BATCH_UPDATE);
+  private static final List<ResourceMethod> _validatePatchMethods = Arrays.asList(
+      ResourceMethod.PARTIAL_UPDATE, ResourceMethod.BATCH_PARTIAL_UPDATE);
 
   private static final Map<RestliVersion, String> ROOT_BUILDERS_SUFFIX;
   private static final Map<RestliVersion, String> METHOD_BUILDER_SUFFIX;
@@ -729,7 +737,8 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
                            pathKeyTypes,
                            assocKeyTypes,
                            pathToAssocKeys,
-                           requestOptionsGetter);
+                           requestOptionsGetter,
+                           resource.data().getDataMap("annotations"));
 
       if (resourceSchemaClass == CollectionSchema.class ||
           resourceSchemaClass == AssociationSchema.class)
@@ -1040,7 +1049,9 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
                                                                   valueClass,
                                                                   finderName,
                                                                   builderName,
-                                                                  facadeClass.getPackage());
+                                                                  facadeClass.getPackage(),
+                                                                  ResourceMethod.FINDER,
+                                                                  null);
 
         JMethod finderMethod = facadeClass.method(JMod.PUBLIC, finderBuilderClass,
                                                 "findBy" + capitalize(finderName));
@@ -1120,7 +1131,9 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
                                                JClass valueClass,
                                                String finderName,
                                                String derivedBuilderName,
-                                               JPackage clientPackage)
+                                               JPackage clientPackage,
+                                               ResourceMethod resourceMethod,
+                                               DataMap annotations)
           throws JClassAlreadyExistsException
   {
     // this method applies to REST methods and finder
@@ -1144,6 +1157,45 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
     if (finderName != null)
     {
       derivedBuilderConstructor.body().add(JExpr._super().invoke("name").arg(finderName));
+    }
+
+    if (_validateEntityMethods.contains(resourceMethod) || _validatePatchMethods.contains(resourceMethod))
+    {
+      JMethod validateMethod = derivedBuilderClass.method(JMod.PUBLIC | JMod.STATIC, ValidationResult.class, "validateInput");
+      JVar inputParam;
+      if (_validateEntityMethods.contains(resourceMethod))
+      {
+        inputParam = validateMethod.param(valueClass, "input");
+      }
+      else
+      {
+        inputParam = validateMethod.param(getCodeModel().ref(PatchRequest.class).narrow(valueClass), "patch");
+      }
+      JBlock block = validateMethod.body();
+      JVar annotationMap = block.decl(getCodeModel().ref(Map.class).narrow(String.class).narrow(getCodeModel().ref(List.class).narrow(String.class)), "annotations")
+          .init(JExpr._new(getCodeModel().ref(HashMap.class).narrow(String.class).narrow(getCodeModel().ref(List.class).narrow(String.class))));
+      if (annotations != null)
+      {
+        for (Map.Entry<String, Object> entry : annotations.entrySet())
+        {
+          DataList values = ((DataMap) entry.getValue()).getDataList("value");
+          if (values != null)
+          {
+            JInvocation list = getCodeModel().ref(Arrays.class).staticInvoke("asList");
+            for (Object value : values)
+            {
+              list.arg(value.toString());
+            }
+            block.add(annotationMap.invoke("put").arg(entry.getKey()).arg(list));
+          }
+        }
+      }
+      JClass validatorClass = getCodeModel().ref(RestLiDataValidator.class);
+      JVar validator = block.decl(validatorClass, "validator").init(JExpr._new(validatorClass)
+                                                                        .arg(annotationMap)
+                                                                        .arg(valueClass.dotclass())
+                                                                        .arg(getCodeModel().ref(ResourceMethod.class).staticRef(resourceMethod.name())));
+      block._return(validator.invoke("validate").arg(inputParam));
     }
 
     return derivedBuilderClass;
@@ -1346,7 +1398,8 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
                                     Map<String, JClass> pathKeyTypes,
                                     Map<String, JClass> assocKeyTypes,
                                     Map<String, List<String>> pathToAssocKeys,
-                                    JExpression requestOptionsExpr)
+                                    JExpression requestOptionsExpr,
+                                    DataMap annotations)
           throws JClassAlreadyExistsException
   {
     final Map<ResourceMethod, RestMethodSchema> schemaMap = new HashMap<ResourceMethod, RestMethodSchema>();
@@ -1411,7 +1464,9 @@ public class RestRequestBuilderGenerator extends DataTemplateGenerator
                                                               null,
                                                               resourceName + RestLiToolsUtils.nameCapsCase(methodName) +
                                                                 METHOD_BUILDER_SUFFIX.get(_config.getVersion()),
-                                                              facadeClass.getPackage());
+                                                              facadeClass.getPackage(),
+                                                              method,
+                                                              annotations);
         generatePathKeyBindingMethods(pathKeys, derivedBuilder, pathKeyTypes, assocKeyTypes, pathToAssocKeys);
 
         JMethod factoryMethod = facadeClass.method(JMod.PUBLIC, derivedBuilder, RestLiToolsUtils.nameCamelCase(

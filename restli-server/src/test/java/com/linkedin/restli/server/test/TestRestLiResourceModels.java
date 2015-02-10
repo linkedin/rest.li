@@ -18,6 +18,8 @@ package com.linkedin.restli.server.test;
 
 
 import com.google.common.collect.Sets;
+import com.linkedin.data.DataList;
+import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.pegasus.generator.test.LongRef;
 import com.linkedin.restli.common.ComplexResourceKey;
@@ -48,6 +50,8 @@ import com.linkedin.restli.server.twitter.TwitterTestDataModels.DiscoveredItem;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Followed;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Status;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.StatusType;
+
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -576,6 +580,26 @@ public class TestRestLiResourceModels
     expectConfigException(InvalidResources.TyperefKeyResource.class, "Typeref '" + LongRef.class.getName() + "' cannot be key type for class '" + InvalidResources.TyperefKeyResource.class.getName() + "'.");
     expectConfigException(InvalidResources.TyperefKeyCollection.class, "Typeref '" + LongRef.class.getName() + "' cannot be key type for class '" + InvalidResources.TyperefKeyCollection.class.getName() + "'.");
 
+  }
+
+  @Test
+  public void testValidRestLiDataAnnotations()
+  {
+    ResourceModel resourceModel = buildResourceModel(CombinedResources.DataAnnotationTestResource.class);
+    DataMap annotations = resourceModel.getCustomAnnotationData();
+    Assert.assertEquals(((DataMap) annotations.get("readOnly")).get("value"), new DataList(Arrays.asList("intField", "longField")));
+    Assert.assertEquals(((DataMap) annotations.get("createOnly")).get("value"), new DataList(Arrays.asList("floatField")));
+  }
+
+  @Test
+  public void testInvalidRestLiDataAnnotations()
+  {
+    expectConfigException(InvalidResources.DataAnnotationOnNonexistentField.class, "CreateOnly annotation asdf is not a valid path for TestRecord");
+    expectConfigException(InvalidResources.DuplicateDataAnnotation.class, "mapA is marked as ReadOnly multiple times");
+    expectConfigException(InvalidResources.RedundantDataAnnotation1.class, "mapA/intField is marked as CreateOnly, but is contained in a CreateOnly field mapA");
+    expectConfigException(InvalidResources.RedundantDataAnnotation2.class, "mapA is marked as both ReadOnly and CreateOnly");
+    expectConfigException(InvalidResources.RedundantDataAnnotation3.class, "mapA/doubleField is marked as CreateOnly, but is contained in a ReadOnly field mapA");
+    expectConfigException(InvalidResources.RedundantDataAnnotation4.class, "mapA/doubleField is marked as ReadOnly, but is contained in a CreateOnly field mapA");
   }
 
   // ************************

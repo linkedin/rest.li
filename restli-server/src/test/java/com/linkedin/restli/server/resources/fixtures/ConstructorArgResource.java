@@ -20,6 +20,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.server.TestRecord;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
 
@@ -29,7 +30,7 @@ import com.linkedin.restli.server.resources.CollectionResourceTemplate;
  */
 @RestLiCollection(name="constructorArgResource",
                   keyName="key")
-public class ConstructorArgResource extends CollectionResourceTemplate<String, RecordTemplate>
+public class ConstructorArgResource extends CollectionResourceTemplate<String, TestRecord>
 {
   private final SomeDependency1 _dependency1;
   private final SomeDependency2 _dependency2;

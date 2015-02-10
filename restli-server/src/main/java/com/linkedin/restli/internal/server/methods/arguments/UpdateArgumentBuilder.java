@@ -48,7 +48,7 @@ public class UpdateArgumentBuilder implements RestLiArgumentBuilder
       positionalArgs = new Object[] { requestData.getEntity() };
     }
     return ArgumentBuilder.buildArgs(positionalArgs,
-                                     routingResult.getResourceMethod().getParameters(),
+                                     routingResult.getResourceMethod(),
                                      routingResult.getContext(),
                                      null);
   }

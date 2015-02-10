@@ -50,7 +50,9 @@ import java.util.List;
  * @author Moira Tagle
  * @version $Revision: $
  */
-
+// Gradle by default will use the module directory as the working directory
+// IDE such as IntelliJ IDEA may use the project directory instead
+// If you create test in IDE, make sure the working directory is always the module directory
 public class TestResourceCompatibilityChecker
 {
   @BeforeClass

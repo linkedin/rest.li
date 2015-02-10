@@ -16,13 +16,17 @@
 
 package com.linkedin.restli.tools.compatibility;
 
+import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.element.DataElement;
 import com.linkedin.data.message.Message;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaResolver;
+import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.schema.UnionDataSchema;
 import com.linkedin.data.schema.compatibility.CompatibilityChecker;
 import com.linkedin.data.schema.compatibility.CompatibilityMessage;
 import com.linkedin.data.schema.compatibility.CompatibilityOptions;
@@ -34,7 +38,9 @@ import com.linkedin.data.template.GetMode;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.data.template.WrappingArrayTemplate;
-import com.linkedin.restli.internal.server.model.ResourceModelEncoder;
+import com.linkedin.restli.common.validation.CreateOnly;
+import com.linkedin.restli.common.validation.ReadOnly;
+import com.linkedin.restli.common.validation.ValidationUtil;
 import com.linkedin.restli.restspec.ActionSchema;
 import com.linkedin.restli.restspec.ActionsSetSchema;
 import com.linkedin.restli.restspec.AssocKeySchema;
@@ -50,6 +56,7 @@ import com.linkedin.restli.restspec.ParameterSchema;
 import com.linkedin.restli.restspec.ParameterSchemaArray;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.restspec.RestMethodSchema;
+import com.linkedin.restli.restspec.RestSpecAnnotation;
 import com.linkedin.restli.restspec.SimpleSchema;
 import com.linkedin.restli.restspec.RestSpecCodec;
 import com.linkedin.restli.tools.idlcheck.CompatibilityInfo;
@@ -61,6 +68,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.Stack;
+import java.util.StringTokenizer;
 
 /**
  * @author Moira Tagle
@@ -624,6 +632,12 @@ public class ResourceCompatibilityChecker
                         prevRec.getAnnotations(GetMode.DEFAULT),
                         currRec.getAnnotations(GetMode.DEFAULT));
 
+    checkRestLiDataAnnotations(prevRec.schema().getField("annotations"),
+                               prevRec.getAnnotations(GetMode.DEFAULT),
+                               currRec.getAnnotations(GetMode.DEFAULT),
+                               prevRec.getSchema(GetMode.DEFAULT),
+                               currRec.getSchema(GetMode.DEFAULT));
+
     checkEqualSingleValue(prevRec.schema().getField("namespace"),
                           prevRec.getNamespace(GetMode.DEFAULT),
                           currRec.getNamespace(GetMode.DEFAULT));
@@ -849,6 +863,110 @@ public class ResourceCompatibilityChecker
     checkArrayContainment(prevRec.schema().getField("throws"),
                           prevRec.getThrows(GetMode.DEFAULT),
                           currRec.getThrows(GetMode.DEFAULT));
+  }
+
+  /**
+   * Determines whether a path is valid according to the given data schema.
+   *
+   * @param schema data schema
+   * @param pathWithoutKeys full path for a field, without map key names and array indices.
+   * @return true if path denotes a field in the data schema
+   */
+  /* package private */ static boolean containsPath(DataSchema schema, String pathWithoutKeys)
+  {
+    StringTokenizer st = new StringTokenizer(pathWithoutKeys, DataElement.SEPARATOR.toString());
+    DataSchema dataSchema = schema;
+    while (st.hasMoreTokens())
+    {
+      String comp = st.nextToken();
+      dataSchema = dataSchema.getDereferencedDataSchema();
+
+      if (dataSchema.getType() == DataSchema.Type.MAP)
+      {
+        // Parent is a map, so current component is a key name
+        dataSchema = ((MapDataSchema) dataSchema).getValues();
+        continue;
+      }
+      else if (dataSchema.getType() == DataSchema.Type.ARRAY)
+      {
+        // Parent is an array, so current component is an index
+        dataSchema = ((ArrayDataSchema) dataSchema).getItems();
+        continue;
+      }
+      else if (dataSchema.getType() == DataSchema.Type.RECORD)
+      {
+        RecordDataSchema.Field field = ((RecordDataSchema) dataSchema).getField(comp);
+        if (field == null) return false;
+        dataSchema = field.getType();
+      }
+      else if (dataSchema.getType() == DataSchema.Type.UNION)
+      {
+        dataSchema = ((UnionDataSchema) dataSchema).getType(comp);
+        if (dataSchema == null) return false;
+      }
+      else
+      {
+        // Parent cannot be a primitive type
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private void checkRestLiDataAnnotations(RecordDataSchema.Field field, CustomAnnotationContentSchemaMap prevMap, CustomAnnotationContentSchemaMap currMap,
+                                          String prevType, String currType)
+  {
+    if (prevType == null || currType == null)
+    {
+      return;
+    }
+    _infoPath.push(field.getName());
+
+    DataSchema prevSchema = RestSpecCodec.textToSchema(prevType, _prevSchemaResolver);
+    DataSchema currSchema = RestSpecCodec.textToSchema(currType, _currSchemaResolver);
+
+    for (Class<?> annotationClass : new Class<?>[]{ReadOnly.class, CreateOnly.class})
+    {
+      String annotationName = annotationClass.getAnnotation(RestSpecAnnotation.class).name();
+      Set<Object> prevPaths = new HashSet<Object>();
+      if (prevMap != null && prevMap.containsKey(annotationName)) prevPaths.addAll((DataList) prevMap.get(annotationName).data().get("value"));
+      Set<Object> currPaths = new HashSet<Object>();
+      if (currMap != null && currMap.containsKey(annotationName)) currPaths.addAll((DataList) currMap.get(annotationName).data().get("value"));
+      // Adding an annotation is only valid if the field was newly added to the schema.
+      Set<Object> addedPaths = new HashSet<Object>(currPaths);
+      addedPaths.removeAll(prevPaths);
+      for (Object path : addedPaths)
+      {
+        String pathString = path.toString();
+        if (ValidationUtil.containsPath(prevSchema, pathString))
+        {
+          _infoMap.addRestSpecInfo(pathString, CompatibilityInfo.Type.ANNOTATION_CHANGE_BREAKS_OLD_CLIENT, _infoPath,
+                                   "Cannot add " + annotationClass.getSimpleName() + " annotation");
+        }
+      }
+      // Removing an annotation is only valid if the field was removed from the schema.
+      Set<Object> removedPaths = new HashSet<Object>(prevPaths);
+      removedPaths.removeAll(currPaths);
+      for (Object path : removedPaths)
+      {
+        String pathString = path.toString();
+        if (ValidationUtil.containsPath(currSchema, pathString))
+        {
+          if (!ValidationUtil.getField(currSchema, pathString).getOptional() && annotationClass.equals(ReadOnly.class))
+          {
+            _infoMap.addRestSpecInfo(pathString, CompatibilityInfo.Type.ANNOTATION_CHANGE_BREAKS_NEW_SERVER, _infoPath,
+                                     "Cannot remove " + annotationClass.getSimpleName() + " annotation");
+          }
+          else
+          {
+            _infoMap.addRestSpecInfo(pathString, CompatibilityInfo.Type.ANNOTATION_CHANGE_MAY_REQUIRE_CLIENT_CODE_CHANGE, _infoPath,
+                                     "Cannot remove " + annotationClass.getSimpleName() + " annotation");
+          }
+        }
+      }
+    }
+
+    _infoPath.pop();
   }
 
   private void checkAnnotationsMap(RecordDataSchema.Field field, CustomAnnotationContentSchemaMap prevMap, CustomAnnotationContentSchemaMap currMap)

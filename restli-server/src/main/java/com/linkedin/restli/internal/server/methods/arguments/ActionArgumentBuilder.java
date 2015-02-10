@@ -53,7 +53,7 @@ public class ActionArgumentBuilder implements RestLiArgumentBuilder
   {
     DynamicRecordTemplate template = (DynamicRecordTemplate) requestData.getEntity();
     return ArgumentBuilder.buildArgs(new Object[0],
-                                     routingResult.getResourceMethod().getParameters(),
+                                     routingResult.getResourceMethod(),
                                      routingResult.getContext(),
                                      template);
   }

@@ -17,6 +17,7 @@
 package com.linkedin.restli.internal.server.filter;
 
 
+import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.server.filter.FilterResourceModel;
 
 
@@ -54,6 +55,12 @@ public class FilterResourceModelImpl implements FilterResourceModel
   public Class<?> getResourceClass()
   {
     return _resourceModel.getResourceClass();
+  }
+
+  @Override
+  public Class<? extends RecordTemplate> getValueClass()
+  {
+    return _resourceModel.getValueClass();
   }
 
   @Override

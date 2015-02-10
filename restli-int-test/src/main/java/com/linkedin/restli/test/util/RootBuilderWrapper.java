@@ -18,6 +18,7 @@ package com.linkedin.restli.test.util;
 
 
 import com.linkedin.data.schema.PathSpec;
+import com.linkedin.data.schema.validation.ValidationResult;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.RequestBuilder;
@@ -51,6 +52,7 @@ import java.util.Map;
 public class RootBuilderWrapper<K, V extends RecordTemplate>
 {
   private final Object _rootBuilder;
+  private final Class<V> _valueClass;
 
   /**
    * Wrapper of the method specific request builders for testing purpose.
@@ -63,11 +65,13 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
   {
     private final RequestBuilder<? extends Request<R>> _methodBuilder;
     private final boolean _isRestLi2Builder;
+    private final Class<V> _valueClass;
 
-    public MethodBuilderWrapper(RequestBuilder<? extends Request<R>> builder, boolean isRestLi2Builder)
+    public MethodBuilderWrapper(RequestBuilder<? extends Request<R>> builder, boolean isRestLi2Builder, Class<V> valueClass)
     {
       _methodBuilder = builder;
       _isRestLi2Builder = isRestLi2Builder;
+      _valueClass = valueClass;
     }
 
     public Request<R> build()
@@ -234,6 +238,42 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
       return invoke(findMethod(RestLiToolsUtils.nameCamelCase(name + "Key"), value), value);
     }
 
+    public ValidationResult validateInput(V entity)
+    {
+      try
+      {
+        @SuppressWarnings("unchecked")
+        final ValidationResult result = (ValidationResult) getMethod("validateInput", _valueClass).invoke(_methodBuilder, entity);
+        return result;
+      }
+      catch (IllegalAccessException e)
+      {
+        throw new RuntimeException(e);
+      }
+      catch (InvocationTargetException e)
+      {
+        throw handleInvocationTargetException(e);
+      }
+    }
+
+    public ValidationResult validateInput(PatchRequest<V> patch)
+    {
+      try
+      {
+        @SuppressWarnings("unchecked")
+        final ValidationResult result = (ValidationResult) getMethod("validateInput", PatchRequest.class).invoke(_methodBuilder, patch);
+        return result;
+      }
+      catch (IllegalAccessException e)
+      {
+        throw new RuntimeException(e);
+      }
+      catch (InvocationTargetException e)
+      {
+        throw handleInvocationTargetException(e);
+      }
+    }
+
     public boolean isRestLi2Builder()
     {
       return _isRestLi2Builder;
@@ -246,7 +286,7 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
         @SuppressWarnings("unchecked")
         final RequestBuilder<? extends Request<R>> builder =
             (RequestBuilder<? extends Request<R>>) method.invoke(_methodBuilder, args);
-        return new MethodBuilderWrapper<K, V, R>(builder, _isRestLi2Builder);
+        return new MethodBuilderWrapper<K, V, R>(builder, _isRestLi2Builder, _valueClass);
       }
       catch (IllegalAccessException e)
       {
@@ -293,7 +333,13 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
 
   public RootBuilderWrapper(Object builder)
   {
+    this(builder, null);
+  }
+
+  public RootBuilderWrapper(Object builder, Class<V> valueClass)
+  {
     _rootBuilder = builder;
+    _valueClass = valueClass;
   }
 
   public Object getBuilder()
@@ -402,7 +448,8 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
           (RequestBuilder<? extends Request<R>>) _rootBuilder.getClass().getMethod(methodName).invoke(_rootBuilder);
       return new MethodBuilderWrapper<K, V, R>(
           builder,
-          areRestLi2Builders());
+          areRestLi2Builders(),
+          _valueClass);
     }
     catch (NoSuchMethodException e)
     {
