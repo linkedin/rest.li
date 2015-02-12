@@ -684,7 +684,7 @@ public final class RestLiAnnotationReader
                          model.getPrimaryKey().getDataSchema(),
                          false,
                          null,
-                         Parameter.ParamType.ASSOC_KEY_PARAM,
+                         Parameter.ParamType.RESOURCE_KEY,
                          false,
                          AnnotationSet.EMPTY);
   }

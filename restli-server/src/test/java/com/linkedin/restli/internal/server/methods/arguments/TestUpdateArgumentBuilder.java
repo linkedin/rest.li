@@ -70,7 +70,7 @@ public class TestUpdateArgumentBuilder
         new IntegerDataSchema(),
         false,
         null,
-        Parameter.ParamType.ASSOC_KEY_PARAM,
+        Parameter.ParamType.RESOURCE_KEY,
         false,
         new AnnotationSet(new Annotation[]{})));
     collectionResourceParams.add(myComplexKeyParam);
@@ -85,7 +85,7 @@ public class TestUpdateArgumentBuilder
         null,
         false,
         null,
-        Parameter.ParamType.ASSOC_KEY_PARAM,
+        Parameter.ParamType.RESOURCE_KEY,
         false,
         new AnnotationSet(new Annotation[]{})));
     associationResourceParams.add(myComplexKeyParam);
@@ -98,7 +98,7 @@ public class TestUpdateArgumentBuilder
         null,
         false,
         null,
-        Parameter.ParamType.ASSOC_KEY_PARAM,
+        Parameter.ParamType.RESOURCE_KEY,
         false,
         new AnnotationSet(new Annotation[]{}));
     complexResourceKeyParams.add(complexResourceKeyParam);

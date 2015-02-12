@@ -40,6 +40,7 @@ import org.testng.annotations.Test;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,7 +65,7 @@ public class TestGetArgumentBuilder
         new IntegerDataSchema(),
         false,
         null,
-        Parameter.ParamType.ASSOC_KEY_PARAM,
+        Parameter.ParamType.RESOURCE_KEY,
         false,
         new AnnotationSet(new Annotation[]{}));
   }
@@ -79,7 +80,7 @@ public class TestGetArgumentBuilder
       null,
       false,
       null,
-      Parameter.ParamType.ASSOC_KEY_PARAM,
+      Parameter.ParamType.RESOURCE_KEY,
       false,
       new AnnotationSet(new Annotation[]{}));
 
@@ -103,7 +104,7 @@ public class TestGetArgumentBuilder
                     null,
                     false,
                     null,
-                    Parameter.ParamType.ASSOC_KEY_PARAM,
+                    Parameter.ParamType.RESOURCE_KEY,
                     false,
                     new AnnotationSet(new Annotation[]{})),
                 "myComplexKeyAssociationId",
@@ -309,10 +310,10 @@ public class TestGetArgumentBuilder
                     new IntegerDataSchema(),
                     false,
                     null,
-                    Parameter.ParamType.ASSOC_KEY_PARAM,
+                    Parameter.ParamType.RESOURCE_KEY,
                     false,
                     new AnnotationSet(new Annotation[]{})),
-                "Association key 'myComplexKeyCollectionId' is required"
+                "Parameter 'myComplexKeyCollectionId' is required"
             }
         };
   }
@@ -325,7 +326,9 @@ public class TestGetArgumentBuilder
     List<Parameter<?>> paramList = new ArrayList<Parameter<?>>();
     paramList.add(param);
     descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(model, 1, paramList);
-    ResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext();
+    Map<String, String> params = new HashMap<String, String>();
+    params.put("myComplexKeyCollectionId", null);
+    ResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(params);
     RoutingResult routingResult;
     routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 2, context, 1);
     RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(false, null, 0);

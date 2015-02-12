@@ -72,7 +72,7 @@ public class TestPatchArgumentBuilder
         new IntegerDataSchema(),
         false,
         null,
-        Parameter.ParamType.ASSOC_KEY_PARAM,
+        Parameter.ParamType.RESOURCE_KEY,
         false,
         new AnnotationSet(new Annotation[]{})));
     collectionResourceParams.add(patchParam);
@@ -87,7 +87,7 @@ public class TestPatchArgumentBuilder
         null,
         false,
         null,
-        Parameter.ParamType.ASSOC_KEY_PARAM,
+        Parameter.ParamType.RESOURCE_KEY,
         false,
         new AnnotationSet(new Annotation[]{})));
     associationResourceParams.add(patchParam);
@@ -100,7 +100,7 @@ public class TestPatchArgumentBuilder
         null,
         false,
         null,
-        Parameter.ParamType.ASSOC_KEY_PARAM,
+        Parameter.ParamType.RESOURCE_KEY,
         false,
         new AnnotationSet(new Annotation[]{}));
     complexResourceKeyParams.add(complexResourceKeyParam);

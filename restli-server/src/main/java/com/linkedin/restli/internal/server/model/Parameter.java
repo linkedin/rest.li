@@ -51,9 +51,10 @@ public class Parameter<T> extends FieldDef<T>
   public enum ParamType
   {
     QUERY,                  // @QueryParam
+    RESOURCE_KEY,           // normal resource keys
     @Deprecated
     KEY,                    // @AssocKey
-    ASSOC_KEY_PARAM,         // @AssocKeyParam
+    ASSOC_KEY_PARAM,        // @AssocKeyParam
     POST,                   // POST-based parameters such as @ActionParam or CREATE
     /**
      * @deprecated Use PAGING_CONTEXT_PARAM instead

@@ -32,7 +32,7 @@ public class TestArgumentBuilder
   @Test
   public void testBuildArgsHappyPath()
   {
-    //test normal key integer
+    //test integer association key integer
     String param1Key = "param1";
     @SuppressWarnings("unchecked")
     Parameter<Integer> param1 = new Parameter<Integer>(param1Key, Integer.class, DataTemplateUtil.getSchema(Integer.class),
