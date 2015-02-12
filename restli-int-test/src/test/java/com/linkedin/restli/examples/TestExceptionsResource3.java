@@ -21,6 +21,7 @@ import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import com.linkedin.r2.transport.http.common.HttpConstants;
 import com.linkedin.restli.client.ErrorHandlingBehavior;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
@@ -29,13 +30,19 @@ import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.client.Exceptions3Builders;
 import com.linkedin.restli.examples.greetings.client.Exceptions3RequestBuilders;
+import com.linkedin.restli.examples.greetings.server.ExceptionsResource3;
+import com.linkedin.restli.server.filter.FilterRequestContext;
+import com.linkedin.restli.server.filter.RequestFilter;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Map;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -53,13 +60,47 @@ public class TestExceptionsResource3 extends RestLiIntegrationTest
   @BeforeClass
   public void initClass() throws Exception
   {
-    super.init();
+    class ChangeHeaderFilter1 implements RequestFilter
+    {
+      @Override
+      public void onRequest(FilterRequestContext requestContext)
+      {
+        Map<String, String> headers = requestContext.getRequestHeaders();
+        // Add new headers
+        headers.put(ExceptionsResource3.TEST1_HEADER, ExceptionsResource3.TEST1_VALUE);
+        headers.put(ExceptionsResource3.TEST2_HEADER, ExceptionsResource3.TEST1_VALUE);
+      }
+    }
+
+    class ChangeHeaderFilter2 implements RequestFilter
+    {
+      @Override
+      public void onRequest(FilterRequestContext requestContext)
+      {
+        Map<String, String> headers = requestContext.getRequestHeaders();
+        Assert.assertEquals(headers.get(ExceptionsResource3.TEST1_HEADER), ExceptionsResource3.TEST1_VALUE);
+        Assert.assertEquals(headers.get(ExceptionsResource3.TEST2_HEADER), ExceptionsResource3.TEST1_VALUE);
+        // Modify existing header
+        headers.put(ExceptionsResource3.TEST2_HEADER, ExceptionsResource3.TEST2_VALUE);
+      }
+    }
+    super.init(Arrays.asList(new ChangeHeaderFilter1(), new ChangeHeaderFilter2()), null);
   }
 
   @AfterClass
   public void shutDown() throws Exception
   {
     super.shutdown();
+  }
+
+  // Test that Rest.li request filters can change request headers
+  @Test
+  public void testChangeRequestHeaderFromFilter() throws RemoteInvocationException
+  {
+    Greeting greeting = new Greeting().setId(1L).setMessage("Hello").setTone(Tone.FRIENDLY);
+    Request<IdResponse<Long>> createRequest = new Exceptions3RequestBuilders().create().input(greeting).build();
+    Response<IdResponse<Long>> response = REST_CLIENT.sendRequest(createRequest).getResponse();
+    Assert.assertEquals(response.getStatus(), HttpStatus.S_201_CREATED.getCode());
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "exceptionHandlingModesDataProvider")

@@ -57,6 +57,7 @@ public class ResourceContextImpl implements ServerResourceContext
   private final MutablePathKeys                     _pathKeys;
   private final RestRequest                         _request;
   private final DataMap                             _parameters;
+  private final Map<String, String>                 _requestHeaders;
   private final Map<String, String>                 _responseHeaders;
   private final Map<Object, RestLiServiceException> _batchKeyErrors;
   private final RequestContext                      _requestContext;
@@ -107,6 +108,7 @@ public class ResourceContextImpl implements ServerResourceContext
   {
     _pathKeys = pathKeys;
     _request = request;
+    _requestHeaders = new HashMap<String, String>(request.getHeaders());
     _requestContext = requestContext;
 
     _protocolVersion = ProtocolVersionUtil.extractProtocolVersion(request.getHeaders());
@@ -291,7 +293,7 @@ public class ResourceContextImpl implements ServerResourceContext
   @Override
   public Map<String, String> getRequestHeaders()
   {
-    return _request.getHeaders();
+    return _requestHeaders;
   }
 
   /**

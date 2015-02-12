@@ -1,6 +1,7 @@
 2.2.4
 -----
-
+(RB=430630)
+Let Rest.li filters modify request headers.
 
 2.2.3
 -----

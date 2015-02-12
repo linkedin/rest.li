@@ -32,8 +32,10 @@
         "name" : "exceptions3Id",
         "type" : "long"
       },
-      "supports" : [ "get", "update" ],
+      "supports" : [ "create", "get", "update" ],
       "methods" : [ {
+        "method" : "create"
+      }, {
         "method" : "get"
       }, {
         "method" : "update"
