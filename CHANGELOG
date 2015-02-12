@@ -1,3 +1,9 @@
+2.2.6
+-----
+(RB=431051)
+Add a new test to test DropRate change.
+Simplify the error messages.
+
 2.2.5
 -----
 (RB=420782)

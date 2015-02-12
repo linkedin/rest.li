@@ -71,6 +71,7 @@ import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
+import com.linkedin.util.degrader.DegraderImpl;
 
 import java.io.File;
 import java.io.IOException;
@@ -83,6 +84,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -1158,5 +1160,130 @@ public class SimpleLoadBalancerTest
       return 3;
     }
 
+  }
+
+  /**
+   * This test simulates dropping requests by playing with OverrideDropRate in config
+   *
+   */
+  @Test(groups = { "small", "back-end" })
+  public void testLoadBalancerDropRate() throws ServiceUnavailableException,
+          ExecutionException, InterruptedException {
+    final int RETRY=10;
+    for (int tryAgain = 0; tryAgain < RETRY; ++tryAgain)
+    {
+      Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
+              new HashMap<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>>();
+      Map<String, TransportClientFactory> clientFactories = new HashMap<String, TransportClientFactory>();
+      List<String> prioritizedSchemes = new ArrayList<String>();
+
+      MockStore<ServiceProperties> serviceRegistry = new MockStore<ServiceProperties>();
+      MockStore<ClusterProperties> clusterRegistry = new MockStore<ClusterProperties>();
+      MockStore<UriProperties> uriRegistry = new MockStore<UriProperties>();
+
+      ScheduledExecutorService executorService = new SynchronousExecutorService();
+
+      //loadBalancerStrategyFactories.put("rr", new RandomLoadBalancerStrategyFactory());
+      loadBalancerStrategyFactories.put("degrader", new DegraderLoadBalancerStrategyFactoryV3());
+      // PrpcClientFactory();
+      clientFactories.put("http", new DoNothingClientFactory()); // new
+      // HttpClientFactory();
+
+      SimpleLoadBalancerState state =
+              new SimpleLoadBalancerState(executorService,
+                      uriRegistry,
+                      clusterRegistry,
+                      serviceRegistry,
+                      clientFactories,
+                      loadBalancerStrategyFactories);
+
+      SimpleLoadBalancer loadBalancer =
+              new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS);
+
+      FutureCallback<None> balancerCallback = new FutureCallback<None>();
+      loadBalancer.start(balancerCallback);
+      balancerCallback.get();
+
+      URI uri1 = URI.create("http://test.qa1.com:1234");
+      URI uri2 = URI.create("http://test.qa2.com:2345");
+      URI uri3 = URI.create("http://test.qa3.com:6789");
+
+      Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
+      partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
+      Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>(3);
+      uriData.put(uri1, partitionData);
+      uriData.put(uri2, partitionData);
+      uriData.put(uri3, partitionData);
+
+      prioritizedSchemes.add("http");
+
+      clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1"));
+
+      serviceRegistry.put("foo", new ServiceProperties("foo",
+              "cluster-1",
+              "/foo",
+              "degrader",
+              Collections.<String>emptyList(),
+              Collections.<String,Object>emptyMap(),
+              null,
+              null,
+              prioritizedSchemes,
+              null));
+      uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData));
+
+      URI expectedUri1 = URI.create("http://test.qa1.com:1234/foo");
+      URI expectedUri2 = URI.create("http://test.qa2.com:2345/foo");
+      URI expectedUri3 = URI.create("http://test.qa3.com:6789/foo");
+
+      Set<URI> expectedUris = new HashSet<URI>();
+
+      expectedUris.add(expectedUri1);
+      expectedUris.add(expectedUri2);
+      expectedUris.add(expectedUri3);
+      Random random = new Random();
+
+      for (int i = 0; i < 100; ++i)
+      {
+        try
+        {
+          RewriteClient client =
+                  (RewriteClient) loadBalancer.getClient(new URIRequest("d2://foo/52"), new RequestContext());
+          TrackerClient tClient = (TrackerClient) client.getWrappedClient();
+          DegraderImpl degrader = (DegraderImpl)tClient.getDegrader(DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
+          DegraderImpl.Config cfg = new DegraderImpl.Config(degrader.getConfig());
+          // Change DropRate to 0.0 at the rate of 1/3
+          cfg.setOverrideDropRate((random.nextInt(2) == 0) ? 1.0 : 0.0);
+          degrader.setConfig(cfg);
+
+          assertTrue(expectedUris.contains(client.getUri()));
+          assertEquals(client.getUri().getScheme(), "http");
+        }
+        catch (ServiceUnavailableException e)
+        {
+          assertTrue(e.toString().contains("in a bad state (high latency/high error)"));
+        }
+      }
+
+      final CountDownLatch latch = new CountDownLatch(1);
+      PropertyEventShutdownCallback callback = new PropertyEventShutdownCallback()
+      {
+        @Override
+        public void done()
+        {
+          latch.countDown();
+        }
+      };
+
+      state.shutdown(callback);
+
+      if (!latch.await(60, TimeUnit.SECONDS))
+      {
+        fail("unable to shutdown state");
+      }
+
+      executorService.shutdownNow();
+
+      assertTrue(executorService.isShutdown(), "ExecutorService should have shut down!");
+    }
   }
 }
