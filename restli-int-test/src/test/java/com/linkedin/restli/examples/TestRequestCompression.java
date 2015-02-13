@@ -20,9 +20,17 @@ package com.linkedin.restli.examples;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.RemoteInvocationException;
+import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.filter.FilterChains;
 import com.linkedin.r2.filter.CompressionConfig;
 import com.linkedin.r2.filter.CompressionOption;
+import com.linkedin.r2.filter.NextFilter;
+import com.linkedin.r2.filter.compression.ServerCompressionFilter;
+import com.linkedin.r2.filter.logging.SimpleLoggingFilter;
+import com.linkedin.r2.filter.message.rest.RestRequestFilter;
+import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.AbstractJmxManager;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
@@ -40,8 +48,6 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
 import com.linkedin.restli.server.RestLiServiceException;
-import com.linkedin.restli.server.filter.FilterRequestContext;
-import com.linkedin.restli.server.filter.RequestFilter;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -79,12 +85,15 @@ public class TestRequestCompression extends RestLiIntegrationTest
   @BeforeClass
   public void initClass() throws Exception
   {
-    class TestHelperFilter implements RequestFilter
+    class CheckRequestCompressionFilter implements RestRequestFilter
     {
       @Override
-      public void onRequest(FilterRequestContext requestContext)
+      public void onRestRequest(RestRequest req,
+                         RequestContext requestContext,
+                         Map<String, String> wireAttrs,
+                         NextFilter<RestRequest, RestResponse> nextFilter)
       {
-        Map<String, String> requestHeaders = requestContext.getRequestHeaders();
+        Map<String, String> requestHeaders = req.getHeaders();
         if (requestHeaders.containsKey(TEST_HELP_HEADER))
         {
           String contentEncodingHeader = requestHeaders.get(HttpConstants.CONTENT_ENCODING);
@@ -110,9 +119,36 @@ public class TestRequestCompression extends RestLiIntegrationTest
             }
           }
         }
+        nextFilter.onRequest(req, requestContext, wireAttrs);
       }
     }
-    super.init(Arrays.asList(new TestHelperFilter()), null);
+
+    // Check that Content-Encoding and Content-Length headers are set correctly by ServerCompressionFilter.
+    class CheckHeadersFilter implements RestRequestFilter
+    {
+      @Override
+      public void onRestRequest(RestRequest req,
+                                RequestContext requestContext,
+                                Map<String, String> wireAttrs,
+                                NextFilter<RestRequest, RestResponse> nextFilter)
+      {
+        if (req.getHeaders().containsKey(HttpConstants.CONTENT_ENCODING))
+        {
+          throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, "Content-Encoding header not removed.");
+        }
+        if (req.getEntity().length() != Integer.parseInt(req.getHeader(HttpConstants.CONTENT_LENGTH)))
+        {
+          throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, "Content-Length header incorrect.");
+        }
+        nextFilter.onRequest(req, requestContext, wireAttrs);
+      }
+    }
+
+    final FilterChain fc = FilterChains.empty().addLast(new CheckRequestCompressionFilter())
+        .addLast(new ServerCompressionFilter(RestLiIntTestServer.supportedCompression))
+        .addLast(new CheckHeadersFilter())
+        .addLast(new SimpleLoggingFilter());
+    super.init(null, null, fc);
   }
 
   @AfterClass

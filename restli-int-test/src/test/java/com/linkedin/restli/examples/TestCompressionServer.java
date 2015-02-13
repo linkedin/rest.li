@@ -17,12 +17,10 @@
 package com.linkedin.restli.examples;
 
 
-import com.linkedin.common.callback.FutureCallback;
-import com.linkedin.common.util.None;
 import com.linkedin.r2.RemoteInvocationException;
-import com.linkedin.r2.filter.FilterChains;
 import com.linkedin.r2.filter.CompressionConfig;
-import com.linkedin.r2.filter.R2Constants;
+import com.linkedin.r2.filter.FilterChains;
+import com.linkedin.r2.filter.NextFilter;
 import com.linkedin.r2.filter.compression.Bzip2Compressor;
 import com.linkedin.r2.filter.compression.ClientCompressionFilter;
 import com.linkedin.r2.filter.compression.CompressionException;
@@ -30,11 +28,14 @@ import com.linkedin.r2.filter.compression.Compressor;
 import com.linkedin.r2.filter.compression.DeflateCompressor;
 import com.linkedin.r2.filter.compression.EncodingType;
 import com.linkedin.r2.filter.compression.GzipCompressor;
+import com.linkedin.r2.filter.compression.ServerCompressionFilter;
 import com.linkedin.r2.filter.compression.SnappyCompressor;
+import com.linkedin.r2.filter.logging.SimpleLoggingFilter;
+import com.linkedin.r2.filter.message.rest.RestResponseFilter;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestException;
-import com.linkedin.r2.transport.common.Client;
-import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.transport.http.common.HttpConstants;
 import com.linkedin.r2.util.RequestContextUtil;
@@ -68,11 +69,11 @@ import com.linkedin.restli.examples.greetings.server.CompressionResource;
 import com.linkedin.restli.examples.groups.api.TransferOwnershipRequest;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.testutils.URIDetails;
+import com.linkedin.restli.server.filter.RequestFilter;
+import com.linkedin.restli.server.filter.ResponseFilter;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -100,8 +101,9 @@ import org.testng.annotations.Test;
  */
 public class TestCompressionServer extends RestLiIntegrationTest
 {
-  private static final String URI_PREFIX = "http://localhost:1338/";
-  private static final String URI_PREFIX_WITHOUT_COMPRESSION = "http://localhost:1339/"; //This server does no compression
+  private static final String URI_PREFIX = RestLiIntegrationTest.FILTERS_URI_PREFIX;
+  private static final String URI_PREFIX_WITHOUT_COMPRESSION = RestLiIntegrationTest.NO_COMPRESSION_PREFIX; //This server does no compression
+  private static final String CONTENT_ENCODING_SAVED = "Content-Encoding-Saved";
 
   @DataProvider
   public Object[][] compressorDataProvider()
@@ -299,7 +301,39 @@ public class TestCompressionServer extends RestLiIntegrationTest
   @BeforeClass
   public void initClass() throws Exception
   {
-    super.init(false, true);
+    // Because the Content-Encoding header is removed when content is decompressed,
+    // we need to save the value to another header to check whether the response was compressed or not.
+    class SaveContentEncodingHeaderFilter implements RestResponseFilter
+    {
+      @Override
+      public void onRestResponse(RestResponse res,
+                          RequestContext requestContext,
+                          Map<String, String> wireAttrs,
+                          NextFilter<RestRequest, RestResponse> nextFilter)
+      {
+        String contentEncoding = res.getHeader(HttpConstants.CONTENT_ENCODING);
+        if (contentEncoding != null)
+        {
+          res = res.builder().addHeaderValue(CONTENT_ENCODING_SAVED, contentEncoding).build();
+        }
+        nextFilter.onResponse(res, requestContext, wireAttrs);
+      }
+
+      @Override
+      public void onRestError(Throwable ex,
+                              RequestContext requestContext,
+                              Map<String, String> wireAttrs,
+                              NextFilter<RestRequest, RestResponse> nextFilter)
+      {
+        nextFilter.onError(ex, requestContext, wireAttrs);
+      }
+    }
+    super.init(Collections.<RequestFilter>emptyList(),
+               Collections.<ResponseFilter>emptyList(),
+               FilterChains.empty().addLast(new SaveContentEncodingHeaderFilter())
+                   .addLast(new ServerCompressionFilter(RestLiIntTestServer.supportedCompression))
+                   .addLast(new SimpleLoggingFilter()),
+               true);
   }
 
   @AfterClass
@@ -322,7 +356,7 @@ public class TestCompressionServer extends RestLiIntegrationTest
 
     HttpResponse response = client.execute(get);
 
-    Assert.assertNull(response.getFirstHeader(HttpConstants.CONTENT_ENCODING));
+    Assert.assertNull(response.getFirstHeader(CONTENT_ENCODING_SAVED));
   }
 
   @Test(dataProvider = "contentEncodingGeneratorDataProvider")
@@ -351,13 +385,13 @@ public class TestCompressionServer extends RestLiIntegrationTest
 
     get.releaseConnection();
     //Ensure uncompressed
-    Assert.assertTrue(response.getFirstHeader(HttpConstants.CONTENT_ENCODING) == null);
+    Assert.assertTrue(response.getFirstHeader(CONTENT_ENCODING_SAVED) == null);
 
     get.addHeader(HttpConstants.ACCEPT_ENCODING, compressor.getContentEncodingName());
     response = client.execute(get);
 
     byte[] compressed = compressor.inflate(response.getEntity().getContent());
-    Assert.assertEquals(compressor.getContentEncodingName(), response.getFirstHeader(HttpConstants.CONTENT_ENCODING).getValue());
+    Assert.assertEquals(compressor.getContentEncodingName(), response.getFirstHeader(CONTENT_ENCODING_SAVED).getValue());
 
     Assert.assertEquals(original, compressed);
     Assert.assertTrue(response.getEntity().getContentLength() < original.length);
@@ -378,13 +412,13 @@ public class TestCompressionServer extends RestLiIntegrationTest
     String original = EntityUtils.toString(response.getEntity());
 
     //Ensure uncompressed
-    Assert.assertTrue(response.getFirstHeader(HttpConstants.CONTENT_ENCODING) == null);
+    Assert.assertTrue(response.getFirstHeader(CONTENT_ENCODING_SAVED) == null);
 
     get.addHeader(HttpConstants.ACCEPT_ENCODING, compressor.getContentEncodingName());
     response = client.execute(get);
     String compressed = EntityUtils.toString(response.getEntity());
 
-    Assert.assertEquals(null, response.getFirstHeader(HttpConstants.CONTENT_ENCODING));
+    Assert.assertEquals(null, response.getFirstHeader(CONTENT_ENCODING_SAVED));
 
     //Ensure the results are the same
     Assert.assertEquals(original, compressed);
@@ -406,11 +440,11 @@ public class TestCompressionServer extends RestLiIntegrationTest
 
     if(contentEncoding == null)
     {
-      Assert.assertNull(response.getFirstHeader(HttpConstants.CONTENT_ENCODING));
+      Assert.assertNull(response.getFirstHeader(CONTENT_ENCODING_SAVED));
     }
     else
     {
-      Assert.assertEquals(contentEncoding, response.getFirstHeader(HttpConstants.CONTENT_ENCODING).getValue());
+      Assert.assertEquals(contentEncoding, response.getFirstHeader(CONTENT_ENCODING_SAVED).getValue());
     }
   }
 
@@ -433,7 +467,7 @@ public class TestCompressionServer extends RestLiIntegrationTest
 
   private <T> void checkContentEncodingHeaderIsAbsent(Response<T> response)
   {
-    Assert.assertFalse(response.getHeaders().containsKey(HttpConstants.CONTENT_ENCODING));
+    Assert.assertFalse(response.getHeaders().containsKey(CONTENT_ENCODING_SAVED));
   }
 
   //Existing tests to ensure compatibility
@@ -846,7 +880,7 @@ public class TestCompressionServer extends RestLiIntegrationTest
    */
   private <T> void checkHeaderForCompression(Response<T> response, String operationsConfig, String methodName)
   {
-    String contentEncodingHeader = response.getHeader(HttpConstants.CONTENT_ENCODING);
+    String contentEncodingHeader = response.getHeader(CONTENT_ENCODING_SAVED);
     String allPossibleAcceptEncodings = "gzip, deflate, bzip2, snappy";
 
     Map<String, Set<String>> methodsAndFamilies = getCompressionMethods(operationsConfig);

@@ -104,6 +104,19 @@ public class RestLiIntTestServer
                                         List<? extends RequestFilter> requestFilters,
                                         List<? extends ResponseFilter> responseFilters)
   {
+    final FilterChain fc = FilterChains.empty().addLast(new ServerCompressionFilter(supportedCompression))
+        .addLast(new SimpleLoggingFilter());
+    return createServer(engine, port, useAsyncServletApi, asyncTimeOut, requestFilters, responseFilters, fc);
+  }
+
+  public static HttpServer createServer(final Engine engine,
+                                        int port,
+                                        boolean useAsyncServletApi,
+                                        int asyncTimeOut,
+                                        List<? extends RequestFilter> requestFilters,
+                                        List<? extends ResponseFilter> responseFilters,
+                                        final FilterChain filterChain)
+  {
     RestLiConfig config = new RestLiConfig();
     config.addResourcePackageNames(RESOURCE_PACKAGE_NAMES);
     config.setServerNodeUri(URI.create("http://localhost:" + port));
@@ -122,18 +135,11 @@ public class RestLiIntTestServer
 
     TransportDispatcher dispatcher = new DelegatingTransportDispatcher(new RestLiServer(config, factory, engine));
 
-    final FilterChain fc = FilterChains.empty().addLast(new ServerCompressionFilter(supportedCompression))
-        .addLast(new SimpleLoggingFilter());
-    return new HttpServerFactory(fc).createServer(port,
-                                                  HttpServerFactory.DEFAULT_CONTEXT_PATH,
-                                                  HttpServerFactory.DEFAULT_THREAD_POOL_SIZE,
-                                                  dispatcher,
-                                                  useAsyncServletApi,
-                                                  asyncTimeOut);
-  }
-
-  public static HttpServer createServer(Engine engine)
-  {
-    return createServer(engine, DEFAULT_PORT, supportedCompression);
+    return new HttpServerFactory(filterChain).createServer(port,
+                                                           HttpServerFactory.DEFAULT_CONTEXT_PATH,
+                                                           HttpServerFactory.DEFAULT_THREAD_POOL_SIZE,
+                                                           dispatcher,
+                                                           useAsyncServletApi,
+                                                           asyncTimeOut);
   }
 }

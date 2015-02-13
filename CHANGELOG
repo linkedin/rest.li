@@ -3,6 +3,9 @@
 (RB=475440 cont')
 Make ChannelPoolHander iterate through all connection tokens.
 
+(RB=438141)
+Modify content-encoding and content-length headers when decompressing body.
+
 2.4.4
 ------
 (RB=475440)
