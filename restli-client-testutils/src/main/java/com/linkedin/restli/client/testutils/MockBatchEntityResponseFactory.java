@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.client.testutils;
 
+
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -36,6 +37,7 @@ import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.internal.client.response.BatchEntityResponse;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.URIParamUtils;
+
 
 /**
  * Factory for creating a {@link BatchKVResponse} that can be used for tests.
@@ -59,13 +61,12 @@ public class MockBatchEntityResponseFactory
    * @param <V>
    * @return
    */
-  public static <K extends CompoundKey, V extends RecordTemplate> BatchKVResponse<K, EntityResponse<V>> createWithCompoundKey
-      (Class<K> keyClass,
-       Map<String, CompoundKey.TypeInfo> keyParts,
-       Class<V> valueClass,
-       Map<K, V> recordTemplates,
-       Map<K, HttpStatus> statuses,
-       Map<K, ErrorResponse> errorResponses)
+  public static <K extends CompoundKey, V extends RecordTemplate> BatchKVResponse<K, EntityResponse<V>> createWithCompoundKey(Class<K> keyClass,
+                                                                                                                              Map<String, CompoundKey.TypeInfo> keyParts,
+                                                                                                                              Class<V> valueClass,
+                                                                                                                              Map<K, V> recordTemplates,
+                                                                                                                              Map<K, HttpStatus> statuses,
+                                                                                                                              Map<K, ErrorResponse> errorResponses)
   {
     ProtocolVersion version = AllProtocolVersions.BASELINE_PROTOCOL_VERSION;
 
@@ -90,13 +91,12 @@ public class MockBatchEntityResponseFactory
    * @return
    */
   @SuppressWarnings("rawtypes")
-  public static <KK extends RecordTemplate, KP extends RecordTemplate, V extends RecordTemplate> BatchKVResponse<ComplexResourceKey<KK, KP>, EntityResponse<V>> createWithComplexKey
-      (Class<V> valueClass,
-       Class<KK> keyKeyClass,
-       Class<KP> keyParamsClass,
-       Map<ComplexResourceKey<KK, KP>, V> recordTemplates,
-       Map<ComplexResourceKey<KK, KP>, HttpStatus> statuses,
-       Map<ComplexResourceKey<KK, KP>, ErrorResponse> errorResponses)
+  public static <KK extends RecordTemplate, KP extends RecordTemplate, V extends RecordTemplate> BatchKVResponse<ComplexResourceKey<KK, KP>, EntityResponse<V>> createWithComplexKey(Class<V> valueClass,
+                                                                                                                                                                                     Class<KK> keyKeyClass,
+                                                                                                                                                                                     Class<KP> keyParamsClass,
+                                                                                                                                                                                     Map<ComplexResourceKey<KK, KP>, V> recordTemplates,
+                                                                                                                                                                                     Map<ComplexResourceKey<KK, KP>, HttpStatus> statuses,
+                                                                                                                                                                                     Map<ComplexResourceKey<KK, KP>, ErrorResponse> errorResponses)
   {
     ProtocolVersion version = AllProtocolVersions.BASELINE_PROTOCOL_VERSION;
 
@@ -170,11 +170,10 @@ public class MockBatchEntityResponseFactory
                                    version);
   }
 
-  static <K, V extends RecordTemplate> DataMap buildDataMap(
-      Map<K, V> recordTemplates,
-      Map<K, HttpStatus> statuses,
-      Map<K, ErrorResponse> errorResponses,
-      ProtocolVersion version)
+  private static <K, V extends RecordTemplate> DataMap buildDataMap(Map<K, V> recordTemplates,
+                                                                    Map<K, HttpStatus> statuses,
+                                                                    Map<K, ErrorResponse> errorResponses,
+                                                                    ProtocolVersion version)
   {
     Set<K> mergedKeys = new HashSet<K>();
     mergedKeys.addAll(recordTemplates.keySet());
@@ -216,14 +215,13 @@ public class MockBatchEntityResponseFactory
     return batchResponseDataMap;
   }
 
-  static <K, V extends RecordTemplate> BatchKVResponse<K, EntityResponse<V>> create
-      (Class<K> keyClass,
-       Class<V> valueClass,
-       Map<String, CompoundKey.TypeInfo> keyParts,
-       Map<K, V> recordTemplates,
-       Map<K, HttpStatus> statuses,
-       Map<K, ErrorResponse> errorResponses,
-       ProtocolVersion version)
+  private static <K, V extends RecordTemplate> BatchKVResponse<K, EntityResponse<V>> create(Class<K> keyClass,
+                                                                                            Class<V> valueClass,
+                                                                                            Map<String, CompoundKey.TypeInfo> keyParts,
+                                                                                            Map<K, V> recordTemplates,
+                                                                                            Map<K, HttpStatus> statuses,
+                                                                                            Map<K, ErrorResponse> errorResponses,
+                                                                                            ProtocolVersion version)
   {
     DataMap batchResponseDataMap = buildDataMap(recordTemplates, statuses, errorResponses, version);
 
@@ -234,5 +232,4 @@ public class MockBatchEntityResponseFactory
                                          null,
                                          version);
   }
-
 }

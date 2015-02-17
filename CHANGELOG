@@ -1,5 +1,8 @@
 2.2.5
 -----
+(RB=420782)
+Added tests for BatchCreateIdResponse
+Added new mock factory and tests for BatchCreateIdResponse.
 
 2.2.4
 -----

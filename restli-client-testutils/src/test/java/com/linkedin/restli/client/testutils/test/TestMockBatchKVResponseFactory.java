@@ -41,7 +41,6 @@ import org.testng.annotations.Test;
  */
 public class TestMockBatchKVResponseFactory
 {
-
   private Greeting buildGreeting(Long id)
   {
     return new Greeting().setId(id).setMessage(id + "");
