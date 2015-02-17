@@ -55,7 +55,7 @@ public class TestErrorResponseBuilder
   @Test(dataProvider = "testData")
   public void testBuilder(ProtocolVersion protocolVersion)
   {
-    Map<String, String> headers = getHeaders();
+    Map<String, String> headers = ResponseBuilderUtil.getHeaders();
     Map<String, String> expectedHeaders = new HashMap<String, String>(headers);
     expectedHeaders.put(HeaderUtil.getErrorResponseHeaderName(protocolVersion), RestConstants.HEADER_VALUE_ERROR);
 
@@ -77,14 +77,6 @@ public class TestErrorResponseBuilder
     ErrorResponse errorResponse = (ErrorResponse)restResponse.getEntity();
     Assert.assertEquals(errorResponse.getStatus(), new Integer(500));
     Assert.assertTrue(errorResponse.getMessage().contains(runtimeException.getMessage()));
-  }
-
-  private static Map<String, String> getHeaders()
-  {
-    Map<String, String> headers = new HashMap<String, String>();
-    headers.put("h1", "v1");
-    headers.put("h2", "v2");
-    return headers;
   }
 
   private ResourceMethodDescriptor getMockResourceMethodDescriptor()

@@ -31,6 +31,7 @@ import com.linkedin.restli.internal.common.URIParamUtils;
 import java.net.URI;
 import java.util.Collections;
 import java.util.Map;
+import java.util.TreeMap;
 
 
 /**
@@ -79,7 +80,8 @@ public class ResponseImpl<T> implements Response<T>
   ResponseImpl(int status, Map<String, String> headers)
   {
     _status = status;
-    _headers = headers;
+    _headers = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    _headers.putAll(headers);
   }
 
   /**

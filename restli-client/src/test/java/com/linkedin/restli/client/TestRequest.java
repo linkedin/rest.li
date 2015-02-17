@@ -35,6 +35,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import java.util.TreeMap;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -67,6 +68,80 @@ public class TestRequest
   }
 
   @Test
+  public void testHeadersCaseInsensitiveGet()
+  {
+    final long id = 42l;
+    final ResourceSpec spec = new ResourceSpecImpl(
+        EnumSet.allOf(ResourceMethod.class),
+        Collections.<String, DynamicRecordMetadata> emptyMap(),
+        Collections.<String, DynamicRecordMetadata> emptyMap(),
+        Long.class,
+        null,
+        null,
+        TestRecord.class,
+        Collections.<String, Class<?>> emptyMap());
+    GetRequestBuilder<Long, TestRecord> builder = new GetRequestBuilder<Long, TestRecord>(
+        "abc",
+        TestRecord.class,
+        spec,
+        RestliRequestOptions.DEFAULT_OPTIONS);
+    Request<TestRecord> request = builder.id(id).addHeader("header", "value").build();
+    Assert.assertEquals(request.getHeaders().get("HEADER"), "value");
+  }
+
+  @Test
+  public void testHeadersCaseInsensitiveAdd()
+  {
+    final long id = 42l;
+    final ResourceSpec spec = new ResourceSpecImpl(
+        EnumSet.allOf(ResourceMethod.class),
+        Collections.<String, DynamicRecordMetadata> emptyMap(),
+        Collections.<String, DynamicRecordMetadata> emptyMap(),
+        Long.class,
+        null,
+        null,
+        TestRecord.class,
+        Collections.<String, Class<?>> emptyMap());
+    GetRequestBuilder<Long, TestRecord> builder = new GetRequestBuilder<Long, TestRecord>(
+        "abc",
+        TestRecord.class,
+        spec,
+        RestliRequestOptions.DEFAULT_OPTIONS);
+    Request<TestRecord> request = builder
+        .id(id)
+        .addHeader("header", "value1")
+        .addHeader("HEADER", "value2")
+        .build();
+    Assert.assertEquals(request.getHeaders().get("HEADER"), "value1,value2");
+  }
+
+  @Test
+  public void testHeadersCaseInsensitiveSet()
+  {
+    final long id = 42l;
+    final ResourceSpec spec = new ResourceSpecImpl(
+        EnumSet.allOf(ResourceMethod.class),
+        Collections.<String, DynamicRecordMetadata> emptyMap(),
+        Collections.<String, DynamicRecordMetadata> emptyMap(),
+        Long.class,
+        null,
+        null,
+        TestRecord.class,
+        Collections.<String, Class<?>> emptyMap());
+    GetRequestBuilder<Long, TestRecord> builder = new GetRequestBuilder<Long, TestRecord>(
+        "abc",
+        TestRecord.class,
+        spec,
+        RestliRequestOptions.DEFAULT_OPTIONS);
+    Request<TestRecord> request = builder
+        .id(id)
+        .setHeader("header", "value1")
+        .setHeader("HEADER", "value2")
+        .build();
+    Assert.assertEquals(request.getHeaders().get("header"), "value2");
+  }
+
+  @Test
   public void testResourceProperties()
   {
     Set<ResourceMethod> expectedSupportedMethods = new HashSet<ResourceMethod>();
@@ -85,6 +160,7 @@ public class TestRequest
 
     Map<String, Object> pathKeys = new HashMap<String, Object>();
     pathKeys.put("id", new ComplexResourceKey<TestRecord, TestRecord>(new TestRecord(), new TestRecord()));
+
 
     Request<TestRecord> request = new Request<TestRecord>(ResourceMethod.GET,
                                                           null,

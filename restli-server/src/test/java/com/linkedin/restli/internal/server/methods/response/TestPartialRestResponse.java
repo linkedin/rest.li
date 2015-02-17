@@ -37,9 +37,12 @@ public class TestPartialRestResponse
     inputHeaderMap.put("bar", "baz");
     PartialRestResponse response = new PartialRestResponse.Builder().headers(inputHeaderMap).build();
     assertEquals(response.getHeaders(), inputHeaderMap);
+    assertEquals(response.getHeader("FOO"), "bar");
+    assertEquals(response.getHeader("BAR"), "baz");
     // Check that the header map is mutable.
     response.getHeaders().put("foo1", "bar1");
     assertEquals(response.getHeader("foo1"), "bar1");
+    assertEquals(response.getHeader("FOO1"), "bar1");
   }
 
   @Test

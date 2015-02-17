@@ -16,15 +16,9 @@
 
 package com.linkedin.restli.client;
 
-
-import com.linkedin.data.DataComplex;
 import com.linkedin.data.schema.PathSpec;
-import com.linkedin.data.template.DataTemplate;
-import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.jersey.api.uri.UriTemplate;
-import com.linkedin.restli.common.ComplexResourceKey;
-import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.HttpMethod;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceProperties;
@@ -34,8 +28,6 @@ import com.linkedin.restli.internal.client.RestResponseDecoder;
 import com.linkedin.restli.internal.common.ResourcePropertiesImpl;
 import com.linkedin.restli.internal.common.URIParamUtils;
 
-import java.lang.reflect.Array;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;

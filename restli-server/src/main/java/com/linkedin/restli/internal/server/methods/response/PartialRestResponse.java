@@ -32,6 +32,8 @@ import com.linkedin.restli.internal.common.URIParamUtils;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
+
 
 /**
  * @author Josh Walker
@@ -61,11 +63,12 @@ public class PartialRestResponse
     _status = status;
     if (headers != null)
     {
-      _headers = new HashMap<String, String>(headers);
+      _headers = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+      _headers.putAll(headers);
     }
     else
     {
-      _headers = new HashMap<String, String>();
+      _headers = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
     }
   }
 

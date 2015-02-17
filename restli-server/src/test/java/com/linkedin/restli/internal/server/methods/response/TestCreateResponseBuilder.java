@@ -67,7 +67,8 @@ public class TestCreateResponseBuilder
     CreateResponse createResponse = new CreateResponse(compoundKey);
     IdResponse<CompoundKey> idResponse = new IdResponse<CompoundKey>(compoundKey);
     RestRequest restRequest = new RestRequestBuilder(new URI("/foo")).build();
-    Map<String, String> headers = getHeaders(protocolVersion);
+    Map<String, String> headers = ResponseBuilderUtil.getHeaders();
+    headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString());
     // the headers passed in are modified
     Map<String, String> expectedHeaders = new HashMap<String, String>(headers);
 
@@ -93,7 +94,7 @@ public class TestCreateResponseBuilder
     }
 
     EasyMock.verify(mockContext, mockDescriptor);
-    Assert.assertEquals(partialRestResponse.getHeaders(), expectedHeaders);
+    ResponseBuilderUtil.validateHeaders(partialRestResponse, expectedHeaders);
     Assert.assertEquals(partialRestResponse.getStatus(), HttpStatus.S_201_CREATED);
     Assert.assertEquals(partialRestResponse.getEntity(), idResponse);
   }
@@ -106,7 +107,8 @@ public class TestCreateResponseBuilder
     CreateResponse createResponse = new CreateResponse(compoundKey, null);
     RestRequest restRequest = new RestRequestBuilder(new URI("/foo")).build();
     ProtocolVersion protocolVersion = AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion();
-    Map<String, String> headers = getHeaders(protocolVersion);
+    Map<String, String> headers = ResponseBuilderUtil.getHeaders();
+    headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString());
 
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor();
     ResourceContext mockContext = getMockResourceContext(protocolVersion);
@@ -139,14 +141,5 @@ public class TestCreateResponseBuilder
     EasyMock.expect(mockContext.getRestliProtocolVersion()).andReturn(protocolVersion).once();
     EasyMock.replay(mockContext);
     return mockContext;
-  }
-
-  private static Map<String, String> getHeaders(ProtocolVersion protocolVersion)
-  {
-    Map<String, String> headers = new HashMap<String, String>();
-    headers.put("h1", "v1");
-    headers.put("h2", "v2");
-    headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString());
-    return headers;
   }
 }

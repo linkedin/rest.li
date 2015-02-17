@@ -46,6 +46,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
+
 
 /**
  * @author Josh Walker
@@ -108,7 +110,9 @@ public class ResourceContextImpl implements ServerResourceContext
   {
     _pathKeys = pathKeys;
     _request = request;
-    _requestHeaders = new HashMap<String, String>(request.getHeaders());
+    _requestHeaders = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    _requestHeaders.putAll(request.getHeaders());
+    _responseHeaders = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
     _requestContext = requestContext;
 
     _protocolVersion = ProtocolVersionUtil.extractProtocolVersion(request.getHeaders());
@@ -163,7 +167,6 @@ public class ResourceContextImpl implements ServerResourceContext
       _pagingProjectionMask = null;
     }
 
-    _responseHeaders = new HashMap<String, String>();
     _batchKeyErrors = new HashMap<Object, RestLiServiceException>();
 
     _projectionMode = ProjectionMode.getDefault();

@@ -149,7 +149,7 @@ public class TestBatchGetResponseBuilder
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor();
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
 
-    Map<String, String> headers = getHeaders();
+    Map<String, String> headers = ResponseBuilderUtil.getHeaders();
 
     BatchGetResponseBuilder responseBuilder = new BatchGetResponseBuilder(new ErrorResponseBuilder());
     AugmentedRestLiResponseData responseData = responseBuilder.buildRestLiResponseData(null,
@@ -159,7 +159,7 @@ public class TestBatchGetResponseBuilder
     PartialRestResponse restResponse = responseBuilder.buildResponse(routingResult, responseData);
 
     EasyMock.verify(mockContext, mockDescriptor);
-    Assert.assertEquals(restResponse.getHeaders(), headers);
+    ResponseBuilderUtil.validateHeaders(restResponse, headers);
     Assert.assertEquals(restResponse.getStatus(), HttpStatus.S_200_OK);
     BatchResponse<Foo> entity = (BatchResponse<Foo>)restResponse.getEntity();
     Assert.assertEquals(entity.getResults(), expectedTransformedResult);
@@ -215,7 +215,7 @@ public class TestBatchGetResponseBuilder
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor();
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
 
-    Map<String, String> headers = getHeaders();
+    Map<String, String> headers = ResponseBuilderUtil.getHeaders();
 
     BatchGetResponseBuilder responseBuilder = new BatchGetResponseBuilder(new ErrorResponseBuilder());
     try
@@ -271,11 +271,12 @@ public class TestBatchGetResponseBuilder
   @SuppressWarnings("unchecked")
   public void unsupportedNullKeyMapTest(Object results, ProtocolVersion protocolVersion, Map<String, Foo> expectedTransformedResult)
   {
-    ResourceContext mockContext = getMockResourceContext(protocolVersion, Collections.<Object, RestLiServiceException>emptyMap(), null, null);
+    ResourceContext mockContext = getMockResourceContext(protocolVersion,
+        Collections.<Object, RestLiServiceException>emptyMap(), null, null);
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor();
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
 
-    Map<String, String> headers = getHeaders();
+    Map<String, String> headers = ResponseBuilderUtil.getHeaders();
 
     BatchGetResponseBuilder responseBuilder = new BatchGetResponseBuilder(new ErrorResponseBuilder());
     AugmentedRestLiResponseData responseData = responseBuilder.buildRestLiResponseData(null,
@@ -284,7 +285,7 @@ public class TestBatchGetResponseBuilder
         headers);
     PartialRestResponse restResponse = responseBuilder.buildResponse(routingResult, responseData);
 
-    Assert.assertEquals(restResponse.getHeaders(), headers);
+    ResponseBuilderUtil.validateHeaders(restResponse, headers);
     Assert.assertEquals(restResponse.getStatus(), HttpStatus.S_200_OK);
     BatchResponse<Foo> entity = (BatchResponse<Foo>)restResponse.getEntity();
     Assert.assertEquals(entity.getResults(), expectedTransformedResult);
@@ -324,13 +325,5 @@ public class TestBatchGetResponseBuilder
     EasyMock.expect(mockDescriptor.getMethodType()).andReturn(ResourceMethod.BATCH_GET).once();
     EasyMock.replay(mockDescriptor);
     return mockDescriptor;
-  }
-
-  private static Map<String, String> getHeaders()
-  {
-    Map<String, String> headers = new HashMap<String, String>();
-    headers.put("h1", "v1");
-    headers.put("h2", "v2");
-    return headers;
   }
 }

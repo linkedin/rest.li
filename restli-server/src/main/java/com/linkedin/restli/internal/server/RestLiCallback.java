@@ -35,9 +35,9 @@ import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.ResponseFilter;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 
 public class RestLiCallback<T> implements RequestExecutionCallback<T>
@@ -183,7 +183,7 @@ public class RestLiCallback<T> implements RequestExecutionCallback<T>
     }
 
     Map<String, String> requestHeaders = _request.getHeaders();
-    Map<String, String> headers = new HashMap<String, String>();
+    Map<String, String> headers = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
     headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION,
                 ProtocolVersionUtil.extractProtocolVersion(requestHeaders).toString());
     headers.put(HeaderUtil.getErrorResponseHeaderName(requestHeaders), RestConstants.HEADER_VALUE_ERROR);

@@ -82,7 +82,7 @@ public class TestGetResponseBuilder
   @Test(dataProvider = "testData")
   public void testBuilder(Object record, HttpStatus expectedHttpStatus, MaskTree maskTree, ProjectionMode projectionMode)
   {
-    Map<String, String> headers = getHeaders();
+    Map<String, String> headers = ResponseBuilderUtil.getHeaders();
     ResourceContext mockContext = getMockResourceContext(maskTree, projectionMode);
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor();
 
@@ -98,7 +98,7 @@ public class TestGetResponseBuilder
     PartialRestResponse partialRestResponse = getResponseBuilder.buildResponse(null, responseData);
 
     EasyMock.verify(mockContext, mockDescriptor);
-    Assert.assertEquals(partialRestResponse.getHeaders(), headers);
+    ResponseBuilderUtil.validateHeaders(partialRestResponse, headers);
     Assert.assertEquals(partialRestResponse.getStatus(), expectedHttpStatus);
     if (maskTree == null || projectionMode == ProjectionMode.MANUAL)
     {
@@ -135,13 +135,5 @@ public class TestGetResponseBuilder
   private static Foo getProjectedRecord()
   {
     return new Foo().setStringField("foo");
-  }
-
-  private static Map<String, String> getHeaders()
-  {
-    Map<String, String> headers = new HashMap<String, String>();
-    headers.put("h1", "v1");
-    headers.put("h2", "v2");
-    return headers;
   }
 }

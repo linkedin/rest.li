@@ -43,8 +43,8 @@ import com.linkedin.restli.server.resources.CollectionResource;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 
 /**
@@ -195,7 +195,7 @@ public class RestLiResponseHandler
   {
     ServerResourceContext context = (ServerResourceContext) routingResult.getContext();
     final ProtocolVersion protocolVersion = context.getRestliProtocolVersion();
-    Map<String, String> responseHeaders = new HashMap<String, String>();
+    Map<String, String> responseHeaders = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
     responseHeaders.putAll(context.getResponseHeaders());
     responseHeaders.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString());
 

@@ -19,6 +19,7 @@ package com.linkedin.restli.internal.server.methods.response;
 
 
 import com.linkedin.pegasus.generator.examples.Foo;
+import com.linkedin.r2.message.Response;
 import com.linkedin.restli.common.BatchCreateIdResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ResourceMethod;
@@ -50,7 +51,7 @@ public class TestBatchCreateResponseBuilder
     List<CreateResponse> createResponses = Arrays.asList(new CreateResponse(1L), new CreateResponse(2L));
     BatchCreateResult<Long, Foo> results =
         new BatchCreateResult<Long, Foo>(createResponses);
-    Map<String, String> headers = getHeaders();
+    Map<String, String> headers = ResponseBuilderUtil.getHeaders();
 
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor();
     RoutingResult routingResult = new RoutingResult(null, mockDescriptor);
@@ -63,7 +64,7 @@ public class TestBatchCreateResponseBuilder
     PartialRestResponse restResponse = responseBuilder.buildResponse(routingResult, responseData);
 
     EasyMock.verify(mockDescriptor);
-    Assert.assertEquals(restResponse.getHeaders(), headers);
+    ResponseBuilderUtil.validateHeaders(restResponse, headers);
     Assert.assertEquals(restResponse.getEntity(),
                         new BatchCreateIdResponse<Long>((List<com.linkedin.restli.common.CreateIdStatus<Long>>) responseData.getCollectionResponse()));
     Assert.assertEquals(restResponse.getStatus(), HttpStatus.S_200_OK);
@@ -75,14 +76,6 @@ public class TestBatchCreateResponseBuilder
     EasyMock.expect(mockDescriptor.getMethodType()).andReturn(ResourceMethod.BATCH_CREATE).once();
     EasyMock.replay(mockDescriptor);
     return mockDescriptor;
-  }
-
-  private static Map<String, String> getHeaders()
-  {
-    Map<String, String> headers = new HashMap<String, String>();
-    headers.put("h1", "v1");
-    headers.put("h2", "v2");
-    return headers;
   }
 
   @DataProvider(name = "testData")
@@ -100,7 +93,7 @@ public class TestBatchCreateResponseBuilder
   @Test(dataProvider = "testData")
   public void testBuilderExceptions(Object result, String expectedErrorMessage)
   {
-    Map<String, String> headers = getHeaders();
+    Map<String, String> headers = ResponseBuilderUtil.getHeaders();
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor();
     RoutingResult routingResult = new RoutingResult(null, mockDescriptor);
     BatchCreateResponseBuilder responseBuilder = new BatchCreateResponseBuilder(null);

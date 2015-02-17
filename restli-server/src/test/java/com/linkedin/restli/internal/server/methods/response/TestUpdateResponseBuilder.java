@@ -18,6 +18,7 @@
 package com.linkedin.restli.internal.server.methods.response;
 
 
+import com.linkedin.r2.message.Response;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.internal.server.AugmentedRestLiResponseData;
@@ -42,7 +43,7 @@ public class TestUpdateResponseBuilder
   {
     HttpStatus status = HttpStatus.S_200_OK;
     UpdateResponse updateResponse = new UpdateResponse(status);
-    Map<String, String> headers = buildHeaders();
+    Map<String, String> headers = ResponseBuilderUtil.getHeaders();
 
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor();
     RoutingResult routingResult = new RoutingResult(null, mockDescriptor);
@@ -55,7 +56,7 @@ public class TestUpdateResponseBuilder
     PartialRestResponse partialRestResponse = updateResponseBuilder.buildResponse(routingResult, responseData);
 
     EasyMock.verify(mockDescriptor);
-    Assert.assertEquals(partialRestResponse.getHeaders(), headers);
+    ResponseBuilderUtil.validateHeaders(partialRestResponse, headers);
     Assert.assertEquals(partialRestResponse.getStatus(), status);
   }
 
@@ -63,7 +64,7 @@ public class TestUpdateResponseBuilder
   public void testBuilderException()
   {
     UpdateResponse updateResponse = new UpdateResponse(null);
-    Map<String, String> headers = buildHeaders();
+    Map<String, String> headers = ResponseBuilderUtil.getHeaders();
     UpdateResponseBuilder updateResponseBuilder = new UpdateResponseBuilder();
 
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor();
@@ -86,13 +87,5 @@ public class TestUpdateResponseBuilder
     EasyMock.expect(mockDescriptor.getMethodType()).andReturn(ResourceMethod.UPDATE).once();
     EasyMock.replay(mockDescriptor);
     return mockDescriptor;
-  }
-
-  private static Map<String, String> buildHeaders()
-  {
-    Map<String, String> headers = new HashMap<String, String>();
-    headers.put("h1", "v1");
-    headers.put("h2", "v2");
-    return headers;
   }
 }

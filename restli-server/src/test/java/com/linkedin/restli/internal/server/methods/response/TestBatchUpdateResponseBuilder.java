@@ -109,7 +109,7 @@ public class TestBatchUpdateResponseBuilder
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor();
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
 
-    Map<String, String> headers = getHeaders();
+    Map<String, String> headers = ResponseBuilderUtil.getHeaders();
 
     BatchUpdateResponseBuilder batchUpdateResponseBuilder = new BatchUpdateResponseBuilder(new ErrorResponseBuilder());
     AugmentedRestLiResponseData responseData = batchUpdateResponseBuilder.buildRestLiResponseData(null,
@@ -120,6 +120,7 @@ public class TestBatchUpdateResponseBuilder
 
     BatchResponse<UpdateStatus> batchResponse = (BatchResponse<UpdateStatus>) restResponse.getEntity();
     EasyMock.verify(mockContext, mockDescriptor);
+    ResponseBuilderUtil.validateHeaders(restResponse, headers);
     Assert.assertEquals(batchResponse.getResults(), expectedResults);
     Assert.assertEquals(batchResponse.getErrors().size(), expectedErrors.size());
     for (Map.Entry<String, ErrorResponse> entry: batchResponse.getErrors().entrySet())
@@ -128,7 +129,6 @@ public class TestBatchUpdateResponseBuilder
       ErrorResponse value = entry.getValue();
       Assert.assertEquals(value.getStatus(), expectedErrors.get(key).getStatus());
     }
-    Assert.assertEquals(restResponse.getHeaders(), headers);
   }
 
   @DataProvider(name = "unsupportedNullKeyMapData")
@@ -168,7 +168,7 @@ public class TestBatchUpdateResponseBuilder
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor();
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
 
-    Map<String, String> headers = getHeaders();
+    Map<String, String> headers = ResponseBuilderUtil.getHeaders();
 
     BatchUpdateResponseBuilder batchUpdateResponseBuilder = new BatchUpdateResponseBuilder(new ErrorResponseBuilder());
     AugmentedRestLiResponseData responseData = batchUpdateResponseBuilder.buildRestLiResponseData(null,
@@ -179,8 +179,8 @@ public class TestBatchUpdateResponseBuilder
 
     BatchResponse<UpdateStatus> batchResponse = (BatchResponse<UpdateStatus>) restResponse.getEntity();
     EasyMock.verify(mockContext, mockDescriptor);
+    ResponseBuilderUtil.validateHeaders(restResponse, headers);
     Assert.assertEquals(batchResponse.getResults(), expectedResults);
-    Assert.assertEquals(restResponse.getHeaders(), headers);
   }
 
   private static ResourceContext getMockResourceContext(ProtocolVersion protocolVersion)
@@ -195,16 +195,9 @@ public class TestBatchUpdateResponseBuilder
   private static ResourceMethodDescriptor getMockResourceMethodDescriptor()
   {
     ResourceMethodDescriptor mockDescriptor = EasyMock.createMock(ResourceMethodDescriptor.class);
+
     EasyMock.expect(mockDescriptor.getMethodType()).andReturn(ResourceMethod.BATCH_UPDATE).once();
     EasyMock.replay(mockDescriptor);
     return mockDescriptor;
-  }
-
-  private static Map<String, String> getHeaders()
-  {
-    Map<String, String> headers = new HashMap<String, String>();
-    headers.put("h1", "v1");
-    headers.put("h2", "v2");
-    return headers;
   }
 }

@@ -179,7 +179,7 @@ public class TestCollectionResponseBuilder
                           ProjectionMode metadataProjectionMode)
       throws URISyntaxException
   {
-    Map<String, String> headers = getHeaders();
+    Map<String, String> headers = ResponseBuilderUtil.getHeaders();
 
     ResourceContext mockContext = getMockResourceContext(dataMaskTree,
                                                          metaDataMaskTree,
@@ -197,7 +197,7 @@ public class TestCollectionResponseBuilder
     PartialRestResponse restResponse = responseBuilder.buildResponse(routingResult, responseData);
 
     EasyMock.verify(mockContext, mockDescriptor);
-    Assert.assertEquals(restResponse.getHeaders(), headers);
+    ResponseBuilderUtil.validateHeaders(restResponse, headers);
     CollectionResponse<Foo> actualResults = (CollectionResponse<Foo>) restResponse.getEntity();
     Assert.assertEquals(actualResults.getElements(), expectedElements);
     Assert.assertEquals(actualResults.getMetadataRaw(), expectedMetadata);
@@ -222,7 +222,7 @@ public class TestCollectionResponseBuilder
   public void testBuilderExceptions(Object results, String expectedErrorMessage)
       throws URISyntaxException
   {
-    Map<String, String> headers = getHeaders();
+    Map<String, String> headers = ResponseBuilderUtil.getHeaders();
     ResourceContext mockContext = getMockResourceContext(null, null, null, null, null);
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor();
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
@@ -247,7 +247,7 @@ public class TestCollectionResponseBuilder
   {
     ResourceContext mockContext = EasyMock.createMock(ResourceContext.class);
     EasyMock.expect(mockContext.getParameter(EasyMock.<String>anyObject())).andReturn(null).times(2);
-    EasyMock.expect(mockContext.getRequestHeaders()).andReturn(getHeaders()).once();
+    EasyMock.expect(mockContext.getRequestHeaders()).andReturn(ResponseBuilderUtil.getHeaders()).once();
     EasyMock.expect(mockContext.getRawRequest()).andReturn(getRestRequest()).once();
 
     //Field Projection
@@ -288,14 +288,6 @@ public class TestCollectionResponseBuilder
     Foo f2 = new Foo().setStringField("f2");
     List<Foo> results = Arrays.asList(f1, f2);
     return results;
-  }
-
-  private static Map<String, String> getHeaders()
-  {
-    Map<String, String> headers = new HashMap<String, String>();
-    headers.put("h1", "v1");
-    headers.put("h2", "v2");
-    return headers;
   }
 
   private static RestRequest getRestRequest()

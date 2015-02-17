@@ -30,6 +30,7 @@ import com.linkedin.restli.internal.common.URIParamUtils;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 
 /**
@@ -124,7 +125,7 @@ public class MockResponseBuilder<K, V>
    */
   public Response<V> build()
   {
-    Map<String, String> headers = new HashMap<String, String>();
+    Map<String, String> headers = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
     if (_headers != null)
     {
       headers.putAll(_headers);

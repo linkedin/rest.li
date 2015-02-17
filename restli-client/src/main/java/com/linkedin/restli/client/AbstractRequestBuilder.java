@@ -41,6 +41,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 
 /**
@@ -54,7 +55,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
 
   protected final ResourceSpec        _resourceSpec;
 
-  private Map<String, String>       _headers     = new HashMap<String, String>();
+  private Map<String, String>       _headers     = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
   private final Map<String, Object> _queryParams = new HashMap<String, Object>();
   private final Map<String, Object> _pathKeys    = new HashMap<String, Object>();
   private final CompoundKey         _assocKey    = new CompoundKey();
@@ -117,7 +118,8 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
    */
   public AbstractRequestBuilder<K, V, R> setHeaders(Map<String, String> headers)
   {
-    _headers = new HashMap<String, String>(headers);
+    _headers = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    _headers.putAll(headers);
     return this;
   }
 
@@ -484,8 +486,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
 
   static protected Map<String, String> getReadOnlyHeaders(Map<String, String> headers)
   {
-    Map<String, String> copyHeaders = new HashMap<String, String>(
-        CollectionUtils.getMapInitialCapacity(headers.size(), 0.75f), 0.75f);
+    Map<String, String> copyHeaders = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
     copyHeaders.putAll(headers);
     return Collections.unmodifiableMap(copyHeaders);
   }

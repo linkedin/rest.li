@@ -27,10 +27,9 @@ import com.linkedin.restli.server.RestLiResponseDataException;
 import com.linkedin.restli.server.RestLiServiceException;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+import java.util.TreeMap;
 import org.apache.commons.lang.Validate;
 
 import static com.linkedin.restli.common.ResourceMethod.ACTION;
@@ -235,7 +234,7 @@ public class AugmentedRestLiResponseData implements RestLiResponseData
     {
       _responseType = ResponseType.fromMethodType(methodType);
       _status = HttpStatus.S_200_OK;
-      _headers = new HashMap<String, String>();
+      _headers = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
     }
 
     public Builder status(HttpStatus status)
@@ -246,7 +245,8 @@ public class AugmentedRestLiResponseData implements RestLiResponseData
 
     public Builder headers(Map<String, String> headers)
     {
-      _headers = headers;
+      _headers = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+      _headers.putAll(headers);
       return this;
     }
 

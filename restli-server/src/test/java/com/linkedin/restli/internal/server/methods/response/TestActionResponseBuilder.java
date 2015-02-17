@@ -54,7 +54,7 @@ public class TestActionResponseBuilder
   @Test(dataProvider = "testData")
   public void testBuilder(Object result, HttpStatus httpStatus, long returnValue)
   {
-    Map<String, String> headers = getHeaders();
+    Map<String, String> headers = ResponseBuilderUtil.getHeaders();
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor();
     RoutingResult routingResult = new RoutingResult(null, mockDescriptor);
 
@@ -66,8 +66,8 @@ public class TestActionResponseBuilder
     PartialRestResponse restResponse = actionResponseBuilder.buildResponse(routingResult, responseData);
 
     EasyMock.verify(mockDescriptor);
+    ResponseBuilderUtil.validateHeaders(restResponse, headers);
     Assert.assertEquals(restResponse.getStatus(), httpStatus);
-    Assert.assertEquals(restResponse.getHeaders(), headers);
     Assert.assertEquals((restResponse.getEntity()), getActionResponse(returnValue));
   }
 
@@ -81,14 +81,6 @@ public class TestActionResponseBuilder
     EasyMock.expect(mockDescriptor.getMethodType()).andReturn(ResourceMethod.ACTION).once();
     EasyMock.replay(mockDescriptor);
     return mockDescriptor;
-  }
-
-  private static Map<String, String> getHeaders()
-  {
-    Map<String, String> headers = new HashMap<String, String>();
-    headers.put("h1", "v1");
-    headers.put("h2", "v2");
-    return headers;
   }
 
   private static ActionResponse<Long> getActionResponse(long returnValue)
