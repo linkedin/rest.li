@@ -59,6 +59,7 @@ import javax.net.ssl.SSLParameters;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -199,8 +200,7 @@ public class SimpleLoadBalancerStateTest
     _serviceRegistry.put("service-1", new ServiceProperties("service-1",
                                                             "cluster-1",
                                                             "/test",
-                                                            "random",
-                                                            Collections.<String>emptyList(),
+                                                            Arrays.asList("random"),
                                                             Collections.<String, Object>emptyMap(),
                                                             null,
                                                             null,
@@ -228,8 +228,7 @@ public class SimpleLoadBalancerStateTest
     _state.listenToService("partition-service-1", new NullStateListenerCallback());
     _serviceRegistry.put("partition-service-1",
         new ServiceProperties("partition-service-1",
-        "partition-cluster-1", "/partition-test", "degraderV3",
-        Collections.<String>emptyList(),
+        "partition-cluster-1", "/partition-test", Arrays.asList("degraderV3"),
         Collections.<String, Object>emptyMap(),
         null,
         null,
@@ -264,8 +263,8 @@ public class SimpleLoadBalancerStateTest
 
     // then add a service
     _state.listenToService("service-1", new NullStateListenerCallback());
-    _serviceRegistry.put("service-1", new ServiceProperties("service-1", "cluster-1", "/test", "random",
-                                                            Collections.<String>emptyList(),
+    _serviceRegistry.put("service-1", new ServiceProperties("service-1", "cluster-1", "/test",
+                                                            Arrays.asList("random"),
                                                             Collections.<String, Object> emptyMap(),
                                                             null, null,
                                                             schemes, null));
@@ -314,7 +313,7 @@ public class SimpleLoadBalancerStateTest
     _serviceRegistry.put("service-1", new ServiceProperties("service-1",
                                                             "cluster-1",
                                                             "/test",
-                                                            "random"));
+                                                            Arrays.asList("random")));
 
     TrackerClient client = _state.getClient("cluster-1", uri);
 
@@ -364,7 +363,7 @@ public class SimpleLoadBalancerStateTest
     assertNull(_state.getServiceProperties("service-1").getProperty());
 
     ServiceProperties property =
-        new ServiceProperties("service-1", "cluster-1", "/test", "random");
+        new ServiceProperties("service-1", "cluster-1", "/test", Arrays.asList("random"));
 
     _serviceRegistry.put("service-1", property);
 
@@ -442,7 +441,7 @@ public class SimpleLoadBalancerStateTest
     assertNull(_state.getClient("service-1", uri));
 
     _serviceRegistry.put("service-1", new ServiceProperties("service-1", "cluster-1",
-                                                            "/test", "random", null,
+                                                            "/test", Arrays.asList("random"),
                                                             Collections.<String, Object>emptyMap(),
                                                              null, null, schemes, null));
 
@@ -478,8 +477,7 @@ public class SimpleLoadBalancerStateTest
     _serviceRegistry.put("service-1", new ServiceProperties("service-1",
                                                             "cluster-1",
                                                             "/test",
-                                                            "random",
-                                                            Collections.<String>emptyList(),
+                                                            Arrays.asList("random"),
                                                             Collections.<String, Object>emptyMap(),
                                                             null,
                                                             null,
@@ -515,8 +513,7 @@ public class SimpleLoadBalancerStateTest
     _serviceRegistry.put("service-1", new ServiceProperties("service-1",
                                                             "cluster-1",
                                                             "/test",
-                                                            "random",
-                                                            Collections.<String>emptyList(),
+                                                            Arrays.asList("random"),
                                                             Collections.<String,Object>emptyMap(),
                                                             null,
                                                             null,
@@ -549,8 +546,7 @@ public class SimpleLoadBalancerStateTest
     _serviceRegistry.put("service-1", new ServiceProperties("service-1",
                                                                 "cluster-1",
                                                                 "/test",
-                                                                "random",
-                                                                Collections.<String>emptyList(),
+                                                                Arrays.asList("random"),
                                                                 Collections.<String,Object>emptyMap(),
                                                                 null,
                                                                 null,
@@ -594,7 +590,6 @@ public class SimpleLoadBalancerStateTest
     _serviceRegistry.put("service-1", new ServiceProperties("service-1",
                                                             "cluster-1",
                                                             "/test",
-                                                            "unusedInThisConstructor",
                                                             strategyList,
                                                             Collections.<String, Object>emptyMap(),
                                                             null,
@@ -611,7 +606,6 @@ public class SimpleLoadBalancerStateTest
     _serviceRegistry.put("service-1", new ServiceProperties("service-1",
                                                             "cluster-1",
                                                             "/test",
-                                                            "unusedInThisConstructor",
                                                             strategyList,
                                                             Collections.<String, Object>emptyMap(),
                                                             null,
@@ -631,7 +625,6 @@ public class SimpleLoadBalancerStateTest
     _serviceRegistry.put("service-1", new ServiceProperties("service-1",
                                                             "cluster-1",
                                                             "/test",
-                                                            "unusedInThisConstructor",
                                                             strategyList,
                                                             Collections.<String, Object>emptyMap(),
                                                             null,
@@ -675,7 +668,6 @@ public class SimpleLoadBalancerStateTest
     _serviceRegistry.put("service-1", new ServiceProperties("service-1",
                                                               "cluster-1",
                                                               "/test",
-                                                              "unusedInThisConstructor",
                                                               strategyList,
                                                               Collections.<String, Object>emptyMap(),
                                                               Collections.<String, Object>emptyMap(),
@@ -716,7 +708,6 @@ public class SimpleLoadBalancerStateTest
           _state.refreshServiceStrategies(new ServiceProperties("service-1",
                                                                 "cluster-1",
                                                                 "/test",
-                                                                "unusedInThisConstructor",
                                                                 myStrategyList,
                                                                 Collections.<String, Object>emptyMap(),
                                                                 Collections.<String, Object>emptyMap(),
@@ -823,8 +814,7 @@ public class SimpleLoadBalancerStateTest
     _serviceRegistry.put("service-1", new ServiceProperties("service-1",
                                                             "cluster-1",
                                                             "/test",
-                                                            "random",
-                                                            null,
+                                                            Arrays.asList("random"),
                                                             Collections.<String, Object>emptyMap(),
                                                             Collections.<String, Object>emptyMap(),
                                                             Collections.<String, String>emptyMap(),
@@ -846,7 +836,7 @@ public class SimpleLoadBalancerStateTest
     _state.listenToService("partition-service-1", new NullStateListenerCallback());
     _serviceRegistry.put("partition-service-1",
         new ServiceProperties("partition-service-1",
-            "partition-cluster-1", "/partition-test", "degraderV3", null, Collections.<String, Object>emptyMap(),
+            "partition-cluster-1", "/partition-test", Arrays.asList("degraderV3"), Collections.<String, Object>emptyMap(),
                                                                         Collections.<String, Object>emptyMap(),
                                                                         Collections.<String, String>emptyMap(),
                                                                         schemes,
@@ -894,8 +884,7 @@ public class SimpleLoadBalancerStateTest
     _serviceRegistry.put("service-1", new ServiceProperties("service-1",
                                                             "cluster-1",
                                                             "/test",
-                                                            "random",
-                                                            Collections.<String>emptyList(),
+                                                            Arrays.asList("random"),
                                                             Collections.<String, Object>emptyMap(),
                                                             null,
                                                             null,
@@ -980,7 +969,7 @@ public class SimpleLoadBalancerStateTest
     _serviceRegistry.put("service-1", new ServiceProperties("service-1",
                                                             "cluster-1",
                                                             "/test",
-                                                            "random"));
+                                                            Arrays.asList("random")));
 
     // one for service onAdd
     ++expectedVersion;
@@ -1029,7 +1018,7 @@ public class SimpleLoadBalancerStateTest
     transportClientProperties = Collections.unmodifiableMap(transportClientProperties);
 
     _serviceRegistry.put("service-1", new ServiceProperties("service-1", "cluster-1",
-                                                            "/test", "random", null,
+                                                            "/test", Arrays.asList("random"),
                                                             Collections.<String, Object>emptyMap(),
                                                             transportClientProperties, null, schemes, null));
 
@@ -1084,7 +1073,7 @@ public class SimpleLoadBalancerStateTest
     transportClientProperties = Collections.unmodifiableMap(transportClientProperties);
 
     _serviceRegistry.put("service-1", new ServiceProperties("service-1", "cluster-1",
-                                                            "/test", "random", null,
+                                                            "/test", Arrays.asList("random"),
                                                             Collections.<String, Object>emptyMap(),
                                                             transportClientProperties, null, schemes, null));
 
@@ -1123,7 +1112,7 @@ public class SimpleLoadBalancerStateTest
     assertNull(_state.getClient("service-1", uri));
 
     _serviceRegistry.put("service-1", new ServiceProperties("service-1", "cluster-1",
-                                                            "/test", "random", null,
+                                                            "/test", Arrays.asList("random"),
                                                             Collections.<String, Object>emptyMap(),
                                                              null, null, schemes, null));
 
@@ -1138,7 +1127,7 @@ public class SimpleLoadBalancerStateTest
 
     //now we publish an event that tells service-1 changes cluster. Now it's hosted in cluster-2
     _serviceRegistry.put("service-1", new ServiceProperties("service-1", "cluster-2",
-                                                            "/test", "random", null,
+                                                            "/test",  Arrays.asList("random"),
                                                             Collections.<String, Object>emptyMap(),
                                                              null, null, schemes, null));
 
@@ -1198,7 +1187,7 @@ public class SimpleLoadBalancerStateTest
     Map<String,Object> transportProperties = new HashMap<String,Object>();
     transportProperties.put("foobar", "unsupportedValue");
     _serviceRegistry.put("service-1", new ServiceProperties("service-1", "cluster-1",
-                                                            "/test", "random", null,
+                                                            "/test", Arrays.asList("random"),
                                                             Collections.<String, Object>emptyMap(),
                                                             transportProperties, null, schemes, null));
 
@@ -1221,7 +1210,7 @@ public class SimpleLoadBalancerStateTest
     assertNull(_state.getClient("service-1", uri));
 
     _serviceRegistry.put("service-1", new ServiceProperties("service-1", "cluster-1",
-                                                            "/test", "random", null,
+                                                            "/test", Arrays.asList("random"),
                                                             Collections.<String, Object>emptyMap(),
                                                             null, null, schemes, null));
 
@@ -1246,7 +1235,7 @@ public class SimpleLoadBalancerStateTest
     _state.listenToCluster("cluster-1", new NullStateListenerCallback());
     _state.listenToService("service-1", new NullStateListenerCallback());
     _serviceRegistry.put("service-1", new ServiceProperties("service-1", "cluster-1",
-        "/test", "random", null,
+        "/test",  Arrays.asList("random"),
         Collections.<String, Object>emptyMap(),
         null, null, schemes, null));
 

@@ -242,7 +242,7 @@ public class ZKFSTest
       store.start(callback);
       callback.get(30, TimeUnit.SECONDS);
 
-      ServiceProperties props = new ServiceProperties(TEST_SERVICE_NAME, "someCluster", "/somePath", "someStrategy");
+      ServiceProperties props = new ServiceProperties(TEST_SERVICE_NAME, "someCluster", "/somePath", Arrays.asList("someStrategy"));
       store.put(TEST_SERVICE_NAME, props);
 
       FutureCallback<List<String>> serviceCallback = new FutureCallback<List<String>>();
@@ -318,8 +318,8 @@ public class ZKFSTest
                                                              new ServicePropertiesJsonSerializer(),
                                                              ZKFSUtil.servicePath(BASE_PATH));
 
-      ServiceProperties props = new ServiceProperties(TEST_SERVICE_NAME, TEST_CLUSTER_NAME, "/test", "degrader",
-                                                      Collections.<String>emptyList(),
+      ServiceProperties props = new ServiceProperties(TEST_SERVICE_NAME, TEST_CLUSTER_NAME, "/test",
+                                                      Arrays.asList("degrader"),
                                                       Collections.<String, Object> emptyMap(),
                                                       null,
                                                       null,
@@ -421,8 +421,8 @@ public class ZKFSTest
       callback.get(30, TimeUnit.SECONDS);
 
 
-      ServiceProperties props = new ServiceProperties(TEST_SERVICE_NAME, TEST_CLUSTER_NAME, "/somePath", "degrader",
-                                                      Collections.<String>emptyList(),
+      ServiceProperties props = new ServiceProperties(TEST_SERVICE_NAME, TEST_CLUSTER_NAME, "/somePath",
+                                                      Arrays.asList("degrader"),
                                                       Collections.<String, Object>emptyMap(),
                                                       null,
                                                       null,

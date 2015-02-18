@@ -17,6 +17,7 @@ import com.linkedin.util.clock.SystemClock;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -116,7 +117,7 @@ public class PartitionedLoadBalancerTestState implements LoadBalancerState
   @Override
   public LoadBalancerStateItem<ServiceProperties> getServiceProperties(String serviceName)
   {
-    ServiceProperties serviceProperties = new ServiceProperties(_service, _cluster, _path, _strategyName);
+    ServiceProperties serviceProperties = new ServiceProperties(_service, _cluster, _path, Arrays.asList(_strategyName));
     return new LoadBalancerStateItem<ServiceProperties>(serviceProperties, 1, 1);
   }
 

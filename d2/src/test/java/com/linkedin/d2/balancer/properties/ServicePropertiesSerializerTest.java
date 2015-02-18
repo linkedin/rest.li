@@ -20,6 +20,7 @@ package com.linkedin.d2.balancer.properties;
 import com.linkedin.d2.discovery.PropertySerializationException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -41,10 +42,11 @@ public class ServicePropertiesSerializerTest
     ServicePropertiesJsonSerializer serializer = new ServicePropertiesJsonSerializer();
 
     ServiceProperties property =
-        new ServiceProperties("servicename", "clustername", "/foo", "rr");
+      new ServiceProperties("servicename", "clustername", "/foo", Arrays.asList("rr"));
     assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
 
-    property = new ServiceProperties("servicename2", "clustername2", "/path2", "strategy2", Collections.<String,Object>singletonMap("foo", "bar"));
+    property = new ServiceProperties("servicename2", "clustername2", "/path2", Arrays.asList("strategy2"), 
+                                     Collections.<String,Object>singletonMap("foo", "bar"));
     assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
 
     Map<String, Object> arbitraryProperties = new HashMap<String, Object>();
@@ -52,8 +54,7 @@ public class ServicePropertiesSerializerTest
     property = new ServiceProperties("serviceName",
                                      "clusterName",
                                      "/service",
-                                     "strategyName",
-                                     Collections.<String>emptyList(),
+                                     Arrays.asList("strategyName"),
                                      arbitraryProperties,
                                      arbitraryProperties,
                                      Collections.<String, String>emptyMap(),
@@ -63,13 +64,13 @@ public class ServicePropertiesSerializerTest
     assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
 
 /*
-    property = new ServiceProperties("servicename", "clustername", "/foo", null);
+    property = new ServiceProperties("servicename", "clustername", "/foo");
     assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
 
-    property = new ServiceProperties("servicename", "clustername", null, null);
+    property = new ServiceProperties("servicename", "clustername", null);
     assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
 
-    property = new ServiceProperties("servicename", null, null, null);
+    property = new ServiceProperties("servicename", null, null);
     assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
 */
   }

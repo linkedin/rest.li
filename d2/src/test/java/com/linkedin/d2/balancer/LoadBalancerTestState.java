@@ -33,6 +33,7 @@ import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -93,8 +94,7 @@ public class LoadBalancerTestState implements LoadBalancerState
         ? new LoadBalancerStateItem<ServiceProperties>(new ServiceProperties("service-1",
                                                                              "cluster-1",
                                                                              "/foo",
-                                                                             "rr",
-                                                                             Collections.<String>emptyList(),
+                                                                             Arrays.asList("rr"),
                                                                              Collections.<String, Object>emptyMap(),
                                                                              null,
                                                                              null,

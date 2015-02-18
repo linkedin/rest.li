@@ -78,6 +78,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -190,8 +191,7 @@ public class SimpleLoadBalancerTest
       serviceRegistry.put("foo", new ServiceProperties("foo",
                                                         "cluster-1",
                                                         "/foo",
-                                                        "degrader",
-                                                        Collections.<String>emptyList(),
+                                                        Arrays.asList("degrader"),
                                                         Collections.<String,Object>emptyMap(),
                                                         null,
                                                         null,
@@ -560,8 +560,7 @@ public class SimpleLoadBalancerTest
       serviceRegistry.put("foo", new ServiceProperties("foo",
                                                         "cluster-1",
                                                         "/foo",
-                                                        "degrader",
-                                                        Collections.<String>emptyList(),
+                                                        Arrays.asList("degrader"),
                                                         Collections.<String,Object>emptyMap(),
                                                         null,
                                                         null,
@@ -1222,8 +1221,7 @@ public class SimpleLoadBalancerTest
       serviceRegistry.put("foo", new ServiceProperties("foo",
               "cluster-1",
               "/foo",
-              "degrader",
-              Collections.<String>emptyList(),
+              Arrays.asList("degrader"),
               Collections.<String,Object>emptyMap(),
               null,
               null,

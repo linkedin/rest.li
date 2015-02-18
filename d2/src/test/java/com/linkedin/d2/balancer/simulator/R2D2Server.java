@@ -32,6 +32,7 @@ import com.linkedin.d2.discovery.stores.zk.ZooKeeperPermanentStore;
 import java.net.InetAddress;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -97,7 +98,7 @@ public class R2D2Server
                                            servers.getKey(),
                                            File.separator + "service-" + i + "-"
                                                + servers.getKey(),
-                                           "degrader"));
+                                           Arrays.asList("degrader")));
         }
 
         server.startServer();

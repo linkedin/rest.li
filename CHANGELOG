@@ -1,14 +1,9 @@
-2.2.6
------
-(RB=431051)
-Add a new test to test DropRate change.
-Simplify the error messages.
-
-(RB=436681)
-Allow release-version to take parameter for remote repository and branch name.
-
 2.2.5
 -----
+(RB=436213)
+LoadBalancerStrategyName is deprecated and replaced by LoadBalancerStrategyList.
+This patch gets rid of the StrategyName from the source.
+
 (RB=420782)
 Added tests for BatchCreateIdResponse
 Added new mock factory and tests for BatchCreateIdResponse.

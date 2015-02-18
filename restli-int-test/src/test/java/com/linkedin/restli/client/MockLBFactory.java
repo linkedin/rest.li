@@ -40,6 +40,7 @@ import com.linkedin.restli.internal.common.AllProtocolVersions;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -89,16 +90,16 @@ public class MockLBFactory
     Map<String, Object> metadataProperties = new HashMap<String, Object>();
     metadataProperties.put(RestConstants.RESTLI_PROTOCOL_VERSION_PROPERTY,
                            AllProtocolVersions.BASELINE_PROTOCOL_VERSION.toString());
-    serviceRegistry.put("greetings", new ServiceProperties("greetings", "testcluster", "/greetings", "degrader",
-                                                           Collections.<String>emptyList(),
+    serviceRegistry.put("greetings", new ServiceProperties("greetings", "testcluster", "/greetings",
+                                                           Arrays.asList("degrader"),
                                                            Collections.<String, Object>emptyMap(),
                                                            null,
                                                            null,
                                                            schemes,
                                                            null,
                                                            metadataProperties));
-    serviceRegistry.put("groups", new ServiceProperties("groups", "badcluster", "/groups", "degrader",
-                                                        Collections.<String>emptyList(),
+    serviceRegistry.put("groups", new ServiceProperties("groups", "badcluster", "/groups",
+                                                        Arrays.asList("degrader"),
                                                         Collections.<String, Object>emptyMap(),
                                                         null,
                                                         null,

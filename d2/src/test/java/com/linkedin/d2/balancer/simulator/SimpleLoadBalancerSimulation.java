@@ -731,7 +731,7 @@ public class SimpleLoadBalancerSimulation
                          String loadBalancerStrategyName)
   {
     ServiceProperties serviceProperties =
-        new ServiceProperties(serviceName, clusterName, path, loadBalancerStrategyName);
+      new ServiceProperties(serviceName, clusterName, path, Arrays.asList(loadBalancerStrategyName));
 
     _expectedServiceProperties.put(serviceName, serviceProperties);
     _serviceRegistry.put(serviceName, serviceProperties);
