@@ -25,6 +25,7 @@ import com.linkedin.d2.discovery.PropertySerializer;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -42,10 +43,10 @@ public class ServicePropertiesJsonSerializer implements
     String serviceName = "testService";
     String clusterName = "testCluster";
     String path = "/foo/bar";
-    String loadBalancerStrategyName = "degrader";
+    List<String> loadBalancerStrategyList = Arrays.asList("degrader");
 
     ServiceProperties property =
-        new ServiceProperties(serviceName, clusterName, path, loadBalancerStrategyName);
+      new ServiceProperties(serviceName, clusterName, path, loadBalancerStrategyList);
 
     ServicePropertiesJsonSerializer serializer = new ServicePropertiesJsonSerializer();
     System.err.println(new String(serializer.toBytes(property), "UTF-8"));
@@ -138,7 +139,6 @@ public class ServicePropertiesJsonSerializer implements
     return new ServiceProperties((String) map.get(PropertyKeys.SERVICE_NAME),
                                  (String) map.get(PropertyKeys.CLUSTER_NAME),
                                  (String) map.get(PropertyKeys.PATH),
-                                 (String) map.get(PropertyKeys.LB_STRATEGY_NAME),
                                  loadBalancerStrategyList,
                                  loadBalancerStrategyProperties,
                                  transportClientProperties,

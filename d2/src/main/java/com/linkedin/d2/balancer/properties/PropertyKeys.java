@@ -62,7 +62,6 @@ public class PropertyKeys
   public static final String SERVICE_METADATA_PROPERTIES = "serviceMetadataProperties";
 
   //load balancer specific properties
-  public static final String LB_STRATEGY_NAME = "loadBalancerStrategyName";
   public static final String LB_STRATEGY_LIST = "loadBalancerStrategyList";
   public static final String LB_STRATEGY_PROPERTIES = "loadBalancerStrategyProperties";
 

@@ -30,7 +30,6 @@ public class ServiceProperties
   private final String _serviceName;
   private final String _clusterName;
   private final String _path;
-  private final String _loadBalancerStrategyName;
   private final List<String> _loadBalancerStrategyList;
   private final Map<String,Object> _loadBalancerStrategyProperties;
   private final Map<String,Object> _transportClientProperties;
@@ -41,10 +40,9 @@ public class ServiceProperties
 
   public ServiceProperties(String serviceName,
                            String clusterName,
-                           String path,
-                           String loadBalancerStrategyName)
+                           String path)
   {
-    this(serviceName, clusterName, path, loadBalancerStrategyName, null,
+    this(serviceName, clusterName, path, null,
          Collections.<String, Object>emptyMap(), Collections.<String, Object>emptyMap(),
          Collections.<String, String>emptyMap(),
          Collections.<String>emptyList(), Collections.<URI>emptySet());
@@ -53,12 +51,12 @@ public class ServiceProperties
   public ServiceProperties(String serviceName,
                            String clusterName,
                            String path,
-                           String loadBalancerStrategyName,
-                           Map<String,Object> loadBalancerStrategyProperties)
+                           List<String> loadBalancerStrategyList)
   {
-    this(serviceName, clusterName, path, loadBalancerStrategyName, null, loadBalancerStrategyProperties,
-         Collections.<String, Object>emptyMap(), Collections.<String, String>emptyMap(),
-                  Collections.<String>emptyList(), Collections.<URI>emptySet());
+    this(serviceName, clusterName, path, loadBalancerStrategyList,
+         Collections.<String, Object>emptyMap(), Collections.<String, Object>emptyMap(),
+            Collections.<String, String>emptyMap(),
+            Collections.<String>emptyList(), Collections.<URI>emptySet());
   }
 
   // The addition of the StrategyList is to allow new strategies to be introduced and be used as they
@@ -67,11 +65,10 @@ public class ServiceProperties
   public ServiceProperties(String serviceName,
                            String clusterName,
                            String path,
-                           String loadBalancerStrategyName,
                            List<String> loadBalancerStrategyList,
                            Map<String,Object> loadBalancerStrategyProperties)
   {
-    this(serviceName,clusterName,path,loadBalancerStrategyName,loadBalancerStrategyList,loadBalancerStrategyProperties,
+    this(serviceName,clusterName,path,loadBalancerStrategyList,loadBalancerStrategyProperties,
          Collections.<String, Object>emptyMap(), Collections.<String, String>emptyMap(),
          Collections.<String>emptyList(), Collections.<URI>emptySet());
   }
@@ -79,7 +76,6 @@ public class ServiceProperties
   public ServiceProperties(String serviceName,
                            String clusterName,
                            String path,
-                           String loadBalancerStrategyName,
                            List<String> loadBalancerStrategyList,
                            Map<String,Object> loadBalancerStrategyProperties,
                            Map<String,Object> transportClientProperties,
@@ -87,7 +83,7 @@ public class ServiceProperties
                            List<String> prioritizedSchemes,
                            Set<URI> banned)
   {
-    this(serviceName,clusterName,path,loadBalancerStrategyName,loadBalancerStrategyList,loadBalancerStrategyProperties,
+    this(serviceName,clusterName,path, loadBalancerStrategyList,loadBalancerStrategyProperties,
         transportClientProperties, degraderProperties, prioritizedSchemes, banned,
         Collections.<String,Object>emptyMap());
   }
@@ -95,7 +91,6 @@ public class ServiceProperties
   public ServiceProperties(String serviceName,
                            String clusterName,
                            String path,
-                           String loadBalancerStrategyName,
                            List<String> loadBalancerStrategyList,
                            Map<String,Object> loadBalancerStrategyProperties,
                            Map<String,Object> transportClientProperties,
@@ -108,15 +103,14 @@ public class ServiceProperties
     ArgumentUtil.notNull(clusterName, PropertyKeys.CLUSTER_NAME);
     ArgumentUtil.notNull(path, PropertyKeys.PATH);
     ArgumentUtil.notNull(loadBalancerStrategyProperties, "loadBalancerStrategyProperties");
-    if (loadBalancerStrategyName == null && (loadBalancerStrategyList == null || loadBalancerStrategyList.isEmpty()))
+    if (loadBalancerStrategyList == null || loadBalancerStrategyList.isEmpty())
     {
-      throw new NullPointerException("Both loadBalancerStrategyName and loadBalancerStrategyList are null");
+      throw new NullPointerException("loadBalancerStrategyList is null or empty");
     }
 
     _serviceName = serviceName;
     _clusterName = clusterName;
     _path = path;
-    _loadBalancerStrategyName = loadBalancerStrategyName;
     _loadBalancerStrategyList = (loadBalancerStrategyList != null) ?
         Collections.unmodifiableList(loadBalancerStrategyList)
         : Collections.<String>emptyList();
@@ -136,11 +130,6 @@ public class ServiceProperties
   public String getClusterName()
   {
     return _clusterName;
-  }
-
-  public String getLoadBalancerStrategyName()
-  {
-    return _loadBalancerStrategyName;
   }
 
   public List<String> getLoadBalancerStrategyList()
@@ -197,7 +186,7 @@ public class ServiceProperties
   public String toString()
   {
     return "ServiceProperties [_clusterName=" + _clusterName
-        + ", _loadBalancerStrategyName=" + _loadBalancerStrategyName + ", _path=" + _path
+        +  ", _path=" + _path
         + ", _serviceName=" + _serviceName + ", _loadBalancerStrategyList=" + _loadBalancerStrategyList
         + ", _loadBalancerStrategyProperties="
         + _loadBalancerStrategyProperties
@@ -220,7 +209,6 @@ public class ServiceProperties
     final int prime = 31;
     int result = 1;
     result = prime * result + _clusterName.hashCode();
-    result = prime * result + _loadBalancerStrategyName.hashCode();
     result = prime * result + _loadBalancerStrategyList.hashCode();
     result = prime * result + _path.hashCode();
     result = prime * result + _serviceName.hashCode();

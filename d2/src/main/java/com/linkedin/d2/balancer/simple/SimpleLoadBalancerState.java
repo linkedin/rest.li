@@ -1402,11 +1402,6 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
         }
       }
     }
-    else
-    {
-      factory =
-          _loadBalancerStrategyFactories.get(serviceProperties.getLoadBalancerStrategyName());
-    }
     // if we get here without a factory, then something might be wrong, there should always
     // be at least a default strategy in the list that is always available.
     // The intent is that the loadBalancerStrategyName will be replaced by the
