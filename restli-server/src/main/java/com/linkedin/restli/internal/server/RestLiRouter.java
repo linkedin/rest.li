@@ -20,6 +20,7 @@ package com.linkedin.restli.internal.server;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.data.template.TemplateRuntimeException;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -597,6 +598,13 @@ public class RestLiRouter
       throw new RoutingException(String.format("Key parameter value '%s' is invalid", pathSegment),
                                  HttpStatus.S_400_BAD_REQUEST.getCode(),
                                  e);
+    }
+    catch (TemplateRuntimeException e)
+    {
+      // thrown from DateTemplateUtil.coerceOutput
+      throw new RoutingException(String.format("Key parameter value '%s' is invalid", pathSegment),
+                                HttpStatus.S_400_BAD_REQUEST.getCode(),
+                                e);
     }
     context.getPathKeys()
       .append(resource.getKeyName(), parsedKey);

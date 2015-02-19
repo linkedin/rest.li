@@ -21,12 +21,7 @@ import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
-import com.linkedin.restli.common.ComplexResourceKey;
-import com.linkedin.restli.common.CompoundKey;
-import com.linkedin.restli.common.PatchRequest;
-import com.linkedin.restli.common.ProtocolVersion;
-import com.linkedin.restli.common.ResourceMethod;
-import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.common.*;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.TestConstants;
 import com.linkedin.restli.internal.server.RestLiRouter;
@@ -36,15 +31,7 @@ import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.server.PathKeys;
 import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.combined.CombinedResources;
-import com.linkedin.restli.server.twitter.DiscoveredItemsResource;
-import com.linkedin.restli.server.twitter.FollowsAssociativeResource;
-import com.linkedin.restli.server.twitter.LocationResource;
-import com.linkedin.restli.server.twitter.RepliesCollectionResource;
-import com.linkedin.restli.server.twitter.StatusCollectionResource;
-import com.linkedin.restli.server.twitter.TrendRegionsCollectionResource;
-import com.linkedin.restli.server.twitter.TrendingResource;
-import com.linkedin.restli.server.twitter.TwitterAccountsResource;
-import com.linkedin.restli.server.twitter.TwitterTestDataModels;
+import com.linkedin.restli.server.twitter.*;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Status;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Trending;
 
@@ -2022,7 +2009,7 @@ public class TestRestLiRouting
 
     _router = new RestLiRouter(pathRootResourceMap);
 
-    expectRoutingException(uri, version, httpMethod, restliMethod);
+    expectRoutingExceptionWithStatus(uri, version, httpMethod, restliMethod, HttpStatus.S_400_BAD_REQUEST);
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "nKeyAssociationRouting")
@@ -2266,163 +2253,164 @@ public class TestRestLiRouting
   {
     return new Object[][]
       {
-        { "/", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
-        { "/", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
-        { "/", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
-        { "/", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" },
-        { "/", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "PUT" },
-        { "/", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "PUT" },
-        { "/", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE" },
-        { "/", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE" },
-        { "/replies", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
-        { "/replies", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
-        { "/location", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
-        { "/location", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
-        { "/trendRegions", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
-        { "/trendRegions", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
-        { "/asdfasf", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
-        { "/asdfasf", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
-        { "/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
-        { "/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
-        { "/statuses", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "PUT" },
-        { "/statuses", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "PUT" },
-        { "/statuses", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE" },
-        { "/statuses", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE" },
-        { "/statuses%2F1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
-        { "/statuses%2F1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
-        { "/statuses/1/asdf", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
-        { "/statuses/1/asdf", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
-        { "/statuses/1/replies/2", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
-        { "/statuses/1/replies/2", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
-        { "/statuses/replies", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
-        { "/statuses/replies", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
-        { "/statuses/2.3", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
-        { "/statuses/2.3", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
-        { "/statuses/1/replies", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE" },
-        { "/statuses/1/replies", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE" },
-        { "/statuses/1/replies", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "PUT" },
-        { "/statuses/1/replies", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "PUT" },
-        { "/statuses/1/2", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
-        { "/statuses/1/2", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
-        { "/statuses/1/badpath", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
-        { "/statuses/1/badpath", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
-        { "/statuses/1/badpath/2", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
-        { "/statuses/1/badpath/2", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
-        { "/statuses?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
-        { "/statuses?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
-        { "/statuses?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "PUT" },
-        { "/statuses?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "PUT" },
-        { "/statuses?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE" },
-        { "/statuses?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE" },
-        { "/statuses?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
-        { "/statuses?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" },
-        { "/statuses/1/replies?q=wrong", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
-        { "/statuses/1/replies?q=wrong", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
-        { "/statuses/1/location/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
-        { "/statuses/1/location/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
-        { "/statuses/1/location/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "PUT" },
-        { "/statuses/1/location/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "PUT" },
-        { "/statuses/1/location/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
-        { "/statuses/1/location/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" },
-        { "/statuses/1/location/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE" },
-        { "/statuses/1/location/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE" },
-        { "/statuses/1/location?q=wrong", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
-        { "/statuses/1/location?q=wrong", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
-        { "/statuses/1/location?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
-        { "/statuses/1/location?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" },
-        { "/follows", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
-        { "/follows", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" },
-        { "/follows", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "PUT" },
-        { "/follows", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "PUT" },
-        { "/follows", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE" },
-        { "/follows", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE" },
-        { "/follows/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
-        { "/follows/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
-        { "/follows?q=wrong", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
-        { "/follows?q=wrong", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
-        { "/follows/followerID=1/bad_path", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
-        { "/follows/(followerID:1)/bad_path", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
-        { "/follows/followerID=1&followerID=2/bad_path", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
-        { "/follows/(followerID:1,followerID:2)/bad_path", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
-        { "/follows/followerID=1&wrongID=2", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
-        { "/follows/(followerID:1,wrongID:2)", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
-        { "/follows/followerID=1&followerID=2", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE" }, // delete not supported
-        { "/follows/(followerID:1,followerID:2)", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE" },
-        { "/trending/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
-        { "/trending/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
-        { "/trending/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "PUT" },
-        { "/trending/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "PUT" },
-        { "/trending/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
-        { "/trending/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" },
-        { "/trending/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE" },
-        { "/trending/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE" },
-        { "/trending?q=abc", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
-        { "/trending?q=abc", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
-        { "/trending?q=def&param1=1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
-        { "/trending?q=def&param1=1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" },
-        { "/trending/1/trendRegions/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
-        { "/trending/1/trendRegions/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
-        { "/trending/1/trendRegions/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "PUT" },
-        { "/trending/1/trendRegions/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "PUT" },
-        { "/trending/1/trendRegions/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
-        { "/trending/1/trendRegions/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" },
-        { "/trending/1/trendRegions/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE" },
-        { "/trending/1/trendRegions/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE" },
-        { "/trending/trendRegions", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
-        { "/trending/trendRegions", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
-        { "/trending/trendRegions", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "PUT" },
-        { "/trending/trendRegions", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "PUT" },
-        { "/trending/trendRegions", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE" },
-        { "/trending/trendRegions", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE" },
-        { "/trending/trendRegions?q=abc", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
-        { "/trending/trendRegions?q=abc", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
-        { "/trending/trendRegions?q=def&param1=1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
-        { "/trending/trendRegions?q=def&param1=1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" },
-        { "/bogusResource", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
-        { "/bogusResource", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
-        { "/accounts", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
-        { "/accounts", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" },
-        { "/accounts?q=register", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
-        { "/accounts?q=register", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" },
+        { "/", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_404_NOT_FOUND },
+        { "/", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_404_NOT_FOUND },
+        { "/", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST", HttpStatus.S_404_NOT_FOUND },
+        { "/", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST", HttpStatus.S_404_NOT_FOUND },
+        { "/", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "PUT", HttpStatus.S_404_NOT_FOUND },
+        { "/", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "PUT", HttpStatus.S_404_NOT_FOUND },
+        { "/", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE", HttpStatus.S_404_NOT_FOUND },
+        { "/", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE", HttpStatus.S_404_NOT_FOUND },
+        { "/replies", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_404_NOT_FOUND },
+        { "/replies", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_404_NOT_FOUND },
+        { "/location", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_404_NOT_FOUND },
+        { "/location", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_404_NOT_FOUND },
+        { "/trendRegions", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_404_NOT_FOUND },
+        { "/trendRegions", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_404_NOT_FOUND },
+        { "/asdfasf", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_404_NOT_FOUND },
+        { "/asdfasf", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_404_NOT_FOUND },
+        { "/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_404_NOT_FOUND },
+        { "/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_404_NOT_FOUND },
+        { "/statuses", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "PUT", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "PUT", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses%2F1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_404_NOT_FOUND },
+        { "/statuses%2F1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_404_NOT_FOUND },
+        { "/statuses/1/asdf", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_404_NOT_FOUND },
+        { "/statuses/1/asdf", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_404_NOT_FOUND },
+        { "/statuses/1/replies/2", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses/1/replies/2", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses/replies", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses/replies", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses/2.3", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses/2.3", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses/1/replies", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses/1/replies", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses/1/replies", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "PUT", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses/1/replies", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "PUT", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses/1/2", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_404_NOT_FOUND },
+        { "/statuses/1/2", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_404_NOT_FOUND },
+        { "/statuses/1/badpath", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_404_NOT_FOUND },
+        { "/statuses/1/badpath", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_404_NOT_FOUND },
+        { "/statuses/1/badpath/2", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_404_NOT_FOUND },
+        { "/statuses/1/badpath/2", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_404_NOT_FOUND },
+        { "/statuses?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "PUT", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "PUT", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses/1/replies?q=wrong", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses/1/replies?q=wrong", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses/1/location/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_404_NOT_FOUND },
+        { "/statuses/1/location/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_404_NOT_FOUND },
+        { "/statuses/1/location/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "PUT", HttpStatus.S_404_NOT_FOUND },
+        { "/statuses/1/location/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "PUT", HttpStatus.S_404_NOT_FOUND },
+        { "/statuses/1/location/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST", HttpStatus.S_404_NOT_FOUND },
+        { "/statuses/1/location/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST", HttpStatus.S_404_NOT_FOUND },
+        { "/statuses/1/location/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE", HttpStatus.S_404_NOT_FOUND },
+        { "/statuses/1/location/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE", HttpStatus.S_404_NOT_FOUND },
+        { "/statuses/1/location?q=wrong", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses/1/location?q=wrong", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses/1/location?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses/1/location?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST", HttpStatus.S_400_BAD_REQUEST },
+        { "/custom_status/1234", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/follows", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST", HttpStatus.S_400_BAD_REQUEST },
+        { "/follows", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST", HttpStatus.S_400_BAD_REQUEST },
+        { "/follows", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "PUT", HttpStatus.S_400_BAD_REQUEST },
+        { "/follows", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "PUT", HttpStatus.S_400_BAD_REQUEST },
+        { "/follows", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE", HttpStatus.S_400_BAD_REQUEST },
+        { "/follows", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE", HttpStatus.S_400_BAD_REQUEST },
+        { "/follows/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/follows/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/follows?q=wrong", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/follows?q=wrong", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/follows/followerID=1/bad_path", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/follows/(followerID:1)/bad_path", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/follows/followerID=1&followerID=2/bad_path", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/follows/(followerID:1,followerID:2)/bad_path", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/follows/followerID=1&wrongID=2", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/follows/(followerID:1,wrongID:2)", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/follows/followerID=1&followerID=2", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE", HttpStatus.S_400_BAD_REQUEST }, // delete not supported
+        { "/follows/(followerID:1,followerID:2)", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE", HttpStatus.S_400_BAD_REQUEST },
+        { "/trending/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_404_NOT_FOUND },
+        { "/trending/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_404_NOT_FOUND },
+        { "/trending/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "PUT", HttpStatus.S_404_NOT_FOUND },
+        { "/trending/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "PUT", HttpStatus.S_404_NOT_FOUND },
+        { "/trending/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST", HttpStatus.S_404_NOT_FOUND },
+        { "/trending/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST", HttpStatus.S_404_NOT_FOUND },
+        { "/trending/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE", HttpStatus.S_404_NOT_FOUND },
+        { "/trending/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE", HttpStatus.S_404_NOT_FOUND },
+        { "/trending?q=abc", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/trending?q=abc", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/trending?q=def&param1=1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST", HttpStatus.S_400_BAD_REQUEST },
+        { "/trending?q=def&param1=1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST", HttpStatus.S_400_BAD_REQUEST },
+        { "/trending/1/trendRegions/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_404_NOT_FOUND },
+        { "/trending/1/trendRegions/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_404_NOT_FOUND },
+        { "/trending/1/trendRegions/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "PUT", HttpStatus.S_404_NOT_FOUND },
+        { "/trending/1/trendRegions/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "PUT", HttpStatus.S_404_NOT_FOUND },
+        { "/trending/1/trendRegions/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST", HttpStatus.S_404_NOT_FOUND },
+        { "/trending/1/trendRegions/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST", HttpStatus.S_404_NOT_FOUND },
+        { "/trending/1/trendRegions/1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE", HttpStatus.S_404_NOT_FOUND },
+        { "/trending/1/trendRegions/1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE", HttpStatus.S_404_NOT_FOUND },
+        { "/trending/trendRegions", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/trending/trendRegions", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/trending/trendRegions", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "PUT", HttpStatus.S_400_BAD_REQUEST },
+        { "/trending/trendRegions", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "PUT", HttpStatus.S_400_BAD_REQUEST },
+        { "/trending/trendRegions", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE", HttpStatus.S_400_BAD_REQUEST },
+        { "/trending/trendRegions", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE", HttpStatus.S_400_BAD_REQUEST },
+        { "/trending/trendRegions?q=abc", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/trending/trendRegions?q=abc", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/trending/trendRegions?q=def&param1=1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST", HttpStatus.S_400_BAD_REQUEST },
+        { "/trending/trendRegions?q=def&param1=1", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST", HttpStatus.S_400_BAD_REQUEST },
+        { "/bogusResource", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_404_NOT_FOUND },
+        { "/bogusResource", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_404_NOT_FOUND },
+        { "/accounts", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST", HttpStatus.S_400_BAD_REQUEST },
+        { "/accounts", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST", HttpStatus.S_400_BAD_REQUEST },
+        { "/accounts?q=register", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST", HttpStatus.S_400_BAD_REQUEST },
+        { "/accounts?q=register", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST", HttpStatus.S_400_BAD_REQUEST },
         // associations
-        { "/test/foo:1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" }, // legacy
-        { "/test/foo=1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
-        { "/test/(foo:1)", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
-        { "/test/foo:1;bar:2;baz:3;qux:4", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" }, // legacy
-        { "/test/foo=1&bar=2&baz=3&qux=4", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
-        { "/test/(foo:1,bar:2,baz:3,qux:4)", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
+        { "/test/foo:1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST }, // legacy
+        { "/test/foo=1", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/test/(foo:1)", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/test/foo:1;bar:2;baz:3;qux:4", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST }, // legacy
+        { "/test/foo=1&bar=2&baz=3&qux=4", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/test/(foo:1,bar:2,baz:3,qux:4)", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
         // actions
-        { "/accounts?action=bogusMethod", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
-        { "/accounts?action=bogusMethod", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" },
-        { "/accounts?action=", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
-        { "/accounts?action=", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" },
-        { "/accounts?action", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
-        { "/accounts?action", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" },
-        { "/accounts?action=register", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
-        { "/accounts?action=register", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
-        { "/accounts?action=register", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "PUT" },
-        { "/accounts?action=register", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "PUT" },
-        { "/accounts?action=register", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE" },
-        { "/accounts?action=register", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE" },
-        { "/accounts/1?action=register", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
-        { "/accounts/1?action=register", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" },
-        { "/statuses/1/replies/1,2,3?action=replyToAll", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
-        { "/statuses/1/replies/1,2,3?action=replyToAll", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
-        { "/statuses/1/replies?action=replyToAll", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE" },
-        { "/statuses/1/replies?action=replyToAll", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE" },
-        { "/statuses/1/replies?action=bogusAction", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
-        { "/statuses/1/replies?action=bogusAction", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" },
-        { "/statuses/1?action=search", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
-        { "/statuses/1?action=search", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" },
-        { "/statuses/1/location?action=new_status_from_location", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET" },
-        { "/statuses/1/location?action=new_status_from_location", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET" },
-        { "/statuses/1/location?action=bogusAction", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST" },
-        { "/statuses/1/location?action=bogusAction", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST" }
+        { "/accounts?action=bogusMethod", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST", HttpStatus.S_400_BAD_REQUEST },
+        { "/accounts?action=bogusMethod", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST", HttpStatus.S_400_BAD_REQUEST },
+        { "/accounts?action=", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST", HttpStatus.S_400_BAD_REQUEST },
+        { "/accounts?action=", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST", HttpStatus.S_400_BAD_REQUEST },
+        { "/accounts?action", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST", HttpStatus.S_400_BAD_REQUEST },
+        { "/accounts?action", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST", HttpStatus.S_400_BAD_REQUEST },
+        { "/accounts?action=register", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/accounts?action=register", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/accounts?action=register", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "PUT", HttpStatus.S_400_BAD_REQUEST },
+        { "/accounts?action=register", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "PUT", HttpStatus.S_400_BAD_REQUEST },
+        { "/accounts?action=register", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE", HttpStatus.S_400_BAD_REQUEST },
+        { "/accounts?action=register", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE", HttpStatus.S_400_BAD_REQUEST },
+        { "/accounts/1?action=register", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST", HttpStatus.S_400_BAD_REQUEST },
+        { "/accounts/1?action=register", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses/1/replies/1,2,3?action=replyToAll", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses/1/replies/1,2,3?action=replyToAll", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses/1/replies?action=replyToAll", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses/1/replies?action=replyToAll", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "DELETE", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses/1/replies?action=bogusAction", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses/1/replies?action=bogusAction", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses/1?action=search", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses/1?action=search", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses/1/location?action=new_status_from_location", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses/1/location?action=new_status_from_location", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses/1/location?action=bogusAction", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "POST", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses/1/location?action=bogusAction", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "POST", HttpStatus.S_400_BAD_REQUEST }
       };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingErrors")
-  public void testRoutingErrors(String uri, ProtocolVersion version, String httpMethod) throws Exception
+  public void testRoutingErrors(String uri, ProtocolVersion version, String httpMethod, HttpStatus status) throws Exception
   {
     Map<String, ResourceModel> pathRootResourceMap =
       buildResourceModels(CombinedResources.CombinedNKeyAssociationResource.class,
@@ -2431,12 +2419,13 @@ public class TestRestLiRouting
                           LocationResource.class,
                           RepliesCollectionResource.class,
                           StatusCollectionResource.class,
+                          CustomStatusCollectionResource.class,
                           TrendRegionsCollectionResource.class,
                           TrendingResource.class,
                           TwitterAccountsResource.class);
     _router = new RestLiRouter(pathRootResourceMap);
 
-    expectRoutingException(uri, version, httpMethod);
+    expectRoutingExceptionWithStatus(uri, version, httpMethod, null, status);
   }
 
   private void checkResult(String uri,
@@ -2520,10 +2509,11 @@ public class TestRestLiRouting
     assertEquals(batchKeys, batchCompoundKeys);
   }
 
-  private void expectRoutingException(String uri,
+  private void expectRoutingExceptionWithStatus(String uri,
                                       ProtocolVersion version,
                                       String httpMethod,
-                                      String restliMethod) throws URISyntaxException
+                                      String restliMethod,
+                                      HttpStatus status) throws URISyntaxException
   {
     RestRequestBuilder builder = createRequestBuilder(uri, httpMethod, version);
     if (restliMethod != null)
@@ -2538,16 +2528,9 @@ public class TestRestLiRouting
     }
     catch (RoutingException e)
     {
-      // expected
-//      System.out.println(e.getMessage() + ": " + e.getStatus());
+      // expected a certain httpStatus code
+      assertEquals(e.getStatus(), status.getCode());
     }
-  }
-
-  private void expectRoutingException(String uri,
-                                      ProtocolVersion version,
-                                      String httpMethod) throws URISyntaxException
-  {
-    expectRoutingException(uri, version, httpMethod, null);
   }
 
   private RestRequest createRequest(String uri, String method, ProtocolVersion version)

@@ -1,0 +1,10 @@
+{
+  "type" : "typeref",
+  "name" : "CustomFixedLengthStringRef",
+  "namespace" : "com.linkedin.restli.server",
+  "ref" : "string",
+  "java" :
+  {
+    "class" : "com.linkedin.restli.server.custom.types.CustomFixedLengthString"
+  }
+}

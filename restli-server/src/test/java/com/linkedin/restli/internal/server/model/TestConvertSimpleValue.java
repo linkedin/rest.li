@@ -21,9 +21,12 @@
 package com.linkedin.restli.internal.server.model;
 
 import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.data.template.TemplateOutputCastException;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
+import com.linkedin.restli.server.CustomFixedLengthStringRef;
 import com.linkedin.restli.server.CustomLongRef;
 import com.linkedin.restli.server.CustomStringRef;
+import com.linkedin.restli.server.custom.types.CustomFixedLengthString;
 import com.linkedin.restli.server.custom.types.CustomLong;
 import com.linkedin.restli.server.custom.types.CustomString;
 import org.testng.Assert;
@@ -137,6 +140,16 @@ public class TestConvertSimpleValue
     CustomString customString = (CustomString) convertedCustomString;
     Assert.assertTrue(customString.toString().equals("aString"));
 
+  }
+
+  @Test(expectedExceptions = TemplateOutputCastException.class)
+  public void testConvertCustomFixedLengthStringError()
+  {
+    CustomFixedLengthString forceRegistration = new CustomFixedLengthString("");
+
+    Class<?> customStringClass = CustomFixedLengthString.class;
+    ArgumentUtils
+        .convertSimpleValue("abcd", DataTemplateUtil.getSchema(CustomFixedLengthStringRef.class), customStringClass);
   }
 
 }
