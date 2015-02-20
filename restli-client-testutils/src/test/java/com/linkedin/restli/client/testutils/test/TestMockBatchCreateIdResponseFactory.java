@@ -63,9 +63,9 @@ public class TestMockBatchCreateIdResponseFactory
         new Object[] {new Long[] {1L, 2L, 3L}},
         new Object[] {new MyCustomString[] {new MyCustomString("1"), new MyCustomString("2"), new MyCustomString("3")}},
         new Object[] {new CompoundKey[] {buildCompoundKey("c1", 1), buildCompoundKey("c2", 2), buildCompoundKey("c3", 3)}},
-        new Object[] {new ComplexResourceKey[] {new ComplexResourceKey<Greeting, Greeting>(g1, g1),
-                                                new ComplexResourceKey<Greeting, Greeting>(g2, g2),
-                                                new ComplexResourceKey<Greeting, Greeting>(g3, g3)}}
+        new Object[] {new ComplexResourceKey<?, ?>[] {new ComplexResourceKey<Greeting, Greeting>(g1, g1),
+                                                      new ComplexResourceKey<Greeting, Greeting>(g2, g2),
+                                                      new ComplexResourceKey<Greeting, Greeting>(g3, g3)}}
     };
   }
 

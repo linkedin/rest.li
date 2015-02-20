@@ -51,7 +51,7 @@ public class TestBatchCreateIdResponse
         new Object[] {new Long[] {1L, 2L, 3L}},
         new Object[] {new MyCustomString[] {new MyCustomString("1"), new MyCustomString("2"), new MyCustomString("3")}},
         new Object[] {new CompoundKey[] {buildCompoundKey("c1", 1), buildCompoundKey("c2", 2), buildCompoundKey("c3", 3)}},
-        new Object[] {new ComplexResourceKey[] {buildComplexResourceKey(1L), buildComplexResourceKey(2L), buildComplexResourceKey(3L)}}
+        new Object[] {new ComplexResourceKey<?, ?>[] {buildComplexResourceKey(1L), buildComplexResourceKey(2L), buildComplexResourceKey(3L)}}
     };
   }
 
