@@ -4,6 +4,10 @@
 Added tests for BatchCreateIdResponse
 Added new mock factory and tests for BatchCreateIdResponse.
 
+(RB=433868)
+Fix bug SI-1851 by returning Http 400 error in case of key coercion error instead of Http 500.
+Enhance existing RestLiRouter error testcases to always check return status.
+
 2.2.4
 -----
 (RB=430630)
