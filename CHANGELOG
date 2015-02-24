@@ -4,6 +4,9 @@
 Add a new test to test DropRate change.
 Simplify the error messages.
 
+(RB=436681)
+Allow release-version to take parameter for remote repository and branch name.
+
 2.2.5
 -----
 (RB=420782)

@@ -1,39 +1,52 @@
 #!/bin/sh
 
-source $(dirname $0)/gradle.properties
+remote="origin"
+branch="master"
+if [ $# -eq 2 ]
+then
+    remote=$1
+    branch=$2
+fi
+
+source $(dirname $0)/gradle.properties >/dev/null 2>&1
 
 echo "Attempting to publish: $version"
 echo
 
-DIRTY="`git status --porcelain --untracked-files=no || echo FAIL`"
+DIRTY="`git status --porcelain --untracked-files=no 2>&1 || echo FAIL`"
 if test -n "$DIRTY"
 then
-    echo "Dirty index or working tree. Use git status to check." 2>&1
-    echo "After resolution, run this command again." 2>&1
+    echo "Dirty index or working tree. Use git status to check."
+    echo "After resolution, run this command again."
     exit 1
 fi
 
-INCONSISTENT="`git diff origin/master || echo FAIL`"
-if test -n "$INCONSISTENT"
+DIFF="`git diff --quiet $remote/$branch >/dev/null 2>&1 ; echo $?`"
+if [ $DIFF = 0 ]
 then
-    echo "origin/master and current branch are inconsistent." 2>&1
-    echo "Use git diff origin/master to see changes." 2>&1
-    echo "Rebase or push, as appropriate, and run this command again." 2>&1
+    echo "$remote/$branch and current branch contain no diff."
     exit 1
-fi
-
-CHANGELOG=`grep $version CHANGELOG`
-if test $? -ne 0
+elif [ $DIFF != 1 ]
 then
-    echo "No entry in the CHANGELOG for version $version." 2>&1
-    echo "To get a list of changes, use git log previous_tag.." 2>&1
-    echo "Add an entry to the CHANGELOG and run this command again." 2>&1
+    echo "$remote/$branch and current branch are inconsistent."
+    echo "Use git diff $remote/$branch to see changes."
+    echo "Rebase or push, as appropriate, and run this command again."
     exit 1
 fi
 
+CHANGELOG="`grep $version CHANGELOG >/dev/null 2>&1 ; echo $?`"
+if [ $CHANGELOG != 0 ]
+then
+    echo "No entry in the CHANGELOG for version $version."
+    echo "To get a list of changes, use git log previous_tag.."
+    echo "Add an entry to the CHANGELOG and run this command again."
+    exit 1
+fi
+
+exit
 if [ ! $SKIP_TAGGING_VERSION ]
 then
     git tag v$version && \
-    git push origin v$version && \
+    git push $remote v$version && \
     echo "Publish completed successfully."
 fi
