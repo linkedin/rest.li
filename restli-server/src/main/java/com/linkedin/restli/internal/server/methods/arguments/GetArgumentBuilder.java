@@ -46,7 +46,8 @@ public class GetArgumentBuilder implements RestLiArgumentBuilder
     }
     return ArgumentBuilder.buildArgs(positionalArgs,
                                      routingResult.getResourceMethod().getParameters(),
-                                     routingResult.getContext());
+                                     routingResult.getContext(),
+                                     null);
   }
 
   @Override

@@ -34,6 +34,7 @@ import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
+import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RestLiRequestDataImpl;
 import com.linkedin.restli.server.RoutingException;
@@ -50,56 +51,11 @@ public class ActionArgumentBuilder implements RestLiArgumentBuilder
   @Override
   public Object[] buildArguments(RestLiRequestData requestData, RoutingResult routingResult)
   {
-    ResourceMethodDescriptor resourceMethodDescriptor = routingResult.getResourceMethod();
-    List<Parameter<?>> parameters = resourceMethodDescriptor.getParameters();
     DynamicRecordTemplate template = (DynamicRecordTemplate) requestData.getEntity();
-    DataMap data = template.data();
-    Object[] arguments = new Object[parameters.size()];
-    int i = 0;
-    for (Parameter<?> param : parameters)
-    {
-      Object value;
-      if (!data.containsKey(param.getName()))
-      {
-        if (param.isOptional() && param.hasDefaultValue())
-        {
-          value = param.getDefaultValue();
-        }
-        else if (param.isOptional())
-        {
-          value = null;
-        }
-        else if (param.getParamType() == Parameter.ParamType.CALLBACK)
-        {
-          value = null;
-        }
-        else if (param.getParamType() == Parameter.ParamType.PARSEQ_CONTEXT_PARAM || param.getParamType() == Parameter.ParamType.PARSEQ_CONTEXT)
-        {
-          value = null;
-        }
-        else
-        {
-          throw new RoutingException("Parameter '" + param.getName() + "' of method '"
-              + resourceMethodDescriptor.getActionName() + "' is required", HttpStatus.S_400_BAD_REQUEST.getCode());
-        }
-      }
-      else
-      {
-        try
-        {
-          value = template.getValue(param);
-        }
-        catch (TemplateOutputCastException e)
-        {
-          throw new RoutingException("Parameter '" + param.getName() + "' of method '"
-                                         + resourceMethodDescriptor.getActionName() + "' must be of type '"
-                                         + param.getType().getName() + "'",
-                                     HttpStatus.S_400_BAD_REQUEST.getCode());
-        }
-      }
-      arguments[i++] = value;
-    }
-    return arguments;
+    return ArgumentBuilder.buildArgs(new Object[0],
+                                     routingResult.getResourceMethod().getParameters(),
+                                     routingResult.getContext(),
+                                     template);
   }
 
   @Override

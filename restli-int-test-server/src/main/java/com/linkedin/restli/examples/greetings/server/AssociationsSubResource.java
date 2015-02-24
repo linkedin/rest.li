@@ -26,6 +26,7 @@ import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.server.PathKeys;
 import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.Finder;
+import com.linkedin.restli.server.annotations.PathKeysParam;
 import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
@@ -84,5 +85,18 @@ public class AssociationsSubResource extends CollectionResourceTemplate<String, 
   public int action()
   {
     return 1;
+  }
+
+  @Action(name="getSource")
+  public String srcAction(@PathKeysParam PathKeys pks)
+  {
+    if (pks != null)
+    {
+      return pks.getAsString("src");
+    }
+    else
+    {
+      return null;
+    }
   }
 }

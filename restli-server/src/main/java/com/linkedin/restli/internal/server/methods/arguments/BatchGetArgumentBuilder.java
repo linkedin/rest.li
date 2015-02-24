@@ -40,7 +40,8 @@ public class BatchGetArgumentBuilder implements RestLiArgumentBuilder
     Object[] positionalArgs = { new HashSet<Object>(requestData.getBatchKeys()) };
     return ArgumentBuilder.buildArgs(positionalArgs,
                                      routingResult.getResourceMethod().getParameters(),
-                                     routingResult.getContext());
+                                     routingResult.getContext(),
+                                     null);
   }
 
   @Override

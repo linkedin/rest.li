@@ -194,6 +194,15 @@ public class TestAssociationsResource extends RestLiIntegrationTest
     Assert.assertEquals(integer, new Integer(1));
   }
 
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestSubBuilderDataProvider")
+  public void testSubresourcePathKeyAction(RootBuilderWrapper<CompoundKey, Message> builders) throws RemoteInvocationException
+  {
+    Request<String> request = builders.<String>action("GetSource").setPathKey("dest", "dest").setPathKey("src", "src").build();
+    String source = REST_CLIENT.sendRequest(request).getResponse().getEntity();
+
+    Assert.assertEquals(source, "src");
+  }
+
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testBatchUpdate(RootBuilderWrapper<CompoundKey, Message> builders)
       throws RemoteInvocationException

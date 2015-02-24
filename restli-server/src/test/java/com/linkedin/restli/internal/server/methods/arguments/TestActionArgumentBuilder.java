@@ -26,12 +26,16 @@ import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.parseq.Context;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.test.SimpleEnum;
+import com.linkedin.restli.internal.server.PathKeysImpl;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.model.AnnotationSet;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
+import com.linkedin.restli.server.PathKeys;
+import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RoutingException;
+import java.util.Collections;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -79,8 +83,7 @@ public class TestActionArgumentBuilder
   {
     EnumDataSchema simpleEnumSchema = new EnumDataSchema(new Name("com.linkedin.restli.common.test.SimpleEnum"));
     simpleEnumSchema.setSymbols(Arrays.asList("A", "B", "C"), null);
-    List<Parameter<?>> enumParams = new ArrayList<Parameter<?>>();
-    enumParams.add(new Parameter<SimpleEnum>(
+    return Collections.<Parameter<?>>singletonList(new Parameter<SimpleEnum>(
         "simpleEnum",
         SimpleEnum.class,
         simpleEnumSchema,
@@ -89,14 +92,12 @@ public class TestActionArgumentBuilder
         Parameter.ParamType.POST,
         true,
         new AnnotationSet(new Annotation[]{})));
-    return enumParams;
   }
 
+  @SuppressWarnings("rawtypes")
   private List<Parameter<?>> getCallbackParams()
   {
-    List<Parameter<?>> params = new ArrayList<Parameter<?>>();
-    @SuppressWarnings("rawtypes")
-    Parameter<Callback> param = new Parameter<Callback>(
+    return Collections.<Parameter<?>>singletonList(new Parameter<Callback>(
         "",
         Callback.class,
         null,
@@ -104,15 +105,12 @@ public class TestActionArgumentBuilder
         null,
         Parameter.ParamType.CALLBACK,
         false,
-        new AnnotationSet(new Annotation[]{}));
-    params.add(param);
-    return params;
+        new AnnotationSet(new Annotation[]{})));
   }
 
   private List<Parameter<?>> getParSeqContextParams()
   {
-    List<Parameter<?>> params = new ArrayList<Parameter<?>>();
-    params.add(new Parameter<Context>(
+    return Collections.<Parameter<?>>singletonList(new Parameter<Context>(
         "",
         Context.class,
         null,
@@ -121,14 +119,12 @@ public class TestActionArgumentBuilder
         Parameter.ParamType.PARSEQ_CONTEXT_PARAM,
         false,
         new AnnotationSet(new Annotation[]{})));
-    return params;
   }
 
+  @SuppressWarnings("deprecation")
   private List<Parameter<?>> getDeprecatedParSeqContextParams()
   {
-    List<Parameter<?>> params = new ArrayList<Parameter<?>>();
-    @SuppressWarnings("deprecation")
-    Parameter<Context> param = new Parameter<Context>(
+    return Collections.<Parameter<?>>singletonList(new Parameter<Context>(
         "",
         Context.class,
         null,
@@ -136,9 +132,33 @@ public class TestActionArgumentBuilder
         null,
         Parameter.ParamType.PARSEQ_CONTEXT,
         false,
-        new AnnotationSet(new Annotation[]{}));
-    params.add(param);
-    return params;
+        new AnnotationSet(new Annotation[]{})));
+  }
+
+  private List<Parameter<?>> getPathKeysParams()
+  {
+    return Collections.<Parameter<?>>singletonList(new Parameter<PathKeys>(
+        "pathKeys",
+        PathKeys.class,
+        null,
+        false,
+        null,
+        Parameter.ParamType.PATH_KEYS_PARAM,
+        false,
+        new AnnotationSet(new Annotation[]{})));
+  }
+
+  private List<Parameter<?>> getAssocKeyParams()
+  {
+    return Collections.<Parameter<?>>singletonList(new Parameter<String>(
+        "string1",
+        String.class,
+        new StringDataSchema(),
+        false,
+        null,
+        Parameter.ParamType.ASSOC_KEY_PARAM,
+        true,
+        new AnnotationSet(new Annotation[]{})));
   }
 
   @DataProvider(name = "successData")
@@ -184,7 +204,8 @@ public class TestActionArgumentBuilder
   {
     RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(false, entity, 3);
     ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(null, params, null, null);
-    RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 2, null, 1);
+    ResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(null, null, null);
+    RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 2, context, 1);
 
     RestLiArgumentBuilder argumentBuilder = new ActionArgumentBuilder();
     RestLiRequestData requestData = argumentBuilder.extractRequestData(routingResult, request);
@@ -240,8 +261,9 @@ public class TestActionArgumentBuilder
   {
     String entity = "{\"param2\":5678}";
     RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(false, entity, 3);
-    ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(null, getStringAndIntParams(), "testAction", null);
-    RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 2, null, 1);
+    ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(null, getStringAndIntParams(), null, null);
+    ResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(null, null, null);
+    RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 2, context, 1);
 
     RestLiArgumentBuilder argumentBuilder = new ActionArgumentBuilder();
     RestLiRequestData requestData = argumentBuilder.extractRequestData(routingResult, request);
@@ -252,9 +274,45 @@ public class TestActionArgumentBuilder
     }
     catch (RoutingException e)
     {
-      assertEquals(e.getMessage(), "Parameter 'param1' of method 'testAction' is required");
+      assertEquals(e.getMessage(), "Parameter 'param1' is required");
     }
 
     verify(request, descriptor, routingResult);
   }
+
+  @DataProvider(name = "keyArgumentData")
+  private Object[][] keyArgumentData()
+  {
+    PathKeys pkeys = new PathKeysImpl().append("string1", "testString");
+    return new Object[][]
+        {
+            {
+                getPathKeysParams(),
+                pkeys,
+                new Object[]{pkeys}
+            },
+            {
+                getAssocKeyParams(),
+                pkeys,
+                new Object[]{"testString"}
+            }
+        };
+  }
+
+  @Test(dataProvider = "keyArgumentData")
+  public void testKeyArguments(List<Parameter<?>> params, PathKeys pathKeys, Object[] expectedArgs)
+  {
+    ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(null, params, null, null);
+    ResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(pathKeys, false);
+    RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 2, context, 1);
+    RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(false, "{\"a\":\"xyz\",\"b\":123}", 3);
+
+    RestLiArgumentBuilder argumentBuilder = new ActionArgumentBuilder();
+    RestLiRequestData requestData = argumentBuilder.extractRequestData(routingResult, request);
+    Object[] args = argumentBuilder.buildArguments(requestData, routingResult);
+    assertEquals(args, expectedArgs);
+
+    verify(descriptor, context, routingResult, request);
+  }
+
 }

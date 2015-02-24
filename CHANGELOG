@@ -7,6 +7,10 @@
 (RB=439521)
 Add feature to QueryTunnelUtil and fix a bug in encode of MimeMultiPart entity
 
+(RB=436399)
+Handle @PathKeysParam and other parameter annotation for action methods by
+invoking the common routine ArgumentBuilder.buildArgs for all RestLiArgumentBuilder classes.
+
 2.2.5
 -----
 (RB=436213)
@@ -18,7 +22,7 @@ Added tests for BatchCreateIdResponse
 Added new mock factory and tests for BatchCreateIdResponse.
 
 (RB=433868)
-Fix bug SI-1851 by returning Http 400 error in case of key coercion error instead of Http 500.
+Return Http 400 error in case of key coercion error instead of Http 500.
 Enhance existing RestLiRouter error testcases to always check return status.
 
 (RB=439796)

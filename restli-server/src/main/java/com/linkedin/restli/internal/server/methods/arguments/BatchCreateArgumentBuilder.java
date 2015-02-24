@@ -46,7 +46,8 @@ public class BatchCreateArgumentBuilder implements RestLiArgumentBuilder
     Object[] positionalArguments = { batchRequest };
     return ArgumentBuilder.buildArgs(positionalArguments,
                                      routingResult.getResourceMethod().getParameters(),
-                                     routingResult.getContext());
+                                     routingResult.getContext(),
+                                     null);
   }
 
   @Override

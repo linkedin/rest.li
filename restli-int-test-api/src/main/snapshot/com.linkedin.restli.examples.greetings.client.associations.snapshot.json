@@ -82,6 +82,9 @@
             "actions" : [ {
               "name" : "action",
               "returns" : "int"
+            }, {
+              "name" : "getSource",
+              "returns" : "string"
             } ],
             "entity" : {
               "path" : "/associations/{associationsId}/associationsSub/{subKey}"

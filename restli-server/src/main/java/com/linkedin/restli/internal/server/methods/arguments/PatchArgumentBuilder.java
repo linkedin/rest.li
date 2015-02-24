@@ -52,7 +52,8 @@ public class PatchArgumentBuilder implements RestLiArgumentBuilder
     }
     return ArgumentBuilder.buildArgs(positionalArgs,
                                      routingResult.getResourceMethod().getParameters(),
-                                     routingResult.getContext());
+                                     routingResult.getContext(),
+                                     null);
   }
 
   @Override
