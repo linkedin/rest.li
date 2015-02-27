@@ -15,6 +15,9 @@ Enhance existing RestLiRouter error testcases to always check return status.
 (RB=439796)
 Fix intermittent test failure in ZooKeeperChildrenDataPublisherTest.
 
+(RB=438203)
+Create option to turn off ClientCompressionFilter.
+
 2.2.4
 -----
 (RB=430630)

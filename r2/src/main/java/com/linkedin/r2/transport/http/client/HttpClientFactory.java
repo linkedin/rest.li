@@ -137,6 +137,7 @@ public class HttpClientFactory implements TransportClientFactory
   private final CompressionConfig          _defaultRequestCompressionConfig;
   /** Request compression config for each http service. */
   private final Map<String, CompressionConfig> _requestCompressionConfigs;
+  private final boolean                    _useClientCompression;
 
   // All fields below protected by _mutex
   private final Object                     _mutex               = new Object();
@@ -276,8 +277,25 @@ public class HttpClientFactory implements TransportClientFactory
                            ExecutorService callbackExecutor,
                            boolean shutdownCallbackExecutor,
                            AbstractJmxManager jmxManager,
-                           final int requestCompressionThresholdDefault,
-                           final Map<String, CompressionConfig> requestCompressionConfigs)
+                           int requestCompressionThresholdDefault,
+                           Map<String, CompressionConfig> requestCompressionConfigs)
+  {
+    this(filters, channelFactory, shutdownFactory, executor, shutdownExecutor, callbackExecutor,
+        shutdownCallbackExecutor, jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs,
+        true);
+  }
+
+  public HttpClientFactory(FilterChain filters,
+                           ClientSocketChannelFactory channelFactory,
+                           boolean shutdownFactory,
+                           ScheduledExecutorService executor,
+                           boolean shutdownExecutor,
+                           ExecutorService callbackExecutor,
+                           boolean shutdownCallbackExecutor,
+                           AbstractJmxManager jmxManager,
+                           int requestCompressionThresholdDefault,
+                           Map<String, CompressionConfig> requestCompressionConfigs,
+                           boolean useClientCompression)
   {
     _filters = filters;
     _channelFactory = channelFactory;
@@ -297,6 +315,7 @@ public class HttpClientFactory implements TransportClientFactory
       throw new IllegalArgumentException("requestCompressionConfigs should not be null.");
     }
     _requestCompressionConfigs = Collections.unmodifiableMap(requestCompressionConfigs);
+    _useClientCompression = useClientCompression;
   }
 
   @Override
@@ -380,14 +399,21 @@ public class HttpClientFactory implements TransportClientFactory
                                                                                       LIST_SEPARATOR);
     FilterChain filters;
 
-    String httpServiceName = (String) properties.get(HTTP_SERVICE_NAME);
-    String requestContentEncodingName = getRequestContentEncodingName(httpRequestServerSupportedEncodings);
-    CompressionConfig compressionConfig = getCompressionConfig(httpServiceName, requestContentEncodingName);
-    String responseCompressionSchemaName = httpResponseCompressionOperations.isEmpty() ? "" : buildAcceptEncodingSchemaNames();
-    filters = _filters.addLast(new ClientCompressionFilter(requestContentEncodingName,
-                                                           compressionConfig,
-                                                           responseCompressionSchemaName,
-                                                           httpResponseCompressionOperations));
+    if (_useClientCompression)
+    {
+      String httpServiceName = (String) properties.get(HTTP_SERVICE_NAME);
+      String requestContentEncodingName = getRequestContentEncodingName(httpRequestServerSupportedEncodings);
+      CompressionConfig compressionConfig = getCompressionConfig(httpServiceName, requestContentEncodingName);
+      String responseCompressionSchemaName = httpResponseCompressionOperations.isEmpty() ? "" : buildAcceptEncodingSchemaNames();
+      filters = _filters.addLast(new ClientCompressionFilter(requestContentEncodingName,
+          compressionConfig,
+          responseCompressionSchemaName,
+          httpResponseCompressionOperations));
+    }
+    else
+    {
+      filters = _filters;
+    }
 
     client = new FilterChainClient(client, filters);
     client = new FactoryClient(client);
