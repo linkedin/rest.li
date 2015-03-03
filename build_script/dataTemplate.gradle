@@ -17,6 +17,8 @@
 final Configuration generatorConfig = project(':generator').configurations.default
 final Set<File> pluginResourcesDirs = project(':generator').sourceSets.main.resources.srcDirs
 
+project.dependencies.add('compile', project(':generator'))
+
 project.sourceSets.all { SourceSet sourceSet ->
   final String inputDataSchemaParentDirPath = "src${File.separatorChar}${sourceSet.name}"
   final String pegasusDirName = 'pegasus'
