@@ -22,7 +22,6 @@ package com.linkedin.restli.examples;
 
 import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.EngineBuilder;
-import com.linkedin.r2.filter.CompressionConfig;
 import com.linkedin.r2.transport.http.server.HttpServer;
 import com.linkedin.restli.server.filter.RequestFilter;
 import com.linkedin.restli.server.filter.ResponseFilter;
@@ -95,24 +94,17 @@ public class RestLiIntegrationTest
 
   public void init(List<? extends RequestFilter> requestFilters, List<? extends ResponseFilter> responseFilters) throws IOException
   {
-    init(requestFilters, responseFilters, RestLiIntTestServer.supportedCompression, new CompressionConfig(0));
-  }
-
-  public void init(List<? extends RequestFilter> requestFilters, List<? extends ResponseFilter> responseFilters,
-                   String supportedCompression, CompressionConfig responseCompressionConfig) throws IOException
-  {
     int asyncTimeout = 5000;
     _scheduler = Executors.newScheduledThreadPool(numCores + 1);
     _engine = new EngineBuilder().setTaskExecutor(_scheduler).setTimerScheduler(_scheduler).build();
     _serverWithFilters =
         RestLiIntTestServer.createServer(_engine,
-            RestLiIntTestServer.DEFAULT_PORT,
-            supportedCompression,
-            responseCompressionConfig,
-            false,
-            asyncTimeout,
-            requestFilters,
-            responseFilters);
+                                         RestLiIntTestServer.DEFAULT_PORT,
+                                         RestLiIntTestServer.supportedCompression,
+                                         false,
+                                         asyncTimeout,
+                                         requestFilters,
+                                         responseFilters);
     _serverWithFilters.start();
   }
 

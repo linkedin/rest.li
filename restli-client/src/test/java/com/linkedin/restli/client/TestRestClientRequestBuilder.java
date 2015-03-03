@@ -393,11 +393,11 @@ public class TestRestClientRequestBuilder
     EasyMock.expect(mockRequest.getMethod()).andReturn(method).anyTimes();
     EasyMock.expect(mockRequest.getPathKeys()).andReturn(Collections.<String, String>emptyMap()).once();
     EasyMock.expect(mockRequest.getQueryParamsObjects()).andReturn(Collections.emptyMap()).once();
-    EasyMock.expect(mockRequest.getBaseUriTemplate()).andReturn(BASE_URI_TEMPLATE).once();
+    EasyMock.expect(mockRequest.getBaseUriTemplate()).andReturn(BASE_URI_TEMPLATE).times(2);
     EasyMock.expect(mockRequest.getServiceName()).andReturn(SERVICE_NAME).once();
     EasyMock.expect(mockRequest.getResponseDecoder()).andReturn(mockResponseDecoder).once();
     EasyMock.expect(mockRequest.getHeaders()).andReturn(Collections.<String, String>emptyMap()).once();
-    EasyMock.expect(mockRequest.getRequestOptions()).andReturn(RestliRequestOptions.DEFAULT_OPTIONS).times(3);
+    EasyMock.expect(mockRequest.getRequestOptions()).andReturn(RestliRequestOptions.DEFAULT_OPTIONS).times(2);
   }
 
   @SuppressWarnings({"rawtypes", "deprecation"})

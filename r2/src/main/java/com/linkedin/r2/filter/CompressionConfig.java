@@ -20,11 +20,10 @@ package com.linkedin.r2.filter;
 import com.linkedin.r2.filter.compression.ClientCompressionFilter;
 
 /**
- * By setting this config in {@link ClientCompressionFilter}, the client can set the default compression threshold
- * for requests and/or responses.
- * Requests/responses with body size larger than this threshold will be compressed.
- * To compress all requests/responses, threshold must be 0.
- * To not compress any requests/responses, threshold must be {@link Integer#MAX_VALUE}.
+ * By setting this config in {@link ClientCompressionFilter}, the client can set the default compression threshold.
+ * Requests with body size larger than this threshold will be compressed.
+ * To compress all requests, threshold must be 0.
+ * To not compress any requests, threshold must be {@link Integer#MAX_VALUE}.
  *
  * This default behavior can be overridden by {@link CompressionOption} in the request context.
  *
@@ -79,8 +78,20 @@ public class CompressionConfig
         '}';
   }
 
-  public int getCompressionThreshold()
+  /**
+   * Determines whether the request should be compressed, first checking {@link CompressionOption} in the request context,
+   * then the threshold.
+   *
+   * @param entityLength request body length.
+   * @param requestCompressionOverride compression force on/off override from the request context.
+   * @return true if the outgoing request should be compressed.
+   */
+  public boolean shouldCompressRequest(int entityLength, CompressionOption requestCompressionOverride)
   {
-    return _compressionThreshold;
+    if (requestCompressionOverride != null)
+    {
+      return (requestCompressionOverride == CompressionOption.FORCE_ON);
+    }
+    return entityLength >= _compressionThreshold;
   }
 }

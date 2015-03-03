@@ -408,7 +408,7 @@ public class TestHttpClientFactory
   }
 
   @Test(dataProvider = "compressionConfigsData")
-  public void testGetRequestCompressionConfig(String serviceName, int requestCompressionThresholdDefault, CompressionConfig expectedConfig)
+  public void testGetCompressionConfig(String serviceName, int requestCompressionThresholdDefault, CompressionConfig expectedConfig)
   {
     Map<String, CompressionConfig> requestCompressionConfigs = new HashMap<String, CompressionConfig>();
     requestCompressionConfigs.put("service1", new CompressionConfig(0));
@@ -416,6 +416,6 @@ public class TestHttpClientFactory
     requestCompressionConfigs.put("service3", new CompressionConfig(111));
     HttpClientFactory factory = new HttpClientFactory(null, null, true, null, true, null, true, null,
         requestCompressionThresholdDefault, requestCompressionConfigs);
-    Assert.assertEquals(factory.getRequestCompressionConfig(serviceName, EncodingType.SNAPPY.getHttpName()), expectedConfig);
+    Assert.assertEquals(factory.getCompressionConfig(serviceName, EncodingType.SNAPPY.getHttpName()), expectedConfig);
   }
 }

@@ -28,7 +28,6 @@ public class RestliRequestOptionsBuilder
 {
   private ProtocolVersionOption _protocolVersionOption;
   private CompressionOption _requestCompressionOverride;
-  private CompressionOption _responseCompressionOverride;
 
   public RestliRequestOptionsBuilder()
   {
@@ -53,14 +52,8 @@ public class RestliRequestOptionsBuilder
     return this;
   }
 
-  public RestliRequestOptionsBuilder setResponseCompressionOverride(CompressionOption responseCompressionOverride)
-  {
-    _responseCompressionOverride = responseCompressionOverride;
-    return this;
-  }
-
   public RestliRequestOptions build()
   {
-    return new RestliRequestOptions(_protocolVersionOption, _requestCompressionOverride, _responseCompressionOverride);
+    return new RestliRequestOptions(_protocolVersionOption, _requestCompressionOverride);
   }
 }

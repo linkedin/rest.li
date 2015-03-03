@@ -20,9 +20,8 @@ package com.linkedin.r2.filter;
 import com.linkedin.r2.message.RequestContext;
 
 /**
- * This enumeration is used by the client to force compression on or off for each request/response,
- * when included as a local attribute of the {@link RequestContext} with the key as
- * {@link R2Constants#REQUEST_COMPRESSION_OVERRIDE}/{@link R2Constants#RESPONSE_COMPRESSION_OVERRIDE}.
+ * This enumeration is used by the client to force compression on or off for each request,
+ * when included as a local attribute of the {@link RequestContext} with the key as {@link R2Constants#REQUEST_COMPRESSION_OVERRIDE}.
  *
  * @author Soojung Ha
  */
