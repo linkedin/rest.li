@@ -64,11 +64,13 @@ public abstract class AbstractAsyncR2Servlet extends AbstractR2Servlet
   public void service(final HttpServletRequest req, final HttpServletResponse resp) throws ServletException,
                                                                                                  IOException
   {
+    RequestContext requestContext = readRequestContext(req);
+
     RestRequest restRequest;
 
     try
     {
-      restRequest = readFromServletRequest(req);
+      restRequest = readFromServletRequest(req, requestContext);
     }
     catch (URISyntaxException e)
     {
@@ -81,7 +83,6 @@ public abstract class AbstractAsyncR2Servlet extends AbstractR2Servlet
       return;
     }
 
-    RequestContext requestContext = readRequestContext(req);
     final AsyncContext ctx = req.startAsync(req, resp);
 
     ctx.setTimeout(_timeout);

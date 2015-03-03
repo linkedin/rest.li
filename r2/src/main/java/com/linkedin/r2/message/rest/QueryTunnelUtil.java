@@ -18,6 +18,8 @@ package com.linkedin.r2.message.rest;
 
 import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
+import com.linkedin.r2.filter.R2Constants;
+import com.linkedin.r2.message.RequestContext;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,6 +91,19 @@ public class QueryTunnelUtil
   public static RestRequest encode(final RestRequest request, int threshold)
       throws URISyntaxException, MessagingException, IOException
   {
+    return encode(request, new RequestContext(), threshold);
+  }
+
+  /**
+   * @param request   a RestRequest object to be encoded as a tunneled POST
+   * @param requestContext a RequestContext object associated with the request
+   * @param threshold the size of the query params above which the request will be encoded
+   *
+   * @return an encoded RestRequest
+   */
+  public static RestRequest encode(final RestRequest request, RequestContext requestContext, int threshold)
+      throws URISyntaxException, MessagingException, IOException
+  {
     URI uri = request.getURI();
 
     // Check to see if we should tunnel this request by testing the length of the query
@@ -100,7 +115,12 @@ public class QueryTunnelUtil
 
     String query = uri.getRawQuery();
 
-    if (query == null || query.length() == 0 || query.length() < threshold)
+    boolean forceQueryTunnel = requestContext.getLocalAttr(R2Constants.FORCE_QUERY_TUNNEL) != null
+        && (Boolean) requestContext.getLocalAttr(R2Constants.FORCE_QUERY_TUNNEL);
+
+    if (query == null
+        || query.length() == 0
+        || (query.length() < threshold && !forceQueryTunnel))
     {
       return request;
     }
@@ -151,6 +171,21 @@ public class QueryTunnelUtil
    * @return a decoded RestRequest
    */
   public static RestRequest decode(final RestRequest request)
+      throws MessagingException, IOException, URISyntaxException
+  {
+    return decode(request, new RequestContext());
+  }
+
+  /**
+   * Takes a Request object that has been encoded for tunnelling as a POST with an X-HTTP-Override-Method header and
+   * creates a new request that represents the intended original request
+   *
+   * @param request the request to be decoded
+   * @param requestContext a RequestContext object associated with the request
+   *
+   * @return a decoded RestRequest
+   */
+  public static RestRequest decode(final RestRequest request, RequestContext requestContext)
       throws MessagingException, IOException, URISyntaxException
   {
     if (request.getHeader(HEADER_METHOD_OVERRIDE) == null)
@@ -225,7 +260,17 @@ public class QueryTunnelUtil
         else if (entity.length <= 0)
         {
           // Assume the first non-urlencoded content we come to is the intended entity.
-          entity = IOUtils.toByteArray((InputStream) part.getContent());
+          Object content = part.getContent();
+          if (content instanceof MimeMultipart)
+          {
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            ((MimeMultipart) content).writeTo(os);
+            entity = os.toByteArray();
+          }
+          else
+          {
+            entity = IOUtils.toByteArray((InputStream) content);
+          }
           h.put(CONTENT_LENGTH, Integer.toString(entity.length));
           h.put(HEADER_CONTENT_TYPE, part.getContentType());
         }
@@ -266,6 +311,8 @@ public class QueryTunnelUtil
     requestBuilder.setHeaders(h);
     requestBuilder.setMethod(request.getHeader(HEADER_METHOD_OVERRIDE));
 
+    requestContext.putLocalAttr(R2Constants.IS_QUERY_TUNNELED, true);
+
     return requestBuilder.build();
   }
 
@@ -278,7 +325,7 @@ public class QueryTunnelUtil
    *
    * @return a ByteString that represents a multi-part encoded entity that contains both
    */
-  private static MimeMultipart createMultiPartEntity(ByteString entity, String entityContentType, String query)
+  private static MimeMultipart createMultiPartEntity(final ByteString entity, final String entityContentType, String query)
       throws MessagingException
   {
     MimeMultipart multi = new MimeMultipart(MIXED);
@@ -287,7 +334,41 @@ public class QueryTunnelUtil
     MimeBodyPart dataPart = new MimeBodyPart();
 
     ContentType contentType = new ContentType(entityContentType);
-    dataPart.setContent(entity.copyBytes(), contentType.getBaseType());
+    if (MULTIPART.equals(contentType.getBaseType()))
+    {
+      MimeMultipart nested = new MimeMultipart(new DataSource()
+      {
+        @Override
+        public InputStream getInputStream() throws IOException
+        {
+          return entity.asInputStream();
+        }
+
+        @Override
+        public OutputStream getOutputStream() throws IOException
+        {
+          return null;
+        }
+
+        @Override
+        public String getContentType()
+        {
+          return entityContentType;
+        }
+
+        @Override
+        public String getName()
+        {
+          return null;
+        }
+      });
+      dataPart.setContent(nested, contentType.getBaseType());
+
+    }
+    else
+    {
+      dataPart.setContent(entity.copyBytes(), contentType.getBaseType());
+    }
     dataPart.setHeader(HEADER_CONTENT_TYPE, entityContentType);
 
     // Encode query params as form-urlencoded

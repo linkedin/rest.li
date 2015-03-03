@@ -303,7 +303,7 @@ import org.slf4j.LoggerFactory;
                           TransportCallback<RestResponse> callback)
   {
     MessageType.setMessageType(MessageType.Type.REST, wireAttrs);
-    writeRequestWithTimeout(request, wireAttrs, HttpBridge.restToHttpCallback(callback, request));
+    writeRequestWithTimeout(request, requestContext, wireAttrs, HttpBridge.restToHttpCallback(callback, request));
   }
 
   @Override
@@ -387,7 +387,7 @@ import org.slf4j.LoggerFactory;
     }
   }
 
-  private void writeRequestWithTimeout(RestRequest request, Map<String, String> wireAttrs,
+  private void writeRequestWithTimeout(RestRequest request, RequestContext requestContext, Map<String, String> wireAttrs,
                                        TransportCallback<RestResponse> callback)
   {
     // By wrapping the callback in a Timeout callback before passing it along, we deny the rest
@@ -401,10 +401,10 @@ import org.slf4j.LoggerFactory;
                                                    TimeUnit.MILLISECONDS,
                                                    callback,
                                                    _requestTimeoutMessage);
-    writeRequest(request, wireAttrs, timeoutCallback);
+    writeRequest(request, requestContext, wireAttrs, timeoutCallback);
   }
 
-  private void writeRequest(RestRequest request, Map<String, String> wireAttrs,
+  private void writeRequest(RestRequest request, RequestContext requestContext, Map<String, String> wireAttrs,
                             final TimeoutTransportCallback<RestResponse> callback)
   {
     State state = _state.get();
@@ -433,6 +433,7 @@ import org.slf4j.LoggerFactory;
       newRequest= QueryTunnelUtil.encode(new RestRequestBuilder(request)
                                              .overwriteHeaders(WireAttributeHelper.toWireAttributes(wireAttrs))
                                              .build(),
+                                         requestContext,
                                          _queryPostThreshold);
     }
     catch (IOException e)

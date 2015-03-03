@@ -27,4 +27,6 @@ public class R2Constants
   public static final String IS_SECURE = "IS_SECURE";
   public static final String CLIENT_CERT = "CLIENT_CERT";
   public static final String REQUEST_COMPRESSION_OVERRIDE = "REQUEST_COMPRESSION_OVERRIDE";
+  public static final String IS_QUERY_TUNNELED = "IS_QUERY_TUNNELED";
+  public static final String FORCE_QUERY_TUNNEL = "FORCE_QUERY_TUNNEL";
 }

@@ -68,11 +68,13 @@ public abstract class AbstractR2Servlet extends HttpServlet
   protected void service(final HttpServletRequest req, final HttpServletResponse resp)
           throws ServletException, IOException
   {
+    RequestContext requestContext = readRequestContext(req);
+
     RestRequest restRequest;
 
     try
     {
-      restRequest = readFromServletRequest(req);
+      restRequest = readFromServletRequest(req, requestContext);
     }
     catch (URISyntaxException e)
     {
@@ -84,8 +86,6 @@ public abstract class AbstractR2Servlet extends HttpServlet
       writeToServletError(resp, RestStatus.BAD_REQUEST, e.toString());
       return;
     }
-
-    RequestContext requestContext = readRequestContext(req);
 
     final AtomicReference<TransportResponse<RestResponse>> result =
         new AtomicReference<TransportResponse<RestResponse>>();
@@ -170,7 +170,7 @@ public abstract class AbstractR2Servlet extends HttpServlet
     writeToServletResponse(TransportResponseImpl.success(restResponse), resp);
   }
 
-  protected RestRequest readFromServletRequest(HttpServletRequest req) throws IOException,
+  protected RestRequest readFromServletRequest(HttpServletRequest req, RequestContext requestContext) throws IOException,
       ServletException,
       URISyntaxException,
       MessagingException
@@ -216,7 +216,7 @@ public abstract class AbstractR2Servlet extends HttpServlet
 
       rb.setEntity(buf);
     }
-    return QueryTunnelUtil.decode(rb.build());
+    return QueryTunnelUtil.decode(rb.build(), requestContext);
   }
 
   /**
