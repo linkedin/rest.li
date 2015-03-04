@@ -8,6 +8,7 @@ import com.linkedin.d2.discovery.event.PropertyEventBus;
 import com.linkedin.d2.discovery.event.PropertyEventBusImpl;
 import com.linkedin.d2.discovery.event.PropertyEventSubscriber;
 import com.linkedin.d2.discovery.stores.PropertyStoreException;
+import java.util.concurrent.TimeoutException;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.testng.annotations.BeforeMethod;
@@ -78,15 +79,18 @@ public class ZooKeeperChildrenDataPublisherTest
   }
 
   @BeforeMethod
-  public void setupMethod() throws ExecutionException, InterruptedException {
+  public void setupMethod()
+      throws ExecutionException, InterruptedException, TimeoutException
+  {
     generateTestData();
-    FutureCallback<None> callback = new FutureCallback<None>();
     for (Map.Entry<String, String> entry : _testData.entrySet())
     {
+      FutureCallback<None> callback = new FutureCallback<None>();
       _zkClient.ensurePersistentNodeExists("/" + entry.getKey(), callback);
-      callback.get();
-      _zkClient.setDataUnsafe("/" + entry.getKey(), entry.getValue().getBytes(), callback);
-      callback.get();
+      callback.get(30, TimeUnit.SECONDS);
+      FutureCallback<None> callback2 = new FutureCallback<None>();
+      _zkClient.setDataUnsafe("/" + entry.getKey(), entry.getValue().getBytes(), callback2);
+      callback2.get(30, TimeUnit.SECONDS);
     }
   }
 
