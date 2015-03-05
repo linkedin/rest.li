@@ -6,6 +6,9 @@
 (RB=445163)
 Fixed DefaultMessageSerializer to support cookies and non-ASCII message entities.
 
+(RB=440822)
+Fixed key value conversion for typeref key without custom Java binding.
+
 2.2.8
 -----
 (RB=446341)

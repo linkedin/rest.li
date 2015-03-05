@@ -245,7 +245,8 @@ public class BatchKVResponse<K, V extends RecordTemplate> extends RecordTemplate
           CollectionUtils.getMapInitialCapacity(resultsRaw.size(), 0.75f), 0.75f, complexKeyType);
       for (Map.Entry<String, Object> entry : resultsRaw.entrySet())
       {
-        final K key = ResponseUtils.convertKey(entry.getKey(), keyType, keyParts, complexKeyType, version);
+        @SuppressWarnings("unchecked")
+        final K key = (K) ResponseUtils.convertKey(entry.getKey(), keyType, keyParts, complexKeyType, version);
         final V value = deserializeValue(entry.getValue());
         _results.put(key, value);
       }
@@ -262,7 +263,8 @@ public class BatchKVResponse<K, V extends RecordTemplate> extends RecordTemplate
           CollectionUtils.getMapInitialCapacity(errorsRaw.size(), 0.75f), 0.75f, complexKeyType);
       for (Map.Entry<String, Object> entry : errorsRaw.entrySet())
       {
-        final K key = ResponseUtils.convertKey(entry.getKey(), keyType, keyParts, complexKeyType, version);
+        @SuppressWarnings("unchecked")
+        final K key = (K) ResponseUtils.convertKey(entry.getKey(), keyType, keyParts, complexKeyType, version);
         final ErrorResponse value = DataTemplateUtil.wrap(entry.getValue(), ErrorResponse.class);
         _errors.put(key, value);
       }

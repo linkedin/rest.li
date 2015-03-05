@@ -1,0 +1,22 @@
+{
+  "name" : "typerefKeys",
+  "namespace" : "com.linkedin.restli.examples.greetings.client",
+  "path" : "/typerefKeys",
+  "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+  "doc" : "generated from: com.linkedin.restli.examples.greetings.server.TyperefKeysResource",
+  "collection" : {
+    "identifier" : {
+      "name" : "typerefKeysId",
+      "type" : "com.linkedin.restli.examples.typeref.api.LongRef"
+    },
+    "supports" : [ "batch_get", "create" ],
+    "methods" : [ {
+      "method" : "create"
+    }, {
+      "method" : "batch_get"
+    } ],
+    "entity" : {
+      "path" : "/typerefKeys/{typerefKeysId}"
+    }
+  }
+}

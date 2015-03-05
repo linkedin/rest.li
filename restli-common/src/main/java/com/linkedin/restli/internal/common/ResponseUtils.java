@@ -42,32 +42,36 @@ import java.util.Map;
  */
 public class ResponseUtils
 {
-  @SuppressWarnings("unchecked")
-  public static <T> T convertKey(String rawKey,
-                                 TypeSpec<T> key,
+  public static Object convertKey(String rawKey,
+                                 TypeSpec<?> keyType,
                                  Map<String, CompoundKey.TypeInfo> keyParts,
                                  ComplexKeySpec<?, ?> complexKeyType,
                                  ProtocolVersion version)
   {
-    Class<? extends T> keyBindingClass = key.getType();
+    Class<?> keyBindingClass = keyType.getType();
     Object result;
 
-    if (TyperefInfo.class.isAssignableFrom(key.getType()))
+    if (TyperefInfo.class.isAssignableFrom(keyType.getType()))
     {
-      TyperefDataSchema schema = (TyperefDataSchema)key.getSchema();
-      DataSchema.Type dereferencedType = schema.getDereferencedType();
+      TyperefDataSchema schema = (TyperefDataSchema)keyType.getSchema();
       if (!schema.getDereferencedDataSchema().isPrimitive())
       {
-        throw new IllegalArgumentException("Compound key type must dereference to a primitive type.");
+        throw new IllegalArgumentException("Typeref must reference a primitive type when used as a key type.");
       }
-      keyBindingClass = (Class<? extends T>)TyperefUtils.getJavaClassForSchema(schema);
+
+      // Coerce the raw key string to the referenced primitive type.
+      DataSchema.Type dereferencedType = schema.getDereferencedType();
+      Class<?> primitiveClass = DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchemaClass(dereferencedType);
+      result = ValueConverter.coerceString(rawKey, primitiveClass);
+
+      // Identify the binding class for the typeref.
+      keyBindingClass = TyperefUtils.getJavaClassForSchema(schema);
       if(keyBindingClass == null)
       {
-        keyBindingClass = (Class<? extends T>)dereferencedType.getClass();
+        keyBindingClass = primitiveClass;
       }
-      result = ValueConverter.coerceString(rawKey, DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchemaClass(dereferencedType));
     }
-    else if (CompoundKey.class.isAssignableFrom(key.getType()))
+    else if (CompoundKey.class.isAssignableFrom(keyType.getType()))
     {
       DataMap keyDataMap;
       if (version.compareTo(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()) >= 0)
@@ -88,7 +92,7 @@ public class ResponseUtils
 
       result = CompoundKey.fromValues(keyDataMap, keyParts);
     }
-    else if (ComplexResourceKey.class.isAssignableFrom(key.getType()))
+    else if (ComplexResourceKey.class.isAssignableFrom(keyType.getType()))
     {
       try
       {
@@ -105,11 +109,11 @@ public class ResponseUtils
     {
       try
       {
-        result = ValueConverter.coerceString(rawKey, key.getType());
+        result = ValueConverter.coerceString(rawKey, keyType.getType());
       }
       catch (IllegalArgumentException e)
       {
-        throw new IllegalStateException(key.getType().getName() + " is not supported as a key type for BatchKVResponse", e);
+        throw new IllegalStateException(keyType.getType().getName() + " is not supported as a key type for BatchKVResponse", e);
       }
     }
 

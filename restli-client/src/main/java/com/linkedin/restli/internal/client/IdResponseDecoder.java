@@ -78,6 +78,7 @@ public class IdResponseDecoder<K> extends RestResponseDecoder<IdResponse<K>>
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   protected IdResponse<K> wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
           throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, IOException
   {
@@ -89,7 +90,7 @@ public class IdResponseDecoder<K> extends RestResponseDecoder<IdResponse<K>>
     }
     else
     {
-      key = ResponseUtils.convertKey(id, _keyType, _keyParts, _complexKeyType, version);
+      key = (K) ResponseUtils.convertKey(id, _keyType, _keyParts, _complexKeyType, version);
     }
     return new IdResponse<K>(key);
   }

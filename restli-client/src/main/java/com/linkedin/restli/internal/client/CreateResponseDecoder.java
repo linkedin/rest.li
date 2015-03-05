@@ -90,6 +90,7 @@ public class CreateResponseDecoder<K> extends EmptyResponseDecoder
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public CreateResponse<K> wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
   {
     String id = HeaderUtil.getIdHeaderValue(headers);
@@ -101,7 +102,7 @@ public class CreateResponseDecoder<K> extends EmptyResponseDecoder
     }
     else
     {
-      key = ResponseUtils.convertKey(id, _keyType, _keyParts, _complexKeyType, version);
+      key = (K) ResponseUtils.convertKey(id, _keyType, _keyParts, _complexKeyType, version);
     }
 
     return new CreateResponse<K>(key);

@@ -49,6 +49,7 @@ public class CreateIdStatusDecoder<K>
     _version = version;
   }
 
+  @SuppressWarnings("unchecked")
   public CreateIdStatus<K> makeValue(DataMap dataMap)
   {
     K key;
@@ -59,7 +60,7 @@ public class CreateIdStatusDecoder<K>
     }
     else
     {
-      key = ResponseUtils.convertKey(id, _keyType, _keyParts, _complexKeyType, _version);
+      key = (K) ResponseUtils.convertKey(id, _keyType, _keyParts, _complexKeyType, _version);
     }
     return new CreateIdStatus<K>(dataMap, key);
   }

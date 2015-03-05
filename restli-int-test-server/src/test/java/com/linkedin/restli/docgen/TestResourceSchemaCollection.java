@@ -61,6 +61,7 @@ public class TestResourceSchemaCollection
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.chainedTyperefs", ResourceType.ASSOCIATION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.customMetadataProjections", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.customTypes2.customTypes4", ResourceType.COLLECTION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.typerefKeys", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.withContext", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.exceptions", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.exceptions2", ResourceType.COLLECTION);
@@ -123,7 +124,7 @@ public class TestResourceSchemaCollection
 
       final String schemaFullName = getResourceSchemaFullName(schema, entry.getKey());
       final ResourceType expectedType = expectedTypes.get(schemaFullName);
-      Assert.assertNotNull(expectedType);
+      Assert.assertNotNull(expectedType, "Resource type for " + schemaFullName);
       Assert.assertSame(actualType, expectedType, schemaFullName);
     }
   }
