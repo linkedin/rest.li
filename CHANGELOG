@@ -1,6 +1,11 @@
-2.2.6
+2.2.7
 -----
 
+
+2.2.6
+-----
+(RB=439521)
+Add feature to QueryTunnelUtil and fix a bug in encode of MimeMultiPart entity
 
 2.2.5
 -----
