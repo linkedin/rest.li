@@ -21,12 +21,16 @@ then
     exit 1
 fi
 
-DIFF="`git diff --quiet $remote/$branch >/dev/null 2>&1 ; echo $?`"
-if [ $DIFF = 0 ]
+LATEST_RELEASED_VERSION=$(git tag | tail -n 1)
+DIFF="`git diff --quiet $remote/$branch $LATEST_RELEASED_VERSION >/dev/null 2>&1 ; echo $?`"
+if [ $INCONSISTENT = 0 ]
 then
-    echo "$remote/$branch and current branch contain no diff."
+    echo "No commit between latest released version $LATEST_RELEASED_VERSION and $remote/$branch."
     exit 1
-elif [ $DIFF != 1 ]
+fi
+
+INCONSISTENT="`git diff --quiet $remote/$branch >/dev/null 2>&1 ; echo $?`"
+if [ $INCONSISTENT != 0 ]
 then
     echo "$remote/$branch and current branch are inconsistent."
     echo "Use git diff $remote/$branch to see changes."
