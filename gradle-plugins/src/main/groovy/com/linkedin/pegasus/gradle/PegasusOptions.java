@@ -22,6 +22,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -34,6 +36,8 @@ public class PegasusOptions
   public Set<GenerationMode> generationModes = new HashSet<GenerationMode>(Arrays.asList(GenerationMode.PEGASUS));
   public IdlOptions idlOptions = new IdlOptions();
   public ClientOptions clientOptions = new ClientOptions();
+
+  private static final Logger _log = LoggerFactory.getLogger(PegasusOptions.class);
 
   /**
    * control whether or not some generation tasks will be executed
@@ -82,6 +86,7 @@ public class PegasusOptions
 
     public void addIdlItem(String inApiName, List<String> inPackageNames)
     {
+      _log.warn("addIdlItem(inApiName, inPackageNames) has been deprecated, please use addIdlItem(inPackageNames) instead.");
       IdlItem newItem = new IdlItem(inApiName, inPackageNames);
       _idlOptionsList.add(newItem);
     }

@@ -11,6 +11,9 @@ Add feature to QueryTunnelUtil and fix a bug in encode of MimeMultiPart entity
 Handle @PathKeysParam and other parameter annotation for action methods by
 invoking the common routine ArgumentBuilder.buildArgs for all RestLiArgumentBuilder classes.
 
+(RB=443980)
+Add warning message for invocation of deprecated pegasus plugin method addIdlItem accepting two parameters.
+
 2.2.5
 -----
 (RB=436213)
