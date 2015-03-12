@@ -74,6 +74,48 @@ public class TestDefaultMessageSerializer
   }
 
   @Test
+  public void testRestReqWithCookies() throws IOException
+  {
+    final RestRequest expected = new RestRequestBuilder(URI.create("http://localhost:1234"))
+        .addCookie("cookie-name1=cookie-value1")
+        .addCookie("cookie-name2=cookie-value2")
+        .build();
+    assertMsgEquals(expected, _serializer.readRestRequest(getResource("rest-req-with-cookies.txt")));
+  }
+
+  @Test
+  public void testRestReqWithHeadersAndCookies() throws IOException
+  {
+    final RestRequest expected = new RestRequestBuilder(URI.create("http://localhost:1234"))
+        .addCookie("cookie-name1=cookie-value1")
+        .addCookie("cookie-name2=cookie-value2")
+        .addHeaderValue("header-field1", "header-value1")
+        .build();
+    assertMsgEquals(expected, _serializer.readRestRequest(getResource("rest-req-with-headers-and-cookies.txt")));
+  }
+
+  @Test
+  public void testRestResWithCookies() throws IOException
+  {
+    final RestResponse expected = new RestResponseBuilder()
+        .addCookie("cookie-name1=cookie-value1")
+        .addCookie("cookie-name2=cookie-value2")
+        .build();
+    assertMsgEquals(expected, _serializer.readRestResponse(getResource("rest-res-with-cookies.txt")));
+  }
+
+  @Test
+  public void testRestResWithHeadersAndCookies() throws IOException
+  {
+    final RestResponse expected = new RestResponseBuilder()
+        .addCookie("cookie-name1=cookie-value1")
+        .addCookie("cookie-name2=cookie-value2")
+        .addHeaderValue("header-field1", "header-value1")
+        .build();
+    assertMsgEquals(expected, _serializer.readRestResponse(getResource("rest-res-with-headers-and-cookies.txt")));
+  }
+
+  @Test
   public void testRestReqWithHeaderMultiValue1() throws IOException
   {
     final RestRequest expected = new RestRequestBuilder(URI.create("http://localhost:1234"))
@@ -258,6 +300,30 @@ public class TestDefaultMessageSerializer
   }
 
   @Test
+  public void testRestRequestReversible6() throws IOException
+  {
+    final RestRequest req = createRestRequest().builder()
+        .setHeader("set-cookie", "field-value1")
+        .addCookie("cookie-key1=cookie-value1")
+        .build();
+    assertMsgEquals(req, readRestReq(writeReq(req)));
+  }
+
+  @Test
+  public void testRestRequestBinaryEntity() throws IOException
+  {
+    final int byteRange = Byte.MAX_VALUE - Byte.MIN_VALUE + 1;
+    final byte[] entity = new byte[byteRange];
+    for (int b = 0; b < byteRange; b++) {
+      entity[b] = (byte) (Byte.MIN_VALUE + b);
+    }
+    final RestRequest req = createRestRequest().builder()
+        .setEntity(entity)
+        .build();
+    assertMsgEquals(req, readRestReq(writeReq(req)));
+  }
+
+  @Test
   public void testRestResponseReversible1() throws IOException
   {
     final RestResponse res = createRestResponse();
@@ -298,6 +364,30 @@ public class TestDefaultMessageSerializer
     final RestResponse res = createRestResponse().builder()
             .addHeaderValue("field-key1", "field-val1")
             .addHeaderValue("field-key1", "field-val2")
+            .build();
+    assertMsgEquals(res, readRestRes(writeRes(res)));
+  }
+
+  @Test
+  public void testRestResponseReversible6() throws IOException
+  {
+    final RestResponse res = createRestResponse().builder()
+        .setHeader("cookie", "field-value1")
+        .addCookie("cookie-key1=cookie-value1")
+        .build();
+    assertMsgEquals(res, readRestRes(writeRes(res)));
+  }
+
+  @Test
+  public void testRestResponseBinaryEntity() throws IOException
+  {
+    final int byteRange = Byte.MAX_VALUE - Byte.MIN_VALUE + 1;
+    final byte[] entity = new byte[byteRange];
+    for (int b = 0; b < byteRange; b++) {
+      entity[b] = (byte) (Byte.MIN_VALUE + b);
+    }
+    final RestResponse res = createRestResponse().builder()
+            .setEntity(entity)
             .build();
     assertMsgEquals(res, readRestRes(writeRes(res)));
   }

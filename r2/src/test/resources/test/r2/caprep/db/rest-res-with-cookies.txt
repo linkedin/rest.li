@@ -1,0 +1,4 @@
+HTTP/1.1 200 OK
+set-cookie:cookie-name1=cookie-value1
+Set-Cookie: cookie-name2=cookie-value2
+
