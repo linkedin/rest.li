@@ -275,36 +275,39 @@ public class ClientCompressionFilter implements Filter, RestFilter
                              Map<String, String> wireAttrs,
                              NextFilter<RestRequest, RestResponse> nextFilter)
   {
-    try
+    Boolean decompressionOff = (Boolean) requestContext.getLocalAttr(R2Constants.RESPONSE_DECOMPRESSION_OFF);
+    if (decompressionOff == null || !decompressionOff)
     {
-      //Check for header encoding
-      String compressionHeader = res.getHeader(HttpConstants.CONTENT_ENCODING);
-
-      //Compress if necessary
-      if (compressionHeader != null && res.getEntity().length() > 0)
+      try
       {
-        EncodingType encoding = null;
-        try
+        //Check for header encoding
+        String compressionHeader = res.getHeader(HttpConstants.CONTENT_ENCODING);
+
+        //Compress if necessary
+        if (compressionHeader != null && res.getEntity().length() > 0)
         {
-          encoding = EncodingType.get(compressionHeader.trim().toLowerCase());
+          EncodingType encoding = null;
+          try
+          {
+            encoding = EncodingType.get(compressionHeader.trim().toLowerCase());
+          }
+          catch (IllegalArgumentException e)
+          {
+            throw new CompressionException(CompressionConstants.SERVER_ENCODING_ERROR + compressionHeader);
+          }
+          if (!encoding.hasCompressor())
+          {
+            throw new CompressionException(CompressionConstants.SERVER_ENCODING_ERROR + compressionHeader);
+          }
+          byte[] inflated = encoding.getCompressor().inflate(res.getEntity().asInputStream());
+          res = res.builder().setEntity(inflated).build();
         }
-        catch (IllegalArgumentException e)
-        {
-          throw new CompressionException(CompressionConstants.SERVER_ENCODING_ERROR + compressionHeader);
-        }
-        if (!encoding.hasCompressor())
-        {
-          throw new CompressionException(CompressionConstants.SERVER_ENCODING_ERROR + compressionHeader);
-        }
-        byte[] inflated = encoding.getCompressor().inflate(res.getEntity().asInputStream());
-        res = res.builder().setEntity(inflated).build();
       }
-    }
-    catch (CompressionException e)
-    {
-      //NOTE: this is going to be thrown up, but this isn't quite the right type of exception
-      //Will change to proper type when rest.li supports centralized filter exception handling
-      throw new RuntimeException(CompressionConstants.SERVER_ENCODING_ERROR, e);
+      catch (CompressionException e)
+      {
+        nextFilter.onError(e, requestContext, wireAttrs);
+        return;
+      }
     }
 
     nextFilter.onResponse(res, requestContext, wireAttrs);

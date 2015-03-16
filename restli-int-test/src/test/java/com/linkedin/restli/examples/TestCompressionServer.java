@@ -22,6 +22,7 @@ import com.linkedin.common.util.None;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.filter.FilterChains;
 import com.linkedin.r2.filter.CompressionConfig;
+import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.filter.compression.Bzip2Compressor;
 import com.linkedin.r2.filter.compression.ClientCompressionFilter;
 import com.linkedin.r2.filter.compression.CompressionException;
@@ -30,10 +31,12 @@ import com.linkedin.r2.filter.compression.DeflateCompressor;
 import com.linkedin.r2.filter.compression.EncodingType;
 import com.linkedin.r2.filter.compression.GzipCompressor;
 import com.linkedin.r2.filter.compression.SnappyCompressor;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.transport.http.common.HttpConstants;
+import com.linkedin.r2.util.RequestContextUtil;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
@@ -687,6 +690,38 @@ public class TestCompressionServer extends RestLiIntegrationTest
     {
       Assert.assertEquals(g.getTone(), Tone.FRIENDLY);
       Assert.assertNotNull(g.getMessage());
+    }
+  }
+
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientsCompressedResponsesBuilderDataProvider")
+  public void testSearchWithoutDecompression(RestClient client, String operationsForCompression, RootBuilderWrapper<Long, Greeting> builders,
+                                             ProtocolVersion protocolVersion) throws RemoteInvocationException
+  {
+    Request<CollectionResponse<Greeting>> findRequest = builders.findBy("Search").setQueryParam("tone", Tone.FRIENDLY).build();
+    RequestContext requestContext = new RequestContext();
+    RequestContextUtil.turnOffResponseDecompression(requestContext);
+
+    Map<String, Set<String>> methodsAndFamilies = getCompressionMethods(operationsForCompression);
+    Set<String> methods = methodsAndFamilies.get("methods");
+    Set<String> families = methodsAndFamilies.get("families");
+
+    if (shouldCompress(families, methods, "finder:search"))
+    {
+      // The server sends a compressed response, but the client does not decompress it so it cannot read the response.
+      try
+      {
+        client.sendRequest(findRequest, requestContext).getResponse();
+        Assert.fail("Expected RemoteInvocationException, but getResponse() succeeded.");
+      }
+      catch (RemoteInvocationException e)
+      {
+        Assert.assertEquals(e.getCause().getMessage(), "Could not decode REST response");
+      }
+    }
+    else
+    {
+      // The server doesn't compress the response in the first place, so the client can read the response.
+      client.sendRequest(findRequest, requestContext).getResponse();
     }
   }
 

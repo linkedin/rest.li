@@ -29,4 +29,5 @@ public class R2Constants
   public static final String REQUEST_COMPRESSION_OVERRIDE = "REQUEST_COMPRESSION_OVERRIDE";
   public static final String IS_QUERY_TUNNELED = "IS_QUERY_TUNNELED";
   public static final String FORCE_QUERY_TUNNEL = "FORCE_QUERY_TUNNEL";
+  public static final String RESPONSE_DECOMPRESSION_OFF = "RESPONSE_DECOMPRESSION_OFF";
 }
