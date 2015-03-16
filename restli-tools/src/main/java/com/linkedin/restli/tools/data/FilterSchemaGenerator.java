@@ -19,8 +19,10 @@ package com.linkedin.restli.tools.data;
 
 import com.linkedin.data.it.Predicate;
 import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.JsonBuilder;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.SchemaParser;
+import com.linkedin.data.schema.SchemaToJsonEncoder;
 import com.linkedin.data.schema.util.Filters;
 import com.linkedin.data.schema.validation.ValidationOptions;
 import com.linkedin.restli.common.RestConstants;
@@ -51,12 +53,15 @@ import java.util.Collection;
  */
 public class FilterSchemaGenerator
 {
+  private FilterSchemaGenerator() {
+  }
+
   public static void main(String[] args)
   {
-    final CommandLineParser parser = new GnuParser();
     CommandLine cl = null;
     try
     {
+      final CommandLineParser parser = new GnuParser();
       cl = parser.parse(_options, args);
     }
     catch (ParseException e)
@@ -110,7 +115,7 @@ public class FilterSchemaGenerator
         schemaParser.parse(new FileInputStream(sourceFile));
         if (schemaParser.hasError())
         {
-          _log.error("Error parsing " + sourceFile.getPath() + ": " + schemaParser.errorMessageBuilder().toString());
+          _log.error("Error parsing " + sourceFile.getPath() + ": " + schemaParser.errorMessageBuilder());
           exitCode = 1;
           continue;
         }
@@ -130,7 +135,7 @@ public class FilterSchemaGenerator
                                                                          predicate, filterParser);
         if (filterParser.hasError())
         {
-          _log.error("Error applying predicate: " + filterParser.errorMessageBuilder().toString());
+          _log.error("Error applying predicate: " + filterParser.errorMessageBuilder());
           exitCode = 1;
           continue;
         }
@@ -148,7 +153,8 @@ public class FilterSchemaGenerator
         }
 
         FileOutputStream fout = new FileOutputStream(outputFile);
-        fout.write(filteredSchema.toString().getBytes(RestConstants.DEFAULT_CHARSET));
+        String schemaJson = SchemaToJsonEncoder.schemaToJson(filteredSchema, JsonBuilder.Pretty.INDENTED);
+        fout.write(schemaJson.getBytes(RestConstants.DEFAULT_CHARSET));
         fout.close();
       }
       catch (IOException e)

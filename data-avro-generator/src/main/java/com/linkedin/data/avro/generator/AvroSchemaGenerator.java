@@ -24,6 +24,7 @@ import com.linkedin.data.avro.SchemaTranslator;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaLocation;
 import com.linkedin.data.schema.DataSchemaResolver;
+import com.linkedin.data.schema.JsonBuilder;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.generator.AbstractGenerator;
@@ -78,7 +79,7 @@ public class AvroSchemaGenerator extends AbstractGenerator
   /**
    * Options that specify how Avro schema should be generated.
    */
-  private final DataToAvroSchemaTranslationOptions _options = new DataToAvroSchemaTranslationOptions();
+  private final DataToAvroSchemaTranslationOptions _options = new DataToAvroSchemaTranslationOptions(JsonBuilder.Pretty.INDENTED);
 
   private final Config _config;
 
