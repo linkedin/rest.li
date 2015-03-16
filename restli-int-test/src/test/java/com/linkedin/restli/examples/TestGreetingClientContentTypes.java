@@ -268,6 +268,7 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
     Assert.assertNull(emptyRecordResponse.getHeader(RestConstants.HEADER_CONTENT_TYPE));
   }
 
+  @SuppressWarnings("deprecation")
   @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientDataDataProvider")
   public Object[][] clientDataDataProvider()
   {
@@ -288,6 +289,7 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
       };
   }
 
+  @SuppressWarnings("deprecation")
   @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientDataBatchDataProvider")
   public Object[][] clientDataBatchDataProvider()
   {
@@ -302,6 +304,7 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
       };
   }
 
+  @SuppressWarnings("deprecation")
   @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "buildersClientDataDataProvider")
   public Object[][] buildersClientDataDataProvider()
   {

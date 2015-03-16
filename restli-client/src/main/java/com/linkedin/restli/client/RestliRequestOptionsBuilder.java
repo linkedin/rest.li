@@ -19,6 +19,10 @@ package com.linkedin.restli.client;
 
 import com.linkedin.r2.filter.CompressionOption;
 
+import java.util.Collections;
+import java.util.List;
+
+
 /**
  * Builds {@link RestliRequestOptions}. NOT thread safe.
  *
@@ -28,6 +32,8 @@ public class RestliRequestOptionsBuilder
 {
   private ProtocolVersionOption _protocolVersionOption;
   private CompressionOption _requestCompressionOverride;
+  private RestClient.ContentType _contentType;
+  private List<RestClient.AcceptType> _acceptTypes;
 
   public RestliRequestOptionsBuilder()
   {
@@ -38,6 +44,8 @@ public class RestliRequestOptionsBuilder
   {
     setProtocolVersionOption(restliRequestOptions.getProtocolVersionOption());
     setRequestCompressionOverride(restliRequestOptions.getRequestCompressionOverride());
+    setContentType(restliRequestOptions.getContentType());
+    setAcceptTypes(restliRequestOptions.getAcceptTypes());
   }
 
   public RestliRequestOptionsBuilder setProtocolVersionOption(ProtocolVersionOption protocolVersionOption)
@@ -52,8 +60,20 @@ public class RestliRequestOptionsBuilder
     return this;
   }
 
+  public RestliRequestOptionsBuilder setContentType(RestClient.ContentType contentType)
+  {
+    _contentType = contentType;
+    return this;
+  }
+
+  public RestliRequestOptionsBuilder setAcceptTypes(List<RestClient.AcceptType> acceptTypes)
+  {
+    _acceptTypes = Collections.unmodifiableList(acceptTypes);
+    return this;
+  }
+
   public RestliRequestOptions build()
   {
-    return new RestliRequestOptions(_protocolVersionOption, _requestCompressionOverride);
+    return new RestliRequestOptions(_protocolVersionOption, _requestCompressionOverride, _contentType, _acceptTypes);
   }
 }

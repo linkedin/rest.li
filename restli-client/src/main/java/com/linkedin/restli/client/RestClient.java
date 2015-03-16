@@ -54,6 +54,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+
 /**
  * Subset of Jersey's REST client, omitting things we probably won't use for internal API calls +
  * enforcing the use of Model (stenciled) response entities. We feature:
@@ -122,11 +123,19 @@ public class RestClient
     this(client, uriPrefix, DEFAULT_CONTENT_TYPE, DEFAULT_ACCEPT_TYPES);
   }
 
+  /**
+   * @deprecated please use {@link RestliRequestOptions} to configure accept types.
+   */
+  @Deprecated
   public RestClient(Client client, String uriPrefix, List<AcceptType> acceptTypes)
   {
     this(client, uriPrefix, DEFAULT_CONTENT_TYPE, acceptTypes);
   }
 
+  /**
+   * @deprecated please use {@link RestliRequestOptions} to configure content type and accept types.
+   */
+  @Deprecated
   public RestClient(Client client, String uriPrefix, ContentType contentType, List<AcceptType> acceptTypes)
   {
     _client = client;
@@ -250,6 +259,8 @@ public class RestClient
                     request.getMethodName(),
                     protocolVersion,
                     request.getRequestOptions().getRequestCompressionOverride(),
+                    request.getRequestOptions().getContentType(),
+                    request.getRequestOptions().getAcceptTypes(),
                     callback);
   }
 
@@ -364,25 +375,37 @@ public class RestClient
     }
   }
 
-  private void addAcceptHeaders(RestRequestBuilder builder)
+  // We handle accept types based on the following precedence order:
+  // 1. Request header
+  // 2. RestLiRequestOptions
+  // 3. RestClient configuration
+  private void addAcceptHeaders(RestRequestBuilder builder, List<AcceptType> acceptTypes)
   {
-    if(!_acceptTypes.isEmpty() && builder.getHeader(RestConstants.HEADER_ACCEPT) == null)
+    if (builder.getHeader(RestConstants.HEADER_ACCEPT) == null)
     {
-      builder.setHeader(RestConstants.HEADER_ACCEPT, createAcceptHeader());
+      List<AcceptType> types = _acceptTypes;
+      if (acceptTypes != null && !acceptTypes.isEmpty())
+      {
+        types = acceptTypes;
+      }
+      if (types != null && !types.isEmpty())
+      {
+        builder.setHeader(RestConstants.HEADER_ACCEPT, createAcceptHeader(types));
+      }
     }
   }
 
-  private String createAcceptHeader()
+  private String createAcceptHeader(List<AcceptType> acceptTypes)
   {
-    if (_acceptTypes.size() == 1)
+    if (acceptTypes.size() == 1)
     {
-      return _acceptTypes.get(0).getHeaderKey();
+      return acceptTypes.get(0).getHeaderKey();
     }
 
     // general case
     StringBuilder acceptHeader = new StringBuilder();
     double currQ = 1.0;
-    Iterator<AcceptType> iterator = _acceptTypes.iterator();
+    Iterator<AcceptType> iterator = acceptTypes.iterator();
     while(iterator.hasNext())
     {
       acceptHeader.append(iterator.next().getHeaderKey());
@@ -396,7 +419,12 @@ public class RestClient
     return acceptHeader.toString();
   }
 
-  private void addEntityAndContentTypeHeaders(RestRequestBuilder builder, DataMap dataMap)
+
+  // Request content type resolution follows similar precedence order to accept type:
+  // 1. Request header
+  // 2. RestLiRequestOption
+  // 3. RestClient configuration
+  private void addEntityAndContentTypeHeaders(RestRequestBuilder builder, DataMap dataMap, ContentType contentType)
     throws IOException
   {
     if (dataMap != null)
@@ -406,32 +434,42 @@ public class RestClient
       ContentType type;
       if(header == null)
       {
-        type = _contentType;
+        if (contentType != null)
+        {
+          type = contentType;
+        }
+        else if (_contentType != null)
+        {
+          type = _contentType;
+        }
+        else {
+          type = DEFAULT_CONTENT_TYPE;
+        }
         builder.setHeader(RestConstants.HEADER_CONTENT_TYPE, type.getHeaderKey());
       }
       else
       {
-        javax.mail.internet.ContentType contentType;
+        javax.mail.internet.ContentType headerContentType;
         try
         {
-          contentType = new javax.mail.internet.ContentType(header);
+          headerContentType = new javax.mail.internet.ContentType(header);
         }
         catch (ParseException e)
         {
           throw new IllegalStateException("Unable to parse Content-Type: " + header);
         }
 
-        if (contentType.getBaseType().equalsIgnoreCase(RestConstants.HEADER_VALUE_APPLICATION_JSON))
+        if (headerContentType.getBaseType().equalsIgnoreCase(RestConstants.HEADER_VALUE_APPLICATION_JSON))
         {
           type = ContentType.JSON;
         }
-        else if (contentType.getBaseType().equalsIgnoreCase(RestConstants.HEADER_VALUE_APPLICATION_PSON))
+        else if (headerContentType.getBaseType().equalsIgnoreCase(RestConstants.HEADER_VALUE_APPLICATION_PSON))
         {
           type = ContentType.PSON;
         }
         else
         {
-          throw new IllegalStateException("Unknown Content-Type: " + contentType.toString());
+          throw new IllegalStateException("Unknown Content-Type: " + headerContentType.toString());
         }
       }
 
@@ -552,6 +590,9 @@ public class RestClient
    * @param method to perform
    * @param dataMap request body entity
    * @param protocolVersion the version of the Rest.li protocol used to build this request
+   * @param requestCompressionOverride request compression override options
+   * @param contentType request content type
+   * @param acceptTypes list of response accept types
    * @param callback to call on request completion. In the event of an error, the callback
    *                 will receive a {@link com.linkedin.r2.RemoteInvocationException}. If a valid
    *                 error response was received from the remote server, the callback will receive
@@ -565,11 +606,13 @@ public class RestClient
                                String methodName,
                                ProtocolVersion protocolVersion,
                                CompressionOption requestCompressionOverride,
+                               ContentType contentType,
+                               List<AcceptType> acceptTypes,
                                Callback<RestResponse> callback)
   {
     try
     {
-      RestRequest request = buildRequest(uri, method, dataMap, headers, protocolVersion);
+      RestRequest request = buildRequest(uri, method, dataMap, headers, protocolVersion, contentType, acceptTypes);
       String operation = OperationNameGenerator.generate(method, methodName);
       requestContext.putLocalAttr(R2Constants.OPERATION, operation);
       requestContext.putLocalAttr(R2Constants.REQUEST_COMPRESSION_OVERRIDE, requestCompressionOverride);
@@ -588,14 +631,16 @@ public class RestClient
                                    ResourceMethod method,
                                    DataMap dataMap,
                                    Map<String, String> headers,
-                                   ProtocolVersion protocolVersion) throws Exception
+                                   ProtocolVersion protocolVersion,
+                                   ContentType contentType,
+                                   List<AcceptType> acceptTypes) throws Exception
   {
     RestRequestBuilder requestBuilder = new RestRequestBuilder(uri).setMethod(
             method.getHttpMethod().toString());
 
     requestBuilder.setHeaders(headers);
-    addAcceptHeaders(requestBuilder);
-    addEntityAndContentTypeHeaders(requestBuilder, dataMap);
+    addAcceptHeaders(requestBuilder, acceptTypes);
+    addEntityAndContentTypeHeaders(requestBuilder, dataMap, contentType);
     addProtocolVersionHeader(requestBuilder, protocolVersion);
 
     if (method.getHttpMethod() == HttpMethod.POST)

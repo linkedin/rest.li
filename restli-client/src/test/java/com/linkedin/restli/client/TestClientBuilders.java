@@ -30,6 +30,7 @@ import com.linkedin.data.template.DynamicRecordTemplate;
 import com.linkedin.data.template.FieldDef;
 import com.linkedin.data.template.IntegerArray;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.r2.filter.CompressionOption;
 import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.client.test.TestRecord;
 import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
@@ -1291,6 +1292,20 @@ public class TestClientBuilders
                                                                                           RestliRequestOptions.DEFAULT_OPTIONS);
     RestliRequestOptions overrideOptions =
         new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.FORCE_USE_NEXT).build();
+    Assert.assertEquals(builder.id(1L).setRequestOptions(overrideOptions).build().getRequestOptions(), overrideOptions);
+
+    overrideOptions = new RestliRequestOptionsBuilder().setRequestCompressionOverride(CompressionOption.FORCE_OFF).build();
+    Assert.assertEquals(builder.id(1L).setRequestOptions(overrideOptions).build().getRequestOptions(), overrideOptions);
+
+    overrideOptions = new RestliRequestOptionsBuilder().setContentType(RestClient.ContentType.PSON).build();
+    Assert.assertEquals(builder.id(1L).setRequestOptions(overrideOptions).build().getRequestOptions(), overrideOptions);
+
+    overrideOptions = new RestliRequestOptionsBuilder().setAcceptTypes(Arrays.asList(RestClient.AcceptType.JSON, RestClient.AcceptType.PSON)).build();
+    Assert.assertEquals(builder.id(1L).setRequestOptions(overrideOptions).build().getRequestOptions(), overrideOptions);
+
+    overrideOptions = new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.FORCE_USE_NEXT)
+        .setRequestCompressionOverride(CompressionOption.FORCE_OFF).setContentType(RestClient.ContentType.PSON)
+        .setAcceptTypes(Arrays.asList(RestClient.AcceptType.JSON, RestClient.AcceptType.PSON)).build();
     Assert.assertEquals(builder.id(1L).setRequestOptions(overrideOptions).build().getRequestOptions(), overrideOptions);
   }
 

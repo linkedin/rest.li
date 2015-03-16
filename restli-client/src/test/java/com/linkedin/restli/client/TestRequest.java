@@ -35,7 +35,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import java.util.TreeMap;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -64,7 +63,7 @@ public class TestRequest
 
     Assert.assertEquals(
         request.toSecureString(),
-        "com.linkedin.restli.client.GetRequest{_method=get, _baseUriTemplate=abc, _methodName=null, _requestOptions={_protocolVersionOption: USE_LATEST_IF_AVAILABLE, _requestCompressionOverride: null}}");
+        "com.linkedin.restli.client.GetRequest{_method=get, _baseUriTemplate=abc, _methodName=null, _requestOptions={_protocolVersionOption: USE_LATEST_IF_AVAILABLE, _requestCompressionOverride: null, _contentType: null, _acceptTypes: null}}");
   }
 
   @Test

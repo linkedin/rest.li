@@ -154,6 +154,7 @@ public class TestGreetingsClientAcceptTypes extends RestLiIntegrationTest
     Assert.assertEquals(greeting.getMessage(), "This is a newly created greeting");
   }
 
+  @SuppressWarnings("deprecation")
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "oldBuildersClientDataDataProvider")
   public void testCreate(RestClient restClient, String expectedContentType, GreetingsBuilders builders) throws RemoteInvocationException
   {
@@ -253,6 +254,7 @@ public class TestGreetingsClientAcceptTypes extends RestLiIntegrationTest
     return result;
   }
 
+  @SuppressWarnings("deprecation")
   @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "oldBuildersClientDataDataProvider")
   public Object[][] oldBuildersClientDataDataProvider()
   {
@@ -481,6 +483,7 @@ public class TestGreetingsClientAcceptTypes extends RestLiIntegrationTest
       };
   }
 
+  @SuppressWarnings("deprecation")
   @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "newBuildersClientDataDataProvider")
   public Object[][] newBuildersClientDataDataProvider()
   {

@@ -79,15 +79,16 @@ public class TestRestClientRequestBuilder
                       String expectedRequestBody,
                       String expectedEntitiesBody,
                       List<RestClient.AcceptType> acceptTypes,
-                      String expectedAcceptHeader)
+                      String expectedAcceptHeader,
+                      boolean acceptContentTypePerClient)
     throws URISyntaxException
   {
-    RestRequest restRequest = clientGeneratedRequest(GetRequest.class, ResourceMethod.GET, null, contentType, acceptTypes);
+    RestRequest restRequest = clientGeneratedRequest(GetRequest.class, ResourceMethod.GET, null, contentType, acceptTypes, acceptContentTypePerClient);
     Assert.assertNull(restRequest.getHeader(CONTENT_TYPE_HEADER));
     Assert.assertEquals(restRequest.getEntity().length(), 0);
     Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
 
-    RestRequest restRequestBatch = clientGeneratedRequest(BatchGetRequest.class, ResourceMethod.BATCH_GET, null, contentType, acceptTypes);
+    RestRequest restRequestBatch = clientGeneratedRequest(BatchGetRequest.class, ResourceMethod.BATCH_GET, null, contentType, acceptTypes, acceptContentTypePerClient);
     Assert.assertNull(restRequestBatch.getHeader(CONTENT_TYPE_HEADER));
     Assert.assertEquals(restRequestBatch.getEntity().length(), 0);
     Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
@@ -100,15 +101,16 @@ public class TestRestClientRequestBuilder
                          String expectedRequestBody,
                          String expectedEntitiesBody,
                          List<RestClient.AcceptType> acceptTypes,
-                         String expectedAcceptHeader)
+                         String expectedAcceptHeader,
+                         boolean acceptContentTypePerClient)
     throws URISyntaxException
   {
-    RestRequest restRequest = clientGeneratedRequest(FindRequest.class, ResourceMethod.FINDER, null, contentType, acceptTypes);
+    RestRequest restRequest = clientGeneratedRequest(FindRequest.class, ResourceMethod.FINDER, null, contentType, acceptTypes, acceptContentTypePerClient);
     Assert.assertNull(restRequest.getHeader(CONTENT_TYPE_HEADER));
     Assert.assertEquals(restRequest.getEntity().length(), 0);
     Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
 
-    RestRequest restRequestAll = clientGeneratedRequest(GetAllRequest.class, ResourceMethod.GET_ALL, null, contentType, acceptTypes);
+    RestRequest restRequestAll = clientGeneratedRequest(GetAllRequest.class, ResourceMethod.GET_ALL, null, contentType, acceptTypes, acceptContentTypePerClient);
     Assert.assertNull(restRequestAll.getHeader(CONTENT_TYPE_HEADER));
     Assert.assertEquals(restRequestAll.getEntity().length(), 0);
     Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
@@ -120,19 +122,21 @@ public class TestRestClientRequestBuilder
                          String expectedRequestBody,
                          String expectedEntitiesBody,
                          List<RestClient.AcceptType> acceptTypes,
-                         String expectedAcceptHeader)
+                         String expectedAcceptHeader,
+                         boolean acceptContentTypePerClient)
     throws URISyntaxException
   {
     RestRequest restRequest = clientGeneratedRequest(ActionRequest.class,
                                                      ResourceMethod.ACTION,
                                                      ENTITY_BODY,
                                                      contentType,
-                                                     acceptTypes);
+                                                     acceptTypes,
+                                                     acceptContentTypePerClient);
     Assert.assertEquals(restRequest.getHeader(CONTENT_TYPE_HEADER), expectedContentTypeHeader);
     Assert.assertEquals(restRequest.getEntity().asAvroString(), expectedRequestBody);
     Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
 
-    RestRequest restRequestNoEntity = clientGeneratedRequest(ActionRequest.class, ResourceMethod.ACTION, null, contentType, acceptTypes);
+    RestRequest restRequestNoEntity = clientGeneratedRequest(ActionRequest.class, ResourceMethod.ACTION, null, contentType, acceptTypes, acceptContentTypePerClient);
     Assert.assertNull(restRequestNoEntity.getHeader(CONTENT_TYPE_HEADER));
     Assert.assertEquals(restRequestNoEntity.getEntity().length(), 0);
     Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
@@ -144,25 +148,26 @@ public class TestRestClientRequestBuilder
                          String expectedRequestBody,
                          String expectedEntitiesBody,
                          List<RestClient.AcceptType> acceptTypes,
-                         String expectedAcceptHeader)
+                         String expectedAcceptHeader,
+                         boolean acceptContentTypePerClient)
     throws URISyntaxException
   {
-    RestRequest restRequest = clientGeneratedRequest(UpdateRequest.class, ResourceMethod.UPDATE, ENTITY_BODY, contentType, acceptTypes);
+    RestRequest restRequest = clientGeneratedRequest(UpdateRequest.class, ResourceMethod.UPDATE, ENTITY_BODY, contentType, acceptTypes, acceptContentTypePerClient);
     Assert.assertEquals(restRequest.getHeader(CONTENT_TYPE_HEADER), expectedContentTypeHeader);
     Assert.assertEquals(restRequest.getEntity().asAvroString(), expectedRequestBody);
     Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
 
-    RestRequest restRequestBatch = clientGeneratedRequest(BatchUpdateRequest.class, ResourceMethod.BATCH_UPDATE, ENTITY_BODY, contentType, acceptTypes);
+    RestRequest restRequestBatch = clientGeneratedRequest(BatchUpdateRequest.class, ResourceMethod.BATCH_UPDATE, ENTITY_BODY, contentType, acceptTypes, acceptContentTypePerClient);
     Assert.assertEquals(restRequestBatch.getHeader(CONTENT_TYPE_HEADER), expectedContentTypeHeader);
     Assert.assertEquals(restRequestBatch.getEntity().asAvroString(), expectedEntitiesBody);
     Assert.assertEquals(restRequestBatch.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
 
-    RestRequest restRequestPartial = clientGeneratedRequest(PartialUpdateRequest.class, ResourceMethod.PARTIAL_UPDATE, ENTITY_BODY, contentType, acceptTypes);
+    RestRequest restRequestPartial = clientGeneratedRequest(PartialUpdateRequest.class, ResourceMethod.PARTIAL_UPDATE, ENTITY_BODY, contentType, acceptTypes, acceptContentTypePerClient);
     Assert.assertEquals(restRequestPartial.getHeader(CONTENT_TYPE_HEADER), expectedContentTypeHeader);
     Assert.assertEquals(restRequestPartial.getEntity().asAvroString(), expectedRequestBody);
     Assert.assertEquals(restRequestPartial.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
 
-    RestRequest restRequestBatchPartial = clientGeneratedRequest(BatchPartialUpdateRequest.class, ResourceMethod.BATCH_PARTIAL_UPDATE, ENTITY_BODY, contentType, acceptTypes);
+    RestRequest restRequestBatchPartial = clientGeneratedRequest(BatchPartialUpdateRequest.class, ResourceMethod.BATCH_PARTIAL_UPDATE, ENTITY_BODY, contentType, acceptTypes, acceptContentTypePerClient);
     Assert.assertEquals(restRequestBatchPartial.getHeader(CONTENT_TYPE_HEADER), expectedContentTypeHeader);
     Assert.assertEquals(restRequestBatchPartial.getEntity().asAvroString(), expectedEntitiesBody);
     Assert.assertEquals(restRequestBatchPartial.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
@@ -174,15 +179,16 @@ public class TestRestClientRequestBuilder
                          String expectedRequestBody,
                          String expectedEntitiesBody,
                          List<RestClient.AcceptType> acceptTypes,
-                         String expectedAcceptHeader)
+                         String expectedAcceptHeader,
+                         boolean acceptContentTypePerClient)
     throws URISyntaxException
   {
-    RestRequest restRequest = clientGeneratedRequest(CreateRequest.class, ResourceMethod.CREATE, ENTITY_BODY, contentType, acceptTypes);
+    RestRequest restRequest = clientGeneratedRequest(CreateRequest.class, ResourceMethod.CREATE, ENTITY_BODY, contentType, acceptTypes, acceptContentTypePerClient);
     Assert.assertEquals(restRequest.getHeader(CONTENT_TYPE_HEADER), expectedContentTypeHeader);
     Assert.assertEquals(restRequest.getEntity().asAvroString(), expectedRequestBody);
     Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
 
-    RestRequest restRequestBatch = clientGeneratedRequest(BatchCreateRequest.class, ResourceMethod.BATCH_CREATE, ENTITY_BODY, contentType, acceptTypes);
+    RestRequest restRequestBatch = clientGeneratedRequest(BatchCreateRequest.class, ResourceMethod.BATCH_CREATE, ENTITY_BODY, contentType, acceptTypes, acceptContentTypePerClient);
     Assert.assertEquals(restRequestBatch.getHeader(CONTENT_TYPE_HEADER), expectedContentTypeHeader);
     Assert.assertEquals(restRequestBatch.getEntity().asAvroString(), expectedRequestBody);
     Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
@@ -194,15 +200,16 @@ public class TestRestClientRequestBuilder
                          String expectedRequestBody,
                          String expectedEntitiesBody,
                          List<RestClient.AcceptType> acceptTypes,
-                         String expectedAcceptHeader)
+                         String expectedAcceptHeader,
+                         boolean acceptContentTypePerClient)
     throws URISyntaxException
   {
-    RestRequest restRequest = clientGeneratedRequest(DeleteRequest.class, ResourceMethod.DELETE, null, contentType, acceptTypes);
+    RestRequest restRequest = clientGeneratedRequest(DeleteRequest.class, ResourceMethod.DELETE, null, contentType, acceptTypes, acceptContentTypePerClient);
     Assert.assertNull(restRequest.getHeader(CONTENT_TYPE_HEADER));
     Assert.assertEquals(restRequest.getEntity().length(), 0);
     Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
 
-    RestRequest restRequestBatch = clientGeneratedRequest(BatchDeleteRequest.class, ResourceMethod.BATCH_DELETE, null, contentType, acceptTypes);
+    RestRequest restRequestBatch = clientGeneratedRequest(BatchDeleteRequest.class, ResourceMethod.BATCH_DELETE, null, contentType, acceptTypes, acceptContentTypePerClient);
     Assert.assertNull(restRequestBatch.getHeader(CONTENT_TYPE_HEADER));
     Assert.assertEquals(restRequestBatch.getEntity().length(), 0);
     Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
@@ -213,14 +220,34 @@ public class TestRestClientRequestBuilder
   {
     return new Object[][]
       {
-        { null,  "application/json", JSON_ENTITY_BODY, JSON_ENTITIES_BODY, null, null }, // default client
+        // contentTypes and acceptTypes configured per client (deprecated)
+        //
+        // {
+        //    RestClient.ContentType contentType
+        //    String expectedContentTypeHeader,
+        //    String expectedRequestBody,
+        //    String expectedEntitiesBody,
+        //    List<RestClient.AcceptType> acceptTypes,
+        //    String expectedAcceptHeader
+        //    boolean acceptContentTypePerClient
+        // }
+        {
+          null,
+          "application/json",
+          JSON_ENTITY_BODY,
+          JSON_ENTITIES_BODY,
+          null,
+          null,
+          true
+        }, // default client
         {
           RestClient.ContentType.JSON,
           "application/json",
           JSON_ENTITY_BODY,
           JSON_ENTITIES_BODY,
           Collections.<RestClient.AcceptType>emptyList(),
-          null
+          null,
+          true
         },
         {
           RestClient.ContentType.PSON,
@@ -228,7 +255,8 @@ public class TestRestClientRequestBuilder
           PSON_ENTITY_BODY,
           PSON_ENTITIES_BODY,
           Collections.<RestClient.AcceptType>emptyList(),
-          null
+          null,
+          true
         },
         {
           RestClient.ContentType.JSON,
@@ -236,7 +264,8 @@ public class TestRestClientRequestBuilder
           JSON_ENTITY_BODY,
           JSON_ENTITIES_BODY,
           Collections.singletonList(RestClient.AcceptType.ANY),
-          "*/*"
+          "*/*",
+          true
         },
         {
           RestClient.ContentType.PSON,
@@ -244,7 +273,8 @@ public class TestRestClientRequestBuilder
           PSON_ENTITY_BODY,
           PSON_ENTITIES_BODY,
           Collections.singletonList(RestClient.AcceptType.ANY),
-          "*/*"
+          "*/*",
+          true
         },
         {
           RestClient.ContentType.JSON,
@@ -252,7 +282,8 @@ public class TestRestClientRequestBuilder
           JSON_ENTITY_BODY,
           JSON_ENTITIES_BODY,
           Collections.singletonList(RestClient.AcceptType.JSON),
-          "application/json"
+          "application/json",
+          true
         },
         {
           RestClient.ContentType.PSON,
@@ -260,7 +291,8 @@ public class TestRestClientRequestBuilder
           PSON_ENTITY_BODY,
           PSON_ENTITIES_BODY,
           Collections.singletonList(RestClient.AcceptType.JSON),
-          "application/json"
+          "application/json",
+          true
         },
         {
           RestClient.ContentType.JSON,
@@ -268,7 +300,8 @@ public class TestRestClientRequestBuilder
           JSON_ENTITY_BODY,
           JSON_ENTITIES_BODY,
           Collections.singletonList(RestClient.AcceptType.PSON),
-          "application/x-pson"
+          "application/x-pson",
+          true
         },
         {
           RestClient.ContentType.PSON,
@@ -276,7 +309,8 @@ public class TestRestClientRequestBuilder
           PSON_ENTITY_BODY,
           PSON_ENTITIES_BODY,
           Collections.singletonList(RestClient.AcceptType.PSON),
-          "application/x-pson"
+          "application/x-pson",
+          true
         },
         {
           RestClient.ContentType.JSON,
@@ -284,7 +318,8 @@ public class TestRestClientRequestBuilder
           JSON_ENTITY_BODY,
           JSON_ENTITIES_BODY,
           Arrays.asList(RestClient.AcceptType.JSON, RestClient.AcceptType.PSON),
-          "application/json;q=1.0,application/x-pson;q=0.9"
+          "application/json;q=1.0,application/x-pson;q=0.9",
+          true
         },
         {
           RestClient.ContentType.PSON,
@@ -292,7 +327,8 @@ public class TestRestClientRequestBuilder
           PSON_ENTITY_BODY,
           PSON_ENTITIES_BODY,
           Arrays.asList(RestClient.AcceptType.JSON, RestClient.AcceptType.PSON),
-          "application/json;q=1.0,application/x-pson;q=0.9"
+          "application/json;q=1.0,application/x-pson;q=0.9",
+          true
         },
         {
           RestClient.ContentType.JSON,
@@ -300,7 +336,8 @@ public class TestRestClientRequestBuilder
           JSON_ENTITY_BODY,
           JSON_ENTITIES_BODY,
           Arrays.asList(RestClient.AcceptType.JSON, RestClient.AcceptType.ANY),
-          "application/json;q=1.0,*/*;q=0.9"
+          "application/json;q=1.0,*/*;q=0.9",
+          true
         },
         {
           RestClient.ContentType.PSON,
@@ -308,7 +345,8 @@ public class TestRestClientRequestBuilder
           PSON_ENTITY_BODY,
           PSON_ENTITIES_BODY,
           Arrays.asList(RestClient.AcceptType.JSON, RestClient.AcceptType.ANY),
-          "application/json;q=1.0,*/*;q=0.9"
+          "application/json;q=1.0,*/*;q=0.9",
+          true
         },
         {
           RestClient.ContentType.JSON,
@@ -316,7 +354,8 @@ public class TestRestClientRequestBuilder
           JSON_ENTITY_BODY,
           JSON_ENTITIES_BODY,
           Arrays.asList(RestClient.AcceptType.PSON, RestClient.AcceptType.JSON),
-          "application/x-pson;q=1.0,application/json;q=0.9"
+          "application/x-pson;q=1.0,application/json;q=0.9",
+          true
         },
         {
           RestClient.ContentType.PSON,
@@ -324,7 +363,8 @@ public class TestRestClientRequestBuilder
           PSON_ENTITY_BODY,
           PSON_ENTITIES_BODY,
           Arrays.asList(RestClient.AcceptType.PSON, RestClient.AcceptType.JSON),
-          "application/x-pson;q=1.0,application/json;q=0.9"
+          "application/x-pson;q=1.0,application/json;q=0.9",
+          true
         },
         {
           RestClient.ContentType.JSON,
@@ -332,7 +372,8 @@ public class TestRestClientRequestBuilder
           JSON_ENTITY_BODY,
           JSON_ENTITIES_BODY,
           Arrays.asList(RestClient.AcceptType.PSON, RestClient.AcceptType.ANY),
-          "application/x-pson;q=1.0,*/*;q=0.9"
+          "application/x-pson;q=1.0,*/*;q=0.9",
+          true
         },
         {
           RestClient.ContentType.PSON,
@@ -340,7 +381,8 @@ public class TestRestClientRequestBuilder
           PSON_ENTITY_BODY,
           PSON_ENTITIES_BODY,
           Arrays.asList(RestClient.AcceptType.PSON, RestClient.AcceptType.ANY),
-          "application/x-pson;q=1.0,*/*;q=0.9"
+          "application/x-pson;q=1.0,*/*;q=0.9",
+          true
         },
         {
           RestClient.ContentType.JSON,
@@ -348,7 +390,8 @@ public class TestRestClientRequestBuilder
           JSON_ENTITY_BODY,
           JSON_ENTITIES_BODY,
           Arrays.asList(RestClient.AcceptType.ANY, RestClient.AcceptType.JSON),
-          "*/*;q=1.0,application/json;q=0.9"
+          "*/*;q=1.0,application/json;q=0.9",
+          true
         },
         {
           RestClient.ContentType.PSON,
@@ -356,7 +399,8 @@ public class TestRestClientRequestBuilder
           PSON_ENTITY_BODY,
           PSON_ENTITIES_BODY,
           Arrays.asList(RestClient.AcceptType.ANY, RestClient.AcceptType.JSON),
-          "*/*;q=1.0,application/json;q=0.9"
+          "*/*;q=1.0,application/json;q=0.9",
+          true
         },
         {
           RestClient.ContentType.JSON,
@@ -364,7 +408,8 @@ public class TestRestClientRequestBuilder
           JSON_ENTITY_BODY,
           JSON_ENTITIES_BODY,
           Arrays.asList(RestClient.AcceptType.ANY, RestClient.AcceptType.PSON),
-          "*/*;q=1.0,application/x-pson;q=0.9"
+          "*/*;q=1.0,application/x-pson;q=0.9",
+          true
         },
         {
           RestClient.ContentType.PSON,
@@ -372,7 +417,8 @@ public class TestRestClientRequestBuilder
           PSON_ENTITY_BODY,
           PSON_ENTITIES_BODY,
           Arrays.asList(RestClient.AcceptType.ANY, RestClient.AcceptType.PSON),
-          "*/*;q=1.0,application/x-pson;q=0.9"
+          "*/*;q=1.0,application/x-pson;q=0.9",
+          true
         },
         {
           RestClient.ContentType.PSON,
@@ -380,15 +426,226 @@ public class TestRestClientRequestBuilder
           PSON_ENTITY_BODY,
           PSON_ENTITIES_BODY,
           Arrays.asList(RestClient.AcceptType.JSON, RestClient.AcceptType.PSON, RestClient.AcceptType.ANY),
-          "application/json;q=1.0,application/x-pson;q=0.9,*/*;q=0.8"
+          "application/json;q=1.0,application/x-pson;q=0.9,*/*;q=0.8",
+          true
         },
+        // contentType and acceptTypes configured per request (recommended)
+        //
+        // {
+        //    RestClient.ContentType contentType
+        //    String expectedContentTypeHeader,
+        //    String expectedRequestBody,
+        //    String expectedEntitiesBody,
+        //    List<RestClient.AcceptType> acceptTypes,
+        //    String expectedAcceptHeader
+        //    boolean acceptContentTypePerClient
+        // }
+        {
+          null,
+          "application/json",
+          JSON_ENTITY_BODY,
+          JSON_ENTITIES_BODY,
+          null,
+          null,
+          false
+        }, // default client
+        {
+          RestClient.ContentType.JSON,
+          "application/json",
+          JSON_ENTITY_BODY,
+          JSON_ENTITIES_BODY,
+          Collections.<RestClient.AcceptType>emptyList(),
+          null,
+          false
+        },
+        {
+          RestClient.ContentType.PSON,
+          "application/x-pson",
+          PSON_ENTITY_BODY,
+          PSON_ENTITIES_BODY,
+          Collections.<RestClient.AcceptType>emptyList(),
+          null,
+          false
+        },
+        {
+          RestClient.ContentType.JSON,
+          "application/json",
+          JSON_ENTITY_BODY,
+          JSON_ENTITIES_BODY,
+          Collections.singletonList(RestClient.AcceptType.ANY),
+          "*/*",
+          false
+        },
+        {
+          RestClient.ContentType.PSON,
+          "application/x-pson",
+          PSON_ENTITY_BODY,
+          PSON_ENTITIES_BODY,
+          Collections.singletonList(RestClient.AcceptType.ANY),
+          "*/*",
+          false
+        },
+        {
+          RestClient.ContentType.JSON,
+          "application/json",
+          JSON_ENTITY_BODY,
+          JSON_ENTITIES_BODY,
+          Collections.singletonList(RestClient.AcceptType.JSON),
+          "application/json",
+          false
+        },
+        {
+          RestClient.ContentType.PSON,
+          "application/x-pson",
+          PSON_ENTITY_BODY,
+          PSON_ENTITIES_BODY,
+          Collections.singletonList(RestClient.AcceptType.JSON),
+          "application/json",
+          false
+        },
+        {
+          RestClient.ContentType.JSON,
+          "application/json",
+          JSON_ENTITY_BODY,
+          JSON_ENTITIES_BODY,
+          Collections.singletonList(RestClient.AcceptType.PSON),
+          "application/x-pson",
+          false
+        },
+        {
+          RestClient.ContentType.PSON,
+          "application/x-pson",
+          PSON_ENTITY_BODY,
+          PSON_ENTITIES_BODY,
+          Collections.singletonList(RestClient.AcceptType.PSON),
+          "application/x-pson",
+          false
+        },
+        {
+          RestClient.ContentType.JSON,
+          "application/json",
+          JSON_ENTITY_BODY,
+          JSON_ENTITIES_BODY,
+          Arrays.asList(RestClient.AcceptType.JSON, RestClient.AcceptType.PSON),
+          "application/json;q=1.0,application/x-pson;q=0.9",
+          false
+        },
+        {
+          RestClient.ContentType.PSON,
+          "application/x-pson",
+          PSON_ENTITY_BODY,
+          PSON_ENTITIES_BODY,
+          Arrays.asList(RestClient.AcceptType.JSON, RestClient.AcceptType.PSON),
+          "application/json;q=1.0,application/x-pson;q=0.9",
+          false
+        },
+        {
+          RestClient.ContentType.JSON,
+          "application/json",
+          JSON_ENTITY_BODY,
+          JSON_ENTITIES_BODY,
+          Arrays.asList(RestClient.AcceptType.JSON, RestClient.AcceptType.ANY),
+          "application/json;q=1.0,*/*;q=0.9",
+          false
+        },
+        {
+          RestClient.ContentType.PSON,
+          "application/x-pson",
+          PSON_ENTITY_BODY,
+          PSON_ENTITIES_BODY,
+          Arrays.asList(RestClient.AcceptType.JSON, RestClient.AcceptType.ANY),
+          "application/json;q=1.0,*/*;q=0.9",
+          false
+        },
+        {
+          RestClient.ContentType.JSON,
+          "application/json",
+          JSON_ENTITY_BODY,
+          JSON_ENTITIES_BODY,
+          Arrays.asList(RestClient.AcceptType.PSON, RestClient.AcceptType.JSON),
+          "application/x-pson;q=1.0,application/json;q=0.9",
+          false
+        },
+        {
+          RestClient.ContentType.PSON,
+          "application/x-pson",
+          PSON_ENTITY_BODY,
+          PSON_ENTITIES_BODY,
+          Arrays.asList(RestClient.AcceptType.PSON, RestClient.AcceptType.JSON),
+          "application/x-pson;q=1.0,application/json;q=0.9",
+          false
+        },
+        {
+          RestClient.ContentType.JSON,
+          "application/json",
+          JSON_ENTITY_BODY,
+          JSON_ENTITIES_BODY,
+          Arrays.asList(RestClient.AcceptType.PSON, RestClient.AcceptType.ANY),
+          "application/x-pson;q=1.0,*/*;q=0.9",
+          false
+        },
+        {
+          RestClient.ContentType.PSON,
+          "application/x-pson",
+          PSON_ENTITY_BODY,
+          PSON_ENTITIES_BODY,
+          Arrays.asList(RestClient.AcceptType.PSON, RestClient.AcceptType.ANY),
+          "application/x-pson;q=1.0,*/*;q=0.9",
+          false
+        },
+        {
+          RestClient.ContentType.JSON,
+          "application/json",
+          JSON_ENTITY_BODY,
+          JSON_ENTITIES_BODY,
+          Arrays.asList(RestClient.AcceptType.ANY, RestClient.AcceptType.JSON),
+          "*/*;q=1.0,application/json;q=0.9",
+          false
+        },
+        {
+          RestClient.ContentType.PSON,
+          "application/x-pson",
+          PSON_ENTITY_BODY,
+          PSON_ENTITIES_BODY,
+          Arrays.asList(RestClient.AcceptType.ANY, RestClient.AcceptType.JSON),
+          "*/*;q=1.0,application/json;q=0.9",
+          false
+        },
+        {
+          RestClient.ContentType.JSON,
+          "application/json",
+          JSON_ENTITY_BODY,
+          JSON_ENTITIES_BODY,
+          Arrays.asList(RestClient.AcceptType.ANY, RestClient.AcceptType.PSON),
+          "*/*;q=1.0,application/x-pson;q=0.9",
+          false
+        },
+        {
+          RestClient.ContentType.PSON,
+          "application/x-pson",
+          PSON_ENTITY_BODY,
+          PSON_ENTITIES_BODY,
+          Arrays.asList(RestClient.AcceptType.ANY, RestClient.AcceptType.PSON),
+          "*/*;q=1.0,application/x-pson;q=0.9",
+          false
+        },
+        {
+          RestClient.ContentType.PSON,
+          "application/x-pson",
+          PSON_ENTITY_BODY,
+          PSON_ENTITIES_BODY,
+          Arrays.asList(RestClient.AcceptType.JSON, RestClient.AcceptType.PSON, RestClient.AcceptType.ANY),
+          "application/json;q=1.0,application/x-pson;q=0.9,*/*;q=0.8",
+          false
+        }
       };
   }
 
   @SuppressWarnings("rawtypes")
   private void setCommonExpectations(Request mockRequest,
                                      ResourceMethod method,
-                                     RestResponseDecoder mockResponseDecoder)
+                                     RestResponseDecoder mockResponseDecoder,
+                                     RestliRequestOptions requestOptions)
   {
     EasyMock.expect(mockRequest.getMethod()).andReturn(method).anyTimes();
     EasyMock.expect(mockRequest.getPathKeys()).andReturn(Collections.<String, String>emptyMap()).once();
@@ -397,7 +654,7 @@ public class TestRestClientRequestBuilder
     EasyMock.expect(mockRequest.getServiceName()).andReturn(SERVICE_NAME).once();
     EasyMock.expect(mockRequest.getResponseDecoder()).andReturn(mockResponseDecoder).once();
     EasyMock.expect(mockRequest.getHeaders()).andReturn(Collections.<String, String>emptyMap()).once();
-    EasyMock.expect(mockRequest.getRequestOptions()).andReturn(RestliRequestOptions.DEFAULT_OPTIONS).times(2);
+    EasyMock.expect(mockRequest.getRequestOptions()).andReturn(requestOptions).anyTimes();
   }
 
   @SuppressWarnings({"rawtypes", "deprecation"})
@@ -428,7 +685,8 @@ public class TestRestClientRequestBuilder
                                                                  ResourceMethod method,
                                                                  DataMap entityBody,
                                                                  RestClient.ContentType contentType,
-                                                                 List<RestClient.AcceptType> acceptTypes)
+                                                                 List<RestClient.AcceptType> acceptTypes,
+                                                                 boolean acceptContentTypePerClient)
     throws URISyntaxException
   {
     // massive setup...
@@ -440,7 +698,12 @@ public class TestRestClientRequestBuilder
     @SuppressWarnings({"rawtypes"})
     RestResponseDecoder mockResponseDecoder = EasyMock.createMock(RestResponseDecoder.class);
 
-    setCommonExpectations(mockRequest, method, mockResponseDecoder);
+    RestliRequestOptions requestOptions = RestliRequestOptions.DEFAULT_OPTIONS;
+    if (!acceptContentTypePerClient)
+    {
+      requestOptions = new RestliRequestOptions(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, null, contentType, acceptTypes);
+    }
+    setCommonExpectations(mockRequest, method, mockResponseDecoder, requestOptions);
 
     if (method == ResourceMethod.BATCH_PARTIAL_UPDATE || method == ResourceMethod.BATCH_UPDATE)
     {
@@ -535,17 +798,15 @@ public class TestRestClientRequestBuilder
 
     // do work!
     RestClient restClient;
-    if (acceptTypes == null)
+    if (acceptContentTypePerClient)
     {
-      restClient = new RestClient(mockClient, HOST);
-    }
-    else if (contentType == null)
-    {
-      restClient = new RestClient(mockClient, HOST, acceptTypes);
+      // configuration per client
+      restClient = new RestClient(mockClient, HOST, contentType, acceptTypes);
     }
     else
     {
-      restClient = new RestClient(mockClient, HOST, contentType, acceptTypes);
+      // configuration per request
+      restClient = new RestClient(mockClient, HOST);
     }
 
     restClient.sendRequest(mockRequest);
