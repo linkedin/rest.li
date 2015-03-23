@@ -113,7 +113,7 @@ public class EntityResponse<E extends RecordTemplate> extends RecordTemplate
     return getStatus(GetMode.STRICT);
   }
 
-  public boolean hasErorr()
+  public boolean hasError()
   {
     return contains(_errorField);
   }
