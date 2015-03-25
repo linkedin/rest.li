@@ -113,7 +113,16 @@ public class EntityResponse<E extends RecordTemplate> extends RecordTemplate
     return getStatus(GetMode.STRICT);
   }
 
+  /**
+   * @deprecated This method has typo in its name. Please use {@link #hasError()} instead.
+   */
+  @Deprecated
   public boolean hasErorr()
+  {
+    return hasError();
+  }
+
+  public boolean hasError()
   {
     return contains(_errorField);
   }
