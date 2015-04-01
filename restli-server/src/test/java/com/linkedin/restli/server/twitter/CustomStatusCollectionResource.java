@@ -18,10 +18,17 @@ package com.linkedin.restli.server.twitter;
 
 
 import com.linkedin.restli.server.CustomFixedLengthStringRef;
+import com.linkedin.restli.server.annotations.Finder;
+import com.linkedin.restli.server.annotations.Optional;
+import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.custom.types.CustomFixedLengthString;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Status;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -38,6 +45,26 @@ public class CustomStatusCollectionResource extends CollectionResourceTemplate<C
    */
   @Override
   public Status get(CustomFixedLengthString key)
+  {
+    return null;
+  }
+
+  /**
+   * Gets a batch of statuses
+   */
+  @Override
+  public Map<CustomFixedLengthString, Status> batchGet(Set<CustomFixedLengthString> ids)
+  {
+    return null;
+  }
+
+  /**
+   * Keyword search for statuses
+   *
+   * @param keywords keyword to search for
+   */
+  @Finder("search")
+  public List<Status> search(@QueryParam(value="keywords",typeref=CustomFixedLengthStringRef.class) CustomFixedLengthString keywords)
   {
     return null;
   }

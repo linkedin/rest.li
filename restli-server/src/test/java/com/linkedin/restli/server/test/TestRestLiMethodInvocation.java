@@ -94,6 +94,7 @@ import com.linkedin.restli.server.twitter.AsyncFollowsAssociativeResource;
 import com.linkedin.restli.server.twitter.AsyncLocationResource;
 import com.linkedin.restli.server.twitter.AsyncRepliesCollectionResource;
 import com.linkedin.restli.server.twitter.AsyncStatusCollectionResource;
+import com.linkedin.restli.server.twitter.CustomStatusCollectionResource;
 import com.linkedin.restli.server.twitter.DiscoveredItemsResource;
 import com.linkedin.restli.server.twitter.FollowsAssociativeResource;
 import com.linkedin.restli.server.twitter.LocationResource;
@@ -2850,6 +2851,42 @@ public class TestRestLiMethodInvocation
 
     RoutingResult routingResult = new RoutingResult(new ResourceContextImpl(null, request,
                                                                             new RequestContext()), methodDescriptor);
+
+    try
+    {
+      _invoker.invoke(routingResult, request, null, false, null);
+      Assert.fail("expected routing exception");
+    }
+    catch (RoutingException e)
+    {
+      Assert.assertEquals(e.getStatus(), 400);
+    }
+  }
+
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "customTypeCoercerError")
+  public Object[][] customTypeCoercerError() throws Exception
+  {
+    return new Object[][]
+        {
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/custom_status?q=search&keywords=1234" },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/custom_status?q=search&keywords=1234" }
+        };
+  }
+
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "customTypeCoercerError")
+  public void testCustomTypeParameters_CoercerError(ProtocolVersion version, String uri) throws Exception
+  {
+    ResourceModel repliesResourceModel = buildResourceModel(CustomStatusCollectionResource.class);
+    ResourceMethodDescriptor methodDescriptor = repliesResourceModel.findNamedMethod("search");
+
+    RestRequest request =
+        new RestRequestBuilder(new URI(uri))
+            .setMethod("GET")
+            .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, version.toString())
+            .build();
+
+    RoutingResult routingResult = new RoutingResult(new ResourceContextImpl(null, request,
+        new RequestContext()), methodDescriptor);
 
     try
     {

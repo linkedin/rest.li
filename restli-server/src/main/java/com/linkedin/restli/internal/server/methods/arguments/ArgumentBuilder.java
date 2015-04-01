@@ -50,7 +50,9 @@ import com.linkedin.restli.internal.server.util.ArgumentUtils;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.PagingContext;
+import com.linkedin.restli.server.ResourceConfigException;
 import com.linkedin.restli.server.ResourceContext;
+import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.annotations.HeaderParam;
 
@@ -95,132 +97,138 @@ public class ArgumentBuilder
     for (int i = positionalArguments.length; i < parameters.size(); ++i)
     {
       Parameter<?> param = parameters.get(i);
-      if (param.getParamType() == Parameter.ParamType.KEY || param.getParamType() == Parameter.ParamType.ASSOC_KEY_PARAM)
+      try
       {
-        Object value = context.getPathKeys().get(param.getName());
-        if (value != null)
+        if (param.getParamType() == Parameter.ParamType.KEY || param.getParamType() == Parameter.ParamType.ASSOC_KEY_PARAM)
         {
+          Object value = context.getPathKeys().get(param.getName());
+          if (value != null)
+          {
+            arguments[i] = value;
+            continue;
+          }
+        }
+        else if (param.getParamType() == Parameter.ParamType.CALLBACK)
+        {
+          continue;
+        }
+        else if (param.getParamType() == Parameter.ParamType.PARSEQ_CONTEXT_PARAM || param.getParamType() == Parameter.ParamType.PARSEQ_CONTEXT)
+        {
+          continue; // don't know what to fill in yet
+        }
+        else if (param.getParamType() == Parameter.ParamType.HEADER)
+        {
+          HeaderParam headerParam = param.getAnnotations().get(HeaderParam.class);
+          String value = context.getRequestHeaders().get(headerParam.value());
           arguments[i] = value;
           continue;
         }
-      }
-      else if (param.getParamType() == Parameter.ParamType.CALLBACK)
-      {
-        continue;
-      }
-      else if (param.getParamType() == Parameter.ParamType.PARSEQ_CONTEXT_PARAM ||
-          param.getParamType() == Parameter.ParamType.PARSEQ_CONTEXT)
-      {
-        continue; // don't know what to fill in yet
-      }
-      else if (param.getParamType() == Parameter.ParamType.HEADER)
-      {
-        HeaderParam headerParam = param.getAnnotations().get(HeaderParam.class);
-        String value = context.getRequestHeaders().get(headerParam.value());
-        arguments[i] = value;
-        continue;
-      }
-      //Since we have multiple different types of MaskTrees that can be passed into resource methods,
-      //we must evaluate based on the param type (annotation used)
-      else if (param.getParamType() == Parameter.ParamType.PROJECTION || param.getParamType() == Parameter.ParamType.PROJECTION_PARAM)
-      {
-        arguments[i] = context.getProjectionMask();
-        continue;
-      }
-      else if (param.getParamType() == Parameter.ParamType.METADATA_PROJECTION_PARAM)
-      {
-        arguments[i] = context.getMetadataProjectionMask();
-        continue;
-      }
-      else if (param.getParamType() == Parameter.ParamType.PAGING_PROJECTION_PARAM)
-      {
-        arguments[i] = context.getPagingProjectionMask();
-        continue;
-      }
-      else if (param.getParamType() == Parameter.ParamType.CONTEXT || param.getParamType() == Parameter.ParamType.PAGING_CONTEXT_PARAM)
-      {
-        PagingContext ctx =
-            RestUtils.getPagingContext(context, (PagingContext) param.getDefaultValue());
-        arguments[i] = ctx;
-        continue;
-      }
-      else if (param.getParamType() == Parameter.ParamType.PATH_KEYS || param.getParamType() == Parameter.ParamType.PATH_KEYS_PARAM)
-      {
-        arguments[i] = context.getPathKeys();
-        continue;
-      }
-      else if (param.getParamType() == Parameter.ParamType.RESOURCE_CONTEXT || param.getParamType() == Parameter.ParamType.RESOURCE_CONTEXT_PARAM)
-      {
-        arguments[i] = context;
-        continue;
-      }
-      else if (param.getParamType() == Parameter.ParamType.POST)
-      {
-        // handle action parameters
-        if (template != null)
+        //Since we have multiple different types of MaskTrees that can be passed into resource methods,
+        //we must evaluate based on the param type (annotation used)
+        else if (param.getParamType() == Parameter.ParamType.PROJECTION || param.getParamType() == Parameter.ParamType.PROJECTION_PARAM)
         {
-          DataMap data = template.data();
-          if (data.containsKey(param.getName()))
+          arguments[i] = context.getProjectionMask();
+          continue;
+        }
+        else if (param.getParamType() == Parameter.ParamType.METADATA_PROJECTION_PARAM)
+        {
+          arguments[i] = context.getMetadataProjectionMask();
+          continue;
+        }
+        else if (param.getParamType() == Parameter.ParamType.PAGING_PROJECTION_PARAM)
+        {
+          arguments[i] = context.getPagingProjectionMask();
+          continue;
+        }
+        else if (param.getParamType() == Parameter.ParamType.CONTEXT || param.getParamType() == Parameter.ParamType.PAGING_CONTEXT_PARAM)
+        {
+          PagingContext ctx = RestUtils.getPagingContext(context, (PagingContext) param.getDefaultValue());
+          arguments[i] = ctx;
+          continue;
+        }
+        else if (param.getParamType() == Parameter.ParamType.PATH_KEYS || param.getParamType() == Parameter.ParamType.PATH_KEYS_PARAM)
+        {
+          arguments[i] = context.getPathKeys();
+          continue;
+        }
+        else if (param.getParamType() == Parameter.ParamType.RESOURCE_CONTEXT || param.getParamType() == Parameter.ParamType.RESOURCE_CONTEXT_PARAM)
+        {
+          arguments[i] = context;
+          continue;
+        }
+        else if (param.getParamType() == Parameter.ParamType.POST)
+        {
+          // handle action parameters
+          if (template != null)
           {
-            try
+            DataMap data = template.data();
+            if (data.containsKey(param.getName()))
             {
               arguments[i] = template.getValue(param);
               continue;
             }
-            catch (TemplateOutputCastException e)
-            {
-              throw new RoutingException("Parameter '" + param.getName() + "' must be of type '"
-                  + param.getType().getName() + "'", HttpStatus.S_400_BAD_REQUEST.getCode());
-            }
           }
         }
-      }
-      else if (param.getParamType() == Parameter.ParamType.QUERY)
-      {
-        Object value;
-        if (DataTemplate.class.isAssignableFrom(param.getType()))
+        else if (param.getParamType() == Parameter.ParamType.QUERY)
         {
-          value = buildDataTemplateArgument(context, param);
+          Object value;
+          if (DataTemplate.class.isAssignableFrom(param.getType()))
+          {
+            value = buildDataTemplateArgument(context, param);
+          }
+          else
+          {
+            value = buildRegularArgument(context, param);
+          }
+
+          if (value != null)
+          {
+            arguments[i] = value;
+            continue;
+          }
+        }
+        else if (param.getParamType() == Parameter.ParamType.BATCH || param.getParamType() == Parameter.ParamType.RESOURCE_KEY)
+        {
+          // should not come to this routine since it should be handled by passing in positionalArguments
+          throw new RoutingException("Parameter '" + param.getName() + "' should be passed in as a positional argument",
+              HttpStatus.S_400_BAD_REQUEST.getCode());
         }
         else
         {
-          value = buildRegularArgument(context, param);
+          // unknown param type
+          throw new RoutingException(
+              "Parameter '" + param.getName() + "' has an unknown parameter type '" + param.getParamType().name() + "'",
+              HttpStatus.S_400_BAD_REQUEST.getCode());
         }
+      }
+      catch (TemplateRuntimeException e)
+      {
+        throw new RoutingException("Parameter '" + param.getName() + "' is invalid", HttpStatus.S_400_BAD_REQUEST.getCode());
+      }
 
-        if (value != null)
+      try
+      {
+        // Handling null-valued parameters not provided in resource context or entity body
+        // check if it is optional parameter
+        if (param.isOptional() && param.hasDefaultValue())
         {
-          arguments[i] = value;
-          continue;
+          arguments[i] = param.getDefaultValue();
+        }
+        else if (param.isOptional() && !param.getType().isPrimitive())
+        {
+          // optional primitive parameter must have default value or provided
+          arguments[i] = null;
+        }
+        else
+        {
+          throw new RoutingException("Parameter '" + param.getName() + "' is required", HttpStatus.S_400_BAD_REQUEST.getCode());
         }
       }
-      else if (param.getParamType() == Parameter.ParamType.BATCH || param.getParamType() == Parameter.ParamType.RESOURCE_KEY)
+      catch (ResourceConfigException e)
       {
-        // should not come to this routine since it should be handled by passing in positionalArguments
-        throw new RoutingException("Parameter '" + param.getName() + "' should be passed in as a positional argument",
-            HttpStatus.S_400_BAD_REQUEST.getCode());
-      }
-      else
-      {
-        // unknown param type
-        throw new RoutingException("Parameter '" + param.getName() + "' has an unknown parameter type '"
-            + param.getParamType().name() + "'", HttpStatus.S_400_BAD_REQUEST.getCode());
-      }
-
-      // Handling null-valued parameters not provided in resource context or entity body
-      // check if it is optional parameter
-      if (param.isOptional() && param.hasDefaultValue())
-      {
-        arguments[i] = param.getDefaultValue();
-      }
-      else if (param.isOptional() && !param.getType().isPrimitive())
-      {
-        // optional primitive parameter must have default value or provided
-        arguments[i] = null;
-      }
-      else
-      {
-        throw new RoutingException("Parameter '" + param.getName() + "' is required",
-            HttpStatus.S_400_BAD_REQUEST.getCode());
+        // Parameter default value format exception should result in server error code 500.
+        throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
+            "Parameter '" + param.getName() + "' default value is invalid", e);
       }
     }
     return arguments;
