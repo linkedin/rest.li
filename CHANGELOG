@@ -1,16 +1,18 @@
-2.2.10
+2.2.11
 ------
 
-2.2.9
------
-(RB=445163)
-Fixed DefaultMessageSerializer to support cookies and non-ASCII message entities.
-
+2.2.10
+------
 (RB=440822)
 Fixed key value conversion for typeref key without custom Java binding.
 
 (RB=446624)
 Provide configuration for acceptType and contentType in RestLiRequestOptions per request.
+
+2.2.9
+-----
+(RB=445163)
+Fixed DefaultMessageSerializer to support cookies and non-ASCII message entities.
 
 2.2.8
 -----
