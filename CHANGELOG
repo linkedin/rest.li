@@ -1,5 +1,7 @@
 2.2.11
 ------
+(RB=455451)
+Formally support the Java 8 compiler to create 1.6 target source files
 
 2.2.10
 ------

@@ -94,7 +94,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.AccessibleObject;
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
@@ -224,9 +224,9 @@ public final class RestLiAnnotationReader
     return annotationsMap;
   }
 
-  private static DataMap addDeprecatedAnnotation(DataMap annotationsMap, AccessibleObject accessibleObject)
+  private static DataMap addDeprecatedAnnotation(DataMap annotationsMap, AnnotatedElement annotatedElement)
   {
-    if(accessibleObject.isAnnotationPresent(Deprecated.class))
+    if(annotatedElement.isAnnotationPresent(Deprecated.class))
     {
       annotationsMap.put("deprecated", new DataMap());
     }

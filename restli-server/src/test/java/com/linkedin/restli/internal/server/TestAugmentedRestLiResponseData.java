@@ -258,8 +258,8 @@ public class TestAugmentedRestLiResponseData
     List<ResourceMethod> validBatchTypes = Arrays.asList(BATCH_DELETE, BATCH_GET, BATCH_PARTIAL_UPDATE, BATCH_UPDATE);
     for (ResourceMethod type : ResourceMethod.values())
     {
-      ret.add(Arrays.asList(type, !validEntityTypes.contains(type), !validCollectionTypes.contains(type),
-                            !validBatchTypes.contains(type)));
+      ret.add(Arrays.<Object>asList(type, !validEntityTypes.contains(type), !validCollectionTypes.contains(type),
+                                    !validBatchTypes.contains(type)));
     }
     return listToArray(ret);
   }
