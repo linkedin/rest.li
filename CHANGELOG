@@ -2,6 +2,8 @@
 ------
 (RB=455451)
 Formally support the Java 8 compiler to create 1.6 target source files
+(RB=461320)
+using servlet container threads to do IO for response in AbstractAsyncR2Servlet
 
 2.2.10
 ------
