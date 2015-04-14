@@ -664,7 +664,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
                                                            List<String> prioritizedSchemes)
   {
     List<SchemeStrategyPair> cached = _serviceStrategiesCache.get(serviceName);
-    if (cached != null)
+    if ((cached != null) && !cached.isEmpty())
     {
       return cached;
     }

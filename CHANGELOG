@@ -2,8 +2,11 @@
 ------
 
 2.3.0
+------
 (RB=426274)
 Rewrite KeyMapper API
+(RB=462831)
+Fix race condition in D2 when Zookeeper is slow.
 
 2.2.12
 ------
