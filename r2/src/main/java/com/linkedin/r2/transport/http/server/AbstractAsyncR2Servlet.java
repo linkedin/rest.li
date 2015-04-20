@@ -70,14 +70,9 @@ public abstract class AbstractAsyncR2Servlet extends AbstractR2Servlet
 
     try
     {
-      restRequest = readFromServletRequest(req, requestContext);
+      restRequest = readFromServletRequest(req);
     }
     catch (URISyntaxException e)
-    {
-      writeToServletError(resp, RestStatus.BAD_REQUEST, e.toString());
-      return;
-    }
-    catch (MessagingException e)
     {
       writeToServletError(resp, RestStatus.BAD_REQUEST, e.toString());
       return;

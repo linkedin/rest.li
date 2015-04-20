@@ -1,3 +1,6 @@
+2.2.12
+------
+
 2.2.11
 ------
 (RB=455451)
@@ -9,6 +12,9 @@ Migrate to using log4j2 internally in pegasus.
 Fixed and consolidated the r2 perf tests.
 (RB=467222)
 Disable transient failing d2 tests
+
+(RB=466051)
+Move QueryTunnel to filters
 
 2.2.10
 ------

@@ -352,7 +352,7 @@ public class TestHttpNettyClient
   {
     try
     {
-      new HttpNettyClient(_factory, _scheduler, 1, 1, 1, 1, 1, null, new SSLParameters(), Integer.MAX_VALUE, _scheduler, Integer.MAX_VALUE);
+      new HttpNettyClient(_factory, _scheduler, 1, 1, 1, 1, 1, null, new SSLParameters(), _scheduler, Integer.MAX_VALUE);
     }
     catch (IllegalArgumentException e)
     {
@@ -383,7 +383,6 @@ public class TestHttpNettyClient
                           1,
                           SSLContext.getDefault(),
                           sslParameters,
-                          Integer.MAX_VALUE,
                           _scheduler,
                           Integer.MAX_VALUE);
     }
@@ -414,7 +413,6 @@ public class TestHttpNettyClient
                         1,
                         SSLContext.getDefault(),
                         sslParameters,
-                        Integer.MAX_VALUE,
                         _scheduler,
                         Integer.MAX_VALUE);
   }
@@ -440,7 +438,6 @@ public class TestHttpNettyClient
                           1,
                           SSLContext.getDefault(),
                           sslParameters,
-                          Integer.MAX_VALUE,
                           _scheduler,
                           Integer.MAX_VALUE);
     }
@@ -471,7 +468,6 @@ public class TestHttpNettyClient
                         1,
                         SSLContext.getDefault(),
                         sslParameters,
-                        Integer.MAX_VALUE,
                         _scheduler,
                         Integer.MAX_VALUE);
   }
@@ -505,7 +501,6 @@ public class TestHttpNettyClient
                                                   1,
                                                   null,
                                                   null,
-                                                  Integer.MAX_VALUE,
                                                   _scheduler,
                                                   Integer.MAX_VALUE,
                                                   HttpClientFactory.DEFAULT_CLIENT_NAME,

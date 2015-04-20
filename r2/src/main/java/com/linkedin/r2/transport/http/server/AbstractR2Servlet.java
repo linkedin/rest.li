@@ -21,7 +21,6 @@ package com.linkedin.r2.transport.http.server;
 import com.linkedin.data.ByteString;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.RequestContext;
-import com.linkedin.r2.message.rest.QueryTunnelUtil;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
@@ -74,14 +73,9 @@ public abstract class AbstractR2Servlet extends HttpServlet
 
     try
     {
-      restRequest = readFromServletRequest(req, requestContext);
+      restRequest = readFromServletRequest(req);
     }
     catch (URISyntaxException e)
-    {
-      writeToServletError(resp, RestStatus.BAD_REQUEST, e.toString());
-      return;
-    }
-    catch (MessagingException e)
     {
       writeToServletError(resp, RestStatus.BAD_REQUEST, e.toString());
       return;
@@ -170,10 +164,9 @@ public abstract class AbstractR2Servlet extends HttpServlet
     writeToServletResponse(TransportResponseImpl.success(restResponse), resp);
   }
 
-  protected RestRequest readFromServletRequest(HttpServletRequest req, RequestContext requestContext) throws IOException,
+  protected RestRequest readFromServletRequest(HttpServletRequest req) throws IOException,
       ServletException,
-      URISyntaxException,
-      MessagingException
+      URISyntaxException
   {
     StringBuilder sb = new StringBuilder();
     sb.append(extractPathInfo(req));
@@ -216,7 +209,7 @@ public abstract class AbstractR2Servlet extends HttpServlet
 
       rb.setEntity(buf);
     }
-    return QueryTunnelUtil.decode(rb.build(), requestContext);
+    return rb.build();
   }
 
   /**

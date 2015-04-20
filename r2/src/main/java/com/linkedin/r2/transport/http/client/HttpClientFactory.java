@@ -25,6 +25,7 @@ import com.linkedin.r2.filter.FilterChains;
 import com.linkedin.r2.filter.CompressionConfig;
 import com.linkedin.r2.filter.compression.ClientCompressionFilter;
 import com.linkedin.r2.filter.compression.EncodingType;
+import com.linkedin.r2.filter.transport.ClientQueryTunnelFilter;
 import com.linkedin.r2.filter.transport.FilterChainClient;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -415,6 +416,9 @@ public class HttpClientFactory implements TransportClientFactory
       filters = _filters;
     }
 
+    Integer queryPostThreshold = chooseNewOverDefault(getIntValue(properties, HTTP_QUERY_POST_THRESHOLD), Integer.MAX_VALUE);
+    filters = filters.addLast(new ClientQueryTunnelFilter(queryPostThreshold));
+
     client = new FilterChainClient(client, filters);
     client = new FactoryClient(client);
     synchronized (_mutex)
@@ -524,7 +528,6 @@ public class HttpClientFactory implements TransportClientFactory
     Integer idleTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_IDLE_TIMEOUT), DEFAULT_IDLE_TIMEOUT);
     Integer shutdownTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_SHUTDOWN_TIMEOUT), DEFAULT_SHUTDOWN_TIMEOUT);
     Integer maxResponseSize = chooseNewOverDefault(getIntValue(properties, HTTP_MAX_RESPONSE_SIZE), DEFAULT_MAX_RESPONSE_SIZE);
-    Integer queryPostThreshold = chooseNewOverDefault(getIntValue(properties, HTTP_QUERY_POST_THRESHOLD), Integer.MAX_VALUE);
     Integer requestTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_REQUEST_TIMEOUT), DEFAULT_REQUEST_TIMEOUT);
     Integer poolWaiterSize = chooseNewOverDefault(getIntValue(properties, HTTP_POOL_WAITER_SIZE), DEFAULT_POOL_WAITER_SIZE);
     String clientName = null;
@@ -545,7 +548,6 @@ public class HttpClientFactory implements TransportClientFactory
                                maxResponseSize,
                                sslContext,
                                sslParameters,
-                               queryPostThreshold,
                                _callbackExecutor,
                                poolWaiterSize,
                                clientName,

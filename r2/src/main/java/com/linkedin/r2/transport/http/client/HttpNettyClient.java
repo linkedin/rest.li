@@ -24,7 +24,6 @@ package com.linkedin.r2.transport.http.client;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.message.RequestContext;
-import com.linkedin.r2.message.rest.QueryTunnelUtil;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
@@ -37,15 +36,12 @@ import com.linkedin.r2.transport.http.common.HttpBridge;
 import com.linkedin.r2.util.Cancellable;
 import com.linkedin.r2.util.TimeoutRunnable;
 
-import javax.mail.MessagingException;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLParameters;
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
@@ -100,7 +96,6 @@ import org.slf4j.LoggerFactory;
   private final int _maxResponseSize;
 
   private final String _requestTimeoutMessage;
-  private final int _queryPostThreshold;
   private final AbstractJmxManager _jmxManager;
   private final String _name;
 
@@ -126,7 +121,6 @@ import org.slf4j.LoggerFactory;
          maxResponseSize,
          null,
          null,
-         Integer.MAX_VALUE,
          executor,
          Integer.MAX_VALUE);
   }
@@ -145,7 +139,6 @@ import org.slf4j.LoggerFactory;
    * @param maxResponseSize
    * @param sslContext {@link SSLContext}
    * @param sslParameters {@link SSLParameters}with overloaded construct
-   * @param queryPostThreshold length of query params above which requests will be tunneled as POSTS
    * @param callbackExecutor an optional executor to invoke user callback
    * @param poolWaiterSize Maximum waiters waiting on the HTTP connection pool
    */
@@ -158,7 +151,6 @@ import org.slf4j.LoggerFactory;
                          int maxResponseSize,
                          SSLContext sslContext,
                          SSLParameters sslParameters,
-                         int queryPostThreshold,
                          ExecutorService callbackExecutor,
                          int poolWaiterSize)
   {
@@ -171,7 +163,6 @@ import org.slf4j.LoggerFactory;
         maxResponseSize,
         sslContext,
         sslParameters,
-        queryPostThreshold,
         callbackExecutor,
         poolWaiterSize,
         HttpClientFactory.DEFAULT_CLIENT_NAME,
@@ -190,7 +181,6 @@ import org.slf4j.LoggerFactory;
                          int maxResponseSize,
                          SSLContext sslContext,
                          SSLParameters sslParameters,
-                         int queryPostThreshold,
                          ExecutorService callbackExecutor,
                          int poolWaiterSize,
                          String name,
@@ -205,7 +195,6 @@ import org.slf4j.LoggerFactory;
          maxResponseSize,
          sslContext,
          sslParameters,
-         queryPostThreshold,
          callbackExecutor,
          poolWaiterSize,
          name,
@@ -228,7 +217,6 @@ import org.slf4j.LoggerFactory;
    * @param maxResponseSize
    * @param sslContext {@link SSLContext}
    * @param sslParameters {@link SSLParameters}with overloaded construct
-   * @param queryPostThreshold length of query params above which requests will be tunneled as POSTS
    * @param callbackExecutor an optional executor to invoke user callback
    * @param poolWaiterSize Maximum waiters waiting on the HTTP connection pool
    * @param name Name of the {@link HttpNettyClient}
@@ -247,7 +235,6 @@ import org.slf4j.LoggerFactory;
                          int maxResponseSize,
                          SSLContext sslContext,
                          SSLParameters sslParameters,
-                         int queryPostThreshold,
                          ExecutorService callbackExecutor,
                          int poolWaiterSize,
                          String name,
@@ -272,7 +259,6 @@ import org.slf4j.LoggerFactory;
     _requestTimeout = requestTimeout;
     _shutdownTimeout = shutdownTimeout;
     _requestTimeoutMessage = "Exceeded request timeout of " + _requestTimeout + "ms";
-    _queryPostThreshold = queryPostThreshold;
     _jmxManager = jmxManager;
     _jmxManager.onProviderCreate(_channelPoolManager);
   }
@@ -290,7 +276,6 @@ import org.slf4j.LoggerFactory;
     _requestTimeout = requestTimeout;
     _shutdownTimeout = shutdownTimeout;
     _requestTimeoutMessage = "Exceeded request timeout of " + _requestTimeout + "ms";
-    _queryPostThreshold = Integer.MAX_VALUE;
     _name = HttpClientFactory.DEFAULT_CLIENT_NAME;
     _jmxManager = HttpClientFactory.NULL_JMX_MANAGER;
     _jmxManager.onProviderCreate(_channelPoolManager);
@@ -427,30 +412,9 @@ import org.slf4j.LoggerFactory;
       port = scheme.equalsIgnoreCase("http") ? HTTP_DEFAULT_PORT : HTTPS_DEFAULT_PORT;
     }
 
-    final RestRequest newRequest;
-    try
-    {
-      newRequest= QueryTunnelUtil.encode(new RestRequestBuilder(request)
-                                             .overwriteHeaders(WireAttributeHelper.toWireAttributes(wireAttrs))
-                                             .build(),
-                                         requestContext,
-                                         _queryPostThreshold);
-    }
-    catch (IOException e)
-    {
-      errorResponse(callback, e);
-      return;
-    }
-    catch (URISyntaxException e)
-    {
-      errorResponse(callback, e);
-      return;
-    }
-    catch (MessagingException e)
-    {
-      errorResponse(callback, e);
-      return;
-    }
+    final RestRequest newRequest = new RestRequestBuilder(request)
+        .overwriteHeaders(WireAttributeHelper.toWireAttributes(wireAttrs))
+        .build();
 
     // TODO investigate DNS resolution and timing
     SocketAddress address = new InetSocketAddress(host, port);
