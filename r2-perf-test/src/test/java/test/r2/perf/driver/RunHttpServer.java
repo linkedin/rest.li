@@ -24,18 +24,27 @@ import test.r2.perf.server.HttpPerfServerFactory;
 import java.io.IOException;
 import java.net.URI;
 
+
 /**
  * @author Chris Pettitt
  * @version $Revision$
  */
 public class RunHttpServer
 {
+  private static volatile Server SERVER;
+
   public static void main(String[] args) throws IOException
   {
     final int port = PerfConfig.getHttpPort();
     final URI relativeUri = PerfConfig.getRelativeUri();
+    final int msgSize = PerfConfig.getServerMessageSize();
 
-    final Server server = new HttpPerfServerFactory().create(port, relativeUri);
-    server.start();
+    SERVER = new HttpPerfServerFactory().create(port, relativeUri, msgSize);
+    SERVER.start();
+  }
+
+  public static void stop() throws IOException
+  {
+    SERVER.stop();
   }
 }

@@ -15,13 +15,13 @@
 */
 
 /* $Id$ */
-package test.r2.perf.client;
+package test.r2.perf;
 
 /**
  * @author Chris Pettitt
  * @version $Revision$
  */
-public interface RequestGenerator<T>
+public interface Generator<T>
 {
   T nextMessage();
 }

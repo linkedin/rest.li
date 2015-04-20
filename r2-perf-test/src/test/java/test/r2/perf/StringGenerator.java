@@ -14,20 +14,19 @@
    limitations under the License.
 */
 
-package test.r2.perf.client;
+package test.r2.perf;
 
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
+import test.r2.perf.Generator;
 
-public class StringRequestGenerator implements RequestGenerator<String>
+
+public class StringGenerator implements Generator<String>
 {
-  private final AtomicInteger _msgCounter;
   private final String _msg;
 
-  public StringRequestGenerator(int numMsgs, int msgSize)
+  public StringGenerator(int msgSize)
   {
-    _msgCounter = new AtomicInteger(numMsgs);
-
     char[] msg = new char[msgSize];
     Arrays.fill(msg, 'a');
     _msg = new String(msg);
@@ -36,12 +35,6 @@ public class StringRequestGenerator implements RequestGenerator<String>
   @Override
   public String nextMessage()
   {
-    if (_msgCounter.getAndDecrement() > 0)
-    {
-
-      return _msg;
-    }
-
-    return null;
+    return _msg;
   }
 }

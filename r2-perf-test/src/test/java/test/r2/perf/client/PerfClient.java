@@ -85,7 +85,7 @@ public class PerfClient
     }
 
     // Reset the stats after the warmup period
-    statsRef.set(new Stats(System.currentTimeMillis()));
+    statsRef.set(new Stats(System.currentTimeMillis(), true));
 
     for (Thread worker : workers)
     {

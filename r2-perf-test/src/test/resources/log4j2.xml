@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+  <Appenders>
+
+    <Console name="Console" target="SYSTEM_OUT">
+      <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %c{1} [%p] %m%n"/>
+    </Console>
+
+    <RollingFile name="RollingFileAppenderSimpleRestClient" append="true"
+                 fileName="../build/r2-perf-test/logs/public_access.csv"
+                 filePattern="../build/r2-perf-test/logs/public_access.%d{yy-MM-dd}-%i.csv">
+      <PatternLayout pattern="%d{yyyy/MM/dd HH:mm:ss.SSS}, %m%n"
+                     header="date,status,latency_nano,error_msg${sys:line.separator}"/>
+      <Policies>
+        <OnStartupTriggeringPolicy/>
+        <TimeBasedTriggeringPolicy />
+        <SizeBasedTriggeringPolicy size="1000000000"/>
+      </Policies>
+    </RollingFile>
+
+  </Appenders>
+
+  <Loggers>
+
+    <AsyncLogger name="test.r2.perf.client.Stats" level="info" additivity="false" >
+      <AppenderRef ref="RollingFileAppenderSimpleRestClient"/>
+    </AsyncLogger>
+
+    <AsyncRoot level="warn">
+      <AppenderRef ref="Console"/>
+    </AsyncRoot>
+
+  </Loggers>
+
+</Configuration>

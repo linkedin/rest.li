@@ -7,86 +7,47 @@ graphics.off()    # Close graphics windows
 
 args <- commandArgs(TRUE)      # retrieve args
 
-print (args)
-
 dataFileOrDir         <- args[1]
-output_graph_file     <- args[2]
-outputSummaryHtmlFile <- args[3]
-outputSummaryJsonFile <- args[4]
-rampupTime            <- args[5] # in seconds
+output_graph_file     <- "response_time"
+outputSummaryHtmlFile <- "summary.html"
+outputSummaryJsonFile <- "summary.json"
 
 ttlresponses <- 0
 successcount <- 0
 failedcount <- 0
 
-# Get list of log files
-datafiles <- list.files(dataFileOrDir, pattern="*.log")
-
-regexp <- "^(\\d{4}\\/\\d{2}\\/\\d{2} \\d{1,2}:\\d{1,2}:\\d{1,2}.\\d{3}) \\[\\(\\w+[^,]*,([^,]*),[^\\]]*\\](?:\\[[^\\]]*\\])*\\] \\[([^\\]]*)\\] \\[([^\\]]*)\\] ([OKFAILED].*)\\(threadid:(\\d+),.*\\) in (\\d+).?(\\d+)?ms\\s{0,1}$"
 
 # --- Functions
 
 getAxisTimeFrequency <- function(ttlexecutiontime)
 {
-  print(ttlexecutiontime)
   atfrequency <- 1;
   if (ttlexecutiontime/60 > 1 )
   {
 	atfrequency <- ttlexecutiontime/60;
   }
-  cat("\natfrequency:",atfrequency)
   atfrequency
 }
 
-readDataFiles <- function(dataFileDir, datafileslist)
+readCsvFile <- function(datafile)
 {
-  cat ("\n\ndataFileDir:",dataFileDir)
-  cat ("\n\ndatafileslist:",datafileslist)
-  extracteddata <- NULL
-  ttlresp <- 0
-  for (file in c(datafiles)){
-    datafile <- paste(dataFileDir, "/", file, sep = "")
+  cat ("\nReading data from ",datafile, "\n\n")
+  data <- read.csv(datafile)
 
-    dfile <- file(datafile)
-    filedata <- readDataFile (datafile)
-    extracteddata <- rbind(extracteddata, filedata)
-    rm(filedata)
-    close(dfile)
-  }
-  extracteddata
-}
-
-readDataFile <- function(datafile)
-{
-  cat ("\n Parsing data from ",datafile," file")
-  extracteddata <- NULL
-  dfile <- file(datafile)
-  data <- readLines(dfile)
-
-  # Get response times
-  resp_times <- as.double(c(gsub(pattern = regexp, replacement = "\\7.\\8", x = data, perl = TRUE)))
   # Get Time
-  dates <- strptime(gsub(regexp, replacement = "\\1", data, perl = TRUE),"%Y/%m/%d %H:%M:%OS", tz="")
-  # Get threads
-  fthreads <- gsub(pattern = regexp, replacement = "\\6", x = data, perl = TRUE)
-  # Get status
-  status <- gsub(pattern = regexp, replacement = "\\5", x = data, perl = TRUE)
+  dates <- strptime(data$date, "%Y/%m/%d %H:%M:%OS", tz="")
+  # Get response times
+  resptimes <- data$latency_nano / 10E6
 
   # Create data frame with all responses (including failed)
-  alldata <- data.frame(date=dates, resptime=resp_times, threads=fthreads)
-
-  close(dfile)
+  alldata <- data.frame(date=dates, resptime=resptimes)
   alldata
 }
 
 plotResponseTimeVsTime <- function (data, starttime, endtime, axistimefrequency,gtitle)
 {
   x <- strptime(data$date,"%Y-%m-%d %H:%M:%OS", tz="")
-  y <- data$resptime 
-
-  # starttime and endtime should be passed as as.POSIXct(starttime), as.POSIXct(endtime)
-  cat("\n axistimefrequency:", axistimefrequency,"\n")
-  cat("\n startime:",starttime," endtime:",endtime,"\n")
+  y <- data$resptime
 
   xpos <- plot(
     x,                                    # Timestamp
@@ -179,27 +140,10 @@ op <- options(digits.secs=4)
 
 r2stats <- NULL
 
-if ( length(datafiles)[1] == 0 )
-{
-  r2stats <- readDataFile(dataFileOrDir)
-} else 
-{
-  r2stats <- readDataFiles(dataFileOrDir, datafiles)
-}
-
-#attach(r2stats)
+r2stats <- readCsvFile(dataFileOrDir)
 
 dates <- strptime(r2stats$date,"%Y-%m-%d %H:%M:%OS", tz="")
 starttime <- min(as.POSIXct(dates))
-
-if (is.null(rampupTime) == FALSE && rampupTime > 0)
-{
-  newstarttime <- as.numeric(starttime) + as.numeric(rampupTime)
-  r2stats <- r2stats[as.POSIXct(r2stats$date) > newstarttime,]
-  r2stats
-  dates <- strptime(r2stats$date,"%Y-%m-%d %H:%M:%OS", tz="")
-  starttime <- min(as.POSIXct(dates))
-}
 
 attach(r2stats)
 
@@ -212,19 +156,8 @@ ttlresponses <- length(r2stats$resptime)
 respcount <- length(r2stats$resptime)
 
 # Get test details for summary report in graph legend
-threadfactor <- factor(r2stats$threads)
-totalthreads <- length(levels(threadfactor))
 successcount <- length(successData$resptime)    # only successful responses
 failedcount <- ttlresponses - successcount    #length(r2stats[is.na(r2stats$resptime),]) #  ttlresponses - successcount
-
-print(r2stats[ is.na(r2stats$resptime),])
-
-cat("\nTOTAL RESPONSES:",ttlresponses)
-cat("\nTOTAL SUCCESSFUL RESPONSES:",successcount)
-cat("\nTOTAL FAILED RESPONSES:",failedcount)
-cat("\nTOTAL THREADS:",totalthreads)
-cat("\nStats:")
-summary(r2stats)
 
 ### Calculate mean and median response time values for all responses
 sums <- c(summary(successData$resptime))
@@ -235,11 +168,11 @@ minresptime <- sums[1]
 maxresptime <- sums[6]
 frsq <- sums[2] # 1st. Qu
 trdq <- sums[5] # 3rd Qu.
+percentile50 <- quantile(successData$resptime, 0.5)
+percentile90 <- quantile(successData$resptime, 0.9)
 percentile95 <- quantile(successData$resptime, 0.95)
-percentile98 <- quantile(successData$resptime, 0.98)
+percentile99 <- quantile(successData$resptime, 0.99)
 standard_deviation <- sapply(successData,sd)
-
-print(standard_deviation)
 
 #Calculate throughput
 howLongRunning <- difftime(as.POSIXct(endtime), as.POSIXct(starttime), tz="", units="secs")
@@ -250,6 +183,19 @@ successData <- NULL
 
 graphHeight=1100
 ttlPlots=2
+
+cat("\nTotal Responses:",ttlresponses)
+cat("\nTotal Successful Responses:",successcount)
+cat("\nTotal Failed Responses:",failedcount)
+cat("\nStats:")
+cat("\n\tMean latency (in millis): ", mean(r2stats$resptime))
+cat("\n\tReqs / Sec: ", nrow(r2stats) / as.numeric(howLongRunning))
+cat("\n\tMin Latency: ", min(r2stats$resptime))
+cat("\n\t50% Latency: ", percentile50)
+cat("\n\t90% Latency: ", percentile90)
+cat("\n\t95% Latency: ", percentile95)
+cat("\n\t99% Latency: ", percentile99)
+cat("\n\tMax Latency: ", max(r2stats$resptime))
 
 # If test run is 4+ minutes long, plot 1 minute graph in addition to main and density graphs
 mid <- round(min(length(dates)/2))
@@ -268,7 +214,7 @@ plot.new()                              # start a new plot
 par(mar=c(24,5,5,5)+0.1)                # set the size of the outer margins
 par(mfrow=c(ttlPlots,1))		# plot three graphs in one page
 
-cat("\nPlotting first graph: Response Time vs Execution Time\n")
+cat("\n\nPlotting first graph: Response Time vs Execution Time\n")
 
 # First plot: response time vs time
 #
@@ -282,19 +228,6 @@ cat("\nPlotting second graph: Density\n")
 #
 plotDensityGraph(r2stats$resptime,resptimedensity)
 
-cat("\nPlotting third graph: One minute graph\n")
-
-# Third plot - one minute graph
-#
-
-if ((endtime - (dates[mid]+60)) > 0)
-{
-  print(as.POSIXlt(dates[mid]))
-  print(as.POSIXlt(dates[mid]+60))
-  #plotResponseTimeVsTime(dates, r2stats$resptime, as.POSIXct(as.POSIXlt(dates[mid])), as.POSIXct(as.POSIXlt(dates[mid]+60)), 1, paste("One Minute Snapshot (",dates[mid]," ",dates[mid]+60,")"))
-  plotResponseTimeVsTime(r2stats, as.POSIXct(as.POSIXlt(dates[mid])), as.POSIXct(as.POSIXlt(dates[mid]+60)), 1, paste("One Minute Snapshot (",dates[mid]," ",dates[mid]+60,")"))
-}
-
 options(op)
 dev.off()
 
@@ -304,12 +237,12 @@ out <- file(outputSummaryHtmlFile,"w") # open an output txt file
 htmldata <- c("<table border=\"1\" cellpadding=\"5\" cellspacing=\"5\" width=\"100%\">")
 
 # Summary html table
-summaryHeader <- c("Test Start Time","Test Stop Time","Total Execution Time(sec)","Total Responses","Successful Responses","Failed Responses","% Failed Responses","Total Threads","Throughput (r/sec")
-summaryData <- c(format(starttime,"%Y/%m/%d %H:%M:%S", tz=""),format(endtime,"%Y/%m/%d %H:%M:%S", tz=""), howLongRunning, ttlresponses, successcount, failedcount, paste((failedcount*100)/ttlresponses," %"),totalthreads,throughput)
+summaryHeader <- c("Test Start Time","Test Stop Time","Total Execution Time(sec)","Total Responses","Successful Responses","Failed Responses","% Failed Responses","Throughput (r/sec")
+summaryData <- c(format(starttime,"%Y/%m/%d %H:%M:%S", tz=""),format(endtime,"%Y/%m/%d %H:%M:%S", tz=""), howLongRunning, ttlresponses, successcount, failedcount, paste((failedcount*100)/ttlresponses," %"),throughput)
 
 # Response Stats html table
-responsesStatsHeader <- c("Min Response Time(millisec)","1st. Qu(millisec)","Median(millisec)","Mean(millisec)","3rd Qu.(millisec)","95%(millisec)","98%(millisec)","Max Response(millisec)","Standard Deviation")
-responsesStatsData <- c(minresptime, frsq, resp_median, resp_mean, trdq, percentile95, percentile98, maxresptime, toString(standard_deviation))
+responsesStatsHeader <- c("Min Response Time(millisec)","1st. Qu(millisec)","Median(millisec)","Mean(millisec)","3rd Qu.(millisec)","90%(millisec)","95%(millisec)","99%(millisec)","Max Response(millisec)","Standard Deviation")
+responsesStatsData <- c(minresptime, frsq, resp_median, resp_mean, trdq, percentile90, percentile95, percentile99, maxresptime, toString(standard_deviation))
 
 cat(htmldata,"<p><br>SERVER REQUESTS<br></p><p><br>SUMMARY<br></p>",generateSummaryHtmlTable(summaryHeader,summaryData ),"<p><br>RESPONSE STATS<br></p>",generateSummaryHtmlTable(responsesStatsHeader,responsesStatsData ),c("</table"), sep="", file=out)
 
@@ -319,9 +252,9 @@ close(out)
 
 jout <- file(outputSummaryJsonFile,"w") # open an output txt file
 
-jdata <- c("{\"Total_Responses\":",ttlresponses,",\"Successful_Responses\":",successcount,",\"Failed_Responses\":",failedcount,",\"Total_Threads\":",totalthreads,",\"Throughput(r/sec)\":",throughput,
+jdata <- c("{\"Total_Responses\":",ttlresponses,",\"Successful_Responses\":",successcount,",\"Failed_Responses\":",failedcount,",\"Throughput(r/sec)\":",throughput,
 ",\"Min_Response_Time\":",minresptime,",\"1st_Qu_RespTime\":",frsq,",\"Median_RespTime\":",resp_median,",\"Mean_RespTime\":",resp_mean,",\"3rd_Qu_RespTime\":",trdq,
-",\"Max_Response\":",maxresptime,",\"95_Percentile(millisec)\":",percentile95,",\"98_Percentile(millisec)\":",percentile98,"}")
+",\"Max_Response\":",maxresptime,",\"90_Percentile(millisec)\":",percentile90,",\"95_Percentile(millisec)\":",percentile95,",\"99_Percentile(millisec)\":",percentile99,"}")
 
 cat(jdata, sep="", file=jout)
 close(jout)

@@ -17,49 +17,36 @@
 /* $Id$ */
 package test.r2.perf.client;
 
-import com.linkedin.common.callback.FutureCallback;
+import com.linkedin.common.callback.Callback;
 import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.common.Client;
-import com.linkedin.common.util.None;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
+import test.r2.perf.Generator;
+
 
 /**
- * @author Chris Pettitt
- * @version $Revision$
- */
-public class RestClientRunnableFactory implements ClientRunnableFactory
+* @author Chris Pettitt
+* @version $Revision$
+*/
+/* package private */ class RestClientRunnable extends AbstractClientRunnable<RestRequest, RestResponse>
 {
   private final Client _client;
-  private final RequestGenerator<RestRequest> _reqGen;
 
-  public RestClientRunnableFactory(Client client, RequestGenerator<RestRequest> reqGen)
+  public RestClientRunnable(Client client,
+                        AtomicReference<Stats> stats,
+                        CountDownLatch startLatch,
+                        Generator<RestRequest> reqGen)
   {
+    super(stats, startLatch, reqGen);
     _client = client;
-    _reqGen = reqGen;
   }
 
   @Override
-  public Runnable create(AtomicReference<Stats> stats, CountDownLatch startLatch)
+  protected void sendMessage(RestRequest nextMsg, Callback<RestResponse> callback)
   {
-    return new RestClientRunnable(_client, stats, startLatch, _reqGen);
-  }
-
-  @Override
-  public void shutdown()
-  {
-    final FutureCallback<None> callback = new FutureCallback<None>();
-    _client.shutdown(callback);
-
-    try
-    {
-      callback.get();
-    }
-    catch (Exception e)
-    {
-      // Print out error and continue
-      e.printStackTrace();
-    }
+    _client.restRequest(nextMsg, callback);
   }
 }

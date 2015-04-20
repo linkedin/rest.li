@@ -5,31 +5,60 @@ dependencies {
   compile project (':r2-sample') 
   compile project (':pegasus-common')
   compile project (':test-util')
+  testRuntime externalDependency.disruptor
 }
 
-task runR2PerfTest  (type: JavaExec) {
-  // Command line example:
-  /* gradle runPerfTest -Dperf.host=localhost -Dperf.port=8083 -Dperf.uri=/echo -Dperf.datafile="/home/usr/r2-perf-test/src/main/resources/data/group.json" -Dperf.reportfile="R2PerfTest.log" -Dperf.threads=10 -Dperf.runs=10 -Dperf.rampup=10 -S
-  */
-  // This task is used for debugging JMeter JavaSample classes
-  def logdir = rootDir.toString() + '/build/r2-perf-test/logs'
-  mkdir (logdir)
-  def properties = System.properties.findAll { k,_ -> k.startsWith('perf.') }
-  main = 'test.r2.perf.R2Perf'
-  description = "Runs simple rest client performance tests"
-  classpath = sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
-  systemProperties += properties
-}
-
-task runHttpPerfServer (type: JavaExec) {
+// Build tasks for running PRPC and HTTP servers and perf tests
+['Http'].each { proto ->
   def props = System.properties.findAll { k,_ -> k.startsWith('perf.') }
-  classpath = sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
- 
-  def gclogdir = rootDir.toString() + '/build/r2-perf-test/logs/gc'
-  mkdir (gclogdir)
-  jvmArgs '-verbose:gc', '-Xloggc:'+gclogdir+'/gc.log', '-XX:+PrintGCDetails', '-XX:+PrintGCDateStamps'
-  main = 'test.r2.perf.RunHttpServer'
-  description = "Runs the http server"
-  classpath = sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
-  systemProperties += props
+
+  // Define server tasks
+  task("run${proto}Server", dependsOn: 'testClasses', type: JavaExec) {
+    def gclogdir = rootDir.toString() + '/build/r2-perf-test/logs/gc'
+    mkdir (gclogdir)
+    jvmArgs '-verbose:gc', '-Xloggc:'+gclogdir+'/gc.log', '-XX:+PrintGCDetails', '-XX:+PrintGCDateStamps'
+    main = "test.r2.perf.driver.Run${proto}Server"
+    description = "Runs the ${proto} server"
+    classpath = sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
+    systemProperties += props
+    maxHeapSize = "512m"
+    minHeapSize = "512m"
+  }.doFirst { println "\n=== Starting ${proto} server ===\n" }
+
+  // Define client tasks
+  ['Rpc', 'Rest'].each { style ->
+    task("run${proto}${style}Client", dependsOn: 'testClasses', type: JavaExec) {
+      def gclogdir = rootDir.toString() + '/build/r2-perf-test/logs/gc'
+      jvmArgs '-verbose:gc', '-Xloggc:'+gclogdir+'/client-gc.log', '-XX:+PrintGCDetails', '-XX:+PrintGCDateStamps'
+      main = "test.r2.perf.driver.Run${proto}${style}Client"
+      description = "Runs ${proto} client for ${style.toUpperCase()}"
+      classpath = sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
+      systemProperties += props
+      maxHeapSize = "512m"
+      minHeapSize = "512m"
+    }.doFirst { println "\n=== Starting ${proto} ${style.toUpperCase()} client ===\n" }
+  }
+}
+
+task("perf", dependsOn: 'testClasses', type: Exec) {
+  workingDir rootDir.path + File.separator + 'r2-perf-test'
+  executable '../gradlew'
+  args 'runHttpRestClient'
+  // without this, if test fails, doLast will not execute, the server may keep running in daemon
+  ignoreExitValue = true
+
+  doFirst {
+    classpath = sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
+    final URL[] classpathUrls = classpath.collect { it.toURI().toURL() } as URL[]
+    it.ext.contextClassLoader = Thread.currentThread().contextClassLoader
+    Thread.currentThread().contextClassLoader = new URLClassLoader(classpathUrls)
+    it.ext.serverClass = Thread.currentThread().contextClassLoader.loadClass('test.r2.perf.driver.RunHttpServer')
+
+    it.ext.serverClass.main(new String[0])
+  }
+  doLast {
+    it.ext.serverClass.stop()
+    it.execResult.assertNormalExitValue()
+    Thread.currentThread().contextClassLoader = it.ext.contextClassLoader
+  }
 }

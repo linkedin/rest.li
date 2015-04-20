@@ -50,14 +50,14 @@ public class PrintResultsTask implements Runnable
     System.out.println("-------");
     System.out.println("    Total Requests: " + stats.getSentCount());
     System.out.println("    Elapsed: " + elapsedTime);
-    System.out.println("    Mean latency (in millis): " + snapshot.getAverage());
+    System.out.println("    Mean latency (in millis): " + snapshot.getAverage() / 10E6);
     System.out.println("    Reqs / Sec: " + reqPerSec);
     System.out.println("    Errors: " + stats.getErrorCount());
-    System.out.println("    Min latency: " + snapshot.getMinimum());
-    System.out.println("    50% latency: " + snapshot.get50Pct());
-    System.out.println("    90% latency: " + snapshot.get90Pct());
-    System.out.println("    95% latency: " + snapshot.get95Pct());
-    System.out.println("    99% latency: " + snapshot.get99Pct());
-    System.out.println("    Max latency: " + snapshot.getMaximum());
+    System.out.println("    Min latency: " + snapshot.getMinimum() / 10E6);
+    System.out.println("    50% latency: " + snapshot.get50Pct() / 10E6);
+    System.out.println("    90% latency: " + snapshot.get90Pct() / 10E6);
+    System.out.println("    95% latency: " + snapshot.get95Pct() / 10E6);
+    System.out.println("    99% latency: " + snapshot.get99Pct() / 10E6);
+    System.out.println("    Max latency: " + snapshot.getMaximum() / 10E6);
   }
 }

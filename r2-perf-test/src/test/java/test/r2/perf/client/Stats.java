@@ -24,6 +24,9 @@ import com.linkedin.common.stats.LongStats;
 import com.linkedin.common.stats.LongTracking;
 
 import java.util.concurrent.atomic.AtomicLong;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 /**
  * @author Steven Ihde
@@ -32,7 +35,10 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class Stats
 {
+  private static final Logger LOG = LoggerFactory.getLogger(Stats.class);
+
   private final long _startTime;
+  private final boolean _logEnabled;
   private final AtomicLong _sent = new AtomicLong();
   private final AtomicLong _success = new AtomicLong();
   private final AtomicLong _error = new AtomicLong();
@@ -42,7 +48,13 @@ public class Stats
 
   public Stats(long startTime)
   {
+    this(startTime, false);
+  }
+
+  public Stats(long startTime, boolean logEnabled)
+  {
     _startTime = startTime;
+    _logEnabled = logEnabled;
   }
 
   public void sent()
@@ -56,12 +68,20 @@ public class Stats
     {
       _latencyTracker.addValue(elapsedTime);
     }
+    if (_logEnabled)
+    {
+      LOG.info("Success, {}, NA", elapsedTime);
+    }
   }
 
   public void error(Exception error)
   {
     _error.incrementAndGet();
     _lastError = error;
+    if (_logEnabled)
+    {
+      LOG.info("Error, NA, {}", error.toString());
+    }
   }
 
   public long getElapsedTime()

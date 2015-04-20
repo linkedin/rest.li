@@ -22,6 +22,8 @@ import com.linkedin.common.callback.FutureCallback;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
+import test.r2.perf.Generator;
+
 
 /**
  * @author Chris Pettitt
@@ -31,11 +33,11 @@ import java.util.concurrent.atomic.AtomicReference;
 {
   private final AtomicReference<Stats> _stats;
   private final CountDownLatch _startLatch;
-  private final RequestGenerator<REQ> _workGen;
+  private final Generator<REQ> _workGen;
 
   public AbstractClientRunnable(AtomicReference<Stats> stats,
                                 CountDownLatch startLatch,
-                                RequestGenerator<REQ> reqGen)
+                                Generator<REQ> reqGen)
   {
     _stats = stats;
     _startLatch = startLatch;
@@ -61,7 +63,7 @@ import java.util.concurrent.atomic.AtomicReference;
     {
       final FutureCallback<RES> callback = new FutureCallback<RES>();
 
-      long start = System.currentTimeMillis();
+      long start = System.nanoTime();
 
       sendMessage(nextMsg, callback);
 
@@ -72,7 +74,7 @@ import java.util.concurrent.atomic.AtomicReference;
       try
       {
         callback.get();
-        long elapsed = System.currentTimeMillis() - start;
+        long elapsed = System.nanoTime() - start;
         stats.success(elapsed);
       }
       catch (Exception e)

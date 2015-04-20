@@ -33,6 +33,7 @@ public class PerfConfig
   private static final String PERF_CLIENT_MSG_SIZE = "perf.client.msg_size";
   private static final String PERF_RELATIVE_URI = "perf.relative_uri";
   private static final String PERF_HOST = "perf.host";
+  private static final String PERF_SERVER_MSG_SIZE = "perf.server.msg_size";
 
   // Default property values
   private static final String DEFAULT_HOST = "localhost";
@@ -44,6 +45,7 @@ public class PerfConfig
   private static final int DEFAULT_CLIENT_NUM_THREADS = 100;
   private static final int DEFAULT_CLIENT_NUM_MSGS = 500 * 1000;
   private static final int DEFAULT_CLIENT_MSG_SIZE = 1000;
+  private static final int DEFAULT_SERVER_MSG_SIZE = 1000;
 
   public static int getHttpPort()
   {
@@ -63,6 +65,11 @@ public class PerfConfig
   public static int getMessageSize()
   {
     return getInt(PERF_CLIENT_MSG_SIZE);
+  }
+
+  public static int getServerMessageSize()
+  {
+    return getInt(PERF_SERVER_MSG_SIZE);
   }
 
   public static URI getRelativeUri()

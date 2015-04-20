@@ -18,14 +18,19 @@
 package test.r2.perf.client;
 
 
+import com.linkedin.common.callback.Callbacks;
+import com.linkedin.common.util.None;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.transport.common.Client;
+import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 
 import java.net.URI;
 import java.util.Collections;
+import test.r2.perf.Generator;
+
 
 /**
  * @author Chris Pettitt
@@ -33,13 +38,41 @@ import java.util.Collections;
  */
 public class PerfClients
 {
+  private static final TransportClientFactory FACTORY = new HttpClientFactory();
+  private static int NUM_CLIENTS = 0;
+
   public static PerfClient httpRest(URI uri, int numThreads, int numMsgs, int msgSize)
   {
-    final TransportClient transportClient = new HttpClientFactory().getClient(Collections.<String, String>emptyMap());
+    final TransportClient transportClient = FACTORY.getClient(Collections.<String, String>emptyMap());
     final Client client = new TransportClientAdapter(transportClient);
-    final RequestGenerator<RestRequest> reqGen = new RestRequestGenerator(uri, numMsgs, msgSize);
+    final Generator<RestRequest> reqGen = new RestRequestGenerator(uri, numMsgs, msgSize);
     final ClientRunnableFactory crf = new RestClientRunnableFactory(client, reqGen);
 
-    return new PerfClient(crf, numThreads);
+    return new FactoryClient(crf, numThreads);
+  }
+
+  private static class FactoryClient extends PerfClient
+  {
+    public FactoryClient(ClientRunnableFactory runnableFactory, int numThreads)
+    {
+      super(runnableFactory, numThreads);
+      synchronized (PerfClients.class)
+      {
+        NUM_CLIENTS++;
+      }
+    }
+
+    @Override
+    public void shutdown()
+    {
+      super.shutdown();
+      synchronized (PerfClients.class)
+      {
+        if (--NUM_CLIENTS == 0)
+        {
+          FACTORY.shutdown(Callbacks.<None>empty());
+        }
+      }
+    }
   }
 }

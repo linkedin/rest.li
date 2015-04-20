@@ -6,11 +6,10 @@ graphics.off()    # Close graphics windows
 args <- commandArgs(TRUE)
 
 dataFile              <- args[1]
-output_graph_file     <- args[2]
-outputSummaryHtmlFile <- args[3]
-outputSummaryJsonFile <- args[4]
-totalResponses        <- args[5]
-rampupTime            <- args[6]  # in seconds
+output_graph_file     <- "gc_plot"
+outputSummaryHtmlFile <- "gc.html"
+outputSummaryJsonFile <- "gc.json"
+totalResponses        <- args[2]
 
 print (args)
 
@@ -81,15 +80,6 @@ heapDiff <- gengcdata$HeapUsedBeforeGc - gengcdata$HeapUsedAfterGc
 
 ### Calcualte graph boundaries
 starttime <- min(as.POSIXct(data$Time))
-
-if (is.null(rampupTime) == FALSE && rampupTime > 0)
-{
-  newstarttime <- as.numeric(starttime) + as.numeric(rampupTime)
-  data <- data[as.POSIXct(data$Time) > newstarttime,]
-  data
-  times <- strptime(data$Time,"%Y-%m-%d %H:%M:%OS", tz="")
-  starttime <- min(as.POSIXct(times))
-}
 
 endtime <- max(as.POSIXct(data$Time))
 howLongRunning <- difftime(endtime,starttime , tz="", units="secs")

@@ -21,39 +21,49 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 
 import java.net.URI;
+import java.util.concurrent.atomic.AtomicInteger;
+import test.r2.perf.Generator;
+import test.r2.perf.StringGenerator;
+
 
 /**
  * @author Chris Pettitt
  * @version $Revision$
  */
-public class RestRequestGenerator implements RequestGenerator<RestRequest>
+public class RestRequestGenerator implements Generator<RestRequest>
 {
   private final URI _uri;
-  private final StringRequestGenerator _generator;
+  private final StringGenerator _generator;
+  private final AtomicInteger _msgCounter;
+
 
   public RestRequestGenerator(URI uri, int numMsgs, int msgSize)
   {
-    this(uri, new StringRequestGenerator(numMsgs, msgSize));
+    this(uri, numMsgs, new StringGenerator(msgSize));
   }
 
-  public RestRequestGenerator(URI uri, StringRequestGenerator generator)
+  public RestRequestGenerator(URI uri, int numMsgs, StringGenerator generator)
   {
     _uri = uri;
     _generator = generator;
+    _msgCounter = new AtomicInteger(numMsgs);
   }
 
   @Override
   public RestRequest nextMessage()
   {
-    final String stringMsg = _generator.nextMessage();
-    if (stringMsg == null)
+    if (_msgCounter.getAndDecrement() > 0)
+    {
+      final String stringMsg = _generator.nextMessage();
+
+      return new RestRequestBuilder(_uri)
+        .setEntity(stringMsg.getBytes())
+        .setMethod("POST")
+        .build();
+    }
+    else
     {
       return null;
     }
-
-    return new RestRequestBuilder(_uri)
-            .setEntity(stringMsg.getBytes())
-            .setMethod("POST")
-            .build();
   }
 }
