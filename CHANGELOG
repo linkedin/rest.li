@@ -4,6 +4,9 @@
 Formally support the Java 8 compiler to create 1.6 target source files
 (RB=461320)
 using servlet container threads to do IO for response in AbstractAsyncR2Servlet
+(RB=462881)
+Migrate to using log4j2 internally in pegasus.
+Fixed and consolidated the r2 perf tests.
 
 2.2.10
 ------
