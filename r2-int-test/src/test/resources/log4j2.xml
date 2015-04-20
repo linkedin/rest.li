@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+  <Appenders>
+
+    <Console name="Console" target="SYSTEM_OUT">
+      <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %c{1} [%p] %m%n"/>
+    </Console>
+
+    <RollingFile name="RollingFileAppenderSimpleRestClient" append="true"
+                 fileName="../build/r2-int-test/logs/SimpleRestClient_public_access.log"
+                 filePattern="../build/r2-int-test/logs/SimpleRestClient_public_access.log-%d{yy-MM-dd}-%i.log">
+      <PatternLayout pattern="%d{yyyy/MM/dd HH:mm:ss.SSS} %m%n"/>
+      <Policies>
+        <OnStartupTriggeringPolicy/>
+        <TimeBasedTriggeringPolicy />
+        <SizeBasedTriggeringPolicy size="1000000000"/>
+      </Policies>
+    </RollingFile>
+
+  </Appenders>
+
+  <Loggers>
+
+    <Logger name="test.r2.perf.client.FSRecorder" level="info" additivity="false" >
+      <AppenderRef ref="RollingFileAppenderSimpleRestClient"/>
+    </Logger>
+
+    <Root level="warn">
+      <AppenderRef ref="Console"/>
+    </Root>
+
+  </Loggers>
+
+</Configuration>

@@ -2,8 +2,6 @@ dependencies {
   compile project(':data')
   compile project(':data-avro')
   compile externalDependency.avro
-  runtime externalDependency.slf4jLog4j12
-  runtime externalDependency.log4j
   testCompile project(path: ':data', configuration: 'testArtifacts')
   testCompile externalDependency.testng
 }

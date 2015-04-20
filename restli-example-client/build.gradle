@@ -8,8 +8,6 @@ dependencies {
   compile project(':restli-client')
   compile project(':data')
   compile project(':restli-common')
-  runtime externalDependency.log4j
-  runtime externalDependency.slf4jLog4j12
   testCompile externalDependency.testng
   testCompile externalDependency.easymock
   testCompile externalDependency.commonsHttpClient

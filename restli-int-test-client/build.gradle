@@ -1,8 +1,6 @@
 dependencies {
   compile project(':d2')
   compile project(':restli-int-test')
-  runtime externalDependency.slf4jLog4j12
-  runtime externalDependency.log4j
   testCompile project(path: ':restli-int-test-api', configuration: 'restClient')
   testCompile project(path: ':restli-common', configuration: 'testArtifacts')
   testCompile project(path: ':restli-internal-testutils', configuration: 'testArtifacts')

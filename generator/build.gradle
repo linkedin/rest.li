@@ -4,6 +4,4 @@ dependencies {
   compile project(':pegasus-common')
   compile externalDependency.commonsIo
   compile externalDependency.codemodel
-  runtime externalDependency.slf4jLog4j12
-  runtime externalDependency.log4j
 }

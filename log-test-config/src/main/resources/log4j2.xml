@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+<Appenders>
+  <Console name="Console" target="SYSTEM_OUT">
+    <PatternLayout pattern="%p [%c{1}] %m%n"/>
+  </Console>
+</Appenders>
+<Loggers>
+  <!-- We intentionally raise the logging levels for these classes since there is mostly white noise here -->
+  <Logger name="com.linkedin.r2.transport.http.client.HttpNettyClient" level="error"/>
+  <Logger name="com.linkedin.r2.transport.http.client.AsyncPoolImpl" level="error"/>
+  <Logger name="com.linkedin.restli.internal.server.model.RestLiAnnotationReader" level="error"/>
+
+  <!-- We want to lower the log level for SimpleLoggingFilter so we can see request/response information which is
+  printed at DEBUG -->
+  <Logger name="com.linkedin.r2.filter.logging.SimpleLoggingFilter" level="debug"/>
+
+  <!-- We default to INFO -->
+  <Root level="info">
+    <AppenderRef ref="Console"/>
+  </Root>
+</Loggers>
+</Configuration>

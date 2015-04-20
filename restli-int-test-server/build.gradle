@@ -18,7 +18,6 @@ dependencies {
   compile externalDependency.commonsLang
   compile externalDependency.javaxInject
   compile externalDependency.parseq
-  runtime externalDependency.slf4jLog4j12
   testCompile project(path: ':restli-int-test-api', configuration: 'testDataTemplate')
   testCompile externalDependency.testng
 
