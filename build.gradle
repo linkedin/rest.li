@@ -54,6 +54,7 @@ project.ext.externalDependency = [
   'json': 'org.json:json:20070829',
   'log4j2Api': 'org.apache.logging.log4j:log4j-api:2.0.2',
   'log4j2Core': 'org.apache.logging.log4j:log4j-core:2.0.2',
+  'log4jLog4j2': 'org.apache.logging.log4j:log4j-1.2-api:2.0.2',
   'mail': 'javax.mail:mail:1.4.1',
   'mina': 'org.apache.mina:mina-core:1.1.7',
   'netty': 'org.jboss.netty:netty:3.2.3.Final',
